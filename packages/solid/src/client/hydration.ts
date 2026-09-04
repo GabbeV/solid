@@ -1459,7 +1459,7 @@ export const createSignal: {
   <T>(
     fn: ComputeFunction<undefined | NoInfer<T>, T>,
     options?: HydrationSignalOptions<T>
-  ): Signal<T>;
+  ): Signal<T, T | undefined>;
 } = ((...args: any[]) => {
   return (_createSignal || coreSignal)(...args);
 }) as any;
@@ -1542,7 +1542,7 @@ export const createOptimistic: {
   <T>(
     fn: ComputeFunction<undefined | NoInfer<T>, T>,
     options?: HydrationSignalOptions<T>
-  ): Signal<T>;
+  ): Signal<T, T | undefined>;
 } = ((...args: any[]) => {
   // `hydrating` can only be true once enableHydration() installed the
   // adapter slot; passing coreOptimistic in here (instead of a dedicated

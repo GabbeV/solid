@@ -710,7 +710,7 @@ export function createSignal<T>(
 export function createSignal<T>(
   fn: ComputeFunction<undefined | NoInfer<T>, T>,
   options?: ServerSignalOptions<T>
-): Signal<T>;
+): Signal<T, T | undefined>;
 export function createSignal<T>(
   first?: T | ComputeFunction<any, any>,
   second?: SignalOptions<any>
@@ -1745,7 +1745,7 @@ export function createOptimistic<T>(
 export function createOptimistic<T>(
   fn: ComputeFunction<undefined | NoInfer<T>, T>,
   options?: ServerSignalOptions<T>
-): Signal<T>;
+): Signal<T, T | undefined>;
 export function createOptimistic<T>(
   first?: T | ComputeFunction<any, any>,
   second?: SignalOptions<any>

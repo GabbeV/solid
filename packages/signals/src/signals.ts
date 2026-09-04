@@ -130,17 +130,17 @@ export function accessor<T>(node: any): SourceAccessor<T> {
  * To store a function as the value itself (rather than as an updater), wrap it
  * with an updater: `setHandler(() => myHandler)`.
  */
-export type Setter<in out T> = {
+export type Setter<in out T, in out Prev = T> = {
   <U extends T>(
-    ...args: undefined extends T ? [] : [value: Exclude<U, Function> | ((prev: T) => U)]
+    ...args: undefined extends T ? [] : [value: Exclude<U, Function> | ((prev: Prev) => U)]
   ): undefined extends T ? undefined : U;
-  <U extends T>(value: (prev: T) => U): U;
+  <U extends T>(value: (prev: Prev) => U): U;
   <U extends T>(value: Exclude<U, Function>): U;
-  <U extends T>(value: Exclude<U, Function> | ((prev: T) => U)): U;
+  <U extends T>(value: Exclude<U, Function> | ((prev: Prev) => U)): U;
 };
 
 /** A `[get, set]` pair returned from `createSignal` / `createOptimistic`. */
-export type Signal<T> = [get: SourceAccessor<T>, set: Setter<T>];
+export type Signal<T, Prev = T> = [get: SourceAccessor<T>, set: Setter<T, Prev>];
 
 export type ComputeFunction<Prev, Next extends Prev = Prev> = (
   v: Prev
@@ -353,9 +353,13 @@ export type NoInfer<T extends any> = [T][T extends any ? 0 : never];
 export function createSignal<T>(): Signal<T | undefined>;
 export function createSignal<T>(value: Exclude<T, Function>, options?: SignalOptions<T>): Signal<T>;
 export function createSignal<T>(
-  fn: ComputeFunction<T>,
-  options?: SignalOptions<T> & MemoOptions<T>
+  fn: ComputeFunction<NoInfer<T>, T>,
+  options: SignalOptions<T> & MemoOptions<T> & { loadingValue: T }
 ): Signal<T>;
+export function createSignal<T>(
+  fn: ComputeFunction<undefined | NoInfer<T>, T>,
+  options?: SignalOptions<T> & MemoOptions<T>
+): Signal<T, T | undefined>;
 export function createSignal<T>(
   first?: T | ComputeFunction<T>,
   second?: SignalOptions<T> & MemoOptions<T>
@@ -1044,9 +1048,13 @@ export function createOptimistic<T>(
   options?: SignalOptions<T>
 ): Signal<T>;
 export function createOptimistic<T>(
-  fn: ComputeFunction<T>,
-  options?: SignalOptions<T> & MemoOptions<T>
+  fn: ComputeFunction<NoInfer<T>, T>,
+  options: SignalOptions<T> & MemoOptions<T> & { loadingValue: T }
 ): Signal<T>;
+export function createOptimistic<T>(
+  fn: ComputeFunction<undefined | NoInfer<T>, T>,
+  options?: SignalOptions<T> & MemoOptions<T>
+): Signal<T, T | undefined>;
 export function createOptimistic<T>(
   first?: T | ComputeFunction<T>,
   second?: SignalOptions<T> & MemoOptions<T>

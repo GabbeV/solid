@@ -211,22 +211,36 @@ setMaybeCount();
 const [derived, setDerived] = createSignal((prev?: number) => (prev ?? count()) + 1);
 const derivedValue: number = derived();
 setDerived(10);
-setDerived(prev => (prev ?? 0) + 1);
+setDerived(prev => {
+  // @ts-expect-error a derived signal may not have committed its initial value yet
+  const initializedPrev: number = prev;
+  return (prev ?? 0) + 1;
+});
+// @ts-expect-error the signal value itself is never undefined
+setDerived(undefined);
 // Bare ssrSource "client" is the structural form: plain function-form typing.
 const [bareClientDerived] = createSignal((p?: number) => (p ?? 0) + 1, { ssrSource: "client" });
 const bareClientDerivedValue: number = bareClientDerived();
-const [clientDerived] = createSignal((prev: number) => (prev ?? count()) + 1, {
+const [clientDerived, setClientDerived] = createSignal((prev: number) => (prev ?? count()) + 1, {
   ssrSource: "client",
   loadingValue: 0
 });
 const clientDerivedValue: number = clientDerived();
-const [bareClientOptimistic] = createOptimistic((p?: number) => p ?? 0, { ssrSource: "client" });
-const bareClientOptimisticValue: number = bareClientOptimistic();
-const [clientOptimistic] = createOptimistic((prev: number) => (prev ?? count()) + 1, {
-  ssrSource: "client",
-  loadingValue: 0
+setClientDerived(prev => prev + 1);
+const [bareClientOptimistic, setBareClientOptimistic] = createOptimistic((p?: number) => p ?? 0, {
+  ssrSource: "client"
 });
+const bareClientOptimisticValue: number = bareClientOptimistic();
+setBareClientOptimistic(prev => (prev ?? 0) + 1);
+const [clientOptimistic, setClientOptimistic] = createOptimistic(
+  (prev: number) => (prev ?? count()) + 1,
+  {
+    ssrSource: "client",
+    loadingValue: 0
+  }
+);
 const clientOptimisticValue: number = clientOptimistic();
+setClientOptimistic(prev => prev + 1);
 
 const [optimisticFnValue, setOptimisticFnValue] = createSignal<() => number>(() => () => 1);
 // @ts-expect-error number is not assignable to function
