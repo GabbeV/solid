@@ -2,7 +2,7 @@
 
 Pinned source: Solid d2ad8b288886a5c7171e6746ccc019ad1d08d8ab,
 production full signals index. `core/async.ts:handleAsync` remains a partial port.
-This milestone admits ordinary thenables whose settlements are non-async payloads.
+This milestone admits ordinary thenables and typed async-iterator descriptors, including one-level promise-to-iterator flattening.
 
 ## Source locations and runtime path
 
@@ -65,14 +65,56 @@ previous histories. Every async history now imports a fresh unchanged full-index
 bundle instance. The reduced single-history control matched without an engine
 change. This is not an upstream bug or a semantic deviation.
 
+## Iterator continuation milestone
+
+`iterator-state.bend` represents external iterable plans/iterator cursors and the
+source consumeIterator closure (hadValue/completed/initialRead/syncValue). All
+external async objects share one identity arena, so a stream and a promise cannot
+collide in the inFlight guard. NextInput supplies bare results, existing thenable
+objects or throws; a stream plan is an external producer's method data, not a
+replacement reactive algorithm. Every consumption allocates its own cursor.
+
+Core consumeIterator registers close on the ambient owner for LIVE consumption,
+or directly on the node for deferred flattening, then stores the same callback
+in flightTeardown. Close marks completed before return; return throws and returned
+promise rejection are swallowed. Owner disposal and supersede use this same close
+program, making repeated closure idempotent. Iterator next/return calls are separate
+host observations, compared in exact order.
+
+The IterateStream / AfterStep / AfterConsume return points retain the source
+recursive drain. Only isSync AND initialRead stashes a step. A bare or immediately
+settled step after an async gap publishes through asyncWrite, flushes, then checks
+autodisposal before the next pull. A stale/dirty ignored write does not continue
+the pump. Empty completion, later rejection, and initial throw keep their distinct
+source continuations and exceptional partial states. Promise fulfillments flatten
+only under the source identity/disposed guards; initial and deferred postures use
+their different cleanup and publication paths.
+
+255 iterator histories (including 192 seeded generated schedules) now compare
+next/return IO, traces, screens, throws/reports and node state after every action.
+Node-state observations also strengthen all 68 promise histories: flags/config,
+status/time, loading/value/staging, generation, previous/effect-modified state,
+flight identity, teardown/disposal presence, error/shown/blocked/source slots are
+checked against the unchanged TS nodes. Read-only observation captures the fresh
+node's actual NOT_PENDING sentinel; it does not change source functions. User
+program trace labels are independent of internal auto-close callback arena IDs.
+Two iterator mutations reject lost post-gap synchronous yields and omitted return;
+eight deliberate mutations are rejected in total.
+
+The immediate empty-flatten object leak is preserved, with 18 independent
+source-only paired controls and a current-head/history investigation in
+[the bug-candidate record](upstream/empty-flatten.md). No deviation or fix is active.
+
 ## Unfinished branches
 
-Async iterables, initial iterator draining, pump cancellation/return, promise-to-
-iterable flattening, projection setters/onError callbacks, arbitrary then/getter
-exceptions and adversarial multi-callback thenables are not admitted. Nested
-promise assimilation is also outside the settlement payload grammar. Active
-boundary/lane/mark/store hooks and public actions/refresh waiters remain open.
-The installed full-index hook bodies are inert only for the admitted scope.
+Arbitrary shape/getter/factory/then callbacks, malformed IteratorResult values,
+adversarial multi-callback thenables, arbitrary return side effects, projection
+setters/onError and nested promise assimilation are outside the admitted protocol.
+Fixed next/return descriptors express the admitted external producer; they do not
+claim arbitrary JavaScript closure support. Active boundary/lane/mark/store hooks
+and public actions/refresh waiters remain open. Installed full-index hook bodies
+are inert only for the admitted scope.
+
 An attempted composed loading-seed/landing proof exhausted the pinned independent
 kernel's reduction fuel, even after narrowing to tree text and splitting named
 construction stages. The frontend accepted it; the kernel did not validate it.

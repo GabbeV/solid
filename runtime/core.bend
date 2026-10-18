@@ -17,6 +17,7 @@ import ./pending-state.bend as P
 import ./transaction.bend as X
 import ./pending.bend as Q
 import ./flight.bend as F
+import ./iterator-state.bend as I
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -49,6 +50,11 @@ type Task is Data:
   Recompute{id: Nat, create: Bool}
   Finish{frame: PassFrame}
   AfterThen{frame: PassFrame, observer: Nat}
+  AfterIterator{frame: PassFrame}
+  IterateStream{stream: Nat}
+  AfterStep{observer: Nat}
+  AfterConsume{stream: Nat}
+  IterateOrRelease{stream: Nat}
   AsyncFulfill{observer: Nat, value: R.Value}
   AsyncReject{observer: Nat, error: R.Value}
   AsyncFlush{}
@@ -514,10 +520,27 @@ def subscribe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame
   +w = B.first(R.World, Nat, pair)
   subscribeState(w, rest, stack, frame, B.second(R.World, Nat, pair), R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
 
+# handleAsync:consumeIterator. The close callback belongs to the ambient
+# owner for LIVE consumption, and directly to el for deferred flattening.
+def consumeIterator(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, result: Nat, source: Nat, +deferred: Bool, initialValue: R.Value) -> Machine:
+  +pair = I.newStream(w, id, result, source, deferred, initialValue)
+  +w = B.first(R.World, Nat, pair)
+  +stream = B.second(R.World, Nat, pair)
+  +close = R.StreamState.close(B.stream(w, stream))
+  +w = O.cleanup(w, B.choose(~Nat, deferred, _ => id, _ => R.World.context(w)), close)
+  +w = E.ext(w, id)
+  +w = B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), close))
+  Machine{w, IterateStream{stream} <> AfterConsume{stream} <> rest, stack}
+
+def finishAsyncObject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +id: Nat, +result: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
+    _ => consumeIterator(F.startFlight(w, id, result), AfterIterator{frame} <> rest, stack, id, result, result, False{}, R.Undefined{}),
+    _ => subscribe(w, rest, stack, frame, id, result))
+
 def finishShape(w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: PassFrame, id: Nat) -> Machine:
   match stack:
     case R.AsyncValue{result} <> tail:
-      subscribe(w, rest, tail, frame, id, result)
+      finishAsyncObject(w, rest, tail, frame, id, result)
     case _:
       finishReady(w, rest, stack, frame, False{})
 
@@ -580,26 +603,185 @@ def catchPass(w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
       catchValue(w, rest, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
 
 # handleAsync's post-.then verdict, still inside recompute's try/catch.
-def afterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, observer: Nat) -> Machine:
-  +pair = F.thenResult(w, observer)
-  +w = B.first(R.World, R.Value, pair)
-  B.choose(~Machine, B.ok(w),
-    _ => finishReady(w, rest, B.second(R.World, R.Value, pair) <> stack, frame, True{}),
-    _ => catchPass(w, rest, frame))
+def iterable(+w: R.World, value: R.Value) -> Nat:
+  match value:
+    case R.AsyncValue{+id}:
+      B.choose(~Nat, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, id)), 0n), _ => id, _ => 0n)
+    case _:
+      0n
+
+# The shared LIVE tail: a first yield or empty completion is a real answer;
+# no synchronous answer returns the seed or throws NotReady inside the pass.
+def afterIterator(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
+  match stack:
+    case R.StreamVerdict{+stream, landed, +value} <> +tail:
+      +id = R.StreamState.node(B.stream(w, stream))
+      B.choose(~Machine, landed,
+        _ => finishReady(B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), rest, value <> tail, frame, True{}),
+        _ => B.choose(~Machine, R.Node.loading(B.node(w, id)),
+          _ => finishReady(w, rest, R.Node.value(B.node(w, id)) <> tail, frame, True{}),
+          _ =>
+            +pair = P.notReadyError(w, R.World.context(w))
+            catchPass(R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, frame)))
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# .then returned; a synchronously fulfilled iterable is flattened LIVE using
+# the same syncValue local (including the immediately empty source branch).
+def afterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +observer: Nat) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  +source = iterable(w, R.AsyncObserver.syncValue(o))
+  B.choose(~Machine, Bool.and(Bool.not(R.AsyncObserver.rejected(o)), Bool.and(R.AsyncObserver.resolved(o), Nat.is_ne(source, 0n))),
+    _ =>
+      +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
+      consumeIterator(w, AfterIterator{frame} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), source, False{}, R.AsyncObserver.syncValue(o)),
+    _ =>
+      +pair = F.thenResult(w, observer)
+      +w = B.first(R.World, R.Value, pair)
+      B.choose(~Machine, B.ok(w),
+        _ => finishReady(w, rest, B.second(R.World, R.Value, pair) <> stack, frame, True{}),
+        _ => catchPass(w, rest, frame)))
+
+# One next(). Bare IteratorResult is assimilated by the source's immediate
+# then adapter; the same observer locals therefore serve all next shapes.
+def subscribeStepState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      Machine{w, AfterStep{observer} <> rest, stack}
+    case R.Fulfilled{+value}:
+      B.choose(~Machine, immediate,
+        _ => Machine{w, AsyncFulfill{observer, value} <> AfterStep{observer} <> rest, stack},
+        _ => Machine{F.enqueueDelivery(w, observer, False{}, value), AfterStep{observer} <> rest, stack})
+    case R.Rejected{+error}:
+      B.choose(~Machine, immediate,
+        _ => Machine{w, AsyncReject{observer, error} <> AfterStep{observer} <> rest, stack},
+        _ => Machine{F.enqueueDelivery(w, observer, True{}, error), AfterStep{observer} <> rest, stack})
+
+def nextInput(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +stream: Nat, input: R.NextInput) -> Machine:
+  match input:
+    case R.ThrowNext{error}:
+      Machine{R.World.with_fault(w, R.CallbackThrown{error}), rest, stack}
+    case R.BareNext{done, value}:
+      +pair = I.newStepObserver(w, stream)
+      +observer = B.second(R.World, Nat, pair)
+      Machine{B.first(R.World, Nat, pair), AsyncFulfill{observer, R.StepResult{done, value}} <> AfterStep{observer} <> rest, stack}
+    case R.PromiseNext{+result}:
+      +pair = I.newStepObserver(w, stream)
+      +w = B.first(R.World, Nat, pair)
+      +observer = B.second(R.World, Nat, pair)
+      +object = B.asyncObject(w, result)
+      +w = B.store_asyncObject(w, result, R.AsyncObject.with_observers(object, B.append(Nat, R.AsyncObject.observers(object), [observer])))
+      subscribeStepState(w, rest, stack, observer, R.AsyncObject.immediate(object), R.AsyncObject.state(object))
+
+def iterateStream(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +stream: Nat) -> Machine:
+  +pair = I.next(w, stream)
+  nextInput(B.first(R.World, R.NextInput, pair), rest, stack, stream, B.second(R.World, R.NextInput, pair))
+
+def afterStepResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +stream: Nat, +resolved: Bool, result: R.Value) -> Machine:
+  match result:
+    case R.StepResult{+done, value}:
+      B.choose(~Machine, Bool.and(resolved, Bool.not(done)),
+        _ =>
+          +w = B.store_stream(w, stream, R.StreamState.with_hadValue(R.StreamState.with_syncValue(B.stream(w, stream), value), True{}))
+          Machine{w, IterateStream{stream} <> rest, stack},
+        _ => Machine{w, rest, R.Boolean{Bool.and(resolved, done)} <> stack})
+    case _:
+      Machine{w, rest, R.Boolean{False{}} <> stack}
+
+def afterStep(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  +stream = R.AsyncObserver.stream(o)
+  +s = B.stream(w, stream)
+  +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
+  B.choose(~Machine, R.AsyncObserver.rejected(o),
+    _ =>
+      +w = B.store_stream(w, stream, R.StreamState.with_completed(s, True{}))
+      +w = F.handleError(w, R.StreamState.node(s), R.StreamState.result(s), R.AsyncObserver.syncError(o))
+      +w = B.choose(~R.World, Bool.and(B.ok(w), R.StreamState.initialRead(s)), _ => R.World.with_fault(w, R.CallbackThrown{R.AsyncObserver.syncError(o)}), _ => w)
+      Machine{w, rest, R.Boolean{True{}} <> stack},
+    _ => afterStepResult(w, rest, stack, stream, R.AsyncObserver.resolved(o), R.AsyncObserver.syncValue(o)))
+
+def afterConsume(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +stream: Nat) -> Machine:
+  match stack:
+    case R.Boolean{done} <> tail:
+      +s = B.stream(w, stream)
+      +w = B.store_stream(w, stream, R.StreamState.with_initialRead(s, False{}))
+      Machine{w, rest, R.StreamVerdict{stream, Bool.or(R.StreamState.hadValue(s), done), R.StreamState.syncValue(s)} <> tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+def stepDone(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +stream: Nat) -> Machine:
+  +s = B.stream(w, stream)
+  +id = R.StreamState.node(s)
+  +w = B.store_stream(w, stream, R.StreamState.with_completed(s, True{}))
+  B.choose(~Machine, R.StreamState.hadValue(s),
+    _ => Machine{B.schedule(w), AsyncFlush{} <> SettleAuto{id} <> rest, stack},
+    _ =>
+      +pair = F.asyncWrite(w, id, R.StreamState.result(s), R.Undefined{})
+      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
+        _ => AsyncFlush{} <> SettleAuto{id} <> rest, _ => SettleAuto{id} <> rest), stack})
+
+def stepFulfilledResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, result: R.Value) -> Machine:
+  match result:
+    case R.StepResult{+done, +value}:
+      +o = B.asyncObserver(w, observer)
+      +stream = R.AsyncObserver.stream(o)
+      +s = B.stream(w, stream)
+      +id = R.StreamState.node(s)
+      B.choose(~Machine, Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s)),
+        _ =>
+          +w = F.syncFulfilled(w, observer, R.StepResult{done, value})
+          +w = B.choose(~R.World, done, _ => B.store_stream(w, stream, R.StreamState.with_completed(B.stream(w, stream), True{})), _ => w)
+          Machine{w, rest, stack},
+        _ => B.choose(~Machine, Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), R.StreamState.result(s)), _ => Machine{w, rest, stack},
+          _ => B.choose(~Machine, done, _ => stepDone(w, rest, stack, stream),
+            _ =>
+              +w = B.store_stream(w, stream, R.StreamState.with_hadValue(s, True{}))
+              +pair = F.asyncWrite(w, id, R.StreamState.result(s), value)
+              Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
+                _ => AsyncFlush{} <> IterateOrRelease{stream} <> rest, _ => rest), stack})))
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+
+def stepRejected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  +stream = R.AsyncObserver.stream(o)
+  +s = B.stream(w, stream)
+  +id = R.StreamState.node(s)
+  B.choose(~Machine, Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s)), _ => Machine{F.syncRejected(w, observer, error), rest, stack},
+    _ => B.choose(~Machine, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), R.StreamState.result(s)),
+      _ =>
+        +w = B.store_stream(w, stream, R.StreamState.with_completed(s, True{}))
+        Machine{F.handleError(w, id, R.StreamState.result(s), error), SettleAuto{id} <> rest, stack},
+      _ => Machine{w, rest, stack}))
+
+def promiseFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  +id = R.AsyncObserver.node(o)
+  +source = iterable(w, value)
+  B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncFulfilled(w, observer, value), rest, stack},
+    _ => B.choose(~Machine, Bool.and(Nat.is_ne(source, 0n), Bool.and(Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), R.AsyncObserver.result(o)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))),
+      _ => consumeIterator(w, Discard{} <> rest, stack, id, R.AsyncObserver.result(o), source, True{}, R.Undefined{}),
+      _ =>
+        +pair = F.asyncWrite(w, id, R.AsyncObserver.result(o), value)
+        Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
+          _ => AsyncFlush{} <> SettleAuto{id} <> rest,
+          _ => SettleAuto{id} <> rest), stack}))
 
 def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
-  +o = B.asyncObserver(w, observer)
-  B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncFulfilled(w, observer, value), rest, stack},
-    _ =>
-      +pair = F.asyncWrite(w, R.AsyncObserver.node(o), R.AsyncObserver.result(o), value)
-      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
-        _ => AsyncFlush{} <> SettleAuto{R.AsyncObserver.node(o)} <> rest,
-        _ => SettleAuto{R.AsyncObserver.node(o)} <> rest), stack})
+  B.choose(~Machine, Nat.is_eq(R.AsyncObserver.node(B.asyncObserver(w, observer)), 0n), _ => Machine{w, rest, stack},
+    _ => B.choose(~Machine, Nat.is_ne(R.AsyncObserver.stream(B.asyncObserver(w, observer)), 0n),
+      _ => stepFulfilledResult(w, rest, stack, observer, value), _ => promiseFulfill(w, rest, stack, observer, value)))
 
-def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
+def promiseReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
   +o = B.asyncObserver(w, observer)
   B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncRejected(w, observer, error), rest, stack},
     _ => Machine{F.handleError(w, R.AsyncObserver.node(o), R.AsyncObserver.result(o), error), SettleAuto{R.AsyncObserver.node(o)} <> rest, stack})
+
+def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
+  B.choose(~Machine, Nat.is_eq(R.AsyncObserver.node(B.asyncObserver(w, observer)), 0n), _ => Machine{w, rest, stack},
+    _ => B.choose(~Machine, Nat.is_ne(R.AsyncObserver.stream(B.asyncObserver(w, observer)), 0n),
+      _ => stepRejected(w, rest, stack, observer, error), _ => promiseReject(w, rest, stack, observer, error)))
 
 def deliverObservers(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, observers: List<&2, Nat>, +immediate: Bool, +rejected: Bool, +value: R.Value) -> Machine:
   match observers:
@@ -852,6 +1034,17 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       finish(w, rest, stack, frame)
     case AfterThen{frame, observer} <> rest:
       afterThen(w, rest, stack, frame, observer)
+    case AfterIterator{frame} <> rest:
+      afterIterator(w, rest, stack, frame)
+    case IterateStream{stream} <> rest:
+      iterateStream(w, rest, stack, stream)
+    case AfterStep{observer} <> rest:
+      afterStep(w, rest, stack, observer)
+    case AfterConsume{stream} <> rest:
+      afterConsume(w, rest, stack, stream)
+    case IterateOrRelease{+stream} <> +rest:
+      +pair = F.settleAutodispose(w, R.StreamState.node(B.stream(w, stream)))
+      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair), _ => rest, _ => IterateStream{stream} <> Discard{} <> rest), stack}
     case AsyncFulfill{observer, value} <> rest:
       asyncFulfill(w, rest, stack, observer, value)
     case AsyncReject{observer, error} <> rest:
@@ -914,6 +1107,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
     case Finish{frame} <> rest:
       catchPass(w, rest, frame)
     case AfterThen{frame, observer} <> rest:
+      catchPass(w, rest, frame)
+    case AfterIterator{frame} <> rest:
       catchPass(w, rest, frame)
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}

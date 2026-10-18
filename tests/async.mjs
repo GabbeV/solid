@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
 import {BendRuntime,list,decode} from '../host/bend.mjs';
 import {SolidRuntime} from '../host/solid.mjs';
+import {bendStates,solidStates} from './node-state.mjs';
 const lit=lit=>({lit}),read=read=>({read}),future=future=>({future}),select=(c,y,n)=>({select:[c,y,n]}),seq=(...seq)=>({seq}),add=(a,b)=>({add:[a,b]});
 let count=0;
 async function scenario(name,commands){
@@ -9,6 +10,7 @@ async function scenario(name,commands){
   const b=new BendRuntime({async:true}),s=new SolidRuntime({module}),logs=[];
   const consoleError=console.error;console.error=(...args)=>logs.push(args);
   function compare(op){
+    const expectedNodes=solidStates(s);assert.deepEqual(bendStates(b,expectedNodes.map(([name])=>name)),expectedNodes,`${name}: node state after ${op}`);
     assert.deepEqual(b.trace(),s.trace(),`${name}: trace after ${op}`);
     for(const target of [2,3,4])assert.deepEqual(b.screen(target),s.screen(target),`${name}: screen after ${op}`);
     assert.deepEqual(b.asyncErrors,s.asyncErrors,`${name}: callback failures after ${op}`);

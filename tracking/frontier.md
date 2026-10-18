@@ -31,7 +31,7 @@ proof credit was imported.
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
-  direct source probes; ordinary promise-like registration/settlement now executes; iterable branches remain unfinished. See
+  direct source probes; ordinary promise-like registration/settlement now executes; typed iterator consumption/flattening now executes. See
   [representation.md](representation.md) for storage-only extension fields.
 - Reusable defunctionalized callback programs, not arbitrary JavaScript closures.
   Render application writes computed text. User application records its value
@@ -44,7 +44,7 @@ proof credit was imported.
   Pending-source propagation/retirement and loading-window/landing helpers now
   execute through core catches/reads. Mainline transactions join, merge, park,
   judge blockers and land through the same flush. Typed promise-like programs now execute registration and callback delivery.
-  Iterators/flattening and active boundary/lane scopes remain unfinished.
+  Typed iterator consumption/flattening executes; active boundary/lane scopes remain unfinished.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Six deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
+Eight deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -151,9 +151,10 @@ queues, visible text, ambient restoration and successful completion. These laws
 use an explicit transaction input, not the public action API or host promises.
 
 1. Ordinary handleAsync thenable registration, callback delivery, supersession
-   guards, settlement/rejection and loading windows now execute. Continue with
-   iterator consumption/flattening/cancellation and richer callback contracts.
-   See [async.md](async.md) for 68 histories and 4,096 helper-state comparisons.
+   guards, settlement/rejection and loading windows now execute. Typed iterator initial drain, pumping, flattening and cancellation also execute.
+   Continue with richer callbacks and active scopes.
+   See [async.md](async.md) for 68 promise histories, 255 iterator histories, 18 source-only controls and
+   4,096 flight-helper comparisons. Node state and next/return order are checked.
 2. Preserve source behavior while extending actual async histories. Inert full-index
    hook bodies are exercised without boundary/lane/mark/store scopes; those scopes
    require their own translated engines, not an assumption that source hooks are

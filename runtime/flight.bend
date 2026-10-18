@@ -15,19 +15,22 @@ import ./owner.bend as O
 
 def newThenable(+w: R.World, immediate: Bool, state: R.AsyncSettlement) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObject, R.World.asyncObjects(w))
-  B.Bundle{R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{immediate, state, []}])), id}
+  B.Bundle{R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{immediate, state, [], 0n}])), id}
 
 def newObserver(+w: R.World, +node: Nat, +result: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObserver, R.World.asyncObservers(w))
-  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{node, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}}]))
+  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{node, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}]))
   B.Bundle{w, id}
 
 # Before .then(): result identity, question provenance and fresh own-flight set.
-def register(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Nat>:
+def startFlight(+w: R.World, +id: Nat, +result: Nat) -> R.World:
   +w = E.ext(w, id)
   +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), result))
   +w = B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), B.choose(~Nat, Nat.is_ne(R.World.question(w), 0n), _ => R.World.question(w), _ => 2147483647n)))
-  +w = P.clearPendingSources(w, id)
+  P.clearPendingSources(w, id)
+
+def register(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Nat>:
+  +w = startFlight(w, id, result)
   +pair = newObserver(w, id, result)
   +w = B.first(R.World, Nat, pair)
   +observer = B.second(R.World, Nat, pair)
@@ -97,8 +100,8 @@ def settleAutodispose(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
   release = Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), Bool.and(Nat.is_eq(R.Node.subs(B.node(w, id)), 0n), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))))
   B.choose(~B.Bundle<R.World, Bool>, release, _ => B.Bundle{O.unobserved(w, id), True{}}, _ => B.Bundle{w, False{}})
 
-# handleAsync after .then has returned. Iterator flattening is a separate,
-# unfinished branch; admitted settlements here are non-async payloads.
+# handleAsync after .then has returned. Core routes the iterable-flatten
+# branch before this ordinary thenable verdict helper.
 def thenResult(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
   +o = B.asyncObserver(w, observer)
   +id = R.AsyncObserver.node(o)

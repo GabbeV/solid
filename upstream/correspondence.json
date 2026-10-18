@@ -85,7 +85,7 @@
     "core/core.ts:recompute": {
       "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
       "status": "partial",
-      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; iterable/flattening/getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
+      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags",
@@ -285,7 +285,7 @@
     "core/async.ts:releaseFlightTeardown": {
       "bend": "runtime/owner.bend:releaseFlightTeardown",
       "status": "partial",
-      "restrictions": "Detach teardown before invocation; cancellation ordering and throw state compared. Actual async iterator protocol unfinished."
+      "restrictions": "Detach callback before invocation; active owner callback protocol now closes admitted iterator streams idempotently on supersession. Arbitrary teardown callbacks remain outside the grammar."
     },
     "core/async.ts:clearStatus": {
       "bend": "runtime/status.bend:clearStatus",
@@ -528,9 +528,9 @@
       "restrictions": "Detach each nonempty queue and execute ordered node-bound runners; preserves throws and phase ordering."
     },
     "core/async.ts:handleAsync": {
-      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto",
+      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease",
       "status": "partial",
-      "restrictions": "Ordinary typed thenables with non-async settlement payloads: immediate and deferred registration/callbacks, source identity/dirty guards, loading, rejection, held staging and actual flush. AsyncObject/Observer and hostJobs encode external objects, closures and queueMicrotask IO. Iterables/flattening/teardown, arbitrary shape/getter/then exceptions, multi-settlement thenables, setter/onError, active scopes and nonproduction hooks unfinished. See tracking/async.md; 68 histories and 4096 helper states."
+      "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

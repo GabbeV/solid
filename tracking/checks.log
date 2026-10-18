@@ -10,11 +10,13 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
 68 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.
+255 iterator histories match pinned TS initial drains, async gaps, bare steps, empty/rejected completion, cancellation, close and promise flattening.
+18 source-only empty-flatten controls preserve the pinned immediate-thenable object leak; direct/native/one-yield controls settle as expected.
 
 > solid-signals-bend@0.1.0 test:alignment
 > node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs
@@ -37,13 +39,15 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: post-gap synchronous yield is lost
+Rejected mutation: iterator return omitted
 Rejected mutation: stale flight writes
 Rejected mutation: unresolved promise commits
 Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-6 incorrect implementations rejected by differential assertions.
+8 incorrect implementations rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -51,4 +55,12 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 4.8s; hashes sealed in build/verification.json.
+Kernel completed in 5.0s; hashes sealed in build/verification.json.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 5.1s; hashes sealed in build/verification.json.

@@ -7,6 +7,7 @@ import ./scheduler.bend as S
 import ./owner.bend as O
 import ./construct.bend as N
 import ./flight.bend as F
+import ./iterator-state.bend as I
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -226,3 +227,22 @@ def deliver(fuel: Nat, w: R.World, observer: Nat, rejected: Bool, value: R.Value
 
 def clearHostJobs(w: R.World) -> R.World:
   R.World.with_hostJobs(w, [])
+
+# Typed external iterator descriptors. No reactive decisions live in the host.
+def emptyNexts() -> List<&2, R.NextInput>:
+  []
+
+def bareNext(done: Bool, value: R.Value, tail: List<&2, R.NextInput>) -> List<&2, R.NextInput>:
+  R.BareNext{done, value} <> tail
+
+def promiseNext(result: Nat, tail: List<&2, R.NextInput>) -> List<&2, R.NextInput>:
+  R.PromiseNext{result} <> tail
+
+def throwNext(error: R.Value, tail: List<&2, R.NextInput>) -> List<&2, R.NextInput>:
+  R.ThrowNext{error} <> tail
+
+def createStream(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, throws: Bool, error: R.Value, returned: Nat) -> R.World:
+  I.newIterable(w, steps, hasReturn, B.choose(~R.Slot, throws, _ => R.Present{error}, _ => R.Empty{}), returned)
+
+def vStepResult(done: Bool, value: R.Value) -> R.Value:
+  R.StepResult{done, value}

@@ -3,7 +3,7 @@ export class SolidRuntime {
   constructor({module=DefaultSolid}={}) {
     this.S=module;
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
   }
   value(v) {
     if(v && typeof v === 'object' && Object.hasOwn(v,'ref')) {
@@ -61,19 +61,43 @@ export class SolidRuntime {
   future(name,{immediate=false}={}) {
     const id=this.nextFuture++,record={settled:false,rejected:false,value:undefined,observers:[]};
     if(immediate){
-      record.object={then:(yes,no)=>{if(record.settled)(record.rejected?no:yes)(record.value);else record.observers.push([yes,no]);}};
-      record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;record.rejected=rejected;record.value=value;for(const [yes,no] of record.observers)(rejected?no:yes)(value);};
+      record.object={then:(yes,no)=>{if(record.settled)(record.rejected?no:yes)?.(record.value);else record.observers.push([yes,no]);}};
+      record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;record.rejected=rejected;record.value=value;for(const [yes,no] of record.observers)(rejected?no:yes)?.(value);};
     }else{
       let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});
       // Native promise microtasks invoke the actual source callbacks. Observe
       // callback exceptions as host outcomes instead of unhandled rejections.
       const observed=fn=>value=>{try{return fn(value);}catch(e){this.asyncErrors.push(this.errorShape(e));}};
-      record.object={then:(yes,no)=>promise.then(observed(yes),observed(no))};
+      record.object={then:(yes,no)=>promise.then(typeof yes==='function'?observed(yes):yes,typeof no==='function'?observed(no):no)};
       promise.catch(()=>{}); // unobserved external rejection is outside engine IO
       record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;(rejected?reject:resolve)(value);};
     }
     this.futures[name]=record;this.futureIdentities.set(record.object,id);return id;
   }
+  stream(name,steps=[],options={}) {
+    const id=this.nextFuture++,self=this;
+    const object={ [Symbol.asyncIterator]() {
+      const iterator=self.nextIterator++;let cursor=0;
+      self.iteratorEvents.push(['start',name,iterator]);
+      const it={next(){
+        self.iteratorEvents.push(['next',iterator,cursor]);
+        const step=steps[cursor++]??{done:true};
+        if(Object.hasOwn(step,'throw'))throw self.value(step.throw);
+        if(step.future)return self.futures[step.future].object;
+        return {done:step.done??false,value:self.value(step.value)};
+      }};
+      if(options.hasReturn??true)it.return=()=>{
+        self.iteratorEvents.push(['return',iterator]);
+        if(Object.hasOwn(options,'returnThrows'))throw self.value(options.returnThrows);
+        return self.futures[options.returnFuture]?.object;
+      };
+      return it;
+    }};
+    this.futures[name]={object};this.futureIdentities.set(object,id);return id;
+  }
+  resolveStep(name,value,done=false){this.futures[name].deliver(false,{done,value:this.value(value)});}
+  resolveStream(name,stream){this.futures[name].deliver(false,this.futures[stream].object);}
+  iteratorIO(){return this.iteratorEvents;}
   resolve(name,value){this.futures[name].deliver(false,this.value(value));}
   reject(name,error){this.futures[name].deliver(true,this.value(error));}
   signal(name,value,equals=true) {
@@ -82,6 +106,7 @@ export class SolidRuntime {
   }
   callback(name,expr) { return prev=> {
     this.sourceNames.set(this.S.getOwner(),name);
+    this.notPending??=this.S.getOwner()._pendingValue; // read-only probe of the fresh-node sentinel
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
     try { return this.evaluate(expr,prev); } finally {this.current=saved;}
   }; }

@@ -89,6 +89,10 @@ def truth(v: R.Value) -> Bool:
       True{}
     case R.AsyncValue{identity}:
       True{}
+    case R.StepResult{done, value}:
+      True{}
+    case R.StreamVerdict{stream, landed, value}:
+      True{}
     case R.StringValue{s}:
       Bool.not(String.is_empty(s))
     case _:
@@ -191,15 +195,15 @@ def blank_transaction() -> R.Transaction:
   R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}}
 
 def blank_asyncObject() -> R.AsyncObject:
-  R.AsyncObject{False{}, R.Unresolved{}, []}
+  R.AsyncObject{False{}, R.Unresolved{}, [], 0n}
 
 def blank_asyncObserver() -> R.AsyncObserver:
-  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}}
+  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}
 
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], []}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -338,3 +342,21 @@ def asyncObserver(w: R.World, id: Nat) -> R.AsyncObserver:
 
 def store_asyncObserver(+w: R.World, id: Nat, observer: R.AsyncObserver) -> R.World:
   R.World.with_asyncObservers(w, List.set(&2, R.AsyncObserver, R.World.asyncObservers(w), id, observer))
+
+def streamPlan(w: R.World, id: Nat) -> R.StreamPlan:
+  get(R.StreamPlan, R.World.streamPlans(w), id, R.StreamPlan{[], False{}, R.Empty{}, 0n})
+
+def iterator(w: R.World, id: Nat) -> R.ExternalIterator:
+  get(R.ExternalIterator, R.World.iterators(w), id, R.ExternalIterator{0n, 0n, 0n})
+
+def store_iterator(+w: R.World, id: Nat, value: R.ExternalIterator) -> R.World:
+  R.World.with_iterators(w, List.set(&2, R.ExternalIterator, R.World.iterators(w), id, value))
+
+def stream(w: R.World, id: Nat) -> R.StreamState:
+  get(R.StreamState, R.World.streams(w), id, R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n})
+
+def store_stream(+w: R.World, id: Nat, value: R.StreamState) -> R.World:
+  R.World.with_streams(w, List.set(&2, R.StreamState, R.World.streams(w), id, value))
+
+def iteratorEvent(+w: R.World, event: R.IteratorEvent) -> R.World:
+  R.World.with_iteratorEvents(w, append(R.IteratorEvent, R.World.iteratorEvents(w), [event]))

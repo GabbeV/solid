@@ -8,6 +8,7 @@ import ./heap.bend as H
 import ./constants.bend as K
 import ./extension.bend as E
 import ./write.bend as W
+import ./iterator-state.bend as I
 
 def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
   +head = R.Node.firstChild(B.node(w, parent))
@@ -160,6 +161,8 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{w, Dispose{R.World.context(w)} <> rest}
     case R.CleanupPriorEffect{}:
       Machine{w, EffectCleanup{R.World.callbackEffect(w), True{}} <> rest}
+    case R.CleanupCloseIterator{stream}:
+      Machine{I.close(w, stream), rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
 

@@ -34,7 +34,7 @@ exists after their ordinary synchronous executions.
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
 | `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReadyFailure retains identity/source; pending helpers execute, while flight callers remain unfinished. |
-| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks execute; promise settlement, the full iterator protocol and transactions are unfinished. |
+| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks, ordinary promise settlement, typed iterator consumption/close and mainline transactions execute. Arbitrary iterator methods and active scopes remain unfinished. |
 | `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Loading park/settle and self-only landing helpers retain blocked semantics; actual async callers unfinished. |
 | `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Unique ordered-ID set helpers implement registration, propagation and retirement; empty retirement restores absence. Actual flights/transactions remain unfinished. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
@@ -66,7 +66,7 @@ receiver checks for disposal callbacks and the plain-call effect cleanup.
 
 The same protocol executes compute/effect programs and signal writes through the
 one shared setter, installs returned cleanup, and invokes unobserved/cancellation
-tokens. It does not implement arbitrary host closures, the iterator protocol or
+tokens. It does not implement arbitrary host closures, arbitrary iterator callbacks or
 pending/async and boundary error paths. World.dormantNodes represents the source Set as
 an ordered unique-ID list; sweeps re-read its live bound and clear only on success.
 Graph callback recursion shares owner tasks; pure pointer operations live in
@@ -131,3 +131,11 @@ stores the RESULT identity in its existing inFlight slot, never the observer ID.
 World.hostJobs records external callback and queueMicrotask(flush) requests. The
 host drains this IO in its native microtask queue; Bend makes every reactive
 decision. See [async.md](async.md) for the admitted protocol and evidence.
+
+Typed StreamPlan/NextInput records supply external iterator method responses.
+ExternalIterator keeps the per-consumption producer cursor; StreamState keeps the
+engine callback closure's hadValue/completed/initialRead/syncValue and close token.
+AsyncObserver.stream distinguishes next callbacks from ordinary fulfillment and
+rejection; node-zero observers express swallowed return rejection. Owner cleanup
+programs contain an explicit close action, sharing the source flightTeardown
+callback identity with disposal. IteratorEvent records method IO only.

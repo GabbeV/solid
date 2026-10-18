@@ -80,7 +80,7 @@ function nodeOptions(options={},programs={}) {
     Object.hasOwn(options,'loadingValue'),encode(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map(); this.encountered=new Map(); this.futures={};this.hostAsync=async;this.asyncErrors=[]; }
+  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[]; }
   drainJobs() {
     if(!this.hostAsync)return;
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
@@ -122,12 +122,28 @@ export class BendRuntime {
       else if(op==='throw')p=R.programThrow(encode(args[0]),p);
       else throw new TypeError('Unsupported callback action');
     }
-    const id=R.nextProgramId(this.world);this.programs[name]=id;
+    const id=R.nextProgramId(this.world);this.programs[name]=id;this.programLabels.set(id,this.programLabels.size+1);
     this.world=R.registerProgram(this.world,p);this.check();return id;
   }
   future(name,{immediate=false}={}) {
     const id=R.nextAsyncId(this.world);this.futures[name]=id;
     this.world=R.createThenable(this.world,immediate);this.check();return id;
+  }
+  stream(name,steps=[],options={}) {
+    let inputs=R.emptyNexts();
+    for(const step of [...steps].reverse()){
+      if(Object.hasOwn(step,'throw'))inputs=R.throwNext(encode(step.throw),inputs);
+      else if(step.future)inputs=R.promiseNext(this.futures[step.future],inputs);
+      else inputs=R.bareNext(step.done??false,encode(step.value),inputs);
+    }
+    const id=R.nextAsyncId(this.world);this.futures[name]=id;
+    this.world=R.createStream(this.world,inputs,options.hasReturn??true,Object.hasOwn(options,'returnThrows'),encode(options.returnThrows),this.futures[options.returnFuture]??0);this.check();return id;
+  }
+  resolveStep(name,value,done=false){this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,R.vStepResult(done,encode(value)));this.check();}
+  resolveStream(name,stream){this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,R.vAsync(this.futures[stream]));this.check();}
+  iteratorIO(){
+    const names=new Map(Object.entries(this.futures).map(([name,id])=>[id,name]));
+    return list(this.world.iteratorEvents).map(e=>'object'in e?['start',names.get(e.object),e.iterator]:'index'in e?['next',e.iterator,e.index]:['return',e.iterator]);
   }
   resolve(name,value) {this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,encode(value));this.check();}
   reject(name,error) {this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],true,encode(error));this.check();}
@@ -166,7 +182,7 @@ export class BendRuntime {
   trace() {
     const name=id=>this.reverse[id] ?? null;
     return list(this.world.events).map(e=> {
-      if ('callback' in e) return ['cleanup',e.callback,e.code];
+      if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),decode(e.value,this.errors),decode(e.previous,this.errors)];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),decode(e.value,this.errors)];
       return ['compute',name(e.id)];
