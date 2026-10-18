@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url));
+function run(bin,args) {const r=spawnSync(bin,args,{cwd:root,stdio:'inherit'});if(r.status!==0)throw new Error(`${bin} failed: ${r.status??r.signal}`);}
+run('npm',['ci']);
+if(process.argv.includes('--without-kernel'))process.exit(0);
+if(process.platform!=='linux'||process.arch!=='x64')throw new Error('Install Lean 4.34.0 for your platform and set LEAN_ROOT; bundled bootstrap targets Linux x64.');
+const dir=path.join(root,'.tools/lean');
+const version=spawnSync(path.join(dir,'bin/lean'),['--version'],{encoding:'utf8'});
+if(version.status===0 && version.stdout.includes('version 4.34.0,'))process.exit(0);
+const pins=JSON.parse(fs.readFileSync(path.join(root,'upstream/pins.json')));
+fs.mkdirSync(path.join(root,'.tools'),{recursive:true});
+const archive=path.join(root,'.tools/lean.tar.zst');
+run('curl',['-fL','--retry','3',pins.lean.url,'-o',archive]);
+const actual=crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
+if(actual!==pins.lean.linuxArchiveSha256)throw new Error('Lean archive hash mismatch.');
+fs.mkdirSync(dir,{recursive:true});
+run('tar',['--zstd','-xf',archive,'--strip-components=1','-C',dir]);
+fs.unlinkSync(archive);
+console.log('Installed pinned JS dependencies and Lean. Bend compiler/kernel source is vendored.');

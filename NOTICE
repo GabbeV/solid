@@ -1,0 +1,4 @@
+Solid source and derived translation: MIT License, Copyright (c) 2016-2025 Ryan Carniato.
+Pinned reference source is retained under upstream/solid with its license.
+Bend compiler, base library and independent kernel: Apache License 2.0.
+Pinned toolchain source and its license are retained under upstream/bend.

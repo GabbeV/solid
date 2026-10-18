@@ -1,0 +1,32 @@
+
+> solid-signals-bend@0.1.0 verify
+> npm run build && npm test && npm run mutations && npm run check
+
+
+> solid-signals-bend@0.1.0 build
+> node tools/build.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Built Bend runtime and pinned Solid production reference.
+
+> solid-signals-bend@0.1.0 test
+> node tests/differential.mjs
+
+185 differential scenarios passed, including generated histories and graph invariants.
+
+> solid-signals-bend@0.1.0 mutations
+> node tests/mutations.mjs
+
+Rejected mutation: lost subscriber wake
+Rejected mutation: leaked staging
+Rejected mutation: untrack subscribes
+Rejected mutation: wrong render result
+4 incorrect implementations rejected by differential assertions.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 1.1s; hashes sealed in build/verification.json.
