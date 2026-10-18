@@ -38,7 +38,8 @@ The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
 and throws. Synchronous errors propagate through compute/effect catches, recovery and scheduler
-halts. Pending/async and boundary status paths remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
+halts. Pending-source and settle helpers are directly tested; core pending callers,
+async flights, transactions and boundaries remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
@@ -59,7 +60,9 @@ arbitrary-history, async, or optimistic consistency theorems**.
 A separate concrete cleanup proof checks reentrant root disposal through the
 active owner machine: detached cleanup lists, exact callback order, effect cleanup
 and final owner state. Two further closed regressions check error wrapper sharing
-and same-value recovery through the actual graph/queues. General error and
+and same-value recovery through the actual graph/queues. Two pending-helper
+regressions check converging retirement and an independent carrying path.
+General error and
 ownership theorems remain open.
 
 Tests additionally exercise strict equality, dynamic branches, diamonds,

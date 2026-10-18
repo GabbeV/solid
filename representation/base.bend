@@ -60,6 +60,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.Reference{x} R.Reference{y}:
       Nat.is_eq(x, y)
+    case R.NotReadyFailure{x, sourceA} R.NotReadyFailure{y, sourceB}:
+      Nat.is_eq(x, y)
     case R.StatusFailure{x, sourceA, causeA} R.StatusFailure{y, sourceB, causeB}:
       Nat.is_eq(x, y)
     case R.StringValue{x} R.StringValue{y}:
@@ -76,6 +78,8 @@ def truth(v: R.Value) -> Bool:
     case R.Reference{id}:
       True{}
     case R.StatusFailure{identity, source, cause}:
+      True{}
+    case R.NotReadyFailure{identity, source}:
       True{}
     case R.StringValue{s}:
       Bool.not(String.is_empty(s))

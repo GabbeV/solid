@@ -40,15 +40,15 @@ try{
     Object.assign(S.ext(n),{_error:value,_blocked:true,_pendingSources:sources?new Set([n]):undefined});let exception;
     const decode=e=>{if(e instanceof S.StatusError){if(!errors.has(e))errors.set(e,errors.size+1);return {identity:errors.get(e),source:id(e.source),cause:decode(e.cause)};}return e;};
     console.error=(...args)=>reports.push([0,args[1]]);
-    try{op===2?S.notifyStatus(n,K.STATUS_ERROR,value):S.clearStatus(n,op===1);}catch(e){exception=e;}finally{console.error=consoleError;}
+    try{op>=2?S.notifyStatus(n,op===4?K.STATUS_PENDING:K.STATUS_ERROR,value,op>=3):S.clearStatus(n,op===1);}catch(e){exception=e;}finally{console.error=consoleError;}
     return {nodes:nodes.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,modified:n._modified??false,error:decode(n._x?._error),blocked:n._x?._blocked,sources:!!n._x?._pendingSources,
       x:!!n._x,next:id(n._nextHeap),prev:id(n._prevHeap)})),pending:S.probePending.map(id),user:S.globalQueue._queues[1].map(()=>2),render:S.globalQueue._queues[0].map(()=>2),
       buckets:Array.from({length:Math.max(1,S.dirtyQueue._heap.length)},(_,i)=>id(S.dirtyQueue._heap[i])),min:S.dirtyQueue._min,max:S.dirtyQueue._max,marked:S.dirtyQueue._marked,scheduled:S.probeScheduled,
       halted:S.probeHalted,haltNotified:S.probeHaltNotified,exception:decode(exception),reports:reports.map(([kind,cause])=>[kind,decode(cause)])};
   }
   let count=0;
-  for(const op of [0,1,2])for(const kind of [0,1,2])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
+  for(const op of [0,1,2,3,4])for(const kind of [0,1,2])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
     assert.deepEqual(actual(B.run(op,kind,status,config,code,sources)),reference(op,kind,status,config,code,sources),JSON.stringify({op,kind,status,config,code,sources}));count++;
   }
-  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues and halt partial states. Pending execution remains unfinished.`);
+  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Pending execution remains unfinished.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

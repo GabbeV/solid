@@ -31,8 +31,11 @@ vendored source hashes and production flags are in upstream/pins.json.
   cleanup-staged live intake and exact flush-finally partial states after throws.
   144 graph comparisons cover detachment/hook ordering, cascade/sweep dormancy,
   pending/zombie/dead guards, callback writes and throw partial states.
-  1,728 status comparisons cover clearStatus/error notification, diamond wrapper
-  sharing, rederive/verdict branches, effect queues and halt partial states.
+  2,880 status comparisons cover clearStatus/error notification, diamond wrapper
+  sharing, rederive/verdict branches, effect queues, blocked forwards and halt partial states.
+  2,880 pending comparisons cover source-set operations, pending/null/stale-link
+  propagation, loading parks, self-only landing, retry paths, convergence, deferred
+  cleanup release and throw partial states. Flight/transaction callers remain open.
   Test-only in-memory exports expose private state and reset it between cases;
   the source helpers and vendored files are unchanged. These are branch probes,
   not claims of complete reactive error/status, async, transaction or arbitrary-callback support.
@@ -50,7 +53,8 @@ computations. They are not counted or retained as completed evidence.
 
 The active roots directly check two closed reactive-chain regressions through
 the actual API/driver, one owner cleanup reentry regression through the active
-owner machine, two concrete error-chain failure/recovery regressions, and a general execution-path lemma for arbitrary core states.
+owner machine, two concrete error-chain failure/recovery regressions, two direct pending-helper
+diamond/other-path regressions, and a general execution-path lemma for arbitrary core states.
 They succeed with the independent kernel. General operation-level refinements,
 arbitrary payloads, graph families and histories remain explicit work.
 

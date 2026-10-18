@@ -27,7 +27,8 @@ def fixture(+op: U32, +kind: U32, status: U32, config: U32, +value: R.Value, sou
   +w = R.World.with_clock(w, 5n)
   B.choose(~R.World, U32.is_eq(op, 0), _ => A.clearStatus(w, 2n, False{}),
     _ => B.choose(~R.World, U32.is_eq(op, 1), _ => A.clearStatus(w, 2n, True{}),
-      _ => A.notifyStatus(w, 2n, value)))
+      _ => B.choose(~R.World, U32.is_eq(op, 2), _ => A.notifyStatus(w, 2n, value),
+        _ => A.notifyStatusWith(w, 2n, B.choose(~U32, U32.is_eq(op, 3), _ => K.STATUS_ERROR(), _ => K.STATUS_PENDING()), value, True{}))))
 
 def value(code: U32) -> R.Value:
   match code:

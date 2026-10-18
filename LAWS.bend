@@ -4,6 +4,7 @@ import ./representation/records.bend as R
 import ./proof/chain.bend as Chain
 import ./proof/ownership.bend as Ownership
 import ./proof/errors.bend as Errors
+import ./proof/pending.bend as Pending
 
 # Concrete composed regressions through actual API construction, driver,
 # reads, heap, staging/commit and attached text. Generalization stays open.
@@ -21,6 +22,12 @@ law error_propagates:
 
 law error_recovers_same_value:
   {Errors.view(Errors.recovered()) == Errors.expectedRecovery() : Errors.View}
+
+law pending_diamond_retires:
+  {Pending.view(Pending.settle(False{})) == Pending.expectedRetirement() : Pending.View}
+
+law pending_other_path_remains:
+  {Pending.view(Pending.settle(True{})) == Pending.expectedOtherPath() : Pending.View}
 
 law nan_is_not_equal:
   {B.equal(R.NotANumber{}, R.NotANumber{}) == False{} : Bool}

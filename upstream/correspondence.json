@@ -293,14 +293,14 @@
       "restrictions": "Source pending-set drop, blocked truthy clear, status mask, truthy error reset and effect notifier. Actual async landing/retirement callers unfinished; direct pending metadata probes are not async execution."
     },
     "core/async.ts:notifyStatus": {
-      "bend": "runtime/status.bend:notifyStatus, Notify, wrapped",
+      "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
       "status": "partial",
-      "restrictions": "Synchronous STATUS_ERROR arm preserves wrappers, clears source set, writes status/error, invokes effect notifier or propagates. Pending/NotReady, block-status effect arguments, lane and boundary routing unfinished."
+      "restrictions": "Error/pending/clear status stores, stable StatusError/NotReady identities, pending-source registration, shown-error stash, blocked forwarding and effect interception retained. Core flight/pending catch callers not yet connected. Transaction entry (pending render/guess and held readers), lane and boundary hooks explicitly unfinished."
     },
     "core/async.ts:propagateStatus": {
       "bend": "runtime/status.bend:Propagate, PropagateNext",
       "status": "partial",
-      "restrictions": "Error arm uses live subscriber order, time stamps, rederive/verdict enqueue, reference-identity deduplication, pending intake and recursive notification. Pending-source branches unfinished."
+      "restrictions": "Live subscriber order, time stamps, rederive/verdict and stale-generation routing, pending-source repeat guard, identity deduplication, pending intake and recursive notification retained. Held transaction joins explicitly refuse; no host flight/transaction execution claim."
     },
     "core/async.ts:settleErroredDependents": {
       "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd",
@@ -308,9 +308,9 @@
       "restrictions": "Visited Set as unique IDs, same-error enqueue and one final schedule. Invoked by actual unchanged-value recovery; pending counterpart unfinished."
     },
     "core/effect.ts:notifyEffectStatus": {
-      "bend": "runtime/status.bend:notifyEffectStatus",
+      "bend": "runtime/status.bend:notifyEffectStatus, notifyEffectStatusOf",
       "status": "partial",
-      "restrictions": "Unblocked synchronous error queues user error arm or halts/rethrows render error; clear is inert at root. Pending, blocked forwarding and boundary hooks unfinished."
+      "restrictions": "Source actual/passed status arms, pending blocked suppression, user-error enqueue guard, render halt/throw and root-clear behavior. Pending render transaction entry and boundary hooks unfinished."
     },
     "core/error.ts:unwrapStatusError": {
       "bend": "runtime/status.bend:unwrapStatusError",
@@ -331,6 +331,56 @@
       "bend": "runtime/api.bend:resetErrorHalt",
       "status": "partial",
       "restrictions": "Resets halted and first-ignored-update notification, as source test/dev reload hook."
+    },
+    "core/async.ts:addPendingSource": {
+      "bend": "runtime/pending-state.bend:addPendingSource, hasSource, items",
+      "status": "partial",
+      "restrictions": "Unique insertion-ordered source IDs and lazy node-owned set; Bundle carries bool result. Synthetic helper coverage; flight callers remain unfinished."
+    },
+    "core/async.ts:removePendingSource": {
+      "bend": "runtime/pending-state.bend:removePendingSource, remove",
+      "status": "partial",
+      "restrictions": "No-op false for absent entry; removes one identity, retires empty container to NoSources, returns bool in Bundle."
+    },
+    "core/async.ts:clearPendingSources": {
+      "bend": "runtime/pending-state.bend:clearPendingSources",
+      "status": "partial",
+      "restrictions": "Source drops sole owned set reference without eager allocation or a clearing walk."
+    },
+    "core/async.ts:setPendingError": {
+      "bend": "runtime/pending-state.bend:setPendingError, preserveOrCreate, notReadyError",
+      "status": "partial",
+      "restrictions": "No source resets error to null only on existing extension; matching provided/current NotReady source preserves identity, otherwise creates once."
+    },
+    "core/async.ts:retryReaches": {
+      "bend": "runtime/pending-state.bend:retryReaches, retryLoop",
+      "status": "partial",
+      "restrictions": "Full retained dependency list, direct source or propagated source membership, with explicit resource exhaustion. No validated-prefix truncation."
+    },
+    "core/async.ts:parkLoadingWindow": {
+      "bend": "runtime/pending-state.bend:parkLoadingWindow",
+      "status": "partial",
+      "restrictions": "Blocked registration and optional pending source, no read-visible status/propagation; preserves settled error answer. Core pending-catch and async rejection callers unfinished."
+    },
+    "core/async.ts:landStatus": {
+      "bend": "runtime/pending.bend:landStatus",
+      "status": "partial",
+      "restrictions": "Self-only retirement before choosing first remaining source or full clearStatus; blocked clear and requested status mask retained. Actual asyncWrite caller unfinished."
+    },
+    "core/async.ts:settlePendingSource": {
+      "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, skip, Walk, Next, Release, End",
+      "status": "partial",
+      "restrictions": "Root retirement, full retryReaches, early-return visited semantics, remaining-source/error preservation, blocked retry, deferred candidate release and final schedule retained. Held transaction joining explicitly refuses; core/async landing/repark callers remain unfinished."
+    },
+    "core/async.ts:releaseIfSettledUnobserved": {
+      "bend": "runtime/pending.bend:releaseIfSettledUnobserved",
+      "status": "partial",
+      "restrictions": "Source computed/AUTO/no-subs/non-zombie/non-pending guards before graph/owner teardown; no extra disposed guard."
+    },
+    "core/async.ts:releaseSettledDependents": {
+      "bend": "runtime/pending.bend:releaseSettledDependents, Collect, CollectWalk, CollectNext, Release",
+      "status": "partial",
+      "restrictions": "Source visited collect-then-release order retained; cleanup exceptions stop before later releases. Async error-settle caller unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

@@ -13,6 +13,7 @@ import ./read-state.bend as V
 import ./owner.bend as O
 import ./status.bend as A
 import ./extension.bend as E
+import ./pending-state.bend as P
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -398,8 +399,10 @@ def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Na
 # value stack restored. A throw from the prelude has no frame of its own here.
 def catchStatus(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
   match fault:
-    case R.CallbackThrown{cause}:
-      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+    case R.CallbackThrown{+cause}:
+      # Pending catch/flight callers are not yet connected. Refuse this typed
+      # control outcome rather than misclassifying NotReady as a user error.
+      B.choose(~R.World, Bool.or(P.isNotReady(cause), B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD())),
         _ => R.World.with_fault(w, R.Unsupported{9n}),
         _ => A.notifyStatus(R.World.with_fault(w, R.Healthy{}), id, cause))
     case other:

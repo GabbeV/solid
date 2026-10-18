@@ -17,6 +17,12 @@ def Laws.error_propagates():
 def Laws.error_recovers_same_value():
   {==}
 
+def Laws.pending_diamond_retires():
+  {==}
+
+def Laws.pending_other_path_remains():
+  {==}
+
 def Laws.nan_is_not_equal():
   {==}
 

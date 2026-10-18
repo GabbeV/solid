@@ -1,6 +1,6 @@
 # Active frontier
 
-This is the first executable checkpoint, not a completed package port.
+This is an incremental executable translation, not a completed package port.
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -37,10 +37,12 @@ proof credit was imported.
   and previous value. Owner cleanup programs can emit trace events, dispose
   owners, register cleanup, or throw a payload. They execute on the active owner
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
-  dispose the root and install returned effect cleanup. Nested primitive construction,
+  dispose the root and install returned effect cleanup. Nested primitive construction
   and arbitrary callback reads remain open. Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
-  Pending/NotReady, boundaries and async retirement remain unfinished.
+  Pending-source propagation/retirement and loading-window/landing helpers now
+  exist and match direct source probes. Core pending catches, async flight callers,
+  transaction entry and boundaries remain unfinished; no promise program is admitted.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -101,29 +103,40 @@ second callback disposes its root. It checks both owners' death, empty child and
 disposal heads, effect-cleanup detachment, exact callback order `[22,44,33,11]`
 and successful completion through the active owner machine. It is a closed
 regression, not a general cleanup/reentrancy theorem.
-Eighteen error histories and 1,728 status-state comparisons cover synchronous
+Eighteen error histories and 2,880 status-state comparisons cover synchronous
 error identity/sharing, diamond propagation, rederive/verdict enqueue branches,
 clearStatus masks/metadata, later tracked retry, effect error programs/cleanup,
 raw versus wrapped throws, halt/report ordering and overriding finally throws.
-Synthetic pending metadata exercises clearStatus only, not async execution.
+Status probes include blocked forwards. A separate 2,880-case pending matrix
+compares source-set identity/order, new/repeated/stale-link propagation, null
+source, loading parks, own-flight-only landing, retained retry paths, converging
+settle walks, deferred releases and cleanup throws. These are direct helper
+executions over synthetic state, not promise/transaction execution.
 The concrete `error_propagates` and `error_recovers_same_value` laws check a
 source -> conditional memo -> memo -> user chain through failure and equal-value
 recovery: all three status/error slots, preserved wrapper identity, previous/value
 slots, reports, empty queues and restored context/tracking/running, with no halt.
 These are closed regressions, not a general error/status theorem.
+The `pending_diamond_retires` and `pending_other_path_remains` laws additionally
+construct initialized nodes, wire a diamond, propagate a NotReady source, and
+check source/error/status/blocked slots after the actual settle helper. A node
+skipped while another branch carries the source can be revisited after that
+branch settles; an independent carrying path preserves pending. Host async
+registration, delivery and transaction landing do not participate in those laws.
 Four deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
 ## Next dependency and broader roadmap
 
-1. Owner teardown is integrated with commit/recompute and unobserved consumers.
-   Core unwind restores tracking/context/running on callback throws. Continue
-   from this through pending-source propagation/retirement and superseded
-   settlements. Synchronous error catches/propagation/recovery are now active.
-2. Extend the synchronous error/status layer to pending-source propagation/retirement
-   and superseded settlements, then async flight registration/landing. The
-   extension data layout alone does not implement these behaviors.
+1. Owner teardown, synchronous callback errors and dormant lifecycle consumers
+   are integrated. Pending-source helpers and direct state/proof regressions exist.
+   Preserve this evidence while connecting the pending callers in recompute/read.
+2. Translate actual handleAsync registration and landing/rejection/iterator
+   callbacks, supersession and settlement identity guards, and connect the pending
+   status/retirement helpers. Core pending catches still refuse explicitly instead
+   of misclassifying NotReady as an ordinary error. The helper layer alone is not
+   async execution. Staged-error notification/publication is also unfinished.
 3. Add actual transaction discovery, blockers, merge redirects, park/land/reruns,
    and queue release to the SAME driver. This is necessary before async consistency
    claims; waiting for all host promises is not an acceptable substitute.

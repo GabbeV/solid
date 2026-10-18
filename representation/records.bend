@@ -10,6 +10,7 @@ type Value is Data:
   NotANumber{}
   StringValue{s: String}
   StatusFailure{identity: Nat, source: Nat, cause: Value}
+  NotReadyFailure{identity: Nat, source: Nat}
 
 type Slot is Data:
   Empty{}

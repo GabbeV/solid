@@ -33,10 +33,10 @@ exists after their ordinary synchronous executions.
 | --- | --- | --- |
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
-| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReady/pending remains unfinished. |
+| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReadyFailure retains identity/source; pending helpers execute, while flight callers remain unfinished. |
 | `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks execute; promise settlement, the full iterator protocol and transactions are unfinished. |
-| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | clearStatus drops truthy blocked state; async park/retirement remains unfinished. |
-| `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | clearStatus and error notification drop the node-owned set. Pending propagation/retirement remains unfinished. |
+| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Loading park/settle and self-only landing helpers retain blocked semantics; actual async callers unfinished. |
+| `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Unique ordered-ID set helpers implement registration, propagation and retirement; empty retirement restores absence. Actual flights/transactions remain unfinished. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
 | `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source parked teardown is integrated with commit/recompute and exception unwinding; directly compared against TS. |
 | `_reask`, `_q`, `_marks` | Boolean and natural counters | Default storage; sync/commit reask reset. Question/mark engines unfinished. |
@@ -88,3 +88,17 @@ callback. World.callbackEffect is an ABI parameter slot for the cleanup helper
 passed to a user error program; it does not change reactive context/tracking, and
 is restored on success/throw. This protocol does not expose arbitrary JS errors,
 receiver inspection, reflection, reportError callbacks or arbitrary closures.
+
+NotReadyFailure is separate from StatusFailure: it has a stable identity and
+nullable source without a user cause. Both draw identities from World.errorSerial,
+so storing or propagating the same object preserves strict equality. Pending sets
+are node-owned unique-ID lists with insertion order. removePendingSource returns
+both updated world and source bool, and resets the empty set to NoSources.
+
+The pending settle machine keeps a local visited set and deferred release list.
+Its early retryReaches return does not mark a node visited: another carrying branch
+may retire later in the same walk. Dependency scans include the retained tail.
+Deferred owner release starts only after dependent traversal and precedes final
+scheduling, including exception partial states. These source helpers do not connect
+promise registration, core NotReady catch/read logic, held transaction joining or
+boundary interception. Those branches remain explicit unfinished domains.
