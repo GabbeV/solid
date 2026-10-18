@@ -114,8 +114,58 @@ scenario('explicit undefined loading seed and effect-specific option rules',[
   ['effect','view',add(read('a'),select({prev:true},{prev:true},lit(0))),{loadingValue:5,lazy:true,noSnapshot:true}],
   ['set','x',2],['flush'],['read','a']
 ]);
+scenario('compute cleanup parks until the new frame commits',[
+  ['signal','x',1],['program','clean',[['emit',101]]],['program','register',[['cleanup','clean']]],
+  ['memo','a',{seq:[{call:'register'},read('x')]}],['effect','view',read('a')],['set','x',2],['flush'],['dispose']
+]);
+scenario('returned effect cleanup runs before next application and at death',[
+  ['signal','x',1],['program','clean',[['emit',101]]],['program','apply',[['emit',102]]],
+  ['effect','view',read('x'),{program:'apply',cleanup:'clean'}],['set','x',2],['flush'],['dispose']
+]);
+scenario('user callback writes drain in a later pure round',[
+  ['signal','x',1],['signal','y',0],['program','write',[['set','y',7]]],['effect','view',read('y')],
+  ['effect','writer',read('x'),{user:true,program:'write'}],['flush'],['read','y']
+]);
+scenario('render callback creation write retains source promotion rules',[
+  ['signal','x',1],['signal','y',0],['program','write',[['set','y',3]]],['effect','writer',read('x'),{program:'write'}],
+  ['effect','view',read('y'),{target:3}],['read','y'],['flush'],['read','y']
+]);
+scenario('creation-time compute write and following staged read',[
+  ['signal','x',1],['program','write',[['set','x',5]]],['memo','a',{seq:[{call:'write'},read('x')]}],
+  ['read','x'],['effect','view',read('a')],['flush'],['read','x']
+]);
+scenario('compute that disposes its root does not publish or relink permanently',[
+  ['signal','x',1],['program','die',[['emit',101],['dispose','root']]],
+  ['memo','a',{seq:[read('x'),{call:'die'},read('x')]}],['read','a'],['flush']
+]);
 scenario('refresh pure node',[
   ['memo','a',lit(2)],['effect','view',read('a')],['refresh','a'],['flush']
+]);
+scenario('lazy top-level reads share one tick cache then revive after dormancy',[
+  ['signal','x',1],['program','clean',[['emit',101]]],['program','register',[['cleanup','clean']]],
+  ['memo','a',{seq:[{call:'register'},read('x')]},{lazy:true}],['read','a'],['read','a'],['flush'],
+  ['set','x',2],['flush'],['read','a'],['read','a'],['flush'],['dispose'],['read','a']
+]);
+scenario('sweep revalidates a memo that gains a subscriber',[
+  ['signal','x',1],['memo','a',read('x'),{lazy:true}],['read','a'],['effect','view',read('a')],
+  ['flush'],['set','x',2],['flush']
+]);
+scenario('last-subscriber cascade runs memo cleanup and source hook',[
+  ['signal','on',true],['program','hook',[['emit',101]]],['signal','x',1,{unobserved:'hook'}],
+  ['program','clean',[['emit',102]]],['program','register',[['cleanup','clean']]],
+  ['memo','a',{seq:[{call:'register'},read('x')]},{lazy:true}],['effect','view',select(read('on'),read('a'),lit(0))],
+  ['set','on',false],['flush'],['set','x',2],['flush'],['set','on',true],['flush']
+]);
+scenario('unobserved callback write joins live commit intake',[
+  ['signal','on',true],['signal','y',0],['program','hook',[['emit',101],['set','y',8]]],['signal','x',1,{unobserved:'hook'}],
+  ['effect','view',select(read('on'),read('x'),read('y'))],['set','on',false],['flush'],['read','y']
+]);
+scenario('dormant owner-dead memo freezes its last committed value',[
+  ['signal','x',1],['memo','a',read('x'),{lazy:true}],['read','a'],['flush'],['dispose'],['set','x',4],['flush'],['read','a'],['flush']
+]);
+scenario('dormancy wins over same-tick dirtying before heap work',[
+  ['signal','x',1],['program','clean',[['emit',101]]],['program','register',[['cleanup','clean']]],
+  ['memo','a',{seq:[{call:'register'},read('x')]},{lazy:true}],['read','a'],['set','x',3],['flush'],['read','a'],['flush']
 ]);
 scenario('refresh ignores plain signal', [['signal','x',3],['effect','view',read('x')],['refresh','x'],['flush'],['read','x']]);
 scenario('disposed graph stays frozen',[

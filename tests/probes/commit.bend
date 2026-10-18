@@ -23,7 +23,7 @@ def seed(+k: U32, config: U32, flags: U32, status: U32, stage: U32, loading: Boo
   +w = B.choose(~R.World, U32.is_eq(k, 0), _ => N.signal(w, R.Number{11n}, N.defaults()),
     _ => B.choose(~R.World, U32.is_eq(k, 1),
       _ => N.computed(0n, w, R.Literal{R.Undefined{}}, R.NodeOptions.with_lazy(N.defaults(), True{}), 1n),
-      _ => N.createEffectNode(w, R.Literal{R.Undefined{}}, kind(k), 0n, N.defaults(), 1n)))
+      _ => N.createEffectNode(w, R.Literal{R.Undefined{}}, kind(k), 0n, N.defaults(), 1n, 0n, 0n)))
   +w = A.createSignal(w, R.Number{7n}, True{})
   # Computeds have one old dependency, left outside the new pass's prefix.
   +w = B.choose(~R.World, U32.is_ne(k, 0), _ => G.link(w, 3n, 2n), _ => w)

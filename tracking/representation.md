@@ -20,7 +20,8 @@ express the TS test host's `runWithOwner` boundary. The primitive constructor
 does not introduce a new owner scope. Root `_parentComputed` is retained and used
 at constructor height setup, heap insertion and read-observer selection. Nested
 root construction/forwarding have focused probes; full nested callback creation,
-root callback API, cleanup and reentrant teardown remain unsupported.
+root callback API and arbitrary host closures remain unfinished. Cleanup and reentrant
+teardown run through the owner continuation machine.
 
 `Node.x = 0` is null. `runtime/extension.bend:ext` lazily appends the source
 default extension once, saves a stable nonzero ID, and reuses it on later calls.
@@ -33,11 +34,11 @@ exists after their ordinary synchronous executions.
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
 | `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Error objects/status propagation remain unfinished. |
-| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Promise settlement, iterator teardown callbacks, unobserved invocation and transactions are unfinished. |
+| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks execute; promise settlement, the full iterator protocol and transactions are unfinished. |
 | `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Storage/default only; status engine unfinished. |
 | `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Storage/default only. No Set operations/propagation are claimed. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
-| `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source-shaped owner parked teardown is directly tested. Commit still refuses this call site until core throw/unwind integration is translated. |
+| `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source parked teardown is integrated with commit/recompute and exception unwinding; directly compared against TS. |
 | `_reask`, `_q`, `_marks` | Boolean and natural counters | Default storage; sync/commit reask reset. Question/mark engines unfinished. |
 
 Commit tests compare null/undefined/error-false separately: `_error == null` is
@@ -48,9 +49,8 @@ transaction program. `setSignal` still lacks held-transaction joining and the
 stash caller path; actual held writes must wait for that translation.
 
 Public host options cover default equality/false, transparent/ownedWrite/lazy/sync,
-noSnapshot masks and synchronous loading seeds. `unobserved` callback identities
-and `_extraConfig` are tested at the primitive boundary only. Callback tokens do
-not create executable callbacks. Options with getters, custom comparators,
+noSnapshot masks and synchronous loading seeds. `unobserved` resolves a named executable callback program; `_extraConfig` stays
+primitive-only. Options with getters, custom comparators,
 async/loading suspension and thenable-shape probing remain outside the grammar.
 
 Owner cleanup uses a separate defunctionalized callback protocol:
@@ -64,6 +64,11 @@ the same owner machine. JavaScript `this` inspection and mutation of a captured
 disposal array are outside this protocol. The source probes preserve `.call`
 receiver checks for disposal callbacks and the plain-call effect cleanup.
 
-This protocol does not yet install cleanups returned by effect callbacks, invoke
-unobserved tokens, run iterator cancellation, or support arbitrary host closures.
+The same protocol executes compute/effect programs and signal writes through the
+one shared setter, installs returned cleanup, and invokes unobserved/cancellation
+tokens. It does not implement arbitrary host closures, the iterator protocol or
+reactive error/status catches. World.dormantNodes represents the source Set as
+an ordered unique-ID list; sweeps re-read its live bound and clear only on success.
+Graph callback recursion shares owner tasks; pure pointer operations live in
+graph-state.bend, avoiding a Bend import cycle without substituting a graph walk.
 The owner machine's task fuel is a resource limit, not a general progress theorem.

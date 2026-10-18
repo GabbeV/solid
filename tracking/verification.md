@@ -24,6 +24,10 @@ vendored source hashes and production flags are in upstream/pins.json.
   Sixteen owner scenarios compare live pointers/flags and exact cleanup traces,
   covering parked/current frames, LIFO, reentry, fresh registrations, throws,
   next-sibling changes, dead children and queued dependency-free nodes.
+  Twelve lifecycle comparisons cover integrated recompute/commit, flight cancellation,
+  cleanup-staged live intake and exact flush-finally partial states after throws.
+  144 graph comparisons cover detachment/hook ordering, cascade/sweep dormancy,
+  pending/zombie/dead guards, callback writes and throw partial states.
   Test-only in-memory exports expose private state and reset it between cases;
   the source helpers and vendored files are unchanged. These are branch probes,
   not claims of complete reactive error/status, async, transaction or arbitrary-callback support.

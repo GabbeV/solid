@@ -33,23 +33,26 @@ def createMemo(fuel: Nat, w: R.World, expr: R.Expr, equals: Bool, lazy: Bool, pa
   options = R.NodeOptions.with_lazy(R.NodeOptions.with_equals(N.defaults(), equals), lazy)
   createMemoWithOptions(fuel, w, expr, options, parent)
 
-def createEffectWithOptions(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, +parent: Nat) -> R.World:
+def createEffectWithPrograms(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
   +id = nextId(w)
   context = R.World.context(w)
   tracking = R.World.tracking(w)
   w = R.World.with_tracking(R.World.with_context(w, parent), False{})
   kind = B.choose(~R.NodeKind, user, _ => R.User{}, _ => R.Render{})
-  w = N.createEffectNode(w, expr, kind, target, options, parent)
+  w = N.createEffectNode(w, expr, kind, target, options, parent, program, returnedCleanup)
   w = C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}, C.InitialEffect{id, scheduled, deferred}], []}))
   R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+def createEffectWithOptions(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat) -> R.World:
+  createEffectWithPrograms(fuel, w, expr, user, target, scheduled, deferred, options, parent, 0n, 0n)
 
 def createEffect(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, parent: Nat) -> R.World:
   createEffectWithOptions(fuel, w, expr, user, target, scheduled, deferred, N.defaults(), parent)
 
 # Presence of loadingValue is independent from its payload being undefined.
-def nodeOptions(equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, loadingPresent: Bool, loadingValue: R.Value) -> R.NodeOptions:
+def nodeOptions(equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, loadingPresent: Bool, loadingValue: R.Value, unobserved: Nat) -> R.NodeOptions:
   R.NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, 0,
-    B.choose(~R.Slot, loadingPresent, _ => R.Present{loadingValue}, _ => R.Empty{}), 0n}
+    B.choose(~R.Slot, loadingPresent, _ => R.Present{loadingValue}, _ => R.Empty{}), unobserved}
 
 def read(fuel: Nat, w: R.World, id: Nat) -> C.Machine:
   C.run(fuel, C.Machine{w, [C.ReadNode{id}], []})
@@ -154,3 +157,37 @@ def dispose(w: R.World, id: Nat) -> R.World:
 # answers: each following transition is core.step and is checked in BendTT.
 def flushMachine(w: R.World) -> C.Machine:
   C.Machine{w, [C.Round{}], []}
+
+# Reusable typed callback-program construction; no host scheduler is hidden here.
+def emptyProgram() -> R.CleanupProgram:
+  R.CleanupProgram{[]}
+
+def programEmit(code: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupEmit{code} <> R.CleanupProgram.actions(tail)}
+
+def programWrite(signal: Nat, value: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupWrite{signal, value} <> R.CleanupProgram.actions(tail)}
+
+def programDispose(owner: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupDispose{owner} <> R.CleanupProgram.actions(tail)}
+
+def programDisposeCurrent(tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupDisposeCurrent{} <> R.CleanupProgram.actions(tail)}
+
+def programCleanup(callback: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupRegisterCurrent{callback} <> R.CleanupProgram.actions(tail)}
+
+def programThrow(cause: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail)}
+
+def registerProgram(+w: R.World, program: R.CleanupProgram) -> R.World:
+  R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [program]))
+
+def nextProgramId(w: R.World) -> Nat:
+  B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
+
+def callProgram(callback: Nat) -> R.Expr:
+  R.CallProgram{callback}
+
+def then(first: R.Expr, second: R.Expr) -> R.Expr:
+  R.Then{first, second}

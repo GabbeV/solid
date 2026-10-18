@@ -36,7 +36,8 @@ Start with [examples/counter.bend](examples/counter.bend),
 [runtime/api.bend](runtime/api.bend), and [host/bend.mjs](host/bend.mjs).
 The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
-and `untrack`. Arbitrary host JavaScript callbacks are not yet supported.
+`untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
+and throws. Reactive error/status catches remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
@@ -60,7 +61,7 @@ and final owner state. General ownership/cleanup theorems remain open.
 
 Tests additionally exercise strict equality, dynamic branches, diamonds,
 nonconsecutive repeated reads, batching, updater composition, lazy activation,
-render/user phases, disposal, and opaque payload identities against the pinned
+render/user phases, effect cleanup, reentrant writes, dormant memo revival, disposal, and opaque payload identities against the pinned
 Solid production entry. Focused internal-state probes compare the actual pinned
 commit/read helpers, including fast/slow value selection and their flags/queues.
 Separate production constructor tests check option masks, loading-seed presence,

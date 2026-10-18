@@ -34,7 +34,7 @@ def signal(+w: R.World, value: R.Value, +options: R.NodeOptions) -> R.World:
   n = {R.Node{R.Signal{}, value, R.Empty{}, R.NodeOptions.equals(options), config,
     0, 0, R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     0n, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n} : R.Node}
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n} : R.Node}
   installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
 
 # core/owner.ts:createOwner; callback-based createRoot remains a facade concern.
@@ -43,7 +43,7 @@ def createOwner(+w: R.World, +parent: Nat, transparent: Bool) -> R.World:
   n = {R.Node{R.Root{}, R.Undefined{}, R.Empty{}, True{}, bit(transparent, K.CONFIG_TRANSPARENT()),
     K.REACTIVE_NONE(), 0, 0n, R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     parent, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, B.parentComputed(w, parent), R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n} : R.Node}
+    0n, B.parentComputed(w, parent), R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n} : R.Node}
   +w = append(w, n)
   B.choose(~R.World, Nat.is_ne(parent, 0n), _ => O.linkChild(w, parent, id), _ => w)
 
@@ -72,13 +72,13 @@ def computed(fuel: Nat, +w: R.World, expr: R.Expr, +options: R.NodeOptions, +par
     bit(R.NodeOptions.lazy(options), K.REACTIVE_LAZY()), B.choose(~U32, loading, _ => 0, _ => K.STATUS_UNINITIALIZED()),
     R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     parent, 0n, 0n, 0n, expr, False{}, R.Undefined{}, 0n, loading,
-    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n} : R.Node}
+    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n} : R.Node}
   +w = installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
   setupComputedNode(fuel, w, id, R.NodeOptions.lazy(options))
 
 # core/core.ts:createEffectNode production literal. Loading, equals, lazy,
 # _noSnapshot and auto-dispose options are deliberately NOT borrowed from memo.
-def createEffectNode(+w: R.World, expr: R.Expr, kind: R.NodeKind, target: Nat, +options: R.NodeOptions, +parent: Nat) -> R.World:
+def createEffectNode(+w: R.World, expr: R.Expr, kind: R.NodeKind, target: Nat, +options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
   +id = B.length(R.Node, R.World.nodes(w))
   +config = bit(R.NodeOptions.transparent(options), K.CONFIG_TRANSPARENT())
   +config = B.set(config, bit(R.NodeOptions.ownedWrite(options), K.CONFIG_OWNED_WRITE()))
@@ -88,6 +88,6 @@ def createEffectNode(+w: R.World, expr: R.Expr, kind: R.NodeKind, target: Nat, +
     K.REACTIVE_LAZY(), K.STATUS_UNINITIALIZED(), R.World.clock(w), R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, parent, 0n, 0n, 0n,
     expr, False{}, R.Undefined{}, target, False{},
-    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n} : R.Node}
+    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, program, returnedCleanup} : R.Node}
   +w = installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
   setupComputedNode(0n, w, id, True{})

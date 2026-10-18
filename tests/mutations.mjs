@@ -5,10 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
-  ['lost subscriber wake','runtime/scheduler.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
+  ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
   ['leaked staging','runtime/core.bend','          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))','          value = B.current(n)'],
   ['untrack subscribes','runtime/core.bend','Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev}','Machine{R.World.with_tracking(w, True{}), Evaluate{body, prev}'],
-  ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(n), R.Node.value(n))','T.setText(w, R.Node.target(n), R.Undefined{})'],
+  ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))','T.setText(w, R.Node.target(B.node(w, id)), R.Undefined{})'],
 ];
 let caught=0;
 for(const [name,file,before,after] of mutations) {

@@ -65,6 +65,31 @@ def equal(a: R.Value, b: R.Value) -> Bool:
     case _ _:
       False{}
 
+def truth(v: R.Value) -> Bool:
+  match v:
+    case R.Boolean{b}:
+      b
+    case R.Number{n}:
+      Nat.is_ne(n, 0n)
+    case R.Reference{id}:
+      True{}
+    case R.StringValue{s}:
+      Bool.not(String.is_empty(s))
+    case _:
+      False{}
+
+# Explicit exception/result control for state-threaded source calls. These
+# checks stop at source throw edges; they are not publication conditions.
+def healthy(fault: R.Fault) -> Bool:
+  match fault:
+    case R.Healthy{}:
+      True{}
+    case _:
+      False{}
+
+def ok(w: R.World) -> Bool:
+  healthy(R.World.fault(w))
+
 def present(s: R.Slot) -> Bool:
   match s:
     case R.Empty{}:
@@ -103,7 +128,7 @@ def blank_node() -> R.Node:
   R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n}
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n}
 
 def blank_link() -> R.Link:
   R.Link{0n, 0n, 0n, 0n, 0n, 0n}
@@ -149,7 +174,7 @@ def noDisposal(d: R.Disposal) -> Bool:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}]}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], []}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -211,3 +236,10 @@ def second(-A: Data, -C: Data, p: Bundle<A, C>) -> C:
   match p:
     case Bundle{a, c}:
       c
+
+def contains(xs: List<&2, Nat>, +id: Nat) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case x <> rest:
+      Bool.or(Nat.is_eq(x, id), contains(rest, id))

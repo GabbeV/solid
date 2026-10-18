@@ -90,6 +90,5 @@ try {
   // A staged error is explicitly outside this port's supported outcomes.
   const refused=B.fixture(1,K.CONFIG_STAGED_ERROR,0,0,1,false,false,false);
   assert.equal(refused.fault.reason,2,'staged error must not masquerade as a successful value commit');
-  assert.equal(B.withExtension(1,0,0,0,1,false,false,false,6).fault.reason,5,'parked teardown must refuse until translated');
   console.log(`${checked} commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error execution remains unsupported.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

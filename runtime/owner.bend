@@ -3,9 +3,11 @@
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
-import ./graph.bend as G
+import ./graph-state.bend as G
 import ./heap.bend as H
 import ./constants.bend as K
+import ./extension.bend as E
+import ./write.bend as W
 
 def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
   +head = R.Node.firstChild(B.node(w, parent))
@@ -34,6 +36,7 @@ type Task is Data:
   AfterPark{id: Nat, self: Bool, zombie: Bool, flags: U32}
   Walk{id: Nat, self: Bool, zombie: Bool, flags: U32, child: Nat}
   AfterChild{id: Nat, self: Bool, zombie: Bool, flags: U32, child: Nat}
+  PrepareChild{id: Nat, self: Bool, zombie: Bool, flags: U32, child: Nat}
   Finish{id: Nat, self: Bool, zombie: Bool, flags: U32}
   RunDisposal{id: Nat, self: Bool, zombie: Bool}
   DisposalLoop{callbacks: List<&2, Nat>, count: Nat}
@@ -41,6 +44,19 @@ type Task is Data:
   Invoke{callback: Nat}
   Action{callback: Nat, action: R.CleanupAction}
   Dispose{id: Nat}
+  MarkChildren{id: Nat}
+  MarkChild{child: Nat}
+  MarkNext{child: Nat}
+  ClearDeps{id: Nat}
+  ClearDepSlots{id: Nat}
+  TrimDeps{id: Nat}
+  TrimDepSlots{id: Nat, tail: Nat}
+  UnlinkLoop{edge: Nat}
+  UnlinkOnce{edge: Nat}
+  AfterUnobservedHook{id: Nat}
+  Unobserved{id: Nat}
+  SweepDormant{index: Nat}
+  ClearDormant{}
 
 type Machine is Data:
   Machine{world: R.World, tasks: List<&2, Task>}
@@ -79,9 +95,7 @@ def walk(+w: R.World, +rest: List<&2, Task>, +id: Nat, +self: Bool, +zombie: Boo
     _ =>
       +w = B.store_node(w, child, R.Node.with_config(B.node(w, child), B.clear(R.Node.config(B.node(w, child)), K.CONFIG_AUTO_DISPOSE())))
       +w = H.deleteFromHeap(w, child)
-      +w = G.clearDeps(w, child)
-      +w = B.store_node(w, child, R.Node.with_prevSibling(B.node(w, child), child))
-      Machine{w, Enter{child, True{}, False{}} <> AfterChild{id, self, zombie, flags, child} <> rest})
+      Machine{w, ClearDeps{child} <> PrepareChild{id, self, zombie, flags, child} <> rest})
 
 def splice(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
@@ -138,17 +152,38 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{w, Dispose{id} <> rest}
     case R.CleanupRegister{owner, cb}:
       Machine{cleanup(w, owner, cb), rest}
+    case R.CleanupWrite{id, value}:
+      Machine{W.setSignal(w, id, value), rest}
+    case R.CleanupRegisterCurrent{cb}:
+      Machine{cleanup(w, R.World.context(w), cb), rest}
+    case R.CleanupDisposeCurrent{}:
+      Machine{w, Dispose{R.World.context(w)} <> rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
 
-def disposeStart(+w: R.World, rest: List<&2, Task>, +id: Nat) -> Machine:
+def disposeStart(+w: R.World, +rest: List<&2, Task>, +id: Nat) -> Machine:
   B.choose(~Machine, B.valid(w, id),
-    _ =>
-      +w = B.choose(~R.World, B.computed(R.Node.kind(B.node(w, id))),
-        _ =>
-          +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())))
-          G.clearDeps(H.deleteFromHeap(w, id), id), _ => w)
-      Machine{w, Enter{id, True{}, False{}} <> rest}, _ => Machine{R.World.with_fault(w, R.BadId{}), []})
+    _ => B.choose(~Machine, B.computed(R.Node.kind(B.node(w, id))),
+      _ =>
+        +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())))
+        Machine{w, Unobserved{id} <> rest},
+      _ => Machine{w, Enter{id, True{}, False{}} <> rest}),
+    _ => Machine{R.World.with_fault(w, R.BadId{}), []})
+
+# graph.ts:unlinkSubs after its captured pointer reads and stores.
+def unlinkOnce(+w: R.World, +rest: List<&2, Task>, +edge: Nat) -> Machine:
+  +link = B.link(w, edge)
+  +id = R.Link.dep(link)
+  +last = Bool.and(Nat.is_eq(R.Link.prevSub(link), 0n), Nat.is_eq(R.Link.nextSub(link), 0n))
+  +w = B.first(R.World, Nat, G.unlinkSubs(w, edge))
+  B.choose(~Machine, last,
+    _ => B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_SLOT_NODE()),
+      _ => Machine{R.World.with_fault(w, R.Unsupported{8n}), []},
+      _ =>
+        +callback = R.NodeExtension.unobserved(B.extension(w, id))
+        +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n), _ => [Invoke{callback}], _ => [])
+        Machine{w, B.append(Task, todo, AfterUnobservedHook{id} <> rest)}),
+    _ => Machine{w, rest})
 
 def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
   match tasks:
@@ -160,6 +195,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       afterPark(w, rest, id, self, zombie, flags)
     case Walk{id, self, zombie, flags, child} <> rest:
       walk(w, rest, id, self, zombie, flags, child)
+    case PrepareChild{+id, +self, +zombie, +flags, +child} <> rest:
+      Machine{B.store_node(w, child, R.Node.with_prevSibling(B.node(w, child), child)), Enter{child, True{}, False{}} <> AfterChild{id, self, zombie, flags, child} <> rest}
     case AfterChild{id, self, zombie, flags, child} <> rest:
       Machine{w, Walk{id, self, zombie, flags, R.Node.nextSibling(B.node(w, child))} <> rest}
     case Finish{id, self, zombie, flags} <> rest:
@@ -180,6 +217,52 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       action(w, rest, callback, value)
     case Dispose{id} <> rest:
       disposeStart(w, rest, id)
+    case MarkChildren{id} <> rest:
+      Machine{w, MarkChild{R.Node.firstChild(B.node(w, id))} <> rest}
+    case MarkChild{+child} <> +rest:
+      B.choose(~Machine, Nat.is_eq(child, 0n), _ => Machine{w, rest},
+        _ => Machine{B.store_node(w, child, R.Node.with_flags(B.node(w, child), B.set(R.Node.flags(B.node(w, child)), K.REACTIVE_ZOMBIE()))),
+          MarkChildren{child} <> MarkNext{child} <> rest})
+    case MarkNext{child} <> rest:
+      Machine{w, MarkChild{R.Node.nextSibling(B.node(w, child))} <> rest}
+    case ClearDeps{+id} <> +rest:
+      +edge = R.Node.deps(B.node(w, id))
+      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest},
+        _ => Machine{w, UnlinkLoop{edge} <> ClearDepSlots{id} <> rest})
+    case ClearDepSlots{+id} <> rest:
+      Machine{B.store_node(w, id, R.Node.with_depsTail(R.Node.with_deps(B.node(w, id), 0n), 0n)), rest}
+    case TrimDeps{+id} <> +rest:
+      +tail = R.Node.depsTail(B.node(w, id))
+      +edge = B.choose(~Nat, Nat.is_ne(tail, 0n), _ => R.Link.nextDep(B.link(w, tail)), _ => R.Node.deps(B.node(w, id)))
+      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest},
+        _ => Machine{w, UnlinkLoop{edge} <> TrimDepSlots{id, tail} <> rest})
+    case TrimDepSlots{+id, +tail} <> rest:
+      +w = B.choose(~R.World, Nat.is_ne(tail, 0n), _ => B.store_link(w, tail, R.Link.with_nextDep(B.link(w, tail), 0n)),
+        _ => B.store_node(w, id, R.Node.with_deps(B.node(w, id), 0n)))
+      Machine{w, rest}
+    case UnlinkLoop{+edge} <> +rest:
+      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest},
+        _ => Machine{w, UnlinkOnce{edge} <> UnlinkLoop{R.Link.nextDep(B.link(w, edge))} <> rest})
+    case UnlinkOnce{edge} <> rest:
+      unlinkOnce(w, rest, edge)
+    case AfterUnobservedHook{+id} <> +rest:
+      +n = B.node(w, id)
+      dormant = Bool.and(B.computed(R.Node.kind(n)), Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
+        Bool.and(Bool.not(B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE())), Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING())))))
+      B.choose(~Machine, dormant, _ => Machine{w, Unobserved{id} <> rest}, _ => Machine{w, rest})
+    case Unobserved{+id} <> rest:
+      Machine{H.deleteFromHeap(w, id), ClearDeps{id} <> Enter{id, True{}, False{}} <> rest}
+    case SweepDormant{+index} <> +rest:
+      B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.World.dormantNodes(w))), _ => Machine{w, ClearDormant{} <> rest},
+        _ =>
+          +id = B.get(Nat, R.World.dormantNodes(w), index, 0n)
+          +n = B.node(w, id)
+          eligible = Bool.and(Nat.is_eq(R.Node.subs(n), 0n), Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
+            Bool.and(Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING())), Bool.not(B.has(R.Node.flags(n), B.set(K.REACTIVE_DISPOSED(), K.REACTIVE_ZOMBIE()))))))
+          +todo = B.choose(~List<&2, Task>, eligible, _ => [Unobserved{id}], _ => [])
+          Machine{w, B.append(Task, todo, SweepDormant{1n+index} <> rest)})
+    case ClearDormant{} <> rest:
+      Machine{R.World.with_dormantNodes(w, []), rest}
 
 def run(fuel: Nat, m: Machine) -> R.World:
   match fuel m:
@@ -187,8 +270,8 @@ def run(fuel: Nat, m: Machine) -> R.World:
       w
     case 0n Machine{w, tasks}:
       R.World.with_fault(w, R.Exhausted{})
-    case 1n+p Machine{w, tasks}:
-      run(p, dispatch(w, tasks))
+    case 1n+p Machine{+w, +tasks}:
+      B.choose(~R.World, B.ok(w), _ => run(p, dispatch(w, tasks)), _ => w)
 
 # Explicit resource bound; cyclic callbacks can still exhaust it.
 def budget(+w: R.World) -> Nat:
@@ -199,3 +282,42 @@ def disposeChildren(+w: R.World, id: Nat, self: Bool, zombie: Bool) -> R.World:
 
 def dispose(+w: R.World, id: Nat) -> R.World:
   run(budget(w), Machine{w, [Dispose{id}]})
+
+def invoke(+w: R.World, callback: Nat) -> R.World:
+  run(budget(w), Machine{w, [Invoke{callback}]})
+
+# core/owner.ts:markDisposal and core/core.ts:parkChildren.
+def markDisposal(+w: R.World, id: Nat) -> R.World:
+  run(budget(w), Machine{w, [MarkChildren{id}]})
+
+def parkChildren(+w: R.World, +id: Nat) -> R.World:
+  +w = markDisposal(w, id)
+  +w = E.ext(w, id)
+  +w = B.store_extension(w, id, R.NodeExtension.with_pendingDisposal(B.extension(w, id), R.Node.disposal(B.node(w, id))))
+  +w = B.store_extension(w, id, R.NodeExtension.with_pendingFirstChild(B.extension(w, id), R.Node.firstChild(B.node(w, id))))
+  +w = B.store_node(w, id, R.Node.with_disposal(B.node(w, id), R.NoDisposal{}))
+  +w = B.store_node(w, id, R.Node.with_firstChild(B.node(w, id), 0n))
+  B.store_node(w, id, R.Node.with_childCount(B.node(w, id), 0n))
+
+# core/async.ts:releaseFlightTeardown, through the same callback protocol.
+def releaseFlightTeardown(+w: R.World, +id: Nat) -> R.World:
+  +callback = R.NodeExtension.flightTeardown(B.extension(w, id))
+  B.choose(~R.World, Nat.is_ne(callback, 0n),
+    _ => invoke(B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), 0n)), callback), _ => w)
+
+# graph.ts operations share this continuation machine with source owner calls.
+def clearDeps(+w: R.World, id: Nat) -> R.World:
+  run(budget(w), Machine{w, [ClearDeps{id}]})
+
+def trimStaleDeps(+w: R.World, id: Nat) -> R.World:
+  run(budget(w), Machine{w, [TrimDeps{id}]})
+
+def unlinkSubs(+w: R.World, edge: Nat) -> R.World:
+  run(budget(w), Machine{w, [UnlinkOnce{edge}]})
+
+def unobserved(+w: R.World, id: Nat) -> R.World:
+  run(budget(w), Machine{w, [Unobserved{id}]})
+
+def sweepDormant(+w: R.World) -> R.World:
+  B.choose(~R.World, List.is_empty(&2, Nat, R.World.dormantNodes(w)), _ => w,
+    _ => run(budget(w), Machine{w, [SweepDormant{0n}]}))

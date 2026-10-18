@@ -2,7 +2,7 @@ import * as S from '../build/solid.mjs';
 export class SolidRuntime {
   constructor() {
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.refs=new Map(); S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=S.getOwner(); });
+    this.refs=new Map(); this.programs={}; this.nextProgram=1; S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=S.getOwner(); });
   }
   value(v) {
     if(v && typeof v === 'object' && Object.hasOwn(v,'ref')) {
@@ -20,19 +20,35 @@ export class SolidRuntime {
     if(e.same) return this.evaluate(e.same[0],prev)===this.evaluate(e.same[1],prev);
     if(e.select) return this.evaluate(e.select[0],prev) ? this.evaluate(e.select[1],prev) : this.evaluate(e.select[2],prev);
     if(e.untrack) return S.untrack(()=>this.evaluate(e.untrack,prev));
+    if(e.call)return this.programs[e.call]();
+    if(e.seq){let value;for(const part of e.seq)value=this.evaluate(part,prev);return value;}
     if(Object.hasOwn(e,'raise')) throw this.value(e.raise);
     throw new TypeError('Unknown expression');
   }
+  program(name,actions) {
+    const self=this,id=this.nextProgram++;
+    this.programs[name]=function callback() {
+      for(const [op,...args] of actions) {
+        if(op==='emit')self.traceEvents.push(['cleanup',id,args[0]]);
+        else if(op==='set')self.setters[args[0]](self.value(args[1]));
+        else if(op==='dispose'&&args[0]==='root')self.disposeRoot();
+        else if(op==='cleanup')S.onCleanup(self.programs[args[0]]);
+        else if(op==='throw')throw self.value(args[0]);
+        else throw new TypeError('Unsupported callback action');
+      }
+    };
+    return id;
+  }
   signal(name,value,equals=true) {
     const opts=typeof equals==='boolean'?{equals}:equals;
-    const [get,set]=S.createSignal(this.value(value), {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot}); this.accessors[name]=get; this.setters[name]=set;
+    const [get,set]=S.createSignal(this.value(value), {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;
   }
   callback(name,expr) { return prev=> {
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
     try { return this.evaluate(expr,prev); } finally {this.current=saved;}
   }; }
   memo(name,expr,options={}) {
-    const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot};
+    const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
     if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
     this.accessors[name]=S.runWithOwner(this.owner,()=>S.createMemo(this.callback(name,expr),opts));
   }
@@ -40,6 +56,8 @@ export class SolidRuntime {
     const {user=false,target=2}=options;
     S.runWithOwner(this.owner,()=> (user ? S.createEffect : S.createRenderEffect)(this.callback(name,expr),(v,p)=> {
       this.traceEvents.push(['apply',name,v,p]); if(!user)this.screens[target]=v;
+      if(options.program)this.programs[options.program]();
+      return options.cleanup?this.programs[options.cleanup]:undefined;
     },options));
   }
   set(name,value) { return this.setters[name](this.value(value)); }

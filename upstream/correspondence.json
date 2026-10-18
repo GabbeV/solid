@@ -3,22 +3,22 @@
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
-      "bend": "runtime/graph.bend:link, reuse_or_append, append_or_duplicate, allocate",
+      "bend": "runtime/graph-state.bend:link, reuse_or_append, append_or_duplicate, allocate; runtime/graph.bend:link",
       "status": "restricted",
-      "restrictions": "No store nodes. Full stable-link/in-order generation mechanics are used by core.readPrepared."
+      "restrictions": "Stable identity and generation mechanics. Slot/store release hooks remain outside the admitted grammar."
     },
     "core/graph.ts:unlinkSubs": {
-      "bend": "runtime/graph.bend:unlinkSubs",
+      "bend": "runtime/graph-state.bend:unlinkSubs; runtime/owner.bend:unlinkOnce, AfterUnobservedHook; runtime/graph.bend:unlinkSubs",
       "status": "partial",
-      "restrictions": "Unobserved callbacks, automatic dormancy cascades and store-release hooks remain open."
+      "restrictions": "Captured nextDep, pointer stores, callback then live dormancy guards, and exception partial state retained. Slot-release hook explicitly refuses; arbitrary callbacks unfinished."
     },
     "core/graph.ts:trimStaleDeps": {
-      "bend": "runtime/graph.bend:trimStaleDeps",
+      "bend": "runtime/graph.bend:trimStaleDeps; runtime/owner.bend:TrimDeps, UnlinkLoop, TrimDepSlots",
       "status": "restricted",
       "restrictions": "Uses the restricted unlinkSubs path."
     },
     "core/graph.ts:clearDeps": {
-      "bend": "runtime/graph.bend:clearDeps",
+      "bend": "runtime/graph.bend:clearDeps; runtime/owner.bend:ClearDeps, UnlinkLoop, ClearDepSlots",
       "status": "restricted",
       "restrictions": "Uses the restricted unlinkSubs path."
     },
@@ -70,7 +70,7 @@
     "core/core.ts:signal": {
       "bend": "runtime/construct.bend:signal",
       "status": "partial",
-      "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture and unobserved invocation unfinished; no custom comparators."
+      "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture unfinished; restricted unobserved programs execute; no custom comparators."
     },
     "core/core.ts:computed": {
       "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
@@ -83,9 +83,9 @@
       "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
     },
     "core/core.ts:recompute": {
-      "bend": "runtime/core.bend:recompute, finish, publish",
+      "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, passFinally, finish, publish, unwind",
       "status": "partial",
-      "restrictions": "Sync successful passes through stored expressions and actual reads. Sync answer clears loading/inFlight and finally consumes reask metadata. Owned child construction/cleanup, handleAsync, clearStatus propagation, transactions/lanes/status/errors/snapshot hooks remain unfinished."
+      "restrictions": "Source teardown/parking, flight cancellation, finally restoration, dead-during-pass freeze and synchronous publication retained. Restricted callback writes/cleanup registrations/disposal execute. Reactive status/error catches, async results, transactions/lanes/snapshot hooks and nested callback construction remain unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, afterCheck, ClearFlags",
@@ -93,9 +93,9 @@
       "restrictions": "Sync status-free nodes; error retry and remaining retained flag postures open."
     },
     "core/core.ts:prepareComputed": {
-      "bend": "runtime/core.bend:readNode",
+      "bend": "runtime/core.bend:readNode, prepareDisposed",
       "status": "partial",
-      "restrictions": "Lazy initial activation and dead-node freeze only; observation-lifecycle reawakening open."
+      "restrictions": "Lazy activation, dormant relinking/reawakening, zombie splice exemption and dead-parent freeze retained. refresh=true routing and other public status consumers remain unfinished."
     },
     "core/core.ts:pullComputed": {
       "bend": "runtime/core.bend:prepareSlow, raiseHeight",
@@ -113,14 +113,14 @@
       "restrictions": "Source order of unflushed probe, late-linker latch, committed selection and staged flag retained. Born-staged NotReady and staged errors refuse explicitly; held stash, spectating, verdict hooks and exception/status propagation unfinished."
     },
     "core/core.ts:setSignal": {
-      "bend": "runtime/scheduler.bend:setSignal, runtime/api.bend:setUpdater",
+      "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater",
       "status": "partial",
-      "restrictions": "Pure synchronous updater expressions over staged composition; default strict equality/equals:false; no held/lane/snapshot/write hooks."
+      "restrictions": "One shared setter for host and callback writes. Source equality, promotion, computed time and notified-epoch rewrite retained. Held/lane/snapshot/write hooks and arbitrary comparators remain unfinished."
     },
     "core/core.ts:untrack": {
-      "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking",
+      "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind",
       "status": "partial",
-      "restrictions": "Tracking restoration on successful callback only. Thrown callbacks are explicitly unsupported; external-untrack hooks open."
+      "restrictions": "Tracking restored at successful and exceptional return points. Reactive compute catches/status propagation and external-untrack hooks remain unfinished."
     },
     "core/scheduler.ts:queuePendingNode": {
       "bend": "runtime/scheduler.bend:queuePendingNode",
@@ -133,24 +133,24 @@
       "restrictions": "Unbounded mathematical Nat in proofs; emitted host natural-number range must be respected."
     },
     "core/scheduler.ts:insertSubs": {
-      "bend": "runtime/scheduler.bend:insertSubs, insert_subs",
+      "bend": "runtime/write.bend:insertSubs, insert_subs; runtime/scheduler.bend:insertSubs wrapper",
       "status": "partial",
-      "restrictions": "Generation-current missed-wake condition and notify epoch retained. Snapshot and observe hooks open."
+      "restrictions": "Generation-current missed-wake condition and notify epoch retained; callback writes use this same path. Snapshot/observe hooks unfinished."
     },
     "core/scheduler.ts:commitPendingNode": {
       "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
       "status": "partial",
-      "restrictions": "Separate source signal/computed branches; configuration masks/inFlight branch, publication order, shownError reset, reask/flushed reset, loading/manual-write reset, nullish error trim gate and staged-effect enqueue retained. Parked child disposal and staged error notification explicitly refuse; synthetic metadata probes do not establish async/held transaction execution."
+      "restrictions": "Source separate signal/computed paths, configuration/publication order, metadata gates and parked teardown integrated; callback throws stop at source edges. Staged-error propagation explicitly refuses; no async/held transaction execution claim."
     },
     "core/scheduler.ts:commitPendingNodes": {
       "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
       "status": "partial",
-      "restrictions": "Live pendingNodes bound, held/override guard, clear after walk, explicit exhaustion. Callback-driven list growth untested until cleanup/reentrant writes exist; no transaction/lane execution."
+      "restrictions": "Live intake bound, held/override guard, clear only after successful walk; callback appends and throwing cleanup partial states are compared. No transactions/lanes."
     },
     "core/scheduler.ts:GlobalQueue.flush": {
-      "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, RoundEnd",
+      "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd",
       "status": "partial",
-      "restrictions": "Source running -> resync -> heap -> settle -> clock/scheduled -> detached nonempty render/user queues for sync grammar. No dormancy, transactions, boundaries or effect callback writes."
+      "restrictions": "Source running -> resync -> dormant sweep -> heap -> settle -> clock/scheduled -> detached queues; running restored on throw. Callback writes drain through same outer rounds. Transactions, boundaries and status/error halts unfinished."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
       "bend": "runtime/scheduler.bend:settle",
@@ -163,14 +163,14 @@
       "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
     },
     "core/effect.ts:effect": {
-      "bend": "runtime/api.bend:createEffect, runtime/core.bend:InitialEffect",
+      "bend": "runtime/api.bend:createEffectWithPrograms; runtime/core.bend:InitialEffect",
       "status": "partial",
-      "restrictions": "Separate compute/apply phases; schedule/defer/user options. No errors, returned cleanups, hold hooks."
+      "restrictions": "Separate compute/apply phases, schedule/defer/user options and returned cleanup program installation. Reactive errors and hold hooks unfinished."
     },
     "core/effect.ts:runEffect": {
       "bend": "runtime/core.bend:runEffect",
       "status": "partial",
-      "restrictions": "Render callback mechanically writes stored result to text. User callback records application. Arbitrary imperative callbacks and cleanup/error/reentrant writes open."
+      "restrictions": "Source success path, previous-cleanup detachment, callback program writes/disposal/registration, returned cleanup, prevValue/modified finally and clean-pass trim. Reactive error catch/escalation still unfinished; arbitrary host callbacks outside ABI."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",
@@ -178,14 +178,14 @@
       "restrictions": "Stable same-identity owner/computed nodes, head insertion and both sibling pointers."
     },
     "core/owner.ts:disposeChildren": {
-      "bend": "runtime/owner.bend:enter, afterPark, walk, AfterChild, finish, runDisposal, effectCleanup",
+      "bend": "runtime/owner.bend:enter, afterPark, walk, PrepareChild, AfterChild, finish, runDisposal, effectCleanup",
       "status": "partial",
-      "restrictions": "Source live child/sibling return points, parked/current frames, child death/AUTO_DISPOSE stripping, heap/deps removal, detached-chain self-predecessor marker, splice guards and cleanup order. Restricted cleanup program ABI supports emit/dispose/register/throw reentry. Dormancy, core commit/recompute consumers, arbitrary callbacks and dev/observe hooks unfinished."
+      "restrictions": "Live recursive return points, graph last-subscriber hooks, parked/current frames and reentry retained. Integrated with commit/recompute/unobserved consumers. Restricted programs; arbitrary JS callbacks/dev/observe unfinished."
     },
     "core/owner.ts:dispose": {
-      "bend": "runtime/owner.bend:dispose, disposeStart",
+      "bend": "runtime/owner.bend:dispose, disposeStart, Unobserved",
       "status": "partial",
-      "restrictions": "Computed path clears AUTO_DISPOSE, removes from heap, clears deps, then source-shaped disposeChildren. Root facade calls the root self-disposal path. No iterator cancellation/unobserved lifecycle integration."
+      "restrictions": "Computed clears AUTO then source unobserved path (deleteHeap, clearDeps, disposeChildren); root self path. Full iterator settlement and public callback facade unfinished."
     },
     "core/core.ts:markRefresh": {
       "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
@@ -218,9 +218,9 @@
       "restrictions": "Source MISSED_WAKE latch; source true return is implicit in the serve branch."
     },
     "core/core.ts:notePromotedWrite": {
-      "bend": "runtime/read-state.bend:notePromotedWrite",
+      "bend": "runtime/read-state.bend:notePromotedWrite; runtime/write.bend:setSignal",
       "status": "partial",
-      "restrictions": "Source running/already-promoted guards, config bit and once-only append. Direct helper probes only; in-callback writes and promotion publication remain unfinished."
+      "restrictions": "Source guards, config bit and once-only append, now called by actual callback writes. No additional eager publication inferred from comments."
     },
     "core/core.ts:resyncUnflushedCompanions": {
       "bend": "runtime/read-state.bend:resyncUnflushedCompanions",
@@ -250,7 +250,7 @@
     "core/owner.ts:runDisposal": {
       "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
       "status": "restricted",
-      "restrictions": "Absent/single/list forms, detach-before-callback and reverse registration order; active cleanup programs can reenter/throw. Captured array mutation and arbitrary JS receiver inspection are outside the protocol. Reactive core exception control integration unfinished."
+      "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol."
     },
     "core/owner.ts:cleanup": {
       "bend": "runtime/owner.bend:cleanup, addDisposal",
@@ -261,6 +261,31 @@
       "bend": "runtime/owner.bend:disposeStart root branch; disposeChildren",
       "status": "partial",
       "restrictions": "Root death routes through source disposeChildren; public root callback/disposer method ABI remains unfinished."
+    },
+    "core/graph.ts:unobserved": {
+      "bend": "runtime/graph.bend:unobserved; runtime/owner.bend:Unobserved",
+      "status": "partial",
+      "restrictions": "Source heap deletion, dependency teardown, then owner self-disposal. Restricted callback ABI and explicit budget."
+    },
+    "core/graph.ts:sweepDormant": {
+      "bend": "runtime/graph.bend:sweepDormant, queueDormant; runtime/owner.bend:SweepDormant, ClearDormant",
+      "status": "partial",
+      "restrictions": "Ordered unique-ID Set representation, live sweep bound and source eligibility guards; clear only on success. Pending guards tested synthetically; async settlement unfinished."
+    },
+    "core/core.ts:parkChildren": {
+      "bend": "runtime/owner.bend:parkChildren, markDisposal",
+      "status": "partial",
+      "restrictions": "Mark descendants zombie before moving child/disposal heads into lazy extension. Consumed by actual commit and recompute."
+    },
+    "core/owner.ts:markDisposal": {
+      "bend": "runtime/owner.bend:markDisposal, MarkChildren, MarkChild, MarkNext",
+      "status": "partial",
+      "restrictions": "Source recursive marking in live child order; callback construction/IDs unfinished."
+    },
+    "core/async.ts:releaseFlightTeardown": {
+      "bend": "runtime/owner.bend:releaseFlightTeardown",
+      "status": "partial",
+      "restrictions": "Detach teardown before invocation; cancellation ordering and throw state compared. Actual async iterator protocol unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."
