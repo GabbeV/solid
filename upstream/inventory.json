@@ -10166,24 +10166,36 @@
           "start": 1603,
           "end": 1608,
           "sha256": "6429f2de94a91a376ecdaa639c7b8ef85f4a6e5c602cbc3e7a38eafe31607ced",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/read-state.bend:readerSeesCommitted",
+            "status": "restricted",
+            "restrictions": "Source no-reader/no-staging/children-forbidden predicate. Does not implement tracked-effect API."
+          }
         },
         {
           "key": "core/core.ts:markUnflushedStaged",
           "start": 1616,
           "end": 1618,
           "sha256": "95bdae38480d6abe12775389b651acf1677cb70283b6d82a5392ff77065d104e",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/read-state.bend:markUnflushedStaged",
+            "status": "restricted",
+            "restrictions": "Module boolean is a World field, set by the actual pending intake."
+          }
         },
         {
           "key": "core/core.ts:unflushedValue",
           "start": 1628,
           "end": 1636,
           "sha256": "1c23f29dad41008640c7cf53edd4b502e2424acaa0bd0abff14d1bb1375d3666",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/read-state.bend:unflushedValue",
+            "status": "partial",
+            "restrictions": "Source running/no-staging/promoted guards and committed Slot. Held cold-extension stash refuses explicitly pending extension translation."
+          }
         },
         {
           "key": "core/core.ts:stashFlushed",
@@ -10198,16 +10210,24 @@
           "start": 1653,
           "end": 1658,
           "sha256": "e884b890e85d12db618e063d0125837abd20c5d11fa4a290758ebf1d64f6edc6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/read-state.bend:markLateLinker",
+            "status": "restricted",
+            "restrictions": "Source MISSED_WAKE latch; source true return is implicit in the serve branch."
+          }
         },
         {
           "key": "core/core.ts:resyncUnflushedCompanions",
           "start": 1660,
           "end": 1667,
           "sha256": "7a5328d27a2b8687c15a53f7bfdbfb7569fd5b2a26e77e4388add517a7d21662",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/read-state.bend:resyncUnflushedCompanions",
+            "status": "partial",
+            "restrictions": "Source flag reset, length guard, promotion-bit walk and clear. Called at the actual flush entry; no alternate scheduler."
+          }
         },
         {
           "key": "core/core.ts:pullComputed",
@@ -10216,7 +10236,7 @@
           "sha256": "0fa1e693d7e396905ccd4740345c4e1d363b36e52381ff7fa2dc521d7706c970",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:readPrepared, raiseHeight",
+            "bend": "runtime/core.bend:prepareSlow, raiseHeight",
             "status": "partial",
             "restrictions": "No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."
           }
@@ -10228,9 +10248,9 @@
           "sha256": "9d07bc553ac1db4bbe34645db273257d4b46336761d89974f0571d45ea942763",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:readNode, readPrepared, serve",
+            "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
             "status": "partial",
-            "restrictions": "No held/error/pending/lane/snapshot paths. No-owner, tracked, and untracked-in-pass read selection retained."
+            "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking and untrack-in-pass selection. No snapshot/verdict/held/status/strict-read paths; no nested root parent forwarding."
           }
         },
         {
@@ -10240,9 +10260,9 @@
           "sha256": "ccc7256cc479b14111d643cbd8bc6fb88b07c9bb380277b5d05f791db9130d07",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:serve",
+            "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
             "status": "partial",
-            "restrictions": "Committed reads outside flush, staged reads inside the pass, late-linker missed-wake latch; uninitialized-held, verdict, error and promoted-write paths open."
+            "restrictions": "Source order of unflushed probe, late-linker latch, committed selection and staged flag retained. Born-staged NotReady and staged errors refuse explicitly; held stash, spectating, verdict hooks and exception/status propagation unfinished."
           }
         },
         {
@@ -10278,8 +10298,12 @@
           "start": 2005,
           "end": 2009,
           "sha256": "e38599200fa1bf620e0834c4dda8a7bdc5dbb14459712d7e86f0229437a77135",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/read-state.bend:notePromotedWrite",
+            "status": "partial",
+            "restrictions": "Source running/already-promoted guards, config bit and once-only append. Direct helper probes only; in-callback writes and promotion publication remain unfinished."
+          }
         },
         {
           "key": "core/core.ts:captureWriteSnapshot",
@@ -17616,7 +17640,7 @@
           "mapping": {
             "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, RoundEnd",
             "status": "partial",
-            "restrictions": "Exact pure/seam/render/user order for sync grammar; no dormancy, transactions, boundaries or effect callback writes."
+            "restrictions": "Source running -> resync -> heap -> settle -> clock/scheduled -> detached nonempty render/user queues for sync grammar. No dormancy, transactions, boundaries or effect callback writes."
           }
         },
         {
@@ -17628,7 +17652,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:settle",
             "status": "partial",
-            "restrictions": "Mainline commit and deferred trim only. Transaction/lane paths remain open."
+            "restrictions": "Mainline live pending/held-trim walks, clearing after source walks. No error extensions, transaction/lane seams, store commit or boundary hooks."
           }
         },
         {
@@ -17704,7 +17728,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:queuePendingNode",
             "status": "partial",
-            "restrictions": "No global unflushedStaged optimization; serve tests running/staging directly."
+            "restrictions": "Source append then markUnflushedStaged outside the running window. Dev attribution not implemented."
           }
         },
         {
@@ -17754,9 +17778,9 @@
           "sha256": "d4b637f8306ace801dfe999717a1e21ffa3cb0582539f5ee2203f6a412bf2154",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/scheduler.bend:commitPendingNode",
+            "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
             "status": "partial",
-            "restrictions": "Plain signals and successful sync computeds only. Async/held/error/child-retirement paths open."
+            "restrictions": "Separate source signal/computed branches; configuration masks and inFlight branch, publication order, loading/manual-write reset, stale-tail trim and staged-effect enqueue retained. No cold extension; shownError, reask/flushed stash and parked-child disposal unfinished. Staged error notification is explicitly unsupported. Synthetic flight/status probes do not establish async execution."
           }
         },
         {
@@ -17768,7 +17792,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
             "status": "partial",
-            "restrictions": "No transaction/lane nodes; callback grammar cannot append staging during this commit walk."
+            "restrictions": "Live pendingNodes bound, held/override guard, clear after walk, explicit exhaustion. Callback-driven list growth untested until cleanup/reentrant writes exist; no transaction/lane execution."
           }
         },
         {

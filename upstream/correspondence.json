@@ -98,19 +98,19 @@
       "restrictions": "Lazy initial activation and dead-node freeze only; observation-lifecycle reawakening open."
     },
     "core/core.ts:pullComputed": {
-      "bend": "runtime/core.bend:readPrepared, raiseHeight",
+      "bend": "runtime/core.bend:prepareSlow, raiseHeight",
       "status": "partial",
       "restrictions": "No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."
     },
     "core/core.ts:read": {
-      "bend": "runtime/core.bend:readNode, readPrepared, serve",
+      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
       "status": "partial",
-      "restrictions": "No held/error/pending/lane/snapshot paths. No-owner, tracked, and untracked-in-pass read selection retained."
+      "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking and untrack-in-pass selection. No snapshot/verdict/held/status/strict-read paths; no nested root parent forwarding."
     },
     "core/core.ts:serve": {
-      "bend": "runtime/core.bend:serve",
+      "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
       "status": "partial",
-      "restrictions": "Committed reads outside flush, staged reads inside the pass, late-linker missed-wake latch; uninitialized-held, verdict, error and promoted-write paths open."
+      "restrictions": "Source order of unflushed probe, late-linker latch, committed selection and staged flag retained. Born-staged NotReady and staged errors refuse explicitly; held stash, spectating, verdict hooks and exception/status propagation unfinished."
     },
     "core/core.ts:setSignal": {
       "bend": "runtime/scheduler.bend:setSignal, runtime/api.bend:setUpdater",
@@ -125,7 +125,7 @@
     "core/scheduler.ts:queuePendingNode": {
       "bend": "runtime/scheduler.bend:queuePendingNode",
       "status": "partial",
-      "restrictions": "No global unflushedStaged optimization; serve tests running/staging directly."
+      "restrictions": "Source append then markUnflushedStaged outside the running window. Dev attribution not implemented."
     },
     "core/scheduler.ts:bumpNotifyEpoch": {
       "bend": "representation/base.bend:bump",
@@ -138,24 +138,24 @@
       "restrictions": "Generation-current missed-wake condition and notify epoch retained. Snapshot and observe hooks open."
     },
     "core/scheduler.ts:commitPendingNode": {
-      "bend": "runtime/scheduler.bend:commitPendingNode",
+      "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
       "status": "partial",
-      "restrictions": "Plain signals and successful sync computeds only. Async/held/error/child-retirement paths open."
+      "restrictions": "Separate source signal/computed branches; configuration masks and inFlight branch, publication order, loading/manual-write reset, stale-tail trim and staged-effect enqueue retained. No cold extension; shownError, reask/flushed stash and parked-child disposal unfinished. Staged error notification is explicitly unsupported. Synthetic flight/status probes do not establish async execution."
     },
     "core/scheduler.ts:commitPendingNodes": {
       "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
       "status": "partial",
-      "restrictions": "No transaction/lane nodes; callback grammar cannot append staging during this commit walk."
+      "restrictions": "Live pendingNodes bound, held/override guard, clear after walk, explicit exhaustion. Callback-driven list growth untested until cleanup/reentrant writes exist; no transaction/lane execution."
     },
     "core/scheduler.ts:GlobalQueue.flush": {
       "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, RoundEnd",
       "status": "partial",
-      "restrictions": "Exact pure/seam/render/user order for sync grammar; no dormancy, transactions, boundaries or effect callback writes."
+      "restrictions": "Source running -> resync -> heap -> settle -> clock/scheduled -> detached nonempty render/user queues for sync grammar. No dormancy, transactions, boundaries or effect callback writes."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
       "bend": "runtime/scheduler.bend:settle",
       "status": "partial",
-      "restrictions": "Mainline commit and deferred trim only. Transaction/lane paths remain open."
+      "restrictions": "Mainline live pending/held-trim walks, clearing after source walks. No error extensions, transaction/lane seams, store commit or boundary hooks."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, run",
@@ -196,6 +196,36 @@
       "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
       "status": "partial",
       "restrictions": "Source REACTIVE_STAGED_READ flag and uninitialized guard are retained in the synchronous profile. Lane stagedReaders collection and callers in other unported paths remain unfinished."
+    },
+    "core/core.ts:markUnflushedStaged": {
+      "bend": "runtime/read-state.bend:markUnflushedStaged",
+      "status": "restricted",
+      "restrictions": "Module boolean is a World field, set by the actual pending intake."
+    },
+    "core/core.ts:readerSeesCommitted": {
+      "bend": "runtime/read-state.bend:readerSeesCommitted",
+      "status": "restricted",
+      "restrictions": "Source no-reader/no-staging/children-forbidden predicate. Does not implement tracked-effect API."
+    },
+    "core/core.ts:unflushedValue": {
+      "bend": "runtime/read-state.bend:unflushedValue",
+      "status": "partial",
+      "restrictions": "Source running/no-staging/promoted guards and committed Slot. Held cold-extension stash refuses explicitly pending extension translation."
+    },
+    "core/core.ts:markLateLinker": {
+      "bend": "runtime/read-state.bend:markLateLinker",
+      "status": "restricted",
+      "restrictions": "Source MISSED_WAKE latch; source true return is implicit in the serve branch."
+    },
+    "core/core.ts:notePromotedWrite": {
+      "bend": "runtime/read-state.bend:notePromotedWrite",
+      "status": "partial",
+      "restrictions": "Source running/already-promoted guards, config bit and once-only append. Direct helper probes only; in-callback writes and promotion publication remain unfinished."
+    },
+    "core/core.ts:resyncUnflushedCompanions": {
+      "bend": "runtime/read-state.bend:resyncUnflushedCompanions",
+      "status": "partial",
+      "restrictions": "Source flag reset, length guard, promotion-bit walk and clear. Called at the actual flush entry; no alternate scheduler."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

@@ -27,6 +27,8 @@ function checkGraph(b) {
   assert.equal(b.world.context,0,'context leaked'); assert.equal(b.world.tracking,false,'tracking leaked');
   if(!b.world.scheduled) {
     assert.equal(list(b.world.pendingNodes).length,0);
+    assert.equal(b.world.unflushedStaged,false,'unflushed state survived a completed drain');
+    assert.equal(list(b.world.promotedWrites).length,0,'promoted-write list survived a completed drain');
     for(const n of ns) assert(!('value' in n.pending),'unqueued staging after completed flush');
   }
 }
@@ -79,6 +81,15 @@ scenario('scheduled and deferred initial effects',[
 ]);
 scenario('late linking after write',[
   ['signal','x',1],['set','x',2],['memo','a',add(read('x'),lit(1))],['effect','view',read('a')],['flush']
+]);
+scenario('late untracked reader still reruns in the carrying flush',[
+  ['signal','x',1],['set','x',2],['memo','a',{untrack:read('x')}],['effect','view',read('a')],['flush'],['read','a']
+]);
+scenario('unflushed undefined retains committed data until flush',[
+  ['signal','x',11],['set','x',undefined],['memo','a',read('x')],['effect','view',read('a')],['read','x'],['flush'],['read','a']
+]);
+scenario('unflushed state reopens after an earlier drain',[
+  ['signal','x',1],['set','x',2],['flush'],['set','x',3],['memo','a',read('x')],['effect','view',read('a')],['flush'],['read','a']
 ]);
 scenario('lazy initial pull',[
   ['signal','x',1],['memo','a',add(read('x'),lit(1)),{lazy:true}],['read','a'],['effect','view',read('a')],['set','x',3],['flush']

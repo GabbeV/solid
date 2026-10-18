@@ -9,6 +9,7 @@ import ./graph.bend as G
 import ./heap.bend as H
 import ./scheduler.bend as S
 import ./constants.bend as K
+import ./read-state.bend as V
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -126,6 +127,14 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       # Error-status propagation is not yet translated. Refuse explicitly.
       Machine{R.World.with_fault(w, R.Unsupported{1n}), [], []}
 
+# Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
+# the pass flag remains source state even in the synchronous profile. A source
+# ID of zero represents the optional el argument being absent (plain fast read).
+def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
+  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())),
+    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ()))),
+    _ => w)
+
 def readNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   B.choose(~Machine, B.valid(w, id),
     _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), 512),
@@ -134,7 +143,7 @@ def readNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
       _ => Machine{w, ReadPrepared{id} <> rest, stack}),
     _ => Machine{R.World.with_fault(w, R.BadId{}), [], []})
 
-def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+def prepareSlow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +reader = R.World.context(w)
   +tracked = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
   +w = B.choose(~R.World, tracked, _ => G.link(w, id, reader), _ => w)
@@ -147,24 +156,63 @@ def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
       Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> Serve{id} <> rest), stack},
     _ => Machine{w, Serve{id} <> rest, stack})
 
-# Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
-# the pass flag remains source state even in the synchronous profile.
-def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
-  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())),
-    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ()))),
-    _ => w)
+# Read event instrumentation belongs to the callback adapter, after value choice.
+def served(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +value: R.Value) -> Machine:
+  Machine{B.event(w, R.ReadValue{reader, id, value}), rest, value <> stack}
 
+# core/core.ts:read's plain-signal fast block, under the admitted no-snapshot,
+# no-verdict profile. Its source ternary intentionally stays separate from serve.
+def readSignalFast(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +reader = R.World.context(w)
+  +tracked = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
+  +w = B.choose(~R.World, tracked, _ => G.link(w, id, reader), _ => w)
+  B.choose(~Machine, Bool.and(Nat.is_ne(reader, 0n), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+    Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())))),
+    _ => Machine{R.World.with_fault(w, R.Unsupported{3n}), [], []},
+    _ =>
+      +n = B.node(w, id)
+      +committed = Bool.or(Nat.is_eq(reader, 0n), Bool.or(Bool.not(B.present(R.Node.pending(n))),
+        B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())))
+      +value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
+      +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, 0n))
+      served(w, rest, stack, reader, id, value))
+
+def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +n = B.node(w, id)
+  fast = Bool.and(Bool.not(B.computed(R.Node.kind(n))),
+    Bool.and(Bool.or(Bool.not(R.World.unflushedStaged(w)), Bool.not(B.present(R.Node.pending(n)))),
+      Bool.not(B.has(R.Node.config(n), K.CONFIG_OVERRIDE()))))
+  B.choose(~Machine, fast, _ => readSignalFast(w, rest, stack, id), _ => prepareSlow(w, rest, stack, id))
+
+def serveSelected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +u: R.Slot) -> Machine:
+  B.choose(~Machine, B.present(u),
+    _ => served(V.markLateLinker(w, reader), rest, stack, reader, id, B.selected(u, R.Undefined{})),
+    _ =>
+      +n = B.node(w, id)
+      +committed = V.readerSeesCommitted(w, id, reader)
+      B.choose(~Machine, Bool.and(Bool.not(committed), B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())),
+        _ => Machine{R.World.with_fault(w, R.Unsupported{2n}), [], []},
+        _ =>
+          +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, id))
+          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
+          served(w, rest, stack, reader, id, value)))
+
+# core/core.ts:serve. NotReady/error propagation and spectating are unfinished.
+# The unsupported born-staged read refuses instead of serving fabricated data.
 def serve(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
   +reader = R.World.context(w)
-  +unflushed = Bool.and(Nat.is_ne(reader, 0n), Bool.and(Bool.not(R.World.running(w)), B.present(R.Node.pending(n))))
-  +w = B.choose(~R.World, unflushed,
-    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), 4096))), _ => w)
-  +w = B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), Bool.and(B.present(R.Node.pending(n)), Bool.not(unflushed))),
-    _ => stagedRead(w, reader, id), _ => w)
-  +value = B.choose(~R.Value, Bool.or(Nat.is_eq(reader, 0n), unflushed),
-    _ => R.Node.value(n), _ => B.current(n))
-  Machine{B.event(w, R.ReadValue{reader, id, value}), rest, value <> stack}
+  +noAnswer = Bool.and(B.present(R.Node.pending(n)), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
+    Bool.or(Nat.is_eq(reader, 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN()))))
+  B.choose(~Machine, noAnswer,
+    _ => Machine{R.World.with_fault(w, R.Unsupported{4n}), [], []},
+    _ =>
+      +pair = B.choose(~B.Bundle<R.World, R.Slot>, Bool.and(Nat.is_ne(reader, 0n), R.World.unflushedStaged(w)),
+        _ => V.unflushedValue(w, id), _ => B.Bundle{w, R.Empty{}})
+      +w = B.first(R.World, R.Slot, pair)
+      B.choose(~Machine, healthy(R.World.fault(w)),
+        _ => serveSelected(w, rest, stack, id, reader, B.second(R.World, R.Slot, pair)),
+        _ => Machine{w, [], []}))
 
 def raiseHeight(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +source: Nat, +reader: Nat) -> Machine:
   +height = R.Node.height(B.node(w, source))
@@ -274,8 +322,11 @@ def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           _ => Machine{H.adjustHeight(w, id), HeapLoop{} <> rest, stack})))
 
 def round(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
-  +w = R.World.with_scheduled(w, False{})
-  w = R.World.with_marked(R.World.with_minimum(R.World.with_running(w, True{}), 0n), False{})
+  w = R.World.with_running(w, True{})
+  w = V.resyncUnflushedCompanions(w)
+  # runHeap's entry writes, after GlobalQueue.flush's resync.
+  w = R.World.with_marked(w, False{})
+  w = R.World.with_minimum(w, 0n)
   Machine{w, HeapLoop{} <> rest, stack}
 
 def seam(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
@@ -329,9 +380,13 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case Seam{} <> +rest:
       seam(w, rest, stack)
     case RenderQueue{} <> +rest:
-      Machine{R.World.with_renderQueue(w, []), B.append(Task, queue_tasks(R.World.renderQueue(w)), UserQueue{} <> rest), stack}
+      B.choose(~Machine, List.is_empty(&2, Nat, R.World.renderQueue(w)),
+        _ => Machine{w, UserQueue{} <> rest, stack},
+        _ => Machine{R.World.with_renderQueue(w, []), B.append(Task, queue_tasks(R.World.renderQueue(w)), UserQueue{} <> rest), stack})
     case UserQueue{} <> +rest:
-      Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(R.World.userQueue(w)), RoundEnd{} <> rest), stack}
+      B.choose(~Machine, List.is_empty(&2, Nat, R.World.userQueue(w)),
+        _ => Machine{w, RoundEnd{} <> rest, stack},
+        _ => Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(R.World.userQueue(w)), RoundEnd{} <> rest), stack})
     case RoundEnd{} <> +rest:
       +w = R.World.with_running(w, False{})
       todo = B.choose(~List<&2, Task>, R.World.scheduled(w), _ => Round{} <> rest, _ => rest)

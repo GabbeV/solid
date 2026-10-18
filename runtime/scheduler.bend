@@ -5,9 +5,12 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./graph.bend as G
 import ./heap.bend as H
+import ./constants.bend as K
+import ./read-state.bend as V
 
 def queuePendingNode(+w: R.World, id: Nat) -> R.World:
-  R.World.with_pendingNodes(w, B.append(Nat, R.World.pendingNodes(w), [id]))
+  +w = R.World.with_pendingNodes(w, B.append(Nat, R.World.pendingNodes(w), [id]))
+  B.choose(~R.World, Bool.not(R.World.running(w)), _ => V.markUnflushedStaged(w), _ => w)
 
 def is_user(k: R.NodeKind) -> Bool:
   match k:
@@ -58,32 +61,93 @@ def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
         _ => B.schedule(insertSubs(w, id))),
     _ => w)
 
-def commitPendingNode(+w: R.World, +id: Nat) -> R.World:
+# Source n._value = n._pendingValue; n._pendingValue = NOT_PENDING.
+def commitValue(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
-  +w = B.choose(~R.World, B.present(R.Node.pending(n)),
-    _ => B.store_node(w, id, R.Node.with_pending(R.Node.with_value(n, B.current(n)), R.Empty{})), _ => w)
-  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(n), 128)))
-  B.choose(~R.World, B.computed(R.Node.kind(n)),
-    _ => G.trimStaleDeps(B.store_node(w, id, R.Node.with_status(R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), 1024)), 0)), id),
+  B.choose(~R.World, B.present(R.Node.pending(n)),
+    _ =>
+      +w = B.store_node(w, id, R.Node.with_value(n, B.current(n)))
+      B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{})),
     _ => w)
 
-def commit_list(ids: List<&2, Nat>, w: R.World) -> R.World:
-  match ids:
-    case Nil{}:
-      w
-    case id <> rest:
-      commit_list(rest, commitPendingNode(w, id))
+def commitComputedAnswer(+w: R.World, +id: Nat) -> R.World:
+  +n = B.node(w, id)
+  +w = B.choose(~R.World, B.present(R.Node.pending(n)),
+    _ =>
+      +w = commitValue(w, id)
+      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
+      # A staged effect is born held: its first application belongs to this
+      # commit. EFFECT_TRACKED is outside the current NodeKind grammar.
+      B.choose(~R.World, B.effect(R.Node.kind(n)),
+        _ => enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id),
+        _ => w),
+    _ => w)
+  +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
+  +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())))
+  +w = G.trimStaleDeps(w, id)
+  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())),
+    _ => B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))),
+    _ => w)
+
+# core/scheduler.ts:commitPendingNode, computed segment. The current Node
+# representation has no _x extension: shown-error, reask/flushed stash, error
+# gate and parked-child disposal remain unfinished. Staged errors are refused
+# explicitly rather than committed as successful data.
+def commitComputed(+w: R.World, +id: Nat) -> R.World:
+  +n = B.node(w, id)
+  +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
+  +err = B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())
+  +config = B.choose(~U32, inFlight,
+    _ => B.set(B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())), K.CONFIG_INPUTS_PUBLISHED()),
+    _ => B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), B.set(K.CONFIG_HELD_FRAME(), B.set(K.CONFIG_STAGED(), B.set(K.CONFIG_INPUTS_PUBLISHED(), K.CONFIG_STAGED_ERROR()))))))
+  +w = B.store_node(w, id, R.Node.with_config(n, config))
+  B.choose(~R.World, err,
+    _ => R.World.with_fault(w, R.Unsupported{2n}),
+    _ => commitComputedAnswer(w, id))
+
+def commitPendingNode(+w: R.World, +id: Nat) -> R.World:
+  +n = B.node(w, id)
+  B.choose(~R.World, Bool.not(B.computed(R.Node.kind(n))),
+    _ =>
+      # Source !c._fn branch: clear config BEFORE publishing; do not touch
+      # computed-only status, loading, manual-write flags or dependency lists.
+      +w = B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), B.set(K.CONFIG_STAGED(), K.CONFIG_HELD()))))
+      commitValue(w, id),
+    _ => commitComputed(w, id))
+
+# The source bound is LIVE pendingNodes.length, not a pre-cleared snapshot.
+# Explicit fuel accounts for future callbacks that append during this walk.
+def commit_list(fuel: Nat, +w: R.World, +index: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.World.pendingNodes(w))), _ => w,
+        _ => R.World.with_fault(w, R.Exhausted{}))
+    case 1n+p:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.World.pendingNodes(w))), _ => w,
+        _ =>
+          +id = B.get(Nat, R.World.pendingNodes(w), index, 0n)
+          +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), B.set(K.CONFIG_OVERRIDE(), K.CONFIG_HELD())),
+            _ => w, _ => commitPendingNode(w, id))
+          commit_list(p, w, 1n+index))
 
 def commitPendingNodes(+w: R.World) -> R.World:
-  commit_list(R.World.pendingNodes(w), R.World.with_pendingNodes(w, []))
+  +w = commit_list(Nat.add(B.length(Nat, R.World.pendingNodes(w)), B.budget(w)), w, 0n)
+  R.World.with_pendingNodes(w, [])
 
-def trim_list(ids: List<&2, Nat>, +w: R.World) -> R.World:
-  match ids:
-    case Nil{}:
-      w
-    case +id <> rest:
-      trim_list(rest, B.choose(~R.World, R.Node.modified(B.node(w, id)), _ => w, _ => G.trimStaleDeps(w, id)))
+def trim_list(fuel: Nat, +w: R.World, +index: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.World.trims(w))), _ => w,
+        _ => R.World.with_fault(w, R.Exhausted{}))
+    case 1n+p:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.World.trims(w))), _ => w,
+        _ =>
+          +id = B.get(Nat, R.World.trims(w), index, 0n)
+          +w = B.choose(~R.World, R.Node.modified(B.node(w, id)), _ => w, _ => G.trimStaleDeps(w, id))
+          trim_list(p, w, 1n+index))
 
 def settle(+w: R.World) -> R.World:
   +w = commitPendingNodes(w)
-  trim_list(R.World.trims(w), R.World.with_trims(w, []))
+  +w = trim_list(Nat.add(B.length(Nat, R.World.trims(w)), B.budget(w)), w, 0n)
+  B.choose(~R.World, List.is_empty(&2, Nat, R.World.trims(w)), _ => w,
+    _ => R.World.with_trims(w, []))

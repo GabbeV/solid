@@ -102,7 +102,7 @@ def effect(k: R.NodeKind) -> Bool:
 def blank_node() -> R.Node:
   R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, 0n,
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
-    R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n}
+    R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{}}
 
 def blank_link() -> R.Link:
   R.Link{0n, 0n, 0n, 0n, 0n, 0n}
@@ -113,7 +113,7 @@ def blank_tree() -> R.TreeNode:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 1n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, []}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -145,7 +145,7 @@ def schedule(w: R.World) -> R.World:
 def current(n: R.Node) -> R.Value:
   R.Node{kind, value, pending, equals, config, flags, status, time, notified,
     deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap,
-    parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target} = n
+    parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading} = n
   selected(pending, value)
 
 def valid(+w: R.World, +id: Nat) -> Bool:

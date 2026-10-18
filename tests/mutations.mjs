@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
   ['lost subscriber wake','runtime/scheduler.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
-  ['leaked staging','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n))','_ => B.current(n), _ => B.current(n))'],
+  ['leaked staging','runtime/core.bend','          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))','          value = B.current(n)'],
   ['untrack subscribes','runtime/core.bend','Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev}','Machine{R.World.with_tracking(w, True{}), Evaluate{body, prev}'],
   ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(n), R.Node.value(n))','T.setText(w, R.Node.target(n), R.Undefined{})'],
 ];

@@ -57,7 +57,9 @@ arbitrary-history, async, or optimistic consistency theorems**.
 Tests additionally exercise strict equality, dynamic branches, diamonds,
 nonconsecutive repeated reads, batching, updater composition, lazy activation,
 render/user phases, disposal, and opaque payload identities against the pinned
-Solid production entry. These are parity evidence, not general proofs.
+Solid production entry. Focused internal-state probes compare the actual pinned
+commit/read helpers, including fast/slow value selection and their flags/queues.
+These are parity evidence, not general proofs or full async execution coverage.
 
 The exact source and toolchain are retained under [upstream](upstream).
 [Source correspondence](upstream/correspondence.json), the automatically checked
