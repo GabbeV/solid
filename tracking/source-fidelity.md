@@ -2,9 +2,11 @@
 
 The user has explicitly set the engineering target: a translation close enough to
 line by line to follow future Solid commits. There is no requirement to formally
-prove TypeScript/Bend equivalence. Runtime changes made solely to make a proof or
-example pass are unacceptable. Explain conflicts and investigate potential
-upstream bugs instead of silently repairing the source baseline.
+prove TypeScript/Bend equivalence. The user permits temporary deviations when
+needed to continue progress, provided they are strictly tracked, explained and
+retired or reconciled when the upstream fix lands. A passing proof/example is not
+evidence of correspondence. Preserve source evidence and investigate conflicts;
+do not silently present a workaround as the faithful source implementation.
 
 ## What line by line means here
 
@@ -13,14 +15,16 @@ conditions, field reads/writes, statement and callback order, traversals, catche
 finally restoration, sentinels, flags, fast paths and shared hooks. A loop may
 become recursion, a mutation may become state threading, and mutually recursive
 calls may become explicit continuations. These changes require a correspondence
-explanation. Reordering, simplifying or replacing source decisions is not justified
-by matching a few traces.
+explanation. Reordering, simplifying or replacing source decisions must either
+preserve the admitted source behavior or be recorded as a temporary deviation in
+[the deviation register](deviations.md). Matching a few traces alone is insufficient.
 
 Unsupported domains stay unfinished. The current expression grammar and one-root
 harness define test coverage; they do not establish full source API coverage.
 Useful Bend proofs continue, but their limitations must follow the actual program.
-No equivalent replacement algorithm, display wrapper, or extra publication gate
-may make an unfaithful translation appear correct.
+A workaround, replacement or extra gate must not be presented as source behavior.
+If such a change is necessary, register its exact scope and proof impact and keep
+it isolated/reversible in the one active execution path.
 
 ## Initial audit of the existing checkpoint
 
@@ -47,7 +51,7 @@ kernel-checked executions and differential tests do not close the gaps above.
 
 ## Reviewing a future upstream commit
 
-1. Keep the active baseline unchanged. Obtain a separate candidate checkout.
+1. Keep the pinned reference unchanged. Obtain a separate candidate checkout.
 2. Run `npm run upstream:impact -- /path/to/candidate` (or add `--json`). The report
    compares source file and function fingerprints and identifies existing Bend
    mappings. It is read-only and does not fetch, repin, or approve correspondence.
@@ -60,7 +64,9 @@ kernel-checked executions and differential tests do not close the gaps above.
    the full TS entry can install shared hooks.
 5. Treat correspondence/parity evidence as stale on source drift. Run appropriate
    differential scenarios and Bend checks after the port is updated. Runtime edits
-   also invalidate prior checked-source hashes. Only then prepare an explicit repin.
+   also invalidate prior checked-source hashes. Review every active deviation,
+   record the reviewed pin, and check whether the upstream fix supersedes its delta.
+   Only then prepare an explicit repin.
 
 ## Handling a discrepancy
 
@@ -72,6 +78,9 @@ paired controls, relevant source lines/tests/docs, and remaining uncertainty.
 Before presenting it as current, reproduce against the version under discussion
 and inspect upstream fixes and issue history. State when those checks are incomplete.
 
-Preserve the faithful baseline, including counterexamples. A candidate correction
-must be separate and explain its semantic effect. Present report-ready evidence to
+Preserve the pinned reference and counterexamples. A candidate correction may be
+used to unblock work when its deviation is registered, explained and reversible;
+it need not wait for upstream acceptance or require another runtime. Record the
+issue/fix links, exact affected source, baseline versus patched expectations, and
+what will cause the workaround to be removed. Present report-ready evidence to
 the user; filing or contacting maintainers requires the user's explicit instruction.

@@ -15,7 +15,8 @@ vendored source hashes and production flags are in upstream/pins.json.
   staged-read state. The probe exposes the actual helper beside the full index.
 - `npm run mutations`: compiles four incorrect runtime copies and requires
   differential assertions to reject each. The active source is not mutated.
-- `npm run check`: rejects upstream drift, stale inventory/builds, runs
+- `npm run check`: validates temporary-deviation records and their reviewed pin,
+  seals active deviation IDs with the evidence, rejects upstream drift/stale builds, runs
   PROOF.bend with --verdict, checks no source changed during the run, and seals
   source/output hashes after success. Failed runs do not replace a sealed record.
 

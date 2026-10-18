@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "activeDeviationIds": [],
   "claim": "Concrete synchronous chain_once(6) and chain_twice(6,9) through the active runtime, generic path composition, and payload laws. See LAWS.bend and tracking/frontier.md.",
   "inputs": {
     "runtime/api.bend": "dc33375a3c21f6247e49456810c48d14fde98de21adca9f644f5a11fb0cc2134",
@@ -22,20 +23,25 @@
     "tests/upstream-impact.mjs": "ac3b567518675d9d697a9b0f0a29d7d991d4ec4b817597d5c6c836fd37d4f33f",
     "tools/bootstrap.mjs": "cd9beca6216d62bb087db91c0841097a5a405146c64cfba482a311540c94f73e",
     "tools/build.mjs": "9b1dabbcfc2af42f61b9f2a3badcec39c9d2ac067a5785b4b0e57273b7a09824",
-    "tools/check.mjs": "89d8f684bda45c5fed0ae7a3028c0c12cabebfbd2d33cb2400c87b85f1f177ed",
+    "tools/check.mjs": "b0f0f6115030275548f6f26ed514659bbe79d1e7a654324a7ba12a88fe18b4ff",
     "tools/constants.mjs": "c4bbb57fd74ffdab48d4829d9df7e4e873c9a5f33b76a5570a3bba950f209988",
+    "tools/deviations.mjs": "4fcbedbf843edd81b10e16e3439f4bcc20642b278efa9a14058db199929a0f79",
     "tools/inventory.mjs": "1e217191febda9097eb5df0af7e94d4ba54704cb3e6385f1bde23ea0ff95ec74",
     "tools/pins.mjs": "f8faf60edaf13972cbfa4a112c55df896b7a5e98a4d8eb8771d98cb576a69584",
     "tools/records.py": "9209af13b2c150aeb218c682567b44a8eeaf91e3b5502be3c58457777b50d2c4",
     "tools/source-inventory.mjs": "1d6bf7c29d402412417856072cfef738613184cc6ba332823d76457ee25d162b",
-    "tools/upstream-impact.mjs": "8862ced95d03fce5f1e58f55d701cb3fd91e4e9415999a892f0fb8c7850b54ff",
+    "tools/upstream-impact.mjs": "fb0c975c4bfb052952f17d534bbbeede21e1467cb103d6d7cd34da04240d76c9",
     "LAWS.bend": "156669b3fb44ea171118eeabf267d94d4d5832d7a0a3f6e8e2ecc5ad7eac12a1",
     "PROOF.bend": "c75a10b5f67a74ca1aeabc1bf6e2ccdc0122257ed265daef9f6b136c00c20970",
     "package.json": "10638d823ce1caf4965d662c77f7d96341814e82445ba9251722cac3fcecc63b",
     "package-lock.json": "8ed5e491277e7eebc8c738db67d64b1dbd7021913bbe8c8efab3b5d2ed6a80c0",
     "upstream/pins.json": "9b858794274a50409aab03a547320dd12741411c84334085230beddc1425b360",
     "upstream/correspondence.json": "bf85b0cecaba06b20c4b2f6573523d768e6c5165cd4736f26aeebf07cee7513f",
-    "upstream/inventory.json": "6d4c37cf8edc0967211d23c5aba17f2a1b7e03bda39199f855c35c665746316f"
+    "upstream/inventory.json": "6d4c37cf8edc0967211d23c5aba17f2a1b7e03bda39199f855c35c665746316f",
+    "tracking/deviations.json": "7060c267c912e3156b87c646e3bc970eac1ac8bdd964cf0a794b83e6f1250614",
+    "tracking/deviations.md": "78f9268a3779d24d7b2c90183b9270166ee33ae4dd67dcc3117bc979ec5caa82",
+    "tracking/source-fidelity.md": "0f4d4c5c14cf6f5dbe5c1722c44587362ba96136389f779b14fcbeb53ea3e60b",
+    "AGENTS.md": "496a9ff067a4b8d6dda3bd0c326a3ce3d43f7e189786bf0c0cb5e8265280b61c"
   },
   "outputs": {
     "build/runtime.mjs": "a125e2a2c1cebc423c0a10e06e3c44c05087d103d343460b1dfeed66be8228a4",
@@ -43,7 +49,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 1.1251044980000002,
+    "seconds": 1.086568231,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {

@@ -4,7 +4,9 @@ This is the first executable checkpoint, not a completed package port.
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
-substitutions. These must be repaired before expanding affected paths. A formal
+substitutions. Repair these before expanding affected paths, or register a
+necessary temporary deviation under [deviations.md](deviations.md). The user permits
+tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
 ## Established execution path

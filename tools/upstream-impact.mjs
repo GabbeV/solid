@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {scanTree} from './source-inventory.mjs';
+import {readDeviations} from './deviations.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 function sourceDir(candidate) {
   for(const dir of [path.join(candidate,'packages/signals/src'),path.join(candidate,'src'),candidate]) {
@@ -47,10 +48,12 @@ export function compare(candidate) {
   return {baseline:pins.solid,candidate:{path:dir,kind:'local working-tree snapshot; commit and cleanliness not asserted'},
     scope:'signals src/**/*.ts; separately review tests, documentation, build conditions and initialization reachability',
     evidence:changed.length?'Correspondence and TS parity require review/revalidation. Existing Bend proofs remain about their pinned program, not this candidate.':'No source-file drift detected; this is not a semantic equivalence claim.',
+    deviationsToReview:readDeviations().active.map(e=>({id:e.id,title:e.title,status:e.status,source:e.source,upstream:e.upstream,retirement:e.retirement})),
     changedFiles:changed};
 }
 function markdown(r) {
   const lines=[`Baseline: Solid ${r.baseline.version} (${r.baseline.commit}).`,`Candidate: ${r.candidate.path}`,`Scope: ${r.scope}`,r.evidence,''];
+  for(const d of r.deviationsToReview)lines.push(`Review deviation ${d.id} (${d.status}): ${d.title}; retire when: ${d.retirement.trigger}`);
   if(!r.changedFiles.length)return lines.concat('No changed source files.').join('\n');
   for(const f of r.changedFiles) {
     lines.push(`${f.change}: ${f.file}${f.excludedStore?' [store excluded; shared-hook review still required]':''}`);

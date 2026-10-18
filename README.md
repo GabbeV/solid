@@ -6,7 +6,9 @@ An executable **initial translation of the synchronous, non-store core** of
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
 [the source-fidelity audit](tracking/source-fidelity.md). Proof convenience does
-not justify changing the algorithm, and formal TS/Bend equivalence is not required.
+not establish fidelity, and formal TS/Bend equivalence is not required. Necessary
+temporary deviations are allowed with a [strict deviation record](tracking/deviations.md),
+baseline/changed expectations and an explicit route back to upstream.
 
 The Bend implementation owns dependency registration, generation-stamped linked
 edges, intrusive height buckets, nested memo pulls, staged writes, commit,
