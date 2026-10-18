@@ -97,6 +97,7 @@ export class BendRuntime {
   trace() {
     const name=id=>this.reverse[id] ?? null;
     return list(this.world.events).map(e=> {
+      if ('callback' in e) return ['cleanup',e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),decode(e.value),decode(e.previous)];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),decode(e.value)];
       return ['compute',name(e.id)];

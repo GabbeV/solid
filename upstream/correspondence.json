@@ -178,14 +178,14 @@
       "restrictions": "Stable same-identity owner/computed nodes, head insertion and both sibling pointers."
     },
     "core/owner.ts:disposeChildren": {
-      "bend": "runtime/owner.bend:dispose_work, splice",
+      "bend": "runtime/owner.bend:enter, afterPark, walk, AfterChild, finish, runDisposal, effectCleanup",
       "status": "partial",
-      "restrictions": "Owned synchronous graph without cleanup/parked frames/reentrancy; future bookkeeping and dormant lifecycle open."
+      "restrictions": "Source live child/sibling return points, parked/current frames, child death/AUTO_DISPOSE stripping, heap/deps removal, detached-chain self-predecessor marker, splice guards and cleanup order. Restricted cleanup program ABI supports emit/dispose/register/throw reentry. Dormancy, core commit/recompute consumers, arbitrary callbacks and dev/observe hooks unfinished."
     },
     "core/owner.ts:dispose": {
-      "bend": "runtime/owner.bend:dispose",
+      "bend": "runtime/owner.bend:dispose, disposeStart",
       "status": "partial",
-      "restrictions": "Heap removal, clearDeps, owned descendant death and splice. No automatic dormancy."
+      "restrictions": "Computed path clears AUTO_DISPOSE, removes from heap, clears deps, then source-shaped disposeChildren. Root facade calls the root self-disposal path. No iterator cancellation/unobserved lifecycle integration."
     },
     "core/core.ts:markRefresh": {
       "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
@@ -246,6 +246,21 @@
       "bend": "runtime/construct.bend:createOwner",
       "status": "partial",
       "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished."
+    },
+    "core/owner.ts:runDisposal": {
+      "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
+      "status": "restricted",
+      "restrictions": "Absent/single/list forms, detach-before-callback and reverse registration order; active cleanup programs can reenter/throw. Captured array mutation and arbitrary JS receiver inspection are outside the protocol. Reactive core exception control integration unfinished."
+    },
+    "core/owner.ts:cleanup": {
+      "bend": "runtime/owner.bend:cleanup, addDisposal",
+      "status": "restricted",
+      "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
+    },
+    "core/owner.ts:disposeRootSelf": {
+      "bend": "runtime/owner.bend:disposeStart root branch; disposeChildren",
+      "status": "partial",
+      "restrictions": "Root death routes through source disposeChildren; public root callback/disposer method ABI remains unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

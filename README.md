@@ -54,6 +54,10 @@ reusable path-composition lemma is checked for arbitrary machine states.
 These concrete regressions are **not arbitrary-value, arbitrary-graph,
 arbitrary-history, async, or optimistic consistency theorems**.
 
+A separate concrete cleanup proof checks reentrant root disposal through the
+active owner machine: detached cleanup lists, exact callback order, effect cleanup
+and final owner state. General ownership/cleanup theorems remain open.
+
 Tests additionally exercise strict equality, dynamic branches, diamonds,
 nonconsecutive repeated reads, batching, updater composition, lazy activation,
 render/user phases, disposal, and opaque payload identities against the pinned

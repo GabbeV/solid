@@ -33,11 +33,11 @@ exists after their ordinary synchronous executions.
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
 | `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Error objects/status propagation remain unfinished. |
-| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass clears flight identity. Promise settlement, teardown callbacks, unobserved invocation and transactions are unfinished. |
+| `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Promise settlement, iterator teardown callbacks, unobserved invocation and transactions are unfinished. |
 | `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Storage/default only; status engine unfinished. |
 | `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Storage/default only. No Set operations/propagation are claimed. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
-| `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Commit detects the parked-disposal call site and refuses until teardown is translated. |
+| `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source-shaped owner parked teardown is directly tested. Commit still refuses this call site until core throw/unwind integration is translated. |
 | `_reask`, `_q`, `_marks` | Boolean and natural counters | Default storage; sync/commit reask reset. Question/mark engines unfinished. |
 
 Commit tests compare null/undefined/error-false separately: `_error == null` is
@@ -52,3 +52,18 @@ noSnapshot masks and synchronous loading seeds. `unobserved` callback identities
 and `_extraConfig` are tested at the primitive boundary only. Callback tokens do
 not create executable callbacks. Options with getters, custom comparators,
 async/loading suspension and thenable-shape probing remain outside the grammar.
+
+Owner cleanup uses a separate defunctionalized callback protocol:
+`World.cleanupPrograms` assigns a stable callable identity to a reusable sequence
+of emit/dispose/register/throw actions. A stored disposal keeps its absent/single/
+array form; array callbacks run from the end. The list and effect cleanup token
+are detached at the source sites before any callback executes. A callback throw
+aborts the owner continuation with an explicit `CallbackThrown(Value)` outcome;
+it is not a reactive status error or successful cleanup. Reentry returns through
+the same owner machine. JavaScript `this` inspection and mutation of a captured
+disposal array are outside this protocol. The source probes preserve `.call`
+receiver checks for disposal callbacks and the plain-call effect cleanup.
+
+This protocol does not yet install cleanups returned by effect callbacks, invoke
+unobserved tokens, run iterator cancellation, or support arbitrary host closures.
+The owner machine's task fuel is a resource limit, not a general progress theorem.

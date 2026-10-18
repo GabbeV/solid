@@ -21,9 +21,12 @@ vendored source hashes and production flags are in upstream/pins.json.
   plus 24 held-stash cases. 7,680 constructor comparisons cover source-specific
   masks/defaults, eager/lazy/loading state, parent links/heights, and extension
   defaults/identity. Direct nested-root heap/read forwarding is checked too.
+  Sixteen owner scenarios compare live pointers/flags and exact cleanup traces,
+  covering parked/current frames, LIFO, reentry, fresh registrations, throws,
+  next-sibling changes, dead children and queued dependency-free nodes.
   Test-only in-memory exports expose private state and reset it between cases;
   the source helpers and vendored files are unchanged. These are branch probes,
-  not claims of complete async, error, transaction or arbitrary-callback support.
+  not claims of complete reactive error/status, async, transaction or arbitrary-callback support.
 - `npm run mutations`: compiles four incorrect runtime copies and requires
   differential assertions to reject each. The active source is not mutated.
 - `npm run check`: validates temporary-deviation records and their reviewed pin,
@@ -36,8 +39,9 @@ became impractical in the independent kernel. Canonical transition witnesses
 reduced peak memory but still expanded too much when composing open-context
 computations. They are not counted or retained as completed evidence.
 
-The active roots instead directly check two closed composed regressions through
-the actual API/driver and a general execution-path lemma for arbitrary states.
+The active roots directly check two closed reactive-chain regressions through
+the actual API/driver, one owner cleanup reentry regression through the active
+owner machine, and a general execution-path lemma for arbitrary core states.
 They succeed with the independent kernel. General operation-level refinements,
 arbitrary payloads, graph families and histories remain explicit work.
 

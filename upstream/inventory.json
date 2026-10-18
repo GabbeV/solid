@@ -16739,9 +16739,9 @@
           "sha256": "4faac70fd5850eeb795711dd19ffe0e79eab964a761e3e2cb5cc9646b2380993",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/owner.bend:dispose",
+            "bend": "runtime/owner.bend:dispose, disposeStart",
             "status": "partial",
-            "restrictions": "Heap removal, clearDeps, owned descendant death and splice. No automatic dormancy."
+            "restrictions": "Computed path clears AUTO_DISPOSE, removes from heap, clears deps, then source-shaped disposeChildren. Root facade calls the root self-disposal path. No iterator cancellation/unobserved lifecycle integration."
           }
         },
         {
@@ -16751,9 +16751,9 @@
           "sha256": "699a5800a400c8a5c473991725f7d7ad92b03c195cdb42d1d17014d3581c8f19",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/owner.bend:dispose_work, splice",
+            "bend": "runtime/owner.bend:enter, afterPark, walk, AfterChild, finish, runDisposal, effectCleanup",
             "status": "partial",
-            "restrictions": "Owned synchronous graph without cleanup/parked frames/reentrancy; future bookkeeping and dormant lifecycle open."
+            "restrictions": "Source live child/sibling return points, parked/current frames, child death/AUTO_DISPOSE stripping, heap/deps removal, detached-chain self-predecessor marker, splice guards and cleanup order. Restricted cleanup program ABI supports emit/dispose/register/throw reentry. Dormancy, core commit/recompute consumers, arbitrary callbacks and dev/observe hooks unfinished."
           }
         },
         {
@@ -16773,8 +16773,12 @@
           "start": 179,
           "end": 208,
           "sha256": "65528c170935d390cd3046b43fd7e042b5a1014f7ff03dcb0ba6e2e2198f37c4",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
+            "status": "restricted",
+            "restrictions": "Absent/single/list forms, detach-before-callback and reverse registration order; active cleanup programs can reenter/throw. Captured array mutation and arbitrary JS receiver inspection are outside the protocol. Reactive core exception control integration unfinished."
+          }
         },
         {
           "key": "core/owner.ts:childId",
@@ -16837,8 +16841,12 @@
           "start": 306,
           "end": 312,
           "sha256": "b80cdf7c6a04660283083ad7f9329b0f638e454f2fd4706503ed1361c5695db4",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/owner.bend:cleanup, addDisposal",
+            "status": "restricted",
+            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
+          }
         },
         {
           "key": "core/owner.ts:isDisposed",
@@ -16853,8 +16861,12 @@
           "start": 334,
           "end": 336,
           "sha256": "d7c284bb71e4769abbf37f5ae6d476af2a107ab44a824391e1d6d123439ad719",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/owner.bend:disposeStart root branch; disposeChildren",
+            "status": "partial",
+            "restrictions": "Root death routes through source disposeChildren; public root callback/disposer method ABI remains unfinished."
+          }
         },
         {
           "key": "core/owner.ts:createOwner",

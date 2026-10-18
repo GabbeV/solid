@@ -34,8 +34,10 @@ proof credit was imported.
   [representation.md](representation.md) for storage-only extension fields.
 - Reusable defunctionalized callback programs, not arbitrary JavaScript closures.
   Render application writes computed text. User application records its value
-  and previous value. Callback writes, nested primitive construction, returned
-  cleanup functions, and arbitrary imperative callback reads remain open.
+  and previous value. Owner cleanup programs can emit trace events, dispose
+  owners, register cleanup, or throw a payload. They execute on the active owner
+  machine, including reentrancy. Compute/effect callback writes, nested primitive
+  construction, returned cleanup installation, and arbitrary callback reads remain open.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -80,21 +82,30 @@ Attempted arbitrary-natural-payload versions passed the frontend, but caused
 excessive independent-kernel expansion under open contexts. Even canonical
 transition witnesses remained too costly without further helper refinements.
 Those attempts are not completed proofs and were removed from the active roots.
-The two concrete laws pass independent checking. The differential suite has
+The concrete laws pass independent checking. The differential suite has
 191 scenarios; focused tests additionally compare 7,680 constructor states,
 4,608 commit states, 768 read states and 24 held-stash helper cases with the
 actual pinned TS helpers. These include synthetic internal
 states to probe branches; they do not admit async/transaction/error programs.
+Sixteen owner teardown scenarios additionally compare state and cleanup order,
+including cleanup exceptions (distinct from reactive error/status programs).
+The concrete `cleanup_reentry` law executes a detached disposal array whose
+second callback disposes its root. It checks both owners' death, empty child and
+disposal heads, effect-cleanup detachment, exact callback order `[22,44,33,11]`
+and successful completion through the active owner machine. It is a closed
+regression, not a general cleanup/reentrancy theorem.
 Four deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
 ## Next dependency and broader roadmap
 
-1. Finish the source owner live child/sibling walk, parked-frame disposal and
-   callback protocol. Constructor literals and nullable extension storage now
-   exist; status/cleanup/transaction engines consuming those fields are still
-   unfinished. See the source-fidelity audit for restrictions. Preserve the
+1. Integrate the now source-shaped owner walk with commit, recompute and
+   unobserved lifecycle consumers, preserving throw/unwind ordering in the core
+   driver. Owner cleanup programs and direct parked teardown are tested; their
+   existence does not implement these call sites or returned effect cleanup.
+   Constructor literals and nullable extension storage exist; see the audit for
+   restrictions. Preserve the
    concrete proof scenarios as regressions;
    reusable arena/linked-list refinements can support later generalization.
 2. Translate outcome/status propagation and source-shaped control unwinding;

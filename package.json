@@ -11,7 +11,7 @@
     "mutations": "node tests/mutations.mjs",
     "example": "bun upstream/bend/bend2/main.ts examples/counter.bend",
     "upstream:impact": "node tools/upstream-impact.mjs",
-    "test:alignment": "node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs"
+    "test:alignment": "node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs"
   },
   "devDependencies": {
     "bun": "1.3.14",
