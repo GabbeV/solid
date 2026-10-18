@@ -1843,8 +1843,12 @@
           "start": 211,
           "end": 225,
           "sha256": "7daa539fbf39a9e94f20b6c44a5d963cc86e216dd6eceb1576001c740ccd683c",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd",
+            "status": "partial",
+            "restrictions": "Visited Set as unique IDs, same-error enqueue and one final schedule. Invoked by actual unchanged-value recovery; pending counterpart unfinished."
+          }
         },
         {
           "key": "core/async.ts:settlePendingSource",
@@ -1887,8 +1891,12 @@
           "start": 800,
           "end": 807,
           "sha256": "fd024095e28e4dbe597749e5d9548922daab650f74c170cd94721799765ec1a4",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:clearStatus",
+            "status": "partial",
+            "restrictions": "Source pending-set drop, blocked truthy clear, status mask, truthy error reset and effect notifier. Actual async landing/retirement callers unfinished; direct pending metadata probes are not async execution."
+          }
         },
         {
           "key": "core/async.ts:landStatus",
@@ -1903,16 +1911,24 @@
           "start": 844,
           "end": 905,
           "sha256": "db12cde6c8110ab6fee53ceebd6dcd5721d9d79a5e5e2f00825be3a30b381cca",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:notifyStatus, Notify, wrapped",
+            "status": "partial",
+            "restrictions": "Synchronous STATUS_ERROR arm preserves wrappers, clears source set, writes status/error, invokes effect notifier or propagates. Pending/NotReady, block-status effect arguments, lane and boundary routing unfinished."
+          }
         },
         {
           "key": "core/async.ts:propagateStatus",
           "start": 912,
           "end": 995,
           "sha256": "eced4100d1edd7ec37578ff3801b00d9fccb7b8a3a173545389b608c00e86bce",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:Propagate, PropagateNext",
+            "status": "partial",
+            "restrictions": "Error arm uses live subscriber order, time stamps, rederive/verdict enqueue, reference-identity deduplication, pending intake and recursive notification. Pending-source branches unfinished."
+          }
         }
       ],
       "branches": [
@@ -9912,9 +9928,9 @@
           "sha256": "c396863c285ab585008992d38b0fc321c4ca0f217b479567ddfa0bd7942a8d75",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, passFinally, finish, publish, unwind",
+            "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publish, unwind",
             "status": "partial",
-            "restrictions": "Source teardown/parking, flight cancellation, finally restoration, dead-during-pass freeze and synchronous publication retained. Restricted callback writes/cleanup registrations/disposal execute. Reactive status/error catches, async results, transactions/lanes/snapshot hooks and nested callback construction remain unfinished."
+            "restrictions": "Source teardown/parking, synchronous body catch, clearStatus, finally restoration, dead-pass freeze, publication and same-value error recovery retained. Error wrapper identities survive propagation. Pending/async, stageError, transactions/lanes/snapshots, arbitrary comparators and nested construction remain unfinished."
           }
         },
         {
@@ -10268,9 +10284,9 @@
           "sha256": "9d07bc553ac1db4bbe34645db273257d4b46336761d89974f0571d45ea942763",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
+            "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe",
             "status": "partial",
-            "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking, untrack-in-pass selection and Root._parentComputed forwarding. Snapshot/verdict/held/status/strict-read paths remain open."
+            "restrictions": "Source fast/slow paths, linking/root forwarding, dormant tail, error throw and later-cycle tracked retry retained. Pending, snapshots, verdict windows, held transactions and strict-read hooks remain unfinished."
           }
         },
         {
@@ -13996,7 +14012,7 @@
           "mapping": {
             "bend": "runtime/api.bend:createEffectWithPrograms; runtime/core.bend:InitialEffect",
             "status": "partial",
-            "restrictions": "Separate compute/apply phases, schedule/defer/user options and returned cleanup program installation. Reactive errors and hold hooks unfinished."
+            "restrictions": "Separate compute/apply/error phases, schedule/defer/user options and returned cleanup program. Staged/transaction/lane creation and hold hooks unfinished."
           }
         },
         {
@@ -14004,8 +14020,12 @@
           "start": 100,
           "end": 151,
           "sha256": "8a671bc4360f854d804aea93638550ea9bf5ddb33bc9b8200a1c89ece2afe860",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:notifyEffectStatus",
+            "status": "partial",
+            "restrictions": "Unblocked synchronous error queues user error arm or halts/rethrows render error; clear is inert at root. Pending, blocked forwarding and boundary hooks unfinished."
+          }
         },
         {
           "key": "core/effect.ts:runEffect",
@@ -14014,9 +14034,9 @@
           "sha256": "b549f921a785f37b6066e3b67160825bf99cdea390ff2a3df694bd0872cbed24",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:runEffect",
+            "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally",
             "status": "partial",
-            "restrictions": "Source success path, previous-cleanup detachment, callback program writes/disposal/registration, returned cleanup, prevValue/modified finally and clean-pass trim. Reactive error catch/escalation still unfinished; arbitrary host callbacks outside ABI."
+            "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished."
           }
         },
         {
@@ -14462,8 +14482,12 @@
           "start": 61,
           "end": 63,
           "sha256": "fea4ae43acfae357118b7f1f972e862a05f1c4153c448a3d5b3284cbe5327fbe",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:unwrapStatusError",
+            "status": "partial",
+            "restrictions": "Unwraps one StatusFailure layer. Arbitrary host Error objects/functions as payload data outside grammar."
+          }
         }
       ],
       "branches": [
@@ -17652,16 +17676,24 @@
           "start": 664,
           "end": 674,
           "sha256": "c9d001a04d52d182b2bb18dffcd19a6536a02661266218dd258f76a75107fc55",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "representation/base.bend:schedule",
+            "status": "partial",
+            "restrictions": "Source halt guard, once-only ignored-update report and scheduled flag. Host microtask delivery intentionally manual in the harness; no event-loop theorem."
+          }
         },
         {
           "key": "core/scheduler.ts:haltReactivity",
           "start": 690,
           "end": 716,
           "sha256": "e723b058c131bfe6df04afa02ccae7215d0477b146802a81f7b9f29f86667b51",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/status.bend:haltReactivity; representation/base.bend:report",
+            "status": "partial",
+            "restrictions": "Once-only halt plus explicit production report. Host reportError channel not installed in admitted host; console output represented as ordered reports."
+          }
         },
         {
           "key": "core/scheduler.ts:notifyHalted",
@@ -17676,8 +17708,12 @@
           "start": 730,
           "end": 733,
           "sha256": "eb7c9d5af090efeb075ff1c62395734d4168fd75a04a60f748c4872d83dd6a77",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/api.bend:resetErrorHalt",
+            "status": "partial",
+            "restrictions": "Resets halted and first-ignored-update notification, as source test/dev reload hook."
+          }
         },
         {
           "key": "core/scheduler.ts:GlobalQueue.flush",
@@ -17688,7 +17724,7 @@
           "mapping": {
             "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd",
             "status": "partial",
-            "restrictions": "Source running -> resync -> dormant sweep -> heap -> settle -> clock/scheduled -> detached queues; running restored on throw. Callback writes drain through same outer rounds. Transactions, boundaries and status/error halts unfinished."
+            "restrictions": "Source running/resync/dormancy/heap/settle/clock/queue ordering and exceptional running restoration; callback writes drain through same rounds. Error halt guard retained in public flush. Transactions/boundaries remain unfinished."
           }
         },
         {
@@ -17852,7 +17888,7 @@
           "mapping": {
             "bend": "runtime/core.bend:flush, run",
             "status": "partial",
-            "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
+            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
           }
         },
         {
@@ -17864,7 +17900,7 @@
           "mapping": {
             "bend": "runtime/core.bend:flush, run",
             "status": "partial",
-            "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
+            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
           }
         },
         {
@@ -17876,7 +17912,7 @@
           "mapping": {
             "bend": "runtime/core.bend:flush, run",
             "status": "partial",
-            "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
+            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
           }
         },
         {

@@ -33,10 +33,10 @@ exists after their ordinary synchronous executions.
 | --- | --- | --- |
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
-| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Error objects/status propagation remain unfinished. |
+| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReady/pending remains unfinished. |
 | `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks execute; promise settlement, the full iterator protocol and transactions are unfinished. |
-| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Storage/default only; status engine unfinished. |
-| `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Storage/default only. No Set operations/propagation are claimed. |
+| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | clearStatus drops truthy blocked state; async park/retirement remains unfinished. |
+| `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | clearStatus and error notification drop the node-owned set. Pending propagation/retirement remains unfinished. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
 | `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source parked teardown is integrated with commit/recompute and exception unwinding; directly compared against TS. |
 | `_reask`, `_q`, `_marks` | Boolean and natural counters | Default storage; sync/commit reask reset. Question/mark engines unfinished. |
@@ -67,8 +67,24 @@ receiver checks for disposal callbacks and the plain-call effect cleanup.
 The same protocol executes compute/effect programs and signal writes through the
 one shared setter, installs returned cleanup, and invokes unobserved/cancellation
 tokens. It does not implement arbitrary host closures, the iterator protocol or
-reactive error/status catches. World.dormantNodes represents the source Set as
+pending/async and boundary error paths. World.dormantNodes represents the source Set as
 an ordered unique-ID list; sweeps re-read its live bound and clear only on success.
 Graph callback recursion shares owner tasks; pure pointer operations live in
 graph-state.bend, avoiding a Bend import cycle without substituting a graph walk.
 The owner machine's task fuel is a resource limit, not a general progress theorem.
+
+Synchronous throws use CallbackThrown(Value) only while unwinding a source call.
+The host consumes that outcome before a later call, preserving the mutated world.
+StatusFailure has a stable per-world identity, source ID and recursively retained
+cause. Error propagation preserves the same identity; effect-phase catch allocates
+a new wrapper while escaping with the raw payload. The expression machine saves
+the caller value stack on each compute frame so a caught nested throw cannot leak
+partially evaluated operands. Finally callbacks execute with a suspended outcome;
+a new throw from trimming overrides the prior one at the source return edge.
+
+World.halted/haltNotified and ordered RuntimeReport records express production
+scheduler halt/logging state. The admitted host installs no global reportError
+callback. World.callbackEffect is an ABI parameter slot for the cleanup helper
+passed to a user error program; it does not change reactive context/tracking, and
+is restored on success/throw. This protocol does not expose arbitrary JS errors,
+receiver inspection, reflection, reportError callbacks or arbitrary closures.

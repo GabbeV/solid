@@ -37,7 +37,8 @@ Start with [examples/counter.bend](examples/counter.bend),
 The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
-and throws. Reactive error/status catches remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
+and throws. Synchronous errors propagate through compute/effect catches, recovery and scheduler
+halts. Pending/async and boundary status paths remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
@@ -57,7 +58,9 @@ arbitrary-history, async, or optimistic consistency theorems**.
 
 A separate concrete cleanup proof checks reentrant root disposal through the
 active owner machine: detached cleanup lists, exact callback order, effect cleanup
-and final owner state. General ownership/cleanup theorems remain open.
+and final owner state. Two further closed regressions check error wrapper sharing
+and same-value recovery through the actual graph/queues. General error and
+ownership theorems remain open.
 
 Tests additionally exercise strict equality, dynamic branches, diamonds,
 nonconsecutive repeated reads, batching, updater composition, lazy activation,
@@ -65,8 +68,8 @@ render/user phases, effect cleanup, reentrant writes, dormant memo revival, disp
 Solid production entry. Focused internal-state probes compare the actual pinned
 commit/read helpers, including fast/slow value selection and their flags/queues.
 Separate production constructor tests check option masks, loading-seed presence,
-parent/root forwarding and lazily allocated extension defaults. Extension storage
-does not yet implement the async/status/transaction engines; see
+parent/root forwarding and lazily allocated extension defaults. Synchronous error histories and internal status states also match the pinned helpers.
+Extension storage does not implement async flights or the transaction engine; see
 [the representation notes](tracking/representation.md).
 These are parity evidence, not general proofs or full async execution coverage.
 

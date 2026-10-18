@@ -158,6 +158,8 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{cleanup(w, R.World.context(w), cb), rest}
     case R.CleanupDisposeCurrent{}:
       Machine{w, Dispose{R.World.context(w)} <> rest}
+    case R.CleanupPriorEffect{}:
+      Machine{w, EffectCleanup{R.World.callbackEffect(w), True{}} <> rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
 

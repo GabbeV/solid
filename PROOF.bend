@@ -11,6 +11,12 @@ def Laws.chain_twice():
 def Laws.cleanup_reentry():
   {==}
 
+def Laws.error_propagates():
+  {==}
+
+def Laws.error_recovers_same_value():
+  {==}
+
 def Laws.nan_is_not_equal():
   {==}
 

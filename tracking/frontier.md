@@ -38,7 +38,9 @@ proof credit was imported.
   owners, register cleanup, or throw a payload. They execute on the active owner
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Nested primitive construction,
-  arbitrary callback reads and reactive error catches remain open.
+  and arbitrary callback reads remain open. Synchronous compute/effect error catches,
+  user error programs, explicit previous-cleanup helpers and scheduler halts work.
+  Pending/NotReady, boundaries and async retirement remain unfinished.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -99,18 +101,28 @@ second callback disposes its root. It checks both owners' death, empty child and
 disposal heads, effect-cleanup detachment, exact callback order `[22,44,33,11]`
 and successful completion through the active owner machine. It is a closed
 regression, not a general cleanup/reentrancy theorem.
+Eighteen error histories and 1,728 status-state comparisons cover synchronous
+error identity/sharing, diamond propagation, rederive/verdict enqueue branches,
+clearStatus masks/metadata, later tracked retry, effect error programs/cleanup,
+raw versus wrapped throws, halt/report ordering and overriding finally throws.
+Synthetic pending metadata exercises clearStatus only, not async execution.
+The concrete `error_propagates` and `error_recovers_same_value` laws check a
+source -> conditional memo -> memo -> user chain through failure and equal-value
+recovery: all three status/error slots, preserved wrapper identity, previous/value
+slots, reports, empty queues and restored context/tracking/running, with no halt.
+These are closed regressions, not a general error/status theorem.
 Four deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
-graph/history, error, async, or optimistic theorem is claimed. Exact TypeScript
+graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
 ## Next dependency and broader roadmap
 
 1. Owner teardown is integrated with commit/recompute and unobserved consumers.
    Core unwind restores tracking/context/running on callback throws. Continue
-   from this through reactive compute/effect error catches; those catches are
-   still absent and must not be inferred from cleanup exception tests.
-2. Translate outcome/status propagation and source-shaped control unwinding;
-   then pending-source propagation/retirement and superseded settlements. The
+   from this through pending-source propagation/retirement and superseded
+   settlements. Synchronous error catches/propagation/recovery are now active.
+2. Extend the synchronous error/status layer to pending-source propagation/retirement
+   and superseded settlements, then async flight registration/landing. The
    extension data layout alone does not implement these behaviors.
 3. Add actual transaction discovery, blockers, merge redirects, park/land/reruns,
    and queue release to the SAME driver. This is necessary before async consistency

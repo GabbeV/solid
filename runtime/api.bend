@@ -33,15 +33,19 @@ def createMemo(fuel: Nat, w: R.World, expr: R.Expr, equals: Bool, lazy: Bool, pa
   options = R.NodeOptions.with_lazy(R.NodeOptions.with_equals(N.defaults(), equals), lazy)
   createMemoWithOptions(fuel, w, expr, options, parent)
 
-def createEffectWithPrograms(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
+def createEffectWithHandlers(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat, errorProgram: Nat) -> R.World:
   +id = nextId(w)
   context = R.World.context(w)
   tracking = R.World.tracking(w)
   w = R.World.with_tracking(R.World.with_context(w, parent), False{})
   kind = B.choose(~R.NodeKind, user, _ => R.User{}, _ => R.Render{})
-  w = N.createEffectNode(w, expr, kind, target, options, parent, program, returnedCleanup)
+  +w = N.createEffectNode(w, expr, kind, target, options, parent, program, returnedCleanup)
+  w = B.store_node(w, id, R.Node.with_errorProgram(B.node(w, id), errorProgram))
   w = C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}, C.InitialEffect{id, scheduled, deferred}], []}))
   R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+def createEffectWithPrograms(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
+  createEffectWithHandlers(fuel, w, expr, user, target, scheduled, deferred, options, parent, program, returnedCleanup, 0n)
 
 def createEffectWithOptions(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat) -> R.World:
   createEffectWithPrograms(fuel, w, expr, user, target, scheduled, deferred, options, parent, 0n, 0n)
@@ -138,7 +142,7 @@ def select(condition: R.Expr, yes: R.Expr, no: R.Expr) -> R.Expr:
 def untrack(e: R.Expr) -> R.Expr:
   R.Untracked{e}
 
-def unsupportedError(cause: R.Value) -> R.Expr:
+def throwError(cause: R.Value) -> R.Expr:
   R.Raise{cause}
 
 def attach(w: R.World, parent: Nat, id: Nat) -> R.World:
@@ -191,3 +195,13 @@ def callProgram(callback: Nat) -> R.Expr:
 
 def then(first: R.Expr, second: R.Expr) -> R.Expr:
   R.Then{first, second}
+
+# A thrown host call consumes the exception outcome before the next API call.
+def clearException(w: R.World) -> R.World:
+  R.World.with_fault(w, R.Healthy{})
+
+def resetErrorHalt(w: R.World) -> R.World:
+  R.World.with_haltNotified(R.World.with_halted(w, False{}), False{})
+
+def programPreviousCleanup(tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail)}

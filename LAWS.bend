@@ -3,6 +3,7 @@ import ./representation/base.bend as B
 import ./representation/records.bend as R
 import ./proof/chain.bend as Chain
 import ./proof/ownership.bend as Ownership
+import ./proof/errors.bend as Errors
 
 # Concrete composed regressions through actual API construction, driver,
 # reads, heap, staging/commit and attached text. Generalization stays open.
@@ -14,6 +15,12 @@ law chain_twice:
 
 law cleanup_reentry:
   {Ownership.view(Ownership.scenario()) == Ownership.expected() : Ownership.View}
+
+law error_propagates:
+  {Errors.view(Errors.errored()) == Errors.expectedError() : Errors.View}
+
+law error_recovers_same_value:
+  {Errors.view(Errors.recovered()) == Errors.expectedRecovery() : Errors.View}
 
 law nan_is_not_equal:
   {B.equal(R.NotANumber{}, R.NotANumber{}) == False{} : Bool}

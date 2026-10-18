@@ -200,5 +200,5 @@ for(let index=0;index<160;index++) {
 for(const v of [undefined,null,NaN,0,-0,12,true,false,'hello',{ref:42}]) assert.deepEqual(decode(encode(v)),v===0?0:v);
 assert.throws(()=>encode(0.5),RangeError);
 const exhausted=new BendRuntime({fuel:0});assert.throws(()=>exhausted.memo('x',lit(1)),/stopped/);
-const unsupported=new BendRuntime();assert.throws(()=>unsupported.memo('x',{raise:null}),/stopped/);
+const errored=new BendRuntime();errored.memo('x',{raise:null});assert.throws(()=>errored.read('x'),e=>e.cause===null);
 console.log(`${passed} differential scenarios passed, including generated histories and graph invariants.`);

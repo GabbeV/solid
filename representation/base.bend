@@ -60,6 +60,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.Reference{x} R.Reference{y}:
       Nat.is_eq(x, y)
+    case R.StatusFailure{x, sourceA, causeA} R.StatusFailure{y, sourceB, causeB}:
+      Nat.is_eq(x, y)
     case R.StringValue{x} R.StringValue{y}:
       String.eq(x, y)
     case _ _:
@@ -72,6 +74,8 @@ def truth(v: R.Value) -> Bool:
     case R.Number{n}:
       Nat.is_ne(n, 0n)
     case R.Reference{id}:
+      True{}
+    case R.StatusFailure{identity, source, cause}:
       True{}
     case R.StringValue{s}:
       Bool.not(String.is_empty(s))
@@ -128,7 +132,7 @@ def blank_node() -> R.Node:
   R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n}
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n}
 
 def blank_link() -> R.Link:
   R.Link{0n, 0n, 0n, 0n, 0n, 0n}
@@ -174,7 +178,7 @@ def noDisposal(d: R.Disposal) -> Bool:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], []}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -200,8 +204,16 @@ def bump(+w: R.World) -> R.World:
 def event(+w: R.World, e: R.TraceEvent) -> R.World:
   R.World.with_events(w, append(R.TraceEvent, R.World.events(w), [e]))
 
-def schedule(w: R.World) -> R.World:
-  R.World.with_scheduled(w, True{})
+# Production scheduler IO is an explicit host report, not a callback.
+# kind 0 = halt, 1 = first ignored scheduling after halt, 2 = user error log.
+def report(+w: R.World, kind: U32, cause: R.Slot) -> R.World:
+  R.World.with_reports(w, append(R.Report, R.World.reports(w), [R.RuntimeReport{kind, cause}]))
+
+def schedule(+w: R.World) -> R.World:
+  choose(~R.World, R.World.halted(w),
+    _ => choose(~R.World, R.World.haltNotified(w), _ => w,
+      _ => report(R.World.with_haltNotified(w, True{}), 1, R.Empty{})),
+    _ => R.World.with_scheduled(w, True{}))
 
 def current(+n: R.Node) -> R.Value:
   selected(R.Node.pending(n), R.Node.value(n))

@@ -83,9 +83,9 @@
       "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
     },
     "core/core.ts:recompute": {
-      "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, passFinally, finish, publish, unwind",
+      "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publish, unwind",
       "status": "partial",
-      "restrictions": "Source teardown/parking, flight cancellation, finally restoration, dead-during-pass freeze and synchronous publication retained. Restricted callback writes/cleanup registrations/disposal execute. Reactive status/error catches, async results, transactions/lanes/snapshot hooks and nested callback construction remain unfinished."
+      "restrictions": "Source teardown/parking, synchronous body catch, clearStatus, finally restoration, dead-pass freeze, publication and same-value error recovery retained. Error wrapper identities survive propagation. Pending/async, stageError, transactions/lanes/snapshots, arbitrary comparators and nested construction remain unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, afterCheck, ClearFlags",
@@ -103,9 +103,9 @@
       "restrictions": "No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."
     },
     "core/core.ts:read": {
-      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
+      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe",
       "status": "partial",
-      "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking, untrack-in-pass selection and Root._parentComputed forwarding. Snapshot/verdict/held/status/strict-read paths remain open."
+      "restrictions": "Source fast/slow paths, linking/root forwarding, dormant tail, error throw and later-cycle tracked retry retained. Pending, snapshots, verdict windows, held transactions and strict-read hooks remain unfinished."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
@@ -150,7 +150,7 @@
     "core/scheduler.ts:GlobalQueue.flush": {
       "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd",
       "status": "partial",
-      "restrictions": "Source running -> resync -> dormant sweep -> heap -> settle -> clock/scheduled -> detached queues; running restored on throw. Callback writes drain through same outer rounds. Transactions, boundaries and status/error halts unfinished."
+      "restrictions": "Source running/resync/dormancy/heap/settle/clock/queue ordering and exceptional running restoration; callback writes drain through same rounds. Error halt guard retained in public flush. Transactions/boundaries remain unfinished."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
       "bend": "runtime/scheduler.bend:settle",
@@ -160,17 +160,17 @@
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, run",
       "status": "partial",
-      "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
+      "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
     },
     "core/effect.ts:effect": {
       "bend": "runtime/api.bend:createEffectWithPrograms; runtime/core.bend:InitialEffect",
       "status": "partial",
-      "restrictions": "Separate compute/apply phases, schedule/defer/user options and returned cleanup program installation. Reactive errors and hold hooks unfinished."
+      "restrictions": "Separate compute/apply/error phases, schedule/defer/user options and returned cleanup program. Staged/transaction/lane creation and hold hooks unfinished."
     },
     "core/effect.ts:runEffect": {
-      "bend": "runtime/core.bend:runEffect",
+      "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally",
       "status": "partial",
-      "restrictions": "Source success path, previous-cleanup detachment, callback program writes/disposal/registration, returned cleanup, prevValue/modified finally and clean-pass trim. Reactive error catch/escalation still unfinished; arbitrary host callbacks outside ABI."
+      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",
@@ -286,6 +286,51 @@
       "bend": "runtime/owner.bend:releaseFlightTeardown",
       "status": "partial",
       "restrictions": "Detach teardown before invocation; cancellation ordering and throw state compared. Actual async iterator protocol unfinished."
+    },
+    "core/async.ts:clearStatus": {
+      "bend": "runtime/status.bend:clearStatus",
+      "status": "partial",
+      "restrictions": "Source pending-set drop, blocked truthy clear, status mask, truthy error reset and effect notifier. Actual async landing/retirement callers unfinished; direct pending metadata probes are not async execution."
+    },
+    "core/async.ts:notifyStatus": {
+      "bend": "runtime/status.bend:notifyStatus, Notify, wrapped",
+      "status": "partial",
+      "restrictions": "Synchronous STATUS_ERROR arm preserves wrappers, clears source set, writes status/error, invokes effect notifier or propagates. Pending/NotReady, block-status effect arguments, lane and boundary routing unfinished."
+    },
+    "core/async.ts:propagateStatus": {
+      "bend": "runtime/status.bend:Propagate, PropagateNext",
+      "status": "partial",
+      "restrictions": "Error arm uses live subscriber order, time stamps, rederive/verdict enqueue, reference-identity deduplication, pending intake and recursive notification. Pending-source branches unfinished."
+    },
+    "core/async.ts:settleErroredDependents": {
+      "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd",
+      "status": "partial",
+      "restrictions": "Visited Set as unique IDs, same-error enqueue and one final schedule. Invoked by actual unchanged-value recovery; pending counterpart unfinished."
+    },
+    "core/effect.ts:notifyEffectStatus": {
+      "bend": "runtime/status.bend:notifyEffectStatus",
+      "status": "partial",
+      "restrictions": "Unblocked synchronous error queues user error arm or halts/rethrows render error; clear is inert at root. Pending, blocked forwarding and boundary hooks unfinished."
+    },
+    "core/error.ts:unwrapStatusError": {
+      "bend": "runtime/status.bend:unwrapStatusError",
+      "status": "partial",
+      "restrictions": "Unwraps one StatusFailure layer. Arbitrary host Error objects/functions as payload data outside grammar."
+    },
+    "core/scheduler.ts:haltReactivity": {
+      "bend": "runtime/status.bend:haltReactivity; representation/base.bend:report",
+      "status": "partial",
+      "restrictions": "Once-only halt plus explicit production report. Host reportError channel not installed in admitted host; console output represented as ordered reports."
+    },
+    "core/scheduler.ts:schedule": {
+      "bend": "representation/base.bend:schedule",
+      "status": "partial",
+      "restrictions": "Source halt guard, once-only ignored-update report and scheduled flag. Host microtask delivery intentionally manual in the harness; no event-loop theorem."
+    },
+    "core/scheduler.ts:resetErrorHalt": {
+      "bend": "runtime/api.bend:resetErrorHalt",
+      "status": "partial",
+      "restrictions": "Resets halted and first-ignored-update notification, as source test/dev reload hook."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

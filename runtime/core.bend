@@ -11,6 +11,8 @@ import ./scheduler.bend as S
 import ./constants.bend as K
 import ./read-state.bend as V
 import ./owner.bend as O
+import ./status.bend as A
+import ./extension.bend as E
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -20,6 +22,7 @@ type Task is Data:
   RestoreTracking{tracking: Bool}
   ReadNode{id: Nat}
   ReadPrepared{id: Nat}
+  ReadStatus{id: Nat}
   Serve{id: Nat}
   AfterServe{id: Nat}
   RaiseHeight{source: Nat, reader: Nat}
@@ -28,7 +31,7 @@ type Task is Data:
   AfterCheck{id: Nat}
   ClearFlags{id: Nat}
   Recompute{id: Nat, create: Bool}
-  Finish{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool}
+  Finish{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, saved: List<&2, R.Value>}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
   Round{}
@@ -119,8 +122,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
     case R.Then{first, second}:
       Machine{w, Evaluate{first, prev} <> Discard{} <> Evaluate{second, prev} <> rest, stack}
     case R.Raise{cause}:
-      # Error-status propagation is not yet translated. Refuse explicitly.
-      Machine{R.World.with_fault(w, R.Unsupported{1n}), rest, stack}
+      Machine{R.World.with_fault(w, R.CallbackThrown{cause}), rest, stack}
 
 # Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
 # the pass flag remains source state even in the synchronous profile. A source
@@ -162,8 +164,8 @@ def prepareSlow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
         _ => H.markHeap(H.markNode(w, reader, 2)), _ => w)
       todo = B.choose(~List<&2, Task>, Nat.is_ge(R.Node.height(B.node(w, id)), R.World.minimum(w)),
         _ => [Update{id}], _ => [])
-      Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> Serve{id} <> AfterServe{id} <> rest), stack},
-    _ => Machine{w, Serve{id} <> AfterServe{id} <> rest, stack})
+      Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> ReadStatus{id} <> AfterServe{id} <> rest), stack},
+    _ => Machine{w, ReadStatus{id} <> AfterServe{id} <> rest, stack})
 
 def afterServe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
@@ -171,6 +173,19 @@ def afterServe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id:
     Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()), Bool.and(Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING())), Nat.is_eq(R.Node.subs(n), 0n)))))
   w = B.choose(~R.World, dormant, _ => B.schedule(G.queueDormant(w, id)), _ => w)
   Machine{w, rest, stack}
+
+# core/core.ts:read, status block after pull and before value selection.
+def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +n = B.node(w, id)
+  B.choose(~Machine, B.has(R.Node.status(n), K.STATUS_PENDING()),
+    _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, stack},
+    _ => B.choose(~Machine, Bool.and(B.computed(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
+      _ => B.choose(~Machine, Bool.and(R.World.tracking(w), Nat.is_lt(R.Node.time(n), R.World.clock(w))),
+        _ => Machine{w, Recompute{id, False{}} <> ReadNode{id} <> rest, stack},
+        _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.error(B.extension(w, id))}), rest, stack}),
+      _ => B.choose(~Machine, Bool.and(Nat.is_eq(B.parentComputed(w, R.World.context(w)), 0n), B.truth(R.NodeExtension.shownError(B.extension(w, id)))),
+        _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.shownError(B.extension(w, id))}), rest, stack},
+        _ => Machine{w, Serve{id} <> rest, stack})))
 
 # Read event instrumentation belongs to the callback adapter, after value choice.
 def served(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +value: R.Value) -> Machine:
@@ -280,7 +295,7 @@ def prepareRecompute(+w: R.World, +id: Nat) -> R.World:
             _ => O.parkChildren(w, id), _ => w))),
     _ => w)
 
-def recomputePrepared(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
+def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
   +n = B.node(w, id)
   reask = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_REASK()),
     Bool.not(Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Bool.not(R.NodeExtension.reask(B.extension(w, id)))))))
@@ -291,7 +306,8 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value
   +n = R.Node.with_flags(n, B.set(K.REACTIVE_RECOMPUTING_DEPS(), U32.and(R.Node.flags(n), B.set(K.REACTIVE_ZOMBIE(), K.REACTIVE_REASK()))))
   +n = R.Node.with_time(n, R.World.clock(w))
   +w = B.store_node(w, id, n)
-  next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{id, create, context, R.World.tracking(w), R.Node.height(n), reask} <> rest : List<&2, Task>}
+  next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
+    B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}), stack} <> rest : List<&2, Task>}
   w = R.World.with_tracking(B.event(w, R.Invoked{id}), True{})
   Machine{w, next, stack}
 
@@ -300,23 +316,28 @@ def recompute(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
   +w = B.choose(~R.World, create, _ => w, _ => prepareRecompute(w, id))
   B.choose(~Machine, B.ok(w), _ => recomputePrepared(w, rest, stack, id, create), _ => Machine{w, rest, stack})
 
-def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat) -> R.World:
-  +n = B.node(w, id)
-  +isEffect = B.effect(R.Node.kind(n))
-  +changed = Bool.or(Bool.and(Bool.not(isEffect), B.has(R.Node.status(n), 4)),
-    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
-  +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
+def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value) -> R.World:
+  +w = B.choose(~R.World, B.truth(R.NodeExtension.error(B.extension(w, id))), _ => w,
     _ =>
-      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
-      B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
-  +w = B.choose(~R.World, changed,
-    _ =>
-      +w = B.choose(~R.World, Bool.or(create, Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id)))))),
-        _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
-        _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})))
-      B.choose(~R.World, Nat.is_ne(R.Node.subs(n), 0n), _ => S.insertSubs(w, id), _ => w),
-    _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
-      _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
+      +n = B.node(w, id)
+      +isEffect = B.effect(R.Node.kind(n))
+      +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
+        Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
+      +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
+        _ =>
+          +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
+          B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
+      +w = B.choose(~R.World, changed,
+        _ =>
+          +w = B.choose(~R.World, Bool.or(create, Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id)))))),
+            _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
+            _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})))
+          B.choose(~R.World, Nat.is_ne(R.Node.subs(n), 0n), _ => S.insertSubs(w, id), _ => w),
+        _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
+          _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
+      recover = Bool.and(Bool.not(changed), Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.not(B.equal(outgoing, R.Undefined{}))))
+      B.choose(~R.World, recover,
+        _ => A.settleErroredDependents(w, id, outgoing), _ => w))
   +n = B.node(w, id)
   +w = B.choose(~R.World, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
     _ => B.choose(~R.World, create, _ => G.trimStaleDeps(w, id),
@@ -328,7 +349,7 @@ def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: N
         Bool.and(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED())), Bool.or(Bool.not(create), B.has(R.Node.status(n), K.STATUS_PENDING())))))
       +w = B.choose(~R.World, queued,
         _ => S.queuePendingNode(B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), 128))), id), _ => w)
-      B.store_node(w, id, R.Node.with_status(B.node(w, id), 0)),
+      w,
     _ => w)
 
 # recompute's finally is shared by normal return and exceptional unwind.
@@ -345,51 +366,118 @@ def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Boo
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
     _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), Bool.and(reask, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))), _ => w)
 
-def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool) -> Machine:
+def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, missed: Bool) -> Machine:
+  B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
+    _ =>
+      +w = G.clearDeps(w, id)
+      w = B.choose(~R.World, Bool.and(B.ok(w), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+      Machine{w, rest, stack},
+    _ =>
+      +w = publish(w, id, value, create, oldHeight, wasUninitialized, outgoing)
+      w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
+      Machine{w, rest, stack})
+
+def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, saved: List<&2, R.Value>) -> Machine:
   match stack:
     case value <> +tail:
       +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
       +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
+      +w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
+        _ => A.clearStatus(w, id, create), _ => w)
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
       +w = passFinally(w, id, create, context, tracking, reask)
-      B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
-        _ =>
-          +w = G.clearDeps(w, id)
-          +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-            _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
-          Machine{w, rest, tail},
-        _ =>
-          +w = publish(w, id, value, create, oldHeight)
-          w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
-          Machine{w, rest, tail})
+      B.choose(~Machine, B.ok(w),
+        _ => afterPass(w, rest, tail, id, create, value, oldHeight, wasUninitialized, outgoing, missed),
+        _ => Machine{w, rest, tail})
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
-# core/effect.ts:runEffect success/cleanup path. Program callbacks are the
-# defunctionalized _effectFn; returnedCleanup is its fixed return in this ABI.
+# Body throw -> source catch -> finally -> publication tail, with the caller's
+# value stack restored. A throw from the prelude has no frame of its own here.
+def catchStatus(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
+  match fault:
+    case R.CallbackThrown{cause}:
+      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+        _ => R.World.with_fault(w, R.Unsupported{9n}),
+        _ => A.notifyStatus(R.World.with_fault(w, R.Healthy{}), id, cause))
+    case other:
+      w
+
+def catchPass(+w: R.World, +rest: List<&2, Task>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, +saved: List<&2, R.Value>) -> Machine:
+  +w = catchStatus(w, id, R.World.fault(w))
+  +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
+  +w = passFinally(w, id, create, context, tracking, reask)
+  B.choose(~Machine, B.ok(w),
+    _ => afterPass(w, rest, saved, id, create, previous, oldHeight, wasUninitialized, outgoing, missed),
+    _ => Machine{w, rest, saved})
+
+# effect.ts:runEffect's catch always constructs a fresh StatusError, even if
+# the thrown payload was itself a wrapper; the escaping throw remains raw.
+def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
+  match fault:
+    case R.CallbackThrown{+cause}:
+      +pair = A.statusError(w, id, cause)
+      +w = E.ext(B.first(R.World, R.Value, pair), id)
+      +w = B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), B.second(R.World, R.Value, pair)))
+      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_ERROR())))
+      R.World.with_fault(A.haltReactivity(w, cause), R.CallbackThrown{cause})
+    case other:
+      w
+
+# A finally callback runs despite an active throw; its own throw overrides it.
+def trimFinally(+w: R.World, id: Nat, +prior: R.Fault) -> R.World:
+  +w = G.trimStaleDeps(R.World.with_fault(w, R.Healthy{}), id)
+  B.choose(~R.World, B.ok(w), _ => R.World.with_fault(w, prior), _ => w)
+
+# Error-arm throws escalate without replacing the compute's status error.
+def errorArmCatch(+w: R.World, fault: R.Fault) -> R.World:
+  match fault:
+    case R.CallbackThrown{cause}:
+      A.haltReactivity(w, cause)
+    case other:
+      w
+
+# User compute errors take the error arm in the effect phase. The helper
+# passed to the program detaches prior cleanup, as the source closure does.
+def userError(+w: R.World, +id: Nat) -> R.World:
+  +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
+  +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
+  +program = R.Node.errorProgram(B.node(w, id))
+  +param = R.World.callbackEffect(w)
+  +w = B.choose(~R.World, Nat.is_ne(program, 0n),
+    _ => O.invoke(R.World.with_callbackEffect(w, id), program),
+    _ => B.report(w, 2, R.Present{A.unwrapStatusError(R.NodeExtension.error(B.extension(w, id)))}))
+  +w = R.World.with_callbackEffect(w, param)
+  errorArmCatch(w, R.World.fault(w))
+
+# core/effect.ts:runEffect. Programs represent _effectFn and its return value.
 def runEffect(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
   +w = B.choose(~R.World, Bool.and(R.Node.modified(n), Bool.not(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()))),
-    _ =>
-      +clean = B.nullish(R.NodeExtension.error(B.extension(w, id)))
-      +prevCleanup = R.Node.cleanup(n)
-      +w = B.store_node(w, id, R.Node.with_cleanup(n, 0n))
-      +w = B.choose(~R.World, Nat.is_ne(prevCleanup, 0n), _ => O.invoke(w, prevCleanup), _ => w)
-      +w = B.choose(~R.World, B.ok(w),
-        _ =>
-          +w = B.event(w, R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))})
-          +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
-            _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
-          +callback = R.Node.effectProgram(B.node(w, id))
-          +w = B.choose(~R.World, Nat.is_ne(callback, 0n), _ => O.invoke(w, callback), _ => w)
-          B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), R.Node.returnedCleanup(B.node(w, id)))), _ => w),
-        _ => w)
-      # Source finally executes even when a cleanup/callback threw. The catch's
-      # status/boundary/halt routing is translated in the next layer.
-      +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
-      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
-      B.choose(~R.World, clean, _ => G.trimStaleDeps(w, id), _ => w),
+    _ => B.choose(~R.World, Bool.and(S.is_user(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
+      _ => userError(w, id),
+      _ =>
+        +clean = B.nullish(R.NodeExtension.error(B.extension(w, id)))
+        +prevCleanup = R.Node.cleanup(n)
+        +w = B.store_node(w, id, R.Node.with_cleanup(n, 0n))
+        +w = B.choose(~R.World, Nat.is_ne(prevCleanup, 0n), _ => O.invoke(w, prevCleanup), _ => w)
+        +w = B.choose(~R.World, B.ok(w),
+          _ =>
+            +w = B.event(w, R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))})
+            +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
+              _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
+            +callback = R.Node.effectProgram(B.node(w, id))
+            +w = B.choose(~R.World, Nat.is_ne(callback, 0n), _ => O.invoke(w, callback), _ => w)
+            B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), R.Node.returnedCleanup(B.node(w, id)))), _ => w),
+          _ => w)
+        +w = effectCatch(w, id, R.World.fault(w))
+        # Source finally, including an overriding trim exception.
+        +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
+        +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
+        B.choose(~R.World, clean, _ => trimFinally(w, id, R.World.fault(w)), _ => w),
+      ),
     _ => w)
   Machine{w, rest, stack}
 
@@ -439,7 +527,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       evaluate(w, rest, stack, expr, prev)
     case Discard{} <> rest:
       match stack:
-        case value <> tail:
+        case value <> +tail:
           Machine{w, rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
@@ -453,6 +541,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       readNode(w, rest, stack, id)
     case ReadPrepared{id} <> +rest:
       readPrepared(w, rest, stack, id)
+    case ReadStatus{id} <> rest:
+      readStatus(w, rest, stack, id)
     case Serve{id} <> +rest:
       serve(w, rest, stack, id)
     case AfterServe{id} <> rest:
@@ -469,8 +559,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), 3))), rest, stack}
     case Recompute{id, create} <> +rest:
       recompute(w, rest, stack, id, create)
-    case Finish{id, create, context, tracking, oldHeight, reask} <> +rest:
-      finish(w, rest, stack, id, create, context, tracking, oldHeight, reask)
+    case Finish{id, create, context, tracking, oldHeight, reask, previous, wasUninitialized, outgoing, saved} <> +rest:
+      finish(w, rest, stack, id, create, context, tracking, oldHeight, reask, previous, wasUninitialized, outgoing, saved)
     case InitialEffect{+id, +scheduled, deferred} <> +rest:
       B.choose(~Machine, deferred, _ => Machine{w, rest, stack},
         _ => B.choose(~Machine, Bool.or(scheduled, S.is_user(R.Node.kind(B.node(w, id)))),
@@ -505,8 +595,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       Machine{w, [], stack}
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
-    case Finish{id, create, context, tracking, height, reask} <> rest:
-      Machine{passFinally(w, id, create, context, tracking, reask), rest, stack}
+    case Finish{id, create, context, tracking, height, reask, previous, wasUninitialized, outgoing, saved} <> rest:
+      catchPass(w, rest, id, create, context, tracking, height, reask, previous, wasUninitialized, outgoing, saved)
     case FlushFinally{} <> rest:
       Machine{R.World.with_running(w, False{}), rest, stack}
     case task <> rest:
@@ -531,7 +621,7 @@ def run(fuel: Nat, m: Machine) -> Machine:
       run(p, step(Machine{w, tasks, stack}))
 
 def flush(fuel: Nat, +w: R.World) -> R.World:
-  B.choose(~R.World, Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))), _ => w,
+  B.choose(~R.World, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))), _ => w,
     _ => world(run(fuel, Machine{w, [Round{}], []})))
 
 def eval(fuel: Nat, w: R.World, expr: R.Expr, prev: R.Value) -> Machine:
