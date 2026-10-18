@@ -8,6 +8,7 @@ import ./extension.bend as E
 import ./write.bend as W
 import ./heap.bend as H
 import ./pending-state.bend as P
+import ./transaction.bend as X
 
 def unwrapStatusError(error: R.Value) -> R.Value:
   match error:
@@ -44,7 +45,7 @@ def notifyEffectStatusOf(+w: R.World, +id: Nat, +status: U32, +error: R.Value) -
         _ => W.enqueue(B.store_node(w, id, R.Node.with_modified(n, True{})), id), _ => w),
       _ => R.World.with_fault(haltReactivity(w, unwrapStatusError(error)), R.CallbackThrown{error})),
     _ => B.choose(~R.World, Bool.and(Bool.not(W.is_user(R.Node.kind(n))), B.has(status, K.STATUS_PENDING())),
-      _ => R.World.with_fault(w, R.Unsupported{9n}), _ => w))
+      _ => X.joinFuture(w, 0n), _ => w))
 
 def notifyEffectStatus(+w: R.World, +id: Nat) -> R.World:
   notifyEffectStatusOf(w, id, R.Node.status(B.node(w, id)), R.NodeExtension.error(B.extension(w, id)))
@@ -110,7 +111,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
       +error = B.second(R.World, R.Value, pair)
       +w = B.choose(~R.World, block, _ => w, _ => storeStatus(w, id, status, error))
       B.choose(~Machine, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())),
-        _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, visited, scheduled},
+        _ => Machine{B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => X.joinFuture(w, 0n), _ => w), rest, visited, scheduled},
         _ => B.choose(~Machine, B.effect(R.Node.kind(B.node(w, id))),
           _ =>
             w = B.choose(~R.World, Bool.and(block, U32.is_eq(status, K.STATUS_PENDING())), _ => w,
@@ -132,15 +133,15 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
             _ => B.choose(~Machine, Bool.and(pending, Bool.and(Nat.is_ne(source, 0n), P.hasSource(w, id, source))),
               _ =>
                 w = B.choose(~R.World, Bool.and(Bool.and(B.has(R.Node.config(sub), K.CONFIG_HELD()), Bool.not(B.has(R.Node.config(sub), K.CONFIG_OVERRIDE()))), R.World.running(w)),
-                  _ => R.World.with_fault(w, R.Unsupported{9n}), _ => w)
+                  _ => X.joinNode(w, id), _ => w)
                 Machine{w, next, visited, scheduled},
               _ => B.choose(~Machine, Bool.or(Bool.and(pending, Nat.is_ne(source, 0n)), Bool.and(Bool.not(pending),
-                  Bool.or(Bool.not(B.equal(R.NodeExtension.error(B.extension(w, id)), error)), hasSources(R.NodeExtension.pendingSources(B.extension(w, id)))))),
+                  Bool.or(Bool.not(B.equal(R.NodeExtension.error(B.extension(w, id)), error)), hasSources(B.pendingSources(w, id))))),
                 _ =>
                   +w = B.choose(~R.World, block, _ => w, _ => W.queuePendingNode(w, id))
                   +w = B.choose(~R.World, Bool.and(Bool.not(block), Bool.and(pending, Bool.and(B.has(R.Node.config(sub), K.CONFIG_HELD()),
                     Bool.and(Bool.not(B.has(R.Node.config(sub), K.CONFIG_OVERRIDE())), Bool.not(B.effect(R.Node.kind(sub))))))),
-                    _ => R.World.with_fault(w, R.Unsupported{9n}), _ => w)
+                    _ => X.joinNode(w, id), _ => w)
                   Machine{w, Notify{id, status, error, block} <> next, visited, scheduled},
                 _ => Machine{w, next, visited, scheduled}))))
     case PropagateNext{+edge, status, error, block} <> rest:

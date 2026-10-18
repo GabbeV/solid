@@ -36,6 +36,10 @@ vendored source hashes and production flags are in upstream/pins.json.
   2,880 pending comparisons cover source-set operations, pending/null/stale-link
   propagation, loading parks, self-only landing, retry paths, convergence, deferred
   cleanup release and throw partial states. Flight/transaction callers remain open.
+  2,160 transaction + 4,096 blocker comparisons retain join/merge and judgment
+  state. 2,304 seam + 48 deferred cases check full park/land/queue/cleanup order.
+  4,096 held operations compare reads/writes, born-held/frame posture, stashes,
+  pending catches and staged errors. Nine Set alias/iterator cases check captures.
   Test-only in-memory exports expose private state and reset it between cases;
   the source helpers and vendored files are unchanged. These are branch probes,
   not claims of complete reactive error/status, async, transaction or arbitrary-callback support.
@@ -54,7 +58,8 @@ computations. They are not counted or retained as completed evidence.
 The active roots directly check two closed reactive-chain regressions through
 the actual API/driver, one owner cleanup reentry regression through the active
 owner machine, two concrete error-chain failure/recovery regressions, two direct pending-helper
-diamond/other-path regressions, and a general execution-path lemma for arbitrary core states.
+diamond/other-path regressions, two actual transaction park/land regressions
+with an explicit open-count input, and a general execution-path lemma for arbitrary core states.
 They succeed with the independent kernel. General operation-level refinements,
 arbitrary payloads, graph families and histories remain explicit work.
 

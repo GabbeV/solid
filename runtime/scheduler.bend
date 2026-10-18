@@ -1,5 +1,6 @@
-# No-transaction production path of src/core/scheduler.ts. No lane, snapshot,
-# store, boundary, external-source or attribution hooks are installed here.
+# Source scheduler helpers. GlobalQueue.settle continuations live in core.bend
+# to express recursive recomputes without a Bend module cycle. Active lane,
+# snapshot, store, boundary and attribution scopes remain unfinished.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -9,6 +10,8 @@ import ./constants.bend as K
 import ./read-state.bend as V
 import ./owner.bend as O
 import ./write.bend as W
+import ./status.bend as A
+import ./transaction.bend as X
 
 # Public source-boundary names delegate to the single shared write path.
 def queuePendingNode(w: R.World, id: Nat) -> R.World:
@@ -35,6 +38,22 @@ def commitValue(+w: R.World, +id: Nat) -> R.World:
       B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{})),
     _ => w)
 
+def finishComputedCommit(+w: R.World, +id: Nat, +inFlight: Bool) -> R.World:
+  +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
+  +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())))
+  +w = B.choose(~R.World, B.nullish(R.NodeExtension.error(B.extension(w, id))),
+    _ => G.trimStaleDeps(w, id), _ => w)
+  B.choose(~R.World, B.ok(w),
+    _ =>
+      +w = B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())),
+        _ => B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w)
+      # Source GlobalQueue._dispose(c, false, true), after successful trim.
+      parked = Bool.and(Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        Bool.or(Nat.is_ne(R.NodeExtension.pendingFirstChild(B.extension(w, id)), 0n), Bool.not(B.noDisposal(R.NodeExtension.pendingDisposal(B.extension(w, id))))))
+      B.choose(~R.World, Bool.and(Bool.not(inFlight), parked),
+        _ => O.disposeChildren(w, id, False{}, True{}), _ => w),
+    _ => w)
+
 def commitComputedAnswer(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
   +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
@@ -53,23 +72,10 @@ def commitComputedAnswer(+w: R.World, +id: Nat) -> R.World:
         _ => enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id),
         _ => w),
     _ => w)
-  +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
-  +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())))
-  +w = B.choose(~R.World, B.nullish(R.NodeExtension.error(B.extension(w, id))),
-    _ => G.trimStaleDeps(w, id), _ => w)
-  B.choose(~R.World, B.ok(w),
-    _ =>
-      +w = B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())),
-        _ => B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w)
-      # Source GlobalQueue._dispose(c, false, true), after successful trim.
-      parked = Bool.and(Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-        Bool.or(Nat.is_ne(R.NodeExtension.pendingFirstChild(B.extension(w, id)), 0n), Bool.not(B.noDisposal(R.NodeExtension.pendingDisposal(B.extension(w, id))))))
-      B.choose(~R.World, Bool.and(Bool.not(inFlight), parked),
-        _ => O.disposeChildren(w, id, False{}, True{}), _ => w),
-    _ => w)
+  finishComputedCommit(w, id, inFlight)
 
 # core/scheduler.ts:commitPendingNode, computed segment. The current Node
-# extension is nullable and lazily allocated. Staged error propagation is open.
+# extension is nullable and lazily allocated; an error publishes at this seam.
 def commitComputed(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
   +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
@@ -81,7 +87,12 @@ def commitComputed(+w: R.World, +id: Nat) -> R.World:
     _ => B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), B.set(K.CONFIG_HELD_FRAME(), B.set(K.CONFIG_STAGED(), B.set(K.CONFIG_INPUTS_PUBLISHED(), K.CONFIG_STAGED_ERROR()))))))
   +w = B.store_node(w, id, R.Node.with_config(n, config))
   B.choose(~R.World, err,
-    _ => R.World.with_fault(w, R.Unsupported{2n}),
+    _ =>
+      +error = B.selected(R.Node.pending(B.node(w, id)), R.NotPendingToken{})
+      +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{}))
+      +w = B.store_node(w, id, R.Node.with_time(B.node(w, id), 1n+R.World.clock(w)))
+      +w = A.notifyStatus(w, id, error)
+      B.choose(~R.World, B.ok(w), _ => finishComputedCommit(w, id, inFlight), _ => w),
     _ => commitComputedAnswer(w, id))
 
 def commitPendingNode(+w: R.World, +id: Nat) -> R.World:
@@ -133,3 +144,94 @@ def settle(+w: R.World) -> R.World:
       +w = trim_list(Nat.add(B.length(Nat, R.World.trims(w)), B.budget(w)), w, 0n)
       B.choose(~R.World, B.ok(w), _ => R.World.with_trims(w, []), _ => w),
     _ => w)
+
+# scheduler.ts:deferZombie, called by GlobalQueue._update in the core machine.
+def deferZombie(+w: R.World, +id: Nat) -> R.World:
+  +w = H.deleteFromHeap(w, id)
+  +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), B.set(K.REACTIVE_DIRTY(), K.REACTIVE_CHECK()))))
+  R.World.with_deferredZombies(w, B.append(Nat, R.World.deferredZombies(w), [id]))
+
+# scheduler.ts:GlobalQueue.settle, one captured-intake member on the park path.
+def parkPendingNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:
+  +n = B.node(w, id)
+  +eligible = Bool.and(Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_OVERRIDE()))),
+    Bool.not(R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, id))))))
+  +loading = Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.not(X.isRender(R.Node.kind(n)))))
+  +unchanged = Bool.and(B.present(R.Node.pending(n)), Bool.and(Bool.not(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))),
+    Bool.and(R.Node.equals(n), Bool.and(B.equal(R.Node.value(n), B.current(n)), Bool.not(O.parked(w, id))))))
+  B.choose(~R.World, Bool.and(eligible, loading), _ => w,
+    _ => B.choose(~R.World, Bool.and(eligible, unchanged),
+      _ => B.store_node(w, id, R.Node.with_pending(R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_STAGED())), R.Empty{})),
+      _ =>
+        +w = B.choose(~R.World, eligible, _ => X.holdNode(w, id, t), _ => w)
+        B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()), _ => X.holdFrame(w, id, t), _ => w)))
+
+def park_list(fuel: Nat, +w: R.World, +t: Nat, +index: Nat, +count: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      R.World.with_fault(w, R.Exhausted{})
+    case 1n+p:
+      B.choose(~R.World, Nat.is_ge(index, count), _ => w,
+        _ =>
+          +w = parkPendingNode(w, B.get(Nat, R.World.pendingNodes(w), index, 0n), t)
+          B.choose(~R.World, B.ok(w), _ => park_list(p, w, t, 1n+index, count), _ => w))
+
+def parkPendingNodes(+w: R.World, t: Nat) -> R.World:
+  +w = park_list(1n+Nat.add(B.budget(w), B.length(Nat, R.World.pendingNodes(w))), w, t, 0n, B.length(Nat, R.World.pendingNodes(w)))
+  B.choose(~R.World, B.ok(w), _ => R.World.with_pendingNodes(w, []), _ => w)
+
+# scheduler.ts:reruns, direct children of a rerun's old frame lose owed runs.
+def clearChildRuns(fuel: Nat, +w: R.World, +child: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      B.choose(~R.World, Nat.is_eq(child, 0n), _ => w, _ => R.World.with_fault(w, R.Exhausted{}))
+    case 1n+p:
+      B.choose(~R.World, Nat.is_eq(child, 0n), _ => w,
+        _ =>
+          +w = B.choose(~R.World, B.effect(R.Node.kind(B.node(w, child))), _ => B.store_node(w, child, R.Node.with_modified(B.node(w, child), False{})), _ => w)
+          clearChildRuns(p, w, R.Node.nextSibling(B.node(w, child))))
+
+def rerunOne(+w: R.World, +id: Nat) -> R.World:
+  +n = B.node(w, id)
+  B.choose(~R.World, Bool.or(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()), B.has(R.Node.status(n), K.STATUS_ERROR())), _ => w,
+    _ => B.choose(~R.World, Bool.or(B.has(R.Node.flags(n), K.REACTIVE_FRAME_READ()), B.has(R.Node.config(n), K.CONFIG_VERDICT())),
+      _ =>
+        +w = B.store_node(w, id, R.Node.with_modified(R.Node.with_flags(n, B.clear(R.Node.flags(n), K.REACTIVE_FRAME_READ())), False{}))
+        +w = clearChildRuns(B.budget(w), w, R.Node.firstChild(B.node(w, id)))
+        H.enqueueSub(w, id), _ => w))
+
+def rerunsLoop(fuel: Nat, +w: R.World, +t: Nat, +index: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      R.World.with_fault(w, R.Exhausted{})
+    case 1n+p:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.Transaction.reruns(B.transaction(w, t)))), _ => w,
+        _ =>
+          +w = rerunOne(w, B.get(Nat, R.Transaction.reruns(B.transaction(w, t)), index, 0n))
+          B.choose(~R.World, B.ok(w), _ => rerunsLoop(p, w, t, 1n+index), _ => w))
+
+def reruns(+w: R.World, +t: Nat) -> R.World:
+  +w = rerunsLoop(1n+Nat.add(B.budget(w), B.length(Nat, R.Transaction.reruns(B.transaction(w, t)))), w, t, 0n)
+  B.choose(~R.World, B.ok(w), _ => B.store_transaction(w, t, R.Transaction.with_reruns(B.transaction(w, t), [])), _ => w)
+
+def releaseQueues(+w: R.World, +t: Nat) -> R.World:
+  +w = R.World.with_renderQueue(w, B.append(Nat, R.World.renderQueue(w), R.Transaction.renderQueue(B.transaction(w, t))))
+  +w = B.store_transaction(w, t, R.Transaction.with_renderQueue(B.transaction(w, t), []))
+  +w = R.World.with_userQueue(w, B.append(Nat, R.World.userQueue(w), R.Transaction.userQueue(B.transaction(w, t))))
+  B.store_transaction(w, t, R.Transaction.with_userQueue(B.transaction(w, t), []))
+
+# Stable ascending height order used by the seam's detached zombie array.
+def insertHeight(+w: R.World, +id: Nat, xs: List<&2, Nat>) -> List<&2, Nat>:
+  match xs:
+    case Nil{}:
+      [id]
+    case +head <> +tail:
+      B.choose(~List<&2, Nat>, Nat.is_le(R.Node.height(B.node(w, id)), R.Node.height(B.node(w, head))), _ => id <> head <> tail,
+        _ => head <> insertHeight(w, id, tail))
+
+def sortHeights(+w: R.World, xs: List<&2, Nat>) -> List<&2, Nat>:
+  match xs:
+    case Nil{}:
+      []
+    case id <> tail:
+      insertHeight(w, id, sortHeights(w, tail))

@@ -14,6 +14,19 @@ import ./owner.bend as O
 import ./status.bend as A
 import ./extension.bend as E
 import ./pending-state.bend as P
+import ./transaction.bend as X
+import ./pending.bend as Q
+
+# GlobalQueue.settle's detached own queues and captured joined transaction.
+type SeamFrame is Data:
+  SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, Nat>}
+
+# Locals captured by recompute's try/catch/finally return point.
+type PassFrame is Data:
+  PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
+    reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
+    outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat,
+    saved: List<&2, R.Value>}
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -29,15 +42,23 @@ type Task is Data:
   RaiseHeight{source: Nat, reader: Nat}
   Update{id: Nat}
   CheckDeps{id: Nat, edge: Nat}
+  CheckNext{id: Nat, edge: Nat}
   AfterCheck{id: Nat}
   ClearFlags{id: Nat}
   Recompute{id: Nat, create: Bool}
-  Finish{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, saved: List<&2, R.Value>}
+  Finish{frame: PassFrame}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
   Round{}
   HeapLoop{}
   Seam{}
+  Settle{}
+  AfterSettle{}
+  LandTransactions{frame: SeamFrame, remaining: Nat}
+  LandNodes{frame: SeamFrame, transaction: Nat, index: Nat}
+  LandEnd{frame: SeamFrame, transaction: Nat}
+  CompleteSettle{frame: SeamFrame}
+  ZombieLoop{nodes: List<&2, Nat>}
   RenderQueue{}
   UserQueue{}
   RoundEnd{}
@@ -164,9 +185,9 @@ def prepareSlow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
       +w = B.choose(~R.World, Nat.is_ge(R.Node.height(B.node(w, id)), R.World.minimum(w)),
         _ => H.markHeap(H.markNode(w, reader, 2)), _ => w)
       todo = B.choose(~List<&2, Task>, Nat.is_ge(R.Node.height(B.node(w, id)), R.World.minimum(w)),
-        _ => [Update{id}], _ => [])
-      Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> ReadStatus{id} <> AfterServe{id} <> rest), stack},
-    _ => Machine{w, ReadStatus{id} <> AfterServe{id} <> rest, stack})
+        _ => [Update{id}], _ => B.choose(~List<&2, Task>, B.has(R.Node.config(B.node(w, reader)), K.CONFIG_FRESH_READ()), _ => [Update{id}], _ => []))
+      Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> ReadStatus{id} <> rest), stack},
+    _ => Machine{w, ReadStatus{id} <> rest, stack})
 
 def afterServe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
@@ -175,22 +196,39 @@ def afterServe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id:
   w = B.choose(~R.World, dormant, _ => B.schedule(G.queueDormant(w, id)), _ => w)
   Machine{w, rest, stack}
 
-# core/core.ts:read, status block after pull and before value selection.
-def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  +n = B.node(w, id)
-  B.choose(~Machine, B.has(R.Node.status(n), K.STATUS_PENDING()),
-    _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, stack},
-    _ => B.choose(~Machine, Bool.and(B.computed(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
-      _ => B.choose(~Machine, Bool.and(R.World.tracking(w), Nat.is_lt(R.Node.time(n), R.World.clock(w))),
-        _ => Machine{w, Recompute{id, False{}} <> ReadNode{id} <> rest, stack},
-        _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.error(B.extension(w, id))}), rest, stack}),
-      _ => B.choose(~Machine, Bool.and(Nat.is_eq(B.parentComputed(w, R.World.context(w)), 0n), B.truth(R.NodeExtension.shownError(B.extension(w, id)))),
-        _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.shownError(B.extension(w, id))}), rest, stack},
-        _ => Machine{w, Serve{id} <> rest, stack})))
-
 # Read event instrumentation belongs to the callback adapter, after value choice.
 def served(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +value: R.Value) -> Machine:
   Machine{B.event(w, R.ReadValue{reader, id, value}), rest, value <> stack}
+
+# Read's error/retry block follows pending handling, even for a forced frame read.
+def readAnswer(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +forced: Bool) -> Machine:
+  +n = B.node(w, id)
+  B.choose(~Machine, Bool.and(B.computed(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
+    _ => B.choose(~Machine, Bool.and(R.World.tracking(w), Nat.is_lt(R.Node.time(n), R.World.clock(w))),
+      _ => Machine{w, Recompute{id, False{}} <> ReadNode{id} <> rest, stack},
+      _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.error(B.extension(w, id))}), rest, stack}),
+    _ => B.choose(~Machine, forced, _ => served(w, rest, stack, reader, id, R.Node.value(n)),
+      _ => B.choose(~Machine, Bool.and(Nat.is_eq(reader, 0n), B.truth(R.NodeExtension.shownError(B.extension(w, id)))),
+        _ => Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.shownError(B.extension(w, id))}), rest, stack},
+        _ => Machine{w, Serve{id} <> AfterServe{id} <> rest, stack})))
+
+# core/core.ts:read, after pull: held-entry, then pending/error/value selection.
+def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +reader = B.parentComputed(w, R.World.context(w))
+  +pair = X.enterRead(w, reader, id, True{})
+  +w = B.first(R.World, Bool, pair)
+  +forced = B.second(R.World, Bool, pair)
+  +n = B.node(w, id)
+  +throws = Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Bool.not(forced),
+    B.choose(~Bool, Nat.is_ne(reader, 0n),
+      _ => Bool.or(Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED())),
+      _ => B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()))))
+  B.choose(~Machine, throws,
+    _ =>
+      +w = B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), Bool.and(Bool.not(R.World.tracking(w)), Nat.is_ne(id, reader))),
+        _ => G.link(w, id, reader), _ => w)
+      Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.error(B.extension(w, id))}), rest, stack},
+    _ => readAnswer(w, rest, stack, id, reader, forced))
 
 # core/core.ts:read's plain-signal fast block, under the admitted no-snapshot,
 # no-verdict profile. Its source ternary intentionally stays separate from serve.
@@ -198,16 +236,14 @@ def readSignalFast(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, 
   +reader = B.parentComputed(w, R.World.context(w))
   +tracked = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
   +w = B.choose(~R.World, tracked, _ => G.link(w, id, reader), _ => w)
-  B.choose(~Machine, Bool.and(Nat.is_ne(reader, 0n), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
-    Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())))),
-    _ => Machine{R.World.with_fault(w, R.Unsupported{3n}), [], []},
-    _ =>
-      +n = B.node(w, id)
-      +committed = Bool.or(Nat.is_eq(reader, 0n), Bool.or(Bool.not(B.present(R.Node.pending(n))),
-        B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())))
-      +value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
-      +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, 0n))
-      served(w, rest, stack, reader, id, value))
+  +pair = X.enterRead(w, reader, id, False{})
+  +w = B.first(R.World, Bool, pair)
+  +n = B.node(w, id)
+  +committed = Bool.or(B.second(R.World, Bool, pair), Bool.or(Nat.is_eq(reader, 0n), Bool.or(Bool.not(B.present(R.Node.pending(n))),
+    B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN()))))
+  +value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
+  +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, 0n))
+  served(w, rest, stack, reader, id, value)
 
 def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
@@ -222,22 +258,23 @@ def serveSelected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
     _ =>
       +n = B.node(w, id)
       +committed = V.readerSeesCommitted(w, id, reader)
+      +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, id))
       B.choose(~Machine, Bool.and(Bool.not(committed), B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())),
-        _ => Machine{R.World.with_fault(w, R.Unsupported{2n}), [], []},
+        _ => Machine{R.World.with_fault(w, R.CallbackThrown{B.current(n)}), rest, stack},
         _ =>
-          +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, id))
           value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
           served(w, rest, stack, reader, id, value)))
 
-# core/core.ts:serve. NotReady/error propagation and spectating are unfinished.
-# The unsupported born-staged read refuses instead of serving fabricated data.
-def serve(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+# core/core.ts:serve. A born-staged plain/frame read throws NotReady(null).
+def serve(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
   +reader = B.parentComputed(w, R.World.context(w))
   +noAnswer = Bool.and(B.present(R.Node.pending(n)), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     Bool.or(Nat.is_eq(reader, 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN()))))
   B.choose(~Machine, noAnswer,
-    _ => Machine{R.World.with_fault(w, R.Unsupported{4n}), [], []},
+    _ =>
+      +pair = P.notReadyError(w, 0n)
+      Machine{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, stack},
     _ =>
       +pair = B.choose(~B.Bundle<R.World, R.Slot>, Bool.and(Nat.is_ne(reader, 0n), R.World.unflushedStaged(w)),
         _ => V.unflushedValue(w, id), _ => B.Bundle{w, R.Empty{}})
@@ -261,16 +298,16 @@ def update(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: N
       _ => Machine{w, AfterCheck{id} <> rest, stack}))
 
 def checkDeps(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +edge: Nat) -> Machine:
-  B.choose(~Machine, Bool.or(Nat.is_eq(edge, 0n), B.has(R.Node.flags(B.node(w, id)), 2)),
+  B.choose(~Machine, Nat.is_eq(edge, 0n),
     _ => Machine{w, rest, stack},
     _ =>
       +e = B.link(w, edge)
       +dep = R.Link.dep(e)
       todo = B.choose(~List<&2, Task>, B.computed(R.Node.kind(B.node(w, dep))), _ => [Update{dep}], _ => [])
-      Machine{w, B.append(Task, todo, CheckDeps{id, R.Link.nextDep(e)} <> rest), stack})
+      Machine{w, B.append(Task, todo, CheckNext{id, edge} <> rest), stack})
 
 def afterCheck(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  todo = B.choose(~List<&2, Task>, B.has(R.Node.flags(B.node(w, id)), 2), _ => [Recompute{id, False{}}], _ => [])
+  todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))), _ => [Recompute{id, False{}}], _ => [])
   Machine{w, B.append(Task, todo, ClearFlags{id} <> rest), stack}
 
 # core/core.ts:recompute before the compute try. Cleanup failures here unwind
@@ -287,13 +324,11 @@ def prepareRecompute(+w: R.World, +id: Nat) -> R.World:
       +n = B.node(w, id)
       +w = B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_PENDING()),
         _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
-      # Transaction/lane re-entry is still an unsupported domain.
-      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
-        _ => R.World.with_fault(w, R.Unsupported{3n}),
-        _ => B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
+      +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.reenterHeld(w, id), _ => w)
+      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
           _ => O.disposeChildren(w, id, False{}, False{}),
           _ => B.choose(~R.World, Bool.or(Nat.is_ne(R.Node.firstChild(B.node(w, id)), 0n), Bool.not(B.noDisposal(R.Node.disposal(B.node(w, id))))),
-            _ => O.parkChildren(w, id), _ => w))),
+            _ => O.parkChildren(w, id), _ => w)),
     _ => w)
 
 def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
@@ -307,8 +342,11 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   +n = R.Node.with_flags(n, B.set(K.REACTIVE_RECOMPUTING_DEPS(), U32.and(R.Node.flags(n), B.set(K.REACTIVE_ZOMBIE(), K.REACTIVE_REASK()))))
   +n = R.Node.with_time(n, R.World.clock(w))
   +w = B.store_node(w, id, n)
-  next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
-    B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}), stack} <> rest : List<&2, Task>}
+  frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
+    B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}),
+    B.choose(~Nat, B.has(R.Node.status(n), K.STATUS_PENDING()), _ => R.NodeExtension.pendingSources(B.extension(w, id)), _ => 0n),
+    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack} : PassFrame}
+  next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{frame} <> rest : List<&2, Task>}
   w = R.World.with_tracking(B.event(w, R.Invoked{id}), True{})
   Machine{w, next, stack}
 
@@ -317,28 +355,62 @@ def recompute(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
   +w = B.choose(~R.World, create, _ => w, _ => prepareRecompute(w, id))
   B.choose(~Machine, B.ok(w), _ => recomputePrepared(w, rest, stack, id, create), _ => Machine{w, rest, stack})
 
-def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value) -> R.World:
-  +w = B.choose(~R.World, B.truth(R.NodeExtension.error(B.extension(w, id))), _ => w,
+# Source loops over a captured Set handle, not a copied member list. Its live
+# cursor skips deleted slots and observes appends, as JS Set iteration does.
+def retireSources(fuel: Nat, +w: R.World, +id: Nat, +set: Nat, +index: Nat, +onlyDropped: Bool) -> R.World:
+  match fuel:
+    case 0n:
+      R.World.with_fault(w, R.Exhausted{})
+    case 1n+p:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, B.pendingSlots(w, set))), _ => w,
+        _ =>
+          +source = B.get(Nat, B.pendingSlots(w, set), index, 0n)
+          +skip = Bool.or(Nat.is_eq(source, 0n), Bool.or(Nat.is_eq(source, id), Bool.and(onlyDropped, P.hasSource(w, id, source))))
+          +w = B.choose(~R.World, skip, _ => w, _ => Q.settlePendingSource(w, id, source))
+          B.choose(~R.World, B.ok(w), _ => retireSources(p, w, id, set, 1n+index, onlyDropped), _ => w))
+
+def retireOutgoing(+w: R.World, id: Nat, +set: Nat, onlyDropped: Bool) -> R.World:
+  retireSources(1n+Nat.add(B.budget(w), B.length(Nat, B.pendingSlots(w, set))), w, id, set, 0n, onlyDropped)
+
+# No lane engine is installed: only joined/creator-pass posture makes a new
+# value belong to flushTransaction/passTx (core.ts's born-held value arm).
+def bornHeld(+w: R.World, joined: Bool) -> Bool:
+  Bool.and(Bool.or(Nat.is_ne(R.World.flushTransaction(w), 0n), Nat.is_ne(R.World.passTx(w), 0n)),
+    Bool.or(joined, B.has(R.Node.flags(B.node(w, B.parentComputed(w, R.World.context(w)))), K.REACTIVE_JOINED())))
+
+def publicationTx(+w: R.World) -> Nat:
+  B.choose(~Nat, Nat.is_ne(R.World.flushTransaction(w), 0n), _ => R.World.flushTransaction(w), _ => R.World.passTx(w))
+
+def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +joined: Bool) -> B.Bundle<R.World, Bool>:
+  +n = B.node(w, id)
+  +isEffect = B.effect(R.Node.kind(n))
+  +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
+    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
+  +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
     _ =>
-      +n = B.node(w, id)
-      +isEffect = B.effect(R.Node.kind(n))
-      +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
-        Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
-      +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
+      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
+      B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
+  +w = B.choose(~R.World, changed,
+    _ =>
+      +direct = B.choose(~Bool, create, _ => Bool.not(bornHeld(w, joined)), _ => Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id))))))
+      +w = B.choose(~R.World, direct,
+        _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
         _ =>
-          +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
-          B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
-      +w = B.choose(~R.World, changed,
-        _ =>
-          +w = B.choose(~R.World, Bool.or(create, Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id)))))),
-            _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
-            _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})))
-          B.choose(~R.World, Nat.is_ne(R.Node.subs(n), 0n), _ => S.insertSubs(w, id), _ => w),
-        _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
-          _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
-      recover = Bool.and(Bool.not(changed), Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.not(B.equal(outgoing, R.Undefined{}))))
-      B.choose(~R.World, recover,
-        _ => A.settleErroredDependents(w, id, outgoing), _ => w))
+          +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
+          B.choose(~R.World, create,
+            _ =>
+              +w = X.holdNode(w, id, publicationTx(w))
+              B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w))
+      B.choose(~R.World, Nat.is_ne(R.Node.subs(n), 0n), _ => S.insertSubs(w, id), _ => w),
+    _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
+      _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
+  B.Bundle{w, changed}
+
+def finishPublication(+w: R.World, +id: Nat, +create: Bool, joined: Bool) -> R.World:
+  +w = B.choose(~R.World, Bool.and(create, Bool.and(joined, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))),
+    _ =>
+      +t = publicationTx(w)
+      B.choose(~R.World, Bool.and(Nat.is_ne(t, 0n), Bool.not(R.Transaction.lane(B.transaction(w, t)))), _ => X.holdNode(w, id, t), _ => w), _ => w)
   +n = B.node(w, id)
   +w = B.choose(~R.World, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
     _ => B.choose(~R.World, create, _ => G.trimStaleDeps(w, id),
@@ -348,10 +420,24 @@ def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: N
       +n = B.node(w, id)
       queued = Bool.or(B.present(R.Node.pending(n)), Bool.or(O.parked(w, id),
         Bool.and(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED())), Bool.or(Bool.not(create), B.has(R.Node.status(n), K.STATUS_PENDING())))))
-      +w = B.choose(~R.World, queued,
-        _ => S.queuePendingNode(B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), 128))), id), _ => w)
-      w,
+      B.choose(~R.World, queued, _ => S.queuePendingNode(B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_STAGED()))), id), _ => w),
     _ => w)
+
+
+def publish(+w: R.World, +id: Nat, value: R.Value, +create: Bool, oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, stagedErr: Bool) -> R.World:
+  errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
+  +w = B.choose(~R.World, errored, _ => w,
+    _ =>
+      +pair = publishValue(w, id, value, create, oldHeight, wasUninitialized, joined)
+      +w = B.first(R.World, Bool, pair)
+      +changed = B.second(R.World, Bool, pair)
+      +w = B.choose(~R.World, Bool.and(Bool.not(changed), Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))),
+        _ =>
+          +w = B.choose(~R.World, B.equal(outgoing, R.Undefined{}), _ => w, _ => A.settleErroredDependents(w, id, outgoing))
+          retireOutgoing(w, id, outgoingSources, False{}), _ => w)
+      B.choose(~R.World, Bool.and(B.ok(w), Bool.and(wasPendingSource, Bool.not(B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))))),
+        _ => Q.settlePendingSource(w, id, id), _ => w))
+  B.choose(~R.World, B.ok(w), _ => finishPublication(w, id, create, joined), _ => w)
 
 # recompute's finally is shared by normal return and exceptional unwind.
 def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool) -> R.World:
@@ -367,7 +453,7 @@ def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Boo
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
     _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), Bool.and(reask, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))), _ => w)
 
-def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, missed: Bool) -> Machine:
+def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
   B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
     _ =>
       +w = G.clearDeps(w, id)
@@ -375,11 +461,11 @@ def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
       Machine{w, rest, stack},
     _ =>
-      +w = publish(w, id, value, create, oldHeight, wasUninitialized, outgoing)
+      +w = publish(w, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr)
       w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
       Machine{w, rest, stack})
 
-def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, saved: List<&2, R.Value>) -> Machine:
+def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat, saved: List<&2, R.Value>) -> Machine:
   match stack:
     case value <> +tail:
       +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
@@ -388,33 +474,64 @@ def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Na
       +w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => A.clearStatus(w, id, create), _ => w)
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
+      +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
       +w = passFinally(w, id, create, context, tracking, reask)
       B.choose(~Machine, B.ok(w),
-        _ => afterPass(w, rest, tail, id, create, value, oldHeight, wasUninitialized, outgoing, missed),
+        _ => afterPass(w, rest, tail, id, create, value, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, False{}, missed),
         _ => Machine{w, rest, tail})
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
+def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame) -> Machine:
+  match frame:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
+      finishValue(w, rest, stack, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
+
 # Body throw -> source catch -> finally -> publication tail, with the caller's
 # value stack restored. A throw from the prelude has no frame of its own here.
-def catchStatus(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
+# recompute's pending/error catch. The loading-window arm changes neither
+# read-visible status nor propagation. Replacement-source retirement follows
+# successful notification, before the caller's finally frame.
+def catchStatus(+w: R.World, +id: Nat, fault: R.Fault, +wasPendingSource: Bool, +outgoingSources: Nat) -> B.Bundle<R.World, Bool>:
   match fault:
     case R.CallbackThrown{+cause}:
-      # Pending catch/flight callers are not yet connected. Refuse this typed
-      # control outcome rather than misclassifying NotReady as a user error.
-      B.choose(~R.World, Bool.or(P.isNotReady(cause), B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD())),
-        _ => R.World.with_fault(w, R.Unsupported{9n}),
-        _ => A.notifyStatus(R.World.with_fault(w, R.Healthy{}), id, cause))
+      +w = R.World.with_fault(w, R.Healthy{})
+      +notReady = P.isNotReady(cause)
+      B.choose(~B.Bundle<R.World, Bool>, Bool.and(notReady, R.Node.loading(B.node(w, id))),
+        _ => B.Bundle{P.parkLoadingWindow(w, id, cause), False{}},
+        _ =>
+          +pair = B.choose(~B.Bundle<R.World, Bool>, notReady, _ => B.Bundle{w, False{}}, _ => Q.stageError(w, id, cause, True{}))
+          +w = B.first(R.World, Bool, pair)
+          +stagedErr = B.second(R.World, Bool, pair)
+          +w = B.choose(~R.World, Bool.or(notReady, Bool.not(stagedErr)),
+            _ =>
+              +w = B.choose(~R.World, notReady,
+                _ =>
+                  +w = E.ext(w, id)
+                  B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{True{}}})), _ => w)
+              +w = A.notifyStatusWith(w, id, B.choose(~U32, notReady, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), cause, False{})
+              B.choose(~R.World, Bool.and(B.ok(w), Bool.and(notReady, Bool.and(wasPendingSource, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))),
+                _ => Q.settlePendingSource(w, id, id), _ => w), _ => w)
+          +w = B.choose(~R.World, Bool.and(B.ok(w), Bool.or(notReady, stagedErr)), _ => retireOutgoing(w, id, outgoingSources, True{}), _ => w)
+          B.Bundle{w, stagedErr})
     case other:
-      w
+      B.Bundle{w, False{}}
 
-def catchPass(+w: R.World, +rest: List<&2, Task>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, +saved: List<&2, R.Value>) -> Machine:
-  +w = catchStatus(w, id, R.World.fault(w))
+def catchValue(+w: R.World, +rest: List<&2, Task>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, oldFlight: Nat, +saved: List<&2, R.Value>) -> Machine:
+  +pair = catchStatus(w, id, R.World.fault(w), wasPendingSource, outgoingSources)
+  +w = B.first(R.World, Bool, pair)
+  +stagedErr = B.second(R.World, Bool, pair)
+  +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
   +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
   +w = passFinally(w, id, create, context, tracking, reask)
   B.choose(~Machine, B.ok(w),
-    _ => afterPass(w, rest, saved, id, create, previous, oldHeight, wasUninitialized, outgoing, missed),
+    _ => afterPass(w, rest, saved, id, create, previous, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr, missed),
     _ => Machine{w, rest, saved})
+
+def catchPass(w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
+  match frame:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
+      catchValue(w, rest, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
 
 # effect.ts:runEffect's catch always constructs a fresh StatusError, even if
 # the thrown payload was itself a wrapper; the escaping throw remains raw.
@@ -499,12 +616,15 @@ def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       B.choose(~Machine, Nat.is_eq(id, 0n),
         _ => Machine{R.World.with_minimum(w, 1n+R.World.minimum(w)), HeapLoop{} <> rest, stack},
         _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), 8),
-          _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack},
+          _ => B.choose(~Machine, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY()))),
+            _ => Machine{S.deferZombie(w, id), HeapLoop{} <> rest, stack},
+            _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}),
           _ => Machine{H.adjustHeight(w, id), HeapLoop{} <> rest, stack})))
 
 def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   +w = R.World.with_running(w, True{})
   +w = V.resyncUnflushedCompanions(w)
+  +w = R.World.with_passTx(R.World.with_passLane(w, 0n), 0n)
   +w = G.sweepDormant(w)
   B.choose(~Machine, B.ok(w),
     _ =>
@@ -513,14 +633,98 @@ def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Mach
       Machine{w, HeapLoop{} <> FlushFinally{} <> RoundEnd{} <> rest, stack},
     _ => Machine{w, FlushFinally{} <> RoundEnd{} <> rest, stack})
 
-def seam(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
-  +w = S.settle(w)
+# scheduler.ts:GlobalQueue.settle, before the transaction landing loop.
+def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+  +joined = R.World.flushTransaction(w)
+  +w = R.World.with_flushTransaction(w, 0n)
+  +pair = B.choose(~B.Bundle<R.World, Nat>, Bool.and(Nat.is_ne(joined, 0n), Bool.not(R.Transaction.lane(B.transaction(w, joined)))),
+    _ => X.resolveTx(w, joined), _ => B.Bundle{w, 0n})
+  +w = B.first(R.World, Nat, pair)
+  +t = B.second(R.World, Nat, pair)
+  +w = B.choose(~R.World, Nat.is_ne(t, 0n),
+    _ =>
+      +w = S.parkPendingNodes(w, t)
+      B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w),
+    _ => S.settle(w))
   B.choose(~Machine, B.ok(w),
     _ =>
-      +w = R.World.with_clock(w, 1n+R.World.clock(w))
-      w = R.World.with_scheduled(w, Bool.or(Nat.is_ge(R.World.maximum(w), R.World.minimum(w)), Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))))
-      Machine{w, RenderQueue{} <> rest, stack},
+      +w = R.World.with_trims(w, [])
+      frame = {SeamFrame{t, R.World.renderQueue(w), R.World.userQueue(w)} : SeamFrame}
+      +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
+      Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack},
     _ => Machine{w, rest, stack})
+
+# Reverse scan restarts after each landing, since its commits can remove a
+# zombie another transaction was blocked on, or a cleanup can register a join.
+def landTransactions(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: SeamFrame, remaining: Nat) -> Machine:
+  match remaining:
+    case 0n:
+      Machine{w, CompleteSettle{frame} <> rest, stack}
+    case 1n+ +index:
+      +t = B.get(Nat, R.World.transactions(w), index, 0n)
+      +pair = X.blocked(w, t)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~Machine, B.second(R.World, Bool, pair),
+        _ => Machine{w, LandTransactions{frame, index} <> rest, stack},
+        _ =>
+          +w = R.World.with_transactions(w, X.removeIdentity(R.World.transactions(w), t))
+          +w = S.reruns(w, t)
+          # A non-null mark array requires the installed affects release hook.
+          +w = B.choose(~R.World, B.ok(w),
+            _ => B.choose(~R.World, X.noMarks(R.Transaction.marks(B.transaction(w, t))), _ => w, _ => R.World.with_fault(w, R.Unsupported{10n})), _ => w)
+          Machine{w, LandNodes{frame, t, 0n} <> rest, stack})
+
+def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: SeamFrame, +t: Nat, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, t)))),
+    _ => Machine{w, LandEnd{frame, t} <> rest, stack},
+    _ =>
+      +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, t)), index, 0n)
+      +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), 0n),
+        _ =>
+          +pair = X.txOf(w, id)
+          B.Bundle{B.first(R.World, Nat, pair), Nat.is_eq(B.second(R.World, Nat, pair), t)},
+        _ => B.Bundle{w, False{}})
+      +w = B.first(R.World, Bool, pair)
+      w = B.choose(~R.World, B.second(R.World, Bool, pair),
+        _ => S.commitPendingNode(B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n)), id), _ => w)
+      Machine{w, LandNodes{frame, t, 1n+index} <> rest, stack})
+
+def landEnd(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
+  +w = B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), t), _ => R.World.with_flushTransaction(w, 0n), _ => w)
+  +w = S.releaseQueues(w, t)
+  Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
+
+def completeSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame) -> Machine:
+  match frame:
+    case SeamFrame{+t, +renders, +users}:
+      +pair = B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(t, 0n), _ => X.liveTx(w, t), _ => B.Bundle{w, 0n})
+      +w = B.first(R.World, Nat, pair)
+      +live = B.second(R.World, Nat, pair)
+      +w = B.choose(~R.World, Nat.is_ne(live, 0n),
+        _ =>
+          +w = B.store_transaction(w, live, R.Transaction.with_renderQueue(B.transaction(w, live), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)))
+          B.store_transaction(w, live, R.Transaction.with_userQueue(B.transaction(w, live), B.append(Nat, R.Transaction.userQueue(B.transaction(w, live)), users))),
+        _ =>
+          +w = R.World.with_renderQueue(w, B.append(Nat, renders, R.World.renderQueue(w)))
+          R.World.with_userQueue(w, B.append(Nat, users, R.World.userQueue(w))))
+      zombies = S.sortHeights(w, R.World.deferredZombies(w))
+      Machine{R.World.with_deferredZombies(w, []), ZombieLoop{zombies} <> rest, stack}
+
+# Only source survivors run, after all commits and queue ordering.
+def zombieLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, nodes: List<&2, Nat>) -> Machine:
+  match nodes:
+    case Nil{}:
+      Machine{w, rest, stack}
+    case +id <> +tail:
+      B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
+        _ => Machine{w, ZombieLoop{tail} <> rest, stack},
+        _ => Machine{w, Recompute{id, False{}} <> ZombieLoop{tail} <> rest, stack})
+
+# GlobalQueue.flush resumes only after the complete settle operation returns.
+def afterSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  +w = R.World.with_clock(w, 1n+R.World.clock(w))
+  w = R.World.with_scheduled(w, Bool.or(Nat.is_ge(R.World.maximum(w), R.World.minimum(w)), Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))))
+  Machine{w, RenderQueue{} <> rest, stack}
 
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
@@ -556,16 +760,21 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       update(w, rest, stack, id)
     case CheckDeps{id, edge} <> +rest:
       checkDeps(w, rest, stack, id, edge)
+    case CheckNext{+id, +edge} <> +rest:
+      B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY()), _ => Machine{w, rest, stack},
+        _ => Machine{w, CheckDeps{id, R.Link.nextDep(B.link(w, edge))} <> rest, stack})
     case AfterCheck{id} <> +rest:
       afterCheck(w, rest, stack, id)
     case ClearFlags{+id} <> +rest:
-      Machine{B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), 3))), rest, stack}
+      +keep = B.set(K.REACTIVE_SNAPSHOT_STALE(), B.set(K.REACTIVE_IN_HEAP(), B.set(K.REACTIVE_IN_HEAP_HEIGHT(), B.set(K.REACTIVE_ZOMBIE(), B.set(K.REACTIVE_DISPOSED(),
+        B.set(K.REACTIVE_MANUAL_WRITE(), B.set(K.REACTIVE_FRAME_READ(), B.set(K.REACTIVE_STAGED_READ(), B.set(K.REACTIVE_LANE_READ(), B.set(K.REACTIVE_SCREEN_READ(), K.REACTIVE_PROBE_UNANSWERED()))))))))))
+      Machine{B.store_node(w, id, R.Node.with_flags(B.node(w, id), U32.and(R.Node.flags(B.node(w, id)), keep))), rest, stack}
     case Recompute{id, create} <> +rest:
       recompute(w, rest, stack, id, create)
-    case Finish{id, create, context, tracking, oldHeight, reask, previous, wasUninitialized, outgoing, saved} <> +rest:
-      finish(w, rest, stack, id, create, context, tracking, oldHeight, reask, previous, wasUninitialized, outgoing, saved)
+    case Finish{frame} <> rest:
+      finish(w, rest, stack, frame)
     case InitialEffect{+id, +scheduled, deferred} <> +rest:
-      B.choose(~Machine, deferred, _ => Machine{w, rest, stack},
+      B.choose(~Machine, Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))), R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, id)))))), _ => Machine{w, rest, stack},
         _ => B.choose(~Machine, Bool.or(scheduled, S.is_user(R.Node.kind(B.node(w, id)))),
           _ => Machine{S.enqueue(w, id), rest, stack}, _ => Machine{w, RunEffect{id} <> rest, stack}))
     case RunEffect{id} <> +rest:
@@ -574,8 +783,22 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       round(w, rest, stack)
     case HeapLoop{} <> +rest:
       heapLoop(w, rest, stack)
-    case Seam{} <> +rest:
-      seam(w, rest, stack)
+    case Seam{} <> rest:
+      Machine{w, Settle{} <> AfterSettle{} <> rest, stack}
+    case Settle{} <> rest:
+      beginSettle(w, rest, stack)
+    case AfterSettle{} <> rest:
+      afterSettle(w, rest, stack)
+    case LandTransactions{frame, remaining} <> rest:
+      landTransactions(w, rest, stack, frame, remaining)
+    case LandNodes{frame, t, index} <> rest:
+      landNodes(w, rest, stack, frame, t, index)
+    case LandEnd{frame, t} <> rest:
+      landEnd(w, rest, stack, frame, t)
+    case CompleteSettle{frame} <> rest:
+      completeSettle(w, rest, stack, frame)
+    case ZombieLoop{nodes} <> rest:
+      zombieLoop(w, rest, stack, nodes)
     case RenderQueue{} <> +rest:
       B.choose(~Machine, List.is_empty(&2, Nat, R.World.renderQueue(w)),
         _ => Machine{w, UserQueue{} <> rest, stack},
@@ -585,7 +808,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
         _ => Machine{w, rest, stack},
         _ => Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(R.World.userQueue(w)), rest), stack})
     case FlushFinally{} <> rest:
-      Machine{R.World.with_running(w, False{}), rest, stack}
+      Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case RoundEnd{} <> +rest:
       todo = B.choose(~List<&2, Task>, R.World.scheduled(w), _ => Round{} <> rest, _ => rest)
       Machine{w, todo, stack}
@@ -598,10 +821,10 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       Machine{w, [], stack}
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
-    case Finish{id, create, context, tracking, height, reask, previous, wasUninitialized, outgoing, saved} <> rest:
-      catchPass(w, rest, id, create, context, tracking, height, reask, previous, wasUninitialized, outgoing, saved)
+    case Finish{frame} <> rest:
+      catchPass(w, rest, frame)
     case FlushFinally{} <> rest:
-      Machine{R.World.with_running(w, False{}), rest, stack}
+      Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case task <> rest:
       Machine{w, rest, stack}
 
@@ -645,3 +868,7 @@ def markRefresh(+w: R.World, +id: Nat) -> R.World:
       +w = H.insertIntoHeap(w, id)
       B.schedule(w),
     _ => w)
+
+# Direct source-helper entry for state probes; full flush uses the same tasks.
+def settleWorld(fuel: Nat, w: R.World) -> R.World:
+  world(run(fuel, Machine{w, [Settle{}], []}))

@@ -83,14 +83,14 @@
       "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
     },
     "core/core.ts:recompute": {
-      "bend": "runtime/core.bend:recompute, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publish, unwind",
+      "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing",
       "status": "partial",
-      "restrictions": "Source teardown/parking, synchronous body catch, clearStatus, finally restoration, dead-pass freeze, publication and same-value error recovery retained. Error wrapper identities survive propagation. Pending/async, stageError, transactions/lanes/snapshots, arbitrary comparators and nested construction remain unfinished."
+      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. No handleAsync flight registration yet; lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
     },
     "core/core.ts:updateIfNecessary": {
-      "bend": "runtime/core.bend:update, checkDeps, afterCheck, ClearFlags",
+      "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags",
       "status": "partial",
-      "restrictions": "Sync status-free nodes; error retry and remaining retained flag postures open."
+      "restrictions": "Source recomputing/disposed guard, live next-dependency read after nested update, post-update DIRTY break, clock/flight-gated error retry and retained flag mask. Snapshot/verdict/lanes and store-specific nodes outside admitted profile."
     },
     "core/core.ts:prepareComputed": {
       "bend": "runtime/core.bend:readNode, prepareDisposed",
@@ -100,22 +100,22 @@
     "core/core.ts:pullComputed": {
       "bend": "runtime/core.bend:prepareSlow, raiseHeight",
       "status": "partial",
-      "restrictions": "No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."
+      "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. Active verdict bit propagation and lane/snapshot interactions remain unfinished."
     },
     "core/core.ts:read": {
       "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe",
       "status": "partial",
-      "restrictions": "Source fast/slow paths, linking/root forwarding, dormant tail, error throw and later-cycle tracked retry retained. Pending, snapshots, verdict windows, held transactions and strict-read hooks remain unfinished."
+      "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
       "status": "partial",
-      "restrictions": "Source order of unflushed probe, late-linker latch, committed selection and staged flag retained. Born-staged NotReady and staged errors refuse explicitly; held stash, spectating, verdict hooks and exception/status propagation unfinished."
+      "restrictions": "Source unflushed/stash selection and late-linker order, committed ternary, stagedRead-before-staged-error throw, and born-staged plain/frame NotReady(null) retained. Snapshot/spectating/verdict hooks and actual promise callers unfinished."
     },
     "core/core.ts:setSignal": {
       "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater",
       "status": "partial",
-      "restrictions": "One shared setter for host and callback writes. Source equality, promotion, computed time and notified-epoch rewrite retained. Held/lane/snapshot/write hooks and arbitrary comparators remain unfinished."
+      "restrictions": "One setter for facade/callbacks/landings, staged composition, held join before equality, outside-flush first-stash, promotion, computed time and notify-epoch skip. Lane/snapshot/write hooks and arbitrary comparators unfinished."
     },
     "core/core.ts:untrack": {
       "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind",
@@ -140,7 +140,7 @@
     "core/scheduler.ts:commitPendingNode": {
       "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
       "status": "partial",
-      "restrictions": "Source separate signal/computed paths, configuration/publication order, metadata gates and parked teardown integrated; callback throws stop at source edges. Staged-error propagation explicitly refuses; no async/held transaction execution claim."
+      "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished."
     },
     "core/scheduler.ts:commitPendingNodes": {
       "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
@@ -150,12 +150,12 @@
     "core/scheduler.ts:GlobalQueue.flush": {
       "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd",
       "status": "partial",
-      "restrictions": "Source running/resync/dormancy/heap/settle/clock/queue ordering and exceptional running restoration; callback writes drain through same rounds. Error halt guard retained in public flush. Transactions/boundaries remain unfinished."
+      "restrictions": "Source running/resync/pass posture/dormant sweep/heap/transaction settle/clock/phase ordering; finally clears running/passTx on normal and exceptional paths. Microtask host delivery and async flights remain unfinished."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
-      "bend": "runtime/scheduler.bend:settle",
+      "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues",
       "status": "partial",
-      "restrictions": "Mainline live pending/held-trim walks, source nullish error/modified trim gate and clearing after walks. Transaction/lane seams, store commit and boundary hooks unfinished."
+      "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, run",
@@ -295,12 +295,12 @@
     "core/async.ts:notifyStatus": {
       "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
       "status": "partial",
-      "restrictions": "Error/pending/clear status stores, stable StatusError/NotReady identities, pending-source registration, shown-error stash, blocked forwarding and effect interception retained. Core flight/pending catch callers not yet connected. Transaction entry (pending render/guess and held readers), lane and boundary hooks explicitly unfinished."
+      "restrictions": "Error/pending/clear stores, wrapper identity, pending-set registration, shown-error stash, blocked forwarding and effect interception retained. Pending render/guess and held-subscriber transaction joins now execute. Flights, active lanes, boundaries and marks remain unfinished."
     },
     "core/async.ts:propagateStatus": {
       "bend": "runtime/status.bend:Propagate, PropagateNext",
       "status": "partial",
-      "restrictions": "Live subscriber order, time stamps, rederive/verdict and stale-generation routing, pending-source repeat guard, identity deduplication, pending intake and recursive notification retained. Held transaction joins explicitly refuse; no host flight/transaction execution claim."
+      "restrictions": "Live subscriber iteration, time, stale-gen/rederive/verdict routing, repeated-source and identity deduplication, pending intake, held transaction joins and recursive notification retained. Active lane/boundary profiles remain unfinished."
     },
     "core/async.ts:settleErroredDependents": {
       "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd",
@@ -335,17 +335,17 @@
     "core/async.ts:addPendingSource": {
       "bend": "runtime/pending-state.bend:addPendingSource, hasSource, items",
       "status": "partial",
-      "restrictions": "Unique insertion-ordered source IDs and lazy node-owned set; Bundle carries bool result. Synthetic helper coverage; flight callers remain unfinished."
+      "restrictions": "Source Set uses a stable nullable arena handle; add/delete preserve shared local references and live insertion order with tombstones, while clear drops only the node handle. Empty deletion restores absence. Nine direct captured-alias/iterator cases compare actual TS Set behavior."
     },
     "core/async.ts:removePendingSource": {
       "bend": "runtime/pending-state.bend:removePendingSource, remove",
       "status": "partial",
-      "restrictions": "No-op false for absent entry; removes one identity, retires empty container to NoSources, returns bool in Bundle."
+      "restrictions": "Source Set uses a stable nullable arena handle; add/delete preserve shared local references and live insertion order with tombstones, while clear drops only the node handle. Empty deletion restores absence. Nine direct captured-alias/iterator cases compare actual TS Set behavior."
     },
     "core/async.ts:clearPendingSources": {
       "bend": "runtime/pending-state.bend:clearPendingSources",
       "status": "partial",
-      "restrictions": "Source drops sole owned set reference without eager allocation or a clearing walk."
+      "restrictions": "Source Set uses a stable nullable arena handle; add/delete preserve shared local references and live insertion order with tombstones, while clear drops only the node handle. Empty deletion restores absence. Nine direct captured-alias/iterator cases compare actual TS Set behavior."
     },
     "core/async.ts:setPendingError": {
       "bend": "runtime/pending-state.bend:setPendingError, preserveOrCreate, notReadyError",
@@ -370,7 +370,7 @@
     "core/async.ts:settlePendingSource": {
       "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, skip, Walk, Next, Release, End",
       "status": "partial",
-      "restrictions": "Root retirement, full retryReaches, early-return visited semantics, remaining-source/error preservation, blocked retry, deferred candidate release and final schedule retained. Held transaction joining explicitly refuses; core/async landing/repark callers remain unfinished."
+      "restrictions": "Root retirement, full retryReaches, early-return visited semantics, remaining error/source identity, held join, blocked retry and collect-then-release order retained. Core recompute callers now execute; async promise landing/rejection callers remain unfinished."
     },
     "core/async.ts:releaseIfSettledUnobserved": {
       "bend": "runtime/pending.bend:releaseIfSettledUnobserved",
@@ -381,6 +381,151 @@
       "bend": "runtime/pending.bend:releaseSettledDependents, Collect, CollectWalk, CollectNext, Release",
       "status": "partial",
       "restrictions": "Source visited collect-then-release order retained; cleanup exceptions stop before later releases. Async error-settle caller unfinished."
+    },
+    "core/scheduler.ts:newTransaction": {
+      "bend": "runtime/transaction.bend:newTransaction",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:resolveTx": {
+      "bend": "runtime/transaction.bend:resolveTx",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:txOf": {
+      "bend": "runtime/transaction.bend:txOf",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:liveTx": {
+      "bend": "runtime/transaction.bend:liveTx",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:merge": {
+      "bend": "runtime/transaction.bend:merge",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:joinFuture": {
+      "bend": "runtime/transaction.bend:joinFuture",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:joinPassTx": {
+      "bend": "runtime/transaction.bend:joinPassTx",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:holdNode": {
+      "bend": "runtime/transaction.bend:holdNode",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:list": {
+      "bend": "runtime/transaction.bend:list",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:holdFrame": {
+      "bend": "runtime/transaction.bend:holdFrame",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:unhold": {
+      "bend": "runtime/transaction.bend:unhold",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:staleReader": {
+      "bend": "runtime/transaction.bend:staleReader",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:blocked": {
+      "bend": "runtime/transaction.bend:blocked",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:blockersOf": {
+      "bend": "runtime/transaction.bend:blockersOf",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:ownFlights": {
+      "bend": "runtime/transaction.bend:ownFlights",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:ownSource": {
+      "bend": "runtime/transaction.bend:ownSource",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:blockedBy": {
+      "bend": "runtime/transaction.bend:blockedBy",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:onScreen": {
+      "bend": "runtime/transaction.bend:onScreen",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/scheduler.ts:removalStagedBy": {
+      "bend": "runtime/transaction.bend:removalStagedBy",
+      "status": "partial",
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+    },
+    "core/core.ts:frameRead": {
+      "bend": "runtime/transaction.bend:frameRead, enterRead",
+      "status": "partial",
+      "restrictions": "Render frame reads, bornInto exclusion, own-flush exclusion and stale rerun capture. Verdict/lane/boundary paths outside the admitted context family."
+    },
+    "core/core.ts:bornInto": {
+      "bend": "runtime/transaction.bend:bornInto",
+      "status": "partial",
+      "restrictions": "Source uninitialized/held-frame, HELD and compressed transaction identity predicate."
+    },
+    "core/core.ts:joinPass": {
+      "bend": "runtime/transaction.bend:joinPass, enterRead",
+      "status": "partial",
+      "restrictions": "JOINED flag, render/source-uninitialized decision and joinPassTx ordering; fresh boundary collection unfinished."
+    },
+    "core/async.ts:stageError": {
+      "bend": "runtime/pending.bend:stageError, stageWrap",
+      "status": "partial",
+      "restrictions": "Source held/in-pass-staged-read transaction guard, blocked/set retirement, error-status preservation, wrapped staging and settle-before-schedule. Actual async rejection caller remains unfinished."
+    },
+    "core/scheduler.ts:deferZombie": {
+      "bend": "runtime/scheduler.bend:deferZombie; runtime/core.bend:heapLoop",
+      "status": "partial",
+      "restrictions": "Delete heap, clear DIRTY/CHECK, append deferred identity; actual heap update uses this branch."
+    },
+    "core/scheduler.ts:reruns": {
+      "bend": "runtime/scheduler.bend:reruns, rerunsLoop, rerunOne, clearChildRuns",
+      "status": "partial",
+      "restrictions": "Live rerun list, disposed/error guard, frame-read/verdict gate, child effect invalidation, enqueue and clear in source order."
+    },
+    "core/scheduler.ts:land": {
+      "bend": "runtime/core.bend:LandTransactions, landTransactions, landNodes, landEnd",
+      "status": "partial",
+      "restrictions": "Remove live transaction before reruns/commits, iterate live membership, clear stamps before commit, clear landing cleanup rejoin, release held queues. Marks/lane completion hooks unfinished."
+    },
+    "core/scheduler.ts:releaseQueues": {
+      "bend": "runtime/scheduler.bend:releaseQueues",
+      "status": "partial",
+      "restrictions": "Append render/user held callbacks then clear each source slot; active landing uses this helper."
+    },
+    "core/scheduler.ts:GlobalQueue.enqueue": {
+      "bend": "runtime/write.bend:enqueueIn, enqueue",
+      "status": "partial",
+      "restrictions": "Node-bound callback identity, queue type and explicit/current lane routing, then schedule; arbitrary callback closures and lane engine callers unfinished."
+    },
+    "core/scheduler.ts:GlobalQueue.run": {
+      "bend": "runtime/core.bend:RenderQueue, UserQueue, RunEffect",
+      "status": "partial",
+      "restrictions": "Detach each nonempty queue and execute ordered node-bound runners; preserves throws and phase ordering."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

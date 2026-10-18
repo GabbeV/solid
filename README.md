@@ -38,8 +38,8 @@ The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
 and throws. Synchronous errors propagate through compute/effect catches, recovery and scheduler
-halts. Pending-source and settle helpers are directly tested; core pending callers,
-async flights, transactions and boundaries remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
+halts. Pending catches, held reads/writes, staged errors and mainline transaction
+park/land now run in the same driver. Async flights and boundaries remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
@@ -62,6 +62,8 @@ active owner machine: detached cleanup lists, exact callback order, effect clean
 and final owner state. Two further closed regressions check error wrapper sharing
 and same-value recovery through the actual graph/queues. Two pending-helper
 regressions check converging retirement and an independent carrying path.
+Two transaction regressions check that a held write keeps old text and appears
+when its explicit transaction input is released; these are not action API proofs.
 General error and
 ownership theorems remain open.
 

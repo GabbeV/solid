@@ -35,7 +35,7 @@ type View is Data:
     scheduled: Bool, fault: R.Fault}
 
 def view(+w: R.World) -> View:
-  View{R.NodeExtension.pendingSources(B.extension(w, 3n)), R.NodeExtension.pendingSources(B.extension(w, 4n)), R.NodeExtension.pendingSources(B.extension(w, 5n)),
+  View{B.pendingSources(w, 3n), B.pendingSources(w, 4n), B.pendingSources(w, 5n),
     R.Node.status(B.node(w, 3n)), R.Node.status(B.node(w, 4n)), R.Node.status(B.node(w, 5n)),
     R.NodeExtension.error(B.extension(w, 3n)), R.NodeExtension.error(B.extension(w, 4n)), R.NodeExtension.error(B.extension(w, 5n)),
     R.NodeExtension.blocked(B.extension(w, 3n)), R.NodeExtension.blocked(B.extension(w, 4n)), R.NodeExtension.blocked(B.extension(w, 5n)),

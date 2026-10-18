@@ -13,11 +13,11 @@ try{
   const bundle=await build({stdin:{contents:`
     export * from './index.ts';export * as K from './core/constants.ts';
     export {computed,createEffectNode,setContextInternal,ext} from './core/core.ts';
-    export {createOwner} from './core/owner.ts';export {link} from './core/graph.ts';export {clearStatus,notifyStatus,addPendingSource,setPendingError,parkLoadingWindow,settlePendingSource,releaseSettledDependents,probeRemove,probeLand} from './core/async.ts';export {StatusError,NotReadyError} from './core/error.ts';
+    export {createOwner} from './core/owner.ts';export {link} from './core/graph.ts';export {clearStatus,notifyStatus,addPendingSource,setPendingError,parkLoadingWindow,settlePendingSource,releaseSettledDependents,probeRemove,probeLand,probeClear} from './core/async.ts';export {StatusError,NotReadyError} from './core/error.ts';
     export {clock,dirtyQueue,globalQueue,probeReset,probePending,probeScheduled,probeHalted,probeHaltNotified} from './core/scheduler.ts';
   `,resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{
     name:'pending-state',setup(b){
-      b.onLoad({filter:/[/\\]core[/\\]async\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {removePendingSource as probeRemove,landStatus as probeLand};'}));
+      b.onLoad({filter:/[/\\]core[/\\]async\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {removePendingSource as probeRemove,landStatus as probeLand,clearPendingSources as probeClear};'}));
       b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
       export {pendingNodes as probePending,scheduled as probeScheduled,halted as probeHalted,haltNotified as probeHaltNotified};
       export function probeReset(){clock=5;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=0;dirtyQueue._max=0;dirtyQueue._marked=false;halted=haltNotified=false;}
@@ -31,7 +31,7 @@ try{
     if('n'in v)return v.n;if('b'in v)return v.b;return v.$==='Null'?null:undefined;
   };return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,time:n.time,
       error:decode(extensions[n.x]?.error??{}),shown:decode(extensions[n.x]?.shownError??{}),blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,
-      sources:'items'in(extensions[n.x]?.pendingSources??{})?list(extensions[n.x].pendingSources.items):undefined,
+      sources:extensions[n.x]?.pendingSources?list(list(w.pendingSets)[extensions[n.x].pendingSources]).filter(id=>id!==0):undefined,
       x:!!n.x,next:n.nextHeap,prev:n.prevHeap,first:n.firstChild,nextSibling:n.nextSibling,prevSibling:n.prevSibling,deps:n.deps,tail:n.depsTail,subs:n.subs,subsTail:n.subsTail,disposal:disposal(n.disposal)})),
     links:list(w.links).slice(1).map(l=>({...l,$:undefined})),events:list(w.events).map(e=>[e.callback,e.code]),
     pending:list(w.pendingNodes),buckets:list(w.buckets),min:w.minimum,max:w.maximum,marked:w.marked,scheduled:w.scheduled,exception:'cause'in w.fault?decode(w.fault.cause):undefined};}
@@ -69,5 +69,27 @@ try{
   for(let op=0;op<10;op++)for(const status of [0,1,3,5])for(const flags of [0,K.REACTIVE_ZOMBIE,K.REACTIVE_DISPOSED])for(const extra of [false,true])for(const additional of [false,true])for(const block of [false,true])for(const config of [0,K.CONFIG_VERDICT,K.CONFIG_REDERIVE]){
     assert.deepEqual(actual(B.fixture(op,status,flags,extra,additional,block,config)),reference(op,status,flags,extra,additional,block,config),JSON.stringify({op,status,flags,extra,additional,block,config}));count++;
   }
-  console.log(`${count} pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Promise/transaction execution remains unfinished.`);
+  for(let mode=0;mode<9;mode++){
+    S.probeReset();S.setContextInternal(null);const r=S.createOwner();S.setContextInternal(r);const nodes=[null,r,...[0,1,2,3,4].map(()=>S.computed(()=>7,{lazy:true}))];S.setContextInternal(null);const n=nodes[2],id=n=>nodes.indexOf(n),seen=[];
+    S.addPendingSource(n,nodes[3]);const saved=n._x._pendingSources;
+    if(mode===0){S.addPendingSource(n,nodes[3]);S.addPendingSource(n,nodes[4]);}
+    if(mode===1)S.probeRemove(n,nodes[3]);
+    if(mode===2){S.probeClear(n);S.addPendingSource(n,nodes[4]);}
+    if(mode===3){S.probeRemove(n,nodes[3]);S.addPendingSource(n,nodes[4]);}
+    if(mode===4){S.addPendingSource(n,nodes[4]);S.probeRemove(n,nodes[3]);}
+    if(mode===5)S.probeRemove(n,{});
+    if(mode>=6){
+      if(mode===6)S.addPendingSource(n,nodes[4]);
+      for(const source of saved){seen.push(id(source));
+        if(mode===6&&source===nodes[3]){S.probeRemove(n,nodes[3]);S.addPendingSource(n,nodes[5]);}
+        if(mode===6&&source===nodes[4]){S.probeRemove(n,nodes[5]);S.addPendingSource(n,nodes[6]);}
+        if(mode===7&&source===nodes[3]){S.probeRemove(n,nodes[3]);S.addPendingSource(n,nodes[4]);}
+        if(mode===8&&source===nodes[3]){S.probeClear(n);S.addPendingSource(n,nodes[4]);}
+      }
+    }
+    const result=B.aliasFixture(mode);
+    assert.deepEqual({oldItems:list(result.oldItems),current:'items'in result.current?list(result.current.items):undefined,same:result.same,seen:list(result.seen)},
+      {oldItems:[...saved].map(id),current:n._x._pendingSources?[...n._x._pendingSources].map(id):undefined,same:n._x._pendingSources===saved,seen},'captured Set case '+mode);
+  }
+  console.log(`${count} pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Promise/transaction execution remains unfinished.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

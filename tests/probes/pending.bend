@@ -17,7 +17,7 @@ def seed(+w: R.World, +id: Nat, +source: Nat, +status: U32, +additional: Bool, +
   +w = B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error))
   +w = B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{True{}}}))
   sources = B.choose(~R.SourceSet, withSources, _ => R.Sources{B.choose(~List<&2, Nat>, additional, _ => [source, 4n], _ => [source])}, _ => R.NoSources{})
-  B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), sources))
+  B.setPendingSources(w, id, sources)
 
 def initial(+op: U32, +status: U32, flags: U32, +extra: Bool, +additional: Bool, +block: Bool, config: U32) -> R.World:
   +w = N.createOwner(R.World.with_clock(B.empty(), 5n), 0n, False{})
@@ -73,3 +73,65 @@ def apply(+w: R.World, op: U32, +additional: Bool, +block: Bool) -> R.World:
 
 def fixture(+op: U32, status: U32, flags: U32, extra: Bool, +additional: Bool, +block: Bool, config: U32) -> R.World:
   apply(initial(op, status, flags, extra, additional, block, config), op, additional, block)
+
+# A captured Set is a live object, including deletion/reinsertion iteration.
+type AliasProbe is Data:
+  AliasProbe{oldItems: List<&2, Nat>, current: R.SourceSet, same: Bool, seen: List<&2, Nat>}
+
+def aliasView(+w: R.World, +saved: Nat, seen: List<&2, Nat>) -> AliasProbe:
+  AliasProbe{B.pendingItems(w, saved), B.pendingSources(w, 2n), Nat.is_eq(saved, R.NodeExtension.pendingSources(B.extension(w, 2n))), seen}
+
+def aliasIter(fuel: Nat, +w: R.World, +saved: Nat, +index: Nat, +seen: List<&2, Nat>, +mode: U32) -> AliasProbe:
+  match fuel:
+    case 0n:
+      aliasView(R.World.with_fault(w, R.Exhausted{}), saved, seen)
+    case 1n+ +p:
+      B.choose(~AliasProbe, Nat.is_ge(index, B.length(Nat, B.pendingSlots(w, saved))), _ => aliasView(w, saved, seen),
+        _ =>
+          +item = B.get(Nat, B.pendingSlots(w, saved), index, 0n)
+          B.choose(~AliasProbe, Nat.is_eq(item, 0n), _ => aliasIter(p, w, saved, 1n+index, seen, mode),
+            _ =>
+              seen = B.append(Nat, seen, [item])
+              +w = B.choose(~R.World, U32.is_eq(mode, 6),
+                _ => B.choose(~R.World, Nat.is_eq(item, 3n),
+                  _ => B.first(R.World, Bool, P.addPendingSource(B.first(R.World, Bool, P.removePendingSource(w, 2n, 3n)), 2n, 5n)),
+                  _ => B.choose(~R.World, Nat.is_eq(item, 4n),
+                    _ => B.first(R.World, Bool, P.addPendingSource(B.first(R.World, Bool, P.removePendingSource(w, 2n, 5n)), 2n, 6n)), _ => w)),
+                _ => B.choose(~R.World, Bool.and(U32.is_eq(mode, 7), Nat.is_eq(item, 3n)),
+                  _ => B.first(R.World, Bool, P.addPendingSource(B.first(R.World, Bool, P.removePendingSource(w, 2n, 3n)), 2n, 4n)),
+                  _ => B.choose(~R.World, Bool.and(U32.is_eq(mode, 8), Nat.is_eq(item, 3n)),
+                    _ => B.first(R.World, Bool, P.addPendingSource(P.clearPendingSources(w, 2n), 2n, 4n)), _ => w)))
+              aliasIter(p, w, saved, 1n+index, seen, mode)))
+
+def aliasApply(+w: R.World, mode: U32, +saved: Nat) -> AliasProbe:
+  match mode:
+    case 0:
+      +w = B.first(R.World, Bool, P.addPendingSource(B.first(R.World, Bool, P.addPendingSource(w, 2n, 3n)), 2n, 4n))
+      aliasView(w, saved, [])
+    case 1:
+      aliasView(B.first(R.World, Bool, P.removePendingSource(w, 2n, 3n)), saved, [])
+    case 2:
+      aliasView(B.first(R.World, Bool, P.addPendingSource(P.clearPendingSources(w, 2n), 2n, 4n)), saved, [])
+    case 3:
+      aliasView(B.first(R.World, Bool, P.addPendingSource(B.first(R.World, Bool, P.removePendingSource(w, 2n, 3n)), 2n, 4n)), saved, [])
+    case 4:
+      aliasView(B.first(R.World, Bool, P.removePendingSource(B.first(R.World, Bool, P.addPendingSource(w, 2n, 4n)), 2n, 3n)), saved, [])
+    case 5:
+      aliasView(B.first(R.World, Bool, P.removePendingSource(w, 2n, 7n)), saved, [])
+    case 6:
+      aliasIter(32n, B.first(R.World, Bool, P.addPendingSource(w, 2n, 4n)), saved, 0n, [], 6)
+    case 7:
+      aliasIter(32n, w, saved, 0n, [], 7)
+    case _:
+      aliasIter(32n, w, saved, 0n, [], 8)
+
+def aliasFixture(+mode: U32) -> AliasProbe:
+  +opts = R.NodeOptions.with_lazy(N.defaults(), True{})
+  +w = N.createOwner(B.empty(), 0n, False{})
+  +w = N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n)
+  +w = N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n)
+  +w = N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n)
+  +w = N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n)
+  +w = N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n)
+  +w = B.first(R.World, Bool, P.addPendingSource(w, 2n, 3n))
+  aliasApply(w, mode, R.NodeExtension.pendingSources(B.extension(w, 2n)))

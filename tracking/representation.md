@@ -92,7 +92,7 @@ receiver inspection, reflection, reportError callbacks or arbitrary closures.
 NotReadyFailure is separate from StatusFailure: it has a stable identity and
 nullable source without a user cause. Both draw identities from World.errorSerial,
 so storing or propagating the same object preserves strict equality. Pending sets
-are node-owned unique-ID lists with insertion order. removePendingSource returns
+are node-owned stable handles with ordered unique-ID membership. removePendingSource returns
 both updated world and source bool, and resets the empty set to NoSources.
 
 The pending settle machine keeps a local visited set and deferred release list.
@@ -102,3 +102,24 @@ Deferred owner release starts only after dependent traversal and precedes final
 scheduling, including exception partial states. These source helpers do not connect
 promise registration, core NotReady catch/read logic, held transaction joining or
 boundary interception. Those branches remain explicit unfinished domains.
+
+Transactions are stable arena IDs with every pinned source field retained. Live
+transactions are an ordered ID list separate from retired arena records. World
+stores flushTransaction/passTx/passLane/judge and deferred zombies. Joins preserve
+source redirect resolution and node-stamp compression; frame holds traverse live
+children, and the settle machine retains own queues across reverse live landings.
+Marks and linked-lane arrays remain storage-only; installed hook behavior for
+active boundaries, lanes, affects and stores is unfinished.
+
+Pending Set storage now uses nullable handles into World.pendingSets. A captured
+outgoing set remains live after the node drops/replaces its reference. Deletion
+leaves internal zero tombstones (all member IDs are nonzero), so an iterator's
+cursor survives earlier deletions and observes later appends. View-only SourceSet
+values expose absence versus current members to probes/proofs; they are not the
+stored mutable Set. This repairs alias fidelity before connecting pending catches.
+
+The internal NotPendingToken payload represents the exact NOT_PENDING object if a
+synthetic staged-error commit consumes an empty slot. Source normally stages a
+wrapper there, but the helper reads its pending slot, never its prior value.
+The token is separate from Empty, undefined and user values; no public encoding
+for this private sentinel is exposed.

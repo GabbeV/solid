@@ -29,7 +29,7 @@ try {
   function extension(x,bend) {
     if(!x)return null;
     if(bend)return {inFlight:x.inFlight,flightTeardown:x.flightTeardown,error:value(x.error),blocked:value(x.blocked.value),
-      sources:Object.hasOwn(x.pendingSources,'items'),unobserved:x.unobserved,snapshot:Object.hasOwn(x.snapshotValue,'value'),
+      sources:x.pendingSources!==0,unobserved:x.unobserved,snapshot:Object.hasOwn(x.snapshotValue,'value'),
       pendingFirstChild:x.pendingFirstChild,pendingDisposal:Object.hasOwn(x.pendingDisposal,'callback'),transaction:x.transaction,
       reask:x.reask,flushed:Object.hasOwn(x.flushed,'value'),flushedAt:stamp(x.flushedAt),q:x.q,lane:Object.hasOwn(x.lane,'value'),marks:x.marks,shownError:value(x.shownError)};
     return {inFlight:x._inFlight??0,flightTeardown:x._flightTeardown??0,error:x._error,blocked:x._blocked,

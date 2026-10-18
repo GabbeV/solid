@@ -14,14 +14,19 @@ def items(sources: R.SourceSet) -> List<&2, Nat>:
       xs
 
 def hasSource(+w: R.World, id: Nat, source: Nat) -> Bool:
-  B.contains(items(R.NodeExtension.pendingSources(B.extension(w, id))), source)
+  B.contains(B.pendingItems(w, R.NodeExtension.pendingSources(B.extension(w, id))), source)
 
 def addPendingSource(+w: R.World, +id: Nat, +source: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, hasSource(w, id, source), _ => B.Bundle{w, False{}},
     _ =>
       +w = E.ext(w, id)
-      xs = B.append(Nat, items(R.NodeExtension.pendingSources(B.extension(w, id))), [source])
-      B.Bundle{B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), R.Sources{xs})), True{}})
+      +w = B.choose(~R.World, Nat.is_eq(R.NodeExtension.pendingSources(B.extension(w, id)), 0n),
+        _ =>
+          +pair = B.newPendingSet(w, [])
+          +w = B.first(R.World, Nat, pair)
+          B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), B.second(R.World, Nat, pair))), _ => w)
+      +set = R.NodeExtension.pendingSources(B.extension(w, id))
+      B.Bundle{B.store_pendingSet(w, set, B.append(Nat, B.pendingSlots(w, set), [source])), True{}})
 
 def remove(xs: List<&2, Nat>, +source: Nat) -> List<&2, Nat>:
   match xs:
@@ -30,17 +35,28 @@ def remove(xs: List<&2, Nat>, +source: Nat) -> List<&2, Nat>:
     case +id <> +rest:
       B.choose(~List<&2, Nat>, Nat.is_eq(id, source), _ => rest, _ => id <> remove(rest, source))
 
+# Set.delete leaves a tombstone so captured iterators keep their cursor.
+def removeSlot(xs: List<&2, Nat>, +source: Nat) -> List<&2, Nat>:
+  match xs:
+    case Nil{}:
+      []
+    case +id <> +rest:
+      B.choose(~List<&2, Nat>, Nat.is_eq(id, source), _ => 0n <> rest, _ => id <> removeSlot(rest, source))
+
 def removePendingSource(+w: R.World, +id: Nat, +source: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, hasSource(w, id, source),
     _ =>
-      +xs = remove(items(R.NodeExtension.pendingSources(B.extension(w, id))), source)
-      sources = B.choose(~R.SourceSet, List.is_empty(&2, Nat, xs), _ => R.NoSources{}, _ => R.Sources{xs})
-      B.Bundle{B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), sources)), True{}},
+      +set = R.NodeExtension.pendingSources(B.extension(w, id))
+      +xs = removeSlot(B.pendingSlots(w, set), source)
+      +w = B.store_pendingSet(w, set, xs)
+      +w = B.choose(~R.World, List.is_empty(&2, Nat, B.liveIds(xs)),
+        _ => B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), 0n)), _ => w)
+      B.Bundle{w, True{}},
     _ => B.Bundle{w, False{}})
 
 def clearPendingSources(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-    _ => B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), R.NoSources{})), _ => w)
+    _ => B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), 0n)), _ => w)
 
 def notReadySource(error: R.Value) -> Nat:
   match error:

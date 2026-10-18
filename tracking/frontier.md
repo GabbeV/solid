@@ -30,7 +30,8 @@ proof credit was imported.
   heap and read sites. Nested callback construction/root callback APIs remain open.
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
-  seed/option histories execute; loading suspension is not implemented. See
+  seed/option histories execute; loading-window pending catches now execute through
+  direct source probes; promise registration/settlement is not yet implemented. See
   [representation.md](representation.md) for storage-only extension fields.
 - Reusable defunctionalized callback programs, not arbitrary JavaScript closures.
   Render application writes computed text. User application records its value
@@ -41,8 +42,9 @@ proof credit was imported.
   and arbitrary callback reads remain open. Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
-  exist and match direct source probes. Core pending catches, async flight callers,
-  transaction entry and boundaries remain unfinished; no promise program is admitted.
+  execute through core catches/reads. Mainline transactions join, merge, park,
+  judge blockers and land through the same flush. No promise program is admitted
+  yet: flight registration/callback delivery and boundaries remain unfinished.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -111,7 +113,8 @@ Status probes include blocked forwards. A separate 2,880-case pending matrix
 compares source-set identity/order, new/repeated/stale-link propagation, null
 source, loading parks, own-flight-only landing, retained retry paths, converging
 settle walks, deferred releases and cleanup throws. These are direct helper
-executions over synthetic state, not promise/transaction execution.
+executions over synthetic state, not promise execution. Nine additional cases check
+captured Set identity and live deletion/reinsertion/iteration semantics.
 The concrete `error_propagates` and `error_recovers_same_value` laws check a
 source -> conditional memo -> memo -> user chain through failure and equal-value
 recovery: all three status/error slots, preserved wrapper identity, previous/value
@@ -127,19 +130,35 @@ Four deliberately broken implementations must be rejected. No arbitrary-value, a
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
-## Next dependency and broader roadmap
+## Current transaction milestone and next dependency
 
-1. Owner teardown, synchronous callback errors and dormant lifecycle consumers
-   are integrated. Pending-source helpers and direct state/proof regressions exist.
-   Preserve this evidence while connecting the pending callers in recompute/read.
-2. Translate actual handleAsync registration and landing/rejection/iterator
-   callbacks, supersession and settlement identity guards, and connect the pending
-   status/retirement helpers. Core pending catches still refuse explicitly instead
-   of misclassifying NotReady as an ordinary error. The helper layer alone is not
-   async execution. Staged-error notification/publication is also unfinished.
-3. Add actual transaction discovery, blockers, merge redirects, park/land/reruns,
-   and queue release to the SAME driver. This is necessary before async consistency
-   claims; waiting for all host promises is not an acceptable substitute.
+2,160 transaction-state comparisons cover source allocation/redirect/merge/join,
+list/hold/frame walk, stale-reader and born-held decisions. Another 4,096 blocker
+comparisons cover own-source filtering, retained link generations, truthy versus
+nullish errors, zombie removal judgments and exact blocker lists. The 2,304 seam
+and 48 deferred-zombie comparisons execute actual park/land, full queue ordering,
+net-zero writes, cleanup-driven live rewrites and exceptional partial state.
+4,096 held-operation comparisons cover signal/memo reads/writes, source unflushed
+stash, frame/born-held posture, pending/error throws, recompute catches, staged
+errors and error commits. Synthetic states are included; full package coverage
+and arbitrary histories are not claimed.
+
+The closed `transaction_parks` / `transaction_lands` laws construct a signal and
+render callback, stage a write, and run the actual flush while a transaction's
+explicit open count holds it. The text stays old while parked and becomes 6 after
+closing the open count and landing. They check held slots/stamps, live and effect
+queues, visible text, ambient restoration and successful completion. These laws
+use an explicit transaction input, not the public action API or host promises.
+
+1. Connect handleAsync object/thenable registration, callback delivery, supersession
+   identity guards, settlement/rejection, loading windows and stream cancellation.
+   Core pending catches and mainline transaction integration are now active.
+2. Preserve source behavior while extending actual async histories. Inert full-index
+   hook bodies are exercised without boundary/lane/mark/store scopes; those scopes
+   require their own translated engines, not an assumption that source hooks are
+   absent.
+3. Extend the translated transaction path to boundary/lane/action hooks and public
+   scopes. Do not replace park/land decisions with waiting for all host promises.
 4. Expand to typed error outcomes, loading seeds, ownership/cleanup and boundaries.
    Characterize the documented loading-seed conflict with a current-source repro
    before proposing a stronger law. No conflict is silently resolved by this port.

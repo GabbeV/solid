@@ -52,6 +52,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
   match a b:
     case R.Undefined{} R.Undefined{}:
       True{}
+    case R.NotPendingToken{} R.NotPendingToken{}:
+      True{}
     case R.Null{} R.Null{}:
       True{}
     case R.Boolean{x} R.Boolean{y}:
@@ -80,6 +82,8 @@ def truth(v: R.Value) -> Bool:
     case R.StatusFailure{identity, source, cause}:
       True{}
     case R.NotReadyFailure{identity, source}:
+      True{}
+    case R.NotPendingToken{}:
       True{}
     case R.StringValue{s}:
       Bool.not(String.is_empty(s))
@@ -145,7 +149,7 @@ def blank_tree() -> R.TreeNode:
   R.TreeNode{0n, [], R.Undefined{}}
 
 def blank_extension() -> R.NodeExtension:
-  R.NodeExtension{0n, 0n, R.Undefined{}, R.Empty{}, R.NoSources{}, 0n,
+  R.NodeExtension{0n, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
     R.Unstamped{}, 0n, R.Empty{}, 0n, R.Undefined{}}
 
@@ -179,10 +183,13 @@ def noDisposal(d: R.Disposal) -> Bool:
     case _:
       False{}
 
+def blank_transaction() -> R.Transaction:
+  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}}
+
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]]}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -259,3 +266,49 @@ def contains(xs: List<&2, Nat>, +id: Nat) -> Bool:
       False{}
     case x <> rest:
       Bool.or(Nat.is_eq(x, id), contains(rest, id))
+
+def transaction(w: R.World, id: Nat) -> R.Transaction:
+  get(R.Transaction, R.World.txArena(w), id, blank_transaction())
+
+def store_transaction(+w: R.World, id: Nat, t: R.Transaction) -> R.World:
+  R.World.with_txArena(w, List.set(&2, R.Transaction, R.World.txArena(w), id, t))
+
+# Source Set identity is a nullable arena handle. Dropping the node's handle
+# does not mutate a Set captured in a recompute local; add/delete do mutate it.
+# Deleted Set entries keep their position for a live JS-style iterator. Node
+# IDs are nonzero, so zero is an internal tombstone, never a member.
+def pendingSlots(w: R.World, set: Nat) -> List<&2, Nat>:
+  get(List<&2, Nat>, R.World.pendingSets(w), set, [])
+
+def liveIds(xs: List<&2, Nat>) -> List<&2, Nat>:
+  match xs:
+    case Nil{}:
+      []
+    case 0n <> rest:
+      liveIds(rest)
+    case id <> rest:
+      id <> liveIds(rest)
+
+def pendingItems(+w: R.World, set: Nat) -> List<&2, Nat>:
+  liveIds(pendingSlots(w, set))
+
+def store_pendingSet(+w: R.World, set: Nat, items: List<&2, Nat>) -> R.World:
+  R.World.with_pendingSets(w, List.set(&2, List<&2, Nat>, R.World.pendingSets(w), set, items))
+
+def pendingSources(+w: R.World, id: Nat) -> R.SourceSet:
+  +set = R.NodeExtension.pendingSources(extension(w, id))
+  choose(~R.SourceSet, Nat.is_eq(set, 0n), _ => R.NoSources{}, _ => R.Sources{pendingItems(w, set)})
+
+def newPendingSet(+w: R.World, items: List<&2, Nat>) -> Bundle<R.World, Nat>:
+  +set = length(List<&2, Nat>, R.World.pendingSets(w))
+  Bundle{R.World.with_pendingSets(w, append(List<&2, Nat>, R.World.pendingSets(w), [items])), set}
+
+# Test/internal construction boundary for a newly allocated source Set.
+def setPendingSources(+w: R.World, +id: Nat, sources: R.SourceSet) -> R.World:
+  match sources:
+    case R.NoSources{}:
+      store_extension(w, id, R.NodeExtension.with_pendingSources(extension(w, id), 0n))
+    case R.Sources{items}:
+      +pair = newPendingSet(w, items)
+      +w = first(R.World, Nat, pair)
+      store_extension(w, id, R.NodeExtension.with_pendingSources(extension(w, id), second(R.World, Nat, pair)))

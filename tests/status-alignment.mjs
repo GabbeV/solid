@@ -27,7 +27,7 @@ try{
     if('identity'in v){if(!errors.has(v.identity))errors.set(v.identity,errors.size+1);return {identity:errors.get(v.identity),source:v.source,cause:decode(v.cause)};}
     if('n'in v)return v.n;if('b'in v)return v.b;return v.$==='Null'?null:undefined;
   };return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,time:n.time,modified:n.modified,
-    error:decode(extensions[n.x]?.error??{}),blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,sources:'items'in(extensions[n.x]?.pendingSources??{}),
+    error:decode(extensions[n.x]?.error??{}),blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,sources:!!extensions[n.x]?.pendingSources,
     x:!!n.x,next:n.nextHeap,prev:n.prevHeap})),
     pending:list(w.pendingNodes),user:list(w.userQueue),render:list(w.renderQueue),buckets:list(w.buckets),min:w.minimum,max:w.maximum,marked:w.marked,scheduled:w.scheduled,
     halted:w.halted,haltNotified:w.haltNotified,exception:'cause'in w.fault?decode(w.fault.cause):undefined,reports:list(w.reports).map(r=>[r.kind,'value'in r.cause?decode(r.cause.value):undefined])};}

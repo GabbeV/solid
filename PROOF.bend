@@ -23,6 +23,12 @@ def Laws.pending_diamond_retires():
 def Laws.pending_other_path_remains():
   {==}
 
+def Laws.transaction_parks():
+  {==}
+
+def Laws.transaction_lands():
+  {==}
+
 def Laws.nan_is_not_equal():
   {==}
 

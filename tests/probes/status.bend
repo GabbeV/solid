@@ -11,7 +11,7 @@ def metadata(+w: R.World, +id: Nat, +value: R.Value, sources: Bool) -> R.World:
   +w = E.ext(w, id)
   +w = B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), value))
   +w = B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{True{}}}))
-  B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), B.choose(~R.SourceSet, sources, _ => R.Sources{[id]}, _ => R.NoSources{})))
+  B.setPendingSources(w, id, B.choose(~R.SourceSet, sources, _ => R.Sources{[id]}, _ => R.NoSources{}))
 
 def fixture(+op: U32, +kind: U32, status: U32, config: U32, +value: R.Value, sources: Bool) -> R.World:
   +w = N.createOwner(R.World.with_clock(B.empty(), 5n), 0n, False{})

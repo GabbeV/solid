@@ -16,18 +16,21 @@ Built Bend runtime and pinned Solid production reference.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
 
 > solid-signals-bend@0.1.0 test:alignment
-> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs
 
 Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
 Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
-4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error execution remains unsupported.
+4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error commit has a focused wrapper/value regression; held execution is checked separately.
 768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and 24 held-stash helper cases match too. Transaction execution remains unfinished.
 7680 constructor comparisons match pinned TS signal/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained.
 16 owner teardown comparisons match pinned TS live child/sibling state and cleanup order, including parked frames, LIFO callbacks, reentrancy, registration during drain, throws, live next-sibling changes, dead children and queued dependency-free nodes.
 12 lifecycle comparisons match pinned TS recompute/park/commit and cancellation order and cleanup-staged live intake, including unchanged frames, restaging, in-flight commit, cleanup throws and flush finally state.
 144 graph-state comparisons match TS detachment, last-subscriber hooks, dormancy guards, callback writes and partial state after throws.
 2880 status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Pending execution remains unfinished.
-2880 pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Promise/transaction execution remains unfinished.
+2880 pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Promise/transaction execution remains unfinished.
+2160 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.
+2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state.
+4096 held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication.
 
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
@@ -44,4 +47,12 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 3.7s; hashes sealed in build/verification.json.
+Kernel completed in 4.6s; hashes sealed in build/verification.json.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 4.7s; hashes sealed in build/verification.json.

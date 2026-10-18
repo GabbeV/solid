@@ -87,8 +87,9 @@ try {
         assert.deepEqual(bendState(B.withExtension(...args,mode)),reference(...args,mode),JSON.stringify({k,config,status,stage,sweep,mode}));checked++;
       }
     }
-  // A staged error is explicitly outside this port's supported outcomes.
-  const refused=B.fixture(1,K.CONFIG_STAGED_ERROR,0,0,1,false,false,false);
-  assert.equal(refused.fault.reason,2,'staged error must not masquerade as a successful value commit');
-  console.log(`${checked} commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error execution remains unsupported.`);
+  // Staged-error commit now preserves the value and publishes wrapped status.
+  const published=B.fixture(1,K.CONFIG_STAGED_ERROR,0,0,1,false,false,false),node=list(published.nodes)[2];
+  assert.equal(node.status,K.STATUS_ERROR);assert.equal(node.value.n,11);assert.equal(node.pending.$,'Empty');
+  assert.equal(list(published.extensions)[node.x].error.cause.n,23);
+  console.log(`${checked} commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error commit has a focused wrapper/value regression; held execution is checked separately.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

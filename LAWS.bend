@@ -5,6 +5,7 @@ import ./proof/chain.bend as Chain
 import ./proof/ownership.bend as Ownership
 import ./proof/errors.bend as Errors
 import ./proof/pending.bend as Pending
+import ./proof/transaction.bend as Transaction
 
 # Concrete composed regressions through actual API construction, driver,
 # reads, heap, staging/commit and attached text. Generalization stays open.
@@ -28,6 +29,12 @@ law pending_diamond_retires:
 
 law pending_other_path_remains:
   {Pending.view(Pending.settle(True{})) == Pending.expectedOtherPath() : Pending.View}
+
+law transaction_parks:
+  {Transaction.view(Transaction.parked()) == Transaction.expectedPark() : Transaction.View}
+
+law transaction_lands:
+  {Transaction.view(Transaction.landed()) == Transaction.expectedLand() : Transaction.View}
 
 law nan_is_not_equal:
   {B.equal(R.NotANumber{}, R.NotANumber{}) == False{} : Bool}

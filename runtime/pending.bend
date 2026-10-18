@@ -8,6 +8,7 @@ import ./status.bend as A
 import ./heap.bend as H
 import ./owner.bend as O
 import ./constants.bend as K
+import ./transaction.bend as X
 
 type Task is Data:
   Visit{id: Nat, root: Nat, source: Nat}
@@ -37,14 +38,14 @@ def skip(+w: R.World, tasks: List<&2, Task>, visited: List<&2, Nat>, released: L
 def settled(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, root: Nat, source: Nat) -> Machine:
   visited = {id <> visited : List<&2, Nat>}
   +w = B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w)))
-  +remaining = B.get(Nat, P.items(R.NodeExtension.pendingSources(B.extension(w, id))), 0n, 0n)
+  +remaining = B.get(Nat, P.items(B.pendingSources(w, id)), 0n, 0n)
   +errored = B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())
   +w = B.choose(~R.World, Nat.is_ne(remaining, 0n),
     _ => B.choose(~R.World, errored, _ => w, _ => P.setPendingError(w, id, remaining, R.Undefined{})),
     _ =>
       +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))
       +w = B.choose(~R.World, errored, _ => w, _ => P.setPendingError(w, id, 0n, R.Undefined{}))
-      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => R.World.with_fault(w, R.Unsupported{9n}), _ => w))
+      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w))
   +last = Nat.is_eq(remaining, 0n)
   +blocked = Bool.and(last, B.truth(B.selected(R.NodeExtension.blocked(B.extension(w, id)), R.Undefined{})))
   +w = B.choose(~R.World, Bool.and(B.ok(w), blocked), _ => H.enqueueSub(w, id), _ => w)
@@ -113,12 +114,39 @@ def releaseSettledDependents(+w: R.World, +id: Nat) -> R.World:
 
 # async.ts:landStatus (private): only self retires when other inputs still pend.
 def landStatus(+w: R.World, +id: Nat, +clearUninitialized: Bool) -> R.World:
-  +hadSources = A.hasSources(R.NodeExtension.pendingSources(B.extension(w, id)))
+  +hadSources = A.hasSources(B.pendingSources(w, id))
   +w = B.choose(~R.World, hadSources, _ => B.first(R.World, Bool, P.removePendingSource(w, id, id)), _ => w)
-  +remaining = B.get(Nat, P.items(R.NodeExtension.pendingSources(B.extension(w, id))), 0n, 0n)
+  +remaining = B.get(Nat, P.items(B.pendingSources(w, id)), 0n, 0n)
   B.choose(~R.World, Nat.is_ne(remaining, 0n),
     _ =>
       +w = B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{False{}}}))
       +w = B.choose(~R.World, clearUninitialized, _ => B.store_node(w, id, R.Node.with_status(B.node(w, id), K.STATUS_PENDING())), _ => w)
       P.setPendingError(w, id, remaining, R.Undefined{}),
     _ => A.clearStatus(w, id, clearUninitialized))
+
+# async.ts:stageError preserves StatusError wrappers; a NotReady payload passed
+# explicitly to this helper is wrapped, unlike notifyStatus's error arm.
+def stageWrap(w: R.World, id: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>:
+  match error:
+    case R.StatusFailure{identity, source, cause}:
+      B.Bundle{w, R.StatusFailure{identity, source, cause}}
+    case other:
+      A.statusError(w, id, other)
+
+def stageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
+  stage = Bool.and(Bool.or(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+    Bool.and(inPass, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_STAGED_READ()), Nat.is_ne(R.World.flushTransaction(w), 0n)))), Nat.is_eq(R.World.passLane(w), 0n))
+  B.choose(~B.Bundle<R.World, Bool>, stage,
+    _ =>
+      +w = P.clearPendingSources(w, id)
+      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ => B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{False{}}})), _ => w)
+      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), U32.and(R.Node.status(B.node(w, id)), B.set(K.STATUS_ERROR(), K.STATUS_UNINITIALIZED()))))
+      +w = B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()), _ => w, _ => P.setPendingError(w, id, 0n, R.Undefined{}))
+      +pair = stageWrap(w, id, error)
+      +w = B.first(R.World, R.Value, pair)
+      +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{B.second(R.World, R.Value, pair)}))
+      +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), B.set(K.CONFIG_STAGED(), K.CONFIG_STAGED_ERROR()))))
+      +w = settlePendingSource(w, id, id)
+      B.Bundle{B.choose(~R.World, B.ok(w), _ => B.schedule(w), _ => w), True{}},
+    _ => B.Bundle{w, False{}})
