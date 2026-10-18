@@ -60,6 +60,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Bool.xor(Bool.xor(x, y), True{})
     case R.Number{x} R.Number{y}:
       Nat.is_eq(x, y)
+    case R.AsyncValue{x} R.AsyncValue{y}:
+      Nat.is_eq(x, y)
     case R.Reference{x} R.Reference{y}:
       Nat.is_eq(x, y)
     case R.NotReadyFailure{x, sourceA} R.NotReadyFailure{y, sourceB}:
@@ -84,6 +86,8 @@ def truth(v: R.Value) -> Bool:
     case R.NotReadyFailure{identity, source}:
       True{}
     case R.NotPendingToken{}:
+      True{}
+    case R.AsyncValue{identity}:
       True{}
     case R.StringValue{s}:
       Bool.not(String.is_empty(s))
@@ -186,10 +190,16 @@ def noDisposal(d: R.Disposal) -> Bool:
 def blank_transaction() -> R.Transaction:
   R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}}
 
+def blank_asyncObject() -> R.AsyncObject:
+  R.AsyncObject{False{}, R.Unresolved{}, []}
+
+def blank_asyncObserver() -> R.AsyncObserver:
+  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}}
+
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]]}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -224,7 +234,11 @@ def schedule(+w: R.World) -> R.World:
   choose(~R.World, R.World.halted(w),
     _ => choose(~R.World, R.World.haltNotified(w), _ => w,
       _ => report(R.World.with_haltNotified(w, True{}), 1, R.Empty{})),
-    _ => R.World.with_scheduled(w, True{}))
+    _ => choose(~R.World, R.World.scheduled(w), _ => w,
+      _ =>
+        +w = R.World.with_scheduled(w, True{})
+        choose(~R.World, Bool.and(Nat.is_eq(R.World.syncDepth(w), 0n), Bool.not(R.World.running(w))),
+          _ => R.World.with_hostJobs(w, append(R.HostJob, R.World.hostJobs(w), [R.FlushJob{}])), _ => w)))
 
 def current(+n: R.Node) -> R.Value:
   selected(R.Node.pending(n), R.Node.value(n))
@@ -312,3 +326,15 @@ def setPendingSources(+w: R.World, +id: Nat, sources: R.SourceSet) -> R.World:
       +pair = newPendingSet(w, items)
       +w = first(R.World, Nat, pair)
       store_extension(w, id, R.NodeExtension.with_pendingSources(extension(w, id), second(R.World, Nat, pair)))
+
+def asyncObject(w: R.World, id: Nat) -> R.AsyncObject:
+  get(R.AsyncObject, R.World.asyncObjects(w), id, blank_asyncObject())
+
+def store_asyncObject(+w: R.World, id: Nat, object: R.AsyncObject) -> R.World:
+  R.World.with_asyncObjects(w, List.set(&2, R.AsyncObject, R.World.asyncObjects(w), id, object))
+
+def asyncObserver(w: R.World, id: Nat) -> R.AsyncObserver:
+  get(R.AsyncObserver, R.World.asyncObservers(w), id, blank_asyncObserver())
+
+def store_asyncObserver(+w: R.World, id: Nat, observer: R.AsyncObserver) -> R.World:
+  R.World.with_asyncObservers(w, List.set(&2, R.AsyncObserver, R.World.asyncObservers(w), id, observer))

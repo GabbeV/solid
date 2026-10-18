@@ -6,6 +6,7 @@ import ./core.bend as C
 import ./scheduler.bend as S
 import ./owner.bend as O
 import ./construct.bend as N
+import ./flight.bend as F
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -205,3 +206,23 @@ def resetErrorHalt(w: R.World) -> R.World:
 
 def programPreviousCleanup(tail: R.CleanupProgram) -> R.CleanupProgram:
   R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail)}
+
+# PromiseLike host protocol: object identity and settlement are external inputs;
+# registration, status, publication and flushing remain Bend engine operations.
+def vAsync(id: Nat) -> R.Value:
+  R.AsyncValue{id}
+
+def nextAsyncId(w: R.World) -> Nat:
+  B.length(R.AsyncObject, R.World.asyncObjects(w))
+
+def createThenable(w: R.World, immediate: Bool) -> R.World:
+  B.first(R.World, Nat, F.newThenable(w, immediate, R.Unresolved{}))
+
+def resolveThenable(fuel: Nat, w: R.World, id: Nat, rejected: Bool, value: R.Value) -> R.World:
+  C.resolveThenable(fuel, w, id, rejected, value)
+
+def deliver(fuel: Nat, w: R.World, observer: Nat, rejected: Bool, value: R.Value) -> R.World:
+  C.deliver(fuel, w, observer, rejected, value)
+
+def clearHostJobs(w: R.World) -> R.World:
+  R.World.with_hostJobs(w, [])

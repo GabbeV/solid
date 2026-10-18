@@ -16,6 +16,7 @@ import ./extension.bend as E
 import ./pending-state.bend as P
 import ./transaction.bend as X
 import ./pending.bend as Q
+import ./flight.bend as F
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -47,6 +48,12 @@ type Task is Data:
   ClearFlags{id: Nat}
   Recompute{id: Nat, create: Bool}
   Finish{frame: PassFrame}
+  AfterThen{frame: PassFrame, observer: Nat}
+  AsyncFulfill{observer: Nat, value: R.Value}
+  AsyncReject{observer: Nat, error: R.Value}
+  AsyncFlush{}
+  SettleAuto{id: Nat}
+  DeliverObservers{observers: List<&2, Nat>, immediate: Bool, rejected: Bool, value: R.Value}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
   Round{}
@@ -465,12 +472,12 @@ def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
       w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
       Machine{w, rest, stack})
 
-def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat, saved: List<&2, R.Value>) -> Machine:
+def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat, saved: List<&2, R.Value>, +keepFlight: Bool) -> Machine:
   match stack:
     case value <> +tail:
-      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+      +w = B.choose(~R.World, Bool.and(Bool.not(keepFlight), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
-      +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
+      +w = B.choose(~R.World, keepFlight, _ => w, _ => B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})))
       +w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => A.clearStatus(w, id, create), _ => w)
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
@@ -482,10 +489,49 @@ def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +i
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
-def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame) -> Machine:
+def finishReady(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame, keepFlight: Bool) -> Machine:
   match frame:
     case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
-      finishValue(w, rest, stack, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
+      finishValue(w, rest, stack, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, keepFlight)
+
+# .then invokes immediate callbacks in the live compute frame; native-style
+# callbacks enter through the host outbox after that frame has returned.
+def subscribeState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      Machine{w, AfterThen{frame, observer} <> rest, stack}
+    case R.Fulfilled{+value}:
+      B.choose(~Machine, immediate,
+        _ => Machine{w, AsyncFulfill{observer, value} <> AfterThen{frame, observer} <> rest, stack},
+        _ => Machine{F.enqueueDelivery(w, observer, False{}, value), AfterThen{frame, observer} <> rest, stack})
+    case R.Rejected{+error}:
+      B.choose(~Machine, immediate,
+        _ => Machine{w, AsyncReject{observer, error} <> AfterThen{frame, observer} <> rest, stack},
+        _ => Machine{F.enqueueDelivery(w, observer, True{}, error), AfterThen{frame, observer} <> rest, stack})
+
+def subscribe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame, id: Nat, +result: Nat) -> Machine:
+  +pair = F.register(w, id, result)
+  +w = B.first(R.World, Nat, pair)
+  subscribeState(w, rest, stack, frame, B.second(R.World, Nat, pair), R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
+
+def finishShape(w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: PassFrame, id: Nat) -> Machine:
+  match stack:
+    case R.AsyncValue{result} <> tail:
+      subscribe(w, rest, tail, frame, id, result)
+    case _:
+      finishReady(w, rest, stack, frame, False{})
+
+def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +id: Nat, oldFlight: Nat) -> Machine:
+  +selfRegistered = Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), oldFlight)
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_SYNC()),
+    _ => finishReady(w, rest, stack, frame, False{}),
+    _ => B.choose(~Machine, selfRegistered, _ => finishReady(w, rest, stack, frame, True{}),
+      _ => finishShape(w, rest, stack, frame, id)))
+
+def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
+  match frame:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved}:
+      finishResult(w, rest, stack, frame, id, flight)
 
 # Body throw -> source catch -> finally -> publication tail, with the caller's
 # value stack restored. A throw from the prelude has no frame of its own here.
@@ -533,8 +579,39 @@ def catchPass(w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
     case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
       catchValue(w, rest, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
 
-# effect.ts:runEffect's catch always constructs a fresh StatusError, even if
-# the thrown payload was itself a wrapper; the escaping throw remains raw.
+# handleAsync's post-.then verdict, still inside recompute's try/catch.
+def afterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, observer: Nat) -> Machine:
+  +pair = F.thenResult(w, observer)
+  +w = B.first(R.World, R.Value, pair)
+  B.choose(~Machine, B.ok(w),
+    _ => finishReady(w, rest, B.second(R.World, R.Value, pair) <> stack, frame, True{}),
+    _ => catchPass(w, rest, frame))
+
+def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncFulfilled(w, observer, value), rest, stack},
+    _ =>
+      +pair = F.asyncWrite(w, R.AsyncObserver.node(o), R.AsyncObserver.result(o), value)
+      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
+        _ => AsyncFlush{} <> SettleAuto{R.AsyncObserver.node(o)} <> rest,
+        _ => SettleAuto{R.AsyncObserver.node(o)} <> rest), stack})
+
+def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncRejected(w, observer, error), rest, stack},
+    _ => Machine{F.handleError(w, R.AsyncObserver.node(o), R.AsyncObserver.result(o), error), SettleAuto{R.AsyncObserver.node(o)} <> rest, stack})
+
+def deliverObservers(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, observers: List<&2, Nat>, +immediate: Bool, +rejected: Bool, +value: R.Value) -> Machine:
+  match observers:
+    case Nil{}:
+      Machine{w, rest, stack}
+    case +id <> +tail:
+      +again = {DeliverObservers{tail, immediate, rejected, value} : Task}
+      B.choose(~Machine, immediate,
+        _ => Machine{w, B.choose(~Task, rejected, _ => AsyncReject{id, value}, _ => AsyncFulfill{id, value}) <> again <> rest, stack},
+        _ => Machine{F.enqueueDelivery(w, id, rejected, value), again <> rest, stack})
+
+# effect.ts:runEffect's catch constructs a fresh wrapper and rethrows raw.
 def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
   match fault:
     case R.CallbackThrown{+cause}:
@@ -773,6 +850,19 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       recompute(w, rest, stack, id, create)
     case Finish{frame} <> rest:
       finish(w, rest, stack, frame)
+    case AfterThen{frame, observer} <> rest:
+      afterThen(w, rest, stack, frame, observer)
+    case AsyncFulfill{observer, value} <> rest:
+      asyncFulfill(w, rest, stack, observer, value)
+    case AsyncReject{observer, error} <> rest:
+      asyncReject(w, rest, stack, observer, error)
+    case AsyncFlush{} <> +rest:
+      B.choose(~Machine, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))),
+        _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
+    case SettleAuto{id} <> rest:
+      Machine{B.first(R.World, Bool, F.settleAutodispose(w, id)), rest, stack}
+    case DeliverObservers{observers, immediate, rejected, value} <> rest:
+      deliverObservers(w, rest, stack, observers, immediate, rejected, value)
     case InitialEffect{+id, +scheduled, deferred} <> +rest:
       B.choose(~Machine, Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))), R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, id)))))), _ => Machine{w, rest, stack},
         _ => B.choose(~Machine, Bool.or(scheduled, S.is_user(R.Node.kind(B.node(w, id)))),
@@ -823,6 +913,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case Finish{frame} <> rest:
       catchPass(w, rest, frame)
+    case AfterThen{frame, observer} <> rest:
+      catchPass(w, rest, frame)
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case task <> rest:
@@ -872,3 +964,19 @@ def markRefresh(+w: R.World, +id: Nat) -> R.World:
 # Direct source-helper entry for state probes; full flush uses the same tasks.
 def settleWorld(fuel: Nat, w: R.World) -> R.World:
   world(run(fuel, Machine{w, [Settle{}], []}))
+
+# External callback input; the same machine performs asyncWrite's flush.
+def deliver(fuel: Nat, w: R.World, +observer: Nat, rejected: Bool, +value: R.Value) -> R.World:
+  world(run(fuel, Machine{w, [B.choose(~Task, rejected, _ => AsyncReject{observer, value}, _ => AsyncFulfill{observer, value})], []}))
+
+def resolveThenableState(fuel: Nat, +w: R.World, +id: Nat, +rejected: Bool, +value: R.Value, state: R.AsyncSettlement) -> R.World:
+  match state:
+    case R.Unresolved{}:
+      +o = B.asyncObject(w, id)
+      +w = B.store_asyncObject(w, id, R.AsyncObject.with_state(o, B.choose(~R.AsyncSettlement, rejected, _ => R.Rejected{value}, _ => R.Fulfilled{value})))
+      world(run(fuel, Machine{w, [DeliverObservers{R.AsyncObject.observers(o), R.AsyncObject.immediate(o), rejected, value}], []}))
+    case _:
+      w
+
+def resolveThenable(fuel: Nat, +w: R.World, +id: Nat, rejected: Bool, value: R.Value) -> R.World:
+  resolveThenableState(fuel, w, id, rejected, value, R.AsyncObject.state(B.asyncObject(w, id)))

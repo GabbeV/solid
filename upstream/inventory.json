@@ -1923,8 +1923,12 @@
           "start": 368,
           "end": 798,
           "sha256": "8bc25d3e9fcb685affd7b929e39b340820fd4ed6747cbb62a08278d22c81803f",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto",
+            "status": "partial",
+            "restrictions": "Ordinary typed thenables with non-async settlement payloads: immediate and deferred registration/callbacks, source identity/dirty guards, loading, rejection, held staging and actual flush. AsyncObject/Observer and hostJobs encode external objects, closures and queueMicrotask IO. Iterables/flattening/teardown, arbitrary shape/getter/then exceptions, multi-settlement thenables, setter/onError, active scopes and nonproduction hooks unfinished. See tracking/async.md; 68 histories and 4096 helper states."
+          }
         },
         {
           "key": "core/async.ts:clearStatus",
@@ -9972,9 +9976,9 @@
           "sha256": "c396863c285ab585008992d38b0fc321c4ca0f217b479567ddfa0bd7942a8d75",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing",
+            "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
             "status": "partial",
-            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. No handleAsync flight registration yet; lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
+            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; iterable/flattening/getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
           }
         },
         {
@@ -9998,7 +10002,7 @@
           "mapping": {
             "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
         },
         {
@@ -10010,7 +10014,7 @@
           "mapping": {
             "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
         },
         {
@@ -10022,7 +10026,7 @@
           "mapping": {
             "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
         },
         {
@@ -17810,9 +17814,9 @@
           "sha256": "c9d001a04d52d182b2bb18dffcd19a6536a02661266218dd258f76a75107fc55",
           "status": "partial",
           "mapping": {
-            "bend": "representation/base.bend:schedule",
+            "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs",
             "status": "partial",
-            "restrictions": "Source halt guard, once-only ignored-update report and scheduled flag. Host microtask delivery intentionally manual in the harness; no event-loop theorem."
+            "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) are retained as host outbox IO. Public flush callback overload and actionDepth scopes unfinished. Draining the outbox is a host harness choice."
           }
         },
         {

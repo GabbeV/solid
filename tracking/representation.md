@@ -51,7 +51,7 @@ stash caller path; actual held writes must wait for that translation.
 Public host options cover default equality/false, transparent/ownedWrite/lazy/sync,
 noSnapshot masks and synchronous loading seeds. `unobserved` resolves a named executable callback program; `_extraConfig` stays
 primitive-only. Options with getters, custom comparators,
-async/loading suspension and thenable-shape probing remain outside the grammar.
+arbitrary thenable-shape probing remains outside the grammar. Typed ordinary promise-like objects and loading suspension execute.
 
 Owner cleanup uses a separate defunctionalized callback protocol:
 `World.cleanupPrograms` assigns a stable callable identity to a reusable sequence
@@ -99,9 +99,9 @@ The pending settle machine keeps a local visited set and deferred release list.
 Its early retryReaches return does not mark a node visited: another carrying branch
 may retire later in the same walk. Dependency scans include the retained tail.
 Deferred owner release starts only after dependent traversal and precedes final
-scheduling, including exception partial states. These source helpers do not connect
-promise registration, core NotReady catch/read logic, held transaction joining or
-boundary interception. Those branches remain explicit unfinished domains.
+scheduling, including exception partial states. These helpers now connect
+ordinary promise registration, core NotReady catch/read logic and held transaction
+joining. Active boundary interception remains unfinished.
 
 Transactions are stable arena IDs with every pinned source field retained. Live
 transactions are an ordered ID list separate from retired arena records. World
@@ -123,3 +123,11 @@ synthetic staged-error commit consumes an empty slot. Source normally stages a
 wrapper there, but the helper reads its pending slot, never its prior value.
 The token is separate from Empty, undefined and user values; no public encoding
 for this private sentinel is exposed.
+
+AsyncValue is a stable external object identity, separate from opaque Reference.
+World.asyncObjects retains settlement state and subscription order; AsyncObserver
+records each then callback closure and its isSync/resolved/rejected locals. A node
+stores the RESULT identity in its existing inFlight slot, never the observer ID.
+World.hostJobs records external callback and queueMicrotask(flush) requests. The
+host drains this IO in its native microtask queue; Bend makes every reactive
+decision. See [async.md](async.md) for the admitted protocol and evidence.

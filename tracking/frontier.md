@@ -31,7 +31,7 @@ proof credit was imported.
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
-  direct source probes; promise registration/settlement is not yet implemented. See
+  direct source probes; ordinary promise-like registration/settlement now executes; iterable branches remain unfinished. See
   [representation.md](representation.md) for storage-only extension fields.
 - Reusable defunctionalized callback programs, not arbitrary JavaScript closures.
   Render application writes computed text. User application records its value
@@ -43,8 +43,8 @@ proof credit was imported.
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
   execute through core catches/reads. Mainline transactions join, merge, park,
-  judge blockers and land through the same flush. No promise program is admitted
-  yet: flight registration/callback delivery and boundaries remain unfinished.
+  judge blockers and land through the same flush. Typed promise-like programs now execute registration and callback delivery.
+  Iterators/flattening and active boundary/lane scopes remain unfinished.
 - Default strict equality and `equals:false`; arbitrary/throwing comparators are
   open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
@@ -93,7 +93,7 @@ The concrete laws pass independent checking. The differential suite has
 203 scenarios; focused tests additionally compare 7,680 constructor states,
 4,608 commit states, 768 read states and 24 held-stash helper cases with the
 actual pinned TS helpers. These include synthetic internal
-states to probe branches; they do not admit async/transaction/error programs.
+states to probe branches; their counts are separate from end-to-end histories.
 144 graph-state comparisons cover last-subscriber callbacks, cascading dormancy,
 pending/zombie/dead guards and exact partial state after callback throws. Twelve
 lifecycle comparisons cover recompute/park/commit/cancellation, cleanup-staged
@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Four deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
+Six deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -150,9 +150,10 @@ closing the open count and landing. They check held slots/stamps, live and effec
 queues, visible text, ambient restoration and successful completion. These laws
 use an explicit transaction input, not the public action API or host promises.
 
-1. Connect handleAsync object/thenable registration, callback delivery, supersession
-   identity guards, settlement/rejection, loading windows and stream cancellation.
-   Core pending catches and mainline transaction integration are now active.
+1. Ordinary handleAsync thenable registration, callback delivery, supersession
+   guards, settlement/rejection and loading windows now execute. Continue with
+   iterator consumption/flattening/cancellation and richer callback contracts.
+   See [async.md](async.md) for 68 histories and 4,096 helper-state comparisons.
 2. Preserve source behavior while extending actual async histories. Inert full-index
    hook bodies are exercised without boundary/lane/mark/store scopes; those scopes
    require their own translated engines, not an assumption that source hooks are

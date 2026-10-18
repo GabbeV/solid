@@ -1,5 +1,5 @@
 {
-  "profile": "Owned synchronous callbacks in the expression grammar; production; top-level explicit root; no stores or hooks in Bend.",
+  "profile": "Owned expression/program callbacks; production; explicit root; typed promise-like objects and explicit host settlement; no active boundary/lane/mark/store scopes in Bend.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
@@ -75,7 +75,7 @@
     "core/core.ts:computed": {
       "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
       "status": "partial",
-      "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
+      "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
     },
     "core/core.ts:setupComputedNode": {
       "bend": "runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild",
@@ -83,9 +83,9 @@
       "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
     },
     "core/core.ts:recompute": {
-      "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing",
+      "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
       "status": "partial",
-      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. No handleAsync flight registration yet; lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
+      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; iterable/flattening/getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags",
@@ -323,9 +323,9 @@
       "restrictions": "Once-only halt plus explicit production report. Host reportError channel not installed in admitted host; console output represented as ordered reports."
     },
     "core/scheduler.ts:schedule": {
-      "bend": "representation/base.bend:schedule",
+      "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs",
       "status": "partial",
-      "restrictions": "Source halt guard, once-only ignored-update report and scheduled flag. Host microtask delivery intentionally manual in the harness; no event-loop theorem."
+      "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) are retained as host outbox IO. Public flush callback overload and actionDepth scopes unfinished. Draining the outbox is a host harness choice."
     },
     "core/scheduler.ts:resetErrorHalt": {
       "bend": "runtime/api.bend:resetErrorHalt",
@@ -526,6 +526,11 @@
       "bend": "runtime/core.bend:RenderQueue, UserQueue, RunEffect",
       "status": "partial",
       "restrictions": "Detach each nonempty queue and execute ordered node-bound runners; preserves throws and phase ordering."
+    },
+    "core/async.ts:handleAsync": {
+      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto",
+      "status": "partial",
+      "restrictions": "Ordinary typed thenables with non-async settlement payloads: immediate and deferred registration/callbacks, source identity/dirty guards, loading, rejection, held staging and actual flush. AsyncObject/Observer and hostJobs encode external objects, closures and queueMicrotask IO. Iterables/flattening/teardown, arbitrary shape/getter/then exceptions, multi-settlement thenables, setter/onError, active scopes and nonproduction hooks unfinished. See tracking/async.md; 68 histories and 4096 helper states."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

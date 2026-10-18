@@ -10,13 +10,14 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
+68 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.
 
 > solid-signals-bend@0.1.0 test:alignment
-> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs
 
 Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
 Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
@@ -31,15 +32,18 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 2160 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.
 2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state.
 4096 held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication.
+4096 flight-state comparisons match TS registration, immediate verdicts, identity/dirty guards, loading parks, rejection/status order, autodisposal and held callback publication.
 
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: stale flight writes
+Rejected mutation: unresolved promise commits
 Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-4 incorrect implementations rejected by differential assertions.
+6 incorrect implementations rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -47,12 +51,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 4.6s; hashes sealed in build/verification.json.
-
-> solid-signals-bend@0.1.0 check
-> node tools/check.mjs
-
-Pinned upstream snapshots match their recorded hashes.
-Checking composed proofs with the independent BendTT kernel...
-ALL PROOFS CHECK
-Kernel completed in 4.7s; hashes sealed in build/verification.json.
+Kernel completed in 4.8s; hashes sealed in build/verification.json.

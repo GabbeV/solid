@@ -1,6 +1,6 @@
 # Solid 2 signals in Bend 2
 
-An executable **initial translation of the synchronous, non-store core** of
+An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.15. This is **not yet the complete signals package**.
 
 The governing requirement is operation-level source fidelity so future Solid
@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject four broken runtime variants
+npm run mutations                # reject six broken runtime variants
 npm run example                  # Number{14n}
 ```
 
@@ -39,7 +39,7 @@ previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
 and throws. Synchronous errors propagate through compute/effect catches, recovery and scheduler
 halts. Pending catches, held reads/writes, staged errors and mainline transaction
-park/land now run in the same driver. Async flights and boundaries remain unfinished. Arbitrary host JavaScript callbacks are not yet supported.
+park/land now run in the same driver. Ordinary typed promise-like flights now register, settle/reject and flush; iterators and active boundary/lane scopes remain unfinished. See [the async milestone](tracking/async.md). Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
