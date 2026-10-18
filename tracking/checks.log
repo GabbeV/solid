@@ -1,6 +1,6 @@
 
 > solid-signals-bend@0.1.0 verify
-> npm run build && npm test && npm run mutations && npm run check
+> npm run build && npm test && npm run test:alignment && npm run mutations && npm run check
 
 
 > solid-signals-bend@0.1.0 build
@@ -13,6 +13,12 @@ Built Bend runtime and pinned Solid production reference.
 > node tests/differential.mjs
 
 185 differential scenarios passed, including generated histories and graph invariants.
+
+> solid-signals-bend@0.1.0 test:alignment
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs
+
+Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
+Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
 
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs

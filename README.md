@@ -3,6 +3,11 @@
 An executable **initial translation of the synchronous, non-store core** of
 `@solidjs/signals` 2.0.0-rc.15. This is **not yet the complete signals package**.
 
+The governing requirement is operation-level source fidelity so future Solid
+commits can be followed directly. The current port still has alignment gaps; see
+[the source-fidelity audit](tracking/source-fidelity.md). Proof convenience does
+not justify changing the algorithm, and formal TS/Bend equivalence is not required.
+
 The Bend implementation owns dependency registration, generation-stamped linked
 edges, intrusive height buckets, nested memo pulls, staged writes, commit,
 render/user queue ordering, and a mechanical text tree. It evaluates the stored
@@ -57,6 +62,16 @@ The exact source and toolchain are retained under [upstream](upstream).
 [unit/branch inventory](upstream/inventory.json), and the
 [current frontier](tracking/frontier.md) distinguish mapped code, open branches,
 proof scope, and representation assumptions.
+
+To inspect a future Solid checkout without repinning or modifying either tree:
+
+```sh
+npm run upstream:impact -- /path/to/solid-checkout
+npm run upstream:impact -- /path/to/solid-checkout --json
+```
+
+The report maps changed functions to known Bend counterparts and flags file-level
+changes too. Tests/docs/build conditions still require separate diff review.
 
 The important remaining work is transaction membership and publication, pending
 and error propagation, promise/iterator settlement, optimistic lanes and actions,

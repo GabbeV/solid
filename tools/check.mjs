@@ -14,6 +14,7 @@ function command(bin,args) {
   return {seconds:(performance.now()-start)/1000,stdout:r.stdout,stderr:r.stderr};
 }
 command('python3',['tools/records.py','--check']);
+command(process.execPath,['tools/constants.mjs','--check']);
 command(process.execPath,['tools/inventory.mjs','--check']);
 // Refuse to check a stale emitted runtime and reference bundle.
 const currentInputs=Object.fromEntries([...files(path.join(root,'runtime')),...files(path.join(root,'representation')),...files(path.join(root,'observation')),...files(path.join(root,'upstream/bend/bend2'))].map(p=>[path.relative(root,p),hash(fs.readFileSync(p))]));

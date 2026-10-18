@@ -2,42 +2,201 @@
   "profile": "Owned synchronous callbacks in the expression grammar; production; top-level explicit root; no stores or hooks in Bend.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
-    "core/graph.ts:link": {"bend":"runtime/graph.bend:link, reuse_or_append, append_or_duplicate, allocate", "status":"restricted", "restrictions":"No store nodes. Full stable-link/in-order generation mechanics are used by core.readPrepared."},
-    "core/graph.ts:unlinkSubs": {"bend":"runtime/graph.bend:unlinkSubs", "status":"partial", "restrictions":"Unobserved callbacks, automatic dormancy cascades and store-release hooks remain open."},
-    "core/graph.ts:trimStaleDeps": {"bend":"runtime/graph.bend:trimStaleDeps", "status":"restricted", "restrictions":"Uses the restricted unlinkSubs path."},
-    "core/graph.ts:clearDeps": {"bend":"runtime/graph.bend:clearDeps", "status":"restricted", "restrictions":"Uses the restricted unlinkSubs path."},
-    "core/heap.ts:enqueueSub": {"bend":"runtime/heap.bend:enqueueSub", "status":"restricted", "restrictions":"Pointer loops carry explicit resource bounds."},
-    "core/heap.ts:actualInsertIntoHeap": {"bend":"runtime/heap.bend:actualInsertIntoHeap", "status":"partial", "restrictions":"Top-level roots only; nested root parentComputed height forwarding remains open."},
-    "core/heap.ts:insertIntoHeap": {"bend":"runtime/heap.bend:insertIntoHeap", "status":"restricted", "restrictions":"Same flag tests, marking posture and intrusive bucket insertion on the admitted graph."},
-    "core/heap.ts:insertIntoHeapHeight": {"bend":"runtime/heap.bend:insertIntoHeapHeight", "status":"restricted", "restrictions":"Same flags and intrusive insertion; top-level root representation."},
-    "core/heap.ts:deleteFromHeap": {"bend":"runtime/heap.bend:deleteFromHeap", "status":"restricted", "restrictions":"Explicit null IDs, no slot nodes."},
-    "core/heap.ts:markNode": {"bend":"runtime/heap.bend:markNode, mark_work", "status":"restricted", "restrictions":"Depth-first explicit worklist preserves subscriber order; traversal budget is an explicit assumption until generalized progress proof."},
-    "core/heap.ts:markHeap": {"bend":"runtime/heap.bend:markHeap, mark_heights, mark_bucket", "status":"restricted", "restrictions":"Ordered intrusive bucket walks with resource bounds."},
-    "core/heap.ts:runHeap": {"bend":"runtime/core.bend:heapLoop", "status":"restricted", "restrictions":"Continuation dispatch replaces callback recursion; zombie/tracked-effect routing remains open."},
-    "core/heap.ts:adjustHeight": {"bend":"runtime/heap.bend:adjustHeight", "status":"restricted", "restrictions":"Same dependency traversal and height propagation for admitted nodes."},
-    "core/core.ts:signal": {"bend":"runtime/api.bend:createSignal, allocate", "status":"partial", "restrictions":"Default strict equality or equals:false only; no snapshot or unobserved options."},
-    "core/core.ts:computed": {"bend":"runtime/api.bend:createMemo, allocate", "status":"partial", "restrictions":"Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."},
-    "core/core.ts:setupComputedNode": {"bend":"runtime/api.bend:allocate, linkChild, createMemo", "status":"partial", "restrictions":"Root-owned nodes only; no nested root parent forwarding or snapshot/external hooks."},
-    "core/core.ts:recompute": {"bend":"runtime/core.bend:recompute, finish, publish", "status":"partial", "restrictions":"Sync successful pass, no owned child construction or cleanup, lanes/transactions/status/errors/snapshot hooks. Real stored expressions and actual read sets are evaluated."},
-    "core/core.ts:updateIfNecessary": {"bend":"runtime/core.bend:update, checkDeps, afterCheck, ClearFlags", "status":"partial", "restrictions":"Sync status-free nodes; error retry and remaining retained flag postures open."},
-    "core/core.ts:prepareComputed": {"bend":"runtime/core.bend:readNode", "status":"partial", "restrictions":"Lazy initial activation and dead-node freeze only; observation-lifecycle reawakening open."},
-    "core/core.ts:pullComputed": {"bend":"runtime/core.bend:readPrepared, raiseHeight", "status":"partial", "restrictions":"No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."},
-    "core/core.ts:read": {"bend":"runtime/core.bend:readNode, readPrepared, serve", "status":"partial", "restrictions":"No held/error/pending/lane/snapshot paths. No-owner, tracked, and untracked-in-pass read selection retained."},
-    "core/core.ts:serve": {"bend":"runtime/core.bend:serve", "status":"partial", "restrictions":"Committed reads outside flush, staged reads inside the pass, late-linker missed-wake latch; uninitialized-held, verdict, error and promoted-write paths open."},
-    "core/core.ts:setSignal": {"bend":"runtime/scheduler.bend:setSignal, runtime/api.bend:setUpdater", "status":"partial", "restrictions":"Pure synchronous updater expressions over staged composition; default strict equality/equals:false; no held/lane/snapshot/write hooks."},
-    "core/core.ts:untrack": {"bend":"runtime/core.bend:evaluate Untracked, RestoreTracking", "status":"partial", "restrictions":"Tracking restoration on successful callback only. Thrown callbacks are explicitly unsupported; external-untrack hooks open."},
-    "core/scheduler.ts:queuePendingNode": {"bend":"runtime/scheduler.bend:queuePendingNode", "status":"partial", "restrictions":"No global unflushedStaged optimization; serve tests running/staging directly."},
-    "core/scheduler.ts:bumpNotifyEpoch": {"bend":"representation/base.bend:bump", "status":"restricted", "restrictions":"Unbounded mathematical Nat in proofs; emitted host natural-number range must be respected."},
-    "core/scheduler.ts:insertSubs": {"bend":"runtime/scheduler.bend:insertSubs, insert_subs", "status":"partial", "restrictions":"Generation-current missed-wake condition and notify epoch retained. Snapshot and observe hooks open."},
-    "core/scheduler.ts:commitPendingNode": {"bend":"runtime/scheduler.bend:commitPendingNode", "status":"partial", "restrictions":"Plain signals and successful sync computeds only. Async/held/error/child-retirement paths open."},
-    "core/scheduler.ts:commitPendingNodes": {"bend":"runtime/scheduler.bend:commitPendingNodes, commit_list", "status":"partial", "restrictions":"No transaction/lane nodes; callback grammar cannot append staging during this commit walk."},
-    "core/scheduler.ts:GlobalQueue.flush": {"bend":"runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, RoundEnd", "status":"partial", "restrictions":"Exact pure/seam/render/user order for sync grammar; no dormancy, transactions, boundaries or effect callback writes."},
-    "core/scheduler.ts:GlobalQueue.settle": {"bend":"runtime/scheduler.bend:settle", "status":"partial", "restrictions":"Mainline commit and deferred trim only. Transaction/lane paths remain open."},
-    "core/scheduler.ts:flush": {"bend":"runtime/core.bend:flush, run", "status":"partial", "restrictions":"Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."},
-    "core/effect.ts:effect": {"bend":"runtime/api.bend:createEffect, runtime/core.bend:InitialEffect", "status":"partial", "restrictions":"Separate compute/apply phases; schedule/defer/user options. No errors, returned cleanups, hold hooks."},
-    "core/effect.ts:runEffect": {"bend":"runtime/core.bend:runEffect", "status":"partial", "restrictions":"Render callback mechanically writes stored result to text. User callback records application. Arbitrary imperative callbacks and cleanup/error/reentrant writes open."},
-    "core/owner.ts:linkChild": {"bend":"runtime/api.bend:linkChild", "status":"restricted", "restrictions":"Stable same-identity owner/computed nodes, head insertion and both sibling pointers."},
-    "core/owner.ts:disposeChildren": {"bend":"runtime/owner.bend:dispose_work, splice", "status":"partial", "restrictions":"Owned synchronous graph without cleanup/parked frames/reentrancy; future bookkeeping and dormant lifecycle open."},
-    "core/owner.ts:dispose": {"bend":"runtime/owner.bend:dispose", "status":"partial", "restrictions":"Heap removal, clearDeps, owned descendant death and splice. No automatic dormancy."}
-  }
+    "core/graph.ts:link": {
+      "bend": "runtime/graph.bend:link, reuse_or_append, append_or_duplicate, allocate",
+      "status": "restricted",
+      "restrictions": "No store nodes. Full stable-link/in-order generation mechanics are used by core.readPrepared."
+    },
+    "core/graph.ts:unlinkSubs": {
+      "bend": "runtime/graph.bend:unlinkSubs",
+      "status": "partial",
+      "restrictions": "Unobserved callbacks, automatic dormancy cascades and store-release hooks remain open."
+    },
+    "core/graph.ts:trimStaleDeps": {
+      "bend": "runtime/graph.bend:trimStaleDeps",
+      "status": "restricted",
+      "restrictions": "Uses the restricted unlinkSubs path."
+    },
+    "core/graph.ts:clearDeps": {
+      "bend": "runtime/graph.bend:clearDeps",
+      "status": "restricted",
+      "restrictions": "Uses the restricted unlinkSubs path."
+    },
+    "core/heap.ts:enqueueSub": {
+      "bend": "runtime/heap.bend:enqueueSub",
+      "status": "restricted",
+      "restrictions": "Pointer loops carry explicit resource bounds."
+    },
+    "core/heap.ts:actualInsertIntoHeap": {
+      "bend": "runtime/heap.bend:actualInsertIntoHeap",
+      "status": "partial",
+      "restrictions": "Top-level roots only; nested root parentComputed height forwarding remains open."
+    },
+    "core/heap.ts:insertIntoHeap": {
+      "bend": "runtime/heap.bend:insertIntoHeap",
+      "status": "restricted",
+      "restrictions": "Same flag tests, marking posture and intrusive bucket insertion on the admitted graph."
+    },
+    "core/heap.ts:insertIntoHeapHeight": {
+      "bend": "runtime/heap.bend:insertIntoHeapHeight",
+      "status": "restricted",
+      "restrictions": "Same flags and intrusive insertion; top-level root representation."
+    },
+    "core/heap.ts:deleteFromHeap": {
+      "bend": "runtime/heap.bend:deleteFromHeap",
+      "status": "restricted",
+      "restrictions": "Explicit null IDs, no slot nodes."
+    },
+    "core/heap.ts:markNode": {
+      "bend": "runtime/heap.bend:markNode, mark_work",
+      "status": "restricted",
+      "restrictions": "Depth-first explicit worklist preserves subscriber order; traversal budget is an explicit assumption until generalized progress proof."
+    },
+    "core/heap.ts:markHeap": {
+      "bend": "runtime/heap.bend:markHeap, mark_heights, mark_bucket",
+      "status": "restricted",
+      "restrictions": "Ordered intrusive bucket walks with resource bounds."
+    },
+    "core/heap.ts:runHeap": {
+      "bend": "runtime/core.bend:heapLoop",
+      "status": "restricted",
+      "restrictions": "Continuation dispatch replaces callback recursion; zombie/tracked-effect routing remains open."
+    },
+    "core/heap.ts:adjustHeight": {
+      "bend": "runtime/heap.bend:adjustHeight",
+      "status": "restricted",
+      "restrictions": "Same dependency traversal and height propagation for admitted nodes."
+    },
+    "core/core.ts:signal": {
+      "bend": "runtime/api.bend:createSignal, allocate",
+      "status": "partial",
+      "restrictions": "Default strict equality or equals:false only; no snapshot or unobserved options."
+    },
+    "core/core.ts:computed": {
+      "bend": "runtime/api.bend:createMemo, allocate",
+      "status": "partial",
+      "restrictions": "Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."
+    },
+    "core/core.ts:setupComputedNode": {
+      "bend": "runtime/api.bend:allocate, linkChild, createMemo",
+      "status": "partial",
+      "restrictions": "Root-owned nodes only; no nested root parent forwarding or snapshot/external hooks."
+    },
+    "core/core.ts:recompute": {
+      "bend": "runtime/core.bend:recompute, finish, publish",
+      "status": "partial",
+      "restrictions": "Sync successful pass, no owned child construction or cleanup, lanes/transactions/status/errors/snapshot hooks. Real stored expressions and actual read sets are evaluated."
+    },
+    "core/core.ts:updateIfNecessary": {
+      "bend": "runtime/core.bend:update, checkDeps, afterCheck, ClearFlags",
+      "status": "partial",
+      "restrictions": "Sync status-free nodes; error retry and remaining retained flag postures open."
+    },
+    "core/core.ts:prepareComputed": {
+      "bend": "runtime/core.bend:readNode",
+      "status": "partial",
+      "restrictions": "Lazy initial activation and dead-node freeze only; observation-lifecycle reawakening open."
+    },
+    "core/core.ts:pullComputed": {
+      "bend": "runtime/core.bend:readPrepared, raiseHeight",
+      "status": "partial",
+      "restrictions": "No fresh-read waiter config or verdict propagation; exact height-gated pull on the supported path."
+    },
+    "core/core.ts:read": {
+      "bend": "runtime/core.bend:readNode, readPrepared, serve",
+      "status": "partial",
+      "restrictions": "No held/error/pending/lane/snapshot paths. No-owner, tracked, and untracked-in-pass read selection retained."
+    },
+    "core/core.ts:serve": {
+      "bend": "runtime/core.bend:serve",
+      "status": "partial",
+      "restrictions": "Committed reads outside flush, staged reads inside the pass, late-linker missed-wake latch; uninitialized-held, verdict, error and promoted-write paths open."
+    },
+    "core/core.ts:setSignal": {
+      "bend": "runtime/scheduler.bend:setSignal, runtime/api.bend:setUpdater",
+      "status": "partial",
+      "restrictions": "Pure synchronous updater expressions over staged composition; default strict equality/equals:false; no held/lane/snapshot/write hooks."
+    },
+    "core/core.ts:untrack": {
+      "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking",
+      "status": "partial",
+      "restrictions": "Tracking restoration on successful callback only. Thrown callbacks are explicitly unsupported; external-untrack hooks open."
+    },
+    "core/scheduler.ts:queuePendingNode": {
+      "bend": "runtime/scheduler.bend:queuePendingNode",
+      "status": "partial",
+      "restrictions": "No global unflushedStaged optimization; serve tests running/staging directly."
+    },
+    "core/scheduler.ts:bumpNotifyEpoch": {
+      "bend": "representation/base.bend:bump",
+      "status": "restricted",
+      "restrictions": "Unbounded mathematical Nat in proofs; emitted host natural-number range must be respected."
+    },
+    "core/scheduler.ts:insertSubs": {
+      "bend": "runtime/scheduler.bend:insertSubs, insert_subs",
+      "status": "partial",
+      "restrictions": "Generation-current missed-wake condition and notify epoch retained. Snapshot and observe hooks open."
+    },
+    "core/scheduler.ts:commitPendingNode": {
+      "bend": "runtime/scheduler.bend:commitPendingNode",
+      "status": "partial",
+      "restrictions": "Plain signals and successful sync computeds only. Async/held/error/child-retirement paths open."
+    },
+    "core/scheduler.ts:commitPendingNodes": {
+      "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
+      "status": "partial",
+      "restrictions": "No transaction/lane nodes; callback grammar cannot append staging during this commit walk."
+    },
+    "core/scheduler.ts:GlobalQueue.flush": {
+      "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, RoundEnd",
+      "status": "partial",
+      "restrictions": "Exact pure/seam/render/user order for sync grammar; no dormancy, transactions, boundaries or effect callback writes."
+    },
+    "core/scheduler.ts:GlobalQueue.settle": {
+      "bend": "runtime/scheduler.bend:settle",
+      "status": "partial",
+      "restrictions": "Mainline commit and deferred trim only. Transaction/lane paths remain open."
+    },
+    "core/scheduler.ts:flush": {
+      "bend": "runtime/core.bend:flush, run",
+      "status": "partial",
+      "restrictions": "Explicit host-driven flush only; microtask scheduling, flush(fn), actions, error halts open."
+    },
+    "core/effect.ts:effect": {
+      "bend": "runtime/api.bend:createEffect, runtime/core.bend:InitialEffect",
+      "status": "partial",
+      "restrictions": "Separate compute/apply phases; schedule/defer/user options. No errors, returned cleanups, hold hooks."
+    },
+    "core/effect.ts:runEffect": {
+      "bend": "runtime/core.bend:runEffect",
+      "status": "partial",
+      "restrictions": "Render callback mechanically writes stored result to text. User callback records application. Arbitrary imperative callbacks and cleanup/error/reentrant writes open."
+    },
+    "core/owner.ts:linkChild": {
+      "bend": "runtime/api.bend:linkChild",
+      "status": "restricted",
+      "restrictions": "Stable same-identity owner/computed nodes, head insertion and both sibling pointers."
+    },
+    "core/owner.ts:disposeChildren": {
+      "bend": "runtime/owner.bend:dispose_work, splice",
+      "status": "partial",
+      "restrictions": "Owned synchronous graph without cleanup/parked frames/reentrancy; future bookkeeping and dormant lifecycle open."
+    },
+    "core/owner.ts:dispose": {
+      "bend": "runtime/owner.bend:dispose",
+      "status": "partial",
+      "restrictions": "Heap removal, clearDeps, owned descendant death and splice. No automatic dormancy."
+    },
+    "core/core.ts:markRefresh": {
+      "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
+      "status": "partial",
+      "restrictions": "Production invalidation branch now follows target flag update -> insertIntoHeap -> schedule, including REASK classification. Dev/observe hooks and async reask metadata are unfinished. The public refresh waiter API is not implemented."
+    },
+    "core/core.ts:stagedRead": {
+      "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
+      "status": "partial",
+      "restrictions": "Source REACTIVE_STAGED_READ flag and uninitialized guard are retained in the synchronous profile. Lane stagedReaders collection and callers in other unported paths remain unfinished."
+    }
+  },
+  "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."
 }

@@ -2,8 +2,9 @@
   "schemaVersion": 1,
   "claim": "Concrete synchronous chain_once(6) and chain_twice(6,9) through the active runtime, generic path composition, and payload laws. See LAWS.bend and tracking/frontier.md.",
   "inputs": {
-    "runtime/api.bend": "e04601f0c4a855d88bbf51889249c61e2f2fd8ab9b0ff9ccd4b26e872982c565",
-    "runtime/core.bend": "957517d1564bba29d99f169d12c91f89ddc19b2c46bfa8e26c79806f14733191",
+    "runtime/api.bend": "dc33375a3c21f6247e49456810c48d14fde98de21adca9f644f5a11fb0cc2134",
+    "runtime/constants.bend": "10d403557ac02a635b796eba7ee6222810b1a57a1255535cc626df6e13b2f743",
+    "runtime/core.bend": "5f472869b52fcd7b5afc32f47856ba5038c83dfc7a87f03a8920b7a24c585a0f",
     "runtime/graph.bend": "df969599787aa7bfea8f8b63c6faa448784ca63fb3c2484485bab0c996b3c20e",
     "runtime/heap.bend": "dc1ae07eeba92575748a6b3a012c8aa1757db1e0857dc2a3ea5b8da52e38dd71",
     "runtime/owner.bend": "43f82a1c94e525c703dcdd52d0453b00abebbe18967697af88805ddab4c7810c",
@@ -17,27 +18,32 @@
     "host/solid.mjs": "650cc026faa1e9357fc23fb64465b70dd872a4c5b1aa59eb3f1e5443c506d53c",
     "tests/differential.mjs": "673ad3e0a5f7a9f2f9073cae846146db71a2b3b0ac806d58cb3760e80480e3d3",
     "tests/mutations.mjs": "02d48f9cebc056b3c2c325c1978a9bebd010e47039334b2c8ca16d9930c61704",
+    "tests/refresh-alignment.mjs": "d743f99d88627e4338f4c37870da03e98430fb4056f2c27f5ebb50e8dadf7771",
+    "tests/upstream-impact.mjs": "ac3b567518675d9d697a9b0f0a29d7d991d4ec4b817597d5c6c836fd37d4f33f",
     "tools/bootstrap.mjs": "cd9beca6216d62bb087db91c0841097a5a405146c64cfba482a311540c94f73e",
     "tools/build.mjs": "9b1dabbcfc2af42f61b9f2a3badcec39c9d2ac067a5785b4b0e57273b7a09824",
-    "tools/check.mjs": "2d98a6eb42a97081099c08c0251ba41d5816bca98de98b5969bcc7142c147745",
-    "tools/inventory.mjs": "bff556df906b6ec8987d9af8b4b4a1b61fe274e845e06d904104ec76fea13159",
+    "tools/check.mjs": "89d8f684bda45c5fed0ae7a3028c0c12cabebfbd2d33cb2400c87b85f1f177ed",
+    "tools/constants.mjs": "c4bbb57fd74ffdab48d4829d9df7e4e873c9a5f33b76a5570a3bba950f209988",
+    "tools/inventory.mjs": "1e217191febda9097eb5df0af7e94d4ba54704cb3e6385f1bde23ea0ff95ec74",
     "tools/pins.mjs": "f8faf60edaf13972cbfa4a112c55df896b7a5e98a4d8eb8771d98cb576a69584",
     "tools/records.py": "9209af13b2c150aeb218c682567b44a8eeaf91e3b5502be3c58457777b50d2c4",
+    "tools/source-inventory.mjs": "1d6bf7c29d402412417856072cfef738613184cc6ba332823d76457ee25d162b",
+    "tools/upstream-impact.mjs": "8862ced95d03fce5f1e58f55d701cb3fd91e4e9415999a892f0fb8c7850b54ff",
     "LAWS.bend": "156669b3fb44ea171118eeabf267d94d4d5832d7a0a3f6e8e2ecc5ad7eac12a1",
     "PROOF.bend": "c75a10b5f67a74ca1aeabc1bf6e2ccdc0122257ed265daef9f6b136c00c20970",
-    "package.json": "a783a9327c96a30f2b736eaea69a8a279f76489725dc8e8cbe5a3f91641ed7d9",
+    "package.json": "10638d823ce1caf4965d662c77f7d96341814e82445ba9251722cac3fcecc63b",
     "package-lock.json": "8ed5e491277e7eebc8c738db67d64b1dbd7021913bbe8c8efab3b5d2ed6a80c0",
     "upstream/pins.json": "9b858794274a50409aab03a547320dd12741411c84334085230beddc1425b360",
-    "upstream/correspondence.json": "cf8501be65f9ff6b8acd801e1659b565de1f19a40597878623f226a9c6cb416b",
-    "upstream/inventory.json": "d5d29abd0079452102f3e7dcf6f4c894d6a24d40ac63216f9b71497758846f44"
+    "upstream/correspondence.json": "bf85b0cecaba06b20c4b2f6573523d768e6c5165cd4736f26aeebf07cee7513f",
+    "upstream/inventory.json": "6d4c37cf8edc0967211d23c5aba17f2a1b7e03bda39199f855c35c665746316f"
   },
   "outputs": {
-    "build/runtime.mjs": "f151c92bc0c2be6bd381d637f836a6e9730d71299c5b611db72864a9586c4e52",
+    "build/runtime.mjs": "a125e2a2c1cebc423c0a10e06e3c44c05087d103d343460b1dfeed66be8228a4",
     "build/solid.mjs": "bc829754eb5e886ace2dfe23f33729dce94236bff409223bed5a70f34934433e"
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 1.053079399,
+    "seconds": 1.1251044980000002,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {

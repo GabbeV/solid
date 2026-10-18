@@ -10250,8 +10250,12 @@
           "start": 1973,
           "end": 1978,
           "sha256": "7e7943780cee7596275cd1babdd4c6299a6f2c82961e924a2e1084588536981e",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
+            "status": "partial",
+            "restrictions": "Source REACTIVE_STAGED_READ flag and uninitialized guard are retained in the synchronous profile. Lane stagedReaders collection and callers in other unported paths remain unfinished."
+          }
         },
         {
           "key": "core/core.ts:stagedScreen",
@@ -10334,8 +10338,12 @@
           "start": 2231,
           "end": 2267,
           "sha256": "68fa8923839b7f262d22bd0cb0dd2738815aa61d40e85afbfcb6603eb8a47ac4",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
+            "status": "partial",
+            "restrictions": "Production invalidation branch now follows target flag update -> insertIntoHeap -> schedule, including REASK classification. Dev/observe hooks and async reask metadata are unfinished. The public refresh waiter API is not implemented."
+          }
         }
       ],
       "branches": [

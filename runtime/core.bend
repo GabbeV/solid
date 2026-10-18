@@ -8,6 +8,7 @@ import ../observation/tree.bend as T
 import ./graph.bend as G
 import ./heap.bend as H
 import ./scheduler.bend as S
+import ./constants.bend as K
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -146,12 +147,21 @@ def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
       Machine{w, B.append(Task, todo, RaiseHeight{id, reader} <> Serve{id} <> rest), stack},
     _ => Machine{w, Serve{id} <> rest, stack})
 
+# Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
+# the pass flag remains source state even in the synchronous profile.
+def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
+  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())),
+    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ()))),
+    _ => w)
+
 def serve(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
   +reader = R.World.context(w)
   +unflushed = Bool.and(Nat.is_ne(reader, 0n), Bool.and(Bool.not(R.World.running(w)), B.present(R.Node.pending(n))))
   +w = B.choose(~R.World, unflushed,
     _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), 4096))), _ => w)
+  +w = B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), Bool.and(B.present(R.Node.pending(n)), Bool.not(unflushed))),
+    _ => stagedRead(w, reader, id), _ => w)
   +value = B.choose(~R.Value, Bool.or(Nat.is_eq(reader, 0n), unflushed),
     _ => R.Node.value(n), _ => B.current(n))
   Machine{B.event(w, R.ReadValue{reader, id, value}), rest, value <> stack}
@@ -189,7 +199,7 @@ def recompute(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: 
   +n = B.node(w, id)
   +n = R.Node.with_depsTail(n, 0n)
   +n = R.Node.with_depGen(n, 1n+R.Node.depGen(n))
-  +n = R.Node.with_flags(n, 4)
+  +n = R.Node.with_flags(n, B.set(K.REACTIVE_RECOMPUTING_DEPS(), U32.and(R.Node.flags(n), K.REACTIVE_REASK())))
   +n = R.Node.with_time(n, R.World.clock(w))
   +w = B.store_node(w, id, n)
   next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{id, create, R.World.context(w), R.World.tracking(w), R.Node.height(n)} <> rest : List<&2, Task>}
@@ -228,7 +238,7 @@ def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Na
     case value <> tail:
       +missed = B.has(R.Node.flags(B.node(w, id)), 4096)
       +w = R.World.with_tracking(R.World.with_context(w, context), tracking)
-      +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), 4103)))
+      +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), B.set(4103, K.REACTIVE_REASK()))))
       +w = publish(w, id, value, create, oldHeight)
       w = B.choose(~R.World, missed, _ => B.schedule(H.enqueueSub(w, id)), _ => w)
       Machine{w, rest, tail}
@@ -349,3 +359,19 @@ def flush(fuel: Nat, +w: R.World) -> R.World:
 
 def eval(fuel: Nat, w: R.World, expr: R.Expr, prev: R.Value) -> Machine:
   run(fuel, Machine{w, [Evaluate{expr, prev}], []})
+
+# Solid core/core.ts:markRefresh, production branch. The dev owned-scope guard
+# and observe attribution hook remain explicit tier omissions. This helper is
+# invalidation, not the public signals.ts refresh waiter protocol.
+def markRefresh(+w: R.World, +id: Nat) -> R.World:
+  +n = B.node(w, id)
+  B.choose(~R.World, Bool.and(B.computed(R.Node.kind(n)), Bool.not(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()))),
+    _ =>
+      +flags = R.Node.flags(n)
+      reask = B.choose(~U32, B.has(flags, B.set(K.REACTIVE_DIRTY(), B.set(K.REACTIVE_CHECK(), K.REACTIVE_IN_HEAP()))),
+        _ => 0, _ => K.REACTIVE_REASK())
+      +flags = B.set(B.clear(flags, K.REACTIVE_CHECK()), B.set(K.REACTIVE_DIRTY(), reask))
+      +w = B.store_node(w, id, R.Node.with_flags(n, flags))
+      +w = H.insertIntoHeap(w, id)
+      B.schedule(w),
+    _ => w)

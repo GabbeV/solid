@@ -83,9 +83,9 @@ def setUpdater(fuel: Nat, +w: R.World, +id: Nat, expr: R.Expr) -> R.World:
   B.choose(~R.World, C.healthy(R.World.fault(C.world(m))),
     _ => setSignal(C.world(m), id, resultValue(m)), _ => C.world(m))
 
+# Compatibility facade: invalidation only. Public awaitable refresh is open.
 def refresh(+w: R.World, +id: Nat) -> R.World:
-  B.choose(~R.World, Bool.and(B.computed(R.Node.kind(B.node(w, id))), Bool.and(B.valid(w, id), Bool.not(B.has(R.Node.flags(B.node(w, id)), 64)))),
-    _ => B.schedule(H.enqueueSub(H.markNode(w, id, 2), id)), _ => w)
+  B.choose(~R.World, B.valid(w, id), _ => C.markRefresh(w, id), _ => w)
 
 # Host-boundary constructors: use these exports instead of generated JS tags.
 def vUndefined() -> R.Value:

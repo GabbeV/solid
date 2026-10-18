@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {compare} from '../tools/upstream-impact.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const baseline=path.join(root,'upstream/solid/packages/signals/src');
+assert.equal(compare(baseline).changedFiles.length,0);
+const candidate=fs.mkdtempSync(path.join(os.tmpdir(),'solid-source-impact-'));
+try {
+  fs.cpSync(baseline,path.join(candidate,'src'),{recursive:true});
+  const target=path.join(candidate,'src/core/scheduler.ts');
+  const original=fs.readFileSync(target,'utf8');
+  assert(original.includes('  notifyEpoch++;'));
+  fs.writeFileSync(target,original.replace('  notifyEpoch++;','  notifyEpoch += 2;'));
+  fs.appendFileSync(path.join(candidate,'src/core/core.ts'),'\n// file-level change probe\n');
+  fs.writeFileSync(path.join(candidate,'src/new-helper.ts'),'export function newHelper() { return 1; }\n');
+  fs.appendFileSync(path.join(candidate,'src/store/index.ts'),'\n// shared-hook review probe\n');
+  const report=compare(candidate);
+  assert.equal(report.changedFiles.length,4);
+  const scheduler=report.changedFiles.find(f=>f.file==='core/scheduler.ts');
+  assert.equal(scheduler.changedUnits.length,1);
+  assert.equal(scheduler.changedUnits[0].key,'core/scheduler.ts:bumpNotifyEpoch');
+  assert.equal(scheduler.changedUnits[0].bend,'representation/base.bend:bump');
+  assert.equal(report.changedFiles.find(f=>f.file==='core/core.ts').changedUnits.length,0);
+  assert.equal(report.changedFiles.find(f=>f.file==='new-helper.ts').changedUnits[0].bend,null);
+  assert.equal(report.changedFiles.find(f=>f.file==='store/index.ts').excludedStore,true);
+  assert.match(report.evidence,/revalidation/);
+  assert.equal(fs.readFileSync(target,'utf8'),original.replace('  notifyEpoch++;','  notifyEpoch += 2;'),'report modified candidate');
+  assert.equal(compare(baseline).changedFiles.length,0,'baseline drifted');
+  const cli=spawnSync(process.execPath,['tools/upstream-impact.mjs',candidate,'--json'],{cwd:root,encoding:'utf8'});
+  assert.equal(cli.status,0,cli.stderr);assert.deepEqual(JSON.parse(cli.stdout),report);
+} finally {fs.rmSync(candidate,{recursive:true,force:true});}
+assert.throws(()=>compare(path.join(root,'tests')),/Expected a Solid checkout/);
+console.log('Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.');

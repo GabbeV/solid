@@ -2,6 +2,11 @@
 
 This is the first executable checkpoint, not a completed package port.
 
+The user now explicitly requires a source-followable translation. Read
+[source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
+substitutions. These must be repaired before expanding affected paths. A formal
+TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
 ## Established execution path
 
 `api.createMemo/createEffect -> core.recompute -> Evaluate/ReadNode -> graph.link
