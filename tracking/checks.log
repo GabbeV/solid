@@ -12,15 +12,16 @@ Built Bend runtime and pinned Solid production reference.
 > solid-signals-bend@0.1.0 test
 > node tests/differential.mjs
 
-188 differential scenarios passed, including generated histories and graph invariants.
+191 differential scenarios passed, including generated histories and graph invariants.
 
 > solid-signals-bend@0.1.0 test:alignment
-> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs
 
 Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
 Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
-768 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail trim and held/override intake guards. Staged-error execution remains unsupported.
-768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset helpers match too.
+4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error execution remains unsupported.
+768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and 24 held-stash helper cases match too. Transaction execution remains unfinished.
+7680 constructor comparisons match pinned TS signal/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained.
 
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
@@ -37,4 +38,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 1.3s; hashes sealed in build/verification.json.
+Kernel completed in 1.4s; hashes sealed in build/verification.json.

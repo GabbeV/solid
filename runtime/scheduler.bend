@@ -44,7 +44,7 @@ def insert_subs(fuel: Nat, +w: R.World, +edge: Nat) -> R.World:
           insert_subs(p, H.enqueueSub(w, id), R.Link.nextSub(e)))
 
 def insertSubs(+w: R.World, +id: Nat) -> R.World:
-  +w = B.store_node(w, id, R.Node.with_notified(B.node(w, id), R.World.epoch(w)))
+  +w = B.store_node(w, id, R.Node.with_notified(B.node(w, id), R.Stamped{R.World.epoch(w)}))
   insert_subs(B.budget(w), w, R.Node.subs(B.node(w, id)))
 
 # Called with a value (the expression updater is evaluated by the machine).
@@ -57,7 +57,7 @@ def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
       +staged = B.present(R.Node.pending(n))
       +w = B.choose(~R.World, staged, _ => w, _ => queuePendingNode(w, id))
       +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
-      B.choose(~R.World, Bool.and(staged, Nat.is_eq(R.Node.notified(n), R.World.epoch(w))), _ => w,
+      B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(n), R.World.epoch(w))), _ => w,
         _ => B.schedule(insertSubs(w, id))),
     _ => w)
 
@@ -72,10 +72,16 @@ def commitValue(+w: R.World, +id: Nat) -> R.World:
 
 def commitComputedAnswer(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
+  +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
   +w = B.choose(~R.World, B.present(R.Node.pending(n)),
     _ =>
       +w = commitValue(w, id)
       +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
+      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ =>
+          +w = B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), False{}))
+          B.store_extension(w, id, R.NodeExtension.with_flushed(B.extension(w, id), R.Empty{})),
+        _ => w)
       # A staged effect is born held: its first application belongs to this
       # commit. EFFECT_TRACKED is outside the current NodeKind grammar.
       B.choose(~R.World, B.effect(R.Node.kind(n)),
@@ -84,19 +90,27 @@ def commitComputedAnswer(+w: R.World, +id: Nat) -> R.World:
     _ => w)
   +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
   +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())))
-  +w = G.trimStaleDeps(w, id)
-  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())),
+  +w = B.choose(~R.World, B.nullish(R.NodeExtension.error(B.extension(w, id))),
+    _ => G.trimStaleDeps(w, id), _ => w)
+  +w = B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())),
     _ => B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))),
     _ => w)
+  # Source GlobalQueue._dispose(c, false, true): parked teardown is not yet
+  # translated. Refuse if that source call would be needed.
+  parked = Bool.and(Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+    Bool.or(Nat.is_ne(R.NodeExtension.pendingFirstChild(B.extension(w, id)), 0n), Bool.not(B.noDisposal(R.NodeExtension.pendingDisposal(B.extension(w, id))))))
+  B.choose(~R.World, Bool.and(Bool.not(inFlight), parked),
+    _ => R.World.with_fault(w, R.Unsupported{5n}), _ => w)
 
 # core/scheduler.ts:commitPendingNode, computed segment. The current Node
-# representation has no _x extension: shown-error, reask/flushed stash, error
-# gate and parked-child disposal remain unfinished. Staged errors are refused
-# explicitly rather than committed as successful data.
+# extension is nullable and lazily allocated. Parked-child disposal and staged
+# error propagation remain unfinished and explicitly refuse their paths.
 def commitComputed(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
   +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
   +err = B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())
+  +w = B.choose(~R.World, Bool.and(Bool.not(inFlight), Nat.is_ne(R.Node.x(n), 0n)),
+    _ => B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.Undefined{})), _ => w)
   +config = B.choose(~U32, inFlight,
     _ => B.set(B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())), K.CONFIG_INPUTS_PUBLISHED()),
     _ => B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), B.set(K.CONFIG_HELD_FRAME(), B.set(K.CONFIG_STAGED(), B.set(K.CONFIG_INPUTS_PUBLISHED(), K.CONFIG_STAGED_ERROR()))))))
@@ -143,7 +157,8 @@ def trim_list(fuel: Nat, +w: R.World, +index: Nat) -> R.World:
       B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.World.trims(w))), _ => w,
         _ =>
           +id = B.get(Nat, R.World.trims(w), index, 0n)
-          +w = B.choose(~R.World, R.Node.modified(B.node(w, id)), _ => w, _ => G.trimStaleDeps(w, id))
+          +w = B.choose(~R.World, Bool.and(B.nullish(R.NodeExtension.error(B.extension(w, id))), Bool.not(R.Node.modified(B.node(w, id)))),
+            _ => G.trimStaleDeps(w, id), _ => w)
           trim_list(p, w, 1n+index))
 
 def settle(+w: R.World) -> R.World:

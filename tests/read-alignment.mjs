@@ -16,13 +16,13 @@ try {
   const bundle=await build({stdin:{contents:`
     export * from './index.ts';
     export * as K from './core/constants.ts';
-    export {read,serve,notePromotedWrite,resyncUnflushedCompanions,unflushedStaged,probeConfigure,probePromotedCount} from './core/core.ts';
-    export {globalQueue,dirtyQueue,queuePendingNode} from './core/scheduler.ts';
+    export {read,serve,notePromotedWrite,resyncUnflushedCompanions,unflushedStaged,probeConfigure,probePromotedCount,ext,stashFlushed,unflushedValue} from './core/core.ts';
+    export {globalQueue,dirtyQueue,queuePendingNode,probeSetClock} from './core/scheduler.ts';
   `,resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{
     name:'private-read-state-probe',setup(b) {b.onLoad({filter:/[/\\]core[/\\]core\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
       export function probeConfigure(c,t,u) { context=c; tracking=t; unflushedStaged=u; promotedWrites.length=0; }
       export function probePromotedCount() { return promotedWrites.length; }
-    `}));}
+    `}));b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport function probeSetClock(v) { clock=v; }'}));}
   }]});
   const S=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
   const K=S.K;
@@ -66,5 +66,19 @@ try {
     assert.equal(list(p.after.promotedWrites).length,S.probePromotedCount());
     assert.equal(after.config&K.CONFIG_PROMOTED,n._config&K.CONFIG_PROMOTED);
   }
-  console.log(`${checked} read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset helpers match too.`);
+  let stashes=0;
+  for(const stage of [0,1,2])for(const advance of [false,true])for(const running of [false,true])for(const promoted of [false,true]) {
+    const n=node();S.probeConfigure(null,false,false);S.probeSetClock(0);S.globalQueue._running=false;
+    n._config=K.CONFIG_HELD;n._pendingValue=stage===0?K.NOT_PENDING:stage===1?23:undefined;S.ext(n);
+    S.stashFlushed(n);n._pendingValue=42;S.stashFlushed(n);
+    if(promoted)S.notePromotedWrite(n);
+    S.probeSetClock(advance?1:0);S.globalQueue._running=running;
+    const result=S.unflushedValue(n),p=B.held(stage,advance,running,promoted),x=list(p.left.extensions)[list(p.left.nodes)[2].x];
+    assert.equal(Object.hasOwn(p.right,'value'),result!==K.NOT_PENDING);
+    assert.equal(Object.hasOwn(p.right,'value')?numeric(p.right.value):undefined,result===K.NOT_PENDING?undefined:result);
+    assert.equal(Object.hasOwn(x.flushed,'value'),n._x._flushed!==K.NOT_PENDING);
+    assert.equal(numeric(x.flushed.value??{}),n._x._flushed===K.NOT_PENDING?undefined:n._x._flushed);
+    assert.equal(x.flushedAt.value,n._x._flushedAt);assert.equal(p.left.unflushedStaged,S.unflushedStaged);stashes++;
+  }
+  console.log(`${checked} read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and ${stashes} held-stash helper cases match too. Transaction execution remains unfinished.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

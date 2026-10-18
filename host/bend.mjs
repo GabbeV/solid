@@ -55,21 +55,28 @@ export function expression(e, ids) {
   if (Object.hasOwn(e,'raise')) return R.unsupportedError(encode(e.raise));
   throw new TypeError('Unknown expression');
 }
+function nodeOptions(options={}) {
+  const {equals=true,transparent=false,ownedWrite=false,lazy=false,sync=false,noSnapshot=false}=options;
+  return R.nodeOptions(equals,transparent,ownedWrite,lazy,sync,noSnapshot,
+    Object.hasOwn(options,'loadingValue'),encode(options.loadingValue));
+}
 export class BendRuntime {
   constructor({fuel=100000}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; }
   check() { if(this.world.fault.$ !== tags.healthy) throw new Error(`Bend runtime stopped: ${JSON.stringify(this.world.fault)}`); }
   signal(name,value,equals=true) {
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
-    this.world=R.createSignal(this.world,encode(value),equals); this.check(); return id;
+    const options=typeof equals==='boolean'?{equals}:equals;
+    this.world=R.createSignalWithOptions(this.world,encode(value),nodeOptions(options)); this.check(); return id;
   }
-  memo(name,expr,{equals=true,lazy=false}={}) {
+  memo(name,expr,options={}) {
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
-    this.world=R.createMemo(this.fuel,this.world,expression(expr,this.ids),equals,lazy,1); this.check(); return id;
+    this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids),nodeOptions(options),1); this.check(); return id;
   }
-  effect(name,expr,{user=false,target=2,schedule=false,defer=false}={}) {
+  effect(name,expr,options={}) {
+    const {user=false,target=2,schedule=false,defer=false}=options;
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     if (!user) this.world=R.attach(this.world,1,target);
-    this.world=R.createEffect(this.fuel,this.world,expression(expr,this.ids),user,target,schedule,defer,1); this.check(); return id;
+    this.world=R.createEffectWithOptions(this.fuel,this.world,expression(expr,this.ids),user,target,schedule,defer,nodeOptions(options),1); this.check(); return id;
   }
   set(name,value) { this.world=R.setSignal(this.world,this.ids[name],encode(value)); this.check(); return value; }
   update(name,expr) {

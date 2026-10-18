@@ -20,6 +20,7 @@ try {
     export * from './index.ts';
     export * as K from './core/constants.ts';
     export {link} from './core/graph.ts';
+    export {ext} from './core/core.ts';
     export {commitPendingNode,queuePendingNode,globalQueue,probeCommitPendingNodes,probePendingNodes,probeReset,probeScheduled} from './core/scheduler.ts';
   `,resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{
     name:'private-scheduler-probe',setup(b) {b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
@@ -31,14 +32,27 @@ try {
   const K=S.K;
   function list(xs) {const a=[];while('head' in xs){a.push(xs.head);xs=xs.tail;}return a;}
   const numeric=v=>Object.hasOwn(v,'n')?v.n:undefined;
+  const tags=B.withExtension(0,0,0,0,0,false,false,false,2);
+  const nullTag=list(tags.extensions)[1].error.$;
+  function payload(v) {return v.$===nullTag?null:Object.hasOwn(v,'b')?v.b:numeric(v);}
+  function bendExtension(w,n) {
+    if(!n.x)return null;
+    const x=list(w.extensions)[n.x];
+    return {error:payload(x.error),reask:x.reask,flushed:Object.hasOwn(x.flushed,'value'),flushedValue:numeric(x.flushed.value??{}),
+      flushedAt:x.flushedAt.value??-1,shownError:payload(x.shownError)};
+  }
+  function sourceExtension(x) {
+    return x?{error:x._error,reask:x._reask,flushed:x._flushed!==K.NOT_PENDING,flushedValue:x._flushed===K.NOT_PENDING?undefined:x._flushed,
+      flushedAt:x._flushedAt,shownError:x._shownError}:null;
+  }
   function bendState(w) {
     const ns=list(w.nodes),n=ns[2],dep=ns[3];
     return {config:n.config,flags:n.flags,status:n.status,loading:n.loading,value:numeric(n.value),
       staging:Object.hasOwn(n.pending,'value'),pending:numeric(n.pending.value??{}),modified:n.modified,
       deps:n.deps!==0,subs:dep.subs!==0,render:list(w.renderQueue).length,user:list(w.userQueue).length,
-      scheduled:w.scheduled,intake:list(w.pendingNodes).length};
+      scheduled:w.scheduled,intake:list(w.pendingNodes).length,extension:bendExtension(w,n)};
   }
-  function reference(k,config,flags,status,stage,loading,modified,sweep) {
+  function reference(k,config,flags,status,stage,loading,modified,sweep,mode=0) {
     S.probeReset();
     // A source-shaped node with no cold extension and a plain source signal.
     const n={_fn:k?()=>{}:undefined,_type:k>1?k-1:0,_config:config,_flags:flags,_statusFlags:status,_loading:loading,
@@ -46,12 +60,19 @@ try {
       _deps:null,_depsTail:null,_depGen:0};
     const dep={_config:0,_x:null,_subs:null,_subsTail:null};
     if(k){S.link(dep,n);n._depsTail=null;}
+    if(mode) {
+      const x=S.ext(n);
+      if(mode===2)x._error=null;
+      if(mode===3)x._error=false;
+      if(mode===4)x._error=23;
+      if(mode===5){x._reask=true;x._flushed=19;x._flushedAt=0;x._shownError=29;}
+    }
     S.queuePendingNode(n);
     if(sweep)S.probeCommitPendingNodes();else S.commitPendingNode(n);
     return {config:n._config,flags:n._flags,status:n._statusFlags,loading:n._loading,value:n._value,
       staging:n._pendingValue!==K.NOT_PENDING,pending:n._pendingValue===K.NOT_PENDING?undefined:n._pendingValue,modified:n._modified,
       deps:n._deps!==null,subs:dep._subs!==null,render:S.globalQueue._queues[0].length,user:S.globalQueue._queues[1].length,
-      scheduled:S.probeScheduled,intake:S.probePendingNodes.length};
+      scheduled:S.probeScheduled,intake:S.probePendingNodes.length,extension:sourceExtension(n._x)};
   }
   const configs=[0,K.CONFIG_STAGED,K.CONFIG_HELD,K.CONFIG_HELD_FRAME,K.CONFIG_INPUTS_PUBLISHED,
     K.CONFIG_OVERRIDE,K.CONFIG_STAGED|K.CONFIG_HELD|K.CONFIG_HELD_FRAME|K.CONFIG_INPUTS_PUBLISHED,
@@ -62,9 +83,13 @@ try {
       const args=[k,config,K.REACTIVE_MANUAL_WRITE|K.REACTIVE_STAGED_READ,status,stage,true,false,sweep];
       assert.deepEqual(bendState(B.fixture(...args)),reference(...args),JSON.stringify({k,config,status,stage,sweep}));
       checked++;
+      for(const mode of [1,2,3,4,5]) {
+        assert.deepEqual(bendState(B.withExtension(...args,mode)),reference(...args,mode),JSON.stringify({k,config,status,stage,sweep,mode}));checked++;
+      }
     }
   // A staged error is explicitly outside this port's supported outcomes.
   const refused=B.fixture(1,K.CONFIG_STAGED_ERROR,0,0,1,false,false,false);
   assert.equal(refused.fault.reason,2,'staged error must not masquerade as a successful value commit');
-  console.log(`${checked} commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail trim and held/override intake guards. Staged-error execution remains unsupported.`);
+  assert.equal(B.withExtension(1,0,0,0,1,false,false,false,6).fault.reason,5,'parked teardown must refuse until translated');
+  console.log(`${checked} commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error execution remains unsupported.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

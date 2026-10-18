@@ -18,10 +18,23 @@ def unflushedValue(+w: R.World, +id: Nat) -> B.Bundle<R.World, R.Slot>:
   B.choose(~B.Bundle<R.World, R.Slot>, Bool.or(R.World.running(w), Bool.or(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.config(n), K.CONFIG_PROMOTED()))),
     _ => B.Bundle{w, R.Empty{}},
     _ => B.choose(~B.Bundle<R.World, R.Slot>, B.has(R.Node.config(n), K.CONFIG_HELD()),
-      # The held node's _x._flushedAt / _flushed stash is not yet translated.
-      # Refusal is an unsupported domain, not a substitute visibility rule.
-      _ => B.Bundle{R.World.with_fault(w, R.Unsupported{3n}), R.Empty{}},
+      _ => B.choose(~B.Bundle<R.World, R.Slot>, Nat.is_ne(R.Node.x(n), 0n),
+        _ => B.Bundle{w, B.choose(~R.Slot, B.stampMatches(R.NodeExtension.flushedAt(B.extension(w, id)), R.World.clock(w)),
+          _ => R.NodeExtension.flushed(B.extension(w, id)), _ => R.Empty{})},
+        _ => B.Bundle{R.World.with_fault(w, R.Unsupported{3n}), R.Empty{}}),
       _ => B.Bundle{w, R.Present{R.Node.value(n)}}))
+
+# core/core.ts:stashFlushed. Held nodes already have an extension in source;
+# a missing one is an invalid representation, not permission to allocate it.
+def stashFlushed(+w: R.World, +id: Nat) -> R.World:
+  B.choose(~R.World, Nat.is_eq(R.Node.x(B.node(w, id)), 0n),
+    _ => R.World.with_fault(w, R.Unsupported{3n}),
+    _ => B.choose(~R.World, B.stampMatches(R.NodeExtension.flushedAt(B.extension(w, id)), R.World.clock(w)),
+      _ => w,
+      _ =>
+        +w = B.store_extension(w, id, R.NodeExtension.with_flushed(B.extension(w, id), R.Node.pending(B.node(w, id))))
+        +w = B.store_extension(w, id, R.NodeExtension.with_flushedAt(B.extension(w, id), R.Stamped{R.World.clock(w)}))
+        R.World.with_unflushedStaged(w, True{})))
 
 def markLateLinker(+w: R.World, +reader: Nat) -> R.World:
   B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_MISSED_WAKE())))

@@ -100,9 +100,10 @@ def effect(k: R.NodeKind) -> Bool:
       False{}
 
 def blank_node() -> R.Node:
-  R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, 0n,
+  R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
-    R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{}}
+    R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n}
 
 def blank_link() -> R.Link:
   R.Link{0n, 0n, 0n, 0n, 0n, 0n}
@@ -110,10 +111,45 @@ def blank_link() -> R.Link:
 def blank_tree() -> R.TreeNode:
   R.TreeNode{0n, [], R.Undefined{}}
 
+def blank_extension() -> R.NodeExtension:
+  R.NodeExtension{0n, 0n, R.Undefined{}, R.Empty{}, R.NoSources{}, 0n,
+    R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
+    R.Unstamped{}, 0n, R.Empty{}, 0n, R.Undefined{}}
+
+def stampMatches(stamp: R.Stamp, value: Nat) -> Bool:
+  match stamp:
+    case R.Unstamped{}:
+      False{}
+    case R.Stamped{x}:
+      Nat.is_eq(x, value)
+
+def root(k: R.NodeKind) -> Bool:
+  match k:
+    case R.Root{}:
+      True{}
+    case _:
+      False{}
+
+def nullish(v: R.Value) -> Bool:
+  match v:
+    case R.Undefined{}:
+      True{}
+    case R.Null{}:
+      True{}
+    case _:
+      False{}
+
+def noDisposal(d: R.Disposal) -> Bool:
+  match d:
+    case R.NoDisposal{}:
+      True{}
+    case _:
+      False{}
+
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
-    [], [], [], [], 0n, False{}, False{}, False{}, 0n, 1n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, []}
+    [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()]}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -142,11 +178,18 @@ def event(+w: R.World, e: R.TraceEvent) -> R.World:
 def schedule(w: R.World) -> R.World:
   R.World.with_scheduled(w, True{})
 
-def current(n: R.Node) -> R.Value:
-  R.Node{kind, value, pending, equals, config, flags, status, time, notified,
-    deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap,
-    parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading} = n
-  selected(pending, value)
+def current(+n: R.Node) -> R.Value:
+  selected(R.Node.pending(n), R.Node.value(n))
+
+def extension(+w: R.World, id: Nat) -> R.NodeExtension:
+  get(R.NodeExtension, R.World.extensions(w), R.Node.x(node(w, id)), blank_extension())
+
+def store_extension(+w: R.World, id: Nat, x: R.NodeExtension) -> R.World:
+  R.World.with_extensions(w, List.set(&2, R.NodeExtension, R.World.extensions(w), R.Node.x(node(w, id)), x))
+
+# Nearest computed for source Root._parentComputed forwarding. Zero is null.
+def parentComputed(+w: R.World, +parent: Nat) -> Nat:
+  choose(~Nat, root(R.Node.kind(node(w, parent))), _ => R.Node.parentComputed(node(w, parent)), _ => parent)
 
 def valid(+w: R.World, +id: Nat) -> Bool:
   Bool.and(Nat.is_ne(id, 0n), Nat.is_lt(id, length(R.Node, R.World.nodes(w))))

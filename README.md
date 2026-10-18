@@ -59,6 +59,10 @@ nonconsecutive repeated reads, batching, updater composition, lazy activation,
 render/user phases, disposal, and opaque payload identities against the pinned
 Solid production entry. Focused internal-state probes compare the actual pinned
 commit/read helpers, including fast/slow value selection and their flags/queues.
+Separate production constructor tests check option masks, loading-seed presence,
+parent/root forwarding and lazily allocated extension defaults. Extension storage
+does not yet implement the async/status/transaction engines; see
+[the representation notes](tracking/representation.md).
 These are parity evidence, not general proofs or full async execution coverage.
 
 The exact source and toolchain are retained under [upstream](upstream).

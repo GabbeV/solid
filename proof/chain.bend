@@ -31,7 +31,7 @@ type View is Data:
   View{source: R.Value, first: R.Value, second: R.Value, text: R.Value,
     attached: Bool, scheduled: Bool, running: Bool, context: Nat, tracking: Bool,
     pending: Nat, renders: Nat, users: Nat, fault: R.Fault,
-    unflushed: Bool, promoted: Nat}
+    unflushed: Bool, promoted: Nat, extensions: Nat}
 
 def view(+w: R.World) -> View:
   View{R.Node.value(B.node(w, 2n)), R.Node.value(B.node(w, 3n)),
@@ -39,8 +39,9 @@ def view(+w: R.World) -> View:
     R.World.scheduled(w), R.World.running(w), R.World.context(w), R.World.tracking(w),
     B.length(Nat, R.World.pendingNodes(w)), B.length(Nat, R.World.renderQueue(w)),
     B.length(Nat, R.World.userQueue(w)), R.World.fault(w),
-    R.World.unflushedStaged(w), B.length(Nat, R.World.promotedWrites(w))}
+    R.World.unflushedStaged(w), B.length(Nat, R.World.promotedWrites(w)),
+    B.length(R.NodeExtension, R.World.extensions(w))}
 
 def expected(+x: Nat) -> View:
   View{R.Number{x}, R.Number{Nat.add(x, 1n)}, R.Number{Nat.mul(Nat.add(x, 1n), 2n)}, answer(x),
-    True{}, False{}, False{}, 0n, False{}, 0n, 0n, 0n, R.Healthy{}, False{}, 0n}
+    True{}, False{}, False{}, 0n, False{}, 0n, 0n, 0n, R.Healthy{}, False{}, 0n, 1n}

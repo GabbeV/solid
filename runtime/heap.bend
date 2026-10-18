@@ -34,7 +34,7 @@ def markNode(+w: R.World, id: Nat, state: U32) -> R.World:
 
 def actualInsertIntoHeap(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
-  +parent = R.Node.parent(n)
+  +parent = B.parentComputed(w, R.Node.parent(n))
   +parentHeight = R.Node.height(B.node(w, parent))
   +height = B.choose(~Nat, Bool.and(Nat.is_ne(parent, 0n), B.computed(R.Node.kind(B.node(w, parent)))),
     _ => Nat.max(R.Node.height(n), 1n+parentHeight), _ => R.Node.height(n))

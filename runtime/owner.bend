@@ -6,6 +6,15 @@ import ../representation/base.bend as B
 import ./graph.bend as G
 import ./heap.bend as H
 
+# core/owner.ts:linkChild. _parent was stored by the constructor literal.
+def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
+  +head = R.Node.firstChild(B.node(w, parent))
+  +w = B.store_node(w, id, R.Node.with_prevSibling(B.node(w, id), 0n))
+  +w = B.store_node(w, id, R.Node.with_nextSibling(B.node(w, id), head))
+  +w = B.choose(~R.World, Nat.is_ne(head, 0n),
+    _ => B.store_node(w, head, R.Node.with_prevSibling(B.node(w, head), id)), _ => w)
+  B.store_node(w, parent, R.Node.with_firstChild(B.node(w, parent), id))
+
 def splice(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
   +parent = R.Node.parent(n)

@@ -144,7 +144,7 @@ def readNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
     _ => Machine{R.World.with_fault(w, R.BadId{}), [], []})
 
 def prepareSlow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  +reader = R.World.context(w)
+  +reader = B.parentComputed(w, R.World.context(w))
   +tracked = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
   +w = B.choose(~R.World, tracked, _ => G.link(w, id, reader), _ => w)
   B.choose(~Machine, Bool.and(tracked, B.computed(R.Node.kind(B.node(w, id)))),
@@ -163,7 +163,7 @@ def served(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +reader: 
 # core/core.ts:read's plain-signal fast block, under the admitted no-snapshot,
 # no-verdict profile. Its source ternary intentionally stays separate from serve.
 def readSignalFast(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  +reader = R.World.context(w)
+  +reader = B.parentComputed(w, R.World.context(w))
   +tracked = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
   +w = B.choose(~R.World, tracked, _ => G.link(w, id, reader), _ => w)
   B.choose(~Machine, Bool.and(Nat.is_ne(reader, 0n), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
@@ -201,7 +201,7 @@ def serveSelected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
 # The unsupported born-staged read refuses instead of serving fabricated data.
 def serve(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
-  +reader = R.World.context(w)
+  +reader = B.parentComputed(w, R.World.context(w))
   +noAnswer = Bool.and(B.present(R.Node.pending(n)), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     Bool.or(Nat.is_eq(reader, 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN()))))
   B.choose(~Machine, noAnswer,
@@ -284,9 +284,16 @@ def publish(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: N
 def finish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat) -> Machine:
   match stack:
     case value <> tail:
+      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+      +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
       +missed = B.has(R.Node.flags(B.node(w, id)), 4096)
       +w = R.World.with_tracking(R.World.with_context(w, context), tracking)
       +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), B.set(4103, K.REACTIVE_REASK()))))
+      # Successful synchronous pass: the source finally consumes quiet-reask
+      # metadata. Pending classification and clearStatus propagation are open.
+      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), False{})), _ => w)
       +w = publish(w, id, value, create, oldHeight)
       w = B.choose(~R.World, missed, _ => B.schedule(H.enqueueSub(w, id)), _ => w)
       Machine{w, rest, tail}

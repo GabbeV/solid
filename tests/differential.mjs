@@ -100,6 +100,20 @@ scenario('write and revert still notify direct effects',[
 scenario('previous successful output',[
   ['signal','x',1],['memo','a',add(read('x'),select({prev:true},{prev:true},lit(0)))],['effect','view',read('a')],['set','x',2],['flush'],['set','x',3],['flush']
 ]);
+scenario('constructor flags retain normal synchronous execution',[
+  ['signal','x',1,{equals:false,ownedWrite:true,noSnapshot:true}],
+  ['memo','a',add(read('x'),lit(1)),{transparent:true,sync:true,noSnapshot:true}],
+  ['effect','view',read('a'),{sync:true,ownedWrite:true}],['set','x',1],['flush'],['set','x',3],['flush']
+]);
+scenario('loading seed participates in previous-value computation',[
+  ['signal','x',1],['memo','a',add(read('x'),{prev:true}),{loadingValue:5}],['effect','view',read('a')],
+  ['set','x',2],['flush'],['read','a']
+]);
+scenario('explicit undefined loading seed and effect-specific option rules',[
+  ['signal','x',1],['memo','a',add(read('x'),select({prev:true},{prev:true},lit(0))),{loadingValue:undefined,lazy:true}],
+  ['effect','view',add(read('a'),select({prev:true},{prev:true},lit(0))),{loadingValue:5,lazy:true,noSnapshot:true}],
+  ['set','x',2],['flush'],['read','a']
+]);
 scenario('refresh pure node',[
   ['memo','a',lit(2)],['effect','view',read('a')],['refresh','a'],['flush']
 ]);

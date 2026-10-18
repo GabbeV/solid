@@ -23,9 +23,15 @@ proof credit was imported.
 
 ## Supported grammar and limitations
 
-- Owned synchronous nodes under one explicit top-level root; stable signal,
+- Owned synchronous nodes under one explicit top-level host root; stable signal,
   owner/computed, link and mechanical-tree identities. Lazy **initial activation**
-  works; lazy/ownerless observation-lifecycle dormancy is not implemented.
+  works; lazy/ownerless observation-lifecycle dormancy is not implemented. Internal
+  constructors support nested-root parentComputed forwarding, tested at height,
+  heap and read sites. Nested callback construction/root callback APIs remain open.
+- Separate source constructors and lazy extension defaults now exist. Default
+  sync is false; loading-seed presence includes explicit undefined. Synchronous
+  seed/option histories execute; loading suspension is not implemented. See
+  [representation.md](representation.md) for storage-only extension fields.
 - Reusable defunctionalized callback programs, not arbitrary JavaScript closures.
   Render application writes computed text. User application records its value
   and previous value. Callback writes, nested primitive construction, returned
@@ -61,7 +67,8 @@ Initial allocation, staging, actual callback reads, memo results, dirty-heap
 execution, commit and render application all participate. The result includes
 actual attached tree text (`20`, then `29`), source/memo values, successful
 completion, empty pending/render/user queues, restored runtime context, and reset
-unflushed/promotion state.
+unflushed/promotion state. They also check that no live cold extension is allocated
+(the arena retains only its reserved zero record).
 
 A separate reusable path lemma relates actual `core.step` transitions to
 `core.run` for arbitrary machine states and a valid finite execution path.
@@ -74,8 +81,9 @@ excessive independent-kernel expansion under open contexts. Even canonical
 transition witnesses remained too costly without further helper refinements.
 Those attempts are not completed proofs and were removed from the active roots.
 The two concrete laws pass independent checking. The differential suite has
-188 scenarios; focused tests additionally compare 768 commit states and 768 read
-states with the actual pinned TS helpers. These include synthetic internal
+191 scenarios; focused tests additionally compare 7,680 constructor states,
+4,608 commit states, 768 read states and 24 held-stash helper cases with the
+actual pinned TS helpers. These include synthetic internal
 states to probe branches; they do not admit async/transaction/error programs.
 Four deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, error, async, or optimistic theorem is claimed. Exact TypeScript
@@ -83,13 +91,15 @@ correspondence and backend compiler correctness are trusted/tested, not proved.
 
 ## Next dependency and broader roadmap
 
-1. Finish the source constructor/owner alignment and the cold extension needed
-   by commits and reads. The synchronous commit branches and unflushed read
-   helpers now follow the source separately; see the source-fidelity audit for
-   remaining restrictions. Preserve the concrete proof scenarios as regressions;
+1. Finish the source owner live child/sibling walk, parked-frame disposal and
+   callback protocol. Constructor literals and nullable extension storage now
+   exist; status/cleanup/transaction engines consuming those fields are still
+   unfinished. See the source-fidelity audit for restrictions. Preserve the
+   concrete proof scenarios as regressions;
    reusable arena/linked-list refinements can support later generalization.
-2. Port `NodeExtension`, outcome/status storage and source-shaped control unwinding;
-   then translate pending-source propagation/retirement and superseded settlements.
+2. Translate outcome/status propagation and source-shaped control unwinding;
+   then pending-source propagation/retirement and superseded settlements. The
+   extension data layout alone does not implement these behaviors.
 3. Add actual transaction discovery, blockers, merge redirects, park/land/reruns,
    and queue release to the SAME driver. This is necessary before async consistency
    claims; waiting for all host promises is not an acceptable substitute.

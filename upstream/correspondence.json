@@ -29,8 +29,8 @@
     },
     "core/heap.ts:actualInsertIntoHeap": {
       "bend": "runtime/heap.bend:actualInsertIntoHeap",
-      "status": "partial",
-      "restrictions": "Top-level roots only; nested root parentComputed height forwarding remains open."
+      "status": "restricted",
+      "restrictions": "Root._parentComputed forwarding now retained and probed. Null/height representation uses Nat and stable IDs; no store slot hooks."
     },
     "core/heap.ts:insertIntoHeap": {
       "bend": "runtime/heap.bend:insertIntoHeap",
@@ -68,24 +68,24 @@
       "restrictions": "Same dependency traversal and height propagation for admitted nodes."
     },
     "core/core.ts:signal": {
-      "bend": "runtime/api.bend:createSignal, allocate",
+      "bend": "runtime/construct.bend:signal",
       "status": "partial",
-      "restrictions": "Default strict equality or equals:false only; no snapshot or unobserved options."
+      "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture and unobserved invocation unfinished; no custom comparators."
     },
     "core/core.ts:computed": {
-      "bend": "runtime/api.bend:createMemo, allocate",
+      "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
       "status": "partial",
-      "restrictions": "Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."
+      "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
     },
     "core/core.ts:setupComputedNode": {
-      "bend": "runtime/api.bend:allocate, linkChild, createMemo",
+      "bend": "runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild",
       "status": "partial",
-      "restrictions": "Root-owned nodes only; no nested root parent forwarding or snapshot/external hooks."
+      "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
     },
     "core/core.ts:recompute": {
       "bend": "runtime/core.bend:recompute, finish, publish",
       "status": "partial",
-      "restrictions": "Sync successful pass, no owned child construction or cleanup, lanes/transactions/status/errors/snapshot hooks. Real stored expressions and actual read sets are evaluated."
+      "restrictions": "Sync successful passes through stored expressions and actual reads. Sync answer clears loading/inFlight and finally consumes reask metadata. Owned child construction/cleanup, handleAsync, clearStatus propagation, transactions/lanes/status/errors/snapshot hooks remain unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, afterCheck, ClearFlags",
@@ -105,7 +105,7 @@
     "core/core.ts:read": {
       "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
       "status": "partial",
-      "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking and untrack-in-pass selection. No snapshot/verdict/held/status/strict-read paths; no nested root parent forwarding."
+      "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking, untrack-in-pass selection and Root._parentComputed forwarding. Snapshot/verdict/held/status/strict-read paths remain open."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
@@ -140,7 +140,7 @@
     "core/scheduler.ts:commitPendingNode": {
       "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
       "status": "partial",
-      "restrictions": "Separate source signal/computed branches; configuration masks and inFlight branch, publication order, loading/manual-write reset, stale-tail trim and staged-effect enqueue retained. No cold extension; shownError, reask/flushed stash and parked-child disposal unfinished. Staged error notification is explicitly unsupported. Synthetic flight/status probes do not establish async execution."
+      "restrictions": "Separate source signal/computed branches; configuration masks/inFlight branch, publication order, shownError reset, reask/flushed reset, loading/manual-write reset, nullish error trim gate and staged-effect enqueue retained. Parked child disposal and staged error notification explicitly refuse; synthetic metadata probes do not establish async/held transaction execution."
     },
     "core/scheduler.ts:commitPendingNodes": {
       "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
@@ -155,7 +155,7 @@
     "core/scheduler.ts:GlobalQueue.settle": {
       "bend": "runtime/scheduler.bend:settle",
       "status": "partial",
-      "restrictions": "Mainline live pending/held-trim walks, clearing after source walks. No error extensions, transaction/lane seams, store commit or boundary hooks."
+      "restrictions": "Mainline live pending/held-trim walks, source nullish error/modified trim gate and clearing after walks. Transaction/lane seams, store commit and boundary hooks unfinished."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, run",
@@ -173,7 +173,7 @@
       "restrictions": "Render callback mechanically writes stored result to text. User callback records application. Arbitrary imperative callbacks and cleanup/error/reentrant writes open."
     },
     "core/owner.ts:linkChild": {
-      "bend": "runtime/api.bend:linkChild",
+      "bend": "runtime/owner.bend:linkChild",
       "status": "restricted",
       "restrictions": "Stable same-identity owner/computed nodes, head insertion and both sibling pointers."
     },
@@ -210,7 +210,7 @@
     "core/core.ts:unflushedValue": {
       "bend": "runtime/read-state.bend:unflushedValue",
       "status": "partial",
-      "restrictions": "Source running/no-staging/promoted guards and committed Slot. Held cold-extension stash refuses explicitly pending extension translation."
+      "restrictions": "Source running/no-staging/promoted guards, held flushedAt/flushed branch and committed Slot. A held node missing its required extension explicitly refuses as an invalid representation. Full held read/join behavior unfinished."
     },
     "core/core.ts:markLateLinker": {
       "bend": "runtime/read-state.bend:markLateLinker",
@@ -226,6 +226,26 @@
       "bend": "runtime/read-state.bend:resyncUnflushedCompanions",
       "status": "partial",
       "restrictions": "Source flag reset, length guard, promotion-bit walk and clear. Called at the actual flush entry; no alternate scheduler."
+    },
+    "core/core.ts:stashFlushed": {
+      "bend": "runtime/read-state.bend:stashFlushed",
+      "status": "restricted",
+      "restrictions": "Source same-clock first-stash preservation, flushed/flushedAt writes and unflushed flag. Direct helper probes include staged undefined. Held setSignal caller/joining unfinished."
+    },
+    "core/core.ts:ext": {
+      "bend": "runtime/extension.bend:ext; representation/base.bend:blank_extension",
+      "status": "restricted",
+      "restrictions": "All source default slots retained with explicit nullable identities and sentinels; one lazy arena allocation reused on subsequent calls. Flight, callback, pending-source, snapshot and transaction data are not implementations of their engines; see tracking/representation.md."
+    },
+    "core/core.ts:createEffectNode": {
+      "bend": "runtime/construct.bend:createEffectNode",
+      "status": "partial",
+      "restrictions": "Separate production effect literal, own config arms, forced lazy/uninitialized, equals false and modified/previous defaults; lazy setup. No hydration IDs, snapshots/external hooks or arbitrary callback/error/cleanup protocol."
+    },
+    "core/owner.ts:createOwner": {
+      "bend": "runtime/construct.bend:createOwner",
+      "status": "partial",
+      "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

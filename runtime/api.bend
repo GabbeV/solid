@@ -4,56 +4,52 @@ import ../representation/base.bend as B
 import ../observation/tree.bend as T
 import ./core.bend as C
 import ./scheduler.bend as S
-import ./graph.bend as G
-import ./heap.bend as H
 import ./owner.bend as O
+import ./construct.bend as N
 
-def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
-  +head = R.Node.firstChild(B.node(w, parent))
-  +n = R.Node.with_nextSibling(R.Node.with_prevSibling(B.node(w, id), 0n), head)
-  +w = B.store_node(w, id, n)
-  +w = B.choose(~R.World, Nat.is_ne(head, 0n),
-    _ => B.store_node(w, head, R.Node.with_prevSibling(B.node(w, head), id)), _ => w)
-  B.store_node(w, parent, R.Node.with_firstChild(B.node(w, parent), id))
-
-def allocate(+w: R.World, +kind: R.NodeKind, expr: R.Expr, value: R.Value, equals: Bool, +parent: Nat, target: Nat, lazy: Bool) -> R.World:
-  +id = B.length(R.Node, R.World.nodes(w))
-  +n = R.Node.with_kind(B.blank_node(), kind)
-  +n = R.Node.with_expr(n, expr)
-  +n = R.Node.with_value(n, value)
-  +n = R.Node.with_equals(n, equals)
-  +n = R.Node.with_parent(n, parent)
-  +n = R.Node.with_target(n, target)
-  +n = R.Node.with_prevHeap(n, id)
-  +n = R.Node.with_flags(n, B.choose(~U32, lazy, _ => 512, _ => 0))
-  +n = R.Node.with_status(n, B.choose(~U32, B.computed(kind), _ => 4, _ => 0))
-  +n = R.Node.with_config(n, 64)
-  +n = R.Node.with_time(n, R.World.clock(w))
-  +w = R.World.with_nodes(w, B.append(R.Node, R.World.nodes(w), [n]))
-  B.choose(~R.World, Nat.is_ne(parent, 0n), _ => linkChild(w, parent, id), _ => w)
-
-# One explicit lifetime root for the supported grammar. No implicit roots are
-# minted per callback. rootId is 1; signal/computed identities start at 2.
+# One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
-  allocate(B.empty(), R.Root{}, R.Literal{R.Undefined{}}, R.Undefined{}, True{}, 0n, 0n, False{})
+  N.createOwner(B.empty(), 0n, False{})
 
 def nextId(w: R.World) -> Nat:
   B.length(R.Node, R.World.nodes(w))
 
+def createSignalWithOptions(w: R.World, value: R.Value, options: R.NodeOptions) -> R.World:
+  N.signal(w, value, options)
+
 def createSignal(w: R.World, value: R.Value, equals: Bool) -> R.World:
-  allocate(w, R.Signal{}, R.Literal{R.Undefined{}}, value, equals, 0n, 0n, False{})
+  createSignalWithOptions(w, value, R.NodeOptions.with_equals(N.defaults(), equals))
 
-def createMemo(fuel: Nat, +w: R.World, expr: R.Expr, equals: Bool, +lazy: Bool, parent: Nat) -> R.World:
-  +id = nextId(w)
-  +w = allocate(w, R.Memo{}, expr, R.Undefined{}, equals, parent, 0n, lazy)
-  B.choose(~R.World, lazy, _ => w,
-    _ => C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}], []})))
+# The explicit-parent facade expresses the same runWithOwner boundary as the
+# TS host. The primitive constructor itself does not install/restore an owner.
+def createMemoWithOptions(fuel: Nat, +w: R.World, expr: R.Expr, options: R.NodeOptions, +parent: Nat) -> R.World:
+  context = R.World.context(w)
+  tracking = R.World.tracking(w)
+  w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  w = N.computed(fuel, w, expr, options, parent)
+  R.World.with_tracking(R.World.with_context(w, context), tracking)
 
-def createEffect(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, parent: Nat) -> R.World:
+def createMemo(fuel: Nat, w: R.World, expr: R.Expr, equals: Bool, lazy: Bool, parent: Nat) -> R.World:
+  options = R.NodeOptions.with_lazy(R.NodeOptions.with_equals(N.defaults(), equals), lazy)
+  createMemoWithOptions(fuel, w, expr, options, parent)
+
+def createEffectWithOptions(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, +parent: Nat) -> R.World:
   +id = nextId(w)
+  context = R.World.context(w)
+  tracking = R.World.tracking(w)
+  w = R.World.with_tracking(R.World.with_context(w, parent), False{})
   kind = B.choose(~R.NodeKind, user, _ => R.User{}, _ => R.Render{})
-  w = allocate(w, kind, expr, R.Undefined{}, False{}, parent, target, False{})
-  C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}, C.InitialEffect{id, scheduled, deferred}], []}))
+  w = N.createEffectNode(w, expr, kind, target, options, parent)
+  w = C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}, C.InitialEffect{id, scheduled, deferred}], []}))
+  R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+def createEffect(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, parent: Nat) -> R.World:
+  createEffectWithOptions(fuel, w, expr, user, target, scheduled, deferred, N.defaults(), parent)
+
+# Presence of loadingValue is independent from its payload being undefined.
+def nodeOptions(equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, loadingPresent: Bool, loadingValue: R.Value) -> R.NodeOptions:
+  R.NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, 0,
+    B.choose(~R.Slot, loadingPresent, _ => R.Present{loadingValue}, _ => R.Empty{}), 0n}
 
 def read(fuel: Nat, w: R.World, id: Nat) -> C.Machine:
   C.run(fuel, C.Machine{w, [C.ReadNode{id}], []})

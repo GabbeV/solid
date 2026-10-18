@@ -9910,7 +9910,7 @@
           "mapping": {
             "bend": "runtime/core.bend:recompute, finish, publish",
             "status": "partial",
-            "restrictions": "Sync successful pass, no owned child construction or cleanup, lanes/transactions/status/errors/snapshot hooks. Real stored expressions and actual read sets are evaluated."
+            "restrictions": "Sync successful passes through stored expressions and actual reads. Sync answer clears loading/inFlight and finally consumes reask metadata. Owned child construction/cleanup, handleAsync, clearStatus propagation, transactions/lanes/status/errors/snapshot hooks remain unfinished."
           }
         },
         {
@@ -9932,9 +9932,9 @@
           "sha256": "2d9c52c27686a6f60db76ab11100ce49d908327c0ea3a313fc70f0ab399fb602",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:createMemo, allocate",
+            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
           }
         },
         {
@@ -9944,9 +9944,9 @@
           "sha256": "1a8ade920fba9088e3f8db4791322609b8566d48c24072d5e30d3991917c9710",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:createMemo, allocate",
+            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
           }
         },
         {
@@ -9956,9 +9956,9 @@
           "sha256": "ada4c98be664a2de8dcbb2fcd56c4dd02e35b1076528a225ad13ad0e08f15142",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:createMemo, allocate",
+            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
             "status": "partial",
-            "restrictions": "Owned sync callbacks only; no loading, extension, auto-dispose, custom-comparator or hook paths."
+            "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators and async results unfinished. Host options are typed data, not getters."
           }
         },
         {
@@ -9966,8 +9966,12 @@
           "start": 1004,
           "end": 1024,
           "sha256": "e3b2b073b67d0410d97b3d490ece25db62900fdb5e9fee582e1c7d43f02a91f6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/extension.bend:ext; representation/base.bend:blank_extension",
+            "status": "restricted",
+            "restrictions": "All source default slots retained with explicit nullable identities and sentinels; one lazy arena allocation reused on subsequent calls. Flight, callback, pending-source, snapshot and transaction data are not implementations of their engines; see tracking/representation.md."
+          }
         },
         {
           "key": "core/core.ts:joinPass",
@@ -10014,8 +10018,12 @@
           "start": 1150,
           "end": 1258,
           "sha256": "52fc413ff315a71db27778e62924418a796e14be7ca355954d00ebb95bd522fc",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/construct.bend:createEffectNode",
+            "status": "partial",
+            "restrictions": "Separate production effect literal, own config arms, forced lazy/uninitialized, equals false and modified/previous defaults; lazy setup. No hydration IDs, snapshots/external hooks or arbitrary callback/error/cleanup protocol."
+          }
         },
         {
           "key": "core/core.ts:setEffectStatusNotify",
@@ -10040,9 +10048,9 @@
           "sha256": "8d010b3b5d419820fc53ea8884ce6711f9a8a709cff3ed632d168b6080b67b4c",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:allocate, linkChild, createMemo",
+            "bend": "runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild",
             "status": "partial",
-            "restrictions": "Root-owned nodes only; no nested root parent forwarding or snapshot/external hooks."
+            "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
           }
         },
         {
@@ -10052,9 +10060,9 @@
           "sha256": "16ecbcab713b288bbb632d018c9ca1354fe1442dc53e33d4a8c43b6687e164fa",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:createSignal, allocate",
+            "bend": "runtime/construct.bend:signal",
             "status": "partial",
-            "restrictions": "Default strict equality or equals:false only; no snapshot or unobserved options."
+            "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture and unobserved invocation unfinished; no custom comparators."
           }
         },
         {
@@ -10194,7 +10202,7 @@
           "mapping": {
             "bend": "runtime/read-state.bend:unflushedValue",
             "status": "partial",
-            "restrictions": "Source running/no-staging/promoted guards and committed Slot. Held cold-extension stash refuses explicitly pending extension translation."
+            "restrictions": "Source running/no-staging/promoted guards, held flushedAt/flushed branch and committed Slot. A held node missing its required extension explicitly refuses as an invalid representation. Full held read/join behavior unfinished."
           }
         },
         {
@@ -10202,8 +10210,12 @@
           "start": 1640,
           "end": 1647,
           "sha256": "9df8d0d0817c3ae42a7696ee071c9d94523c07608b32cce16ad47a40c44720a3",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/read-state.bend:stashFlushed",
+            "status": "restricted",
+            "restrictions": "Source same-clock first-stash preservation, flushed/flushedAt writes and unflushed flag. Direct helper probes include staged undefined. Held setSignal caller/joining unfinished."
+          }
         },
         {
           "key": "core/core.ts:markLateLinker",
@@ -10250,7 +10262,7 @@
           "mapping": {
             "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve",
             "status": "partial",
-            "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking and untrack-in-pass selection. No snapshot/verdict/held/status/strict-read paths; no nested root parent forwarding."
+            "restrictions": "Distinct source plain-signal fast block and slow tail, source unflushed flag, tracked linking, untrack-in-pass selection and Root._parentComputed forwarding. Snapshot/verdict/held/status/strict-read paths remain open."
           }
         },
         {
@@ -14863,11 +14875,11 @@
           "start": 37,
           "end": 53,
           "sha256": "38fd16a4c07f82b32867792d04ee5ab1cc87b116720ff7b0c613251cac2dfade",
-          "status": "partial",
+          "status": "restricted",
           "mapping": {
             "bend": "runtime/heap.bend:actualInsertIntoHeap",
-            "status": "partial",
-            "restrictions": "Top-level roots only; nested root parentComputed height forwarding remains open."
+            "status": "restricted",
+            "restrictions": "Root._parentComputed forwarding now retained and probed. Null/height representation uses Nat and stable IDs; no store slot hooks."
           }
         },
         {
@@ -16751,7 +16763,7 @@
           "sha256": "a1191652205e966f506fde6258fa722e5641cf934fb8b345abb097fd8344cfb7",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/api.bend:linkChild",
+            "bend": "runtime/owner.bend:linkChild",
             "status": "restricted",
             "restrictions": "Stable same-identity owner/computed nodes, head insertion and both sibling pointers."
           }
@@ -16849,8 +16861,12 @@
           "start": 346,
           "end": 414,
           "sha256": "04269a8146cb5a128073311a214670a520bb24b1afbde4e9af532d27c8da80df",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/construct.bend:createOwner",
+            "status": "partial",
+            "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished."
+          }
         },
         {
           "key": "core/owner.ts:createRoot",
@@ -17652,7 +17668,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:settle",
             "status": "partial",
-            "restrictions": "Mainline live pending/held-trim walks, clearing after source walks. No error extensions, transaction/lane seams, store commit or boundary hooks."
+            "restrictions": "Mainline live pending/held-trim walks, source nullish error/modified trim gate and clearing after walks. Transaction/lane seams, store commit and boundary hooks unfinished."
           }
         },
         {
@@ -17780,7 +17796,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
             "status": "partial",
-            "restrictions": "Separate source signal/computed branches; configuration masks and inFlight branch, publication order, loading/manual-write reset, stale-tail trim and staged-effect enqueue retained. No cold extension; shownError, reask/flushed stash and parked-child disposal unfinished. Staged error notification is explicitly unsupported. Synthetic flight/status probes do not establish async execution."
+            "restrictions": "Separate source signal/computed branches; configuration masks/inFlight branch, publication order, shownError reset, reask/flushed reset, loading/manual-write reset, nullish error trim gate and staged-effect enqueue retained. Parked child disposal and staged error notification explicitly refuse; synthetic metadata probes do not establish async/held transaction execution."
           }
         },
         {

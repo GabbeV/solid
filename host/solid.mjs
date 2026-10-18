@@ -24,19 +24,23 @@ export class SolidRuntime {
     throw new TypeError('Unknown expression');
   }
   signal(name,value,equals=true) {
-    const [get,set]=S.createSignal(this.value(value), {equals:equals ? undefined : false}); this.accessors[name]=get; this.setters[name]=set;
+    const opts=typeof equals==='boolean'?{equals}:equals;
+    const [get,set]=S.createSignal(this.value(value), {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot}); this.accessors[name]=get; this.setters[name]=set;
   }
   callback(name,expr) { return prev=> {
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
     try { return this.evaluate(expr,prev); } finally {this.current=saved;}
   }; }
-  memo(name,expr,{equals=true,lazy=false}={}) {
-    this.accessors[name]=S.runWithOwner(this.owner,()=>S.createMemo(this.callback(name,expr),{equals:equals ? undefined : false,lazy}));
+  memo(name,expr,options={}) {
+    const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot};
+    if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+    this.accessors[name]=S.runWithOwner(this.owner,()=>S.createMemo(this.callback(name,expr),opts));
   }
-  effect(name,expr,{user=false,target=2,schedule=false,defer=false}={}) {
+  effect(name,expr,options={}) {
+    const {user=false,target=2}=options;
     S.runWithOwner(this.owner,()=> (user ? S.createEffect : S.createRenderEffect)(this.callback(name,expr),(v,p)=> {
       this.traceEvents.push(['apply',name,v,p]); if(!user)this.screens[target]=v;
-    },{schedule,defer}));
+    },options));
   }
   set(name,value) { return this.setters[name](this.value(value)); }
   update(name,expr) { return this.setters[name](prev=>this.evaluate(expr,prev)); }
