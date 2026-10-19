@@ -29,7 +29,7 @@ def delivered() -> R.World:
 
 def userCause(value: R.Value) -> R.Value:
   match value:
-    case R.StatusFailure{identity, source, cause}:
+    case R.StatusFailure{identity, source, cause, message}:
       cause
     case other:
       other

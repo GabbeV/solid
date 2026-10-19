@@ -313,3 +313,6 @@ def setAbortInput(+w: R.World, +id: Nat, reason: R.Value) -> R.World:
 
 def vTimeout(identity: Nat) -> R.Value:
   R.TimeoutFailure{identity}
+
+def vExternalError(id: Nat, explicit: Bool, kind: U32, name: String, message: String, native: Bool, code: Nat) -> R.Value:
+  R.ExternalError{id, explicit, kind, name, message, native, code}

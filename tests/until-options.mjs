@@ -64,6 +64,28 @@ async function scenario(name,commands,expected){
 }
 const timeout={timeoutError:true,name:'TimeoutError',message:'Timed out waiting for condition'};
 const resolved=(value,name='r')=>['resolve',name,value],rejected=(value,name='r')=>['reject',name,value];
+const defaultController=new AbortController();defaultController.abort();
+const defaultAbort={externalError:1,kind:'DOMException',name:defaultController.signal.reason.name,message:defaultController.signal.reason.message,native:defaultController.signal.reason instanceof Error,code:defaultController.signal.reason.code};
+for(const preAborted of [false,true])for(const explicitUndefined of [false,true]){
+  await scenario(`default abort ${preAborted}/${explicitUndefined}`,[
+    ['controller','cancel'],...(preAborted?[["abort","cancel",...(explicitUndefined?[undefined]:[])]]:[]),
+    ['awaitUntil','r',lit(false),{signal:'cancel',timeout:100}],
+    ...(!preAborted?[["abort","cancel",...(explicitUndefined?[undefined]:[])]]:[]),['tick'],['fire']
+  ],[rejected(defaultAbort)]);
+}
+await scenario('default abort beats a queued initial truthy callback',[
+  ['controller','cancel'],['awaitUntil','r',lit(7),{signal:'cancel',timeout:0}],['abort','cancel'],['tick'],['fire']
+],[rejected(defaultAbort)]);
+await scenario('default abort beats a queued initial error callback',[
+  ['controller','cancel'],['awaitUntil','r',{raise:66},{signal:'cancel',timeout:0}],['abort','cancel'],['tick'],['fire']
+],[rejected(defaultAbort)]);
+await scenario('shared default abort reason',[
+  ['controller','cancel'],['awaitUntil','a',lit(false),{signal:'cancel'}],['awaitUntil','b',lit(false),{signal:'cancel'}],
+  ['abort','cancel'],['tick']
+],[rejected(defaultAbort,'a'),rejected(defaultAbort,'b')]);
+await scenario('default abort after success leaves the answer intact',[
+  ['controller','cancel'],['awaitUntil','r',lit(7),{signal:'cancel',timeout:0}],['tick'],['abort','cancel'],['tick'],['fire']
+],[resolved(7)]);
 for(const reason of [null,false,0,NaN,'',true,99,{ref:7}]){
   await scenario('already aborted '+String(reason),[
     ['controller','cancel'],['abort','cancel',reason],['awaitUntil','r',lit(7),{signal:'cancel',timeout:0}],['tick']

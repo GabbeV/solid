@@ -110,9 +110,9 @@ a claim that the pinned behavior is desirable.
 
 Default until's own/captured confirmation, frame delivery and truthy inPass join
 now execute with 136 histories, 8192 closure probes and two closed regressions.
-Natural-millisecond timeout/explicit-reason AbortSignal handling now has 52 option
-histories and native timer controls. Default AbortError objects, arbitrary host
-signal/getter/callback behavior and active truth/lagging/action APIs remain unfinished; see
+Natural-millisecond timeout/AbortSignal handling now has 60 option histories and
+native timer controls, including the controller's exact default reason.
+Arbitrary host signal/getter/callback behavior and active truth/lagging/action APIs remain unfinished; see
 [until.md](until.md).
 
 The host codec's repeated reference decoding formerly allocated fresh JS token
@@ -126,3 +126,12 @@ identity normalization for raw thrown/rejected payloads. Native thenable rejecti
 reasons are not assimilated; within-runtime identity is asserted separately from
 cross-runtime token comparisons. This is host observation, not error handling or
 Promise resolution implemented by the adapter.
+
+StatusError's message was formerly synthesized from the decoded cause at
+observation time. It is now captured by runtime/error.bend at source wrapper
+construction. Immutable built-in Error/DOMException inputs preserve native
+identity and selected property/prototype snapshots, with 99 end-to-end histories
+and 50 actual constructor/unwrap probes. The inventory now fingerprints class
+constructors. See [errors.md](errors.md) for the admitted host domain and explicit
+untranslated operations; this is a representation/port repair, not an upstream
+workaround or a proof of general JavaScript error semantics.

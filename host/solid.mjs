@@ -1,12 +1,15 @@
 import * as DefaultSolid from '../build/solid.mjs';
+import {HostErrors} from './errors.mjs';
 export class SolidRuntime {
   constructor({module=DefaultSolid,clock}={}) {
     this.S=module;
-    this.clock=clock??{setTimeout,clearTimeout};this.controllers={};
+    this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
     this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
   }
   value(v) {
+    const described=this.hostErrors.describe(v);
+    if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
     if(v && typeof v === 'object' && Object.hasOwn(v,'ref')) {
       if(!this.refs.has(v.ref)) this.refs.set(v.ref,{ref:v.ref});
       return this.refs.get(v.ref);
@@ -34,7 +37,7 @@ export class SolidRuntime {
   }
   observe(value) {
     if(this.futureIdentities.has(value))return {async:this.futureIdentities.get(value)};
-    return value;
+    return this.hostErrors.observe(value);
   }
   errorShape(e) {
     if(e instanceof this.S.TimeoutError)return {timeoutError:true,name:e.name,message:e.message};
@@ -42,9 +45,10 @@ export class SolidRuntime {
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
       return {notReady:this.encountered.get(e),source:this.sourceNames.get(e.source)??null};
     }
+    if(this.hostErrors.ids.has(e))return this.observe(e);
     if(e instanceof Error&&Object.hasOwn(e,'source')&&Object.hasOwn(e,'cause')){
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
-      return {statusError:this.encountered.get(e),source:this.sourceNames.get(e.source),cause:this.errorShape(e.cause)};
+      return {statusError:this.encountered.get(e),source:this.sourceNames.get(e.source),cause:this.errorShape(e.cause),message:e.message};
     }
     return this.observe(e);
   }
@@ -86,6 +90,7 @@ export class SolidRuntime {
   controller(name){
     const controller=new AbortController(),signal=controller.signal,callbacks=new Map();
     const add=signal.addEventListener.bind(signal),remove=signal.removeEventListener.bind(signal);
+    add('abort',()=>this.hostErrors.describe(signal.reason),{once:true});
     // Host observation of an escaping engine callback, as for future reactions
     // and microtasks. Native AbortSignal still controls once/order/removal.
     signal.addEventListener=(type,callback,options)=>{
@@ -97,7 +102,6 @@ export class SolidRuntime {
     this.controllers[name]=controller;
   }
   abort(name,reason){
-    if(reason===undefined)throw new TypeError('Abort input currently requires an explicit represented reason');
     this.controllers[name].abort(this.value(reason));
   }
   awaitRefresh(name,target){this.recordPort(name,this.S.refresh(this.accessors[target]??(()=>undefined)));}

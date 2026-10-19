@@ -50,8 +50,10 @@ proof credit was imported.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
   text, and opaque reference identities. Reference tokens must preserve host
   identity. Signed zero has strict-equality semantics. General binary64 numeric
-  computation, functions-as-data, thenable shape probing and user Error objects
-  as data still need a richer host protocol.
+  computation, functions-as-data and arbitrary thenable shape probing still need
+  a richer host protocol. Immutable built-in Error/DOMException inputs now retain
+  native identity and selected properties; custom errors/getters/coercion remain
+  unfinished. See [errors.md](errors.md).
 - Nat counters are mathematically unbounded in proofs. The emitted JS backend's
   supported integer range and the facade's 2^48-1 payload/arithmetic bound apply
   to execution. Proofs are about Bend terms, not unbounded JS integer arithmetic.
@@ -126,7 +128,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Fourteen source-changing variants must be rejected. No arbitrary-value, arbitrary-
+Sixteen source-changing variants must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -204,9 +206,15 @@ closed laws check its queued falsy/true callbacks, promise outcome, root lifetim
 and dependency release. Together there are seventeen composed closed regressions,
 one explicitly negative, plus payload/question/path laws. See [until.md](until.md).
 Until's timeout/abort branches now execute for natural millisecond delays and
-explicit represented abort reasons, with 52 additional option histories and
+represented or default native abort reasons, with 60 additional option histories and
 native timeout controls. Timer/listener registration and cancellation follow the
-source; queued callbacks still run after a competing settlement. Default
-AbortError objects, arbitrary structural signal/getter behavior and active
+source; queued callbacks still run after a competing settlement. Arbitrary
+structural signal/getter behavior and active
 optimistic/truth/deferred scopes remain unfinished. No new theorem is claimed
 for timeout/abort or native scheduling.
+
+StatusError message capture now lives in runtime/error.bend rather than the host
+decoder. 99 additional error histories and 50 actual constructor/unwrap probes
+cover the admitted Error/DOMException data/failure paths. Existing error laws now
+retain the captured message field; no new general error theorem is claimed.
+The source inventory indexes constructors for future commit review.

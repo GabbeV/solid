@@ -13,7 +13,7 @@ import ../../runtime/constants.bend as K
 def seed(+w: R.World, +id: Nat, +source: Nat, +status: U32, +additional: Bool, +withSources: Bool) -> R.World:
   +w = E.ext(w, id)
   +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), status))
-  +error = B.choose(~R.Value, B.has(status, K.STATUS_ERROR()), _ => R.StatusFailure{2n, 2n, R.Number{99n}}, _ => R.NotReadyFailure{1n, source})
+  +error = B.choose(~R.Value, B.has(status, K.STATUS_ERROR()), _ => R.StatusFailure{2n, 2n, R.Number{99n}, "99"}, _ => R.NotReadyFailure{1n, source})
   +w = B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error))
   +w = B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{True{}}}))
   sources = B.choose(~R.SourceSet, withSources, _ => R.Sources{B.choose(~List<&2, Nat>, additional, _ => [source, 4n], _ => [source])}, _ => R.NoSources{})

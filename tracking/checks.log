@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/identity.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -21,13 +21,14 @@ Built Bend runtime and pinned Solid production reference.
 16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
 8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
 136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
-52 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes.
+60 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes.
+99 host-error histories match TS captured wrapper messages, native Error/DOMException identity, success versus failure, callback paths and default abort; native identity assertions pass.
 Host reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens.
 
 > solid-signals-bend@0.1.0 test:alignment
-> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs && node tests/until-alignment.mjs
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/error-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs && node tests/until-alignment.mjs
 
-Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
+Upstream impact reporting passed changed-function/constructor, file-level, added-unit, shared-store, CLI, and read-only checks.
 Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
 4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error commit has a focused wrapper/value regression; held execution is checked separately.
 768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and 24 held-stash helper cases match too. 24 verdict-bit carry cases match the memo-only post-pull flags store.
@@ -36,6 +37,7 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 12 lifecycle comparisons match pinned TS recompute/park/commit and cancellation order and cleanup-staged live intake, including unchanged frames, restaging, in-flight commit, cleanup throws and flush finally state.
 144 graph-state comparisons match TS detachment, last-subscriber hooks, dormancy guards, callback writes and partial state after throws.
 2880 status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Pending execution remains unfinished.
+50 actual StatusError constructor/unwrap comparisons match captured messages, primitives/numeric bounds, wrappers, NotReady/Timeout errors and native/foreign Error prototype branches.
 2880 pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Promise/transaction execution remains unfinished.
 2160 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.
 2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state.
@@ -48,6 +50,8 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: StatusError prefixes a native Error message
+Rejected mutation: explicit/native error identities alias
 Rejected mutation: until timer is never cancelled
 Rejected mutation: until ignores a pre-aborted signal
 Rejected mutation: until resolves a falsy value
@@ -62,7 +66,7 @@ Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-14 source-changing variants rejected by differential assertions.
+16 source-changing variants rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -70,4 +74,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 10.2s; hashes sealed in build/verification.json.
+Kernel completed in 10.8s; hashes sealed in build/verification.json.

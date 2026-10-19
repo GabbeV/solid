@@ -14538,21 +14538,69 @@
       "status": "open",
       "units": [
         {
+          "key": "core/error.ts:NotReadyError.constructor",
+          "start": 34,
+          "end": 46,
+          "sha256": "0fbd8d55a43d2d14adfdd559e8dcf83aba1db827482bee22d46711582305de59",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "core/error.ts:StatusError.constructor",
+          "start": 50,
+          "end": 57,
+          "sha256": "cd2f5cddd9b8c37c3254a5e83cba3b10b9cc9890d65de76a127e5704787e0218",
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/error.bend:statusError, errorMessage, stringify; representation/records.bend:StatusFailure; host/bend.mjs:BendStatusError, decode",
+            "status": "partial",
+            "restrictions": "Capture message at wrapper allocation, preserve original cause/source and fresh wrapper identity. Error instanceof test/message from immutable built-in Error/DOMException host snapshots; supported non-error primitives use explicit String conversion. 50 actual constructor/unwrap comparisons and 99 end-to-end error histories; existing parity histories additionally compare wrapper messages. Getters, custom coercion, non-string Error.message, arbitrary subclasses/reflection and stack semantics unfinished."
+          }
+        },
+        {
           "key": "core/error.ts:unwrapStatusError",
           "start": 61,
           "end": 63,
           "sha256": "fea4ae43acfae357118b7f1f972e862a05f1c4153c448a3d5b3284cbe5327fbe",
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/error.bend:unwrapStatusError; runtime/status.bend:unwrapStatusError; runtime/watch-state.bend:unwrap",
+            "status": "restricted",
+            "restrictions": "One-layer unwrap preserves the exact cause, including external Error/DOMException identity; non-status values unchanged. 50 actual constructor/unwrap probes. Wider caller domains remain unfinished."
+          }
+        },
+        {
+          "key": "core/error.ts:TimeoutError.constructor",
+          "start": 72,
+          "end": 75,
+          "sha256": "522a77a019acbb168567da2f9bf0862decf7bde6fb0e00c2c52109cc4f19838d",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/status.bend:unwrapStatusError",
+            "bend": "runtime/signals.bend:fireUntil; representation/records.bend:TimeoutFailure; host/bend.mjs:BendTimeoutError, decode",
             "status": "partial",
-            "restrictions": "Unwraps one StatusFailure layer. Arbitrary host Error objects/functions as payload data outside grammar."
+            "restrictions": "Default constructor only: fresh identity, default message and TimeoutError name; native instanceof Error and identity checks. Custom message arguments and stack semantics unfinished."
           }
+        },
+        {
+          "key": "core/error.ts:NoOwnerError.constructor",
+          "start": 79,
+          "end": 81,
+          "sha256": "c66ccaf9f22e19ccda922d5799941d061a7c06338923314a3df2e7813eb7859d",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "core/error.ts:ContextNotFoundError.constructor",
+          "start": 85,
+          "end": 91,
+          "sha256": "7adcdee3e22fe7500af499a31c2465ec2cb2bcf7032e13693208f0bae73314a3",
+          "status": "open",
+          "mapping": null
         }
       ],
       "branches": [
         {
-          "unit": "module",
+          "unit": "NotReadyError.constructor",
           "start": 41,
           "end": 41,
           "kind": "ConditionalExpression",
@@ -14561,7 +14609,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "NotReadyError.constructor",
           "start": 42,
           "end": 42,
           "kind": "IfStatement",
@@ -14570,7 +14618,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "NotReadyError.constructor",
           "start": 44,
           "end": 44,
           "kind": "IfStatement",
@@ -14579,7 +14627,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "StatusError.constructor",
           "start": 54,
           "end": 54,
           "kind": "ConditionalExpression",
@@ -14597,7 +14645,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "NoOwnerError.constructor",
           "start": 80,
           "end": 80,
           "kind": "ConditionalExpression",
@@ -14606,7 +14654,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "ContextNotFoundError.constructor",
           "start": 87,
           "end": 89,
           "kind": "ConditionalExpression",
@@ -21750,6 +21798,14 @@
           "mapping": null
         },
         {
+          "key": "reveal.ts:RevealController.constructor",
+          "start": 79,
+          "end": 82,
+          "sha256": "199ef011533d638d14f3c06e8ada2719e6b169a1bddcdf133f2f5e6f98fec88c",
+          "status": "open",
+          "mapping": null
+        },
+        {
           "key": "reveal.ts:RevealController._done",
           "start": 86,
           "end": 88,
@@ -22265,7 +22321,7 @@
           "mapping": {
             "bend": "runtime/signals.bend:until, untilOptions, untilResources, settleUntil, fireUntil, UntilFire, timeoutUntil, abortUntil, makeWatch, watchConfig, deliver; runtime/watch-state.bend:postAnswer, untilInPass; runtime/api.bend:untilValue, untilWithOptions, timeoutUntil, abortUntil, createAbortInput, setAbortInput; host/bend.mjs:awaitUntil, controller, abort, drainJobs",
             "status": "partial",
-            "restrictions": "Expression predicates; default path plus natural millisecond timeout and explicit represented-reason native AbortSignal options. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 52 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. Default AbortError/DOMException reasons, non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
+            "restrictions": "Expression predicates; default path plus natural millisecond timeout and native AbortSignal options with represented or default DOMException reasons. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 60 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
           }
         },
         {
@@ -25942,6 +25998,14 @@
           "start": 267,
           "end": 269,
           "sha256": "31ed0d469b9d0317f33768f12e2b7d98a614fd019c3c101fa5ca6d1e4acb01ef",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/store.ts:LaneView.constructor",
+          "start": 276,
+          "end": 285,
+          "sha256": "991aed2de85b90c5bc3c6ff6d20bb2035f68fd4443a40c621250af0f2e1c7986",
           "status": "excluded-store",
           "mapping": null
         },
@@ -31341,6 +31405,14 @@
           "mapping": null
         },
         {
+          "key": "store/utils.ts:OmitView.constructor",
+          "start": 92,
+          "end": 99,
+          "sha256": "7b2321498526e9095e960c1a7fee38328c98c3fd5166ccfc5df9387cb2caece6",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
           "key": "store/utils.ts:isHidden",
           "start": 104,
           "end": 107,
@@ -31465,6 +31537,14 @@
           "start": 333,
           "end": 342,
           "sha256": "8377ddfb76c09b337a9af68b8c798923382672ecab252f2619861d7b9edfdbf4",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/utils.ts:MergeView.constructor",
+          "start": 360,
+          "end": 364,
+          "sha256": "c4a805afa3f0ca33b3968d12148802a55216e78976feba404c4b89de52c71afe",
           "status": "excluded-store",
           "mapping": null
         },

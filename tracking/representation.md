@@ -75,8 +75,10 @@ The owner machine's task fuel is a resource limit, not a general progress theore
 
 Synchronous throws use CallbackThrown(Value) only while unwinding a source call.
 The host consumes that outcome before a later call, preserving the mutated world.
-StatusFailure has a stable per-world identity, source ID and recursively retained
-cause. Error propagation preserves the same identity; effect-phase catch allocates
+StatusFailure has a stable per-world identity, source ID, captured message and
+recursively retained cause. runtime/error.bend captures that message at the source
+constructor seam; the decoder only materializes the recorded result. Error
+propagation preserves the same identity; effect-phase catch allocates
 a new wrapper while escaping with the raw payload. The expression machine saves
 the caller value stack on each compute frame so a caught nested throw cannot leak
 partially evaluated operands. Finally callbacks execute with a suspended outcome;
@@ -171,6 +173,9 @@ core/error.ts TimeoutError constructor. Its serial shares the internal error
 identity arena, without wrapping the timeout as a StatusError. The error's stack
 and arbitrary host Error objects are not represented. Delays are natural integer
 milliseconds through 2^31-1; explicit abort reasons use the admitted Value grammar.
-Default native AbortError/DOMException reasons and arbitrary signal/option getters
+Default abort now retains the native controller's actual DOMException identity.
+ExternalError stores selected immutable host properties and a disjoint explicit /
+native identity namespace. See [errors.md](errors.md) for admitted types, message
+capture, alias checks and remaining host limits. Arbitrary signal/option getters
 or callbacks remain unfinished. Timers may be native or an explicit-delivery
 test environment; no native clock timing or timeout/abort law is proved.

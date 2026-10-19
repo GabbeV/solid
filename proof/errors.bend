@@ -31,7 +31,7 @@ def view(+w: R.World) -> View:
     R.World.context(w), R.World.tracking(w), R.World.running(w), R.World.scheduled(w), R.World.reports(w), R.World.fault(w)}
 
 def expectedError() -> View:
-  +error = {R.StatusFailure{1n, 3n, R.Number{99n}} : R.Value}
+  +error = {R.StatusFailure{1n, 3n, R.Number{99n}, "99"} : R.Value}
   View{R.Number{7n}, R.Number{7n}, R.Number{7n}, R.Number{7n}, 2, 2, 2, error, error, error,
     False{}, False{}, [], [], 0n, False{}, False{}, False{}, [R.RuntimeReport{2, R.Present{R.Number{99n}}}], R.Healthy{}}
 

@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject twelve source-changing variants
+npm run mutations                # reject sixteen source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -123,7 +123,8 @@ representation are documented in [question-ids.md](tracking/question-ids.md).
 Iterator pumping, native job timing and public watchers remain tested domains.
 
 The [until path](tracking/until.md) also executes through the shared watcher,
-including natural-millisecond timeouts and abort signals with represented explicit
-reasons. Two closed queued-callback regressions cover the default path; option
-handling is differentially tested. Default AbortError objects, arbitrary host
-callbacks and active optimistic/truth scopes remain unfinished.
+including natural-millisecond timeouts and abort signals with represented or
+default native reasons. Two closed queued-callback regressions cover the default
+path; option handling is differentially tested. Built-in Error/DOMException data
+and captured StatusError messages are covered by [the error contract](tracking/errors.md).
+Arbitrary host callbacks and active optimistic/truth scopes remain unfinished.

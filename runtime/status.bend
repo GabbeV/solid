@@ -9,23 +9,19 @@ import ./write.bend as W
 import ./heap.bend as H
 import ./pending-state.bend as P
 import ./transaction.bend as X
+import ./error.bend as V
 
 def unwrapStatusError(error: R.Value) -> R.Value:
-  match error:
-    case R.StatusFailure{identity, source, cause}:
-      cause
-    case other:
-      other
+  V.unwrapStatusError(error)
 
 # Construct a NEW wrapper (effect-phase catch wraps even an existing wrapper).
 def statusError(+w: R.World, source: Nat, cause: R.Value) -> B.Bundle<R.World, R.Value>:
-  +serial = Nat.add(1n, R.World.errorSerial(w))
-  B.Bundle{R.World.with_errorSerial(w, serial), R.StatusFailure{serial, source, cause}}
+  V.statusError(w, source, cause)
 
 def wrapped(+w: R.World, source: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>:
   match error:
-    case R.StatusFailure{identity, owner, cause}:
-      B.Bundle{w, R.StatusFailure{identity, owner, cause}}
+    case R.StatusFailure{identity, owner, cause, message}:
+      B.Bundle{w, R.StatusFailure{identity, owner, cause, message}}
     case R.NotReadyFailure{identity, owner}:
       B.Bundle{w, R.NotReadyFailure{identity, owner}}
     case e:

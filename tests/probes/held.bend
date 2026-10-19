@@ -47,7 +47,7 @@ def initial(+status: U32, +config: U32, +staging: U32, +reader: U32, +readerConf
   +w = B.store_node(w, 4n, R.Node.with_flags(R.Node.with_status(R.Node.with_config(B.node(w, 4n), readerConfig), readerStatus), 0))
   +w = B.choose(~R.World, B.has(readerConfig, K.CONFIG_HELD()), _ => X.holdNode(w, 4n, 1n), _ => w)
   +w = B.choose(~R.World, B.has(status, K.STATUS_ERROR()),
-    _ => B.store_extension(w, 3n, R.NodeExtension.with_error(B.extension(w, 3n), R.StatusFailure{2n, 3n, R.Number{99n}})),
+    _ => B.store_extension(w, 3n, R.NodeExtension.with_error(B.extension(w, 3n), R.StatusFailure{2n, 3n, R.Number{99n}, "99"})),
     _ => B.choose(~R.World, B.has(status, K.STATUS_PENDING()),
       _ => B.store_extension(w, 3n, R.NodeExtension.with_error(B.extension(w, 3n), R.NotReadyFailure{1n, 3n})), _ => w))
   +w = B.choose(~R.World, B.has(status, K.STATUS_PENDING()), _ => B.first(R.World, Bool, P.addPendingSource(w, 3n, 3n)), _ => w)

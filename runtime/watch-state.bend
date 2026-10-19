@@ -4,6 +4,7 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./constants.bend as K
 import ./transaction.bend as X
+import ./error.bend as V
 
 def newAwaiter(+w: R.World, expr: R.Expr, refresh: Bool, target: Nat) -> R.World:
   R.World.with_awaiters(w, B.append(R.Awaiter, R.World.awaiters(w), [R.Awaiter{expr, refresh, target, R.World.flushTransaction(w), 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}]))
@@ -13,11 +14,7 @@ def capture(+w: R.World, +id: Nat) -> R.World:
     _ => B.store_awaiter(w, id, R.Awaiter.with_node(B.awaiter(w, id), R.World.context(w))), _ => w)
 
 def unwrap(value: R.Value) -> R.Value:
-  match value:
-    case R.StatusFailure{identity, source, cause}:
-      cause
-    case other:
-      other
+  V.unwrapStatusError(value)
 
 def ownJoined(+w: R.World, own: Nat, joined: Nat) -> B.Bundle<R.World, Bool>:
   match own:

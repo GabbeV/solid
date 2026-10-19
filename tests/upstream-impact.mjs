@@ -18,12 +18,20 @@ try {
   fs.appendFileSync(path.join(candidate,'src/core/core.ts'),'\n// file-level change probe\n');
   fs.writeFileSync(path.join(candidate,'src/new-helper.ts'),'export function newHelper() { return 1; }\n');
   fs.appendFileSync(path.join(candidate,'src/store/index.ts'),'\n// shared-hook review probe\n');
+  const errorFile=path.join(candidate,'src/core/error.ts'),errorSource=fs.readFileSync(errorFile,'utf8');
+  const formatting='original instanceof Error ? original.message : String(original)';
+  assert.ok(errorSource.includes(formatting));
+  fs.writeFileSync(errorFile,errorSource.replace(formatting,'String(original)'));
   const report=compare(candidate);
-  assert.equal(report.changedFiles.length,4);
+  assert.equal(report.changedFiles.length,5);
   const scheduler=report.changedFiles.find(f=>f.file==='core/scheduler.ts');
   assert.equal(scheduler.changedUnits.length,1);
   assert.equal(scheduler.changedUnits[0].key,'core/scheduler.ts:bumpNotifyEpoch');
   assert.equal(scheduler.changedUnits[0].bend,'representation/base.bend:bump');
+  const error=report.changedFiles.find(f=>f.file==='core/error.ts');
+  assert.equal(error.changedUnits.length,1);
+  assert.equal(error.changedUnits[0].key,'core/error.ts:StatusError.constructor');
+  assert.match(error.changedUnits[0].bend,/runtime\/error.bend:statusError/);
   assert.equal(report.changedFiles.find(f=>f.file==='core/core.ts').changedUnits.length,0);
   assert.equal(report.changedFiles.find(f=>f.file==='new-helper.ts').changedUnits[0].bend,null);
   assert.equal(report.changedFiles.find(f=>f.file==='store/index.ts').excludedStore,true);
@@ -34,4 +42,4 @@ try {
   assert.equal(cli.status,0,cli.stderr);assert.deepEqual(JSON.parse(cli.stdout),report);
 } finally {fs.rmSync(candidate,{recursive:true,force:true});}
 assert.throws(()=>compare(path.join(root,'tests')),/Expected a Solid checkout/);
-console.log('Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.');
+console.log('Upstream impact reporting passed changed-function/constructor, file-level, added-unit, shared-store, CLI, and read-only checks.');

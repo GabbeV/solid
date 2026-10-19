@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['StatusError prefixes a native Error message','runtime/error.bend','B.choose(~String, native, _ => message, _ => errorString(name, message))','errorString(name, message)','tests/host-errors.mjs'],
+  ['explicit/native error identities alias','representation/base.bend','Bool.and(Nat.is_eq(x, y), Bool.xor(Bool.xor(explicitA, explicitB), True{}))','Nat.is_eq(x, y)','tests/host-errors.mjs'],
   ['until timer is never cancelled','runtime/signals.bend','R.Awaiter.timer(a)','False{}','tests/until-options.mjs'],
   ['until ignores a pre-aborted signal','runtime/signals.bend','Bool.and(Nat.is_ne(signal, 0n), R.AbortInput.aborted(input))','False{}','tests/until-options.mjs'],
   ['until resolves a falsy value','runtime/signals.bend','Bool.and(R.Awaiter.until(B.awaiter(w, id)), Bool.and(Bool.not(rejected), Bool.not(B.truth(value))))','False{}','tests/until.mjs'],

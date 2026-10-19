@@ -7,8 +7,8 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
 
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
-  158 resolve/refresh, 16 held-error-recovery, 136 default-until and 52 until-option
-  histories: 906 total, plus explicit host object-identity and native timeout
+  158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
+  and 99 host-error histories: 1013 total, plus explicit host object-identity and native timeout
   checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -19,13 +19,15 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   closures: 7,680 constructor, 4,608 commit, 768 read (+24 held stash, +24 verdict
   carry), 16 owner, 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held,
-  4,096 flight, 6,144 watch and 8,192 until-body comparisons. Question evidence
+  4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
+  comparisons. The latter include genuine foreign-realm Error prototype controls;
+  those helper probes do not establish end-to-end cross-realm host support. Question evidence
   includes 4,096 counter steps, five large counter starts, 69 flight-provenance
   cases and 4,103 mathematical increment/equality vectors. Synthetic internal
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles fourteen isolated source-changing copies and requires parity
+- mutations compiles sixteen isolated source-changing copies and requires parity
   assertions to reject them. One is an unregistered workaround for a known source
   counterexample; its rejection enforces the pin, not a claim that the bug is
   desirable. The active runtime is not mutated by this check.

@@ -15,7 +15,7 @@ def expression(code: U32) -> R.Expr:
     case 1:
       R.Raise{R.Number{99n}}
     case 2:
-      R.Raise{R.StatusFailure{1n, 2n, R.Number{99n}}}
+      R.Raise{R.StatusFailure{1n, 2n, R.Number{99n}, "99"}}
     case 3:
       R.Raise{R.NotReadyFailure{2n, 2n}}
     case 4:

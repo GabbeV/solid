@@ -38,7 +38,7 @@ def prepare(+status: U32, +flags: U32, +config: U32, +loading: Bool, subscriber:
   +w = G.link(w, 2n, 3n)
   +w = B.choose(~R.World, subscriber, _ => G.link(w, 3n, 4n), _ => w)
   +w = E.ext(w, 3n)
-  +w = B.store_extension(w, 3n, R.NodeExtension.with_error(B.extension(w, 3n), B.choose(~R.Value, B.has(status, K.STATUS_ERROR()), _ => R.StatusFailure{1n, 3n, R.Number{99n}}, _ => B.choose(~R.Value, B.has(status, K.STATUS_PENDING()), _ => R.NotReadyFailure{2n, 2n}, _ => R.Undefined{}))))
+  +w = B.store_extension(w, 3n, R.NodeExtension.with_error(B.extension(w, 3n), B.choose(~R.Value, B.has(status, K.STATUS_ERROR()), _ => R.StatusFailure{1n, 3n, R.Number{99n}, "99"}, _ => B.choose(~R.Value, B.has(status, K.STATUS_PENDING()), _ => R.NotReadyFailure{2n, 2n}, _ => R.Undefined{}))))
   +w = B.setPendingSources(w, 3n, R.Sources{[2n, 3n]})
   +w = R.World.with_errorSerial(w, 4n)
   +w = B.choose(~R.World, held,

@@ -1,10 +1,10 @@
 # Until watcher and cancellation
 
 `signals.ts:until` now executes for expression predicates with no options and
-natural-millisecond timeout/explicit-reason AbortSignal options. This
+natural-millisecond timeout/AbortSignal options, including default native reasons. This
 uses the same watcher, pending/error catches, frame rule, heap, owner teardown and
 native-promise IO as resolve/refresh. Active optimistic / deferred-truth scopes,
-arbitrary host getter/callback behavior and default AbortError objects remain
+arbitrary host getter/callback behavior remain
 unfinished. Option support has separate differential evidence below.
 
 The predicate is authoritative from its first pass. Falsy answers still queue an
@@ -65,7 +65,7 @@ codec), or read reason from the captured signal snapshot. AbortSignal dispatch a
 timer callback delivery are external inputs; all watcher and disposal decisions
 stay in the Bend runtime. The existing foreign-frame and inPass paths are shared.
 
-52 option histories compare ordered set/clearTimeout and add/removeEventListener
+60 option histories compare ordered set/clearTimeout and add/removeEventListener
 calls in addition to node state, execution traces, promise observers, reports,
 escaping callbacks and ambient restoration. They cover pre-abort without running
 the predicate, falsy/initial-truthy/error cases, cancellation races, repeated queued
@@ -77,9 +77,11 @@ AbortController supplies abort dispatch in all option histories; source function
 bodies are unchanged. Delays in these controlled histories are explicit host
 deliveries, not a model of elapsed wall time or browser task scheduling.
 
-Admitted delays are integers 0..2^31-1 milliseconds. Abort requires an explicit
-non-undefined reason in the existing payload grammar; default AbortError objects,
-arbitrary structural signal implementations/getter throws, reentrant host calls
+Admitted delays are integers 0..2^31-1 milliseconds. Abort supports represented
+explicit reasons and the native default DOMException, retaining the signal's
+actual reason object. See [errors.md](errors.md) for the property-input listener,
+namespaced external identities, Error-as-data checks and default/undefined abort
+controls. Arbitrary structural signal implementations/getter throws, reentrant host calls
 from user callbacks and returned-thenable assimilation remain unfinished. No
 semantic workaround is introduced. The two default-path closed laws remain
 unchanged; no new timeout/abort theorem is claimed.

@@ -29,13 +29,14 @@ type Value is Data:
   Reference{id: Nat}
   NotANumber{}
   StringValue{s: String}
-  StatusFailure{identity: Nat, source: Nat, cause: Value}
+  StatusFailure{identity: Nat, source: Nat, cause: Value, message: String}
   NotReadyFailure{identity: Nat, source: Nat}
   NotPendingToken{}
   AsyncValue{identity: Nat}
   StepResult{done: Bool, value: Value}
   StreamVerdict{stream: Nat, landed: Bool, value: Value}
   TimeoutFailure{identity: Nat}
+  ExternalError{id: Nat, explicit: Bool, kind: U32, name: String, message: String, native: Bool, code: Nat}
 
 # Typed external iterator method inputs, not engine decisions.
 type Question is Data:

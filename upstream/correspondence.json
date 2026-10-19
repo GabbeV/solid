@@ -313,9 +313,9 @@
       "restrictions": "Source actual/passed status arms, pending blocked suppression, user-error enqueue guard, render halt/throw and root-clear behavior. Pending render transaction entry and boundary hooks unfinished."
     },
     "core/error.ts:unwrapStatusError": {
-      "bend": "runtime/status.bend:unwrapStatusError",
-      "status": "partial",
-      "restrictions": "Unwraps one StatusFailure layer. Arbitrary host Error objects/functions as payload data outside grammar."
+      "bend": "runtime/error.bend:unwrapStatusError; runtime/status.bend:unwrapStatusError; runtime/watch-state.bend:unwrap",
+      "status": "restricted",
+      "restrictions": "One-layer unwrap preserves the exact cause, including external Error/DOMException identity; non-status values unchanged. 50 actual constructor/unwrap probes. Wider caller domains remain unfinished."
     },
     "core/scheduler.ts:haltReactivity": {
       "bend": "runtime/status.bend:haltReactivity; representation/base.bend:report",
@@ -560,7 +560,17 @@
     "signals.ts:until": {
       "bend": "runtime/signals.bend:until, untilOptions, untilResources, settleUntil, fireUntil, UntilFire, timeoutUntil, abortUntil, makeWatch, watchConfig, deliver; runtime/watch-state.bend:postAnswer, untilInPass; runtime/api.bend:untilValue, untilWithOptions, timeoutUntil, abortUntil, createAbortInput, setAbortInput; host/bend.mjs:awaitUntil, controller, abort, drainJobs",
       "status": "partial",
-      "restrictions": "Expression predicates; default path plus natural millisecond timeout and explicit represented-reason native AbortSignal options. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 52 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. Default AbortError/DOMException reasons, non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
+      "restrictions": "Expression predicates; default path plus natural millisecond timeout and native AbortSignal options with represented or default DOMException reasons. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 60 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
+    },
+    "core/error.ts:StatusError.constructor": {
+      "bend": "runtime/error.bend:statusError, errorMessage, stringify; representation/records.bend:StatusFailure; host/bend.mjs:BendStatusError, decode",
+      "status": "partial",
+      "restrictions": "Capture message at wrapper allocation, preserve original cause/source and fresh wrapper identity. Error instanceof test/message from immutable built-in Error/DOMException host snapshots; supported non-error primitives use explicit String conversion. 50 actual constructor/unwrap comparisons and 99 end-to-end error histories; existing parity histories additionally compare wrapper messages. Getters, custom coercion, non-string Error.message, arbitrary subclasses/reflection and stack semantics unfinished."
+    },
+    "core/error.ts:TimeoutError.constructor": {
+      "bend": "runtime/signals.bend:fireUntil; representation/records.bend:TimeoutFailure; host/bend.mjs:BendTimeoutError, decode",
+      "status": "partial",
+      "restrictions": "Default constructor only: fresh identity, default message and TimeoutError name; native instanceof Error and identity checks. Custom message arguments and stack semantics unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

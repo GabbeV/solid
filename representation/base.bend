@@ -66,10 +66,12 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.NotReadyFailure{x, sourceA} R.NotReadyFailure{y, sourceB}:
       Nat.is_eq(x, y)
-    case R.StatusFailure{x, sourceA, causeA} R.StatusFailure{y, sourceB, causeB}:
+    case R.StatusFailure{x, sourceA, causeA, messageA} R.StatusFailure{y, sourceB, causeB, messageB}:
       Nat.is_eq(x, y)
     case R.TimeoutFailure{x} R.TimeoutFailure{y}:
       Nat.is_eq(x, y)
+    case R.ExternalError{x, explicitA, kindA, nameA, messageA, nativeA, codeA} R.ExternalError{y, explicitB, kindB, nameB, messageB, nativeB, codeB}:
+      Bool.and(Nat.is_eq(x, y), Bool.xor(Bool.xor(explicitA, explicitB), True{}))
     case R.StringValue{x} R.StringValue{y}:
       String.eq(x, y)
     case _ _:
@@ -83,9 +85,11 @@ def truth(v: R.Value) -> Bool:
       Nat.is_ne(n, 0n)
     case R.Reference{id}:
       True{}
-    case R.StatusFailure{identity, source, cause}:
+    case R.StatusFailure{identity, source, cause, message}:
       True{}
     case R.TimeoutFailure{identity}:
+      True{}
+    case R.ExternalError{id, explicit, kind, name, message, native, code}:
       True{}
     case R.NotReadyFailure{identity, source}:
       True{}

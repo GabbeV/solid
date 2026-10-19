@@ -128,8 +128,8 @@ def landStatus(+w: R.World, +id: Nat, +clearUninitialized: Bool) -> R.World:
 # explicitly to this helper is wrapped, unlike notifyStatus's error arm.
 def stageWrap(w: R.World, id: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>:
   match error:
-    case R.StatusFailure{identity, source, cause}:
-      B.Bundle{w, R.StatusFailure{identity, source, cause}}
+    case R.StatusFailure{identity, source, cause, message}:
+      B.Bundle{w, R.StatusFailure{identity, source, cause, message}}
     case other:
       A.statusError(w, id, other)
 
