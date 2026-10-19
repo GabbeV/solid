@@ -4,6 +4,14 @@ Status: reduced upstream bug candidate; no report filed and no workaround active
 The Bend port preserves the pinned TypeScript behavior. This does not block
 iterator translation.
 
+Minimal JSX playground, created at the user's request:
+[empty-stream repro](https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw).
+It uses one memo in an ordinary component and displays `Value: [object Object]`
+instead of `Value: undefined`. Returning the stream directly is a passing
+one-line control. Source and browser evidence are in
+[`repros/playground`](../../repros/playground/README.md); the share pins
+`mizulu/solid2@d2ad8b28`, with Tailwind and SSR disabled.
+
 A standalone public-package repro is now in
 [`repros/solid-signals`](../../repros/solid-signals/README.md). It reproduces on
 the **published npm** `@solidjs/signals@2.0.0-rc.15` as well as the exact next
@@ -92,7 +100,7 @@ change and is deliberately not active.
 The implementation and explicit flattening contract strongly suggest an overlooked
 empty live-flatten branch. Maintainer confirmation is still needed; this record
 is a bug candidate, not a claim that every intended API contract has been settled.
-No fix, source repin, external report or publish has been performed.
+No fix, source repin, external report or package publication has been performed.
 
 ## Tracking / retirement
 

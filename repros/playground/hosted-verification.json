@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-19T01:56:17.737Z",
+  "browser": "154.0.8037.57",
+  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "cases": [
+    {
+      "name": "empty-stream",
+      "url": "https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw",
+      "sourceRoundTrip": true,
+      "hasSavedBuild": true,
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: [object Object]"
+        }
+      ],
+      "errors": [],
+      "control": [
+        {
+          "step": "control build",
+          "text": "Value: undefined"
+        }
+      ]
+    },
+    {
+      "name": "held-recovery",
+      "url": "https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag",
+      "sourceRoundTrip": true,
+      "hasSavedBuild": true,
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        }
+      ],
+      "control": [
+        {
+          "step": "control build",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 3"
+        }
+      ]
+    }
+  ]
+}

@@ -60,7 +60,9 @@ proved as JavaScript semantics. All unreviewed source branches stay open.
 Two reduced current-head upstream bug candidates are indexed in upstream-issues.json.
 Both baseline behaviors remain active; no semantic workaround or issue filing is
 active. The deviation register is separate and empty. Local git commits are on
-main; this checkout has no configured remote and nothing was pushed/published.
+main; this checkout has no configured remote and no repository or package was
+pushed/published. Public playground repros were later created at the user's
+request; their links and hosted observations are in repros/playground.
 
 The standalone project at repros/solid-signals installs separately, without Bend
 or the differential adapters. Its intended-behavior assertions fail for the two

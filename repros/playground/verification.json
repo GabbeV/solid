@@ -1,0 +1,297 @@
+{
+  "date": "2026-10-19T01:56:32.583Z",
+  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "browser": "154.0.8037.57",
+  "node": "v24.19.0",
+  "claim": "Specific baseline failures and paired controls for compiled JSX in connected Chromium DOM; no proof of intended behavior or hosted playground execution.",
+  "cases": [
+    {
+      "name": "empty-stream",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: [object Object]"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "empty-direct-control",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: undefined"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "empty-native-control",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: undefined"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "held-recovery",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        }
+      ],
+      "reports": [
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED]"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED]"
+        }
+      ]
+    },
+    {
+      "name": "held-changed-recovery",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "7"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "7"
+        }
+      ],
+      "reports": [
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED]"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED]"
+        }
+      ]
+    },
+    {
+      "name": "held-no-error-control",
+      "profile": "production",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 3"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "empty-stream",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: [object Object]"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "empty-direct-control",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: undefined"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "empty-native-control",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: undefined"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "held-recovery",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        }
+      ],
+      "reports": [
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash."
+        },
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED] Update ignored: the reactive system was halted by an earlier uncaught error."
+        }
+      ]
+    },
+    {
+      "name": "held-changed-recovery",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "7"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "7"
+        }
+      ],
+      "reports": [
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash."
+        },
+        {
+          "step": "3. Finish request",
+          "message": "[REACTIVITY_HALTED] Update ignored: the reactive system was halted by an earlier uncaught error."
+        }
+      ]
+    },
+    {
+      "name": "held-no-error-control",
+      "profile": "development",
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 3"
+        }
+      ],
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

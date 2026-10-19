@@ -232,3 +232,111 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 10.3s; hashes sealed in build/verification.json.
+
+Minimal JSX and hosted playground verification, 2026-10-19 UTC
+
+> test
+> node verify.mjs
+
+From https://github.com/solidjs/solid
+ * branch            d2ad8b288886a5c7171e6746ccc019ad1d08d8ab -> FETCH_HEAD
+empty-stream / production: Value: [object Object]
+empty-direct-control / production: Value: undefined
+empty-native-control / production: Value: undefined
+held-recovery / production: Sum: 2; throws 1 on final click
+held-changed-recovery / production: Sum: 2; throws 7 on final click
+held-no-error-control / production: Sum: 3
+empty-stream / development: Value: [object Object]
+empty-direct-control / development: Value: undefined
+empty-native-control / development: Value: undefined
+held-recovery / development: Sum: 2; throws 1 on final click
+held-changed-recovery / development: Sum: 2; throws 7 on final click
+held-no-error-control / development: Sum: 3
+
+Fresh-session hosted source/build round trips and controls:
+{
+  "date": "2026-10-19T01:56:17.737Z",
+  "browser": "154.0.8037.57",
+  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "cases": [
+    {
+      "name": "empty-stream",
+      "url": "https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw",
+      "sourceRoundTrip": true,
+      "hasSavedBuild": true,
+      "states": [
+        {
+          "step": "initial",
+          "text": "Value: [object Object]"
+        }
+      ],
+      "errors": [],
+      "control": [
+        {
+          "step": "control build",
+          "text": "Value: undefined"
+        }
+      ]
+    },
+    {
+      "name": "held-recovery",
+      "url": "https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag",
+      "sourceRoundTrip": true,
+      "hasSavedBuild": true,
+      "states": [
+        {
+          "step": "initial",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 2"
+        }
+      ],
+      "errors": [
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        },
+        {
+          "step": "3. Finish request",
+          "message": "1"
+        }
+      ],
+      "control": [
+        {
+          "step": "control build",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "1. Start update",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "2. Recover",
+          "text": "Sum: 2"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "Sum: 3"
+        }
+      ]
+    }
+  ]
+}
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 10.3s; hashes sealed in build/verification.json.

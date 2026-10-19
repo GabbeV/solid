@@ -26,8 +26,10 @@ const dirs=['runtime','representation','observation','proof','host','tests','too
 const checked=[...dirs.flatMap(d=>files(path.join(root,d))),...['LAWS.bend','PROOF.bend','package.json','package-lock.json','upstream/pins.json','upstream/correspondence.json','upstream/inventory.json','tracking/deviations.json','tracking/deviations.md','tracking/source-fidelity.md','tracking/representation.md','README.md','tracking/frontier.md','tracking/async.md','tracking/watchers.md','tracking/question-ids.md','tracking/until.md','tracking/verification.md','tracking/upstream-issues.json','tracking/upstream/empty-flatten.md','tracking/upstream/staged-error-recovery.md','AGENTS.md'].map(p=>path.join(root,p))];
 // Seal the standalone repro sources/lock/log, excluding installed dependencies
 // and generated source/build directories inside this independent npm project.
-const reproRoot=path.join(root,'repros/solid-signals');
-checked.push(...fs.readdirSync(reproRoot,{withFileTypes:true}).filter(e=>e.isFile()).map(e=>path.join(reproRoot,e.name)).sort());
+for(const name of ['solid-signals','playground']){
+  const reproRoot=path.join(root,'repros',name);
+  checked.push(...fs.readdirSync(reproRoot,{withFileTypes:true}).filter(e=>e.isFile()).map(e=>path.join(reproRoot,e.name)).sort());
+}
 const inputs=Object.fromEntries(checked.map(p=>[path.relative(root,p),hash(fs.readFileSync(p))]));
 console.log('Checking composed proofs with the independent BendTT kernel...');
 const proof=command(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','PROOF.bend','--verdict']);

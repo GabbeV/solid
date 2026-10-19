@@ -3,6 +3,17 @@
 Status: reduced current-head upstream bug candidate. No report or workaround is
 active. Both pinned TS and Bend preserve this baseline. This does not block work.
 
+Minimal JSX playground, created at the user's request:
+[held-recovery repro](https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag).
+It reduces the graph to one signal and two memos; JSX supplies the combined
+rendered read. Three manual clicks start the pending/failed update, recover,
+then resolve the native Promise. The final click throws the successful value 1
+and leaves `Sum: 2` instead of showing 3. Removing the throw is a passing
+one-line control. No explicit effects, flushes or timers remain in the component.
+The share pins `mizulu/solid2@d2ad8b28`, with Tailwind and SSR disabled. Source,
+local development/production and hosted browser evidence are in
+[`repros/playground`](../../repros/playground/README.md).
+
 A standalone native-Promise repro is now in
 [`repros/solid-signals`](../../repros/solid-signals/README.md), using only public
 imports from `@solidjs/signals`. On the exact next source below, it renders `[2]`
@@ -128,4 +139,4 @@ pending.stageError, core.finishValue/publish/serveSelected, scheduler.commitPend
 Baseline parity and this negative law must remain visible. On an upstream fix,
 review the precise flag/overwrite changes, port them, update these controls and
 retire the counterexample expectation with its report/fix link. Keep the history.
-No semantic deviation, publication or external issue filing has occurred.
+No semantic deviation, package publication or external issue filing has occurred.

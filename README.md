@@ -100,6 +100,11 @@ published package and current next, and successful-value-as-error recovery on
 current next. The shared rc.15 version string does not identify the same source
 commit in npm and next; the repro instructions distinguish them.
 
+[Minimal JSX playground repros](repros/playground/README.md) use ordinary
+components and rendered expressions. The held-recovery reduction needs one
+signal, two memos and three manual clicks; the empty-stream reduction needs one
+memo. Browser checks exercise both production and development builds.
+
 The important remaining work is transaction membership and publication, pending
 and error propagation, promise/iterator settlement, optimistic lanes and actions,
 boundaries and reveal ordering, full ownership/cleanup/context APIs, remaining
