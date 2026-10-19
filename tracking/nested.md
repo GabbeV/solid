@@ -48,7 +48,8 @@ its previous instance settles can continually start fresh async work. Pending me
 settlement tests retain their child under a root; the runtime preserves source
 allocation behavior rather than stabilizing such a recreating program.
 
-Nested signals, escaping new accessors/setters, arbitrary lexical closures,
+Local data signals and captured inline bodies also execute; see [locals.md](locals.md).
+Function-initializer signals, escaping new accessors/setters, arbitrary lexical closures,
 dynamic returned cleanup selection and expression reads in owner teardown remain
 unfinished. Custom comparators, option getters, dev/observe, hydration, external
 and snapshot hooks retain the constructor restrictions in the correspondence.

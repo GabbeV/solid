@@ -15,6 +15,9 @@ import ./proof/disposer.bend as Disposer
 import ./proof/context-records.bend as ContextRecords
 import ./proof/bound-cleanup.bend as BoundCleanup
 import ./proof/nested.bend as Nested
+import ./proof/locals.bend as Locals
+import ./runtime/lexical.bend as Lexical
+import ./runtime/construct.bend as Construct
 import ./runtime/callback.bend as Callback
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
@@ -128,3 +131,15 @@ law nested_effect_first_application_is_queued:
 
 law nested_effect_disposed_before_application:
   {Nested.effectView(True{}) == Nested.expectedEarlyDisposal() : Nested.EffectView}
+
+law local_signal_is_captured:
+  {Locals.view(Locals.scenario()) == Locals.expected() : Locals.View}
+
+law lexical_read_binding:
+  for +signal: Nat
+  {Lexical.bind(R.LocalRead{0n}, 0n, signal) == R.Read{signal} : R.Expr}
+
+law lexical_scope_shadows:
+  for +signal: Nat
+  {Lexical.bind(R.SignalScope{R.LocalRead{0n}, Construct.defaults(), R.LocalRead{0n}}, 0n, signal)
+    == R.SignalScope{R.Read{signal}, Construct.defaults(), R.LocalRead{0n}} : R.Expr}

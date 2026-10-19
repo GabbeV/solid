@@ -31,6 +31,12 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.DisposeRoot{bind(owner, first, second)}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bind(left, first, second), bind(right, first, second)}
+    case R.SignalScope{initial, options, body}:
+      R.SignalScope{bind(initial, first, second), options, bind(body, first, second)}
+    case R.LocalWrite{depth, value, updater}:
+      R.LocalWrite{depth, bind(value, first, second), updater}
+    case R.WriteExpr{signal, value, updater}:
+      R.WriteExpr{signal, bind(value, first, second), updater}
     case R.EffectCreate{compute, spec}:
       R.EffectCreate{bind(compute, first, second), spec}
     case R.MemoRead{compute, options}:

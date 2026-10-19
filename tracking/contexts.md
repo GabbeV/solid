@@ -48,6 +48,7 @@ not prove a general context/ownership/TS-equivalence theorem. Four compiled
 mutations cover null fallback, in-place records, dropped inheritance and a
 missing-owner read that wrongly succeeds.
 
-High-level component/provider APIs, nested signal/memo/effect constructors,
+Local data signal/memo/effect construction now executes; see [locals.md](locals.md).
+High-level component/provider APIs, escaping accessors/setters,
 teardown expression suspension and active boundary/lane/snapshot scopes remain
 unfinished. No semantic deviation or source workaround is active.

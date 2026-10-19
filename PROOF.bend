@@ -101,3 +101,12 @@ def Laws.nested_effect_first_application_is_queued():
 
 def Laws.nested_effect_disposed_before_application():
   {==}
+
+def Laws.local_signal_is_captured():
+  {==}
+
+def Laws.lexical_read_binding(signal):
+  {==}
+
+def Laws.lexical_scope_shadows(signal):
+  {==}

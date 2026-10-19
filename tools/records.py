@@ -14,7 +14,7 @@ schemas={
 'ContextEntry': [('key','Nat'),('value','Value')],
 'ContextRecord': [('entries','List<&2, ContextEntry>')],
 'CleanupProgram': [('actions','List<&2, CleanupAction>')],
-'EffectSpec': [('user','Bool'),('target','Nat'),('options','NodeOptions'),('scheduled','Bool'),('deferred','Bool'),('program','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat')],
+'EffectSpec': [('user','Bool'),('target','Nat'),('options','NodeOptions'),('scheduled','Bool'),('deferred','Bool'),('program','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat'),('body','InlineBody')],
 'NodeOptions': [('equals','Bool'),('transparent','Bool'),('ownedWrite','Bool'),('lazy','Bool'),('sync','Bool'),('noSnapshot','Bool'),('extraConfig','U32'),('loading','Slot'),('unobserved','Nat')],
 'NodeExtension': [('inFlight','Nat'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
 'Node': [('kind','NodeKind'),('value','Value'),('pending','Slot'),('equals','Bool'),('config','U32'),('flags','U32'),('status','U32'),('time','Nat'),('notified','Stamp'),('deps','Nat'),('depsTail','Nat'),('depGen','Nat'),('subs','Nat'),('subsTail','Nat'),('height','Nat'),('nextHeap','Nat'),('prevHeap','Nat'),('parent','Nat'),('firstChild','Nat'),('nextSibling','Nat'),('prevSibling','Nat'),('expr','Expr'),('modified','Bool'),('prevValue','Value'),('target','Nat'),('loading','Bool'),('x','Nat'),('parentComputed','Nat'),('scope','Nat'),('childCount','Nat'),('disposal','Disposal'),('cleanup','Nat'),('effectProgram','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat')],
@@ -113,6 +113,10 @@ type NodeKind is Data:
   User{}
   Root{}
 
+type InlineBody is Data:
+  NoInlineBody{}
+  SomeInlineBody{expr: Expr}
+
 type Expr is Data:
   Literal{value: Value}
   Read{id: Nat}
@@ -126,6 +130,10 @@ type Expr is Data:
   CurrentOwner{}
   CurrentObserver{}
   OwnerDisposed{owner: Expr}
+  SignalScope{initial: Expr, options: NodeOptions, body: Expr}
+  LocalRead{depth: Nat}
+  LocalWrite{depth: Nat, value: Expr, updater: Bool}
+  WriteExpr{signal: Nat, value: Expr, updater: Bool}
   MemoRead{compute: Expr, options: NodeOptions}
   EffectCreate{compute: Expr, spec: EffectSpec}
   RootScope{body: Expr, transparent: Bool}

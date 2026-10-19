@@ -89,6 +89,10 @@ type NodeKind is Data:
   User{}
   Root{}
 
+type InlineBody is Data:
+  NoInlineBody{}
+  SomeInlineBody{expr: Expr}
+
 type Expr is Data:
   Literal{value: Value}
   Read{id: Nat}
@@ -102,6 +106,10 @@ type Expr is Data:
   CurrentOwner{}
   CurrentObserver{}
   OwnerDisposed{owner: Expr}
+  SignalScope{initial: Expr, options: NodeOptions, body: Expr}
+  LocalRead{depth: Nat}
+  LocalWrite{depth: Nat, value: Expr, updater: Bool}
+  WriteExpr{signal: Nat, value: Expr, updater: Bool}
   MemoRead{compute: Expr, options: NodeOptions}
   EffectCreate{compute: Expr, spec: EffectSpec}
   RootScope{body: Expr, transparent: Bool}
@@ -803,87 +811,97 @@ def CleanupProgram.with_actions(r: CleanupProgram, v: List<&2, CleanupAction>) -
       CleanupProgram{v}
 
 type EffectSpec is Data:
-  EffectSpec{user: Bool, target: Nat, options: NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat}
+  EffectSpec{user: Bool, target: Nat, options: NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat, body: InlineBody}
 
 def EffectSpec.user(r: EffectSpec) -> Bool:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       user
 
 def EffectSpec.with_user(r: EffectSpec, v: Bool) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{v, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{v, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}
 
 def EffectSpec.target(r: EffectSpec) -> Nat:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       target
 
 def EffectSpec.with_target(r: EffectSpec, v: Nat) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, v, options, scheduled, deferred, program, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, v, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}
 
 def EffectSpec.options(r: EffectSpec) -> NodeOptions:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       options
 
 def EffectSpec.with_options(r: EffectSpec, v: NodeOptions) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, v, scheduled, deferred, program, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, v, scheduled, deferred, program, returnedCleanup, errorProgram, body}
 
 def EffectSpec.scheduled(r: EffectSpec) -> Bool:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       scheduled
 
 def EffectSpec.with_scheduled(r: EffectSpec, v: Bool) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, options, v, deferred, program, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, v, deferred, program, returnedCleanup, errorProgram, body}
 
 def EffectSpec.deferred(r: EffectSpec) -> Bool:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       deferred
 
 def EffectSpec.with_deferred(r: EffectSpec, v: Bool) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, options, scheduled, v, program, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, scheduled, v, program, returnedCleanup, errorProgram, body}
 
 def EffectSpec.program(r: EffectSpec) -> Nat:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       program
 
 def EffectSpec.with_program(r: EffectSpec, v: Nat) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, options, scheduled, deferred, v, returnedCleanup, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, scheduled, deferred, v, returnedCleanup, errorProgram, body}
 
 def EffectSpec.returnedCleanup(r: EffectSpec) -> Nat:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       returnedCleanup
 
 def EffectSpec.with_returnedCleanup(r: EffectSpec, v: Nat) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, options, scheduled, deferred, program, v, errorProgram}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, scheduled, deferred, program, v, errorProgram, body}
 
 def EffectSpec.errorProgram(r: EffectSpec) -> Nat:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
       errorProgram
 
 def EffectSpec.with_errorProgram(r: EffectSpec, v: Nat) -> EffectSpec:
   match r:
-    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}:
-      EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, v}
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, v, body}
+
+def EffectSpec.body(r: EffectSpec) -> InlineBody:
+  match r:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      body
+
+def EffectSpec.with_body(r: EffectSpec, v: InlineBody) -> EffectSpec:
+  match r:
+    case EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, body}:
+      EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, v}
 
 type NodeOptions is Data:
   NodeOptions{equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, extraConfig: U32, loading: Slot, unobserved: Nat}

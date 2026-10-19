@@ -26,6 +26,7 @@ import ./callback.bend as Z
 import ./context.bend as Y
 import ./callable.bend as J
 import ./construct-state.bend as N
+import ./lexical.bend as Local
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -44,6 +45,8 @@ type Task is Data:
   CallArguments{callback: Nat}
   Invoke{}
   OnCleanup{}
+  CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
+  WriteResult{signal: Nat, updater: Bool}
   CallbackWrite{signal: Nat, updater: Bool}
   CallbackThrow{}
   WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
@@ -163,6 +166,18 @@ def branch(w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +yes: R.
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), [], []}
 
+# One source effect callback closure per inline body/creation. Its statements
+# run in the existing callback machine; ordinary body values are discarded by
+# the user ABI wrapper, whose static cleanup token is separate.
+def inlineProgram(+w: R.World, body: R.InlineBody, program: Nat) -> B.Bundle<R.World, Nat>:
+  match body:
+    case R.NoInlineBody{}:
+      B.Bundle{w, program}
+    case R.SomeInlineBody{expr}:
+      +id = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
+      w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CallbackEvaluate{expr}]}]))
+      B.Bundle{w, id}
+
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
     case R.WatchExpr{+awaiter, expr}:
@@ -191,13 +206,24 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.SignalScope{initial, options, body}:
+      Machine{w, Evaluate{initial, prev} <> CreateSignal{options, body, prev} <> rest, stack}
+    case R.LocalRead{depth}:
+      Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
+    case R.LocalWrite{depth, value, updater}:
+      Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
+    case R.WriteExpr{+signal, value, +updater}:
+      previous = B.choose(~R.Value, updater, _ => B.current(B.node(w, signal)), _ => prev)
+      Machine{w, Evaluate{value, previous} <> WriteResult{signal, updater} <> rest, stack}
     case R.EffectCreate{compute, +spec}:
       +id = B.length(R.Node, R.World.nodes(w))
       +w = B.event(w, R.Constructed{id})
       # Attachment is the user ABI's mechanical output target, as in api.createEffect.
       +w = B.choose(~R.World, R.EffectSpec.user(spec), _ => w, _ => T.attach(w, 1n, R.EffectSpec.target(spec)))
       kind = B.choose(~R.NodeKind, R.EffectSpec.user(spec), _ => R.User{}, _ => R.Render{})
-      +w = N.createEffectNode(w, compute, kind, R.EffectSpec.target(spec), R.EffectSpec.options(spec), R.World.context(w), R.EffectSpec.program(spec), R.EffectSpec.returnedCleanup(spec))
+      +pair = inlineProgram(w, R.EffectSpec.body(spec), R.EffectSpec.program(spec))
+      +w = B.first(R.World, Nat, pair)
+      +w = N.createEffectNode(w, compute, kind, R.EffectSpec.target(spec), R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair), R.EffectSpec.returnedCleanup(spec))
       +w = B.store_node(w, id, R.Node.with_errorProgram(B.node(w, id), R.EffectSpec.errorProgram(spec)))
       Machine{w, Recompute{id, True{}} <> InitialEffect{id, R.EffectSpec.scheduled(spec), R.EffectSpec.deferred(spec)} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, stack}
     case R.MemoRead{compute, +options}:
@@ -259,6 +285,13 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
       Machine{w, rest, R.Undefined{} <> stack}
     case value <> tail:
       callbackAction(w, rest, stack, id, tail, first, second, value)
+
+def setterResult(value: R.Value) -> R.Value:
+  match value:
+    case R.RootDisposerReference{owner}:
+      R.Undefined{}
+    case other:
+      other
 
 def setterValue(+w: R.World, +signal: Nat, value: R.Value) -> R.World:
   match value:
@@ -1267,6 +1300,26 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           B.choose(~Machine, Bool.and(Nat.is_ne(id, 0n), Nat.is_lt(id, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
             _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[]})), first, second} <> rest, tail},
             _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case CreateSignal{+options, +body, +previous} <> +rest:
+      match stack:
+        case +value <> +tail:
+          match value:
+            case R.RootDisposerReference{owner}:
+              Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
+            case other:
+              +id = B.length(R.Node, R.World.nodes(w))
+              +w = B.event(w, R.Constructed{id})
+              Machine{N.signal(w, other, options), Evaluate{Local.bind(body, 0n, id), previous} <> rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case WriteResult{+signal, +updater} <> rest:
+      match stack:
+        case +value <> tail:
+          +w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value))
+          result = B.choose(~R.Value, updater, _ => value, _ => setterResult(value))
+          Machine{w, rest, result <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case Invoke{} <> rest:

@@ -101,9 +101,20 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if(e.signalScope){
+    const {initial={lit:undefined},options={},body={lit:undefined}}=e.signalScope;
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
+    return R.signalScope(expression(initial,ids,programs,futures,encodeValue,contexts),nodeOptions(options,programs,encodeValue),expression(body,ids,programs,futures,encodeValue,contexts));
+  }
+  if(Object.hasOwn(e,'localRead'))return R.localRead(e.localRead);
+  if(e.localWrite){const {depth=0,value={lit:undefined},updater=false}=e.localWrite;return R.localWrite(depth,expression(value,ids,programs,futures,encodeValue,contexts),updater);}
   if (e.effectCreate){
     const options=e.options??{};
     if(programs.teardownActions){requireTeardownProgram(programs.teardownActions,options.unobserved);requireTeardownProgram(programs.teardownActions,options.cleanup);}
+    if(Object.hasOwn(e,'body')){
+      if(options.program)throw new TypeError('Use either an inline effect body or a named program');
+      return R.nestedEffectBody(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,expression(e.body,ids,programs,futures,encodeValue,contexts),programs[options.cleanup]??0,programs[options.error]??0);
+    }
     return R.nestedEffect(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,programs[options.program]??0,programs[options.cleanup]??0,programs[options.error]??0);
   }
   if (e.memoRead){

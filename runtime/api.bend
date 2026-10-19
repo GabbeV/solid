@@ -132,7 +132,19 @@ def withOwner(owner: R.Expr, body: R.Expr) -> R.Expr:
 
 # User ABI for createEffect's selected compute/application/error family.
 def nestedEffect(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat) -> R.Expr:
-  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}}
+  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, R.NoInlineBody{}}}
+
+def nestedEffectBody(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, body: R.Expr, returnedCleanup: Nat, errorProgram: Nat) -> R.Expr:
+  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, 0n, returnedCleanup, errorProgram, R.SomeInlineBody{body}}}
+
+def signalScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
+  R.SignalScope{initial, options, body}
+
+def localRead(depth: Nat) -> R.Expr:
+  R.LocalRead{depth}
+
+def localWrite(depth: Nat, value: R.Expr, updater: Bool) -> R.Expr:
+  R.LocalWrite{depth, value, updater}
 
 # User ABI for the source expression createMemo(compute, options)().
 def memoRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:

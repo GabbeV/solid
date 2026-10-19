@@ -5,7 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
-  ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), R.EffectSpec.program(spec)','R.EffectSpec.options(spec), 0n, R.EffectSpec.program(spec)','tests/nested.mjs'],
+  ['local reads bind the wrong signal','runtime/lexical.bend','_ => R.Read{signal}, _ => R.LocalRead{index}','_ => R.Read{1n}, _ => R.LocalRead{index}','tests/locals.mjs'],
+  ['inner signal scope fails to shadow','runtime/lexical.bend','bind(body, 1n+depth, signal)','bind(body, depth, signal)','tests/locals.mjs'],
+  ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal)}','R.SomeInlineBody{expr}','tests/locals.mjs'],
+  ['local updater sees committed instead of staged slot','runtime/core.bend','previous = B.choose(~R.Value, updater, _ => B.current(B.node(w, signal)), _ => prev)','previous = B.choose(~R.Value, updater, _ => R.Node.value(B.node(w, signal)), _ => prev)','tests/locals.mjs'],
+  ['local updater result function is invoked again','runtime/core.bend','+w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value))','+w = setterValue(w, signal, value)','tests/locals.mjs'],
+  ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair)','R.EffectSpec.options(spec), 0n, B.second(R.World, Nat, pair)','tests/nested.mjs'],
   ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bind(compute, first, second), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
   ['nested effect untracks its caller','runtime/core.bend','case R.EffectCreate{compute, +spec}:','case R.EffectCreate{compute, +spec}:\n      +w = R.World.with_tracking(w, False{})','tests/nested.mjs'],
   ['initial effect ignores staged first value','runtime/core.bend','Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))),','Bool.or(deferred, Bool.or(False{},','tests/nested.mjs'],

@@ -35,24 +35,47 @@ export class SolidRuntime {
     }
     return v;
   }
-  evaluate(e,prev,values=[]) {
+  evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
-    if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values));}
-    if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values),this.evaluate(owner,prev,values));}
+    if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values,locals));}
+    if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.signalScope){
+      const {initial={lit:undefined},options={},body={lit:undefined}}=e.signalScope;
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const value=this.evaluate(initial,prev,values,locals);
+      if(typeof value==='function')throw new TypeError('Function initializers are not yet translated');
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      const [get,set]=this.S.createSignal(value,{...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]});
+      const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+      this.localNotPending??=node._pendingValue;
+      const binding={get,set,name};(this.localSignals??=new Map()).set(name,binding);
+      return this.evaluate(body,prev,values,[binding,...locals]);
+    }
+    if(Object.hasOwn(e,'localRead')){
+      const binding=locals[e.localRead];if(!binding)throw new TypeError('Unbound local signal');
+      const value=binding.get(),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
+      this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,binding.name,value]);return value;
+    }
+    if(e.localWrite){
+      const {depth=0,value={lit:undefined},updater=false}=e.localWrite,binding=locals[depth];if(!binding)throw new TypeError('Unbound local signal');
+      return updater?binding.set(previous=>this.evaluate(value,previous,values,locals)):binding.set(this.evaluate(value,prev,values,locals));
+    }
     if(e.effectCreate){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);requireTeardownProgram(this.programActions,options.cleanup);
+      if(Object.hasOwn(e,'body')&&options.program)throw new TypeError('Use either an inline effect body or a named program');
       const apply=(v,p)=>{
         this.traceEvents.push(['apply',name,v,p]);
         if(options.user===false)this.screens[options.target??3]=v;
-        if(options.program)this.programs[options.program](undefined,v,p);
+        if(Object.hasOwn(e,'body'))this.evaluate(e.body,undefined,[v,p],locals);
+        else if(options.program)this.programs[options.program](undefined,v,p);
         return options.cleanup?this.programs[options.cleanup]:undefined;
       };
       const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
-      return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values),bundle,{...options,unobserved:this.programs[options.unobserved]});
+      return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values,locals),bundle,{...options,unobserved:this.programs[options.unobserved]});
     }
     if(e.memoRead){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
@@ -61,30 +84,30 @@ export class SolidRuntime {
       if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
       const get=this.S.createMemo(next=>{
         const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
-        this.traceEvents.push(['compute',name]);return this.evaluate(e.memoRead,next,values);
+        this.traceEvents.push(['compute',name]);return this.evaluate(e.memoRead,next,values,locals);
       },opts);
       const value=get(),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
       this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
     }
-    if(e.root)return this.S.createRoot(dispose=>{const owner=this.S.getOwner();this.ownerObjects.add(owner);this.rootDisposers.set(dispose,owner);return this.evaluate(e.root,prev,[dispose]);},{transparent:e.transparent??false});
-    if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev,values).dispose();
-    if(e.disposed)return this.S.isDisposed(this.evaluate(e.disposed,prev,values));
-    if(e.withOwner)return this.S.runWithOwner(this.evaluate(e.withOwner[0],prev,values),()=>this.evaluate(e.withOwner[1],prev,values));
+    if(e.root)return this.S.createRoot(dispose=>{const owner=this.S.getOwner();this.ownerObjects.add(owner);this.rootDisposers.set(dispose,owner);return this.evaluate(e.root,prev,[dispose],locals);},{transparent:e.transparent??false});
+    if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev,values,locals).dispose();
+    if(e.disposed)return this.S.isDisposed(this.evaluate(e.disposed,prev,values,locals));
+    if(e.withOwner)return this.S.runWithOwner(this.evaluate(e.withOwner[0],prev,values,locals),()=>this.evaluate(e.withOwner[1],prev,values,locals));
     if(e.future)return this.futures[e.future].object;
     if(e.read) return this.read(e.read);
-    if(e.add) return this.evaluate(e.add[0],prev,values)+this.evaluate(e.add[1],prev,values);
-    if(e.mul) return this.evaluate(e.mul[0],prev,values)*this.evaluate(e.mul[1],prev,values);
-    if(e.same) return this.evaluate(e.same[0],prev,values)===this.evaluate(e.same[1],prev,values);
-    if(e.select) return this.evaluate(e.select[0],prev,values) ? this.evaluate(e.select[1],prev,values) : this.evaluate(e.select[2],prev,values);
-    if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values));
+    if(e.add) return this.evaluate(e.add[0],prev,values,locals)+this.evaluate(e.add[1],prev,values,locals);
+    if(e.mul) return this.evaluate(e.mul[0],prev,values,locals)*this.evaluate(e.mul[1],prev,values,locals);
+    if(e.same) return this.evaluate(e.same[0],prev,values,locals)===this.evaluate(e.same[1],prev,values,locals);
+    if(e.select) return this.evaluate(e.select[0],prev,values,locals) ? this.evaluate(e.select[1],prev,values,locals) : this.evaluate(e.select[2],prev,values,locals);
+    if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
-    if(e.invoke)return this.evaluate(e.invoke,prev,values)();
-    if(e.onCleanup)return this.S.onCleanup(this.evaluate(e.onCleanup,prev,values));
+    if(e.invoke)return this.evaluate(e.invoke,prev,values,locals)();
+    if(e.onCleanup)return this.S.onCleanup(this.evaluate(e.onCleanup,prev,values,locals));
     if(e.call){
       if((e.args?.length??0)>2)throw new TypeError('Callback ABI currently admits at most two arguments');
-      return this.programs[e.call](undefined,...(e.args??[]).map(arg=>this.evaluate(arg,prev,values)));
+      return this.programs[e.call](undefined,...(e.args??[]).map(arg=>this.evaluate(arg,prev,values,locals)));
     }
-    if(e.seq){let value;for(const part of e.seq)value=this.evaluate(part,prev,values);return value;}
+    if(e.seq){let value;for(const part of e.seq)value=this.evaluate(part,prev,values,locals);return value;}
     if(Object.hasOwn(e,'raise')) throw this.value(e.raise);
     throw new TypeError('Unknown expression');
   }
@@ -238,11 +261,11 @@ export class SolidRuntime {
     if(typeof initial==='function')throw new TypeError('Function initializers are not yet translated');
     const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;
   }
-  callback(name,expr,values=[]) { return prev=> {
+  callback(name,expr,values=[],locals=[]) { return prev=> {
     this.sourceNames.set(this.S.getOwner(),name);
     this.notPending??=this.S.getOwner()._pendingValue; // read-only probe of the fresh-node sentinel
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
-    try { return this.evaluate(expr,prev,values); } finally {this.current=saved;}
+    try { return this.evaluate(expr,prev,values,locals); } finally {this.current=saved;}
   }; }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
