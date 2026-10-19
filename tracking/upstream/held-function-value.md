@@ -2,9 +2,9 @@
 
 Status: the user selected the wrapper fix. It is pushed to GabbeV/solid on
 `fix/held-function-values` at `82c89dab837f1f71f8391dd6323861261147afc8`,
-rebased onto current next `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`. GitHub
-denied PR creation through both available credentials; a prefilled form is
-prepared for the user. No PR exists yet. See the [publication and validation
+rebased onto next `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`. The user
+submitted [PR #4163](https://github.com/solidjs/solid/pull/4163); verified open
+with that head on 2026-10-19. See the [publication and validation
 record](held-function-wrapper-pr.md). Writable-memo setters are not yet in the
 Bend input ABI. This is source-only evidence, not a Bend parity claim or active
 workaround. The pinned runtime is unchanged and the deviation register is empty.

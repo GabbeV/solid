@@ -5,17 +5,19 @@ The user selected the existing wrapper approach and authorized publication on
 
 - Head: `82c89dab837f1f71f8391dd6323861261147afc8`.
 - Base (current Solid next): `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`.
-- [Review and submit](https://github.com/solidjs/solid/compare/next...GabbeV:fix/held-function-values?expand=1).
+- [PR #4163](https://github.com/solidjs/solid/pull/4163), submitted by the user;
+  verified open with the recorded head on 2026-10-19.
 - Worktree: `/workspace/solid-held-function-pr`.
 - Exactly three changed files: `packages/signals/src/core/core.ts`,
   `packages/signals/tests/held-function-value.test.ts`, and
   `.changeset/quiet-functions-rest.md`.
 
-PR submission is blocked by GitHub permissions. The connected GitHub REST tool
+Initial automated PR submission was blocked by GitHub permissions. The connected GitHub REST tool
 returned 403 “Resource not accessible by integration”; `gh pr create` returned
-“Resource not accessible by integration (createPullRequest)”. No PR was created.
-The filled-out compare form was queued in the Codex browser panel for the user to
-read and submit. This is a prepared submission, not an open PR.
+“Resource not accessible by integration (createPullRequest)”. The filled-out
+compare form was queued in the Codex browser panel. The user then submitted
+PR #4163, confirmed open with the recorded head; the publication blocker is
+resolved.
 
 The wrapper follows existing async-result and store-write patterns. The original
 updater still runs against the committed value before writeHook, and its result

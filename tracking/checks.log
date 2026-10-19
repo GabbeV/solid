@@ -146,3 +146,13 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 13.9s; hashes sealed in build/verification.json.
+
+User submitted held-function wrapper PR #4163; verified OPEN at 82c89dab837f1f71f8391dd6323861261147afc8 on 2026-10-19. PR #4148 remains OPEN. No new user-input blocker; runtime/pins unchanged.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 13.9s; hashes sealed in build/verification.json.

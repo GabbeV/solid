@@ -38,7 +38,7 @@
     {
       "id": "SOLID-HELD-FUNCTION-VALUE-003",
       "classification": "suspected-upstream-bug",
-      "status": "candidate-pushed-pr-submission-blocked",
+      "status": "upstream-fix-pr-open",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/core.ts:setMemo",
       "record": "tracking/upstream/held-function-value.md",
@@ -50,7 +50,7 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
-      "fixUrl": null,
+      "fixUrl": "https://github.com/solidjs/solid/pull/4163",
       "candidateFixCommit": "82c89dab837f1f71f8391dd6323861261147afc8",
       "candidateFixRecord": "tracking/upstream/held-function-wrapper-pr.md",
       "candidateBaseCommit": "1ddd68df16b6aec1edc1c87982eb0944d0ea8831",
