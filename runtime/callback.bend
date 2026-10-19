@@ -31,6 +31,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.DisposeRoot{bind(owner, first, second)}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bind(left, first, second), bind(right, first, second)}
+    case R.MemoRead{compute, options}:
+      R.MemoRead{bind(compute, first, second), options}
     case R.RootScope{body, transparent}:
       R.RootScope{body, transparent}
     case R.ContextGet{key, owner}:

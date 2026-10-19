@@ -92,3 +92,6 @@ def Laws.nan_is_not_equal():
 
 def Laws.undefined_is_a_staged_value():
   {==}
+
+def Laws.nested_memo_replaces_child():
+  {==}

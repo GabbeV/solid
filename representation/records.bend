@@ -102,6 +102,7 @@ type Expr is Data:
   CurrentOwner{}
   CurrentObserver{}
   OwnerDisposed{owner: Expr}
+  MemoRead{compute: Expr, options: NodeOptions}
   RootScope{body: Expr, transparent: Bool}
   DisposeRoot{owner: Expr}
   ContextGet{key: Nat, owner: Expr}

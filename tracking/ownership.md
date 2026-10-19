@@ -48,7 +48,7 @@ parent unlinking, cleared disposal and restored ambient state. It is one concret
 execution, not a general ownership/lifetime/progress theorem. Three compiled
 mutations exercise tracking restoration, observer gating and root attachment.
 
-Nested signal/memo/effect construction inside callbacks, arbitrary functions,
+Nested signal/effect construction, escaping memo accessors, arbitrary functions,
 teardown expression suspension, arbitrary callbacks and active context-provider /
 boundary / lane / snapshot scopes remain unfinished. The deviation register is
 unchanged and empty; both upstream counterexamples remain baseline-preserved.

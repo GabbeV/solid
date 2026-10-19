@@ -45,5 +45,6 @@ Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
 reads, arbitrary closures, general function values, dynamic returned cleanup
-selection, nested primitive construction and active scopes remain unfinished.
+selection, nested signal/effect construction, escaping new accessors and active scopes remain unfinished.
+Nested createMemo(compute, options)() expressions now execute; see [nested.md](nested.md).
 The semantic deviation register is unchanged and empty.

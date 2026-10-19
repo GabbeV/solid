@@ -210,3 +210,7 @@ Root-disposer data identities have a canonical, lazily materialized callback-are
 encoding for disposal slots. Repeated registrations share that encoding, preserving
 source function alias relations. CleanupBoundRoot invokes the same owner machine
 with the bound root and self=true. See [cleanup-values.md](cleanup-values.md).
+
+Nested `createMemo(compute, options)()` expressions share constructor literals/setup
+with standalone construction, then resume the core driver. The expression-local
+accessor does not yet escape into general closures. See [nested.md](nested.md).

@@ -14,6 +14,7 @@ import ./proof/context.bend as Context
 import ./proof/disposer.bend as Disposer
 import ./proof/context-records.bend as ContextRecords
 import ./proof/bound-cleanup.bend as BoundCleanup
+import ./proof/nested.bend as Nested
 import ./runtime/callback.bend as Callback
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
@@ -118,3 +119,6 @@ law nan_is_not_equal:
 
 law undefined_is_a_staged_value:
   {B.selected(R.Present{R.Undefined{}}, R.Null{}) == R.Undefined{} : R.Value}
+
+law nested_memo_replaces_child:
+  {Nested.view(Nested.scenario()) == Nested.expected() : Nested.View}

@@ -130,6 +130,10 @@ def ownerDisposed(owner: R.Expr) -> R.Expr:
 def withOwner(owner: R.Expr, body: R.Expr) -> R.Expr:
   R.WithOwner{owner, body}
 
+# User ABI for the source expression createMemo(compute, options)().
+def memoRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
+  R.MemoRead{compute, options}
+
 def rootScope(body: R.Expr, transparent: Bool) -> R.Expr:
   R.RootScope{body, transparent}
 

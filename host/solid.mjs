@@ -42,6 +42,18 @@ export class SolidRuntime {
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values),this.evaluate(owner,prev,values));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.memoRead){
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const get=this.S.createMemo(next=>{
+        const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+        this.traceEvents.push(['compute',name]);return this.evaluate(e.memoRead,next,values);
+      },opts);
+      const value=get(),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
+      this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
+    }
     if(e.root)return this.S.createRoot(dispose=>{const owner=this.S.getOwner();this.ownerObjects.add(owner);this.rootDisposers.set(dispose,owner);return this.evaluate(e.root,prev,[dispose]);},{transparent:e.transparent??false});
     if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev,values).dispose();
     if(e.disposed)return this.S.isDisposed(this.evaluate(e.disposed,prev,values));

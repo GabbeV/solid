@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs'],
+  ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bind(compute, first, second), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
+  ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ReadNode{id} <> rest)','_ => ReadNode{id} <> rest)','tests/nested.mjs'],
   ['onCleanup loses return identity','runtime/core.bend','rest, R.RootDisposerReference{root} <> tail}','rest, R.Undefined{} <> tail}','tests/cleanup-values.mjs'],
   ['same bound cleanup receives fresh callable IDs','runtime/callable.bend','+old = find(R.World.cleanupPrograms(w), root, 0n)','+old = {0n : Nat}','tests/cleanup-values.mjs'],
   ['bound cleanup disposes ambient receiver','runtime/owner.bend','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{owner, True{}, False{}} <> rest}','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{R.World.context(w), True{}, False{}} <> rest}','tests/cleanup-values.mjs'],

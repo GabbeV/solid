@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/ownership.mjs && node tests/arguments.mjs && node tests/contexts.mjs && node tests/cleanup-values.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/ownership.mjs && node tests/arguments.mjs && node tests/contexts.mjs && node tests/cleanup-values.mjs && node tests/nested.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -19,6 +19,7 @@ Built Bend runtime and pinned Solid production reference.
 71 callback-argument histories match pinned TS binding/order, effect/error parameters, callable root disposers and setter function branches.
 52 context histories match pinned TS default/undefined/null rules, copied records, owner targeting, inheritance, errors, argument order and async/function data.
 24 bound-cleanup histories match pinned TS callable return/alias identity, LIFO order, no-owner behavior, pending registration and reentrant/throwing teardown.
+68 nested-memo histories match pinned TS allocation, initial execution, callbacks, lifetime, loading and error behavior.
 68 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.
 255 iterator histories match pinned TS initial drains, async gaps, bare steps, empty/rejected completion, cancellation, close and promise flattening.
 18 source-only empty-flatten controls preserve the pinned immediate-thenable object leak; direct/native/one-yield controls settle as expected.
@@ -55,6 +56,9 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: nested memo loses owner
+Rejected mutation: nested memo loses captured arguments
+Rejected mutation: nested eager initial pass omitted
 Rejected mutation: onCleanup loses return identity
 Rejected mutation: same bound cleanup receives fresh callable IDs
 Rejected mutation: bound cleanup disposes ambient receiver
@@ -87,7 +91,7 @@ Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-32 source-changing variants rejected by differential assertions.
+35 source-changing variants rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -95,4 +99,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 11.3s; hashes sealed in build/verification.json.
+Kernel completed in 12.3s; hashes sealed in build/verification.json.

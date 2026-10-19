@@ -9990,7 +9990,7 @@
           "mapping": {
             "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
             "status": "partial",
-            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; teardown expressions and nested construction remain unfinished."
+            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)() expressions execute in the same machine; escaping accessors, nested signals/effects and teardown expressions remain unfinished."
           }
         },
         {
@@ -10012,7 +10012,7 @@
           "sha256": "2d9c52c27686a6f60db76ab11100ce49d908327c0ea3a313fc70f0ab399fb602",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
+            "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions",
             "status": "partial",
             "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
@@ -10024,7 +10024,7 @@
           "sha256": "1a8ade920fba9088e3f8db4791322609b8566d48c24072d5e30d3991917c9710",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
+            "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions",
             "status": "partial",
             "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
@@ -10036,7 +10036,7 @@
           "sha256": "ada4c98be664a2de8dcbb2fcd56c4dd02e35b1076528a225ad13ad0e08f15142",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:computed; runtime/api.bend:createMemoWithOptions",
+            "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions",
             "status": "partial",
             "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
           }
@@ -10116,7 +10116,7 @@
           "sha256": "52fc413ff315a71db27778e62924418a796e14be7ca355954d00ebb95bd522fc",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:createEffectNode",
+            "bend": "runtime/construct-state.bend:createEffectNode; runtime/construct.bend:createEffectNode",
             "status": "partial",
             "restrictions": "Separate production effect literal, own config arms, forced lazy/uninitialized, equals false and modified/previous defaults; lazy setup. No hydration IDs, snapshots/external hooks or arbitrary callback/error/cleanup protocol."
           }
@@ -10144,7 +10144,7 @@
           "sha256": "8d010b3b5d419820fc53ea8884ce6711f9a8a709cff3ed632d168b6080b67b4c",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild",
+            "bend": "runtime/construct-state.bend:setupComputedNode; runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild",
             "status": "partial",
             "restrictions": "Source prevHeap self -> child link -> root-forwarded parent height -> eager recompute. Hydration ID accounting, external/snapshot/dev/observe hooks unfinished."
           }
@@ -10156,7 +10156,7 @@
           "sha256": "16ecbcab713b288bbb632d018c9ca1354fe1442dc53e33d4a8c43b6687e164fa",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:signal",
+            "bend": "runtime/construct-state.bend:signal; runtime/construct.bend:signal",
             "status": "partial",
             "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture unfinished; restricted unobserved programs execute; no custom comparators."
           }

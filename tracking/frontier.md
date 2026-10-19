@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1307 differential histories, 32 rejected compiled mutations,
-and 23 composed closed Bend regressions (one deliberately preserves an upstream
+Current verification: 1375 differential histories, 35 rejected compiled mutations,
+and 24 composed closed Bend regressions (one deliberately preserves an upstream
 failure), plus general payload/question/callback/path helper laws. Pins are
 unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -33,8 +33,8 @@ proof credit was imported.
   and observation-lifecycle dormancy/revival work, including dead-parent freeze. Internal
   constructors support nested-root parentComputed forwarding, tested at height,
   heap and read sites. Callback-based owned/detached roots, runWithOwner, owner/observer handles and
-  disposal status now execute; see [ownership.md](ownership.md). Nested signal,
-  memo and effect construction inside callbacks remain open.
+  disposal status now execute; see [ownership.md](ownership.md). Nested createMemo(compute, options)() expressions execute under the actual current
+  owner; nested signals/effects and escaping accessors remain open. See [nested.md](nested.md).
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
@@ -47,7 +47,7 @@ proof credit was imported.
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
   read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, arbitrary closure environments and nested primitive construction remain open;
+  reads, arbitrary closure environments, escaping accessors and nested signal/effect construction remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
@@ -254,7 +254,8 @@ canonical callable identity, LIFO order and reentrant/throwing disposal. One
 closed law checks repeated registration and exactly one detached-target cleanup.
 See [cleanup-values.md](cleanup-values.md).
 
-The next callback dependencies are nested signal/memo/effect construction and
+68 nested-memo histories and one closed replacement/retirement law extend callback construction;
+see [nested.md](nested.md). The next callback dependencies are escaping accessors, nested signal/effect construction and
 expression reads in teardown callbacks. General closures/functions, dynamic
 returned effect-cleanup selection, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit

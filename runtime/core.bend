@@ -25,6 +25,7 @@ import ./owner-state.bend as D
 import ./callback.bend as Z
 import ./context.bend as Y
 import ./callable.bend as J
+import ./construct-state.bend as N
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -190,6 +191,13 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.MemoRead{compute, +options}:
+      +id = B.length(R.Node, R.World.nodes(w))
+      +w = N.computed(w, compute, options, R.World.context(w))
+      tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
+        _ => ReadNode{id} <> rest,
+        _ => Recompute{id, True{}} <> ReadNode{id} <> rest)
+      Machine{w, tasks, stack}
     case R.RootScope{body, transparent}:
       +id = B.length(R.Node, R.World.nodes(w))
       Machine{L.enterOwner(D.createOwner(w, R.World.context(w), transparent), id),

@@ -101,6 +101,10 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if (e.memoRead){
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,e.options?.unobserved);
+    return R.memoRead(expression(e.memoRead,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
+  }
   if (e.root) return R.rootScope(expression(e.root,ids,programs,futures,encodeValue,contexts),e.transparent??false);
   if (e.disposeRoot) return R.disposeRoot(expression(e.disposeRoot,ids,programs,futures,encodeValue,contexts));
   if (e.disposed) return R.ownerDisposed(expression(e.disposed,ids,programs,futures,encodeValue,contexts));
