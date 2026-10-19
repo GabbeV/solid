@@ -33,6 +33,10 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.CallWith{callback, bind(left, first, second), bind(right, first, second)}
     case R.RootScope{body, transparent}:
       R.RootScope{body, transparent}
+    case R.ContextGet{key, owner}:
+      R.ContextGet{key, bind(owner, first, second)}
+    case R.ContextSet{key, value, owner}:
+      R.ContextSet{key, bind(value, first, second), bind(owner, first, second)}
     case R.Invoke{callee}:
       R.Invoke{bind(callee, first, second)}
     case R.WatchExpr{awaiter, body}:

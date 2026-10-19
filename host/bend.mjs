@@ -15,9 +15,15 @@ const tags = {
   undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
-  timeout:R.vTimeout(0).$, disposer:R.vRootDisposer(0).$,
+  contextFailure:R.vContextFailure(0,0).$, timeout:R.vTimeout(0).$, disposer:R.vRootDisposer(0).$,
   externalError:R.vExternalError(0,false,0,'','',true,0).$,
 };
+export class BendNoOwnerError extends Error {
+  constructor(identity){super('');this.identity=identity;}
+}
+export class BendContextNotFoundError extends Error {
+  constructor(identity){super('');this.identity=identity;}
+}
 export class BendOwner {
   constructor(id){this.owner=id;Object.freeze(this);}
 }
@@ -44,6 +50,9 @@ export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),ext
     case tags.null: return null;
     case tags.number: return v.n;
     case tags.bool: return v.b;
+    case tags.contextFailure:
+      if(!errors.has(v.identity))errors.set(v.identity,v.kind===0?new BendNoOwnerError(v.identity):new BendContextNotFoundError(v.identity));
+      return errors.get(v.identity);
     case tags.disposer: return rootDisposers.get(v.owner);
     case tags.owner:
       if(!refs.has('owner:'+v.id))refs.set('owner:'+v.id,new BendOwner(v.id));return refs.get('owner:'+v.id);
@@ -83,32 +92,34 @@ export function encode(v) {
   if (typeof v === 'object' && Number.isSafeInteger(v.error) && typeof v.native==='boolean')return R.vExternalError(v.error,v.explicit,errorKind(v),v.name,v.message,v.native,v.code);
   throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
 }
-export function expression(e, ids, programs={},futures={},encodeValue=encode) {
+export function expression(e, ids, programs={},futures={},encodeValue=encode,contexts={}) {
   if (Object.hasOwn(e,'lit')) return R.literal(encodeValue(e.lit));
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if (e.getContext){const {name,owner={lit:undefined}}=e.getContext;return R.contextGet(contexts[name],expression(owner,ids,programs,futures,encodeValue,contexts));}
+  if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
-  if (e.root) return R.rootScope(expression(e.root,ids,programs,futures,encodeValue),e.transparent??false);
-  if (e.disposeRoot) return R.disposeRoot(expression(e.disposeRoot,ids,programs,futures,encodeValue));
-  if (e.disposed) return R.ownerDisposed(expression(e.disposed,ids,programs,futures,encodeValue));
-  if (e.withOwner) return R.withOwner(...e.withOwner.map(x=>expression(x,ids,programs,futures,encodeValue)));
-  if (e.add) return R.add(...e.add.map(x=>expression(x,ids,programs,futures,encodeValue)));
-  if (e.mul) return R.multiply(...e.mul.map(x=>expression(x,ids,programs,futures,encodeValue)));
-  if (e.same) return R.same(...e.same.map(x=>expression(x,ids,programs,futures,encodeValue)));
-  if (e.select) return R.select(...e.select.map(x=>expression(x,ids,programs,futures,encodeValue)));
-  if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue));
+  if (e.root) return R.rootScope(expression(e.root,ids,programs,futures,encodeValue,contexts),e.transparent??false);
+  if (e.disposeRoot) return R.disposeRoot(expression(e.disposeRoot,ids,programs,futures,encodeValue,contexts));
+  if (e.disposed) return R.ownerDisposed(expression(e.disposed,ids,programs,futures,encodeValue,contexts));
+  if (e.withOwner) return R.withOwner(...e.withOwner.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if (e.add) return R.add(...e.add.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if (e.mul) return R.multiply(...e.mul.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if (e.same) return R.same(...e.same.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if (e.select) return R.select(...e.select.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue,contexts));
   if (Object.hasOwn(e,'argument'))return R.argument(e.argument);
-  if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue));
+  if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue,contexts));
   if (e.call){
     if(e.args){
       if(e.args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
-      return R.callWith(programs[e.call],...Array.from({length:2},(_,i)=>expression(e.args[i]??{lit:undefined},ids,programs,futures,encodeValue)));
+      return R.callWith(programs[e.call],...Array.from({length:2},(_,i)=>expression(e.args[i]??{lit:undefined},ids,programs,futures,encodeValue,contexts)));
     }
     return R.callProgram(programs[e.call]);
   }
-  if (e.seq) return e.seq.map(x=>expression(x,ids,programs,futures,encodeValue)).reduceRight((next,current)=>next?R.then(current,next):current,null) ?? R.literal(R.vUndefined());
+  if (e.seq) return e.seq.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)).reduceRight((next,current)=>next?R.then(current,next):current,null) ?? R.literal(R.vUndefined());
   if (Object.hasOwn(e,'raise')) return R.throwError(encodeValue(e.raise));
   throw new TypeError('Unknown expression');
 }
@@ -118,7 +129,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers);}
   ownerId(name){
     if(name===null)return 0;
@@ -127,6 +138,7 @@ export class BendRuntime {
     return id;
   }
   encode(value){
+    if((value instanceof BendNoOwnerError||value instanceof BendContextNotFoundError)&&this.errors.get(value.identity)===value)return R.vContextFailure(value.identity,value instanceof BendNoOwnerError?0:1);
     const disposer=this.rootDisposers.identity(value);
     if(disposer!==undefined)return R.vRootDisposer(disposer);
     const described=this.hostErrors.describe(value);
@@ -138,7 +150,17 @@ export class BendRuntime {
     if(described&&typeof described==='object'&&Object.hasOwn(described,'owner')&&typeof described.owner==='string')return R.vOwner(this.ownerId(described.owner));
     return encode(described);
   }
+  context(name,value,description){
+    if(Object.hasOwn(this.contexts,name))throw new TypeError('Context names must be unique');
+    if(description!==undefined&&typeof description!=='string')throw new TypeError('Context descriptions must be strings');
+    const encoded=this.encode(value),id=R.nextContextId(this.world);
+    this.world=R.createContext(this.world,encoded,description===undefined?R.noDescription():R.contextDescription(description));this.contexts[name]=id;this.check();return id;
+  }
   observe(value){
+    if(value instanceof BendNoOwnerError||value instanceof BendContextNotFoundError){
+      if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
+      return {[value instanceof BendNoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};
+    }
     const disposer=this.rootDisposers.identity(value);
     if(disposer!==undefined)return {rootDisposer:this.observe(this.decode(R.vOwner(disposer)))};
     if(value instanceof BendOwner){
@@ -149,12 +171,12 @@ export class BendRuntime {
     return this.hostErrors.observe(value);
   }
   evaluate(expr,previous){
-    const m=R.evaluateExpression(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),this.encode(previous));
+    const m=R.evaluateExpression(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),this.encode(previous));
     this.world=R.resultWorld(m);this.check();return this.decode(R.resultValue(m));
   }
   root(name,expr,{owner='root',transparent=false}={}){
     const parent=this.ownerId(owner),id=R.nextId(this.world);this.ids[name]=id;this.reverse[id]=name;
-    const m=R.createRoot(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>v?.owner===name?R.vOwner(id):this.encode(v)),parent,transparent);
+    const m=R.createRoot(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>v?.owner===name?R.vOwner(id):this.encode(v),this.contexts),parent,transparent);
     this.world=R.resultWorld(m);this.check();return this.decode(R.resultValue(m));
   }
   disposeOwner(name){this.world=R.dispose(this.world,this.ownerId(name));this.check();}
@@ -230,11 +252,11 @@ export class BendRuntime {
       else if(op==='previousCleanup')p=R.programPreviousCleanup(p);
       else if(op==='cleanup')p=R.programCleanup(this.programs[args[0]],p);
       else if(op==='throw')p=R.programThrow(this.encode(args[0]),p);
-      else if(op==='eval')p=R.programEvaluate(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
-      else if(op==='return')p=R.programReturn(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
-      else if(op==='updateExpr')p=R.programUpdateExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
-      else if(op==='setExpr')p=R.programWriteExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
-      else if(op==='throwExpr')p=R.programThrowExpr(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
+      else if(op==='eval')p=R.programEvaluate(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),p);
+      else if(op==='return')p=R.programReturn(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),p);
+      else if(op==='updateExpr')p=R.programUpdateExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),p);
+      else if(op==='setExpr')p=R.programWriteExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),p);
+      else if(op==='throwExpr')p=R.programThrowExpr(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),p);
       else throw new TypeError('Unsupported callback action');
     }
     const id=R.nextProgramId(this.world);this.programs[name]=id;this.programLabels.set(id,this.programLabels.size+1);
@@ -253,14 +275,14 @@ export class BendRuntime {
   }
   awaitValue(name,expr){
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
-    this.world=R.resolveValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)));this.bindAwaiter(id);this.check();
+    this.world=R.resolveValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts));this.bindAwaiter(id);this.check();
   }
   awaitUntil(name,expr,options={}){
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
     const timed=options.timeout!==undefined;
     if(timed&&(!Number.isSafeInteger(options.timeout)||options.timeout<0||options.timeout>2**31-1))throw new RangeError('Timeout protocol admits natural milliseconds through 2^31-1');
     const signal=options.signal===undefined?0:this.controllers[options.signal].id;
-    this.world=R.untilWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),timed,options.timeout??0,signal);this.bindAwaiter(id);this.check();
+    this.world=R.untilWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),timed,options.timeout??0,signal);this.bindAwaiter(id);this.check();
   }
   controller(name){
     const id=R.nextAbortId(this.world),controller=new AbortController();controller.id=id;
@@ -314,7 +336,7 @@ export class BendRuntime {
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
-    this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
+    this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
   }
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
@@ -322,7 +344,7 @@ export class BendRuntime {
     const {user=false,target=2,schedule=false,defer=false}=options;
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     if (!user) this.world=R.attach(this.world,1,target);
-    this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'),this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
+    this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'),this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
   }
   set(name,value) {
     const encoded=this.encode(value);this.world=R.setSignal(this.world,this.ids[name],encoded);this.check();
@@ -331,7 +353,7 @@ export class BendRuntime {
   }
   update(name,expr) {
     // The Bend engine evaluates the updater against its staged slot.
-    const encoded=expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v));
+    const encoded=expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts);
     this.world=R.setUpdater(this.fuel,this.world,this.ids[name],encoded); this.check();
     const n=this.nodes()[this.ids[name]];
     return this.decode(Object.hasOwn(n.pending,'value') ? n.pending.value : n.value);

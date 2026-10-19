@@ -12,15 +12,16 @@ source shapes need. A signal's inactive owner/computed fields have representatio
 defaults; source membership tests use `NodeKind`, not those defaults. This does
 not reproduce or claim JavaScript hidden-class layout/performance. Stable arena
 IDs model identity. They are not Solid's hydration ID strings: `inheritId`,
-child-ID generation, snapshot capture and context-map APIs remain unfinished.
-`scope` stores an inherited context identity; it does not implement lookup.
+child-ID generation and snapshot capture remain unfinished. `scope` now stores
+an inherited ContextRecord identity used by translated context lookup/copy-on-write
+operations; see [contexts.md](contexts.md).
 
 The explicit-parent API facade installs/restores owner and tracking state to
 express the TS test host's `runWithOwner` boundary. The primitive constructor
 does not introduce a new owner scope. Root `_parentComputed` is retained and used
 at constructor height setup, heap insertion and read-observer selection. Nested
-root construction/forwarding have focused probes; full nested callback creation,
-root callback API and arbitrary host closures remain unfinished. Cleanup and reentrant
+root construction/forwarding have focused probes; nested signal/memo/effect creation and arbitrary host closures remain unfinished;
+root callbacks and selected bound-disposer arguments now execute. Cleanup and reentrant
 teardown run through the owner continuation machine.
 
 `Node.x = 0` is null. `runtime/extension.bend:ext` lazily appends the source
@@ -199,3 +200,8 @@ Named callback arguments are bound by substitution across the admitted expressio
 grammar, stopping at fresh root init binders. Updater-returned functions remain
 data; raw function setter inputs execute first, as source setSignal requires.
 See [arguments.md](arguments.md) for the exact family, observation rules and limits.
+
+Context keys and record arenas model fresh Symbol and spread-object identities.
+The source context module is runtime/context.bend; ambient owner/tracking stores
+are runtime/ambient.bend. ContextFailure represents the two production context
+Error subclasses. See [contexts.md](contexts.md) for the exact domain.

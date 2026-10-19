@@ -1,7 +1,7 @@
 # Closed composed root allocation / captured owner / explicit disposal law.
 import Base
 import ../runtime/api.bend as A
-import ../runtime/context.bend as L
+import ../runtime/ambient.bend as L
 import ../representation/base.bend as B
 import ../representation/records.bend as R
 

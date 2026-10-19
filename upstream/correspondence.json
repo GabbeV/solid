@@ -573,22 +573,22 @@
       "restrictions": "Default constructor only: fresh identity, default message and TimeoutError name; native instanceof Error and identity checks. Custom message arguments and stack semantics unfinished."
     },
     "core/core.ts:runWithOwner": {
-      "bend": "runtime/context.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
+      "bend": "runtime/ambient.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
       "status": "restricted",
       "restrictions": "Production owner/context/tracking stores and finally on success/throw; admitted owner handles and callbacks. Dev disposed-owner diagnostics excluded."
     },
     "core/owner.ts:getOwner": {
-      "bend": "runtime/context.bend:getOwner, reference; runtime/core.bend:evaluate",
+      "bend": "runtime/ambient.bend:getOwner, reference; runtime/core.bend:evaluate",
       "status": "restricted",
       "restrictions": "Stable owner IDs/null represent native node object identity. Reflection and arbitrary property access unfinished."
     },
     "core/owner.ts:getObserver": {
-      "bend": "runtime/context.bend:getObserver, reference; runtime/core.bend:evaluate",
+      "bend": "runtime/ambient.bend:getObserver, reference; runtime/core.bend:evaluate",
       "status": "restricted",
       "restrictions": "Tracking guard returns actual ambient owner or null, including untrack/runWithOwner/root contexts."
     },
     "core/owner.ts:isDisposed": {
-      "bend": "runtime/context.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
+      "bend": "runtime/ambient.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
       "status": "restricted",
       "restrictions": "Admitted owner handles; no arbitrary object/getter flags."
     },
@@ -596,6 +596,31 @@
       "bend": "runtime/api.bend:createRoot; runtime/core.bend:evaluate RootScope, RestoreContext; runtime/owner-state.bend:createOwner",
       "status": "partial",
       "restrictions": "Owned/detached and transparent roots, init callbacks including actual bound disposer arguments, returns/throws and cleanup attachment execute. Bound disposer identity/plain invocation and capture via signal updater are represented. Hydration IDs/dev/observe hooks, arbitrary functions and nested signal/memo/effect construction unfinished."
+    },
+    "core/context.ts:createContext": {
+      "bend": "runtime/context.bend:createContext; runtime/api.bend:createContext, nextContextId",
+      "status": "restricted",
+      "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+    },
+    "core/context.ts:getContext": {
+      "bend": "runtime/context.bend:getContext, key, record, lookup, failure; runtime/core.bend:ContextGet, contextGet, contextGetValue, contextGetAt",
+      "status": "restricted",
+      "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+    },
+    "core/context.ts:setContext": {
+      "bend": "runtime/context.bend:setContext, key, record, copyWith, failure; runtime/core.bend:ContextSet, contextSet, contextSetValue, contextSetAt",
+      "status": "restricted",
+      "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+    },
+    "core/error.ts:NoOwnerError.constructor": {
+      "bend": "runtime/context.bend:failure; runtime/error.bend:errorMessage; host/bend.mjs:decode",
+      "status": "restricted",
+      "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
+    },
+    "core/error.ts:ContextNotFoundError.constructor": {
+      "bend": "runtime/context.bend:failure; runtime/error.bend:errorMessage; host/bend.mjs:decode",
+      "status": "restricted",
+      "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

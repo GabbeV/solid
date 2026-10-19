@@ -9831,24 +9831,36 @@
           "start": 20,
           "end": 22,
           "sha256": "9ba98eaa21e831a816d88611d50ab567d18cf29fffdd13486837561a45a37830",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:createContext; runtime/api.bend:createContext, nextContextId",
+            "status": "restricted",
+            "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+          }
         },
         {
           "key": "core/context.ts:getContext",
           "start": 34,
           "end": 48,
           "sha256": "fadc62a682580eb1dcec69581cffd584b7cbe8b5563ba06d8c230795613f5d60",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:getContext, key, record, lookup, failure; runtime/core.bend:ContextGet, contextGet, contextGetValue, contextGetAt",
+            "status": "restricted",
+            "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+          }
         },
         {
           "key": "core/context.ts:setContext",
           "start": 59,
           "end": 70,
           "sha256": "4feef3d790484735c762ccc845dfad1e28de2eb21a1b8efb8b3e3c9e397db1b6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:setContext, key, record, copyWith, failure; runtime/core.bend:ContextSet, contextSet, contextSetValue, contextSetAt",
+            "status": "restricted",
+            "restrictions": "Fresh symbol-key identity/default/selected string description; immutable context keys and symbol-only data records. Source undefined/default versus null rules, owner default parameter, fresh copy-on-write record identity and inherited snapshots execute. Arbitrary reflection/mutable defaults/getters/prototype records and general symbol values remain unfinished."
+          }
         }
       ],
       "branches": [
@@ -10444,7 +10456,7 @@
           "sha256": "c5f029af462230137fd3a029d30b87adb66e016e345c9586ece26778666bf0d7",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/context.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
+            "bend": "runtime/ambient.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
             "status": "restricted",
             "restrictions": "Production owner/context/tracking stores and finally on success/throw; admitted owner handles and callbacks. Dev disposed-owner diagnostics excluded."
           }
@@ -14590,16 +14602,24 @@
           "start": 79,
           "end": 81,
           "sha256": "c66ccaf9f22e19ccda922d5799941d061a7c06338923314a3df2e7813eb7859d",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:failure; runtime/error.bend:errorMessage; host/bend.mjs:decode",
+            "status": "restricted",
+            "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
+          }
         },
         {
           "key": "core/error.ts:ContextNotFoundError.constructor",
           "start": 85,
           "end": 91,
           "sha256": "7adcdee3e22fe7500af499a31c2465ec2cb2bcf7032e13693208f0bae73314a3",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:failure; runtime/error.bend:errorMessage; host/bend.mjs:decode",
+            "status": "restricted",
+            "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
+          }
         }
       ],
       "branches": [
@@ -16983,7 +17003,7 @@
           "sha256": "7da5cb5724396f7ab61c3fc2a7559a1fb1ed8c4de0eed425ff8dc323b5ef3161",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/context.bend:getObserver, reference; runtime/core.bend:evaluate",
+            "bend": "runtime/ambient.bend:getObserver, reference; runtime/core.bend:evaluate",
             "status": "restricted",
             "restrictions": "Tracking guard returns actual ambient owner or null, including untrack/runWithOwner/root contexts."
           }
@@ -16995,7 +17015,7 @@
           "sha256": "5cb6b4a864e545c53fd944185acbde63056702d60fc03fbf59efeef2262dd0c6",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/context.bend:getOwner, reference; runtime/core.bend:evaluate",
+            "bend": "runtime/ambient.bend:getOwner, reference; runtime/core.bend:evaluate",
             "status": "restricted",
             "restrictions": "Stable owner IDs/null represent native node object identity. Reflection and arbitrary property access unfinished."
           }
@@ -17019,7 +17039,7 @@
           "sha256": "118272cd0f1a3f908f91c1d07adaa9b9215d5daa8b28ccf898e9833d74b4c779",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/context.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
+            "bend": "runtime/ambient.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
             "status": "restricted",
             "restrictions": "Admitted owner handles; no arbitrary object/getter flags."
           }

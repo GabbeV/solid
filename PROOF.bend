@@ -63,6 +63,12 @@ def Laws.captured_root_disposes():
 def Laws.init_disposer_is_bound():
   {==}
 
+def Laws.context_records_are_snapshots():
+  {==}
+
+def Laws.context_child_override_is_isolated():
+  {==}
+
 def Laws.callback_argument_zero(first, second):
   {==}
 

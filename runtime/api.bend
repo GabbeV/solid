@@ -9,8 +9,9 @@ import ./construct.bend as N
 import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./signals.bend as J
-import ./context.bend as L
+import ./ambient.bend as L
 import ./callback.bend as Z
+import ./context.bend as Y
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -389,3 +390,25 @@ def vTimeout(identity: Nat) -> R.Value:
 
 def vExternalError(id: Nat, explicit: Bool, kind: U32, name: String, message: String, native: Bool, code: Nat) -> R.Value:
   R.ExternalError{id, explicit, kind, name, message, native, code}
+
+
+def nextContextId(w: R.World) -> Nat:
+  B.length(R.ContextKey, R.World.contextKeys(w))
+
+def createContext(w: R.World, value: R.Value, description: R.Slot) -> R.World:
+  Y.createContext(w, value, description)
+
+def contextGet(key: Nat, owner: R.Expr) -> R.Expr:
+  R.ContextGet{key, owner}
+
+def contextSet(key: Nat, value: R.Expr, owner: R.Expr) -> R.Expr:
+  R.ContextSet{key, value, owner}
+
+def noDescription() -> R.Slot:
+  R.Empty{}
+
+def contextDescription(description: String) -> R.Slot:
+  R.Present{R.StringValue{description}}
+
+def vContextFailure(identity: Nat, kind: U32) -> R.Value:
+  R.ContextFailure{identity, kind}

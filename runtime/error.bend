@@ -26,6 +26,8 @@ def stringify(value: R.Value) -> String:
       "NaN"
     case R.StringValue{s}:
       s
+    case R.ContextFailure{identity, kind}:
+      "Error"
     case R.RootDisposerReference{owner}:
       "function () { [native code] }"
     case R.ExternalError{id, explicit, kind, name, message, native, code}:
@@ -40,6 +42,8 @@ def errorMessage(+original: R.Value) -> String:
     case R.StatusFailure{identity, source, cause, message}:
       message
     case R.NotReadyFailure{identity, source}:
+      ""
+    case R.ContextFailure{identity, kind}:
       ""
     case R.TimeoutFailure{identity}:
       "Timed out waiting for condition"

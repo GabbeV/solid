@@ -10,13 +10,16 @@ schemas={
 'ExternalIterator': [('plan','Nat'),('cursor','Nat'),('returns','Nat')],
 'StreamState': [('node','Nat'),('result','Nat'),('iterator','Nat'),('hadValue','Bool'),('completed','Bool'),('initialRead','Bool'),('syncValue','Value'),('close','Nat')],
 'Transaction': [('nodes','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, Nat>'),('reruns','List<&2, Nat>'),('into','Nat'),('parent','Nat'),('lane','Bool'),('verdict','Nat'),('open','Nat'),('acted','Bool'),('links','Nat'),('shown','Bool'),('held','Bool'),('marks','OptionalIds')],
+'ContextKey': [('defaultValue','Value'),('description','Slot')],
+'ContextEntry': [('key','Nat'),('value','Value')],
+'ContextRecord': [('entries','List<&2, ContextEntry>')],
 'CleanupProgram': [('actions','List<&2, CleanupAction>')],
 'NodeOptions': [('equals','Bool'),('transparent','Bool'),('ownedWrite','Bool'),('lazy','Bool'),('sync','Bool'),('noSnapshot','Bool'),('extraConfig','U32'),('loading','Slot'),('unobserved','Nat')],
 'NodeExtension': [('inFlight','Nat'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
 'Node': [('kind','NodeKind'),('value','Value'),('pending','Slot'),('equals','Bool'),('config','U32'),('flags','U32'),('status','U32'),('time','Nat'),('notified','Stamp'),('deps','Nat'),('depsTail','Nat'),('depGen','Nat'),('subs','Nat'),('subsTail','Nat'),('height','Nat'),('nextHeap','Nat'),('prevHeap','Nat'),('parent','Nat'),('firstChild','Nat'),('nextSibling','Nat'),('prevSibling','Nat'),('expr','Expr'),('modified','Bool'),('prevValue','Value'),('target','Nat'),('loading','Bool'),('x','Nat'),('parentComputed','Nat'),('scope','Nat'),('childCount','Nat'),('disposal','Disposal'),('cleanup','Nat'),('effectProgram','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat')],
 'Link': [('dep','Nat'),('sub','Nat'),('nextDep','Nat'),('prevSub','Nat'),('nextSub','Nat'),('gen','Nat')],
 'TreeNode': [('parent','Nat'),('children','List<&2, Nat>'),('text','Value')],
-'World': [('nodes','List<&2, Node>'),('links','List<&2, Link>'),('buckets','List<&2, Nat>'),('minimum','Nat'),('maximum','Nat'),('marked','Bool'),('pendingNodes','List<&2, Nat>'),('trims','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, Nat>'),('context','Nat'),('tracking','Bool'),('running','Bool'),('scheduled','Bool'),('clock','Nat'),('epoch','Nat'),('tree','List<&2, TreeNode>'),('events','List<&2, TraceEvent>'),('fault','Fault'),('unflushedStaged','Bool'),('promotedWrites','List<&2, Nat>'),('extensions','List<&2, NodeExtension>'),('cleanupPrograms','List<&2, CleanupProgram>'),('dormantNodes','List<&2, Nat>'),('errorSerial','Nat'),('halted','Bool'),('haltNotified','Bool'),('reports','List<&2, Report>'),('callbackEffect','Nat'),('txArena','List<&2, Transaction>'),('transactions','List<&2, Nat>'),('flushTransaction','Nat'),('passTx','Nat'),('passLane','Nat'),('judge','Nat'),('deferredZombies','List<&2, Nat>'),('question','Question'),('pendingSets','List<&2, List<&2, Nat>>'),('asyncObjects','List<&2, AsyncObject>'),('asyncObservers','List<&2, AsyncObserver>'),('hostJobs','List<&2, HostJob>'),('syncDepth','Nat'),('streamPlans','List<&2, StreamPlan>'),('iterators','List<&2, ExternalIterator>'),('streams','List<&2, StreamState>'),('iteratorEvents','List<&2, IteratorEvent>'),('awaiters','List<&2, Awaiter>'),('truthReadHook','Bool'),('truthConfirmedHook','Bool'),('questions','Question'),('abortInputs','List<&2, AbortInput>')]
+'World': [('nodes','List<&2, Node>'),('links','List<&2, Link>'),('buckets','List<&2, Nat>'),('minimum','Nat'),('maximum','Nat'),('marked','Bool'),('pendingNodes','List<&2, Nat>'),('trims','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, Nat>'),('context','Nat'),('tracking','Bool'),('running','Bool'),('scheduled','Bool'),('clock','Nat'),('epoch','Nat'),('tree','List<&2, TreeNode>'),('events','List<&2, TraceEvent>'),('fault','Fault'),('unflushedStaged','Bool'),('promotedWrites','List<&2, Nat>'),('extensions','List<&2, NodeExtension>'),('cleanupPrograms','List<&2, CleanupProgram>'),('dormantNodes','List<&2, Nat>'),('errorSerial','Nat'),('halted','Bool'),('haltNotified','Bool'),('reports','List<&2, Report>'),('callbackEffect','Nat'),('txArena','List<&2, Transaction>'),('transactions','List<&2, Nat>'),('flushTransaction','Nat'),('passTx','Nat'),('passLane','Nat'),('judge','Nat'),('deferredZombies','List<&2, Nat>'),('question','Question'),('pendingSets','List<&2, List<&2, Nat>>'),('asyncObjects','List<&2, AsyncObject>'),('asyncObservers','List<&2, AsyncObserver>'),('hostJobs','List<&2, HostJob>'),('syncDepth','Nat'),('streamPlans','List<&2, StreamPlan>'),('iterators','List<&2, ExternalIterator>'),('streams','List<&2, StreamState>'),('iteratorEvents','List<&2, IteratorEvent>'),('awaiters','List<&2, Awaiter>'),('truthReadHook','Bool'),('truthConfirmedHook','Bool'),('questions','Question'),('abortInputs','List<&2, AbortInput>'),('contextKeys','List<&2, ContextKey>'),('contextRecords','List<&2, ContextRecord>')]
 }
 header='''# Generated by tools/records.py; edit the schema, not the rebuilders.
 import Base
@@ -29,6 +32,7 @@ type Value is Data:
   Reference{id: Nat}
   OwnerReference{id: Nat}
   RootDisposerReference{owner: Nat}
+  ContextFailure{identity: Nat, kind: U32}
   NotANumber{}
   StringValue{s: String}
   StatusFailure{identity: Nat, source: Nat, cause: Value, message: String}
@@ -123,6 +127,8 @@ type Expr is Data:
   OwnerDisposed{owner: Expr}
   RootScope{body: Expr, transparent: Bool}
   DisposeRoot{owner: Expr}
+  ContextGet{key: Nat, owner: Expr}
+  ContextSet{key: Nat, value: Expr, owner: Expr}
   Raise{cause: Value}
   CallProgram{callback: Nat}
   CallWith{callback: Nat, first: Expr, second: Expr}

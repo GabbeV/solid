@@ -6,7 +6,7 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);
   }
   ownerFor(name){
     if(name===null)return null;
@@ -15,6 +15,7 @@ export class SolidRuntime {
     return owner;
   }
   value(v) {
+    if(v instanceof this.S.NoOwnerError||v instanceof this.S.ContextNotFoundError)return v;
     if(typeof v==='function'&&!this.rootDisposers.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
     const described=this.hostErrors.describe(v);
     if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
@@ -37,6 +38,8 @@ export class SolidRuntime {
   evaluate(e,prev,values=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values));}
+    if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values),this.evaluate(owner,prev,values));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
     if(e.root)return this.S.createRoot(dispose=>{const owner=this.S.getOwner();this.ownerObjects.add(owner);this.rootDisposers.set(dispose,owner);return this.evaluate(e.root,prev,[dispose]);},{transparent:e.transparent??false});
@@ -66,7 +69,16 @@ export class SolidRuntime {
     },{transparent}));
   }
   disposeOwner(name){this.ownerFor(name).dispose();}
+  context(name,value,description){
+    if(Object.hasOwn(this.contexts,name))throw new TypeError('Context names must be unique');
+    if(description!==undefined&&typeof description!=='string')throw new TypeError('Context descriptions must be strings');
+    this.contexts[name]=this.S.createContext(this.value(value),description);
+  }
   observe(value) {
+    if(value instanceof this.S.NoOwnerError||value instanceof this.S.ContextNotFoundError){
+      if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
+      return {[value instanceof this.S.NoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};
+    }
     if(this.rootDisposers.has(value))return {rootDisposer:this.observe(this.rootDisposers.get(value))};
     for(const [name,owner] of Object.entries(this.owners))if(value===owner)return {owner:name};
     if(this.sourceNames.has(value))return {owner:this.sourceNames.get(value)};

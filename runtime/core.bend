@@ -20,9 +20,10 @@ import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./watch-state.bend as U
 import ./write.bend as W
-import ./context.bend as L
+import ./ambient.bend as L
 import ./owner-state.bend as D
 import ./callback.bend as Z
+import ./context.bend as Y
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -51,6 +52,8 @@ type Task is Data:
   RestoreContext{owner: Nat, tracking: Bool}
   CheckDisposed{}
   DisposeRoot{}
+  ContextGet{key: Nat}
+  ContextSet{key: Nat}
   ReadNode{id: Nat}
   ReadPrepared{id: Nat}
   ReadStatus{id: Nat}
@@ -191,6 +194,10 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
         Evaluate{Z.bind(body, R.RootDisposerReference{id}, R.Undefined{}), prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
     case R.DisposeRoot{owner}:
       Machine{w, Evaluate{owner, prev} <> DisposeRoot{} <> rest, stack}
+    case R.ContextGet{key, owner}:
+      Machine{w, Evaluate{owner, prev} <> ContextGet{key} <> rest, stack}
+    case R.ContextSet{key, value, owner}:
+      Machine{w, Evaluate{value, prev} <> Evaluate{owner, prev} <> ContextSet{key} <> rest, stack}
     case R.Argument{index}:
       Machine{w, rest, R.Undefined{} <> stack}
     case R.CallWith{callback, first, second}:
@@ -301,6 +308,53 @@ def invoke(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
   match stack:
     case value <> tail:
       invokeValue(w, rest, tail, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# core/context.ts argument/default-parameter seams. The value argument of a
+# write is evaluated before the owner argument, as in the source call.
+def contextGetAt(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, key: Nat, owner: Nat) -> Machine:
+  +pair = Y.getContext(w, key, owner)
+  +w = B.first(R.World, R.Value, pair)
+  B.choose(~Machine, B.ok(w), _ => Machine{w, rest, B.second(R.World, R.Value, pair) <> tail}, _ => Machine{w, rest, tail})
+
+def contextGetValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +key: Nat, owner: R.Value) -> Machine:
+  match owner:
+    case R.OwnerReference{id}:
+      contextGetAt(w, rest, tail, key, id)
+    case R.Null{}:
+      contextGetAt(w, rest, tail, key, 0n)
+    case R.Undefined{}:
+      contextGetAt(w, rest, tail, key, R.World.context(w))
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def contextGet(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +key: Nat) -> Machine:
+  match stack:
+    case owner <> tail:
+      contextGetValue(w, rest, tail, key, owner)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+def contextSetAt(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, key: Nat, value: R.Value, owner: Nat) -> Machine:
+  +w = Y.setContext(w, key, value, owner)
+  B.choose(~Machine, B.ok(w), _ => Machine{w, rest, R.Undefined{} <> tail}, _ => Machine{w, rest, tail})
+
+def contextSetValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +key: Nat, +value: R.Value, owner: R.Value) -> Machine:
+  match owner:
+    case R.OwnerReference{id}:
+      contextSetAt(w, rest, tail, key, value, id)
+    case R.Null{}:
+      contextSetAt(w, rest, tail, key, value, 0n)
+    case R.Undefined{}:
+      contextSetAt(w, rest, tail, key, value, R.World.context(w))
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def contextSet(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +key: Nat) -> Machine:
+  match stack:
+    case owner <> value <> tail:
+      contextSetValue(w, rest, tail, key, value, owner)
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -1211,6 +1265,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       checkDisposed(w, rest, stack)
     case DisposeRoot{} <> rest:
       disposeRoot(w, rest, stack)
+    case ContextGet{key} <> rest:
+      contextGet(w, rest, stack, key)
+    case ContextSet{key} <> rest:
+      contextSet(w, rest, stack, key)
     case ReadNode{id} <> +rest:
       readNode(w, rest, stack, id)
     case ReadPrepared{id} <> +rest:

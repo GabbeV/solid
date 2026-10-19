@@ -238,3 +238,9 @@ bring the totals to 1231 differential histories and twenty composed closed
 regressions, one negative. Two general callback-binding helper laws also check.
 See [arguments.md](arguments.md) for selected function values, setter invocation
 versus updater-returned data, native callable materialization and explicit limits.
+
+52 owner-context histories bring the differential total to 1283. The low-level
+context module now uses inherited copied records and fresh Symbol-key identity;
+see [contexts.md](contexts.md). Two closed snapshot/isolation laws bring the
+composed closed total to twenty-two (one negative). High-level component/provider
+apis and arbitrary context/key/prototype reflection remain unfinished.

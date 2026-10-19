@@ -32,7 +32,7 @@ These are port-side observations. None establishes an upstream bug.
 
 | Area | Current gap | Required treatment |
 | --- | --- | --- |
-| Node construction | `api.allocate` has been removed. Separate signal/computed/effect/owner literals retain their own option masks, lazy/loading defaults, parent links and setup order; sync is opt-in. | 7,680 constructor comparisons cover the production subset and lazy extension defaults; nested-root heap/read forwarding has direct probes. Hydration IDs, snapshot/external hooks, context APIs and callbacks remain unfinished. See [representation.md](representation.md). |
+| Node construction | `api.allocate` has been removed. Separate signal/computed/effect/owner literals retain their own option masks, lazy/loading defaults, parent links and setup order; sync is opt-in. | 7,680 constructor comparisons cover the production subset and lazy extension defaults; nested-root heap/read forwarding has direct probes. Hydration IDs, snapshot/external hooks and arbitrary/nested-constructor callbacks remain unfinished. Owner context lookup/copy-on-write now executes; see [contexts.md](contexts.md). See [representation.md](representation.md). |
 | Refresh helper | The original port called markNode/enqueueSub, eagerly propagating CHECK and changing the heap minimum; source markRefresh updates the target flags, calls insertIntoHeap, then schedule. | This checkpoint replaces that substitution with core.markRefresh in source order, including REASK flag classification. Async classification remains unfinished. |
 | Public promise helpers | The public resolve/refresh watchers now execute eager resolve, deferred/coalesced refresh, source frame delivery, pending/error handling and native promise IO before disposal. markRefresh remains a separate helper. | 158 histories and 6,144 watch-body comparisons. Arbitrary callback/store targets, returned-thenable assimilation and active truth/lagging/lane scopes remain unfinished; see [watchers.md](watchers.md). |
 | Commit (`scheduler.commitPendingNode`) | Separate source branches preserve publication/configuration order and status bits, close `_loading`, queue staged effects, and use nullable extension state for shown-error/reask/flushed resets and the nullish error trim gate. | 4,608 comparisons with the actual TS helper cover internal state/queues, including the in-flight bit branch and absent/null/false/error metadata. Staged-error publication and parked teardown execute; these probes do not establish async or transaction execution. |
@@ -151,3 +151,10 @@ arguments and source setter function branching. The shared setter remainder
 still owns equality/publication; updater-returned functions are not re-invoked.
 See [arguments.md](arguments.md) for 71 histories, the closed bound-disposer law,
 ABI helper laws and remaining function/constructor limitations.
+
+Production context.ts now has separate create/get/set functions with fresh key
+and copied-record identities, exact undefined/default/null rules and fresh
+NoOwnerError/ContextNotFoundError constructors. 52 public histories compare
+record contents, order and aliases; two closed laws cover root inheritance and
+child isolation. The ambient globals helper moved to runtime/ambient.bend so
+runtime/context.bend follows the source module boundary.

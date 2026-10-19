@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject twenty-five source-changing variants
+npm run mutations                # reject twenty-nine source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -43,7 +43,8 @@ halts. Pending catches, held reads/writes, staged errors and mainline transactio
 park/land now run in the same driver. Ordinary typed promise-like flights now register, settle/reject and flush; typed iterator initial drains, later yields, cancellation and flattening also execute; active boundary/lane scopes remain unfinished. See [the async milestone](tracking/async.md). Public resolve/refresh watchers also execute for admitted payloads/accessor targets; see [the watcher milestone](tracking/watchers.md). Owner/observer handles, owned/detached root callbacks and runWithOwner also execute;
 see [ownership coverage](tracking/ownership.md). Bound root disposers are callable
 and retain identity through argument passing and updater storage; see
-[argument/function coverage](tracking/arguments.md). Arbitrary host JavaScript callbacks are not yet supported.
+[argument/function coverage](tracking/arguments.md). Low-level context keys,
+lookup and copied owner records also execute; see [context coverage](tracking/contexts.md). Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 
