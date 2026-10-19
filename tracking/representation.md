@@ -33,20 +33,20 @@ exists after their ordinary synchronous executions.
 | --- | --- | --- |
 | `_notifiedAt`, `_flushedAt`: -1 or clock/epoch | `Unstamped` or `Stamped(Nat)` | Notify rewrite fast path, held-stash bookkeeping. Epoch now starts at source zero; no offset convention. |
 | `NOT_PENDING` or payload | `Empty` or `Present(Value)` | Pending slot, flushed stash and lane storage distinguish staged undefined. Lane engine is unfinished. |
-| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReadyFailure retains identity/source; pending helpers execute, while flight callers remain unfinished. |
+| `_error`, `_shownError` | `Value`, including distinct undefined/null/false | Commit's nullish error gate and shown-error clearing. Identity-bearing StatusFailure wrappers retain source/cause and propagate through synchronous error paths. NotReadyFailure retains identity/source; pending helpers and typed flight callers execute. |
 | `_inFlight`, `_flightTeardown`, `_unobserved`, `_transaction` | Nullable stable host identities | Default initialization and unobserved installer; sync pass and owner death clear flight identity. Restricted cancellation/unobserved callbacks, ordinary promise settlement, typed iterator consumption/close and mainline transactions execute. Arbitrary iterator methods and active scopes remain unfinished. |
-| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Loading park/settle and self-only landing helpers retain blocked semantics; actual async callers unfinished. |
-| `_pendingSources`: undefined or Set | `NoSources` or `Sources(List)` | Unique ordered-ID set helpers implement registration, propagation and retirement; empty retirement restores absence. Actual flights/transactions remain unfinished. |
+| `_blocked`: undefined or boolean | Optional `Slot(Boolean)` | Loading park/settle and self-only landing helpers retain blocked semantics; actual typed async callers execute. |
+| `_pendingSources`: undefined or Set | Nullable handle into World.pendingSets; view-only NoSources/Sources | Stable aliased sets, tombstone/live iteration, propagation and retirement; typed flights/mainline transactions execute. |
 | `_snapshotValue`: undefined, `NO_SNAPSHOT`, or payload | `NoSnapshotValue`, `UndefinedSnapshot`, `SnapshotValue` | Storage/default only; snapshot engine unfinished. |
 | `_pendingFirstChild`, `_pendingDisposal` | Nullable child ID and explicit absent/single/list disposal shape | Source parked teardown is integrated with commit/recompute and exception unwinding; directly compared against TS. |
-| `_reask`, `_q`, `_marks` | Boolean and natural counters | Default storage; sync/commit reask reset. Question/mark engines unfinished. |
+| `_reask`, `_q`, `_marks` | Boolean, exact binary Question, natural mark handle | Quiet reask metadata and flight provenance execute; question stores/counters are distinct. Active action/mark scopes remain unfinished. |
 
 Commit tests compare null/undefined/error-false separately: `_error == null` is
 not a truthiness test. The stash helper preserves the first flushed staging in
 one clock even across later rewrites, including undefined, and exposes it only
-under the source guards. These direct state probes do not implement a held-frame
-transaction program. `setSignal` still lacks held-transaction joining and the
-stash caller path; actual held writes must wait for that translation.
+under the source guards. Held-frame transactions, setter joining and the stash caller now execute through
+the same runtime, with separate end-to-end/closed-proof evidence; direct probe
+counts remain distinct from that composed evidence.
 
 Public host options cover default equality/false, transparent/ownedWrite/lazy/sync,
 noSnapshot masks and synchronous loading seeds. `unobserved` resolves a named executable callback program; `_extraConfig` stays
@@ -146,3 +146,9 @@ microtask IO; PromiseOutcome is synchronous native resolve/reject IO before the
 callback's disposal. WatchExpr/WatchFinish retain the callback catch/return edge
 inside the actual computation. Known truth/confirmed installers have separate
 Boolean presence tags; active truth/lagging scopes remain unfinished.
+
+Question identities now use canonical bijective binary naturals, preserving exact
+source values without forcing the kernel to unfold the 0x7fffffff mainline ID as
+billions of unary constructors. World.questions is the sequence counter, separate
+from ambient World.question. See [question-ids.md](question-ids.md) for numeric
+source comparisons, general helper proofs and five composed async laws.

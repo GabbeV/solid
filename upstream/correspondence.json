@@ -528,9 +528,9 @@
       "restrictions": "Detach each nonempty queue and execute ordered node-bound runners; preserves throws and phase ordering."
     },
     "core/async.ts:handleAsync": {
-      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease",
+      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen",
       "status": "partial",
-      "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished."
+      "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished. Question provenance uses exact binary natural IDs, with 69 numeric source comparisons; statement order remains unchanged."
     },
     "signals.ts:watch": {
       "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined",
@@ -546,6 +546,16 @@
       "bend": "runtime/signals.bend:refresh, startRefresh, makeWatch, deliver; runtime/api.bend:refresh; host/bend.mjs:awaitRefresh",
       "status": "partial",
       "restrictions": "Accessor targets; invalid production target resolves undefined. Synchronous mark/transaction capture, deferred rooted watcher, FRESH_READ/AUTHORITATIVE first pass, own-node capture, guessed-target status check, microtask answer and node disposal. Same-tick coalescing/equal landings/supersession tested. Store targets, active truth/lane/deferred hooks, native thenable assimilation and dev/observe branches unfinished."
+    },
+    "core/scheduler.ts:setQuestion": {
+      "bend": "runtime/question.bend:setQuestion; representation/records.bend:World.question",
+      "status": "restricted",
+      "restrictions": "Source ambient numeric identity store, represented by exact binary naturals. Separate from the sequence counter; native source comparisons within admitted safe integers. No action/lane API claim."
+    },
+    "core/scheduler.ts:nextQuestion": {
+      "bend": "runtime/question.bend:nextQuestion, increment; representation/records.bend:World.questions",
+      "status": "restricted",
+      "restrictions": "Separate ++questions counter and return, without installing ambient question. Binary-natural representation avoids unary expansion of source MAINLINE_QUESTION 0x7fffffff; no wraparound or disjoint special sentinel. 4096 source increments, 5 large starting boundaries and general meaning/increment kernel lemmas. Native JS precision beyond admitted integers remains outside scope."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

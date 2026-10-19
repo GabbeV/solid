@@ -6,6 +6,9 @@ import ./proof/ownership.bend as Ownership
 import ./proof/errors.bend as Errors
 import ./proof/pending.bend as Pending
 import ./proof/transaction.bend as Transaction
+import ./proof/flight.bend as Flight
+import ./proof/question.bend as Question
+import ./runtime/question.bend as Q
 
 # Concrete composed regressions through actual API construction, driver,
 # reads, heap, staging/commit and attached text. Generalization stays open.
@@ -35,6 +38,33 @@ law transaction_parks:
 
 law transaction_lands:
   {Transaction.view(Transaction.landed()) == Transaction.expectedLand() : Transaction.View}
+
+law loading_seed_waits:
+  {Flight.view(Flight.waiting()) == Flight.expectedWait() : Flight.View}
+
+law promise_lands:
+  {Flight.view(Flight.landed()) == Flight.expectedLand() : Flight.View}
+
+law stale_promise_is_ignored:
+  {Flight.replacementView(Flight.staleCallback()) == Flight.expectedStale() : Flight.View}
+
+law newest_promise_lands:
+  {Flight.replacementView(Flight.newestCallback()) == Flight.expectedNewest() : Flight.View}
+
+law async_diamond_lands:
+  {Flight.diamondView(Flight.diamondLanded()) == Flight.expectedDiamond() : Flight.DiamondView}
+
+law question_increment_meaning:
+  for +value: R.Question
+  {Question.meaning(Q.increment(value)) == 1n+Question.meaning(value) : Nat}
+
+law question_from_nat_meaning:
+  for +value: Nat
+  {Question.meaning(Q.fromNat(value)) == value : Nat}
+
+law question_equal_reflexive:
+  for +value: R.Question
+  {Q.equal(value, value) == True{} : Bool}
 
 law nan_is_not_equal:
   {B.equal(R.NotANumber{}, R.NotANumber{}) == False{} : Bool}

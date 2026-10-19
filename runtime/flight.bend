@@ -12,6 +12,7 @@ import ./status.bend as A
 import ./write.bend as W
 import ./graph.bend as G
 import ./owner.bend as O
+import ./question.bend as J
 
 def newThenable(+w: R.World, immediate: Bool, state: R.AsyncSettlement) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObject, R.World.asyncObjects(w))
@@ -23,19 +24,26 @@ def newObserver(+w: R.World, +node: Nat, +result: Nat) -> B.Bundle<R.World, Nat>
   B.Bundle{w, id}
 
 # Before .then(): result identity, question provenance and fresh own-flight set.
-def startFlight(+w: R.World, +id: Nat, +result: Nat) -> R.World:
+def recordFlight(+w: R.World, +id: Nat, result: Nat) -> R.World:
   +w = E.ext(w, id)
-  +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), result))
-  +w = B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), B.choose(~Nat, Nat.is_ne(R.World.question(w), 0n), _ => R.World.question(w), _ => 2147483647n)))
-  P.clearPendingSources(w, id)
+  B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), result))
+
+def recordQuestion(+w: R.World, +id: Nat) -> R.World:
+  B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), B.choose(~R.Question, J.isZero(R.World.question(w)), _ => J.mainline(), _ => R.World.question(w))))
+
+def startFlight(w: R.World, +id: Nat, result: Nat) -> R.World:
+  P.clearPendingSources(recordQuestion(recordFlight(w, id, result), id), id)
+
+def addObserver(+w: R.World, +result: Nat, observer: Nat) -> R.World:
+  +object = B.asyncObject(w, result)
+  B.store_asyncObject(w, result, R.AsyncObject.with_observers(object, B.append(Nat, R.AsyncObject.observers(object), [observer])))
 
 def register(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Nat>:
   +w = startFlight(w, id, result)
   +pair = newObserver(w, id, result)
   +w = B.first(R.World, Nat, pair)
   +observer = B.second(R.World, Nat, pair)
-  +w = B.store_asyncObject(w, result, R.AsyncObject.with_observers(B.asyncObject(w, result), B.append(Nat, R.AsyncObject.observers(B.asyncObject(w, result)), [observer])))
-  B.Bundle{w, observer}
+  B.Bundle{addObserver(w, result, observer), observer}
 
 def enqueueDelivery(+w: R.World, observer: Nat, rejected: Bool, value: R.Value) -> R.World:
   R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.DeliveryJob{observer, rejected, value}]))

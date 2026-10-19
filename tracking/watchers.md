@@ -91,6 +91,6 @@ settled answer. Accessor reads of ordinary async memos resolve their payloads an
 are covered. Arbitrary store targets, timeout/abort/until, inPass callbacks and
 active truth/lagging scopes remain unfinished.
 
-No new async semantic proof was added. Existing composed kernel laws still check
-through this runtime. These tests and source-operation mappings support fidelity;
+The watcher milestone adds no watcher semantic theorem. Separate ordinary-flight
+closed laws now check through this runtime; see [question-ids.md](question-ids.md). These tests and source-operation mappings support fidelity;
 they do not establish formal TypeScript/Bend equivalence or general progress.

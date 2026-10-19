@@ -4,6 +4,7 @@ import ../../representation/base.bend as B
 import ../../runtime/construct.bend as N
 import ../../runtime/extension.bend as E
 import ../../runtime/constants.bend as K
+import ../../runtime/question.bend as J
 import ../../runtime/heap.bend as H
 import ../../runtime/core.bend as C
 
@@ -36,7 +37,7 @@ type Allocation is Data:
 def allocation() -> Allocation:
   +w = N.signal(B.empty(), R.Number{11n}, N.defaults())
   +first = E.ext(w, 1n)
-  +second = B.store_extension(first, 1n, R.NodeExtension.with_q(B.extension(first, 1n), 19n))
+  +second = B.store_extension(first, 1n, R.NodeExtension.with_q(B.extension(first, 1n), J.fromNat(19n)))
   Allocation{w, first, E.ext(second, 1n)}
 
 def heapUnderRoot() -> R.World:

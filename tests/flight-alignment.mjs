@@ -1,3 +1,4 @@
+import {decodeQuestion} from './question-codec.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -30,7 +31,7 @@ try{
     const xs=list(w.extensions),sets=list(w.pendingSets),errors=new Map();
     const decode=v=>{if('source'in v&&'identity'in v){if(!errors.has(v.identity))errors.set(v.identity,errors.size+1);return {kind:'cause'in v?'error':'pending',identity:errors.get(v.identity),source:v.source,...('cause'in v?{cause:decode(v.cause)}:{})};}return v.$==='Null'?null:'n'in v?v.n:'b'in v?v.b:undefined;};
     return {returned:'value'in result,result:decode(result.value??{}),nodes:list(w.nodes).slice(1).map(n=>({value:decode(n.value),config:n.config,flags:n.flags,status:n.status,time:n.time,loading:n.loading,pending:'value'in n.pending,pendingValue:decode(n.pending.value??{}),deps:n.deps,tail:n.depsTail,subs:n.subs,subsTail:n.subsTail,first:n.firstChild,next:n.nextSibling,prev:n.prevSibling,gen:n.depGen,
-      x:n.x?{flight:xs[n.x].inFlight,q:xs[n.x].q,error:decode(xs[n.x].error),shown:decode(xs[n.x].shownError),blocked:'value'in xs[n.x].blocked?decode(xs[n.x].blocked.value):undefined,sources:xs[n.x].pendingSources?list(sets[xs[n.x].pendingSources]).filter(id=>id!==0):undefined,tx:xs[n.x].transaction}:null})),
+      x:n.x?{flight:xs[n.x].inFlight,q:decodeQuestion(xs[n.x].q),error:decode(xs[n.x].error),shown:decode(xs[n.x].shownError),blocked:'value'in xs[n.x].blocked?decode(xs[n.x].blocked.value):undefined,sources:xs[n.x].pendingSources?list(sets[xs[n.x].pendingSources]).filter(id=>id!==0):undefined,tx:xs[n.x].transaction}:null})),
       links:list(w.links).slice(1).map(l=>({...l,$:undefined})),pending:list(w.pendingNodes),trims:list(w.trims),live:list(w.transactions),clock:w.clock,scheduled:w.scheduled,running:w.running,context:w.context,tracking:w.tracking,halted:w.halted,threw:w.fault.$!=='Healthy',exception:decode(w.fault.cause??{}),queues:[list(w.renderQueue),list(w.userQueue)]};
   }
   function reference(mode,action,status,flags,config,loading,subscriber,staging,held,code){

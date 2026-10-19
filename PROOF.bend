@@ -1,6 +1,7 @@
 import Base
 import ./LAWS.bend as Laws
 import ./proof/paths.bend as Paths
+import ./proof/question.bend as Question
 
 def Laws.chain_once():
   {==}
@@ -28,6 +29,30 @@ def Laws.transaction_parks():
 
 def Laws.transaction_lands():
   {==}
+
+def Laws.loading_seed_waits():
+  {==}
+
+def Laws.promise_lands():
+  {==}
+
+def Laws.stale_promise_is_ignored():
+  {==}
+
+def Laws.newest_promise_lands():
+  {==}
+
+def Laws.async_diamond_lands():
+  {==}
+
+def Laws.question_increment_meaning(value):
+  Question.incrementMeaning(value)
+
+def Laws.question_from_nat_meaning(value):
+  Question.fromNatMeaning(value)
+
+def Laws.question_equal_reflexive(value):
+  Question.equalReflexive(value)
 
 def Laws.nan_is_not_equal():
   {==}

@@ -159,7 +159,7 @@ def blank_tree() -> R.TreeNode:
 def blank_extension() -> R.NodeExtension:
   R.NodeExtension{0n, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
-    R.Unstamped{}, 0n, R.Empty{}, 0n, R.Undefined{}}
+    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Undefined{}}
 
 def stampMatches(stamp: R.Stamp, value: Nat) -> Bool:
   match stamp:
@@ -203,7 +203,7 @@ def blank_asyncObserver() -> R.AsyncObserver:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], 0n, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}}], False{}, False{}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}}], False{}, False{}, R.QuestionZero{}}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())

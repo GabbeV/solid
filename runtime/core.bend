@@ -52,6 +52,11 @@ type Task is Data:
   Recompute{id: Nat, create: Bool}
   Finish{frame: PassFrame}
   AfterThen{frame: PassFrame, observer: Nat}
+  RegisterFlight{frame: PassFrame, id: Nat, result: Nat}
+  RegisterQuestion{frame: PassFrame, id: Nat, result: Nat}
+  RegisterSources{frame: PassFrame, id: Nat, result: Nat}
+  RegisterObserver{frame: PassFrame, id: Nat, result: Nat}
+  SubscribeThen{frame: PassFrame, result: Nat, observer: Nat}
   AfterIterator{frame: PassFrame}
   IterateStream{stream: Nat}
   AfterStep{observer: Nat}
@@ -521,10 +526,11 @@ def subscribeState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
         _ => Machine{w, AsyncReject{observer, error} <> AfterThen{frame, observer} <> rest, stack},
         _ => Machine{F.enqueueDelivery(w, observer, True{}, error), AfterThen{frame, observer} <> rest, stack})
 
-def subscribe(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame, id: Nat, +result: Nat) -> Machine:
-  +pair = F.register(w, id, result)
-  +w = B.first(R.World, Nat, pair)
-  subscribeState(w, rest, stack, frame, B.second(R.World, Nat, pair), R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
+# Source assignment boundaries are explicit return points. They do not yield
+# to host jobs: the same run continues to the .then call before returning.
+def subscribe(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame, id: Nat, result: Nat) -> Machine:
+  Machine{w, RegisterFlight{frame, id, result} <> rest, stack}
+
 
 # handleAsync:consumeIterator. The close callback belongs to the ambient
 # owner for LIVE consumption, and directly to el for deferred flattening.
@@ -1061,6 +1067,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       recompute(w, rest, stack, id, create)
     case Finish{frame} <> rest:
       finish(w, rest, stack, frame)
+    case RegisterFlight{frame, +id, +result} <> rest:
+      Machine{F.recordFlight(w, id, result), RegisterQuestion{frame, id, result} <> rest, stack}
+    case RegisterQuestion{frame, +id, result} <> rest:
+      Machine{F.recordQuestion(w, id), RegisterSources{frame, id, result} <> rest, stack}
+    case RegisterSources{frame, +id, result} <> rest:
+      Machine{P.clearPendingSources(w, id), RegisterObserver{frame, id, result} <> rest, stack}
+    case RegisterObserver{frame, id, +result} <> rest:
+      +pair = F.newObserver(w, id, result)
+      Machine{B.first(R.World, Nat, pair), SubscribeThen{frame, result, B.second(R.World, Nat, pair)} <> rest, stack}
+    case SubscribeThen{frame, +result, +observer} <> rest:
+      +w = F.addObserver(w, result, observer)
+      subscribeState(w, rest, stack, frame, observer, R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
     case AfterThen{frame, observer} <> rest:
       afterThen(w, rest, stack, frame, observer)
     case AfterIterator{frame} <> rest:
@@ -1136,6 +1154,16 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case Finish{frame} <> rest:
+      catchPass(w, rest, frame)
+    case RegisterFlight{frame, id, result} <> rest:
+      catchPass(w, rest, frame)
+    case RegisterQuestion{frame, id, result} <> rest:
+      catchPass(w, rest, frame)
+    case RegisterSources{frame, id, result} <> rest:
+      catchPass(w, rest, frame)
+    case RegisterObserver{frame, id, result} <> rest:
+      catchPass(w, rest, frame)
+    case SubscribeThen{frame, result, observer} <> rest:
       catchPass(w, rest, frame)
     case AfterThen{frame, observer} <> rest:
       catchPass(w, rest, frame)

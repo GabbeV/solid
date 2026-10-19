@@ -1925,9 +1925,9 @@
           "sha256": "8bc25d3e9fcb685affd7b929e39b340820fd4ed6747cbb62a08278d22c81803f",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease",
+            "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen",
             "status": "partial",
-            "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished."
+            "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished. Question provenance uses exact binary natural IDs, with 69 numeric source comparisons; statement order remains unchanged."
           }
         },
         {
@@ -17788,16 +17788,24 @@
           "start": 648,
           "end": 650,
           "sha256": "b02f99fdf9616b8ae5f78c0f333c210ac16dc8db9347b488b9a841b20e0f610d",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/question.bend:setQuestion; representation/records.bend:World.question",
+            "status": "restricted",
+            "restrictions": "Source ambient numeric identity store, represented by exact binary naturals. Separate from the sequence counter; native source comparisons within admitted safe integers. No action/lane API claim."
+          }
         },
         {
           "key": "core/scheduler.ts:nextQuestion",
           "start": 651,
           "end": 653,
           "sha256": "80b0ac313c643d28802d8cda064b260ffd2c775e341d4a3e3736254e640b3870",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/question.bend:nextQuestion, increment; representation/records.bend:World.questions",
+            "status": "restricted",
+            "restrictions": "Separate ++questions counter and return, without installing ambient question. Binary-natural representation avoids unary expansion of source MAINLINE_QUESTION 0x7fffffff; no wraparound or disjoint special sentinel. 4096 source increments, 5 large starting boundaries and general meaning/increment kernel lemmas. Native JS precision beyond admitted integers remains outside scope."
+          }
         },
         {
           "key": "core/scheduler.ts:setEffectCallback",

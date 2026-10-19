@@ -55,7 +55,7 @@ restored ambient context, and successful completion within the execution budget.
 The independent kernel checks the actual constructed executions. A separate
 reusable path-composition lemma is checked for arbitrary machine states.
 These concrete regressions are **not arbitrary-value, arbitrary-graph,
-arbitrary-history, async, or optimistic consistency theorems**.
+arbitrary-history, general async, or optimistic consistency theorems**.
 
 A separate concrete cleanup proof checks reentrant root disposal through the
 active owner machine: detached cleanup lists, exact callback order, effect cleanup
@@ -105,3 +105,8 @@ successful or settled work.
 `build/verification.json` only after a successful independent-kernel check.
 See [verification](tracking/verification.md) for the exact trust boundary and the
 open generalization work.
+
+Five additional closed async laws cover loading, landing, supersession and a
+pending diamond. Their explicit external input and the exact binary question-ID
+representation are documented in [question-ids.md](tracking/question-ids.md).
+Iterator pumping, native job timing and public watchers remain tested domains.

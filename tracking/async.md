@@ -115,10 +115,10 @@ claim arbitrary JavaScript closure support. Active boundary/lane/mark/store hook
 and public actions remain open. Resolve/refresh watchers now execute in their restricted scope; see [watchers.md](watchers.md). Installed full-index hook bodies
 are inert only for the admitted scope.
 
-An attempted composed loading-seed/landing proof exhausted the pinned independent
-kernel's reduction fuel, even after narrowing to tree text and splitting named
-construction stages. The frontend accepted it; the kernel did not validate it.
-Those attempted laws are not active or counted. The existing nine composed
-concrete regressions remain the proof frontier; async evidence here is tested.
+The earlier composed-proof fuel failure is now diagnosed and repaired as an
+exact question-ID representation cost: see [question-ids.md](question-ids.md).
+Five closed loading/landing/supersession/diamond laws now pass the independent
+kernel directly through the active API/driver. Settlement is an explicit external
+thenable input; native job timing, iterators and watchers remain tested domains.
 No general async consistency, progress, TS-equivalence or host-runtime proof is
 claimed. Pins and source branch obligations remain unchanged/open.

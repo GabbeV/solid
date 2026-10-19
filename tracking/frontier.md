@@ -130,6 +130,24 @@ Ten deliberately broken implementations must be rejected. No arbitrary-value, ar
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
+## Concrete async proof extension
+
+Five additional closed laws now check loading seed 0, later fulfillment 6, stale
+object 1's ignored answer 99, object 2's committed answer 6, and an unseeded
+pending diamond landing 6/7/8/15 with text 15. They use actual API construction,
+callback delivery, status/graph/transaction/flush code and the mechanical tree;
+settlement is an explicit external thenable input, not a native Promise timing
+proof. Together with the earlier nine cases there are fourteen closed composed
+regressions. Iterator and watcher semantics remain tested, not generally proved.
+
+The old async proof fuel failure came from representing source 0x7fffffff as unary
+Nat. Exact binary Question IDs repair that cost without changing source values or
+branches. Three general kernel laws establish increment meaning, small-Nat
+conversion meaning and reflexive equality. 4096 source counter steps, five large
+counter starts, 69 provenance cases and 4103 mathematical vectors support the
+representation. See [question-ids.md](question-ids.md). No generated execution
+state, runtime fork or modified kernel supplies the direct new proofs.
+
 ## Current transaction milestone and next dependency
 
 2,160 transaction-state comparisons cover source allocation/redirect/merge/join,

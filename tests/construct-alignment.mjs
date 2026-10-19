@@ -1,3 +1,4 @@
+import {decodeQuestion} from './question-codec.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -31,7 +32,7 @@ try {
     if(bend)return {inFlight:x.inFlight,flightTeardown:x.flightTeardown,error:value(x.error),blocked:value(x.blocked.value),
       sources:x.pendingSources!==0,unobserved:x.unobserved,snapshot:Object.hasOwn(x.snapshotValue,'value'),
       pendingFirstChild:x.pendingFirstChild,pendingDisposal:Object.hasOwn(x.pendingDisposal,'callback'),transaction:x.transaction,
-      reask:x.reask,flushed:Object.hasOwn(x.flushed,'value'),flushedAt:stamp(x.flushedAt),q:x.q,lane:Object.hasOwn(x.lane,'value'),marks:x.marks,shownError:value(x.shownError)};
+      reask:x.reask,flushed:Object.hasOwn(x.flushed,'value'),flushedAt:stamp(x.flushedAt),q:decodeQuestion(x.q),lane:Object.hasOwn(x.lane,'value'),marks:x.marks,shownError:value(x.shownError)};
     return {inFlight:x._inFlight??0,flightTeardown:x._flightTeardown??0,error:x._error,blocked:x._blocked,
       sources:x._pendingSources!==undefined,unobserved:x._unobserved?1:0,snapshot:x._snapshotValue!==undefined,
       pendingFirstChild:x._pendingFirstChild??0,pendingDisposal:x._pendingDisposal!==null,transaction:x._transaction??0,
@@ -80,7 +81,7 @@ try {
   const p=B.allocation(),n=w=>list(w.nodes)[1];
   assert.equal(n(p.before).x,0);assert.equal(list(p.before.extensions).length,1);
   assert.equal(n(p.first).x,n(p.second).x);assert.equal(list(p.first.extensions).length,2);assert.equal(list(p.second.extensions).length,2);
-  assert.equal(list(p.second.extensions)[n(p.second).x].q,19,'ext must reuse the existing object and retain writes');
+  assert.equal(decodeQuestion(list(p.second.extensions)[n(p.second).x].q),19,'ext must reuse the existing object and retain writes');
   const s=S.signal(11),first=S.ext(s);first._q=19;assert.equal(S.ext(s),first);assert.equal(S.ext(s)._q,19);
   S.setContextInternal(null);const r=S.createOwner();S.setContextInternal(r);
   const parent=S.computed(()=>17,{lazy:true});parent._height=7;S.setContextInternal(parent);
