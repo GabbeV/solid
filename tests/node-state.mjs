@@ -1,9 +1,9 @@
 // State observations only; neither adapter makes a reactive decision here.
-import {decode,list} from '../host/bend.mjs';
+import {list} from '../host/bend.mjs';
 const disposalSize=d=>'callbacks'in d?list(d.callbacks).length:'callback'in d?1:0;
 const nativeDisposalSize=d=>Array.isArray(d)?d.length:d?1:0;
 export function bendStates(runtime,names){
-  const nodes=runtime.nodes(),extensions=list(runtime.world.extensions),sets=list(runtime.world.pendingSets),value=v=>runtime.errorShape(decode(v,runtime.errors));
+  const nodes=runtime.nodes(),extensions=list(runtime.world.extensions),sets=list(runtime.world.pendingSets),value=v=>runtime.errorShape(runtime.decode(v));
   return Object.entries(runtime.ids).filter(([name,id])=>names.includes(name)&&nodes[id].kind.$!=='Signal').sort(([a],[b])=>a.localeCompare(b)).map(([name,id])=>{
     const n=nodes[id],x=extensions[n.x];
     return [name,{flags:n.flags,config:n.config,status:n.status,time:n.time,loading:n.loading,value:value(n.value),pending:'value'in n.pending,pendingValue:'value'in n.pending?value(n.pending.value):undefined,gen:n.depGen,modified:n.modified,previous:value(n.prevValue),disposal:disposalSize(n.disposal),

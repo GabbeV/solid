@@ -15,7 +15,7 @@ function scenario(name,commands){
       for(const target of [2,3,4])assert.deepEqual(b.screen(target),s.screen(target),`${name}: screen after ${op}`);
       assert.equal(b.world.context,0,`${name}: context`);assert.equal(b.world.tracking,false,`${name}: tracking`);assert.equal(b.world.running,false,`${name}: running`);
       // Production reports are explicit host IO; ordering and payloads agree.
-      const recent=list(b.world.reports).slice(s.reportCount??0).map(r=>r.kind===0?['[REACTIVITY_HALTED]',...('value' in r.cause?[b.errorShape(decode(r.cause.value,b.errors))]:[])]:r.kind===1?['[REACTIVITY_HALTED]']:[b.errorShape(decode(r.cause.value,b.errors))]);
+      const recent=list(b.world.reports).slice(s.reportCount??0).map(r=>r.kind===0?['[REACTIVITY_HALTED]',...('value' in r.cause?[b.errorShape(b.decode(r.cause.value))]:[])]:r.kind===1?['[REACTIVITY_HALTED]']:[b.errorShape(b.decode(r.cause.value))]);
       assert.deepEqual(recent,logs.slice(before).map(args=>args.map(e=>s.errorShape(e))),`${name}: reports after ${op}`);s.reportCount=list(b.world.reports).length;
     }
     count++;

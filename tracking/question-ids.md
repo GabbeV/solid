@@ -66,7 +66,9 @@ queues, successful completion and restored ambient state. The diamond checks
 those observation/status/queue fields over a larger graph. Settlement is an
 explicit external thenable input. Native Promise reaction timing, arbitrary graphs,
 iterator pumping and public watcher semantics are tested rather than proved.
-There are now fourteen closed composed regressions, two payload laws, three
-general question-representation laws and the existing generic path lemmas. No
+That milestone brought the count to fourteen closed composed regressions, alongside
+two payload laws, three general question-representation laws and generic path
+lemmas. The current frontier also includes the later until cases and the explicitly
+negative staged-error recovery counterexample. No
 unsafe code, generated answer, axiom, runtime fork or kernel modification supplies
 these results. The executable/proof frontends and independent checker remain pinned.

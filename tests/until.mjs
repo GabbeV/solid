@@ -17,7 +17,7 @@ async function scenario(name,commands){
     assert.deepEqual(b.portEvents,s.portEvents,`${name}: promise delivery after ${op}`);
     assert.deepEqual(b.asyncErrors,s.asyncErrors,`${name}: callback failures after ${op}`);
     for(const key of ['context','tracking','running'])assert.equal(b.world[key],key==='context'?0:false,`${name}: ${key}`);
-    const reports=list(b.world.reports).map(r=>r.kind===0?['[REACTIVITY_HALTED]',...('value' in r.cause?[b.errorShape(decode(r.cause.value,b.errors))]:[])]:r.kind===1?['[REACTIVITY_HALTED]']:[b.errorShape(decode(r.cause.value,b.errors))]);
+    const reports=list(b.world.reports).map(r=>r.kind===0?['[REACTIVITY_HALTED]',...('value' in r.cause?[b.errorShape(b.decode(r.cause.value))]:[])]:r.kind===1?['[REACTIVITY_HALTED]']:[b.errorShape(b.decode(r.cause.value))]);
     assert.deepEqual(reports,logs.map(args=>args.map(e=>s.errorShape(e))),`${name}: reports after ${op}`);
   }
   try{

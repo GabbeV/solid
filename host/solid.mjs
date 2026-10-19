@@ -10,6 +10,10 @@ export class SolidRuntime {
       if(!this.refs.has(v.ref)) this.refs.set(v.ref,{ref:v.ref});
       return this.refs.get(v.ref);
     }
+    if(v&&typeof v==='object'&&Object.hasOwn(v,'async')){
+      for(const [object,id] of this.futureIdentities)if(id===v.async)return object;
+      throw new TypeError('Unknown async object identity');
+    }
     return v;
   }
   evaluate(e,prev) {

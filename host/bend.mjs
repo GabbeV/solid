@@ -19,13 +19,13 @@ export class BendStatusError extends Error {
 export class BendNotReady extends Error {
   constructor(identity,source){super();this.identity=identity;this.source=source;}
 }
-export function decode(v,errors=new Map()) {
+export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map()) {
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'source')&&!Object.hasOwn(v,'cause')) {
     if(!errors.has(v.identity))errors.set(v.identity,new BendNotReady(v.identity,v.source));
     return errors.get(v.identity);
   }
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'cause')) {
-    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors)));
+    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors,refs,asyncRefs)));
     return errors.get(v.identity);
   }
   switch (v.$) {
@@ -33,8 +33,10 @@ export function decode(v,errors=new Map()) {
     case tags.null: return null;
     case tags.number: return v.n;
     case tags.bool: return v.b;
-    case tags.ref: return {ref:v.id};
-    case tags.async: return {async:v.identity};
+    case tags.ref:
+      if(!refs.has(v.id))refs.set(v.id,{ref:v.id});return refs.get(v.id);
+    case tags.async:
+      if(!asyncRefs.has(v.identity))asyncRefs.set(v.identity,{async:v.identity});return asyncRefs.get(v.identity);
     case tags.nan: return NaN;
     case tags.text: return typeof v.s === 'string' ? v.s : decodeString(v.s);
     default: throw new Error('Unsupported Bend payload shape');
@@ -80,7 +82,8 @@ function nodeOptions(options={},programs={}) {
     Object.hasOwn(options,'loadingValue'),encode(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set(); }
+  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set(); }
+  decode(value){return decode(value,this.errors,this.refs,this.asyncRefs);}
   drainJobs() {
     if(!this.hostAsync)return;
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
@@ -90,7 +93,7 @@ export class BendRuntime {
         const port=this.ports[this.portNames.get(job.awaiter)];
         if(port){
           if(!job.rejected&&job.value.$===tags.async&&list(this.world.asyncObjects)[job.value.identity].stream===0)throw new TypeError('Native promise assimilation of a returned thenable is outside this host protocol');
-          (job.rejected?port.reject:port.resolve)(decode(job.value,this.errors));
+          (job.rejected?port.reject:port.resolve)(this.decode(job.value));
         }
         continue;
       }
@@ -109,7 +112,7 @@ export class BendRuntime {
     this.drainJobs();
     if(this.world.fault.$ === tags.healthy)return;
     if(Object.hasOwn(this.world.fault,'cause')) {
-      const thrown=decode(this.world.fault.cause,this.errors);this.world=R.clearException(this.world);throw thrown;
+      const thrown=this.decode(this.world.fault.cause);this.world=R.clearException(this.world);throw thrown;
     }
     throw new Error(`Bend runtime stopped: ${JSON.stringify(this.world.fault)}`);
   }
@@ -200,17 +203,20 @@ export class BendRuntime {
     if (!user) this.world=R.attach(this.world,1,target);
     this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures),user,target,schedule,defer,nodeOptions(options,this.programs),1,this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
   }
-  set(name,value) { this.world=R.setSignal(this.world,this.ids[name],encode(value)); this.check(); return value; }
+  set(name,value) {
+    const encoded=encode(value);this.world=R.setSignal(this.world,this.ids[name],encoded);this.check();
+    return encoded.$===tags.ref||encoded.$===tags.async?this.decode(encoded):value;
+  }
   update(name,expr) {
     // The Bend engine evaluates the updater against its staged slot.
     const encoded=expression(expr,this.ids,this.programs,this.futures);
     this.world=R.setUpdater(this.fuel,this.world,this.ids[name],encoded); this.check();
     const n=this.nodes()[this.ids[name]];
-    return decode(Object.hasOwn(n.pending,'value') ? n.pending.value : n.value);
+    return this.decode(Object.hasOwn(n.pending,'value') ? n.pending.value : n.value);
   }
   read(name) {
     const m=R.read(this.fuel,this.world,this.ids[name]);
-    this.world=R.resultWorld(m); this.check(); return decode(R.resultValue(m),this.errors);
+    this.world=R.resultWorld(m); this.check(); return this.decode(R.resultValue(m));
   }
   flush() { this.world=R.flush(this.fuel,this.world); this.check(); }
   markRefresh(name) { this.world=R.markRefresh(this.world,this.ids[name]); this.check(); }
@@ -222,10 +228,10 @@ export class BendRuntime {
     const name=id=>this.reverse[id] ?? null;
     return list(this.world.events).filter(e=>!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
-      if ('previous' in e) return ['apply',name(e.id),decode(e.value,this.errors),decode(e.previous,this.errors)];
-      if ('reader' in e) return ['read',name(e.reader),name(e.source),decode(e.value,this.errors)];
+      if ('previous' in e) return ['apply',name(e.id),this.decode(e.value),this.decode(e.previous)];
+      if ('reader' in e) return ['read',name(e.reader),name(e.source),this.decode(e.value)];
       return ['compute',name(e.id)];
     });
   }
-  screen(target=2) { return decode(R.displayed(this.world,target)); }
+  screen(target=2) { return this.decode(R.displayed(this.world,target)); }
 }

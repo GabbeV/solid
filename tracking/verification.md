@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery and 136 default-until histories: 854
-  total. It compares actual callbacks, returned/thrown values, wrapper identity,
+  total, plus explicit host object-identity checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten and eight staged-error-recovery cases. No expected
@@ -61,3 +61,13 @@ Two reduced current-head upstream bug candidates are indexed in upstream-issues.
 Both baseline behaviors remain active; no semantic workaround or issue filing is
 active. The deviation register is separate and empty. Local git commits are on
 main; this checkout has no configured remote and nothing was pushed/published.
+
+The output codec now keeps per-runtime reference and async-object caches, including
+setter/updater returns, tree/trace values, promise outcomes and nested error causes.
+An identity test compares actual JS object aliases to the TS host. Earlier fresh
+decoding could preserve token IDs while losing observable host aliases; this was
+a host-adapter mistake, now fixed without changing the Bend engine or source pin.
+The reference input codec also maps observed async identity tokens back to their
+registered source object, so data-token literal round trips retain the same alias.
+This is an observation/encoding boundary fix; native thenable assimilation and
+arbitrary object reflection remain outside the admitted protocol.

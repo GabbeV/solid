@@ -111,3 +111,9 @@ Default until's own/captured confirmation, frame delivery and truthy inPass join
 now execute with 136 histories, 8192 closure probes and two closed regressions.
 Timeout/AbortSignal and active truth/lagging/action APIs remain unfinished; see
 [until.md](until.md).
+
+The host codec's repeated reference decoding formerly allocated fresh JS token
+objects. It now uses per-runtime reference/async-object caches across all result,
+trace/tree, setter/updater, promise and error paths. Strict host alias assertions
+match TS, including raw cleanup errors. This repairs an adapter bug, not source
+semantics or an active workaround.

@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -21,6 +21,7 @@ Built Bend runtime and pinned Solid production reference.
 16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
 8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
 136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
+Host reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens.
 
 > solid-signals-bend@0.1.0 test:alignment
 > node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs && node tests/until-alignment.mjs
@@ -66,4 +67,12 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 10.5s; hashes sealed in build/verification.json.
+Kernel completed in 10.3s; hashes sealed in build/verification.json.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 10.3s; hashes sealed in build/verification.json.
