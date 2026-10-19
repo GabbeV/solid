@@ -44,6 +44,7 @@ type Task is Data:
   EffectCleanup{id: Nat, self: Bool}
   Invoke{callback: Nat}
   Action{callback: Nat, action: R.CleanupAction}
+  WriteValue{signal: Nat, value: R.Value}
   Dispose{id: Nat}
   MarkChildren{id: Nat}
   MarkChild{child: Nat}
@@ -145,6 +146,15 @@ def actions(+callback: Nat, xs: List<&2, R.CleanupAction>) -> List<&2, Task>:
     case action <> rest:
       Action{callback, action} <> actions(callback, rest)
 
+# setSignal's typeof-function updater branch for the admitted bound disposer.
+# Its throw skips the write; a successful bound disposer returns undefined.
+def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
+  match value:
+    case R.RootDisposerReference{owner}:
+      Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, R.Undefined{}} <> rest}
+    case other:
+      Machine{W.setSignal(w, signal, other), rest}
+
 def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAction) -> Machine:
   match value:
     case R.CleanupEmit{code}:
@@ -154,7 +164,7 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
     case R.CleanupRegister{owner, cb}:
       Machine{cleanup(w, owner, cb), rest}
     case R.CleanupWrite{id, value}:
-      Machine{W.setSignal(w, id, value), rest}
+      writeValue(w, rest, id, value)
     case R.CleanupRegisterCurrent{cb}:
       Machine{cleanup(w, R.World.context(w), cb), rest}
     case R.CleanupDisposeCurrent{}:
@@ -224,6 +234,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), []})
     case Action{callback, value} <> rest:
       action(w, rest, callback, value)
+    case WriteValue{signal, value} <> rest:
+      Machine{W.setSignal(w, signal, value), rest}
     case Dispose{id} <> rest:
       disposeStart(w, rest, id)
     case MarkChildren{id} <> rest:

@@ -60,6 +60,15 @@ def Laws.callback_reads_and_returns():
 def Laws.captured_root_disposes():
   {==}
 
+def Laws.init_disposer_is_bound():
+  {==}
+
+def Laws.callback_argument_zero(first, second):
+  {==}
+
+def Laws.root_binder_shadows_arguments(body, first, second):
+  {==}
+
 def Laws.question_increment_meaning(value):
   Question.incrementMeaning(value)
 

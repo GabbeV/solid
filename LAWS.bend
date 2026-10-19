@@ -11,6 +11,8 @@ import ./proof/held-error.bend as HeldError
 import ./proof/until.bend as Until
 import ./proof/callbacks.bend as Callbacks
 import ./proof/context.bend as Context
+import ./proof/disposer.bend as Disposer
+import ./runtime/callback.bend as Callback
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
 
@@ -73,6 +75,20 @@ law callback_reads_and_returns:
 
 law captured_root_disposes:
   {Context.view(Context.disposed()) == Context.expected() : Context.View}
+
+law init_disposer_is_bound:
+  {Disposer.view(Disposer.invoked()) == Disposer.expected() : Disposer.View}
+
+law callback_argument_zero:
+  for +first: R.Value
+  for second: R.Value
+  {Callback.bind(R.Argument{0n}, first, second) == R.Literal{first} : R.Expr}
+
+law root_binder_shadows_arguments:
+  for +body: R.Expr
+  for first: R.Value
+  for second: R.Value
+  {Callback.bind(R.RootScope{body, False{}}, first, second) == R.RootScope{body, False{}} : R.Expr}
 
 law question_increment_meaning:
   for +value: R.Question

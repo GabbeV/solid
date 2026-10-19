@@ -5,11 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['nested root captures outer disposer argument','runtime/callback.bend','R.RootScope{body, transparent}\n    case R.Invoke','R.RootScope{bind(body, first, second), transparent}\n    case R.Invoke','tests/arguments.mjs'],
+  ['function updater result is invoked again','runtime/api.bend','S.setSignal(C.world(m), id, resultValue(m))','setSignal(C.world(m), id, resultValue(m))','tests/arguments.mjs'],
+  ['bound disposer uses ambient owner','runtime/core.bend','case R.RootDisposerReference{id}:\n      Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail}','case R.RootDisposerReference{id}:\n      Machine{O.disposeChildren(w, R.World.context(w), True{}, False{}), rest, R.Undefined{} <> tail}','tests/arguments.mjs'],
+  ['effect callback arguments reversed','runtime/core.bend','R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}','R.CallWith{callback, R.Literal{R.Node.prevValue(B.node(w, id))}, R.Literal{R.Node.value(B.node(w, id))}}','tests/arguments.mjs'],
   ['runWithOwner fails to restore tracking','runtime/context.bend','R.World.with_tracking(R.World.with_context(w, owner), tracking)','R.World.with_tracking(R.World.with_context(w, owner), False{})','tests/ownership.mjs'],
   ['getObserver ignores untrack','runtime/context.bend','B.choose(~Nat, R.World.tracking(w), _ => R.World.context(w), _ => 0n)','R.World.context(w)','tests/ownership.mjs'],
   ['inline root detaches from its actual parent','runtime/core.bend','D.createOwner(w, R.World.context(w), transparent)','D.createOwner(w, 0n, transparent)','tests/ownership.mjs'],
-  ['callback return falls through','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> rest, stack}','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
-  ['callback read loses tracking','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
+  ['callback return falls through','runtime/core.bend','Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> rest, stack}','Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}','tests/callbacks.mjs'],
+  ['callback read loses tracking','runtime/core.bend','Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}','tests/callbacks.mjs'],
   ['StatusError prefixes a native Error message','runtime/error.bend','B.choose(~String, native, _ => message, _ => errorString(name, message))','errorString(name, message)','tests/host-errors.mjs'],
   ['explicit/native error identities alias','representation/base.bend','Bool.and(Nat.is_eq(x, y), Bool.xor(Bool.xor(explicitA, explicitB), True{}))','Nat.is_eq(x, y)','tests/host-errors.mjs'],
   ['until timer is never cancelled','runtime/signals.bend','R.Awaiter.timer(a)','False{}','tests/until-options.mjs'],

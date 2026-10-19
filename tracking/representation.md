@@ -190,6 +190,12 @@ OwnerReference carries stable native owner identity in a namespace separate from
 application references. getOwner/getObserver, storage, equality, isDisposed and
 runWithOwner consume these handles; arbitrary owner reflection remains open.
 RootScope allocates the shared production literal and restores ambient owner and
-tracking on success/throw. Initializers currently ignore their bound disposer
-argument; explicit root-handle disposal executes disposeRootSelf instead. See
+tracking on success/throw. Initializers now receive a selected RootDisposerReference value; bound function
+invocation and explicit root-handle methods both execute disposeRootSelf. See
 [ownership.md](ownership.md) for observations and source boundaries.
+
+RootDisposerReference has its own identity namespace and native callable cache.
+Named callback arguments are bound by substitution across the admitted expression
+grammar, stopping at fresh root init binders. Updater-returned functions remain
+data; raw function setter inputs execute first, as source setSignal requires.
+See [arguments.md](arguments.md) for the exact family, observation rules and limits.

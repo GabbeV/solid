@@ -28,6 +28,7 @@ type Value is Data:
   Number{n: Nat}
   Reference{id: Nat}
   OwnerReference{id: Nat}
+  RootDisposerReference{owner: Nat}
   NotANumber{}
   StringValue{s: String}
   StatusFailure{identity: Nat, source: Nat, cause: Value, message: String}
@@ -124,6 +125,9 @@ type Expr is Data:
   DisposeRoot{owner: Expr}
   Raise{cause: Value}
   CallProgram{callback: Nat}
+  CallWith{callback: Nat, first: Expr, second: Expr}
+  Argument{index: Nat}
+  Invoke{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}
 
@@ -142,6 +146,7 @@ type CleanupAction is Data:
   CallbackEvaluate{expr: Expr}
   CallbackReturn{expr: Expr}
   CallbackWrite{signal: Nat, expr: Expr}
+  CallbackUpdate{signal: Nat, expr: Expr}
   CallbackThrow{expr: Expr}
 
 type Fault is Data:

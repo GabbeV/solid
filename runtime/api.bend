@@ -10,6 +10,7 @@ import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./signals.bend as J
 import ./context.bend as L
+import ./callback.bend as Z
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -82,13 +83,13 @@ def flush(fuel: Nat, w: R.World) -> R.World:
   C.flush(fuel, w)
 
 def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
-  B.choose(~R.World, B.valid(w, id), _ => S.setSignal(w, id, value), _ => R.World.with_fault(w, R.BadId{}))
+  B.choose(~R.World, B.valid(w, id), _ => C.setterValue(w, id, value), _ => R.World.with_fault(w, R.BadId{}))
 
 # Updaters see staged composition; setter returns are preserved by the facade.
 def setUpdater(fuel: Nat, +w: R.World, +id: Nat, expr: R.Expr) -> R.World:
   +m = C.eval(fuel, w, expr, B.current(B.node(w, id)))
   B.choose(~R.World, C.healthy(R.World.fault(C.world(m))),
-    _ => setSignal(C.world(m), id, resultValue(m)), _ => C.world(m))
+    _ => S.setSignal(C.world(m), id, resultValue(m)), _ => C.world(m))
 
 # The source invalidation helper is separate from public awaitable refresh.
 def markRefresh(+w: R.World, +id: Nat) -> R.World:
@@ -112,6 +113,9 @@ def vOwner(id: Nat) -> R.Value:
 
 def validOwner(+w: R.World, +id: Nat) -> Bool:
   Bool.and(B.valid(w, id), Bool.or(B.root(R.Node.kind(B.node(w, id))), B.computed(R.Node.kind(B.node(w, id)))))
+
+def validRoot(+w: R.World, +id: Nat) -> Bool:
+  Bool.and(B.valid(w, id), B.root(R.Node.kind(B.node(w, id))))
 
 def currentOwner() -> R.Expr:
   R.CurrentOwner{}
@@ -142,8 +146,23 @@ def createRoot(fuel: Nat, +w: R.World, expr: R.Expr, +parent: Nat, transparent: 
   +oldTracking = R.World.tracking(w)
   +id = nextId(w)
   w = N.createOwner(L.enterOwner(w, parent), parent, transparent)
-  +m = C.eval(fuel, w, R.WithOwner{R.Literal{R.OwnerReference{id}}, expr}, R.Undefined{})
+  +m = C.eval(fuel, w, R.WithOwner{R.Literal{R.OwnerReference{id}}, Z.bind(expr, R.RootDisposerReference{id}, R.Undefined{})}, R.Undefined{})
   C.Machine{L.restore(C.world(m), oldContext, oldTracking), [], C.values(m)}
+
+def invokeRootDisposer(w: R.World, owner: Nat) -> R.World:
+  O.disposeChildren(w, owner, True{}, False{})
+
+def vRootDisposer(owner: Nat) -> R.Value:
+  R.RootDisposerReference{owner}
+
+def argument(index: Nat) -> R.Expr:
+  R.Argument{index}
+
+def callWith(callback: Nat, first: R.Expr, second: R.Expr) -> R.Expr:
+  R.CallWith{callback, first, second}
+
+def invoke(callee: R.Expr) -> R.Expr:
+  R.Invoke{callee}
 
 def vText(s: String) -> R.Value:
   R.StringValue{s}
@@ -234,6 +253,9 @@ def programReturn(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
 
 def programWriteExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
   R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail)}
+
+def programUpdateExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CallbackUpdate{signal, expr} <> R.CleanupProgram.actions(tail)}
 
 def programThrowExpr(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
   R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail)}

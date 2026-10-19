@@ -26,6 +26,8 @@ def stringify(value: R.Value) -> String:
       "NaN"
     case R.StringValue{s}:
       s
+    case R.RootDisposerReference{owner}:
+      "function () { [native code] }"
     case R.ExternalError{id, explicit, kind, name, message, native, code}:
       errorString(name, message)
     case _:

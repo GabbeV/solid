@@ -42,7 +42,7 @@ proof credit was imported.
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
   read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, parameters, nested primitive construction and arbitrary closures remain open;
+  reads, arbitrary closure environments and nested primitive construction remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
@@ -229,5 +229,12 @@ There are eighteen composed closed regressions, one explicitly negative.
 
 73 ownership/context histories and the closed captured-root disposal law now
 exercise actual root callbacks and ambient restoration. There are nineteen
-composed closed regressions, one explicitly negative. Bound-disposer init
-arguments and nested signal/memo/effect construction remain unfinished.
+composed closed regressions, one explicitly negative at that checkpoint. Bound
+disposer arguments and selected function values now execute; nested
+signal/memo/effect construction remains unfinished.
+
+71 additional argument/disposer histories and the bound-init-disposer closed law
+bring the totals to 1231 differential histories and twenty composed closed
+regressions, one negative. Two general callback-binding helper laws also check.
+See [arguments.md](arguments.md) for selected function values, setter invocation
+versus updater-returned data, native callable materialization and explicit limits.

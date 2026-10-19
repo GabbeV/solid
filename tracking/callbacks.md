@@ -4,8 +4,9 @@
 of a Solid function. `CallProgram` now executes statements in the active core
 continuation machine. `eval`, `return`, `setExpr` and `throwExpr` can use the
 existing expression grammar, including actual reads, nested calls, branches,
-untrack, errors and async objects. Calls currently have no arguments, so `prev`
-inside a named body is undefined. The enclosing compute expression still receives
+untrack, errors and async objects. Named calls can now pass up to two arguments, with effect/error parameter
+plumbing; see [arguments.md](arguments.md). `prev` inside a named body is
+undefined. The enclosing compute expression still receives
 its source previous-value argument normally.
 
 `Callback` retains the remaining statements. A return schedules only its
@@ -43,6 +44,6 @@ The owner teardown machine cannot yet suspend for expression evaluation.
 Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
-reads, arbitrary closures/parameters, function values, dynamic returned cleanup
+reads, arbitrary closures, general function values, dynamic returned cleanup
 selection, nested primitive construction and active scopes remain unfinished.
 The semantic deviation register is unchanged and empty.

@@ -145,3 +145,9 @@ The owner literal is now shared by constructor facades and callback-based roots.
 Production runWithOwner/getOwner/getObserver/isDisposed execute on the same core
 continuations; see [ownership.md](ownership.md) for the admitted identity API,
 73 histories, exact trace-observation repair and remaining initializer limits.
+
+The selected init-bound disposer function family now executes with real callback
+arguments and source setter function branching. The shared setter remainder
+still owns equality/publication; updater-returned functions are not re-invoked.
+See [arguments.md](arguments.md) for 71 histories, the closed bound-disposer law,
+ABI helper laws and remaining function/constructor limitations.

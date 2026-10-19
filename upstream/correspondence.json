@@ -113,9 +113,9 @@
       "restrictions": "Source unflushed/stash selection and late-linker order, committed ternary, stagedRead-before-staged-error throw, and born-staged plain/frame NotReady(null) retained. Snapshot/spectating/verdict hooks and actual promise callers unfinished."
     },
     "core/core.ts:setSignal": {
-      "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater",
+      "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater; runtime/core.bend:setterValue, CallbackWrite; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setSignal, setUpdater",
       "status": "partial",
-      "restrictions": "One setter for facade/callbacks/landings, staged composition, held join before equality, outside-flush first-stash, promotion, computed time and notify-epoch skip. Lane/snapshot/write hooks and arbitrary comparators unfinished."
+      "restrictions": "One setter for facade/callbacks/landings, staged composition, held join before equality, outside-flush first-stash, promotion, computed time and notify-epoch skip. Lane/snapshot/write hooks and arbitrary comparators unfinished. The source typeof-function branch now executes for init-bound root disposers. Updater-returned functions remain data; evaluated updater expressions use the same setter remainder. Arbitrary updater functions still outside the ABI."
     },
     "core/core.ts:untrack": {
       "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind",
@@ -170,7 +170,7 @@
     "core/effect.ts:runEffect": {
       "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally",
       "status": "partial",
-      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished."
+      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished. Application bodies now receive actual current/previous values; error bodies receive the unwrapped cause with cleanup retained as the existing explicit helper. Arguments are user-code ABI, not engine decisions."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",
@@ -258,9 +258,9 @@
       "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
     },
     "core/owner.ts:disposeRootSelf": {
-      "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren",
+      "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren; runtime/core.bend:invoke, invokeValue; runtime/api.bend:invokeRootDisposer",
       "status": "restricted",
-      "restrictions": "Typed root handle receiver, self=true method call. Arbitrary binding, disposer-as-data and explicit self=false invocation outside callback grammar."
+      "restrictions": "Typed root method receiver or init-bound disposer, self=true. The receiver is retained independently of ambient context. Arbitrary function binding/properties and explicit self=false invocation outside the grammar."
     },
     "core/graph.ts:unobserved": {
       "bend": "runtime/graph.bend:unobserved; runtime/owner.bend:Unobserved",
@@ -595,7 +595,7 @@
     "core/owner.ts:createRoot": {
       "bend": "runtime/api.bend:createRoot; runtime/core.bend:evaluate RootScope, RestoreContext; runtime/owner-state.bend:createOwner",
       "status": "partial",
-      "restrictions": "Owned/detached and transparent roots, callbacks, returns/throws and actual cleanup attachment execute. Initializers ignore the supplied disposer argument; a represented root handle exposes disposeRootSelf separately. Hydration IDs/dev/observe hooks and arbitrary closure construction unfinished."
+      "restrictions": "Owned/detached and transparent roots, init callbacks including actual bound disposer arguments, returns/throws and cleanup attachment execute. Bound disposer identity/plain invocation and capture via signal updater are represented. Hydration IDs/dev/observe hooks, arbitrary functions and nested signal/memo/effect construction unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

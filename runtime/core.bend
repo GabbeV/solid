@@ -22,6 +22,7 @@ import ./watch-state.bend as U
 import ./write.bend as W
 import ./context.bend as L
 import ./owner-state.bend as D
+import ./callback.bend as Z
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -36,8 +37,10 @@ type PassFrame is Data:
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
-  Callback{callback: Nat, actions: List<&2, R.CleanupAction>}
-  CallbackWrite{signal: Nat}
+  Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
+  CallArguments{callback: Nat}
+  Invoke{}
+  CallbackWrite{signal: Nat, updater: Bool}
   CallbackThrow{}
   WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
   Binary{op: U32}
@@ -185,12 +188,18 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
     case R.RootScope{body, transparent}:
       +id = B.length(R.Node, R.World.nodes(w))
       Machine{L.enterOwner(D.createOwner(w, R.World.context(w), transparent), id),
-        Evaluate{body, prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
+        Evaluate{Z.bind(body, R.RootDisposerReference{id}, R.Undefined{}), prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
     case R.DisposeRoot{owner}:
       Machine{w, Evaluate{owner, prev} <> DisposeRoot{} <> rest, stack}
+    case R.Argument{index}:
+      Machine{w, rest, R.Undefined{} <> stack}
+    case R.CallWith{callback, first, second}:
+      Machine{w, Evaluate{first, prev} <> Evaluate{second, prev} <> CallArguments{callback} <> rest, stack}
+    case R.Invoke{callee}:
+      Machine{w, Evaluate{callee, prev} <> Invoke{} <> rest, stack}
     case R.CallProgram{+callback}:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]}))} <> rest, stack},
+        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]})), R.Undefined{}, R.Undefined{}} <> rest, stack},
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
     case R.Then{first, second}:
       Machine{w, Evaluate{first, prev} <> Discard{} <> Evaluate{second, prev} <> rest, stack}
@@ -198,27 +207,37 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), rest, stack}
 
 # User callback ABI, not a Solid scheduling operation. Statements execute in
-# order in the current source callback scope. Calls have no arguments; return
-# exits only this invocation. Reads use the ordinary ReadNode continuation.
-def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, value: R.CleanupAction) -> Machine:
+# order in the current source callback scope. Arguments are bound as user-code
+# data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
+def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
     case R.CallbackEvaluate{expr}:
-      Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}
+      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackReturn{expr}:
-      Machine{w, Evaluate{expr, R.Undefined{}} <> rest, stack}
+      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> rest, stack}
     case R.CallbackWrite{signal, expr}:
-      Machine{w, Evaluate{expr, R.Undefined{}} <> CallbackWrite{signal} <> Callback{id, tail} <> rest, stack}
+      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> CallbackWrite{signal, False{}} <> Callback{id, tail, first, second} <> rest, stack}
+    case R.CallbackUpdate{+signal, expr}:
+      Machine{w, Evaluate{Z.bind(expr, first, second), B.current(B.node(w, signal))} <> CallbackWrite{signal, True{}} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackThrow{expr}:
-      Machine{w, Evaluate{expr, R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail} <> rest, stack}
+      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail, first, second} <> rest, stack}
     case other:
-      Machine{O.invokeAction(w, id, other), Callback{id, tail} <> rest, stack}
+      Machine{O.invokeAction(w, id, other), Callback{id, tail, first, second} <> rest, stack}
 
-def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, actions: List<&2, R.CleanupAction>) -> Machine:
+def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +first: R.Value, +second: R.Value, actions: List<&2, R.CleanupAction>) -> Machine:
   match actions:
     case Nil{}:
       Machine{w, rest, R.Undefined{} <> stack}
     case value <> tail:
-      callbackAction(w, rest, stack, id, tail, value)
+      callbackAction(w, rest, stack, id, tail, first, second, value)
+
+def setterValue(+w: R.World, +signal: Nat, value: R.Value) -> R.World:
+  match value:
+    case R.RootDisposerReference{owner}:
+      +w = O.disposeChildren(w, owner, True{}, False{})
+      B.choose(~R.World, B.ok(w), _ => W.setSignal(w, signal, R.Undefined{}), _ => w)
+    case other:
+      W.setSignal(w, signal, other)
 
 # core.ts:runWithOwner, after evaluating the user ABI's owner argument.
 def enterOwnerValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value, +body: R.Expr, +prev: R.Value) -> Machine:
@@ -267,6 +286,21 @@ def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) ->
   match stack:
     case value <> tail:
       disposeRootValue(w, rest, tail, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# Root init's bound disposeRootSelf(owner,true), invoked as a plain function.
+def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
+  match value:
+    case R.RootDisposerReference{id}:
+      Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def invoke(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case value <> tail:
+      invokeValue(w, rest, tail, value)
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -940,7 +974,7 @@ def userError(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
   +program = R.Node.errorProgram(B.node(w, id))
   +param = R.World.callbackEffect(w)
   B.choose(~Machine, Nat.is_ne(program, 0n),
-    _ => Machine{R.World.with_callbackEffect(w, id), Evaluate{R.CallProgram{program}, R.Undefined{}} <> Discard{} <> ErrorArmFinally{param, stack} <> rest, stack},
+    _ => Machine{R.World.with_callbackEffect(w, id), Evaluate{R.CallWith{program, R.Literal{A.unwrapStatusError(R.NodeExtension.error(B.extension(w, id)))}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> Discard{} <> ErrorArmFinally{param, stack} <> rest, stack},
     _ => Machine{B.report(w, 2, R.Present{A.unwrapStatusError(R.NodeExtension.error(B.extension(w, id)))}), rest, stack})
 
 # core/effect.ts:runEffect's finally after its callback/previous-cleanup catch.
@@ -961,7 +995,7 @@ def applyEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
     _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
   +callback = R.Node.effectProgram(B.node(w, id))
   +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n),
-    _ => [Evaluate{R.CallProgram{callback}, R.Undefined{}}, Discard{}], _ => [])
+    _ => [Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}, R.Undefined{}}, Discard{}], _ => [])
   Machine{w, B.append(Task, todo, InstallEffectCleanup{id} <> rest), stack}
 
 # core/effect.ts:runEffect. The pre-cleanup call and finally retain their source
@@ -1133,12 +1167,22 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       watchFinish(w, rest, stack, awaiter)
     case Evaluate{expr, prev} <> +rest:
       evaluate(w, rest, stack, expr, prev)
-    case Callback{id, actions} <> rest:
-      callback(w, rest, stack, id, actions)
-    case CallbackWrite{signal} <> rest:
+    case Callback{id, actions, first, second} <> rest:
+      callback(w, rest, stack, id, first, second, actions)
+    case CallArguments{+id} <> +rest:
       match stack:
-        case value <> tail:
-          Machine{W.setSignal(w, signal, value), rest, tail}
+        case second <> first <> +tail:
+          B.choose(~Machine, Bool.and(Nat.is_ne(id, 0n), Nat.is_lt(id, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
+            _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[]})), first, second} <> rest, tail},
+            _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case Invoke{} <> rest:
+      invoke(w, rest, stack)
+    case CallbackWrite{+signal, updater} <> rest:
+      match stack:
+        case +value <> tail:
+          Machine{B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value)), rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case CallbackThrow{} <> rest:

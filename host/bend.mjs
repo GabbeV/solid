@@ -1,3 +1,4 @@
+import {RootDisposers} from './functions.mjs';
 import {requireTeardownProgram} from './programs.mjs';
 const {default:R}=await import(process.env.BEND_EMIT_FILE ?? '../build/runtime.mjs');
 import {HostErrors,errorKind} from './errors.mjs';
@@ -14,7 +15,7 @@ const tags = {
   undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
-  timeout:R.vTimeout(0).$,
+  timeout:R.vTimeout(0).$, disposer:R.vRootDisposer(0).$,
   externalError:R.vExternalError(0,false,0,'','',true,0).$,
 };
 export class BendOwner {
@@ -29,13 +30,13 @@ export class BendStatusError extends Error {
 export class BendNotReady extends Error {
   constructor(identity,source){super();this.identity=identity;this.source=source;}
 }
-export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),externalErrors=new HostErrors()) {
+export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),externalErrors=new HostErrors(),rootDisposers=new RootDisposers(()=>{throw new TypeError('A bound disposer needs its runtime');})) {
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'source')&&!Object.hasOwn(v,'cause')) {
     if(!errors.has(v.identity))errors.set(v.identity,new BendNotReady(v.identity,v.source));
     return errors.get(v.identity);
   }
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'cause')) {
-    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors,refs,asyncRefs,externalErrors),typeof v.message==='string'?v.message:decodeString(v.message)));
+    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors,refs,asyncRefs,externalErrors,rootDisposers),typeof v.message==='string'?v.message:decodeString(v.message)));
     return errors.get(v.identity);
   }
   switch (v.$) {
@@ -43,6 +44,7 @@ export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),ext
     case tags.null: return null;
     case tags.number: return v.n;
     case tags.bool: return v.b;
+    case tags.disposer: return rootDisposers.get(v.owner);
     case tags.owner:
       if(!refs.has('owner:'+v.id))refs.set('owner:'+v.id,new BendOwner(v.id));return refs.get('owner:'+v.id);
     case tags.ref:
@@ -75,6 +77,7 @@ export function encode(v) {
     return R.vNumber(v === 0 ? 0 : v); // strict equality identifies +/-0
   }
   if (typeof v === 'object' && Number.isSafeInteger(v.async) && v.async > 0) return R.vAsync(v.async);
+  if (typeof v === 'object' && Number.isSafeInteger(v.rootDisposer) && v.rootDisposer > 0)return R.vRootDisposer(v.rootDisposer);
   if (typeof v === 'object' && Number.isSafeInteger(v.owner) && v.owner > 0)return R.vOwner(v.owner);
   if (typeof v === 'object' && Number.isSafeInteger(v.ref) && v.ref >= 0) return R.vReference(v.ref);
   if (typeof v === 'object' && Number.isSafeInteger(v.error) && typeof v.native==='boolean')return R.vExternalError(v.error,v.explicit,errorKind(v),v.name,v.message,v.native,v.code);
@@ -96,7 +99,15 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode) {
   if (e.same) return R.same(...e.same.map(x=>expression(x,ids,programs,futures,encodeValue)));
   if (e.select) return R.select(...e.select.map(x=>expression(x,ids,programs,futures,encodeValue)));
   if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue));
-  if (e.call) return R.callProgram(programs[e.call]);
+  if (Object.hasOwn(e,'argument'))return R.argument(e.argument);
+  if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue));
+  if (e.call){
+    if(e.args){
+      if(e.args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
+      return R.callWith(programs[e.call],...Array.from({length:2},(_,i)=>expression(e.args[i]??{lit:undefined},ids,programs,futures,encodeValue)));
+    }
+    return R.callProgram(programs[e.call]);
+  }
   if (e.seq) return e.seq.map(x=>expression(x,ids,programs,futures,encodeValue)).reduceRight((next,current)=>next?R.then(current,next):current,null) ?? R.literal(R.vUndefined());
   if (Object.hasOwn(e,'raise')) return R.throwError(encodeValue(e.raise));
   throw new TypeError('Unknown expression');
@@ -107,8 +118,8 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map(); }
-  decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors);}
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); }
+  decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers);}
   ownerId(name){
     if(name===null)return 0;
     const id=name==='root'?1:this.ids[name];
@@ -116,11 +127,20 @@ export class BendRuntime {
     return id;
   }
   encode(value){
+    const disposer=this.rootDisposers.identity(value);
+    if(disposer!==undefined)return R.vRootDisposer(disposer);
     const described=this.hostErrors.describe(value);
+    if(described&&typeof described==='object'&&typeof described.rootDisposer==='string'){
+      const id=this.ownerId(described.rootDisposer);
+      if(!R.validRoot(this.world,id))throw new TypeError('No bound disposer for owner: '+described.rootDisposer);
+      return R.vRootDisposer(id);
+    }
     if(described&&typeof described==='object'&&Object.hasOwn(described,'owner')&&typeof described.owner==='string')return R.vOwner(this.ownerId(described.owner));
     return encode(described);
   }
   observe(value){
+    const disposer=this.rootDisposers.identity(value);
+    if(disposer!==undefined)return {rootDisposer:this.observe(this.decode(R.vOwner(disposer)))};
     if(value instanceof BendOwner){
       if(this.reverse[value.owner])return {owner:this.reverse[value.owner]};
       if(!this.anonymousOwners.has(value.owner))this.anonymousOwners.set(value.owner,this.anonymousOwners.size+1);
@@ -212,6 +232,7 @@ export class BendRuntime {
       else if(op==='throw')p=R.programThrow(this.encode(args[0]),p);
       else if(op==='eval')p=R.programEvaluate(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
       else if(op==='return')p=R.programReturn(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
+      else if(op==='updateExpr')p=R.programUpdateExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
       else if(op==='setExpr')p=R.programWriteExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
       else if(op==='throwExpr')p=R.programThrowExpr(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
       else throw new TypeError('Unsupported callback action');
@@ -286,7 +307,9 @@ export class BendRuntime {
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     const options=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,options.unobserved);
-    this.world=R.createSignalWithOptions(this.world,this.encode(value),nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
+    const encoded=this.encode(value);
+    if(encoded.$===tags.disposer)throw new TypeError('Function initializers are not yet translated');
+    this.world=R.createSignalWithOptions(this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
   }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
@@ -303,7 +326,8 @@ export class BendRuntime {
   }
   set(name,value) {
     const encoded=this.encode(value);this.world=R.setSignal(this.world,this.ids[name],encoded);this.check();
-    return encoded.$===tags.ref||encoded.$===tags.async||encoded.$===tags.externalError?this.decode(encoded):value;
+    if(encoded.$===tags.disposer)return undefined;
+    return [tags.ref,tags.owner,tags.async,tags.externalError].includes(encoded.$)?this.decode(encoded):value;
   }
   update(name,expr) {
     // The Bend engine evaluates the updater against its staged slot.

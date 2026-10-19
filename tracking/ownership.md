@@ -14,8 +14,9 @@ RestoreContext runs on both normal and exceptional return. RootScope allocates a
 real child of the ambient owner and invokes its initializer through that same
 scope boundary. A null ambient owner detaches it. Inline root bodies retain the
 enclosing compute's previous value as lexical data, rather than as an init
-argument. The current init grammar ignores its supplied bound disposer argument;
-that argument and arbitrary closure capture remain unfinished. A typed root
+argument. Initializers now receive their real bound disposer argument, represented as a
+selected function family; see [arguments.md](arguments.md). Arbitrary closure
+capture remains unfinished. A typed root
 handle can separately invoke its actual dispose method (`disposeRootSelf`,
 self=true), through the existing owner teardown machine.
 
@@ -47,7 +48,7 @@ parent unlinking, cleared disposal and restored ambient state. It is one concret
 execution, not a general ownership/lifetime/progress theorem. Three compiled
 mutations exercise tracking restoration, observer gating and root attachment.
 
-Nested primitive construction inside callbacks, full bound-disposer arguments,
+Nested signal/memo/effect construction inside callbacks, arbitrary functions,
 teardown expression suspension, arbitrary callbacks and active context-provider /
 boundary / lane / snapshot scopes remain unfinished. The deviation register is
 unchanged and empty; both upstream counterexamples remain baseline-preserved.
