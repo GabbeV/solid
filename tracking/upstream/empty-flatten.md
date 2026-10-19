@@ -1,8 +1,11 @@
 # Candidate: synchronous promise of empty iterable publishes the iterable object
 
-Status: reduced upstream bug candidate; no report filed and no workaround active.
-The Bend port preserves the pinned TypeScript behavior. This does not block
-iterator translation.
+Status: upstream fix [PR #4144](https://github.com/solidjs/solid/pull/4144) is open,
+submitted by the user on 2026-10-19. Its current head is
+619df26b6065d6a027a6ada93f212fd7a76e1749: reset `syncValue` at the iterable
+handoff before consumption. No workaround is active in Bend; the port preserves
+the pinned TypeScript behavior until an upstream fix is integrated. This does
+not block iterator translation.
 
 Minimal JSX playground, created at the user's request:
 [empty-stream repro](https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw).

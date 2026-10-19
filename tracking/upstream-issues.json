@@ -4,7 +4,7 @@
     {
       "id": "SOLID-EMPTY-FLATTEN-001",
       "classification": "suspected-upstream-bug",
-      "status": "reduced-current-head-repro-no-report",
+      "status": "upstream-fix-pr-open",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/async.ts:handleAsync",
       "record": "tracking/upstream/empty-flatten.md",
@@ -15,7 +15,7 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
-      "fixUrl": null
+      "fixUrl": "https://github.com/solidjs/solid/pull/4144"
     },
     {
       "id": "SOLID-STAGED-ERROR-RECOVERY-002",
