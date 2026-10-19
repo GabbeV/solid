@@ -37,3 +37,8 @@ Arbitrary function input/capture, function properties, general returned effect
 cleanup selection, expression-bearing teardown callbacks, nested primitive
 construction and active boundary/lane/high-level provider scopes remain open.
 No semantic deviation or pinned-source edit is active.
+
+The admitted family now also includes data/writable-memo setters, with a separate
+canonical callback encoding and exact no-argument write behavior. See
+[setter-cleanup.md](setter-cleanup.md) for 42 additional complete histories, one
+closed law and the remaining getter/expression teardown limits.

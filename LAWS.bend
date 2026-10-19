@@ -19,6 +19,7 @@ import ./proof/locals.bend as Locals
 import ./proof/accessors.bend as Accessors
 import ./proof/setters.bend as Setters
 import ./proof/writable-signals.bend as WritableSignals
+import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -173,3 +174,6 @@ law writable_signal_rederives_from_manual_previous:
 
 law held_function_result_counterexample:
   {WritableSignals.counterexample() == WritableSignals.expectedCounterexample() : WritableSignals.Counterexample}
+
+law setter_cleanup_preserves_identity_and_clears:
+  {SetterCleanup.scenario() == SetterCleanup.expected() : SetterCleanup.View}

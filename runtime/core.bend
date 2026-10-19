@@ -475,8 +475,8 @@ def onCleanupValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>,
       Machine{J.cleanup(w, R.World.context(w), root), rest, R.RootDisposerReference{root} <> tail}
     case R.AccessorReference{signal}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}
-    case R.SetterReference{signal}:
-      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}
+    case R.SetterReference{+signal}:
+      Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.SetterReference{signal} <> tail}
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
 

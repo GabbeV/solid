@@ -53,3 +53,7 @@ Escaped data-signal read accessors now enter the ordinary read machine; see [loc
 Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions now execute; see [nested.md](nested.md). Local signal bindings and captured inline bodies also execute;
 see [locals.md](locals.md).
 The semantic deviation register is unchanged and empty.
+
+Selected bound setters now enter onCleanup and the existing owner action walk
+with no arguments; see [setter-cleanup.md](setter-cleanup.md). This does not
+implement general owner/core expression suspension.

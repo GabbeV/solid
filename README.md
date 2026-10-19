@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject sixty source-changing variants
+npm run mutations                # reject sixty-four source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -53,6 +53,8 @@ Escaped data-signal setters and computed read accessors also execute; see
 [setter coverage](tracking/setters.md) and [computed accessors](tracking/computed-accessors.md).
 The expression-based `createSignal(fn)` overload and its distinct setMemo policy
 now execute; see [writable signals](tracking/writable-signals.md).
+Selected setters can also be registered directly with `onCleanup`; see
+[setter cleanup](tracking/setter-cleanup.md).
 Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:

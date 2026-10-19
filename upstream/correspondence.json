@@ -248,14 +248,14 @@
       "restrictions": "Separate production root literal, inherited context-record identity, parentComputed forwarding and child linking. Callback-based roots bind their actual disposer; selected owner/context operations execute. Hydration IDs, arbitrary root properties and dev/observe hooks unfinished."
     },
     "core/owner.ts:runDisposal": {
-      "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
+      "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
       "status": "restricted",
-      "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol."
+      "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
     },
     "core/owner.ts:cleanup": {
-      "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode",
+      "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
       "status": "restricted",
-      "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged."
+      "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
     },
     "core/owner.ts:disposeRootSelf": {
       "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren; runtime/core.bend:invoke, invokeValue; runtime/api.bend:invokeRootDisposer",
@@ -623,9 +623,9 @@
       "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
     },
     "signals.ts:onCleanup": {
-      "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup",
+      "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
       "status": "partial",
-      "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished."
+      "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
     },
     "signals.ts:createEffect": {
       "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
@@ -648,9 +648,9 @@
       "restrictions": "Bound read functions for data signals and computed nodes capture the actual node ID, preserve native aliases and resume ordinary source reads, including lazy pulls, pending/error paths and frozen reads after owner disposal. Forty signal-accessor and fifty-one computed-accessor histories plus closed lifetime laws. Refresh target retained as node ID; symbol/property reflection, arbitrary functions and active store accessors unfinished."
     },
     "core/core.ts:setMemo": {
-      "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask",
+      "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask; runtime/memo-write.bend:clear (no-argument bound cleanup)",
       "status": "partial",
-      "restrictions": "Source held/manual/txOf short-circuit, committed pre-call, setSignal delegation, dirty/check/heap/schedule and manual-pending remainder retained. 4096 actual setMemo probes and 81 public histories compare values, flags, heaps, slots and owner/async state. Pinned returned-function second invocation deliberately preserved; a negative closed law and 16 bound-function histories/controls supplement the original source-only report. General functions, active hooks and expression-capable teardown remain unfinished."
+      "restrictions": "Source held/manual/txOf short-circuit, committed pre-call, setSignal delegation, dirty/check/heap/schedule and manual-pending remainder retained. 4096 actual setMemo probes and 81 public histories compare values, flags, heaps, slots and owner/async state. Pinned returned-function second invocation deliberately preserved; a negative closed law and 16 bound-function histories/controls supplement the original source-only report. General functions, active hooks and expression-capable teardown remain unfinished. Its no-argument bound cleanup case now runs in the owner machine; general callable teardown still unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

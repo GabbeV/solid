@@ -176,3 +176,15 @@ eleven paired histories. This is a port repair, not an upstream workaround.
 Escaped data-signal setters and computed accessors now share those continuations;
 computed owner disposal retains its distinct frozen-value behavior. See
 [computed-accessors.md](computed-accessors.md).
+
+Selected bound setter values now register with source onCleanup/cleanup and
+runDisposal. Their native bound receiver and no-argument undefined value are
+retained; writable memo targets execute setMemo's own flag/schedule remainder.
+No cached read or replacement disposal walk is introduced. General teardown
+expressions remain unfinished; see [setter-cleanup.md](setter-cleanup.md).
+
+The [function-value operation review](reviews/function-values.md) records exact
+pinned unit hashes, ordered source return points, tested restrictions and a
+read-only impact rehearsal against the existing PR #4163 checkout. It identifies
+the held wrapper, node-aware write hook and new data signal hook for a future
+repin; it does not silently apply those changes or close full-domain branches.

@@ -145,6 +145,7 @@ type CleanupAction is Data:
   CleanupPriorEffect{}
   CleanupCloseIterator{stream: Nat}
   CleanupBoundRoot{owner: Nat}
+  CleanupBoundSetter{signal: Nat}
   CallbackEvaluate{expr: Expr}
   CallbackReturn{expr: Expr}
   CallbackWrite{signal: Nat, expr: Expr}

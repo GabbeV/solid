@@ -10448,9 +10448,9 @@
           "sha256": "7c11d592ff09bcbde29e36295a5f7aa69e29ff6690c254ec984463344acc7ea0",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask",
+            "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask; runtime/memo-write.bend:clear (no-argument bound cleanup)",
             "status": "partial",
-            "restrictions": "Source held/manual/txOf short-circuit, committed pre-call, setSignal delegation, dirty/check/heap/schedule and manual-pending remainder retained. 4096 actual setMemo probes and 81 public histories compare values, flags, heaps, slots and owner/async state. Pinned returned-function second invocation deliberately preserved; a negative closed law and 16 bound-function histories/controls supplement the original source-only report. General functions, active hooks and expression-capable teardown remain unfinished."
+            "restrictions": "Source held/manual/txOf short-circuit, committed pre-call, setSignal delegation, dirty/check/heap/schedule and manual-pending remainder retained. 4096 actual setMemo probes and 81 public histories compare values, flags, heaps, slots and owner/async state. Pinned returned-function second invocation deliberately preserved; a negative closed law and 16 bound-function histories/controls supplement the original source-only report. General functions, active hooks and expression-capable teardown remain unfinished. Its no-argument bound cleanup case now runs in the owner machine; general callable teardown still unfinished."
           }
         },
         {
@@ -16955,9 +16955,9 @@
           "sha256": "65528c170935d390cd3046b43fd7e042b5a1014f7ff03dcb0ba6e2e2198f37c4",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
+            "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
             "status": "restricted",
-            "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol."
+            "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
           }
         },
         {
@@ -17031,9 +17031,9 @@
           "sha256": "b80cdf7c6a04660283083ad7f9329b0f638e454f2fd4706503ed1361c5695db4",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode",
+            "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
             "status": "restricted",
-            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged."
+            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
           }
         },
         {
@@ -22191,9 +22191,9 @@
           "sha256": "1d6ffea63cac1e421b0f4857f36edb44776feac727a86e6b6721aa4f72bd8103",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup",
+            "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
             "status": "partial",
-            "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished."
+            "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished."
           }
         },
         {

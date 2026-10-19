@@ -215,7 +215,7 @@ console.log(`${count-setterStart} escaped-setter histories match pinned TS funct
       assert.throws(()=>runtime.signal('bad',fn),/Function initializers/);
       runtime.signal('sink',0);runtime.program('raw',[['set','sink',fn]]);
       assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/teardown/);
-      assert.throws(()=>runtime.evaluate({onCleanup:lit(fn)}));
+      assert.equal(runtime.evaluate({onCleanup:lit(fn)}),fn);
     }
   }finally{for(const runtime of [b,s]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');}}
 }

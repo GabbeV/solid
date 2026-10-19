@@ -68,8 +68,9 @@ mutations target reloaded entry values, wrong bound targets, committed-versus-
 staged updater values and dropped argument effects. Existing function-result
 mutations now target the new source return points.
 
-Expression-capable teardown remains unfinished. Escaped setter registration as
-onCleanup and raw setter updater calls in owner teardown are explicitly rejected.
+Expression-capable teardown remains unfinished. Escaped setter registration as onCleanup now executes its no-argument call;
+see [setter-cleanup.md](setter-cleanup.md). Raw setter updater calls in owner
+teardown remain explicitly rejected.
 Function-initializer/writable-memo setters now use their own setMemo translation;
 see [writable-signals.md](writable-signals.md). They are selected by that distinct
 constructor, not this data-signal constructor. No manual-write or held

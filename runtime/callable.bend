@@ -47,3 +47,32 @@ def accessor(node: Nat) -> R.Value:
 # entry for the constructor-selected target. Read and write identities differ.
 def setter(node: Nat) -> R.Value:
   R.SetterReference{node}
+
+# A setter has its own canonical callback encoding, separate from root dispose.
+def boundSetter(actions: List<&2, R.CleanupAction>, +signal: Nat) -> Bool:
+  match actions:
+    case R.CleanupBoundSetter{id} <> Nil{}:
+      Nat.is_eq(id, signal)
+    case _:
+      False{}
+
+def findSetter(programs: List<&2, R.CleanupProgram>, +signal: Nat, +index: Nat) -> Nat:
+  match programs:
+    case Nil{}:
+      0n
+    case program <> rest:
+      B.choose(~Nat, boundSetter(R.CleanupProgram.actions(program), signal),
+        _ => index, _ => findSetter(rest, signal, Nat.add(index, 1n)))
+
+def encodeSetter(+w: R.World, +signal: Nat) -> B.Bundle<R.World, Nat>:
+  +old = findSetter(R.World.cleanupPrograms(w), signal, 0n)
+  B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
+    _ =>
+      +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundSetter{signal}]}])), next})
+
+def cleanupSetter(+w: R.World, +owner: Nat, signal: Nat) -> R.World:
+  B.choose(~R.World, Nat.is_eq(owner, 0n), _ => w,
+    _ =>
+      +pair = encodeSetter(w, signal)
+      O.cleanup(B.first(R.World, Nat, pair), owner, B.second(R.World, Nat, pair)))

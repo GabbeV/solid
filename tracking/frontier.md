@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1743 differential histories, 60 rejected compiled mutations,
-and 33 composed closed Bend regressions (two deliberately preserve upstream
+Current verification: 1785 differential histories, 64 rejected compiled mutations,
+and 34 composed closed Bend regressions (two deliberately preserve upstream
 failures), plus general payload/question/callback/path helper laws. Pins are
 unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -280,3 +280,9 @@ family, sixteen paired histories and one negative kernel law. No fix has been
 silently added to Bend. Open PR
 [#4148](https://github.com/solidjs/solid/pull/4148) now addresses the previously
 filed staged-error issue #4145; the pin and preserved counterexample are unchanged.
+
+Selected data/writable-memo setters now register directly through onCleanup and
+the same detached LIFO owner walk. Forty-two additional histories and a closed
+identity/clear law retain no-argument invocation, canonical aliases and held memo
+write policy. Getter cleanup, raw setter-updater calls in teardown and arbitrary
+expression teardown remain unfinished; see [setter-cleanup.md](setter-cleanup.md).

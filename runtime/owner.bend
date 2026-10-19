@@ -8,6 +8,7 @@ import ./heap.bend as H
 import ./constants.bend as K
 import ./extension.bend as E
 import ./write.bend as W
+import ./memo-write.bend as MW
 import ./iterator-state.bend as I
 
 def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
@@ -159,6 +160,18 @@ def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value)
     case other:
       Machine{W.setSignal(w, signal, other), rest}
 
+# runDisposal invokes bound functions with no arguments. Their captured node
+# and entry (setSignal versus setMemo) survive the callback's call receiver.
+def clearSetterKind(+w: R.World, +signal: Nat, kind: R.NodeKind) -> R.World:
+  match kind:
+    case R.Memo{}:
+      MW.clear(w, signal)
+    case _:
+      W.setSignal(w, signal, R.Undefined{})
+
+def clearSetter(+w: R.World, +signal: Nat) -> R.World:
+  clearSetterKind(w, signal, R.Node.kind(B.node(w, signal)))
+
 def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAction) -> Machine:
   match value:
     case R.CleanupEmit{code}:
@@ -179,6 +192,8 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{I.close(w, stream), rest}
     case R.CleanupBoundRoot{owner}:
       Machine{w, Enter{owner, True{}, False{}} <> rest}
+    case R.CleanupBoundSetter{signal}:
+      Machine{clearSetter(w, signal), rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
     # Expression-bearing callbacks currently run on core's read continuation

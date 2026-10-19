@@ -134,3 +134,6 @@ def Laws.writable_signal_rederives_from_manual_previous():
 
 def Laws.held_function_result_counterexample():
   {==}
+
+def Laws.setter_cleanup_preserves_identity_and_clears():
+  {==}

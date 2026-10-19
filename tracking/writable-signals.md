@@ -105,3 +105,8 @@ held heap insertion. Existing mutation targets follow the shared updater helper.
 Active hooks/lanes/snapshots, general function values and expression-capable owner
 teardown remain unfinished. Source pins and the empty deviation register are
 unchanged.
+
+Selected writable-memo setters can now be registered with onCleanup; their
+no-argument call runs the same source held/manual policy in the existing owner
+machine. General getter/expression teardown remains open. See
+[setter-cleanup.md](setter-cleanup.md).

@@ -6,6 +6,7 @@ import ../representation/base.bend as B
 import ./constants.bend as K
 import ./transaction.bend as X
 import ./heap.bend as H
+import ./write.bend as W
 
 # Keep short-circuit order: txOf is consulted only for held non-manual staging.
 def held(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
@@ -27,3 +28,11 @@ def finish(+w: R.World, +id: Nat, held: Bool) -> R.World:
     _ => B.choose(~R.World, B.present(R.Node.pending(B.node(w, id))),
       _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE()))),
       _ => w))
+
+# Source setMemo(undefined), used when owner invokes its bound cleanup with no
+# arguments. This argument has no callable arm, so the same prefix and remainder
+# can run in the existing owner machine without an expression/read suspension.
+def clear(+w: R.World, +id: Nat) -> R.World:
+  +pair = held(w, id)
+  +w = W.setSignal(B.first(R.World, Bool, pair), id, R.Undefined{})
+  B.choose(~R.World, B.ok(w), _ => finish(w, id, B.second(R.World, Bool, pair)), _ => w)

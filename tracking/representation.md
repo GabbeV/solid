@@ -224,3 +224,8 @@ signal and performs no reactive work itself. Its strong caches are not a memory
 or performance equivalence claim. Data-signal setter and computed accessor values now execute as well; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
 Function reflection and general teardown reads remain unfinished. See [locals.md](locals.md).
+
+CleanupBoundSetter is a canonical callback-arena identity for a constructor's
+bound setter, separately from CleanupBoundRoot. It preserves the captured node
+and no-argument call through the ordinary owner machine. Getter and arbitrary
+expression callbacks remain unfinished; see [setter-cleanup.md](setter-cleanup.md).

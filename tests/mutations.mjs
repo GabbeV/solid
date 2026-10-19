@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['setter cleanup uses the ambient owner as its target','runtime/owner.bend','Machine{clearSetter(w, signal), rest}','Machine{clearSetter(w, R.World.context(w)), rest}','tests/setter-cleanup.mjs'],
+  ['setter cleanup receives a value instead of no arguments','runtime/owner.bend','W.setSignal(w, signal, R.Undefined{})','W.setSignal(w, signal, R.Number{99n})','tests/setter-cleanup.mjs'],
+  ['setter cleanup loses its returned function identity','runtime/core.bend','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.SetterReference{signal} <> tail}','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.Undefined{} <> tail}','tests/setter-cleanup.mjs'],
+  ['same setter cleanup receives distinct callback identities','runtime/callable.bend','+old = findSetter(R.World.cleanupPrograms(w), signal, 0n)','+old = {0n : Nat}','tests/setter-cleanup.mjs'],
   ['writable initializer fails to shadow its body binding','runtime/lexical.bend','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, depth, signal)}','tests/writable-signals.mjs'],
   ['writable initializer retains auto-dispose','runtime/core.bend','B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())','R.Node.config(B.node(w, signal))','tests/writable-signals.mjs'],
   ['held writable updater sees staging instead of its committed frame','runtime/core.bend','Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward','Evaluate{expr, B.current(B.node(w, id))} <> SetMemoForward','tests/writable-signals.mjs'],
