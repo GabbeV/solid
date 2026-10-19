@@ -185,3 +185,11 @@ evaluated writes/throws on the core machine. Callback tasks are user-code ABI
 continuations, not source scheduler operations. Effect application/error arms
 have explicit source catch/finally return points. Teardown expression callbacks
 are still outside the grammar and rejected before attachment. See [callbacks.md](callbacks.md).
+
+OwnerReference carries stable native owner identity in a namespace separate from
+application references. getOwner/getObserver, storage, equality, isDisposed and
+runWithOwner consume these handles; arbitrary owner reflection remains open.
+RootScope allocates the shared production literal and restores ambient owner and
+tracking on success/throw. Initializers currently ignore their bound disposer
+argument; explicit root-handle disposal executes disposeRootSelf instead. See
+[ownership.md](ownership.md) for observations and source boundaries.

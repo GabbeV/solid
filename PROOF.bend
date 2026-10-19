@@ -57,6 +57,9 @@ def Laws.until_truthy_resolves():
 def Laws.callback_reads_and_returns():
   {==}
 
+def Laws.captured_root_disposes():
+  {==}
+
 def Laws.question_increment_meaning(value):
   Question.incrementMeaning(value)
 

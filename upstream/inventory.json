@@ -10442,8 +10442,12 @@
           "start": 2184,
           "end": 2212,
           "sha256": "c5f029af462230137fd3a029d30b87adb66e016e345c9586ece26778666bf0d7",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
+            "status": "restricted",
+            "restrictions": "Production owner/context/tracking stores and finally on success/throw; admitted owner handles and callbacks. Dev disposed-owner diagnostics excluded."
+          }
         },
         {
           "key": "core/core.ts:staleValues",
@@ -16977,16 +16981,24 @@
           "start": 276,
           "end": 278,
           "sha256": "7da5cb5724396f7ab61c3fc2a7559a1fb1ed8c4de0eed425ff8dc323b5ef3161",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:getObserver, reference; runtime/core.bend:evaluate",
+            "status": "restricted",
+            "restrictions": "Tracking guard returns actual ambient owner or null, including untrack/runWithOwner/root contexts."
+          }
         },
         {
           "key": "core/owner.ts:getOwner",
           "start": 297,
           "end": 299,
           "sha256": "5cb6b4a864e545c53fd944185acbde63056702d60fc03fbf59efeef2262dd0c6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:getOwner, reference; runtime/core.bend:evaluate",
+            "status": "restricted",
+            "restrictions": "Stable owner IDs/null represent native node object identity. Reflection and arbitrary property access unfinished."
+          }
         },
         {
           "key": "core/owner.ts:cleanup",
@@ -17005,19 +17017,23 @@
           "start": 330,
           "end": 332,
           "sha256": "118272cd0f1a3f908f91c1d07adaa9b9215d5daa8b28ccf898e9833d74b4c779",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/context.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
+            "status": "restricted",
+            "restrictions": "Admitted owner handles; no arbitrary object/getter flags."
+          }
         },
         {
           "key": "core/owner.ts:disposeRootSelf",
           "start": 334,
           "end": 336,
           "sha256": "d7c284bb71e4769abbf37f5ae6d476af2a107ab44a824391e1d6d123439ad719",
-          "status": "partial",
+          "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:disposeStart root branch; disposeChildren",
-            "status": "partial",
-            "restrictions": "Root death routes through source disposeChildren; public root callback/disposer method ABI remains unfinished."
+            "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren",
+            "status": "restricted",
+            "restrictions": "Typed root handle receiver, self=true method call. Arbitrary binding, disposer-as-data and explicit self=false invocation outside callback grammar."
           }
         },
         {
@@ -17027,9 +17043,9 @@
           "sha256": "04269a8146cb5a128073311a214670a520bb24b1afbde4e9af532d27c8da80df",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/construct.bend:createOwner",
+            "bend": "runtime/owner-state.bend:createOwner; runtime/construct.bend:createOwner",
             "status": "partial",
-            "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished."
+            "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished. Shared production literal also serves callback-based roots. Root initializers ignore their bound disposer argument; selected owner handle operations execute."
           }
         },
         {
@@ -17037,8 +17053,12 @@
           "start": 451,
           "end": 460,
           "sha256": "3b15e631e384fb8185a541cbba51dab978b4dab7128f3bd2be2d29f5d154568f",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/api.bend:createRoot; runtime/core.bend:evaluate RootScope, RestoreContext; runtime/owner-state.bend:createOwner",
+            "status": "partial",
+            "restrictions": "Owned/detached and transparent roots, callbacks, returns/throws and actual cleanup attachment execute. Initializers ignore the supplied disposer argument; a represented root handle exposes disposeRootSelf separately. Hydration IDs/dev/observe hooks and arbitrary closure construction unfinished."
+          }
         }
       ],
       "branches": [

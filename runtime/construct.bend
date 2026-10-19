@@ -10,6 +10,7 @@ import ./constants.bend as K
 import ./extension.bend as E
 import ./owner.bend as O
 import ./core.bend as C
+import ./owner-state.bend as V
 
 def defaults() -> R.NodeOptions:
   R.NodeOptions{True{}, False{}, False{}, False{}, False{}, False{}, 0, R.Empty{}, 0n}
@@ -37,15 +38,9 @@ def signal(+w: R.World, value: R.Value, +options: R.NodeOptions) -> R.World:
     0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
   installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
 
-# core/owner.ts:createOwner; callback-based createRoot remains a facade concern.
-def createOwner(+w: R.World, +parent: Nat, transparent: Bool) -> R.World:
-  +id = B.length(R.Node, R.World.nodes(w))
-  n = {R.Node{R.Root{}, R.Undefined{}, R.Empty{}, True{}, bit(transparent, K.CONFIG_TRANSPARENT()),
-    K.REACTIVE_NONE(), 0, 0n, R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
-    parent, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, B.parentComputed(w, parent), R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
-  +w = append(w, n)
-  B.choose(~R.World, Nat.is_ne(parent, 0n), _ => O.linkChild(w, parent, id), _ => w)
+# Shared literal; callback-based roots also allocate through this definition.
+def createOwner(w: R.World, parent: Nat, transparent: Bool) -> R.World:
+  V.createOwner(w, parent, transparent)
 
 # core/core.ts:setupComputedNode; the final eager recompute is source-owned.
 def setupComputedNode(fuel: Nat, +w: R.World, +id: Nat, lazy: Bool) -> R.World:

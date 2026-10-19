@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['runWithOwner fails to restore tracking','runtime/context.bend','R.World.with_tracking(R.World.with_context(w, owner), tracking)','R.World.with_tracking(R.World.with_context(w, owner), False{})','tests/ownership.mjs'],
+  ['getObserver ignores untrack','runtime/context.bend','B.choose(~Nat, R.World.tracking(w), _ => R.World.context(w), _ => 0n)','R.World.context(w)','tests/ownership.mjs'],
+  ['inline root detaches from its actual parent','runtime/core.bend','D.createOwner(w, R.World.context(w), transparent)','D.createOwner(w, 0n, transparent)','tests/ownership.mjs'],
   ['callback return falls through','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> rest, stack}','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
   ['callback read loses tracking','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
   ['StatusError prefixes a native Error message','runtime/error.bend','B.choose(~String, native, _ => message, _ => errorString(name, message))','errorString(name, message)','tests/host-errors.mjs'],

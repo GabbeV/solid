@@ -7,6 +7,7 @@ type Value is Data:
   Boolean{b: Bool}
   Number{n: Nat}
   Reference{id: Nat}
+  OwnerReference{id: Nat}
   NotANumber{}
   StringValue{s: String}
   StatusFailure{identity: Nat, source: Nat, cause: Value, message: String}
@@ -95,6 +96,12 @@ type Expr is Data:
   Same{left: Expr, right: Expr}
   Select{condition: Expr, yes: Expr, no: Expr}
   Untracked{body: Expr}
+  WithOwner{owner: Expr, body: Expr}
+  CurrentOwner{}
+  CurrentObserver{}
+  OwnerDisposed{owner: Expr}
+  RootScope{body: Expr, transparent: Bool}
+  DisposeRoot{owner: Expr}
   Raise{cause: Value}
   CallProgram{callback: Nat}
   WatchExpr{awaiter: Nat, expr: Expr}

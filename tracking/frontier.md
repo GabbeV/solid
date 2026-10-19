@@ -23,11 +23,13 @@ proof credit was imported.
 
 ## Supported grammar and limitations
 
-- Owned synchronous nodes under one explicit top-level host root; stable signal,
+- Owned synchronous nodes under explicit owner/root callback scopes; stable signal,
   owner/computed, link and mechanical-tree identities. Lazy activation
   and observation-lifecycle dormancy/revival work, including dead-parent freeze. Internal
   constructors support nested-root parentComputed forwarding, tested at height,
-  heap and read sites. Nested callback construction/root callback APIs remain open.
+  heap and read sites. Callback-based owned/detached roots, runWithOwner, owner/observer handles and
+  disposal status now execute; see [ownership.md](ownership.md). Nested signal,
+  memo and effect construction inside callbacks remain open.
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
@@ -224,3 +226,8 @@ The source inventory indexes constructors for future commit review.
 74 callback histories and a closed callback read/return/application-write law now
 exercise the active core callback continuation; see [callbacks.md](callbacks.md).
 There are eighteen composed closed regressions, one explicitly negative.
+
+73 ownership/context histories and the closed captured-root disposal law now
+exercise actual root callbacks and ambient restoration. There are nineteen
+composed closed regressions, one explicitly negative. Bound-disposer init
+arguments and nested signal/memo/effect construction remain unfinished.

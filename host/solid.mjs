@@ -6,11 +6,18 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();
+  }
+  ownerFor(name){
+    if(name===null)return null;
+    const owner=this.owners[name]??[...this.sourceNames,...this.namedOwners].find(([,label])=>label===name)?.[0];
+    if(!owner)throw new TypeError('Unknown owner: '+name);
+    return owner;
   }
   value(v) {
     const described=this.hostErrors.describe(v);
     if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
+    if(v&&typeof v==='object'&&Object.hasOwn(v,'owner')&&typeof v.owner==='string')return this.ownerFor(v.owner);
     if(v && typeof v === 'object' && Object.hasOwn(v,'ref')) {
       if(!this.refs.has(v.ref)) this.refs.set(v.ref,{ref:v.ref});
       return this.refs.get(v.ref);
@@ -24,6 +31,12 @@ export class SolidRuntime {
   evaluate(e,prev) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.owner)return this.S.getOwner();
+    if(e.observer)return this.S.getObserver();
+    if(e.root)return this.S.createRoot(()=>{this.ownerObjects.add(this.S.getOwner());return this.evaluate(e.root,prev);},{transparent:e.transparent??false});
+    if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev).dispose();
+    if(e.disposed)return this.S.isDisposed(this.evaluate(e.disposed,prev));
+    if(e.withOwner)return this.S.runWithOwner(this.evaluate(e.withOwner[0],prev),()=>this.evaluate(e.withOwner[1],prev));
     if(e.future)return this.futures[e.future].object;
     if(e.read) return this.read(e.read);
     if(e.add) return this.evaluate(e.add[0],prev)+this.evaluate(e.add[1],prev);
@@ -36,7 +49,20 @@ export class SolidRuntime {
     if(Object.hasOwn(e,'raise')) throw this.value(e.raise);
     throw new TypeError('Unknown expression');
   }
+  root(name,expr,{owner='root',transparent=false}={}){
+    return this.S.runWithOwner(this.ownerFor(owner),()=>this.S.createRoot(()=>{
+      this.owners[name]=this.S.getOwner();return this.evaluate(expr);
+    },{transparent}));
+  }
+  disposeOwner(name){this.ownerFor(name).dispose();}
   observe(value) {
+    for(const [name,owner] of Object.entries(this.owners))if(value===owner)return {owner:name};
+    if(this.sourceNames.has(value))return {owner:this.sourceNames.get(value)};
+    if(this.namedOwners.has(value))return {owner:this.namedOwners.get(value)};
+    if(value&&typeof value==='object'&&this.ownerObjects.has(value)){
+      if(!this.anonymousOwners.has(value))this.anonymousOwners.set(value,this.anonymousOwners.size+1);
+      return {anonymousOwner:this.anonymousOwners.get(value)};
+    }
     if(this.futureIdentities.has(value))return {async:this.futureIdentities.get(value)};
     return this.hostErrors.observe(value);
   }
@@ -170,7 +196,11 @@ export class SolidRuntime {
     requireTeardownProgram(this.programActions,options.unobserved);
     const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
     if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
-    this.accessors[name]=this.S.runWithOwner(this.owner,()=>this.S.createMemo(this.callback(name,expr),opts));
+    const parent=this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root');
+    this.accessors[name]=this.S.runWithOwner(parent,()=>this.S.createMemo(this.callback(name,expr),opts));
+    // Read-only construction observation: a lazy body has not called getOwner
+    // yet. In this grammar it cannot construct children before its first pass.
+    if(options.lazy&&parent)this.namedOwners.set(parent._firstChild,name);
   }
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
@@ -182,11 +212,14 @@ export class SolidRuntime {
       return options.cleanup?this.programs[options.cleanup]:undefined;
     };
     const bundle=options.error?{effect:apply,error:(err,cleanup)=>this.programs[options.error](cleanup)}:apply;
-    this.S.runWithOwner(this.owner,()=> (user ? this.S.createEffect : this.S.createRenderEffect)(this.callback(name,expr),bundle,options));
+    this.S.runWithOwner(this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root'),()=> (user ? this.S.createEffect : this.S.createRenderEffect)(this.callback(name,expr),bundle,options));
   }
   set(name,value) { return this.setters[name](this.value(value)); }
   update(name,expr) { return this.setters[name](prev=>this.evaluate(expr,prev)); }
-  read(name) {const value=this.accessors[name](); this.traceEvents.push(['read',this.current,name,value]); return value;}
+  read(name) {
+    const value=this.accessors[name](),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
+    this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
+  }
   flush() { this.S.flush(); }
   refresh(name) { this.awaitRefresh('refresh#'+Object.keys(this.ports).length,name); }
   resetErrorHalt() { this.S.resetErrorHalt(); }

@@ -20,6 +20,8 @@ import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./watch-state.bend as U
 import ./write.bend as W
+import ./context.bend as L
+import ./owner-state.bend as D
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -42,6 +44,10 @@ type Task is Data:
   Discard{}
   Branch{yes: R.Expr, no: R.Expr, previous: R.Value}
   RestoreTracking{tracking: Bool}
+  EnterOwner{body: R.Expr, previous: R.Value}
+  RestoreContext{owner: Nat, tracking: Bool}
+  CheckDisposed{}
+  DisposeRoot{}
   ReadNode{id: Nat}
   ReadPrepared{id: Nat}
   ReadStatus{id: Nat}
@@ -168,6 +174,20 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{condition, prev} <> Branch{yes, no, prev} <> rest, stack}
     case R.Untracked{body}:
       Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev} <> RestoreTracking{R.World.tracking(w)} <> rest, stack}
+    case R.WithOwner{owner, body}:
+      Machine{w, Evaluate{owner, prev} <> EnterOwner{body, prev} <> rest, stack}
+    case R.CurrentOwner{}:
+      Machine{w, rest, L.reference(L.getOwner(w)) <> stack}
+    case R.CurrentObserver{}:
+      Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
+    case R.OwnerDisposed{owner}:
+      Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.RootScope{body, transparent}:
+      +id = B.length(R.Node, R.World.nodes(w))
+      Machine{L.enterOwner(D.createOwner(w, R.World.context(w), transparent), id),
+        Evaluate{body, prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
+    case R.DisposeRoot{owner}:
+      Machine{w, Evaluate{owner, prev} <> DisposeRoot{} <> rest, stack}
     case R.CallProgram{+callback}:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
         _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]}))} <> rest, stack},
@@ -199,6 +219,56 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
       Machine{w, rest, R.Undefined{} <> stack}
     case value <> tail:
       callbackAction(w, rest, stack, id, tail, value)
+
+# core.ts:runWithOwner, after evaluating the user ABI's owner argument.
+def enterOwnerValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value, +body: R.Expr, +prev: R.Value) -> Machine:
+  match value:
+    case R.Null{}:
+      Machine{L.enterOwner(w, 0n), Evaluate{body, prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, tail}
+    case R.OwnerReference{id}:
+      Machine{L.enterOwner(w, id), Evaluate{body, prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def enterOwner(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +body: R.Expr, +prev: R.Value) -> Machine:
+  match stack:
+    case value <> tail:
+      enterOwnerValue(w, rest, tail, value, body, prev)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+def checkDisposedValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
+  match value:
+    case R.OwnerReference{id}:
+      Machine{w, rest, R.Boolean{L.isDisposed(w, id)} <> tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def checkDisposed(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case value <> tail:
+      checkDisposedValue(w, rest, tail, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# owner.ts:disposeRootSelf with its bound receiver, self=true. Only actual root
+# handles enter this user ABI operation; computed disposal has another source
+# entry and must not be substituted for a root's dispose method.
+def disposeRootValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
+  match value:
+    case R.OwnerReference{+id}:
+      B.choose(~Machine, B.root(R.Node.kind(B.node(w, id))),
+        _ => Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail},
+        _ => Machine{R.World.with_fault(w, R.TypeError{}), rest, tail})
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case value <> tail:
+      disposeRootValue(w, rest, tail, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
 # Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
 # the pass flag remains source state even in the synchronous profile. A source
@@ -1089,6 +1159,14 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       branch(w, rest, stack, yes, no, prev)
     case RestoreTracking{tracking} <> +rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
+    case EnterOwner{body, previous} <> rest:
+      enterOwner(w, rest, stack, body, previous)
+    case RestoreContext{owner, tracking} <> rest:
+      Machine{L.restore(w, owner, tracking), rest, stack}
+    case CheckDisposed{} <> rest:
+      checkDisposed(w, rest, stack)
+    case DisposeRoot{} <> rest:
+      disposeRoot(w, rest, stack)
     case ReadNode{id} <> +rest:
       readNode(w, rest, stack, id)
     case ReadPrepared{id} <> +rest:
@@ -1212,6 +1290,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       watchCause(w, rest, saved, awaiter, R.World.fault(w))
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
+    case RestoreContext{owner, tracking} <> rest:
+      Machine{L.restore(w, owner, tracking), rest, stack}
     case Finish{frame} <> rest:
       catchPass(w, rest, frame)
     case RegisterFlight{frame, id, result} <> rest:

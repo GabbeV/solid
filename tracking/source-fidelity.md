@@ -140,3 +140,8 @@ Expression-bearing compute/application/error callback bodies now run on the
 existing core read continuation machine. Effect catches/finally are explicit
 source return points; teardown expressions remain rejected and unfinished. See
 [callbacks.md](callbacks.md) for ABI boundaries, 74 histories and the closed law.
+
+The owner literal is now shared by constructor facades and callback-based roots.
+Production runWithOwner/getOwner/getObserver/isDisposed execute on the same core
+continuations; see [ownership.md](ownership.md) for the admitted identity API,
+73 histories, exact trace-observation repair and remaining initializer limits.

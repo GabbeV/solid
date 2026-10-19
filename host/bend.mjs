@@ -12,11 +12,14 @@ export function list(xs) {
 }
 const tags = {
   undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
-  bool:R.vBoolean(false).$, ref:R.vReference(0).$, nan:R.vNaN().$,
+  bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
   timeout:R.vTimeout(0).$,
   externalError:R.vExternalError(0,false,0,'','',true,0).$,
 };
+export class BendOwner {
+  constructor(id){this.owner=id;Object.freeze(this);}
+}
 export class BendTimeoutError extends Error {
   constructor(identity){super('Timed out waiting for condition');this.name='TimeoutError';this.identity=identity;}
 }
@@ -40,6 +43,8 @@ export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),ext
     case tags.null: return null;
     case tags.number: return v.n;
     case tags.bool: return v.b;
+    case tags.owner:
+      if(!refs.has('owner:'+v.id))refs.set('owner:'+v.id,new BendOwner(v.id));return refs.get('owner:'+v.id);
     case tags.ref:
       if(!refs.has(v.id))refs.set(v.id,{ref:v.id});return refs.get(v.id);
     case tags.async:
@@ -70,6 +75,7 @@ export function encode(v) {
     return R.vNumber(v === 0 ? 0 : v); // strict equality identifies +/-0
   }
   if (typeof v === 'object' && Number.isSafeInteger(v.async) && v.async > 0) return R.vAsync(v.async);
+  if (typeof v === 'object' && Number.isSafeInteger(v.owner) && v.owner > 0)return R.vOwner(v.owner);
   if (typeof v === 'object' && Number.isSafeInteger(v.ref) && v.ref >= 0) return R.vReference(v.ref);
   if (typeof v === 'object' && Number.isSafeInteger(v.error) && typeof v.native==='boolean')return R.vExternalError(v.error,v.explicit,errorKind(v),v.name,v.message,v.native,v.code);
   throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
@@ -79,6 +85,12 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode) {
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if (e.owner) return R.currentOwner();
+  if (e.observer) return R.currentObserver();
+  if (e.root) return R.rootScope(expression(e.root,ids,programs,futures,encodeValue),e.transparent??false);
+  if (e.disposeRoot) return R.disposeRoot(expression(e.disposeRoot,ids,programs,futures,encodeValue));
+  if (e.disposed) return R.ownerDisposed(expression(e.disposed,ids,programs,futures,encodeValue));
+  if (e.withOwner) return R.withOwner(...e.withOwner.map(x=>expression(x,ids,programs,futures,encodeValue)));
   if (e.add) return R.add(...e.add.map(x=>expression(x,ids,programs,futures,encodeValue)));
   if (e.mul) return R.multiply(...e.mul.map(x=>expression(x,ids,programs,futures,encodeValue)));
   if (e.same) return R.same(...e.same.map(x=>expression(x,ids,programs,futures,encodeValue)));
@@ -95,10 +107,37 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors(); }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map(); }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors);}
-  encode(value){return encode(this.hostErrors.describe(value));}
-  observe(value){return this.hostErrors.observe(value);}
+  ownerId(name){
+    if(name===null)return 0;
+    const id=name==='root'?1:this.ids[name];
+    if(!id||!R.validOwner(this.world,id))throw new TypeError('Unknown owner: '+name);
+    return id;
+  }
+  encode(value){
+    const described=this.hostErrors.describe(value);
+    if(described&&typeof described==='object'&&Object.hasOwn(described,'owner')&&typeof described.owner==='string')return R.vOwner(this.ownerId(described.owner));
+    return encode(described);
+  }
+  observe(value){
+    if(value instanceof BendOwner){
+      if(this.reverse[value.owner])return {owner:this.reverse[value.owner]};
+      if(!this.anonymousOwners.has(value.owner))this.anonymousOwners.set(value.owner,this.anonymousOwners.size+1);
+      return {anonymousOwner:this.anonymousOwners.get(value.owner)};
+    }
+    return this.hostErrors.observe(value);
+  }
+  evaluate(expr,previous){
+    const m=R.evaluateExpression(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),this.encode(previous));
+    this.world=R.resultWorld(m);this.check();return this.decode(R.resultValue(m));
+  }
+  root(name,expr,{owner='root',transparent=false}={}){
+    const parent=this.ownerId(owner),id=R.nextId(this.world);this.ids[name]=id;this.reverse[id]=name;
+    const m=R.createRoot(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>v?.owner===name?R.vOwner(id):this.encode(v)),parent,transparent);
+    this.world=R.resultWorld(m);this.check();return this.decode(R.resultValue(m));
+  }
+  disposeOwner(name){this.world=R.dispose(this.world,this.ownerId(name));this.check();}
   drainJobs() {
     if(!this.hostAsync)return;
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
@@ -252,7 +291,7 @@ export class BendRuntime {
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
-    this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),nodeOptions(options,this.programs,v=>this.encode(v)),1); this.check(); return id;
+    this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
   }
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
@@ -260,7 +299,7 @@ export class BendRuntime {
     const {user=false,target=2,schedule=false,defer=false}=options;
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     if (!user) this.world=R.attach(this.world,1,target);
-    this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),1,this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
+    this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'),this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
   }
   set(name,value) {
     const encoded=this.encode(value);this.world=R.setSignal(this.world,this.ids[name],encoded);this.check();

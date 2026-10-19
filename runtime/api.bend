@@ -9,6 +9,7 @@ import ./construct.bend as N
 import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./signals.bend as J
+import ./context.bend as L
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -105,6 +106,44 @@ def vNumber(n: Nat) -> R.Value:
 
 def vReference(id: Nat) -> R.Value:
   R.Reference{id}
+
+def vOwner(id: Nat) -> R.Value:
+  R.OwnerReference{id}
+
+def validOwner(+w: R.World, +id: Nat) -> Bool:
+  Bool.and(B.valid(w, id), Bool.or(B.root(R.Node.kind(B.node(w, id))), B.computed(R.Node.kind(B.node(w, id)))))
+
+def currentOwner() -> R.Expr:
+  R.CurrentOwner{}
+
+def currentObserver() -> R.Expr:
+  R.CurrentObserver{}
+
+def ownerDisposed(owner: R.Expr) -> R.Expr:
+  R.OwnerDisposed{owner}
+
+def withOwner(owner: R.Expr, body: R.Expr) -> R.Expr:
+  R.WithOwner{owner, body}
+
+def rootScope(body: R.Expr, transparent: Bool) -> R.Expr:
+  R.RootScope{body, transparent}
+
+def disposeRoot(owner: R.Expr) -> R.Expr:
+  R.DisposeRoot{owner}
+
+def evaluateExpression(fuel: Nat, w: R.World, expr: R.Expr, previous: R.Value) -> C.Machine:
+  C.eval(fuel, w, expr, previous)
+
+# owner.ts:createRoot's production body, hosted under an explicit parent just
+# like the existing constructor facade. The represented init does not inspect
+# its bound disposer argument; the host retains the root for later disposal.
+def createRoot(fuel: Nat, +w: R.World, expr: R.Expr, +parent: Nat, transparent: Bool) -> C.Machine:
+  +oldContext = R.World.context(w)
+  +oldTracking = R.World.tracking(w)
+  +id = nextId(w)
+  w = N.createOwner(L.enterOwner(w, parent), parent, transparent)
+  +m = C.eval(fuel, w, R.WithOwner{R.Literal{R.OwnerReference{id}}, expr}, R.Undefined{})
+  C.Machine{L.restore(C.world(m), oldContext, oldTracking), [], C.values(m)}
 
 def vText(s: String) -> R.Value:
   R.StringValue{s}

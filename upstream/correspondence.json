@@ -243,9 +243,9 @@
       "restrictions": "Separate production effect literal, own config arms, forced lazy/uninitialized, equals false and modified/previous defaults; lazy setup. No hydration IDs, snapshots/external hooks or arbitrary callback/error/cleanup protocol."
     },
     "core/owner.ts:createOwner": {
-      "bend": "runtime/construct.bend:createOwner",
+      "bend": "runtime/owner-state.bend:createOwner; runtime/construct.bend:createOwner",
       "status": "partial",
-      "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished."
+      "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished. Shared production literal also serves callback-based roots. Root initializers ignore their bound disposer argument; selected owner handle operations execute."
     },
     "core/owner.ts:runDisposal": {
       "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke",
@@ -258,9 +258,9 @@
       "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
     },
     "core/owner.ts:disposeRootSelf": {
-      "bend": "runtime/owner.bend:disposeStart root branch; disposeChildren",
-      "status": "partial",
-      "restrictions": "Root death routes through source disposeChildren; public root callback/disposer method ABI remains unfinished."
+      "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren",
+      "status": "restricted",
+      "restrictions": "Typed root handle receiver, self=true method call. Arbitrary binding, disposer-as-data and explicit self=false invocation outside callback grammar."
     },
     "core/graph.ts:unobserved": {
       "bend": "runtime/graph.bend:unobserved; runtime/owner.bend:Unobserved",
@@ -571,6 +571,31 @@
       "bend": "runtime/signals.bend:fireUntil; representation/records.bend:TimeoutFailure; host/bend.mjs:BendTimeoutError, decode",
       "status": "partial",
       "restrictions": "Default constructor only: fresh identity, default message and TimeoutError name; native instanceof Error and identity checks. Custom message arguments and stack semantics unfinished."
+    },
+    "core/core.ts:runWithOwner": {
+      "bend": "runtime/context.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot",
+      "status": "restricted",
+      "restrictions": "Production owner/context/tracking stores and finally on success/throw; admitted owner handles and callbacks. Dev disposed-owner diagnostics excluded."
+    },
+    "core/owner.ts:getOwner": {
+      "bend": "runtime/context.bend:getOwner, reference; runtime/core.bend:evaluate",
+      "status": "restricted",
+      "restrictions": "Stable owner IDs/null represent native node object identity. Reflection and arbitrary property access unfinished."
+    },
+    "core/owner.ts:getObserver": {
+      "bend": "runtime/context.bend:getObserver, reference; runtime/core.bend:evaluate",
+      "status": "restricted",
+      "restrictions": "Tracking guard returns actual ambient owner or null, including untrack/runWithOwner/root contexts."
+    },
+    "core/owner.ts:isDisposed": {
+      "bend": "runtime/context.bend:isDisposed; runtime/core.bend:checkDisposed, checkDisposedValue",
+      "status": "restricted",
+      "restrictions": "Admitted owner handles; no arbitrary object/getter flags."
+    },
+    "core/owner.ts:createRoot": {
+      "bend": "runtime/api.bend:createRoot; runtime/core.bend:evaluate RootScope, RestoreContext; runtime/owner-state.bend:createOwner",
+      "status": "partial",
+      "restrictions": "Owned/detached and transparent roots, callbacks, returns/throws and actual cleanup attachment execute. Initializers ignore the supplied disposer argument; a represented root handle exposes disposeRootSelf separately. Hydration IDs/dev/observe hooks and arbitrary closure construction unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."
