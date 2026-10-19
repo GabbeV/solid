@@ -39,6 +39,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.ContextSet{key, bind(value, first, second), bind(owner, first, second)}
     case R.Invoke{callee}:
       R.Invoke{bind(callee, first, second)}
+    case R.OnCleanup{callee}:
+      R.OnCleanup{bind(callee, first, second)}
     case R.WatchExpr{awaiter, body}:
       R.WatchExpr{awaiter, bind(body, first, second)}
     case R.Then{left, right}:

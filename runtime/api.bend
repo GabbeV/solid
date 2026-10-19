@@ -165,6 +165,9 @@ def callWith(callback: Nat, first: R.Expr, second: R.Expr) -> R.Expr:
 def invoke(callee: R.Expr) -> R.Expr:
   R.Invoke{callee}
 
+def onCleanup(callee: R.Expr) -> R.Expr:
+  R.OnCleanup{callee}
+
 def vText(s: String) -> R.Value:
   R.StringValue{s}
 

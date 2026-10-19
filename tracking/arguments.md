@@ -54,6 +54,9 @@ cleared disposal and ambient restoration. Two general ABI helper laws check
 argument-zero substitution and the fresh root binder. These do not constitute a
 formal TS/Bend equivalence or general closure/lifetime/progress theorem.
 
+Init-bound disposers can now also be registered/returned through onCleanup;
+see [cleanup-values.md](cleanup-values.md).
+
 Nested signal/memo/effect creation, arbitrary function-valued inputs, dynamic
 returned effect-cleanup selection, expression teardown callbacks and active
 boundary/lane/provider/snapshot scopes remain unfinished. No source workaround

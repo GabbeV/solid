@@ -253,9 +253,9 @@
       "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol."
     },
     "core/owner.ts:cleanup": {
-      "bend": "runtime/owner.bend:cleanup, addDisposal",
+      "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode",
       "status": "restricted",
-      "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
+      "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged."
     },
     "core/owner.ts:disposeRootSelf": {
       "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren; runtime/core.bend:invoke, invokeValue; runtime/api.bend:invokeRootDisposer",
@@ -621,6 +621,11 @@
       "bend": "runtime/context.bend:failure; runtime/error.bend:errorMessage; host/bend.mjs:decode",
       "status": "restricted",
       "restrictions": "Production empty-message Error subclass, fresh identity, wrapper message capture and native decoding. Dev messages/stack costs and arbitrary error property mutation remain unfinished."
+    },
+    "signals.ts:onCleanup": {
+      "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup",
+      "status": "partial",
+      "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

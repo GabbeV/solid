@@ -2,6 +2,11 @@
 
 This is an incremental executable translation, not a completed package port.
 
+Current verification: 1307 differential histories, 32 rejected compiled mutations,
+and 23 composed closed Bend regressions (one deliberately preserves an upstream
+failure), plus general payload/question/callback/path helper laws. Pins are
+unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
+
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
 substitutions. Repair these before expanding affected paths, or register a
@@ -54,7 +59,7 @@ proof credit was imported.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
   text, and opaque reference identities. Reference tokens must preserve host
   identity. Signed zero has strict-equality semantics. General binary64 numeric
-  computation, functions-as-data and arbitrary thenable shape probing still need
+  computation, arbitrary functions-as-data and arbitrary thenable shape probing still need
   a richer host protocol. Immutable built-in Error/DOMException inputs now retain
   native identity and selected properties; custom errors/getters/coercion remain
   unfinished. See [errors.md](errors.md).
@@ -207,8 +212,8 @@ candidates are preserved; the semantic deviation register remains empty.
 
 Default until now has 136 histories and 8192 actual source closure probes; two
 closed laws check its queued falsy/true callbacks, promise outcome, root lifetime
-and dependency release. Together there are seventeen composed closed regressions,
-one explicitly negative, plus payload/question/path laws. See [until.md](until.md).
+and dependency release. See [until.md](until.md) for the default/option domain;
+the current combined proof/test totals are at the top of this file.
 Until's timeout/abort branches now execute for natural millisecond delays and
 represented or default native abort reasons, with 60 additional option histories and
 native timeout controls. Timer/listener registration and cancellation follow the
@@ -223,24 +228,34 @@ cover the admitted Error/DOMException data/failure paths. Existing error laws no
 retain the captured message field; no new general error theorem is claimed.
 The source inventory indexes constructors for future commit review.
 
-74 callback histories and a closed callback read/return/application-write law now
-exercise the active core callback continuation; see [callbacks.md](callbacks.md).
-There are eighteen composed closed regressions, one explicitly negative.
+## Callback, ownership and context dependencies
 
-73 ownership/context histories and the closed captured-root disposal law now
-exercise actual root callbacks and ambient restoration. There are nineteen
-composed closed regressions, one explicitly negative at that checkpoint. Bound
-disposer arguments and selected function values now execute; nested
-signal/memo/effect construction remains unfinished.
+74 callback histories exercise expression reads/returns/writes/throws through
+core's active read continuation, including application/error-arm finally frames.
+See [callbacks.md](callbacks.md). Another 73 ownership histories cover actual
+owned/detached root callbacks, owner/observer identity and exceptional ambient
+restoration; see [ownership.md](ownership.md).
 
-71 additional argument/disposer histories and the bound-init-disposer closed law
-bring the totals to 1231 differential histories and twenty composed closed
-regressions, one negative. Two general callback-binding helper laws also check.
-See [arguments.md](arguments.md) for selected function values, setter invocation
-versus updater-returned data, native callable materialization and explicit limits.
+71 argument/disposer histories cover argument order/binding, actual effect/error
+parameters, retained init-bound callable identity and the distinction between
+raw function setter inputs and updater-returned function data. See
+[arguments.md](arguments.md). Their closed laws exercise callback reads/returns,
+captured-root disposal and invocation of a bound disposer under another owner.
+Two general ABI helper laws check argument substitution and fresh root binding.
 
-52 owner-context histories bring the differential total to 1283. The low-level
-context module now uses inherited copied records and fresh Symbol-key identity;
-see [contexts.md](contexts.md). Two closed snapshot/isolation laws bring the
-composed closed total to twenty-two (one negative). High-level component/provider
-apis and arbitrary context/key/prototype reflection remain unfinished.
+52 context histories compare fresh keys, default/undefined/null rules, inherited
+copied records, entry order/aliasing, owner targeting and context errors. Two
+closed laws check parent snapshots and isolated child overrides. See
+[contexts.md](contexts.md). High-level component/provider APIs and arbitrary
+context/key/prototype reflection remain unfinished.
+
+24 cleanup-value histories compare onCleanup's original-function return,
+canonical callable identity, LIFO order and reentrant/throwing disposal. One
+closed law checks repeated registration and exactly one detached-target cleanup.
+See [cleanup-values.md](cleanup-values.md).
+
+The next callback dependencies are nested signal/memo/effect construction and
+expression reads in teardown callbacks. General closures/functions, dynamic
+returned effect-cleanup selection, custom comparators and active boundary/lane/
+snapshot/truth/action engines remain unfinished. Missing operations are explicit
+port limits, not source bugs or unregistered semantic repairs.

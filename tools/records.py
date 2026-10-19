@@ -134,6 +134,7 @@ type Expr is Data:
   CallWith{callback: Nat, first: Expr, second: Expr}
   Argument{index: Nat}
   Invoke{callee: Expr}
+  OnCleanup{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}
 
@@ -149,6 +150,7 @@ type CleanupAction is Data:
   CleanupDisposeCurrent{}
   CleanupPriorEffect{}
   CleanupCloseIterator{stream: Nat}
+  CleanupBoundRoot{owner: Nat}
   CallbackEvaluate{expr: Expr}
   CallbackReturn{expr: Expr}
   CallbackWrite{signal: Nat, expr: Expr}

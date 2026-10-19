@@ -205,3 +205,8 @@ Context keys and record arenas model fresh Symbol and spread-object identities.
 The source context module is runtime/context.bend; ambient owner/tracking stores
 are runtime/ambient.bend. ContextFailure represents the two production context
 Error subclasses. See [contexts.md](contexts.md) for the exact domain.
+
+Root-disposer data identities have a canonical, lazily materialized callback-arena
+encoding for disposal slots. Repeated registrations share that encoding, preserving
+source function alias relations. CleanupBoundRoot invokes the same owner machine
+with the bound root and self=true. See [cleanup-values.md](cleanup-values.md).

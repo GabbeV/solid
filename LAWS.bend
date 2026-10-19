@@ -13,6 +13,7 @@ import ./proof/callbacks.bend as Callbacks
 import ./proof/context.bend as Context
 import ./proof/disposer.bend as Disposer
 import ./proof/context-records.bend as ContextRecords
+import ./proof/bound-cleanup.bend as BoundCleanup
 import ./runtime/callback.bend as Callback
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
@@ -85,6 +86,9 @@ law context_records_are_snapshots:
 
 law context_child_override_is_isolated:
   {ContextRecords.view(ContextRecords.childOverride()) == ContextRecords.expectedOverride() : ContextRecords.View}
+
+law bound_cleanup_preserves_identity:
+  {BoundCleanup.view(BoundCleanup.initial()) == BoundCleanup.expected() : BoundCleanup.View}
 
 law callback_argument_zero:
   for +first: R.Value

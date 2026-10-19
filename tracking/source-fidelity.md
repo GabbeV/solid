@@ -158,3 +158,11 @@ NoOwnerError/ContextNotFoundError constructors. 52 public histories compare
 record contents, order and aliases; two closed laws cover root inheritance and
 child isolation. The ambient globals helper moved to runtime/ambient.bend so
 runtime/context.bend follows the source module boundary.
+
+The selected bound-disposer family now enters signals.ts:onCleanup and the same
+owner.ts:cleanup/disposeChildren operations. A canonical callback ID preserves
+its identity across disposal-list registrations, while the source return value
+remains the original function. 24 histories compare actual disposal aliases and
+reentrant behavior; one composed closed law checks the representation and drain.
+See [cleanup-values.md](cleanup-values.md); arbitrary teardown expressions remain
+rejected and no scheduling/teardown workaround is active.

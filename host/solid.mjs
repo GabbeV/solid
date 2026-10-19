@@ -55,6 +55,7 @@ export class SolidRuntime {
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
     if(e.invoke)return this.evaluate(e.invoke,prev,values)();
+    if(e.onCleanup)return this.S.onCleanup(this.evaluate(e.onCleanup,prev,values));
     if(e.call){
       if((e.args?.length??0)>2)throw new TypeError('Callback ABI currently admits at most two arguments');
       return this.programs[e.call](undefined,...(e.args??[]).map(arg=>this.evaluate(arg,prev,values)));

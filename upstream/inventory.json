@@ -17027,9 +17027,9 @@
           "sha256": "b80cdf7c6a04660283083ad7f9329b0f638e454f2fd4706503ed1361c5695db4",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:cleanup, addDisposal",
+            "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode",
             "status": "restricted",
-            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI."
+            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged."
           }
         },
         {
@@ -22185,8 +22185,12 @@
           "start": 91,
           "end": 120,
           "sha256": "1d6ffea63cac1e421b0f4857f36edb44776feac727a86e6b6721aa4f72bd8103",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup",
+            "status": "partial",
+            "restrictions": "Production returns the same registered callable, including without an owner. Static imperative named programs and init-bound root disposers execute; repeated bound functions use one canonical callable ID. Dev forbidden-scope diagnostics, arbitrary callbacks/function data and teardown expression suspension unfinished."
+          }
         },
         {
           "key": "signals.ts:accessor",

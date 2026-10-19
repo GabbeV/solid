@@ -24,6 +24,7 @@ import ./ambient.bend as L
 import ./owner-state.bend as D
 import ./callback.bend as Z
 import ./context.bend as Y
+import ./callable.bend as J
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -41,6 +42,7 @@ type Task is Data:
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
   Invoke{}
+  OnCleanup{}
   CallbackWrite{signal: Nat, updater: Bool}
   CallbackThrow{}
   WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
@@ -204,6 +206,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{first, prev} <> Evaluate{second, prev} <> CallArguments{callback} <> rest, stack}
     case R.Invoke{callee}:
       Machine{w, Evaluate{callee, prev} <> Invoke{} <> rest, stack}
+    case R.OnCleanup{callee}:
+      Machine{w, Evaluate{callee, prev} <> OnCleanup{} <> rest, stack}
     case R.CallProgram{+callback}:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
         _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]})), R.Undefined{}, R.Undefined{}} <> rest, stack},
@@ -308,6 +312,22 @@ def invoke(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
   match stack:
     case value <> tail:
       invokeValue(w, rest, tail, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# signals.ts:onCleanup -> owner.ts:cleanup, selected bound disposer family.
+# The source returns the very same callable, including without an owner.
+def onCleanupValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
+  match value:
+    case R.RootDisposerReference{+root}:
+      Machine{J.cleanup(w, R.World.context(w), root), rest, R.RootDisposerReference{root} <> tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
+
+def onCleanup(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case value <> tail:
+      onCleanupValue(w, rest, tail, value)
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -1233,6 +1253,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case Invoke{} <> rest:
       invoke(w, rest, stack)
+    case OnCleanup{} <> rest:
+      onCleanup(w, rest, stack)
     case CallbackWrite{+signal, updater} <> rest:
       match stack:
         case +value <> tail:

@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['onCleanup loses return identity','runtime/core.bend','rest, R.RootDisposerReference{root} <> tail}','rest, R.Undefined{} <> tail}','tests/cleanup-values.mjs'],
+  ['same bound cleanup receives fresh callable IDs','runtime/callable.bend','+old = find(R.World.cleanupPrograms(w), root, 0n)','+old = {0n : Nat}','tests/cleanup-values.mjs'],
+  ['bound cleanup disposes ambient receiver','runtime/owner.bend','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{owner, True{}, False{}} <> rest}','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{R.World.context(w), True{}, False{}} <> rest}','tests/cleanup-values.mjs'],
   ['context null treated as absent','runtime/context.bend','+value = B.choose(~R.Value, undefined(value),','+value = B.choose(~R.Value, B.nullish(value),','tests/contexts.mjs'],
   ['context record mutated in place','runtime/context.bend','+next = B.length(R.ContextRecord, R.World.contextRecords(w))\n      +w = R.World.with_contextRecords(w, B.append(R.ContextRecord, R.World.contextRecords(w), [R.ContextRecord{copyWith(entries, id, value)}]))','+next = R.Node.scope(B.node(w, owner))\n      +w = R.World.with_contextRecords(w, List.set(&2, R.ContextRecord, R.World.contextRecords(w), next, R.ContextRecord{copyWith(entries, id, value)}))','tests/contexts.mjs'],
   ['new root drops inherited context','runtime/owner-state.bend','R.Node.scope(B.node(w, parent))','0n','tests/contexts.mjs'],

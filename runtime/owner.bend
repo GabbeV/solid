@@ -173,6 +173,8 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{w, EffectCleanup{R.World.callbackEffect(w), True{}} <> rest}
     case R.CleanupCloseIterator{stream}:
       Machine{I.close(w, stream), rest}
+    case R.CleanupBoundRoot{owner}:
+      Machine{w, Enter{owner, True{}, False{}} <> rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
     # Expression-bearing callbacks currently run on core's read continuation

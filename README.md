@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject twenty-nine source-changing variants
+npm run mutations                # reject thirty-two source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -44,7 +44,9 @@ park/land now run in the same driver. Ordinary typed promise-like flights now re
 see [ownership coverage](tracking/ownership.md). Bound root disposers are callable
 and retain identity through argument passing and updater storage; see
 [argument/function coverage](tracking/arguments.md). Low-level context keys,
-lookup and copied owner records also execute; see [context coverage](tracking/contexts.md). Arbitrary host JavaScript callbacks are not yet supported.
+lookup and copied owner records also execute; see [context coverage](tracking/contexts.md). Selected bound disposers can be returned
+and registered by onCleanup with preserved callable identity; see
+[cleanup values](tracking/cleanup-values.md). Arbitrary host JavaScript callbacks are not yet supported.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 

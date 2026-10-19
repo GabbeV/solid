@@ -69,6 +69,9 @@ def Laws.context_records_are_snapshots():
 def Laws.context_child_override_is_isolated():
   {==}
 
+def Laws.bound_cleanup_preserves_identity():
+  {==}
+
 def Laws.callback_argument_zero(first, second):
   {==}
 

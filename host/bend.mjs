@@ -112,6 +112,7 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue,contexts));
   if (Object.hasOwn(e,'argument'))return R.argument(e.argument);
   if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue,contexts));
+  if (e.onCleanup)return R.onCleanup(expression(e.onCleanup,ids,programs,futures,encodeValue,contexts));
   if (e.call){
     if(e.args){
       if(e.args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
