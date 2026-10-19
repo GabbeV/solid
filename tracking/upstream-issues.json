@@ -13,6 +13,20 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null
+    },
+    {
+      "id": "SOLID-STAGED-ERROR-RECOVERY-002",
+      "classification": "suspected-upstream-bug",
+      "status": "reduced-current-head-repro-no-report",
+      "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+      "sourceUnit": "core/core.ts:recompute",
+      "record": "tracking/upstream/staged-error-recovery.md",
+      "reproducer": "tests/upstream/staged-error-recovery.mjs",
+      "baselineProof": "LAWS.bend:staged_error_recovery_counterexample",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null
     }
   ]
 }

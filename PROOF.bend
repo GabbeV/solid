@@ -45,6 +45,9 @@ def Laws.newest_promise_lands():
 def Laws.async_diamond_lands():
   {==}
 
+def Laws.staged_error_recovery_counterexample():
+  {==}
+
 def Laws.question_increment_meaning(value):
   Question.incrementMeaning(value)
 

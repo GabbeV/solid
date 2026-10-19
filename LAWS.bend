@@ -7,6 +7,7 @@ import ./proof/errors.bend as Errors
 import ./proof/pending.bend as Pending
 import ./proof/transaction.bend as Transaction
 import ./proof/flight.bend as Flight
+import ./proof/held-error.bend as HeldError
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
 
@@ -53,6 +54,10 @@ law newest_promise_lands:
 
 law async_diamond_lands:
   {Flight.diamondView(Flight.diamondLanded()) == Flight.expectedDiamond() : Flight.DiamondView}
+
+# Negative source baseline: this is not the intended recovery guarantee.
+law staged_error_recovery_counterexample:
+  {HeldError.view(HeldError.delivered()) == HeldError.expectedCounterexample() : HeldError.View}
 
 law question_increment_meaning:
   for +value: R.Question

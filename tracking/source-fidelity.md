@@ -99,3 +99,10 @@ empty iterable. Direct/native/one-yield controls and related upstream history
 were checked. This is a reduced bug candidate; no report, workaround or source
 change is active. tracking/upstream-issues.json indexes it separately from the
 semantic deviation register.
+
+[SOLID-STAGED-ERROR-RECOVERY-002](upstream/staged-error-recovery.md) records a
+successful held value thrown as an error after an earlier staged error is replaced
+before landing. Eight source-only controls, sixteen parity histories and a closed
+negative Bend law preserve this current-head behavior. No workaround is active.
+An unregistered bit-clearing mutation is rejected for source mismatch; that is not
+a claim that the pinned behavior is desirable.

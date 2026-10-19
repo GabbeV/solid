@@ -72,7 +72,7 @@ Bend's explicit host outcomes without changing the engine body or job ordering.
 This lets a rejection that halts a render be compared without terminating Node.
 The user promise may already have resolved before cleanup throws; that result is
 retained on both sides. Two new mutation checks reject eager refresh-watcher
-creation and delivering a watch promise directly from the pass: ten broken variants
+creation and delivering a watch promise directly from the pass: eleven source-changing variants
 are rejected overall.
 
 ## Interface and limitations

@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Ten deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
+Eleven source-changing variants must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -191,3 +191,10 @@ use an explicit transaction input, not the public action API or host promises.
 
 All source branches are still marked open for individual branch review, even
 where a restricted function port exists. No blended completion percentage is used.
+
+A fifteenth closed composed law is explicitly negative baseline evidence:
+`staged_error_recovery_counterexample` checks the pinned successful-value-as-error
+recovery failure. It is not a successful coherence guarantee. See
+[the upstream candidate](upstream/staged-error-recovery.md) for native/immediate
+controls, exact source operations and current-head/duplicate checks. Both bug
+candidates are preserved; the semantic deviation register remains empty.
