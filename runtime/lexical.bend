@@ -12,6 +12,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Read{signal}, _ => R.LocalRead{index})
     case R.LocalAccessor{+index}:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.accessor(signal)}, _ => R.LocalAccessor{index})
+    case R.LocalSetter{+index}:
+      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.setter(signal)}, _ => R.LocalSetter{index})
     case R.LocalWrite{+index, value, +updater}:
       +value = bind(value, depth, signal)
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.WriteExpr{signal, value, updater}, _ => R.LocalWrite{index, value, updater})
@@ -39,6 +41,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.CallWith{callback, bind(left, depth, signal), bind(right, depth, signal)}
     case R.RootScope{body, transparent}:
       R.RootScope{bind(body, depth, signal), transparent}
+    case R.MemoAccessor{compute, options}:
+      R.MemoAccessor{bind(compute, depth, signal), options}
     case R.MemoRead{compute, options}:
       R.MemoRead{bind(compute, depth, signal), options}
     case R.EffectCreate{+compute, spec}:
@@ -53,6 +57,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.ContextGet{key, bind(owner, depth, signal)}
     case R.ContextSet{key, value, owner}:
       R.ContextSet{key, bind(value, depth, signal), bind(owner, depth, signal)}
+    case R.InvokeWith{callee, value, updater}:
+      R.InvokeWith{bind(callee, depth, signal), bind(value, depth, signal), updater}
     case R.Invoke{callee}:
       R.Invoke{bind(callee, depth, signal)}
     case R.OnCleanup{callee}:

@@ -56,11 +56,13 @@ def insertSubs(+w: R.World, +id: Nat) -> R.World:
 
 # Called with a value (the expression updater is evaluated by the machine).
 # Source returns v even when equality suppresses the write.
-def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
+# core.ts:setSignal after invoking v(currentValue). currentValue is the
+# entry local, not a second slot read after an updater's reentrant writes.
+def setResolved(+w: R.World, +id: Nat, currentValue: R.Value, +value: R.Value) -> R.World:
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w)
   +n = B.node(w, id)
   changed = Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),
-    Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
+    Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(currentValue, value)))))
   B.choose(~R.World, changed,
     _ =>
       +staged = B.present(R.Node.pending(n))
@@ -73,4 +75,8 @@ def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
       B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(n), R.World.epoch(w))), _ => w,
         _ => B.schedule(insertSubs(w, id))),
     _ => w)
+
+
+def setSignal(+w: R.World, +id: Nat, value: R.Value) -> R.World:
+  setResolved(w, id, B.current(B.node(w, id)), value)
 

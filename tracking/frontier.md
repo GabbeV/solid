@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1560 differential histories, 48 rejected compiled mutations,
-and 28 composed closed Bend regressions (one deliberately preserves an upstream
+Current verification: 1662 differential histories, 54 rejected compiled mutations,
+and 31 composed closed Bend regressions (one deliberately preserves an upstream
 failure), plus general payload/question/callback/path helper laws. Pins are
 unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -34,7 +34,7 @@ proof credit was imported.
   constructors support nested-root parentComputed forwarding, tested at height,
   heap and read sites. Callback-based owned/detached roots, runWithOwner, owner/observer handles and
   disposal status now execute; see [ownership.md](ownership.md). Nested createMemo(compute, options)() expressions execute under the actual current
-  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaping setters, memo accessors and function-initializer signals remain open. See [locals.md](locals.md). See [nested.md](nested.md).
+  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; function-initializer signals remain open. See [locals.md](locals.md). See [nested.md](nested.md).
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
@@ -47,7 +47,7 @@ proof credit was imported.
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
   read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaping setters, memo accessors and function-initializer signals remain open;
+  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; function-initializer signals remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
@@ -259,7 +259,11 @@ see [nested.md](nested.md). 55 local-signal/captured-body histories and one clos
 operations; see [locals.md](locals.md). Two general lexical-binding laws also check.
 Forty escaped-accessor histories and one closed lifetime/tracking law extend
 local data-signal read functions; one general lexical-accessor binder law also checks.
-The next callback dependencies are escaping setters/memo accessors, function-initializer
+Eleven reentrant-setter, forty escaped-setter and fifty-one computed-accessor
+histories extend the function domain. Three closed regressions check entry-value
+capture and setter/computed lifetime; one general lexical-setter binder law also
+checks. See [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
+The next callback dependencies are function-initializer
 signals and expression reads in teardown callbacks. General closures/functions, dynamic
 returned effect-cleanup selection, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit

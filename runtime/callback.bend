@@ -39,6 +39,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.WriteExpr{signal, bind(value, first, second), updater}
     case R.EffectCreate{compute, spec}:
       R.EffectCreate{bind(compute, first, second), spec}
+    case R.MemoAccessor{compute, options}:
+      R.MemoAccessor{bind(compute, first, second), options}
     case R.MemoRead{compute, options}:
       R.MemoRead{bind(compute, first, second), options}
     case R.RootScope{body, transparent}:
@@ -47,6 +49,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.ContextGet{key, bind(owner, first, second)}
     case R.ContextSet{key, value, owner}:
       R.ContextSet{key, bind(value, first, second), bind(owner, first, second)}
+    case R.InvokeWith{callee, value, updater}:
+      R.InvokeWith{bind(callee, first, second), bind(value, first, second), updater}
     case R.Invoke{callee}:
       R.Invoke{bind(callee, first, second)}
     case R.OnCleanup{callee}:

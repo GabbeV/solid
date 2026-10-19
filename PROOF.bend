@@ -116,3 +116,15 @@ def Laws.escaped_accessor_tracks_after_root_disposal():
 
 def Laws.lexical_accessor_binding(signal):
   {==}
+
+def Laws.escaped_setter_writes_after_root_disposal():
+  {==}
+
+def Laws.reentrant_setter_uses_entry_value():
+  {==}
+
+def Laws.computed_accessor_freezes_on_root_disposal():
+  {==}
+
+def Laws.lexical_setter_binding(signal):
+  {==}

@@ -45,7 +45,9 @@ Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
 reads, arbitrary closures, general function values, dynamic returned cleanup
-selection, function-initializer signals, escaping setters/memo accessors and active scopes remain unfinished.
+selection, function-initializer signals and active scopes remain unfinished.
+Escaped data-signal setters and computed accessors now execute; see
+[setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
 Escaped data-signal read accessors now enter the ordinary read machine; see [locals.md](locals.md).
 Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions now execute; see [nested.md](nested.md). Local signal bindings and captured inline bodies also execute;
 see [locals.md](locals.md).

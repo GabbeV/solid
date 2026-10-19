@@ -32,7 +32,7 @@ These are port-side observations. None establishes an upstream bug.
 
 | Area | Current gap | Required treatment |
 | --- | --- | --- |
-| Node construction | `api.allocate` has been removed. Separate signal/computed/effect/owner literals retain their own option masks, lazy/loading defaults, parent links and setup order; sync is opt-in. | 7,680 constructor comparisons cover the production subset and lazy extension defaults; nested-root heap/read forwarding has direct probes. Hydration IDs, snapshot/external hooks and arbitrary callbacks, function-initializer signals, escaping setters and memo accessors remain unfinished; escaped data-signal read accessors now execute; nested memo-read and user/render effect construction now execute through the same core machine. See [nested.md](nested.md) and [locals.md](locals.md). Owner context lookup/copy-on-write now executes; see [contexts.md](contexts.md). See [representation.md](representation.md). |
+| Node construction | `api.allocate` has been removed. Separate signal/computed/effect/owner literals retain their own option masks, lazy/loading defaults, parent links and setup order; sync is opt-in. | 7,680 constructor comparisons cover the production subset and lazy extension defaults; nested-root heap/read forwarding has direct probes. Hydration IDs, snapshot/external hooks and arbitrary callbacks, function-initializer signals remain unfinished; escaped data-signal read/set functions and computed read accessors now execute; nested memo-read and user/render effect construction now execute through the same core machine. See [nested.md](nested.md) and [locals.md](locals.md). Owner context lookup/copy-on-write now executes; see [contexts.md](contexts.md). See [representation.md](representation.md). |
 | Refresh helper | The original port called markNode/enqueueSub, eagerly propagating CHECK and changing the heap minimum; source markRefresh updates the target flags, calls insertIntoHeap, then schedule. | This checkpoint replaces that substitution with core.markRefresh in source order, including REASK flag classification. Async classification remains unfinished. |
 | Public promise helpers | The public resolve/refresh watchers now execute eager resolve, deferred/coalesced refresh, source frame delivery, pending/error handling and native promise IO before disposal. markRefresh remains a separate helper. | 158 histories and 6,144 watch-body comparisons. Arbitrary callback/store targets, returned-thenable assimilation and active truth/lagging/lane scopes remain unfinished; see [watchers.md](watchers.md). |
 | Commit (`scheduler.commitPendingNode`) | Separate source branches preserve publication/configuration order and status bits, close `_loading`, queue staged effects, and use nullable extension state for shown-error/reask/flushed resets and the nullish error trim gate. | 4,608 comparisons with the actual TS helper cover internal state/queues, including the in-flight bit branch and absent/null/false/error metadata. Staged-error publication and parked teardown execute; these probes do not establish async or transaction execution. |
@@ -166,3 +166,13 @@ remains the original function. 24 histories compare actual disposal aliases and
 reentrant behavior; one composed closed law checks the representation and drain.
 See [cleanup-values.md](cleanup-values.md); arbitrary teardown expressions remain
 rejected and no scheduling/teardown workaround is active.
+
+
+The source setter's captured currentValue now survives user updater calls. A
+reentrant updater that stages 9 then returns its entry value 1 leaves 9 staged,
+matching TypeScript; the former port incorrectly overwrote it. See
+[setters.md](setters.md) for the reduced failure, source return-point split and
+eleven paired histories. This is a port repair, not an upstream workaround.
+Escaped data-signal setters and computed accessors now share those continuations;
+computed owner disposal retains its distinct frozen-value behavior. See
+[computed-accessors.md](computed-accessors.md).

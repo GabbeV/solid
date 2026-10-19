@@ -28,7 +28,7 @@ The Source adapter actually calls createSignal and createEffect/createRenderEffe
 Native accessor refresh-symbol metadata is inspected read-only for signal-state
 observations; it is never used to decide a value, write, dependency or schedule.
 Bend IDs and source const-pair closures represent the same admitted user bindings.
-Escaping setters and computed accessors, variable reassignment, arbitrary JavaScript
+Variable reassignment and arbitrary JavaScript
 closures and function-initializer/writable-memo overloads remain outside this ABI.
 Unbound local indices are invalid programs and fail explicitly.
 
@@ -68,9 +68,9 @@ escaped accessor.
 A raw accessor setter argument takes the source typeof-function branch: read it
 once, then hand the answer to the shared write remainder, including when the
 answer is another function. An updater-returned accessor is data and is not
-called again. `WriteResult` now serves expression writes, imperative callback
-writes and the facade; `CallbackWrite` discards its result at the original return
-point. Existing bound-disposer writes still use the same owner teardown machine.
+called again. The source return points now use `SetSignalArgument` and
+`SetSignalResolved`; callback writes discard their result at the original
+return point. See [setters.md](setters.md) for the entry-local repair. Existing bound-disposer writes still use the same owner teardown machine.
 Active write/lane/snapshot hooks and arbitrary updaters/comparators remain open.
 
 Forty additional differential histories check escape/return, native identity,
@@ -100,9 +100,10 @@ wrong targets, lost tracking, repeated updater-result invocation and omitted raw
 updater invocation. This is concrete Bend evidence, not general closure or formal
 TS/Bend equivalence.
 
-Escaped setter functions and computed accessors, function initializers/writable
-memos, arbitrary closure/function inputs and expression-capable owner teardown
-remain unfinished. Accessor use as onCleanup and raw accessor updater reads in
+Escaped data-signal setters and computed accessors now execute; see
+[setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
+Function initializers/writable memos, arbitrary closure/function inputs and
+expression-capable owner teardown remain unfinished. Accessor use as onCleanup and raw accessor updater reads in
 teardown are explicitly rejected; no owner-machine cached read or accidental
 function-as-data fallback is introduced. The source pin and deviation register
 are unchanged.

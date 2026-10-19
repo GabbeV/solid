@@ -85,17 +85,18 @@ def flush(fuel: Nat, w: R.World) -> R.World:
 
 def setValue(fuel: Nat, +w: R.World, +id: Nat, value: R.Value) -> C.Machine:
   B.choose(~C.Machine, B.valid(w, id),
-    _ => C.run(fuel, C.Machine{w, [C.WriteResult{id, False{}}], [value]}),
+    _ => C.run(fuel, C.Machine{w, [C.SetSignalArgument{id}], [value]}),
     _ => C.Machine{R.World.with_fault(w, R.BadId{}), [], []})
 
 def setSignal(+w: R.World, id: Nat, value: R.Value) -> R.World:
   C.world(setValue(B.budget(w), w, id, value))
 
 # Updaters see staged composition; setter returns are preserved by the facade.
-def setUpdater(fuel: Nat, +w: R.World, +id: Nat, expr: R.Expr) -> R.World:
-  +m = C.eval(fuel, w, expr, B.current(B.node(w, id)))
-  B.choose(~R.World, C.healthy(R.World.fault(C.world(m))),
-    _ => S.setSignal(C.world(m), id, resultValue(m)), _ => C.world(m))
+def updateValue(fuel: Nat, w: R.World, id: Nat, expr: R.Expr) -> C.Machine:
+  C.eval(fuel, w, R.WriteExpr{id, expr, True{}}, R.Undefined{})
+
+def setUpdater(fuel: Nat, w: R.World, id: Nat, expr: R.Expr) -> R.World:
+  C.world(updateValue(fuel, w, id, expr))
 
 # The source invalidation helper is separate from public awaitable refresh.
 def markRefresh(+w: R.World, +id: Nat) -> R.World:
@@ -148,6 +149,12 @@ def signalScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr
 def vAccessor(signal: Nat) -> R.Value:
   R.AccessorReference{signal}
 
+def vSetter(signal: Nat) -> R.Value:
+  R.SetterReference{signal}
+
+def localSetter(depth: Nat) -> R.Expr:
+  R.LocalSetter{depth}
+
 def localAccessor(depth: Nat) -> R.Expr:
   R.LocalAccessor{depth}
 
@@ -158,6 +165,9 @@ def localWrite(depth: Nat, value: R.Expr, updater: Bool) -> R.Expr:
   R.LocalWrite{depth, value, updater}
 
 # User ABI for the source expression createMemo(compute, options)().
+def memoAccessor(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
+  R.MemoAccessor{compute, options}
+
 def memoRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
   R.MemoRead{compute, options}
 
@@ -192,6 +202,9 @@ def argument(index: Nat) -> R.Expr:
 
 def callWith(callback: Nat, first: R.Expr, second: R.Expr) -> R.Expr:
   R.CallWith{callback, first, second}
+
+def invokeWith(callee: R.Expr, value: R.Expr, updater: Bool) -> R.Expr:
+  R.InvokeWith{callee, value, updater}
 
 def invoke(callee: R.Expr) -> R.Expr:
   R.Invoke{callee}

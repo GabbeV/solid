@@ -6,7 +6,7 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value);
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value);
   }
   ownerFor(name){
     if(name===null)return null;
@@ -16,9 +16,14 @@ export class SolidRuntime {
   }
   value(v) {
     if(v instanceof this.S.NoOwnerError||v instanceof this.S.ContextNotFoundError)return v;
-    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
+    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
     const described=this.hostErrors.describe(v);
     if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
+    if(v&&typeof v==='object'&&typeof v.setter==='string'){
+      const set=this.setterFunctions.get(v.setter);
+      if(!set)throw new TypeError('Unknown signal setter: '+v.setter);
+      return set;
+    }
     if(v&&typeof v==='object'&&typeof v.accessor==='string'){
       const binding=this.localSignals?.get(v.accessor),get=binding?.get??this.accessors[v.accessor];
       if(!get||!this.accessorIdentities.has(get))throw new TypeError('Unknown signal accessor: '+v.accessor);
@@ -56,9 +61,13 @@ export class SolidRuntime {
       const [get,set]=this.S.createSignal(value,{...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]});
       const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
       this.localNotPending??=node._pendingValue;
-      this.accessorIdentities.set(get,name);
+      this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
       const binding={get,set,name};(this.localSignals??=new Map()).set(name,binding);
       return this.evaluate(body,prev,values,[binding,...locals]);
+    }
+    if(Object.hasOwn(e,'localSetter')){
+      const binding=locals[e.localSetter];if(!binding)throw new TypeError('Unbound local signal');
+      return binding.set;
     }
     if(Object.hasOwn(e,'localAccessor')){
       const binding=locals[e.localAccessor];if(!binding)throw new TypeError('Unbound local signal');
@@ -87,15 +96,17 @@ export class SolidRuntime {
       const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
       return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values,locals),bundle,{...options,unobserved:this.programs[options.unobserved]});
     }
-    if(e.memoRead){
+    if(e.memoRead||e.memoAccessor){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);
       const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
       if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
       const get=this.S.createMemo(next=>{
         const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
-        this.traceEvents.push(['compute',name]);return this.evaluate(e.memoRead,next,values,locals);
+        this.traceEvents.push(['compute',name]);return this.evaluate(e.memoRead??e.memoAccessor,next,values,locals);
       },opts);
+      this.registerComputedAccessor(get,name);
+      if(e.memoAccessor)return get;
       const value=get(),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
       this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
     }
@@ -111,6 +122,18 @@ export class SolidRuntime {
     if(e.select) return this.evaluate(e.select[0],prev,values,locals) ? this.evaluate(e.select[1],prev,values,locals) : this.evaluate(e.select[2],prev,values,locals);
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
+    if(e.invokeWith){
+      const {callee,value={lit:undefined},updater=false}=e.invokeWith;
+      const fn=this.evaluate(callee,prev,values,locals);
+      if(updater){
+        const result=fn(previous=>this.evaluate(value,previous,values,locals));
+        if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
+        return result;
+      }
+      const argument=this.evaluate(value,prev,values,locals),result=this.setterIdentities.has(fn)?this.writeValue(fn,argument):fn(argument);
+      if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
+      return result;
+    }
     if(e.invoke){
       const callee=this.evaluate(e.invoke,prev,values,locals),value=callee();
       if(this.accessorIdentities.has(callee))this.observeAccessorRead(callee,value);
@@ -118,7 +141,7 @@ export class SolidRuntime {
     }
     if(e.onCleanup){
       const callee=this.evaluate(e.onCleanup,prev,values,locals);
-      if(this.accessorIdentities.has(callee))throw new TypeError('Accessor teardown reads are not yet translated');
+      if(this.accessorIdentities.has(callee)||this.setterIdentities.has(callee))throw new TypeError('Accessor/setter teardown calls are not yet translated');
       return this.S.onCleanup(callee);
     }
     if(e.call){
@@ -140,6 +163,14 @@ export class SolidRuntime {
     if(description!==undefined&&typeof description!=='string')throw new TypeError('Context descriptions must be strings');
     this.contexts[name]=this.S.createContext(this.value(value),description);
   }
+  registerComputedAccessor(get,name){
+    this.accessorIdentities.set(get,name);this.accessors[name]=get;
+    // Read-only identity/state observation for lazy nodes whose body has not
+    // yet called getOwner. The native accessor and its metadata stay intact.
+    const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+    if(!node)throw new Error('Missing source accessor target metadata');
+    this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+  }
   observeAccessorRead(callee,value){
     const owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
     this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,this.accessorIdentities.get(callee),value]);
@@ -149,6 +180,7 @@ export class SolidRuntime {
       if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
       return {[value instanceof this.S.NoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};
     }
+    if(this.setterIdentities.has(value))return {setter:this.setterIdentities.get(value)};
     if(this.accessorIdentities.has(value))return {accessor:this.accessorIdentities.get(value)};
     if(this.rootDisposers.has(value))return {rootDisposer:this.observe(this.rootDisposers.get(value))};
     for(const [name,owner] of Object.entries(this.owners))if(value===owner)return {owner:name};
@@ -282,7 +314,7 @@ export class SolidRuntime {
     requireTeardownProgram(this.programActions,opts.unobserved);
     const initial=this.value(value);
     if(typeof initial==='function')throw new TypeError('Function initializers are not yet translated');
-    const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);
+    const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
   }
   callback(name,expr,values=[],locals=[]) { return prev=> {
     this.sourceNames.set(this.S.getOwner(),name);
@@ -296,6 +328,7 @@ export class SolidRuntime {
     if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
     const parent=this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root');
     this.accessors[name]=this.S.runWithOwner(parent,()=>this.S.createMemo(this.callback(name,expr),opts));
+    this.registerComputedAccessor(this.accessors[name],name);
     // Read-only construction observation: a lazy body has not called getOwner
     // yet. In this grammar it cannot construct children before its first pass.
     if(options.lazy&&parent)this.namedOwners.set(parent._firstChild,name);

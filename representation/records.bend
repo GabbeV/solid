@@ -10,6 +10,7 @@ type Value is Data:
   OwnerReference{id: Nat}
   RootDisposerReference{owner: Nat}
   AccessorReference{signal: Nat}
+  SetterReference{signal: Nat}
   ContextFailure{identity: Nat, kind: U32}
   NotANumber{}
   StringValue{s: String}
@@ -110,9 +111,11 @@ type Expr is Data:
   SignalScope{initial: Expr, options: NodeOptions, body: Expr}
   LocalRead{depth: Nat}
   LocalAccessor{depth: Nat}
+  LocalSetter{depth: Nat}
   LocalWrite{depth: Nat, value: Expr, updater: Bool}
   WriteExpr{signal: Nat, value: Expr, updater: Bool}
   MemoRead{compute: Expr, options: NodeOptions}
+  MemoAccessor{compute: Expr, options: NodeOptions}
   EffectCreate{compute: Expr, spec: EffectSpec}
   RootScope{body: Expr, transparent: Bool}
   DisposeRoot{owner: Expr}
@@ -123,6 +126,7 @@ type Expr is Data:
   CallWith{callback: Nat, first: Expr, second: Expr}
   Argument{index: Nat}
   Invoke{callee: Expr}
+  InvokeWith{callee: Expr, value: Expr, updater: Bool}
   OnCleanup{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}

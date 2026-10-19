@@ -44,7 +44,7 @@ type Task is Data:
   EffectCleanup{id: Nat, self: Bool}
   Invoke{callback: Nat}
   Action{callback: Nat, action: R.CleanupAction}
-  WriteValue{signal: Nat, value: R.Value}
+  WriteValue{signal: Nat, current: R.Value, value: R.Value}
   Dispose{id: Nat}
   MarkChildren{id: Nat}
   MarkChild{child: Nat}
@@ -151,8 +151,10 @@ def actions(+callback: Nat, xs: List<&2, R.CleanupAction>) -> List<&2, Task>:
 def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, R.Undefined{}} <> rest}
+      Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}} <> rest}
     case R.AccessorReference{source}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
+    case R.SetterReference{target}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case other:
       Machine{W.setSignal(w, signal, other), rest}
@@ -238,8 +240,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), []})
     case Action{callback, value} <> rest:
       action(w, rest, callback, value)
-    case WriteValue{signal, value} <> rest:
-      Machine{W.setSignal(w, signal, value), rest}
+    case WriteValue{signal, current, value} <> rest:
+      Machine{W.setResolved(w, signal, current, value), rest}
     case Dispose{id} <> rest:
       disposeStart(w, rest, id)
     case MarkChildren{id} <> rest:

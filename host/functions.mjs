@@ -15,3 +15,18 @@ export class RootDisposers {
 // One escaped accessor per admitted signal. Invocation re-enters core.read;
 // this cache supplies native callable identity only.
 export class SourceAccessors extends RootDisposers {}
+
+// Escaped data-signal setters retain a separate function identity. One raw
+// argument is passed back to the Bend call machine; arbitrary JS updaters are
+// outside this codec and are represented by the explicit expression-call ABI.
+export class SourceSetters {
+  constructor(invoke){this.invoke=invoke;this.bySignal=new Map();this.identities=new WeakMap();}
+  get(signal){
+    if(!this.bySignal.has(signal)){
+      const set=value=>this.invoke(signal,value);
+      this.bySignal.set(signal,set);this.identities.set(set,signal);
+    }
+    return this.bySignal.get(signal);
+  }
+  identity(value){return typeof value==='function'?this.identities.get(value):undefined;}
+}

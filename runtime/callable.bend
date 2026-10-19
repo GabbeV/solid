@@ -41,3 +41,9 @@ def cleanup(+w: R.World, +owner: Nat, root: Nat) -> R.World:
 # per signal by the host codec; invocation enters core's ordinary read machine.
 def accessor(node: Nat) -> R.Value:
   R.AccessorReference{node}
+
+# signals.ts:createSignal(data): setSignal.bind(null,node), separate from
+# the read function for the same signal. Function-initializer setters use a
+# different source entry and are not admitted by this constructor.
+def setter(node: Nat) -> R.Value:
+  R.SetterReference{node}

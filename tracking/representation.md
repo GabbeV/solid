@@ -221,5 +221,6 @@ captured inline application bodies now execute; see [locals.md](locals.md). See 
 escaped data-signal read family. Lexical binding retains the allocated signal ID;
 invocation resumes ordinary core reads. The native codec caches one callable per
 signal and performs no reactive work itself. Its strong caches are not a memory
-or performance equivalence claim. Setter/memo accessor values, function reflection
-and general teardown reads remain unfinished. See [locals.md](locals.md).
+or performance equivalence claim. Data-signal setter and computed accessor values now execute as well; see
+[setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
+Function reflection and general teardown reads remain unfinished. See [locals.md](locals.md).

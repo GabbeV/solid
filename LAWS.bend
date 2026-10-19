@@ -17,6 +17,8 @@ import ./proof/bound-cleanup.bend as BoundCleanup
 import ./proof/nested.bend as Nested
 import ./proof/locals.bend as Locals
 import ./proof/accessors.bend as Accessors
+import ./proof/setters.bend as Setters
+import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
 import ./runtime/callback.bend as Callback
@@ -151,3 +153,16 @@ law escaped_accessor_tracks_after_root_disposal:
 law lexical_accessor_binding:
   for +signal: Nat
   {Lexical.bind(R.LocalAccessor{0n}, 0n, signal) == R.Literal{R.AccessorReference{signal}} : R.Expr}
+
+law escaped_setter_writes_after_root_disposal:
+  {Setters.view(Setters.scenario()) == Setters.expected() : Setters.View}
+
+law reentrant_setter_uses_entry_value:
+  {Setters.capture() == Setters.expectedCapture() : Setters.CaptureView}
+
+law computed_accessor_freezes_on_root_disposal:
+  {ComputedAccessors.view(ComputedAccessors.scenario()) == ComputedAccessors.expected() : ComputedAccessors.View}
+
+law lexical_setter_binding:
+  for +signal: Nat
+  {Lexical.bind(R.LocalSetter{0n}, 0n, signal) == R.Literal{R.SetterReference{signal}} : R.Expr}

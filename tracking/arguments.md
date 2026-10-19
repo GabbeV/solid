@@ -32,7 +32,7 @@ this selected function family.
 Function values require the source setter's typeof-function branch. A raw bound
 disposer passed to a setter runs before the setter remainder and yields undefined;
 a throw skips all later setter stores. Returning the same function from an
-updater stores it as data, without invoking it again. `setSignal`/`setterValue`,
+updater stores it as data, without invoking it again. `SetSignalArgument`/`SetSignalResolved`,
 owner.writeValue's teardown continuation and evaluated callback writes preserve
 these sites. `updateExpr` is the callback form of a real updater and can retain a
 function. Async settlements write returned function data through the existing
