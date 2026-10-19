@@ -152,3 +152,9 @@ source values without forcing the kernel to unfold the 0x7fffffff mainline ID as
 billions of unary constructors. World.questions is the sequence counter, separate
 from ambient World.question. See [question-ids.md](question-ids.md) for numeric
 source comparisons, general helper proofs and five composed async laws.
+
+Awaiter.until selects the default predicate callback, while confirmation retains
+until's pre-root transaction t separately from watch's own. makeWatch captures the
+default own at the source watch call; refresh passes its earlier explicit own.
+Falsy until delivery keeps the root and watcher subscribed. No timeout/signal
+record or branch is claimed yet; those options are outside the current ABI.

@@ -278,3 +278,6 @@ def hostJobKind(job: R.HostJob) -> U32:
       3
     case R.PromiseOutcome{awaiter, rejected, value}:
       4
+
+def untilValue(fuel: Nat, w: R.World, expr: R.Expr) -> R.World:
+  J.until(fuel, w, expr)

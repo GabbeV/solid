@@ -99,7 +99,7 @@ checked against the unchanged TS nodes. Read-only observation captures the fresh
 node's actual NOT_PENDING sentinel; it does not change source functions. User
 program trace labels are independent of internal auto-close callback arena IDs.
 Two iterator mutations reject lost post-gap synchronous yields and omitted return;
-eight iterator/ordinary-flight mutations are rejected; two public-watcher mutations bring the total to ten.
+the iterator/flight and public-watcher mutations are joined by a source-counterexample guard and a falsy-until guard: twelve source-changing variants are rejected.
 
 The immediate empty-flatten object leak is preserved, with 18 independent
 source-only paired controls and a current-head/history investigation in

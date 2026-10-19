@@ -253,77 +253,97 @@ def AsyncObserver.with_stream(r: AsyncObserver, v: Nat) -> AsyncObserver:
       AsyncObserver{node, result, isSync, resolved, rejected, syncValue, syncError, v}
 
 type Awaiter is Data:
-  Awaiter{expr: Expr, refresh: Bool, target: Nat, own: Nat, root: Nat, node: Nat, state: AsyncSettlement}
+  Awaiter{expr: Expr, refresh: Bool, target: Nat, own: Nat, root: Nat, node: Nat, state: AsyncSettlement, until: Bool, confirmation: Nat}
 
 def Awaiter.expr(r: Awaiter) -> Expr:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       expr
 
 def Awaiter.with_expr(r: Awaiter, v: Expr) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{v, refresh, target, own, root, node, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{v, refresh, target, own, root, node, state, until, confirmation}
 
 def Awaiter.refresh(r: Awaiter) -> Bool:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       refresh
 
 def Awaiter.with_refresh(r: Awaiter, v: Bool) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, v, target, own, root, node, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, v, target, own, root, node, state, until, confirmation}
 
 def Awaiter.target(r: Awaiter) -> Nat:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       target
 
 def Awaiter.with_target(r: Awaiter, v: Nat) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, refresh, v, own, root, node, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, v, own, root, node, state, until, confirmation}
 
 def Awaiter.own(r: Awaiter) -> Nat:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       own
 
 def Awaiter.with_own(r: Awaiter, v: Nat) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, refresh, target, v, root, node, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, v, root, node, state, until, confirmation}
 
 def Awaiter.root(r: Awaiter) -> Nat:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       root
 
 def Awaiter.with_root(r: Awaiter, v: Nat) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, refresh, target, own, v, node, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, own, v, node, state, until, confirmation}
 
 def Awaiter.node(r: Awaiter) -> Nat:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       node
 
 def Awaiter.with_node(r: Awaiter, v: Nat) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, refresh, target, own, root, v, state}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, own, root, v, state, until, confirmation}
 
 def Awaiter.state(r: Awaiter) -> AsyncSettlement:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
       state
 
 def Awaiter.with_state(r: Awaiter, v: AsyncSettlement) -> Awaiter:
   match r:
-    case Awaiter{expr, refresh, target, own, root, node, state}:
-      Awaiter{expr, refresh, target, own, root, node, v}
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, own, root, node, v, until, confirmation}
+
+def Awaiter.until(r: Awaiter) -> Bool:
+  match r:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      until
+
+def Awaiter.with_until(r: Awaiter, v: Bool) -> Awaiter:
+  match r:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, own, root, node, state, v, confirmation}
+
+def Awaiter.confirmation(r: Awaiter) -> Nat:
+  match r:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      confirmation
+
+def Awaiter.with_confirmation(r: Awaiter, v: Nat) -> Awaiter:
+  match r:
+    case Awaiter{expr, refresh, target, own, root, node, state, until, confirmation}:
+      Awaiter{expr, refresh, target, own, root, node, state, until, v}
 
 type StreamPlan is Data:
   StreamPlan{steps: List<&2, NextInput>, hasReturn: Bool, returnError: Slot, returnResult: Nat}

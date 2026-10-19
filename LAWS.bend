@@ -8,6 +8,7 @@ import ./proof/pending.bend as Pending
 import ./proof/transaction.bend as Transaction
 import ./proof/flight.bend as Flight
 import ./proof/held-error.bend as HeldError
+import ./proof/until.bend as Until
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
 
@@ -58,6 +59,12 @@ law async_diamond_lands:
 # Negative source baseline: this is not the intended recovery guarantee.
 law staged_error_recovery_counterexample:
   {HeldError.view(HeldError.delivered()) == HeldError.expectedCounterexample() : HeldError.View}
+
+law until_false_waits:
+  {Until.falseCase() == Until.expectedFalseCase() : Until.Case}
+
+law until_truthy_resolves:
+  {Until.trueCase() == Until.expectedTrueCase() : Until.Case}
 
 law question_increment_meaning:
   for +value: R.Question

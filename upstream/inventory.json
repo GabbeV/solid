@@ -22229,7 +22229,7 @@
           "mapping": {
             "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined",
             "status": "partial",
-            "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and inPass callbacks unfinished."
+            "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and until inPass confirmation executes after the frame gate; arbitrary inPass callbacks unfinished."
           }
         },
         {
@@ -22261,8 +22261,12 @@
           "start": 1043,
           "end": 1097,
           "sha256": "5eec15f03d54d873e75e7971c84eef98764d54d735925225444b7528b8423bc0",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/signals.bend:until, makeWatch, watchConfig, deliver; runtime/watch-state.bend:newUntil, postAnswer, untilInPass; runtime/api.bend:untilValue; host/bend.mjs:awaitUntil",
+            "status": "partial",
+            "restrictions": "Default/no-options expression predicate. Authoritative first pass; separate watcher own and until confirmation transaction captures; foreign-frame gate precedes truthy inPass resolve/open/running/join; falsy callback keeps root/subscription alive; truthy/error native delivery before root disposal. 136 histories, 8192 actual source closure comparisons and two closed queued-callback regressions. Timeout/AbortSignal, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
+          }
         },
         {
           "key": "signals.ts:onSettled",

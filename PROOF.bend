@@ -48,6 +48,12 @@ def Laws.async_diamond_lands():
 def Laws.staged_error_recovery_counterexample():
   {==}
 
+def Laws.until_false_waits():
+  {==}
+
+def Laws.until_truthy_resolves():
+  {==}
+
 def Laws.question_increment_meaning(value):
   Question.incrementMeaning(value)
 

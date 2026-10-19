@@ -106,3 +106,8 @@ before landing. Eight source-only controls, sixteen parity histories and a close
 negative Bend law preserve this current-head behavior. No workaround is active.
 An unregistered bit-clearing mutation is rejected for source mismatch; that is not
 a claim that the pinned behavior is desirable.
+
+Default until's own/captured confirmation, frame delivery and truthy inPass join
+now execute with 136 histories, 8192 closure probes and two closed regressions.
+Timeout/AbortSignal and active truth/lagging/action APIs remain unfinished; see
+[until.md](until.md).

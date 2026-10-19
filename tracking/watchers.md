@@ -88,9 +88,14 @@ require the native Promise resolution procedure, including interleaving its then
 subscription with the engine's observers. That richer host protocol remains open;
 the adapter explicitly refuses it instead of returning a thenable token as the
 settled answer. Accessor reads of ordinary async memos resolve their payloads and
-are covered. Arbitrary store targets, timeout/abort/until, inPass callbacks and
+are covered. Arbitrary store targets, timeout/abort, arbitrary inPass callbacks and
 active truth/lagging scopes remain unfinished.
 
 The watcher milestone adds no watcher semantic theorem. Separate ordinary-flight
 closed laws now check through this runtime; see [question-ids.md](question-ids.md). These tests and source-operation mappings support fidelity;
 they do not establish formal TypeScript/Bend equivalence or general progress.
+
+Default until now shares this path, with falsy filtering and the source confirmation
+callback; see [until.md](until.md). Its two closed laws use explicit delivery of
+its actual queued values. They do not establish native timing or general watcher
+semantics. Timeout/abort and active truth/lagging scopes remain unfinished.

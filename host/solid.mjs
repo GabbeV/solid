@@ -68,6 +68,7 @@ export class SolidRuntime {
     promise.then(value=>{this.portEvents.push(['resolve',name,this.observe(value)]);this.portSnapshots.push([name,this.screen()]);},error=>{this.portEvents.push(['reject',name,this.errorShape(error)]);this.portSnapshots.push([name,this.screen()]);});
   }
   awaitValue(name,expr){this.recordPort(name,this.S.resolve(this.callback('wait:'+name,expr)));}
+  awaitUntil(name,expr){this.recordPort(name,this.S.until(this.callback('wait:'+name,expr)));}
   awaitRefresh(name,target){this.recordPort(name,this.S.refresh(this.accessors[target]??(()=>undefined)));}
   promise(name){return this.ports[name].promise;}
   future(name,{immediate=false}={}) {

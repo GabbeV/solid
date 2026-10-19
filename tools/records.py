@@ -4,7 +4,7 @@ root=Path(__file__).resolve().parents[1]
 schemas={
 'AsyncObject': [('immediate','Bool'),('state','AsyncSettlement'),('observers','List<&2, Nat>'),('stream','Nat')],
 'AsyncObserver': [('node','Nat'),('result','Nat'),('isSync','Bool'),('resolved','Bool'),('rejected','Bool'),('syncValue','Value'),('syncError','Value'),('stream','Nat')],
-'Awaiter': [('expr','Expr'),('refresh','Bool'),('target','Nat'),('own','Nat'),('root','Nat'),('node','Nat'),('state','AsyncSettlement')],
+'Awaiter': [('expr','Expr'),('refresh','Bool'),('target','Nat'),('own','Nat'),('root','Nat'),('node','Nat'),('state','AsyncSettlement'),('until','Bool'),('confirmation','Nat')],
 'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat')],
 'ExternalIterator': [('plan','Nat'),('cursor','Nat'),('returns','Nat')],
 'StreamState': [('node','Nat'),('result','Nat'),('iterator','Nat'),('hadValue','Bool'),('completed','Bool'),('initialRead','Bool'),('syncValue','Value'),('close','Nat')],

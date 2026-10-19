@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -20,9 +20,10 @@ Built Bend runtime and pinned Solid production reference.
 158 public promise-watcher histories match pinned TS eager resolve, deferred/coalesced refresh, pending/error answers, cleanup and delivery timing.
 16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
 8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
+136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
 
 > solid-signals-bend@0.1.0 test:alignment
-> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs && node tests/until-alignment.mjs
 
 Upstream impact reporting passed changed-function, file-level, added-unit, shared-store, CLI, and read-only checks.
 Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
@@ -40,10 +41,12 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 4096 flight-state comparisons match TS registration, immediate verdicts, identity/dirty guards, loading parks, rejection/status order, autodisposal and held callback publication.
 6144 watch-body comparisons match actual TS closure calls: own/foreign transaction delivery gates, redirects, rerun deduplication, status unwrapping and NotReady rethrows.
 4096 source question-counter steps, 5 large counter boundaries and 69 flight provenance cases match TS; exact binary increment/equality also pass 4103 integer vectors, including the mainline identity and large mathematical IDs.
+8192 actual until-closure comparisons match own/foreign delivery gates, truthy in-pass confirmation, open/running guards, redirects/merges, errors and NotReady.
 
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: until resolves a falsy value
 Rejected mutation: unregistered staged-error recovery workaround
 Rejected mutation: refresh waiter runs eagerly
 Rejected mutation: watch promise resolves in the pass
@@ -55,7 +58,7 @@ Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-11 source-changing variants rejected by differential assertions.
+12 source-changing variants rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -63,4 +66,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 9.8s; hashes sealed in build/verification.json.
+Kernel completed in 10.5s; hashes sealed in build/verification.json.

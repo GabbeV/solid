@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Eleven source-changing variants must be rejected. No arbitrary-value, arbitrary-
+Twelve source-changing variants must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -198,3 +198,9 @@ recovery failure. It is not a successful coherence guarantee. See
 [the upstream candidate](upstream/staged-error-recovery.md) for native/immediate
 controls, exact source operations and current-head/duplicate checks. Both bug
 candidates are preserved; the semantic deviation register remains empty.
+
+Default until now has 136 histories and 8192 actual source closure probes; two
+closed laws check its queued falsy/true callbacks, promise outcome, root lifetime
+and dependency release. Together there are seventeen composed closed regressions,
+one explicitly negative, plus payload/question/path laws. See [until.md](until.md).
+Timeout/abort and active optimistic/truth/deferred scopes remain unfinished.

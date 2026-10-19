@@ -535,7 +535,7 @@
     "signals.ts:watch": {
       "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined",
       "status": "partial",
-      "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and inPass callbacks unfinished."
+      "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and until inPass confirmation executes after the frame gate; arbitrary inPass callbacks unfinished."
     },
     "signals.ts:resolve": {
       "bend": "runtime/signals.bend:resolve, creationCatch, deliver; runtime/watch-state.bend:settle; runtime/api.bend:resolveValue; host/bend.mjs:awaitValue",
@@ -556,6 +556,11 @@
       "bend": "runtime/question.bend:nextQuestion, increment; representation/records.bend:World.questions",
       "status": "restricted",
       "restrictions": "Separate ++questions counter and return, without installing ambient question. Binary-natural representation avoids unary expansion of source MAINLINE_QUESTION 0x7fffffff; no wraparound or disjoint special sentinel. 4096 source increments, 5 large starting boundaries and general meaning/increment kernel lemmas. Native JS precision beyond admitted integers remains outside scope."
+    },
+    "signals.ts:until": {
+      "bend": "runtime/signals.bend:until, makeWatch, watchConfig, deliver; runtime/watch-state.bend:newUntil, postAnswer, untilInPass; runtime/api.bend:untilValue; host/bend.mjs:awaitUntil",
+      "status": "partial",
+      "restrictions": "Default/no-options expression predicate. Authoritative first pass; separate watcher own and until confirmation transaction captures; foreign-frame gate precedes truthy inPass resolve/open/running/join; falsy callback keeps root/subscription alive; truthy/error native delivery before root disposal. 136 histories, 8192 actual source closure comparisons and two closed queued-callback regressions. Timeout/AbortSignal, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

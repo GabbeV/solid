@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject eleven source-changing variants
+npm run mutations                # reject twelve source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -110,3 +110,7 @@ Five additional closed async laws cover loading, landing, supersession and a
 pending diamond. Their explicit external input and the exact binary question-ID
 representation are documented in [question-ids.md](tracking/question-ids.md).
 Iterator pumping, native job timing and public watchers remain tested domains.
+
+The [default until path](tracking/until.md) also executes through the shared
+watcher, with two closed queued-callback regressions. Timeout/AbortSignal options
+and active optimistic/truth scopes remain unfinished.

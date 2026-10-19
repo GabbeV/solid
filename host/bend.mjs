@@ -154,6 +154,10 @@ export class BendRuntime {
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
     this.world=R.resolveValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures));this.bindAwaiter(id);this.check();
   }
+  awaitUntil(name,expr){
+    const id=R.nextAwaiterId(this.world);this.makePort(name,id);
+    this.world=R.untilValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures));this.bindAwaiter(id);this.check();
+  }
   awaitRefresh(name,target){
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
     this.world=R.refreshValue(this.world,this.ids[target]??0);this.check();
