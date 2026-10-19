@@ -124,6 +124,19 @@ recovery AFTER the old error's frame committed. They do not cover replacing an
 uncommitted error proposal while the original frame is still held. The related
 createLoadingBoundary test also recovers after an error has shown.
 
+The 2026-10-19 follow-up review of the user's recent reports and #3886's closing
+discussion confirms the relationship without identifying this exact schedule as
+already reported. #3886 was closed in favor of #4085; its committed-outcome test
+also lets the error commit before retrying. Open [#4109](https://github.com/solidjs/solid/issues/4109)
+concerns outside reads seeing a held error early, and open
+[#4110](https://github.com/solidjs/solid/issues/4110) concerns direct writes to a
+failed writable memo. This repro instead recomputes an ordinary memo successfully
+before its proposed error commits. [#4106](https://github.com/solidjs/solid/issues/4106),
+fixed by [#4129](https://github.com/solidjs/solid/pull/4129), covers error/value
+publication through `latest` derivations; that fix is in the pinned source, and
+this repro uses no `latest`. A bug-template form with these links was prepared
+for the user to review and submit; no issue has been filed by the agent.
+
 Searches for staged-error recovery, CONFIG_STAGED_ERROR, and held/value/error
 recovery found #4085 and older related error recovery reports, including closed
 [#2949](https://github.com/solidjs/solid/issues/2949); returned results did not identify
