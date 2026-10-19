@@ -119,3 +119,15 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 13.5s; hashes sealed in build/verification.json.
+
+Allocation-free Source candidate 824006e (separate worktree; pinned runtime unchanged):
+315 Source test files; 5,371 passed, 3 expected failures, 2 skips. All three signals build tiers, source declarations, purity, public type probe, release invariants and formatting pass. Thirty test-tree type diagnostics match baseline; no new diagnostics. All four signals comparison gates pass with unchanged caps.
+12 source-only held function-value cases preserve the unexpected invocation and plain-signal/non-held controls.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 15.0s; hashes sealed in build/verification.json.

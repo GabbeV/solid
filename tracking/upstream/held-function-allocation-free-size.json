@@ -1,0 +1,2357 @@
+{
+  "solidCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "selected": "private-common-resolved",
+  "scope": "Four upstream signals size scenarios only; pinned Rolldown 1.2.11 harness, unchanged caps. Discarded experimental layouts were screened on production output; only the selected candidate has final source/type/test validation. Earlier shared-classification layouts may need the resolved-value type refinements shown by later prototypes.",
+  "base": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7246,
+      "minified": 19781,
+      "limit": 7250,
+      "passed": true,
+      "capMinified": 19773,
+      "lazy": [],
+      "packages": {
+        "signals": 19736,
+        "other": 45
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14808,
+      "minified": 44873,
+      "limit": 14820,
+      "passed": true,
+      "capMinified": 44865,
+      "lazy": [],
+      "packages": {
+        "signals": 44817,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 9963,
+      "minified": 28064,
+      "limit": 9980,
+      "passed": true,
+      "capMinified": 28064,
+      "lazy": [],
+      "packages": {
+        "signals": 28005,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7857,
+      "minified": 21592,
+      "limit": 7860,
+      "passed": true,
+      "capMinified": 21584,
+      "lazy": [],
+      "packages": {
+        "signals": 21536,
+        "other": 55
+      }
+    }
+  ],
+  "variants": [
+    {
+      "name": "base-common",
+      "sourceSha256": "f23d4dccfa6eb718e299c63bb9f7d3d5d00156dbe217d504d8d741dfb3e509f3",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7257,
+          "minified": 19757,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19712,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14804,
+          "minified": 44849,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44791,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9971,
+          "minified": 28040,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 27982,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7860,
+          "minified": 21568,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21513,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -24,
+          "brotli": 11
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -24,
+          "brotli": -4
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -24,
+          "brotli": 8
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -24,
+          "brotli": 3
+        }
+      ]
+    },
+    {
+      "name": "flag-default-reuse",
+      "sourceSha256": "cc2b8f1137165b0bbb8393daeb5e03fbd804c7ba4935bac2b119c927696aef2a",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7261,
+          "minified": 19788,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19742,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14814,
+          "minified": 44880,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44824,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9965,
+          "minified": 28071,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28012,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7850,
+          "minified": 21599,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21542,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 7,
+          "brotli": 15
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 7,
+          "brotli": 6
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 7,
+          "brotli": 2
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 7,
+          "brotli": -7
+        }
+      ]
+    },
+    {
+      "name": "flag-default",
+      "sourceSha256": "2a25f2971f11c39bc77eff88c0a51e136694014a2af66b778ad89264f4ecf5f6",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7269,
+          "minified": 19792,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19746,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14786,
+          "minified": 44884,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44827,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9965,
+          "minified": 28075,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28016,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7860,
+          "minified": 21603,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21548,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 11,
+          "brotli": 23
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 11,
+          "brotli": -22
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 11,
+          "brotli": 2
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 11,
+          "brotli": 3
+        }
+      ]
+    },
+    {
+      "name": "flag-private-fixed",
+      "sourceSha256": "db3094f55985b10f02dbb154e4d77798ad30a4745c4754888f98a8c9ee245496",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7265,
+          "minified": 19824,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19778,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14798,
+          "minified": 44917,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44859,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9973,
+          "minified": 28107,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28048,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7868,
+          "minified": 21635,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21579,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 43,
+          "brotli": 19
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 44,
+          "brotli": -10
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 43,
+          "brotli": 10
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 43,
+          "brotli": 11
+        }
+      ]
+    },
+    {
+      "name": "flag-private-reuse",
+      "sourceSha256": "1a43f54bc779fdec5fe31a786871ec5de7e257e34f7fa4b10847e23f68e27d31",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7261,
+          "minified": 19817,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19773,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14820,
+          "minified": 44910,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44852,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9965,
+          "minified": 28100,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28042,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7862,
+          "minified": 21628,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21573,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 36,
+          "brotli": 15
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 37,
+          "brotli": 12
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 36,
+          "brotli": 2
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 36,
+          "brotli": 5
+        }
+      ]
+    },
+    {
+      "name": "flag-private",
+      "sourceSha256": "db98f50e6e1a18c15511943a72abdf64f2034042f12a134a4eb03cee1d0e45a8",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7270,
+          "minified": 19821,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19776,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14787,
+          "minified": 44914,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44857,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9971,
+          "minified": 28104,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28046,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7866,
+          "minified": 21632,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21577,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 40,
+          "brotli": 24
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 41,
+          "brotli": -21
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 40,
+          "brotli": 8
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 40,
+          "brotli": 9
+        }
+      ]
+    },
+    {
+      "name": "flag-public",
+      "sourceSha256": "0760290e64e304662250a4599bee9ab1b2507d4460358029784b84a0ecdff4d0",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7251,
+          "minified": 19789,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19744,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14804,
+          "minified": 44881,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44825,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9963,
+          "minified": 28072,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28013,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7856,
+          "minified": 21600,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21544,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 8,
+          "brotli": 5
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 8,
+          "brotli": -4
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 8,
+          "brotli": 0
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 8,
+          "brotli": -1
+        }
+      ]
+    },
+    {
+      "name": "flag-resolve",
+      "sourceSha256": "44965c3035aa09d9753d95617c6968e84d7555c9a61d9762a0004681a665f04c",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7261,
+          "minified": 19788,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19742,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14801,
+          "minified": 44880,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44824,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9969,
+          "minified": 28071,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28012,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7857,
+          "minified": 21599,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21542,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 7,
+          "brotli": 15
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 7,
+          "brotli": -7
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 7,
+          "brotli": 6
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 7,
+          "brotli": 0
+        }
+      ]
+    },
+    {
+      "name": "flag-reuse",
+      "sourceSha256": "7abfa9c2231f2420baa2a2e2cfd2700e94bfd50600b212ec2e46b345572019fd",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7259,
+          "minified": 19785,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19739,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14816,
+          "minified": 44877,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44821,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9962,
+          "minified": 28068,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28009,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7852,
+          "minified": 21596,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21539,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 4,
+          "brotli": 13
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 4,
+          "brotli": 8
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 4,
+          "brotli": -1
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 4,
+          "brotli": -5
+        }
+      ]
+    },
+    {
+      "name": "flag-type-first",
+      "sourceSha256": "70917dde0786bb44b05b767005863f0a6ad0a518a31c53987019759fad3897b4",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7267,
+          "minified": 19788,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19742,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14799,
+          "minified": 44880,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44824,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9968,
+          "minified": 28071,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28012,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7860,
+          "minified": 21599,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21542,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 7,
+          "brotli": 21
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 7,
+          "brotli": -9
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 7,
+          "brotli": 5
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 7,
+          "brotli": 3
+        }
+      ]
+    },
+    {
+      "name": "flag-undefined",
+      "sourceSha256": "9d01bdcf060f6d94168320fa59df872cd75c97f1b03be414f5ae0f574b18fccb",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7257,
+          "minified": 19792,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19746,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14787,
+          "minified": 44884,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44827,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9966,
+          "minified": 28075,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28016,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7856,
+          "minified": 21603,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21548,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 11,
+          "brotli": 11
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 11,
+          "brotli": -21
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 11,
+          "brotli": 3
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 11,
+          "brotli": -1
+        }
+      ]
+    },
+    {
+      "name": "flag-undefined-type-first",
+      "sourceSha256": "4681392651e4e0aa2cb6e42bc4c7d69168f86a0884f6f4a5844e38f239d89c41",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7269,
+          "minified": 19792,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19746,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14805,
+          "minified": 44884,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44827,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9970,
+          "minified": 28075,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28016,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7855,
+          "minified": 21603,
+          "limit": 7860,
+          "passed": true,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21548,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 11,
+          "brotli": 23
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 11,
+          "brotli": -3
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 11,
+          "brotli": 7
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 11,
+          "brotli": -2
+        }
+      ]
+    },
+    {
+      "name": "private-common-late-update",
+      "sourceSha256": "8b58a7b39f1afa7d2e235e45d3d4485fce8f20d182363323684385e43c04db0e",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7274,
+          "minified": 19783,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19740,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14803,
+          "minified": 44876,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44818,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9996,
+          "minified": 28066,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28008,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7880,
+          "minified": 21594,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21540,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 2,
+          "brotli": 28
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 3,
+          "brotli": -5
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 2,
+          "brotli": 33
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 2,
+          "brotli": 23
+        }
+      ]
+    },
+    {
+      "name": "private-common-late-value",
+      "sourceSha256": "345e52bdf1ebaf18b067beae3ac3e67cf1b790abc9f8b085bc95961dd258ec33",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7265,
+          "minified": 19782,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19739,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14813,
+          "minified": 44875,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44817,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9991,
+          "minified": 28065,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28006,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7880,
+          "minified": 21593,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21539,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 1,
+          "brotli": 19
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 2,
+          "brotli": 5
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 1,
+          "brotli": 28
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 1,
+          "brotli": 23
+        }
+      ]
+    },
+    {
+      "name": "private-common-normalize",
+      "sourceSha256": "ed7e8f3971681b23677b4b302bff40ffcfccb97d3aced743c2017df0ba5260a1",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7260,
+          "minified": 19774,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19730,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14807,
+          "minified": 44867,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44810,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9997,
+          "minified": 28057,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 27997,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7881,
+          "minified": 21585,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21530,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -7,
+          "brotli": 14
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -6,
+          "brotli": -1
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -7,
+          "brotli": 34
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -7,
+          "brotli": 24
+        }
+      ]
+    },
+    {
+      "name": "private-common-resolved",
+      "sourceSha256": "616d26ae193187dee9b13ac1834a27ad276d6ac75e19c4fd20626a2c3bc5d0dd",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7275,
+          "minified": 19792,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19747,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14828,
+          "minified": 44885,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44826,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9983,
+          "minified": 28075,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28016,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7871,
+          "minified": 21603,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21549,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 11,
+          "brotli": 29
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 12,
+          "brotli": 20
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 11,
+          "brotli": 20
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 11,
+          "brotli": 14
+        }
+      ]
+    },
+    {
+      "name": "private-common",
+      "sourceSha256": "e5c1db39093e400062771a205b19ce33e89f81bc97b5918b337fb8039d94c2f1",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7253,
+          "minified": 19774,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19730,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14797,
+          "minified": 44867,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44810,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9984,
+          "minified": 28057,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 27997,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7876,
+          "minified": 21585,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21530,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -7,
+          "brotli": 7
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -6,
+          "brotli": -11
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -7,
+          "brotli": 21
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -7,
+          "brotli": 19
+        }
+      ]
+    },
+    {
+      "name": "private-common-value-function",
+      "sourceSha256": "bcab01d592d0545a6981ec1045d9cf1b6ed469831a7b86cdc83a79e4feb2b7c2",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7262,
+          "minified": 19777,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19734,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14817,
+          "minified": 44870,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44813,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9986,
+          "minified": 28060,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28000,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7874,
+          "minified": 21588,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21533,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -4,
+          "brotli": 16
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -3,
+          "brotli": 9
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -4,
+          "brotli": 23
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -4,
+          "brotli": 17
+        }
+      ]
+    },
+    {
+      "name": "private-common-value",
+      "sourceSha256": "e5eeac91da721e5f167ecbad3058e18b4074303ae149695ac0e91ac36f32800f",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7262,
+          "minified": 19769,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19726,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14836,
+          "minified": 44862,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44804,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9990,
+          "minified": 28052,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 27993,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7874,
+          "minified": 21580,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21525,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -12,
+          "brotli": 16
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -11,
+          "brotli": 28
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -12,
+          "brotli": 27
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -12,
+          "brotli": 17
+        }
+      ]
+    },
+    {
+      "name": "private-constant-arrow",
+      "sourceSha256": "e5c1db39093e400062771a205b19ce33e89f81bc97b5918b337fb8039d94c2f1",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7248,
+          "minified": 19798,
+          "limit": 7250,
+          "passed": true,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19755,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14818,
+          "minified": 44891,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44833,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9982,
+          "minified": 28081,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28023,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7871,
+          "minified": 21609,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21556,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 17,
+          "brotli": 2
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 18,
+          "brotli": 10
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 17,
+          "brotli": 19
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 17,
+          "brotli": 14
+        }
+      ]
+    },
+    {
+      "name": "private-constant-bound",
+      "sourceSha256": "6cb2898df0fc69a0af812b9accdd759dee7d85aa2aae8cceffeef47925fb15b5",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7271,
+          "minified": 19814,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19769,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14831,
+          "minified": 44907,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44850,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9989,
+          "minified": 28097,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28039,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7878,
+          "minified": 21625,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21572,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 33,
+          "brotli": 25
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 34,
+          "brotli": 23
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 33,
+          "brotli": 26
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 33,
+          "brotli": 21
+        }
+      ]
+    },
+    {
+      "name": "private-shared-arrow",
+      "sourceSha256": "7a334a15bdba57495580732459dacfc3e32bca2aae28c0c51fa56f41d5996738",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7257,
+          "minified": 19799,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19755,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14820,
+          "minified": 44892,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44835,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9983,
+          "minified": 28082,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28024,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7876,
+          "minified": 21610,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21556,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 18,
+          "brotli": 11
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 19,
+          "brotli": 12
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 18,
+          "brotli": 20
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 18,
+          "brotli": 19
+        }
+      ]
+    },
+    {
+      "name": "shared-arrow-optional",
+      "sourceSha256": "f85aaf01d4b6ce504ab15fa54a67c685f8385044db8d8cb4ac34d8bd3205c494",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7266,
+          "minified": 19773,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19728,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14810,
+          "minified": 44865,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44807,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9975,
+          "minified": 28056,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 27998,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7877,
+          "minified": 21584,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21529,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -8,
+          "brotli": 20
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -8,
+          "brotli": 2
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -8,
+          "brotli": 12
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -8,
+          "brotli": 20
+        }
+      ]
+    },
+    {
+      "name": "shared-arrow",
+      "sourceSha256": "668ad5bc4650087216d342436136606ebae8967a6ed6663224fcd1d338194395",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7269,
+          "minified": 19776,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19730,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14827,
+          "minified": 44868,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44809,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9974,
+          "minified": 28059,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28001,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7880,
+          "minified": 21587,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21533,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -5,
+          "brotli": 23
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -5,
+          "brotli": 19
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -5,
+          "brotli": 11
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -5,
+          "brotli": 23
+        }
+      ]
+    },
+    {
+      "name": "shared-normalize",
+      "sourceSha256": "668ad5bc4650087216d342436136606ebae8967a6ed6663224fcd1d338194395",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7264,
+          "minified": 19778,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19733,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14794,
+          "minified": 44870,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44813,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9970,
+          "minified": 28061,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28002,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7864,
+          "minified": 21589,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21534,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": -3,
+          "brotli": 18
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": -3,
+          "brotli": -14
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": -3,
+          "brotli": 7
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": -3,
+          "brotli": 7
+        }
+      ]
+    },
+    {
+      "name": "shared-updater",
+      "sourceSha256": "c714342d80918fec4d335a2e82889a99e914ed89a07a2e5f80257cc89b79624a",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7268,
+          "minified": 19791,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19745,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14812,
+          "minified": 44883,
+          "limit": 14820,
+          "passed": true,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44826,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9967,
+          "minified": 28074,
+          "limit": 9980,
+          "passed": true,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28015,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7869,
+          "minified": 21602,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21547,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 10,
+          "brotli": 22
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 10,
+          "brotli": 4
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 10,
+          "brotli": 4
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 10,
+          "brotli": 12
+        }
+      ]
+    },
+    {
+      "name": "split-normalize",
+      "sourceSha256": "9c5de9085d05dac8c25735c1cbe6d41c95ae1a630ffeb058ee148bb3fc7029cb",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7275,
+          "minified": 19894,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19851,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14837,
+          "minified": 44987,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44930,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9987,
+          "minified": 28177,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28118,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7887,
+          "minified": 21705,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21651,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 113,
+          "brotli": 29
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 114,
+          "brotli": 29
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 113,
+          "brotli": 24
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 113,
+          "brotli": 30
+        }
+      ]
+    },
+    {
+      "name": "split-write",
+      "sourceSha256": "23edd5b9bc46733afd12ead79be2d8225753d26ad7bc3e4580a47719eedd597f",
+      "measurements": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "size": 7279,
+          "minified": 19861,
+          "limit": 7250,
+          "passed": false,
+          "capMinified": 19773,
+          "lazy": [],
+          "packages": {
+            "signals": 19816,
+            "other": 45
+          }
+        },
+        {
+          "name": "signals: + createStore",
+          "size": 14826,
+          "minified": 44953,
+          "limit": 14820,
+          "passed": false,
+          "capMinified": 44865,
+          "lazy": [],
+          "packages": {
+            "signals": 44895,
+            "other": 57
+          }
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "size": 9985,
+          "minified": 28144,
+          "limit": 9980,
+          "passed": false,
+          "capMinified": 28064,
+          "lazy": [],
+          "packages": {
+            "signals": 28085,
+            "other": 58
+          }
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "size": 7878,
+          "minified": 21672,
+          "limit": 7860,
+          "passed": false,
+          "capMinified": 21584,
+          "lazy": [],
+          "packages": {
+            "signals": 21617,
+            "other": 55
+          }
+        }
+      ],
+      "deltaFromBase": [
+        {
+          "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+          "minified": 80,
+          "brotli": 33
+        },
+        {
+          "name": "signals: + createStore",
+          "minified": 80,
+          "brotli": 18
+        },
+        {
+          "name": "signals: + isPending/latest",
+          "minified": 80,
+          "brotli": 22
+        },
+        {
+          "name": "signals: + until/refresh (truth readers, no optimism)",
+          "minified": 80,
+          "brotli": 21
+        }
+      ]
+    }
+  ],
+  "candidateCommit": "824006e2a9744282179132e72e11f5df2a1077fc",
+  "selectedMeasurements": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7275,
+      "minified": 19792,
+      "limit": 7250,
+      "passed": false,
+      "capMinified": 19773,
+      "lazy": [],
+      "packages": {
+        "signals": 19747,
+        "other": 45
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14828,
+      "minified": 44885,
+      "limit": 14820,
+      "passed": false,
+      "capMinified": 44865,
+      "lazy": [],
+      "packages": {
+        "signals": 44826,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 9983,
+      "minified": 28075,
+      "limit": 9980,
+      "passed": false,
+      "capMinified": 28064,
+      "lazy": [],
+      "packages": {
+        "signals": 28016,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7871,
+      "minified": 21603,
+      "limit": 7860,
+      "passed": false,
+      "capMinified": 21584,
+      "lazy": [],
+      "packages": {
+        "signals": 21549,
+        "other": 55
+      }
+    }
+  ],
+  "selectedComparisonGate": "WARN signals: core floor (createSignal/Memo/Effect/Root/flush)\n     over brotli cap by 25 B; minified 19,792 B vs 19,773 B recorded with the cap (+19 B) \u2014 1 B of the 20 B minified allowance left; +11 B minified over this PR's base\nWARN signals: + createStore\n     over brotli cap by 8 B; minified 44,885 B vs 44,865 B recorded with the cap (+20 B) \u2014 0 B of the 20 B minified allowance left; +12 B minified over this PR's base\nWARN signals: + isPending/latest\n     over brotli cap by 3 B; minified 28,075 B vs 28,064 B recorded with the cap (+11 B) \u2014 9 B of the 20 B minified allowance left; +11 B minified over this PR's base\nWARN signals: + until/refresh (truth readers, no optimism)\n     over brotli cap by 11 B; minified 21,603 B vs 21,584 B recorded with the cap (+19 B) \u2014 1 B of the 20 B minified allowance left; +11 B minified over this PR's base\n\nsize: every scenario passes (4 over its brotli cap within the minified allowance).\n"
+}

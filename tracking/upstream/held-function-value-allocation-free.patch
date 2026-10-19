@@ -1,0 +1,234 @@
+diff --git a/.changeset/quiet-functions-rest.md b/.changeset/quiet-functions-rest.md
+new file mode 100644
+index 0000000..682fe37
+--- /dev/null
++++ b/.changeset/quiet-functions-rest.md
+@@ -0,0 +1,5 @@
++---
++"@solidjs/signals": patch
++---
++
++Preserve a function returned by a writable-memo updater during a held transition as data, without invoking it again.
+diff --git a/packages/signals/src/core/core.ts b/packages/signals/src/core/core.ts
+index 7f52190..06921a4 100644
+--- a/packages/signals/src/core/core.ts
++++ b/packages/signals/src/core/core.ts
+@@ -2044,0 +2045,8 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
++  return writeSignal(el, v);
++}
++
++function writeSignal<T>(
++  el: Signal<T> | Computed<T>,
++  v: T | ((prev: T) => T),
++  resolved?: boolean | number
++): T {
+@@ -2067 +2075,2 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
+-  if (typeof v === "function") v = (v as (prev: T) => T)(currentValue);
++  // Held memo updaters have already resolved against the committed frame.
++  v = (!resolved && typeof v === "function" ? (v as (prev: T) => T)(currentValue) : v) as T;
+@@ -2154 +2163 @@ export function setMemo<T>(el: Computed<T>, v: T | ((prev: T) => T)): T {
+-  const result = setSignal(el, v);
++  v = writeSignal(el, v, held);
+@@ -2162 +2171 @@ export function setMemo<T>(el: Computed<T>, v: T | ((prev: T) => T)): T {
+-  return result;
++  return v;
+diff --git a/packages/signals/src/signals.ts b/packages/signals/src/signals.ts
+index c912101..a9b9198 100644
+--- a/packages/signals/src/signals.ts
++++ b/packages/signals/src/signals.ts
+@@ -409,11 +409,10 @@ export function createSignal<T>(
+-  if (typeof first === "function") {
+-    const node = computed<T>(first as any, second as any);
+-    node._config &= ~CONFIG_AUTO_DISPOSE;
+-    return [
+-      accessor<T | undefined>(node),
+-      setMemo.bind(null, node as any) as Setter<T | undefined>
+-    ];
+-  }
+-  const node = signal<T>(first as any, second as SignalOptions<T>);
+-  if (__OBSERVE__) registerGraph(node, getOwner());
+-  return [accessor<T>(node), setSignal.bind(null, node as any) as Setter<T | undefined>];
++  const derived = typeof first === "function";
++  const node = derived
++    ? computed<T>(first as any, second as any)
++    : signal<T>(first as any, second as SignalOptions<T>);
++  if (derived) node._config &= ~CONFIG_AUTO_DISPOSE;
++  else if (__OBSERVE__) registerGraph(node, getOwner());
++  return [
++    accessor<T | undefined>(node),
++    (derived ? setMemo : setSignal).bind(null, node as any) as Setter<T | undefined>
++  ];
+diff --git a/packages/signals/tests/held-function-value.test.ts b/packages/signals/tests/held-function-value.test.ts
+new file mode 100644
+index 0000000..dc93882
+--- /dev/null
++++ b/packages/signals/tests/held-function-value.test.ts
+@@ -0,0 +1,168 @@
++import { setWriteHook } from "../src/core/core.js";
++import { describe, expect, it, vi } from "vitest";
++import { createMemo, createRenderEffect, createRoot, createSignal, flush } from "../src/index.js";
++
++// The held-derivation rule changes the updater's input frame, not its result:
++// returning a function must store that function as data, as setSignal does.
++describe("function-valued writes to a held writable memo", () => {
++  for (const held of [false, true]) {
++    for (const memo of [false, true]) {
++      for (const outcome of ["value", "undefined", "throw"] as const) {
++        it(`held=${held}, memo=${memo}, returned callback=${outcome}`, async () => {
++          let release!: (value: number) => void;
++          const request = new Promise<number>(resolve => {
++            release = resolve;
++          });
++          const original = () => "original",
++            derived = () => "derived";
++          const replacement = vi.fn(() => {
++            if (outcome === "throw") throw new Error("replacement was invoked");
++            return outcome === "value" ? "replacement" : undefined;
++          });
++          const app = createRoot(dispose => {
++            const [version, setVersion] = createSignal(0);
++            const [callback, setCallback] = memo
++              ? createSignal<(() => unknown) | undefined>(() => (version() ? derived : original))
++              : createSignal<() => unknown>();
++            const slow = createMemo(() => (held && version() ? request : 0));
++            createRenderEffect(
++              () => [version(), callback(), slow()],
++              () => {}
++            );
++            return { dispose, setVersion, setCallback };
++          });
++          try {
++            flush();
++            app.setVersion(1);
++            flush();
++            let previous: unknown;
++            const result = app.setCallback(value => {
++              previous = value;
++              return replacement;
++            });
++            expect(replacement).not.toHaveBeenCalled();
++            expect(result).toBe(replacement);
++            expect(previous).toBe(memo ? (held ? original : derived) : undefined);
++          } finally {
++            app.dispose();
++            flush();
++            release(1);
++            await Promise.resolve();
++            flush();
++          }
++        });
++      }
++    }
++  }
++});
++
++// Held updaters run before the write hook; ordinary updaters run after it.
++// The comparator must still use the slot as it stands after a reentrant hook.
++describe("updater ordering at the write hook", () => {
++  for (const memo of [false, true]) {
++    for (const held of [false, true]) {
++      function setup() {
++        let release!: (value: number) => void;
++        const request = new Promise<number>(resolve => {
++          release = resolve;
++        });
++        const comparisons: [number, number][] = [];
++        const app = createRoot(dispose => {
++          const [version, setVersion] = createSignal(1);
++          const options = {
++            equals: (a: number, b: number) => {
++              comparisons.push([a, b]);
++              return a === b;
++            }
++          };
++          const [value, setValue] = memo
++            ? createSignal(() => version() * 100, options)
++            : createSignal(100, options);
++          const slow = createMemo(() => (held && version() === 2 ? request : 1));
++          createRenderEffect(
++            () => [version(), value(), slow()],
++            () => {}
++          );
++          return { dispose, value, setValue, setVersion };
++        });
++        flush();
++        app.setVersion(2);
++        flush();
++        comparisons.length = 0;
++        return { ...app, comparisons, release };
++      }
++      const label = `memo=${memo}, held=${held}`;
++      it(`preserves frame, hook, and comparator order (${label})`, async () => {
++        const app = setup();
++        const events: string[] = [];
++        try {
++          setWriteHook(() => {
++            setWriteHook(null);
++            events.push("hook");
++            app.setValue(300);
++          });
++          const result = app.setValue(previous => {
++            events.push(`updater:${previous}`);
++            return previous + 1;
++          });
++          if (memo && held) {
++            expect(events).toEqual(["updater:100", "hook"]);
++            expect(result).toBe(101);
++          } else {
++            expect(events).toEqual(["hook", "updater:300"]);
++            expect(result).toBe(301);
++          }
++          const beforeHook = memo ? 200 : 100;
++          expect(app.comparisons).toEqual([
++            [beforeHook, 300],
++            [300, result]
++          ]);
++        } finally {
++          setWriteHook(null);
++          app.dispose();
++          flush();
++          app.release(1);
++          await Promise.resolve();
++          flush();
++        }
++      });
++      for (const throwing of ["updater", "hook"] as const) {
++        it(`preserves a throwing ${throwing}'s order (${label})`, async () => {
++          const app = setup();
++          const events: string[] = [];
++          const error = new Error(throwing);
++          try {
++            setWriteHook(() => {
++              events.push("hook");
++              if (throwing === "hook") throw error;
++            });
++            expect(() =>
++              app.setValue(previous => {
++                events.push("updater");
++                if (throwing === "updater") throw error;
++                return previous + 1;
++              })
++            ).toThrow(error);
++            expect(events).toEqual(
++              memo && held
++                ? throwing === "updater"
++                  ? ["updater"]
++                  : ["updater", "hook"]
++                : throwing === "hook"
++                  ? ["hook"]
++                  : ["hook", "updater"]
++            );
++            expect(app.comparisons).toEqual([]);
++          } finally {
++            setWriteHook(null);
++            app.dispose();
++            flush();
++            app.release(1);
++            await Promise.resolve();
++            flush();
++          }
++        });
++      }
++    }
++  }
++});

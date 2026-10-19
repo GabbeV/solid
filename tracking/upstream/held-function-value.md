@@ -52,7 +52,9 @@ error recovery, a distinct problem; this reproduction throws no compute error.
 The previously filed staged-error issue #4145 has open fix PR #4148, also distinct.
 Search results cannot establish that no related report exists.
 
-## Isolated candidate and tradeoff
+## Original wrapper candidate and tradeoff
+
+Superseded by the [allocation-free candidate and comparison record](held-function-allocation-free.md). The measurements below describe the original wrapper trial, retained for history.
 
 Local worktree `/workspace/solid-held-function-pr`, branch
 `fix/held-function-values`, commit

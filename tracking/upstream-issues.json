@@ -45,12 +45,13 @@
       "standaloneReproducer": "repros/solid-signals/held-function-value.mjs",
       "playgroundReproducer": "repros/playground/held-function.tsx",
       "playgroundUrl": "https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA",
-      "candidateFixBranch": "fix/held-function-values",
+      "candidateFixBranch": "fix/held-function-values-allocation-free",
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "candidateFixCommit": "9bd896fa1242a7ca769fe19baf858f3f1e94f107"
+      "candidateFixCommit": "824006e2a9744282179132e72e11f5df2a1077fc",
+      "candidateFixRecord": "tracking/upstream/held-function-allocation-free.md"
     }
   ]
 }
