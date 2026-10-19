@@ -2,12 +2,15 @@
   "name": "solid-signals-upstream-repros",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "test": "node verify.mjs",
     "use:next": "node use-next.mjs",
     "repro:empty": "node empty-flatten.mjs",
-    "repro:recovery": "node held-error-recovery.mjs"
+    "repro:recovery": "node held-error-recovery.mjs",
+    "repro:function": "node held-function-value.mjs"
   },
   "dependencies": {
     "@solidjs/signals": "2.0.0-rc.15"

@@ -14,7 +14,10 @@ const cases = [
   ['empty-flatten.mjs', 'native', "actual: 'undefined'", 0],
   ...(next ? [
     ['held-error-recovery.mjs', 'same-recovery', 'threw: 1', 1],
-    ['held-error-recovery.mjs', 'changed-recovery', 'threw: 7', 1]
+    ['held-error-recovery.mjs', 'changed-recovery', 'threw: 7', 1],
+    ['held-function-value.mjs', 'held', "returned: 'string'", 1],
+    ['held-function-value.mjs', 'no-hold', "returned: 'function'", 0],
+    ['held-function-value.mjs', 'plain', "returned: 'function'", 0]
   ] : []),
   ['held-error-recovery.mjs', 'no-error', 'returned: 3', 0]
 ];

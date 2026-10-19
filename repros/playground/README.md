@@ -92,3 +92,24 @@ CHROMIUM_PATH=/usr/bin/chromium npm test -- /absolute/path/to/solid
 The TSX files use the playground's default `root` mount element. Tailwind and SSR
 are disabled. Tests and generated build output are separate from the repro code.
 No GitHub issue has been filed or edited by this work.
+
+## Function returned by an updater during a hold
+
+[Open the playground](https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA).
+Source: [held-function.tsx](held-function.tsx).
+
+Click **1. Start update**, then **2. Store callback** while the request is open.
+Expected: the second button says `Returned: function`, and the replacement does
+not run. Actual: `Returned: string`, and the console logs `Replacement invoked`.
+The third button finishes the request. The component needs two signals (one a
+writable derivation), one memo, and one combined JSX binding. It adds no explicit
+effect, timer or private runtime access.
+
+`CHROMIUM_PATH=/usr/bin/chromium node verify-held-function.mjs /path/to/solid`
+compiles this component with the pinned source compiler and tests development /
+production in a connected DOM. Removing the hold, or using an ordinary data signal
+for the callback, passes. [held-function-verification.json](held-function-verification.json)
+records all six cases. [held-function-hosted.json](held-function-hosted.json) records
+the separately opened public share, source round-trip, saved pinned build and
+three real button clicks. Its saved module was compiled locally with that same
+pinned JSX compiler and imports the pinned runtime through its import map.

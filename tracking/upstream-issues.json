@@ -20,7 +20,7 @@
     {
       "id": "SOLID-STAGED-ERROR-RECOVERY-002",
       "classification": "suspected-upstream-bug",
-      "status": "upstream-issue-open",
+      "status": "upstream-fix-pr-open",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/core.ts:recompute",
       "record": "tracking/upstream/staged-error-recovery.md",
@@ -32,7 +32,25 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": "https://github.com/solidjs/solid/issues/4145",
-      "fixUrl": null
+      "fixUrl": "https://github.com/solidjs/solid/pull/4148"
+    },
+    {
+      "id": "SOLID-HELD-FUNCTION-VALUE-003",
+      "classification": "suspected-upstream-bug",
+      "status": "repro-verified-candidate-fix-local",
+      "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+      "sourceUnit": "core/core.ts:setMemo",
+      "record": "tracking/upstream/held-function-value.md",
+      "reproducer": "tests/upstream/held-function-value.mjs",
+      "standaloneReproducer": "repros/solid-signals/held-function-value.mjs",
+      "playgroundReproducer": "repros/playground/held-function.tsx",
+      "playgroundUrl": "https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA",
+      "candidateFixBranch": "fix/held-function-values",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "candidateFixCommit": "9bd896fa1242a7ca769fe19baf858f3f1e94f107"
     }
   ]
 }

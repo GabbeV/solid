@@ -1,0 +1,31 @@
+{
+  "name": "held-function",
+  "url": "https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA",
+  "storageKey": "7902a062-2d68-42b6-b3a7-f95c5523a0a4",
+  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "solidVersion": "mizulu/solid2@d2ad8b28",
+  "devMode": true,
+  "ssrEnabled": false,
+  "tailwindEnabled": false,
+  "states": [
+    {
+      "step": "1. Start update",
+      "text": "0 / function / 0"
+    },
+    {
+      "step": "2. Store callback",
+      "text": "0 / function / 0"
+    },
+    {
+      "step": "3. Finish request",
+      "text": "1 / function / 1"
+    }
+  ],
+  "returned": "string",
+  "unexpectedInvocation": true,
+  "errors": [],
+  "createdAt": "2026-10-19T16:52:57.162Z",
+  "build": "Pinned-source JSX compiler with external imports through the saved pinned import map",
+  "sourceRoundTrip": true,
+  "hasSavedBuild": true
+}

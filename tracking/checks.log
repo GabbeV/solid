@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/ownership.mjs && node tests/arguments.mjs && node tests/contexts.mjs && node tests/cleanup-values.mjs && node tests/nested.mjs && node tests/locals.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/ownership.mjs && node tests/arguments.mjs && node tests/contexts.mjs && node tests/cleanup-values.mjs && node tests/nested.mjs && node tests/locals.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/upstream/held-function-value.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -27,6 +27,7 @@ Built Bend runtime and pinned Solid production reference.
 158 public promise-watcher histories match pinned TS eager resolve, deferred/coalesced refresh, pending/error answers, cleanup and delivery timing.
 16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
 8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
+12 source-only held function-value cases preserve the unexpected invocation and plain-signal/non-held controls.
 136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
 60 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes.
 99 host-error histories match TS captured wrapper messages, native Error/DOMException identity, success versus failure, callback paths and default abort; native identity assertions pass.
@@ -102,6 +103,14 @@ Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
 44 source-changing variants rejected by differential assertions.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 13.5s; hashes sealed in build/verification.json.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs

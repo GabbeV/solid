@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-19T16:46:17.805Z",
+  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+  "browser": "154.0.8037.57",
+  "node": "v24.19.0",
+  "cases": [
+    {
+      "name": "function-held",
+      "profile": "production",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "string",
+      "unexpectedInvocations": 1,
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "function-unheld",
+      "profile": "production",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "1 / function / 1"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "1 / function / 1"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "function",
+      "unexpectedInvocations": 0,
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "function-plain",
+      "profile": "production",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "0 / undefined / 0"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "function",
+      "unexpectedInvocations": 0,
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "function-held",
+      "profile": "development",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "string",
+      "unexpectedInvocations": 1,
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "function-unheld",
+      "profile": "development",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "1 / function / 1"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "1 / function / 1"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "function",
+      "unexpectedInvocations": 0,
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "function-plain",
+      "profile": "development",
+      "states": [
+        {
+          "step": "1. Start update",
+          "text": "0 / undefined / 0"
+        },
+        {
+          "step": "2. Store callback",
+          "text": "0 / function / 0"
+        },
+        {
+          "step": "3. Finish request",
+          "text": "1 / function / 1"
+        }
+      ],
+      "returned": "function",
+      "unexpectedInvocations": 0,
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

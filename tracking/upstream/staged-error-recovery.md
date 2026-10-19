@@ -155,3 +155,8 @@ review the precise flag/overwrite changes, port them, update these controls and
 retire the counterexample expectation with its report/fix link. Keep the history.
 No semantic deviation or package publication has occurred. The user filed #4145;
 no upstream fix is known yet.
+
+Upstream follow-up checked 2026-10-19: open [PR #4148](https://github.com/solidjs/solid/pull/4148)
+fixes this filed issue by clearing CONFIG_STAGED_ERROR in the value-staging branch.
+The translation remains pinned to d2ad8b28 and preserves its failure; this PR is
+recorded for the next source-impact review, not incorporated or repinned.

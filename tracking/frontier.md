@@ -262,3 +262,10 @@ signals and expression reads in teardown callbacks. General closures/functions, 
 returned effect-cleanup selection, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit
 port limits, not source bugs or unregistered semantic repairs.
+
+A third upstream candidate, [held function values](upstream/held-function-value.md),
+is source-only: setMemo invokes a function returned by a held updater a second
+time. Twelve baseline/control cases and a minimal JSX share reproduce it; no
+writable-memo implementation or fix has been silently added to Bend. Open PR
+[#4148](https://github.com/solidjs/solid/pull/4148) now addresses the previously
+filed staged-error issue #4145; the pin and preserved counterexample are unchanged.
