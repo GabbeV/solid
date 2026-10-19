@@ -37,7 +37,8 @@ owner.writeValue's teardown continuation and evaluated callback writes preserve
 these sites. `updateExpr` is the callback form of a real updater and can retain a
 function. Async settlements write returned function data through the existing
 internal value path. Function initializers select createSignal's writable-memo
-overload in Solid; that constructor remains unfinished and is explicitly rejected.
+overload in Solid. The expression-based constructor now executes; direct native
+callable initializers remain explicitly rejected. See [writable-signals.md](writable-signals.md).
 
 71 differential histories compare argument order/binding, early/nested returns,
 suspension/errors, application/error parameters, root disposer retention,

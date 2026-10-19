@@ -6,7 +6,7 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value);
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.memoSetters=new WeakSet();this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value);
   }
   ownerFor(name){
     if(name===null)return null;
@@ -52,11 +52,25 @@ export class SolidRuntime {
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.signalComputeScope){
+      const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const [get,set]=this.S.createSignal(next=>{
+        const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+        this.traceEvents.push(['compute',name]);return this.evaluate(compute,next,values,locals);
+      },opts);
+      this.registerComputedAccessor(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);this.memoSetters.add(set);
+      const binding={get,set,name};(this.localComputedSignals??=new Map()).set(name,binding);
+      return this.evaluate(body,prev,values,[binding,...locals]);
+    }
     if(e.signalScope){
       const {initial={lit:undefined},options={},body={lit:undefined}}=e.signalScope;
       requireTeardownProgram(this.programActions,options.unobserved);
       const value=this.evaluate(initial,prev,values,locals);
-      if(typeof value==='function')throw new TypeError('Function initializers are not yet translated');
+      if(typeof value==='function')throw new TypeError('Function initializers from first-class values are not yet translated');
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
       const [get,set]=this.S.createSignal(value,{...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]});
       const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
@@ -313,7 +327,7 @@ export class SolidRuntime {
     const opts=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,opts.unobserved);
     const initial=this.value(value);
-    if(typeof initial==='function')throw new TypeError('Function initializers are not yet translated');
+    if(typeof initial==='function')throw new TypeError('Function initializers from first-class values are not yet translated');
     const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
   }
   callback(name,expr,values=[],locals=[]) { return prev=> {
@@ -347,7 +361,11 @@ export class SolidRuntime {
   }
   writeValue(setter,value){
     const result=setter(value);
-    if(this.accessorIdentities.has(value))this.observeAccessorRead(value,result);
+    // A held setMemo can invoke a getter's returned function again. Its final
+    // setter result then differs from the getter result; do not invent that
+    // read observation. Native value/state controls cover this combination,
+    // while complete internal getter traces remain an observation limit.
+    if(this.accessorIdentities.has(value)&&!this.memoSetters.has(setter))this.observeAccessorRead(value,result);
     return result;
   }
   set(name,value) { return this.writeValue(this.setters[name],this.value(value)); }

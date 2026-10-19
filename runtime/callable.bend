@@ -42,8 +42,8 @@ def cleanup(+w: R.World, +owner: Nat, root: Nat) -> R.World:
 def accessor(node: Nat) -> R.Value:
   R.AccessorReference{node}
 
-# signals.ts:createSignal(data): setSignal.bind(null,node), separate from
-# the read function for the same signal. Function-initializer setters use a
-# different source entry and are not admitted by this constructor.
+# signals.ts:createSignal binds setSignal for data and setMemo for the
+# function overload. Both capture this unique node ID; core selects the actual
+# entry for the constructor-selected target. Read and write identities differ.
 def setter(node: Nat) -> R.Value:
   R.SetterReference{node}

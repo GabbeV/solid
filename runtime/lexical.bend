@@ -16,7 +16,9 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.setter(signal)}, _ => R.LocalSetter{index})
     case R.LocalWrite{+index, value, +updater}:
       +value = bind(value, depth, signal)
-      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.WriteExpr{signal, value, updater}, _ => R.LocalWrite{index, value, updater})
+      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.InvokeWith{R.Literal{Callable.setter(signal)}, value, updater}, _ => R.LocalWrite{index, value, updater})
+    case R.SignalComputeScope{compute, options, body}:
+      R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, 1n+depth, signal)}
     case R.SignalScope{initial, options, body}:
       R.SignalScope{bind(initial, depth, signal), options, bind(body, 1n+depth, signal)}
     case R.WriteExpr{id, value, updater}:

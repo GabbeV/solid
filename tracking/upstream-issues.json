@@ -57,7 +57,10 @@
       "candidateCompareUrl": "https://github.com/solidjs/solid/compare/next...GabbeV:fix/held-function-values?expand=1",
       "alternativeFixBranch": "fix/held-function-values-allocation-free",
       "alternativeFixCommit": "824006e2a9744282179132e72e11f5df2a1077fc",
-      "alternativeFixRecord": "tracking/upstream/held-function-allocation-free.md"
+      "alternativeFixRecord": "tracking/upstream/held-function-allocation-free.md",
+      "parityReproducer": "tests/writable-signals.mjs",
+      "baselineProof": "LAWS.bend:held_function_result_counterexample",
+      "parityScope": "Selected bound-function family; original arbitrary replacement-function controls remain source-only."
     }
   ]
 }

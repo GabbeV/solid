@@ -128,3 +128,9 @@ def Laws.computed_accessor_freezes_on_root_disposal():
 
 def Laws.lexical_setter_binding(signal):
   {==}
+
+def Laws.writable_signal_rederives_from_manual_previous():
+  {==}
+
+def Laws.held_function_result_counterexample():
+  {==}

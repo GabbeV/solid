@@ -103,6 +103,11 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if(e.signalComputeScope){
+    const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
+    return R.signalComputeScope(expression(compute,ids,programs,futures,encodeValue,contexts),nodeOptions(options,programs,encodeValue),expression(body,ids,programs,futures,encodeValue,contexts));
+  }
   if(e.signalScope){
     const {initial={lit:undefined},options={},body={lit:undefined}}=e.signalScope;
     if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
@@ -159,7 +164,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined; }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined; }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters);}
   ownerId(name){
     if(name===null)return 0;
@@ -173,14 +178,14 @@ export class BendRuntime {
     if(setter!==undefined)return R.vSetter(setter);
     if(value&&typeof value==='object'&&typeof value.setter==='string'){
       const id=this.ids[value.setter];
-      if(!id||this.nodes()[id].kind.$!=='Signal')throw new TypeError('Unknown signal setter: '+value.setter);
+      if(!id||(this.nodes()[id].kind.$!=='Signal'&&!this.writableSetters.has(id)))throw new TypeError('Unknown signal setter: '+value.setter);
       return R.vSetter(id);
     }
     const accessor=this.accessors.identity(value);
     if(accessor!==undefined)return R.vAccessor(accessor);
     if(value&&typeof value==='object'&&typeof value.accessor==='string'){
       const id=this.ids[value.accessor];
-      if(!id||!['Signal','Memo'].includes(this.nodes()[id].kind.$))throw new TypeError('Unknown signal accessor: '+value.accessor);
+      if(!id||(this.nodes()[id].kind.$!=='Signal'&&!this.boundAccessors.has(id)))throw new TypeError('Unknown signal accessor: '+value.accessor);
       return R.vAccessor(id);
     }
     const disposer=this.rootDisposers.identity(value);
@@ -274,6 +279,10 @@ export class BendRuntime {
     for(const event of list(this.world.events))if('created'in event&&!this.reverse[event.created]){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
       this.ids[name]=event.created;this.reverse[event.created]=name;
+    }
+    for(const event of list(this.world.events)){
+      if('boundSetter'in event){this.writableSetters.add(event.boundSetter);this.boundAccessors.add(event.boundSetter);}
+      if('boundAccessor'in event)this.boundAccessors.add(event.boundAccessor);
     }
     this.drainJobs();
     if(this.world.fault.$ === tags.healthy)return;
@@ -384,7 +393,7 @@ export class BendRuntime {
     const options=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,options.unobserved);
     const encoded=this.encode(value);
-    if([tags.disposer,tags.accessor,tags.setter].includes(encoded.$))throw new TypeError('Function initializers are not yet translated');
+    if([tags.disposer,tags.accessor,tags.setter].includes(encoded.$))throw new TypeError('Function initializers from first-class values are not yet translated');
     this.world=R.createSignalWithOptions(this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
   }
   memo(name,expr,options={}) {
@@ -422,7 +431,7 @@ export class BendRuntime {
   nodes() { return list(this.world.nodes); }
   trace() {
     const name=id=>this.reverse[id] ?? null;
-    return list(this.world.events).filter(e=>!('created'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
+    return list(this.world.events).filter(e=>!('created'in e)&&!('boundSetter'in e)&&!('boundAccessor'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),this.observe(this.decode(e.value)),this.observe(this.decode(e.previous))];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),this.observe(this.decode(e.value))];

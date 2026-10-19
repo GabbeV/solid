@@ -31,8 +31,10 @@ def createSignal(w: R.World, value: R.Value, equals: Bool) -> R.World:
 def createMemoWithOptions(fuel: Nat, +w: R.World, expr: R.Expr, options: R.NodeOptions, +parent: Nat) -> R.World:
   context = R.World.context(w)
   tracking = R.World.tracking(w)
-  w = R.World.with_tracking(R.World.with_context(w, parent), False{})
-  w = N.computed(fuel, w, expr, options, parent)
+  +w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  +id = nextId(w)
+  +w = N.computed(fuel, w, expr, options, parent)
+  w = B.choose(~R.World, B.ok(w), _ => B.event(w, R.AccessorBound{id}), _ => w)
   R.World.with_tracking(R.World.with_context(w, context), tracking)
 
 def createMemo(fuel: Nat, w: R.World, expr: R.Expr, equals: Bool, lazy: Bool, parent: Nat) -> R.World:
@@ -142,6 +144,9 @@ def nestedEffect(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOption
 
 def nestedEffectBody(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, body: R.Expr, returnedCleanup: Nat, errorProgram: Nat) -> R.Expr:
   R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, 0n, returnedCleanup, errorProgram, R.SomeInlineBody{body}}}
+
+def signalComputeScope(compute: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
+  R.SignalComputeScope{compute, options, body}
 
 def signalScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
   R.SignalScope{initial, options, body}

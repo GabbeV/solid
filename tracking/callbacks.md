@@ -45,7 +45,8 @@ Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
 reads, arbitrary closures, general function values, dynamic returned cleanup
-selection, function-initializer signals and active scopes remain unfinished.
+selection, general callable initializers and active scopes remain unfinished.
+Expression-based function initializers now execute; see [writable-signals.md](writable-signals.md).
 Escaped data-signal setters and computed accessors now execute; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
 Escaped data-signal read accessors now enter the ordinary read machine; see [locals.md](locals.md).

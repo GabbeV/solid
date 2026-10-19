@@ -1,4 +1,5 @@
-// Source-only evidence. The writable-memo overload is not yet in Bend's ABI.
+// Original arbitrary-function controls remain source-only. The admitted bound-
+// function counterpart also has Bend parity in tests/writable-signals.mjs.
 // Preserve the actual bug and passing controls; never patch the vendored source.
 import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';

@@ -133,6 +133,7 @@ type Expr is Data:
   CurrentObserver{}
   OwnerDisposed{owner: Expr}
   SignalScope{initial: Expr, options: NodeOptions, body: Expr}
+  SignalComputeScope{compute: Expr, options: NodeOptions, body: Expr}
   LocalRead{depth: Nat}
   LocalAccessor{depth: Nat}
   LocalSetter{depth: Nat}
@@ -187,6 +188,8 @@ type Report is Data:
 
 type TraceEvent is Data:
   Constructed{created: Nat}
+  SetterBound{boundSetter: Nat}
+  AccessorBound{boundAccessor: Nat}
   Invoked{id: Nat}
   ReadValue{reader: Nat, source: Nat, value: Value}
   Applied{id: Nat, value: Value, previous: Value}

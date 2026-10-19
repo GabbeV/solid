@@ -43,7 +43,8 @@ input becomes 9, with the expected owner/death/queue/ambient state. It is one
 concrete Bend regression, not a general closure theorem or formal TS equivalence.
 Two additional mutations exercise lazy creation and captured parameters.
 
-Computed setter/function-initializer overloads, arbitrary closures/options/getters,
+Expression-based function-initializer signals now execute with a distinct setter;
+see [writable-signals.md](writable-signals.md). Arbitrary callable initializers/closures/options/getters,
 refresh-property reflection and expression-capable owner teardown remain open.
 Existing source counterexamples and source pins are unchanged. No workaround or
 active semantic deviation is added.

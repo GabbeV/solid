@@ -2,9 +2,9 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1662 differential histories, 54 rejected compiled mutations,
-and 31 composed closed Bend regressions (one deliberately preserves an upstream
-failure), plus general payload/question/callback/path helper laws. Pins are
+Current verification: 1743 differential histories, 60 rejected compiled mutations,
+and 33 composed closed Bend regressions (two deliberately preserve upstream
+failures), plus general payload/question/callback/path helper laws. Pins are
 unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -34,7 +34,7 @@ proof credit was imported.
   constructors support nested-root parentComputed forwarding, tested at height,
   heap and read sites. Callback-based owned/detached roots, runWithOwner, owner/observer handles and
   disposal status now execute; see [ownership.md](ownership.md). Nested createMemo(compute, options)() expressions execute under the actual current
-  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; function-initializer signals remain open. See [locals.md](locals.md). See [nested.md](nested.md).
+  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; general callable initializers remain open. See [locals.md](locals.md). See [nested.md](nested.md).
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
@@ -47,7 +47,7 @@ proof credit was imported.
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
   read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; function-initializer signals remain open;
+  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; general callable initializers remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
@@ -101,7 +101,7 @@ excessive independent-kernel expansion under open contexts. Even canonical
 transition witnesses remained too costly without further helper refinements.
 Those attempts are not completed proofs and were removed from the active roots.
 The concrete laws pass independent checking. The differential suite has
-203 scenarios; focused tests additionally compare 7,680 constructor states,
+203 scenarios; focused tests additionally compare 9,216 constructor states,
 4,608 commit states, 768 read states and 24 held-stash helper cases with the
 actual pinned TS helpers. These include synthetic internal
 states to probe branches; their counts are separate from end-to-end histories.
@@ -263,15 +263,20 @@ Eleven reentrant-setter, forty escaped-setter and fifty-one computed-accessor
 histories extend the function domain. Three closed regressions check entry-value
 capture and setter/computed lifetime; one general lexical-setter binder law also
 checks. See [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
-The next callback dependencies are function-initializer
-signals and expression reads in teardown callbacks. General closures/functions, dynamic
+Eighty-one writable-signal histories and 4,096 setMemo probes now cover the
+expression-based function-initializer overload. Two additional closed laws check
+manual previous-value rederivation and the preserved held-function counterexample.
+Constructor comparisons total 9,216. See [writable-signals.md](writable-signals.md).
+The next callback dependencies are general callable initializers and expression
+reads in teardown callbacks. General closures/functions, dynamic
 returned effect-cleanup selection, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit
 port limits, not source bugs or unregistered semantic repairs.
 
 A third upstream candidate, [held function values](upstream/held-function-value.md),
-is source-only: setMemo invokes a function returned by a held updater a second
-time. Twelve baseline/control cases and a minimal JSX share reproduce it; no
-writable-memo implementation or fix has been silently added to Bend. Open PR
+retains twelve original source-only controls. The new writable-memo translation
+now also preserves its returned-function invocation with a selected bound-function
+family, sixteen paired histories and one negative kernel law. No fix has been
+silently added to Bend. Open PR
 [#4148](https://github.com/solidjs/solid/pull/4148) now addresses the previously
 filed staged-error issue #4145; the pin and preserved counterexample are unchanged.

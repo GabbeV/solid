@@ -26,10 +26,12 @@ def fixture(+kind: U32, bits: U32, load: U32, +parentMode: Nat, unobserved: Bool
   +w = R.World.with_context(parents(), parentMode)
   +opts = options(bits, load, unobserved)
   B.choose(~R.World, U32.is_eq(kind, 0), _ => N.signal(w, R.Number{11n}, opts),
+    _ => B.choose(~R.World, U32.is_eq(kind, 5),
+      _ => C.world(C.eval(256n, w, R.SignalComputeScope{R.Literal{R.Number{17n}}, opts, R.Literal{R.Undefined{}}}, R.Undefined{})),
     _ => B.choose(~R.World, U32.is_eq(kind, 1),
       _ => N.computed(128n, w, R.Literal{R.Number{17n}}, opts, parentMode),
       _ => B.choose(~R.World, U32.is_eq(kind, 4), _ => N.createOwner(w, parentMode, R.NodeOptions.transparent(opts)),
-        _ => N.createEffectNode(w, R.Literal{R.Number{17n}}, B.choose(~R.NodeKind, U32.is_eq(kind, 2), _ => R.Render{}, _ => R.User{}), 0n, opts, parentMode, 0n, 0n))))
+        _ => N.createEffectNode(w, R.Literal{R.Number{17n}}, B.choose(~R.NodeKind, U32.is_eq(kind, 2), _ => R.Render{}, _ => R.User{}), 0n, opts, parentMode, 0n, 0n)))))
 
 type Allocation is Data:
   Allocation{before: R.World, first: R.World, second: R.World}

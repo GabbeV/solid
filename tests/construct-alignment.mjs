@@ -62,6 +62,11 @@ try {
     if(kind===0)n=S.signal(11,opts);
     else if(kind===1)n=S.computed(()=>17,opts);
     else if(kind===4)n=S.createOwner(opts);
+    else if(kind===5){
+      const [get]=S.createSignal(()=>17,opts);
+      n=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+      assert.ok(n,'native accessor target');
+    }
     else n=S.createEffectNode(()=>17,()=>{},undefined,kind-1,opts);
     nodes.push(n);
     const id=v=>v?nodes.indexOf(v):0;
@@ -75,7 +80,7 @@ try {
     return result;
   }
   let checked=0;
-  for(const kind of [0,1,2,3,4])for(let bits=0;bits<64;bits++)for(const load of [0,1,2])for(const parent of [0,1,2,3])for(const unobserved of [false,true]) {
+  for(const kind of [0,1,2,3,4,5])for(let bits=0;bits<64;bits++)for(const load of [0,1,2])for(const parent of [0,1,2,3])for(const unobserved of [false,true]) {
     assert.deepEqual(actual(B.fixture(kind,bits,load,parent,unobserved)),reference(kind,bits,load,parent,unobserved),JSON.stringify({kind,bits,load,parent,unobserved}));checked++;
   }
   const p=B.allocation(),n=w=>list(w.nodes)[1];
@@ -96,5 +101,5 @@ try {
   assert.equal(value(list(m.values)[0]),result);assert.equal(ns[3].deps,0);assert.notEqual(ns[2].deps,0);
   assert.equal(links[ns[2].deps].sub,2);assert.equal(links[ns[2].deps].dep,4);
   assert.equal(parent._deps._dep,sourceSignal);assert.equal(sourceSignal._subs._sub,parent);S.setContextInternal(null);
-  console.log(`${checked} constructor comparisons match pinned TS signal/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained.`);
+  console.log(`${checked} constructor comparisons match pinned TS signal/writable-memo/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

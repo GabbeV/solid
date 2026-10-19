@@ -84,8 +84,20 @@ def apply(+w: R.World, op: U32, +v: R.Value) -> HeldProbe:
       +tracking = R.World.tracking(w)
       +pair = Q.stageError(w, 3n, R.Number{99n}, tracking)
       HeldProbe{B.first(R.World, Bool, pair), R.Present{R.Boolean{B.second(R.World, Bool, pair)}}}
+    case 7:
+      fromMachine(C.run(2048n, C.Machine{w, [C.SetMemoArgument{3n}], [v]}))
+    case 8:
+      fromMachine(C.run(2048n, C.memoUpdater(w, [], [], 3n, R.Previous{})))
+    case 9:
+      fromMachine(C.run(2048n, C.memoUpdater(w, [], [], 3n, R.Literal{v})))
     case _:
       HeldProbe{S.commitPendingNode(w, 3n), R.Empty{}}
 
 def fixture(op: U32, status: U32, config: U32, staging: U32, reader: U32, readerConfig: U32, readerStatus: U32, tracking: Bool, running: Bool, joined: Bool, unflushed: Bool, v: U32) -> HeldProbe:
   apply(initial(status, config, staging, reader, readerConfig, readerStatus, tracking, running, joined, unflushed), op, value(v))
+
+def fixtureMemo(op: U32, status: U32, config: U32, staging: U32, reader: U32, readerConfig: U32, readerStatus: U32, tracking: Bool, running: Bool, joined: Bool, unflushed: Bool, v: U32, flags: U32, +held: Bool) -> HeldProbe:
+  +w = initial(status, config, staging, reader, readerConfig, readerStatus, tracking, running, joined, unflushed)
+  +w = B.store_node(w, 3n, R.Node.with_flags(B.node(w, 3n), flags))
+  +w = B.choose(~R.World, held, _ => w, _ => B.store_node(w, 3n, R.Node.with_config(B.node(w, 3n), B.clear(R.Node.config(B.node(w, 3n)), K.CONFIG_HELD()))))
+  apply(w, op, value(v))

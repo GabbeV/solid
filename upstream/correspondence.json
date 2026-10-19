@@ -73,7 +73,7 @@
       "restrictions": "Separate production literal and signal-only ownedWrite/noSnapshot masks; optional extension installer retained as callback identity. Snapshot capture unfinished; restricted unobserved programs execute; no custom comparators."
     },
     "core/core.ts:computed": {
-      "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions",
+      "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions; runtime/core.bend:SignalComputeScope, MemoSignalReady",
       "status": "partial",
       "restrictions": "Separate production literal with source config arms, loading-value presence, lazy/initial status and lazy extension; parent scope/height setup. Hydration IDs, external/snapshot hooks, custom comparators unfinished; ordinary typed promise-like results execute. Host options are typed data, not getters."
     },
@@ -113,7 +113,7 @@
       "restrictions": "Source unflushed/stash selection and late-linker order, committed ternary, stagedRead-before-staged-error throw, and born-staged plain/frame NotReady(null) retained. Snapshot/spectating/verdict hooks and actual promise callers unfinished."
     },
     "core/core.ts:setSignal": {
-      "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater",
+      "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater; runtime/core.bend:signalUpdater",
       "status": "partial",
       "restrictions": "Entry currentValue captured before updater invocation and retained through equality, including reentrant writes/throws. Shared source remainder preserves held join, staging, promotion, computed time and notify-epoch skip. Bound disposer/accessor/data-signal-setter raw arguments execute once; updater-returned functions remain data. Eleven reentrant and forty escaped-setter histories, two closed regressions and one binder law. Internal resolved-value entry is retained. Arbitrary functions/comparators and active lane/snapshot/write hooks unfinished; owner teardown cannot yet suspend for accessor/setter calls."
     },
@@ -638,14 +638,19 @@
       "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static returned cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and dynamic cleanup closures unfinished."
     },
     "signals.ts:createSignal": {
-      "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind",
+      "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope",
       "status": "partial",
-      "restrictions": "Production data-initializer overload with actual signal allocation, lexical bindings and escaped read/set functions. Setter calls preserve binding, argument/updater order and source return semantics. Function initializer/writable-memo overload, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
+      "restrictions": "Data initializer and admitted expression-function initializer overloads retain their actual signal/computed constructors. Function form clears AUTO_DISPOSE after eager/lazy setup and returns bound accessor/setMemo handles. Lexical writes call the constructor-selected function. 81 writable-signal histories, 1536 additional constructor comparisons and two closed regressions include the preserved held-function result failure. General first-class callable initializers, self/TDZ bindings, reflection, arbitrary options/comparators and active hooks remain unfinished."
     },
     "signals.ts:accessor": {
       "bend": "runtime/callable.bend:accessor; runtime/core.bend:invokeValue; runtime/lexical.bend:bind LocalAccessor",
       "status": "partial",
       "restrictions": "Bound read functions for data signals and computed nodes capture the actual node ID, preserve native aliases and resume ordinary source reads, including lazy pulls, pending/error paths and frozen reads after owner disposal. Forty signal-accessor and fifty-one computed-accessor histories plus closed lifetime laws. Refresh target retained as node ID; symbol/property reflection, arbitrary functions and active store accessors unfinished."
+    },
+    "core/core.ts:setMemo": {
+      "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask",
+      "status": "partial",
+      "restrictions": "Source held/manual/txOf short-circuit, committed pre-call, setSignal delegation, dirty/check/heap/schedule and manual-pending remainder retained. 4096 actual setMemo probes and 81 public histories compare values, flags, heaps, slots and owner/async state. Pinned returned-function second invocation deliberately preserved; a negative closed law and 16 bound-function histories/controls supplement the original source-only report. General functions, active hooks and expression-capable teardown remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

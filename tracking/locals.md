@@ -11,7 +11,8 @@ source signal using the shared signal literal; signals have no owner/child link.
 occurrences. It crosses root/compute/application closures to capture the binding;
 new signal blocks shadow it only in their bodies, while their initializers still
 see the surrounding environment. The resulting `Read` uses the ordinary read
-machine. `WriteExpr` uses the same source setter and staged previous-value slot.
+machine. Local writes call the bound const-pair setter through the shared call machine,
+including its source-selected previous-value slot.
 A raw bound-disposer input invokes the function before writing undefined; a
 function returned by an updater is stored as data. Throws retain earlier argument
 side effects and skip the interrupted write.
@@ -29,7 +30,8 @@ Native accessor refresh-symbol metadata is inspected read-only for signal-state
 observations; it is never used to decide a value, write, dependency or schedule.
 Bend IDs and source const-pair closures represent the same admitted user bindings.
 Variable reassignment and arbitrary JavaScript
-closures and function-initializer/writable-memo overloads remain outside this ABI.
+closures and general callable initializer inputs remain outside this ABI. The expression-based
+function initializer now executes; see [writable-signals.md](writable-signals.md).
 Unbound local indices are invalid programs and fail explicitly.
 
 55 histories compare initializer/setter return values, staged updater composition,
@@ -102,8 +104,9 @@ TS/Bend equivalence.
 
 Escaped data-signal setters and computed accessors now execute; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
-Function initializers/writable memos, arbitrary closure/function inputs and
-expression-capable owner teardown remain unfinished. Accessor use as onCleanup and raw accessor updater reads in
+Expression-based function-initializer signals now execute; see
+[writable-signals.md](writable-signals.md). General callable initializer inputs
+and expression-capable owner teardown remain unfinished. Accessor use as onCleanup and raw accessor updater reads in
 teardown are explicitly rejected; no owner-machine cached read or accidental
 function-as-data fallback is introduced. The source pin and deviation register
 are unchanged.

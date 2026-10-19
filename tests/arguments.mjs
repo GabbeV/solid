@@ -149,7 +149,7 @@ for(const Runtime of [BendRuntime,SolidRuntime]){
   assert.deepEqual(runtime.trace().filter(e=>e[0]==='cleanup'),[['cleanup',1,30]],'cleanup runs exactly once');
   dispose();
   assert.deepEqual(runtime.trace().filter(e=>e[0]==='cleanup'),[['cleanup',1,30]],'repeated disposer call is inert');
-  assert.throws(()=>runtime.signal('bad',dispose),/Function initializers are not yet translated/);
+  assert.throws(()=>runtime.signal('bad',dispose),/Function initializers from first-class values are not yet translated/);
   assert.throws(()=>runtime.evaluate(callWith('body',lit(1),lit(2),lit(3))),/at most two arguments/);
   runtime.dispose();runtime.flush();
 }

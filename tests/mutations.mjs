@@ -5,9 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['writable initializer fails to shadow its body binding','runtime/lexical.bend','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, depth, signal)}','tests/writable-signals.mjs'],
+  ['writable initializer retains auto-dispose','runtime/core.bend','B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())','R.Node.config(B.node(w, signal))','tests/writable-signals.mjs'],
+  ['held writable updater sees staging instead of its committed frame','runtime/core.bend','Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward','Evaluate{expr, B.current(B.node(w, id))} <> SetMemoForward','tests/writable-signals.mjs'],
+  ['unregistered held-function result workaround','runtime/core.bend','Machine{w, SetSignalArgument{signal} <> SetMemoAfter{signal, held} <> rest, stack}','Machine{w, SetSignalResolved{signal, B.current(B.node(w, signal))} <> SetMemoAfter{signal, held} <> rest, stack}','tests/writable-signals.mjs'],
+  ['memo write drops its manual proposal flag','runtime/memo-write.bend','B.set(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())','R.Node.flags(B.node(w, id))','tests/writable-signals.mjs'],
+  ['held memo write omits rederivation heap insertion','runtime/memo-write.bend','B.schedule(H.insertIntoHeap(w, id))','B.schedule(w)','tests/writable-signals.mjs'],
   ['setter comparator reloads a reentrant slot','runtime/write.bend','B.equal(currentValue, value)','B.equal(B.current(n), value)','tests/setters.mjs'],
   ['escaped setter binds the wrong node','runtime/callable.bend','R.SetterReference{node}','R.SetterReference{1n}','tests/setters.mjs'],
-  ['escaped setter updater uses committed previous value','runtime/core.bend','+current = B.current(B.node(w, id))','+current = R.Node.value(B.node(w, id))','tests/setters.mjs'],
+  ['writable-memo setter selects plain setter policy','runtime/core.bend','_ => SetMemoArgument{id}, _ => SetSignalArgument{id}','_ => SetSignalArgument{id}, _ => SetSignalArgument{id}','tests/writable-signals.mjs'],
   ['setter raw argument discards its effects','runtime/core.bend','Evaluate{value, previous} <> InvokeApplied{callee}','Evaluate{R.Literal{R.Undefined{}}, previous} <> InvokeApplied{callee}','tests/setters.mjs'],
   ['computed accessor disables lazy creation','runtime/core.bend','memoExpression(w, rest, stack, compute, options, False{})','memoExpression(w, rest, stack, compute, R.NodeOptions.with_lazy(options, False{}), False{})','tests/computed-accessors.mjs'],
   ['computed accessor drops captured parameters','runtime/callback.bend','R.MemoAccessor{bind(compute, first, second), options}','R.MemoAccessor{compute, options}','tests/computed-accessors.mjs'],
@@ -17,7 +23,7 @@ const mutations=[
   ['raw accessor updater stored without invocation','runtime/core.bend','Machine{w, ReadNode{id} <> SetSignalResolved{signal, current} <> rest, tail}','Machine{w, SetSignalResolved{signal, current} <> rest, R.AccessorReference{id} <> tail}','tests/locals.mjs'],
 
   ['local reads bind the wrong signal','runtime/lexical.bend','_ => R.Read{signal}, _ => R.LocalRead{index}','_ => R.Read{1n}, _ => R.LocalRead{index}','tests/locals.mjs'],
-  ['inner signal scope fails to shadow','runtime/lexical.bend','bind(body, 1n+depth, signal)','bind(body, depth, signal)','tests/locals.mjs'],
+  ['inner signal scope fails to shadow','runtime/lexical.bend','R.SignalScope{bind(initial, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalScope{bind(initial, depth, signal), options, bind(body, depth, signal)}','tests/locals.mjs'],
   ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal)}','R.SomeInlineBody{expr}','tests/locals.mjs'],
   ['local updater sees committed instead of staged slot','runtime/core.bend','+current = B.current(B.node(w, signal))','+current = R.Node.value(B.node(w, signal))','tests/locals.mjs'],
   ['local updater result function is invoked again','runtime/core.bend','Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest','Evaluate{value, current} <> SetSignalArgument{signal} <> rest','tests/locals.mjs'],

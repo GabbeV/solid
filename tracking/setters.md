@@ -70,6 +70,7 @@ mutations now target the new source return points.
 
 Expression-capable teardown remains unfinished. Escaped setter registration as
 onCleanup and raw setter updater calls in owner teardown are explicitly rejected.
-Function-initializer/writable-memo setters use setMemo, a different source function
-which is not admitted by this data-signal constructor. No manual-write or held
+Function-initializer/writable-memo setters now use their own setMemo translation;
+see [writable-signals.md](writable-signals.md). They are selected by that distinct
+constructor, not this data-signal constructor. No manual-write or held
 memo behavior is silently borrowed from the plain setter.

@@ -20,6 +20,7 @@ import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./watch-state.bend as U
 import ./write.bend as W
+import ./memo-write.bend as MW
 import ./ambient.bend as L
 import ./owner-state.bend as D
 import ./callback.bend as Z
@@ -49,6 +50,11 @@ type Task is Data:
   OnCleanup{}
   CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
   SetSignalArgument{signal: Nat}
+  SetMemoArgument{signal: Nat}
+  SetMemoForward{signal: Nat, held: Bool}
+  SetMemoAfter{signal: Nat, held: Bool}
+  MemoSignalReady{signal: Nat, body: R.Expr, previous: R.Value}
+  MemoAccessorReady{node: Nat}
   SetSignalResolved{signal: Nat, current: R.Value}
   CallbackThrow{}
   WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
@@ -180,6 +186,13 @@ def inlineProgram(+w: R.World, body: R.InlineBody, program: Nat) -> B.Bundle<R.W
       w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CallbackEvaluate{expr}]}]))
       B.Bundle{w, id}
 
+# core.ts:setSignal's updater call, with the source currentValue captured
+# before evaluating the admitted function body. Every user updater entry shares
+# this continuation, including a non-held setMemo delegation.
+def signalUpdater(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +signal: Nat, value: R.Expr) -> Machine:
+  +current = B.current(B.node(w, signal))
+  Machine{w, Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest, stack}
+
 # signals.ts:createMemo returns the accessor; the MemoRead user ABI adds a
 # subsequent call. Both use the same source constructor and eager/lazy setup.
 def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, +options: R.NodeOptions, read: Bool) -> Machine:
@@ -189,6 +202,7 @@ def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>,
   +ending = B.choose(~List<&2, Task>, read,
     _ => ReadNode{id} <> rest,
     _ => Evaluate{R.Literal{J.accessor(id)}, R.Undefined{}} <> rest)
+  +ending = {MemoAccessorReady{id} <> ending : List<&2, Task>}
   tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
     _ => ending,
     _ => Recompute{id, True{}} <> ending)
@@ -222,6 +236,14 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.SignalComputeScope{compute, +options, +body}:
+      +id = B.length(R.Node, R.World.nodes(w))
+      +w = B.event(w, R.Constructed{id})
+      +w = N.computed(w, compute, options, R.World.context(w))
+      tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
+        _ => MemoSignalReady{id, body, prev} <> rest,
+        _ => Recompute{id, True{}} <> MemoSignalReady{id, body, prev} <> rest)
+      Machine{w, tasks, stack}
     case R.SignalScope{initial, options, body}:
       Machine{w, Evaluate{initial, prev} <> CreateSignal{options, body, prev} <> rest, stack}
     case R.LocalRead{depth}:
@@ -234,9 +256,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
     case R.WriteExpr{+signal, +value, +updater}:
       B.choose(~Machine, updater,
-        _ =>
-          +current = B.current(B.node(w, signal))
-          Machine{w, Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest, stack},
+        _ => signalUpdater(w, rest, stack, signal, value),
         _ => Machine{w, Evaluate{value, prev} <> SetSignalArgument{signal} <> rest, stack})
     case R.EffectCreate{compute, +spec}:
       +id = B.length(R.Node, R.World.nodes(w))
@@ -296,8 +316,7 @@ def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
     case R.CallbackWrite{signal, expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> SetSignalArgument{signal} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackUpdate{+signal, expr}:
-      +current = B.current(B.node(w, signal))
-      Machine{w, Evaluate{Z.bind(expr, first, second), current} <> SetSignalResolved{signal, current} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
+      signalUpdater(w, Discard{} <> Callback{id, tail, first, second} <> rest, stack, signal, Z.bind(expr, first, second))
     case R.CallbackThrow{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail, first, second} <> rest, stack}
     case other:
@@ -310,6 +329,16 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
     case value <> tail:
       callbackAction(w, rest, stack, id, tail, first, second, value)
 
+def memoNode(kind: R.NodeKind) -> Bool:
+  match kind:
+    case R.Memo{}:
+      True{}
+    case _:
+      False{}
+
+def setterTask(+w: R.World, +id: Nat) -> Task:
+  B.choose(~Task, memoNode(R.Node.kind(B.node(w, id))), _ => SetMemoArgument{id}, _ => SetSignalArgument{id})
+
 # core.ts:setSignal's typeof-function branch. currentValue was captured before
 # invoking the callable. A returned function is data in SetSignalResolved.
 def resolveSignalArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +signal: Nat, +current: R.Value, value: R.Value) -> Machine:
@@ -319,7 +348,7 @@ def resolveSignalArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.
     case R.AccessorReference{id}:
       Machine{w, ReadNode{id} <> SetSignalResolved{signal, current} <> rest, tail}
     case R.SetterReference{id}:
-      Machine{w, SetSignalArgument{id} <> SetSignalResolved{signal, current} <> rest, current <> tail}
+      Machine{w, setterTask(w, id) <> SetSignalResolved{signal, current} <> rest, current <> tail}
     case other:
       Machine{w, SetSignalResolved{signal, current} <> rest, other <> tail}
 
@@ -386,7 +415,7 @@ def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, va
     case R.AccessorReference{id}:
       Machine{w, ReadNode{id} <> rest, tail}
     case R.SetterReference{id}:
-      Machine{w, SetSignalArgument{id} <> rest, R.Undefined{} <> tail}
+      Machine{w, setterTask(w, id) <> rest, R.Undefined{} <> tail}
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
 
@@ -401,17 +430,40 @@ def invoke(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
 def invokeApplied(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, callee: R.Value, +value: R.Value) -> Machine:
   match callee:
     case R.SetterReference{id}:
-      Machine{w, SetSignalArgument{id} <> rest, value <> tail}
+      Machine{w, setterTask(w, id) <> rest, value <> tail}
     case other:
       invokeValue(w, rest, tail, other)
+
+# core.ts:setMemo, an updater expression represents its original function
+# argument. The held pre-call's answer is passed to setSignal as-is, preserving
+# the pinned second-invocation bug for returned function data (SOLID-003).
+def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +id: Nat, value: R.Value) -> Machine:
+  match value:
+    case R.RootDisposerReference{owner}:
+      Machine{O.disposeChildren(w, owner, True{}, False{}), SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
+    case R.AccessorReference{node}:
+      Machine{w, ReadNode{node} <> SetMemoForward{id, True{}} <> rest, tail}
+    case R.SetterReference{node}:
+      Machine{w, setterTask(w, node) <> SetMemoForward{id, True{}} <> rest, R.Node.value(B.node(w, id)) <> tail}
+    case other:
+      Machine{w, SetMemoForward{id, True{}} <> rest, other <> tail}
+
+def memoUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +expr: R.Expr) -> Machine:
+  +pair = MW.held(w, id)
+  +w = B.first(R.World, Bool, pair)
+  held = B.second(R.World, Bool, pair)
+  B.choose(~Machine, held,
+    _ => Machine{w, Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward{id, True{}} <> rest, stack},
+    _ => signalUpdater(w, SetMemoAfter{id, False{}} <> rest, stack, id, expr))
 
 # Creating an updater closure does not execute its body. Accessors/disposers
 # ignore that function argument; only setSignal invokes it with currentValue.
 def invokeUpdater(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, callee: R.Value, +expr: R.Expr) -> Machine:
   match callee:
     case R.SetterReference{+id}:
-      +current = B.current(B.node(w, id))
-      Machine{w, Evaluate{expr, current} <> SetSignalResolved{id, current} <> rest, tail}
+      B.choose(~Machine, memoNode(R.Node.kind(B.node(w, id))),
+        _ => memoUpdater(w, rest, tail, id, expr),
+        _ => signalUpdater(w, rest, tail, id, expr))
     case other:
       invokeValue(w, rest, tail, other)
 
@@ -1371,6 +1423,29 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
               Machine{N.signal(w, other, options), Evaluate{Local.bind(body, 0n, id), previous} <> rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MemoAccessorReady{node} <> rest:
+      Machine{B.event(w, R.AccessorBound{node}), rest, stack}
+    case MemoSignalReady{+signal, body, previous} <> rest:
+      +w = B.store_node(w, signal, R.Node.with_config(B.node(w, signal), B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())))
+      # User ABI observation: the constructor returned its actual const pair.
+      # Failed constructors never bind/return that setter function.
+      +w = B.event(w, R.SetterBound{signal})
+      Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case SetMemoArgument{+signal} <> +rest:
+      match stack:
+        case +value <> +tail:
+          +pair = MW.held(w, signal)
+          +w = B.first(R.World, Bool, pair)
+          +held = B.second(R.World, Bool, pair)
+          B.choose(~Machine, held,
+            _ => memoRawArgument(w, rest, tail, signal, value),
+            _ => Machine{w, SetSignalArgument{signal} <> SetMemoAfter{signal, False{}} <> rest, value <> tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case SetMemoForward{+signal, held} <> rest:
+      Machine{w, SetSignalArgument{signal} <> SetMemoAfter{signal, held} <> rest, stack}
+    case SetMemoAfter{signal, held} <> rest:
+      Machine{MW.finish(w, signal, held), rest, stack}
     case SetSignalArgument{signal} <> rest:
       match stack:
         case value <> tail:

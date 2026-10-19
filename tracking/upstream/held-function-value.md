@@ -5,8 +5,10 @@ Status: the user selected the wrapper fix. It is pushed to GabbeV/solid on
 rebased onto next `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`. The user
 submitted [PR #4163](https://github.com/solidjs/solid/pull/4163); verified open
 with that head on 2026-10-19. See the [publication and validation
-record](held-function-wrapper-pr.md). Writable-memo setters are not yet in the
-Bend input ABI. This is source-only evidence, not a Bend parity claim or active
+record](held-function-wrapper-pr.md). The expression-based writable-memo overload is now in the Bend ABI. Its
+selected bound-function counterpart has sixteen paired histories and the negative
+`held_function_result_counterexample` law. The original twelve arbitrary function
+controls remain source-only. This is preserved baseline evidence, not an active
 workaround. The pinned runtime is unchanged and the deviation register is empty.
 
 [Minimal JSX playground](https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA), pinned to
@@ -80,7 +82,8 @@ all 315 test files pass (5,359 tests, three expected failures, two skips). Forma
 release invariants and the strict public-type snippet pass. The full test-tree
 TypeScript check has 30 existing diagnostics, verified identical on the base and
 patched checkouts; the new regression file has none. Source-impact inspection
-identifies only `core/core.ts:setMemo`, explicitly **unported** in Bend.
+identified only `core/core.ts:setMemo`, which was **unported at that original
+trial**. The current admitted translation is described above.
 
 The compact patch adds nine minified bytes to each of the four measured signals
 size scenarios. The upstream comparison gate passes: core floor and until/refresh
@@ -103,7 +106,7 @@ the repro and both choices was initially preferred. The user subsequently
 selected the compact wrapper and authorized a PR; that publication is recorded
 above.
 
-Future Bend `setMemo` work must retain this baseline behavior or explicitly
-register an authorized deviation. The plain-signal WriteResult path must not be
+The Bend `setMemo` translation retains this baseline behavior; any correction
+must follow an audited upstream repin or explicitly register a deviation. The plain-signal WriteResult path must not be
 substituted for the held writable-memo updater prefix. A future repin should check
 this report's status and port the upstream fix when it lands.

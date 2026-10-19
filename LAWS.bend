@@ -18,6 +18,7 @@ import ./proof/nested.bend as Nested
 import ./proof/locals.bend as Locals
 import ./proof/accessors.bend as Accessors
 import ./proof/setters.bend as Setters
+import ./proof/writable-signals.bend as WritableSignals
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -166,3 +167,9 @@ law computed_accessor_freezes_on_root_disposal:
 law lexical_setter_binding:
   for +signal: Nat
   {Lexical.bind(R.LocalSetter{0n}, 0n, signal) == R.Literal{R.SetterReference{signal}} : R.Expr}
+
+law writable_signal_rederives_from_manual_previous:
+  {WritableSignals.view(WritableSignals.writable()) == WritableSignals.expected() : WritableSignals.View}
+
+law held_function_result_counterexample:
+  {WritableSignals.counterexample() == WritableSignals.expectedCounterexample() : WritableSignals.Counterexample}
