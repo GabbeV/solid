@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Twelve source-changing variants must be rejected. No arbitrary-value, arbitrary-
+Fourteen source-changing variants must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -203,4 +203,10 @@ Default until now has 136 histories and 8192 actual source closure probes; two
 closed laws check its queued falsy/true callbacks, promise outcome, root lifetime
 and dependency release. Together there are seventeen composed closed regressions,
 one explicitly negative, plus payload/question/path laws. See [until.md](until.md).
-Timeout/abort and active optimistic/truth/deferred scopes remain unfinished.
+Until's timeout/abort branches now execute for natural millisecond delays and
+explicit represented abort reasons, with 52 additional option histories and
+native timeout controls. Timer/listener registration and cancellation follow the
+source; queued callbacks still run after a competing settlement. Default
+AbortError objects, arbitrary structural signal/getter behavior and active
+optimistic/truth/deferred scopes remain unfinished. No new theorem is claimed
+for timeout/abort or native scheduling.

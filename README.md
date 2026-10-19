@@ -122,6 +122,8 @@ pending diamond. Their explicit external input and the exact binary question-ID
 representation are documented in [question-ids.md](tracking/question-ids.md).
 Iterator pumping, native job timing and public watchers remain tested domains.
 
-The [default until path](tracking/until.md) also executes through the shared
-watcher, with two closed queued-callback regressions. Timeout/AbortSignal options
-and active optimistic/truth scopes remain unfinished.
+The [until path](tracking/until.md) also executes through the shared watcher,
+including natural-millisecond timeouts and abort signals with represented explicit
+reasons. Two closed queued-callback regressions cover the default path; option
+handling is differentially tested. Default AbortError objects, arbitrary host
+callbacks and active optimistic/truth scopes remain unfinished.

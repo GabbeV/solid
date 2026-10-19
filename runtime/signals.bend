@@ -45,12 +45,75 @@ def resolve(fuel: Nat, +w: R.World, expr: R.Expr) -> R.World:
   +w = makeWatch(fuel, U.newAwaiter(w, expr, False{}, 0n), id)
   creationCatch(w, id, R.World.fault(w))
 
-# until(fn) with no timer/AbortSignal options. Falsy values are delivered to
-# the callback but do not settle it; error and truthy answers use the same root.
-def until(fuel: Nat, +w: R.World, expr: R.Expr) -> R.World:
+# Registration follows watch's initial pass, even when its truthy/error answer
+# is already queued. Source locals retain their handles after cancellation.
+def untilResources(+w: R.World, +id: Nat, timed: Bool, delay: Nat, +signal: Nat) -> R.World:
+  +w = B.choose(~R.World, timed,
+    _ =>
+      +w = B.store_awaiter(w, id, R.Awaiter.with_timer(B.awaiter(w, id), True{}))
+      R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.StartTimeout{id, delay}])), _ => w)
+  B.choose(~R.World, Nat.is_ne(signal, 0n),
+    _ =>
+      +w = B.store_awaiter(w, id, R.Awaiter.with_onAbort(B.awaiter(w, id), True{}))
+      R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ListenAbort{id, signal}])), _ => w)
+
+# signals.ts:until's executor. AbortInput contains external signal properties;
+# timer handles and listener identities use the awaiter ID across host IO.
+# Timeout delays are admitted natural millisecond inputs, with presence separate
+# from zero. Arbitrary option/signal getter throws remain outside this grammar.
+def untilOptions(fuel: Nat, +w: R.World, expr: R.Expr, timed: Bool, delay: Nat, +signal: Nat) -> R.World:
   +id = B.length(R.Awaiter, R.World.awaiters(w))
-  +w = makeWatch(fuel, U.newUntil(w, expr), id)
-  creationCatch(w, id, R.World.fault(w))
+  +w = U.newAwaiter(w, expr, False{}, 0n)
+  +a = R.Awaiter.with_signal(R.Awaiter.with_until(B.awaiter(w, id), True{}), signal)
+  +w = B.store_awaiter(w, id, a)
+  +input = B.get(R.AbortInput, R.World.abortInputs(w), signal, R.AbortInput{False{}, R.Undefined{}})
+  B.choose(~R.World, Bool.and(Nat.is_ne(signal, 0n), R.AbortInput.aborted(input)),
+    _ => U.settle(w, id, True{}, R.AbortInput.reason(input)),
+    _ =>
+      +w = B.store_awaiter(w, id, R.Awaiter.with_confirmation(B.awaiter(w, id), R.World.flushTransaction(w)))
+      +w = makeWatch(fuel, w, id)
+      +w = B.choose(~R.World, B.ok(w), _ => untilResources(w, id, timed, delay, signal), _ => w)
+      creationCatch(w, id, R.World.fault(w)))
+
+# No-options entry delegates to the same source executor and watcher.
+def until(fuel: Nat, +w: R.World, expr: R.Expr) -> R.World:
+  untilOptions(fuel, w, expr, False{}, 0n, 0n)
+
+# The until settle closure clears timer, removes listener, fires the native
+# resolver/rejecter, then disposes. It has no extra already-settled gate: queued
+# answers still repeat cancellation/disposal; native promise settlement is once.
+type UntilFire is Data:
+  Answer{rejected: Bool, value: R.Value}
+  Timeout{}
+  Abort{}
+
+# Defunctionalized fire closure. These reads/allocations belong inside fire,
+# AFTER timer/listener cancellation, not when the outer callback is entered.
+def fireUntil(+w: R.World, +id: Nat, fire: UntilFire) -> R.World:
+  match fire:
+    case Answer{rejected, value}:
+      U.settle(w, id, rejected, value)
+    case Timeout{}:
+      +serial = Nat.add(1n, R.World.errorSerial(w))
+      U.settle(R.World.with_errorSerial(w, serial), id, True{}, R.TimeoutFailure{serial})
+    case Abort{}:
+      +input = B.get(R.AbortInput, R.World.abortInputs(w), R.Awaiter.signal(B.awaiter(w, id)), R.AbortInput{False{}, R.Undefined{}})
+      U.settle(w, id, True{}, R.AbortInput.reason(input))
+
+def settleUntil(+w: R.World, +id: Nat, fire: UntilFire) -> R.World:
+  +a = B.awaiter(w, id)
+  +w = B.choose(~R.World, R.Awaiter.timer(a),
+    _ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.CancelTimeout{id}])), _ => w)
+  +w = B.choose(~R.World, R.Awaiter.onAbort(a),
+    _ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.UnlistenAbort{id, R.Awaiter.signal(a)}])), _ => w)
+  +w = fireUntil(w, id, fire)
+  O.dispose(w, R.Awaiter.root(B.awaiter(w, id)))
+
+def timeoutUntil(w: R.World, id: Nat) -> R.World:
+  settleUntil(w, id, Timeout{})
+
+def abortUntil(w: R.World, id: Nat) -> R.World:
+  settleUntil(w, id, Abort{})
 
 # markRefresh happens synchronously, before creating the promise. All calls
 # in one tick mark before a watcher pulls; the WatchStart is a microtask.
@@ -71,6 +134,9 @@ def deliver(+w: R.World, +id: Nat, +rejected: Bool, +value: R.Value) -> R.World:
   B.choose(~R.World, Bool.and(R.Awaiter.until(B.awaiter(w, id)), Bool.and(Bool.not(rejected), Bool.not(B.truth(value)))),
     _ => w,
     _ =>
-      +w = U.settle(w, id, rejected, value)
-      +awaiter = B.awaiter(w, id)
-      O.dispose(w, B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter))))
+      B.choose(~R.World, R.Awaiter.until(B.awaiter(w, id)),
+        _ => settleUntil(w, id, Answer{rejected, value}),
+        _ =>
+          +w = U.settle(w, id, rejected, value)
+          +awaiter = B.awaiter(w, id)
+          O.dispose(w, B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter)))))

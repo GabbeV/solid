@@ -1,7 +1,8 @@
 import * as DefaultSolid from '../build/solid.mjs';
 export class SolidRuntime {
-  constructor({module=DefaultSolid}={}) {
+  constructor({module=DefaultSolid,clock}={}) {
     this.S=module;
+    this.clock=clock??{setTimeout,clearTimeout};this.controllers={};
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
     this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
   }
@@ -36,6 +37,7 @@ export class SolidRuntime {
     return value;
   }
   errorShape(e) {
+    if(e instanceof this.S.TimeoutError)return {timeoutError:true,name:e.name,message:e.message};
     if(e instanceof this.S.NotReadyError){
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
       return {notReady:this.encountered.get(e),source:this.sourceNames.get(e.source)??null};
@@ -44,12 +46,17 @@ export class SolidRuntime {
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
       return {statusError:this.encountered.get(e),source:this.sourceNames.get(e.source),cause:this.errorShape(e.cause)};
     }
-    return e;
+    return this.observe(e);
   }
   withJobs(fn){
     const original=globalThis.queueMicrotask;
+    const originalSet=globalThis.setTimeout,originalClear=globalThis.clearTimeout;
     globalThis.queueMicrotask=callback=>original(()=>{try{this.withJobs(callback);}catch(e){this.asyncErrors.push(this.errorShape(e));}});
-    try{return fn();}finally{globalThis.queueMicrotask=original;}
+    if(this.clock){
+      globalThis.setTimeout=(callback,delay)=>this.clock.setTimeout(()=>{try{this.withJobs(callback);}catch(e){this.asyncErrors.push(this.errorShape(e));}},delay);
+      globalThis.clearTimeout=handle=>this.clock.clearTimeout(handle);
+    }
+    try{return fn();}finally{globalThis.queueMicrotask=original;globalThis.setTimeout=originalSet;globalThis.clearTimeout=originalClear;}
   }
   attempt(op,...args) {try{return ['return',this.observe(this.withJobs(()=>this[op](...args)))];}catch(e){return ['throw',this.errorShape(e)];}}
   program(name,actions) {
@@ -72,7 +79,27 @@ export class SolidRuntime {
     promise.then(value=>{this.portEvents.push(['resolve',name,this.observe(value)]);this.portSnapshots.push([name,this.screen()]);},error=>{this.portEvents.push(['reject',name,this.errorShape(error)]);this.portSnapshots.push([name,this.screen()]);});
   }
   awaitValue(name,expr){this.recordPort(name,this.S.resolve(this.callback('wait:'+name,expr)));}
-  awaitUntil(name,expr){this.recordPort(name,this.S.until(this.callback('wait:'+name,expr)));}
+  awaitUntil(name,expr,options={}){
+    const signal=options.signal===undefined?undefined:this.controllers[options.signal].signal;
+    this.recordPort(name,this.S.until(this.callback('wait:'+name,expr),{...options,signal}));
+  }
+  controller(name){
+    const controller=new AbortController(),signal=controller.signal,callbacks=new Map();
+    const add=signal.addEventListener.bind(signal),remove=signal.removeEventListener.bind(signal);
+    // Host observation of an escaping engine callback, as for future reactions
+    // and microtasks. Native AbortSignal still controls once/order/removal.
+    signal.addEventListener=(type,callback,options)=>{
+      if(type!=='abort')return add(type,callback,options);
+      const observed=()=>{try{this.withJobs(callback);}catch(e){this.asyncErrors.push(this.errorShape(e));}};
+      callbacks.set(callback,observed);return add(type,observed,options);
+    };
+    signal.removeEventListener=(type,callback)=>remove(type,callbacks.get(callback)??callback);
+    this.controllers[name]=controller;
+  }
+  abort(name,reason){
+    if(reason===undefined)throw new TypeError('Abort input currently requires an explicit represented reason');
+    this.controllers[name].abort(this.value(reason));
+  }
   awaitRefresh(name,target){this.recordPort(name,this.S.refresh(this.accessors[target]??(()=>undefined)));}
   promise(name){return this.ports[name].promise;}
   future(name,{immediate=false}={}) {

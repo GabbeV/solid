@@ -153,8 +153,24 @@ billions of unary constructors. World.questions is the sequence counter, separat
 from ambient World.question. See [question-ids.md](question-ids.md) for numeric
 source comparisons, general helper proofs and five composed async laws.
 
-Awaiter.until selects the default predicate callback, while confirmation retains
+Awaiter.until selects the predicate callback, while confirmation retains
 until's pre-root transaction t separately from watch's own. makeWatch captures the
 default own at the source watch call; refresh passes its earlier explicit own.
-Falsy until delivery keeps the root and watcher subscribed. No timeout/signal
-record or branch is claimed yet; those options are outside the current ABI.
+Falsy until delivery keeps the root and watcher subscribed. Awaiter.timer/onAbort
+represent the definedness of the source closure locals; they retain their values
+after cancellation, as the source does. The awaiter ID identifies each external
+timer handle and abort callback. Awaiter.signal indexes AbortInput snapshots of
+the host's aborted/reason properties. The adapter installs each snapshot before
+native AbortController dispatch and uses actual add/removeEventListener with
+once:true; it does not decide watcher settlement or disposal.
+
+StartTimeout/CancelTimeout/ListenAbort/UnlistenAbort are ordered synchronous host
+IO requests, not microtasks. TimeoutFailure carries a fresh error identity;
+decoding preserves Error/name/message and object identity for the default
+core/error.ts TimeoutError constructor. Its serial shares the internal error
+identity arena, without wrapping the timeout as a StatusError. The error's stack
+and arbitrary host Error objects are not represented. Delays are natural integer
+milliseconds through 2^31-1; explicit abort reasons use the admitted Value grammar.
+Default native AbortError/DOMException reasons and arbitrary signal/option getters
+or callbacks remain unfinished. Timers may be native or an explicit-delivery
+test environment; no native clock timing or timeout/abort law is proved.

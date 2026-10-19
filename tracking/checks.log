@@ -10,7 +10,7 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/identity.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
@@ -21,6 +21,7 @@ Built Bend runtime and pinned Solid production reference.
 16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
 8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
 136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
+52 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes.
 Host reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens.
 
 > solid-signals-bend@0.1.0 test:alignment
@@ -47,6 +48,8 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: until timer is never cancelled
+Rejected mutation: until ignores a pre-aborted signal
 Rejected mutation: until resolves a falsy value
 Rejected mutation: unregistered staged-error recovery workaround
 Rejected mutation: refresh waiter runs eagerly
@@ -59,7 +62,7 @@ Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-12 source-changing variants rejected by differential assertions.
+14 source-changing variants rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -67,276 +70,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 10.3s; hashes sealed in build/verification.json.
-
-> solid-signals-bend@0.1.0 check
-> node tools/check.mjs
-
-Pinned upstream snapshots match their recorded hashes.
-Checking composed proofs with the independent BendTT kernel...
-ALL PROOFS CHECK
-Kernel completed in 10.3s; hashes sealed in build/verification.json.
-
-Standalone public Solid repro verification, 2026-10-19 UTC
-Standalone clean-directory verification; Node v24.19.0
-Date: 2026-10-19T01:36:29Z
-
-$ npm ci --no-audit --no-fund
-
-added 3 packages in 301ms
-
-Exit: 0 (expected 0)
-
-$ npm test
-
-> test
-> node verify.mjs
-
-Published @solidjs/signals@2.0.0-rc.15 (older than pinned next)
-empty-flatten.mjs immediate: reproduced failure
-empty-flatten.mjs direct: control passed
-empty-flatten.mjs native: control passed
-held-error-recovery.mjs no-error: control passed
-Held recovery requires the newer next commit: run npm run use:next, then npm test.
-
-Exit: 0 (expected 0)
-
-$ npm run use:next
-
-> use:next
-> node use-next.mjs
-
-
-changed 1 package in 322ms
-Installed unchanged Solid next public index at d2ad8b288886a5c7171e6746ccc019ad1d08d8ab
-npm ci restores the published npm package.
-From https://github.com/solidjs/solid
- * branch            d2ad8b288886a5c7171e6746ccc019ad1d08d8ab -> FETCH_HEAD
-Exit: 0 (expected 0)
-
-$ npm test
-
-> test
-> node verify.mjs
-
-Solid next d2ad8b288886a5c7171e6746ccc019ad1d08d8ab
-empty-flatten.mjs immediate: reproduced failure
-empty-flatten.mjs direct: control passed
-empty-flatten.mjs native: control passed
-held-error-recovery.mjs same-recovery: reproduced failure
-held-error-recovery.mjs changed-recovery: reproduced failure
-held-error-recovery.mjs no-error: control passed
-
-Exit: 0 (expected 0)
-
-$ node empty-flatten.mjs
-{
-  mode: 'immediate',
-  expected: 'undefined',
-  actual: 'empty iterable object'
-}
-node:internal/modules/run_main:107
-    triggerUncaughtException(
-    ^
-
-AssertionError [ERR_ASSERTION]: An empty flattened stream should settle to undefined
-+ actual - expected
-
-+ {
-+   Symbol(Symbol.asyncIterator): [Function: [Symbol.asyncIterator]]
-+ }
-- undefined
-
-    at file:///workspace/scratch/solid-public-repros-x87tl0uk/empty-flatten.mjs:33:10 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: { Symbol(Symbol.asyncIterator): [Function: [Symbol.asyncIterator]] },
-  expected: undefined,
-  operator: 'strictEqual',
-  diff: 'simple'
-}
-
-Node.js v24.19.0
-Exit: 1 (expected 1)
-
-$ node held-error-recovery.mjs
-Unhandled callback rejection: 1
-{
-  mode: 'same-recovery',
-  expected: { rendered: [ 2, 3 ], read: { returned: 3 } },
-  actual: { rendered: [ 2 ], read: { threw: 1 } }
-}
-[REACTIVITY_HALTED] 1
-node:internal/modules/run_main:107
-    triggerUncaughtException(
-    ^
-
-AssertionError [ERR_ASSERTION]: The successful recovery should render when the pending input resolves
-+ actual - expected
-
-  [
-    2,
--   3
-  ]
-
-    at file:///workspace/scratch/solid-public-repros-x87tl0uk/held-error-recovery.mjs:42:10 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: [ 2 ],
-  expected: [ 2, 3 ],
-  operator: 'deepStrictEqual',
-  diff: 'simple'
-}
-
-Node.js v24.19.0
-Exit: 1 (expected 1)
-
-$ node held-error-recovery.mjs changed-recovery
-Unhandled callback rejection: 7
-{
-  mode: 'changed-recovery',
-  expected: { rendered: [ 2, 9 ], read: { returned: 9 } },
-  actual: { rendered: [ 2 ], read: { threw: 7 } }
-}
-[REACTIVITY_HALTED] 7
-node:internal/modules/run_main:107
-    triggerUncaughtException(
-    ^
-
-AssertionError [ERR_ASSERTION]: The successful recovery should render when the pending input resolves
-+ actual - expected
-
-  [
-    2,
--   9
-  ]
-
-    at file:///workspace/scratch/solid-public-repros-x87tl0uk/held-error-recovery.mjs:42:10 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: [ 2 ],
-  expected: [ 2, 9 ],
-  operator: 'deepStrictEqual',
-  diff: 'simple'
-}
-
-Node.js v24.19.0
-Exit: 1 (expected 1)
-
-PASS: independent npm installation, upstream download/build, paired controls and the three intended-assertion failures verified.
-
-> solid-signals-bend@0.1.0 check
-> node tools/check.mjs
-
-Pinned upstream snapshots match their recorded hashes.
-Checking composed proofs with the independent BendTT kernel...
-ALL PROOFS CHECK
-Kernel completed in 10.3s; hashes sealed in build/verification.json.
-
-Minimal JSX and hosted playground verification, 2026-10-19 UTC
-
-> test
-> node verify.mjs
-
-From https://github.com/solidjs/solid
- * branch            d2ad8b288886a5c7171e6746ccc019ad1d08d8ab -> FETCH_HEAD
-empty-stream / production: Value: [object Object]
-empty-direct-control / production: Value: undefined
-empty-native-control / production: Value: undefined
-held-recovery / production: Sum: 2; throws 1 on final click
-held-changed-recovery / production: Sum: 2; throws 7 on final click
-held-no-error-control / production: Sum: 3
-empty-stream / development: Value: [object Object]
-empty-direct-control / development: Value: undefined
-empty-native-control / development: Value: undefined
-held-recovery / development: Sum: 2; throws 1 on final click
-held-changed-recovery / development: Sum: 2; throws 7 on final click
-held-no-error-control / development: Sum: 3
-
-Fresh-session hosted source/build round trips and controls:
-{
-  "date": "2026-10-19T01:56:17.737Z",
-  "browser": "154.0.8037.57",
-  "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
-  "cases": [
-    {
-      "name": "empty-stream",
-      "url": "https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw",
-      "sourceRoundTrip": true,
-      "hasSavedBuild": true,
-      "states": [
-        {
-          "step": "initial",
-          "text": "Value: [object Object]"
-        }
-      ],
-      "errors": [],
-      "control": [
-        {
-          "step": "control build",
-          "text": "Value: undefined"
-        }
-      ]
-    },
-    {
-      "name": "held-recovery",
-      "url": "https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag",
-      "sourceRoundTrip": true,
-      "hasSavedBuild": true,
-      "states": [
-        {
-          "step": "initial",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "1. Start update",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "2. Recover",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "3. Finish request",
-          "text": "Sum: 2"
-        }
-      ],
-      "errors": [
-        {
-          "step": "3. Finish request",
-          "message": "1"
-        },
-        {
-          "step": "3. Finish request",
-          "message": "1"
-        }
-      ],
-      "control": [
-        {
-          "step": "control build",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "1. Start update",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "2. Recover",
-          "text": "Sum: 2"
-        },
-        {
-          "step": "3. Finish request",
-          "text": "Sum: 3"
-        }
-      ]
-    }
-  ]
-}
-
-> solid-signals-bend@0.1.0 check
-> node tools/check.mjs
-
-Pinned upstream snapshots match their recorded hashes.
-Checking composed proofs with the independent BendTT kernel...
-ALL PROOFS CHECK
-Kernel completed in 10.3s; hashes sealed in build/verification.json.
+Kernel completed in 10.2s; hashes sealed in build/verification.json.

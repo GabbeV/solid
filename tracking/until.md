@@ -1,10 +1,11 @@
-# Default until watcher
+# Until watcher and cancellation
 
-`signals.ts:until` now executes for expression predicates with no options. This
+`signals.ts:until` now executes for expression predicates with no options and
+natural-millisecond timeout/explicit-reason AbortSignal options. This
 uses the same watcher, pending/error catches, frame rule, heap, owner teardown and
-native-promise IO as resolve/refresh. Timeout, AbortSignal and active optimistic /
-deferred-truth scopes remain explicit unfinished branches. No option support is
-inferred from the default-path evidence.
+native-promise IO as resolve/refresh. Active optimistic / deferred-truth scopes,
+arbitrary host getter/callback behavior and default AbortError objects remain
+unfinished. Option support has separate differential evidence below.
 
 The predicate is authoritative from its first pass. Falsy answers still queue an
 onValue microtask, whose callback leaves the promise and root alive. A later truthy
@@ -39,9 +40,46 @@ release. Both check emitted callback payload/order, actual delivery, empty react
 queues, restored ambient state and successful completion. Host callback delivery
 is an explicit input; native timing/timeout/abort/general predicates are not proved.
 
-`api.untilValue` and host awaitUntil(name,expr) expose this admitted path. Returned
+`api.untilValue` and host awaitUntil(name,expr,options) expose these admitted paths. Returned
 external thenables would require the richer native assimilation protocol already
 listed for the other public watchers; it remains unimplemented. The next source
-work is timeout/AbortSignal registration and cancellation, then active truth /
-lagging and public action scopes. Default-path tests/proofs do not close those
-branch obligations.
+work is richer host errors/callbacks and active truth / lagging and public action
+scopes. Default-path tests/proofs do not close those branch obligations.
+
+## Timeout and abort operation correspondence
+
+signals.untilOptions follows the Promise executor: inspect the captured external
+signal, reject an already-aborted signal before allocating a root or evaluating
+the predicate, capture t, create the root/watch, then register timeout followed by
+the abort listener. Zero timeout is present; an explicit undefined timeout is not.
+untilResources represents those registrations as host IO after the initial pass,
+even when its answer is already queued. settleUntil follows the source closure:
+clear timeout, remove abort listener, resolve/reject, dispose the root. It adds no
+settled guard around cancellation/disposal. Only native Promise resolution is
+once; an already queued answer can invoke the closure again after abort/timeout.
+
+timeoutUntil and abortUntil retain the source's inner fire closures as UntilFire
+descriptors. Only after cancellation does fireUntil construct a new TimeoutFailure
+identity (mapped to the source TimeoutError name/message/Error shape by the host
+codec), or read reason from the captured signal snapshot. AbortSignal dispatch and
+timer callback delivery are external inputs; all watcher and disposal decisions
+stay in the Bend runtime. The existing foreign-frame and inPass paths are shared.
+
+52 option histories compare ordered set/clearTimeout and add/removeEventListener
+calls in addition to node state, execution traces, promise observers, reports,
+escaping callbacks and ambient restoration. They cover pre-abort without running
+the predicate, falsy/initial-truthy/error cases, cancellation races, repeated queued
+answers, shared signals, zero/large delays, async pending/fulfillment/rejection,
+lazy observation and cleanup throws. Independent native tests reject a falsy
+predicate, resolve an immediate truthy one, check fresh/cached timeout identity,
+and preserve reference/thenable abort-reason identity in both runtimes. Native
+AbortController supplies abort dispatch in all option histories; source function
+bodies are unchanged. Delays in these controlled histories are explicit host
+deliveries, not a model of elapsed wall time or browser task scheduling.
+
+Admitted delays are integers 0..2^31-1 milliseconds. Abort requires an explicit
+non-undefined reason in the existing payload grammar; default AbortError objects,
+arbitrary structural signal implementations/getter throws, reentrant host calls
+from user callbacks and returned-thenable assimilation remain unfinished. No
+semantic workaround is introduced. The two default-path closed laws remain
+unchanged; no new timeout/abort theorem is claimed.

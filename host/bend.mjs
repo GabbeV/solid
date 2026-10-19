@@ -12,7 +12,11 @@ const tags = {
   undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
+  timeout:R.vTimeout(0).$,
 };
+export class BendTimeoutError extends Error {
+  constructor(identity){super('Timed out waiting for condition');this.name='TimeoutError';this.identity=identity;}
+}
 export class BendStatusError extends Error {
   constructor(identity,source,cause){super(String(cause),{cause});this.identity=identity;this.source=source;}
 }
@@ -39,6 +43,9 @@ export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map()) {
       if(!asyncRefs.has(v.identity))asyncRefs.set(v.identity,{async:v.identity});return asyncRefs.get(v.identity);
     case tags.nan: return NaN;
     case tags.text: return typeof v.s === 'string' ? v.s : decodeString(v.s);
+    case tags.timeout:
+      if(!errors.has(v.identity))errors.set(v.identity,new BendTimeoutError(v.identity));
+      return errors.get(v.identity);
     default: throw new Error('Unsupported Bend payload shape');
   }
 }
@@ -82,13 +89,28 @@ function nodeOptions(options={},programs={}) {
     Object.hasOwn(options,'loadingValue'),encode(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set(); }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map(); }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs);}
   drainJobs() {
     if(!this.hostAsync)return;
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
     for(const job of jobs){
       const kind=R.hostJobKind(job);
+      if(kind===5){
+        this.timers.set(job.awaiter,this.clock.setTimeout(()=>this.hostCallback(()=>{this.world=R.timeoutUntil(this.world,job.awaiter);}),job.delay));
+        continue;
+      }
+      if(kind===6){this.clock.clearTimeout(this.timers.get(job.awaiter));continue;}
+      if(kind===7){
+        const callback=()=>this.hostCallback(()=>{this.world=R.abortUntil(this.world,job.awaiter);});
+        this.abortListeners.set(job.awaiter,callback);
+        this.controllers[this.abortNames.get(job.signal)].signal.addEventListener('abort',callback,{once:true});
+        continue;
+      }
+      if(kind===8){
+        this.controllers[this.abortNames.get(job.signal)].signal.removeEventListener('abort',this.abortListeners.get(job.awaiter));
+        continue;
+      }
       if(kind===4){
         const port=this.ports[this.portNames.get(job.awaiter)];
         if(port){
@@ -108,6 +130,7 @@ export class BendRuntime {
       });
     }
   }
+  hostCallback(callback){try{callback();this.check();}catch(error){this.asyncErrors.push(this.errorShape(error));}}
   check() {
     this.drainJobs();
     if(this.world.fault.$ === tags.healthy)return;
@@ -117,6 +140,7 @@ export class BendRuntime {
     throw new Error(`Bend runtime stopped: ${JSON.stringify(this.world.fault)}`);
   }
   errorShape(e) {
+    if(e instanceof BendTimeoutError)return {timeoutError:true,name:e.name,message:e.message};
     if(e instanceof BendNotReady){
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
       return {notReady:this.encountered.get(e),source:this.reverse[e.source]??null};
@@ -157,9 +181,22 @@ export class BendRuntime {
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
     this.world=R.resolveValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures));this.bindAwaiter(id);this.check();
   }
-  awaitUntil(name,expr){
+  awaitUntil(name,expr,options={}){
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);
-    this.world=R.untilValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures));this.bindAwaiter(id);this.check();
+    const timed=options.timeout!==undefined;
+    if(timed&&(!Number.isSafeInteger(options.timeout)||options.timeout<0||options.timeout>2**31-1))throw new RangeError('Timeout protocol admits natural milliseconds through 2^31-1');
+    const signal=options.signal===undefined?0:this.controllers[options.signal].id;
+    this.world=R.untilWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures),timed,options.timeout??0,signal);this.bindAwaiter(id);this.check();
+  }
+  controller(name){
+    const id=R.nextAbortId(this.world),controller=new AbortController();controller.id=id;
+    this.controllers[name]=controller;this.abortNames.set(id,name);this.world=R.createAbortInput(this.world);this.check();
+  }
+  abort(name,reason){
+    if(reason===undefined)throw new TypeError('Abort input currently requires an explicit represented reason');
+    const controller=this.controllers[name];
+    this.world=R.setAbortInput(this.world,controller.id,encode(reason));
+    controller.abort(this.decode(encode(reason)));this.check();
   }
   awaitRefresh(name,target){
     const id=R.nextAwaiterId(this.world);this.makePort(name,id);

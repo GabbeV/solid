@@ -1,7 +1,8 @@
 # Candidate: a successful held recovery is later thrown as an error
 
-Status: reduced current-head upstream bug candidate. No report or workaround is
-active. Both pinned TS and Bend preserve this baseline. This does not block work.
+Status: reported in [issue #4145](https://github.com/solidjs/solid/issues/4145),
+submitted by the user on 2026-10-19. No workaround is active. Both pinned TS and
+Bend preserve this baseline. This does not block work.
 
 Minimal JSX playground, created at the user's request:
 [held-recovery repro](https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag).
@@ -152,4 +153,5 @@ pending.stageError, core.finishValue/publish/serveSelected, scheduler.commitPend
 Baseline parity and this negative law must remain visible. On an upstream fix,
 review the precise flag/overwrite changes, port them, update these controls and
 retire the counterexample expectation with its report/fix link. Keep the history.
-No semantic deviation, package publication or external issue filing has occurred.
+No semantic deviation or package publication has occurred. The user filed #4145;
+no upstream fix is known yet.

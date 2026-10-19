@@ -6,12 +6,7 @@ import ./constants.bend as K
 import ./transaction.bend as X
 
 def newAwaiter(+w: R.World, expr: R.Expr, refresh: Bool, target: Nat) -> R.World:
-  R.World.with_awaiters(w, B.append(R.Awaiter, R.World.awaiters(w), [R.Awaiter{expr, refresh, target, R.World.flushTransaction(w), 0n, 0n, R.Unresolved{}, False{}, 0n}]))
-
-def newUntil(+w: R.World, expr: R.Expr) -> R.World:
-  +id = B.length(R.Awaiter, R.World.awaiters(w))
-  +w = newAwaiter(w, expr, False{}, 0n)
-  B.store_awaiter(w, id, R.Awaiter.with_confirmation(R.Awaiter.with_until(B.awaiter(w, id), True{}), R.World.flushTransaction(w)))
+  R.World.with_awaiters(w, B.append(R.Awaiter, R.World.awaiters(w), [R.Awaiter{expr, refresh, target, R.World.flushTransaction(w), 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}]))
 
 def capture(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, Nat.is_eq(R.Awaiter.node(B.awaiter(w, id)), 0n),

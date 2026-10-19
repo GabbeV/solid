@@ -68,6 +68,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.StatusFailure{x, sourceA, causeA} R.StatusFailure{y, sourceB, causeB}:
       Nat.is_eq(x, y)
+    case R.TimeoutFailure{x} R.TimeoutFailure{y}:
+      Nat.is_eq(x, y)
     case R.StringValue{x} R.StringValue{y}:
       String.eq(x, y)
     case _ _:
@@ -82,6 +84,8 @@ def truth(v: R.Value) -> Bool:
     case R.Reference{id}:
       True{}
     case R.StatusFailure{identity, source, cause}:
+      True{}
+    case R.TimeoutFailure{identity}:
       True{}
     case R.NotReadyFailure{identity, source}:
       True{}
@@ -203,7 +207,7 @@ def blank_asyncObserver() -> R.AsyncObserver:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[]}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}]}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -362,7 +366,7 @@ def iteratorEvent(+w: R.World, event: R.IteratorEvent) -> R.World:
   R.World.with_iteratorEvents(w, append(R.IteratorEvent, R.World.iteratorEvents(w), [event]))
 
 def awaiter(w: R.World, id: Nat) -> R.Awaiter:
-  get(R.Awaiter, R.World.awaiters(w), id, R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n})
+  get(R.Awaiter, R.World.awaiters(w), id, R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n})
 
 def store_awaiter(+w: R.World, id: Nat, value: R.Awaiter) -> R.World:
   R.World.with_awaiters(w, List.set(&2, R.Awaiter, R.World.awaiters(w), id, value))

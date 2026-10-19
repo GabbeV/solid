@@ -96,20 +96,23 @@ the user; filing or contacting maintainers requires the user's explicit instruct
 [SOLID-EMPTY-FLATTEN-001](upstream/empty-flatten.md) records a current-next-head
 source-only object leak for an immediately settled promise of an immediately
 empty iterable. Direct/native/one-yield controls and related upstream history
-were checked. This is a reduced bug candidate; no report, workaround or source
+were checked. The user submitted fix PR #4144; no workaround or pinned source
 change is active. tracking/upstream-issues.json indexes it separately from the
 semantic deviation register.
 
 [SOLID-STAGED-ERROR-RECOVERY-002](upstream/staged-error-recovery.md) records a
 successful held value thrown as an error after an earlier staged error is replaced
 before landing. Eight source-only controls, sixteen parity histories and a closed
-negative Bend law preserve this current-head behavior. No workaround is active.
+negative Bend law preserve this current-head behavior. The user filed #4145;
+no workaround is active.
 An unregistered bit-clearing mutation is rejected for source mismatch; that is not
 a claim that the pinned behavior is desirable.
 
 Default until's own/captured confirmation, frame delivery and truthy inPass join
 now execute with 136 histories, 8192 closure probes and two closed regressions.
-Timeout/AbortSignal and active truth/lagging/action APIs remain unfinished; see
+Natural-millisecond timeout/explicit-reason AbortSignal handling now has 52 option
+histories and native timer controls. Default AbortError objects, arbitrary host
+signal/getter/callback behavior and active truth/lagging/action APIs remain unfinished; see
 [until.md](until.md).
 
 The host codec's repeated reference decoding formerly allocated fresh JS token
@@ -117,3 +120,9 @@ objects. It now uses per-runtime reference/async-object caches across all result
 trace/tree, setter/updater, promise and error paths. Strict host alias assertions
 match TS, including raw cleanup errors. This repairs an adapter bug, not source
 semantics or an active workaround.
+
+Abort-reason comparisons also use the reference observer's existing async-object
+identity normalization for raw thrown/rejected payloads. Native thenable rejection
+reasons are not assimilated; within-runtime identity is asserted separately from
+cross-runtime token comparisons. This is host observation, not error handling or
+Promise resolution implemented by the adapter.

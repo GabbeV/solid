@@ -278,6 +278,38 @@ def hostJobKind(job: R.HostJob) -> U32:
       3
     case R.PromiseOutcome{awaiter, rejected, value}:
       4
+    case R.StartTimeout{awaiter, delay}:
+      5
+    case R.CancelTimeout{awaiter}:
+      6
+    case R.ListenAbort{awaiter, signal}:
+      7
+    case R.UnlistenAbort{awaiter, signal}:
+      8
 
 def untilValue(fuel: Nat, w: R.World, expr: R.Expr) -> R.World:
   J.until(fuel, w, expr)
+
+def untilWithOptions(fuel: Nat, w: R.World, expr: R.Expr, timed: Bool, delay: Nat, signal: Nat) -> R.World:
+  J.untilOptions(fuel, w, expr, timed, delay, signal)
+
+def timeoutUntil(w: R.World, id: Nat) -> R.World:
+  J.timeoutUntil(w, id)
+
+def abortUntil(w: R.World, id: Nat) -> R.World:
+  J.abortUntil(w, id)
+
+def nextAbortId(w: R.World) -> Nat:
+  B.length(R.AbortInput, R.World.abortInputs(w))
+
+def createAbortInput(+w: R.World) -> R.World:
+  R.World.with_abortInputs(w, B.append(R.AbortInput, R.World.abortInputs(w), [R.AbortInput{False{}, R.Undefined{}}]))
+
+# External AbortSignal property snapshot, installed before its host dispatch.
+def setAbortInput(+w: R.World, +id: Nat, reason: R.Value) -> R.World:
+  +input = B.get(R.AbortInput, R.World.abortInputs(w), id, R.AbortInput{False{}, R.Undefined{}})
+  B.choose(~R.World, R.AbortInput.aborted(input), _ => w,
+    _ => R.World.with_abortInputs(w, List.set(&2, R.AbortInput, R.World.abortInputs(w), id, R.AbortInput{True{}, reason})))
+
+def vTimeout(identity: Nat) -> R.Value:
+  R.TimeoutFailure{identity}

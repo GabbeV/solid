@@ -7,8 +7,9 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
 
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
-  158 resolve/refresh, 16 held-error-recovery and 136 default-until histories: 854
-  total, plus explicit host object-identity checks. It compares actual callbacks, returned/thrown values, wrapper identity,
+  158 resolve/refresh, 16 held-error-recovery, 136 default-until and 52 until-option
+  histories: 906 total, plus explicit host object-identity and native timeout
+  checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten and eight staged-error-recovery cases. No expected
@@ -24,7 +25,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles twelve isolated source-changing copies and requires parity
+- mutations compiles fourteen isolated source-changing copies and requires parity
   assertions to reject them. One is an unregistered workaround for a known source
   counterexample; its rejection enforces the pin, not a claim that the bug is
   desirable. The active runtime is not mutated by this check.
@@ -58,11 +59,12 @@ range. Correspondence is reviewed/differentially tested rather than formally
 proved as JavaScript semantics. All unreviewed source branches stay open.
 
 Two reduced current-head upstream bug candidates are indexed in upstream-issues.json.
-Both baseline behaviors remain active; no semantic workaround or issue filing is
-active. The deviation register is separate and empty. Local git commits are on
-main; this checkout has no configured remote and no repository or package was
-pushed/published. Public playground repros were later created at the user's
-request; their links and hosted observations are in repros/playground.
+Both baseline behaviors remain active; no semantic workaround is active. The
+user submitted upstream fix PR #4144 and issue #4145. The deviation register is
+separate and empty. This translation checkout remains on local main with no
+configured remote. The separate upstream-fix workspace pushed its branch to
+GabbeV/solid; no package was published. Public playground repros were created at
+the user's request; links and hosted observations are in repros/playground.
 
 The standalone project at repros/solid-signals installs separately, without Bend
 or the differential adapters. Its intended-behavior assertions fail for the two
