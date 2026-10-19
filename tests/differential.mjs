@@ -167,7 +167,7 @@ scenario('dormancy wins over same-tick dirtying before heap work',[
   ['signal','x',1],['program','clean',[['emit',101]]],['program','register',[['cleanup','clean']]],
   ['memo','a',{seq:[{call:'register'},read('x')]},{lazy:true}],['read','a'],['set','x',3],['flush'],['read','a'],['flush']
 ]);
-scenario('refresh ignores plain signal', [['signal','x',3],['effect','view',read('x')],['refresh','x'],['flush'],['read','x']]);
+scenario('refreshing a plain signal keeps its synchronous value', [['signal','x',3],['effect','view',read('x')],['refresh','x'],['flush'],['read','x']]);
 scenario('disposed graph stays frozen',[
   ['signal','x',1],['memo','a',add(read('x'),lit(1))],['effect','view',read('a')],['set','x',3],['dispose'],['flush'],['read','a'],['set','x',4],['flush']
 ]);

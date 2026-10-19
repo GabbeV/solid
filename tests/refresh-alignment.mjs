@@ -19,17 +19,17 @@ function flags() {return [tsNode(a)._flags,tsNode(b)._flags];}
 function actualFlags() {const ns=bend.nodes();return [ns[bend.ids.a].flags,ns[bend.ids.b].flags];}
 try {
   assert.deepEqual(actualFlags(),flags());
-  S.markRefreshProbe(tsNode(a));bend.refresh('a');
+  S.markRefreshProbe(tsNode(a));bend.markRefresh('a');
   assert.deepEqual(actualFlags(),flags(),'refresh must preserve target REASK and leave downstream marking to source scheduling');
-  S.markRefreshProbe(tsNode(a));bend.refresh('a');
+  S.markRefreshProbe(tsNode(a));bend.markRefresh('a');
   assert.deepEqual(actualFlags(),flags(),'repeated invalidation must use source flag classification');
   S.flush();bend.flush();
   assert.equal(bend.read('a'),a());assert.equal(bend.read('b'),b());
   assert.deepEqual(actualFlags(),flags(),'pass must consume REASK like the sync source');
-  S.markRefreshProbe(tsNode(x));bend.refresh('x');
+  S.markRefreshProbe(tsNode(x));bend.markRefresh('x');
   assert.deepEqual(actualFlags(),flags(),'plain signals are not refreshable computations');
   dispose();bend.dispose();
-  S.markRefreshProbe(tsNode(a));bend.refresh('a');
+  S.markRefreshProbe(tsNode(a));bend.markRefresh('a');
   assert.deepEqual(actualFlags(),flags(),'dead nodes must refuse invalidation');
 } finally {dispose();S.flush();}
 console.log('Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.');

@@ -8,6 +8,7 @@ import ./owner.bend as O
 import ./construct.bend as N
 import ./flight.bend as F
 import ./iterator-state.bend as I
+import ./signals.bend as J
 
 # One explicit lifetime root for the current host grammar.
 def createWorld() -> R.World:
@@ -88,8 +89,8 @@ def setUpdater(fuel: Nat, +w: R.World, +id: Nat, expr: R.Expr) -> R.World:
   B.choose(~R.World, C.healthy(R.World.fault(C.world(m))),
     _ => setSignal(C.world(m), id, resultValue(m)), _ => C.world(m))
 
-# Compatibility facade: invalidation only. Public awaitable refresh is open.
-def refresh(+w: R.World, +id: Nat) -> R.World:
+# The source invalidation helper is separate from public awaitable refresh.
+def markRefresh(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, B.valid(w, id), _ => C.markRefresh(w, id), _ => w)
 
 # Host-boundary constructors: use these exports instead of generated JS tags.
@@ -246,3 +247,34 @@ def createStream(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, thro
 
 def vStepResult(done: Bool, value: R.Value) -> R.Value:
   R.StepResult{done, value}
+
+def nextAwaiterId(w: R.World) -> Nat:
+  B.length(R.Awaiter, R.World.awaiters(w))
+
+def resolveValue(fuel: Nat, w: R.World, expr: R.Expr) -> R.World:
+  J.resolve(fuel, w, expr)
+
+def refresh(w: R.World, target: Nat) -> R.World:
+  J.refresh(w, target)
+
+def refreshValue(w: R.World, target: Nat) -> R.World:
+  refresh(w, target)
+
+def startRefresh(fuel: Nat, w: R.World, id: Nat) -> R.World:
+  J.startRefresh(fuel, w, id)
+
+def deliverWatch(w: R.World, id: Nat, rejected: Bool, value: R.Value) -> R.World:
+  J.deliver(w, id, rejected, value)
+
+def hostJobKind(job: R.HostJob) -> U32:
+  match job:
+    case R.FlushJob{}:
+      0
+    case R.DeliveryJob{observer, rejected, value}:
+      1
+    case R.WatchStart{awaiter}:
+      2
+    case R.WatchDelivery{awaiter, rejected, value}:
+      3
+    case R.PromiseOutcome{awaiter, rejected, value}:
+      4

@@ -23,7 +23,7 @@ const currentInputs=Object.fromEntries([...files(path.join(root,'runtime')),...f
 const built=JSON.parse(fs.readFileSync(path.join(root,'build/build-inputs.json')));
 if(JSON.stringify(currentInputs)!==JSON.stringify(built))throw new Error('Build inputs changed; run npm run build before checking.');
 const dirs=['runtime','representation','observation','proof','host','tests','tools'];
-const checked=[...dirs.flatMap(d=>files(path.join(root,d))),...['LAWS.bend','PROOF.bend','package.json','package-lock.json','upstream/pins.json','upstream/correspondence.json','upstream/inventory.json','tracking/deviations.json','tracking/deviations.md','tracking/source-fidelity.md','tracking/representation.md','tracking/async.md','tracking/upstream-issues.json','tracking/upstream/empty-flatten.md','AGENTS.md'].map(p=>path.join(root,p))];
+const checked=[...dirs.flatMap(d=>files(path.join(root,d))),...['LAWS.bend','PROOF.bend','package.json','package-lock.json','upstream/pins.json','upstream/correspondence.json','upstream/inventory.json','tracking/deviations.json','tracking/deviations.md','tracking/source-fidelity.md','tracking/representation.md','README.md','tracking/frontier.md','tracking/async.md','tracking/watchers.md','tracking/upstream-issues.json','tracking/upstream/empty-flatten.md','AGENTS.md'].map(p=>path.join(root,p))];
 const inputs=Object.fromEntries(checked.map(p=>[path.relative(root,p),hash(fs.readFileSync(p))]));
 console.log('Checking composed proofs with the independent BendTT kernel...');
 const proof=command(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','PROOF.bend','--verdict']);

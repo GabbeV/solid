@@ -80,16 +80,30 @@ function nodeOptions(options={},programs={}) {
     Object.hasOwn(options,'loadingValue'),encode(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[]; }
+  constructor({fuel=100000,async=false}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set(); }
   drainJobs() {
     if(!this.hostAsync)return;
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
-    for(const job of jobs)queueMicrotask(()=>{
-      try {
-        this.world='observer'in job?R.deliver(this.fuel,this.world,job.observer,job.rejected,job.value):R.flush(this.fuel,this.world);
-        this.check();
-      }catch(e){this.asyncErrors.push(this.errorShape(e));}
-    });
+    for(const job of jobs){
+      const kind=R.hostJobKind(job);
+      if(kind===4){
+        const port=this.ports[this.portNames.get(job.awaiter)];
+        if(port){
+          if(!job.rejected&&job.value.$===tags.async&&list(this.world.asyncObjects)[job.value.identity].stream===0)throw new TypeError('Native promise assimilation of a returned thenable is outside this host protocol');
+          (job.rejected?port.reject:port.resolve)(decode(job.value,this.errors));
+        }
+        continue;
+      }
+      queueMicrotask(()=>{
+        try {
+          if(kind===1)this.world=R.deliver(this.fuel,this.world,job.observer,job.rejected,job.value);
+          else if(kind===2){this.world=R.startRefresh(this.fuel,this.world,job.awaiter);this.bindAwaiter(job.awaiter);}
+          else if(kind===3)this.world=R.deliverWatch(this.world,job.awaiter,job.rejected,job.value);
+          else this.world=R.flush(this.fuel,this.world);
+          this.check();
+        }catch(e){this.asyncErrors.push(this.errorShape(e));}
+      });
+    }
   }
   check() {
     this.drainJobs();
@@ -125,6 +139,26 @@ export class BendRuntime {
     const id=R.nextProgramId(this.world);this.programs[name]=id;this.programLabels.set(id,this.programLabels.size+1);
     this.world=R.registerProgram(this.world,p);this.check();return id;
   }
+  makePort(name,id){
+    let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});
+    this.ports[name]={id,promise,resolve,reject};this.portNames.set(id,name);
+    promise.then(value=>{this.portEvents.push(['resolve',name,value]);this.portSnapshots.push([name,this.screen()]);},error=>{this.portEvents.push(['reject',name,this.errorShape(error)]);this.portSnapshots.push([name,this.screen()]);});
+  }
+  bindAwaiter(id){
+    const a=list(this.world.awaiters)[id],name=this.portNames.get(id);
+    if(!a?.node)return;
+    if(a.refresh)this.hiddenNodes.add(a.node);
+    else{this.ids['wait:'+name]=a.node;this.reverse[a.node]='wait:'+name;}
+  }
+  awaitValue(name,expr){
+    const id=R.nextAwaiterId(this.world);this.makePort(name,id);
+    this.world=R.resolveValue(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures));this.bindAwaiter(id);this.check();
+  }
+  awaitRefresh(name,target){
+    const id=R.nextAwaiterId(this.world);this.makePort(name,id);
+    this.world=R.refreshValue(this.world,this.ids[target]??0);this.check();
+  }
+  promise(name){return this.ports[name].promise;}
   future(name,{immediate=false}={}) {
     const id=R.nextAsyncId(this.world);this.futures[name]=id;
     this.world=R.createThenable(this.world,immediate);this.check();return id;
@@ -175,13 +209,14 @@ export class BendRuntime {
     this.world=R.resultWorld(m); this.check(); return decode(R.resultValue(m),this.errors);
   }
   flush() { this.world=R.flush(this.fuel,this.world); this.check(); }
-  refresh(name) { this.world=R.refresh(this.world,this.ids[name]); this.check(); }
+  markRefresh(name) { this.world=R.markRefresh(this.world,this.ids[name]); this.check(); }
+  refresh(name) { this.awaitRefresh('refresh#'+Object.keys(this.ports).length,name); }
   resetErrorHalt() { this.world=R.resetErrorHalt(this.world); }
   dispose() { this.world=R.dispose(this.world,1); this.check(); }
   nodes() { return list(this.world.nodes); }
   trace() {
     const name=id=>this.reverse[id] ?? null;
-    return list(this.world.events).map(e=> {
+    return list(this.world.events).filter(e=>!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),decode(e.value,this.errors),decode(e.previous,this.errors)];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),decode(e.value,this.errors)];

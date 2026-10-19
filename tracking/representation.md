@@ -139,3 +139,10 @@ AsyncObserver.stream distinguishes next callbacks from ordinary fulfillment and
 rejection; node-zero observers express swallowed return rejection. Owner cleanup
 programs contain an explicit close action, sharing the source flightTeardown
 callback identity with disposal. IteratorEvent records method IO only.
+
+Awaiter stores the public promise closure's expression/refresh target, captured own
+transaction, root, watcher node and first settlement. WatchStart/WatchDelivery are
+microtask IO; PromiseOutcome is synchronous native resolve/reject IO before the
+callback's disposal. WatchExpr/WatchFinish retain the callback catch/return edge
+inside the actual computation. Known truth/confirmed installers have separate
+Boolean presence tags; active truth/lagging scopes remain unfinished.

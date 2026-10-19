@@ -24,7 +24,7 @@ try {
       export function probePromotedCount() { return promotedWrites.length; }
     `}));b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport function probeSetClock(v) { clock=v; }'}));}
   }]});
-  const S=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
+  const refFile=path.join(dir,'solid.mjs');fs.writeFileSync(refFile,bundle.outputFiles[0].text);const S=await import(pathToFileURL(refFile));
   const K=S.K;
   function list(xs) {const a=[];while('head' in xs){a.push(xs.head);xs=xs.tail;}return a;}
   const numeric=v=>Object.hasOwn(v,'n')?v.n:undefined;
@@ -80,5 +80,12 @@ try {
     assert.equal(numeric(x.flushed.value??{}),n._x._flushed===K.NOT_PENDING?undefined:n._x._flushed);
     assert.equal(x.flushedAt.value,n._x._flushedAt);assert.equal(p.left.unflushedStaged,S.unflushedStaged);stashes++;
   }
-  console.log(`${checked} read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and ${stashes} held-stash helper cases match too. Transaction execution remains unfinished.`);
+  let carries=0;
+  for(const config of [0,K.CONFIG_VERDICT,K.CONFIG_VERDICT|K.CONFIG_TRANSPARENT,K.CONFIG_NO_SNAPSHOT])for(const kind of [0,1,2])for(const tracking of [false,true]){
+    const n=node(true),c=node(true);n._config=config;if(kind)c._type=kind===1?K.EFFECT_RENDER:K.EFFECT_USER;
+    S.globalQueue._running=false;S.dirtyQueue._min=1;S.probeConfigure(c,tracking,false);
+    const value=S.read(n);
+    assert.deepEqual(actual(B.carry(config,kind,tracking)),{value,flags:c._flags,linked:c._deps!==null,height:c._height,marked:S.unflushedStaged});carries++;
+  }
+  console.log(`${checked} read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and ${stashes} held-stash helper cases match too. ${carries} verdict-bit carry cases match the memo-only post-pull flags store.`);
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

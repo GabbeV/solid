@@ -10334,7 +10334,7 @@
           "mapping": {
             "bend": "runtime/core.bend:prepareSlow, raiseHeight",
             "status": "partial",
-            "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. Active verdict bit propagation and lane/snapshot interactions remain unfinished."
+            "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. The read caller now carries owner CONFIG_VERDICT into a memo reader FLAGS exactly as source; 24 focused comparisons. Active verdict windows and lane/snapshot interactions remain unfinished."
           }
         },
         {
@@ -10462,7 +10462,7 @@
           "mapping": {
             "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
             "status": "partial",
-            "restrictions": "Production invalidation branch now follows target flag update -> insertIntoHeap -> schedule, including REASK classification. Dev/observe hooks and async reask metadata are unfinished. The public refresh waiter API is not implemented."
+            "restrictions": "Production target flag update -> insertIntoHeap -> schedule, including REASK classification; separate from public deferred refresh watcher now in signals.bend. Production typed thenable/iterator reask paths execute. Dev/observe and active lane/truth scopes remain unfinished."
           }
         }
       ],
@@ -22217,24 +22217,36 @@
           "start": 784,
           "end": 833,
           "sha256": "fe3fcf06f7b436e2026c72b518aa261f14c7f271a281d32d13ee2444fe8f1236",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined",
+            "status": "partial",
+            "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and inPass callbacks unfinished."
+          }
         },
         {
           "key": "signals.ts:resolve",
           "start": 856,
           "end": 871,
           "sha256": "7dd8fcb66d4d176d4417343bf384708ba312a41f479c3d78df6ff623874d5606",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/signals.bend:resolve, creationCatch, deliver; runtime/watch-state.bend:settle; runtime/api.bend:resolveValue; host/bend.mjs:awaitValue",
+            "status": "partial",
+            "restrictions": "Production expression callback, eager root/watch, promise-executor exception boundary, microtask answer then synchronous native resolve/reject before root disposal. Admitted payloads only; native assimilation of a returned thenable and arbitrary callback APIs unfinished."
+          }
         },
         {
           "key": "signals.ts:refresh",
           "start": 905,
           "end": 986,
           "sha256": "2ecee1a5a4e9b7f4f3f48dbbf30c3d54fe0c2d2190bdaedf3de09296f937d8b8",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/signals.bend:refresh, startRefresh, makeWatch, deliver; runtime/api.bend:refresh; host/bend.mjs:awaitRefresh",
+            "status": "partial",
+            "restrictions": "Accessor targets; invalid production target resolves undefined. Synchronous mark/transaction capture, deferred rooted watcher, FRESH_READ/AUTHORITATIVE first pass, own-node capture, guessed-target status check, microtask answer and node disposal. Same-tick coalescing/equal landings/supersession tested. Store targets, active truth/lane/deferred hooks, native thenable assimilation and dev/observe branches unfinished."
+          }
         },
         {
           "key": "signals.ts:until",

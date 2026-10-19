@@ -18,6 +18,7 @@ import ./transaction.bend as X
 import ./pending.bend as Q
 import ./flight.bend as F
 import ./iterator-state.bend as I
+import ./watch-state.bend as U
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -32,6 +33,7 @@ type PassFrame is Data:
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
+  WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
   Binary{op: U32}
   Discard{}
   Branch{yes: R.Expr, no: R.Expr, previous: R.Value}
@@ -135,6 +137,8 @@ def branch(w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +yes: R.
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.WatchExpr{+awaiter, expr}:
+      Machine{U.capture(w, awaiter), Evaluate{expr, prev} <> WatchFinish{awaiter, stack} <> rest, stack}
     case R.Literal{v}:
       Machine{w, rest, v <> stack}
     case R.Previous{}:
@@ -299,8 +303,10 @@ def serve(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Na
 def raiseHeight(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +source: Nat, +reader: Nat) -> Machine:
   +height = R.Node.height(B.node(w, source))
   +c = B.node(w, reader)
-  w = B.choose(~R.World, Bool.and(Nat.is_ge(height, R.Node.height(c)), Nat.is_ne(R.Node.parent(B.node(w, source)), reader)),
+  +w = B.choose(~R.World, Bool.and(Nat.is_ge(height, R.Node.height(c)), Nat.is_ne(R.Node.parent(B.node(w, source)), reader)),
     _ => B.store_node(w, reader, R.Node.with_height(c, 1n+height)), _ => w)
+  +w = B.choose(~R.World, Bool.not(B.effect(R.Node.kind(B.node(w, reader)))),
+    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.and(R.Node.config(B.node(w, source)), K.CONFIG_VERDICT())))), _ => w)
   Machine{w, rest, stack}
 
 def update(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
@@ -985,10 +991,33 @@ def afterSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> 
   w = R.World.with_scheduled(w, Bool.or(Nat.is_ge(R.World.maximum(w), R.World.minimum(w)), Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))))
   Machine{w, RenderQueue{} <> rest, stack}
 
+# signals.ts:watch's catch: NotReady remains a compute throw; real errors
+# become microtask rejection answers, unwrapped once. Partial expression values
+# are discarded when unwinding the user's callback.
+def watchCause(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, awaiter: Nat, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{+cause}:
+      B.choose(~Machine, P.isNotReady(cause), _ => Machine{w, rest, saved},
+        _ => Machine{U.queueAnswer(R.World.with_fault(w, R.Healthy{}), awaiter, True{}, U.unwrap(cause)), rest, R.Undefined{} <> saved})
+    case _:
+      Machine{w, rest, saved}
+
+def watchFinish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +awaiter: Nat) -> Machine:
+  match stack:
+    case +value <> +tail:
+      +target = R.Awaiter.target(B.awaiter(w, awaiter))
+      B.choose(~Machine, Bool.and(R.Awaiter.refresh(B.awaiter(w, awaiter)), Bool.and(B.has(R.Node.config(B.node(w, target)), K.CONFIG_GUESS()), B.has(R.Node.status(B.node(w, target)), B.set(K.STATUS_PENDING(), K.STATUS_ERROR())))),
+        _ => watchCause(w, rest, tail, awaiter, R.CallbackThrown{R.NodeExtension.error(B.extension(w, target))}),
+        _ => Machine{U.queueAnswer(w, awaiter, False{}, value), rest, R.Undefined{} <> tail})
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case Nil{}:
       Machine{w, [], stack}
+    case WatchFinish{awaiter, saved} <> rest:
+      watchFinish(w, rest, stack, awaiter)
     case Evaluate{expr, prev} <> +rest:
       evaluate(w, rest, stack, expr, prev)
     case Discard{} <> rest:
@@ -1102,6 +1131,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
   match tasks:
     case Nil{}:
       Machine{w, [], stack}
+    case WatchFinish{awaiter, saved} <> rest:
+      watchCause(w, rest, saved, awaiter, R.World.fault(w))
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case Finish{frame} <> rest:

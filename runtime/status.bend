@@ -36,7 +36,7 @@ def haltReactivity(+w: R.World, +cause: R.Value) -> R.World:
     _ => B.report(R.World.with_halted(w, True{}), 0, B.choose(~R.Slot, B.equal(cause, R.Undefined{}), _ => R.Empty{}, _ => R.Present{cause})))
 
 # effect.ts:notifyEffectStatus, including explicit blocked-forward arguments.
-# A pending render observer enters joinFuture; transactions remain unfinished.
+# A pending render observer enters joinFuture in the shared mainline transaction path.
 def notifyEffectStatusOf(+w: R.World, +id: Nat, +status: U32, +error: R.Value) -> R.World:
   +n = B.node(w, id)
   B.choose(~R.World, B.has(status, K.STATUS_ERROR()),

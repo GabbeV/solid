@@ -3,7 +3,7 @@ export class SolidRuntime {
   constructor({module=DefaultSolid}={}) {
     this.S=module;
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
   }
   value(v) {
     if(v && typeof v === 'object' && Object.hasOwn(v,'ref')) {
@@ -42,7 +42,12 @@ export class SolidRuntime {
     }
     return e;
   }
-  attempt(op,...args) {try{return ['return',this.observe(this[op](...args))];}catch(e){return ['throw',this.errorShape(e)];}}
+  withJobs(fn){
+    const original=globalThis.queueMicrotask;
+    globalThis.queueMicrotask=callback=>original(()=>{try{this.withJobs(callback);}catch(e){this.asyncErrors.push(this.errorShape(e));}});
+    try{return fn();}finally{globalThis.queueMicrotask=original;}
+  }
+  attempt(op,...args) {try{return ['return',this.observe(this.withJobs(()=>this[op](...args)))];}catch(e){return ['throw',this.errorShape(e)];}}
   program(name,actions) {
     const self=this,id=this.nextProgram++;
     this.programs[name]=function callback(previousCleanup) {
@@ -58,6 +63,13 @@ export class SolidRuntime {
     };
     return id;
   }
+  recordPort(name,promise){
+    this.ports[name]={promise};
+    promise.then(value=>{this.portEvents.push(['resolve',name,this.observe(value)]);this.portSnapshots.push([name,this.screen()]);},error=>{this.portEvents.push(['reject',name,this.errorShape(error)]);this.portSnapshots.push([name,this.screen()]);});
+  }
+  awaitValue(name,expr){this.recordPort(name,this.S.resolve(this.callback('wait:'+name,expr)));}
+  awaitRefresh(name,target){this.recordPort(name,this.S.refresh(this.accessors[target]??(()=>undefined)));}
+  promise(name){return this.ports[name].promise;}
   future(name,{immediate=false}={}) {
     const id=this.nextFuture++,record={settled:false,rejected:false,value:undefined,observers:[]};
     if(immediate){
@@ -67,7 +79,7 @@ export class SolidRuntime {
       let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});
       // Native promise microtasks invoke the actual source callbacks. Observe
       // callback exceptions as host outcomes instead of unhandled rejections.
-      const observed=fn=>value=>{try{return fn(value);}catch(e){this.asyncErrors.push(this.errorShape(e));}};
+      const observed=fn=>value=>{try{return this.withJobs(()=>fn(value));}catch(e){this.asyncErrors.push(this.errorShape(e));}};
       record.object={then:(yes,no)=>promise.then(typeof yes==='function'?observed(yes):yes,typeof no==='function'?observed(no):no)};
       promise.catch(()=>{}); // unobserved external rejection is outside engine IO
       record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;(rejected?reject:resolve)(value);};
@@ -129,7 +141,7 @@ export class SolidRuntime {
   update(name,expr) { return this.setters[name](prev=>this.evaluate(expr,prev)); }
   read(name) {const value=this.accessors[name](); this.traceEvents.push(['read',this.current,name,value]); return value;}
   flush() { this.S.flush(); }
-  refresh(name) { this.S.refresh(this.accessors[name]); }
+  refresh(name) { this.awaitRefresh('refresh#'+Object.keys(this.ports).length,name); }
   resetErrorHalt() { this.S.resetErrorHalt(); }
   dispose() { this.disposeRoot(); }
   trace() { return this.traceEvents.map(e=>e.map(v=>this.observe(v))); }

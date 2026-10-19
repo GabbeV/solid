@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['refresh waiter runs eagerly','runtime/signals.bend','_ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.WatchStart{id}]))','_ => makeWatch(256n, w, id)','tests/waiters.mjs'],
+  ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs'],
   ['iterator return omitted','runtime/iterator-state.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs'],
   ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],

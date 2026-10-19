@@ -1,5 +1,5 @@
 {
-  "profile": "Owned expression/program callbacks; production; explicit root; typed promise-like objects and explicit host settlement; no active boundary/lane/mark/store scopes in Bend.",
+  "profile": "Owned expression/program callbacks; production; explicit root; typed promise-like objects and explicit host settlement; no active boundary/lane/mark/store scopes in Bend. Public resolve/refresh watchers for admitted payloads/accessor targets; active truth/lagging scopes unfinished.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
@@ -100,7 +100,7 @@
     "core/core.ts:pullComputed": {
       "bend": "runtime/core.bend:prepareSlow, raiseHeight",
       "status": "partial",
-      "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. Active verdict bit propagation and lane/snapshot interactions remain unfinished."
+      "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. The read caller now carries owner CONFIG_VERDICT into a memo reader FLAGS exactly as source; 24 focused comparisons. Active verdict windows and lane/snapshot interactions remain unfinished."
     },
     "core/core.ts:read": {
       "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe",
@@ -190,7 +190,7 @@
     "core/core.ts:markRefresh": {
       "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)",
       "status": "partial",
-      "restrictions": "Production invalidation branch now follows target flag update -> insertIntoHeap -> schedule, including REASK classification. Dev/observe hooks and async reask metadata are unfinished. The public refresh waiter API is not implemented."
+      "restrictions": "Production target flag update -> insertIntoHeap -> schedule, including REASK classification; separate from public deferred refresh watcher now in signals.bend. Production typed thenable/iterator reask paths execute. Dev/observe and active lane/truth scopes remain unfinished."
     },
     "core/core.ts:stagedRead": {
       "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
@@ -531,6 +531,21 @@
       "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease",
       "status": "partial",
       "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten source object leak deliberately preserved (SOLID-EMPTY-FLATTEN-001). Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished."
+    },
+    "signals.ts:watch": {
+      "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined",
+      "status": "partial",
+      "restrictions": "Eager rooted computed, config-before-first-pass and REDERIVE-afterward, NotReady rethrow, one-level error unwrap, source own/foreign joined-frame gate and microtask delivery. 6144 direct source closure comparisons and 158 composed public histories. Installer identities stored as truthReadHook/truthConfirmedHook tags. Active truth/lagging/lane/guess behavior and inPass callbacks unfinished."
+    },
+    "signals.ts:resolve": {
+      "bend": "runtime/signals.bend:resolve, creationCatch, deliver; runtime/watch-state.bend:settle; runtime/api.bend:resolveValue; host/bend.mjs:awaitValue",
+      "status": "partial",
+      "restrictions": "Production expression callback, eager root/watch, promise-executor exception boundary, microtask answer then synchronous native resolve/reject before root disposal. Admitted payloads only; native assimilation of a returned thenable and arbitrary callback APIs unfinished."
+    },
+    "signals.ts:refresh": {
+      "bend": "runtime/signals.bend:refresh, startRefresh, makeWatch, deliver; runtime/api.bend:refresh; host/bend.mjs:awaitRefresh",
+      "status": "partial",
+      "restrictions": "Accessor targets; invalid production target resolves undefined. Synchronous mark/transaction capture, deferred rooted watcher, FRESH_READ/AUTHORITATIVE first pass, own-node capture, guessed-target status check, microtask answer and node disposal. Same-tick coalescing/equal landings/supersession tested. Store targets, active truth/lane/deferred hooks, native thenable assimilation and dev/observe branches unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

@@ -99,7 +99,7 @@ checked against the unchanged TS nodes. Read-only observation captures the fresh
 node's actual NOT_PENDING sentinel; it does not change source functions. User
 program trace labels are independent of internal auto-close callback arena IDs.
 Two iterator mutations reject lost post-gap synchronous yields and omitted return;
-eight deliberate mutations are rejected in total.
+eight iterator/ordinary-flight mutations are rejected; two public-watcher mutations bring the total to ten.
 
 The immediate empty-flatten object leak is preserved, with 18 independent
 source-only paired controls and a current-head/history investigation in
@@ -112,7 +112,7 @@ adversarial multi-callback thenables, arbitrary return side effects, projection
 setters/onError and nested promise assimilation are outside the admitted protocol.
 Fixed next/return descriptors express the admitted external producer; they do not
 claim arbitrary JavaScript closure support. Active boundary/lane/mark/store hooks
-and public actions/refresh waiters remain open. Installed full-index hook bodies
+and public actions remain open. Resolve/refresh watchers now execute in their restricted scope; see [watchers.md](watchers.md). Installed full-index hook bodies
 are inert only for the admitted scope.
 
 An attempted composed loading-seed/landing proof exhausted the pinned independent

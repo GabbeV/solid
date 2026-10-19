@@ -126,7 +126,7 @@ check source/error/status/blocked slots after the actual settle helper. A node
 skipped while another branch carries the source can be revisited after that
 branch settles; an independent carrying path preserves pending. Host async
 registration, delivery and transaction landing do not participate in those laws.
-Eight deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
+Ten deliberately broken implementations must be rejected. No arbitrary-value, arbitrary-
 graph/history, general-error, async, or optimistic theorem is claimed. Exact TypeScript
 correspondence and backend compiler correctness are trusted/tested, not proved.
 
@@ -152,7 +152,8 @@ use an explicit transaction input, not the public action API or host promises.
 
 1. Ordinary handleAsync thenable registration, callback delivery, supersession
    guards, settlement/rejection and loading windows now execute. Typed iterator initial drain, pumping, flattening and cancellation also execute.
-   Continue with richer callbacks and active scopes.
+   Continue with richer callbacks and active scopes. Public resolve/refresh watchers now have 158 histories and
+   6,144 direct body comparisons; see [watchers.md](watchers.md).
    See [async.md](async.md) for 68 promise histories, 255 iterator histories, 18 source-only controls and
    4,096 flight-helper comparisons. Node state and next/return order are checked.
 2. Preserve source behavior while extending actual async histories. Inert full-index
