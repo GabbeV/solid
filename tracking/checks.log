@@ -131,3 +131,18 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 15.0s; hashes sealed in build/verification.json.
+
+Selected wrapper publication, 2026-10-19:
+Pushed GabbeV:fix/held-function-values at 82c89dab837f1f71f8391dd6323861261147afc8, based on next 1ddd68df16b6aec1edc1c87982eb0944d0ea8831.
+Current-base controls: 3 regressions fail before fix, 9 controls pass; patched 12/12 pass. Full signals suite: 318 files, 5,375 passed, 3 expected failures, 2 skips. Signals build/declarations, purity, formatting, release invariants pass.
+Size: +9 minified bytes in each scenario; 3 comparison gates pass; core floor exceeds its 20-byte allowance by 6 bytes. Caps unchanged.
+GitHub REST and CLI both denied PR creation: Resource not accessible by integration. Prefilled form queued for user submission; no PR created.
+12 pinned source-only held function-value cases remain unchanged; Bend runtime/pins and active deviations unchanged.
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 13.9s; hashes sealed in build/verification.json.

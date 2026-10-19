@@ -1,8 +1,13 @@
 # SOLID-HELD-FUNCTION-VALUE-003
 
-Status: reproduced in the pinned source; no upstream report filed. Writable-memo
-setters are not yet in the Bend input ABI. This is source-only evidence, not a
-Bend parity claim or active workaround. The deviation register remains empty.
+Status: the user selected the wrapper fix. It is pushed to GabbeV/solid on
+`fix/held-function-values` at `82c89dab837f1f71f8391dd6323861261147afc8`,
+rebased onto current next `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`. GitHub
+denied PR creation through both available credentials; a prefilled form is
+prepared for the user. No PR exists yet. See the [publication and validation
+record](held-function-wrapper-pr.md). Writable-memo setters are not yet in the
+Bend input ABI. This is source-only evidence, not a Bend parity claim or active
+workaround. The pinned runtime is unchanged and the deviation register is empty.
 
 [Minimal JSX playground](https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA), pinned to
 Solid d2ad8b288886a5c7171e6746ccc019ad1d08d8ab. Source:
@@ -54,11 +59,15 @@ Search results cannot establish that no related report exists.
 
 ## Original wrapper candidate and tradeoff
 
-Superseded by the [allocation-free candidate and comparison record](held-function-allocation-free.md). The measurements below describe the original wrapper trial, retained for history.
+The user selected this approach after comparing the [allocation-free
+alternative](held-function-allocation-free.md). The measurements below describe
+the original trial against the old pin; current-next validation and its core
+size-gate failure are recorded [separately](held-function-wrapper-pr.md).
 
 Local worktree `/workspace/solid-held-function-pr`, branch
 `fix/held-function-values`, commit
-`9bd896fa1242a7ca769fe19baf858f3f1e94f107`. Nothing was pushed or filed.
+`9bd896fa1242a7ca769fe19baf858f3f1e94f107` before rebase. At the time of this
+original trial nothing had been pushed or filed.
 [Candidate patch](held-function-value.patch) includes twelve regressions and a
 patch changeset. The patch keeps the updater evaluation before setSignal, wraps
 its resolved answer as data, and reuses `v` for the setter result. The source
@@ -90,7 +99,9 @@ An [alternative](held-function-value-function-only.patch) wraps only function-va
 answers and avoids that numeric wrapper allocation. It passes the source tests but
 adds 30 minified bytes and fails three signals size gates. The compact candidate is
 reviewable, but this allocation/size choice merits maintainer input; an issue with
-the repro and both choices is preferable to silently selecting an optimization.
+the repro and both choices was initially preferred. The user subsequently
+selected the compact wrapper and authorized a PR; that publication is recorded
+above.
 
 Future Bend `setMemo` work must retain this baseline behavior or explicitly
 register an authorized deviation. The plain-signal WriteResult path must not be

@@ -1,0 +1,114 @@
+{
+  "baseCommit": "1ddd68df16b6aec1edc1c87982eb0944d0ea8831",
+  "headCommit": "82c89dab837f1f71f8391dd6323861261147afc8",
+  "bundler": "Rolldown 1.2.11",
+  "base": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7260,
+      "minified": 19790,
+      "limit": 7250,
+      "passed": false,
+      "capMinified": 19773,
+      "lazy": [],
+      "packages": {
+        "signals": 19745,
+        "other": 45
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14797,
+      "minified": 44882,
+      "limit": 14820,
+      "passed": true,
+      "capMinified": 44865,
+      "lazy": [],
+      "packages": {
+        "signals": 44825,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10008,
+      "minified": 28208,
+      "limit": 10030,
+      "passed": true,
+      "capMinified": 28197,
+      "lazy": [],
+      "packages": {
+        "signals": 28150,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7851,
+      "minified": 21601,
+      "limit": 7860,
+      "passed": true,
+      "capMinified": 21584,
+      "lazy": [],
+      "packages": {
+        "signals": 21547,
+        "other": 54
+      }
+    }
+  ],
+  "wrapper": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7262,
+      "minified": 19799,
+      "limit": 7250,
+      "passed": false,
+      "capMinified": 19773,
+      "lazy": [],
+      "packages": {
+        "signals": 19754,
+        "other": 45
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14788,
+      "minified": 44891,
+      "limit": 14820,
+      "passed": true,
+      "capMinified": 44865,
+      "lazy": [],
+      "packages": {
+        "signals": 44833,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10013,
+      "minified": 28217,
+      "limit": 10030,
+      "passed": true,
+      "capMinified": 28197,
+      "lazy": [],
+      "packages": {
+        "signals": 28159,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7857,
+      "minified": 21610,
+      "limit": 7860,
+      "passed": true,
+      "capMinified": 21584,
+      "lazy": [],
+      "packages": {
+        "signals": 21557,
+        "other": 54
+      }
+    }
+  ],
+  "comparison": "Three gates pass. Core floor fails: minified growth above recorded size 26 B exceeds 20 B allowance by 6 B. Base growth is 17 B; patch adds 9 B. Caps unchanged."
+}

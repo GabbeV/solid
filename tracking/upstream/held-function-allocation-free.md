@@ -1,8 +1,10 @@
 # Allocation-free candidate for SOLID-HELD-FUNCTION-VALUE-003
 
-This supersedes the original wrapper candidate, not the pinned runtime. Nothing
-has been pushed, filed, or applied to the Bend translation. Solid remains pinned
-to d2ad8b288886a5c7171e6746ccc019ad1d08d8ab and active deviations remain empty.
+This is an unpublished local alternative. The user subsequently selected the
+[wrapper candidate](held-function-wrapper-pr.md), which has been rebased and
+pushed separately. This alternative has not been pushed, filed, or applied to
+the Bend translation. Solid remains pinned to
+d2ad8b288886a5c7171e6746ccc019ad1d08d8ab and active deviations remain empty.
 
 Local worktree: `/workspace/solid-held-function-experiments`. Branch:
 `fix/held-function-values-allocation-free`. Commit: `824006e2a9744282179132e72e11f5df2a1077fc`.
