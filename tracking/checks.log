@@ -10,10 +10,11 @@ Pinned upstream snapshots match their recorded hashes.
 Built Bend runtime and pinned Solid production reference.
 
 > solid-signals-bend@0.1.0 test
-> node tests/differential.mjs && node tests/errors.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
+> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
 
 203 differential scenarios passed, including generated histories and graph invariants.
 18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
+74 callback histories match pinned TS statement order, returns, reads, writes, suspension and exceptions.
 68 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.
 255 iterator histories match pinned TS initial drains, async gaps, bare steps, empty/rejected completion, cancellation, close and promise flattening.
 18 source-only empty-flatten controls preserve the pinned immediate-thenable object leak; direct/native/one-yield controls settle as expected.
@@ -50,6 +51,8 @@ Refresh helper matches pinned TS target/downstream flags, repeated invalidation,
 > solid-signals-bend@0.1.0 mutations
 > node tests/mutations.mjs
 
+Rejected mutation: callback return falls through
+Rejected mutation: callback read loses tracking
 Rejected mutation: StatusError prefixes a native Error message
 Rejected mutation: explicit/native error identities alias
 Rejected mutation: until timer is never cancelled
@@ -66,7 +69,7 @@ Rejected mutation: lost subscriber wake
 Rejected mutation: leaked staging
 Rejected mutation: untrack subscribes
 Rejected mutation: wrong render result
-16 source-changing variants rejected by differential assertions.
+18 source-changing variants rejected by differential assertions.
 
 > solid-signals-bend@0.1.0 check
 > node tools/check.mjs
@@ -74,4 +77,4 @@ Rejected mutation: wrong render result
 Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
-Kernel completed in 10.8s; hashes sealed in build/verification.json.
+Kernel completed in 10.9s; hashes sealed in build/verification.json.

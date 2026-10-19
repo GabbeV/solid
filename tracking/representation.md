@@ -179,3 +179,9 @@ native identity namespace. See [errors.md](errors.md) for admitted types, messag
 capture, alias checks and remaining host limits. Arbitrary signal/option getters
 or callbacks remain unfinished. Timers may be native or an explicit-delivery
 test environment; no native clock timing or timeout/abort law is proved.
+
+Named callback programs now admit expression statements, early returns and
+evaluated writes/throws on the core machine. Callback tasks are user-code ABI
+continuations, not source scheduler operations. Effect application/error arms
+have explicit source catch/finally return points. Teardown expression callbacks
+are still outside the grammar and rejected before attachment. See [callbacks.md](callbacks.md).

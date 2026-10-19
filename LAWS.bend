@@ -9,6 +9,7 @@ import ./proof/transaction.bend as Transaction
 import ./proof/flight.bend as Flight
 import ./proof/held-error.bend as HeldError
 import ./proof/until.bend as Until
+import ./proof/callbacks.bend as Callbacks
 import ./proof/question.bend as Question
 import ./runtime/question.bend as Q
 
@@ -65,6 +66,9 @@ law until_false_waits:
 
 law until_truthy_resolves:
   {Until.trueCase() == Until.expectedTrueCase() : Until.Case}
+
+law callback_reads_and_returns:
+  {Callbacks.view(Callbacks.landed()) == Callbacks.expected() : Callbacks.View}
 
 law question_increment_meaning:
   for +value: R.Question

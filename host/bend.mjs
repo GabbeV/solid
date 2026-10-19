@@ -1,3 +1,4 @@
+import {requireTeardownProgram} from './programs.mjs';
 const {default:R}=await import(process.env.BEND_EMIT_FILE ?? '../build/runtime.mjs');
 import {HostErrors,errorKind} from './errors.mjs';
 
@@ -94,7 +95,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={}; this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors(); }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.programActions=new Map(); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors(); }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors);}
   encode(value){return encode(this.hostErrors.describe(value));}
   observe(value){return this.hostErrors.observe(value);}
@@ -160,6 +161,8 @@ export class BendRuntime {
   }
   attempt(op,...args) {try{return ['return',this.observe(this[op](...args))];}catch(e){return ['throw',this.errorShape(e)];}}
   program(name,actions) {
+    for(const [op,name] of actions)if(op==='cleanup')requireTeardownProgram(this.programActions,name);
+    this.programActions.set(name,actions);
     let p=R.emptyProgram();
     for(const [op,...args] of [...actions].reverse()) {
       if(op==='emit')p=R.programEmit(args[0],p);
@@ -168,6 +171,10 @@ export class BendRuntime {
       else if(op==='previousCleanup')p=R.programPreviousCleanup(p);
       else if(op==='cleanup')p=R.programCleanup(this.programs[args[0]],p);
       else if(op==='throw')p=R.programThrow(this.encode(args[0]),p);
+      else if(op==='eval')p=R.programEvaluate(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
+      else if(op==='return')p=R.programReturn(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
+      else if(op==='setExpr')p=R.programWriteExpr(this.ids[args[0]],expression(args[1],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
+      else if(op==='throwExpr')p=R.programThrowExpr(expression(args[0],this.ids,this.programs,this.futures,v=>this.encode(v)),p);
       else throw new TypeError('Unsupported callback action');
     }
     const id=R.nextProgramId(this.world);this.programs[name]=id;this.programLabels.set(id,this.programLabels.size+1);
@@ -239,13 +246,17 @@ export class BendRuntime {
   signal(name,value,equals=true) {
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     const options=typeof equals==='boolean'?{equals}:equals;
+    requireTeardownProgram(this.programActions,options.unobserved);
     this.world=R.createSignalWithOptions(this.world,this.encode(value),nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
   }
   memo(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v)),nodeOptions(options,this.programs,v=>this.encode(v)),1); this.check(); return id;
   }
   effect(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
+    requireTeardownProgram(this.programActions,options.cleanup);
     const {user=false,target=2,schedule=false,defer=false}=options;
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     if (!user) this.world=R.attach(this.world,1,target);

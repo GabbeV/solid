@@ -19,6 +19,7 @@ import ./pending.bend as Q
 import ./flight.bend as F
 import ./iterator-state.bend as I
 import ./watch-state.bend as U
+import ./write.bend as W
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -33,6 +34,9 @@ type PassFrame is Data:
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
+  Callback{callback: Nat, actions: List<&2, R.CleanupAction>}
+  CallbackWrite{signal: Nat}
+  CallbackThrow{}
   WatchFinish{awaiter: Nat, saved: List<&2, R.Value>}
   Binary{op: U32}
   Discard{}
@@ -69,6 +73,10 @@ type Task is Data:
   DeliverObservers{observers: List<&2, Nat>, immediate: Bool, rejected: Bool, value: R.Value}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
+  ApplyEffect{id: Nat}
+  InstallEffectCleanup{id: Nat}
+  EffectFinally{id: Nat, clean: Bool, saved: List<&2, R.Value>}
+  ErrorArmFinally{parameter: Nat, saved: List<&2, R.Value>}
   Round{}
   HeapLoop{}
   Seam{}
@@ -160,13 +168,37 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{condition, prev} <> Branch{yes, no, prev} <> rest, stack}
     case R.Untracked{body}:
       Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev} <> RestoreTracking{R.World.tracking(w)} <> rest, stack}
-    case R.CallProgram{callback}:
-      +w = O.invoke(w, callback)
-      B.choose(~Machine, B.ok(w), _ => Machine{w, rest, R.Undefined{} <> stack}, _ => Machine{w, rest, stack})
+    case R.CallProgram{+callback}:
+      B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
+        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]}))} <> rest, stack},
+        _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
     case R.Then{first, second}:
       Machine{w, Evaluate{first, prev} <> Discard{} <> Evaluate{second, prev} <> rest, stack}
     case R.Raise{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), rest, stack}
+
+# User callback ABI, not a Solid scheduling operation. Statements execute in
+# order in the current source callback scope. Calls have no arguments; return
+# exits only this invocation. Reads use the ordinary ReadNode continuation.
+def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, value: R.CleanupAction) -> Machine:
+  match value:
+    case R.CallbackEvaluate{expr}:
+      Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}
+    case R.CallbackReturn{expr}:
+      Machine{w, Evaluate{expr, R.Undefined{}} <> rest, stack}
+    case R.CallbackWrite{signal, expr}:
+      Machine{w, Evaluate{expr, R.Undefined{}} <> CallbackWrite{signal} <> Callback{id, tail} <> rest, stack}
+    case R.CallbackThrow{expr}:
+      Machine{w, Evaluate{expr, R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail} <> rest, stack}
+    case other:
+      Machine{O.invokeAction(w, id, other), Callback{id, tail} <> rest, stack}
+
+def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, actions: List<&2, R.CleanupAction>) -> Machine:
+  match actions:
+    case Nil{}:
+      Machine{w, rest, R.Undefined{} <> stack}
+    case value <> tail:
+      callbackAction(w, rest, stack, id, tail, value)
 
 # Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
 # the pass flag remains source state even in the synchronous profile. A source
@@ -832,45 +864,50 @@ def errorArmCatch(+w: R.World, fault: R.Fault) -> R.World:
 
 # User compute errors take the error arm in the effect phase. The helper
 # passed to the program detaches prior cleanup, as the source closure does.
-def userError(+w: R.World, +id: Nat) -> R.World:
+def userError(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
   +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
   +program = R.Node.errorProgram(B.node(w, id))
   +param = R.World.callbackEffect(w)
-  +w = B.choose(~R.World, Nat.is_ne(program, 0n),
-    _ => O.invoke(R.World.with_callbackEffect(w, id), program),
-    _ => B.report(w, 2, R.Present{A.unwrapStatusError(R.NodeExtension.error(B.extension(w, id)))}))
-  +w = R.World.with_callbackEffect(w, param)
-  errorArmCatch(w, R.World.fault(w))
+  B.choose(~Machine, Nat.is_ne(program, 0n),
+    _ => Machine{R.World.with_callbackEffect(w, id), Evaluate{R.CallProgram{program}, R.Undefined{}} <> Discard{} <> ErrorArmFinally{param, stack} <> rest, stack},
+    _ => Machine{B.report(w, 2, R.Present{A.unwrapStatusError(R.NodeExtension.error(B.extension(w, id)))}), rest, stack})
 
-# core/effect.ts:runEffect. Programs represent _effectFn and its return value.
-def runEffect(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+# core/effect.ts:runEffect's finally after its callback/previous-cleanup catch.
+# A nested read can run a full compute pass; the caller's stack is restored on
+# both success and throw, just as at a recompute return boundary.
+def effectFinally(+w: R.World, rest: List<&2, Task>, +id: Nat, clean: Bool, saved: List<&2, R.Value>) -> Machine:
+  +w = effectCatch(w, id, R.World.fault(w))
+  +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
+  +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
+  w = B.choose(~R.World, clean, _ => trimFinally(w, id, R.World.fault(w)), _ => w)
+  Machine{w, rest, saved}
+
+# The adapter's _effectFn records the application, executes the named body,
+# and returns the separate cleanup token. A body's ordinary return is ignored.
+def applyEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +w = B.event(w, R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))})
+  +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
+    _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
+  +callback = R.Node.effectProgram(B.node(w, id))
+  +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n),
+    _ => [Evaluate{R.CallProgram{callback}, R.Undefined{}}, Discard{}], _ => [])
+  Machine{w, B.append(Task, todo, InstallEffectCleanup{id} <> rest), stack}
+
+# core/effect.ts:runEffect. The pre-cleanup call and finally retain their source
+# order; callback reads resume this machine rather than a second read engine.
+def runEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
-  +w = B.choose(~R.World, Bool.and(R.Node.modified(n), Bool.not(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()))),
-    _ => B.choose(~R.World, Bool.and(S.is_user(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
-      _ => userError(w, id),
+  B.choose(~Machine, Bool.and(R.Node.modified(n), Bool.not(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()))),
+    _ => B.choose(~Machine, Bool.and(S.is_user(R.Node.kind(n)), B.has(R.Node.status(n), K.STATUS_ERROR())),
+      _ => userError(w, rest, stack, id),
       _ =>
         +clean = B.nullish(R.NodeExtension.error(B.extension(w, id)))
         +prevCleanup = R.Node.cleanup(n)
         +w = B.store_node(w, id, R.Node.with_cleanup(n, 0n))
         +w = B.choose(~R.World, Nat.is_ne(prevCleanup, 0n), _ => O.invoke(w, prevCleanup), _ => w)
-        +w = B.choose(~R.World, B.ok(w),
-          _ =>
-            +w = B.event(w, R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))})
-            +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
-              _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
-            +callback = R.Node.effectProgram(B.node(w, id))
-            +w = B.choose(~R.World, Nat.is_ne(callback, 0n), _ => O.invoke(w, callback), _ => w)
-            B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), R.Node.returnedCleanup(B.node(w, id)))), _ => w),
-          _ => w)
-        +w = effectCatch(w, id, R.World.fault(w))
-        # Source finally, including an overriding trim exception.
-        +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
-        +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
-        B.choose(~R.World, clean, _ => trimFinally(w, id, R.World.fault(w)), _ => w),
-      ),
-    _ => w)
-  Machine{w, rest, stack}
+        Machine{w, ApplyEffect{id} <> EffectFinally{id, clean, stack} <> rest, stack}),
+    _ => Machine{w, rest, stack})
 
 def queue_tasks(ids: List<&2, Nat>) -> List<&2, Task>:
   match ids:
@@ -1026,6 +1063,20 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       watchFinish(w, rest, stack, awaiter)
     case Evaluate{expr, prev} <> +rest:
       evaluate(w, rest, stack, expr, prev)
+    case Callback{id, actions} <> rest:
+      callback(w, rest, stack, id, actions)
+    case CallbackWrite{signal} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{W.setSignal(w, signal, value), rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case CallbackThrow{} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{R.World.with_fault(w, R.CallbackThrown{value}), rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case Discard{} <> rest:
       match stack:
         case value <> +tail:
@@ -1109,6 +1160,14 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           _ => Machine{S.enqueue(w, id), rest, stack}, _ => Machine{w, RunEffect{id} <> rest, stack}))
     case RunEffect{id} <> +rest:
       runEffect(w, rest, stack, id)
+    case ApplyEffect{id} <> rest:
+      applyEffect(w, rest, stack, id)
+    case InstallEffectCleanup{+id} <> rest:
+      Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), R.Node.returnedCleanup(B.node(w, id)))), rest, stack}
+    case EffectFinally{id, clean, saved} <> rest:
+      effectFinally(w, rest, id, clean, saved)
+    case ErrorArmFinally{parameter, saved} <> rest:
+      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
     case Round{} <> +rest:
       round(w, rest, stack)
     case HeapLoop{} <> +rest:
@@ -1169,6 +1228,10 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       catchPass(w, rest, frame)
     case AfterIterator{frame} <> rest:
       catchPass(w, rest, frame)
+    case EffectFinally{id, clean, saved} <> rest:
+      effectFinally(w, rest, id, clean, saved)
+    case ErrorArmFinally{parameter, saved} <> rest:
+      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case task <> rest:

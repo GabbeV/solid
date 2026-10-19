@@ -165,6 +165,10 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{I.close(w, stream), rest}
     case R.CleanupThrow{cause}:
       Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
+    # Expression-bearing callbacks currently run on core's read continuation
+    # machine. Teardown reads need an owner/core suspension boundary first.
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), []}
 
 def disposeStart(+w: R.World, +rest: List<&2, Task>, +id: Nat) -> Machine:
   B.choose(~Machine, B.valid(w, id),
@@ -290,6 +294,11 @@ def dispose(+w: R.World, id: Nat) -> R.World:
 
 def invoke(+w: R.World, callback: Nat) -> R.World:
   run(budget(w), Machine{w, [Invoke{callback}]})
+
+# One imperative statement in a core callback; nested disposal still runs the
+# same owner continuation machine, including callback identity and reentry.
+def invokeAction(+w: R.World, callback: Nat, value: R.CleanupAction) -> R.World:
+  run(budget(w), Machine{w, [Action{callback, value}]})
 
 # core/owner.ts:markDisposal and core/core.ts:parkChildren.
 def markDisposal(+w: R.World, id: Nat) -> R.World:

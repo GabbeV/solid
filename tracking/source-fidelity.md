@@ -135,3 +135,8 @@ and 50 actual constructor/unwrap probes. The inventory now fingerprints class
 constructors. See [errors.md](errors.md) for the admitted host domain and explicit
 untranslated operations; this is a representation/port repair, not an upstream
 workaround or a proof of general JavaScript error semantics.
+
+Expression-bearing compute/application/error callback bodies now run on the
+existing core read continuation machine. Effect catches/finally are explicit
+source return points; teardown expressions remain rejected and unfinished. See
+[callbacks.md](callbacks.md) for ABI boundaries, 74 histories and the closed law.

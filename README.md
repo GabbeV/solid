@@ -37,7 +37,8 @@ Start with [examples/counter.bend](examples/counter.bend),
 The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
-and throws. Synchronous errors propagate through compute/effect catches, recovery and scheduler
+and throws. Compute/application/error bodies support expression reads, early returns
+and evaluated writes/throws; teardown reads remain unfinished. See [callback coverage](tracking/callbacks.md). Synchronous errors propagate through compute/effect catches, recovery and scheduler
 halts. Pending catches, held reads/writes, staged errors and mainline transaction
 park/land now run in the same driver. Ordinary typed promise-like flights now register, settle/reject and flush; typed iterator initial drains, later yields, cancellation and flattening also execute; active boundary/lane scopes remain unfinished. See [the async milestone](tracking/async.md). Public resolve/refresh watchers also execute for admitted payloads/accessor targets; see [the watcher milestone](tracking/watchers.md). Arbitrary host JavaScript callbacks are not yet supported.
 

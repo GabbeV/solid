@@ -38,8 +38,10 @@ proof credit was imported.
   and previous value. Owner cleanup programs can emit trace events, dispose
   owners, register cleanup, or throw a payload. They execute on the active owner
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
-  dispose the root and install returned effect cleanup. Nested primitive construction
-  and arbitrary callback reads remain open. Synchronous compute/effect error catches,
+  dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
+  read machine, with early return and evaluated writes/throws. Teardown callback
+  reads, parameters, nested primitive construction and arbitrary closures remain open;
+  see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
   execute through core catches/reads. Mainline transactions join, merge, park,
@@ -218,3 +220,7 @@ decoder. 99 additional error histories and 50 actual constructor/unwrap probes
 cover the admitted Error/DOMException data/failure paths. Existing error laws now
 retain the captured message field; no new general error theorem is claimed.
 The source inventory indexes constructors for future commit review.
+
+74 callback histories and a closed callback read/return/application-write law now
+exercise the active core callback continuation; see [callbacks.md](callbacks.md).
+There are eighteen composed closed regressions, one explicitly negative.

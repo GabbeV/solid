@@ -1,3 +1,4 @@
+import {requireTeardownProgram} from './programs.mjs';
 import * as DefaultSolid from '../build/solid.mjs';
 import {HostErrors} from './errors.mjs';
 export class SolidRuntime {
@@ -5,7 +6,7 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={}; this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });
   }
   value(v) {
     const described=this.hostErrors.describe(v);
@@ -64,6 +65,8 @@ export class SolidRuntime {
   }
   attempt(op,...args) {try{return ['return',this.observe(this.withJobs(()=>this[op](...args)))];}catch(e){return ['throw',this.errorShape(e)];}}
   program(name,actions) {
+    for(const [op,name] of actions)if(op==='cleanup')requireTeardownProgram(this.programActions,name);
+    this.programActions.set(name,actions);
     const self=this,id=this.nextProgram++;
     this.programs[name]=function callback(previousCleanup) {
       for(const [op,...args] of actions) {
@@ -73,6 +76,10 @@ export class SolidRuntime {
         else if(op==='previousCleanup')previousCleanup();
         else if(op==='cleanup')self.S.onCleanup(self.programs[args[0]]);
         else if(op==='throw')throw self.value(args[0]);
+        else if(op==='eval')self.evaluate(args[0]);
+        else if(op==='return')return self.evaluate(args[0]);
+        else if(op==='setExpr')self.setters[args[0]](self.evaluate(args[1]));
+        else if(op==='throwExpr')throw self.evaluate(args[0]);
         else throw new TypeError('Unsupported callback action');
       }
     };
@@ -150,6 +157,7 @@ export class SolidRuntime {
   reject(name,error){this.futures[name].deliver(true,this.value(error));}
   signal(name,value,equals=true) {
     const opts=typeof equals==='boolean'?{equals}:equals;
+    requireTeardownProgram(this.programActions,opts.unobserved);
     const [get,set]=this.S.createSignal(this.value(value), {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;
   }
   callback(name,expr) { return prev=> {
@@ -159,11 +167,14 @@ export class SolidRuntime {
     try { return this.evaluate(expr,prev); } finally {this.current=saved;}
   }; }
   memo(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
     const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
     if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
     this.accessors[name]=this.S.runWithOwner(this.owner,()=>this.S.createMemo(this.callback(name,expr),opts));
   }
   effect(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
+    requireTeardownProgram(this.programActions,options.cleanup);
     const {user=false,target=2}=options;
     const apply=(v,p)=> {
       this.traceEvents.push(['apply',name,v,p]); if(!user)this.screens[target]=v;

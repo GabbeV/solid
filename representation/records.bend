@@ -112,6 +112,10 @@ type CleanupAction is Data:
   CleanupDisposeCurrent{}
   CleanupPriorEffect{}
   CleanupCloseIterator{stream: Nat}
+  CallbackEvaluate{expr: Expr}
+  CallbackReturn{expr: Expr}
+  CallbackWrite{signal: Nat, expr: Expr}
+  CallbackThrow{expr: Expr}
 
 type Fault is Data:
   Healthy{}

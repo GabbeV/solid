@@ -85,7 +85,7 @@
     "core/core.ts:recompute": {
       "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
       "status": "partial",
-      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished."
+      "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; teardown expressions and nested construction remain unfinished."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags",
@@ -168,9 +168,9 @@
       "restrictions": "Separate compute/apply/error phases, schedule/defer/user options and returned cleanup program. Staged/transaction/lane creation and hold hooks unfinished."
     },
     "core/effect.ts:runEffect": {
-      "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally",
+      "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally",
       "status": "partial",
-      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished."
+      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",

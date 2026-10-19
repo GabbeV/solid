@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['callback return falls through','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> rest, stack}','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
+  ['callback read loses tracking','runtime/core.bend','Machine{w, Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{expr, R.Undefined{}} <> Discard{} <> Callback{id, tail} <> rest, stack}','tests/callbacks.mjs'],
   ['StatusError prefixes a native Error message','runtime/error.bend','B.choose(~String, native, _ => message, _ => errorString(name, message))','errorString(name, message)','tests/host-errors.mjs'],
   ['explicit/native error identities alias','representation/base.bend','Bool.and(Nat.is_eq(x, y), Bool.xor(Bool.xor(explicitA, explicitB), True{}))','Nat.is_eq(x, y)','tests/host-errors.mjs'],
   ['until timer is never cancelled','runtime/signals.bend','R.Awaiter.timer(a)','False{}','tests/until-options.mjs'],

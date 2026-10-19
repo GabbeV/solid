@@ -187,6 +187,18 @@ def programCleanup(callback: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
 def programThrow(cause: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
   R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail)}
 
+def programEvaluate(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CallbackEvaluate{expr} <> R.CleanupProgram.actions(tail)}
+
+def programReturn(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CallbackReturn{expr} <> R.CleanupProgram.actions(tail)}
+
+def programWriteExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail)}
+
+def programThrowExpr(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
+  R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail)}
+
 def registerProgram(+w: R.World, program: R.CleanupProgram) -> R.World:
   R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [program]))
 
