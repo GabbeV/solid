@@ -5,11 +5,16 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['escaped accessor binds outer signal incorrectly','runtime/lexical.bend','_ => R.Literal{Callable.accessor(signal)}, _ => R.LocalAccessor{index}','_ => R.Literal{R.AccessorReference{1n}}, _ => R.LocalAccessor{index}','tests/locals.mjs'],
+  ['escaped accessor invocation drops tracking','runtime/core.bend','Machine{w, ReadNode{id} <> rest, tail}','Machine{R.World.with_tracking(w, False{}), ReadNode{id} <> rest, tail}','tests/locals.mjs'],
+  ['accessor updater result is invoked again','runtime/core.bend','_ => Machine{W.setSignal(w, signal, R.AccessorReference{id}), rest, R.AccessorReference{id} <> tail}','_ => Machine{w, ReadNode{id} <> WriteResult{signal, True{}} <> rest, tail}','tests/locals.mjs'],
+  ['raw accessor updater stored without invocation','runtime/core.bend','_ => Machine{w, ReadNode{id} <> WriteResult{signal, True{}} <> rest, tail}','_ => Machine{W.setSignal(w, signal, R.AccessorReference{id}), rest, R.AccessorReference{id} <> tail}','tests/locals.mjs'],
+
   ['local reads bind the wrong signal','runtime/lexical.bend','_ => R.Read{signal}, _ => R.LocalRead{index}','_ => R.Read{1n}, _ => R.LocalRead{index}','tests/locals.mjs'],
   ['inner signal scope fails to shadow','runtime/lexical.bend','bind(body, 1n+depth, signal)','bind(body, depth, signal)','tests/locals.mjs'],
   ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal)}','R.SomeInlineBody{expr}','tests/locals.mjs'],
   ['local updater sees committed instead of staged slot','runtime/core.bend','previous = B.choose(~R.Value, updater, _ => B.current(B.node(w, signal)), _ => prev)','previous = B.choose(~R.Value, updater, _ => R.Node.value(B.node(w, signal)), _ => prev)','tests/locals.mjs'],
-  ['local updater result function is invoked again','runtime/core.bend','+w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value))','+w = setterValue(w, signal, value)','tests/locals.mjs'],
+  ['local updater result function is invoked again','runtime/core.bend','+w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, other), _ => setterValue(w, signal, other))','+w = setterValue(w, signal, other)','tests/locals.mjs'],
   ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair)','R.EffectSpec.options(spec), 0n, B.second(R.World, Nat, pair)','tests/nested.mjs'],
   ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bind(compute, first, second), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
   ['nested effect untracks its caller','runtime/core.bend','case R.EffectCreate{compute, +spec}:','case R.EffectCreate{compute, +spec}:\n      +w = R.World.with_tracking(w, False{})','tests/nested.mjs'],

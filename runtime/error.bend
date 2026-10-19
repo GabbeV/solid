@@ -30,6 +30,8 @@ def stringify(value: R.Value) -> String:
       "Error"
     case R.RootDisposerReference{owner}:
       "function () { [native code] }"
+    case R.AccessorReference{signal}:
+      "function () { [native code] }"
     case R.ExternalError{id, explicit, kind, name, message, native, code}:
       errorString(name, message)
     case _:

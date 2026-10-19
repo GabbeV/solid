@@ -210,6 +210,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{initial, prev} <> CreateSignal{options, body, prev} <> rest, stack}
     case R.LocalRead{depth}:
       Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
+    case R.LocalAccessor{depth}:
+      Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
     case R.LocalWrite{depth, value, updater}:
       Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
     case R.WriteExpr{+signal, value, +updater}:
@@ -266,6 +268,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.CleanupWrite{signal, value}:
+      Machine{w, WriteResult{signal, False{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, value <> stack}
     case R.CallbackEvaluate{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackReturn{expr}:
@@ -356,6 +360,10 @@ def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, va
   match value:
     case R.RootDisposerReference{id}:
       Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail}
+    # signals.ts:accessor is read.bind(null,node); invocation enters the
+    # ordinary read return points, with the caller stack/context intact.
+    case R.AccessorReference{id}:
+      Machine{w, ReadNode{id} <> rest, tail}
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
 
@@ -372,6 +380,8 @@ def onCleanupValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>,
   match value:
     case R.RootDisposerReference{+root}:
       Machine{J.cleanup(w, R.World.context(w), root), rest, R.RootDisposerReference{root} <> tail}
+    case R.AccessorReference{signal}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
 
@@ -1308,30 +1318,37 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           match value:
             case R.RootDisposerReference{owner}:
               Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
+            case R.AccessorReference{signal}:
+              Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
             case other:
               +id = B.length(R.Node, R.World.nodes(w))
               +w = B.event(w, R.Constructed{id})
               Machine{N.signal(w, other, options), Evaluate{Local.bind(body, 0n, id), previous} <> rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
-    case WriteResult{+signal, +updater} <> rest:
+    # core.ts:setSignal typeof-function branch, for an already evaluated
+    # user argument. Only the raw callable is invoked; its returned value is
+    # handed to the shared write remainder once, including function data.
+    case WriteResult{+signal, +updater} <> +rest:
       match stack:
-        case +value <> tail:
-          +w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value))
-          result = B.choose(~R.Value, updater, _ => value, _ => setterResult(value))
-          Machine{w, rest, result <> tail}
+        case +value <> +tail:
+          match value:
+            case R.AccessorReference{+id}:
+              B.choose(~Machine, updater,
+                _ => Machine{W.setSignal(w, signal, R.AccessorReference{id}), rest, R.AccessorReference{id} <> tail},
+                _ => Machine{w, ReadNode{id} <> WriteResult{signal, True{}} <> rest, tail})
+            case other:
+              +w = B.choose(~R.World, updater, _ => W.setSignal(w, signal, other), _ => setterValue(w, signal, other))
+              result = B.choose(~R.Value, updater, _ => other, _ => setterResult(other))
+              Machine{w, rest, result <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case Invoke{} <> rest:
       invoke(w, rest, stack)
     case OnCleanup{} <> rest:
       onCleanup(w, rest, stack)
-    case CallbackWrite{+signal, updater} <> rest:
-      match stack:
-        case +value <> tail:
-          Machine{B.choose(~R.World, updater, _ => W.setSignal(w, signal, value), _ => setterValue(w, signal, value)), rest, tail}
-        case _:
-          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case CallbackWrite{signal, updater} <> rest:
+      Machine{w, WriteResult{signal, updater} <> Discard{} <> rest, stack}
     case CallbackThrow{} <> rest:
       match stack:
         case value <> tail:

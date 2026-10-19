@@ -33,6 +33,7 @@ type Value is Data:
   Reference{id: Nat}
   OwnerReference{id: Nat}
   RootDisposerReference{owner: Nat}
+  AccessorReference{signal: Nat}
   ContextFailure{identity: Nat, kind: U32}
   NotANumber{}
   StringValue{s: String}
@@ -132,6 +133,7 @@ type Expr is Data:
   OwnerDisposed{owner: Expr}
   SignalScope{initial: Expr, options: NodeOptions, body: Expr}
   LocalRead{depth: Nat}
+  LocalAccessor{depth: Nat}
   LocalWrite{depth: Nat, value: Expr, updater: Bool}
   WriteExpr{signal: Nat, value: Expr, updater: Bool}
   MemoRead{compute: Expr, options: NodeOptions}

@@ -156,3 +156,150 @@ await scenario('local unobserved callback retains signal-specific teardown',[
   ['flush'],['dispose']
 ]);
 console.log(`${count} local-signal and captured-body histories match pinned TS allocation, lexical identity, staged writes, callbacks and lifetime.`);
+
+const accessor=depth=>({localAccessor:depth});
+const capture=[['signal','box',undefined],['program','capture',[['updateExpr','box',arg(0)]]]];
+const outside=()=>invoke(read('box'));
+const escapedStart=count;
+for(const value of [undefined,null,false,true,0,7,NaN,'retained',{ref:9},{rootDisposer:'root'}]){
+  await scenario('accessor escapes root with data '+String(value),[
+    ...capture,['root','scope',scope(lit(undefined),seq(write(lit(value),{updater:true}),callWith('capture',accessor(0))))],
+    ['flush'],['evaluate',outside()],['disposeOwner','scope'],['evaluate',outside()],['flush'],['dispose']
+  ]);
+}
+for(const equals of [false,true])for(const user of [false,true]){
+  await scenario('escaped accessor tracks and survives scope disposal '+JSON.stringify({equals,user}),[
+    ['signal','input',1],...capture,['root','scope',scope(lit(0),seq(
+      callWith('capture',accessor(0)),effect(read('input'),write(arg(0)))
+    ),{equals})],['effect','view',outside(),{user}],['flush'],
+    ['set','input',4],['flush'],['set','input',4],['flush'],['set','input',7],['flush'],
+    ['disposeOwner','scope'],['set','input',9],['flush'],['evaluate',outside()],['dispose']
+  ]);
+}
+for(const raw of [false,true]){
+  await scenario('raw accessor updater versus returned function data '+raw,[
+    ...capture,['signal','target',0],['root','scope',scope(lit(11),callWith('capture',accessor(0)))],['flush'],
+    ...(raw?[['set','target',{accessor:'#nested1'}]]:[['update','target',read('box')]]),
+    ['read','target'],['flush'],['read','target'],['evaluate',raw?read('target'):invoke(read('target'))],['dispose']
+  ]);
+  await scenario('local setter receives an escaped accessor '+raw,[
+    ...capture,['root','one',scope(lit(12),callWith('capture',accessor(0)))],['flush'],
+    ['root','two',scope(lit(2),write(read('box'),{updater:!raw}))],['flush'],
+    ['evaluate',raw?invoke(lit({accessor:'#nested2'})):invoke(invoke(lit({accessor:'#nested2'})))],['dispose']
+  ]);
+}
+for(const op of ['set','setExpr','updateExpr']){
+  await scenario('named callback handles accessor writes '+op,[
+    ...capture,['signal','target',0],['root','scope',scope(lit(13),callWith('capture',accessor(0)))],['flush'],
+    ['program','store',[[op,'target',op==='set'?{accessor:'#nested1'}:read('box')]]],
+    ['evaluate',call('store')],['flush'],['evaluate',op==='updateExpr'?invoke(read('target')):read('target')],['dispose']
+  ]);
+}
+for(const untracked of [false,true]){
+  await scenario('accessor invocation preserves enclosing operand and tracking '+untracked,[
+    ['signal','input',1],...capture,['root','scope',scope(lit(3),seq(callWith('capture',accessor(0)),effect(read('input'),write(arg(0)))))],
+    ['memo','m',add(lit(10),untracked?{untrack:outside()}:outside())],['effect','view',read('m')],['flush'],
+    ['set','input',5],['flush'],['set','input',8],['flush'],['dispose']
+  ]);
+}
+await scenario('shadowed accessor consts preserve distinct function identity',[
+  ...capture,['root','scope',scope(lit(2),scope(lit(5),seq(
+    callWith('capture',accessor(1)),
+    {same:[accessor(0),accessor(1)]},
+    add(invoke(accessor(0)),invoke(accessor(1)))
+  )))],['flush'],['evaluate',outside()],['dispose']
+]);
+await scenario('same binding returns the same accessor',[
+  ['root','scope',scope(lit(3),{same:[accessor(0),accessor(0)]})],['flush'],['dispose']
+]);
+await scenario('rerunning a parent allocates a fresh escaped accessor',[
+  ['signal','input',1],['signal','old',undefined],['program','save',[['updateExpr','old',arg(0)]]],
+  ['memo','factory',scope(read('input'),accessor(0))],['flush'],['evaluate',callWith('save',read('factory'))],
+  ['effect','view',invoke(read('factory'))],['flush'],['set','input',4],['flush'],
+  ['evaluate',{same:[read('factory'),read('old')]}],['evaluate',invoke(read('old'))],['dispose']
+]);
+for(const immediate of [false,true]){
+  await scenario('async settlement retains escaped function as data '+immediate,[
+    ...capture,['root','scope',scope(lit(14),callWith('capture',accessor(0)))],
+    ['future','p',{immediate}],['memo','answer',future('p'),{loadingValue:0}],['flush'],
+    ['resolve','p',{accessor:'#nested1'}],['tick'],['flush'],['evaluate',invoke(read('answer'))],['dispose']
+  ]);
+}
+await scenario('accessor payload uses native bound function error text',[
+  ...capture,['root','scope',scope(lit(15),callWith('capture',accessor(0)))],
+  ['memo','bad',{raise:{accessor:'#nested1'}}],['read','bad'],['flush'],['dispose']
+]);
+await scenario('raw accessor updater adds its actual read dependency',[
+  ['signal','input',1],...capture,['signal','sink',0],['program','copy',[['setExpr','sink',read('box')]]],
+  ['root','scope',scope(lit(2),seq(callWith('capture',accessor(0)),effect(read('input'),write(arg(0)))))],
+  ['memo','copy',call('copy')],['effect','view',read('sink')],['flush'],
+  ['set','input',9],['flush'],['read','copy'],['dispose']
+]);
+
+for(const equals of [false,true])for(const user of [false,true]){
+  await scenario('repeated accessor data uses strict callable equality '+JSON.stringify({equals,user}),[
+    ['signal','input',1],['signal','box',undefined,{equals}],['program','capture',[['updateExpr','box',arg(0)]]],
+    ['root','scope',scope(lit(17),seq(callWith('capture',accessor(0)),effect(read('input'),callWith('capture',accessor(0)))))],
+    ['effect','view',outside(),{user}],['flush'],['set','input',2],['flush'],['set','input',3],['flush'],['dispose']
+  ]);
+}
+await scenario('switching escaped accessors retires the old dependency',[
+  ['signal','input',1],['signal','flag',true],['signal','left',undefined],['signal','right',undefined],
+  ['program','saveLeft',[['updateExpr','left',arg(0)]]],['program','saveRight',[['updateExpr','right',arg(0)]]],
+  ['root','leftScope',scope(lit(2),seq(callWith('saveLeft',accessor(0)),effect(read('input'),write(arg(0)))))],
+  ['root','rightScope',scope(lit(20),seq(callWith('saveRight',accessor(0)),effect(read('input'),write(add(arg(0),lit(20))))))],
+  ['memo','selected',invoke(select(read('flag'),read('left'),read('right')))],['effect','view',read('selected')],
+  ['flush'],['set','input',3],['flush'],['set','flag',false],['flush'],['set','input',5],['flush'],
+  ['set','flag',true],['flush'],['dispose']
+]);
+await scenario('callback parameters retain an accessor during an enclosing expression',[
+  ...capture,['program','callRead',[['return',add(lit(5),invoke(arg(0)))]]],
+  ['root','scope',scope(lit(19),callWith('capture',accessor(0)))],['flush'],
+  ['memo','m',add(lit(3),callWith('callRead',read('box')))],['effect','view',read('m')],['flush'],['dispose']
+]);
+for(const immediate of [false,true]){
+  await scenario('escaped read respects an async held frame '+immediate,[
+    ['signal','input',1],...capture,['future','p',{immediate}],
+    ['root','scope',scope(lit(0),seq(callWith('capture',accessor(0)),effect(read('input'),write(arg(0)))))],
+    ['memo','pending',future('p')],['effect','view',add(outside(),read('pending'))],['flush'],
+    ['set','input',7],['flush'],['resolve','p',10],['tick'],['flush'],['set','input',9],['flush'],['dispose']
+  ]);
+}
+
+for(const storedFunction of ['disposer','accessor']){
+  await scenario('raw accessor updater returns function data once '+storedFunction,[
+    ['signal','box',undefined],['signal','target',0],
+    ['program','capture',[['updateExpr','box',arg(0)]]],['root','targetRoot',arg(0),{owner:null}],
+    ['root','scope',scope(lit(23),scope(lit(undefined),seq(
+      write(storedFunction==='disposer'?lit({rootDisposer:'targetRoot'}):accessor(1),{updater:true}),
+      callWith('capture',accessor(0))
+    )))],['flush'],['set','target',{accessor:'#nested2'}],['flush'],
+    ['evaluate',storedFunction==='disposer'?{disposed:lit({owner:'targetRoot'})}:invoke(read('target'))],['dispose']
+  ]);
+}
+
+// Native functions and same-runtime aliases are checked independently of the
+// cross-runtime observer's names. Native source calls are observed after return,
+// as at the other successful accessor call sites; no function is replaced.
+{
+  const s=new SolidRuntime({module:await import('../build/solid.mjs?native-accessor')}),b=new BendRuntime();
+  try{
+    const expr=scope(lit(21),accessor(0));
+    const sf=s.root('scope',expr),bf=b.root('scope',expr);
+    assert.equal(typeof sf,'function');assert.equal(typeof bf,'function');
+    assert.equal(sf,s.localSignals.get('#nested1').get);
+    assert.equal(bf,b.accessors.get(b.ids['#nested1']));
+    assert.equal(b.encode(bf).signal,b.ids['#nested1']);
+    for(const runtime of [s,b])runtime.disposeOwner('scope');
+    assert.equal(sf(),21);assert.equal(bf(),21);
+    assert.equal(sf,s.value({accessor:'#nested1'}));assert.equal(bf,b.decode(b.encode(bf)));
+    for(const runtime of [s,b]){
+      assert.throws(()=>runtime.signal('bad',runtime===s?sf:bf),/Function initializers/);
+      runtime.signal('sink',0);
+      runtime.program('raw',[['set','sink',runtime===s?sf:bf]]);
+      assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/Accessor updater reads in teardown/);
+      assert.throws(()=>runtime.evaluate({onCleanup:{lit:runtime===s?sf:bf}}));
+    }
+  }finally{for(const runtime of [s,b]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');}}
+}
+console.log(`${count-escapedStart} escaped-accessor histories match pinned TS calls, function identity, setter branching, dependency tracking and lifetime.`);

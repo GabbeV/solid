@@ -215,3 +215,11 @@ Nested `createMemo(compute, options)()` expressions share constructor literals/s
 with standalone construction, then resume the core driver. The expression-local
 accessor does not yet escape into general closures. Local signal const-pair bindings and
 captured inline application bodies now execute; see [locals.md](locals.md). See [nested.md](nested.md).
+
+
+`AccessorReference(signal)` is a separate function identity for the selected
+escaped data-signal read family. Lexical binding retains the allocated signal ID;
+invocation resumes ordinary core reads. The native codec caches one callable per
+signal and performs no reactive work itself. Its strong caches are not a memory
+or performance equivalence claim. Setter/memo accessor values, function reflection
+and general teardown reads remain unfinished. See [locals.md](locals.md).

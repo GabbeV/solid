@@ -57,7 +57,9 @@ formal TS/Bend equivalence or general closure/lifetime/progress theorem.
 Init-bound disposers can now also be registered/returned through onCleanup;
 see [cleanup-values.md](cleanup-values.md).
 
-Nested signal/memo/effect creation, arbitrary function-valued inputs, dynamic
+Nested signal/memo/effect creation now executes; see [nested.md](nested.md).
+Local data-signal read accessors now escape and execute; see [locals.md](locals.md).
+Arbitrary function-valued inputs, dynamic
 returned effect-cleanup selection, expression teardown callbacks and active
 boundary/lane/provider/snapshot scopes remain unfinished. No source workaround
 or deviation is active; the pinned upstream counterexamples are preserved.

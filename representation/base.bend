@@ -68,6 +68,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.RootDisposerReference{x} R.RootDisposerReference{y}:
       Nat.is_eq(x, y)
+    case R.AccessorReference{x} R.AccessorReference{y}:
+      Nat.is_eq(x, y)
     case R.ContextFailure{x, kindA} R.ContextFailure{y, kindB}:
       Nat.is_eq(x, y)
     case R.NotReadyFailure{x, sourceA} R.NotReadyFailure{y, sourceB}:
@@ -94,6 +96,8 @@ def truth(v: R.Value) -> Bool:
     case R.OwnerReference{id}:
       True{}
     case R.RootDisposerReference{owner}:
+      True{}
+    case R.AccessorReference{signal}:
       True{}
     case R.ContextFailure{identity, kind}:
       True{}

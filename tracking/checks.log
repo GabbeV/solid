@@ -156,3 +156,131 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 13.9s; hashes sealed in build/verification.json.
+
+Escaped data-signal accessor milestone, 2026-10-19:
+40 new histories; 1,560 differential histories total. Native callable alias and unsupported-domain controls pass separately. Four additional mutations, 48 rejected total. One new concrete escaped-accessor lifetime/tracking law and one general binder law; 28 closed composed regressions.
+Source pin and deviation register unchanged. All source branches retain their explicit review status. Escaping setters/computed accessors, function initializers and expression-capable teardown remain unfinished.
+
+accessor-build.log
+
+> solid-signals-bend@0.1.0 build
+> node tools/build.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Built Bend runtime and pinned Solid production reference.
+
+accessor-tests.log
+
+> solid-signals-bend@0.1.0 test
+> node tests/differential.mjs && node tests/errors.mjs && node tests/callbacks.mjs && node tests/ownership.mjs && node tests/arguments.mjs && node tests/contexts.mjs && node tests/cleanup-values.mjs && node tests/nested.mjs && node tests/locals.mjs && node tests/async.mjs && node tests/iterators.mjs && node tests/upstream/flatten-empty.mjs && node tests/waiters.mjs && node tests/held-recovery.mjs && node tests/upstream/staged-error-recovery.mjs && node tests/upstream/held-function-value.mjs && node tests/until.mjs && node tests/until-options.mjs && node tests/host-errors.mjs && node tests/identity.mjs
+
+203 differential scenarios passed, including generated histories and graph invariants.
+18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration.
+74 callback histories match pinned TS statement order, returns, reads, writes, suspension and exceptions.
+73 ownership histories match pinned TS roots, owner/observer identity, runWithOwner scopes, cleanup attachment and restoration.
+71 callback-argument histories match pinned TS binding/order, effect/error parameters, callable root disposers and setter function branches.
+52 context histories match pinned TS default/undefined/null rules, copied records, owner targeting, inheritance, errors, argument order and async/function data.
+24 bound-cleanup histories match pinned TS callable return/alias identity, LIFO order, no-owner behavior, pending registration and reentrant/throwing teardown.
+158 nested-construction histories match pinned TS allocation, initial execution, callbacks, lifetime, loading and error behavior.
+55 local-signal and captured-body histories match pinned TS allocation, lexical identity, staged writes, callbacks and lifetime.
+40 escaped-accessor histories match pinned TS calls, function identity, setter branching, dependency tracking and lifetime.
+68 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.
+255 iterator histories match pinned TS initial drains, async gaps, bare steps, empty/rejected completion, cancellation, close and promise flattening.
+18 source-only empty-flatten controls preserve the pinned immediate-thenable object leak; direct/native/one-yield controls settle as expected.
+158 public promise-watcher histories match pinned TS eager resolve, deferred/coalesced refresh, pending/error answers, cleanup and delivery timing.
+16 held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.
+8 source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.
+12 source-only held function-value cases preserve the unexpected invocation and plain-signal/non-held controls.
+136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order.
+60 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes.
+99 host-error histories match TS captured wrapper messages, native Error/DOMException identity, success versus failure, callback paths and default abort; native identity assertions pass.
+Host reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens.
+
+accessor-alignment.log
+
+> solid-signals-bend@0.1.0 test:alignment
+> node tests/upstream-impact.mjs && node tests/refresh-alignment.mjs && node tests/commit-alignment.mjs && node tests/read-alignment.mjs && node tests/construct-alignment.mjs && node tests/owner-alignment.mjs && node tests/lifecycle-alignment.mjs && node tests/graph-alignment.mjs && node tests/status-alignment.mjs && node tests/error-alignment.mjs && node tests/pending-alignment.mjs && node tests/transaction-alignment.mjs && node tests/seam-alignment.mjs && node tests/held-alignment.mjs && node tests/flight-alignment.mjs && node tests/watch-alignment.mjs && node tests/question-alignment.mjs && node tests/until-alignment.mjs
+
+Upstream impact reporting passed changed-function/constructor, file-level, added-unit, shared-store, CLI, and read-only checks.
+Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals.
+4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error commit has a focused wrapper/value regression; held execution is checked separately.
+768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and 24 held-stash helper cases match too. 24 verdict-bit carry cases match the memo-only post-pull flags store.
+7680 constructor comparisons match pinned TS signal/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained.
+16 owner teardown comparisons match pinned TS live child/sibling state and cleanup order, including parked frames, LIFO callbacks, reentrancy, registration during drain, throws, live next-sibling changes, dead children and queued dependency-free nodes.
+12 lifecycle comparisons match pinned TS recompute/park/commit and cancellation order and cleanup-staged live intake, including unchanged frames, restaging, in-flight commit, cleanup throws and flush finally state.
+144 graph-state comparisons match TS detachment, last-subscriber hooks, dormancy guards, callback writes and partial state after throws.
+2880 status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Pending execution remains unfinished.
+50 actual StatusError constructor/unwrap comparisons match captured messages, primitives/numeric bounds, wrappers, NotReady/Timeout errors and native/foreign Error prototype branches.
+2880 pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Promise/transaction execution remains unfinished.
+2160 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.
+2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state.
+4096 held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication.
+4096 flight-state comparisons match TS registration, immediate verdicts, identity/dirty guards, loading parks, rejection/status order, autodisposal and held callback publication.
+6144 watch-body comparisons match actual TS closure calls: own/foreign transaction delivery gates, redirects, rerun deduplication, status unwrapping and NotReady rethrows.
+4096 source question-counter steps, 5 large counter boundaries and 69 flight provenance cases match TS; exact binary increment/equality also pass 4103 integer vectors, including the mainline identity and large mathematical IDs.
+8192 actual until-closure comparisons match own/foreign delivery gates, truthy in-pass confirmation, open/running guards, redirects/merges, errors and NotReady.
+
+accessor-mutations.log
+
+> solid-signals-bend@0.1.0 mutations
+> node tests/mutations.mjs
+
+Rejected mutation: escaped accessor binds outer signal incorrectly
+Rejected mutation: escaped accessor invocation drops tracking
+Rejected mutation: accessor updater result is invoked again
+Rejected mutation: raw accessor updater stored without invocation
+Rejected mutation: local reads bind the wrong signal
+Rejected mutation: inner signal scope fails to shadow
+Rejected mutation: inline body drops captured local
+Rejected mutation: local updater sees committed instead of staged slot
+Rejected mutation: local updater result function is invoked again
+Rejected mutation: nested effect loses owner
+Rejected mutation: nested effect loses captured arguments
+Rejected mutation: nested effect untracks its caller
+Rejected mutation: initial effect ignores staged first value
+Rejected mutation: nested memo loses owner
+Rejected mutation: nested memo loses captured arguments
+Rejected mutation: nested eager initial pass omitted
+Rejected mutation: onCleanup loses return identity
+Rejected mutation: same bound cleanup receives fresh callable IDs
+Rejected mutation: bound cleanup disposes ambient receiver
+Rejected mutation: context null treated as absent
+Rejected mutation: context record mutated in place
+Rejected mutation: new root drops inherited context
+Rejected mutation: context read without owner returns default
+Rejected mutation: nested root captures outer disposer argument
+Rejected mutation: function updater result is invoked again
+Rejected mutation: bound disposer uses ambient owner
+Rejected mutation: effect callback arguments reversed
+Rejected mutation: runWithOwner fails to restore tracking
+Rejected mutation: getObserver ignores untrack
+Rejected mutation: inline root detaches from its actual parent
+Rejected mutation: callback return falls through
+Rejected mutation: callback read loses tracking
+Rejected mutation: StatusError prefixes a native Error message
+Rejected mutation: explicit/native error identities alias
+Rejected mutation: until timer is never cancelled
+Rejected mutation: until ignores a pre-aborted signal
+Rejected mutation: until resolves a falsy value
+Rejected mutation: unregistered staged-error recovery workaround
+Rejected mutation: refresh waiter runs eagerly
+Rejected mutation: watch promise resolves in the pass
+Rejected mutation: post-gap synchronous yield is lost
+Rejected mutation: iterator return omitted
+Rejected mutation: stale flight writes
+Rejected mutation: unresolved promise commits
+Rejected mutation: lost subscriber wake
+Rejected mutation: leaked staging
+Rejected mutation: untrack subscribes
+Rejected mutation: wrong render result
+48 source-changing variants rejected by differential assertions.
+
+accessor-check.log
+
+> solid-signals-bend@0.1.0 check
+> node tools/check.mjs
+
+Pinned upstream snapshots match their recorded hashes.
+Checking composed proofs with the independent BendTT kernel...
+ALL PROOFS CHECK
+Kernel completed in 17.9s; hashes sealed in build/verification.json.

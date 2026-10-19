@@ -28,7 +28,7 @@ The Source adapter actually calls createSignal and createEffect/createRenderEffe
 Native accessor refresh-symbol metadata is inspected read-only for signal-state
 observations; it is never used to decide a value, write, dependency or schedule.
 Bend IDs and source const-pair closures represent the same admitted user bindings.
-General escaping accessors/setters, variable reassignment, arbitrary JavaScript
+Escaping setters and computed accessors, variable reassignment, arbitrary JavaScript
 closures and function-initializer/writable-memo overloads remain outside this ABI.
 Unbound local indices are invalid programs and fail explicitly.
 
@@ -47,3 +47,62 @@ read binding and shadowing with the surrounding initializer. Five compiled
 mutations check binding identity, shadowing, captured bodies, staged previous values
 and function-updater result semantics. These are Bend properties and parity
 evidence; formal TypeScript/Bend equivalence is not claimed.
+
+## Escaped data-signal accessors
+
+`LocalAccessor{depth}` names the actual get function from the local const pair.
+Lexical binding replaces it with `Callable.accessor(signal)`; the separate
+`AccessorReference(signal)` function family captures the signal ID. Source
+`signals.ts:accessor` creates `read.bind(null,node)` and attaches the refresh
+target. The port retains that bound target in the value; symbol/property
+reflection and arbitrary refresh-target expressions remain unfinished.
+
+The native codec materializes one callable per signal and preserves aliases
+across returns, arguments, contexts, updater storage and async settlement. Native
+calls re-enter Bend evaluation. No read value, dependency, owner, heap decision or
+schedule is computed by that codec. `core.invokeValue` resumes `ReadNode` on the
+existing continuation stack, preserving enclosing operands, ambient owner and
+tracking. The lifetime of the allocating root does not own the signal or its
+escaped accessor.
+
+A raw accessor setter argument takes the source typeof-function branch: read it
+once, then hand the answer to the shared write remainder, including when the
+answer is another function. An updater-returned accessor is data and is not
+called again. `WriteResult` now serves expression writes, imperative callback
+writes and the facade; `CallbackWrite` discards its result at the original return
+point. Existing bound-disposer writes still use the same owner teardown machine.
+Active write/lane/snapshot hooks and arbitrary updaters/comparators remain open.
+
+Forty additional differential histories check escape/return, native identity,
+retention after root disposal, shadowing and distinct constructions, tracked and
+untracked calls, operand/argument preservation, dynamic dependency replacement,
+raw versus updater-result setter branches, repeated callable equality, function
+results returned by a raw accessor updater, async function settlement, held frames
+and captured native-function StatusError text. The original 55 local-signal
+histories remain separate. Native alias checks and explicit unsupported-domain
+checks are additional controls, not counted as differential histories.
+
+Source read traces are observed after successful calls to the actual bound
+function, including a raw accessor updater's setter result. The source callable
+is never replaced with a wrapping function. This observation is restricted to
+data-signal accessors: their reads do not invoke compute bodies. Native function
+String/name/length/property reflection and function allocation/performance
+correspondence are not claimed. Earlier signed-zero normalization remains the
+admitted numeric representation; direct numeric setter return spelling is retained.
+
+`escaped_accessor_tracks_after_root_disposal` is one closed kernel law through
+allocation, returning/storing the accessor, source read/dependency registration,
+flush, root disposal and subsequent local writes. The surviving effect displays
+21 from a retained signal containing 11. It also checks the function target,
+owner/dependency identities, pending queue and ambient restoration. One general
+lexical-accessor binder law checks substitution. Four compiled mutations exercise
+wrong targets, lost tracking, repeated updater-result invocation and omitted raw
+updater invocation. This is concrete Bend evidence, not general closure or formal
+TS/Bend equivalence.
+
+Escaped setter functions and computed accessors, function initializers/writable
+memos, arbitrary closure/function inputs and expression-capable owner teardown
+remain unfinished. Accessor use as onCleanup and raw accessor updater reads in
+teardown are explicitly rejected; no owner-machine cached read or accidental
+function-as-data fallback is introduced. The source pin and deviation register
+are unchanged.

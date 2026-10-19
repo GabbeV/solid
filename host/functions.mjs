@@ -11,3 +11,7 @@ export class RootDisposers {
   }
   identity(value){return typeof value==='function'?this.identities.get(value):undefined;}
 }
+
+// One escaped accessor per admitted signal. Invocation re-enters core.read;
+// this cache supplies native callable identity only.
+export class SourceAccessors extends RootDisposers {}

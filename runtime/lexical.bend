@@ -4,11 +4,14 @@
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
+import ./callable.bend as Callable
 
 def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
   match expr:
     case R.LocalRead{+index}:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Read{signal}, _ => R.LocalRead{index})
+    case R.LocalAccessor{+index}:
+      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.accessor(signal)}, _ => R.LocalAccessor{index})
     case R.LocalWrite{+index, value, +updater}:
       +value = bind(value, depth, signal)
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.WriteExpr{signal, value, updater}, _ => R.LocalWrite{index, value, updater})

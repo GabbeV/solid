@@ -152,6 +152,8 @@ def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value)
   match value:
     case R.RootDisposerReference{owner}:
       Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, R.Undefined{}} <> rest}
+    case R.AccessorReference{source}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case other:
       Machine{W.setSignal(w, signal, other), rest}
 

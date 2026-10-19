@@ -10436,9 +10436,9 @@
           "sha256": "782b215d3522498565add7e52cfbffd9863303ca47d7c4e3d08b7f86cfcd8e16",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater; runtime/core.bend:setterValue, CallbackWrite; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setSignal, setUpdater; runtime/core.bend:WriteResult, setterResult",
+            "bend": "runtime/write.bend:setSignal; runtime/scheduler.bend:setSignal wrapper; runtime/api.bend:setUpdater; runtime/core.bend:setterValue, CallbackWrite; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setSignal, setUpdater; runtime/core.bend:WriteResult, setterResult; runtime/api.bend:setValue; runtime/core.bend:WriteResult accessor branch",
             "status": "partial",
-            "restrictions": "One setter for facade/callbacks/landings, staged composition, held join before equality, outside-flush first-stash, promotion, computed time and notify-epoch skip. Lane/snapshot/write hooks and arbitrary comparators unfinished. The source typeof-function branch now executes for init-bound root disposers. Updater-returned functions remain data; evaluated updater expressions use the same setter remainder. Arbitrary updater functions still outside the ABI."
+            "restrictions": "One setter for facade/callbacks/landings, staged composition, held join before equality, outside-flush first-stash, promotion, computed time and notify-epoch skip. Lane/snapshot/write hooks and arbitrary comparators unfinished. The source typeof-function branch now executes for init-bound root disposers. Updater-returned functions remain data; evaluated updater expressions use the same setter remainder. Arbitrary updater functions still outside the ABI. Escaped data-signal accessor updater arguments read once on the core continuation and then use the shared value-write remainder. Returned function data is not invoked again; core callback/facade writes share WriteResult. Owner teardown cannot yet suspend for such reads and rejects that domain."
           }
         },
         {
@@ -22197,8 +22197,12 @@
           "start": 132,
           "end": 136,
           "sha256": "e2924f66fa69ba303b0e68f432366bb23e4aebc642129708541129c540a982f6",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/callable.bend:accessor; runtime/core.bend:invokeValue; runtime/lexical.bend:bind LocalAccessor",
+            "status": "partial",
+            "restrictions": "Selected data-signal bound read functions capture the actual node ID, preserve native host aliases and resume the shared read continuation. Forty public histories plus one closed lifetime/tracking law and one general binding law. Refresh target is retained as the node ID; symbol/property reflection, memo/store accessor values and arbitrary callbacks remain unfinished."
+          }
         },
         {
           "key": "signals.ts:createSignal",
@@ -22209,7 +22213,7 @@
           "mapping": {
             "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind",
             "status": "partial",
-            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings. Function initializer/writable-memo overload, escaping first-class accessors/setters, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
+            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings; data-signal read accessors now escape with bound identity and ordinary core invocation. Function initializer/writable-memo overload, escaping setter and computed accessor functions, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
           }
         },
         {
@@ -22221,7 +22225,7 @@
           "mapping": {
             "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind",
             "status": "partial",
-            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings. Function initializer/writable-memo overload, escaping first-class accessors/setters, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
+            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings; data-signal read accessors now escape with bound identity and ordinary core invocation. Function initializer/writable-memo overload, escaping setter and computed accessor functions, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
           }
         },
         {
@@ -22233,7 +22237,7 @@
           "mapping": {
             "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind",
             "status": "partial",
-            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings. Function initializer/writable-memo overload, escaping first-class accessors/setters, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
+            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings; data-signal read accessors now escape with bound identity and ordinary core invocation. Function initializer/writable-memo overload, escaping setter and computed accessor functions, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
           }
         },
         {
@@ -22245,7 +22249,7 @@
           "mapping": {
             "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind",
             "status": "partial",
-            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings. Function initializer/writable-memo overload, escaping first-class accessors/setters, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
+            "restrictions": "Production data-initializer overload with actual signal allocation and const-pair lexical read/set bindings; data-signal read accessors now escape with bound identity and ordinary core invocation. Function initializer/writable-memo overload, escaping setter and computed accessor functions, refresh-property reflection, arbitrary closures/options/comparators and observe hooks unfinished."
           }
         },
         {

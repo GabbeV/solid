@@ -16,6 +16,7 @@ import ./proof/context-records.bend as ContextRecords
 import ./proof/bound-cleanup.bend as BoundCleanup
 import ./proof/nested.bend as Nested
 import ./proof/locals.bend as Locals
+import ./proof/accessors.bend as Accessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
 import ./runtime/callback.bend as Callback
@@ -143,3 +144,10 @@ law lexical_scope_shadows:
   for +signal: Nat
   {Lexical.bind(R.SignalScope{R.LocalRead{0n}, Construct.defaults(), R.LocalRead{0n}}, 0n, signal)
     == R.SignalScope{R.Read{signal}, Construct.defaults(), R.LocalRead{0n}} : R.Expr}
+
+law escaped_accessor_tracks_after_root_disposal:
+  {Accessors.view(Accessors.scenario()) == Accessors.expected() : Accessors.View}
+
+law lexical_accessor_binding:
+  for +signal: Nat
+  {Lexical.bind(R.LocalAccessor{0n}, 0n, signal) == R.Literal{R.AccessorReference{signal}} : R.Expr}

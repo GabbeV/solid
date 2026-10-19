@@ -110,3 +110,9 @@ def Laws.lexical_read_binding(signal):
 
 def Laws.lexical_scope_shadows(signal):
   {==}
+
+def Laws.escaped_accessor_tracks_after_root_disposal():
+  {==}
+
+def Laws.lexical_accessor_binding(signal):
+  {==}

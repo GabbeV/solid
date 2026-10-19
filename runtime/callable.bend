@@ -34,3 +34,10 @@ def cleanup(+w: R.World, +owner: Nat, root: Nat) -> R.World:
     _ =>
       +pair = encode(w, root)
       O.cleanup(B.first(R.World, Nat, pair), owner, B.second(R.World, Nat, pair)))
+
+# signals.ts:accessor, read.bind(null,node). The node ID captures the bound
+# receiver argument and the refresh target; symbol/property reflection remains
+# outside the admitted grammar. Native callable identity is materialized once
+# per signal by the host codec; invocation enters core's ordinary read machine.
+def accessor(node: Nat) -> R.Value:
+  R.AccessorReference{node}

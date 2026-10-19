@@ -83,8 +83,13 @@ def resultWorld(m: C.Machine) -> R.World:
 def flush(fuel: Nat, w: R.World) -> R.World:
   C.flush(fuel, w)
 
-def setSignal(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
-  B.choose(~R.World, B.valid(w, id), _ => C.setterValue(w, id, value), _ => R.World.with_fault(w, R.BadId{}))
+def setValue(fuel: Nat, +w: R.World, +id: Nat, value: R.Value) -> C.Machine:
+  B.choose(~C.Machine, B.valid(w, id),
+    _ => C.run(fuel, C.Machine{w, [C.WriteResult{id, False{}}], [value]}),
+    _ => C.Machine{R.World.with_fault(w, R.BadId{}), [], []})
+
+def setSignal(+w: R.World, id: Nat, value: R.Value) -> R.World:
+  C.world(setValue(B.budget(w), w, id, value))
 
 # Updaters see staged composition; setter returns are preserved by the facade.
 def setUpdater(fuel: Nat, +w: R.World, +id: Nat, expr: R.Expr) -> R.World:
@@ -139,6 +144,12 @@ def nestedEffectBody(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOp
 
 def signalScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
   R.SignalScope{initial, options, body}
+
+def vAccessor(signal: Nat) -> R.Value:
+  R.AccessorReference{signal}
+
+def localAccessor(depth: Nat) -> R.Expr:
+  R.LocalAccessor{depth}
 
 def localRead(depth: Nat) -> R.Expr:
   R.LocalRead{depth}
