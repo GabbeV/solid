@@ -122,3 +122,9 @@ law undefined_is_a_staged_value:
 
 law nested_memo_replaces_child:
   {Nested.view(Nested.scenario()) == Nested.expected() : Nested.View}
+
+law nested_effect_first_application_is_queued:
+  {Nested.effectView(False{}) == Nested.expectedEffect() : Nested.EffectView}
+
+law nested_effect_disposed_before_application:
+  {Nested.effectView(True{}) == Nested.expectedEarlyDisposal() : Nested.EffectView}

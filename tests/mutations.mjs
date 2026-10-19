@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), R.EffectSpec.program(spec)','R.EffectSpec.options(spec), 0n, R.EffectSpec.program(spec)','tests/nested.mjs'],
+  ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bind(compute, first, second), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
+  ['nested effect untracks its caller','runtime/core.bend','case R.EffectCreate{compute, +spec}:','case R.EffectCreate{compute, +spec}:\n      +w = R.World.with_tracking(w, False{})','tests/nested.mjs'],
+  ['initial effect ignores staged first value','runtime/core.bend','Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))),','Bool.or(deferred, Bool.or(False{},','tests/nested.mjs'],
   ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs'],
   ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bind(compute, first, second), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
   ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ReadNode{id} <> rest)','_ => ReadNode{id} <> rest)','tests/nested.mjs'],

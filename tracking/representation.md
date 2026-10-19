@@ -20,7 +20,7 @@ The explicit-parent API facade installs/restores owner and tracking state to
 express the TS test host's `runWithOwner` boundary. The primitive constructor
 does not introduce a new owner scope. Root `_parentComputed` is retained and used
 at constructor height setup, heap insertion and read-observer selection. Nested
-root construction/forwarding have focused probes; nested signal/memo/effect creation and arbitrary host closures remain unfinished;
+root construction/forwarding have focused probes; nested signal creation, escaping new accessors and arbitrary host closures remain unfinished; nested memo reads and user/render effects execute as documented in [nested.md](nested.md);
 root callbacks and selected bound-disposer arguments now execute. Cleanup and reentrant
 teardown run through the owner continuation machine.
 

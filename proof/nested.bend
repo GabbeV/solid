@@ -37,3 +37,43 @@ def view(+w: R.World) -> View:
 def expected() -> View:
   View{R.Number{6n}, True{}, 0n, 0n, R.Number{6n}, 3n, 1n, 6n, 7n,
     R.Number{6n}, 0n, False{}, R.Healthy{}}
+
+# createEffect queues its first application; disposing its init root before
+# that queue drains skips the application and never installs its returned cleanup.
+def visibleEvents(events: List<&2, R.TraceEvent>) -> List<&2, R.TraceEvent>:
+  match events:
+    case Nil{}:
+      []
+    case R.Constructed{created} <> rest:
+      visibleEvents(rest)
+    case event <> rest:
+      event <> visibleEvents(rest)
+
+
+type EffectView is Data:
+  EffectView{result: R.Value, initialQueue: List<&2, Nat>,
+    events: List<&2, R.TraceEvent>, modified: Bool, previous: R.Value,
+    value: R.Value, dead: Bool, child: Nat, context: Nat,
+    tracking: Bool, fault: R.Fault}
+
+
+def effectView(+early: Bool) -> EffectView:
+  +m = A.createRoot(512n, A.createWorld(),
+    A.nestedEffect(R.Literal{R.Number{5n}}, True{}, 0n, N.defaults(), False{}, False{}, 0n, 0n, 0n),
+    1n, False{})
+  +before = A.resultWorld(m)
+  +after = A.flush(512n, B.choose(~R.World, early, _ => A.dispose(before, 2n), _ => before))
+  EffectView{A.resultValue(m), R.World.userQueue(before), visibleEvents(R.World.events(after)),
+    R.Node.modified(B.node(after, 3n)), R.Node.prevValue(B.node(after, 3n)),
+    R.Node.value(B.node(after, 3n)), L.isDisposed(after, 3n), R.Node.firstChild(B.node(after, 2n)),
+    R.World.context(after), R.World.tracking(after), R.World.fault(after)}
+
+
+def expectedEffect() -> EffectView:
+  EffectView{R.Undefined{}, [3n], [R.Invoked{3n}, R.Applied{3n, R.Number{5n}, R.Undefined{}}],
+    False{}, R.Number{5n}, R.Number{5n}, False{}, 3n, 0n, False{}, R.Healthy{}}
+
+
+def expectedEarlyDisposal() -> EffectView:
+  EffectView{R.Undefined{}, [3n], [R.Invoked{3n}], True{}, R.Undefined{},
+    R.Number{5n}, True{}, 0n, 0n, False{}, R.Healthy{}}

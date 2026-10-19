@@ -9990,7 +9990,7 @@
           "mapping": {
             "bend": "runtime/core.bend:PassFrame, prepareRecompute, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, publish, retireOutgoing, finishResult, finishShape, subscribe, afterThen",
             "status": "partial",
-            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)() expressions execute in the same machine; escaping accessors, nested signals/effects and teardown expressions remain unfinished."
+            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions execute in the same machine; escaping accessors, nested signals and teardown expressions remain unfinished."
           }
         },
         {
@@ -14086,9 +14086,9 @@
           "sha256": "e9374d7fd6121d464f50a949fdb10d9c88203e5050eded75c67dc00297f012e8",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/api.bend:createEffectWithPrograms; runtime/core.bend:InitialEffect",
+            "bend": "runtime/api.bend:createEffectWithHandlers, nestedEffect; runtime/core.bend:evaluate(EffectCreate), InitialEffect",
             "status": "partial",
-            "restrictions": "Separate compute/apply/error phases, schedule/defer/user options and returned cleanup program. Staged/transaction/lane creation and hold hooks unfinished."
+            "restrictions": "Separate source literal/setup, initial recompute and source defer/pending-slot/user/schedule gate; nested construction uses the same machine and inherits caller context/tracking. Static callback/error/returned-cleanup programs. Born-staged nested creation tested; active lane/hold hooks and dynamic cleanup closures remain unfinished."
           }
         },
         {
@@ -17065,7 +17065,7 @@
           "mapping": {
             "bend": "runtime/owner-state.bend:createOwner; runtime/construct.bend:createOwner",
             "status": "partial",
-            "restrictions": "Separate production root literal, inherited scope identity, parentComputed forwarding and child linking. Hydration IDs, public context-map APIs, root callback/disposer method facade and dev/observe hooks unfinished. Shared production literal also serves callback-based roots. Root initializers ignore their bound disposer argument; selected owner handle operations execute."
+            "restrictions": "Separate production root literal, inherited context-record identity, parentComputed forwarding and child linking. Callback-based roots bind their actual disposer; selected owner/context operations execute. Hydration IDs, arbitrary root properties and dev/observe hooks unfinished."
           }
         },
         {
@@ -22293,16 +22293,24 @@
           "start": 583,
           "end": 606,
           "sha256": "a6c70f59031211c6d22cf38407dace568b616d024f291fb26a1c71b027d19f7b",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
+            "status": "partial",
+            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static returned cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and dynamic cleanup closures unfinished."
+          }
         },
         {
           "key": "signals.ts:createRenderEffect",
           "start": 637,
           "end": 643,
           "sha256": "82e001d85ae0ff9fa431be1271e68b59a467c18112575ac0266ade42f8d9e330",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
+            "status": "partial",
+            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static returned cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and dynamic cleanup closures unfinished."
+          }
         },
         {
           "key": "signals.ts:createTrackedEffect",

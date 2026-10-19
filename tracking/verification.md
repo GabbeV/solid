@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 68 nested-memo histories: 1375 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction histories: 1465 total, plus explicit host object-identity and native timeout
   checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles thirty-five isolated source-changing copies and requires parity
+- mutations compiles thirty-nine isolated source-changing copies and requires parity
   assertions to reject them. One is an unregistered workaround for a known source
   counterexample; its rejection enforces the pin, not a claim that the bug is
   desirable. The active runtime is not mutated by this check.
@@ -35,9 +35,9 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
   change during the run, and seals source/output hashes only after success.
 
-The roots now contain twenty-four closed composed regressions: nine earlier
+The roots now contain twenty-six closed composed regressions: nine earlier
 chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
-landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, and one explicitly
+landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, and one explicitly
 NEGATIVE staged-error recovery counterexample. The negative law preserves a source
 failure and is not a successful coherence guarantee. Two payload laws, three
 general question-representation laws, two general callback-binding helper laws,

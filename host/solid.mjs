@@ -42,6 +42,18 @@ export class SolidRuntime {
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values),this.evaluate(owner,prev,values));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.effectCreate){
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
+      requireTeardownProgram(this.programActions,options.unobserved);requireTeardownProgram(this.programActions,options.cleanup);
+      const apply=(v,p)=>{
+        this.traceEvents.push(['apply',name,v,p]);
+        if(options.user===false)this.screens[options.target??3]=v;
+        if(options.program)this.programs[options.program](undefined,v,p);
+        return options.cleanup?this.programs[options.cleanup]:undefined;
+      };
+      const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
+      return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values),bundle,{...options,unobserved:this.programs[options.unobserved]});
+    }
     if(e.memoRead){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);
@@ -226,11 +238,11 @@ export class SolidRuntime {
     if(typeof initial==='function')throw new TypeError('Function initializers are not yet translated');
     const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;
   }
-  callback(name,expr) { return prev=> {
+  callback(name,expr,values=[]) { return prev=> {
     this.sourceNames.set(this.S.getOwner(),name);
     this.notPending??=this.S.getOwner()._pendingValue; // read-only probe of the fresh-node sentinel
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
-    try { return this.evaluate(expr,prev); } finally {this.current=saved;}
+    try { return this.evaluate(expr,prev,values); } finally {this.current=saved;}
   }; }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);

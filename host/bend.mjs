@@ -101,6 +101,11 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if (e.effectCreate){
+    const options=e.options??{};
+    if(programs.teardownActions){requireTeardownProgram(programs.teardownActions,options.unobserved);requireTeardownProgram(programs.teardownActions,options.cleanup);}
+    return R.nestedEffect(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,programs[options.program]??0,programs[options.cleanup]??0,programs[options.error]??0);
+  }
   if (e.memoRead){
     if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,e.options?.unobserved);
     return R.memoRead(expression(e.memoRead,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
@@ -226,6 +231,12 @@ export class BendRuntime {
   }
   hostCallback(callback){try{callback();this.check();}catch(error){this.asyncErrors.push(this.errorShape(error));}}
   check() {
+    // Observation labels come from the user ABI's actual allocation events.
+    // Internal waiter nodes and ordinary top-level constructors are untouched.
+    for(const event of list(this.world.events))if('created'in event&&!this.reverse[event.created]){
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      this.ids[name]=event.created;this.reverse[event.created]=name;
+    }
     this.drainJobs();
     if(this.world.fault.$ === tags.healthy)return;
     if(Object.hasOwn(this.world.fault,'cause')) {
@@ -375,7 +386,7 @@ export class BendRuntime {
   nodes() { return list(this.world.nodes); }
   trace() {
     const name=id=>this.reverse[id] ?? null;
-    return list(this.world.events).filter(e=>!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
+    return list(this.world.events).filter(e=>!('created'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),this.observe(this.decode(e.value)),this.observe(this.decode(e.previous))];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),this.observe(this.decode(e.value))];

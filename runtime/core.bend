@@ -191,8 +191,18 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.EffectCreate{compute, +spec}:
+      +id = B.length(R.Node, R.World.nodes(w))
+      +w = B.event(w, R.Constructed{id})
+      # Attachment is the user ABI's mechanical output target, as in api.createEffect.
+      +w = B.choose(~R.World, R.EffectSpec.user(spec), _ => w, _ => T.attach(w, 1n, R.EffectSpec.target(spec)))
+      kind = B.choose(~R.NodeKind, R.EffectSpec.user(spec), _ => R.User{}, _ => R.Render{})
+      +w = N.createEffectNode(w, compute, kind, R.EffectSpec.target(spec), R.EffectSpec.options(spec), R.World.context(w), R.EffectSpec.program(spec), R.EffectSpec.returnedCleanup(spec))
+      +w = B.store_node(w, id, R.Node.with_errorProgram(B.node(w, id), R.EffectSpec.errorProgram(spec)))
+      Machine{w, Recompute{id, True{}} <> InitialEffect{id, R.EffectSpec.scheduled(spec), R.EffectSpec.deferred(spec)} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, stack}
     case R.MemoRead{compute, +options}:
       +id = B.length(R.Node, R.World.nodes(w))
+      +w = B.event(w, R.Constructed{id})
       +w = N.computed(w, compute, options, R.World.context(w))
       tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
         _ => ReadNode{id} <> rest,

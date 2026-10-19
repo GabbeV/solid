@@ -95,3 +95,9 @@ def Laws.undefined_is_a_staged_value():
 
 def Laws.nested_memo_replaces_child():
   {==}
+
+def Laws.nested_effect_first_application_is_queued():
+  {==}
+
+def Laws.nested_effect_disposed_before_application():
+  {==}

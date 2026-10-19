@@ -130,6 +130,10 @@ def ownerDisposed(owner: R.Expr) -> R.Expr:
 def withOwner(owner: R.Expr, body: R.Expr) -> R.Expr:
   R.WithOwner{owner, body}
 
+# User ABI for createEffect's selected compute/application/error family.
+def nestedEffect(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat) -> R.Expr:
+  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram}}
+
 # User ABI for the source expression createMemo(compute, options)().
 def memoRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
   R.MemoRead{compute, options}
