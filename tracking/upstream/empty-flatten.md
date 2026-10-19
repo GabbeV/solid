@@ -4,6 +4,16 @@ Status: reduced upstream bug candidate; no report filed and no workaround active
 The Bend port preserves the pinned TypeScript behavior. This does not block
 iterator translation.
 
+A standalone public-package repro is now in
+[`repros/solid-signals`](../../repros/solid-signals/README.md). It reproduces on
+the **published npm** `@solidjs/signals@2.0.0-rc.15` as well as the exact next
+source. That npm release's gitHead is 4937f0a2bfddd45a65738c189075aff577530073,
+which differs from the next commit below despite the shared version string.
+`empty-flatten.mjs` uses an immediately fulfilled thenable for `next()`, so the
+standalone case does not depend on tolerance of bare async IteratorResults.
+It asserts intended behavior and fails; direct/native controls pass. The project
+installs independently and uses no Bend code or adapter.
+
 Observed on Solid `next` d2ad8b288886a5c7171e6746ccc019ad1d08d8ab
 (`@solidjs/signals` 2.0.0-rc.15), production full-index bundle. A read-only
 `git ls-remote origin refs/heads/next` on 2026-10-18 also returned that commit,

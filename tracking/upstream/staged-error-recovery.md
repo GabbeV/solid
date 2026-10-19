@@ -3,6 +3,21 @@
 Status: reduced current-head upstream bug candidate. No report or workaround is
 active. Both pinned TS and Bend preserve this baseline. This does not block work.
 
+A standalone native-Promise repro is now in
+[`repros/solid-signals`](../../repros/solid-signals/README.md), using only public
+imports from `@solidjs/signals`. On the exact next source below, it renders `[2]`
+and throws the successful value 1 (or 7); its no-error control renders `[2,3]`.
+Unlike the older matrix below, it uses the native Promise directly; a Node
+`unhandledRejection` listener observes Solid's failing callback without wrapping
+the Promise or its handlers. Each repro asserts intended recovery and fails.
+
+**Version distinction:** the published npm `@solidjs/signals@2.0.0-rc.15` has
+gitHead 4937f0a2bfddd45a65738c189075aff577530073, not the next commit below.
+It halts on the original error 99 before recovery is reached; it does not
+reproduce the specific successful-value-as-error schedule. Use the standalone
+project's `npm run use:next` to install the unchanged current-next public index.
+Do not identify the affected source solely by the shared rc.15 version string.
+
 Source: Solid next d2ad8b288886a5c7171e6746ccc019ad1d08d8ab,
 @solidjs/signals 2.0.0-rc.15, production full-index bundle. A read-only remote-head
 check on 2026-10-19 returned the same commit.

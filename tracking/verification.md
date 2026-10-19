@@ -62,6 +62,14 @@ Both baseline behaviors remain active; no semantic workaround or issue filing is
 active. The deviation register is separate and empty. Local git commits are on
 main; this checkout has no configured remote and nothing was pushed/published.
 
+The standalone project at repros/solid-signals installs separately, without Bend
+or the differential adapters. Its intended-behavior assertions fail for the two
+bugs and its direct/native/no-error controls pass. Its baseline runner checks
+these specific failures in fresh Node processes. The empty-stream case also
+reproduces in the published npm rc.15; the held-error case requires the newer
+next commit, which still declares rc.15. Standalone source/setup scripts,
+dependency lock and observed verification log are included in the hash seal.
+
 The output codec now keeps per-runtime reference and async-object caches, including
 setter/updater returns, tree/trace values, promise outcomes and nested error causes.
 An identity test compares actual JS object aliases to the TS host. Earlier fresh

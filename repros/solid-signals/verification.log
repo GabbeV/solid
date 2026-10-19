@@ -1,0 +1,146 @@
+Standalone clean-directory verification; Node v24.19.0
+Date: 2026-10-19T01:36:29Z
+
+$ npm ci --no-audit --no-fund
+
+added 3 packages in 301ms
+
+Exit: 0 (expected 0)
+
+$ npm test
+
+> test
+> node verify.mjs
+
+Published @solidjs/signals@2.0.0-rc.15 (older than pinned next)
+empty-flatten.mjs immediate: reproduced failure
+empty-flatten.mjs direct: control passed
+empty-flatten.mjs native: control passed
+held-error-recovery.mjs no-error: control passed
+Held recovery requires the newer next commit: run npm run use:next, then npm test.
+
+Exit: 0 (expected 0)
+
+$ npm run use:next
+
+> use:next
+> node use-next.mjs
+
+
+changed 1 package in 322ms
+Installed unchanged Solid next public index at d2ad8b288886a5c7171e6746ccc019ad1d08d8ab
+npm ci restores the published npm package.
+From https://github.com/solidjs/solid
+ * branch            d2ad8b288886a5c7171e6746ccc019ad1d08d8ab -> FETCH_HEAD
+Exit: 0 (expected 0)
+
+$ npm test
+
+> test
+> node verify.mjs
+
+Solid next d2ad8b288886a5c7171e6746ccc019ad1d08d8ab
+empty-flatten.mjs immediate: reproduced failure
+empty-flatten.mjs direct: control passed
+empty-flatten.mjs native: control passed
+held-error-recovery.mjs same-recovery: reproduced failure
+held-error-recovery.mjs changed-recovery: reproduced failure
+held-error-recovery.mjs no-error: control passed
+
+Exit: 0 (expected 0)
+
+$ node empty-flatten.mjs
+{
+  mode: 'immediate',
+  expected: 'undefined',
+  actual: 'empty iterable object'
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: An empty flattened stream should settle to undefined
++ actual - expected
+
++ {
++   Symbol(Symbol.asyncIterator): [Function: [Symbol.asyncIterator]]
++ }
+- undefined
+
+    at file:///workspace/scratch/solid-public-repros-x87tl0uk/empty-flatten.mjs:33:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: { Symbol(Symbol.asyncIterator): [Function: [Symbol.asyncIterator]] },
+  expected: undefined,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
+Exit: 1 (expected 1)
+
+$ node held-error-recovery.mjs
+Unhandled callback rejection: 1
+{
+  mode: 'same-recovery',
+  expected: { rendered: [ 2, 3 ], read: { returned: 3 } },
+  actual: { rendered: [ 2 ], read: { threw: 1 } }
+}
+[REACTIVITY_HALTED] 1
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The successful recovery should render when the pending input resolves
++ actual - expected
+
+  [
+    2,
+-   3
+  ]
+
+    at file:///workspace/scratch/solid-public-repros-x87tl0uk/held-error-recovery.mjs:42:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ 2 ],
+  expected: [ 2, 3 ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
+Exit: 1 (expected 1)
+
+$ node held-error-recovery.mjs changed-recovery
+Unhandled callback rejection: 7
+{
+  mode: 'changed-recovery',
+  expected: { rendered: [ 2, 9 ], read: { returned: 9 } },
+  actual: { rendered: [ 2 ], read: { threw: 7 } }
+}
+[REACTIVITY_HALTED] 7
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The successful recovery should render when the pending input resolves
++ actual - expected
+
+  [
+    2,
+-   9
+  ]
+
+    at file:///workspace/scratch/solid-public-repros-x87tl0uk/held-error-recovery.mjs:42:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ 2 ],
+  expected: [ 2, 9 ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
+Exit: 1 (expected 1)
+
+PASS: independent npm installation, upstream download/build, paired controls and the three intended-assertion failures verified.

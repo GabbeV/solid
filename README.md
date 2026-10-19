@@ -94,6 +94,12 @@ npm run upstream:impact -- /path/to/solid-checkout --json
 The report maps changed functions to known Bend counterparts and flags file-level
 changes too. Tests/docs/build conditions still require separate diff review.
 
+[Standalone Solid bug repros](repros/solid-signals/README.md) install independently
+and import only `@solidjs/signals`. They reproduce the empty-iterable leak on the
+published package and current next, and successful-value-as-error recovery on
+current next. The shared rc.15 version string does not identify the same source
+commit in npm and next; the repro instructions distinguish them.
+
 The important remaining work is transaction membership and publication, pending
 and error propagation, promise/iterator settlement, optimistic lanes and actions,
 boundaries and reveal ordering, full ownership/cleanup/context APIs, remaining
