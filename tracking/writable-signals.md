@@ -3,10 +3,9 @@
 `SignalComputeScope(compute,options,body)` represents the common const-pair form
 `const [get,set] = createSignal(previous => expression, options)`. The initializer
 is an admitted callback expression closing over enclosing arguments/locals;
-its new const pair binds only in body. General first-class callable initializers,
-self/TDZ references, arbitrary closures and reflective options remain unfinished.
-The existing SignalScope data form still rejects first-class function initializers
-explicitly, rather than storing them as data under the wrong overload.
+its new const pair binds only in body. Selected first-class bound function initializers now also enter this overload;
+see [callable-initializers.md](callable-initializers.md). Self/TDZ references,
+arbitrary callable/closure values and reflective options remain unfinished.
 
 ## Construction and binding
 
@@ -86,7 +85,7 @@ and logical bucket entries in addition to node/transaction state. Sparse JS hole
 and explicit Bend empty slots normalize to the same logical bucket map. The old
 4,096 held probes remain separate and now also compare those heap fields.
 
-Constructor comparisons now include 1,536 actual createSignal(fn) cases (9,216
+Constructor comparisons now include 1,536 actual createSignal(fn) cases (10,752
 constructors total), including options, loading presence, parents and the exact
 auto-dispose clearing point. Existing restricted source branches remain open for
 individual review; these probes do not close them automatically.
@@ -110,3 +109,8 @@ Selected writable-memo setters can now be registered with onCleanup; their
 no-argument call runs the same source held/manual policy in the existing owner
 machine. General getter/expression teardown remains open. See
 [setter-cleanup.md](setter-cleanup.md).
+
+Selected first-class getter/setter/root-disposer initializers now take the real
+function overload and share writable-computed construction and selected setter
+policy; see [callable-initializers.md](callable-initializers.md). Arbitrary
+functions and read-capable owner teardown remain unfinished.

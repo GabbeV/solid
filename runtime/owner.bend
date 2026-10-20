@@ -46,6 +46,8 @@ type Task is Data:
   Invoke{callback: Nat}
   Action{callback: Nat, action: R.CleanupAction}
   WriteValue{signal: Nat, current: R.Value, value: R.Value}
+  WriteForward{signal: Nat, value: R.Value}
+  WriteMemoFinish{signal: Nat, held: Bool}
   Dispose{id: Nat}
   MarkChildren{id: Nat}
   MarkChild{child: Nat}
@@ -149,7 +151,7 @@ def actions(+callback: Nat, xs: List<&2, R.CleanupAction>) -> List<&2, Task>:
 
 # setSignal's typeof-function updater branch for the admitted bound disposer.
 # Its throw skips the write; a successful bound disposer returns undefined.
-def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
+def writeDataValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
       Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}} <> rest}
@@ -159,6 +161,35 @@ def writeValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value)
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case other:
       Machine{W.setSignal(w, signal, other), rest}
+
+# A named callback retains the constructor-selected setter too. Held setMemo
+# invokes its raw function before the setSignal entry captures currentValue.
+# The admitted root disposer ignores its previous-value argument; getter/setter
+# arguments still require the unfinished owner/core read boundary.
+def writeHeldValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
+  match value:
+    case R.RootDisposerReference{owner}:
+      Machine{w, Enter{owner, True{}, False{}} <> WriteForward{signal, R.Undefined{}} <> rest}
+    case R.AccessorReference{source}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
+    case R.SetterReference{target}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
+    case other:
+      Machine{W.setSignal(w, signal, other), rest}
+
+def writeValueKind(+w: R.World, +rest: List<&2, Task>, +signal: Nat, +value: R.Value, kind: R.NodeKind) -> Machine:
+  match kind:
+    case R.Memo{}:
+      +pair = MW.held(w, signal)
+      +w = B.first(R.World, Bool, pair)
+      +held = B.second(R.World, Bool, pair)
+      +ending = {WriteMemoFinish{signal, held} <> rest : List<&2, Task>}
+      B.choose(~Machine, held, _ => writeHeldValue(w, ending, signal, value), _ => writeDataValue(w, ending, signal, value))
+    case _:
+      writeDataValue(w, rest, signal, value)
+
+def writeValue(+w: R.World, rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
+  writeValueKind(w, rest, signal, value, R.Node.kind(B.node(w, signal)))
 
 # runDisposal invokes bound functions with no arguments. Their captured node
 # and entry (setSignal versus setMemo) survive the callback's call receiver.
@@ -257,6 +288,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       action(w, rest, callback, value)
     case WriteValue{signal, current, value} <> rest:
       Machine{W.setResolved(w, signal, current, value), rest}
+    case WriteForward{signal, value} <> rest:
+      Machine{W.setSignal(w, signal, value), rest}
+    case WriteMemoFinish{signal, held} <> rest:
+      Machine{MW.finish(w, signal, held), rest}
     case Dispose{id} <> rest:
       disposeStart(w, rest, id)
     case MarkChildren{id} <> rest:

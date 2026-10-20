@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['callable getter initializer selects a setter','runtime/core.bend','callableSignal(w, rest, tail, R.AccessorReference{signal}, options, body, previous)','callableSignal(w, rest, tail, R.SetterReference{signal}, options, body, previous)','tests/callable-initializers.mjs'],
+  ['initializer receives enclosing expression previous','runtime/core.bend','R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}','R.InvokeWith{R.Literal{value}, R.Literal{previous}, False{}}','tests/callable-initializers.mjs'],
+  ['named setter bypasses memo policy','runtime/api.bend','C.Machine{w, [C.setterTask(w, id)], [value]}','C.Machine{w, [C.SetSignalArgument{id}], [value]}','tests/callable-initializers.mjs'],
+  ['held teardown setter captures before raw callback','runtime/owner.bend','Enter{owner, True{}, False{}} <> WriteForward{signal, R.Undefined{}}','Enter{owner, True{}, False{}} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}}','tests/callable-initializers.mjs'],
   ['returned cleanup assignment is discarded','runtime/core.bend','installReturned(w, rest, stack, id)','Machine{w, rest, stack}','tests/returned-cleanup.mjs'],
   ['returned setter cleanup binds wrong target','runtime/core.bend','+pair = J.encodeSetter(w, signal)','+pair = J.encodeSetter(w, id)','tests/returned-cleanup.mjs'],
   ['setter cleanup uses the ambient owner as its target','runtime/owner.bend','Machine{clearSetter(w, signal), rest}','Machine{clearSetter(w, R.World.context(w)), rest}','tests/setter-cleanup.mjs'],
@@ -37,13 +41,13 @@ const mutations=[
   ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bind(compute, first, second), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
   ['nested effect untracks its caller','runtime/core.bend','case R.EffectCreate{compute, +spec}:','case R.EffectCreate{compute, +spec}:\n      +w = R.World.with_tracking(w, False{})','tests/nested.mjs'],
   ['initial effect ignores staged first value','runtime/core.bend','Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))),','Bool.or(deferred, Bool.or(False{},','tests/nested.mjs'],
-  ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs'],
+  ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs','memoExpression'],
   ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bind(compute, first, second), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
   ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ending)','_ => ending)','tests/nested.mjs'],
   ['onCleanup loses return identity','runtime/core.bend','rest, R.RootDisposerReference{root} <> tail}','rest, R.Undefined{} <> tail}','tests/cleanup-values.mjs'],
   ['same bound cleanup receives fresh callable IDs','runtime/callable.bend','+old = find(R.World.cleanupPrograms(w), root, 0n)','+old = {0n : Nat}','tests/cleanup-values.mjs'],
   ['bound cleanup disposes ambient receiver','runtime/owner.bend','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{owner, True{}, False{}} <> rest}','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{R.World.context(w), True{}, False{}} <> rest}','tests/cleanup-values.mjs'],
-  ['context null treated as absent','runtime/context.bend','+value = B.choose(~R.Value, undefined(value),','+value = B.choose(~R.Value, B.nullish(value),','tests/contexts.mjs'],
+  ['context null treated as absent','runtime/context.bend','+value = B.choose(~R.Value, undefined(value),','+value = B.choose(~R.Value, B.nullish(value),','tests/contexts.mjs','getContext'],
   ['context record mutated in place','runtime/context.bend','+next = B.length(R.ContextRecord, R.World.contextRecords(w))\n      +w = R.World.with_contextRecords(w, B.append(R.ContextRecord, R.World.contextRecords(w), [R.ContextRecord{copyWith(entries, id, value)}]))','+next = R.Node.scope(B.node(w, owner))\n      +w = R.World.with_contextRecords(w, List.set(&2, R.ContextRecord, R.World.contextRecords(w), next, R.ContextRecord{copyWith(entries, id, value)}))','tests/contexts.mjs'],
   ['new root drops inherited context','runtime/owner-state.bend','R.Node.scope(B.node(w, parent))','0n','tests/contexts.mjs'],
   ['context read without owner returns default','runtime/context.bend','Nat.is_eq(owner, 0n),\n    _ => B.Bundle{failure(w, 0), R.Undefined{}}','False{},\n    _ => B.Bundle{failure(w, 0), R.Undefined{}}','tests/contexts.mjs'],
@@ -64,7 +68,7 @@ const mutations=[
   ['unregistered staged-error recovery workaround','runtime/core.bend','+w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),','+w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR())))\n      +w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),','tests/held-recovery.mjs'],
   ['refresh waiter runs eagerly','runtime/signals.bend','_ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.WatchStart{id}]))','_ => makeWatch(256n, w, id)','tests/waiters.mjs'],
   ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
-  ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs'],
+  ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
   ['iterator return omitted','runtime/iterator-state.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs'],
   ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
   ['unresolved promise commits','runtime/flight.bend','Bool.not(R.AsyncObserver.resolved(o))','False{}','tests/async.mjs'],
@@ -74,13 +78,17 @@ const mutations=[
   ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))','T.setText(w, R.Node.target(B.node(w, id)), R.Undefined{})'],
 ];
 let caught=0;
-for(const [name,file,before,after,test='tests/differential.mjs'] of mutations) {
+for(const [name,file,before,after,test='tests/differential.mjs',anchor] of mutations) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bend-signals-mutation-'));
   try {
     for(const d of ['runtime','representation','observation'])await fs.cp(path.join(root,d),path.join(dir,d),{recursive:true});
     const p=path.join(dir,file),text=await fs.readFile(p,'utf8');
-    if(!text.includes(before))throw new Error('Stale mutation '+name);
-    await fs.writeFile(p,text.replace(before,after));
+    const start=anchor?text.indexOf('def '+anchor+'('):0;
+    if(start<0)throw new Error('Stale mutation function '+name);
+    const next=anchor?text.indexOf('\ndef ',start+1):-1,end=next<0?text.length:next;
+    const segment=text.slice(start,end);
+    if(segment.split(before).length!==2)throw new Error('Mutation must select exactly one source operation: '+name);
+    await fs.writeFile(p,text.slice(0,start)+segment.replace(before,after)+text.slice(end));
     const emit=path.join(dir,'runtime.mjs');
     const compile=spawnSync(path.join(root,'node_modules/.bin/bun'),[path.join(root,'upstream/bend/bend2/main.ts'),path.join(dir,'runtime/api.bend'),'-o',emit],{encoding:'utf8'});
     if(compile.status!==0)throw new Error('Mutation did not compile: '+name+'\n'+compile.stderr.slice(-3000));

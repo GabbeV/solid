@@ -195,6 +195,21 @@ def signalUpdater(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +
   +current = B.current(B.node(w, signal))
   Machine{w, Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest, stack}
 
+# signals.ts:createSignal's function overload. Both expression initializers and
+# selected first-class functions share computed construction, eager/lazy setup,
+# then CONFIG_AUTO_DISPOSE removal and const-pair binding at MemoSignalReady.
+def signalCompute(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, +options: R.NodeOptions, +body: R.Expr, +prev: R.Value) -> Machine:
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = B.event(w, R.Constructed{id})
+  +w = N.computed(w, compute, options, R.World.context(w))
+  tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
+    _ => MemoSignalReady{id, body, prev} <> rest,
+    _ => Recompute{id, True{}} <> MemoSignalReady{id, body, prev} <> rest)
+  Machine{w, tasks, stack}
+
+def callableSignal(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, value: R.Value, options: R.NodeOptions, body: R.Expr, +previous: R.Value) -> Machine:
+  signalCompute(w, rest, stack, R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}, options, body, previous)
+
 # signals.ts:createMemo returns the accessor; the MemoRead user ABI adds a
 # subsequent call. Both use the same source constructor and eager/lazy setup.
 def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, +options: R.NodeOptions, read: Bool) -> Machine:
@@ -209,6 +224,32 @@ def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>,
     _ => ending,
     _ => Recompute{id, True{}} <> ending)
   Machine{w, tasks, stack}
+
+def memoNode(kind: R.NodeKind) -> Bool:
+  match kind:
+    case R.Memo{}:
+      True{}
+    case _:
+      False{}
+
+def setterTask(+w: R.World, +id: Nat) -> Task:
+  B.choose(~Task, memoNode(R.Node.kind(B.node(w, id))), _ => SetMemoArgument{id}, _ => SetSignalArgument{id})
+
+# core.ts:setMemo's held function pre-call and non-held setter delegation.
+def memoUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +expr: R.Expr) -> Machine:
+  +pair = MW.held(w, id)
+  +w = B.first(R.World, Bool, pair)
+  held = B.second(R.World, Bool, pair)
+  B.choose(~Machine, held,
+    _ => Machine{w, Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward{id, True{}} <> rest, stack},
+    _ => signalUpdater(w, SetMemoAfter{id, False{}} <> rest, stack, id, expr))
+
+# The selected setter's target determines the public entry, including named
+# host/program calls to a constructor-produced writable memo.
+def selectedUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +signal: Nat, +expr: R.Expr) -> Machine:
+  B.choose(~Machine, memoNode(R.Node.kind(B.node(w, signal))),
+    _ => memoUpdater(w, rest, stack, signal, expr),
+    _ => signalUpdater(w, rest, stack, signal, expr))
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
@@ -238,14 +279,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
-    case R.SignalComputeScope{compute, +options, +body}:
-      +id = B.length(R.Node, R.World.nodes(w))
-      +w = B.event(w, R.Constructed{id})
-      +w = N.computed(w, compute, options, R.World.context(w))
-      tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
-        _ => MemoSignalReady{id, body, prev} <> rest,
-        _ => Recompute{id, True{}} <> MemoSignalReady{id, body, prev} <> rest)
-      Machine{w, tasks, stack}
+    case R.SignalComputeScope{compute, options, body}:
+      signalCompute(w, rest, stack, compute, options, body, prev)
     case R.SignalScope{initial, options, body}:
       Machine{w, Evaluate{initial, prev} <> CreateSignal{options, body, prev} <> rest, stack}
     case R.LocalRead{depth}:
@@ -258,8 +293,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{R.World.with_fault(w, R.Unsupported{20n}), rest, stack}
     case R.WriteExpr{+signal, +value, +updater}:
       B.choose(~Machine, updater,
-        _ => signalUpdater(w, rest, stack, signal, value),
-        _ => Machine{w, Evaluate{value, prev} <> SetSignalArgument{signal} <> rest, stack})
+        _ => selectedUpdater(w, rest, stack, signal, value),
+        _ => Machine{w, Evaluate{value, prev} <> setterTask(w, signal) <> rest, stack})
     case R.EffectCreate{compute, +spec}:
       +id = B.length(R.Node, R.World.nodes(w))
       +w = B.event(w, R.Constructed{id})
@@ -310,15 +345,15 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
     case R.CleanupWrite{signal, value}:
-      Machine{w, SetSignalArgument{signal} <> Discard{} <> Callback{id, tail, first, second} <> rest, value <> stack}
+      Machine{w, setterTask(w, signal) <> Discard{} <> Callback{id, tail, first, second} <> rest, value <> stack}
     case R.CallbackEvaluate{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackReturn{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> rest, stack}
     case R.CallbackWrite{signal, expr}:
-      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> SetSignalArgument{signal} <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
+      Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> setterTask(w, signal) <> Discard{} <> Callback{id, tail, first, second} <> rest, stack}
     case R.CallbackUpdate{+signal, expr}:
-      signalUpdater(w, Discard{} <> Callback{id, tail, first, second} <> rest, stack, signal, Z.bind(expr, first, second))
+      selectedUpdater(w, Discard{} <> Callback{id, tail, first, second} <> rest, stack, signal, Z.bind(expr, first, second))
     case R.CallbackThrow{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail, first, second} <> rest, stack}
     case other:
@@ -331,15 +366,8 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
     case value <> tail:
       callbackAction(w, rest, stack, id, tail, first, second, value)
 
-def memoNode(kind: R.NodeKind) -> Bool:
-  match kind:
-    case R.Memo{}:
-      True{}
-    case _:
-      False{}
 
-def setterTask(+w: R.World, +id: Nat) -> Task:
-  B.choose(~Task, memoNode(R.Node.kind(B.node(w, id))), _ => SetMemoArgument{id}, _ => SetSignalArgument{id})
+
 
 # core.ts:setSignal's typeof-function branch. currentValue was captured before
 # invoking the callable. A returned function is data in SetSignalResolved.
@@ -450,13 +478,6 @@ def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>
     case other:
       Machine{w, SetMemoForward{id, True{}} <> rest, other <> tail}
 
-def memoUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +expr: R.Expr) -> Machine:
-  +pair = MW.held(w, id)
-  +w = B.first(R.World, Bool, pair)
-  held = B.second(R.World, Bool, pair)
-  B.choose(~Machine, held,
-    _ => Machine{w, Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward{id, True{}} <> rest, stack},
-    _ => signalUpdater(w, SetMemoAfter{id, False{}} <> rest, stack, id, expr))
 
 # Creating an updater closure does not execute its body. Accessors/disposers
 # ignore that function argument; only setSignal invokes it with currentValue.
@@ -1440,11 +1461,11 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
         case +value <> +tail:
           match value:
             case R.RootDisposerReference{owner}:
-              Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
+              callableSignal(w, rest, tail, R.RootDisposerReference{owner}, options, body, previous)
             case R.AccessorReference{signal}:
-              Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
+              callableSignal(w, rest, tail, R.AccessorReference{signal}, options, body, previous)
             case R.SetterReference{signal}:
-              Machine{R.World.with_fault(w, R.Unsupported{21n}), rest, tail}
+              callableSignal(w, rest, tail, R.SetterReference{signal}, options, body, previous)
             case other:
               +id = B.length(R.Node, R.World.nodes(w))
               +w = B.event(w, R.Constructed{id})

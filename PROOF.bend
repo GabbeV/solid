@@ -140,3 +140,6 @@ def Laws.setter_cleanup_preserves_identity_and_clears():
 
 def Laws.effect_returns_selected_cleanup():
   {==}
+
+def Laws.callable_initializer_tracks_and_freezes():
+  {==}

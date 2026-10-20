@@ -21,6 +21,7 @@ import ./proof/setters.bend as Setters
 import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/returned-cleanup.bend as ReturnedCleanup
+import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -181,3 +182,6 @@ law setter_cleanup_preserves_identity_and_clears:
 
 law effect_returns_selected_cleanup:
   {ReturnedCleanup.scenario() == ReturnedCleanup.expected() : ReturnedCleanup.View}
+
+law callable_initializer_tracks_and_freezes:
+  {CallableInitializers.scenario() == CallableInitializers.expected() : CallableInitializers.View}

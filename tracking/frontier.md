@@ -34,7 +34,7 @@ proof credit was imported.
   constructors support nested-root parentComputed forwarding, tested at height,
   heap and read sites. Callback-based owned/detached roots, runWithOwner, owner/observer handles and
   disposal status now execute; see [ownership.md](ownership.md). Nested createMemo(compute, options)() expressions execute under the actual current
-  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; general callable initializers remain open. See [locals.md](locals.md). See [nested.md](nested.md).
+  owner; nested user/render effects also execute. Local data signals and captured inline application bodies also execute; escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; arbitrary callable initializers remain open. See [locals.md](locals.md). See [nested.md](nested.md).
 - Separate source constructors and lazy extension defaults now exist. Default
   sync is false; loading-seed presence includes explicit undefined. Synchronous
   seed/option histories execute; loading-window pending catches now execute through
@@ -47,7 +47,7 @@ proof credit was imported.
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
   read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; general callable initializers remain open;
+  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; arbitrary callable initializers remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now
@@ -101,7 +101,7 @@ excessive independent-kernel expansion under open contexts. Even canonical
 transition witnesses remained too costly without further helper refinements.
 Those attempts are not completed proofs and were removed from the active roots.
 The concrete laws pass independent checking. The differential suite has
-203 scenarios; focused tests additionally compare 9,216 constructor states,
+203 scenarios; focused tests additionally compare 10,752 constructor states,
 4,608 commit states, 768 read states and 24 held-stash helper cases with the
 actual pinned TS helpers. These include synthetic internal
 states to probe branches; their counts are separate from end-to-end histories.
@@ -266,8 +266,8 @@ checks. See [setters.md](setters.md) and [computed-accessors.md](computed-access
 Eighty-one writable-signal histories and 4,096 setMemo probes now cover the
 expression-based function-initializer overload. Two additional closed laws check
 manual previous-value rederivation and the preserved held-function counterexample.
-Constructor comparisons total 9,216. See [writable-signals.md](writable-signals.md).
-The next callback dependencies are general callable initializers and expression
+Constructor comparisons total 10,752. See [writable-signals.md](writable-signals.md).
+The next callback dependencies are arbitrary callable initializers and expression
 reads in teardown callbacks. General closures/functions, general
 returned cleanup closures, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit
@@ -291,3 +291,8 @@ Runtime-selected effect cleanup now retains actual callback returns for bound ro
 disposers, data/writable setters and undefined. Forty-eight additional histories
 and a closed replacement/disposal law exercise the source assignment/catch/finally
 order and aliases shared with owner slots; see [returned-cleanup.md](returned-cleanup.md).
+
+Selected first-class getter/setter/root-disposer initializers now take the real
+function overload and share writable-computed construction and selected setter
+policy; see [callable-initializers.md](callable-initializers.md). Arbitrary
+functions and read-capable owner teardown remain unfinished.

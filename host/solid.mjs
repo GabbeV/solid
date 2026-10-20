@@ -70,13 +70,20 @@ export class SolidRuntime {
       const {initial={lit:undefined},options={},body={lit:undefined}}=e.signalScope;
       requireTeardownProgram(this.programActions,options.unobserved);
       const value=this.evaluate(initial,prev,values,locals);
-      if(typeof value==='function')throw new TypeError('Function initializers from first-class values are not yet translated');
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
-      const [get,set]=this.S.createSignal(value,{...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]});
-      const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
-      this.localNotPending??=node._pendingValue;
-      this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
-      const binding={get,set,name};(this.localSignals??=new Map()).set(name,binding);
+      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const [get,set]=this.S.createSignal(typeof value==='function'?this.initializerCallback(name,value):value,opts);
+      const binding={get,set,name};
+      if(typeof value==='function'){
+        this.registerComputedAccessor(get,name);this.memoSetters.add(set);
+        (this.localComputedSignals??=new Map()).set(name,binding);
+      }else{
+        const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+        this.localNotPending??=node._pendingValue;
+        this.accessorIdentities.set(get,name);(this.localSignals??=new Map()).set(name,binding);
+      }
+      this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
       return this.evaluate(body,prev,values,[binding,...locals]);
     }
     if(Object.hasOwn(e,'localSetter')){
@@ -327,9 +334,23 @@ export class SolidRuntime {
     const opts=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,opts.unobserved);
     const initial=this.value(value);
-    if(typeof initial==='function')throw new TypeError('Function initializers from first-class values are not yet translated');
-    const [get,set]=this.S.createSignal(initial, {...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]}); this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
+    const options={...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]};
+    if(Object.hasOwn(opts,'loadingValue'))options.loadingValue=this.value(opts.loadingValue);
+    const [get,set]=this.S.createSignal(typeof initial==='function'?this.initializerCallback(name,initial):initial,options);
+    this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
+    if(typeof initial==='function'){this.registerComputedAccessor(get,name);this.memoSetters.add(set);}
   }
+  // Observation wrapper for an admitted first-class initializer. It calls the
+  // original bound function with exactly its source previous-value argument.
+  // Direct unwrapped native controls separately check result/state/lifetime.
+  initializerCallback(name,fn){return previous=>{
+    const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+    this.traceEvents.push(['compute',name]);
+    if(this.setterIdentities.has(fn))return this.writeValue(fn,previous);
+    const result=fn(previous);
+    if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
+    return result;
+  };}
   callback(name,expr,values=[],locals=[]) { return prev=> {
     this.sourceNames.set(this.S.getOwner(),name);
     this.notPending??=this.S.getOwner()._pendingValue; // read-only probe of the fresh-node sentinel

@@ -400,8 +400,7 @@ export class BendRuntime {
     const options=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,options.unobserved);
     const encoded=this.encode(value);
-    if([tags.disposer,tags.accessor,tags.setter].includes(encoded.$))throw new TypeError('Function initializers from first-class values are not yet translated');
-    this.world=R.createSignalWithOptions(this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
+    this.world=[tags.disposer,tags.accessor,tags.setter].includes(encoded.$)?R.createSignalInput(this.fuel,this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))):R.createSignalWithOptions(this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
   }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);

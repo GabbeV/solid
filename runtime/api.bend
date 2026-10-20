@@ -23,6 +23,12 @@ def nextId(w: R.World) -> Nat:
 def createSignalWithOptions(w: R.World, value: R.Value, options: R.NodeOptions) -> R.World:
   N.signal(w, value, options)
 
+# Public createSignal input dispatch, including constructor-selected callable
+# initializers. The body is user-ABI pair observation only; source ownership and
+# recomputation use the same SignalScope machine as nested construction.
+def createSignalInput(fuel: Nat, w: R.World, value: R.Value, options: R.NodeOptions) -> R.World:
+  C.world(C.eval(fuel, w, R.SignalScope{R.Literal{value}, options, R.Literal{R.Undefined{}}}, R.Undefined{}))
+
 def createSignal(w: R.World, value: R.Value, equals: Bool) -> R.World:
   createSignalWithOptions(w, value, R.NodeOptions.with_equals(N.defaults(), equals))
 
@@ -94,7 +100,7 @@ def flush(fuel: Nat, w: R.World) -> R.World:
 
 def setValue(fuel: Nat, +w: R.World, +id: Nat, value: R.Value) -> C.Machine:
   B.choose(~C.Machine, B.valid(w, id),
-    _ => C.run(fuel, C.Machine{w, [C.SetSignalArgument{id}], [value]}),
+    _ => C.run(fuel, C.Machine{w, [C.setterTask(w, id)], [value]}),
     _ => C.Machine{R.World.with_fault(w, R.BadId{}), [], []})
 
 def setSignal(+w: R.World, id: Nat, value: R.Value) -> R.World:

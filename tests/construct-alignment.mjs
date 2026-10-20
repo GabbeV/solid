@@ -38,11 +38,11 @@ try {
       pendingFirstChild:x._pendingFirstChild??0,pendingDisposal:x._pendingDisposal!==null,transaction:x._transaction??0,
       reask:x._reask,flushed:x._flushed!==K.NOT_PENDING,flushedAt:x._flushedAt,q:x._q,lane:x._lane!==K.NOT_PENDING,marks:x._marks,shownError:x._shownError};
   }
-  function actual(w) {
-    const ns=list(w.nodes),n=ns[4],xs=list(w.extensions);
+  function actual(w,kind) {
+    const ns=list(w.nodes),n=ns[kind===6?5:4],xs=list(w.extensions),links=list(w.links);
     return {config:n.config,flags:n.flags,status:n.status,loading:n.loading,equals:n.equals,value:value(n.value),
       pending:Object.hasOwn(n.pending,'value'),time:n.time,notified:stamp(n.notified),prevHeap:n.prevHeap,
-      height:n.height,deps:n.deps,subs:n.subs,parent:n.parent,parentComputed:n.parentComputed,scope:n.scope,childCount:n.childCount,
+      height:n.height,deps:n.deps?links[n.deps].dep:0,subs:n.subs,parent:n.parent,parentComputed:n.parentComputed,scope:n.scope,childCount:n.childCount,
       firstChild:n.firstChild,nextSibling:n.nextSibling,prevSibling:n.prevSibling,modified:n.modified,prevValue:value(n.prevValue),
       context:w.context,tracking:w.tracking,extension:extension(n.x?xs[n.x]:null,true),
       children:ns.slice(1,4).map(p=>[p.firstChild,p.nextSibling,p.prevSibling])};
@@ -67,12 +67,20 @@ try {
       n=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
       assert.ok(n,'native accessor target');
     }
+    else if(kind===6){
+      const [source]=S.createSignal(11);
+      const sourceNode=Object.getOwnPropertySymbols(source).map(key=>source[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+      nodes.push(sourceNode);
+      const [get]=S.createSignal(source,opts);
+      n=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+      assert.ok(n,'actual first-class native getter initializer target');
+    }
     else n=S.createEffectNode(()=>17,()=>{},undefined,kind-1,opts);
     nodes.push(n);
     const id=v=>v?nodes.indexOf(v):0;
     const result={config:n._config,flags:n._flags??0,status:n._statusFlags??0,loading:n._loading??false,equals:n._equals!==false,value:n._value,
       pending:n._pendingValue!==undefined&&n._pendingValue!==K.NOT_PENDING,time:n._time??0,notified:n._notifiedAt??-1,prevHeap:id(n._prevHeap),
-      height:n._height??0,deps:id(n._deps),subs:id(n._subs),parent:id(n._parent),parentComputed:id(n._parentComputed),scope:n._context===shared?41:0,childCount:n._childCount??0,
+      height:n._height??0,deps:n._deps?id(n._deps._dep):0,subs:id(n._subs),parent:id(n._parent),parentComputed:id(n._parentComputed),scope:n._context===shared?41:0,childCount:n._childCount??0,
       firstChild:id(n._firstChild),nextSibling:id(n._nextSibling),prevSibling:id(n._prevSibling),modified:n._modified??false,prevValue:n._prevValue,
       context:parentMode,tracking:false,extension:extension(n._x,false),
       children:nodes.slice(1,4).map(p=>[id(p._firstChild),id(p._nextSibling),id(p._prevSibling)])};
@@ -80,8 +88,8 @@ try {
     return result;
   }
   let checked=0;
-  for(const kind of [0,1,2,3,4,5])for(let bits=0;bits<64;bits++)for(const load of [0,1,2])for(const parent of [0,1,2,3])for(const unobserved of [false,true]) {
-    assert.deepEqual(actual(B.fixture(kind,bits,load,parent,unobserved)),reference(kind,bits,load,parent,unobserved),JSON.stringify({kind,bits,load,parent,unobserved}));checked++;
+  for(const kind of [0,1,2,3,4,5,6])for(let bits=0;bits<64;bits++)for(const load of [0,1,2])for(const parent of [0,1,2,3])for(const unobserved of [false,true]) {
+    assert.deepEqual(actual(B.fixture(kind,bits,load,parent,unobserved),kind),reference(kind,bits,load,parent,unobserved),JSON.stringify({kind,bits,load,parent,unobserved}));checked++;
   }
   const p=B.allocation(),n=w=>list(w.nodes)[1];
   assert.equal(n(p.before).x,0);assert.equal(list(p.before.extensions).length,1);

@@ -212,7 +212,7 @@ console.log(`${count-setterStart} escaped-setter histories match pinned TS funct
     assert.equal(s.evaluate(invoke(lit({accessor:'#nested1'}))),undefined);
     for(const runtime of [b,s]){
       const fn=runtime===b?bf:sf;
-      assert.throws(()=>runtime.signal('bad',fn),/Function initializers/);
+      runtime.signal('initializer',fn);assert.equal(runtime.read('initializer'),undefined);
       runtime.signal('sink',0);runtime.program('raw',[['set','sink',fn]]);
       assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/teardown/);
       assert.equal(runtime.evaluate({onCleanup:lit(fn)}),fn);

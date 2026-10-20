@@ -294,7 +294,7 @@ for(const storedFunction of ['disposer','accessor']){
     assert.equal(sf(),21);assert.equal(bf(),21);
     assert.equal(sf,s.value({accessor:'#nested1'}));assert.equal(bf,b.decode(b.encode(bf)));
     for(const runtime of [s,b]){
-      assert.throws(()=>runtime.signal('bad',runtime===s?sf:bf),/Function initializers/);
+      runtime.signal('initializer',runtime===s?sf:bf);assert.equal(runtime.read('initializer'),21);
       runtime.signal('sink',0);
       runtime.program('raw',[['set','sink',runtime===s?sf:bf]]);
       assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/Accessor updater reads in teardown/);

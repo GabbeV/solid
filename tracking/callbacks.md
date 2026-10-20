@@ -44,7 +44,7 @@ The owner teardown machine cannot yet suspend for expression evaluation.
 Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
-reads, arbitrary closures, general function values, general returned closures, general callable initializers and active scopes remain unfinished.
+reads, arbitrary closures, general function values, general returned closures, arbitrary callable initializers and active scopes remain unfinished.
 Expression-based function initializers now execute; see [writable-signals.md](writable-signals.md).
 Escaped data-signal setters and computed accessors now execute; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
@@ -56,3 +56,8 @@ The semantic deviation register is unchanged and empty.
 Selected bound setters now enter onCleanup and the existing owner action walk
 with no arguments; see [setter-cleanup.md](setter-cleanup.md). This does not
 implement general owner/core expression suspension.
+
+Selected first-class getter/setter/root-disposer initializers now take the real
+function overload and share writable-computed construction and selected setter
+policy; see [callable-initializers.md](callable-initializers.md). Arbitrary
+functions and read-capable owner teardown remain unfinished.

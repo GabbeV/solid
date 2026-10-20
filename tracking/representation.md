@@ -229,3 +229,8 @@ CleanupBoundSetter is a canonical callback-arena identity for a constructor's
 bound setter, separately from CleanupBoundRoot. It preserves the captured node
 and no-argument call through the ordinary owner machine. Getter and arbitrary
 expression callbacks remain unfinished; see [setter-cleanup.md](setter-cleanup.md).
+
+Selected first-class getter/setter/root-disposer initializers now take the real
+function overload and share writable-computed construction and selected setter
+policy; see [callable-initializers.md](callable-initializers.md). Arbitrary
+functions and read-capable owner teardown remain unfinished.

@@ -695,3 +695,5 @@ ALL PROOFS CHECK
 Kernel completed in 17.9s; hashes sealed in build/verification.json.
 
 2026-10-20 dynamic returned-cleanup milestone: build, 1833 complete differential histories, all alignment probes, 66 rejected mutations and independent kernel ALL PROOFS CHECK. Pin unchanged; active deviations empty. Logs: /workspace/scratch/returned-cleanup-{tests,alignment,mutations,check}.log. Seal inputs/outputs verified before commit.
+
+2026-10-20 callable initializer milestone: build, 1899 complete histories, 12 direct native constructor controls, all alignment suites including 10752 constructors, 70 source-changing mutations rejected, independent kernel ALL PROOFS CHECK. /workspace/scratch/callable-initializers-{tests,alignment,mutations,check}.log. Seal inputs/outputs verified; source pin unchanged, deviations empty.
