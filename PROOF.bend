@@ -138,6 +138,9 @@ def Laws.held_function_result_stays_data():
 def Laws.setter_cleanup_preserves_identity_and_clears():
   {==}
 
+def Laws.getter_cleanup_preserves_identity_and_pulls():
+  {==}
+
 def Laws.effect_returns_selected_cleanup():
   {==}
 

@@ -42,9 +42,9 @@ undefined write while the unowned signal survives. It checks slots, disposal,
 queues and ambient state through the actual runtime. This is one concrete law,
 not a proof of arbitrary callbacks or TS/Bend equivalence.
 
-Raw setter functions used as another setter's updater during owner teardown are
-still rejected: their arguments can themselves be functions and require the
-unfinished owner/core read boundary. Getter cleanup and arbitrary expression
-teardown remain unfinished. Runtime-selected effect cleanup now admits these same setters; see
-[returned-cleanup.md](returned-cleanup.md). General callable inputs remain open. The source pin and empty deviation register
-are unchanged.
+Raw setters used as another setter's updater and named expression reads in
+teardown now use the shared core driver. Direct bound getters are also admitted
+for registration/returned effect cleanup; see [getter-cleanup.md](getter-cleanup.md).
+Runtime-selected effect cleanup admits these same families; see
+[returned-cleanup.md](returned-cleanup.md). General closures remain open. The
+source pin and empty deviation register are unchanged.

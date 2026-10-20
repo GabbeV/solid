@@ -1,5 +1,8 @@
 # Owner/core continuation migration
 
+This milestone records its original pin and totals. The current pin is b0ad1df5;
+[getter cleanup](../getter-cleanup.md) supersedes the direct getter exclusion below.
+
 Solid remains pinned at 71153bf0; no semantic deviation is active. PR
 [#4176](https://github.com/solidjs/solid/pull/4176) is recorded separately. Its
 finally restoration is not applied to the pinned runtime.

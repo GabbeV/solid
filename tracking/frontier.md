@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2115 differential histories, 97 rejected compiled mutations,
-and 48 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2169 differential histories, 101 rejected compiled mutations,
+and 49 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -35,8 +35,10 @@ order, interrupted assignments and partial throws are retained. The static
 inventory reports zero restricted core crossings; it is not a package-completeness
 proof. Earlier staged progress sections below describe the historical boundary.
 
-Remaining callable work includes direct bound-getter cleanup registration,
-arbitrary callable initializers and richer closures; custom comparators and
+Direct bound getters now register and return as cleanup functions through the
+same read driver. [The getter review](getter-cleanup.md) records 54 new histories,
+canonical owner/effect aliases, a concrete law and native trace limits.
+Remaining callable work includes arbitrary callable initializers and richer closures; custom comparators and
 active boundary/lane/store engines remain outside this profile. PR #4176 is
 open; its proposed source fix is not silently applied to Bend.
 

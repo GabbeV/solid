@@ -14206,9 +14206,9 @@
           "sha256": "b549f921a785f37b6066e3b67160825bf99cdea390ff2a3df694bd0872cbed24",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally, installReturned, InstallReturnedCleanup, OwnerTasks, TrimFinallyRestore",
+            "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally, installReturned, InstallReturnedCleanup, OwnerTasks, TrimFinallyRestore; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
             "status": "partial",
-            "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished. Application bodies now receive actual current/previous values; error bodies receive the unwrapped cause with cleanup retained as the existing explicit helper. Arguments are user-code ABI, not engine decisions. Dynamic return-valued application wrappers now select undefined or canonical bound root/setter cleanup functions; the assignment remains after the callback and before finally. General returned closures/getters and expression teardown remain unfinished. First-class named callback values now execute through the existing core argument/call continuations. Their separate bound identity is canonical in owner/effect slots for the imperative teardown subset; general closure values and read-capable teardown remain unfinished. The previous cleanup now resumes the same core read machine before ApplyEffect; its finally trim now suspends too, with prior-fault/caller-stack restoration and new trim-fault precedence. Current closure supersedes earlier teardown exclusions: registered named expression-program cleanup functions are now admitted at previous-cleanup and returned-cleanup call sites. Direct getter cleanup values, arbitrary closures and active boundary/held-run hooks remain unfinished."
+            "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Application/error bodies receive actual values/parameters and use shared core read continuations. Return-valued application callbacks select undefined or canonical bound root/setter/getter/named program functions. Assignment follows successful callback return and precedes finally. Prior cleanup and finally trim suspend through the same owner/core driver, preserving prior faults, caller operands and overriding cleanup/trim errors. General closures, active boundaries/held-run hooks and dev diagnostics remain unfinished. Getter boundary read events cannot be observed directly by the native host; other trace/state/dependency/alias checks remain active in the focused suite."
           }
         },
         {
@@ -17179,9 +17179,9 @@
           "sha256": "65528c170935d390cd3046b43fd7e042b5a1014f7ff03dcb0ba6e2e2198f37c4",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter, runtime/core.bend:ownerTasks, ownerResume, OwnerTasks",
+            "bend": "runtime/owner.bend:runDisposal, disposalTasks, DisposalLoop, Invoke; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter, runtime/core.bend:ownerTasks, ownerResume, OwnerTasks; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
             "status": "restricted",
-            "restrictions": "Absent/single/list forms, detach before callback and reverse order. Reentry and explicit throws unwind core finally frames. Arbitrary receiver inspection/captured array mutation outside protocol. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished. First-class named callback values now execute through the existing core argument/call continuations. Their separate bound identity is canonical in owner/effect slots for the imperative teardown subset; general closure values and read-capable teardown remain unfinished. Direct core/API calls suspend actual Invoke tasks to the shared core callback interpreter. Restricted World helper paths still serve unmigrated scheduler/async callers; global read-capable teardown admission remains unfinished."
+            "restrictions": "Absent/single/list forms, detach before callback, reverse call order and interrupted/reentrant partial states retained. All active core callers suspend Invoke through the shared read machine. Original bound root, setter, getter and named expression-program functions retain canonical callback aliases. Cleanup returns are ignored; a bound getter reads its captured node in unchanged ambient context/tracking. Restricted World-only helper facades still reject read-capable actions. Arbitrary receiver inspection, captured array mutation, general closures and dev bookkeeping remain outside the admitted protocol. Getter-specific read-trace observation limits and 54 public histories are documented in tracking/getter-cleanup.md."
           }
         },
         {
@@ -17255,9 +17255,9 @@
           "sha256": "09ac49cfaefb11ec7f0413a74bb6c07a4a3e08ce8884e18f6141da2aee401d15",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter",
+            "bend": "runtime/owner.bend:cleanup, addDisposal; runtime/callable.bend:cleanup, encode; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
             "status": "restricted",
-            "restrictions": "Null owner early return and absent/single/list registration retained; explicit owner comes from the host runWithOwner boundary. The known callback identity is an implicit return in the state-threaded ABI. Bound root functions retain canonical callback identity across repeated/separate-owner registrations. Function data returns use RootDisposerReference; existing disposal forms/order remain unchanged. Selected bound data/writable-memo setter functions now preserve original return, canonical callback aliases and no-argument invocation. 42 additional histories and one closed identity/clear law; getter and arbitrary expression teardown still unfinished. First-class named callback values now execute through the existing core argument/call continuations. Their separate bound identity is canonical in owner/effect slots for the imperative teardown subset; general closure values and read-capable teardown remain unfinished. Reviewed #4158: Source now has an explicit optional owner target; Bend already takes the explicit owner and callers pass ambient or captured target at the same call points."
+            "restrictions": "Null owner early return and absent/single/list registration retained; explicit optional owner is passed at the source call sites. Canonical bound root, setter, getter and named program identities are reused across separate owners and returned effect-cleanup slots. Registration returns the original function and does not call it; no-owner registration allocates no hidden callback. Arbitrary function families and dev forbidden-scope checks remain unfinished."
           }
         },
         {
@@ -22415,9 +22415,9 @@
           "sha256": "1d6ffea63cac1e421b0f4857f36edb44776feac727a86e6b6721aa4f72bd8103",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter; runtime/core.bend:registerProgramCleanup, callbackExists, OwnerTasks; runtime/callable.bend:encodeProgram",
+            "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter; runtime/core.bend:registerProgramCleanup, callbackExists, OwnerTasks; runtime/callable.bend:encodeProgram; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
             "status": "partial",
-            "restrictions": "Production returns the same registered callable, including without an owner. Init-bound root disposers, selected data/writable-memo setters and canonical named expression-program callback values execute. Void callback returns are ignored; reads/writes/updaters/nested primitives use the shared core driver across disposal and async/error/pending callers. Direct bound-getter cleanup values, arbitrary function data/closures and dev forbidden-scope diagnostics remain unfinished. See tracking/reviews/teardown-closure.md."
+            "restrictions": "Production returns the same registered callable, including without an owner. Bound root disposers, data/writable setters, data/computed getters and named expression-program callbacks execute. Getter cleanup uses its captured node and the shared ReadNode driver, retaining lazy activation, frozen/dead-owner reads, tracking, pending and error behavior. Source cleanup returns are ignored. Arbitrary closures/function reflection and dev forbidden-scope diagnostics remain unfinished. See tracking/getter-cleanup.md for 54 histories, observation limits and one concrete law."
           }
         },
         {
@@ -22427,9 +22427,9 @@
           "sha256": "e2924f66fa69ba303b0e68f432366bb23e4aebc642129708541129c540a982f6",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/callable.bend:accessor; runtime/core.bend:invokeValue; runtime/lexical.bend:bind LocalAccessor",
+            "bend": "runtime/callable.bend:accessor; runtime/core.bend:invokeValue; runtime/lexical.bend:bind LocalAccessor; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
             "status": "partial",
-            "restrictions": "Bound read functions for data signals and computed nodes capture the actual node ID, preserve native aliases and resume ordinary source reads, including lazy pulls, pending/error paths and frozen reads after owner disposal. Forty signal-accessor and fifty-one computed-accessor histories plus closed lifetime laws. Refresh target retained as node ID; symbol/property reflection, arbitrary functions and active store accessors unfinished."
+            "restrictions": "Bound read functions for data signals and computed nodes capture the actual node ID, preserve native aliases and resume ordinary source reads, including lazy pulls, pending/error paths and frozen reads after owner disposal. Forty signal-accessor and fifty-one computed-accessor histories plus closed lifetime laws. Refresh target retained as node ID; symbol/property reflection, arbitrary functions and active store accessors unfinished. Direct cleanup registration and returned effect cleanup now reuse this same function identity, target and core read path; no source wrapper is substituted. Getter-cleanup observations intentionally omit read trace comparisons because native cleanup calls bypass the host observer."
           }
         },
         {
@@ -22545,7 +22545,7 @@
           "mapping": {
             "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
             "status": "partial",
-            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
+            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter/getter/named-program cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
           }
         },
         {
@@ -22557,7 +22557,7 @@
           "mapping": {
             "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
             "status": "partial",
-            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
+            "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter/getter/named-program cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
           }
         },
         {

@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['getter cleanup reads the ambient receiver','runtime/core.bend','Machine{w, ReadNode{signal} <> rest, stack}','Machine{w, ReadNode{R.World.context(w)} <> rest, stack}','tests/getter-cleanup.mjs','callbackAction'],
+  ['getter cleanup loses its returned identity','runtime/core.bend','Machine{J.cleanupAccessor(w, R.World.context(w), signal), rest, R.AccessorReference{signal} <> tail}','Machine{J.cleanupAccessor(w, R.World.context(w), signal), rest, R.Undefined{} <> tail}','tests/getter-cleanup.mjs','onCleanupValue'],
+  ['getter cleanup allocates a fresh callable per registration','runtime/callable.bend','+old = findAccessor(R.World.cleanupPrograms(w), signal, 0n)','+old = {0n : Nat}','tests/getter-cleanup.mjs','encodeAccessor'],
+  ['returned getter cleanup captures the effect instead','runtime/core.bend','+pair = J.encodeAccessor(w, signal)','+pair = J.encodeAccessor(w, id)','tests/getter-cleanup.mjs','installReturned'],
   ['async landing omits dependency-tail cleanup','runtime/core.bend','OwnerTasks{[O.TrimDeps{id}]} <> ending','ending','tests/teardown-expressions.mjs','asyncWrite'],
   ['pending release skips its next captured candidate','runtime/core.bend','Q.Release{1n+index} <> tail','Q.Release{2n+index} <> tail','tests/teardown-expressions.mjs','pendingTasks'],
   ['flight settlement omits last-observer cleanup','runtime/core.bend','Machine{w, B.choose(~List<&2, Task>, F.shouldSettleAutodispose(w, id),\n        _ => OwnerTasks{[O.Unobserved{id}]} <> rest, _ => rest), stack}','Machine{w, rest, stack}','tests/teardown-expressions.mjs','dispatch'],

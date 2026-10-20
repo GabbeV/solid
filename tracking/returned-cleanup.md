@@ -46,7 +46,8 @@ and commits the last cleanup's write through the actual runtime. This concrete
 execution does not prove arbitrary cleanup selection or TypeScript equivalence.
 
 Named expression-program cleanup functions now share the owner/core driver.
-General returned closures and direct bound-getter cleanup values remain outside
+Direct bound getter values are now supported; see [getter-cleanup.md](getter-cleanup.md).
+General returned closures remain outside
 the represented callable domain. Invalid production return values are outside this typed ABI; no dev
 validation has been imported into the production translation. Unsupported
 returned values report an explicit boundary fault rather than being treated as

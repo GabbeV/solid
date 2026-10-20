@@ -301,7 +301,7 @@ for(const storedFunction of ['disposer','accessor']){
       assert.doesNotThrow(()=>runtime.effect('getterCleanup',lit(1),{cleanup:'raw',owner:'cleanupScope'}));
       runtime.flush();runtime.disposeOwner('cleanupScope');runtime.flush();
       assert.equal(runtime.read('sink'),21,'teardown setter invokes the frozen getter updater');
-      assert.throws(()=>runtime.evaluate({onCleanup:{lit:runtime===s?sf:bf}}));
+      assert.equal(runtime.evaluate({onCleanup:{lit:runtime===s?sf:bf}}),runtime===s?sf:bf,'no-owner getter cleanup returns its original function');
     }
   }finally{for(const runtime of [s,b]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');}}
 }

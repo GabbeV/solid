@@ -29,7 +29,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject ninety-seven source-changing variants
+npm run mutations                # reject 101 source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -69,7 +69,8 @@ use, native promise data and runtime-selected cleanup programs; see
 callbacks remain unfinished. Read-capable teardown now has shared owner/core
 continuations through disposal, effect cleanup, core/scheduler trims, native
 watchers and async/error/pending release. Public expression cleanup programs
-are admitted; bound getter cleanup values and arbitrary closures remain open.
+and direct bound getter cleanup values are admitted; arbitrary closures remain open.
+See [getter cleanup](tracking/getter-cleanup.md) for coverage and read-observation limits.
 See [owner/core coverage](tracking/owner-core.md).
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:

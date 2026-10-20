@@ -148,6 +148,7 @@ type CleanupAction is Data:
   CleanupCloseIterator{stream: Nat}
   CleanupBoundRoot{owner: Nat}
   CleanupBoundSetter{signal: Nat}
+  CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
   CallbackEvaluate{expr: Expr}
   CallbackReturn{expr: Expr}

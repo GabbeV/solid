@@ -405,6 +405,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.CleanupBoundAccessor{signal}:
+      Machine{w, ReadNode{signal} <> rest, stack}
     case R.CleanupWrite{signal, value}:
       Machine{w, setterTask(w, signal) <> Discard{} <> Callback{id, tail, first, second} <> rest, value <> stack}
     case R.CallbackEvaluate{expr}:
@@ -580,8 +582,8 @@ def onCleanupValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>,
       registerProgramCleanup(w, rest, tail, callback)
     case R.RootDisposerReference{+root}:
       Machine{J.cleanup(w, R.World.context(w), root), rest, R.RootDisposerReference{root} <> tail}
-    case R.AccessorReference{signal}:
-      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}
+    case R.AccessorReference{+signal}:
+      Machine{J.cleanupAccessor(w, R.World.context(w), signal), rest, R.AccessorReference{signal} <> tail}
     case R.SetterReference{+signal}:
       Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.SetterReference{signal} <> tail}
     case _:
@@ -1447,6 +1449,10 @@ def installReturned(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>
             _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail})
         case R.SetterReference{signal}:
           +pair = J.encodeSetter(w, signal)
+          +w = B.first(R.World, Nat, pair)
+          Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail}
+        case R.AccessorReference{signal}:
+          +pair = J.encodeAccessor(w, signal)
           +w = B.first(R.World, Nat, pair)
           Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail}
         case _:

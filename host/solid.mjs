@@ -184,7 +184,6 @@ export class SolidRuntime {
     }
     if(e.onCleanup){
       const callee=this.evaluate(e.onCleanup,prev,values,locals);
-      if(this.accessorIdentities.has(callee))throw new TypeError('Accessor teardown reads are not yet translated');
       if(this.S.getOwner()&&this.callbackIdentities.has(callee))requireTeardownProgram(this.programActions,this.callbackIdentities.get(callee));
       return this.S.onCleanup(callee);
     }
