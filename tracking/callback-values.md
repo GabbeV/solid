@@ -42,7 +42,7 @@ Only the existing imperative teardown program domain is admitted here. Expressio
 teardown still needs the unfinished owner/core continuation boundary. No-owner
 onCleanup returns the same function without inspecting or allocating a cleanup.
 
-63 complete histories compare actual pinned Solid results, node fields, owner and
+64 complete histories compare actual pinned Solid results, node fields, owner and
 effect cleanup identities, traces, reports, ambient restoration and native promise
 observations. They cover values/aliases, tracked and imperative calls, ordered and
 throwing arguments, higher-order dispatch, callee capture before argument effects,
@@ -58,3 +58,6 @@ identity, then disposes and commits its writes through the active runtime. It ch
 that the unowned derived signal remains live. This is one concrete composed law,
 not a theorem for arbitrary functions or TypeScript equivalence. The pin and empty
 deviation register are unchanged.
+
+The direct owner/core bridge now also preserves completion of a longer imperative
+cleanup under the implicit disposal budget; see [owner-core.md](owner-core.md).

@@ -67,3 +67,8 @@ enter the same core call/argument, initializer and updater paths. Their imperati
 teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
 Read-capable teardown remains unfinished; the boundary investigation and explicit
 next return points are in [the teardown review](reviews/teardown-boundary.md).
+
+Direct disposal/effect-precleanup/recompute-preparation now suspend owner Invoke
+tasks to the shared core callback machine. Thirty-five direct source probes and
+a concrete cleanup-read kernel fixture check the first stage; global teardown
+read admission remains unfinished. See [owner-core.md](owner-core.md).

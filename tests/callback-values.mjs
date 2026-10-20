@@ -212,3 +212,15 @@ await scenario('callee selection is captured before argument effects',[
   ['evaluate',invokeArgs(call('select'),call('switch'))],['flush'],['evaluate',invoke(call('select'))],['dispose'],['flush']
 ]);
 console.log(`${count} total first-class callback histories pass.`);
+
+await scenario('long imperative cleanup keeps the source implicit disposal capacity',[
+  ['program','clean',Array.from({length:96},(_,i)=>['emit',i])],['root','target',onCleanup(fn('clean'))],
+  ['disposeOwner','target'],['dispose'],['flush']
+]);
+for(const r of [new BendRuntime(),new SolidRuntime({module:await import('../build/solid.mjs?long-native-cleanup')})]){
+  r.program('clean',Array.from({length:96},(_,i)=>['emit',i]));r.root('target',onCleanup(fn('clean')));
+  const dispose=r.evaluate(disposer('target'));dispose();
+  assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,96);
+  r.dispose();r.flush();
+}
+console.log(`${count} complete callback-value histories and native controls pass.`);

@@ -212,8 +212,10 @@ def createRoot(fuel: Nat, +w: R.World, expr: R.Expr, +parent: Nat, transparent: 
   +m = C.eval(fuel, w, R.WithOwner{R.Literal{R.OwnerReference{id}}, Z.bind(expr, R.RootDisposerReference{id}, R.Undefined{})}, R.Undefined{})
   C.Machine{L.restore(C.world(m), oldContext, oldTracking), [], C.values(m)}
 
-def invokeRootDisposer(w: R.World, owner: Nat) -> R.World:
-  O.disposeChildren(w, owner, True{}, False{})
+# Bookkeeping allowance for the additional core callback/owner steps; this
+# remains an explicit implicit resource bound, not a source engine decision.
+def invokeRootDisposer(+w: R.World, owner: Nat) -> R.World:
+  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Enter{owner, True{}, False{}}])
 
 def vRootDisposer(owner: Nat) -> R.Value:
   R.RootDisposerReference{owner}
@@ -284,8 +286,8 @@ def detach(w: R.World, id: Nat) -> R.World:
 def displayed(w: R.World, id: Nat) -> R.Value:
   T.text(w, id)
 
-def dispose(w: R.World, id: Nat) -> R.World:
-  O.dispose(w, id)
+def dispose(+w: R.World, id: Nat) -> R.World:
+  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{id}])
 
 # Constructor for the proof witness generator. It supplies no scheduling or
 # answers: each following transition is core.step and is checked in BendTT.

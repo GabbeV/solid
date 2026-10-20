@@ -23,6 +23,7 @@ import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/callback-values.bend as CallbackValues
+import ./proof/owner-core.bend as OwnerCore
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -189,3 +190,6 @@ law callable_initializer_tracks_and_freezes:
 
 law callback_values_bind_initialize_and_cleanup:
   {CallbackValues.scenario() == CallbackValues.expected() : CallbackValues.View}
+
+law direct_owner_cleanup_reads_resume_core:
+  {OwnerCore.scenario() == OwnerCore.expected() : OwnerCore.View}

@@ -45,3 +45,9 @@ First-class named callback values were implemented independently on the existing
 core continuations. Their imperative cleanup subset uses the unchanged owner walk;
 expression-bearing teardown remains explicitly rejected. There is no semantic
 workaround to register or retire.
+
+The first continuation stage now executes on the active runtime for direct owner
+calls, effect previous cleanup and recompute pre-body teardown. Its evidence and
+remaining caller gaps are in [owner-core.md](../owner-core.md). Public teardown
+expression admission is still restricted; the rejected executor prototype remains
+outside the runtime.

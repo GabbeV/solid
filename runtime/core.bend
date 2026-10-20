@@ -48,6 +48,9 @@ type Task is Data:
   InvokeArgument{value: R.Expr, updater: Bool, previous: R.Value}
   InvokeApplied{callee: R.Value}
   InvokeArguments{}
+  OwnerTasks{tasks: List<&2, O.Task>}
+  RecomputeAfterFlight{id: Nat}
+  RecomputePrepared{id: Nat, create: Bool}
   OnCleanup{}
   CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
   SetSignalArgument{signal: Nat}
@@ -360,7 +363,7 @@ def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
     case R.CallbackThrow{expr}:
       Machine{w, Evaluate{Z.bind(expr, first, second), R.Undefined{}} <> CallbackThrow{} <> Callback{id, tail, first, second} <> rest, stack}
     case other:
-      Machine{O.invokeAction(w, id, other), Callback{id, tail, first, second} <> rest, stack}
+      Machine{w, OwnerTasks{[O.Action{id, other}]} <> Callback{id, tail, first, second} <> rest, stack}
 
 def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +first: R.Value, +second: R.Value, actions: List<&2, R.CleanupAction>) -> Machine:
   match actions:
@@ -374,7 +377,7 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
 def resolveSignalArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +signal: Nat, +current: R.Value, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{O.disposeChildren(w, owner, True{}, False{}), SetSignalResolved{signal, current} <> rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> SetSignalResolved{signal, current} <> rest, R.Undefined{} <> tail}
     case R.ProgramReference{callback}:
       Machine{w, Evaluate{R.CallWith{callback, R.Literal{current}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetSignalResolved{signal, current} <> rest, tail}
     case R.AccessorReference{id}:
@@ -425,7 +428,7 @@ def disposeRootValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value
   match value:
     case R.OwnerReference{+id}:
       B.choose(~Machine, B.root(R.Node.kind(B.node(w, id))),
-        _ => Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail},
+        _ => Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}]} <> rest, R.Undefined{} <> tail},
         _ => Machine{R.World.with_fault(w, R.TypeError{}), rest, tail})
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
@@ -441,7 +444,7 @@ def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) ->
 def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{id}:
-      Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}]} <> rest, R.Undefined{} <> tail}
     # signals.ts:accessor is read.bind(null,node); invocation enters the
     # ordinary read return points, with the caller stack/context intact.
     case R.ProgramReference{callback}:
@@ -476,7 +479,7 @@ def invokeApplied(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, 
 def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +id: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{O.disposeChildren(w, owner, True{}, False{}), SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
     case R.ProgramReference{callback}:
       Machine{w, Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetMemoForward{id, True{}} <> rest, tail}
     case R.AccessorReference{node}:
@@ -745,27 +748,6 @@ def afterCheck(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
   todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))), _ => [Recompute{id, False{}}], _ => [])
   Machine{w, B.append(Task, todo, ClearFlags{id} <> rest), stack}
 
-# core/core.ts:recompute before the compute try. Cleanup failures here unwind
-# the caller; they are not caught as errors of this node's body.
-def prepareRecompute(+w: R.World, +id: Nat) -> R.World:
-  +w = H.deleteFromHeap(w, id)
-  +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-    _ =>
-      +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
-      O.releaseFlightTeardown(w, id),
-    _ => w)
-  B.choose(~R.World, B.ok(w),
-    _ =>
-      +n = B.node(w, id)
-      +w = B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_PENDING()),
-        _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
-      +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.reenterHeld(w, id), _ => w)
-      B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
-          _ => O.disposeChildren(w, id, False{}, False{}),
-          _ => B.choose(~R.World, Bool.or(Nat.is_ne(R.Node.firstChild(B.node(w, id)), 0n), Bool.not(B.noDisposal(R.Node.disposal(B.node(w, id))))),
-            _ => O.parkChildren(w, id), _ => w)),
-    _ => w)
-
 def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
   +n = B.node(w, id)
   reask = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_REASK()),
@@ -785,10 +767,35 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   w = R.World.with_tracking(B.event(w, R.Invoked{id}), True{})
   Machine{w, next, stack}
 
+# core.ts:recompute before its body try: callbacks here unwind the caller.
+def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +n = B.node(w, id)
+  +w = B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_PENDING()),
+    _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
+  +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.reenterHeld(w, id), _ => w)
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
+    _ => Machine{w, OwnerTasks{[O.Enter{id, False{}, False{}}]} <> RecomputePrepared{id, False{}} <> rest, stack},
+    _ =>
+      w = B.choose(~R.World, Bool.or(Nat.is_ne(R.Node.firstChild(B.node(w, id)), 0n), Bool.not(B.noDisposal(R.Node.disposal(B.node(w, id))))),
+        _ => O.parkChildren(w, id), _ => w)
+      Machine{w, RecomputePrepared{id, False{}} <> rest, stack})
+
+def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
+  +callback = R.NodeExtension.flightTeardown(B.extension(w, id))
+  B.choose(~Machine, Nat.is_ne(callback, 0n),
+    _ => Machine{B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), 0n)),
+      OwnerTasks{[O.Invoke{callback}]} <> RecomputeAfterFlight{id} <> rest, stack},
+    _ => Machine{w, RecomputeAfterFlight{id} <> rest, stack})
+
 def recompute(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
   +w = B.bump(w)
-  +w = B.choose(~R.World, create, _ => w, _ => prepareRecompute(w, id))
-  B.choose(~Machine, B.ok(w), _ => recomputePrepared(w, rest, stack, id, create), _ => Machine{w, rest, stack})
+  B.choose(~Machine, create, _ => recomputePrepared(w, rest, stack, id, create),
+    _ =>
+      +w = H.deleteFromHeap(w, id)
+      B.choose(~Machine, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ => recomputeFlight(w, rest, stack, id),
+        _ => recomputeAfterFlight(w, rest, stack, id)))
 
 # Source loops over a captured Set handle, not a copied member list. Its live
 # cursor skips deleted slots and observes appends, as JS Set iteration does.
@@ -1317,8 +1324,9 @@ def runEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
         +clean = B.nullish(R.NodeExtension.error(B.extension(w, id)))
         +prevCleanup = R.Node.cleanup(n)
         +w = B.store_node(w, id, R.Node.with_cleanup(n, 0n))
-        +w = B.choose(~R.World, Nat.is_ne(prevCleanup, 0n), _ => O.invoke(w, prevCleanup), _ => w)
-        Machine{w, ApplyEffect{id} <> EffectFinally{id, clean, stack} <> rest, stack}),
+        +ending = {ApplyEffect{id} <> EffectFinally{id, clean, stack} <> rest : List<&2, Task>}
+        todo = B.choose(~List<&2, Task>, Nat.is_ne(prevCleanup, 0n), _ => OwnerTasks{[O.Invoke{prevCleanup}]} <> ending, _ => ending)
+        Machine{w, todo, stack}),
     _ => Machine{w, rest, stack})
 
 def queue_tasks(ids: List<&2, Nat>) -> List<&2, Task>:
@@ -1467,6 +1475,22 @@ def watchFinish(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +a
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
+def ownerResume(+rest: List<&2, Task>, +stack: List<&2, R.Value>, machine: O.Machine) -> Machine:
+  match machine:
+    case O.Machine{world, tasks}:
+      Machine{world, OwnerTasks{tasks} <> rest, stack}
+
+# Same owner dispatcher, resumed after core has executed the user callback.
+# The owner walk neither changes ambient context/tracking nor observes a return.
+def ownerTasks(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, tasks: List<&2, O.Task>) -> Machine:
+  match tasks:
+    case Nil{}:
+      Machine{w, rest, stack}
+    case O.Invoke{callback} <> tail:
+      Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail} <> rest, stack}
+    case other:
+      ownerResume(rest, stack, O.dispatch(w, other))
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case Nil{}:
@@ -1538,6 +1562,12 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{W.setResolved(w, signal, current, value), rest, value <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case OwnerTasks{tasks} <> rest:
+      ownerTasks(w, rest, stack, tasks)
+    case RecomputeAfterFlight{id} <> rest:
+      recomputeAfterFlight(w, rest, stack, id)
+    case RecomputePrepared{id, create} <> rest:
+      recomputePrepared(w, rest, stack, id, create)
     case InvokeArguments{} <> +rest:
       match stack:
         case second <> first <> callee <> tail:
@@ -1808,3 +1838,7 @@ def resolveThenableState(fuel: Nat, +w: R.World, +id: Nat, +rejected: Bool, +val
 
 def resolveThenable(fuel: Nat, +w: R.World, +id: Nat, rejected: Bool, value: R.Value) -> R.World:
   resolveThenableState(fuel, w, id, rejected, value, R.AsyncObject.state(B.asyncObject(w, id)))
+
+# External root/dispose facades use the same core step relation as callbacks.
+def ownerWorld(fuel: Nat, w: R.World, tasks: List<&2, O.Task>) -> R.World:
+  world(run(fuel, Machine{w, [OwnerTasks{tasks}], []}))

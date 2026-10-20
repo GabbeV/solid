@@ -146,3 +146,6 @@ def Laws.callable_initializer_tracks_and_freezes():
 
 def Laws.callback_values_bind_initialize_and_cleanup():
   {==}
+
+def Laws.direct_owner_cleanup_reads_resume_core():
+  {==}
