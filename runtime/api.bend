@@ -480,3 +480,10 @@ def contextDescription(description: String) -> R.Slot:
 
 def vContextFailure(identity: Nat, kind: U32) -> R.Value:
   R.ContextFailure{identity, kind}
+
+# Named callback function values retain the program's own two user arguments.
+def vProgram(callback: Nat) -> R.Value:
+  R.ProgramReference{callback}
+
+def invokeArguments(callee: R.Expr, first: R.Expr, second: R.Expr) -> R.Expr:
+  R.InvokeArguments{callee, first, second}

@@ -51,3 +51,9 @@ boundary. Invalid production return values are outside this typed ABI; no dev
 validation has been imported into the production translation. Unsupported
 returned values report an explicit boundary fault rather than being treated as
 undefined. The pin and empty deviation register are unchanged.
+
+First-class named callback values now retain canonical function identity and
+enter the same core call/argument, initializer and updater paths. Their imperative
+teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
+Read-capable teardown remains unfinished; the boundary investigation and explicit
+next return points are in [the teardown review](reviews/teardown-boundary.md).

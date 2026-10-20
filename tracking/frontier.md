@@ -296,3 +296,9 @@ Selected first-class getter/setter/root-disposer initializers now take the real
 function overload and share writable-computed construction and selected setter
 policy; see [callable-initializers.md](callable-initializers.md). Arbitrary
 functions and read-capable owner teardown remain unfinished.
+
+First-class named callback values now retain canonical function identity and
+enter the same core call/argument, initializer and updater paths. Their imperative
+teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
+Read-capable teardown remains unfinished; the boundary investigation and explicit
+next return points are in [the teardown review](reviews/teardown-boundary.md).

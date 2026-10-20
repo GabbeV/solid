@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['callback raw updater is stored without invocation','runtime/core.bend','Machine{w, Evaluate{R.CallWith{callback, R.Literal{current}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetSignalResolved{signal, current} <> rest, tail}','Machine{w, SetSignalResolved{signal, current} <> rest, R.ProgramReference{callback} <> tail}','tests/callback-values.mjs'],
+  ['callback function values lose canonical cleanup aliases','runtime/callable.bend','+old = findProgram(R.World.cleanupPrograms(w), callback, 0n)','+old = {0n : Nat}','tests/callback-values.mjs'],
+  ['two-argument call reverses user parameters','runtime/core.bend','R.CallWith{callback, R.Literal{first}, R.Literal{second}}','R.CallWith{callback, R.Literal{second}, R.Literal{first}}','tests/callback-values.mjs'],
+  ['callback value initializer selects a data signal','runtime/core.bend','callableSignal(w, rest, tail, R.ProgramReference{callback}, options, body, previous)','Machine{N.signal(w, R.ProgramReference{callback}, options), rest, tail}','tests/callback-values.mjs'],
   ['callable getter initializer selects a setter','runtime/core.bend','callableSignal(w, rest, tail, R.AccessorReference{signal}, options, body, previous)','callableSignal(w, rest, tail, R.SetterReference{signal}, options, body, previous)','tests/callable-initializers.mjs'],
   ['initializer receives enclosing expression previous','runtime/core.bend','R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}','R.InvokeWith{R.Literal{value}, R.Literal{previous}, False{}}','tests/callable-initializers.mjs'],
   ['named setter bypasses memo policy','runtime/api.bend','C.Machine{w, [C.setterTask(w, id)], [value]}','C.Machine{w, [C.SetSignalArgument{id}], [value]}','tests/callable-initializers.mjs'],

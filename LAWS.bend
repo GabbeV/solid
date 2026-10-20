@@ -22,6 +22,7 @@ import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
+import ./proof/callback-values.bend as CallbackValues
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -185,3 +186,6 @@ law effect_returns_selected_cleanup:
 
 law callable_initializer_tracks_and_freezes:
   {CallableInitializers.scenario() == CallableInitializers.expected() : CallableInitializers.View}
+
+law callback_values_bind_initialize_and_cleanup:
+  {CallbackValues.scenario() == CallbackValues.expected() : CallbackValues.View}

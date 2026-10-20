@@ -76,3 +76,27 @@ def cleanupSetter(+w: R.World, +owner: Nat, signal: Nat) -> R.World:
     _ =>
       +pair = encodeSetter(w, signal)
       O.cleanup(B.first(R.World, Nat, pair), owner, B.second(R.World, Nat, pair)))
+
+# A bound named program is distinct from the original static cleanup wrapper.
+# One canonical arena callable represents that bound function at every owner.
+def boundProgram(actions: List<&2, R.CleanupAction>, +callback: Nat) -> Bool:
+  match actions:
+    case R.CleanupBoundProgram{id} <> Nil{}:
+      Nat.is_eq(id, callback)
+    case _:
+      False{}
+
+def findProgram(programs: List<&2, R.CleanupProgram>, +callback: Nat, +index: Nat) -> Nat:
+  match programs:
+    case Nil{}:
+      0n
+    case program <> rest:
+      B.choose(~Nat, boundProgram(R.CleanupProgram.actions(program), callback),
+        _ => index, _ => findProgram(rest, callback, Nat.add(index, 1n)))
+
+def encodeProgram(+w: R.World, +callback: Nat) -> B.Bundle<R.World, Nat>:
+  +old = findProgram(R.World.cleanupPrograms(w), callback, 0n)
+  B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
+    _ =>
+      +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundProgram{callback}], False{}}])), next})

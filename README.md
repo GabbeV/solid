@@ -55,7 +55,10 @@ The expression-based `createSignal(fn)` overload and its distinct setMemo policy
 now execute; see [writable signals](tracking/writable-signals.md).
 Selected setters can also be registered directly with `onCleanup`; see
 [setter cleanup](tracking/setter-cleanup.md).
-Arbitrary host JavaScript callbacks are not yet supported.
+First-class named callback values also support ordered calls, initializer/updater
+use, native promise data and runtime-selected imperative cleanup; see
+[callback function values](tracking/callback-values.md). Arbitrary host JavaScript
+callbacks and read-capable teardown remain unfinished.
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 

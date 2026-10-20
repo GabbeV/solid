@@ -30,3 +30,15 @@ export class SourceSetters {
   }
   identity(value){return typeof value==='function'?this.identities.get(value):undefined;}
 }
+
+// The public named function binds the helper parameter to undefined. It keeps
+// its own stable identity, separate from the static cleanup program wrapper.
+export class ProgramFunctions extends SourceSetters {
+  get(program){
+    if(!this.bySignal.has(program)){
+      const call=(first,second)=>this.invoke(program,first,second);
+      this.bySignal.set(program,call);this.identities.set(call,program);
+    }
+    return this.bySignal.get(program);
+  }
+}

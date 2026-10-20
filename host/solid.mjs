@@ -1,4 +1,4 @@
-import {requireTeardownProgram} from './programs.mjs';
+import {requireTeardownProgram,requireFunctionProgram} from './programs.mjs';
 import * as DefaultSolid from '../build/solid.mjs';
 import {HostErrors} from './errors.mjs';
 export class SolidRuntime {
@@ -6,7 +6,7 @@ export class SolidRuntime {
     this.S=module;
     this.clock=clock??{setTimeout,clearTimeout};this.controllers={};this.hostErrors=new HostErrors();
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
-    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.memoSetters=new WeakSet();this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value);
+    this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.callbackFunctions=new Map();this.callbackIdentities=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.memoSetters=new WeakSet();this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value)||this.callbackIdentities.has(value);
   }
   ownerFor(name){
     if(name===null)return null;
@@ -14,9 +14,22 @@ export class SolidRuntime {
     if(!owner)throw new TypeError('Unknown owner: '+name);
     return owner;
   }
+  callbackValue(name){
+    if(!this.programs[name])throw new TypeError('Unknown callback function: '+name);
+    requireFunctionProgram(this.programActions,name);
+    if(!this.callbackFunctions.has(name)){
+      const fn=this.programs[name].bind(null,undefined);this.callbackFunctions.set(name,fn);this.callbackIdentities.set(fn,name);
+    }
+    return this.callbackFunctions.get(name);
+  }
+  returnedCleanup(value){
+    if(this.callbackIdentities.has(value))requireTeardownProgram(this.programActions,this.callbackIdentities.get(value));
+    return value;
+  }
   value(v) {
+    if(v&&typeof v==='object'&&typeof v.callback==='string')return this.callbackValue(v.callback);
     if(v instanceof this.S.NoOwnerError||v instanceof this.S.ContextNotFoundError)return v;
-    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
+    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v)&&!this.callbackIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
     const described=this.hostErrors.describe(v);
     if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
     if(v&&typeof v==='object'&&typeof v.setter==='string'){
@@ -112,7 +125,7 @@ export class SolidRuntime {
         this.traceEvents.push(['apply',name,v,p]);
         if(options.user===false)this.screens[options.target??3]=v;
         const result=Object.hasOwn(e,'body')?this.evaluate(e.body,undefined,[v,p],locals):options.program?this.programs[options.program](undefined,v,p):undefined;
-        return options.returnCleanup?result:options.cleanup?this.programs[options.cleanup]:undefined;
+        return options.returnCleanup?this.returnedCleanup(result):options.cleanup?this.programs[options.cleanup]:undefined;
       };
       const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
       return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values,locals),bundle,{...options,unobserved:this.programs[options.unobserved]});
@@ -143,10 +156,19 @@ export class SolidRuntime {
     if(e.select) return this.evaluate(e.select[0],prev,values,locals) ? this.evaluate(e.select[1],prev,values,locals) : this.evaluate(e.select[2],prev,values,locals);
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
+    if(e.invokeArgs){
+      const {callee,args=[]}=e.invokeArgs;
+      if(args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
+      const fn=this.evaluate(callee,prev,values,locals),arguments_=args.map(arg=>this.evaluate(arg,prev,values,locals));
+      const result=this.setterIdentities.has(fn)?this.writeValue(fn,arguments_[0]):fn(...arguments_);
+      if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
+      return result;
+    }
     if(e.invokeWith){
       const {callee,value={lit:undefined},updater=false}=e.invokeWith;
       const fn=this.evaluate(callee,prev,values,locals);
       if(updater){
+        if(this.callbackIdentities.has(fn))throw new TypeError('Updater closure arguments to callback values are not yet translated');
         const result=fn(previous=>this.evaluate(value,previous,values,locals));
         if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
         return result;
@@ -163,6 +185,7 @@ export class SolidRuntime {
     if(e.onCleanup){
       const callee=this.evaluate(e.onCleanup,prev,values,locals);
       if(this.accessorIdentities.has(callee))throw new TypeError('Accessor teardown reads are not yet translated');
+      if(this.S.getOwner()&&this.callbackIdentities.has(callee))requireTeardownProgram(this.programActions,this.callbackIdentities.get(callee));
       return this.S.onCleanup(callee);
     }
     if(e.call){
@@ -197,6 +220,7 @@ export class SolidRuntime {
     this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,this.accessorIdentities.get(callee),value]);
   }
   observe(value) {
+    if(this.callbackIdentities.has(value))return {callback:this.callbackIdentities.get(value)};
     if(value instanceof this.S.NoOwnerError||value instanceof this.S.ContextNotFoundError){
       if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
       return {[value instanceof this.S.NoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};
@@ -239,6 +263,7 @@ export class SolidRuntime {
   }
   attempt(op,...args) {try{return ['return',this.observe(this.withJobs(()=>this[op](...args)))];}catch(e){return ['throw',this.errorShape(e)];}}
   program(name,actions) {
+    if(this.programActions.has(name))throw new TypeError('Callback programs cannot be redefined');
     for(const [op,name] of actions)if(op==='cleanup')requireTeardownProgram(this.programActions,name);
     this.programActions.set(name,actions);
     const self=this,id=this.nextProgram++;
@@ -376,7 +401,7 @@ export class SolidRuntime {
     const apply=(v,p)=> {
       this.traceEvents.push(['apply',name,v,p]); if(!user)this.screens[target]=v;
       const result=options.program?this.programs[options.program](undefined,v,p):undefined;
-      return options.returnCleanup?result:options.cleanup?this.programs[options.cleanup]:undefined;
+      return options.returnCleanup?this.returnedCleanup(result):options.cleanup?this.programs[options.cleanup]:undefined;
     };
     const bundle=options.error?{effect:apply,error:(err,cleanup)=>this.programs[options.error](cleanup,err)}:apply;
     this.S.runWithOwner(this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root'),()=> (user ? this.S.createEffect : this.S.createRenderEffect)(this.callback(name,expr),bundle,options));

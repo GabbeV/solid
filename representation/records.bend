@@ -11,6 +11,7 @@ type Value is Data:
   RootDisposerReference{owner: Nat}
   AccessorReference{signal: Nat}
   SetterReference{signal: Nat}
+  ProgramReference{callback: Nat}
   ContextFailure{identity: Nat, kind: U32}
   NotANumber{}
   StringValue{s: String}
@@ -128,6 +129,7 @@ type Expr is Data:
   Argument{index: Nat}
   Invoke{callee: Expr}
   InvokeWith{callee: Expr, value: Expr, updater: Bool}
+  InvokeArguments{callee: Expr, first: Expr, second: Expr}
   OnCleanup{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}
@@ -146,6 +148,7 @@ type CleanupAction is Data:
   CleanupCloseIterator{stream: Nat}
   CleanupBoundRoot{owner: Nat}
   CleanupBoundSetter{signal: Nat}
+  CleanupBoundProgram{callback: Nat}
   CallbackEvaluate{expr: Expr}
   CallbackReturn{expr: Expr}
   CallbackWrite{signal: Nat, expr: Expr}

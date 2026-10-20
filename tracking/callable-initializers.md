@@ -55,3 +55,9 @@ Arbitrary host functions, general closure values and custom comparator functions
 remain unfinished. This extends the selected function domain; it is not a claim
 that all JavaScript function initializers or the complete public package execute.
 The source pin and empty semantic deviation register are unchanged.
+
+First-class named callback values now retain canonical function identity and
+enter the same core call/argument, initializer and updater paths. Their imperative
+teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
+Read-capable teardown remains unfinished; the boundary investigation and explicit
+next return points are in [the teardown review](reviews/teardown-boundary.md).

@@ -157,6 +157,8 @@ def writeDataValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Va
       Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}} <> rest}
     case R.AccessorReference{source}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
+    case R.ProgramReference{callback}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case R.SetterReference{target}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case other:
@@ -171,6 +173,8 @@ def writeHeldValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Va
     case R.RootDisposerReference{owner}:
       Machine{w, Enter{owner, True{}, False{}} <> WriteForward{signal, R.Undefined{}} <> rest}
     case R.AccessorReference{source}:
+      Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
+    case R.ProgramReference{callback}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case R.SetterReference{target}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
@@ -223,6 +227,8 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
       Machine{I.close(w, stream), rest}
     case R.CleanupBoundRoot{owner}:
       Machine{w, Enter{owner, True{}, False{}} <> rest}
+    case R.CleanupBoundProgram{callback}:
+      Machine{w, Invoke{callback} <> rest}
     case R.CleanupBoundSetter{signal}:
       Machine{clearSetter(w, signal), rest}
     case R.CleanupThrow{cause}:
@@ -403,3 +409,46 @@ def unobserved(+w: R.World, id: Nat) -> R.World:
 def sweepDormant(+w: R.World) -> R.World:
   B.choose(~R.World, List.is_empty(&2, Nat, R.World.dormantNodes(w)), _ => w,
     _ => run(budget(w), Machine{w, [SweepDormant{0n}]}))
+
+# Domain check for selected callback function values at the unfinished owner
+# expression boundary. It is not a source cleanup decision.
+def rawTeardownValue(value: R.Value) -> Bool:
+  match value:
+    case R.AccessorReference{signal}:
+      False{}
+    case R.SetterReference{signal}:
+      False{}
+    case R.ProgramReference{callback}:
+      False{}
+    case _:
+      True{}
+
+def admittedAction(action: R.CleanupAction) -> Bool:
+  match action:
+    case R.CallbackEvaluate{expr}:
+      False{}
+    case R.CallbackReturn{expr}:
+      False{}
+    case R.CallbackWrite{signal, expr}:
+      False{}
+    case R.CallbackUpdate{signal, expr}:
+      False{}
+    case R.CallbackThrow{expr}:
+      False{}
+    case R.CleanupPriorEffect{}:
+      False{}
+    case R.CleanupWrite{signal, value}:
+      rawTeardownValue(value)
+    case _:
+      True{}
+
+def admittedActions(actions: List<&2, R.CleanupAction>) -> Bool:
+  match actions:
+    case Nil{}:
+      True{}
+    case action <> rest:
+      Bool.and(admittedAction(action), admittedActions(rest))
+
+def admittedProgram(+w: R.World, +callback: Nat) -> Bool:
+  Bool.and(Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
+    admittedActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}}))))

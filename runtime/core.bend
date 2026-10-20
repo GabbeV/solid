@@ -47,6 +47,7 @@ type Task is Data:
   Invoke{}
   InvokeArgument{value: R.Expr, updater: Bool, previous: R.Value}
   InvokeApplied{callee: R.Value}
+  InvokeArguments{}
   OnCleanup{}
   CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
   SetSignalArgument{signal: Nat}
@@ -324,6 +325,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, R.Undefined{} <> stack}
     case R.CallWith{callback, first, second}:
       Machine{w, Evaluate{first, prev} <> Evaluate{second, prev} <> CallArguments{callback} <> rest, stack}
+    case R.InvokeArguments{callee, first, second}:
+      Machine{w, Evaluate{callee, prev} <> Evaluate{first, prev} <> Evaluate{second, prev} <> InvokeArguments{} <> rest, stack}
     case R.InvokeWith{callee, value, updater}:
       Machine{w, Evaluate{callee, prev} <> InvokeArgument{value, updater, prev} <> rest, stack}
     case R.Invoke{callee}:
@@ -366,15 +369,14 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
     case value <> tail:
       callbackAction(w, rest, stack, id, tail, first, second, value)
 
-
-
-
 # core.ts:setSignal's typeof-function branch. currentValue was captured before
 # invoking the callable. A returned function is data in SetSignalResolved.
 def resolveSignalArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +signal: Nat, +current: R.Value, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
       Machine{O.disposeChildren(w, owner, True{}, False{}), SetSignalResolved{signal, current} <> rest, R.Undefined{} <> tail}
+    case R.ProgramReference{callback}:
+      Machine{w, Evaluate{R.CallWith{callback, R.Literal{current}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetSignalResolved{signal, current} <> rest, tail}
     case R.AccessorReference{id}:
       Machine{w, ReadNode{id} <> SetSignalResolved{signal, current} <> rest, tail}
     case R.SetterReference{id}:
@@ -442,6 +444,8 @@ def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, va
       Machine{O.disposeChildren(w, id, True{}, False{}), rest, R.Undefined{} <> tail}
     # signals.ts:accessor is read.bind(null,node); invocation enters the
     # ordinary read return points, with the caller stack/context intact.
+    case R.ProgramReference{callback}:
+      Machine{w, Evaluate{R.CallWith{callback, R.Literal{R.Undefined{}}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> rest, tail}
     case R.AccessorReference{id}:
       Machine{w, ReadNode{id} <> rest, tail}
     case R.SetterReference{id}:
@@ -459,6 +463,8 @@ def invoke(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
 # User call ABI: function value and raw argument have already evaluated.
 def invokeApplied(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, callee: R.Value, +value: R.Value) -> Machine:
   match callee:
+    case R.ProgramReference{callback}:
+      Machine{w, Evaluate{R.CallWith{callback, R.Literal{value}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> rest, tail}
     case R.SetterReference{id}:
       Machine{w, setterTask(w, id) <> rest, value <> tail}
     case other:
@@ -471,6 +477,8 @@ def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>
   match value:
     case R.RootDisposerReference{owner}:
       Machine{O.disposeChildren(w, owner, True{}, False{}), SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
+    case R.ProgramReference{callback}:
+      Machine{w, Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetMemoForward{id, True{}} <> rest, tail}
     case R.AccessorReference{node}:
       Machine{w, ReadNode{node} <> SetMemoForward{id, True{}} <> rest, tail}
     case R.SetterReference{node}:
@@ -483,6 +491,8 @@ def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>
 # ignore that function argument; only setSignal invokes it with currentValue.
 def invokeUpdater(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, callee: R.Value, +expr: R.Expr) -> Machine:
   match callee:
+    case R.ProgramReference{callback}:
+      Machine{R.World.with_fault(w, R.Unsupported{22n}), rest, tail}
     case R.SetterReference{+id}:
       B.choose(~Machine, memoNode(R.Node.kind(B.node(w, id))),
         _ => memoUpdater(w, rest, tail, id, expr),
@@ -490,10 +500,22 @@ def invokeUpdater(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, 
     case other:
       invokeValue(w, rest, tail, other)
 
-# signals.ts:onCleanup -> owner.ts:cleanup, selected bound disposer family.
-# The source returns the very same callable, including without an owner.
+# User ABI admission at the unfinished owner/core expression boundary.
+# No-owner cleanup returns before inspecting or allocating a callback.
+def registerProgramCleanup(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +callback: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_eq(R.World.context(w), 0n), _ => Machine{w, rest, R.ProgramReference{callback} <> tail},
+    _ => B.choose(~Machine, O.admittedProgram(w, callback),
+      _ =>
+        +pair = J.encodeProgram(w, callback)
+        +w = B.first(R.World, Nat, pair)
+        Machine{O.cleanup(w, R.World.context(w), B.second(R.World, Nat, pair)), rest, R.ProgramReference{callback} <> tail},
+      _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}))
+
+# signals.ts:onCleanup -> owner.ts:cleanup returns the original function.
 def onCleanupValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
   match value:
+    case R.ProgramReference{callback}:
+      registerProgramCleanup(w, rest, tail, callback)
     case R.RootDisposerReference{+root}:
       Machine{J.cleanup(w, R.World.context(w), root), rest, R.RootDisposerReference{root} <> tail}
     case R.AccessorReference{signal}:
@@ -1252,6 +1274,13 @@ def installReturned(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>
           +pair = J.encode(w, root)
           +w = B.first(R.World, Nat, pair)
           Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail}
+        case R.ProgramReference{+callback}:
+          B.choose(~Machine, O.admittedProgram(w, callback),
+            _ =>
+              +pair = J.encodeProgram(w, callback)
+              +w = B.first(R.World, Nat, pair)
+              Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail},
+            _ => Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail})
         case R.SetterReference{signal}:
           +pair = J.encodeSetter(w, signal)
           +w = B.first(R.World, Nat, pair)
@@ -1464,6 +1493,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
               callableSignal(w, rest, tail, R.RootDisposerReference{owner}, options, body, previous)
             case R.AccessorReference{signal}:
               callableSignal(w, rest, tail, R.AccessorReference{signal}, options, body, previous)
+            case R.ProgramReference{callback}:
+              callableSignal(w, rest, tail, R.ProgramReference{callback}, options, body, previous)
             case R.SetterReference{signal}:
               callableSignal(w, rest, tail, R.SetterReference{signal}, options, body, previous)
             case other:
@@ -1505,6 +1536,16 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       match stack:
         case +value <> tail:
           Machine{W.setResolved(w, signal, current, value), rest, value <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case InvokeArguments{} <> +rest:
+      match stack:
+        case second <> first <> callee <> tail:
+          match callee:
+            case R.ProgramReference{callback}:
+              Machine{w, Evaluate{R.CallWith{callback, R.Literal{first}, R.Literal{second}}, R.Undefined{}} <> rest, tail}
+            case other:
+              invokeApplied(w, rest, tail, other, first)
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case InvokeArgument{+value, +updater, +previous} <> +rest:

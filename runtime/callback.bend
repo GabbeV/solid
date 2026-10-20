@@ -51,6 +51,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.ContextGet{key, bind(owner, first, second)}
     case R.ContextSet{key, value, owner}:
       R.ContextSet{key, bind(value, first, second), bind(owner, first, second)}
+    case R.InvokeArguments{callee, a, b}:
+      R.InvokeArguments{bind(callee, first, second), bind(a, first, second), bind(b, first, second)}
     case R.InvokeWith{callee, value, updater}:
       R.InvokeWith{bind(callee, first, second), bind(value, first, second), updater}
     case R.Invoke{callee}:

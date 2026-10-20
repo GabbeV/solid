@@ -143,3 +143,6 @@ def Laws.effect_returns_selected_cleanup():
 
 def Laws.callable_initializer_tracks_and_freezes():
   {==}
+
+def Laws.callback_values_bind_initialize_and_cleanup():
+  {==}
