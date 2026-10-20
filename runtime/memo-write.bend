@@ -7,6 +7,7 @@ import ./constants.bend as K
 import ./transaction.bend as X
 import ./heap.bend as H
 import ./write.bend as W
+import ./status.bend as A
 
 # Keep short-circuit order: txOf is consulted only for held non-manual staging.
 def held(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
@@ -18,9 +19,18 @@ def held(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
       B.Bundle{w, Nat.is_ne(B.second(R.World, Nat, pair), R.World.flushTransaction(w))},
     _ => B.Bundle{w, False{}})
 
+# setMemo's error recovery is after a held updater pre-call, before setSignal.
+# The shown error remains read-visible until the staged write commits (#4110).
+def recover(+w: R.World, +id: Nat) -> R.World:
+  B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()),
+    _ =>
+      +w = B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id))))
+      A.notifyStatusWith(w, id, 0, R.Undefined{}, False{}), _ => w)
+
 # Source runs this only after setSignal returns successfully. The original held
 # local decides the branch even if the invoked updater changed other state.
 def finish(+w: R.World, +id: Nat, held: Bool) -> R.World:
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR())))
   B.choose(~R.World, held,
     _ =>
       +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_CHECK()), K.REACTIVE_DIRTY())))
@@ -34,5 +44,5 @@ def finish(+w: R.World, +id: Nat, held: Bool) -> R.World:
 # can run in the existing owner machine without an expression/read suspension.
 def clear(+w: R.World, +id: Nat) -> R.World:
   +pair = held(w, id)
-  +w = W.setSignal(B.first(R.World, Bool, pair), id, R.Undefined{})
+  +w = W.setSignal(recover(B.first(R.World, Bool, pair), id), id, R.Undefined{})
   B.choose(~R.World, B.ok(w), _ => finish(w, id, B.second(R.World, Bool, pair)), _ => w)

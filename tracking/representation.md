@@ -240,3 +240,10 @@ enter the same core call/argument, initializer and updater paths. Their imperati
 teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
 Read-capable teardown remains unfinished; the boundary investigation and explicit
 next return points are in [the teardown review](reviews/teardown-boundary.md).
+
+For upstream #4164, World.deferredReleases is a nullable-array handle (zero is
+null), and releaseLists is its stable list arena. It is separate from pending Sets:
+array duplicates and live bounds are retained. PassFrame.released captures each
+pass's array; the prior active handle restores only after successful pre-body
+teardown, matching Source. PassReleases resumes callbacks through the existing
+core machine after context restoration. See [the pin review](reviews/solid-71153bf0.md).

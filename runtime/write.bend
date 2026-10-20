@@ -1,6 +1,7 @@
 # core/core.ts:setSignal and scheduler notify/intake helpers, extracted as a
 # leaf to express the TS core/owner/scheduler call cycle without duplicating it.
 import Base
+import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./heap.bend as H
@@ -62,7 +63,7 @@ def setResolved(+w: R.World, +id: Nat, currentValue: R.Value, +value: R.Value) -
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w)
   +n = B.node(w, id)
   changed = Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),
-    Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(currentValue, value)))))
+    Bool.not(EQ.isSame(w, id, currentValue, value))))
   B.choose(~R.World, changed,
     _ =>
       +staged = B.present(R.Node.pending(n))

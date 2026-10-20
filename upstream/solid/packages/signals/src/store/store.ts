@@ -73,6 +73,7 @@ import {
   registerGraph,
   warnStrictReadUntracked
 } from "../core/dev.js";
+import { signalHook } from "../core/identities.js";
 import { setSlotUnobserved } from "../core/graph.js";
 import { getObserver, getOwner } from "../core/owner.js";
 import { insertIntoHeap } from "../core/heap.js";
@@ -341,11 +342,16 @@ function noteNode(target: StoreTarget, node: Signal<any>, key: PropertyKey): voi
 // dispatches CONFIG_SLOT_NODE nodes here (graph.ts) instead of holding a
 // per-node closure in a per-node NodeExtension. A dropped node is
 // unreachable through the store — a fresh read makes a fresh node.
+// A staged write — or a lane's value (a guess, S4) — is state only the node
+// holds: its release waits for the commit that resolves it. So does a leaf of
+// a held container (#4146): a mainline write it carried is in the held
+// staging too, where it would read as the hold's until the landing.
+const slotKept = (node: any): any =>
+  node._pendingValue !== NOT_PENDING ||
+  node._config & CONFIG_OVERRIDE ||
+  node._host.k?._config & CONFIG_HELD;
 setSlotUnobserved((node: any): void => {
-  // A staged write — or a lane's value (a guess, S4) — is state only the
-  // node holds: defer the release to the commit that resolves it.
-  if (node._pendingValue !== NOT_PENDING || node._config & CONFIG_OVERRIDE)
-    deferredReleases.add(node);
+  if (slotKept(node)) deferredReleases.add(node);
   else releaseSlot(node);
 });
 
@@ -897,11 +903,7 @@ function drainFolds(): void {
   }
   if (deferredReleases.size !== 0) {
     for (const node of deferredReleases) {
-      if (
-        node._pendingValue === NOT_PENDING &&
-        !(node._config & CONFIG_OVERRIDE) &&
-        node._subs === null
-      ) {
+      if (node._subs === null && !slotKept(node)) {
         deferredReleases.delete(node);
         releaseSlot(node);
       }
@@ -2178,6 +2180,18 @@ const traps: ProxyHandler<StoreTarget> = {
     if (key === "__proto__") return true; // pollution guard (core R30)
     const uv = target.s ? value : unwrapValue(value);
     const pb = ensurePB(target);
+    // #4146 (R1: node existence is unobservable; #3706: the hold's unit is
+    // the key): a user setter writing a key a HELD container's staging left
+    // unchanged would write it into the held staging — read as the hold's
+    // until its landing, while the same key with a leaf (a live reader)
+    // publishes at the flush. The key gets its leaf first, born from the two
+    // frames (`bornStaged`: a key the hold left unchanged — or added — is
+    // unstaged and held by no one; a key the hold changed is born held, A34
+    // (1)), and the write stages on it (A28; a write by the holder joins it,
+    // A34) — as it would with a reader's leaf. Kept while the container is
+    // held (`deferredReleases`).
+    if (userWrite && (target.k as any)?._config & CONFIG_HELD)
+      deferredReleases.add(getNode(target, key));
     if (Array.isArray(pb)) {
       touch(target, key);
       if (key === "length") target.wk = WK_ALL;
@@ -2317,7 +2331,7 @@ function devGuardStoreSetterResult(result: unknown): void {
 }
 
 export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = true): void {
-  if (writeHook !== null) writeHook();
+  if (writeHook !== null) writeHook(proxy as object);
   if (__DEV__ && guard) devGuardStoreSetterWrite();
   const target: StoreTarget = (proxy as any)[$TARGET];
   const prevScopes = writeScopes;
@@ -2389,6 +2403,8 @@ export function createStore<T extends Record<PropertyKey, any>>(
       throw new Error("createStore({ shallow }): value is already a store proxy");
   }
   const proxy = wrap(initialValue);
+  // Dependency edges (store/edges.ts): the root is named like a plain signal.
+  if (signalHook !== null) signalHook((proxy as any)[$TARGET]);
   if (shallow) {
     ((proxy as any)[$TARGET] as StoreTarget).s = true;
     markRawIngest(initialValue);

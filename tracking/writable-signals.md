@@ -44,7 +44,7 @@ an extension or resolve a transaction on the inactive arms. The core callback
 continuations preserve the updater call sites:
 
 - A held derivation's updater runs first against the committed value, before
-  delegating to setSignal. Its answer is passed as the source passes it.
+  delegating to setSignal. Its answer is wrapped in the source's constant-returning closure before setSignal, so callable data is retained.
 - Other updaters delegate to the ordinary setter's captured entry-value path.
 - A successful held write clears CHECK, sets DIRTY, inserts the actual node into
   the dirty heap and schedules. Other successful writes mark MANUAL_WRITE when
@@ -52,10 +52,13 @@ continuations preserve the updater call sites:
 - An async landing still uses the original internal value setter; it does not
   become a user proposal by calling setMemo.
 
-The pre-call's returned function is invoked again by setSignal on the pinned
-source. The port deliberately preserves this reported failure, including an
-unexpected bound-disposer invocation/throw. See SOLID-HELD-FUNCTION-VALUE-003 and
-PR #4163. There is no wrapper fix, local patch or active deviation in this runtime.
+At the reviewed 71153bf0 pin, the held result is wrapped before setSignal (#4163).
+`memoDelegate(wrapped=True)` represents that constant closure and retains the
+setter's currentValue capture before it returns the stack value. It does not
+invoke the user's returned function. `memo-write.recover` also retains an errored
+memo's shown error before clearing live status; `finish` clears STAGED_ERROR before
+held/manual flags (#4167). A read before commit still throws the displayed error.
+See [the pin review](reviews/solid-71153bf0.md) for the exact source delta.
 
 ## Evidence and limits
 
@@ -64,19 +67,17 @@ eager/lazy construction, options, captures, manual writes, rerun previous values
 unobserved/revival, owner disposal, writes to dead targets, stored initialization
 errors, pending construction, native/immediate flights, streaming updates/close,
 function data and the held committed-frame policy. Sixteen of those histories are
-paired bound-function counterexamples/controls for the reported function-result
+paired bound-function regressions/controls for the now-fixed function-result
 bug. They explicitly assert its setter result, selected previous frame and
-unexpected root disposal; arbitrary replacement functions in the original twelve
+retained root lifetime; arbitrary replacement functions in the original twelve
 source-only controls remain outside this selected Bend function family.
 
 Additional native controls compare aliases/token round trips, stored-error pair
 availability, read-only setter rejection, caller failure after construction and
 nested getter/function results. Complete read traces for accessors invoked inside
-setMemo are not yet observed by the reference adapter. In a held call the final
-setter result may differ from that accessor's result, so the adapter does not
-fabricate a read value from the final return. Those combinations have direct
-native result/node/lifetime controls and are not counted as complete histories.
-No reactive decisions or runtime behavior are changed to satisfy that observer.
+setMemo are not yet observed by the reference adapter. The adapter does not fabricate an internal read from the setter's final return.
+Those combinations have direct native result/node/lifetime controls and are not
+counted as complete histories. No reactive decisions are changed for observation.
 
 4,096 new probes call the actual TypeScript setMemo with raw/identity/constant
 updaters across held/non-held, manual flags, staged/undefined values, statuses,
@@ -93,13 +94,13 @@ individual review; these probes do not close them automatically.
 One closed kernel law follows a manual proposal of 10 into rederivation with input
 3, displaying 13 through a real writable constructor and render. It checks bound
 identities, owner/dependency links, the cleared auto-dispose/manual bits, slots,
-queues and ambient restoration. Another law is explicitly negative: a real held
-flight makes an updater-returned disposer unexpectedly kill its target. It checks
-that pinned failure, not desired function-storage correctness. The two negative
-laws in the suite are upstream baseline evidence, not successful guarantees.
+queues and ambient restoration. A second law checks that a real held flight stores an updater-returned disposer
+without invoking it. The historical negative laws remain on the baseline branch;
+current laws check the upstream fixes. New integration laws also check writable
+error display until commit, lazy reuse, protocol failure and empty flatten.
 
 Six added mutations check scope shadowing, auto-dispose clearing, committed-frame
-updaters, an unregistered function-result workaround, manual flags and the actual
+updaters, reintroduction of the function-result bug, manual flags and the actual
 held heap insertion. Existing mutation targets follow the shared updater helper.
 Active hooks/lanes/snapshots, general function values and expression-capable owner
 teardown remain unfinished. Source pins and the empty deviation register are

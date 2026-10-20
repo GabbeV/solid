@@ -1,5 +1,10 @@
 # Source fidelity and upstream tracking
 
+Current pin: Solid 71153bf0. The initial audit and milestone notes below retain
+their historical context; [the integration review](reviews/solid-71153bf0.md)
+documents the current source delta and replaces the old bug baselines.
+
+
 The user has explicitly set the engineering target: a translation close enough to
 line by line to follow future Solid commits. There is no requirement to formally
 prove TypeScript/Bend equivalence. The user permits temporary deviations when
@@ -208,3 +213,12 @@ Direct disposal/effect-precleanup/recompute-preparation now suspend owner Invoke
 tasks to the shared core callback machine. Thirty-five direct source probes and
 a concrete cleanup-read kernel fixture check the first stage; global teardown
 read admission remains unfinished. See [owner-core.md](owner-core.md).
+
+## Reviewed pin update
+
+The active integration branch now uses Solid 71153bf0. The three tracked failures
+are fixed by accepted upstream implementations; historical records above retain
+their original pin. Negative laws are retained on baseline/solid-d2ad8b28 and
+replaced by positive current-pin regressions. The complete changed-file/operation
+audit, inactive hook exclusions, original repro matrix and validation are in
+[the pin review](reviews/solid-71153bf0.md). No active semantic deviation exists.

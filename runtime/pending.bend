@@ -23,11 +23,12 @@ type Task is Data:
 type Machine is Data:
   Machine{world: R.World, tasks: List<&2, Task>, visited: List<&2, Nat>, released: List<&2, Nat>, scheduled: Bool}
 
-def releaseIfSettledUnobserved(+w: R.World, +id: Nat) -> R.World:
+def releasable(+w: R.World, +id: Nat) -> Bool:
   +n = B.node(w, id)
-  release = Bool.and(B.computed(R.Node.kind(n)), Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
+  Bool.and(B.computed(R.Node.kind(n)), Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
     Bool.and(Nat.is_eq(R.Node.subs(n), 0n), Bool.and(Bool.not(B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE())), Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING()))))))
-  B.choose(~R.World, release, _ => O.unobserved(w, id), _ => w)
+def releaseIfSettledUnobserved(+w: R.World, +id: Nat) -> R.World:
+  B.choose(~R.World, releasable(w, id), _ => O.unobserved(w, id), _ => w)
 
 # Early return deliberately does NOT add to visited. A later branch may retire
 # another carrier and must be free to revisit this same converging node.
@@ -135,7 +136,7 @@ def stageWrap(w: R.World, id: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>
 
 def stageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
   stage = Bool.and(Bool.or(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
-    Bool.and(inPass, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_STAGED_READ()), Nat.is_ne(R.World.flushTransaction(w), 0n)))), Nat.is_eq(R.World.passLane(w), 0n))
+    Bool.and(inPass, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_STAGED_READ()), R.World.running(w)))), Nat.is_eq(R.World.passLane(w), 0n))
   B.choose(~B.Bundle<R.World, Bool>, stage,
     _ =>
       +w = P.clearPendingSources(w, id)

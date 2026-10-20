@@ -18,10 +18,16 @@ callback expressions. JavaScript supplies the test host and payload encoding.
 The implementation, differential tests, and composed proofs use the same runtime.
 There is no second scheduler hidden behind the proof.
 
+The reviewed Solid pin is now `71153bf0` (still rc.15), integrating the tracked
+fixes and related core updates. [Pin review and before/after evidence](tracking/reviews/solid-71153bf0.md).
+The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
+This integration branch preserves a newly found [cleanup collector regression](tracking/upstream/deferred-release-throw.md);
+`main` retains the old pin pending review.
+
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject eighty-six source-changing variants
+npm run mutations                # reject ninety-three source-changing variants
 npm run example                  # Number{14n}
 ```
 

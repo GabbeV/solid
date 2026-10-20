@@ -43,4 +43,4 @@ for(const immediate of [false,true])for(const variant of ['no-error','no-recover
   ['read','a'],['resolve','q',2],['tick'],['read','a'],['read','c']];
  await scenario(`held staged recovery ${immediate}/${variant}/user=${user}`,commands);
 }
-console.log(`${count} held-error recovery histories match source state, delivery, reports and the preserved successful-value-as-error counterexample, with non-render controls.`);
+console.log(`${count} held-error recovery histories match source state, delivery, reports and the merged held-error recovery fix, with non-render controls.`);

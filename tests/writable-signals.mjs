@@ -128,7 +128,7 @@ for(const immediate of [false,true])for(const held of [false,true])for(const upd
   ]);
 }
 for(const immediate of [false,true])for(const held of [false,true])for(const derived of [false,true])for(const throws of [false,true]){
-  await scenario('preserved held function result bug '+JSON.stringify({immediate,held,derived,throws}),[
+  await scenario('held function result remains data '+JSON.stringify({immediate,held,derived,throws}),[
     ['signal','version',0],['signal','previous',undefined],...capture,
     ['program','replacementCleanup',[['emit',51],...(throws?[['throw',7]]:[])]],
     ['program','attach',[['cleanup','replacementCleanup'],['return',arg(0)]]],
@@ -143,11 +143,10 @@ for(const immediate of [false,true])for(const held of [false,true])for(const der
     ['evaluate',invokeWith(read('setSaved'),callWith('replace',{prev:true}),true)],
     ['evaluate',{disposed:lit({owner:'replacement'})}],['flush'],['resolve','p',7],['tick'],['flush'],['read','previous'],['dispose']
   ],(op,args,actual,wanted)=>{
-    const bug=held&&derived;
     if(op==='evaluate'&&args[0].invokeWith){
-      assert.deepEqual(wanted,bug&&throws?['throw',7]:['return',bug?undefined:{rootDisposer:{owner:'replacement'}}],'pinned function-result outcome');
+      assert.deepEqual(wanted,['return',{rootDisposer:{owner:'replacement'}}],'upstream wrapper preserves the returned function');
     }
-    if(op==='evaluate'&&args[0].disposed)assert.deepEqual(wanted,['return',bug],'only held writable-memo updater invokes the returned disposer');
+    if(op==='evaluate'&&args[0].disposed)assert.deepEqual(wanted,['return',false],'updater-returned disposer remains live');
     if(op==='read'&&args[0]==='previous')assert.deepEqual(wanted,['return',derived?{rootDisposer:{owner:held?'original':'derived'}}:undefined],'updater receives the source-selected frame');
   });
 }
@@ -250,7 +249,7 @@ for(const raw of [false,true])for(const functionResult of [false,true]){
     const result=invokeWith(read('setSaved'),lit({accessor:'payload'}),!raw);
     assert.deepEqual(b.attempt('evaluate',result),s.attempt('evaluate',result));
     const states=solidStates(s);assert.deepEqual(bendStates(b,states.map(([name])=>name)),states);
-    assert.deepEqual(b.attempt('evaluate',{disposed:lit({owner:'replacement'})}),['return',raw&&functionResult]);
-    assert.deepEqual(s.attempt('evaluate',{disposed:lit({owner:'replacement'})}),['return',raw&&functionResult]);
+    assert.deepEqual(b.attempt('evaluate',{disposed:lit({owner:'replacement'})}),['return',false]);
+    assert.deepEqual(s.attempt('evaluate',{disposed:lit({owner:'replacement'})}),['return',false]);
   }finally{for(const runtime of [b,s]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');runtime.attempt('resolve','p',1);}await setImmediate();}
 }

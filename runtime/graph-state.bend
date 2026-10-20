@@ -55,3 +55,15 @@ def unlinkSubs(+w: R.World, +id: Nat) -> B.Bundle<R.World, Nat>:
     _ => B.store_node(w, dep, R.Node.with_subs(B.node(w, dep), next)))
   B.Bundle{w, R.Link.nextDep(edge)}
 
+
+# graph.ts:deferredReleases/deferReleases. Nonzero arena handles retain the
+# array identity captured across nested passes; collection preserves duplicates.
+def beginReleases(+w: R.World) -> B.Bundle<R.World, Nat>:
+  +id = B.length(List<&2, Nat>, R.World.releaseLists(w))
+  +w = R.World.with_releaseLists(w, B.append(List<&2, Nat>, R.World.releaseLists(w), [[]]))
+  B.Bundle{R.World.with_deferredReleases(w, id), id}
+
+def deferRelease(+w: R.World, id: Nat) -> R.World:
+  +list = R.World.deferredReleases(w)
+  +nodes = B.get(List<&2, Nat>, R.World.releaseLists(w), list, [])
+  R.World.with_releaseLists(w, List.set(&2, List<&2, Nat>, R.World.releaseLists(w), list, B.append(Nat, nodes, [id])))

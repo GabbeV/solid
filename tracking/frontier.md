@@ -2,10 +2,9 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1979 differential histories, 86 rejected compiled mutations,
-and 40 composed closed Bend regressions (two deliberately preserve upstream
-failures), plus general payload/question/callback/path helper laws. Pins are
-unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
+Current verification: 2029 differential histories, 93 rejected compiled mutations,
+and 45 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+now pinned at 71153bf0 and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -203,8 +202,8 @@ use an explicit transaction input, not the public action API or host promises.
 All source branches are still marked open for individual branch review, even
 where a restricted function port exists. No blended completion percentage is used.
 
-A fifteenth closed composed law is explicitly negative baseline evidence:
-`staged_error_recovery_counterexample` checks the pinned successful-value-as-error
+The former fifteenth law was negative evidence at the historical baseline:
+`staged_error_recovery_counterexample` checked the successful-value-as-error
 recovery failure. It is not a successful coherence guarantee. See
 [the upstream candidate](upstream/staged-error-recovery.md) for native/immediate
 controls, exact source operations and current-head/duplicate checks. Both bug
@@ -324,3 +323,20 @@ after native settlement, preserving timer/listener cancellation and partial thro
 Eighty-eight direct owner/core probes and two more mutation checks cover the stages.
 The remaining frontier is async/error settlement and pending-source release; public
 general expression teardown stays restricted until those callers can resume it.
+
+## Reviewed upstream integration
+
+Solid is now pinned at 71153bf0; the prior d2ad8b28 runtime, source and negative
+laws remain on baseline/solid-d2ad8b28 (76361a4). All three tracked bug repros
+verify the accepted fixes. Fifty new public histories cover the related
+lazy teardown, writable error, replacement-flight and protocol changes. The two
+negative laws are now positive regressions; four more closed laws also check.
+See [the pin review](reviews/solid-71153bf0.md) for exact source operations,
+inactive/unported branches, before/after evidence and current validation. Older
+milestone paragraphs above describe their original pin unless superseded here.
+
+The repin review also found a new upstream collector-leak regression after a
+throwing pre-body cleanup. One of the 45 current concrete laws is explicitly
+negative; two public controls preserve it without an active workaround. See
+[SOLID-DEFERRED-RELEASE-THROW-004](upstream/deferred-release-throw.md). The candidate
+is isolated on integrate/solid-next-fixes; main retains the old baseline.

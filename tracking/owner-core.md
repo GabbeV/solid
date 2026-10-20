@@ -140,3 +140,13 @@ after a throwing cleanup; both must compile and fail differential assertions.
 The global public teardown-admission guard remains active: asyncWrite, error
 settlement and pending-source release still have restricted World-helper crossings.
 Those paths are the next continuation frontier, not upstream bug candidates.
+
+## Upstream deferred lazy release update
+
+At the reviewed 71153bf0 pin, PassReleases additionally drives the release array
+collected while tearing down an unfinished frame. It runs after caller context
+restoration and before reask classification; release failures skip the remaining
+finally tail. Fifty public integration histories and five new kernel laws (one negative upstream regression)
+check the related source fixes. The conservative boundary report now has 13 core
+crossings because ProtocolCatch adds a handleError call. Earlier twelve-call
+counts above describe the old pin. See [the pin review](reviews/solid-71153bf0.md).

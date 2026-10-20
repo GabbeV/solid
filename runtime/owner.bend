@@ -179,7 +179,7 @@ def writeHeldValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Va
     case R.SetterReference{target}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case other:
-      Machine{W.setSignal(w, signal, other), rest}
+      Machine{W.setSignal(MW.recover(w, signal), signal, other), rest}
 
 def writeValueKind(+w: R.World, +rest: List<&2, Task>, +signal: Nat, +value: R.Value, kind: R.NodeKind) -> Machine:
   match kind:
@@ -188,7 +188,7 @@ def writeValueKind(+w: R.World, +rest: List<&2, Task>, +signal: Nat, +value: R.V
       +w = B.first(R.World, Bool, pair)
       +held = B.second(R.World, Bool, pair)
       +ending = {WriteMemoFinish{signal, held} <> rest : List<&2, Task>}
-      B.choose(~Machine, held, _ => writeHeldValue(w, ending, signal, value), _ => writeDataValue(w, ending, signal, value))
+      B.choose(~Machine, held, _ => writeHeldValue(w, ending, signal, value), _ => writeDataValue(MW.recover(w, signal), ending, signal, value))
     case _:
       writeDataValue(w, rest, signal, value)
 
@@ -294,8 +294,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       action(w, rest, callback, value)
     case WriteValue{signal, current, value} <> rest:
       Machine{W.setResolved(w, signal, current, value), rest}
-    case WriteForward{signal, value} <> rest:
-      Machine{W.setSignal(w, signal, value), rest}
+    case WriteForward{+signal, value} <> rest:
+      Machine{W.setSignal(MW.recover(w, signal), signal, value), rest}
     case WriteMemoFinish{signal, held} <> rest:
       Machine{MW.finish(w, signal, held), rest}
     case Dispose{id} <> rest:
@@ -332,7 +332,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       +n = B.node(w, id)
       dormant = Bool.and(B.computed(R.Node.kind(n)), Bool.and(B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
         Bool.and(Bool.not(B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE())), Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING())))))
-      B.choose(~Machine, dormant, _ => Machine{w, Unobserved{id} <> rest}, _ => Machine{w, rest})
+      B.choose(~Machine, dormant,
+        _ => B.choose(~Machine, Nat.is_ne(R.World.deferredReleases(w), 0n),
+          _ => Machine{G.deferRelease(w, id), rest}, _ => Machine{w, Unobserved{id} <> rest}),
+        _ => Machine{w, rest})
     case Unobserved{+id} <> rest:
       Machine{H.deleteFromHeap(w, id), ClearDeps{id} <> Enter{id, True{}, False{}} <> rest}
     case SweepDormant{+index} <> +rest:

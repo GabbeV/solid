@@ -1,5 +1,11 @@
 # Candidate: a successful held recovery is later thrown as an error
 
+Current status: accepted upstream fix integrated and validated at Solid 71153bf0.
+The evidence below records the original historical pin; see
+[the integration review](../reviews/solid-71153bf0.md) for current behavior and
+retained baseline branch.
+
+
 Status: reported in [issue #4145](https://github.com/solidjs/solid/issues/4145),
 submitted by the user on 2026-10-19. No workaround is active. Both pinned TS and
 Bend preserve this baseline. This does not block work.

@@ -1,6 +1,6 @@
 # Promise-like flight milestone
 
-Pinned source: Solid d2ad8b288886a5c7171e6746ccc019ad1d08d8ab,
+Current source: Solid 71153bf0dbd1325cf29f81cb1e7a34e380e694d2,
 production full signals index. `core/async.ts:handleAsync` remains a partial port.
 This milestone admits ordinary thenables and typed async-iterator descriptors, including one-level promise-to-iterator flattening.
 
@@ -122,3 +122,9 @@ kernel directly through the active API/driver. Settlement is an explicit externa
 thenable input; native job timing, iterators and watchers remain tested domains.
 No general async consistency, progress, TS-equivalence or host-runtime proof is
 claimed. Pins and source branch obligations remain unchanged/open.
+
+The reviewed pin update replaces the empty-flatten leak and adds Source's catches
+for later iterator pulls and deferred thenable-to-stream setup. The typed protocol
+now routes later-next throws to the memo via ProtocolCatch; source owner-target
+close registration shares owner.cleanup. Custom comparator execution and hostile
+protocol getters remain unfinished. See [the pin review](reviews/solid-71153bf0.md).

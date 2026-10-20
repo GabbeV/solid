@@ -235,7 +235,7 @@ def blank_asyncObserver() -> R.AsyncObserver:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}]}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]]}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "pin": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+    "commit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
     "branch": "next",
     "version": "2.0.0-rc.15"
   },
@@ -13,7 +13,7 @@
       "from": "core:retireSources",
       "target": "pending:settlePendingSource",
       "file": "runtime/core.bend",
-      "functionLine": 813,
+      "functionLine": 843,
       "route": [
         "pending:settlePendingSource",
         "pending:run",
@@ -26,7 +26,7 @@
       "from": "core:publishState",
       "target": "pending:settlePendingSource",
       "file": "runtime/core.bend",
-      "functionLine": 886,
+      "functionLine": 916,
       "route": [
         "pending:settlePendingSource",
         "pending:run",
@@ -39,7 +39,7 @@
       "from": "core:catchStatus",
       "target": "pending:settlePendingSource",
       "file": "runtime/core.bend",
-      "functionLine": 1007,
+      "functionLine": 1055,
       "route": [
         "pending:settlePendingSource",
         "pending:run",
@@ -52,7 +52,7 @@
       "from": "core:catchStatus",
       "target": "pending:stageError",
       "file": "runtime/core.bend",
-      "functionLine": 1007,
+      "functionLine": 1055,
       "route": [
         "pending:stageError",
         "pending:settlePendingSource",
@@ -66,7 +66,7 @@
       "from": "core:afterThen",
       "target": "flight:thenResult",
       "file": "runtime/core.bend",
-      "functionLine": 1074,
+      "functionLine": 1115,
       "route": [
         "flight:thenResult",
         "flight:handleError",
@@ -81,7 +81,7 @@
       "from": "core:afterStep",
       "target": "flight:handleError",
       "file": "runtime/core.bend",
-      "functionLine": 1134,
+      "functionLine": 1175,
       "route": [
         "flight:handleError",
         "pending:releaseSettledDependents",
@@ -95,7 +95,7 @@
       "from": "core:stepDone",
       "target": "flight:asyncWrite",
       "file": "runtime/core.bend",
-      "functionLine": 1156,
+      "functionLine": 1197,
       "route": [
         "flight:asyncWrite",
         "graph:trimStaleDeps",
@@ -106,7 +106,7 @@
       "from": "core:stepFulfilledResult",
       "target": "flight:asyncWrite",
       "file": "runtime/core.bend",
-      "functionLine": 1167,
+      "functionLine": 1208,
       "route": [
         "flight:asyncWrite",
         "graph:trimStaleDeps",
@@ -117,7 +117,7 @@
       "from": "core:stepRejected",
       "target": "flight:handleError",
       "file": "runtime/core.bend",
-      "functionLine": 1189,
+      "functionLine": 1230,
       "route": [
         "flight:handleError",
         "pending:releaseSettledDependents",
@@ -131,7 +131,7 @@
       "from": "core:promiseFulfill",
       "target": "flight:asyncWrite",
       "file": "runtime/core.bend",
-      "functionLine": 1201,
+      "functionLine": 1242,
       "route": [
         "flight:asyncWrite",
         "graph:trimStaleDeps",
@@ -142,7 +142,7 @@
       "from": "core:promiseReject",
       "target": "flight:handleError",
       "file": "runtime/core.bend",
-      "functionLine": 1219,
+      "functionLine": 1260,
       "route": [
         "flight:handleError",
         "pending:releaseSettledDependents",
@@ -156,9 +156,23 @@
       "from": "core:dispatch",
       "target": "flight:settleAutodispose",
       "file": "runtime/core.bend",
-      "functionLine": 1541,
+      "functionLine": 1582,
       "route": [
         "flight:settleAutodispose",
+        "owner:unobserved"
+      ]
+    },
+    {
+      "from": "core:catchProtocol",
+      "target": "flight:handleError",
+      "file": "runtime/core.bend",
+      "functionLine": 1871,
+      "route": [
+        "flight:handleError",
+        "pending:releaseSettledDependents",
+        "pending:run",
+        "pending:dispatch",
+        "pending:releaseIfSettledUnobserved",
         "owner:unobserved"
       ]
     }
@@ -168,7 +182,7 @@
       "from": "flight:settleAutodispose",
       "target": "owner:unobserved",
       "file": "runtime/flight.bend",
-      "functionLine": 107
+      "functionLine": 97
     },
     {
       "from": "graph:unlinkSubs",
@@ -204,13 +218,13 @@
       "from": "pending:releaseIfSettledUnobserved",
       "target": "owner:unobserved",
       "file": "runtime/pending.bend",
-      "functionLine": 26
+      "functionLine": 30
     },
     {
       "from": "scheduler:finishComputedCommit",
       "target": "owner:disposeChildren",
       "file": "runtime/scheduler.bend",
-      "functionLine": 55
+      "functionLine": 56
     }
   ],
   "files": {
@@ -222,27 +236,28 @@
     "runtime/construct-state.bend": "10be893e8c50c423e1b4ae6ec7f8cdd0d34f12d8b009eff32d233fa5063839ca",
     "runtime/construct.bend": "6c1920665371e628e847f9c04426a5c86d7b74665b7c503f1609e766db28868b",
     "runtime/context.bend": "f33b93e99c74b52e35e192064ce7915a13d7cb9f8a5bfc062953e85e2be78eee",
-    "runtime/core.bend": "f0e8bdc3d8115608eed0e27a2c6b8ab7009d63c995f17647891fe23522b41837",
+    "runtime/core.bend": "c0902c2545df57e65df9dfe8e846b4d8a818481b2d285f97887e7d76f3e76e16",
+    "runtime/equality.bend": "47b4c48669509383247c0bb36ff411cd861841e404b79d2dd3a373891c2ff0b9",
     "runtime/error.bend": "171595b0556d1677d614e05cf4e1076f6f573fd7ba708186932b00dfd1e888a9",
     "runtime/extension.bend": "b0784d485b3a842a37bf8067f9524436cc42a56dae18ef7452f644047324cca7",
-    "runtime/flight.bend": "82d2d577d86810611e727ce3138a0d99aad380d10b189d632a06766b3f92ae6c",
-    "runtime/graph-state.bend": "960d16fe9f3fe0945ad615601362559e4138656464a1f1a055fd74b07cdf32a7",
+    "runtime/flight.bend": "d0f0bd6a1e7fb44ce8231ce7be735c337633df7eaea2badf9ba5e7e933326c4f",
+    "runtime/graph-state.bend": "afdbbce0289a43b2f8f720d7784d449599db2ef367d047de60a63b1a74c73514",
     "runtime/graph.bend": "bf50c25a0fb9629eae0db66efcac1a1f0f5e4c81f114e7994895bf991788d805",
     "runtime/heap.bend": "fc6b0fa63efe8e1e9907e46f81c0cbcbc3e41a6cc8dab3c57de5f79966b41ae9",
     "runtime/iterator-state.bend": "4c2f518cf39a3079cce74d7563e9a30a1eca740202859f302bacd5f3ccfbb4a2",
     "runtime/lexical.bend": "558a49bf8219ff2a7992c550ccaf6287a243a51379c7fe880591fcc096624b2e",
-    "runtime/memo-write.bend": "36a0d3da0e8e9a10ac9b1ad30813af2378a3b7eb19e92f616355e558cdd3d462",
+    "runtime/memo-write.bend": "f1dcbf800899009984f6c3e94f787d74f7651e9dc6945e0545a8e4ec67c17ce5",
     "runtime/owner-state.bend": "297e692de6e5b401a1cb73b2a14d755ab47d8ada8b1fb7c823065d4a1812cbb1",
-    "runtime/owner.bend": "1a796fd7648e2e073397af9f23df4c5ba10a50f704f28344ad12dc10c413d1ea",
+    "runtime/owner.bend": "b80e648ed90661c129a16f317dcecb6c7587c3dbc1b03a1cf6956c6bbfcffa7c",
     "runtime/pending-state.bend": "113a4c4dc7f2122f0304a5cb31b20ccd1ee33dcf4db49339275e74412cf61782",
-    "runtime/pending.bend": "b1d21718aa5a0623291ac286112e2f6a2266836fdf82fecb7a0c4f782b93757b",
+    "runtime/pending.bend": "34a3e1f0abbffc8e9c00c678d2fefcb1174179e8c2ca756b622ee8aa16e4301c",
     "runtime/question.bend": "7b719ebc09b4452bd28d09169fb5549ee20d4c42a56d546cd4604d8c11e1e1a7",
     "runtime/read-state.bend": "90c9f6e3898802c327f55c9f1023b8e808cfb9e9dfcdeb10999962206459fb1d",
-    "runtime/scheduler.bend": "f483c11c273bdd0454809506b79e57750fa633048643c408ce19037472540dee",
+    "runtime/scheduler.bend": "fc73d09f5449a2775d3470f9bcb2b7703ae4cc6161387d1620382e7e36e4840a",
     "runtime/signals.bend": "56340052f7daf38822c42c4d3dcb509d8fbed7f3c559c77e2dc02d2bc0750fe2",
     "runtime/status.bend": "5d6e6569b7f30f176d4a031efed0799984191db38f2f9e12e98d38efbe8aa804",
     "runtime/transaction.bend": "32a0c097d579cf129b2ab2bbf79a61aea1fb06f89ad940804f1050504ad21d4b",
     "runtime/watch-state.bend": "322673a81d5205fabddfc6454512d6b40fe826de2917d7c67ad1e3092efc650d",
-    "runtime/write.bend": "7f398c73c3223372cea66b8025a63e3f7191547e1de27fb64d05b406808e9905"
+    "runtime/write.bend": "2f0a8ac153d93cd8199b63389679f5d482091d9cac9018cde58fde499724bfcb"
   }
 }

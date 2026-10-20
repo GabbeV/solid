@@ -1,5 +1,9 @@
 # Function-value operation review
 
+Historical d2ad8b28 review. The candidate changes discussed below are now integrated
+with the full upstream delta; see [the pin review](solid-71153bf0.md).
+
+
 Reviewed on 2026-10-20 (Europe/Stockholm) against Solid
 `d2ad8b288886a5c7171e6746ccc019ad1d08d8ab`. This is an operation-level review
 for the admitted production callback/value domain, not a full-package or

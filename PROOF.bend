@@ -45,7 +45,7 @@ def Laws.newest_promise_lands():
 def Laws.async_diamond_lands():
   {==}
 
-def Laws.staged_error_recovery_counterexample():
+def Laws.staged_error_recovers_before_landing():
   {==}
 
 def Laws.until_false_waits():
@@ -132,7 +132,7 @@ def Laws.lexical_setter_binding(signal):
 def Laws.writable_signal_rederives_from_manual_previous():
   {==}
 
-def Laws.held_function_result_counterexample():
+def Laws.held_function_result_stays_data():
   {==}
 
 def Laws.setter_cleanup_preserves_identity_and_clears():
@@ -154,4 +154,19 @@ def Laws.trim_error_overrides_application_error():
   {==}
 
 def Laws.commit_publishes_before_parked_cleanup_error():
+  {==}
+
+def Laws.rebuilt_lazy_source_runs_once():
+  {==}
+
+def Laws.writable_error_is_shown_until_replacement_commit():
+  {==}
+
+def Laws.later_iterator_throw_reaches_memo():
+  {==}
+
+def Laws.empty_flatten_returns_undefined():
+  {==}
+
+def Laws.throwing_teardown_leaks_release_collector():
   {==}

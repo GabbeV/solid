@@ -19,7 +19,7 @@ try {
   fs.writeFileSync(path.join(candidate,'src/new-helper.ts'),'export function newHelper() { return 1; }\n');
   fs.appendFileSync(path.join(candidate,'src/store/index.ts'),'\n// shared-hook review probe\n');
   const errorFile=path.join(candidate,'src/core/error.ts'),errorSource=fs.readFileSync(errorFile,'utf8');
-  const formatting='original instanceof Error ? original.message : String(original)';
+  const formatting='original instanceof Error ? original.message : original';
   assert.ok(errorSource.includes(formatting));
   fs.writeFileSync(errorFile,errorSource.replace(formatting,'String(original)'));
   const report=compare(candidate);

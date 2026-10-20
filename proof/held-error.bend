@@ -1,5 +1,4 @@
-# Negative regression: the pinned source's successful-value-as-error behavior.
-# This is preserved baseline evidence, not the desired recovery guarantee.
+# Regression for upstream #4156: a new pass replaces a held staged error.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -52,5 +51,5 @@ def view(+w: R.World) -> View:
     R.Node.status(B.node(w, 6n)), userCause(R.NodeExtension.error(B.extension(w, 6n))), faultCause(R.World.fault(w)),
     A.displayed(w, 2n), R.World.halted(w), B.ok(w), R.World.context(w), R.World.tracking(w), R.World.running(w)}
 
-def expectedCounterexample() -> View:
-  View{R.Number{1n}, R.Present{R.Number{1n}}, True{}, K.STATUS_ERROR(), R.Number{1n}, R.Number{1n}, R.Number{2n}, True{}, False{}, 0n, False{}, False{}}
+def expectedRecovery() -> View:
+  View{R.Number{1n}, R.Empty{}, False{}, 0, R.Null{}, R.Undefined{}, R.Number{3n}, False{}, True{}, 0n, False{}, False{}}

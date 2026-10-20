@@ -147,7 +147,7 @@ for(const immediate of [false,true])for(const entry of ['set','update','bodySet'
   ]);
 }
 for(const entry of ['bodySet','bodyExpr','bodyUpdate']){
-  await scenario('named updater preserves held returned-function counterexample '+entry,[
+  await scenario('named updater preserves held returned-function data '+entry,[
     ['signal','version',0],['signal','derived',{accessor:'version'}],['root','replacement',lit(0)],['future','p',{immediate:true}],
     ['memo','slow',select(read('version'),future('p'),lit(0))],['effect','view',seq(read('version'),read('derived'),read('slow'))],['flush'],
     ['program','write',[[entry==='bodySet'?'set':entry==='bodyExpr'?'setExpr':'updateExpr','derived',entry==='bodySet'?{rootDisposer:'replacement'}:disposer('replacement')]]],

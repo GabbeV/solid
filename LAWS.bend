@@ -1,4 +1,5 @@
 import Base
+import ./proof/upstream-integration.bend as Integrated
 import ./representation/base.bend as B
 import ./representation/records.bend as R
 import ./proof/chain.bend as Chain
@@ -75,9 +76,9 @@ law newest_promise_lands:
 law async_diamond_lands:
   {Flight.diamondView(Flight.diamondLanded()) == Flight.expectedDiamond() : Flight.DiamondView}
 
-# Negative source baseline: this is not the intended recovery guarantee.
-law staged_error_recovery_counterexample:
-  {HeldError.view(HeldError.delivered()) == HeldError.expectedCounterexample() : HeldError.View}
+# Upstream #4156 recovery regression; historical counterexample retained in the baseline branch.
+law staged_error_recovers_before_landing:
+  {HeldError.view(HeldError.delivered()) == HeldError.expectedRecovery() : HeldError.View}
 
 law until_false_waits:
   {Until.falseCase() == Until.expectedFalseCase() : Until.Case}
@@ -176,8 +177,8 @@ law lexical_setter_binding:
 law writable_signal_rederives_from_manual_previous:
   {WritableSignals.view(WritableSignals.writable()) == WritableSignals.expected() : WritableSignals.View}
 
-law held_function_result_counterexample:
-  {WritableSignals.counterexample() == WritableSignals.expectedCounterexample() : WritableSignals.Counterexample}
+law held_function_result_stays_data:
+  {WritableSignals.heldFunctionResult() == WritableSignals.expectedHeldFunction() : WritableSignals.HeldFunctionView}
 
 law setter_cleanup_preserves_identity_and_clears:
   {SetterCleanup.scenario() == SetterCleanup.expected() : SetterCleanup.View}
@@ -199,3 +200,20 @@ law trim_error_overrides_application_error:
 
 law commit_publishes_before_parked_cleanup_error:
   {OwnerCore.commitScenario() == OwnerCore.expectedCommit() : OwnerCore.CommitView}
+
+# Concrete positive regressions for the reviewed upstream pin update.
+law rebuilt_lazy_source_runs_once:
+  {Integrated.lazyReader() == Integrated.expectedLazy() : Integrated.LazyView}
+
+law writable_error_is_shown_until_replacement_commit:
+  {Integrated.writableRecovery() == Integrated.expectedWritable() : Integrated.WritableView}
+
+law later_iterator_throw_reaches_memo:
+  {Integrated.protocolThrow() == Integrated.expectedProtocol() : Integrated.ProtocolView}
+
+law empty_flatten_returns_undefined:
+  {Integrated.emptyFlatten() == Integrated.expectedEmpty() : Integrated.EmptyView}
+
+# Negative upstream regression at 71153bf0, not a desired cleanup guarantee.
+law throwing_teardown_leaks_release_collector:
+  {Integrated.collectorLeak() == Integrated.expectedCollectorLeak() : Integrated.LeakView}

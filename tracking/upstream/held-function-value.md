@@ -1,5 +1,11 @@
 # SOLID-HELD-FUNCTION-VALUE-003
 
+Current status: accepted upstream fix integrated and validated at Solid 71153bf0.
+The evidence below records the original historical pin; see
+[the integration review](../reviews/solid-71153bf0.md) for current behavior and
+retained baseline branch.
+
+
 Status: the user selected the wrapper fix. It is pushed to GabbeV/solid on
 `fix/held-function-values` at `82c89dab837f1f71f8391dd6323861261147afc8`,
 rebased onto next `1ddd68df16b6aec1edc1c87982eb0944d0ea8831`. The user

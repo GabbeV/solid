@@ -77,14 +77,6 @@ def handleError(+w: R.World, +id: Nat, +result: Nat, +error: R.Value) -> R.World
           +w = B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
           B.choose(~R.World, Bool.and(B.ok(w), Bool.not(pending)), _ => Q.releaseSettledDependents(w, id), _ => w)))
 
-# setSignal's user-comparator exception belongs to the source status path.
-def writeCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
-  match fault:
-    case R.CallbackThrown{error}:
-      A.notifyStatus(R.World.with_fault(w, R.Healthy{}), id, error)
-    case other:
-      w
-
 # asyncWrite up to its flush() call. Bool says the call was reached; ignored
 # stale/dirty results perform no write or flush. Callback continuation is core's.
 def asyncWrite(+w: R.World, +id: Nat, +result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
@@ -93,9 +85,7 @@ def asyncWrite(+w: R.World, +id: Nat, +result: Nat, value: R.Value) -> B.Bundle<
     _ =>
       +w = Q.landStatus(w, id, False{})
       +w = B.choose(~R.World, B.ok(w),
-        _ =>
-          +w = W.setSignal(w, id, value)
-          writeCatch(w, id, R.World.fault(w)), _ => w)
+        _ => W.setSignal(w, id, value), _ => w)
       +w = B.choose(~R.World, Bool.and(B.ok(w), Bool.not(B.present(R.Node.pending(B.node(w, id))))),
         _ =>
           +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))

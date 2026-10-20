@@ -2,6 +2,7 @@
 # to express recursive recomputes without a Bend module cycle. Active lane,
 # snapshot, store, boundary and attribution scopes remain unfinished.
 import Base
+import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./graph.bend as G
@@ -162,7 +163,7 @@ def parkPendingNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:
     Bool.not(R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, id))))))
   +loading = Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.not(X.isRender(R.Node.kind(n)))))
   +unchanged = Bool.and(B.present(R.Node.pending(n)), Bool.and(Bool.not(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))),
-    Bool.and(R.Node.equals(n), Bool.and(B.equal(R.Node.value(n), B.current(n)), Bool.not(O.parked(w, id))))))
+    Bool.and(Bool.not(O.parked(w, id)), EQ.isSame(w, id, R.Node.value(n), B.current(n)))))
   B.choose(~R.World, Bool.and(eligible, loading), _ => w,
     _ => B.choose(~R.World, Bool.and(eligible, unchanged),
       _ => B.store_node(w, id, R.Node.with_pending(R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_STAGED())), R.Empty{})),

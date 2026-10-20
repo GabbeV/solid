@@ -4,7 +4,7 @@
     {
       "id": "SOLID-EMPTY-FLATTEN-001",
       "classification": "suspected-upstream-bug",
-      "status": "upstream-fix-merged",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/async.ts:handleAsync",
       "record": "tracking/upstream/empty-flatten.md",
@@ -12,16 +12,24 @@
       "standaloneReproducer": "repros/solid-signals/empty-flatten.mjs",
       "playgroundReproducer": "repros/playground/empty-stream.tsx",
       "playgroundUrl": "https://s.olid.uk/id/2a9vZpFtSnWcRDbIppG0Rw",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4144",
-      "fixMergedCommit": "745e807bd5c3ff553eef8be05f48278b901b0a49"
+      "fixMergedCommit": "745e807bd5c3ff553eef8be05f48278b901b0a49",
+      "historicalBaseline": {
+        "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+        "bendCommit": "76361a4",
+        "branch": "baseline/solid-d2ad8b28"
+      },
+      "validatedSourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
+      "currentProof": "LAWS.bend:empty_flatten_returns_undefined"
     },
     {
       "id": "SOLID-STAGED-ERROR-RECOVERY-002",
       "classification": "suspected-upstream-bug",
-      "status": "upstream-fix-pr-open",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/core.ts:recompute",
       "record": "tracking/upstream/staged-error-recovery.md",
@@ -30,15 +38,26 @@
       "playgroundReproducer": "repros/playground/held-recovery.tsx",
       "playgroundUrl": "https://s.olid.uk/id/df_wYAiPRlmgfLmezgxTag",
       "baselineProof": "LAWS.bend:staged_error_recovery_counterexample",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": "https://github.com/solidjs/solid/issues/4145",
-      "fixUrl": "https://github.com/solidjs/solid/pull/4148"
+      "fixUrl": "https://github.com/solidjs/solid/pull/4156",
+      "historicalBaseline": {
+        "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+        "bendCommit": "76361a4",
+        "branch": "baseline/solid-d2ad8b28"
+      },
+      "validatedSourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
+      "supersededFixUrl": "https://github.com/solidjs/solid/pull/4148",
+      "fixMergedCommit": "fb6006eb9ce03d705f937030a68d77c3b9996453",
+      "supersededReason": "PR #4148 closed without merge; #4156 clears prior staged errors at the next pass prelude. Related setter case lands in #4167.",
+      "currentProof": "LAWS.bend:staged_error_recovers_before_landing"
     },
     {
       "id": "SOLID-HELD-FUNCTION-VALUE-003",
       "classification": "suspected-upstream-bug",
-      "status": "upstream-fix-pr-open",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
       "sourceUnit": "core/core.ts:setMemo",
       "record": "tracking/upstream/held-function-value.md",
@@ -47,7 +66,7 @@
       "playgroundReproducer": "repros/playground/held-function.tsx",
       "playgroundUrl": "https://s.olid.uk/id/eQKgYi1oQrazp_lcVSOgpA",
       "candidateFixBranch": "fix/held-function-values",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4163",
@@ -60,7 +79,34 @@
       "alternativeFixRecord": "tracking/upstream/held-function-allocation-free.md",
       "parityReproducer": "tests/writable-signals.mjs",
       "baselineProof": "LAWS.bend:held_function_result_counterexample",
-      "parityScope": "Selected bound-function family; original arbitrary replacement-function controls remain source-only."
+      "parityScope": "Selected bound-function family; original arbitrary replacement-function controls remain source-only.",
+      "historicalBaseline": {
+        "sourceCommit": "d2ad8b288886a5c7171e6746ccc019ad1d08d8ab",
+        "bendCommit": "76361a4",
+        "branch": "baseline/solid-d2ad8b28"
+      },
+      "validatedSourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
+      "fixMergedCommit": "7014aca40e38afa58ba917ba6c534e45bde14430",
+      "currentProof": "LAWS.bend:held_function_result_stays_data"
+    },
+    {
+      "id": "SOLID-DEFERRED-RELEASE-THROW-004",
+      "classification": "suspected-upstream-regression",
+      "status": "reproduced-not-filed",
+      "sourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "sourceUnit": "core/core.ts:recompute pre-body deferred-release collection",
+      "introducedBy": "6371b910",
+      "relatedFixUrl": "https://github.com/solidjs/solid/pull/4164",
+      "record": "tracking/upstream/deferred-release-throw.md",
+      "reproducer": "tests/upstream/deferred-release-throw.mjs",
+      "parityReproducer": "tests/upstream-integration.mjs",
+      "baselineProof": "LAWS.bend:throwing_teardown_leaks_release_collector",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "checkedRemoteHead": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "reportDraft": "tracking/upstream/deferred-release-throw-issue.md"
     }
   ]
 }

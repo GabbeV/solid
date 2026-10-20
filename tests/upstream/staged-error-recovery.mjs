@@ -2,9 +2,11 @@
 // source export, function rewrite, lane/action scope or candidate fix is used.
 import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
+const baseline=process.argv.includes('--baseline');
+const reference=process.env.SOLID_REFERENCE??new URL('../../build/solid.mjs',import.meta.url).href;
 const rows=[];
 for(const delivery of ['immediate','native'])for(const variant of ['no-error','no-recovery','same-recovery','changed-recovery']){
- const S=await import('../../build/solid.mjs?staged-error-recovery='+rows.length),escaped=[],reports=[],seen=[];
+ const S=await import(reference+'?staged-error-recovery='+rows.length),escaped=[],reports=[],seen=[];
  const original=console.error;console.error=(...args)=>reports.push(args);
  let complete;
  const q=delivery==='immediate'?{then(yes){complete=value=>{try{yes(value);}catch(e){escaped.push(e);}};}}:(()=>{
@@ -30,13 +32,13 @@ for(const delivery of ['immediate','native'])for(const variant of ['no-error','n
   if(variant==='changed-recovery')app.setStage(2);
   S.flush();const before=app.a();complete(2);await setImmediate();S.flush();
   let result;try{result={returned:app.c()};}catch(e){result={thrown:unwrap(e)};}
-  const failed=variant!=='no-error',cause=variant==='no-recovery'?99:variant==='changed-recovery'?7:1;
-  assert.deepEqual(result,failed?{thrown:cause}:{returned:3});
-  assert.deepEqual(seen,failed?[2]:[2,3]);
-  if(failed){assert.equal(unwrap(escaped[0]),cause);assert.equal(reports[0][0],'[REACTIVITY_HALTED]');assert.equal(reports[0][1],cause);}
+  const failed=baseline?variant!=='no-error':variant==='no-recovery',cause=variant==='no-recovery'?99:variant==='changed-recovery'?7:1;
+  assert.deepEqual(result,failed?{thrown:cause}:{returned:variant==='changed-recovery'?9:3});
+  assert.deepEqual(seen,failed?[2]:[2,variant==='changed-recovery'?9:3]);
+  if(failed){assert.deepEqual(escaped.map(unwrap),baseline?[cause]:[]);assert.equal(reports[0][0],'[REACTIVITY_HALTED]');assert.equal(reports[0][1],cause);}
   else{assert.deepEqual(escaped,[]);assert.deepEqual(reports,[]);}
   rows.push({delivery,variant,before,...result,rendered:seen,escaped:escaped.map(unwrap),haltReports:reports.length});
  }finally{dispose?.();S.resetErrorHalt();S.flush();console.error=original;}
 }
 if(process.argv.includes('--json'))console.log(JSON.stringify(rows,null,2));
-else console.log(`${rows.length} source-only staged-error recovery controls preserve the pinned successful-value-as-error behavior for both immediate and native delivery.`);
+else console.log(`${rows.length} source-only staged-error recovery controls pass (${baseline?'historical value-as-error':'upstream recovery fix'}) for immediate and native delivery.`);

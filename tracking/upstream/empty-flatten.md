@@ -1,5 +1,11 @@
 # Candidate: synchronous promise of empty iterable publishes the iterable object
 
+Current status: accepted upstream fix integrated and validated at Solid 71153bf0.
+The evidence below records the original historical pin; see
+[the integration review](../reviews/solid-71153bf0.md) for current behavior and
+retained baseline branch.
+
+
 Status: upstream fix [PR #4144](https://github.com/solidjs/solid/pull/4144),
 submitted by the user, is merged as
 `745e807bd5c3ff553eef8be05f48278b901b0a49` (verified on next on 2026-10-19).

@@ -1,4 +1,4 @@
-# createSignal(fn), source setter policy and a preserved upstream failure.
+# createSignal(fn), source setter policy and the merged held-function fix.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -44,8 +44,8 @@ def expected() -> View:
     False{}, False{}, False{}, 5n, 2n, R.Number{13n}, 0n, False{}, False{}, False{}, [], R.Healthy{}}
 
 
-# Negative baseline evidence: a held updater's function result is invoked by
-# setSignal a second time. The replacement disposer unexpectedly kills root 5.
+# Upstream #4163: the held result is wrapped before setSignal; the returned
+# disposer remains data and root 5 stays live.
 def heldFunction() -> R.World:
   w = A.createThenable(A.createWorld(), True{})
   w = A.createSignal(w, R.Boolean{False{}}, True{})
@@ -62,22 +62,22 @@ def heldFunction() -> R.World:
   A.flush(2048n, A.setSignal(w, 2n, R.Boolean{True{}}))
 
 
-type Counterexample is Data:
-  Counterexample{heldBefore: Bool, returned: R.Value, replacementDead: Bool,
+type HeldFunctionView is Data:
+  HeldFunctionView{heldBefore: Bool, returned: R.Value, replacementDead: Bool,
     committed: R.Value, proposal: R.Slot, dirty: Bool, manual: Bool,
     scheduled: Bool, context: Nat, tracking: Bool, running: Bool, fault: R.Fault}
 
 
-def counterexample() -> Counterexample:
+def heldFunctionResult() -> HeldFunctionView:
   +w = heldFunction()
   before = B.has(R.Node.config(B.node(w, 9n)), K.CONFIG_HELD())
   +m = A.evaluateExpression(2048n, w, R.InvokeWith{R.Read{4n}, R.Literal{R.RootDisposerReference{5n}}, True{}}, R.Undefined{})
   +w = A.resultWorld(m)
-  Counterexample{before, A.resultValue(m), L.isDisposed(w, 5n), R.Node.value(B.node(w, 9n)), R.Node.pending(B.node(w, 9n)),
+  HeldFunctionView{before, A.resultValue(m), L.isDisposed(w, 5n), R.Node.value(B.node(w, 9n)), R.Node.pending(B.node(w, 9n)),
     B.has(R.Node.flags(B.node(w, 9n)), K.REACTIVE_DIRTY()), B.has(R.Node.flags(B.node(w, 9n)), K.REACTIVE_MANUAL_WRITE()),
     R.World.scheduled(w), R.World.context(w), R.World.tracking(w), R.World.running(w), R.World.fault(w)}
 
 
-def expectedCounterexample() -> Counterexample:
-  Counterexample{True{}, R.Undefined{}, True{}, R.RootDisposerReference{6n}, R.Present{R.Undefined{}},
+def expectedHeldFunction() -> HeldFunctionView:
+  HeldFunctionView{True{}, R.RootDisposerReference{5n}, False{}, R.RootDisposerReference{6n}, R.Present{R.RootDisposerReference{5n}},
     True{}, False{}, True{}, 0n, False{}, False{}, R.Healthy{}}

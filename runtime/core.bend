@@ -2,10 +2,12 @@
 # Defunctionalized expressions are reusable callbacks. The same machine drives
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
+import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../observation/tree.bend as T
 import ./graph.bend as G
+import ./graph-state.bend as GS
 import ./heap.bend as H
 import ./scheduler.bend as S
 import ./constants.bend as K
@@ -38,7 +40,12 @@ type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
     reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
     outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat,
-    saved: List<&2, R.Value>}
+    saved: List<&2, R.Value>, released: Nat}
+
+def passStack(frame: PassFrame) -> List<&2, R.Value>:
+  match frame:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+      saved
 
 type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
@@ -50,7 +57,10 @@ type Task is Data:
   InvokeArguments{}
   OwnerTasks{tasks: List<&2, O.Task>}
   RecomputeAfterFlight{id: Nat}
-  RecomputePrepared{id: Nat, create: Bool}
+  RecomputePrepared{id: Nat, create: Bool, released: Nat}
+  RestoreDeferredReleases{id: Nat, previous: Nat, released: Nat}
+  RecomputeAfterTeardown{id: Nat, released: Nat}
+  PassReleases{frame: PassFrame, index: Nat, value: R.Value, joined: Bool, stagedErr: Bool, missed: Bool, prior: R.Fault}
   FinishPublication{id: Nat, create: Bool, joined: Bool, missed: Bool}
   QueuePublication{id: Nat, create: Bool, missed: Bool}
   AfterDeadPass{id: Nat}
@@ -107,6 +117,7 @@ type Task is Data:
   AfterStep{observer: Nat}
   AfterConsume{stream: Nat}
   IterateOrRelease{stream: Nat}
+  ProtocolCatch{id: Nat, result: Nat, saved: List<&2, R.Value>, successAuto: Bool, errorAuto: Bool}
   AsyncFulfill{observer: Nat, value: R.Value}
   AsyncReject{observer: Nat, error: R.Value}
   AsyncFlush{}
@@ -257,7 +268,15 @@ def memoUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
   held = B.second(R.World, Bool, pair)
   B.choose(~Machine, held,
     _ => Machine{w, Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward{id, True{}} <> rest, stack},
-    _ => signalUpdater(w, SetMemoAfter{id, False{}} <> rest, stack, id, expr))
+    _ => signalUpdater(MW.recover(w, id), SetMemoAfter{id, False{}} <> rest, stack, id, expr))
+
+# The constant closure `() => value` introduced by setMemo is represented by
+# wrapped=True: it returns this stack value after setSignal captures its entry
+# currentValue. User-returned callable data is consequently never invoked again.
+def memoDelegate(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, held: Bool, wrapped: Bool) -> Machine:
+  +w = MW.recover(w, id)
+  +call = B.choose(~Task, wrapped, _ => SetSignalResolved{id, B.current(B.node(w, id))}, _ => SetSignalArgument{id})
+  Machine{w, call <> SetMemoAfter{id, held} <> rest, stack}
 
 # The selected setter's target determines the public entry, including named
 # host/program calls to a constructor-produced writable memo.
@@ -498,7 +517,7 @@ def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>
     case R.SetterReference{node}:
       Machine{w, setterTask(w, node) <> SetMemoForward{id, True{}} <> rest, R.Node.value(B.node(w, id)) <> tail}
     case other:
-      Machine{w, SetMemoForward{id, True{}} <> rest, other <> tail}
+      memoDelegate(w, rest, other <> tail, id, True{}, False{})
 
 
 # Creating an updater closure does not execute its body. Accessors/disposers
@@ -759,7 +778,7 @@ def afterCheck(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
   todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))), _ => [Recompute{id, False{}}], _ => [])
   Machine{w, B.append(Task, todo, ClearFlags{id} <> rest), stack}
 
-def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
+def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, released: Nat) -> Machine:
   +n = B.node(w, id)
   reask = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_REASK()),
     Bool.not(Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Bool.not(R.NodeExtension.reask(B.extension(w, id)))))))
@@ -773,7 +792,7 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}),
     B.choose(~Nat, B.has(R.Node.status(n), K.STATUS_PENDING()), _ => R.NodeExtension.pendingSources(B.extension(w, id)), _ => 0n),
-    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack} : PassFrame}
+    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released} : PassFrame}
   next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{frame} <> rest : List<&2, Task>}
   w = R.World.with_tracking(B.event(w, R.Invoked{id}), True{})
   Machine{w, next, stack}
@@ -785,11 +804,22 @@ def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.
     _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.reenterHeld(w, id), _ => w)
   B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
-    _ => Machine{w, OwnerTasks{[O.Enter{id, False{}, False{}}]} <> RecomputePrepared{id, False{}} <> rest, stack},
+    _ =>
+      +previous = R.World.deferredReleases(w)
+      +pair = GS.beginReleases(w)
+      Machine{B.first(R.World, Nat, pair), OwnerTasks{[O.Enter{id, False{}, False{}}]} <> RestoreDeferredReleases{id, previous, B.second(R.World, Nat, pair)} <> rest, stack},
     _ =>
       w = B.choose(~R.World, Bool.or(Nat.is_ne(R.Node.firstChild(B.node(w, id)), 0n), Bool.not(B.noDisposal(R.Node.disposal(B.node(w, id))))),
         _ => O.parkChildren(w, id), _ => w)
-      Machine{w, RecomputePrepared{id, False{}} <> rest, stack})
+      Machine{w, RecomputeAfterTeardown{id, 0n} <> rest, stack})
+
+# core.ts:recompute after frame teardown and deferred-array restoration.
+def recomputeAfterTeardown(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, released: Nat) -> Machine:
+  +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR()),
+    _ =>
+      +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{}))
+      B.store_node(w, id, R.Node.with_config(B.node(w, id), U32.xor(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR()))), _ => w)
+  Machine{w, RecomputePrepared{id, False{}, released} <> rest, stack}
 
 def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
@@ -801,7 +831,7 @@ def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def recompute(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
   +w = B.bump(w)
-  B.choose(~Machine, create, _ => recomputePrepared(w, rest, stack, id, create),
+  B.choose(~Machine, create, _ => recomputePrepared(w, rest, stack, id, create, 0n),
     _ =>
       +w = H.deleteFromHeap(w, id)
       B.choose(~Machine, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
@@ -838,7 +868,7 @@ def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeig
   +n = B.node(w, id)
   +isEffect = B.effect(R.Node.kind(n))
   +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
-    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.or(Bool.not(R.Node.equals(n)), Bool.not(B.equal(B.current(n), value)))))
+    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(EQ.isSame(w, id, B.current(n), value))))
   +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
     _ =>
       +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
@@ -909,6 +939,9 @@ def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Boo
   keep = B.choose(~U32, create, _ => B.set(keep, K.REACTIVE_SNAPSHOT_STALE()), _ => keep)
   +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), U32.and(R.Node.flags(B.node(w, id)), keep)))
   +w = R.World.with_context(w, context)
+  w
+
+def passFinallyTail(+w: R.World, +id: Nat, reask: Bool) -> R.World:
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
     _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), Bool.and(reask, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))), _ => w)
 
@@ -920,9 +953,32 @@ def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
       w = publishState(w, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr)
       Machine{w, FinishPublication{id, create, joined, missed} <> rest, stack})
 
-def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat, saved: List<&2, R.Value>, +keepFlight: Bool) -> Machine:
-  match stack:
-    case value <> +tail:
+# Source finally executes its deferred releases even when unwinding a body
+# failure. A release failure replaces that failure and skips the remaining tail.
+def startPassFinally(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, value: R.Value, joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
+  match frame:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+      +w = passFinally(w, id, create, context, tracking, reask)
+      Machine{R.World.with_fault(w, R.Healthy{}), PassReleases{frame, 0n, value, joined, stagedErr, missed, R.World.fault(w)} <> rest, stack}
+
+def passReleases(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +index: Nat, +value: R.Value, +joined: Bool, +stagedErr: Bool, +missed: Bool, +prior: R.Fault) -> Machine:
+  match frame:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+      +nodes = B.get(List<&2, Nat>, R.World.releaseLists(w), released, [])
+      B.choose(~Machine, Nat.is_ge(index, B.length(Nat, nodes)),
+        _ =>
+          +w = R.World.with_fault(passFinallyTail(w, id, reask), prior)
+          B.choose(~Machine, B.ok(w),
+            _ => afterPass(w, rest, stack, id, create, value, height, uninitialized, outgoing, sources, pendingSource, joined, stagedErr, missed),
+            _ => Machine{w, rest, stack}),
+        _ =>
+          +node = B.get(Nat, nodes, index, 0n)
+          +ending = {PassReleases{frame, 1n+index, value, joined, stagedErr, missed, prior} <> rest : List<&2, Task>}
+          Machine{w, B.choose(~List<&2, Task>, Q.releasable(w, node), _ => OwnerTasks{[O.Unobserved{node}]} <> ending, _ => ending), stack})
+
+def finishReady(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, +keepFlight: Bool) -> Machine:
+  match stack frame:
+    case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
       +w = B.choose(~R.World, Bool.and(Bool.not(keepFlight), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
       +w = B.choose(~R.World, keepFlight, _ => w, _ => B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})))
@@ -930,17 +986,9 @@ def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +i
         _ => A.clearStatus(w, id, create), _ => w)
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
       +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
-      +w = passFinally(w, id, create, context, tracking, reask)
-      B.choose(~Machine, B.ok(w),
-        _ => afterPass(w, rest, tail, id, create, value, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, False{}, missed),
-        _ => Machine{w, rest, tail})
-    case _:
+      startPassFinally(w, rest, tail, frame, value, joined, False{}, missed)
+    case _ _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
-
-def finishReady(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: PassFrame, keepFlight: Bool) -> Machine:
-  match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
-      finishValue(w, rest, stack, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, keepFlight)
 
 # .then invokes immediate callbacks in the live compute frame; native-style
 # callbacks enter through the host outbox after that frame has returned.
@@ -996,7 +1044,7 @@ def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved, released}:
       finishResult(w, rest, stack, frame, id, flight)
 
 # Body throw -> source catch -> finally -> publication tail, with the caller's
@@ -1029,21 +1077,14 @@ def catchStatus(+w: R.World, +id: Nat, fault: R.Fault, +wasPendingSource: Bool, 
     case other:
       B.Bundle{w, False{}}
 
-def catchValue(+w: R.World, +rest: List<&2, Task>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, oldFlight: Nat, +saved: List<&2, R.Value>) -> Machine:
-  +pair = catchStatus(w, id, R.World.fault(w), wasPendingSource, outgoingSources)
-  +w = B.first(R.World, Bool, pair)
-  +stagedErr = B.second(R.World, Bool, pair)
-  +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
-  +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
-  +w = passFinally(w, id, create, context, tracking, reask)
-  B.choose(~Machine, B.ok(w),
-    _ => afterPass(w, rest, saved, id, create, previous, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr, missed),
-    _ => Machine{w, rest, saved})
-
-def catchPass(w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
+def catchPass(+w: R.World, rest: List<&2, Task>, +frame: PassFrame) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved}:
-      catchValue(w, rest, id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved)
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+      +pair = catchStatus(w, id, R.World.fault(w), pendingSource, sources)
+      +w = B.first(R.World, Bool, pair)
+      +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
+      +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
+      startPassFinally(w, rest, saved, frame, previous, joined, B.second(R.World, Bool, pair), missed)
 
 # handleAsync's post-.then verdict, still inside recompute's try/catch.
 def iterable(+w: R.World, value: R.Value) -> Nat:
@@ -1077,7 +1118,7 @@ def afterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +fr
   B.choose(~Machine, Bool.and(Bool.not(R.AsyncObserver.rejected(o)), Bool.and(R.AsyncObserver.resolved(o), Nat.is_ne(source, 0n))),
     _ =>
       +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
-      consumeIterator(w, AfterIterator{frame} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), source, False{}, R.AsyncObserver.syncValue(o)),
+      consumeIterator(w, AfterIterator{frame} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), source, False{}, R.Undefined{}),
     _ =>
       +pair = F.thenResult(w, observer)
       +w = B.first(R.World, R.Value, pair)
@@ -1204,12 +1245,12 @@ def promiseFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
   +source = iterable(w, value)
   B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncFulfilled(w, observer, value), rest, stack},
     _ => B.choose(~Machine, Bool.and(Nat.is_ne(source, 0n), Bool.and(Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), R.AsyncObserver.result(o)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))),
-      _ => consumeIterator(w, Discard{} <> rest, stack, id, R.AsyncObserver.result(o), source, True{}, R.Undefined{}),
+      _ => consumeIterator(w, Discard{} <> ProtocolCatch{id, R.AsyncObserver.result(o), stack, False{}, True{}} <> rest, stack, id, R.AsyncObserver.result(o), source, True{}, R.Undefined{}),
       _ =>
         +pair = F.asyncWrite(w, id, R.AsyncObserver.result(o), value)
         Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair),
-          _ => AsyncFlush{} <> SettleAuto{id} <> rest,
-          _ => SettleAuto{id} <> rest), stack}))
+          _ => AsyncFlush{} <> ProtocolCatch{id, R.AsyncObserver.result(o), stack, True{}, True{}} <> rest,
+          _ => ProtocolCatch{id, R.AsyncObserver.result(o), stack, True{}, True{}} <> rest), stack}))
 
 def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
   B.choose(~Machine, Nat.is_eq(R.AsyncObserver.node(B.asyncObserver(w, observer)), 0n), _ => Machine{w, rest, stack},
@@ -1590,11 +1631,11 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           +held = B.second(R.World, Bool, pair)
           B.choose(~Machine, held,
             _ => memoRawArgument(w, rest, tail, signal, value),
-            _ => Machine{w, SetSignalArgument{signal} <> SetMemoAfter{signal, False{}} <> rest, value <> tail})
+            _ => memoDelegate(w, rest, value <> tail, signal, False{}, False{}))
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case SetMemoForward{+signal, held} <> rest:
-      Machine{w, SetSignalArgument{signal} <> SetMemoAfter{signal, held} <> rest, stack}
+      memoDelegate(w, rest, stack, signal, held, True{})
     case SetMemoAfter{signal, held} <> rest:
       Machine{MW.finish(w, signal, held), rest, stack}
     case SetSignalArgument{signal} <> rest:
@@ -1640,8 +1681,14 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       ownerTasks(w, rest, stack, tasks)
     case RecomputeAfterFlight{id} <> rest:
       recomputeAfterFlight(w, rest, stack, id)
-    case RecomputePrepared{id, create} <> rest:
-      recomputePrepared(w, rest, stack, id, create)
+    case RestoreDeferredReleases{id, previous, released} <> rest:
+      Machine{R.World.with_deferredReleases(w, previous), RecomputeAfterTeardown{id, released} <> rest, stack}
+    case RecomputeAfterTeardown{id, released} <> rest:
+      recomputeAfterTeardown(w, rest, stack, id, released)
+    case RecomputePrepared{id, create, released} <> rest:
+      recomputePrepared(w, rest, stack, id, create, released)
+    case PassReleases{frame, index, value, joined, stagedErr, missed, prior} <> rest:
+      passReleases(w, rest, stack, frame, index, value, joined, stagedErr, missed, prior)
     case InvokeArguments{} <> +rest:
       match stack:
         case second <> first <> callee <> tail:
@@ -1752,8 +1799,12 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case AfterConsume{stream} <> rest:
       afterConsume(w, rest, stack, stream)
     case IterateOrRelease{+stream} <> +rest:
-      +pair = F.settleAutodispose(w, R.StreamState.node(B.stream(w, stream)))
-      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair), _ => rest, _ => IterateStream{stream} <> Discard{} <> rest), stack}
+      +s = B.stream(w, stream)
+      +ending = {ProtocolCatch{R.StreamState.node(s), R.StreamState.result(s), stack, False{}, False{}} <> rest : List<&2, Task>}
+      +pair = F.settleAutodispose(w, R.StreamState.node(s))
+      Machine{B.first(R.World, Bool, pair), B.choose(~List<&2, Task>, B.second(R.World, Bool, pair), _ => ending, _ => IterateStream{stream} <> Discard{} <> ending), stack}
+    case ProtocolCatch{id, result, saved, successAuto, errorAuto} <> +rest:
+      Machine{w, B.choose(~List<&2, Task>, successAuto, _ => SettleAuto{id} <> rest, _ => rest), stack}
     case AsyncFulfill{observer, value} <> rest:
       asyncFulfill(w, rest, stack, observer, value)
     case AsyncReject{observer, error} <> rest:
@@ -1817,12 +1868,22 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
 
 # Source exceptions skip ordinary continuations and execute enclosing finally
 # frames. Cleanup throws before the compute try do not become node status here.
+def catchProtocol(+w: R.World, +rest: List<&2, Task>, saved: List<&2, R.Value>, +id: Nat, result: Nat, errorAuto: Bool, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{error}:
+      +w = F.handleError(R.World.with_fault(w, R.Healthy{}), id, result, error)
+      Machine{w, B.choose(~List<&2, Task>, errorAuto, _ => SettleAuto{id} <> rest, _ => rest), saved}
+    case other:
+      Machine{w, rest, saved}
+
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case Nil{}:
       Machine{w, [], stack}
     case WatchFinish{awaiter, saved} <> rest:
       watchCause(w, rest, saved, awaiter, R.World.fault(w))
+    case ProtocolCatch{id, result, saved, successAuto, errorAuto} <> rest:
+      catchProtocol(w, rest, saved, id, result, errorAuto, R.World.fault(w))
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case RestoreContext{owner, tracking} <> rest:
@@ -1847,6 +1908,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:
       Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
+    case PassReleases{frame, index, value, joined, stagedErr, missed, prior} <> rest:
+      Machine{w, rest, passStack(frame)}
     case TrimFinallyRestore{prior, saved} <> rest:
       Machine{w, rest, saved}
     case FlushFinally{} <> rest:
