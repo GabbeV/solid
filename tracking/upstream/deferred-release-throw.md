@@ -172,3 +172,20 @@ the issue distinguishes that hosted build from the separate unchanged-source
 a2743fa2 browser verification. The earlier unavailable hosted reproduction is
 superseded by this verified user-provided share. The issue form is refreshed
 with the link, with policy and implementation still left open.
+
+## Finally PR selected for submission
+
+The user chose to return to the finally restoration PR. The direct-parent
+comparison establishes that #4164 introduced the unrelated lazy release failure:
+the throwing cleanup already escaped without a halt on a9b9f9e4, where the later
+cleanup ran once. Restoration in finally addresses this regression without
+changing that error propagation policy. Broader cleanup error policy remains
+a separate question and does not make the measured regression ambiguous.
+
+The candidate remains 035e9b2f on fix/restore-deferred-releases, with all prior
+build/test/size/performance evidence unchanged. Its refreshed prefilled PR
+description includes the verified user-provided playground, distinguishes its
+package label from local upstream source, and states the before/after regression.
+The previously prepared issue is retained for history; it was not submitted.
+No actual PR number exists yet; the filled comparison is for manual submission
+because the integration previously denied createPullRequest.
