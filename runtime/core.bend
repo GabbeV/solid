@@ -56,6 +56,12 @@ type Task is Data:
   AfterDeadPass{id: Nat}
   TrimFinallyRestore{prior: R.Fault, saved: List<&2, R.Value>}
   RoundAfterSweep{}
+  CommitPending{id: Nat}
+  CommitFinish{id: Nat, inFlight: Bool}
+  CommitAfterTrim{id: Nat, inFlight: Bool}
+  CommitIntake{index: Nat}
+  TrimIntake{index: Nat}
+  FinishSettleIntake{transaction: Nat}
   OnCleanup{}
   CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
   SetSignalArgument{signal: Nat}
@@ -1363,6 +1369,51 @@ def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Mach
   Machine{w, todo, stack}
 
 # scheduler.ts:GlobalQueue.settle, before the transaction landing loop.
+def commitPending(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  B.choose(~Machine, B.computed(R.Node.kind(B.node(w, id))),
+    _ =>
+      +pair = S.commitComputedPrefix(w, id)
+      Machine{B.first(R.World, Bool, pair), CommitFinish{id, B.second(R.World, Bool, pair)} <> rest, stack},
+    _ => Machine{S.commitSignal(w, id), rest, stack})
+
+def commitFinish(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +inFlight: Bool) -> Machine:
+  +w = S.finishCommitFields(w, id)
+  +ending = {CommitAfterTrim{id, inFlight} <> rest : List<&2, Task>}
+  todo = B.choose(~List<&2, Task>, B.nullish(R.NodeExtension.error(B.extension(w, id))),
+    _ => OwnerTasks{[O.TrimDeps{id}]} <> ending, _ => ending)
+  Machine{w, todo, stack}
+
+def commitAfterTrim(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, inFlight: Bool) -> Machine:
+  +w = S.afterCommitTrim(w, id)
+  B.choose(~Machine, S.disposeCommittedFrame(w, id, inFlight),
+    _ => Machine{w, OwnerTasks{[O.Enter{id, False{}, True{}}]} <> rest, stack}, _ => Machine{w, rest, stack})
+
+# Live source pendingNodes.length and heldTrims.length; clears stay after walks.
+def commitIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.World.pendingNodes(w))),
+    _ => Machine{R.World.with_pendingNodes(w, []), rest, stack},
+    _ =>
+      +id = B.get(Nat, R.World.pendingNodes(w), index, 0n)
+      +ending = {CommitIntake{1n+index} <> rest : List<&2, Task>}
+      todo = B.choose(~List<&2, Task>, B.has(R.Node.config(B.node(w, id)), B.set(K.CONFIG_OVERRIDE(), K.CONFIG_HELD())),
+        _ => ending, _ => CommitPending{id} <> ending)
+      Machine{w, todo, stack})
+
+def trimIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.World.trims(w))), _ => Machine{w, rest, stack},
+    _ =>
+      +id = B.get(Nat, R.World.trims(w), index, 0n)
+      +ending = {TrimIntake{1n+index} <> rest : List<&2, Task>}
+      todo = B.choose(~List<&2, Task>, Bool.and(B.nullish(R.NodeExtension.error(B.extension(w, id))), Bool.not(R.Node.modified(B.node(w, id)))),
+        _ => OwnerTasks{[O.TrimDeps{id}]} <> ending, _ => ending)
+      Machine{w, todo, stack})
+
+def finishSettleIntake(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +t: Nat) -> Machine:
+  +w = S.clearTrims(w)
+  frame = {SeamFrame{t, R.World.renderQueue(w), R.World.userQueue(w)} : SeamFrame}
+  +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
+  Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
+
 def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   +joined = R.World.flushTransaction(w)
   +w = R.World.with_flushTransaction(w, 0n)
@@ -1370,18 +1421,12 @@ def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -
     _ => X.resolveTx(w, joined), _ => B.Bundle{w, 0n})
   +w = B.first(R.World, Nat, pair)
   +t = B.second(R.World, Nat, pair)
-  +w = B.choose(~R.World, Nat.is_ne(t, 0n),
+  B.choose(~Machine, Nat.is_ne(t, 0n),
     _ =>
       +w = S.parkPendingNodes(w, t)
-      B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w),
-    _ => S.settle(w))
-  B.choose(~Machine, B.ok(w),
-    _ =>
-      +w = R.World.with_trims(w, [])
-      frame = {SeamFrame{t, R.World.renderQueue(w), R.World.userQueue(w)} : SeamFrame}
-      +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
-      Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack},
-    _ => Machine{w, rest, stack})
+      w = B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w)
+      Machine{w, FinishSettleIntake{t} <> rest, stack},
+    _ => Machine{w, CommitIntake{0n} <> TrimIntake{0n} <> FinishSettleIntake{t} <> rest, stack})
 
 # Reverse scan restarts after each landing, since its commits can remove a
 # zombie another transaction was blocked on, or a cleanup can register a join.
@@ -1414,9 +1459,10 @@ def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +fr
           B.Bundle{B.first(R.World, Nat, pair), Nat.is_eq(B.second(R.World, Nat, pair), t)},
         _ => B.Bundle{w, False{}})
       +w = B.first(R.World, Bool, pair)
-      w = B.choose(~R.World, B.second(R.World, Bool, pair),
-        _ => S.commitPendingNode(B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n)), id), _ => w)
-      Machine{w, LandNodes{frame, t, 1n+index} <> rest, stack})
+      +ending = {LandNodes{frame, t, 1n+index} <> rest : List<&2, Task>}
+      B.choose(~Machine, B.second(R.World, Bool, pair),
+        _ => Machine{B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n)), CommitPending{id} <> ending, stack},
+        _ => Machine{w, ending, stack}))
 
 def landEnd(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
   +w = B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), t), _ => R.World.with_flushTransaction(w, 0n), _ => w)
@@ -1563,6 +1609,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{W.setResolved(w, signal, current, value), rest, value <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case CommitPending{id} <> rest:
+      commitPending(w, rest, stack, id)
+    case CommitFinish{id, inFlight} <> rest:
+      commitFinish(w, rest, stack, id, inFlight)
+    case CommitAfterTrim{id, inFlight} <> rest:
+      commitAfterTrim(w, rest, stack, id, inFlight)
+    case CommitIntake{index} <> rest:
+      commitIntake(w, rest, stack, index)
+    case TrimIntake{index} <> rest:
+      trimIntake(w, rest, stack, index)
+    case FinishSettleIntake{t} <> rest:
+      finishSettleIntake(w, rest, stack, t)
     case FinishPublication{id, create, joined, missed} <> rest:
       finishPublication(w, rest, stack, id, create, joined, missed)
     case QueuePublication{+id, create, missed} <> rest:

@@ -191,5 +191,45 @@ for(const throws of [false,true]){
     ['set','other',3],['flush'],['dispose'],['resetErrorHalt'],['flush']
   ]);
 }
+for(const held of [false,true])for(const immediate of [false,true])for(const cleanup of ['read','throw','pending']){
+  let changed=false;
+  await scenario('scheduler commit resumes parked cleanup '+JSON.stringify({held,immediate,cleanup}),[
+    ['signal','version',0],['signal','marker',0],['signal','other',7],['future','p',{immediate}],['future','q',{immediate}],
+    ['memo','reader',cleanup==='pending'?future('q'):read('other'),{owner:null,lazy:true}],
+    ['program','clean',[['updateExpr','marker',add({prev:true},read('reader'))],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ['memo','target',read('version')],['install','target','clean'],['memo','slow',select(read('version'),future('p'),lit(0))],
+    ['effect','view',held?seq(read('target'),read('slow')):read('target')],['flush'],
+    ['set','version',1],['flush'],['resolve','p',7],['tick'],['resolve','q',8],['tick'],['resetErrorHalt'],['flush'],
+    ['read','marker'],['dispose'],['resetErrorHalt'],['flush']
+  ],(op,args,actual,wanted,b,s)=>{
+    if(op==='set'&&args[0]==='version')changed=true;
+    if(op==='flush'&&changed){changed=false;
+      if(!held){const target=[...s.sourceNames].find(([,name])=>name==='target')[0];assert.equal(target._value,1,'native value publishes before parked cleanup');assert.equal(target._x._pendingDisposal,null,'native cleanup list detaches before callback');}
+      if(!held&&cleanup==='throw')assert.deepEqual(wanted,['throw',9]);
+    }
+  });
+}
+for(const throws of [false,true]){
+  await scenario('unchanged-pass held trim resumes its unobserved hook '+throws,[
+    ['signal','choose',true],['signal','input',1],['signal','marker',0],['signal','other',7],
+    ['memo','reader',read('other'),{owner:null,lazy:true}],['program','hook',[['setExpr','marker',read('reader')],...(throws?[['throwExpr',lit(9)]]:[])]],
+    ['memoHook','observed',read('input'),'hook'],['memo','stable',seq(select(read('choose'),read('observed'),lit(0)),lit(5))],
+    ['effect','view',read('stable')],['flush'],['set','choose',false],['flush'],['resetErrorHalt'],['flush'],['read','marker'],['dispose'],['resetErrorHalt'],['flush']
+  ]);
+}
+let changedManual=false;
+await scenario('commit callback proposal retains its new manual-write flag',[
+  ['signal','choose',true],['signal','input',1],['signal','saved',undefined],
+  ['program','hook',[['eval',{invokeWith:{callee:read('saved'),value:lit(9)}}],['throwExpr',lit(9)]]],
+  ['memoHook','observed',read('input'),'hook'],['program','compute',[['return',select(read('choose'),read('observed'),lit(0))]]],
+  ['signal','target',{callback:'compute'}],['update','saved',lit({setter:'target'})],['flush'],['effect','view',read('target')],['flush'],
+  ['set','choose',false],['flush'],['dispose'],['resetErrorHalt'],['flush']
+],(op,args,actual,wanted,b,s)=>{
+  if(op==='set'&&args[0]==='choose')changedManual=true;
+  if(op==='flush'&&changedManual){changedManual=false;const target=[...s.sourceNames].find(([,name])=>name==='target')[0];
+    assert.deepEqual(wanted,['throw',9]);assert.equal(target._value,0);assert.equal(target._pendingValue,9);
+    assert.ok(target._flags&1024,'native callback proposal sets REACTIVE_MANUAL_WRITE after the commit prefix cleared it');
+  }
+});
 fs.rmSync(dir,{recursive:true,force:true});
 console.log(`${count} direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public read-capable teardown admission remains restricted.`);

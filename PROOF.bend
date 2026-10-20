@@ -152,3 +152,6 @@ def Laws.direct_owner_cleanup_reads_resume_core():
 
 def Laws.trim_error_overrides_application_error():
   {==}
+
+def Laws.commit_publishes_before_parked_cleanup_error():
+  {==}

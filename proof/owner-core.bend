@@ -49,3 +49,27 @@ def trimScenario() -> TrimView:
 def expectedTrim() -> TrimView:
   TrimView{R.CallbackThrown{R.Number{9n}}, R.StatusFailure{1n, 5n, R.Number{7n}, "7"}, 2, R.Number{0n}, False{}, True{},
     [R.RuntimeReport{0, R.Present{R.Number{7n}}}], 0n, False{}, False{}}
+
+# A commit publishes its value before retiring the parked frame. A teardown
+# error leaves its list detached and later writes pending in the live intake.
+type CommitView is Data:
+  CommitView{fault: R.Fault, value: R.Value, pending: R.Slot,
+    disposal: R.Disposal, marker: R.Value, proposal: R.Slot,
+    intake: List<&2, Nat>, modified: Bool, previous: R.Value,
+    running: Bool, context: Nat, tracking: Bool, halted: Bool}
+
+def commitScenario() -> CommitView:
+  w = A.createSignal(A.createWorld(), R.Number{0n}, True{})
+  w = A.createSignal(w, R.Number{0n}, True{})
+  w = A.registerProgram(w, A.programWriteExpr(3n, R.Literal{R.Number{8n}}, A.programThrowExpr(R.Literal{R.Number{9n}}, A.emptyProgram())))
+  w = A.createMemoWithOptions(2048n, w, R.Read{2n}, N.defaults(), 1n)
+  w = O.cleanup(w, 4n, 1n)
+  w = A.createEffect(2048n, w, R.Read{4n}, False{}, 2n, False{}, False{}, 1n)
+  +done = A.flush(2048n, A.setSignal(w, 2n, R.Number{1n}))
+  CommitView{R.World.fault(done), R.Node.value(B.node(done, 4n)), R.Node.pending(B.node(done, 4n)), R.NodeExtension.pendingDisposal(B.extension(done, 4n)),
+    R.Node.value(B.node(done, 3n)), R.Node.pending(B.node(done, 3n)), R.World.pendingNodes(done), R.Node.modified(B.node(done, 5n)), R.Node.prevValue(B.node(done, 5n)),
+    R.World.running(done), R.World.context(done), R.World.tracking(done), R.World.halted(done)}
+
+def expectedCommit() -> CommitView:
+  CommitView{R.CallbackThrown{R.Number{9n}}, R.Number{1n}, R.Empty{}, R.NoDisposal{}, R.Number{0n}, R.Present{R.Number{8n}},
+    [2n, 4n, 3n], True{}, R.Number{0n}, False{}, 0n, False{}, False{}}

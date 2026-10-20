@@ -83,3 +83,40 @@ Three mutations target lost/incorrect throw restoration and a skipped sweep.
 Scheduler commit/held trims and async/pending/watch release paths remain to be
 migrated. Global expression-teardown admission remains restricted until those
 remaining callers can resume the same installed callback.
+
+## Scheduler commit and held-trim return points
+
+The active scheduler path now uses CommitPending/CommitFinish/CommitAfterTrim,
+live CommitIntake/TrimIntake and FinishSettleIntake tasks, including transaction
+landings. Shared scheduler helpers retain the actual source mutation segments;
+the restricted direct helper facade calls those same segments. The inFlight local
+is captured before publication/configuration changes and retained across callbacks.
+Loading/manual-write fields clear before dependency trim; status initialization
+clears after successful trim; parked-frame teardown remains last. A callback's new
+manual proposal is consequently retained if that callback throws.
+
+Pending intake still reads its live length after callbacks and clears only after
+the walk completes. Held trims keep their nullish-error/modified guard. Their one
+conditional clear now matches the source after either commit or park; the former
+redundant empty clear from composing the helper facade and core was removed.
+Transaction pointers clear before their individual commit, and landing resumes its
+live node list after the callback. No queue snapshot or replacement scheduler was
+introduced.
+
+Fifteen additional direct probes cover ordinary/held/native commit cleanup,
+pending reads, throwing partial publication, unchanged-pass trims and the new
+manual-write proposal flag (64 direct probes total). One additional kernel law
+checks that the value published before a parked cleanup throws, its list detached,
+and the cleanup's write remains in the uncompleted live intake. Four new mutations
+remove parked cleanup, finish a failed trim incorrectly, omit held trims or stop
+intake early. Sixteen additional public seeded histories run 2,560 generated
+operations plus setup/disposal against actual Solid; every generated operation is
+also required to stay in the admitted total natural/function domain.
+
+The remaining World-helper crossings are now inventoried by
+`node tools/owner-boundaries.mjs` and the sealed
+[call-site report](reviews/owner-boundaries.json). It reports possible call chains,
+not actual reachability, API failures or bugs. The current twelve core call sites
+lead through async/error/pending release; watch/until disposal is listed separately.
+Static call analysis does not interpret task constructors or branch predicates.
+Read-capable teardown admission remains restricted until those callers migrate.

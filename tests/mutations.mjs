@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['scheduler commit omits parked cleanup','runtime/core.bend','Machine{w, OwnerTasks{[O.Enter{id, False{}, True{}}]} <> rest, stack}','Machine{w, rest, stack}','tests/owner-core-alignment.mjs','commitAfterTrim'],
+  ['failed commit clears a callback proposal flag','runtime/core.bend','    case TrimFinallyRestore{prior, saved} <> rest:','    case CommitAfterTrim{id, inFlight} <> rest:\n      Machine{S.finishCommitFields(w, id), rest, stack}\n    case TrimFinallyRestore{prior, saved} <> rest:','tests/owner-core-alignment.mjs','unwind'],
+  ['unchanged-pass trim callbacks are skipped','runtime/core.bend','OwnerTasks{[O.TrimDeps{id}]} <> ending','ending','tests/owner-core-alignment.mjs','trimIntake'],
+  ['pending intake stops after its first member','runtime/core.bend','CommitIntake{1n+index} <> rest','rest','tests/owner-core-alignment.mjs','commitIntake'],
   ['trim throw is replaced with the earlier application fault','runtime/core.bend','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{w, rest, saved}','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, prior), rest, saved}','tests/owner-core-alignment.mjs','unwind'],
   ['successful finally trim drops the original application fault','runtime/core.bend','Machine{R.World.with_fault(w, prior), rest, saved}','Machine{R.World.with_fault(w, R.Healthy{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
   ['dormant owner sweep is skipped','runtime/core.bend','OwnerTasks{[O.SweepDormant{0n}]} <> ending','OwnerTasks{[]} <> ending','tests/owner-core-alignment.mjs','round'],

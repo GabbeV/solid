@@ -312,3 +312,9 @@ Core publication/dead-pass trims, effect finally trims and dormant sweeps now us
 owner/core return points too. Forty-nine direct probes and a second kernel fixture
 retain override errors and caller restoration. Scheduler and async/pending/watch
 callers still block global read-capable teardown admission.
+
+Scheduler commit, parked-frame disposal, held trims and live intake/landing now
+resume callbacks on the shared core driver. Sixty-four direct probes, a third
+owner/core kernel fixture and sixteen seeded public histories cover these stages.
+The sealed owner-boundary call-site report leaves twelve core async/pending/error
+World-helper crossings explicit; it is an inventory, not a bug count.

@@ -196,3 +196,6 @@ law direct_owner_cleanup_reads_resume_core:
 
 law trim_error_overrides_application_error:
   {OwnerCore.trimScenario() == OwnerCore.expectedTrim() : OwnerCore.TrimView}
+
+law commit_publishes_before_parked_cleanup_error:
+  {OwnerCore.commitScenario() == OwnerCore.expectedCommit() : OwnerCore.CommitView}

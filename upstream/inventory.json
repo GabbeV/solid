@@ -17970,9 +17970,9 @@
           "sha256": "87120c0ed765aa7ce869b77091aa7976fa8c05dacd7771c8075e5fc692ab1505",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues",
+            "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake",
             "status": "partial",
-            "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished."
+            "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty."
           }
         },
         {
@@ -18122,9 +18122,9 @@
           "sha256": "d4b637f8306ace801dfe999717a1e21ffa3cb0582539f5ee2203f6a412bf2154",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
+            "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedPrefix, commitAnswerValue, finishCommitFields, afterCommitTrim, disposeCommittedFrame; runtime/core.bend:commitPending, commitFinish, commitAfterTrim, CommitPending, CommitFinish, CommitAfterTrim",
             "status": "partial",
-            "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished."
+            "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished. Active commit and transaction landings now suspend trim/parked teardown through the same core driver, retaining the entry inFlight local and exact field/callback order. The direct state-probe facade shares those mutation segments."
           }
         },
         {
@@ -18134,9 +18134,9 @@
           "sha256": "985c16fbcef7d19de4a4382917821dec0d06fa71d662464dabf3485ba6a12720",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
+            "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake",
             "status": "partial",
-            "restrictions": "Live intake bound, held/override guard, clear only after successful walk; callback appends and throwing cleanup partial states are compared. No transactions/lanes."
+            "restrictions": "Live intake bound, held/override guard, clear only after successful walk; callback appends and throwing cleanup partial states are compared. No transactions/lanes. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty."
           }
         },
         {

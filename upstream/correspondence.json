@@ -138,14 +138,14 @@
       "restrictions": "Generation-current missed-wake condition and notify epoch retained; callback writes use this same path. Snapshot/observe hooks unfinished."
     },
     "core/scheduler.ts:commitPendingNode": {
-      "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedAnswer",
+      "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedPrefix, commitAnswerValue, finishCommitFields, afterCommitTrim, disposeCommittedFrame; runtime/core.bend:commitPending, commitFinish, commitAfterTrim, CommitPending, CommitFinish, CommitAfterTrim",
       "status": "partial",
-      "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished."
+      "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished. Active commit and transaction landings now suspend trim/parked teardown through the same core driver, retaining the entry inFlight local and exact field/callback order. The direct state-probe facade shares those mutation segments."
     },
     "core/scheduler.ts:commitPendingNodes": {
-      "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list",
+      "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake",
       "status": "partial",
-      "restrictions": "Live intake bound, held/override guard, clear only after successful walk; callback appends and throwing cleanup partial states are compared. No transactions/lanes."
+      "restrictions": "Live intake bound, held/override guard, clear only after successful walk; callback appends and throwing cleanup partial states are compared. No transactions/lanes. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty."
     },
     "core/scheduler.ts:GlobalQueue.flush": {
       "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd",
@@ -153,9 +153,9 @@
       "restrictions": "Source running/resync/pass posture/dormant sweep/heap/transaction settle/clock/phase ordering; finally clears running/passTx on normal and exceptional paths. Microtask host delivery and async flights remain unfinished."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
-      "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues",
+      "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake",
       "status": "partial",
-      "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished."
+      "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, run",
