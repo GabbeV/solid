@@ -140,7 +140,7 @@
     "tests/writable-signals.mjs": "03a88076573e500476e2e3772f87656851c4e32b9aef3210675bdcc257673ff7",
     "tools/bootstrap.mjs": "cd9beca6216d62bb087db91c0841097a5a405146c64cfba482a311540c94f73e",
     "tools/build.mjs": "9b1dabbcfc2af42f61b9f2a3badcec39c9d2ac067a5785b4b0e57273b7a09824",
-    "tools/check.mjs": "d73e2da31ac19367b0c2c85b5ebbaaf58b73e291939f2ff1618a2a0b82357c82",
+    "tools/check.mjs": "3a9dded3900cbdf43d22fab4e986b89a3d3baea5b5221cc8ab0810a42a24a91f",
     "tools/constants.mjs": "c4bbb57fd74ffdab48d4829d9df7e4e873c9a5f33b76a5570a3bba950f209988",
     "tools/deviations.mjs": "4fcbedbf843edd81b10e16e3439f4bcc20642b278efa9a14058db199929a0f79",
     "tools/inventory.mjs": "1e217191febda9097eb5df0af7e94d4ba54704cb3e6385f1bde23ea0ff95ec74",
@@ -190,8 +190,10 @@
     "tracking/verification.md": "19c5cb5dbe47efaf6a065dcbccf86dd7ee5a8b285807fd482cdd3e5192fd40a3",
     "tracking/reviews/function-values.md": "602565de8f531697118f57c27dd0596138c060e165a07568eff9eb47b7dbde1c",
     "tracking/reviews/function-values-impact.json": "a4c00521df130a47d4542290794a606d013769d617335c6b5af8b83ba207df5c",
-    "tracking/upstream-issues.json": "ecb647a799966b330f6754502965561ef6a5a1a0676bd42fd756986f1bca71e0",
-    "tracking/upstream/deferred-release-throw.md": "d0627991a1007c7a69b824058d00cc458aea0d3aefc382f7096c06af41c85161",
+    "tracking/upstream-issues.json": "5391201e69c692b055d17b5d0f66a48d14cd9080b56213203524d2baf1fb5efe",
+    "tracking/upstream/deferred-release-fix-size.json": "6c2924c5ff78b8298b263b7a6022dc6a8912292b5c3cc7ab9e8c9a8bbbce1100",
+    "tracking/upstream/deferred-release-fix-benchmark.json": "a958cd40b0bfb2b9409a47c4c6357fad4313ff0b21dec57347aa87dfc14d0401",
+    "tracking/upstream/deferred-release-throw.md": "217e5942a3f2020b2cac8ec9970220184a305f08b7e61cd0bb082323dfcb0520",
     "tracking/upstream/deferred-release-throw-issue.md": "b1c5ce985bab61fc8dc2b70cc2836df1502ce5e7a75176c37b6a157bd3eb73dd",
     "tracking/upstream/empty-flatten.md": "9e2228a08a714cdc6945a2060f58c876a176911617f0984edf9b4be694e54f8f",
     "tracking/upstream/staged-error-recovery.md": "673b14f2a35179ce3f3f50e6f3c1c50cd37c117df2f26934829cd061ee624f34",
@@ -245,7 +247,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 23.770558944,
+    "seconds": 24.085113927,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {

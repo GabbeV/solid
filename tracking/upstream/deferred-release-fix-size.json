@@ -1,0 +1,115 @@
+{
+  "baseCommit": "a2743fa2d26d78f38c42600b91aceddb43a1c3ef",
+  "fixCommit": "035e9b2f34f9c160ac708676e242fd594056a509",
+  "bundler": "Rolldown 1.2.11",
+  "base": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7374,
+      "minified": 20021,
+      "limit": 7390,
+      "passed": true,
+      "capMinified": 20021,
+      "lazy": [],
+      "packages": {
+        "signals": 19977,
+        "other": 44
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14932,
+      "minified": 45175,
+      "limit": 14950,
+      "passed": true,
+      "capMinified": 45175,
+      "lazy": [],
+      "packages": {
+        "signals": 45118,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10144,
+      "minified": 28443,
+      "limit": 10160,
+      "passed": true,
+      "capMinified": 28443,
+      "lazy": [],
+      "packages": {
+        "signals": 28386,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7969,
+      "minified": 21832,
+      "limit": 7980,
+      "passed": true,
+      "capMinified": 21832,
+      "lazy": [],
+      "packages": {
+        "signals": 21778,
+        "other": 54
+      }
+    }
+  ],
+  "fixed": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7372,
+      "minified": 20034,
+      "limit": 7390,
+      "passed": true,
+      "capMinified": 20021,
+      "lazy": [],
+      "packages": {
+        "signals": 19988,
+        "other": 44
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14960,
+      "minified": 45188,
+      "limit": 14950,
+      "passed": false,
+      "capMinified": 45175,
+      "lazy": [],
+      "packages": {
+        "signals": 45130,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10149,
+      "minified": 28456,
+      "limit": 10160,
+      "passed": true,
+      "capMinified": 28443,
+      "lazy": [],
+      "packages": {
+        "signals": 28398,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7977,
+      "minified": 21845,
+      "limit": 7980,
+      "passed": true,
+      "capMinified": 21832,
+      "lazy": [],
+      "packages": {
+        "signals": 21790,
+        "other": 54
+      }
+    }
+  ],
+  "gate": "ok   signals: core floor (createSignal/Memo/Effect/Root/flush)\nWARN signals: + createStore\n     over brotli cap by 10 B; minified 45,188 B vs 45,175 B recorded with the cap (+13 B) \u2014 7 B of the 20 B minified allowance left; +13 B minified over this PR's base\nok   signals: + isPending/latest\nok   signals: + until/refresh (truth readers, no optimism)\n\nsize: every scenario passes (1 over its brotli cap within the minified allowance).\n",
+  "capsChanged": false
+}

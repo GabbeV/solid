@@ -93,7 +93,7 @@
     {
       "id": "SOLID-DEFERRED-RELEASE-THROW-004",
       "classification": "suspected-upstream-regression",
-      "status": "reproduced-not-filed",
+      "status": "fix-branch-pushed-pr-submission-pending",
       "sourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
       "sourceUnit": "core/core.ts:recompute pre-body deferred-release collection",
       "introducedBy": "6371b910",
@@ -106,7 +106,14 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "checkedRemoteHead": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
-      "reportDraft": "tracking/upstream/deferred-release-throw-issue.md"
+      "reportDraft": "tracking/upstream/deferred-release-throw-issue.md",
+      "candidateFixBranch": "fix/restore-deferred-releases",
+      "candidateFixCommit": "035e9b2f34f9c160ac708676e242fd594056a509",
+      "candidateBaseCommit": "a2743fa2d26d78f38c42600b91aceddb43a1c3ef",
+      "candidateCompareUrl": "https://github.com/solidjs/solid/compare/next...GabbeV:fix/restore-deferred-releases?expand=1",
+      "candidateSizeRecord": "tracking/upstream/deferred-release-fix-size.json",
+      "candidateBenchmarkRecord": "tracking/upstream/deferred-release-fix-benchmark.json",
+      "submissionBlock": "GitHub createPullRequest: Resource not accessible by integration; full prefilled comparison opened for manual submission."
     }
   ]
 }

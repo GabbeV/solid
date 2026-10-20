@@ -85,3 +85,30 @@ found in the returned results. Related but different:
 
 These searches are evidence of the review performed, not proof that no duplicate
 exists. [Prepared issue text](deferred-release-throw-issue.md); nothing was posted.
+
+## Prepared upstream fix
+
+The reviewed try/finally fix is committed as
+035e9b2f34f9c160ac708676e242fd594056a509 and pushed to
+GabbeV/solid:fix/restore-deferred-releases, based on current next a2743fa2.
+It changes only the disposal/restoration pair, adds public-API returning/throwing
+controls and a patch changeset. The throwing case fails before the fix; both
+controls and the existing #4142 regressions pass afterward. Full signals base
+and patched suites pass: 326/327 files, 5409/5411 passing tests, three expected
+failures and two skips. Signals JS/declaration builds, Prettier and release
+invariants pass.
+
+[Size results](deferred-release-fix-size.json): +13 minified bytes in all four
+signals scenarios. Every comparison gate passes; the store scenario warns about
+brotli within the existing minified allowance. Caps are unchanged.
+[Local performance samples](deferred-release-fix-benchmark.json): five warm-ups
+and 11 alternating measured rounds per version for chains, diamonds and pending
+frame rebuilds, with GC outside timed regions. Patched medians are within 3% of
+the base with no apparent slowdown; noisy local microbenchmarks do not establish
+application-performance equivalence.
+
+GitHub accepted the branch push but denied createPullRequest with “Resource not
+accessible by integration”. A complete prefilled comparison was opened for user
+submission; no PR number exists yet. This candidate fix remains separate from
+the pinned reference and active Bend behavior. The negative regression and empty
+semantic-deviation register are unchanged.
