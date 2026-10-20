@@ -1,0 +1,39 @@
+{
+  "url": "https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg",
+  "packageBuild": "mizulu/solid2@5a4b2e85",
+  "upstreamSourceCommitForSeparateLocalVerification": "a2743fa2d26d78f38c42600b91aceddb43a1c3ef",
+  "packageBuildSourceCommitMapping": "Not established; the playground build label is recorded independently of the local upstream source pin.",
+  "sourceSha256": "a86cdbe70a5585f5733d1b92fded0c82c26b46fe000734ae3f8e6cfc450ee434",
+  "initial": [
+    "Not run"
+  ],
+  "throw": [
+    "Cleanup count: 0"
+  ],
+  "nonthrowControl": [
+    "Cleanup count: 1"
+  ],
+  "savedShareReload": [
+    "Cleanup count: 0"
+  ],
+  "pageErrors": [],
+  "consoleReports": [
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "runtimeRequests": [
+    "https://esm.sh/pr/mizulu/solid2/solid-js@5a4b2e85?dev&external=solid-js,@solidjs/signals",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/babel-plugin@5a4b2e85?target=esnext",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/babel-plugin@5a4b2e85/esnext/babel-plugin.mjs",
+    "https://esm.sh/pr/mizulu/solid2/solid-js@5a4b2e85?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/web@5a4b2e85?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "https://esm.sh/pr/mizulu/solid2/solid-js@5a4b2e85/X-ZUBzb2xpZGpzL3NpZ25hbHMsc29saWQtanMsc29saWQtanMvaW50ZXJuYWw/es2022/solid-js.development.mjs",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/web@5a4b2e85/X-ZUBzb2xpZGpzL3NpZ25hbHMsc29saWQtanMsc29saWQtanMvaW50ZXJuYWw/es2022/web.development.mjs",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/signals@5a4b2e85?dev",
+    "https://esm.sh/pr/mizulu/solid2/solid-js@5a4b2e85/internal?dev&external=solid-js,@solidjs/signals",
+    "https://esm.sh/pr/mizulu/solid2/solid-js@5a4b2e85/X-ZUBzb2xpZGpzL3NpZ25hbHMsc29saWQtanM/es2022/internal.development.mjs",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/signals@5a4b2e85/es2022/dist/dev-shared.development.mjs",
+    "https://esm.sh/pr/mizulu/solid2/@solidjs/signals@5a4b2e85/es2022/signals.development.mjs"
+  ],
+  "shareMutation": "None: control edited only in local browser; saved share reloaded and source compared exactly."
+}

@@ -13,75 +13,18 @@ with a leaked global release collector.
 
 ### Your Example Website or App
 
-Self-contained JSX component below, verified against unchanged source-built
-next@a2743fa2 in Chromium, in development and production.
+https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg
 
 ### Steps to Reproduce the Bug or Issue
 
-Run the component below against `a2743fa2` and click **Run**. The handler catches
+Open the playground and click **Run**. The handler catches
 and logs `cleanup failed`, then observes and releases a separate lazy memo.
 The paragraph updates to **Cleanup count: 0**; its cleanup did not run.
 Its own root remains alive.
 
-```tsx
-import {
-  createMemo,
-  createRenderEffect,
-  createRoot,
-  createSignal,
-  flush,
-  onCleanup
-} from "solid-js";
-import { render } from "solid-js/web";
 
-function App() {
-  const [result, setResult] = createSignal("Not run");
-
-  function run() {
-    const [version, setVersion] = createSignal(0);
-    createRoot(() => {
-      createMemo(() => {
-        version();
-        onCleanup(() => {
-          throw new Error("cleanup failed");
-        });
-        return new Promise(() => {});
-      });
-    });
-    flush();
-    setVersion(1);
-    try {
-      flush();
-    } catch (error) {
-      console.log("Caught:", error);
-    }
-
-    let cleaned = 0;
-    let stop!: () => void;
-    createRoot(() => {
-      const value = createMemo(() => {
-        onCleanup(() => cleaned++);
-        return 1;
-      }, { lazy: true });
-      stop = createRoot(dispose => {
-        createRenderEffect(value, () => {});
-        return dispose;
-      });
-    });
-    flush();
-    stop();
-    flush();
-    setResult(`Cleanup count: ${cleaned}`);
-  }
-
-  return <>
-    <button onClick={run}>Run</button>
-    <p>{result()}</p>
-  </>;
-}
-
-render(() => <App />, document.getElementById("root")!);
-```
+The same component also reproduces against unchanged, locally built upstream
+`a2743fa2`.
 
 Control: replace `throw new Error("cleanup failed")` with `return`, rebuild,
 and run: the count is **1**. Both controls were tested in development and
@@ -104,6 +47,7 @@ _No response_
 ### Platform
 
 - Linux, Chromium 154; standalone signals repro on Node 24.19.0
+- Playground package build: `mizulu/solid2@5a4b2e85` (development)
 - next@`a2743fa2d26d78f38c42600b91aceddb43a1c3ef` (declares rc.15)
 - Also reproduced at `71153bf0` in production, development and observe builds
 

@@ -120,7 +120,10 @@
         3601,
         4029
       ],
-      "playgroundReproducer": "repros/playground/cleanup-throw.tsx"
+      "playgroundReproducer": "repros/playground/cleanup-throw.tsx",
+      "playgroundUrl": "https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg",
+      "playgroundPackageBuild": "mizulu/solid2@5a4b2e85",
+      "playgroundVerification": "repros/playground/cleanup-throw-hosted.json"
     }
   ]
 }

@@ -130,8 +130,14 @@ compiles the actual source and tests both cases in development and production
 in connected Chromium DOM. [cleanup-throw-verification.json](cleanup-throw-verification.json)
 records all four observations. No source patches or private exports are used.
 
-There is no verified hosted share for this repro. The CDN lacks a complete build
-at the tested commit; attempted custom-import-map shares selected the older
-runtime and produced 1, so they were rejected as reproduction evidence. The
-[issue draft](../../tracking/upstream/deferred-release-throw-issue.md) includes
-the locally verified component directly.
+[Open the user-provided playground](https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg).
+It uses package build `mizulu/solid2@5a4b2e85`; this label is recorded separately
+from the locally checked upstream source commit a2743fa2.
+[cleanup-throw-hosted.json](cleanup-throw-hosted.json) records the failing count 0,
+the locally edited nonthrow control's count 1, exact source agreement with the
+local component, and a saved-share reload restoring count 0. The share was not
+modified. Earlier automatic sharing attempts failed; this user-provided share
+replaces the former absence of a verified hosted reproduction.
+
+The [issue draft](../../tracking/upstream/deferred-release-throw-issue.md) now
+links this share and retains the separate local upstream-source validation.

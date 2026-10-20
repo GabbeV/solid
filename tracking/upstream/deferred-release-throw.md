@@ -155,3 +155,20 @@ with no page exceptions or error reports. See
 `repros/playground/cleanup-throw-verification.json`. No verified hosted share
 exists: CDN artifacts were unavailable and custom-import-map attempts executed
 the older runtime, so those attempts are not claimed as evidence.
+
+## User-provided hosted repro verified
+
+The user supplied https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg. Its component
+source matches `repros/playground/cleanup-throw.tsx` exactly. In Chromium the
+saved share starts at Not run, then Run produces cleanup count 0. A local-only
+edit replacing the throw with return and rebuilding gives 1. Reopening the
+saved share restores the exact original source and gives 0 again. No page
+exceptions or REACTIVITY_HALTED reports occurred; the site logged two unrelated
+401 resource responses. No share was saved or overwritten by verification.
+
+The loaded package label is `mizulu/solid2@5a4b2e85`, confirmed by actual CDN
+requests. Its source-commit mapping to upstream a2743fa2 is not established;
+the issue distinguishes that hosted build from the separate unchanged-source
+a2743fa2 browser verification. The earlier unavailable hosted reproduction is
+superseded by this verified user-provided share. The issue form is refreshed
+with the link, with policy and implementation still left open.
