@@ -100,12 +100,12 @@ export class SolidRuntime {
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);requireTeardownProgram(this.programActions,options.cleanup);
       if(Object.hasOwn(e,'body')&&options.program)throw new TypeError('Use either an inline effect body or a named program');
+      if(options.returnCleanup&&(options.cleanup||(!Object.hasOwn(e,'body')&&!options.program)))throw new TypeError('Returned cleanup requires a body and excludes static cleanup');
       const apply=(v,p)=>{
         this.traceEvents.push(['apply',name,v,p]);
         if(options.user===false)this.screens[options.target??3]=v;
-        if(Object.hasOwn(e,'body'))this.evaluate(e.body,undefined,[v,p],locals);
-        else if(options.program)this.programs[options.program](undefined,v,p);
-        return options.cleanup?this.programs[options.cleanup]:undefined;
+        const result=Object.hasOwn(e,'body')?this.evaluate(e.body,undefined,[v,p],locals):options.program?this.programs[options.program](undefined,v,p):undefined;
+        return options.returnCleanup?result:options.cleanup?this.programs[options.cleanup]:undefined;
       };
       const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
       return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values,locals),bundle,{...options,unobserved:this.programs[options.unobserved]});
@@ -350,11 +350,12 @@ export class SolidRuntime {
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
     requireTeardownProgram(this.programActions,options.cleanup);
+    if(options.returnCleanup&&(options.cleanup||!options.program))throw new TypeError('Returned cleanup requires a body and excludes static cleanup');
     const {user=false,target=2}=options;
     const apply=(v,p)=> {
       this.traceEvents.push(['apply',name,v,p]); if(!user)this.screens[target]=v;
-      if(options.program)this.programs[options.program](undefined,v,p);
-      return options.cleanup?this.programs[options.cleanup]:undefined;
+      const result=options.program?this.programs[options.program](undefined,v,p):undefined;
+      return options.returnCleanup?result:options.cleanup?this.programs[options.cleanup]:undefined;
     };
     const bundle=options.error?{effect:apply,error:(err,cleanup)=>this.programs[options.error](cleanup,err)}:apply;
     this.S.runWithOwner(this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root'),()=> (user ? this.S.createEffect : this.S.createRenderEffect)(this.callback(name,expr),bundle,options));

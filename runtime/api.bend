@@ -55,6 +55,13 @@ def createEffectWithHandlers(fuel: Nat, +w: R.World, expr: R.Expr, user: Bool, t
 def createEffectWithPrograms(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
   createEffectWithHandlers(fuel, w, expr, user, target, scheduled, deferred, options, parent, program, returnedCleanup, 0n)
 
+# The admitted return-valued application closure delegates to the same source
+# effect constructor. Its descriptor preserves its body result at application.
+def createReturningEffect(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat, program: Nat, errorProgram: Nat) -> R.World:
+  body = {R.CallWith{program, R.Argument{0n}, R.Argument{1n}} : R.Expr}
+  +pair = C.inlineProgram(w, R.SomeInlineBody{body, True{}}, 0n)
+  createEffectWithHandlers(fuel, B.first(R.World, Nat, pair), expr, user, target, scheduled, deferred, options, parent, B.second(R.World, Nat, pair), 0n, errorProgram)
+
 def createEffectWithOptions(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, options: R.NodeOptions, parent: Nat) -> R.World:
   createEffectWithPrograms(fuel, w, expr, user, target, scheduled, deferred, options, parent, 0n, 0n)
 
@@ -143,7 +150,10 @@ def nestedEffect(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOption
   R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, program, returnedCleanup, errorProgram, R.NoInlineBody{}}}
 
 def nestedEffectBody(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, body: R.Expr, returnedCleanup: Nat, errorProgram: Nat) -> R.Expr:
-  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, 0n, returnedCleanup, errorProgram, R.SomeInlineBody{body}}}
+  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, 0n, returnedCleanup, errorProgram, R.SomeInlineBody{body, False{}}}}
+
+def nestedReturningEffect(compute: R.Expr, user: Bool, target: Nat, options: R.NodeOptions, scheduled: Bool, deferred: Bool, body: R.Expr, errorProgram: Nat) -> R.Expr:
+  R.EffectCreate{compute, R.EffectSpec{user, target, options, scheduled, deferred, 0n, 0n, errorProgram, R.SomeInlineBody{body, True{}}}}
 
 def signalComputeScope(compute: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
   R.SignalComputeScope{compute, options, body}
@@ -278,40 +288,40 @@ def flushMachine(w: R.World) -> C.Machine:
 
 # Reusable typed callback-program construction; no host scheduler is hidden here.
 def emptyProgram() -> R.CleanupProgram:
-  R.CleanupProgram{[]}
+  R.CleanupProgram{[], False{}}
 
 def programEmit(code: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupEmit{code} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupEmit{code} <> R.CleanupProgram.actions(tail), False{}}
 
 def programWrite(signal: Nat, value: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupWrite{signal, value} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupWrite{signal, value} <> R.CleanupProgram.actions(tail), False{}}
 
 def programDispose(owner: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupDispose{owner} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupDispose{owner} <> R.CleanupProgram.actions(tail), False{}}
 
 def programDisposeCurrent(tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupDisposeCurrent{} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupDisposeCurrent{} <> R.CleanupProgram.actions(tail), False{}}
 
 def programCleanup(callback: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupRegisterCurrent{callback} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupRegisterCurrent{callback} <> R.CleanupProgram.actions(tail), False{}}
 
 def programThrow(cause: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail), False{}}
 
 def programEvaluate(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackEvaluate{expr} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CallbackEvaluate{expr} <> R.CleanupProgram.actions(tail), False{}}
 
 def programReturn(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackReturn{expr} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CallbackReturn{expr} <> R.CleanupProgram.actions(tail), False{}}
 
 def programWriteExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail), False{}}
 
 def programUpdateExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackUpdate{signal, expr} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CallbackUpdate{signal, expr} <> R.CleanupProgram.actions(tail), False{}}
 
 def programThrowExpr(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail), False{}}
 
 def registerProgram(+w: R.World, program: R.CleanupProgram) -> R.World:
   R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [program]))
@@ -333,7 +343,7 @@ def resetErrorHalt(w: R.World) -> R.World:
   R.World.with_haltNotified(R.World.with_halted(w, False{}), False{})
 
 def programPreviousCleanup(tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail)}
+  R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail), False{}}
 
 # PromiseLike host protocol: object identity and settlement are external inputs;
 # registration, status, publication and flushing remain Bend engine operations.

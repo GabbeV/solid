@@ -45,6 +45,6 @@ not a proof of arbitrary callbacks or TS/Bend equivalence.
 Raw setter functions used as another setter's updater during owner teardown are
 still rejected: their arguments can themselves be functions and require the
 unfinished owner/core read boundary. Getter cleanup and arbitrary expression
-teardown remain unfinished. Dynamic effect-returned cleanup selection and general
-callable inputs also remain open. The source pin and empty deviation register
+teardown remain unfinished. Runtime-selected effect cleanup now admits these same setters; see
+[returned-cleanup.md](returned-cleanup.md). General callable inputs remain open. The source pin and empty deviation register
 are unchanged.

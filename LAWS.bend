@@ -20,6 +20,7 @@ import ./proof/accessors.bend as Accessors
 import ./proof/setters.bend as Setters
 import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
+import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/computed-accessors.bend as ComputedAccessors
 import ./runtime/lexical.bend as Lexical
 import ./runtime/construct.bend as Construct
@@ -177,3 +178,6 @@ law held_function_result_counterexample:
 
 law setter_cleanup_preserves_identity_and_clears:
   {SetterCleanup.scenario() == SetterCleanup.expected() : SetterCleanup.View}
+
+law effect_returns_selected_cleanup:
+  {ReturnedCleanup.scenario() == ReturnedCleanup.expected() : ReturnedCleanup.View}

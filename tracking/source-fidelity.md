@@ -188,3 +188,7 @@ pinned unit hashes, ordered source return points, tested restrictions and a
 read-only impact rehearsal against the existing PR #4163 checkout. It identifies
 the held wrapper, node-aware write hook and new data signal hook for a future
 repin; it does not silently apply those changes or close full-domain branches.
+
+Runtime-selected effect application returns now reach runEffect's own cleanup
+assignment for admitted bound root/setter functions and undefined. The static
+wrapper mode remains available; see [returned-cleanup.md](returned-cleanup.md).

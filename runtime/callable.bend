@@ -26,7 +26,7 @@ def encode(+w: R.World, +root: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundRoot{root}]}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundRoot{root}], False{}}])), next})
 
 # Source cleanup returns without touching a disposal slot when context is null.
 def cleanup(+w: R.World, +owner: Nat, root: Nat) -> R.World:
@@ -69,7 +69,7 @@ def encodeSetter(+w: R.World, +signal: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundSetter{signal}]}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundSetter{signal}], False{}}])), next})
 
 def cleanupSetter(+w: R.World, +owner: Nat, signal: Nat) -> R.World:
   B.choose(~R.World, Nat.is_eq(owner, 0n), _ => w,

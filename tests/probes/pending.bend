@@ -42,7 +42,7 @@ def initial(+op: U32, +status: U32, flags: U32, +extra: Bool, +additional: Bool,
   +w = B.store_extension(w, 3n, R.NodeExtension.with_unobserved(B.extension(w, 3n), 2n))
   +w = R.World.with_errorSerial(w, 2n)
   +w = O.cleanup(w, 5n, 1n)
-  R.World.with_cleanupPrograms(w, [R.CleanupProgram{[]}, R.CleanupProgram{R.CleanupEmit{101n} <> B.choose(~List<&2, R.CleanupAction>, block, _ => [R.CleanupThrow{R.Number{42n}}], _ => [])}, R.CleanupProgram{[R.CleanupEmit{102n}]}])
+  R.World.with_cleanupPrograms(w, [R.CleanupProgram{[], False{}}, R.CleanupProgram{R.CleanupEmit{101n} <> B.choose(~List<&2, R.CleanupAction>, block, _ => [R.CleanupThrow{R.Number{42n}}], _ => []), False{}}, R.CleanupProgram{[R.CleanupEmit{102n}], False{}}])
 
 def apply(+w: R.World, op: U32, +additional: Bool, +block: Bool) -> R.World:
   match op:

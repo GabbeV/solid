@@ -13,7 +13,7 @@ schemas={
 'ContextKey': [('defaultValue','Value'),('description','Slot')],
 'ContextEntry': [('key','Nat'),('value','Value')],
 'ContextRecord': [('entries','List<&2, ContextEntry>')],
-'CleanupProgram': [('actions','List<&2, CleanupAction>')],
+'CleanupProgram': [('actions','List<&2, CleanupAction>'),('returnsCleanup','Bool')],
 'EffectSpec': [('user','Bool'),('target','Nat'),('options','NodeOptions'),('scheduled','Bool'),('deferred','Bool'),('program','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat'),('body','InlineBody')],
 'NodeOptions': [('equals','Bool'),('transparent','Bool'),('ownedWrite','Bool'),('lazy','Bool'),('sync','Bool'),('noSnapshot','Bool'),('extraConfig','U32'),('loading','Slot'),('unobserved','Nat')],
 'NodeExtension': [('inFlight','Nat'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
@@ -117,7 +117,7 @@ type NodeKind is Data:
 
 type InlineBody is Data:
   NoInlineBody{}
-  SomeInlineBody{expr: Expr}
+  SomeInlineBody{expr: Expr, returnsCleanup: Bool}
 
 type Expr is Data:
   Literal{value: Value}

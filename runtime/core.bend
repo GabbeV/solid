@@ -101,6 +101,7 @@ type Task is Data:
   RunEffect{id: Nat}
   ApplyEffect{id: Nat}
   InstallEffectCleanup{id: Nat}
+  InstallReturnedCleanup{id: Nat}
   EffectFinally{id: Nat, clean: Bool, saved: List<&2, R.Value>}
   ErrorArmFinally{parameter: Nat, saved: List<&2, R.Value>}
   Round{}
@@ -175,15 +176,16 @@ def branch(w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +yes: R.
       Machine{R.World.with_fault(w, R.TypeError{}), [], []}
 
 # One source effect callback closure per inline body/creation. Its statements
-# run in the existing callback machine; ordinary body values are discarded by
-# the user ABI wrapper, whose static cleanup token is separate.
+# run in the existing callback machine. The descriptor's return policy belongs
+# to this user-code closure, not to the source reactive node.
 def inlineProgram(+w: R.World, body: R.InlineBody, program: Nat) -> B.Bundle<R.World, Nat>:
   match body:
     case R.NoInlineBody{}:
       B.Bundle{w, program}
-    case R.SomeInlineBody{expr}:
+    case R.SomeInlineBody{+expr, +returnsCleanup}:
       +id = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CallbackEvaluate{expr}]}]))
+      action = B.choose(~R.CleanupAction, returnsCleanup, _ => R.CallbackReturn{expr}, _ => R.CallbackEvaluate{expr})
+      w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[action], returnsCleanup}]))
       B.Bundle{w, id}
 
 # core.ts:setSignal's updater call, with the source currentValue captured
@@ -295,7 +297,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{callee, prev} <> OnCleanup{} <> rest, stack}
     case R.CallProgram{+callback}:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[]})), R.Undefined{}, R.Undefined{}} <> rest, stack},
+        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}})), R.Undefined{}, R.Undefined{}} <> rest, stack},
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
     case R.Then{first, second}:
       Machine{w, Evaluate{first, prev} <> Discard{} <> Evaluate{second, prev} <> rest, stack}
@@ -1217,16 +1219,42 @@ def effectFinally(+w: R.World, rest: List<&2, Task>, +id: Nat, clean: Bool, save
   w = B.choose(~R.World, clean, _ => trimFinally(w, id, R.World.fault(w)), _ => w)
   Machine{w, rest, saved}
 
-# The adapter's _effectFn records the application, executes the named body,
-# and returns the separate cleanup token. A body's ordinary return is ignored.
+# core/effect.ts:runEffect's assignment after the actual application callback.
+# Callable IDs represent the original function identity in the owner walk.
+def installReturned(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  match stack:
+    case value <> +tail:
+      match value:
+        case R.Undefined{}:
+          Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n)), rest, tail}
+        case R.RootDisposerReference{root}:
+          +pair = J.encode(w, root)
+          +w = B.first(R.World, Nat, pair)
+          Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail}
+        case R.SetterReference{signal}:
+          +pair = J.encodeSetter(w, signal)
+          +w = B.first(R.World, Nat, pair)
+          Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), B.second(R.World, Nat, pair))), rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.Unsupported{9n}), rest, tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+
+# The user-code wrapper records application and runs its body. Existing static
+# wrappers discard ordinary returns; return-valued wrappers preserve the result
+# until runEffect's _cleanup assignment. Throws skip both assignment tasks.
 def applyEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +w = B.event(w, R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))})
   +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
     _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
   +callback = R.Node.effectProgram(B.node(w, id))
+  +returnsCleanup = R.CleanupProgram.returnsCleanup(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}}))
+  +call = {Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}, R.Undefined{}} : Task}
   +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n),
-    _ => [Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}, R.Undefined{}}, Discard{}], _ => [])
-  Machine{w, B.append(Task, todo, InstallEffectCleanup{id} <> rest), stack}
+    _ => B.choose(~List<&2, Task>, returnsCleanup,
+      _ => [call], _ => [call, Discard{}]), _ => [])
+  ending = B.choose(~Task, returnsCleanup, _ => InstallReturnedCleanup{id}, _ => InstallEffectCleanup{id})
+  Machine{w, B.append(Task, todo, ending <> rest), stack}
 
 # core/effect.ts:runEffect. The pre-cleanup call and finally retain their source
 # order; callback reads resume this machine rather than a second read engine.
@@ -1403,7 +1431,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       match stack:
         case second <> first <> +tail:
           B.choose(~Machine, Bool.and(Nat.is_ne(id, 0n), Nat.is_lt(id, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-            _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[]})), first, second} <> rest, tail},
+            _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}})), first, second} <> rest, tail},
             _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, tail})
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
@@ -1581,6 +1609,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       applyEffect(w, rest, stack, id)
     case InstallEffectCleanup{+id} <> rest:
       Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), R.Node.returnedCleanup(B.node(w, id)))), rest, stack}
+    case InstallReturnedCleanup{id} <> rest:
+      installReturned(w, rest, stack, id)
     case EffectFinally{id, clean, saved} <> rest:
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:

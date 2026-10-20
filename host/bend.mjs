@@ -120,6 +120,13 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.effectCreate){
     const options=e.options??{};
     if(programs.teardownActions){requireTeardownProgram(programs.teardownActions,options.unobserved);requireTeardownProgram(programs.teardownActions,options.cleanup);}
+    if(options.returnCleanup){
+      if(options.cleanup)throw new TypeError('Use either returned or static effect cleanup');
+      if(Object.hasOwn(e,'body')&&options.program)throw new TypeError('Use either an inline effect body or a named program');
+      if(!Object.hasOwn(e,'body')&&!options.program)throw new TypeError('Returned cleanup requires an effect body');
+      const body=e.body??{call:options.program,args:[{argument:0},{argument:1}]};
+      return R.nestedReturningEffect(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,expression(body,ids,programs,futures,encodeValue,contexts),programs[options.error]??0);
+    }
     if(Object.hasOwn(e,'body')){
       if(options.program)throw new TypeError('Use either an inline effect body or a named program');
       return R.nestedEffectBody(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,expression(e.body,ids,programs,futures,encodeValue,contexts),programs[options.cleanup]??0,programs[options.error]??0);
@@ -404,10 +411,11 @@ export class BendRuntime {
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
     requireTeardownProgram(this.programActions,options.cleanup);
+    if(options.returnCleanup&&(options.cleanup||!options.program))throw new TypeError('Returned cleanup requires a body and excludes static cleanup');
     const {user=false,target=2,schedule=false,defer=false}=options;
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     if (!user) this.world=R.attach(this.world,1,target);
-    this.world=R.createEffectWithHandlers(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'),this.programs[options.program]??0,this.programs[options.cleanup]??0,this.programs[options.error]??0); this.check(); return id;
+    this.world=(options.returnCleanup?R.createReturningEffect:R.createEffectWithHandlers)(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),user,target,schedule,defer,nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'),this.programs[options.program]??0,...(options.returnCleanup?[]:[this.programs[options.cleanup]??0]),this.programs[options.error]??0); this.check(); return id;
   }
   set(name,value) {
     const m=R.setValue(this.fuel,this.world,this.ids[name],this.encode(value));

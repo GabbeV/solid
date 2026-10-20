@@ -93,7 +93,7 @@ type NodeKind is Data:
 
 type InlineBody is Data:
   NoInlineBody{}
-  SomeInlineBody{expr: Expr}
+  SomeInlineBody{expr: Expr, returnsCleanup: Bool}
 
 type Expr is Data:
   Literal{value: Value}
@@ -808,17 +808,27 @@ def ContextRecord.with_entries(r: ContextRecord, v: List<&2, ContextEntry>) -> C
       ContextRecord{v}
 
 type CleanupProgram is Data:
-  CleanupProgram{actions: List<&2, CleanupAction>}
+  CleanupProgram{actions: List<&2, CleanupAction>, returnsCleanup: Bool}
 
 def CleanupProgram.actions(r: CleanupProgram) -> List<&2, CleanupAction>:
   match r:
-    case CleanupProgram{actions}:
+    case CleanupProgram{actions, returnsCleanup}:
       actions
 
 def CleanupProgram.with_actions(r: CleanupProgram, v: List<&2, CleanupAction>) -> CleanupProgram:
   match r:
-    case CleanupProgram{actions}:
-      CleanupProgram{v}
+    case CleanupProgram{actions, returnsCleanup}:
+      CleanupProgram{v, returnsCleanup}
+
+def CleanupProgram.returnsCleanup(r: CleanupProgram) -> Bool:
+  match r:
+    case CleanupProgram{actions, returnsCleanup}:
+      returnsCleanup
+
+def CleanupProgram.with_returnsCleanup(r: CleanupProgram, v: Bool) -> CleanupProgram:
+  match r:
+    case CleanupProgram{actions, returnsCleanup}:
+      CleanupProgram{actions, v}
 
 type EffectSpec is Data:
   EffectSpec{user: Bool, target: Nat, options: NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat, body: InlineBody}

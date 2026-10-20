@@ -9,11 +9,11 @@ import ../../runtime/extension.bend as E
 import ../../runtime/constants.bend as K
 
 def cb(code: Nat, actions: List<&2, R.CleanupAction>) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupEmit{code} <> actions}
+  R.CleanupProgram{R.CleanupEmit{code} <> actions, False{}}
 
 def programs(+mode: U32) -> List<&2, R.CleanupProgram>:
   +throw = Bool.or(U32.is_eq(mode, 4), Bool.or(U32.is_eq(mode, 5), U32.is_eq(mode, 9)))
-  [R.CleanupProgram{[]}, cb(101n, []), cb(102n, []),
+  [R.CleanupProgram{[], False{}}, cb(101n, []), cb(102n, []),
     cb(103n, B.choose(~List<&2, R.CleanupAction>, throw, _ => [R.CleanupThrow{R.Number{99n}}],
       _ => B.choose(~List<&2, R.CleanupAction>, U32.is_eq(mode, 11), _ => [R.CleanupWrite{2n, R.Number{7n}}], _ => []))), cb(104n, []),
     cb(105n, B.choose(~List<&2, R.CleanupAction>, U32.is_eq(mode, 6), _ => [R.CleanupThrow{R.Number{99n}}], _ => []))]

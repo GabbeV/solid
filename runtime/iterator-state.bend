@@ -17,7 +17,7 @@ def newStream(+w: R.World, +node: Nat, result: Nat, +source: Nat, deferred: Bool
   +close = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
   +w = R.World.with_iterators(w, B.append(R.ExternalIterator, R.World.iterators(w), [R.ExternalIterator{R.AsyncObject.stream(B.asyncObject(w, source)), 0n, 0n}]))
   +w = R.World.with_streams(w, B.append(R.StreamState, R.World.streams(w), [R.StreamState{node, result, iterator, False{}, False{}, Bool.not(deferred), initialValue, close}]))
-  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupCloseIterator{stream}]}]))
+  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupCloseIterator{stream}], False{}}]))
   B.Bundle{B.iteratorEvent(w, R.IteratorStarted{source, iterator}), stream}
 
 def next(+w: R.World, stream: Nat) -> B.Bundle<R.World, R.NextInput>:

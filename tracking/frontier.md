@@ -268,8 +268,8 @@ expression-based function-initializer overload. Two additional closed laws check
 manual previous-value rederivation and the preserved held-function counterexample.
 Constructor comparisons total 9,216. See [writable-signals.md](writable-signals.md).
 The next callback dependencies are general callable initializers and expression
-reads in teardown callbacks. General closures/functions, dynamic
-returned effect-cleanup selection, custom comparators and active boundary/lane/
+reads in teardown callbacks. General closures/functions, general
+returned cleanup closures, custom comparators and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit
 port limits, not source bugs or unregistered semantic repairs.
 
@@ -286,3 +286,8 @@ the same detached LIFO owner walk. Forty-two additional histories and a closed
 identity/clear law retain no-argument invocation, canonical aliases and held memo
 write policy. Getter cleanup, raw setter-updater calls in teardown and arbitrary
 expression teardown remain unfinished; see [setter-cleanup.md](setter-cleanup.md).
+
+Runtime-selected effect cleanup now retains actual callback returns for bound root
+disposers, data/writable setters and undefined. Forty-eight additional histories
+and a closed replacement/disposal law exercise the source assignment/catch/finally
+order and aliases shared with owner slots; see [returned-cleanup.md](returned-cleanup.md).

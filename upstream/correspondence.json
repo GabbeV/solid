@@ -165,12 +165,12 @@
     "core/effect.ts:effect": {
       "bend": "runtime/api.bend:createEffectWithHandlers, nestedEffect; runtime/core.bend:evaluate(EffectCreate), InitialEffect",
       "status": "partial",
-      "restrictions": "Separate source literal/setup, initial recompute and source defer/pending-slot/user/schedule gate; nested construction uses the same machine and inherits caller context/tracking. Named and captured inline application programs with static returned cleanup. Born-staged nested creation tested; active lane/hold hooks and dynamic cleanup closures remain unfinished."
+      "restrictions": "Separate source literal/setup, initial recompute and source defer/pending-slot/user/schedule gate; nested construction uses the same machine and inherits caller context/tracking. Named and captured inline application programs with static or runtime-selected bound root/setter cleanup. Born-staged nested creation tested; active lane/hold hooks and general cleanup closures remain unfinished."
     },
     "core/effect.ts:runEffect": {
-      "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally",
+      "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, trimFinally, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally, installReturned, InstallReturnedCleanup",
       "status": "partial",
-      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished. Application bodies now receive actual current/previous values; error bodies receive the unwrapped cause with cleanup retained as the existing explicit helper. Arguments are user-code ABI, not engine decisions."
+      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Restricted programs; boundaries/held-run hooks and arbitrary callbacks remain unfinished. Expression reads/writes/returns in application/error bodies preserve ambient tracking and enclosing catch/finally frames; teardown expressions remain unfinished. Application bodies now receive actual current/previous values; error bodies receive the unwrapped cause with cleanup retained as the existing explicit helper. Arguments are user-code ABI, not engine decisions. Dynamic return-valued application wrappers now select undefined or canonical bound root/setter cleanup functions; the assignment remains after the callback and before finally. General returned closures/getters and expression teardown remain unfinished."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",
@@ -630,12 +630,12 @@
     "signals.ts:createEffect": {
       "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
       "status": "partial",
-      "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static returned cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and dynamic cleanup closures unfinished."
+      "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
     },
     "signals.ts:createRenderEffect": {
       "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)",
       "status": "partial",
-      "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static returned cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and dynamic cleanup closures unfinished."
+      "restrictions": "Production typed compute/application programs, optional user error bundle, data options and static or runtime-selected bound root/setter cleanup; preserves source user/render distinction and void return. Arbitrary callable/option getters, dev diagnostics and general cleanup closures unfinished."
     },
     "signals.ts:createSignal": {
       "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope",

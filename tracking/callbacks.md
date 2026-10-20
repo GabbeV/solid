@@ -22,7 +22,7 @@ Returned thenables/iterables enter the original recompute async path.
 function at its user callback calls; they do not add a tracking/owner scope.
 The adapter's application wrapper records the value, runs the named body,
 ignores its ordinary return, and returns its separately configured cleanup token.
-Both hosts use that same wrapper. Application/error body reads are consequently
+Both hosts use that same wrapper. Return-valued wrappers now additionally select admitted callable cleanup values; see [returned-cleanup.md](returned-cleanup.md). Application/error body reads are consequently
 imperative reads under the existing source ambient context. Source cleanup
 helper detachment, catch allocation/escalation, previous-value/modified stores,
 clean-pass capture and overriding trim exceptions retain their original order.
@@ -44,8 +44,7 @@ The owner teardown machine cannot yet suspend for expression evaluation.
 Expression-bearing programs are rejected before installation as cleanup or
 unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
 There is no fake cached read, swallowed throw, or source workaround. Teardown
-reads, arbitrary closures, general function values, dynamic returned cleanup
-selection, general callable initializers and active scopes remain unfinished.
+reads, arbitrary closures, general function values, general returned closures, general callable initializers and active scopes remain unfinished.
 Expression-based function initializers now execute; see [writable-signals.md](writable-signals.md).
 Escaped data-signal setters and computed accessors now execute; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).

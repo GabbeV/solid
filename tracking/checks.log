@@ -693,3 +693,5 @@ Pinned upstream snapshots match their recorded hashes.
 Checking composed proofs with the independent BendTT kernel...
 ALL PROOFS CHECK
 Kernel completed in 17.9s; hashes sealed in build/verification.json.
+
+2026-10-20 dynamic returned-cleanup milestone: build, 1833 complete differential histories, all alignment probes, 66 rejected mutations and independent kernel ALL PROOFS CHECK. Pin unchanged; active deviations empty. Logs: /workspace/scratch/returned-cleanup-{tests,alignment,mutations,check}.log. Seal inputs/outputs verified before commit.

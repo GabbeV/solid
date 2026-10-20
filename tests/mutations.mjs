@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['returned cleanup assignment is discarded','runtime/core.bend','installReturned(w, rest, stack, id)','Machine{w, rest, stack}','tests/returned-cleanup.mjs'],
+  ['returned setter cleanup binds wrong target','runtime/core.bend','+pair = J.encodeSetter(w, signal)','+pair = J.encodeSetter(w, id)','tests/returned-cleanup.mjs'],
   ['setter cleanup uses the ambient owner as its target','runtime/owner.bend','Machine{clearSetter(w, signal), rest}','Machine{clearSetter(w, R.World.context(w)), rest}','tests/setter-cleanup.mjs'],
   ['setter cleanup receives a value instead of no arguments','runtime/owner.bend','W.setSignal(w, signal, R.Undefined{})','W.setSignal(w, signal, R.Number{99n})','tests/setter-cleanup.mjs'],
   ['setter cleanup loses its returned function identity','runtime/core.bend','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.SetterReference{signal} <> tail}','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.Undefined{} <> tail}','tests/setter-cleanup.mjs'],
@@ -28,7 +30,7 @@ const mutations=[
 
   ['local reads bind the wrong signal','runtime/lexical.bend','_ => R.Read{signal}, _ => R.LocalRead{index}','_ => R.Read{1n}, _ => R.LocalRead{index}','tests/locals.mjs'],
   ['inner signal scope fails to shadow','runtime/lexical.bend','R.SignalScope{bind(initial, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalScope{bind(initial, depth, signal), options, bind(body, depth, signal)}','tests/locals.mjs'],
-  ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal)}','R.SomeInlineBody{expr}','tests/locals.mjs'],
+  ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal), returnsCleanup}','R.SomeInlineBody{expr, returnsCleanup}','tests/locals.mjs'],
   ['local updater sees committed instead of staged slot','runtime/core.bend','+current = B.current(B.node(w, signal))','+current = R.Node.value(B.node(w, signal))','tests/locals.mjs'],
   ['local updater result function is invoked again','runtime/core.bend','Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest','Evaluate{value, current} <> SetSignalArgument{signal} <> rest','tests/locals.mjs'],
   ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair)','R.EffectSpec.options(spec), 0n, B.second(R.World, Nat, pair)','tests/nested.mjs'],

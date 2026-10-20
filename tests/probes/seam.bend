@@ -38,9 +38,9 @@ def initial(+joined: Bool, +waiting: Bool, +zombie: Bool, +write: Bool, +throw: 
     _ => B.store_extension(w, 4n, R.NodeExtension.with_error(B.extension(w, 4n), R.NotReadyFailure{1n, 3n})), _ => w)
   +w = O.cleanup(w, 3n, 1n)
   +w = B.choose(~R.World, zombie, _ => O.parkChildren(w, 3n), _ => w)
-  +w = R.World.with_cleanupPrograms(w, [R.CleanupProgram{[]}, R.CleanupProgram{R.CleanupEmit{101n} <>
+  +w = R.World.with_cleanupPrograms(w, [R.CleanupProgram{[], False{}}, R.CleanupProgram{R.CleanupEmit{101n} <>
     B.append(R.CleanupAction, B.choose(~List<&2, R.CleanupAction>, write, _ => [R.CleanupWrite{2n, R.Number{77n}}], _ => []),
-      B.choose(~List<&2, R.CleanupAction>, throw, _ => [R.CleanupThrow{R.Number{42n}}], _ => []))}])
+      B.choose(~List<&2, R.CleanupAction>, throw, _ => [R.CleanupThrow{R.Number{42n}}], _ => [])), False{}}])
   +w = B.first(R.World, Nat, X.newTransaction(w, False{}, 0n))
   +w = B.choose(~R.World, held, _ => X.holdNode(X.holdNode(w, 3n, 1n), 2n, 1n), _ => w)
   +w = B.store_transaction(w, 1n, R.Transaction.with_open(R.Transaction.with_userQueue(R.Transaction.with_renderQueue(B.transaction(w, 1n), [4n]), [5n]), B.choose(~Nat, open, _ => 1n, _ => 0n)))
