@@ -113,3 +113,25 @@ records all six cases. [held-function-hosted.json](held-function-hosted.json) re
 the separately opened public share, source round-trip, saved pinned build and
 three real button clicks. Its saved module was compiled locally with that same
 pinned JSX compiler and imports the pinned runtime through its import map.
+
+## Throwing reactive cleanup and unrelated lazy release
+
+Source: [cleanup-throw.tsx](cleanup-throw.tsx). Unlike the historical repros
+above, this targets unchanged Solid source at a2743fa2. Click **Run**: the pending
+memo's `onCleanup` error is caught, then a separate lazy memo loses its last
+observer. Its cleanup count is 0; replacing the throw with `return` produces 1.
+The paragraph updates in both cases. This demonstrates current behavior, not
+a guarantee that continuation after a cleanup throw is supported. The issue
+leaves containment versus halt and implementation choices to upstream.
+
+Run `node verify-cleanup-throw.cjs /path/to/solid-at-a2743fa2` after installing
+this directory's dependencies. It verifies the clean runtime/compiler checkout,
+compiles the actual source and tests both cases in development and production
+in connected Chromium DOM. [cleanup-throw-verification.json](cleanup-throw-verification.json)
+records all four observations. No source patches or private exports are used.
+
+There is no verified hosted share for this repro. The CDN lacks a complete build
+at the tested commit; attempted custom-import-map shares selected the older
+runtime and produced 1, so they were rejected as reproduction evidence. The
+[issue draft](../../tracking/upstream/deferred-release-throw-issue.md) includes
+the locally verified component directly.

@@ -1,0 +1,38 @@
+{
+  "sourceCommit": "a2743fa2d26d78f38c42600b91aceddb43a1c3ef",
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "issue-prod-control",
+      "dev": false,
+      "throws": false,
+      "text": "Cleanup count: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-prod-throw",
+      "dev": false,
+      "throws": true,
+      "text": "Cleanup count: 0",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-dev-control",
+      "dev": true,
+      "throws": false,
+      "text": "Cleanup count: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-dev-throw",
+      "dev": true,
+      "throws": true,
+      "text": "Cleanup count: 0",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

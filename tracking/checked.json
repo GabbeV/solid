@@ -190,11 +190,11 @@
     "tracking/verification.md": "19c5cb5dbe47efaf6a065dcbccf86dd7ee5a8b285807fd482cdd3e5192fd40a3",
     "tracking/reviews/function-values.md": "602565de8f531697118f57c27dd0596138c060e165a07568eff9eb47b7dbde1c",
     "tracking/reviews/function-values-impact.json": "a4c00521df130a47d4542290794a606d013769d617335c6b5af8b83ba207df5c",
-    "tracking/upstream-issues.json": "5391201e69c692b055d17b5d0f66a48d14cd9080b56213203524d2baf1fb5efe",
+    "tracking/upstream-issues.json": "ce5355049cacafec2b2f9b7a55121908d085c1b68e078f8e007b9a2867509d21",
     "tracking/upstream/deferred-release-fix-size.json": "6c2924c5ff78b8298b263b7a6022dc6a8912292b5c3cc7ab9e8c9a8bbbce1100",
     "tracking/upstream/deferred-release-fix-benchmark.json": "a958cd40b0bfb2b9409a47c4c6357fad4313ff0b21dec57347aa87dfc14d0401",
-    "tracking/upstream/deferred-release-throw.md": "217e5942a3f2020b2cac8ec9970220184a305f08b7e61cd0bb082323dfcb0520",
-    "tracking/upstream/deferred-release-throw-issue.md": "b1c5ce985bab61fc8dc2b70cc2836df1502ce5e7a75176c37b6a157bd3eb73dd",
+    "tracking/upstream/deferred-release-throw.md": "a0cba90b79ef3e8fcf0846b9190f79c47a9e0855fbc505c9e760f003b5b8c3fe",
+    "tracking/upstream/deferred-release-throw-issue.md": "81f4310c114b421b30793b014e7ef733c22cb9acb0057cb309d9be69b25850c2",
     "tracking/upstream/empty-flatten.md": "9e2228a08a714cdc6945a2060f58c876a176911617f0984edf9b4be694e54f8f",
     "tracking/upstream/staged-error-recovery.md": "673b14f2a35179ce3f3f50e6f3c1c50cd37c117df2f26934829cd061ee624f34",
     "tracking/upstream/held-function-value.md": "394b6de5ea162d6c9e8d2b06a44f44eed519a723dc4824a1809d31779c782ef4",
@@ -226,7 +226,9 @@
     "repros/solid-signals/verification.log": "2c61b426a35c9f519f2524e330e5868f906566b9212e7d1951d682fc4fd488ea",
     "repros/solid-signals/verify.mjs": "12b6730fc7d91b83faed8afb9f678e4f757390098a83e0e7cefbee735f653f74",
     "repros/playground/.gitignore": "6f0e942c5038a20d9656f9c5d918b101ee6eb9d729a6dbd62a1c4745b3c5623b",
-    "repros/playground/README.md": "9d6aa20660455bd23c07c5ad5b91a153b1065189a461e4f61da4197ff71f3a62",
+    "repros/playground/README.md": "9022b32255cc0debccd3a9c4e3b02690fc91dfdf267a677fd936639fcb97ba1f",
+    "repros/playground/cleanup-throw-verification.json": "9b51467bfa5226bc58d31823ead049c48f5f7bc9c4d31246fc70b5200580b5ba",
+    "repros/playground/cleanup-throw.tsx": "a86cdbe70a5585f5733d1b92fded0c82c26b46fe000734ae3f8e6cfc450ee434",
     "repros/playground/empty-stream.tsx": "f1af338761914327ead71c5c821ccfd47bc85fd45de9b43d80ff1e3d9483d615",
     "repros/playground/held-function-hosted.json": "c83680a4a584efe61ba53277d9a41fc199e5ba46d63ccfbe2eaa1bf395404818",
     "repros/playground/held-function-verification.json": "763f9a08a16f69c74d64da631dded32c222c90bc1820af1b850959e1d99de040",
@@ -237,6 +239,7 @@
     "repros/playground/package-lock.json": "92a297387994886887a40ab81a7e911bcdbdb98baddc1f0b780d11903c07dd2d",
     "repros/playground/package.json": "e4f0f54aeffbccc56556a66c350d47eb20a276ff4da21d5b97bf753ff9fd588e",
     "repros/playground/verification.json": "8a315c88be67a45a70b3c28ab454f5b763cbf51b6fd1a2d2d97d3a1507064a52",
+    "repros/playground/verify-cleanup-throw.cjs": "4b735633e4c065eab21e1e449a2443482b2537bf9f89759f485d6981f28a0fc1",
     "repros/playground/verify-held-function.mjs": "3c54c6bb847fcdff2d1cefb2fae95aa064a61a0ecd28f0f3bde1616c63cd0f60",
     "repros/playground/verify-hosted.mjs": "04c09a940d328f599013666eb06ae9dd2e2532de9a9b76ff28914ecc5cb7cb02",
     "repros/playground/verify.mjs": "ba0473d2bbfa5fa612331b4831411ca808cc4bf70dfe73e7d1850dced6649b2c"
@@ -247,7 +250,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 24.085113927,
+    "seconds": 24.341343340999998,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {

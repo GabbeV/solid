@@ -93,7 +93,7 @@
     {
       "id": "SOLID-DEFERRED-RELEASE-THROW-004",
       "classification": "suspected-upstream-regression",
-      "status": "fix-branch-pushed-pr-submission-pending",
+      "status": "issue-prepared-error-policy-open",
       "sourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
       "sourceUnit": "core/core.ts:recompute pre-body deferred-release collection",
       "introducedBy": "6371b910",
@@ -113,7 +113,14 @@
       "candidateCompareUrl": "https://github.com/solidjs/solid/compare/next...GabbeV:fix/restore-deferred-releases?expand=1",
       "candidateSizeRecord": "tracking/upstream/deferred-release-fix-size.json",
       "candidateBenchmarkRecord": "tracking/upstream/deferred-release-fix-benchmark.json",
-      "submissionBlock": "GitHub createPullRequest: Resource not accessible by integration; full prefilled comparison opened for manual submission."
+      "candidateFixDisposition": "Not proposed for submission: user chose an issue so Ryan can determine reactive cleanup error routing and implementation. Candidate branch retained as a validated restoration experiment.",
+      "relatedPolicyReports": [
+        2496,
+        2839,
+        3601,
+        4029
+      ],
+      "playgroundReproducer": "repros/playground/cleanup-throw.tsx"
     }
   ]
 }

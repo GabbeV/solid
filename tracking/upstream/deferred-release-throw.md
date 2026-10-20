@@ -9,8 +9,9 @@ and continuing does not repair the pointer. A later, unrelated lazy memo loses i
 last observer but is queued into the abandoned array, so its cleanup never runs
 while its own owner remains alive.
 
-The problem is the subsequent unrelated release, not a demand that the interrupted
-owner walk continue after a callback throws.
+The observed problem is the subsequent unrelated release. Whether this error
+should permit continuation, be routed to a boundary or halt reactivity is an open
+policy question; the reproduction does not establish a supported recovery contract.
 
 ## Evidence
 
@@ -88,7 +89,7 @@ exists. [Prepared issue text](deferred-release-throw-issue.md); nothing was post
 
 ## Prepared upstream fix
 
-The reviewed try/finally fix is committed as
+A tested try/finally restoration experiment is committed as
 035e9b2f34f9c160ac708676e242fd594056a509 and pushed to
 GabbeV/solid:fix/restore-deferred-releases, based on current next a2743fa2.
 It changes only the disposal/restoration pair, adds public-API returning/throwing
@@ -112,3 +113,45 @@ accessible by integration”. A complete prefilled comparison was opened for use
 submission; no PR number exists yet. This candidate fix remains separate from
 the pinned reference and active Bend behavior. The negative regression and empty
 semantic-deviation register are unchanged.
+
+## Issue replaces proposed PR: reactive cleanup error policy remains open
+
+The user chose an issue rather than submitting the prepared PR. No PR was
+created. The pushed candidate remains available as an experiment; it is not an
+accepted fix or a requested upstream implementation. Its passing test asserts
+continuation after the caught throw, which is not itself evidence that this is
+Solid's intended error policy.
+
+This repro throws from `onCleanup` registered inside a pending `createMemo`,
+not from a cleanup returned by an effect callback. The throw currently bypasses
+the computation body's error handler and does not call `haltReactivity`. Thus
+current continuation plus collector corruption is observed, not prescribed.
+A catch that routes to boundaries or halts may be the appropriate upstream fix.
+
+Prior issue/ruling review:
+
+- [#2496](https://github.com/solidjs/solid/issues/2496): directly reports throwing
+  `onCleanup` breaking reactivity; Ryan said it was addressed in 2.0 and closed
+  it as fixed. It does not explicitly settle this path's halt policy.
+- [#2839 ruling](https://github.com/solidjs/solid/issues/2839#issuecomment-4897650632):
+  reactive compute errors differ from imperative effect errors, whose unhandled
+  throws use boundary-or-halt. Reactive cleanup is not explicitly classified.
+- [#3601](https://github.com/solidjs/solid/issues/3601): detaching the disposal
+  list prevents reentrancy and repeated throws, without defining this error's
+  routing policy.
+- [#4029](https://github.com/solidjs/solid/issues/4029): server abort contains
+  cleanup throws and reports through `onError`, continuing outer teardown; it
+  is a different context from client recomputation.
+
+The replacement [issue draft](deferred-release-throw-issue.md) leaves both error
+policy and implementation to Ryan. The active Bend pin, baseline-parity tests,
+negative law and empty deviation register are unchanged.
+
+The replacement draft includes the full JSX component in
+`repros/playground/cleanup-throw.tsx`. Its portable browser verifier checks the
+unchanged runtime and compiler at a2743fa2, in production and development. All
+four cases reproduce 0 for the caught throw and 1 for the nonthrow control,
+with no page exceptions or error reports. See
+`repros/playground/cleanup-throw-verification.json`. No verified hosted share
+exists: CDN artifacts were unavailable and custom-import-map attempts executed
+the older runtime, so those attempts are not claimed as evidence.
