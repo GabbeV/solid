@@ -36,6 +36,10 @@ type SeamFrame is Data:
   SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, Nat>}
 
 # Locals captured by recompute's try/catch/finally return point.
+# b0ad1df5/#4171 adds prevMount/mount and laneRoot save/restore in Source.
+# Active lanes are outside this profile: prevLane and inherited mount stay
+# falsy, so joined still tests REACTIVE_JOINED alone at both finally entries.
+# Full-index TS installs lane hooks; their presence does not create a lane.
 type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
     reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
@@ -901,6 +905,8 @@ def retireOutgoing(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, i
 
 # No lane engine is installed: only joined/creator-pass posture makes a new
 # value belong to flushTransaction/passTx (core.ts's born-held value arm).
+# #4171 folds the former prevLane && STAGED_READ arm into mount-aware joined;
+# both arms are absent with this profile's inactive lanes, not globally.
 def bornHeld(+w: R.World, joined: Bool) -> Bool:
   Bool.and(Bool.or(Nat.is_ne(R.World.flushTransaction(w), 0n), Nat.is_ne(R.World.passTx(w), 0n)),
     Bool.or(joined, B.has(R.Node.flags(B.node(w, B.parentComputed(w, R.World.context(w)))), K.REACTIVE_JOINED())))

@@ -1,9 +1,9 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+    "commit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
     "branch": "next",
-    "version": "2.0.0-rc.15"
+    "version": "2.0.0-rc.16"
   },
   "bend": {
     "repository": "https://github.com/bendlang/bend",
@@ -148,7 +148,7 @@
     "upstream/solid/packages/signals/docs/rules-mining/projections.md": "4d38d2854493f73adeec6ff9b044fa055101e1cba83bccdbf8e6ba133074d181",
     "upstream/solid/packages/signals/docs/rules-mining/reconcile-snapshot.md": "74fd2eac8fb5af5686939775e3c43964cade69b4859b6ef62252890394a48fb0",
     "upstream/solid/packages/signals/docs/write-coalescing.md": "7fba4b2578586754e2a141cb46fd57c70e5f296c0670bc14433ade988aabcabe",
-    "upstream/solid/packages/signals/package.json": "d6a25c5fdfd90274cdb895b3813f990906c9a60c2a0affb79c5ce8b04dec3a0d",
+    "upstream/solid/packages/signals/package.json": "aa7ef90e705e56bf53664f936f4f4c420e848555b80c870de4402164d69808a0",
     "upstream/solid/packages/signals/src/affects-marks.ts": "4c641eb692b5f0062911ee351af8c2d27451e929ad9488c2c7603b6f5a4d90dc",
     "upstream/solid/packages/signals/src/affects.ts": "6f23a5f6327fcf92c03ab6868357c915b93f61389b2be2a2faafe856c05138f1",
     "upstream/solid/packages/signals/src/attribution.prod.ts": "3f7ab4a323d9434d58ec70647d12a7b6aed0cd5e2cdaca75f471839168e77953",
@@ -164,7 +164,7 @@
     "upstream/solid/packages/signals/src/core/attribution.ts": "a219aa1cc6566b0be0ffe0196d3e6cbf6effeed2d4a0acc478b15c26783a776f",
     "upstream/solid/packages/signals/src/core/constants.ts": "b52ee01afff74a64965131f7c010ccc8f4b89096dc69666706d10d4dbc904dea",
     "upstream/solid/packages/signals/src/core/context.ts": "35ccd5808fb5c21ff1504e39fb424ef5f0f4a88057ee86e8b0faa90f2fa9c912",
-    "upstream/solid/packages/signals/src/core/core.ts": "304c06198a154890da59d6646cb695f2a90df2b844fc46269f3c04fa73b837c2",
+    "upstream/solid/packages/signals/src/core/core.ts": "9021903b4d2aa6770ed585b99eddce5fd460d120209c58edf6133a7d78b5fca7",
     "upstream/solid/packages/signals/src/core/dev.ts": "6ac6cb1e74b0bef88a0acca77164c739087e97dd8446d1ce2e95342db1dc96ae",
     "upstream/solid/packages/signals/src/core/effect.ts": "d8117f9e5d4a30ab35c535b4bb47b23dd0caaf1b7998ffc8f21123fb1bb2bf12",
     "upstream/solid/packages/signals/src/core/error-hooks.ts": "5b58b7db8056352e1995061bd37e85b67ae89cae4dadbfe4a0832daf6ed816e0",
@@ -195,7 +195,7 @@
     "upstream/solid/packages/signals/src/store/optimistic.ts": "9b0cba1fb985cdb492478738556241b961efaf513a5fa3ba6cf705c860c392ac",
     "upstream/solid/packages/signals/src/store/projection.ts": "7ff8040f4769e1454a626b996502128494d26badcf147305399bae7bc8bb1f0f",
     "upstream/solid/packages/signals/src/store/reconcile.ts": "2b8a088a7846121cd851c6ff64bea30bacbdc99e9203bb4d18f313f283843bd9",
-    "upstream/solid/packages/signals/src/store/store.ts": "9eab63009b91fa1051aa46663b6dede963b59f44b62fb7cafa361bb780798c89",
+    "upstream/solid/packages/signals/src/store/store.ts": "9da6b8e40d94745453aa2d2999c5e843388e3801521a9649456476bef5e9c225",
     "upstream/solid/packages/signals/src/store/storePath.ts": "5b7587a755c09aa4d32dc8515a942497fa249f6cf151c065d2fd5e74451b2666",
     "upstream/solid/packages/signals/src/store/target.ts": "d651342f9a184c0fc5cbfdd41a18f8cf2748e9b17b329a4038b8756eedeec9d3",
     "upstream/solid/packages/signals/src/store/types.ts": "00d50fa1a2393887a5d18e96b223ae4cbbc8b9b7706cca0784055c0872319e51",

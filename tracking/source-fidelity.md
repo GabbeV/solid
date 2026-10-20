@@ -1,8 +1,10 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid 71153bf0. The initial audit and milestone notes below retain
-their historical context; [the integration review](reviews/solid-71153bf0.md)
-documents the current source delta and replaces the old bug baselines.
+Current pin: Solid b0ad1df5 (rc.16). [The latest review](reviews/solid-b0ad1df5.md)
+records the eight-commit update from 71153bf0 and its inactive lane/dev limits.
+The initial audit and milestone notes below retain their historical context;
+[the earlier integration review](reviews/solid-71153bf0.md) records the original
+three upstream fixes. No active semantic deviation exists.
 
 
 The user has explicitly set the engineering target: a translation close enough to

@@ -1,7 +1,7 @@
 # Solid 2 signals in Bend 2
 
 An executable **incremental translation of the non-store core** of
-`@solidjs/signals` 2.0.0-rc.15. This is **not yet the complete signals package**.
+`@solidjs/signals` 2.0.0-rc.16. This is **not yet the complete signals package**.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
@@ -18,8 +18,10 @@ callback expressions. JavaScript supplies the test host and payload encoding.
 The implementation, differential tests, and composed proofs use the same runtime.
 There is no second scheduler hidden behind the proof.
 
-The reviewed Solid pin is now `71153bf0` (still rc.15), integrating the tracked
-fixes and related core updates. [Pin review and before/after evidence](tracking/reviews/solid-71153bf0.md).
+The reviewed Solid pin is now `b0ad1df5` (rc.16), matching `next` when fetched
+on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-b0ad1df5.md).
+The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
+[the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
 This integration branch preserves a newly found [cleanup collector regression](tracking/upstream/deferred-release-throw.md);
 `main` retains the old pin pending review.
@@ -124,10 +126,10 @@ The report maps changed functions to known Bend counterparts and flags file-leve
 changes too. Tests/docs/build conditions still require separate diff review.
 
 [Standalone Solid bug repros](repros/solid-signals/README.md) install independently
-and import only `@solidjs/signals`. They reproduce the empty-iterable leak on the
-published package and current next, and successful-value-as-error recovery on
-current next. The shared rc.15 version string does not identify the same source
-commit in npm and next; the repro instructions distinguish them.
+and import only `@solidjs/signals`. Their original versions preserve the historical
+empty-iterable leak and successful-value-as-error recovery repros. Both are fixed
+at the current source pin. A package version alone does not identify a source
+commit; the repro instructions distinguish the historical builds.
 
 [Minimal JSX playground repros](repros/playground/README.md) use ordinary
 components and rendered expressions. The held-recovery reduction needs one

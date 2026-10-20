@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21",
+  "timezone": "Europe/Stockholm",
+  "baseline": {
+    "solidCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+    "bendCommit": "075455c",
+    "branch": "baseline/solid-71153bf0"
+  },
+  "candidate": {
+    "solidCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+    "version": "2.0.0-rc.16",
+    "branch": "integrate/solid-next-fixes",
+    "cleanCheckout": "/workspace/solid-repin-b0ad1df5",
+    "exactSnapshotFiles": 76,
+    "changedSourceFiles": 2,
+    "changedVendoredFiles": 3,
+    "bendToolchainUnchanged": true,
+    "remoteNextAtFinalCheck": "b0ad1df505b835058a4b3750ab37d6576bb18c01"
+  },
+  "commits": [
+    {
+      "sha": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+      "title": "fix(compiler): WASI loc paths and directive hashes ignore the binding's cwd (#4173)"
+    },
+    {
+      "sha": "47c745c5044be9684d00df454977b13bf4ce914c",
+      "title": "Merge pull request #4037 from solidjs/changeset-release/next"
+    },
+    {
+      "sha": "8134a9080846a3dff703b7689ffec4147678a9fd",
+      "title": "Version packages (rc)"
+    },
+    {
+      "sha": "1bb070de6f794ec3353083958720a145225fcff3",
+      "title": "examples: move to router next.41 formAction; note mutation-wide revalidation (#4172)"
+    },
+    {
+      "sha": "dc063a65868b8e4731386556c332b0f8a2982873",
+      "title": "fix(signals): a verdict-mounted Loading holds a nested render effect's first read (#4166) (#4171)"
+    },
+    {
+      "sha": "7f8ab2dbf495e214b2ac1c4964f32eb211dd2572",
+      "title": "feat(web): a server function reference can declare its own client send (#4170)"
+    },
+    {
+      "sha": "5a4b2e850c1fa8100b04f5d708448de2139f5aa1",
+      "title": "docs(signals): explain untrack with unresolved async reads (#4169)"
+    },
+    {
+      "sha": "a2743fa2d26d78f38c42600b91aceddb43a1c3ef",
+      "title": "fix(signals): a removed row's cleanup can write during teardown (#4165) (#4168)"
+    }
+  ],
+  "operationReview": "tracking/reviews/solid-b0ad1df5.md",
+  "impactRecord": "tracking/reviews/solid-b0ad1df5-impact.json",
+  "sourceTests": {
+    "build": "All three tiers, property mangling, pure-annotation checks and source declarations pass via installed rollup/tsc, not a fresh lockfile install.",
+    "fullSuite": {
+      "filesPassed": 327,
+      "testsPassed": 5411,
+      "expectedFailures": 3,
+      "skipped": 2
+    },
+    "focusedProduction": {
+      "filesPassed": 2,
+      "testsPassed": 6
+    },
+    "focusedObserve": {
+      "filesPassed": 2,
+      "testsPassed": 6
+    },
+    "beforeCleanupTestsIsolated": [
+      {
+        "test": "a removed row's cleanup can write a signal",
+        "exit": 1
+      },
+      {
+        "test": "a branch's cleanup can write a signal",
+        "exit": 0
+      },
+      {
+        "test": "a removed row's cleanup can write a store",
+        "exit": 1
+      },
+      {
+        "test": "a removed row's cleanup still sees its owner and context",
+        "exit": 0
+      }
+    ],
+    "beforeNestedRenderTests": {
+      "failed": 2,
+      "observed": "Future value publishes while held; both direct nested render effect and additional memo variants fail."
+    },
+    "beforeCombinedFileCaveat": "The signal guard throw halts its module; later failures in that same old cleanup file are not independent evidence. The four isolated runs above distinguish two regressions from two passing controls."
+  },
+  "bend": {
+    "publicDifferentialHistories": 2115,
+    "newUntrackHistories": 12,
+    "newUntrackAlsoPassPreviousPin": true,
+    "directOwnerCoreProbes": 136,
+    "helperAlignment": "Full suite passes, including 10752 constructor comparisons and the recorded async/pending/transaction/read/write helpers.",
+    "compiledMutationsRejected": 97,
+    "concreteKernelRegressions": 48,
+    "positiveKernelRegressions": 47,
+    "negativePreservedCounterexamples": 1,
+    "kernelEvidence": "tracking/checked.json seals this record and all active inputs after a successful independent kernel check.",
+    "runtimeSemanticChanges": false,
+    "activeDeviationIds": []
+  },
+  "trackedBugs": [
+    {
+      "id": "SOLID-EMPTY-FLATTEN-001",
+      "sourceControls": 18,
+      "result": "upstream fix still passes"
+    },
+    {
+      "id": "SOLID-STAGED-ERROR-RECOVERY-002",
+      "sourceControls": 8,
+      "result": "upstream fix still passes"
+    },
+    {
+      "id": "SOLID-HELD-FUNCTION-VALUE-003",
+      "sourceControls": 12,
+      "result": "upstream fix still passes"
+    },
+    {
+      "id": "SOLID-DEFERRED-RELEASE-THROW-004",
+      "sourceControls": 2,
+      "result": "collector regression preserved; no local workaround",
+      "pr": {
+        "number": 4176,
+        "url": "https://github.com/solidjs/solid/pull/4176",
+        "state": "open",
+        "merged": false,
+        "head": "035e9b2f34f9c160ac708676e242fd594056a509"
+      }
+    }
+  ],
+  "limitations": [
+    "Dev cleanup guards, store APIs and active lane/action/verdict/boundary engines remain unported. Upstream regression tests do not establish Bend support for those APIs.",
+    "Full-index reference installs lane hooks; the port reduction requires inactive lane scopes and no lane-bearing nodes, not missing hook installation.",
+    "No new general proof, TS/Bend equivalence, compiler/browser or web-package validation.",
+    "The initial pnpm invocation rejected a new example router dependency on release-age policy. Checks reused the previously installed signals tools directly; no age policy was relaxed."
+  ],
+  "logs": {
+    "build": {
+      "path": "/workspace/scratch/solid-b0ad1df5-build.log",
+      "sha256": "f4b4ba6f408f8b4118229b3ff06e0091bac2e8bc7424f3efbd4a1b7254f3f961"
+    },
+    "upstream-tests": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-tests.log",
+      "sha256": "77d883a34321b9e6297a3c598e23dac7205dbcf847aacffb527a2d2b05b92d72"
+    },
+    "upstream-before": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-before.log",
+      "sha256": "9d59666a1c239555b5aaf4b35f55cdd5425084dd491a78472e19ac007ad81b2b"
+    },
+    "upstream-prod": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-prod.log",
+      "sha256": "4fa119a65be3fa0cee2fec000f3f125dd1128b2147af428af4516662ea130186"
+    },
+    "upstream-observe": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-observe.log",
+      "sha256": "cced624135e30fbbae9da326f61e598a6823f929d33aec438a9680ef98db78e3"
+    },
+    "untrack-before": {
+      "path": "/workspace/scratch/solid-b0ad1df5-untrack-before.log",
+      "sha256": "9eb3d4ba4589bc368c7b8566507f92dcef6caa94f71c1e8765887aa4657994fb"
+    },
+    "bend-build": {
+      "path": "/workspace/scratch/solid-b0ad1df5-bend-build.log",
+      "sha256": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125"
+    },
+    "bend-tests": {
+      "path": "/workspace/scratch/solid-b0ad1df5-bend-tests.log",
+      "sha256": "2d36d57f38dbd2e116c667e8f079a18f14be6fb19942bc2e018777bfd9e0e562"
+    },
+    "alignment": {
+      "path": "/workspace/scratch/solid-b0ad1df5-alignment.log",
+      "sha256": "76cf8670d714c731351d85169d942a853e011aafd9477c68aa94a7cb8a24b227"
+    },
+    "mutations": {
+      "path": "/workspace/scratch/solid-b0ad1df5-mutations.log",
+      "sha256": "7653bf5b6364877224e45a9b86742bb6d824c82dafc1a6e9622761156f4e8b47"
+    },
+    "isolated-before-0": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-before-0.log",
+      "sha256": "d6ff2a23b0d7f31fcafc41e4fb6e8e40837907f81ce5346a582b71b26bc5a796"
+    },
+    "isolated-before-1": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-before-1.log",
+      "sha256": "3deb3a2e0cf7e236dc6393fb39c63f387b6f9fb10759880a972c4919b69a88f4"
+    },
+    "isolated-before-2": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-before-2.log",
+      "sha256": "5dfd63bac4500e0ce790f1196f0e1777032276f1cfa31c37d62b07a08f3060a6"
+    },
+    "isolated-before-3": {
+      "path": "/workspace/scratch/solid-b0ad1df5-upstream-before-3.log",
+      "sha256": "47d3b7fc00f391a9707b3c371d2c1fbb71a080de16aa4dd73a19361baf42e978"
+    }
+  }
+}

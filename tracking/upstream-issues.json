@@ -24,7 +24,13 @@
       },
       "validatedSourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
       "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
-      "currentProof": "LAWS.bend:empty_flatten_returns_undefined"
+      "currentProof": "LAWS.bend:empty_flatten_returns_undefined",
+      "lastRevalidation": {
+        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "date": "2026-10-21",
+        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "result": "upstream-fix-still-passes"
+      }
     },
     {
       "id": "SOLID-STAGED-ERROR-RECOVERY-002",
@@ -52,7 +58,13 @@
       "supersededFixUrl": "https://github.com/solidjs/solid/pull/4148",
       "fixMergedCommit": "fb6006eb9ce03d705f937030a68d77c3b9996453",
       "supersededReason": "PR #4148 closed without merge; #4156 clears prior staged errors at the next pass prelude. Related setter case lands in #4167.",
-      "currentProof": "LAWS.bend:staged_error_recovers_before_landing"
+      "currentProof": "LAWS.bend:staged_error_recovers_before_landing",
+      "lastRevalidation": {
+        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "date": "2026-10-21",
+        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "result": "upstream-fix-still-passes"
+      }
     },
     {
       "id": "SOLID-HELD-FUNCTION-VALUE-003",
@@ -88,7 +100,13 @@
       "validatedSourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
       "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
       "fixMergedCommit": "7014aca40e38afa58ba917ba6c534e45bde14430",
-      "currentProof": "LAWS.bend:held_function_result_stays_data"
+      "currentProof": "LAWS.bend:held_function_result_stays_data",
+      "lastRevalidation": {
+        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "date": "2026-10-21",
+        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "result": "upstream-fix-still-passes"
+      }
     },
     {
       "id": "SOLID-DEFERRED-RELEASE-THROW-004",
@@ -105,7 +123,7 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
-      "checkedRemoteHead": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+      "checkedRemoteHead": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
       "reportDraft": "tracking/upstream/deferred-release-throw-issue.md",
       "candidateFixBranch": "fix/restore-deferred-releases",
       "candidateFixCommit": "035e9b2f34f9c160ac708676e242fd594056a509",
@@ -124,7 +142,13 @@
       "playgroundUrl": "https://s.olid.uk/id/Q4l9sDY2RriitepR-nQmfg",
       "playgroundPackageBuild": "mizulu/solid2@5a4b2e85",
       "playgroundVerification": "repros/playground/cleanup-throw-hosted.json",
-      "fixUrl": "https://github.com/solidjs/solid/pull/4176"
+      "fixUrl": "https://github.com/solidjs/solid/pull/4176",
+      "lastRevalidation": {
+        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "date": "2026-10-21",
+        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "result": "regression-preserved"
+      }
     }
   ]
 }

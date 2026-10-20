@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid 71153bf0dbd1325cf29f81cb1e7a34e380e694d2; Bend
+Pins: Solid b0ad1df505b835058a4b3750ab37d6576bb18c01 (rc.16); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories: 2103 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories: 2115 total, plus explicit host object-identity and native timeout
   checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -65,7 +65,9 @@ proved as JavaScript semantics. All unreviewed source branches stay open.
 All three originally tracked upstream bugs have accepted fixes integrated at this pin. PR #4148
 was superseded by #4156; #4163 and #4144 merged. The original before/after matrix,
 operation-level audit and upstream test results are in
-[the pin review](reviews/solid-71153bf0.md). The separate integration branch is local;
+[the earlier pin review](reviews/solid-71153bf0.md).
+[The current update](reviews/solid-b0ad1df5.md) revalidates those fixes and records
+new upstream dev/lane regressions separately from Bend support. The separate integration branch is local;
 no translation remote is configured. No package was published. Historical standalone
 npm/playground repro artifacts retain their original versions and evidence.
 The original vendored source and negative laws remain at baseline/solid-d2ad8b28

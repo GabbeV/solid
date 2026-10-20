@@ -2,9 +2,9 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2103 differential histories, 97 rejected compiled mutations,
+Current verification: 2115 differential histories, 97 rejected compiled mutations,
 and 48 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at 71153bf0 and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -12,6 +12,17 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Current source update
+
+The active pin is b0ad1df5, the fetched `next` head on 2026-10-21
+(Europe/Stockholm). [The review](reviews/solid-b0ad1df5.md) covers the eight
+commits since 71153bf0, two changed source files, dev-only cleanup-write guards,
+mount inheritance for active lanes, and untrack documentation. No active lane or
+dev support is newly claimed; the admitted production operations are unchanged.
+Twelve new public untrack histories run on both pins. The old 71153bf0 checkpoint
+is retained at baseline/solid-71153bf0 (075455c). Earlier milestone sections below
+retain their historical pin and totals unless superseded here.
 
 ## Current owner/core milestone
 

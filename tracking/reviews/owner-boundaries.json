@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "pin": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
+    "commit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
     "branch": "next",
-    "version": "2.0.0-rc.15"
+    "version": "2.0.0-rc.16"
   },
   "interpretation": "Possible calls to restricted World owner helpers. Current imperative subsets remain supported; this is not a runtime failure list or a proof of callback reachability/equivalence.",
   "exclusions": "OwnerTasks intercepts Invoke before owner.dispatch; callback-free markDisposal/parkChildren are not seeds. Task constructors, branch predicates and callback bodies are not interpreted. Re-audit these assumptions on repin.",
@@ -68,7 +68,7 @@
     "runtime/construct-state.bend": "10be893e8c50c423e1b4ae6ec7f8cdd0d34f12d8b009eff32d233fa5063839ca",
     "runtime/construct.bend": "6c1920665371e628e847f9c04426a5c86d7b74665b7c503f1609e766db28868b",
     "runtime/context.bend": "f33b93e99c74b52e35e192064ce7915a13d7cb9f8a5bfc062953e85e2be78eee",
-    "runtime/core.bend": "74718dd9b382a25252b16edc3d09d34a2266f6f7edb0dc28ce261aa9f0bb1fe7",
+    "runtime/core.bend": "694e0979673ddd63a538253f9822ee06bf362c109833c640a9b6f47c6725b7c7",
     "runtime/equality.bend": "47b4c48669509383247c0bb36ff411cd861841e404b79d2dd3a373891c2ff0b9",
     "runtime/error.bend": "171595b0556d1677d614e05cf4e1076f6f573fd7ba708186932b00dfd1e888a9",
     "runtime/extension.bend": "b0784d485b3a842a37bf8067f9524436cc42a56dae18ef7452f644047324cca7",
