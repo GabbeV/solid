@@ -201,6 +201,15 @@ law trim_error_overrides_application_error:
 law commit_publishes_before_parked_cleanup_error:
   {OwnerCore.commitScenario() == OwnerCore.expectedCommit() : OwnerCore.CommitView}
 
+law flight_release_runs_read_capable_cleanup:
+  {OwnerCore.asyncAutodispose() == OwnerCore.expectedAsyncCleanup() : OwnerCore.AsyncCleanupView}
+
+law async_landing_trims_through_cleanup_read:
+  {OwnerCore.asyncDependencyTrim() == OwnerCore.expectedAsyncCleanup() : OwnerCore.AsyncCleanupView}
+
+law pending_dependent_release_runs_cleanup_read:
+  {OwnerCore.pendingDependentCleanup() == OwnerCore.expectedAsyncCleanup() : OwnerCore.AsyncCleanupView}
+
 # Concrete positive regressions for the reviewed upstream pin update.
 law rebuilt_lazy_source_runs_once:
   {Integrated.lazyReader() == Integrated.expectedLazy() : Integrated.LazyView}

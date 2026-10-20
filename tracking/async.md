@@ -128,3 +128,14 @@ for later iterator pulls and deferred thenable-to-stream setup. The typed protoc
 now routes later-next throws to the memo via ProtocolCatch; source owner-target
 close registration shares owner.cleanup. Custom comparator execution and hostile
 protocol getters remain unfinished. See [the pin review](reviews/solid-71153bf0.md).
+
+## Owner callback continuation completion
+
+AsyncWrite, settleAutodispose, handleError, pending-source/error release and
+recompute outgoing-source retirement now suspend into the shared owner/core
+callback machine. Equal-valued landing trims before flush, while a changed
+staged answer may trim at commit. Both controls, throwing/pending callback reads,
+iterator release/close and captured multi-dependent release are tested.
+[The operation review](reviews/teardown-closure.md) records public admission,
+remaining callable exclusions and three concrete async cleanup laws. The source
+pin and upstream collector regression remain unchanged.

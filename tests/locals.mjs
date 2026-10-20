@@ -297,7 +297,10 @@ for(const storedFunction of ['disposer','accessor']){
       runtime.signal('initializer',runtime===s?sf:bf);assert.equal(runtime.read('initializer'),21);
       runtime.signal('sink',0);
       runtime.program('raw',[['set','sink',runtime===s?sf:bf]]);
-      assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/Accessor updater reads in teardown/);
+      runtime.root('cleanupScope',lit(0));
+      assert.doesNotThrow(()=>runtime.effect('getterCleanup',lit(1),{cleanup:'raw',owner:'cleanupScope'}));
+      runtime.flush();runtime.disposeOwner('cleanupScope');runtime.flush();
+      assert.equal(runtime.read('sink'),21,'teardown setter invokes the frozen getter updater');
       assert.throws(()=>runtime.evaluate({onCleanup:{lit:runtime===s?sf:bf}}));
     }
   }finally{for(const runtime of [s,b]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');}}

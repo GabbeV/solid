@@ -172,7 +172,8 @@ for(const r of [new BendRuntime(),new SolidRuntime({module:await import('../buil
     assert.throws(()=>r.evaluate(fn('indirect')),/helper is unavailable/);
     r.program('reads',[['return',lit(1)]]);
     assert.equal(typeof r.evaluate(onCleanup(fn('reads'))),'function','no owner does not inspect or allocate a cleanup');
-    assert.throws(()=>r.root('scope',onCleanup(fn('reads'))));
+    assert.equal(typeof r.root('scope',onCleanup(fn('reads'))),'function');
+    assert.doesNotThrow(()=>r.disposeOwner('scope'),'cleanup expression returns are ignored');
   }finally{r.attempt('dispose');r.resetErrorHalt();r.attempt('flush');}
 }
 console.log(`${count} complete first-class callback histories and native alias/domain controls pass.`);

@@ -27,7 +27,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject ninety-three source-changing variants
+npm run mutations                # reject ninety-seven source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -44,7 +44,7 @@ The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,
 `untrack`, sequences, and reusable callback programs for writes, cleanup, disposal
 and throws. Compute/application/error bodies support expression reads, early returns
-and evaluated writes/throws; teardown reads remain unfinished. See [callback coverage](tracking/callbacks.md). Synchronous errors propagate through compute/effect catches, recovery and scheduler
+and evaluated writes/throws, including cleanup programs. See [callback coverage](tracking/callbacks.md). Synchronous errors propagate through compute/effect catches, recovery and scheduler
 halts. Pending catches, held reads/writes, staged errors and mainline transaction
 park/land now run in the same driver. Ordinary typed promise-like flights now register, settle/reject and flush; typed iterator initial drains, later yields, cancellation and flattening also execute; active boundary/lane scopes remain unfinished. See [the async milestone](tracking/async.md). Public resolve/refresh watchers also execute for admitted payloads/accessor targets; see [the watcher milestone](tracking/watchers.md). Owner/observer handles, owned/detached root callbacks and runWithOwner also execute;
 see [ownership coverage](tracking/ownership.md). Bound root disposers are callable
@@ -62,11 +62,12 @@ now execute; see [writable signals](tracking/writable-signals.md).
 Selected setters can also be registered directly with `onCleanup`; see
 [setter cleanup](tracking/setter-cleanup.md).
 First-class named callback values also support ordered calls, initializer/updater
-use, native promise data and runtime-selected imperative cleanup; see
+use, native promise data and runtime-selected cleanup programs; see
 [callback function values](tracking/callback-values.md). Arbitrary host JavaScript
 callbacks remain unfinished. Read-capable teardown now has shared owner/core
-continuations for direct disposal, effect cleanup, core/scheduler trims and native
-watcher disposal; global admission remains gated on async/pending release paths.
+continuations through disposal, effect cleanup, core/scheduler trims, native
+watchers and async/error/pending release. Public expression cleanup programs
+are admitted; bound getter cleanup values and arbitrary closures remain open.
 See [owner/core coverage](tracking/owner-core.md).
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:

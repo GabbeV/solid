@@ -40,11 +40,11 @@ setter, heap/flush and final queues/context. It also checks that the effect's
 imperative read does not add a dependency. This is one concrete execution, not a
 general callback/progress/equivalence theorem.
 
-The owner teardown machine cannot yet suspend for expression evaluation.
-Expression-bearing programs are rejected before installation as cleanup or
-unobserved callbacks; the raw owner action boundary also returns Unsupported(9).
-There is no fake cached read, swallowed throw, or source workaround. Teardown
-reads, arbitrary closures, general function values, general returned closures, arbitrary callable initializers and active scopes remain unfinished.
+The owner walk now suspends for core expression evaluation through all active
+async/error/pending, scheduler and native watcher callers. Named cleanup programs
+are admitted publicly. General closures, direct bound-getter cleanup values,
+arbitrary callable initializers and active scopes remain unfinished. See
+[the operation review](reviews/teardown-closure.md).
 Expression-based function initializers now execute; see [writable-signals.md](writable-signals.md).
 Escaped data-signal setters and computed accessors now execute; see
 [setters.md](setters.md) and [computed-accessors.md](computed-accessors.md).
@@ -72,3 +72,8 @@ Direct disposal/effect-precleanup/recompute-preparation now suspend owner Invoke
 tasks to the shared core callback machine. Thirty-five direct source probes and
 a concrete cleanup-read kernel fixture check the first stage; global teardown
 read admission remains unfinished. See [owner-core.md](owner-core.md).
+
+The later owner/core migration now admits read-capable cleanup programs through
+the same public path. Earlier staged boundary notes above are historical; see
+[owner-core.md](owner-core.md) for 136 direct probes and the closure review for
+74 additional public histories and three concrete async cleanup laws.

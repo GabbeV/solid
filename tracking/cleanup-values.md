@@ -34,11 +34,13 @@ once, both roots die and ambient state restores. This concrete law does not prov
 a general lifetime, termination, arbitrary function or TS-equivalence theorem.
 
 Arbitrary function input/capture, function properties, general returned effect
-cleanup selection, expression-bearing teardown callbacks, nested primitive
-construction and active boundary/lane/high-level provider scopes remain open.
+closures and direct bound-getter cleanup values remain open, as do active
+boundary/lane/high-level provider scopes. Named expression teardown programs
+now use the complete shared continuation path, including nested construction.
 No semantic deviation or pinned-source edit is active.
 
 The admitted family now also includes data/writable-memo setters, with a separate
 canonical callback encoding and exact no-argument write behavior. See
 [setter-cleanup.md](setter-cleanup.md) for 42 additional complete histories, one
-closed law and the remaining getter/expression teardown limits.
+closed law and remaining getter-cleanup value limits. See
+[the continuation review](reviews/teardown-closure.md) for expression cleanup.

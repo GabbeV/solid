@@ -1,4 +1,8 @@
-# Direct owner/core continuation bridge
+# Owner/core continuation bridge
+
+Current: the migration is complete for the admitted expression-program grammar.
+The sections below retain staged implementation history; the final section and
+[operation review](reviews/teardown-closure.md) describe current public admission.
 
 Owner tasks now enter the existing core continuation machine at direct disposal,
 bound root invocation, callback imperative actions, the previous-effect-cleanup
@@ -150,3 +154,25 @@ finally tail. Fifty public integration histories and five new kernel laws (one n
 check the related source fixes. The conservative boundary report now has 13 core
 crossings because ProtocolCatch adds a handleError call. Earlier twelve-call
 counts above describe the old pin. See [the pin review](reviews/solid-71153bf0.md).
+
+## Async/error/pending release and public admission
+
+The remaining thirteen core World-helper crossings now use explicit source return
+points. AsyncWrite trim and flight autodisposal run OwnerTasks; pending traversals
+retain visited/released locals in PendingTasks; handleError, stageError and both
+recompute retirement paths resume those walks. Catch-stage settlement commits
+its stagedErr local only after success, and callback throws still execute the
+pass finally. Publication settlement remains outside the body catch.
+
+The global expression-teardown guard is removed for the existing program ABI.
+Named onCleanup, unobserved and returned effect callback programs can read,
+write/update, construct nested primitives, return early and throw. Raw getter
+and setter updater calls inside them share ordinary core semantics. Direct bound
+getter cleanup values and arbitrary JavaScript closures remain unfinished.
+
+There are 74 new public histories and 48 new direct probes (136 total), with
+separate equal/changed landing controls. Four additional compiled mutations are
+rejected. Three public onCleanup laws cover flight autodisposal, equal-value
+async dependency trim and pending-dependent release. The detailed operation
+review and unproven/untested limits are in [teardown-closure.md](reviews/teardown-closure.md).
+Pins, source collector regression and the empty deviation register are unchanged.

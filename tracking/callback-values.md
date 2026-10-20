@@ -38,8 +38,9 @@ one canonical callback-arena wrapper for the bound function. Repeated registrati
 and multiple effects/owners reuse it. The original static cleanup ID stays distinct.
 The owner walk invokes the original program with no user arguments, preserving
 its detached LIFO traversal, bound receiver behavior and partial states on throws.
-Only the existing imperative teardown program domain is admitted here. Expression
-teardown still needs the unfinished owner/core continuation boundary. No-owner
+The existing expression-program domain now executes through the shared owner/core
+continuations at cleanup and unobserved call sites. Direct bound getter cleanup
+values and arbitrary closures remain open. No-owner
 onCleanup returns the same function without inspecting or allocating a cleanup.
 
 64 complete histories compare actual pinned Solid results, node fields, owner and
@@ -61,3 +62,6 @@ deviation register are unchanged.
 
 The direct owner/core bridge now also preserves completion of a longer imperative
 cleanup under the implicit disposal budget; see [owner-core.md](owner-core.md).
+
+Current continuation coverage and public teardown histories are recorded in
+[the operation review](reviews/teardown-closure.md).

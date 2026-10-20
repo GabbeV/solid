@@ -45,9 +45,9 @@ installed callable IDs, commits the previous cleanup's write, disposes the root,
 and commits the last cleanup's write through the actual runtime. This concrete
 execution does not prove arbitrary cleanup selection or TypeScript equivalence.
 
-General returned closures, named teardown-function values, getter cleanup and
-expression-bearing teardown still need a broader callable/owner continuation
-boundary. Invalid production return values are outside this typed ABI; no dev
+Named expression-program cleanup functions now share the owner/core driver.
+General returned closures and direct bound-getter cleanup values remain outside
+the represented callable domain. Invalid production return values are outside this typed ABI; no dev
 validation has been imported into the production translation. Unsupported
 returned values report an explicit boundary fault rather than being treated as
 undefined. The pin and empty deviation register are unchanged.
@@ -57,3 +57,6 @@ enter the same core call/argument, initializer and updater paths. Their imperati
 teardown subset can be selected dynamically; see [callback-values.md](callback-values.md).
 Read-capable teardown remains unfinished; the boundary investigation and explicit
 next return points are in [the teardown review](reviews/teardown-boundary.md).
+
+Read-capable named teardown programs are now admitted; the full migration and
+remaining callable limits are in [the operation review](reviews/teardown-closure.md).

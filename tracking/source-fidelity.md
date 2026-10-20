@@ -13,6 +13,16 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Current continuation closure
+
+The remaining owner/core async/error/pending crossings have been migrated at
+the source's callback return points. Public expression cleanup programs now
+execute through the shared core machine; direct bound-getter cleanup values and
+arbitrary closures remain excluded. [The operation review](reviews/teardown-closure.md)
+records shared mutation segments, source ordering, tests, closed laws and limits.
+Older staged notes below retain the history of that migration. No pin change or
+semantic workaround is active.
+
 ## What line by line means here
 
 Each source function and meaningful operation should be locatable in Bend: branch
@@ -44,7 +54,7 @@ These are port-side observations. None establishes an upstream bug.
 | Queue/pending intake | Pending nodes and held trims formerly cleared before their walks. They now use live indexed bounds and clear at the source sites, with the source held/override intake guard. | Walk fuel is explicit. Cleanup-triggered writes now test live intake growth and exact throw partial states. The effect queue snapshot is source behavior (`GlobalQueue.run` detaches a nonempty queue before running it); the earlier broad audit description did not distinguish it. |
 | Staged-read state | A state comparison exposed missing REACTIVE_STAGED_READ recording after a staged dependency read. | This checkpoint restores stagedRead and its uninitialized guard. The source pass flag is retained even before lane support exists. |
 | Unflushed reads | Source `unflushedStaged`, `readerSeesCommitted`, `unflushedValue`, `stashFlushed`, `markLateLinker`, promotion/reset helpers and a distinct signal fast block are retained. | 768 read-state comparisons, 24 direct held-stash cases and end-to-end regressions cover the admitted helpers. Held entry, pending throw and staged-error callers execute; spectating and active snapshot/verdict/lane/boundary hooks remain unfinished. The memo-only post-pull verdict-bit flags store now has 24 direct source comparisons. The helper placement in `runtime/read-state.bend` breaks the TS core/scheduler import cycle without replacing its state decisions. Callback writes use the shared setter and promotion path. |
-| Disposal | The pre-collected child worklist has been replaced with source return-point tasks: detach head, strip AUTO_DISPOSE, delete heap/clear deps, self-predecessor marker, recursive disposal, then live next-sibling read. Parked/current frames and cleanup detachment/LIFO are retained. | 16 comparisons exercise source owner state and cleanup traces, including reentrant disposal/registration, throws, changed siblings, dead children and a dependency-free queued node. Cleanup programs are a restricted callback ABI. Shared owner/core continuations now cover direct disposal, previous-effect cleanup, recompute preparation, core/scheduler trims and native watcher disposal (88 direct native probes); general public expression teardown stays gated on unfinished async/pending release paths. See [owner-core.md](owner-core.md). Twelve lifecycle cases cover the integrated commit/recompute consumers, including cancellation/cleanup throws and flush finally. 144 graph-state cases cover unobserved cascades and sweep guards; typed iterator close programs now execute; arbitrary callbacks remain unfinished. |
+| Disposal | The pre-collected child worklist has been replaced with source return-point tasks: detach head, strip AUTO_DISPOSE, delete heap/clear deps, self-predecessor marker, recursive disposal, then live next-sibling read. Parked/current frames and cleanup detachment/LIFO are retained. | 16 comparisons exercise source owner state and cleanup traces, including reentrant disposal/registration, throws, changed siblings, dead children and a dependency-free queued node. Cleanup programs are a restricted callback ABI. Shared owner/core continuations now cover direct disposal, previous-effect cleanup, recompute preparation, core/scheduler trims and native watcher disposal (88 direct native probes); all active core callers now resume through async/error/pending continuations; expression cleanup programs are public, while direct getter cleanup values and arbitrary closures remain excluded. See [owner-core.md](owner-core.md). Twelve lifecycle cases cover the integrated commit/recompute consumers, including cancellation/cleanup throws and flush finally. 144 graph-state cases cover unobserved cascades and sweep guards; typed iterator close programs now execute; arbitrary callbacks remain unfinished. |
 | Graph/heap helpers | Link identity, generation reuse and intrusive buckets are retained, with dormant/revival and restricted unobserved hooks now active. Slot/store hooks still explicitly refuse. | Keep local correspondence restricted. Review every source branch; do not exclude a shared path merely because it includes a store hook. |
 | Synchronous errors | Compute/effect catches, wrapper identity, user error arm, raw escaping throws, same-value recovery and root halt/report state now execute through the same driver. | 18 histories and 2,880 helper states compare pinned source behavior; two concrete kernel laws cover a failed/recovered chain. Pending catches, mainline transactions and ordinary typed thenables now execute; active boundaries and arbitrary host errors remain unfinished. |
 | Pending bookkeeping | Source sets, identity-preserving NotReady helpers, loading registration, self-only landing, propagation and deferred settle/release walks now exist in pending-state/status/pending modules. | 2,880 direct state comparisons and two closed diamond/path laws exercise helpers; core pending catches and mainline transactions now execute; ordinary typed host flights now execute through the same core; active boundaries remain unfinished. |
@@ -143,7 +153,7 @@ workaround or a proof of general JavaScript error semantics.
 
 Expression-bearing compute/application/error callback bodies now run on the
 existing core read continuation machine. Effect catches/finally are explicit
-source return points; teardown expressions remain rejected and unfinished. See
+source return points; named expression teardown programs now use the same driver. See
 [callbacks.md](callbacks.md) for ABI boundaries, 74 histories and the closed law.
 
 The owner literal is now shared by constructor facades and callback-based roots.

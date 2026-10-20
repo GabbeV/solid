@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2029 differential histories, 93 rejected compiled mutations,
-and 45 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2103 differential histories, 97 rejected compiled mutations,
+and 48 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 71153bf0 and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -12,6 +12,22 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Current owner/core milestone
+
+[The continuation review](reviews/teardown-closure.md) closes the remaining
+async/error/pending World-helper crossings for the admitted program grammar.
+Cleanup programs now read through the same public core machine at every active
+engine caller: 74 new public histories, 136 total direct owner/core probes, four
+new rejected mutations and three new closed async cleanup laws. Source/helper
+order, interrupted assignments and partial throws are retained. The static
+inventory reports zero restricted core crossings; it is not a package-completeness
+proof. Earlier staged progress sections below describe the historical boundary.
+
+Remaining callable work includes direct bound-getter cleanup registration,
+arbitrary callable initializers and richer closures; custom comparators and
+active boundary/lane/store engines remain outside this profile. PR #4176 is
+open; its proposed source fix is not silently applied to Bend.
 
 ## Established execution path
 
@@ -45,8 +61,8 @@ proof credit was imported.
   owners, register cleanup, or throw a payload. They execute on the active owner
   machine, including reentrancy. Compute/effect programs can also write signals, register cleanup in the active context,
   dispose the root and install returned effect cleanup. Expression-bearing compute/application/error callback bodies now use the real
-  read machine, with early return and evaluated writes/throws. Teardown callback
-  reads, arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; arbitrary callable initializers remain open;
+  read machine, with early return and evaluated writes/throws. Expression teardown callback
+  reads now execute; arbitrary closure environments, escaped data-signal read accessors now execute; escaped data-signal setters and computed read accessors now execute; expression-based function initializers now execute; arbitrary callable initializers remain open;
   see [callbacks.md](callbacks.md). Synchronous compute/effect error catches,
   user error programs, explicit previous-cleanup helpers and scheduler halts work.
   Pending-source propagation/retirement and loading-window/landing helpers now

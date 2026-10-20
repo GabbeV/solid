@@ -63,7 +63,9 @@ def visitRemoved(+w: R.World, +tasks: List<&2, Task>, +visited: List<&2, Nat>, +
     _ => settled(w, tasks, visited, released, scheduled, id, root, source),
     _ => skip(w, tasks, visited, released, scheduled, id))
 
-def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool) -> Machine:
+# Callback-free traversal segments, shared with core's suspending owner driver.
+# Release is intercepted by each caller before entering this dispatcher.
+def advance(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool) -> Machine:
   match tasks:
     case Nil{}:
       Machine{w, [], visited, released, scheduled}
@@ -91,11 +93,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +relea
         _ => Machine{w, Collect{R.Link.sub(B.link(w, edge))} <> CollectNext{edge} <> rest, visited, released, scheduled})
     case CollectNext{+edge} <> rest:
       Machine{w, CollectWalk{R.Link.nextSub(B.link(w, edge))} <> rest, visited, released, scheduled}
+    case End{} <> rest:
+      Machine{B.choose(~R.World, scheduled, _ => B.schedule(w), _ => w), rest, visited, released, scheduled}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), [], visited, released, scheduled}
+
+def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool) -> Machine:
+  match tasks:
     case Release{+index} <> +rest:
       B.choose(~Machine, Nat.is_ge(index, B.length(Nat, released)), _ => Machine{w, rest, visited, released, scheduled},
         _ => Machine{releaseIfSettledUnobserved(w, B.get(Nat, released, index, 0n)), Release{1n+index} <> rest, visited, released, scheduled})
-    case End{} <> rest:
-      Machine{B.choose(~R.World, scheduled, _ => B.schedule(w), _ => w), rest, visited, released, scheduled}
+    case other:
+      advance(w, other, visited, released, scheduled)
 
 def run(fuel: Nat, m: Machine) -> R.World:
   match fuel m:
@@ -106,12 +115,18 @@ def run(fuel: Nat, m: Machine) -> R.World:
     case 1n+p Machine{+w, +tasks, +visited, +released, +scheduled}:
       B.choose(~R.World, B.ok(w), _ => run(p, dispatch(w, tasks, visited, released, scheduled)), _ => w)
 
-def settlePendingSource(+w: R.World, +id: Nat, +source: Nat) -> R.World:
+def beginSettlement(+w: R.World, +id: Nat, +source: Nat) -> Machine:
   +w = B.first(R.World, Bool, P.removePendingSource(w, id, source))
-  run(Nat.mul(16n, B.budget(w)), Machine{w, [Walk{R.Node.subs(B.node(w, id)), id, source}, Release{0n}, End{}], [], [], False{}})
+  Machine{w, [Walk{R.Node.subs(B.node(w, id)), id, source}, Release{0n}, End{}], [], [], False{}}
+
+def settlePendingSource(+w: R.World, +id: Nat, +source: Nat) -> R.World:
+  run(Nat.mul(16n, B.budget(w)), beginSettlement(w, id, source))
 
 def releaseSettledDependents(+w: R.World, +id: Nat) -> R.World:
   run(Nat.mul(16n, B.budget(w)), Machine{w, [CollectWalk{R.Node.subs(B.node(w, id))}, Release{0n}], [], [], False{}})
+
+def beginReleaseSettledDependents(+w: R.World, id: Nat) -> Machine:
+  Machine{w, [CollectWalk{R.Node.subs(B.node(w, id))}, Release{0n}], [], [], False{}}
 
 # async.ts:landStatus (private): only self retires when other inputs still pend.
 def landStatus(+w: R.World, +id: Nat, +clearUninitialized: Bool) -> R.World:
@@ -134,7 +149,7 @@ def stageWrap(w: R.World, id: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>
     case other:
       A.statusError(w, id, other)
 
-def stageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
+def beginStageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
   stage = Bool.and(Bool.or(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
     Bool.and(inPass, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_STAGED_READ()), R.World.running(w)))), Nat.is_eq(R.World.passLane(w), 0n))
   B.choose(~B.Bundle<R.World, Bool>, stage,
@@ -148,6 +163,12 @@ def stageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<
       +w = B.first(R.World, R.Value, pair)
       +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{B.second(R.World, R.Value, pair)}))
       +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), B.set(K.CONFIG_STAGED(), K.CONFIG_STAGED_ERROR()))))
-      +w = settlePendingSource(w, id, id)
-      B.Bundle{B.choose(~R.World, B.ok(w), _ => B.schedule(w), _ => w), True{}},
+      B.Bundle{w, True{}},
     _ => B.Bundle{w, False{}})
+
+def stageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
+  +pair = beginStageError(w, id, error, inPass)
+  +w = B.first(R.World, Bool, pair)
+  +staged = B.second(R.World, Bool, pair)
+  +w = B.choose(~R.World, staged, _ => settlePendingSource(w, id, id), _ => w)
+  B.Bundle{B.choose(~R.World, Bool.and(B.ok(w), staged), _ => B.schedule(w), _ => w), staged}

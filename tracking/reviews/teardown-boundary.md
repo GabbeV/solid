@@ -1,5 +1,10 @@
 # Owner/core callback boundary investigation
 
+Current result: the active driver migration is complete for the admitted
+expression-program callback grammar; see [teardown-closure.md](teardown-closure.md).
+This document retains the original constraints and rejected experiment history.
+The separate bound-getter cleanup and arbitrary-closure domains remain open.
+
 The remaining read-capable teardown gap is a translation omission. Solid's source
 allows the user function to perform ordinary reads and nested operations. No new
 upstream bug or desired semantic difference was found in this investigation.

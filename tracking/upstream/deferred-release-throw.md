@@ -189,3 +189,12 @@ package label from local upstream source, and states the before/after regression
 The previously prepared issue is retained for history; it was not submitted.
 No actual PR number exists yet; the filled comparison is for manual submission
 because the integration previously denied createPullRequest.
+
+## Submitted upstream PR
+
+The user submitted [#4176](https://github.com/solidjs/solid/pull/4176),
+fix(signals): restore deferred releases after cleanup throws. Its branch is
+fix/restore-deferred-releases and its base is next; the PR is open. The submitted
+PR is attached to this task. The pinned Source and active Bend implementation
+continue to preserve the upstream collector leak until a reviewed upstream fix
+is integrated or a separately registered deviation is authorized and used.

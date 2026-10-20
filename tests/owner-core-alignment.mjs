@@ -88,6 +88,7 @@ async function scenario(name,commands,verify){
       const states=solidStates(s);
       assert.deepEqual(bendStates(b,states.map(([name])=>name)),states,`${name}: node state after ${op}`);
       assert.deepEqual(b.trace(),s.trace(),`${name}: trace after ${op}`);
+      assert.deepEqual(b.iteratorIO(),s.iteratorIO(),`${name}: iterator protocol after ${op}`);
       assert.deepEqual(b.portEvents,s.portEvents,`${name}: promise results after ${op}`);
       assert.deepEqual(b.portSnapshots,s.portSnapshots,`${name}: observer screen after ${op}`);
       assert.deepEqual(b.asyncErrors,s.asyncErrors,`${name}: escaping callback failures after ${op}`);
@@ -254,5 +255,48 @@ for(const route of ['resolve','until','abort','timeout'])for(const immediate of 
     }
   });
 }
+for(const immediate of [false,true])for(const value of [1,8])for(const cleanup of ['read','throw','pending']){
+  await scenario('asyncWrite landing resumes dependency cleanup '+JSON.stringify({immediate,value,cleanup}),[
+    ['signal','version',0],['signal','input',1],['signal','marker',0],['signal','other',7],['future','p',{immediate}],['future','q',{immediate}],
+    ['memo','reader',cleanup==='pending'?future('q'):read('other'),{owner:null,lazy:true}],
+    ['program','clean',[['emit',10],['setExpr','marker',read('reader')],['emit',11],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ['memo','observed',read('input'),{lazy:true}],['install','observed','clean'],
+    ['memo','target',select(read('version'),future('p'),read('observed'))],['flush'],
+    ['set','version',1],['flush'],['resolve','p',value],['tick'],['read','marker'],
+    ['resolve','q',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
+  ],(op,args,actual,wanted,b,s)=>{
+    if(op==='read'&&args[0]==='marker'){
+      assert.deepEqual(wanted,['return',cleanup==='pending'?0:7],'native landing reached the read-capable cleanup');
+      const target=[...s.sourceNames].find(([,name])=>name==='target')[0];
+      assert.equal(target._value,value,'native landing retains its settled value');
+    }
+  });
+}
+for(const immediate of [false,true])for(const children of [1,2])for(const cleanup of ['read','throw','pending']){
+  const dependents=[];
+  for(let i=0;i<children;i++)dependents.push(['memo','child'+i,read('source'),{lazy:true}],['install','child'+i,'clean'],['read','child'+i]);
+  await scenario('pending-source deferred releases resume captured walk '+JSON.stringify({immediate,children,cleanup}),[
+    ['signal','marker',0],['signal','other',7],['future','p',{immediate}],['future','q',{immediate}],
+    ['memo','reader',cleanup==='pending'?future('q'):read('other'),{owner:null,lazy:true}],
+    ['program','clean',[['emit',30],['updateExpr','marker',add({prev:true},read('reader'))],['emit',31],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ['memo','source',future('p')],...dependents,['flush'],['resolve','p',8],['tick'],['read','marker'],
+    ['resolve','q',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
+  ],(op,args,actual,wanted,b,s)=>{
+    if(op==='read'&&args[0]==='marker'&&cleanup==='read')assert.deepEqual(wanted,['return',7*children],'native pending-source release walks every captured candidate');
+  });
+}
+for(const immediate of [false,true])for(const route of ['promise','yield','empty','reject'])for(const cleanup of ['read','throw','pending']){
+  await scenario('flight last observer release resumes cleanup '+JSON.stringify({immediate,route,cleanup}),[
+    ['signal','marker',0],['signal','other',7],['future','p',{immediate}],['future','q',{immediate}],
+    ['memo','reader',cleanup==='pending'?future('q'):read('other'),{owner:null,lazy:true}],
+    ['program','clean',[['emit',20],['setExpr','marker',read('reader')],['emit',21],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ...(route==='yield'||route==='empty'?[['stream','stream',[{future:'p'},{value:99},{done:true}]]]:[]),
+    ['memo','target',future(route==='yield'||route==='empty'?'stream':'p'),{lazy:true}],['install','target','clean'],['read','target'],['flush'],
+    route==='reject'?['reject','p',8]:route==='yield'?['resolveStep','p',8]:route==='empty'?['resolveStep','p',8,true]:['resolve','p',8],
+    ['tick'],['read','marker'],['resolve','q',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
+  ],(op,args,actual,wanted,b,s)=>{
+    if(op==='read'&&args[0]==='marker')assert.deepEqual(wanted,['return',cleanup==='pending'?0:7],'native flight release reached the read-capable cleanup');
+  });
+}
 fs.rmSync(dir,{recursive:true,force:true});
-console.log(`${count} direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public read-capable teardown admission remains restricted.`);
+console.log(`${count} direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public teardown-expression histories are checked separately.`);

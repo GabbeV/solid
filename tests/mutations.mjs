@@ -5,12 +5,16 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['async landing omits dependency-tail cleanup','runtime/core.bend','OwnerTasks{[O.TrimDeps{id}]} <> ending','ending','tests/teardown-expressions.mjs','asyncWrite'],
+  ['pending release skips its next captured candidate','runtime/core.bend','Q.Release{1n+index} <> tail','Q.Release{2n+index} <> tail','tests/teardown-expressions.mjs','pendingTasks'],
+  ['flight settlement omits last-observer cleanup','runtime/core.bend','Machine{w, B.choose(~List<&2, Task>, F.shouldSettleAutodispose(w, id),\n        _ => OwnerTasks{[O.Unobserved{id}]} <> rest, _ => rest), stack}','Machine{w, rest, stack}','tests/teardown-expressions.mjs','dispatch'],
+  ['real flight error skips stranded-dependent release','runtime/core.bend','pendingResume(rest, stack, Q.beginReleaseSettledDependents(w, id))','Machine{w, rest, stack}','tests/teardown-expressions.mjs','finishHandleError'],
   ['unregistered restore-after-throw workaround','runtime/core.bend','    case RestoreTracking{tracking} <> rest:', '    case RestoreDeferredReleases{id, previous, released} <> rest:\n      Machine{R.World.with_deferredReleases(w, previous), rest, stack}\n    case RestoreTracking{tracking} <> rest:','tests/upstream-integration.mjs','unwind'],
   ['writable memo keeps its stale error status','runtime/memo-write.bend','B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())','False{}','tests/upstream-integration.mjs','recover'],
   ['writable memo leaves staged-error classification on the write','runtime/memo-write.bend','B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR())','R.Node.config(B.node(w, id))','tests/upstream-integration.mjs','finish'],
   ['frame teardown releases the lazy source immediately','runtime/owner.bend','Nat.is_ne(R.World.deferredReleases(w), 0n)','False{}','tests/upstream-integration.mjs','dispatch'],
   ['pass never releases its abandoned lazy source','runtime/core.bend','Q.releasable(w, node)','False{}','tests/upstream-integration.mjs','passReleases'],
-  ['later iterator protocol throw escapes its memo','runtime/core.bend','F.handleError(R.World.with_fault(w, R.Healthy{}), id, result, error)','w','tests/upstream-integration.mjs','catchProtocol'],
+  ['later iterator protocol throw escapes its memo','runtime/core.bend','handleError(R.World.with_fault(w, R.Healthy{}), B.choose(~List<&2, Task>, errorAuto, _ => SettleAuto{id} <> rest, _ => rest), saved, id, result, error)','Machine{w, rest, saved}','tests/upstream-integration.mjs','catchProtocol'],
   ['empty synchronous flattened stream leaks its outer object','runtime/core.bend','source, False{}, R.Undefined{})','source, False{}, R.AsyncObserver.syncValue(o))','tests/iterators.mjs','afterThen'],
   ['watch delivery omits owner disposal','runtime/signals.bend','C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter))}])','w','tests/owner-core-alignment.mjs','deliver'],
   ['until settles after throwing cleanup','runtime/signals.bend','+w = fireUntil(w, id, fire)\n  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{R.Awaiter.root(B.awaiter(w, id))}])','+w = C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{R.Awaiter.root(B.awaiter(w, id))}])\n  fireUntil(w, id, fire)','tests/owner-core-alignment.mjs','settleUntil'],

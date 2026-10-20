@@ -214,7 +214,11 @@ console.log(`${count-setterStart} escaped-setter histories match pinned TS funct
       const fn=runtime===b?bf:sf;
       runtime.signal('initializer',fn);assert.equal(runtime.read('initializer'),undefined);
       runtime.signal('sink',0);runtime.program('raw',[['set','sink',fn]]);
-      assert.throws(()=>runtime.effect('bad',lit(1),{cleanup:'raw'}),/teardown/);
+      runtime.root('cleanupScope',lit(0));
+      assert.doesNotThrow(()=>runtime.effect('setterCleanup',lit(1),{cleanup:'raw',owner:'cleanupScope'}));
+      runtime.flush();runtime.disposeOwner('cleanupScope');runtime.flush();
+      assert.equal(runtime.evaluate(invoke(lit({accessor:'#nested1'}))),0,'teardown raw setter updater receives the sink entry value');
+      assert.equal(runtime.read('sink'),0);
       assert.equal(runtime.evaluate({onCleanup:lit(fn)}),fn);
     }
   }finally{for(const runtime of [b,s]){runtime.attempt('dispose');runtime.resetErrorHalt();runtime.attempt('flush');}}

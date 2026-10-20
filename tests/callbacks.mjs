@@ -120,16 +120,16 @@ for(const immediate of [false,true])for(const user of [false,true]){
   ]);
 }
 // Restriction checks are not counted as Solid histories: these input programs
-// are deliberately outside the translated teardown grammar in both adapters.
+// use the error-arm-only helper outside its supplied callback entry.
 for(const Runtime of [BendRuntime,SolidRuntime]){
   const runtime=new Runtime();
-  runtime.program('readBody',[['eval',lit(1)]]);
+  runtime.program('readBody',[['previousCleanup']]);
   for(const [op,...args] of [
     ['signal','x',0,{unobserved:'readBody'}],
     ['memo','m',lit(1),{unobserved:'readBody'}],
     ['effect','e',lit(1),{cleanup:'readBody'}],
     ['program','register',[['emit',1],['cleanup','readBody']]]
-  ])assert.throws(()=>runtime[op](...args),/teardown callbacks are not yet translated/);
+  ])assert.throws(()=>runtime[op](...args),/helper is unavailable in teardown callbacks/);
   assert.deepEqual(runtime.trace(),[],'restriction must precede callback side effects');
   runtime.dispose();runtime.flush();
 }

@@ -58,16 +58,37 @@ def syncRejected(+w: R.World, +observer: Nat, error: R.Value) -> R.World:
 
 # The rejection is this flight's only while _inFlight is its RESULT object,
 # not its registration. Re-registering the same thenable preserves that rule.
-def handleError(+w: R.World, +id: Nat, +result: Nat, +error: R.Value) -> R.World:
-  B.choose(~R.World, Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), _ => w,
+type ErrorPosture is Data:
+  ErrorDone{}
+  ErrorPending{}
+  ErrorActual{}
+
+def pendingPosture(posture: ErrorPosture) -> Bool:
+  match posture:
+    case ErrorPending{}:
+      True{}
+    case _:
+      False{}
+
+def beginHandleError(+w: R.World, +id: Nat, result: Nat, +error: R.Value) -> B.Bundle<R.World, ErrorPosture>:
+  B.choose(~B.Bundle<R.World, ErrorPosture>, Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), _ => B.Bundle{w, ErrorDone{}},
     _ =>
       +pending = P.isNotReady(error)
-      B.choose(~R.World, Bool.and(pending, R.Node.loading(B.node(w, id))),
+      B.choose(~B.Bundle<R.World, ErrorPosture>, Bool.and(pending, R.Node.loading(B.node(w, id))),
         _ =>
           +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
           +w = P.parkLoadingWindow(w, id, error)
-          B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))),
-        _ =>
+          B.Bundle{B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), ErrorDone{}},
+        _ => B.Bundle{w, B.choose(~ErrorPosture, pending, _ => ErrorPending{}, _ => ErrorActual{})}))
+
+# Restricted direct facade composes the same guard/loading segment. The
+# active core driver supplies continuations around stage/settlement releases.
+def handleErrorStarted(+id: Nat, +error: R.Value, pair: B.Bundle<R.World, ErrorPosture>) -> R.World:
+  match pair:
+    case B.Bundle{world, ErrorDone{}}:
+      world
+    case B.Bundle{+w, +posture}:
+          +pending = pendingPosture(posture)
           +pair = B.choose(~B.Bundle<R.World, Bool>, pending, _ => B.Bundle{w, False{}}, _ => Q.stageError(w, id, error, False{}))
           +w = B.first(R.World, Bool, pair)
           +staged = B.second(R.World, Bool, pair)
@@ -75,43 +96,64 @@ def handleError(+w: R.World, +id: Nat, +result: Nat, +error: R.Value) -> R.World
             _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error, False{}), _ => w)
           +w = B.choose(~R.World, Bool.and(B.ok(w), pending), _ => Q.settlePendingSource(w, id, id), _ => w)
           +w = B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
-          B.choose(~R.World, Bool.and(B.ok(w), Bool.not(pending)), _ => Q.releaseSettledDependents(w, id), _ => w)))
+          B.choose(~R.World, Bool.and(B.ok(w), Bool.not(pending)), _ => Q.releaseSettledDependents(w, id), _ => w)
 
-# asyncWrite up to its flush() call. Bool says the call was reached; ignored
-# stale/dirty results perform no write or flush. Callback continuation is core's.
-def asyncWrite(+w: R.World, +id: Nat, +result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
+def handleError(w: R.World, +id: Nat, result: Nat, +error: R.Value) -> R.World:
+  handleErrorStarted(id, error, beginHandleError(w, id, result, error))
+
+# asyncWrite before the dependency-tail trim. The active core driver retains
+# the return points after trim and pending-source release; the direct helper
+# below composes the same segments for restricted World-only probes.
+def beginAsyncWrite(+w: R.World, +id: Nat, +result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())),
     _ => B.Bundle{w, False{}},
     _ =>
       +w = Q.landStatus(w, id, False{})
       +w = B.choose(~R.World, B.ok(w),
         _ => W.setSignal(w, id, value), _ => w)
-      +w = B.choose(~R.World, Bool.and(B.ok(w), Bool.not(B.present(R.Node.pending(B.node(w, id))))),
+      B.Bundle{w, B.ok(w)})
+
+def asyncWrite(+w: R.World, +id: Nat, result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
+  +pair = beginAsyncWrite(w, id, result, value)
+  +w = B.first(R.World, Bool, pair)
+  B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair),
+    _ =>
+      +w = B.choose(~R.World, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
         _ =>
           +w = B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{}))
           G.trimStaleDeps(w, id), _ => w)
       +w = B.choose(~R.World, B.ok(w), _ => Q.settlePendingSource(w, id, id), _ => w)
-      B.Bundle{B.choose(~R.World, B.ok(w), _ => B.schedule(w), _ => w), B.ok(w)})
+      B.Bundle{B.choose(~R.World, B.ok(w), _ => B.schedule(w), _ => w), B.ok(w)},
+    _ => B.Bundle{w, False{}})
 
 # Unlike releaseIfSettledUnobserved, this closure has no zombie guard in TS.
+def shouldSettleAutodispose(+w: R.World, +id: Nat) -> Bool:
+  Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), Bool.and(Nat.is_eq(R.Node.subs(B.node(w, id)), 0n), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))))
+
 def settleAutodispose(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
-  release = Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), Bool.and(Nat.is_eq(R.Node.subs(B.node(w, id)), 0n), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))))
+  release = shouldSettleAutodispose(w, id)
   B.choose(~B.Bundle<R.World, Bool>, release, _ => B.Bundle{O.unobserved(w, id), True{}}, _ => B.Bundle{w, False{}})
 
 # handleAsync after .then has returned. Core routes the iterable-flatten
 # branch before this ordinary thenable verdict helper.
-def thenResult(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
+def thenValue(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
   +o = B.asyncObserver(w, observer)
   +id = R.AsyncObserver.node(o)
   +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
-  B.choose(~B.Bundle<R.World, R.Value>, R.AsyncObserver.rejected(o),
-    _ =>
-      +w = handleError(w, id, R.AsyncObserver.result(o), R.AsyncObserver.syncError(o))
-      B.Bundle{B.choose(~R.World, B.ok(w), _ => R.World.with_fault(w, R.CallbackThrown{R.AsyncObserver.syncError(o)}), _ => w), R.Undefined{}},
-    _ => B.choose(~B.Bundle<R.World, R.Value>, Bool.not(R.AsyncObserver.resolved(o)),
+  B.choose(~B.Bundle<R.World, R.Value>, Bool.not(R.AsyncObserver.resolved(o)),
       _ => B.choose(~B.Bundle<R.World, R.Value>, R.Node.loading(B.node(w, id)),
         _ => B.Bundle{w, R.Node.value(B.node(w, id))},
         _ =>
           +pair = P.notReadyError(w, R.World.context(w))
           B.Bundle{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), R.Undefined{}}),
-      _ => B.Bundle{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), R.AsyncObserver.syncValue(o)}))
+      _ => B.Bundle{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), R.AsyncObserver.syncValue(o)})
+
+def thenResult(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
+  +o = B.asyncObserver(w, observer)
+  B.choose(~B.Bundle<R.World, R.Value>, R.AsyncObserver.rejected(o),
+    _ =>
+      +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
+      +id = R.AsyncObserver.node(o)
+      +w = handleError(w, id, R.AsyncObserver.result(o), R.AsyncObserver.syncError(o))
+      B.Bundle{B.choose(~R.World, B.ok(w), _ => R.World.with_fault(w, R.CallbackThrown{R.AsyncObserver.syncError(o)}), _ => w), R.Undefined{}},
+    _ => thenValue(w, observer))
