@@ -211,18 +211,6 @@
       "target": "owner:disposeChildren",
       "file": "runtime/scheduler.bend",
       "functionLine": 55
-    },
-    {
-      "from": "signals:settleUntil",
-      "target": "owner:dispose",
-      "file": "runtime/signals.bend",
-      "functionLine": 103
-    },
-    {
-      "from": "signals:deliver",
-      "target": "owner:dispose",
-      "file": "runtime/signals.bend",
-      "functionLine": 133
     }
   ],
   "files": {
@@ -251,7 +239,7 @@
     "runtime/question.bend": "7b719ebc09b4452bd28d09169fb5549ee20d4c42a56d546cd4604d8c11e1e1a7",
     "runtime/read-state.bend": "90c9f6e3898802c327f55c9f1023b8e808cfb9e9dfcdeb10999962206459fb1d",
     "runtime/scheduler.bend": "f483c11c273bdd0454809506b79e57750fa633048643c408ce19037472540dee",
-    "runtime/signals.bend": "4b6c0b0fe92ff78ef58339afd56e303875036cc454123e7be59632dcf59ba386",
+    "runtime/signals.bend": "56340052f7daf38822c42c4d3dcb509d8fbed7f3c559c77e2dc02d2bc0750fe2",
     "runtime/status.bend": "5d6e6569b7f30f176d4a031efed0799984191db38f2f9e12e98d38efbe8aa804",
     "runtime/transaction.bend": "32a0c097d579cf129b2ab2bbf79a61aea1fb06f89ad940804f1050504ad21d4b",
     "runtime/watch-state.bend": "322673a81d5205fabddfc6454512d6b40fe826de2917d7c67ad1e3092efc650d",

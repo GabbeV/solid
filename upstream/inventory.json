@@ -22373,7 +22373,7 @@
           "mapping": {
             "bend": "runtime/signals.bend:resolve, creationCatch, deliver; runtime/watch-state.bend:settle; runtime/api.bend:resolveValue; host/bend.mjs:awaitValue",
             "status": "partial",
-            "restrictions": "Production expression callback, eager root/watch, promise-executor exception boundary, microtask answer then synchronous native resolve/reject before root disposal. Admitted payloads only; native assimilation of a returned thenable and arbitrary callback APIs unfinished."
+            "restrictions": "Production expression callback, eager root/watch, promise-executor exception boundary, microtask answer then synchronous native resolve/reject before root disposal. Admitted payloads only; native assimilation of a returned thenable and arbitrary callback APIs unfinished. Native delivery disposal enters the shared core owner driver; cleanup reads/throws/pending are direct-probed, while global expression-teardown admission remains gated on unfinished async/pending release paths."
           }
         },
         {
@@ -22385,7 +22385,7 @@
           "mapping": {
             "bend": "runtime/signals.bend:refresh, startRefresh, makeWatch, deliver; runtime/api.bend:refresh; host/bend.mjs:awaitRefresh",
             "status": "partial",
-            "restrictions": "Accessor targets; invalid production target resolves undefined. Synchronous mark/transaction capture, deferred rooted watcher, FRESH_READ/AUTHORITATIVE first pass, own-node capture, guessed-target status check, microtask answer and node disposal. Same-tick coalescing/equal landings/supersession tested. Store targets, active truth/lane/deferred hooks, native thenable assimilation and dev/observe branches unfinished."
+            "restrictions": "Accessor targets; invalid production target resolves undefined. Synchronous mark/transaction capture, deferred rooted watcher, FRESH_READ/AUTHORITATIVE first pass, own-node capture, guessed-target status check, microtask answer and node disposal. Same-tick coalescing/equal landings/supersession tested. Store targets, active truth/lane/deferred hooks, native thenable assimilation and dev/observe branches unfinished. Native delivery disposal enters the shared core owner driver; cleanup reads/throws/pending are direct-probed, while global expression-teardown admission remains gated on unfinished async/pending release paths."
           }
         },
         {
@@ -22397,7 +22397,7 @@
           "mapping": {
             "bend": "runtime/signals.bend:until, untilOptions, untilResources, settleUntil, fireUntil, UntilFire, timeoutUntil, abortUntil, makeWatch, watchConfig, deliver; runtime/watch-state.bend:postAnswer, untilInPass; runtime/api.bend:untilValue, untilWithOptions, timeoutUntil, abortUntil, createAbortInput, setAbortInput; host/bend.mjs:awaitUntil, controller, abort, drainJobs",
             "status": "partial",
-            "restrictions": "Expression predicates; default path plus natural millisecond timeout and native AbortSignal options with represented or default DOMException reasons. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 60 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished."
+            "restrictions": "Expression predicates; default path plus natural millisecond timeout and native AbortSignal options with represented or default DOMException reasons. Authoritative first pass; separate own/confirmation captures; foreign-frame gate before truthy inPass join. Pre-abort rejects before root/watch creation; watch then timer/listener registration; clear timer/remove listener/fire/dispose order and repeated queued cancellation preserved. TimeoutError default constructor shape/identity represented. 136 default and 60 option histories, native timer controls, 8192 actual source closure comparisons and two default-path closed laws. non-natural/coercing delays, arbitrary option/signal getters and callbacks, returned-thenable assimilation and active lane/truth/lagging/action scopes unfinished. Native delivery disposal enters the shared core owner driver; cleanup reads/throws/pending are direct-probed, while global expression-teardown admission remains gated on unfinished async/pending release paths."
           }
         },
         {

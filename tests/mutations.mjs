@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['watch delivery omits owner disposal','runtime/signals.bend','C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter))}])','w','tests/owner-core-alignment.mjs','deliver'],
+  ['until settles after throwing cleanup','runtime/signals.bend','+w = fireUntil(w, id, fire)\n  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{R.Awaiter.root(B.awaiter(w, id))}])','+w = C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{R.Awaiter.root(B.awaiter(w, id))}])\n  fireUntil(w, id, fire)','tests/owner-core-alignment.mjs','settleUntil'],
   ['scheduler commit omits parked cleanup','runtime/core.bend','Machine{w, OwnerTasks{[O.Enter{id, False{}, True{}}]} <> rest, stack}','Machine{w, rest, stack}','tests/owner-core-alignment.mjs','commitAfterTrim'],
   ['failed commit clears a callback proposal flag','runtime/core.bend','    case TrimFinallyRestore{prior, saved} <> rest:','    case CommitAfterTrim{id, inFlight} <> rest:\n      Machine{S.finishCommitFields(w, id), rest, stack}\n    case TrimFinallyRestore{prior, saved} <> rest:','tests/owner-core-alignment.mjs','unwind'],
   ['unchanged-pass trim callbacks are skipped','runtime/core.bend','OwnerTasks{[O.TrimDeps{id}]} <> ending','ending','tests/owner-core-alignment.mjs','trimIntake'],

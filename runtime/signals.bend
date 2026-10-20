@@ -107,7 +107,7 @@ def settleUntil(+w: R.World, +id: Nat, fire: UntilFire) -> R.World:
   +w = B.choose(~R.World, R.Awaiter.onAbort(a),
     _ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.UnlistenAbort{id, R.Awaiter.signal(a)}])), _ => w)
   +w = fireUntil(w, id, fire)
-  O.dispose(w, R.Awaiter.root(B.awaiter(w, id)))
+  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{R.Awaiter.root(B.awaiter(w, id))}])
 
 def timeoutUntil(w: R.World, id: Nat) -> R.World:
   settleUntil(w, id, Timeout{})
@@ -139,4 +139,4 @@ def deliver(+w: R.World, +id: Nat, +rejected: Bool, +value: R.Value) -> R.World:
         _ =>
           +w = U.settle(w, id, rejected, value)
           +awaiter = B.awaiter(w, id)
-          O.dispose(w, B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter)))))
+          C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Dispose{B.choose(~Nat, R.Awaiter.refresh(awaiter), _ => R.Awaiter.node(awaiter), _ => R.Awaiter.root(awaiter))}])))

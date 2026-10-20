@@ -21,7 +21,7 @@ There is no second scheduler hidden behind the proof.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject sixty-four source-changing variants
+npm run mutations                # reject eighty-six source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -58,7 +58,10 @@ Selected setters can also be registered directly with `onCleanup`; see
 First-class named callback values also support ordered calls, initializer/updater
 use, native promise data and runtime-selected imperative cleanup; see
 [callback function values](tracking/callback-values.md). Arbitrary host JavaScript
-callbacks and read-capable teardown remain unfinished.
+callbacks remain unfinished. Read-capable teardown now has shared owner/core
+continuations for direct disposal, effect cleanup, core/scheduler trims and native
+watcher disposal; global admission remains gated on async/pending release paths.
+See [owner/core coverage](tracking/owner-core.md).
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 

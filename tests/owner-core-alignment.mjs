@@ -30,10 +30,17 @@ const owner=name=>lit({owner:name}),disposer=name=>lit({rootDisposer:name}),onCl
 const under=(target,body)=>({withOwner:[target,body]});
 const callbackIds=d=>'callbacks'in d?list(d.callbacks):'callback'in d?[d.callback]:[];
 const callbacks=d=>Array.isArray(d)?d:d?[d]:[];
+class ProbeClock {
+  constructor(){this.now=0;this.serial=0;this.tasks=new Map();}
+  setTimeout(callback,delay){const id=++this.serial;this.tasks.set(id,{callback,at:this.now+delay});return id;}
+  clearTimeout(id){this.tasks.delete(id);}
+  advance(ms){this.now+=ms;for(const [id,task]of [...this.tasks].sort((a,b)=>a[1].at-b[1].at||a[0]-b[0]))if(task.at<=this.now&&this.tasks.has(id)){this.tasks.delete(id);task.callback();}}
+}
 let count=0;
 async function scenario(name,commands,verify){
   const module=await import('../build/solid.mjs?owner-core='+count);
-  const b=new BendRuntime({async:true}),s=new SolidRuntime({module}),logs=[];
+  const b=new BendRuntime({async:true,clock:new ProbeClock()}),s=new SolidRuntime({module,clock:new ProbeClock()}),logs=[];
+  b.advance=ms=>b.clock.advance(ms);s.advance=ms=>s.clock.advance(ms);
   b.install=(name,program)=>{b.world=ABI.registerOwnerProgram(b.world,b.ownerId(name),b.programs[program]);b.check();};
   b.disposeStatic=name=>{b.world=ABI.staticOwnerDispose(b.world,b.ownerId(name));b.check();};
   s.disposeStatic=name=>s.disposeOwner(name);
@@ -231,5 +238,21 @@ await scenario('commit callback proposal retains its new manual-write flag',[
     assert.ok(target._flags&1024,'native callback proposal sets REACTIVE_MANUAL_WRITE after the commit prefix cleared it');
   }
 });
+for(const route of ['resolve','until','abort','timeout'])for(const immediate of [false,true])for(const cleanup of ['read','throw','pending']){
+  await scenario('native watcher disposal resumes cleanup without changing settlement order '+JSON.stringify({route,immediate,cleanup}),[
+    ['signal','input',route==='until'?1:0],['signal','marker',0],['signal','other',8],['effect','view',read('marker')],
+    ['future','q',{immediate}],['memo','reader',cleanup==='pending'?future('q'):read('other'),{owner:null,lazy:true}],
+    ['program','clean',[['setExpr','marker',read('reader')],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ...(route==='abort'?[['controller','stop']]:[]),
+    route==='resolve'?['awaitValue','port',read('input')]:['awaitUntil','port',read('input'),route==='timeout'?{timeout:5}:route==='abort'?{signal:'stop'}:{}],
+    ['install','wait:port','clean'],...(route==='abort'?[['abort','stop',3]]:route==='timeout'?[['advance',5]]:[]),
+    ['tick'],['resolve','q',7],['tick'],['flush'],['read','marker'],['dispose'],['flush']
+  ],(op,args,actual,wanted,b,s)=>{
+    if(op==='read'&&args[0]==='marker'){
+      assert.equal(s.portEvents.length,1,'native settlement occurs even when disposal throws');
+      assert.deepEqual(s.portSnapshots,[['port',0]],'native promise observer precedes cleanup-triggered rendering');
+    }
+  });
+}
 fs.rmSync(dir,{recursive:true,force:true});
 console.log(`${count} direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public read-capable teardown admission remains restricted.`);

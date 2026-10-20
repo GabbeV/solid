@@ -17,7 +17,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   checkpoints do not settle or wait for unresolved external promises.
 - alignment runs read-only upstream-impact checks and actual pinned helpers / source
   closures: 10,752 constructor, 4,608 commit, 768 read (+24 held stash, +24 verdict
-  carry), 16 owner (+64 direct owner/core), 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
+  carry), 16 owner (+88 direct owner/core), 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
   comparisons. The latter include genuine foreign-realm Error prototype controls;
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles eighty-four isolated source-changing copies and requires parity
+- mutations compiles eighty-six isolated source-changing copies and requires parity
   assertions to reject them. One is an unregistered workaround for a known source
   counterexample; its rejection enforces the pin, not a claim that the bug is
   desirable. The active runtime is not mutated by this check.

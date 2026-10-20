@@ -32,7 +32,7 @@ before returning. A paired public history and native function control retain its
 successful completion. Explicit exhaustion is still a fault; no truncated walk is
 presented as success and no general progress/fuel bound theorem is claimed.
 
-35 direct owner/core probes install actual programs using a small fixture export
+The initial 35 direct owner/core probes install actual programs using a small fixture export
 of owner.cleanup, and compare with native Solid onCleanup/createEffect calls. They
 bypass the harness's global teardown-admission restriction only at those fixture
 entries. Results, all observed node fields, owner/effect aliases, read/apply/cleanup
@@ -41,7 +41,7 @@ include lazy pulls, pending/error throws, partial teardown, live caller operands
 child cleanup, ignored returns, nested construction/registration and caller observer
 identity. An imperative static-owner helper control separately retains the old
 restricted helper path's held-setter callback entry behavior. These probes are
-separate from the 1,963 public-ABI histories.
+separate from the current 1,979 public-ABI histories.
 
 One concrete kernel law installs an expression cleanup, calls its bound root
 disposer with a live outer operand, pulls a lazy unowned memo, writes/commits its
@@ -51,9 +51,9 @@ checks cover lost caller tracking, a cleanup return corrupting the operand stack
 and the restricted owner helper's early capture; the existing held-capture mutation
 now targets the active core continuation.
 
-This is a foundation, not full read-capable teardown admission. Scheduler commit
-and held trims, core publication/finally trim callers, asyncWrite/settlement,
-pending-source deferred release and watch/until disposal still need corresponding
+This is a foundation, not full read-capable teardown admission. The later stages
+below extend it through core trims, scheduler commits and native watch disposal.
+AsyncWrite/settlement and pending-source deferred release still need corresponding
 return points. Their restricted owner helper paths remain in use. Public admission
 continues to reject general teardown expressions so the same installed callback
 cannot accidentally fail through one of those unmigrated callers. No cached-read
@@ -80,9 +80,9 @@ Direct owner/core probe coverage totals 49. A second concrete kernel law checks
 both errors, the node's previous/modified fields, report and finally restoration.
 Three mutations target lost/incorrect throw restoration and a skipped sweep.
 
-Scheduler commit/held trims and async/pending/watch release paths remain to be
-migrated. Global expression-teardown admission remains restricted until those
-remaining callers can resume the same installed callback.
+At this stage scheduler and native watch callers still used restricted helpers;
+the later stages below migrate them. Global expression-teardown admission remains
+restricted until the remaining async/pending callers can resume the same callback.
 
 ## Scheduler commit and held-trim return points
 
@@ -117,6 +117,26 @@ The remaining World-helper crossings are now inventoried by
 `node tools/owner-boundaries.mjs` and the sealed
 [call-site report](reviews/owner-boundaries.json). It reports possible call chains,
 not actual reachability, API failures or bugs. The current twelve core call sites
-lead through async/error/pending release; watch/until disposal is listed separately.
+lead through async/error/pending release. Native watch/until disposal now uses
+the same core driver, as described below.
 Static call analysis does not interpret task constructors or branch predicates.
 Read-capable teardown admission remains restricted until those callers migrate.
+
+## Native watcher and until disposal
+
+Resolve/refresh delivery and until settlement now enter the same core owner driver
+from their native host callback boundary. No nested callback engine is introduced.
+Until still clears its timer and removes its abort listener before firing the
+resolve/reject operation; disposal follows settlement. Cleanup failures escape the
+native callback without undoing an already queued promise settlement.
+
+Twenty-four additional direct probes cover resolve, truthy until, abort and timeout,
+with native/immediate promise dependencies and successful, throwing or pending
+cleanup reads (88 direct probes total). Native assertions independently require
+exactly one settlement and the promise observer's screen before cleanup-triggered
+rendering. Two additional mutations omit watcher disposal or move until settlement
+after a throwing cleanup; both must compile and fail differential assertions.
+
+The global public teardown-admission guard remains active: asyncWrite, error
+settlement and pending-source release still have restricted World-helper crossings.
+Those paths are the next continuation frontier, not upstream bug candidates.

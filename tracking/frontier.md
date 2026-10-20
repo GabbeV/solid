@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 1785 differential histories, 64 rejected compiled mutations,
-and 34 composed closed Bend regressions (two deliberately preserve upstream
+Current verification: 1979 differential histories, 86 rejected compiled mutations,
+and 40 composed closed Bend regressions (two deliberately preserve upstream
 failures), plus general payload/question/callback/path helper laws. Pins are
 unchanged and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -310,7 +310,7 @@ read admission remains unfinished. See [owner-core.md](owner-core.md).
 
 Core publication/dead-pass trims, effect finally trims and dormant sweeps now use
 owner/core return points too. Forty-nine direct probes and a second kernel fixture
-retain override errors and caller restoration. Scheduler and async/pending/watch
+retain override errors and caller restoration. Subsequent scheduler and native watcher stages are below; async/pending
 callers still block global read-capable teardown admission.
 
 Scheduler commit, parked-frame disposal, held trims and live intake/landing now
@@ -318,3 +318,9 @@ resume callbacks on the shared core driver. Sixty-four direct probes, a third
 owner/core kernel fixture and sixteen seeded public histories cover these stages.
 The sealed owner-boundary call-site report leaves twelve core async/pending/error
 World-helper crossings explicit; it is an inventory, not a bug count.
+
+Native resolve/refresh and until disposal now enter the shared owner/core driver
+after native settlement, preserving timer/listener cancellation and partial throws.
+Eighty-eight direct owner/core probes and two more mutation checks cover the stages.
+The remaining frontier is async/error settlement and pending-source release; public
+general expression teardown stays restricted until those callers can resume it.
