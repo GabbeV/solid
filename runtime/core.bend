@@ -51,6 +51,11 @@ type Task is Data:
   OwnerTasks{tasks: List<&2, O.Task>}
   RecomputeAfterFlight{id: Nat}
   RecomputePrepared{id: Nat, create: Bool}
+  FinishPublication{id: Nat, create: Bool, joined: Bool, missed: Bool}
+  QueuePublication{id: Nat, create: Bool, missed: Bool}
+  AfterDeadPass{id: Nat}
+  TrimFinallyRestore{prior: R.Fault, saved: List<&2, R.Value>}
+  RoundAfterSweep{}
   OnCleanup{}
   CreateSignal{options: R.NodeOptions, body: R.Expr, previous: R.Value}
   SetSignalArgument{signal: Nat}
@@ -848,15 +853,8 @@ def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeig
       _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
   B.Bundle{w, changed}
 
-def finishPublication(+w: R.World, +id: Nat, +create: Bool, joined: Bool) -> R.World:
-  +w = B.choose(~R.World, Bool.and(create, Bool.and(joined, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))),
-    _ =>
-      +t = publicationTx(w)
-      B.choose(~R.World, Bool.and(Nat.is_ne(t, 0n), Bool.not(R.Transaction.lane(B.transaction(w, t)))), _ => X.holdNode(w, id, t), _ => w), _ => w)
-  +n = B.node(w, id)
-  +w = B.choose(~R.World, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
-    _ => B.choose(~R.World, create, _ => G.trimStaleDeps(w, id),
-      _ => R.World.with_trims(w, B.append(Nat, R.World.trims(w), [id]))), _ => w)
+# recompute's queue decision is after its successful dependency trim callback.
+def queuePublication(+w: R.World, +id: Nat, create: Bool) -> R.World:
   B.choose(~R.World, B.ok(w),
     _ =>
       +n = B.node(w, id)
@@ -865,8 +863,21 @@ def finishPublication(+w: R.World, +id: Nat, +create: Bool, joined: Bool) -> R.W
       B.choose(~R.World, queued, _ => S.queuePendingNode(B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_STAGED()))), id), _ => w),
     _ => w)
 
+def finishPublication(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, joined: Bool, +missed: Bool) -> Machine:
+  +w = B.choose(~R.World, Bool.and(create, Bool.and(joined, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))),
+    _ =>
+      +t = publicationTx(w)
+      B.choose(~R.World, Bool.and(Nat.is_ne(t, 0n), Bool.not(R.Transaction.lane(B.transaction(w, t)))), _ => X.holdNode(w, id, t), _ => w), _ => w)
+  +n = B.node(w, id)
+  +ending = {QueuePublication{id, create, missed} <> rest : List<&2, Task>}
+  B.choose(~Machine, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
+    _ => B.choose(~Machine, create,
+      _ => Machine{w, OwnerTasks{[O.TrimDeps{id}]} <> ending, stack},
+      _ => Machine{R.World.with_trims(w, B.append(Nat, R.World.trims(w), [id])), ending, stack}),
+    _ => Machine{w, ending, stack})
 
-def publish(+w: R.World, +id: Nat, value: R.Value, +create: Bool, oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, stagedErr: Bool) -> R.World:
+
+def publishState(+w: R.World, +id: Nat, value: R.Value, +create: Bool, oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, stagedErr: Bool) -> R.World:
   errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
   +w = B.choose(~R.World, errored, _ => w,
     _ =>
@@ -879,7 +890,7 @@ def publish(+w: R.World, +id: Nat, value: R.Value, +create: Bool, oldHeight: Nat
           retireOutgoing(w, id, outgoingSources, False{}), _ => w)
       B.choose(~R.World, Bool.and(B.ok(w), Bool.and(wasPendingSource, Bool.not(B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))))),
         _ => Q.settlePendingSource(w, id, id), _ => w))
-  B.choose(~R.World, B.ok(w), _ => finishPublication(w, id, create, joined), _ => w)
+  w
 
 # recompute's finally is shared by normal return and exceptional unwind.
 def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool) -> R.World:
@@ -895,17 +906,13 @@ def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Boo
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
     _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), Bool.and(reask, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))), _ => w)
 
-def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
+def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, +joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
   B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
     _ =>
-      +w = G.clearDeps(w, id)
-      w = B.choose(~R.World, Bool.and(B.ok(w), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
-        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
-      Machine{w, rest, stack},
+      Machine{w, OwnerTasks{[O.ClearDeps{id}]} <> AfterDeadPass{id} <> rest, stack},
     _ =>
-      +w = publish(w, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr)
-      w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
-      Machine{w, rest, stack})
+      w = publishState(w, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr)
+      Machine{w, FinishPublication{id, create, joined, missed} <> rest, stack})
 
 def finishValue(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +create: Bool, context: Nat, tracking: Bool, oldHeight: Nat, reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat, saved: List<&2, R.Value>, +keepFlight: Bool) -> Machine:
   match stack:
@@ -1235,11 +1242,6 @@ def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
     case other:
       w
 
-# A finally callback runs despite an active throw; its own throw overrides it.
-def trimFinally(+w: R.World, id: Nat, +prior: R.Fault) -> R.World:
-  +w = G.trimStaleDeps(R.World.with_fault(w, R.Healthy{}), id)
-  B.choose(~R.World, B.ok(w), _ => R.World.with_fault(w, prior), _ => w)
-
 # Error-arm throws escalate without replacing the compute's status error.
 def errorArmCatch(+w: R.World, fault: R.Fault) -> R.World:
   match fault:
@@ -1262,12 +1264,15 @@ def userError(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
 # core/effect.ts:runEffect's finally after its callback/previous-cleanup catch.
 # A nested read can run a full compute pass; the caller's stack is restored on
 # both success and throw, just as at a recompute return boundary.
-def effectFinally(+w: R.World, rest: List<&2, Task>, +id: Nat, clean: Bool, saved: List<&2, R.Value>) -> Machine:
+def effectFinally(+w: R.World, +rest: List<&2, Task>, +id: Nat, clean: Bool, +saved: List<&2, R.Value>) -> Machine:
   +w = effectCatch(w, id, R.World.fault(w))
   +w = B.store_node(w, id, R.Node.with_prevValue(B.node(w, id), R.Node.value(B.node(w, id))))
   +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{}))
-  w = B.choose(~R.World, clean, _ => trimFinally(w, id, R.World.fault(w)), _ => w)
-  Machine{w, rest, saved}
+  B.choose(~Machine, clean,
+    _ =>
+      prior = R.World.fault(w)
+      Machine{R.World.with_fault(w, R.Healthy{}), OwnerTasks{[O.TrimDeps{id}]} <> TrimFinallyRestore{prior, saved} <> rest, saved},
+    _ => Machine{w, rest, saved})
 
 # core/effect.ts:runEffect's assignment after the actual application callback.
 # Callable IDs represent the original function identity in the owner walk.
@@ -1353,13 +1358,9 @@ def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Mach
   +w = R.World.with_running(w, True{})
   +w = V.resyncUnflushedCompanions(w)
   +w = R.World.with_passTx(R.World.with_passLane(w, 0n), 0n)
-  +w = G.sweepDormant(w)
-  B.choose(~Machine, B.ok(w),
-    _ =>
-      w = R.World.with_marked(w, False{})
-      w = R.World.with_minimum(w, 0n)
-      Machine{w, HeapLoop{} <> FlushFinally{} <> RoundEnd{} <> rest, stack},
-    _ => Machine{w, FlushFinally{} <> RoundEnd{} <> rest, stack})
+  +ending = {RoundAfterSweep{} <> FlushFinally{} <> RoundEnd{} <> rest : List<&2, Task>}
+  todo = B.choose(~List<&2, Task>, List.is_empty(&2, Nat, R.World.dormantNodes(w)), _ => ending, _ => OwnerTasks{[O.SweepDormant{0n}]} <> ending)
+  Machine{w, todo, stack}
 
 # scheduler.ts:GlobalQueue.settle, before the transaction landing loop.
 def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
@@ -1562,6 +1563,21 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{W.setResolved(w, signal, current, value), rest, value <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FinishPublication{id, create, joined, missed} <> rest:
+      finishPublication(w, rest, stack, id, create, joined, missed)
+    case QueuePublication{+id, create, missed} <> rest:
+      +w = queuePublication(w, id, create)
+      w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
+      Machine{w, rest, stack}
+    case AfterDeadPass{+id} <> rest:
+      w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+      Machine{w, rest, stack}
+    case TrimFinallyRestore{prior, saved} <> rest:
+      Machine{R.World.with_fault(w, prior), rest, saved}
+    case RoundAfterSweep{} <> rest:
+      w = R.World.with_minimum(R.World.with_marked(w, False{}), 0n)
+      Machine{w, HeapLoop{} <> rest, stack}
     case OwnerTasks{tasks} <> rest:
       ownerTasks(w, rest, stack, tasks)
     case RecomputeAfterFlight{id} <> rest:
@@ -1773,6 +1789,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:
       Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
+    case TrimFinallyRestore{prior, saved} <> rest:
+      Machine{w, rest, saved}
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case task <> rest:

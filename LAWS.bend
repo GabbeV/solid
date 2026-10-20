@@ -193,3 +193,6 @@ law callback_values_bind_initialize_and_cleanup:
 
 law direct_owner_cleanup_reads_resume_core:
   {OwnerCore.scenario() == OwnerCore.expected() : OwnerCore.View}
+
+law trim_error_overrides_application_error:
+  {OwnerCore.trimScenario() == OwnerCore.expectedTrim() : OwnerCore.TrimView}

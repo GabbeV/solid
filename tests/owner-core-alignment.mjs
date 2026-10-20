@@ -31,7 +31,7 @@ const under=(target,body)=>({withOwner:[target,body]});
 const callbackIds=d=>'callbacks'in d?list(d.callbacks):'callback'in d?[d.callback]:[];
 const callbacks=d=>Array.isArray(d)?d:d?[d]:[];
 let count=0;
-async function scenario(name,commands){
+async function scenario(name,commands,verify){
   const module=await import('../build/solid.mjs?owner-core='+count);
   const b=new BendRuntime({async:true}),s=new SolidRuntime({module}),logs=[];
   b.install=(name,program)=>{b.world=ABI.registerOwnerProgram(b.world,b.ownerId(name),b.programs[program]);b.check();};
@@ -44,6 +44,17 @@ async function scenario(name,commands){
     b.world=ABI.createEffectWithHandlers(b.fuel,b.world,expression(expr,b.ids,b.programs,b.futures,v=>b.encode(v),b.contexts),user,2,false,false,ABI.nodeOptions(true,false,false,false,false,false,false,ABI.vUndefined(),0),1,0,b.programs[cleanup],0);b.check();
   };
   s.effectRead=(name,expr,cleanup,user=false)=>s.S.runWithOwner(s.owner,()=> (user?s.S.createEffect:s.S.createRenderEffect)(s.callback(name,expr),(v,p)=>{s.traceEvents.push(['apply',name,v,p]);if(!user)s.screens[2]=v;return s.programs[cleanup];}));
+  b.memoHook=(name,expr,hook)=>{
+    const id=ABI.nextId(b.world);b.ids[name]=id;b.reverse[id]=name;
+    b.world=ABI.createMemoWithOptions(b.fuel,b.world,expression(expr,b.ids,b.programs,b.futures,v=>b.encode(v),b.contexts),ABI.nodeOptions(true,false,false,false,false,false,false,ABI.vUndefined(),b.programs[hook]),1);b.check();
+  };
+  s.memoHook=(name,expr,hook)=>{const get=s.S.runWithOwner(s.owner,()=>s.S.createMemo(s.callback(name,expr),{unobserved:s.programs[hook]}));s.accessors[name]=get;s.registerComputedAccessor(get,name);};
+  b.effectApply=(name,expr,body,user=false)=>{
+    const id=ABI.nextId(b.world);b.ids[name]=id;b.reverse[id]=name;
+    if(!user)b.world=ABI.attach(b.world,1,2);
+    b.world=ABI.createEffectWithHandlers(b.fuel,b.world,expression(expr,b.ids,b.programs,b.futures,v=>b.encode(v),b.contexts),user,2,false,false,ABI.nodeOptions(true,false,false,false,false,false,false,ABI.vUndefined(),0),1,b.programs[body],0,0);b.check();
+  };
+  s.effectApply=(name,expr,body,user=false)=>s.S.runWithOwner(s.owner,()=> (user?s.S.createEffect:s.S.createRenderEffect)(s.callback(name,expr),(v,p)=>{s.traceEvents.push(['apply',name,v,p]);if(!user)s.screens[2]=v;s.programs[body](undefined,v,p);}));
   const original=console.error;console.error=(...args)=>logs.push(args);
   try{
     for(const [op,...args] of commands){
@@ -52,6 +63,7 @@ async function scenario(name,commands){
         const actual=b.attempt(op,...args),wanted=s.attempt(op,...args);
         if(actual[0]==='return'&&wanted[0]==='return'&&!['read','set','update','future','root','evaluate'].includes(op))actual[1]=wanted[1]=undefined;
         assert.deepEqual(actual,wanted,`${name}: ${op} result`);
+        verify?.(op,args,actual,wanted,b,s);
       }
       const owners=[...Object.entries(s.owners).map(([name,node])=>[node,name]),...s.sourceNames];
       const actual=[],wanted=[];
@@ -152,5 +164,32 @@ await scenario('imperative owner helper preserves held setter callback entry',[
   ['set','input',undefined],['set','version',1],['flush'],['disposeStatic','cleaner'],['flush'],
   ['resolve','p',7],['tick'],['flush'],['read','derived'],['dispose'],['flush']
 ]);
+for(const user of [false,true])for(const appError of [false,true])for(const hook of ['read','throw','pending']){
+  let dropping=false;
+  await scenario('effect finally trim callback preserves prior fault and overrides '+JSON.stringify({user,appError,hook}),[
+    ['signal','choose',true],['signal','input',1],['signal','other',11],['future','p',{immediate:true}],
+    ['memo','reader',hook==='pending'?future('p'):add(read('other'),lit(1)),{owner:null,lazy:true}],
+    ['program','hook',[['eval',read('reader')],...(hook==='throw'?[['throwExpr',lit(9)]]:[])]],
+    ['program','body',[['return',appError?select(arg(0),lit(undefined),{raise:7}):lit(undefined)]]],
+    ['memoHook','observed',read('input'),'hook'],['effectApply','view',select(read('choose'),read('observed'),lit(0)),'body',user],
+    ['flush'],['set','choose',false],['flush'],['resolve','p',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
+  ],(op,args,actual,wanted)=>{
+    if(op==='set'&&args[0]==='choose')dropping=true;
+    if(op==='flush'&&dropping){
+      dropping=false;
+      if(hook==='throw')assert.deepEqual(wanted,['throw',9],'native trim throw overrides the application error');
+      else if(hook==='pending'){assert.equal(wanted[0],'throw');assert.equal(wanted[1].source,'reader');assert.ok(wanted[1].notReady);}
+      else assert.deepEqual(wanted,appError?['throw',7]:['return',undefined],'native body fault remains when trim succeeds');
+    }
+  });
+}
+for(const throws of [false,true]){
+  await scenario('dormant sweep executes callback reads on the same core loop '+throws,[
+    ['signal','input',1],['signal','other',7],['memo','reader',add(read('other'),lit(1)),{owner:null,lazy:true}],
+    ['memo','observed',read('input'),{owner:null,lazy:true}],['read','observed'],
+    ['program','clean',[['eval',read('reader')],...(throws?[['throwExpr',lit(9)]]:[])]],['install','observed','clean'],
+    ['set','other',3],['flush'],['dispose'],['resetErrorHalt'],['flush']
+  ]);
+}
 fs.rmSync(dir,{recursive:true,force:true});
 console.log(`${count} direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public read-capable teardown admission remains restricted.`);

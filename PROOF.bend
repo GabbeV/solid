@@ -149,3 +149,6 @@ def Laws.callback_values_bind_initialize_and_cleanup():
 
 def Laws.direct_owner_cleanup_reads_resume_core():
   {==}
+
+def Laws.trim_error_overrides_application_error():
+  {==}

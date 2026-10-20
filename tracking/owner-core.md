@@ -59,3 +59,27 @@ continues to reject general teardown expressions so the same installed callback
 cannot accidentally fail through one of those unmigrated callers. No cached-read
 shortcut, higher-order executor prototype, semantic workaround or source repin is
 active. See [the boundary review](reviews/teardown-boundary.md).
+
+## Core trim and sweep return points
+
+Core's publication tail, disposed-pass dependency clear, effect finally trim and
+round-start dormant sweep now also resume OwnerTasks. Publication retains its
+create/held-trim decision and queues the node only after successful trim; its
+missed-notification requeue stays last. The dead-pass flight pointer clears only
+after successful dependency removal. Empty dormant sets retain the original fast
+return before entering the walk; nonempty walks keep their live indexed bound.
+
+`TrimFinallyRestore` retains the prior throw and caller operand stack while the
+trim executes with a healthy control slot. Success restores that prior throw;
+a trim failure retains the new failure and still restores the caller stack.
+The trim failure does not re-enter the effect callback catch, so an application
+error 7 remains the stored status error/halt report while trim error 9 escapes.
+Twelve additional native probes assert that precedence independently of parity,
+including a NotReady trim read; two more check dormant cleanup reads and throws.
+Direct owner/core probe coverage totals 49. A second concrete kernel law checks
+both errors, the node's previous/modified fields, report and finally restoration.
+Three mutations target lost/incorrect throw restoration and a skipped sweep.
+
+Scheduler commit/held trims and async/pending/watch release paths remain to be
+migrated. Global expression-teardown admission remains restricted until those
+remaining callers can resume the same installed callback.

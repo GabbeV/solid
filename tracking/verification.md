@@ -17,7 +17,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   checkpoints do not settle or wait for unresolved external promises.
 - alignment runs read-only upstream-impact checks and actual pinned helpers / source
   closures: 10,752 constructor, 4,608 commit, 768 read (+24 held stash, +24 verdict
-  carry), 16 owner (+35 direct owner/core), 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
+  carry), 16 owner (+49 direct owner/core), 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
   comparisons. The latter include genuine foreign-realm Error prototype controls;
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles seventy-seven isolated source-changing copies and requires parity
+- mutations compiles eighty isolated source-changing copies and requires parity
   assertions to reject them. One is an unregistered workaround for a known source
   counterexample; its rejection enforces the pin, not a claim that the bug is
   desirable. The active runtime is not mutated by this check.
@@ -35,9 +35,9 @@ production flags are in upstream/pins.json. No vendored baseline was edited.
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
   change during the run, and seals source/output hashes only after success.
 
-The roots now contain thirty-eight closed composed regressions: nine earlier
+The roots now contain thirty-nine closed composed regressions: nine earlier
 chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
-landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, and two explicitly
+landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, and two explicitly
 NEGATIVE staged-error recovery and held-function-result counterexamples. The negative laws preserve source
 failures and are not successful coherence guarantees. Two payload laws, three
 general question-representation laws, two general callback-binding and four general lexical-binding helper laws,

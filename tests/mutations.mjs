@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['trim throw is replaced with the earlier application fault','runtime/core.bend','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{w, rest, saved}','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, prior), rest, saved}','tests/owner-core-alignment.mjs','unwind'],
+  ['successful finally trim drops the original application fault','runtime/core.bend','Machine{R.World.with_fault(w, prior), rest, saved}','Machine{R.World.with_fault(w, R.Healthy{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
+  ['dormant owner sweep is skipped','runtime/core.bend','OwnerTasks{[O.SweepDormant{0n}]} <> ending','OwnerTasks{[]} <> ending','tests/owner-core-alignment.mjs','round'],
   ['owner cleanup loses caller tracking','runtime/core.bend','Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail} <> rest, stack}','tests/owner-core-alignment.mjs','ownerTasks'],
   ['owner cleanup return corrupts caller operand stack','runtime/core.bend','Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail}','Evaluate{R.CallProgram{callback}, R.Undefined{}} <> OwnerTasks{tail}','tests/owner-core-alignment.mjs','ownerTasks'],
   ['callback raw updater is stored without invocation','runtime/core.bend','Machine{w, Evaluate{R.CallWith{callback, R.Literal{current}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetSignalResolved{signal, current} <> rest, tail}','Machine{w, SetSignalResolved{signal, current} <> rest, R.ProgramReference{callback} <> tail}','tests/callback-values.mjs'],

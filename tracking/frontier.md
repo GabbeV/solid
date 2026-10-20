@@ -307,3 +307,8 @@ Direct disposal/effect-precleanup/recompute-preparation now suspend owner Invoke
 tasks to the shared core callback machine. Thirty-five direct source probes and
 a concrete cleanup-read kernel fixture check the first stage; global teardown
 read admission remains unfinished. See [owner-core.md](owner-core.md).
+
+Core publication/dead-pass trims, effect finally trims and dormant sweeps now use
+owner/core return points too. Forty-nine direct probes and a second kernel fixture
+retain override errors and caller restoration. Scheduler and async/pending/watch
+callers still block global read-capable teardown admission.
