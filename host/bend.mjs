@@ -104,6 +104,8 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if(e.reactionCreate){const {body,options={}}=e.reactionCreate;return R.reactionCreate(expression(body,ids,programs,futures,encodeValue,contexts),programs[options.errorProgram]??0,nodeOptions(options,programs,encodeValue),options.schedule??false);}
+  if(e.reactionArm)return R.reactionArm(expression(e.reactionArm.callee,ids,programs,futures,encodeValue,contexts),expression(e.reactionArm.tracking,ids,programs,futures,encodeValue,contexts));
   if(e.settled)return R.settled(expression(e.settled,ids,programs,futures,encodeValue,contexts));
   if(e.trackedCreate)return R.trackedCreate(expression(e.trackedCreate,ids,programs,futures,encodeValue,contexts));
   if(e.signalComputeScope){
@@ -184,6 +186,9 @@ export class BendRuntime {
     return id;
   }
   encode(value){
+    if(value&&typeof value==='object'&&typeof value.reaction==='string'){
+      const ref=this.reactionValues?.get(value.reaction);if(!ref)throw new TypeError('Unknown reaction: '+value.reaction);return ref;
+    }
     const callback=this.callbacks.identity(value);
     if(callback!==undefined)return R.vProgram(callback);
     if(value&&typeof value==='object'&&typeof value.callback==='string'){
@@ -295,6 +300,10 @@ export class BendRuntime {
   }
   hostCallback(callback){try{callback();this.check();}catch(error){this.asyncErrors.push(this.errorShape(error));}}
   check() {
+    // Observe returned source closures; these labels do not create or arm nodes.
+    for(const [index,state]of list(this.world.reactions).entries())if(!this.programNames.has(state.track)){
+      const name='@reaction'+(index+1);this.programNames.set(state.track,name);this.programs[name]=state.track;this.programActions.set(name,[]);
+    }
     // Observation labels come from the user ABI's actual allocation events.
     // Internal waiter nodes and ordinary top-level constructors are untouched.
     for(const event of list(this.world.events))if('created'in event&&!this.reverse[event.created]){
@@ -421,6 +430,14 @@ export class BendRuntime {
     requireTeardownProgram(this.programActions,options.unobserved);
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
+  }
+  reaction(name,body,options={}){
+    this.reactionValues??=new Map();const id=R.nextProgramId(this.world)+1;this.reactionValues.set(name,R.vProgram(id));
+    const m=R.createReaction(this.fuel,this.world,expression(body,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),this.programs[options.errorProgram]??0,nodeOptions(options,this.programs,v=>this.encode(v)),options.schedule??false,this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root'));
+    this.world=R.resultWorld(m);this.check();return this.decode(R.resultValue(m));
+  }
+  track(name,body){
+    return this.evaluate({reactionArm:{callee:{lit:{reaction:name}},tracking:body}});
   }
   settled(name,body,{owner='root'}={}) {
     const before=R.nextId(this.world);

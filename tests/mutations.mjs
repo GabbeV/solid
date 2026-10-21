@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['reaction replacement leaves the old arm live','runtime/core.bend','OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending','ending','tests/reactions.mjs','reactionArm'],
+  ['reaction cleanup is cleared before it throws','runtime/core.bend','+ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','+w = Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), R.Undefined{}))\n  +ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','tests/reactions.mjs','reactionFire'],
+  ['reaction fire omits full dependency disposal','runtime/core.bend','OwnerTasks{[O.Dispose{node}]}','OwnerTasks{[O.Enter{node, True{}, False{}}]}','tests/reactions.mjs','dispatch'],
+  ['reaction arms use the ambient owner','runtime/core.bend','L.enterOwner(w, R.ReactionState.owner(state))','L.enterOwner(w, R.World.context(w))','tests/reactions.mjs','reactionArmAfterDispose'],
+  ['reaction fires on its initial arm','runtime/core.bend','R.ReactionState.scheduled(state), True{}','R.ReactionState.scheduled(state), False{}','tests/reactions.mjs','reactionArmAfterDispose'],
   ['owned settled tracks ordinary reads','runtime/core.bend','trackedEffect(w, rest, stack, R.Untracked{body})','trackedEffect(w, rest, stack, body)','tests/settled.mjs','onSettled'],
   ['unowned settled ignores dirty derivations','runtime/core.bend','Nat.is_ge(R.World.maximum(w), R.World.minimum(w))','False{}','tests/settled-alignment.mjs','fireSettled'],
   ['settled requeue changes closure identity','runtime/core.bend','W.enqueueUserCallback(w, R.SettledFire{callback})','W.enqueueUserCallback(w, R.SettledFire{1n+callback})','tests/settled-alignment.mjs','fireSettled'],

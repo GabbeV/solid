@@ -676,6 +676,11 @@
       "bend": "runtime/core.bend:onSettled, fireSettled, user_task, user_tasks; runtime/write.bend:enqueueUserCallback; runtime/api.bend:onSettled",
       "status": "restricted",
       "restrictions": "Production owned trackedEffect/untrack branch and unowned or children-forbidden plain fire closure. Stable closure identities, dirty heap gate, ordered snapshot queues, default passLane routing and ignored returns. Arbitrary closures, dev/observe diagnostics and active lane/boundary hooks remain unfinished."
+    },
+    "signals.ts:createReaction": {
+      "bend": "runtime/reaction-state.bend:create, get, store; runtime/core.bend:reactionArm, reactionArmAfterDispose, reactionFire, ReactionRemember, ReactionAssignCleanup; runtime/api.bend:createReaction",
+      "status": "restricted",
+      "restrictions": "Source lexical cl/owner/arm cells and original returned ProgramReference; conditional dispose/clear and captured-owner deferred user effect, tracking return ignored, post-tracking arm assignment, cl assignment and disposal order, bundle error arm. Missing pending arm from #2861 deliberately preserved. Arbitrary closures and active boundary/lane/dev/store hooks remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

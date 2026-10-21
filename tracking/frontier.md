@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2270 differential histories, 109 rejected compiled mutations,
-and 53 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2347 differential histories, 114 rejected compiled mutations,
+and 56 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -28,8 +28,14 @@ children-forbidden posture, pending/error notifier and immediate trim are retain
 leaf, or a node-free plain callback in the user queue. The latter retains its
 identity when dirty derivations make it requeue. [The review](settled.md) records
 54 public histories, 48 native fire-closure cases, cleanup/throw behavior, two
-concrete laws and two general input-binding laws. Reactions and richer callable
-closures are the next public API gaps; active lanes/boundaries remain unfinished.
+concrete laws and two general input-binding laws. [Reactions](reactions.md) now also retain the source closure's cleanup/current arm,
+replacement disposal, captured owner, deferred user effects and first-class track
+function. The milestone adds 65 expression histories and 12 original function
+histories, two positive concrete laws and one negative pending-arm counterexample.
+[The new source bug](upstream/reaction-pending-rearm.md) is an uncovered pending
+case of #2861, reproduced in Chromium on current next; no workaround is applied.
+Richer callable closures, custom comparators and active lanes/boundaries remain
+unfinished.
 
 ## Current source update
 

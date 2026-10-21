@@ -30,6 +30,7 @@ import ./context.bend as Y
 import ./callable.bend as J
 import ./construct-state.bend as N
 import ./lexical.bend as Local
+import ./reaction-state.bend as Reaction
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -151,6 +152,13 @@ type Task is Data:
   DeliverObservers{observers: List<&2, Nat>, immediate: Bool, rejected: Bool, value: R.Value}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
+  ReactionArmClear{reaction: Nat}
+  ReactionArmAfterDispose{reaction: Nat, tracking: R.Expr}
+  ReactionRemember{reaction: Nat}
+  ReactionFireValue{reaction: Nat}
+  ReactionCallBody{reaction: Nat, node: Nat}
+  ReactionAssignCleanup{reaction: Nat, node: Nat}
+  ReactionArmValue{tracking: R.Expr}
   FireSettled{callback: Nat}
   RunTracked{id: Nat}
   TrackedAfterCleanup{id: Nat, body: R.Expr}
@@ -346,8 +354,47 @@ def selectedUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
     _ => memoUpdater(w, rest, stack, signal, expr),
     _ => signalUpdater(w, rest, stack, signal, expr))
 
+# signals.ts:createReaction.track: dispose the superseded arm before clearing
+# the captured cell; a cleanup throw skips that clear and the new constructor.
+def reactionArm(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +reaction: Nat, +tracking: R.Expr) -> Machine:
+  +arm = R.ReactionState.arm(Reaction.get(w, reaction))
+  +ending = {ReactionArmAfterDispose{reaction, tracking} <> rest : List<&2, Task>}
+  Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(arm, 0n), _ => OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending, _ => ending), stack}
+
+def reactionArmExpression(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, actions: List<&2, R.CleanupAction>, tracking: R.Expr) -> Machine:
+  match actions:
+    case R.ReactionTrack{reaction} <> Nil{}:
+      reactionArm(w, rest, stack, reaction, tracking)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+
+# The captured owner is entered only after successful old-arm disposal.
+def reactionArmAfterDispose(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +reaction: Nat, tracking: R.Expr) -> Machine:
+  +state = Reaction.get(w, reaction)
+  +body = {R.ReactionFire{reaction, R.Argument{0n}} : R.Expr}
+  +spec = {R.EffectSpec{True{}, 0n, R.ReactionState.options(state), R.ReactionState.scheduled(state), True{}, 0n, 0n, R.ReactionState.errorProgram(state), R.SomeInlineBody{body, False{}}} : R.EffectSpec}
+  Machine{L.enterOwner(w, R.ReactionState.owner(state)), Evaluate{R.EffectCreate{R.ReactionTracking{reaction, tracking}, spec}, R.Undefined{}} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
+
+# arm is reset before cl?.(); cl itself is deliberately left installed until
+# effectFn returns successfully. Cleanup throws retain the previous cl value.
+def reactionFire(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +reaction: Nat, +node: Nat) -> Machine:
+  +state = Reaction.get(w, reaction)
+  +w = Reaction.store(w, reaction, R.ReactionState.with_arm(state, 0n))
+  +ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}
+  Machine{w, B.choose(~List<&2, Task>, B.nullish(R.ReactionState.cleanup(state)), _ => ending,
+    _ => Evaluate{R.Invoke{R.Literal{R.ReactionState.cleanup(state)}}, R.Undefined{}} <> Discard{} <> ending), stack}
+
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.ReactionCreate{body, errorProgram, options, scheduled}:
+      +pair = Reaction.create(w, body, errorProgram, options, scheduled)
+      Machine{B.first(R.World, R.Value, pair), rest, B.second(R.World, R.Value, pair) <> stack}
+    case R.ReactionArm{callee, tracking}:
+      Machine{w, Evaluate{callee, prev} <> ReactionArmValue{tracking} <> rest, stack}
+    case R.ReactionTracking{reaction, body}:
+      Machine{w, Evaluate{body, R.Undefined{}} <> Discard{} <> ReactionRemember{reaction} <> rest, stack}
+    case R.ReactionFire{reaction, node}:
+      Machine{w, Evaluate{node, prev} <> ReactionFireValue{reaction} <> rest, stack}
     case R.OnSettled{body}:
       onSettled(w, rest, stack, body)
     case R.TrackedCreate{body}:
@@ -447,6 +494,12 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.ReactionTrack{reaction}:
+      reactionArm(w, rest, stack, reaction, R.InvokeWith{R.Literal{first}, R.Literal{R.Undefined{}}, False{}})
+    case R.ReactionLifecycle{+reaction}:
+      B.choose(~Machine, B.nullish(R.ReactionState.cleanup(Reaction.get(w, reaction))),
+        _ => Machine{w, rest, R.Undefined{} <> stack},
+        _ => Machine{w, Evaluate{R.Invoke{R.Literal{R.ReactionState.cleanup(Reaction.get(w, reaction))}}, R.Undefined{}} <> rest, stack})
     case R.CleanupBoundAccessor{signal}:
       Machine{w, ReadNode{signal} <> rest, stack}
     case R.CleanupWrite{signal, value}:
@@ -2054,6 +2107,32 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           _ => Machine{S.enqueue(w, id), rest, stack}, _ => Machine{w, RunEffect{id} <> rest, stack}))
     case RunEffect{id} <> +rest:
       runEffect(w, rest, stack, id)
+    case ReactionArmValue{tracking} <> rest:
+      match stack:
+        case R.ProgramReference{callback} <> tail:
+          reactionArmExpression(w, rest, tail, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}})), tracking)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+    case ReactionArmClear{+reaction} <> rest:
+      Machine{Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), 0n)), rest, stack}
+    case ReactionArmAfterDispose{reaction, tracking} <> rest:
+      reactionArmAfterDispose(w, rest, stack, reaction, tracking)
+    case ReactionRemember{+reaction} <> rest:
+      Machine{Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), R.World.context(w))), rest, R.OwnerReference{R.World.context(w)} <> stack}
+    case ReactionFireValue{reaction} <> rest:
+      match stack:
+        case R.OwnerReference{node} <> tail:
+          reactionFire(w, rest, tail, reaction, node)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+    case ReactionCallBody{+reaction, node} <> rest:
+      Machine{w, Evaluate{R.ReactionState.body(Reaction.get(w, reaction)), R.Undefined{}} <> ReactionAssignCleanup{reaction, node} <> rest, stack}
+    case ReactionAssignCleanup{+reaction, node} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), value)), OwnerTasks{[O.Dispose{node}]} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
     case FireSettled{callback} <> rest:
       fireSettled(w, rest, stack, callback)
     case RunTracked{id} <> rest:

@@ -27,6 +27,9 @@ export class SolidRuntime {
     return value;
   }
   value(v) {
+    if(v&&typeof v==='object'&&typeof v.reaction==='string'){
+      const value=this.reactionValues?.get(v.reaction);if(!value)throw new TypeError('Unknown reaction: '+v.reaction);return value;
+    }
     if(v&&typeof v==='object'&&typeof v.callback==='string')return this.callbackValue(v.callback);
     if(v instanceof this.S.NoOwnerError||v instanceof this.S.ContextNotFoundError)return v;
     if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v)&&!this.callbackIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
@@ -65,6 +68,11 @@ export class SolidRuntime {
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.reactionCreate){return this.createReaction(e.reactionCreate.body,e.reactionCreate.options??{},values,locals);}
+    if(e.reactionArm){
+      const track=this.evaluate(e.reactionArm.callee,prev,values,locals),body=e.reactionArm.tracking;
+      return this.armReaction(track,()=>this.evaluate(body,undefined,values,locals));
+    }
     if(e.settled){
       const owner=this.S.getOwner(),owned=owner&&!(owner._config&16);
       const name=owned?'#nested'+(this.nestedSerial=(this.nestedSerial??0)+1):undefined;
@@ -401,6 +409,28 @@ export class SolidRuntime {
     // yet. In this grammar it cannot construct children before its first pass.
     if(options.lazy&&parent)this.namedOwners.set(parent._firstChild,name);
   }
+  createReaction(body,options={},values=[],locals=[]){
+    const name='@reaction'+(this.reactionSerial=(this.reactionSerial??0)+1);
+    const callback=()=>this.returnedCleanup(this.evaluate(body,undefined,values,locals));
+    const input=options.errorProgram?{effect:callback,error:(error,cleanup)=>this.programs[options.errorProgram](cleanup,error)}:callback;
+    const track=this.S.createReaction(input,options);
+    this.callbackFunctions.set(name,track);this.callbackIdentities.set(track,name);this.programActions.set(name,[]);
+    this.programs[name]=(_helper,tracking)=>track(tracking);
+    return track;
+  }
+  armReaction(track,body){
+    return track(()=>{
+      const node=this.S.getOwner();let name=this.sourceNames.get(node);
+      if(!name){name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);this.sourceNames.set(node,name);this.notPending??=node._pendingValue;}
+      this.traceEvents.push(['compute',name]);return body();
+    });
+  }
+  reaction(name,body,options={}){
+    this.reactionValues??=new Map();
+    const value=this.S.runWithOwner(this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root'),()=>this.createReaction(body,options));
+    this.reactionValues.set(name,value);return value;
+  }
+  track(name,body){return this.armReaction(this.reactionValues.get(name),()=>this.evaluate(body));}
   createSettled(name,body,values=[],locals=[]){
     const parent=this.S.getOwner(),owned=parent&&!(parent._config&16);
     this.S.onSettled(()=>{

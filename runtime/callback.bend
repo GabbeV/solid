@@ -41,6 +41,12 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.WriteExpr{signal, bind(value, first, second), updater}
     case R.EffectCreate{compute, spec}:
       R.EffectCreate{bind(compute, first, second), spec}
+    case R.ReactionCreate{body, errorProgram, options, scheduled}:
+      R.ReactionCreate{bind(body, first, second), errorProgram, options, scheduled}
+    case R.ReactionArm{callee, tracking}:
+      R.ReactionArm{bind(callee, first, second), bind(tracking, first, second)}
+    case R.ReactionFire{reaction, node}:
+      R.ReactionFire{reaction, bind(node, first, second)}
     case R.OnSettled{body}:
       R.OnSettled{bind(body, first, second)}
     case R.TrackedCreate{body}:

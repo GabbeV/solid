@@ -249,3 +249,10 @@ The public onSettled branches now retain their distinct owner test, tracked/untr
 wrapper, plain closure identity, heap gate, passLane routing and production return
 drop. User queue entries represent actual source callable identities; no synthetic
 reactive node is introduced for unowned callbacks. See [settled.md](settled.md).
+
+## Reaction source closures
+
+createReaction now retains the source cl/owner/arm cells, callable identities,
+conditional old-arm disposal/clear, deferred ordinary user effects and assignment
+order. The missing-async-read hole in #2861 is preserved with a paired control and
+an explicit negative law; see [reactions.md](reactions.md). No repair is active.

@@ -55,6 +55,12 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
               R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
             case R.SomeInlineBody{expr, returnsCleanup}:
               R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bind(expr, depth, signal), returnsCleanup}}}
+    case R.ReactionCreate{body, errorProgram, options, scheduled}:
+      R.ReactionCreate{bind(body, depth, signal), errorProgram, options, scheduled}
+    case R.ReactionArm{callee, tracking}:
+      R.ReactionArm{bind(callee, depth, signal), bind(tracking, depth, signal)}
+    case R.ReactionFire{reaction, node}:
+      R.ReactionFire{reaction, bind(node, depth, signal)}
     case R.OnSettled{body}:
       R.OnSettled{bind(body, depth, signal)}
     case R.TrackedCreate{body}:

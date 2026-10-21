@@ -24,6 +24,7 @@ import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/getter-cleanup.bend as GetterCleanup
 import ./proof/tracked-effects.bend as TrackedEffects
 import ./proof/settled.bend as Settled
+import ./proof/reactions.bend as Reactions
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/callback-values.bend as CallbackValues
@@ -253,3 +254,25 @@ law callback_settled_binding:
 law lexical_settled_binding:
   for +signal: Nat
   {Lexical.bind(R.OnSettled{R.LocalRead{0n}}, 0n, signal) == R.OnSettled{R.Read{signal}} : R.Expr}
+
+law reaction_replaces_arms_and_retains_cleanup:
+  {Reactions.lifecycle() == Reactions.expectedLifecycle() : Reactions.View}
+
+# Negative upstream counterexample: this claims the observed bug, not the
+# desired replacement guarantee. Kept separate from positive capability laws.
+law pending_reaction_arm_survives_replacement:
+  {Reactions.pendingReplacement(False{}) == Reactions.expectedPendingBug() : Reactions.PendingView}
+
+law seeded_reaction_arm_is_replaced:
+  {Reactions.pendingReplacement(True{}) == Reactions.expectedSeededControl() : Reactions.PendingView}
+
+law callback_reaction_binding:
+  for +first: R.Value
+  for second: R.Value
+  {Callback.bind(R.ReactionCreate{R.Argument{0n}, 0n, Construct.defaults(), False{}}, first, second)
+    == R.ReactionCreate{R.Literal{first}, 0n, Construct.defaults(), False{}} : R.Expr}
+
+law lexical_reaction_tracking_binding:
+  for +signal: Nat
+  {Lexical.bind(R.ReactionArm{R.Literal{R.ProgramReference{1n}}, R.LocalRead{0n}}, 0n, signal)
+    == R.ReactionArm{R.Literal{R.ProgramReference{1n}}, R.Read{signal}} : R.Expr}

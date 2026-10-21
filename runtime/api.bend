@@ -511,3 +511,18 @@ def onSettled(fuel: Nat, +w: R.World, body: R.Expr, +parent: Nat) -> R.World:
 
 def settled(body: R.Expr) -> R.Expr:
   R.OnSettled{body}
+
+# createReaction returns its original first-class track closure. Its effect
+# arms are constructed by the same core driver, under the captured owner.
+def createReaction(fuel: Nat, +w: R.World, body: R.Expr, errorProgram: Nat, options: R.NodeOptions, scheduled: Bool, +parent: Nat) -> C.Machine:
+  +context = R.World.context(w)
+  +tracking = R.World.tracking(w)
+  +w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  +m = C.eval(fuel, w, R.ReactionCreate{body, errorProgram, options, scheduled}, R.Undefined{})
+  C.Machine{R.World.with_tracking(R.World.with_context(C.world(m), context), tracking), [], C.values(m)}
+
+def reactionCreate(body: R.Expr, errorProgram: Nat, options: R.NodeOptions, scheduled: Bool) -> R.Expr:
+  R.ReactionCreate{body, errorProgram, options, scheduled}
+
+def reactionArm(callee: R.Expr, tracking: R.Expr) -> R.Expr:
+  R.ReactionArm{callee, tracking}

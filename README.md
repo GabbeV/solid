@@ -29,7 +29,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 109 source-changing variants
+npm run mutations                # reject 114 source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -75,7 +75,8 @@ See [owner/core coverage](tracking/owner-core.md).
 `createTrackedEffect` now runs its tracking body in the user phase after the
 commit seam, with returned cleanup and source error behavior; see
 [tracked effects](tracking/tracked-effects.md) and
-[onSettled callbacks](tracking/settled.md).
+[onSettled callbacks](tracking/settled.md) and
+[reactions](tracking/reactions.md).
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 

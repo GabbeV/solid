@@ -22585,8 +22585,12 @@
           "start": 725,
           "end": 767,
           "sha256": "e16e584f9d5ebab84458fb3d9a2942fbc4a3f07cd9e3868fe4a265a7f74f8da9",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/reaction-state.bend:create, get, store; runtime/core.bend:reactionArm, reactionArmAfterDispose, reactionFire, ReactionRemember, ReactionAssignCleanup; runtime/api.bend:createReaction",
+            "status": "restricted",
+            "restrictions": "Source lexical cl/owner/arm cells and original returned ProgramReference; conditional dispose/clear and captured-owner deferred user effect, tracking return ignored, post-tracking arm assignment, cl assignment and disposal order, bundle error arm. Missing pending arm from #2861 deliberately preserved. Arbitrary closures and active boundary/lane/dev/store hooks remain unfinished."
+          }
         },
         {
           "key": "signals.ts:watch",

@@ -149,6 +149,31 @@
         "record": "tracking/reviews/solid-b0ad1df5-validation.json",
         "result": "regression-preserved"
       }
+    },
+    {
+      "id": "SOLID-REACTION-PENDING-001",
+      "classification": "reproduced-upstream-bug",
+      "status": "reproduced-unreported",
+      "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+      "sourceUnit": "signals.ts:createReaction",
+      "record": "tracking/upstream/reaction-pending-rearm.md",
+      "standaloneReproducer": "repros/solid-signals/reaction-pending-rearm.mjs",
+      "playgroundReproducer": "repros/playground/reaction-pending-rearm.tsx",
+      "playgroundVerification": "repros/playground/reaction-pending-rearm-verification.json",
+      "playgroundUrl": null,
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "relatedIssueUrl": "https://github.com/solidjs/solid/issues/2861",
+      "relatedFixCommit": "40d13a9ef3e6f3dc2197885bb2eaec3e294b8c16",
+      "currentProof": "LAWS.bend:pending_reaction_arm_survives_replacement",
+      "controlProof": "LAWS.bend:seeded_reaction_arm_is_replaced",
+      "lastRevalidation": {
+        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "date": "2026-10-21",
+        "result": "current-next-reproduces; production/development/observe Chromium cases and loading-seeded controls"
+      }
     }
   ]
 }

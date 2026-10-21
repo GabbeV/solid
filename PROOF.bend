@@ -200,3 +200,18 @@ def Laws.callback_settled_binding(first, second):
 
 def Laws.lexical_settled_binding(signal):
   {==}
+
+def Laws.reaction_replaces_arms_and_retains_cleanup():
+  {==}
+
+def Laws.pending_reaction_arm_survives_replacement():
+  {==}
+
+def Laws.seeded_reaction_arm_is_replaced():
+  {==}
+
+def Laws.callback_reaction_binding(first, second):
+  {==}
+
+def Laws.lexical_reaction_tracking_binding(signal):
+  {==}

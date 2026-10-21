@@ -1,0 +1,72 @@
+{
+  "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "issue-production-pending",
+      "profile": "production",
+      "dev": false,
+      "observe": false,
+      "seeded": false,
+      "afterOld": "Reaction calls: 1",
+      "afterCurrent": "Reaction calls: 2",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-production-control",
+      "profile": "production",
+      "dev": false,
+      "observe": false,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-development-pending",
+      "profile": "development",
+      "dev": true,
+      "observe": true,
+      "seeded": false,
+      "afterOld": "Reaction calls: 1",
+      "afterCurrent": "Reaction calls: 2",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-development-control",
+      "profile": "development",
+      "dev": true,
+      "observe": true,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-observe-pending",
+      "profile": "observe",
+      "dev": false,
+      "observe": true,
+      "seeded": false,
+      "afterOld": "Reaction calls: 1",
+      "afterCurrent": "Reaction calls: 2",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-observe-control",
+      "profile": "observe",
+      "dev": false,
+      "observe": true,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}
