@@ -9,7 +9,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
   99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories: 2546 total, plus explicit host object-identity and native timeout
-  checks and eight native flush scheduling-IO controls. It compares actual callbacks, returned/thrown values, wrapper identity,
+  checks, eight native flush scheduling-IO controls and eight finite conditional-memo constructor/setter/value controls, plus four source-only action-contract controls for the next engine. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten, eight staged-error-recovery and twelve held-function-value cases. The original arbitrary replacement-function cases remain source-only; an admitted bound-function counterpart now also has Bend parity and a positive merged-fix law. No expected
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 138 isolated source-changing copies: 132 are rejected by
+- mutations compiles 139 isolated source-changing copies: 133 are rejected by
   differential assertions and six by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
@@ -114,3 +114,10 @@ sentinel and normal-frame premises are in [general-properties.md](general-proper
 Mutation rejection counts refer to assertion oracles; corrupted proof properties
 may be rejected before the kernel starts. Every positive proof claim still needs
 ALL PROOFS CHECK from the independent kernel.
+
+The root also proves a conditional scalar-memo flush theorem for all natural
+proposals and budgets >= 40, from the exact specified staged arena. Eight finite
+boundary/value controls include pinned Solid, but the constructor/setter bridge
+remains formally unproved. tools/check verifies the generated data is current;
+only the independent kernel establishes the quantified theorem. It is counted
+separately from closed regressions and complete public signal properties.

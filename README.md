@@ -24,6 +24,8 @@ returned values and exception-safe depth restoration; see [flush callbacks](trac
 Custom comparator programs now run through signal writes, memo publication, async
 landings and held seams; see [comparator coverage](tracking/comparators.md).
 
+[Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
+
 The reviewed Solid pin is now `b0ad1df5` (rc.16), matching `next` when fetched
 on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-b0ad1df5.md).
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
@@ -35,7 +37,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 138 source-changing variants
+npm run mutations                # reject 139 source-changing variants
 npm run example                  # Number{14n}
 ```
 

@@ -1,4 +1,7 @@
 import Base
+import ./proof/memo-driver.bend as MemoDriver
+import ./proof/memo-states.bend as MemoStates
+import ./proof/memo-staging.bend as MemoStaging
 import ./proof/extension-laws.bend as ExtensionLaws
 import ./proof/cleanup-laws.bend as CleanupLaws
 import ./runtime/extension.bend as Extension
@@ -567,3 +570,11 @@ law reactive_cleanup_uses_reverse_registration_order:
   for +rest: List<&2, DisposalOwner.Task>
   {DisposalOwner.dispatch(w, DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), 1n+B.length(Nat, prefix)} <> rest)
     == DisposalOwner.Machine{w, DisposalOwner.Invoke{callback} <> DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : DisposalOwner.Machine}
+
+
+# Conditional on this exact staged graph family, not the public setter bridge.
+law staged_scalar_memo_flush_completes:
+  for +next: Nat
+  for extra: Nat
+  {MemoDriver.view(API.flush(Nat.add(40n, extra), Core.world(MemoStates.state_0(next))))
+    == MemoDriver.expected(next) : MemoDriver.View}

@@ -1,4 +1,5 @@
 import Base
+import ./proof/memo-staging.bend as MemoStaging
 import ./proof/extension-laws.bend as ExtensionLaws
 import ./proof/cleanup-laws.bend as CleanupLaws
 import ./LAWS.bend as Laws
@@ -329,3 +330,7 @@ def Laws.detached_cleanup_list_is_not_replayed(w, prefix, node, suffix, rest, se
 
 def Laws.reactive_cleanup_uses_reverse_registration_order(w, prefix, callback, rest):
   CleanupLaws.last_registered_cleanup_is_first(w, prefix, callback, rest)
+
+
+def Laws.staged_scalar_memo_flush_completes(next, extra):
+  MemoStaging.every_staged_input(next, extra)

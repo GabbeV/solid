@@ -1,8 +1,10 @@
 # Active frontier
 
 This is an incremental executable translation, not a completed package port.
+[Progress checkpoints](progress.md) compare this session with c446418 without
+turning test counts into a package-completion percentage.
 
-Current verification: 2546 differential histories, 138 rejected compiled mutations,
+Current verification: 2546 differential histories, 139 rejected compiled mutations,
 and 62 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -30,6 +32,14 @@ public histories, eight native scheduling-IO controls, two closed execution laws
 and three quantified entry/finally properties. Public actions remain unfinished.
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
 open and tracked; its change is not applied to the active source pin.
+
+## Conditional memo drain proof milestone
+
+A [40-step scalar-memo drain](general-properties.md#conditional-scalar-memo-drain)
+now checks actual flush for every natural-number proposal and any larger budget,
+from an explicitly specified staged graph. Its constructor/setter bridge remains
+unproved and is tested by eight finite controls. This is a new quantified
+conditional result, not a claim of arbitrary graph or full public-program proof.
 
 ## Allocation and cleanup proof milestone
 

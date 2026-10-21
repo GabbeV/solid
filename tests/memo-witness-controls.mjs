@@ -1,0 +1,31 @@
+// Finite controls for the unproved constructor/setter boundary. The quantified
+// theorem starts from memo-states.state_0; these controls are not that proof.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {setImmediate} from 'node:timers/promises';
+import {SolidRuntime} from '../host/solid.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-memo-controls-'));
+try{
+ const modules={};
+ for(const [name,file]of [['D','memo-driver'],['M','memo-states']]){
+  const output=path.join(dir,file+'.mjs'),built=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','proof/'+file+'.bend','-o',output],{cwd:root,encoding:'utf8'});
+  assert.equal(built.status,0,built.stderr);modules[name]=(await import(pathToFileURL(output))).default;
+ }
+ const {D,M}=modules,values=[0,1,2,17,255,65535,2**32+3,2**48-2];
+ for(const next of values){
+  const S=await import('../build/solid.mjs?memo-proof-control='+next),s=new SolidRuntime({module:S});
+  try{
+   const before=D.before(next);assert.deepEqual(before,M.state_0(next),'Bend constructor/setter boundary at '+next);
+   const after=D.view(D.flush(40,before.world));assert.deepEqual(after,D.expected(next),'specified arena drain at '+next);
+   s.signal('value',0,{equals:false});s.memo('derived',{add:[{read:'value'},{lit:1}]},{equals:false});
+   s.set('value',next);assert.equal(s.read('value'),0);assert.equal(s.read('derived'),1);
+   s.flush();assert.equal(s.read('value'),next);assert.equal(s.read('derived'),next+1);
+   assert.deepEqual([after.source.n,after.memo.n],[next,next+1]);
+  }finally{s.attempt('dispose');s.attempt('flush');await setImmediate();}
+ }
+ console.log('8 finite constructor/setter and pinned Solid value controls match the specified staged memo family; the boundary remains formally unproved.');
+}finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -5,10 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
-  ["existing extension reallocates","runtime/extension.bend","Nat.is_ne(R.Node.x(B.node(w, id)), 0n)","False{}","tests/proof-properties.mjs","ext"],
-  ["reactive disposal leaves captured callbacks installed","runtime/owner.bend","R.Node.with_disposal(B.node(w, id), R.NoDisposal{})","B.node(w, id)","tests/proof-properties.mjs","runDisposal"],
-  ["reactive disposal invokes the first callback instead of the last","runtime/owner.bend","Invoke{B.get(Nat, callbacks, p, 0n)}","Invoke{B.get(Nat, callbacks, 0n, 0n)}","tests/proof-properties.mjs","dispatch"],
-  ["memo change overwrites committed value before the seam","runtime/core.bend","R.Node.with_pending(B.node(w, id), R.Present{value})","R.Node.with_value(B.node(w, id), value)","tests/proof-properties.mjs","publishValueChanged"],
+  ["memo arithmetic drops the increment","runtime/core.bend","R.Number{Nat.add(a, b)}","R.Number{a}","tests/proof-properties.mjs","arithmetic","memo-staging"],
+  ["existing extension reallocates","runtime/extension.bend","Nat.is_ne(R.Node.x(B.node(w, id)), 0n)","False{}","tests/proof-properties.mjs","ext","extension-laws"],
+  ["reactive disposal leaves captured callbacks installed","runtime/owner.bend","R.Node.with_disposal(B.node(w, id), R.NoDisposal{})","B.node(w, id)","tests/proof-properties.mjs","runDisposal","cleanup-laws"],
+  ["reactive disposal invokes the first callback instead of the last","runtime/owner.bend","Invoke{B.get(Nat, callbacks, p, 0n)}","Invoke{B.get(Nat, callbacks, 0n, 0n)}","tests/proof-properties.mjs","dispatch","cleanup-laws"],
+  ["memo change overwrites committed value before the seam","runtime/core.bend","R.Node.with_pending(B.node(w, id), R.Present{value})","R.Node.with_value(B.node(w, id), value)","tests/comparators.mjs","publishValueChanged"],
   ["signal loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","signal"],
   ["computed loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","computed"],
   ["custom comparator swaps old and new","runtime/core.bend","R.CallWith{callback, R.Literal{a}, R.Literal{b}}","R.CallWith{callback, R.Literal{b}, R.Literal{a}}","tests/comparator-alignment.mjs","isSame"],
@@ -28,8 +29,8 @@ const mutations=[
   ["flush callback loses captured arguments", "runtime/callback.bend", "R.FlushCallback{bind(body, first, second)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
   ["flush callback loses lexical signals", "runtime/lexical.bend", "R.FlushCallback{bind(body, depth, signal)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
 
-  ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue'],
-  ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast'],
+  ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue',"publication"],
+  ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast',"read-policy"],
   ['reaction replacement leaves the old arm live','runtime/core.bend','OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending','ending','tests/reactions.mjs','reactionArm'],
   ['reaction cleanup is cleared before it throws','runtime/core.bend','+ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','+w = Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), R.Undefined{}))\n  +ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','tests/reactions.mjs','reactionFire'],
   ['reaction fire omits full dependency disposal','runtime/core.bend','OwnerTasks{[O.Dispose{node}]}','OwnerTasks{[O.Enter{node, True{}, False{}}]}','tests/reactions.mjs','dispatch'],
@@ -147,7 +148,7 @@ const mutations=[
   ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))','T.setText(w, R.Node.target(B.node(w, id)), R.Undefined{})'],
 ];
 let caught=0;
-for(const [name,file,before,after,test='tests/differential.mjs',anchor] of mutations) {
+for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModule] of mutations) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bend-signals-mutation-'));
   try {
     for(const d of ['runtime','representation','observation'])await fs.cp(path.join(root,d),path.join(dir,d),{recursive:true});
@@ -161,7 +162,7 @@ for(const [name,file,before,after,test='tests/differential.mjs',anchor] of mutat
     const emit=path.join(dir,'runtime.mjs');
     const compile=spawnSync(path.join(root,'node_modules/.bin/bun'),[path.join(root,'upstream/bend/bend2/main.ts'),path.join(dir,'runtime/api.bend'),'-o',emit],{encoding:'utf8'});
     if(compile.status!==0)throw new Error('Mutation did not compile: '+name+'\n'+compile.stderr.slice(-3000));
-    const run=spawnSync(process.execPath,[test],{cwd:root,env:{...process.env,BEND_EMIT_FILE:emit},encoding:'utf8',maxBuffer:1024*1024});
+    const run=spawnSync(process.execPath,[test],{cwd:root,env:{...process.env,BEND_EMIT_FILE:emit,...(proofModule?{BEND_PROOF_MODULE:proofModule}:{})},encoding:'utf8',maxBuffer:1024*1024});
     if(run.status===0)throw new Error('Test oracle accepted mutation: '+name);
     if(!run.stderr.includes('AssertionError'))throw new Error('Mutation failed for an unrelated reason: '+name+'\n'+run.stderr.slice(-3000));
     caught++;console.log('Rejected mutation: '+name);
