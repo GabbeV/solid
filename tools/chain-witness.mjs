@@ -1,0 +1,76 @@
+// Canonical data from the actual API/core driver, not an alternate evaluator.
+// Generation is untrusted: each transition and the full conditional drain law
+// must pass the independent kernel for arbitrary numeric proposals and budgets.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-chain-witness-'));
+try{
+for(const generic of [false]){
+// Fixed initial graph; only its proposed payload is symbolic.
+const emitted=path.join(dir,'chain-driver.mjs');
+const built=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','proof/chain-driver.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+if(built.status!==0)throw Error(built.stderr);
+const {default:D}=await import(pathToFileURL(emitted));
+const constructors=new Map();
+function split(text){let depth=0,start=0,out=[];for(let i=0;i<text.length;i++){if('<({'.includes(text[i]))depth++;if('>)}'.includes(text[i]))depth--;if(text[i]===','&&depth===0){out.push(text.slice(start,i).trim());start=i+1;}}if(text.slice(start).trim())out.push(text.slice(start).trim());return out;}
+for(const [file,ns]of[['representation/records.bend','R'],['runtime/core.bend','C'],['runtime/owner.bend','O'],['runtime/pending.bend','Q']]){
+ let data=false,family;for(const line of fs.readFileSync(root+'/'+file,'utf8').replace(/\n    /g,' ').split('\n')){
+  if(/^type .* is Data:/.test(line)){data=true;family=line.match(/^type (\w+)/)[1];continue;}if(/^[^ #\t]/.test(line))data=false;if(!data)continue;
+  const m=line.match(/^  (\w+)\{(.*)\}$/);if(!m)continue;
+  constructors.set(ns+'.'+family+'.'+m[1],{ns,fields:split(m[2]).map(x=>{const i=x.indexOf(':');return[x.slice(0,i).trim(),x.slice(i+1).trim()];})});
+ }
+}
+const shared=new Map(),declarations=[];
+function qualified(type,ns){
+ if(['Nat','Bool','U32','String'].includes(type))return type;
+ if(type.startsWith('List<'))return 'List<&2, '+qualified(split(type.slice(5,-1))[1],ns)+'>';
+ return type.includes('.')?type:ns+'.'+type;
+}
+function intern(body,type){
+ const key=type+'#'+body;if(shared.has(key))return shared.get(key);
+ const name='data_'+shared.size,variables=(generic?['initial','input']:['input']).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;
+}
+function show(value,type,ns='R'){
+ const plain=type.replace(/^\w+\./,'');
+ if(plain==='Nat')return value+'n';if(plain==='U32')return String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
+ if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
+ const family=type.includes('.')?type:ns+'.'+type;
+ if(family==='R.Value'&&value.$==='Number'){
+  const terms={17:'input',18:'Nat.add(input, 1n)',36:'Nat.mul(Nat.add(input, 1n), 2n)',53:'Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)'};
+  if(terms[value.n])return intern('R.Number{'+terms[value.n]+'}','R.Value');
+ }
+ const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+type+' '+JSON.stringify(value));
+ return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+value.$+'.'+name+' keys '+Object.keys(value));return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
+}
+let m=generic?D.before(11,17):D.before(17),states=[m];
+for(let i=0;i<256&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
+if('head'in m.tasks)throw Error('Driver did not finish');
+const steps=states.length-1;if(steps!==95||m.world.fault.$!=='Healthy')throw Error('The chain witness requires a source review after this runtime change');
+let out=`# SHARED_DATA\n# Canonical data from the actual emitted core.step. The equations in\n# chain-staging check it for arbitrary proposals; generation is not trusted.\nimport Base\nimport ../runtime/api.bend as A\nimport ../runtime/core.bend as C\nimport ../representation/base.bend as B\nimport ../representation/records.bend as R\nimport ../proof/paths.bend as P\nimport ./chain-driver.bend as Driver\nimport ../runtime/owner.bend as O\nimport ../runtime/pending.bend as Q\n\n`;
+out+=`def origin(${generic?'+initial: Nat':''}) -> R.World:\n  ${show(D.base(generic?11:undefined),'World')}\n\n`;
+for(let i=0;i<states.length;i++)out+=`def state_${i}(${generic?'+initial: Nat, ':''}+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
+out+=`def finalWorld(${generic?'+initial: Nat, ':''}+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\n`;
+for(const [i,id]of [[13,3],[33,4]]){
+ const value=states[i].tasks.head.value,slot=D.slot(states[i].world,id,value);
+ out+=`def slot_${i}(+input: Nat) -> R.World:\n  ${show(slot,'World')}\n\n`;
+ out+=`def notify_${i}(+input: Nat) -> R.World:\n  ${show(D.notify(slot,id),'World')}\n\n`;
+}
+const modified=D.modified(states[55].world,5),queued=D.enqueue(modified,5),valued=D.value(queued,5,states[55].tasks.head.value);
+for(const [name,world]of [['modified_55',modified],['queued_55',queued],['value_55',valued]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+const setterQueued=D.queued(D.base()),setterSlot=D.slot(setterQueued,2,states[0].world.nodes.tail.tail.head.pending.value),setterInserted=D.notify(setterSlot,2),setterScheduled=D.scheduled(setterInserted);
+for(const [name,world]of [['setter_queued',setterQueued],['setter_slot',setterSlot],['setter_inserted',setterInserted],['setter_scheduled',setterScheduled]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+const stamped=D.stamp(setterSlot,2),enqueued3=D.heap(stamped,3),enqueued5=D.heap(enqueued3,5);
+for(const [name,world]of [['setter_stamped',stamped],['setter_enqueued3',enqueued3],['setter_enqueued5',enqueued5]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+out=out.replace('# SHARED_DATA\n','');const index=out.indexOf('def origin(');out=out.slice(0,index)+declarations.join('\n')+'\n'+out.slice(index);const target=path.join(root,'proof/chain-states.bend');
+if(process.argv.includes('--check')){
+ if(fs.readFileSync(target,'utf8')!==out)throw Error('Chain witness is stale; regenerate and run the independent kernel');
+}else{
+ fs.writeFileSync(target,out);console.log('Regenerated 95 canonical chain transitions; run the independent kernel before trusting them.');
+}
+
+}
+}finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2678 differential histories, 162 rejected compiled mutations,
+Current verification: 2678 differential histories, 164 rejected compiled mutations,
 and 65 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at d682022c (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -63,13 +63,23 @@ two-step setter close the previous staged-arena precondition. The original theor
 initial value and proposal, all constructor budgets >= 14 and drain budgets >= 40.
 Graph topology is fixed and has no effects. This is a complete quantified
 program result within that domain, with no runtime change or TS equivalence claim.
-The larger two-memo/render theorem remains open.
+The two-memo/render conditional drain and constructor are now checked; its
+public setter bridge remains open.
 
 The constructor is also proved separately for every natural initial value and
 all budgets >= 14, using a symbolic path. The complete update/drain family now also quantifies the initial value; arbitrary
 graphs remain outside that result. Three general transaction-merge laws
 now cover open-count sums, redirects and action markers in both directions
 between two represented ordinary roots.
+
+## Two-memo/render proof milestone
+
+The [larger graph drain](chain-proof.md) now has a checked 95-step completion
+path and exact render-application trace for every natural proposal and all larger
+budgets, from its explicit staged arena. Its fixed constructor is also checked.
+The public setter bridge remains open; eight finite native/canonical controls
+pass but do not establish that missing theorem. Two general successful-publication
+composition laws also check. The runtime is unchanged by this proof milestone.
 
 ## Allocation and cleanup proof milestone
 
@@ -78,8 +88,8 @@ now prove exact identity, single append, default fields and idempotence under th
 sentinel invariant. Three [cleanup laws](general-properties.md#reactive-cleanup-capture)
 prove normal-frame detachment before invocation, non-replay and reverse order.
 These are quantified local results over arbitrary surrounding state; the runtime
-is unchanged. The larger two-memo/render symbolic proof remains resource
-limited and uncounted.
+is unchanged. The two-memo/render public setter bridge remains resource limited; its
+conditional 95-step drain is now checked.
 
 ## Memo staging proof milestone
 

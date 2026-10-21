@@ -9,7 +9,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
   99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories: 2678 total, plus explicit host object-identity and native timeout
-  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, 21 native-generator action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
+  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, eight two-memo/render canonical/native controls, 21 native-generator action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten, eight staged-error-recovery and twelve held-function-value cases. The original arbitrary replacement-function cases remain source-only; an admitted bound-function counterpart now also has Bend parity and a positive merged-fix law. No expected
@@ -27,16 +27,16 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 162 isolated source-changing copies: 153 are rejected by
+- mutations compiles 164 isolated source-changing copies: 155 are rejected by
   differential assertions and nine by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
   change during the run, and seals source/output hashes only after success.
 
-The roots now contain sixty-two closed composed regressions: nine earlier
+The roots now contain sixty-five closed composed regressions: nine earlier
 chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
-landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, two tracked-effect phase/write and rerun/disposal-cleanup cases, two owned/unowned settled callback cases, two nested-flush/error-precedence cases, four custom-comparator cases, two positive reaction lifecycle/seeded replacement cases, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, plus four upstream
+landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, two tracked-effect phase/write and rerun/disposal-cleanup cases, two owned/unowned settled callback cases, two nested-flush/error-precedence cases, four custom-comparator cases, two positive reaction lifecycle/seeded replacement cases, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, three action hold/resume/reusable-wrapper executions, plus four upstream
 integration regressions for lazy reuse, writable error display/commit, protocol
 throw containment and empty flatten. The original negative laws remain on
 baseline/solid-d2ad8b28. Two explicitly negative laws preserve the
@@ -55,7 +55,7 @@ TS/Bend equivalence or compiler/browser verification is claimed.
 
 Earlier direct arbitrary-payload/open-context proof attempts exhausted
 resources. The new canonical signal witness and small equality transports prove
-the fixed signal family without changing the kernel; the full memo-chain family
+the fixed signal family without changing the kernel; the larger two-memo/render public setter boundary
 is still unfinished. The ordinary-flight fuel failure was separately
 diagnosed: unary Nat forced expansion of the source 0x7fffffff question ID. Exact
 binary naturals repair that representation cost; the new direct proofs require no
@@ -71,7 +71,7 @@ All three originally tracked upstream bugs have accepted fixes integrated at thi
 was superseded by #4156; #4163 and #4144 merged. The original before/after matrix,
 operation-level audit and upstream test results are in
 [the earlier pin review](reviews/solid-71153bf0.md).
-[The current update](reviews/solid-b0ad1df5.md) revalidates those fixes and records
+[The current update](reviews/solid-d682022c.md) revalidates those fixes and records
 new upstream dev/lane regressions separately from Bend support. The separate integration branch is local;
 no translation remote is configured. No package was published. Historical standalone
 npm/playground repro artifacts retain their original versions and evidence.
@@ -121,7 +121,7 @@ constructor and two-step public setter now close that staged-arena boundary for
 the fixed initial value zero. Two quantified public staging/completion properties
 compose the actual APIs for every proposal and larger drain budget. Eight finite
 boundary/value controls additionally include pinned Solid. tools/check verifies
-all three witness generators; only the independent kernel establishes the
+all four witness generators; only the independent kernel establishes the
 properties. These remain separate from arbitrary graph correctness, JavaScript
 arithmetic/equivalence and the 65 closed regressions.
 
@@ -146,3 +146,12 @@ The d682022c pin review adds twelve paired equal-compute effect histories and tw
 source-only projection rejection controls. Full-index native imports and module
 initialization remain intact. Source-only projection/boundary tests are not port
 coverage; the admitted production profile has no family-bearing projection nodes.
+
+The larger graph milestone adds two conditional quantified properties for a
+95-step two-memo/render drain and its exact render-application values, plus two
+general default-publication composition properties and a fixed constructor lemma.
+Its public setter bridge remains unproved. `tools/chain-witness.mjs --check` is
+part of the seal. Eight new finite controls do not establish the missing bridge.
+Negative proof subprocesses use a 4 GiB process-group RSS cap (Linux), a 90-second
+time limit and a 1 MiB output cap. Limit/resource failures remain infrastructure
+Errors, never counted assertion rejections. The actual proof kernel is unchanged.

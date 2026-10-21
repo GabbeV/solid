@@ -318,3 +318,28 @@ and public API composition still need the original kernel's positive verdict.
 Sixty-four additional canonical/native finite controls cover zero, equal values,
 reversed values and large natural payloads. They support but do not establish the
 quantified result. The original fixed-initial theorem and witnesses remain checked.
+
+## Two-memo/render staged graph and publication composition
+
+[The graph proof boundary](chain-proof.md) records the completed conditional
+95-step drain, exact render-application trace, supporting fixed constructor lemma
+and the still-open public setter bridge. The proposal is arbitrary Nat, the drain
+budget is `95 + extra`, and the topology/initial zero value are fixed. The larger
+public constructor/setter/flush program is not claimed proved. Eight additional
+finite controls compare public entry behavior and whole Worlds with pinned Solid;
+they are separate from the quantified results.
+
+`changed_memo_publication_stages_then_notifies` proves the actual default leaf
+`core.publishValue` stages the changed value before notifying live subscribers,
+under equals:false, non-effect and nonzero-subscriber premises.
+`effect_publication_marks_and_queues_before_store` proves the corresponding
+mark/queue/store order for effects with no subscribers and no pending slot before
+or after queue preparation. Both quantify arbitrary admitted surrounding World,
+payload, node and height; malformed-graph progress and arbitrary source custom
+comparator execution are not claimed. They extend the previous changed-helper
+laws through the default comparison entry.
+
+Earlier scratch references above retain the old failed larger-graph experiment.
+The active `chain-staging.bend` supersedes that experiment's composed-drain limit;
+the larger setter bridge remains a separate unproved obligation. Resource-limited
+scratch attempts were discarded rather than counted as positive proof evidence.

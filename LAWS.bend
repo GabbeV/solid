@@ -1,4 +1,9 @@
 import Base
+import ./proof/chain-states.bend as ChainStates
+import ./proof/chain-staging.bend as ChainStaging
+import ./proof/chain-observation.bend as ChainObservation
+import ./proof/chain-publication.bend as ChainPublication
+import ./runtime/scheduler.bend as PublicationScheduler
 import ./proof/memo-general-setter.bend as MemoGeneralSetter
 import ./proof/memo-general-public.bend as MemoGeneralPublic
 import ./proof/memo-general-states.bend as MemoGeneralStates
@@ -744,3 +749,37 @@ law scalar_memo_public_program_all_initial_values:
   for +constructorExtra: Nat
   for +drainExtra: Nat
   {MemoDriver.view(API.flush(Nat.add(40n, drainExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{input}))) == MemoDriver.expected(input) : MemoDriver.View}
+
+# General default-helper publication properties, with explicit field premises.
+law changed_memo_publication_stages_then_notifies:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +height: Nat
+  for off: {R.Node.equals(B.node(w, id)) == False{} : Bool}
+  for nonEffect: {B.effect(R.Node.kind(B.node(w, id))) == False{} : Bool}
+  for subs: {Nat.is_ne(R.Node.subs(B.node(w, id)), 0n) == True{} : Bool}
+  {Core.publishValue(w, id, value, False{}, height, False{}, False{}) == B.Bundle{PublicationScheduler.insertSubs(StagePublication.staged(w, id, value), id), True{}} : B.Bundle<R.World, Bool>}
+
+law effect_publication_marks_and_queues_before_store:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +height: Nat
+  for off: {R.Node.equals(B.node(w, id)) == False{} : Bool}
+  for effect: {B.effect(R.Node.kind(B.node(w, id))) == True{} : Bool}
+  for subs: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for empty: {B.present(R.Node.pending(B.node(w, id))) == False{} : Bool}
+  for stillEmpty: {B.present(R.Node.pending(B.node(ChainPublication.effect_prepare(w, id), id))) == False{} : Bool}
+  {Core.publishValue(w, id, value, False{}, height, False{}, False{}) == B.Bundle{B.store_node(ChainPublication.effect_prepare(w, id), id, R.Node.with_value(B.node(ChainPublication.effect_prepare(w, id), id), value)), True{}} : B.Bundle<R.World, Bool>}
+
+# Conditional graph-family theorems. The public setter bridge is still open.
+law staged_two_memo_render_graph_completes:
+  for +input: Nat
+  for +extra: Nat
+  {Chain.view(API.flush(Nat.add(95n, extra), Core.world(ChainStates.state_0(input)))) == Chain.expected(input) : Chain.View}
+
+law staged_graph_renders_only_its_final_proposal:
+  for +input: Nat
+  for +extra: Nat
+  {ChainObservation.applications(R.World.events(API.flush(Nat.add(95n, extra), Core.world(ChainStates.state_0(input))))) == [R.Number{2n}, Chain.answer(input)] : List<&2, R.Value>}

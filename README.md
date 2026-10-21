@@ -199,3 +199,8 @@ The constructor separately supports a proof for every natural initializer with
 at least 14 steps. General transaction merge laws also preserve summed open
 counts, redirect identity and the action marker for two ordinary roots. These
 remain scoped semantic properties of the actual Bend code.
+
+The [larger graph proof](tracking/chain-proof.md) now checks a 95-step two-memo /
+render drain and its exact application trace for every natural proposal, from the
+specified staged arena. Its constructor is checked; the larger public setter
+bridge remains open. The complete scalar-memo public theorem remains separate.

@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['memo publication drops the staged payload','runtime/core.bend','R.Node.with_pending(B.node(w, id), R.Present{value})','R.Node.with_pending(B.node(w, id), R.Present{R.Undefined{}})','tests/chain-witness-controls.mjs','publishValueChanged'],
+  ['memo chain multiplication drops its second operand','runtime/core.bend','R.Number{Nat.mul(a, b)}','R.Number{a}','tests/chain-witness-controls.mjs','arithmetic'],
+
   ['action wrapper drops captured previous value','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack}','ActionArgs.bind(methods, 0n, first, second)}, R.Undefined{}} <> rest, stack}','tests/action-functions.mjs','callbackAction'],
 
   ['action wrapper creation schedules work','runtime/action-state.bend','B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), R.ProgramReference{callback}}','B.Bundle{B.schedule(R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}]))), R.ProgramReference{callback}}','tests/action-functions.mjs','function'],

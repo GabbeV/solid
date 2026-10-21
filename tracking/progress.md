@@ -10,12 +10,12 @@ the complete b0ad1df5 checkpoint on baseline/solid-b0ad1df5. The semantic deviat
 | --- | --- | --- |
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
-| General local guarantees | Existing publication/read/signal and representation laws | 32 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
-| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked |
+| General local guarantees | Existing publication/read/signal and representation laws | 34 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
+| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; two-memo/render conditional 95-step drain, constructor and exact application trace now checked (larger setter bridge open) |
 | Typed actions | No public action engine | Reusable function identities, two call arguments and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Public comparison corpus | 2,348 histories | 2,678 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 65, including two deliberately preserved upstream bugs |
-| Compiled mutation checks | 116 | 162; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 164; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -30,7 +30,7 @@ closures/protocol objects and dev/observe behavior. [The action readiness review
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
 invokes its callback without draining; the review explicitly preserves that arm. Arbitrary
-graph/history correctness and the larger two-memo/render symbolic theorem remain
+graph/history correctness and the larger two-memo/render public setter bridge remain
 open. None of the test counts should be read as that fraction of Solid completed.
 
 
@@ -57,3 +57,11 @@ keeps two native projection rejection controls explicitly source-only. Its full
 signals suite passes 330 files / 5,432 tests. Active dev diagnostics and projection
 families remain outside the Bend implementation; prior integrated fixes and the
 two deliberately preserved bugs are revalidated.
+
+The larger two-memo/render family now has a kernel-checked 95-step drain and
+exact final-application trace for all natural proposals and sufficient budgets,
+plus its fixed constructor boundary. This closes the former composed-drain gap.
+The public setter bridge is still open and explicitly excluded from the claim.
+Eight finite native/canonical controls support it without proving it. Two general
+publication composition laws and two additional rejected compiled variants were
+added; the runtime did not change. See [the proof boundary](chain-proof.md).

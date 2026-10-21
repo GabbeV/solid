@@ -1,4 +1,11 @@
 import Base
+import ./proof/chain-staging.bend as ChainStaging
+import ./proof/chain-observation.bend as ChainObservation
+import ./proof/chain-publication.bend as ChainPublication
+import ./proof/chain-constructor.bend as ChainConstructor
+import ./runtime/scheduler.bend as PublicationScheduler
+import ./representation/base.bend as B
+import ./representation/records.bend as R
 import ./proof/memo-general-setter.bend as MemoGeneralSetter
 import ./proof/memo-general-public.bend as MemoGeneralPublic
 import ./proof/action-function-laws.bend as ActionFunctions
@@ -410,3 +417,15 @@ def Laws.scalar_memo_public_setter_all_initial_values(initial, input, constructo
 
 def Laws.scalar_memo_public_program_all_initial_values(initial, input, constructorExtra, drainExtra):
   MemoGeneralPublic.complete(initial, input, constructorExtra, drainExtra)
+
+def Laws.changed_memo_publication_stages_then_notifies(w, id, value, height, off, nonEffect, subs):
+  ChainPublication.memo_complete(w, id, value, height, StagePublication.staged(w, id, value), PublicationScheduler.insertSubs(StagePublication.staged(w, id, value), id), off, nonEffect, subs, {==}, {==})
+
+def Laws.effect_publication_marks_and_queues_before_store(w, id, value, height, off, effect, subs, empty, stillEmpty):
+  ChainPublication.effect_complete(w, id, value, height, ChainPublication.effect_prepare(w, id), B.store_node(ChainPublication.effect_prepare(w, id), id, R.Node.with_value(B.node(ChainPublication.effect_prepare(w, id), id), value)), off, effect, subs, empty, {==}, stillEmpty, {==})
+
+def Laws.staged_two_memo_render_graph_completes(input, extra):
+  ChainStaging.completed(input, extra)
+
+def Laws.staged_graph_renders_only_its_final_proposal(input, extra):
+  ChainObservation.completes(input, extra)
