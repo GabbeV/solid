@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["memo constructor discards its compute expression","runtime/construct-state.bend","parent, 0n, 0n, 0n, expr, False{}","parent, 0n, 0n, 0n, R.Literal{R.Number{0n}}, False{}","tests/proof-properties.mjs","computed","memo-public-program"],
+  ["public memo setter omits subscriber intake","runtime/write.bend","B.schedule(insertSubs(w, id))","B.schedule(w)","tests/memo-witness-controls.mjs","stageResolved"],
   ["action omits its acted marker","runtime/action-state.bend","R.Transaction.with_acted(B.transaction(w, t), True{})","R.Transaction.with_acted(B.transaction(w, t), False{})","tests/actions-native.mjs","open"],
   ["action depth entry is omitted", "runtime/action-state.bend", "R.World.with_actionDepth(w, 1n+R.World.actionDepth(w))", "w", "tests/proof-properties.mjs", "enter", "action-laws"],
   ["action yield accepts a superseded callback", "runtime/core.bend", "Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry))", "False{}", "tests/actions-native.mjs", "actionDelivery"],

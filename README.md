@@ -37,7 +37,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 152 source-changing variants
+npm run mutations                # reject 154 source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -186,3 +186,16 @@ check independently. [The scope review](tracking/actions.md) records the source
 return points and remaining first-class function/protocol/active-engine gaps.
 The earlier transaction laws with explicit open counts retain their narrower
 historical scope; this milestone does not turn them into general action proofs.
+
+
+The [scalar-memo public program proof](tracking/general-properties.md#complete-scalar-memo-public-program)
+now closes the earlier constructor/setter gap. For every natural proposal, the
+actual fixed-initial constructor/setter reaches the staged arena, then a drain of
+40 or more steps commits source n and memo n + 1. The checked constructor and
+setter paths have 14 and two steps respectively. This is a fixed graph family;
+arbitrary graph correctness and TS equivalence remain outside the claim.
+
+The constructor separately supports a proof for every natural initializer with
+at least 14 steps. General transaction merge laws also preserve summed open
+counts, redirect identity and the action marker for two ordinary roots. These
+remain scoped semantic properties of the actual Bend code.

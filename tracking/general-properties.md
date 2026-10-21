@@ -190,15 +190,47 @@ rejects stale data. Proof-only source-gate cuts and abstract API/machine/budget
 transports avoid evaluating the entire run during kernel conversion; they are
 also independently checked. The runtime was not split or altered for the proof.
 
-The constructor/setter bridge from memo-driver.before(n) to this specified family
-is **not proved**. Eight finite controls compare that boundary and the resulting
-values with unchanged pinned Solid; those controls do not discharge the missing
-quantified bridge. The larger two-memo/render graph also remains unproved.
-The Nat theorem is about Bend arithmetic; it does not establish IEEE-754/TS
-behavior for unbounded numbers or equivalence of the implementations. This
-conditional result is counted separately from the three complete public numeric
-signal properties and the 62 closed regressions. A compiled increment-dropping
-mutation is rejected by the quantified proof-property assertions.
+The constructor/setter bridge is now checked separately by
+[memo-public-program.bend](../proof/memo-public-program.bend). The original drain
+lemma retains its explicit precondition, while the complete public theorem below
+closes this fixed family. Eight finite controls additionally compare the boundary
+and resulting values with unchanged pinned Solid; those are correspondence
+evidence, separate from the proof. The larger two-memo/render graph remains
+unproved. Nat arithmetic does not establish IEEE-754 behavior for unbounded numbers
+or TS/Bend equivalence. The compiled increment-dropping mutation is rejected by
+the quantified proof-property assertions.
+
+## Complete scalar-memo public program
+
+[memo-public-program.bend](../proof/memo-public-program.bend) proves the actual
+public constructor, setter and flush composition for every natural proposal n
+and every additional drain budget:
+
+1. Construct a numeric signal at zero and an eager memo computing source + 1,
+   both with equality disabled, under the normal root.
+2. Call the public signal setter with n. Its whole resulting World equals the
+   specified staged arena used by the drain theorem.
+3. Flush with 40 + extra steps. The source commits n and the memo commits n + 1;
+   pending intake is empty, caller context/tracking is restored, the flush is
+   idle/unscheduled and no control fault remains.
+
+The constructor has a checked 14-step eager path plus its actual facade prefix
+and accessor/owner restoration. The setter has a checked two-step core path and
+its actual public validity, target-selection and budget boundary. Their bridges
+are composed with the existing 40-step drain; no constructor/setter state is
+assumed or replaced with the generator's sample. tools/memo-boundaries.mjs records
+untrusted snapshots from the actual source helpers/core and rejects stale data.
+Every asserted equation, source-gate cut and composition checks in the original
+independent kernel. No runtime change was made for this proof.
+
+The initial signal value is fixed to zero; the proposal is quantified. This is
+one fixed graph topology without effects, custom callbacks or active engine
+scopes. It is not arbitrary-graph progress, a general constructor invariant,
+unbounded JavaScript arithmetic or implementation equivalence. The two public
+staging/completion properties are counted separately from the 64 closed semantic
+regressions and the three complete data-signal properties. A queued host flush
+request may remain after a synchronous drain; the claim does not cancel that IO.
+
 
 
 ## Action depth and callback boundaries
@@ -219,3 +251,45 @@ and landing for that program. These do not assert arbitrary generator terminatio
 correctness of active optimistic/lane/store engines or general Promise semantics.
 [The action review](actions.md) separates protocol restrictions, finite/native
 controls, source correspondence and these proof domains.
+
+
+The new public-program proof oracle rejects a compiled constructor that discards
+its compute expression. A separate compiled setter mutation omits subscriber
+intake: the old conditional drain theorem still passes because it assumes the
+staged arena, while finite constructor/setter controls reject the changed public
+boundary. Its initial proof-negative trial exhausted resources and was discarded;
+resource failures are not counted as proof rejections.
+
+
+## Scalar-memo construction for every numeric initial value
+
+[memo-initial.bend](../proof/memo-initial.bend) generalizes the constructor part:
+for every natural initial value and constructor budget >= 14, the actual signal
+and eager source-plus-one memo constructor yields source n, memo n + 1, no pending
+intake, restored caller state and a healthy idle scheduler. A symbolic 14-step path
+and the exact public constructor facade reach the entire generated arena; the
+View projection follows from that equality. Eight further finite controls compare
+these arenas and pinned Solid values, including large admitted payloads.
+
+This extends construction to every natural initializer. The separate complete
+setter/flush program still starts its signal at zero; arbitrary initial and next
+values have not yet been combined in one update/drain theorem. All prior numeric,
+graph-topology, active-scope and TS-equivalence restrictions still apply. The
+boundary generator checks both the fixed and symbolic constructor families.
+
+## Transaction merge bookkeeping
+
+[transaction-merge-laws.bend](../proof/transaction-merge-laws.bend) proves three
+quantified properties of the actual transaction.mergeResolved helper: the target
+open count is target.open + source.open, the source redirects to the target, and
+the target action marker is target.acted OR source.acted. Both merge directions
+between arena positions one and two are covered. Counts, flags, transaction
+metadata, suffix arena and every surrounding World field are quantified.
+
+The scoped input places a sentinel at zero and two represented ordinary roots:
+redirects are zero and lane flags false. These are local bookkeeping properties,
+not a proof of arbitrary valid global transaction graphs, redirect acyclicity,
+landing progress or active optimistic/lane/mark/store engines. They support the
+action invocation work's shared open-count and redirect machinery; seventeen
+native-generator controls separately compare actual action behavior and joined
+source open/action fields. The runtime was not changed for these proofs.

@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2621 differential histories, 152 rejected compiled mutations,
+Current verification: 2621 differential histories, 154 rejected compiled mutations,
 and 64 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -44,13 +44,21 @@ and three quantified entry/finally properties. Typed production action invocatio
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
 open and tracked; its change is not applied to the active source pin.
 
-## Conditional memo drain proof milestone
+## Complete scalar-memo proof milestone
 
-A [40-step scalar-memo drain](general-properties.md#conditional-scalar-memo-drain)
-now checks actual flush for every natural-number proposal and any larger budget,
-from an explicitly specified staged graph. Its constructor/setter bridge remains
-unproved and is tested by eight finite controls. This is a new quantified
-conditional result, not a claim of arbitrary graph or full public-program proof.
+The [public program theorem](general-properties.md#complete-scalar-memo-public-program)
+now composes the actual constructor, public setter and 40-step drain for every
+natural proposal and larger drain budget. A checked 14-step constructor and
+two-step setter close the previous staged-arena precondition. The signal starts
+at zero; graph topology is fixed and has no effects. This is a complete quantified
+program result within that domain, with no runtime change or TS equivalence claim.
+The larger two-memo/render theorem remains open.
+
+The constructor is also proved separately for every natural initial value and
+all budgets >= 14, using a symbolic path. This does not generalize the complete
+update/drain program's fixed initial value. Three general transaction-merge laws
+now cover open-count sums, redirects and action markers in both directions
+between two represented ordinary roots.
 
 ## Allocation and cleanup proof milestone
 
@@ -59,7 +67,7 @@ now prove exact identity, single append, default fields and idempotence under th
 sentinel invariant. Three [cleanup laws](general-properties.md#reactive-cleanup-capture)
 prove normal-frame detachment before invocation, non-replay and reverse order.
 These are quantified local results over arbitrary surrounding state; the runtime
-is unchanged. The larger complete symbolic memo-program proof remains resource
+is unchanged. The larger two-memo/render symbolic proof remains resource
 limited and uncounted.
 
 ## Memo staging proof milestone

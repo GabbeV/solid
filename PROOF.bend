@@ -1,4 +1,7 @@
 import Base
+import ./proof/memo-initial.bend as MemoInitial
+import ./proof/transaction-merge-laws.bend as TxMerge
+import ./proof/memo-public-program.bend as MemoPublic
 import ./proof/action-laws.bend as ActionLaws
 import ./proof/memo-staging.bend as MemoStaging
 import ./proof/extension-laws.bend as ExtensionLaws
@@ -357,3 +360,23 @@ def Laws.action_holds_first_slice_write():
 
 def Laws.action_resumed_slice_lands_reconciled_write():
   ActionLaws.lands()
+
+
+def Laws.scalar_memo_public_setter_reaches_staged_arena(next):
+  MemoPublic.constructed_setter(next)
+
+def Laws.scalar_memo_public_constructor_setter_flush_completes(next, extra):
+  MemoPublic.public_program(next, extra)
+
+
+def Laws.scalar_memo_constructor_all_natural_initial_values(initial, extra):
+  MemoInitial.all_initials(initial, extra)
+
+def Laws.merged_transactions_sum_open_counts(w, source, target, suffix, reverse):
+  TxMerge.open_sum(w, source, target, suffix, reverse)
+
+def Laws.merged_transaction_redirects_to_target(w, source, target, suffix, reverse):
+  TxMerge.redirects(w, source, target, suffix, reverse)
+
+def Laws.merged_transactions_preserve_action_marker(w, source, target, suffix, reverse):
+  TxMerge.acted_union(w, source, target, suffix, reverse)

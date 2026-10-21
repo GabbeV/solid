@@ -164,7 +164,8 @@ def witness(+input: Nat) -> P.Path<M.state_0(input), M.state_40(input)>:
 
 
 # This theorem starts at the explicit staged arena. The public setter bridge is
-# deliberately excluded: it is not yet independently checked.
+# is established separately by memo-public-program; this local drain theorem
+# retains its explicit staged-arena precondition.
 def retimed(+start: C.Machine, -end: C.Machine, +path: P.Path<start, end>, +extra: Nat, +fuel: Nat,
   lengthEq: {Nat.add(P.length(start, end, path), extra) == fuel : Nat}) ->
   {C.run(fuel, start) == end : C.Machine}:

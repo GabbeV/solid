@@ -1,4 +1,9 @@
 import Base
+import ./proof/memo-initial.bend as MemoInitial
+import ./proof/memo-initial-driver.bend as MemoInitialDriver
+import ./proof/memo-constructor-cuts.bend as MemoConstructorCuts
+import ./proof/transaction-merge-laws.bend as TxMerge
+import ./proof/memo-public-program.bend as MemoPublic
 import ./proof/action-laws.bend as ActionLaws
 import ./runtime/action-state.bend as Action
 import ./proof/memo-driver.bend as MemoDriver
@@ -628,3 +633,44 @@ law action_holds_first_slice_write:
 
 law action_resumed_slice_lands_reconciled_write:
   {ActionLaws.view(ActionLaws.landed()) == ActionLaws.View{R.Number{3n}, False{}, 0n, 0n, True{}} : ActionLaws.View}
+
+
+law scalar_memo_public_setter_reaches_staged_arena:
+  for +next: Nat
+  {API.setSignal(MemoDriver.base(), 2n, R.Number{next}) == Core.world(MemoStates.state_0(next)) : R.World}
+
+law scalar_memo_public_constructor_setter_flush_completes:
+  for +next: Nat
+  for +extra: Nat
+  {MemoDriver.view(API.flush(Nat.add(40n, extra), API.setSignal(MemoDriver.base(), 2n, R.Number{next})))
+    == MemoDriver.expected(next) : MemoDriver.View}
+
+
+law scalar_memo_constructor_all_natural_initial_values:
+  for +initial: Nat
+  for +extra: Nat
+  {MemoDriver.view(API.createMemo(Nat.add(14n, extra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n)) == MemoDriver.expected(initial) : MemoDriver.View}
+
+law merged_transactions_sum_open_counts:
+  for +w: R.World
+  for +source: R.Transaction
+  for +target: R.Transaction
+  for +suffix: List<&2, R.Transaction>
+  for +reverse: Bool
+  {R.Transaction.open(B.transaction(TxMerge.merged(w, source, target, suffix, reverse), TxMerge.targetId(reverse))) == Nat.add(R.Transaction.open(target), R.Transaction.open(source)) : Nat}
+
+law merged_transaction_redirects_to_target:
+  for +w: R.World
+  for +source: R.Transaction
+  for +target: R.Transaction
+  for +suffix: List<&2, R.Transaction>
+  for +reverse: Bool
+  {R.Transaction.into(B.transaction(TxMerge.merged(w, source, target, suffix, reverse), TxMerge.sourceId(reverse))) == TxMerge.targetId(reverse) : Nat}
+
+law merged_transactions_preserve_action_marker:
+  for +w: R.World
+  for +source: R.Transaction
+  for +target: R.Transaction
+  for +suffix: List<&2, R.Transaction>
+  for +reverse: Bool
+  {R.Transaction.acted(B.transaction(TxMerge.merged(w, source, target, suffix, reverse), TxMerge.targetId(reverse))) == Bool.or(R.Transaction.acted(target), R.Transaction.acted(source)) : Bool}
