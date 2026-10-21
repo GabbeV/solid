@@ -9971,7 +9971,7 @@
           "mapping": {
             "bend": "runtime/core.bend:PassFrame, recomputeFlight, recomputeAfterFlight, RecomputePrepared, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, retireOutgoing, finishResult, finishShape, subscribe, afterThen, publishState, queuePublication, AfterDeadPass, FinishPublication, QueuePublication; runtime/core.bend:RestoreDeferredReleases, RecomputeAfterTeardown, startPassFinally, PassReleases, passFinallyTail; runtime/graph-state.bend:beginReleases, deferRelease; runtime/core.bend:RetireSources, PublishSettleSelf, catchNotify, CatchStageSettle, CatchStageFinish, CatchSelfRetire, CatchRetireSources, CatchFinally, finishCatch, PendingTasks",
             "status": "partial",
-            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions execute in the same machine; Nested data signals and captured inline effect bodies execute; escaped accessors and expression/selected-bound-function initializer signals now execute; teardown expressions remain unfinished. Direct pre-body owner/flight callbacks now suspend on core OwnerTasks, preserving the before-try failure and subsequent frame-capture order. Publication/finally trim and async/pending callers remain restricted. Publication-tail trim and disposed-pass dependency clear now suspend on OwnerTasks before their queue/flight-pointer remainder. Async/pending helpers remain restricted. Reviewed 71153bf0 delta: staged-error clear is after frame teardown and before the body try. RestoreDeferredReleases, RecomputeAfterTeardown, PassReleases, startPassFinally/passFinallyTail retain the deferred lazy release array identity and finally ordering. No restoration is invented on a pre-body teardown throw. Lane-frame hook branch stays unfinished/inactive. Current Source collector-leak regression after a throwing prelude is preserved as SOLID-DEFERRED-RELEASE-THROW-004, with paired histories and a negative closed law; no finally restoration workaround is active. Current owner/core closure: outgoing-source retirement retains the live captured Set cursor; pending walks suspend through owner callbacks. Catch-stage assignment completes only after settlement returns; throws within catch still execute pass finally. Publication settlement remains outside the body catch. See tracking/reviews/teardown-closure.md for current public expression-program coverage and remaining exclusions. Reviewed b0ad1df5/#4171: Source adds laneRoot and prevMount/mount, restores the inherited root in finally, widens joined to STAGED_READ for mounts, and uses mount for freshHook. With no active lane scopes prevLane/mount remain falsy even when the full-index reference installs lane hooks; the existing REACTIVE_JOINED checks, born-held value predicate and pending hold therefore remain unchanged. Active mount inheritance and freshHook/boundary routing stay unported, not silently approximated."
+            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/custom-comparator/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions execute in the same machine; Nested data signals and captured inline effect bodies execute; escaped accessors and expression/selected-bound-function initializer signals now execute; teardown expressions remain unfinished. Direct pre-body owner/flight callbacks now suspend on core OwnerTasks, preserving the before-try failure and subsequent frame-capture order. Publication/finally trim and async/pending callers remain restricted. Publication-tail trim and disposed-pass dependency clear now suspend on OwnerTasks before their queue/flight-pointer remainder. Async/pending helpers remain restricted. Reviewed 71153bf0 delta: staged-error clear is after frame teardown and before the body try. RestoreDeferredReleases, RecomputeAfterTeardown, PassReleases, startPassFinally/passFinallyTail retain the deferred lazy release array identity and finally ordering. No restoration is invented on a pre-body teardown throw. Lane-frame hook branch stays unfinished/inactive. Current Source collector-leak regression after a throwing prelude is preserved as SOLID-DEFERRED-RELEASE-THROW-004, with paired histories and a negative closed law; no finally restoration workaround is active. Current owner/core closure: outgoing-source retirement retains the live captured Set cursor; pending walks suspend through owner callbacks. Catch-stage assignment completes only after settlement returns; throws within catch still execute pass finally. Publication settlement remains outside the body catch. See tracking/reviews/teardown-closure.md for current public expression-program coverage and remaining exclusions. Reviewed b0ad1df5/#4171: Source adds laneRoot and prevMount/mount, restores the inherited root in finally, widens joined to STAGED_READ for mounts, and uses mount for freshHook. With no active lane scopes prevLane/mount remain falsy even when the full-index reference installs lane hooks; the existing REACTIVE_JOINED checks, born-held value predicate and pending hold therefore remain unchanged. Active mount inheritance and freshHook/boundary routing stay unported, not silently approximated. Tracked-effect delta: prelude disposes its old frame immediately, unlike ordinary frame parking; its successful dependency trim runs immediately rather than heldTrim. PassFrame now captures source prevStale, render/tracked passes enter stale scope, and passFinally restores it at the source finally site."
           }
         },
         {
@@ -10463,8 +10463,12 @@
           "start": 2307,
           "end": 2315,
           "sha256": "964f9ca1e34e0ed524f50fbc6cc72d65ce4be82deeb30fb8806ef258f024e93e",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:RestoreStale, TrackedAfterCleanup; representation/records.bend:World.stale",
+            "status": "partial",
+            "restrictions": "Source module-global stale is now a threaded World field. Tracked callback staleValues sets true, restores on success/throw, then assigns cleanup. Recompute sets stale for render/tracked passes and restores its captured incoming value in finally. Public arbitrary staleValues callbacks are not exposed by the host ABI; active verdict/lane consumers remain unfinished."
+          }
         },
         {
           "key": "core/core.ts:markRefresh",
@@ -14216,8 +14220,12 @@
           "start": 260,
           "end": 327,
           "sha256": "88b48231ca62b2f786c67df2913613e55115acdea5e2c051f7dc1072b802583d",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:trackedEffect, trackedBody, runTracked, visitHeap, TrackedAfterCleanup, TrackedCreate, TrackedBody; runtime/api.bend:createTrackedEffect; runtime/write.bend:userQueue",
+            "status": "restricted",
+            "restrictions": "Production default/BaseEffectOptions name/loc only; no active boundary heldRunHook. Actual lazy computed constructor, cleanup/config/modified/type setup, heap-before-user-phase routing, duplicate modified/disposed gate, pre-cleanup clear/call, staleValues(fn), return-valued cleanup assignment and void compute return retained. Data/getter/setter/root/named-program cleanup families use the shared owner/core driver. 47 public histories and 32 actual native _run comparisons cover startup, updates, dependency switching, writes/commits, pending/rejection, errors, cleanup, captures, owner disposal and incoming stale scopes. Arbitrary closures, dev checks, lane/boundary engines and internal NodeOptions comparator/loading extensions remain unfinished."
+          }
         }
       ],
       "branches": [
@@ -15226,9 +15234,9 @@
           "sha256": "08dc2f850c6945f8a76049816b40796e37b93ee01266d57f53da39b3110396fe",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/core.bend:heapLoop",
+            "bend": "runtime/core.bend:heapLoop; runtime/core.bend:visitHeap",
             "status": "restricted",
-            "restrictions": "Continuation dispatch replaces callback recursion; zombie/tracked-effect routing remains open."
+            "restrictions": "Dirty/check/height routing and zombie deferral retained for the admitted graph. Source GlobalQueue._update tracked branch deletes from heap, marks modified and queues its existing runner in EFFECT_USER before any zombie branch. The tracked body runs after the commit seam; active lane member handling remains unfinished."
           }
         },
         {
@@ -18348,7 +18356,7 @@
           "mapping": {
             "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedPrefix, commitAnswerValue, finishCommitFields, afterCommitTrim, disposeCommittedFrame; runtime/core.bend:commitPending, commitFinish, commitAfterTrim, CommitPending, CommitFinish, CommitAfterTrim",
             "status": "partial",
-            "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished. Active commit and transaction landings now suspend trim/parked teardown through the same core driver, retaining the entry inFlight local and exact field/callback order. The direct state-probe facade shares those mutation segments."
+            "restrictions": "Source signal/computed split, pre-commit inFlight capture, configuration masks, staged error consumption/time/status notification, answer publication, metadata gates and parked teardown. Synthetic empty error slot retains the NOT_PENDING token as cause; no fallback to last value. Lanes/tracked/boundary/store paths remain unfinished. Active commit and transaction landings now suspend trim/parked teardown through the same core driver, retaining the entry inFlight local and exact field/callback order. The direct state-probe facade shares those mutation segments. Committed staged effect values enqueue ordinary render/user runners only; tracked nodes are explicitly excluded as in Source."
           }
         },
         {
@@ -22565,8 +22573,12 @@
           "start": 692,
           "end": 697,
           "sha256": "60ec3fd1064aacfafefae38c4821c6ed1e7b8c913b6144d01d8353bddf8474ae",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/api.bend:createTrackedEffect; runtime/core.bend:TrackedCreate, trackedEffect",
+            "status": "restricted",
+            "restrictions": "Delegates to the source-shaped tracked-effect constructor. Expression/program bodies represent the callback; production name/loc options are inert. Nested creation captures outer lexical and argument bindings. Source dev child-creation and forbidden-scope checks remain unported."
+          }
         },
         {
           "key": "signals.ts:createReaction",

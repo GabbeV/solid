@@ -29,7 +29,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 101 source-changing variants
+npm run mutations                # reject 105 source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -72,6 +72,9 @@ watchers and async/error/pending release. Public expression cleanup programs
 and direct bound getter cleanup values are admitted; arbitrary closures remain open.
 See [getter cleanup](tracking/getter-cleanup.md) for coverage and read-observation limits.
 See [owner/core coverage](tracking/owner-core.md).
+`createTrackedEffect` now runs its tracking body in the user phase after the
+commit seam, with returned cleanup and source error behavior; see
+[tracked effects](tracking/tracked-effects.md).
 
 The proof in [LAWS.bend](LAWS.bend) covers an actual constructed graph:
 

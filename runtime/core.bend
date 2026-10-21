@@ -44,16 +44,16 @@ type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
     reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
     outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat,
-    saved: List<&2, R.Value>, released: Nat}
+    saved: List<&2, R.Value>, released: Nat, stale: Bool}
 
 def passStack(frame: PassFrame) -> List<&2, R.Value>:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       saved
 
 def passId(frame: PassFrame) -> Nat:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       id
 
 type Task is Data:
@@ -104,6 +104,7 @@ type Task is Data:
   Discard{}
   Branch{yes: R.Expr, no: R.Expr, previous: R.Value}
   RestoreTracking{tracking: Bool}
+  RestoreStale{stale: Bool}
   EnterOwner{body: R.Expr, previous: R.Value}
   RestoreContext{owner: Nat, tracking: Bool}
   CheckDisposed{}
@@ -150,6 +151,8 @@ type Task is Data:
   DeliverObservers{observers: List<&2, Nat>, immediate: Bool, rejected: Bool, value: R.Value}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
+  RunTracked{id: Nat}
+  TrackedAfterCleanup{id: Nat, body: R.Expr}
   ApplyEffect{id: Nat}
   InstallEffectCleanup{id: Nat}
   InstallReturnedCleanup{id: Nat}
@@ -261,6 +264,28 @@ def signalCompute(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, 
 def callableSignal(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, value: R.Value, options: R.NodeOptions, body: R.Expr, +previous: R.Value) -> Machine:
   signalCompute(w, rest, stack, R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}, options, body, previous)
 
+# core/effect.ts:trackedEffect constructor. A lazy computed becomes a tracked
+# leaf before its first heap wake; the user queue owns the actual first pass.
+def trackedEffect(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, body: R.Expr) -> Machine:
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = B.event(w, R.Constructed{id})
+  +w = N.computed(w, R.TrackedBody{body}, R.NodeOptions.with_lazy(N.defaults(), True{}), R.World.context(w))
+  +n = B.node(w, id)
+  +n = R.Node.with_cleanup(n, 0n)
+  +n = R.Node.with_config(n, B.set(B.clear(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()), K.CONFIG_CHILDREN_FORBIDDEN()))
+  +n = R.Node.with_modified(n, True{})
+  +w = B.store_node(w, id, R.Node.with_kind(n, R.Tracked{}))
+  Machine{B.schedule(H.enqueueSub(w, id)), rest, R.Undefined{} <> stack}
+
+# Its compute wrapper clears previous cleanup before calling it. staleValues
+# surrounds only fn; assignment of its returned cleanup follows successful return.
+def trackedBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, body: R.Expr) -> Machine:
+  +id = R.World.context(w)
+  +previous = R.Node.cleanup(B.node(w, id))
+  +w = B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n))
+  +ending = {TrackedAfterCleanup{id, body} <> rest : List<&2, Task>}
+  Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(previous, 0n), _ => OwnerTasks{[O.Invoke{previous}]} <> ending, _ => ending), stack}
+
 # signals.ts:createMemo returns the accessor; the MemoRead user ABI adds a
 # subsequent call. Both use the same source constructor and eager/lazy setup.
 def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, +options: R.NodeOptions, read: Bool) -> Machine:
@@ -312,6 +337,10 @@ def selectedUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.TrackedCreate{body}:
+      trackedEffect(w, rest, stack, body)
+    case R.TrackedBody{body}:
+      trackedBody(w, rest, stack, body)
     case R.WatchExpr{+awaiter, expr}:
       Machine{U.capture(w, awaiter), Evaluate{expr, prev} <> WatchFinish{awaiter, stack} <> rest, stack}
     case R.Literal{v}:
@@ -823,9 +852,10 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}),
     B.choose(~Nat, B.has(R.Node.status(n), K.STATUS_PENDING()), _ => R.NodeExtension.pendingSources(B.extension(w, id)), _ => 0n),
-    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released} : PassFrame}
+    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released, R.World.stale(w)} : PassFrame}
   next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{frame} <> rest : List<&2, Task>}
-  w = R.World.with_tracking(B.event(w, R.Invoked{id}), True{})
+  +w = R.World.with_stale(w, Bool.or(R.World.stale(w), Bool.and(B.effect(R.Node.kind(n)), Bool.not(S.is_user(R.Node.kind(n))))))
+  w = R.World.with_tracking(B.choose(~R.World, B.tracked(R.Node.kind(n)), _ => w, _ => B.event(w, R.Invoked{id})), True{})
   Machine{w, next, stack}
 
 # core.ts:recompute before its body try: callbacks here unwind the caller.
@@ -834,7 +864,7 @@ def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.
   +w = B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_PENDING()),
     _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.reenterHeld(w, id), _ => w)
-  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()),
+  B.choose(~Machine, Bool.or(B.tracked(R.Node.kind(B.node(w, id))), B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED())),
     _ =>
       +previous = R.World.deferredReleases(w)
       +pair = GS.beginReleases(w)
@@ -959,7 +989,7 @@ def finishPublication(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
   +n = B.node(w, id)
   +ending = {QueuePublication{id, create, missed} <> rest : List<&2, Task>}
   B.choose(~Machine, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
-    _ => B.choose(~Machine, create,
+    _ => B.choose(~Machine, Bool.or(create, B.tracked(R.Node.kind(n))),
       _ => Machine{w, OwnerTasks{[O.TrimDeps{id}]} <> ending, stack},
       _ => Machine{R.World.with_trims(w, B.append(Nat, R.World.trims(w), [id])), ending, stack}),
     _ => Machine{w, ending, stack})
@@ -980,8 +1010,9 @@ def publishState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
         _ => Machine{w, ending, stack}))
 
 # recompute's finally is shared by normal return and exceptional unwind.
-def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool) -> R.World:
+def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool, stale: Bool) -> R.World:
   +w = R.World.with_tracking(w, tracking)
+  +w = R.World.with_stale(w, stale)
   +n = B.node(w, id)
   +config = B.set(B.clear(R.Node.config(n), K.CONFIG_VERDICT()), U32.and(R.Node.flags(n), K.REACTIVE_PROBED()))
   +w = B.store_node(w, id, R.Node.with_config(n, config))
@@ -1007,13 +1038,13 @@ def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
 # failure. A release failure replaces that failure and skips the remaining tail.
 def startPassFinally(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, value: R.Value, joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
-      +w = passFinally(w, id, create, context, tracking, reask)
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+      +w = passFinally(w, id, create, context, tracking, reask, stale)
       Machine{R.World.with_fault(w, R.Healthy{}), PassReleases{frame, 0n, value, joined, stagedErr, missed, R.World.fault(w)} <> rest, stack}
 
 def passReleases(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +index: Nat, +value: R.Value, +joined: Bool, +stagedErr: Bool, +missed: Bool, +prior: R.Fault) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       +nodes = B.get(List<&2, Nat>, R.World.releaseLists(w), released, [])
       B.choose(~Machine, Nat.is_ge(index, B.length(Nat, nodes)),
         _ =>
@@ -1028,7 +1059,7 @@ def passReleases(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 def finishReady(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, +keepFlight: Bool) -> Machine:
   match stack frame:
-    case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       +w = B.choose(~R.World, Bool.and(Bool.not(keepFlight), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
       +w = B.choose(~R.World, keepFlight, _ => w, _ => B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})))
@@ -1094,7 +1125,7 @@ def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved, released}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved, released, stale}:
       finishResult(w, rest, stack, frame, id, flight)
 
 # Body throw -> source catch -> finally -> publication tail, with the caller's
@@ -1106,7 +1137,7 @@ def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: P
 # stageError's assignment is complete only after its release walk returns.
 def finishCatch(+w: R.World, rest: List<&2, Task>, +frame: PassFrame, stagedErr: Bool) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
       startPassFinally(w, rest, saved, frame, previous, joined, stagedErr, missed)
@@ -1146,7 +1177,7 @@ def catchPass(+w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
 
 def catchSelfRetire(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +notReady: Bool, stagedErr: Bool) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       +ending = {CatchRetireSources{frame, Bool.or(notReady, stagedErr)} <> rest : List<&2, Task>}
       B.choose(~Machine, Bool.and(notReady, Bool.and(pendingSource, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n))),
         _ => pendingResume(ending, stack, Q.beginSettlement(w, id, id)),
@@ -1154,7 +1185,7 @@ def catchSelfRetire(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def catchRetireSources(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: PassFrame, +retire: Bool) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       B.choose(~Machine, retire, _ => retireOutgoing(w, rest, stack, id, sources, True{}), _ => Machine{w, rest, stack})
 
 # handleAsync's post-.then verdict, still inside recompute's try/catch.
@@ -1492,12 +1523,31 @@ def runEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
         Machine{w, todo, stack}),
     _ => Machine{w, rest, stack})
 
-def queue_tasks(ids: List<&2, Nat>) -> List<&2, Task>:
+def queue_tasks(+w: R.World, ids: List<&2, Nat>) -> List<&2, Task>:
   match ids:
     case Nil{}:
       []
-    case id <> +rest:
-      RunEffect{id} <> queue_tasks(rest)
+    case +id <> +rest:
+      B.choose(~Task, B.tracked(R.Node.kind(B.node(w, id))), _ => RunTracked{id}, _ => RunEffect{id}) <> queue_tasks(w, rest)
+
+# core/effect.ts:trackedEffect.run. Multiple heap visits can enqueue this same
+# bound closure: modified deduplicates its actual pass, not its queue entries.
+def runTracked(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  B.choose(~Machine, Bool.and(R.Node.modified(B.node(w, id)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()))),
+    _ => Machine{B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{})), Recompute{id, False{}} <> rest, stack},
+    _ => Machine{w, rest, stack})
+
+# core.ts:GlobalQueue._update. Tracked effects visit the heap before the seam
+# and enqueue their _run in the user phase; their body executes only afterward.
+def visitHeap(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  B.choose(~Machine, B.tracked(R.Node.kind(B.node(w, id))),
+    _ =>
+      +w = H.deleteFromHeap(w, id)
+      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
+      Machine{S.enqueue(w, id), HeapLoop{} <> rest, stack},
+    _ => B.choose(~Machine, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY()))),
+      _ => Machine{S.deferZombie(w, id), HeapLoop{} <> rest, stack},
+      _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}))
 
 def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   B.choose(~Machine, Nat.is_gt(R.World.minimum(w), R.World.maximum(w)),
@@ -1507,9 +1557,7 @@ def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       B.choose(~Machine, Nat.is_eq(id, 0n),
         _ => Machine{R.World.with_minimum(w, 1n+R.World.minimum(w)), HeapLoop{} <> rest, stack},
         _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), 8),
-          _ => B.choose(~Machine, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY()))),
-            _ => Machine{S.deferZombie(w, id), HeapLoop{} <> rest, stack},
-            _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}),
+          _ => visitHeap(w, rest, stack, id),
           _ => Machine{H.adjustHeight(w, id), HeapLoop{} <> rest, stack})))
 
 def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
@@ -1864,6 +1912,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       branch(w, rest, stack, yes, no, prev)
     case RestoreTracking{tracking} <> +rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
+    case RestoreStale{stale} <> rest:
+      Machine{R.World.with_stale(w, stale), rest, stack}
     case EnterOwner{body, previous} <> rest:
       enterOwner(w, rest, stack, body, previous)
     case RestoreContext{owner, tracking} <> rest:
@@ -1969,6 +2019,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           _ => Machine{S.enqueue(w, id), rest, stack}, _ => Machine{w, RunEffect{id} <> rest, stack}))
     case RunEffect{id} <> +rest:
       runEffect(w, rest, stack, id)
+    case RunTracked{id} <> rest:
+      runTracked(w, rest, stack, id)
+    case TrackedAfterCleanup{+id, body} <> rest:
+      Machine{R.World.with_stale(B.event(w, R.Invoked{id}), True{}), Evaluate{body, R.Undefined{}} <> RestoreStale{R.World.stale(w)} <> InstallReturnedCleanup{id} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, stack}
     case ApplyEffect{id} <> rest:
       applyEffect(w, rest, stack, id)
     case InstallEffectCleanup{+id} <> rest:
@@ -2002,11 +2056,11 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case RenderQueue{} <> +rest:
       B.choose(~Machine, List.is_empty(&2, Nat, R.World.renderQueue(w)),
         _ => Machine{w, UserQueue{} <> rest, stack},
-        _ => Machine{R.World.with_renderQueue(w, []), B.append(Task, queue_tasks(R.World.renderQueue(w)), UserQueue{} <> rest), stack})
+        _ => Machine{R.World.with_renderQueue(w, []), B.append(Task, queue_tasks(w, R.World.renderQueue(w)), UserQueue{} <> rest), stack})
     case UserQueue{} <> +rest:
       B.choose(~Machine, List.is_empty(&2, Nat, R.World.userQueue(w)),
         _ => Machine{w, rest, stack},
-        _ => Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(R.World.userQueue(w)), rest), stack})
+        _ => Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(w, R.World.userQueue(w)), rest), stack})
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case RoundEnd{} <> +rest:
@@ -2032,6 +2086,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       catchProtocol(w, rest, saved, id, result, errorAuto, R.World.fault(w))
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
+    case RestoreStale{stale} <> rest:
+      Machine{R.World.with_stale(w, stale), rest, stack}
     case RestoreContext{owner, tracking} <> rest:
       Machine{L.restore(w, owner, tracking), rest, stack}
     case Finish{frame} <> rest:

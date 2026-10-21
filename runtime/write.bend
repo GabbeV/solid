@@ -20,14 +20,18 @@ def is_user(k: R.NodeKind) -> Bool:
     case _:
       False{}
 
+# Tracked _run closures enter EFFECT_USER, while their node _type stays tracked.
+def userQueue(+k: R.NodeKind) -> Bool:
+  Bool.or(is_user(k), B.tracked(k))
+
 def enqueueIn(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
   B.choose(~R.World, B.effect(R.Node.kind(B.node(w, id))),
     _ =>
       +w = B.choose(~R.World, Nat.is_ne(lane, 0n),
-        _ => B.choose(~R.World, is_user(R.Node.kind(B.node(w, id))),
+        _ => B.choose(~R.World, userQueue(R.Node.kind(B.node(w, id))),
           _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.userQueue(B.transaction(w, lane)), [id]))),
           _ => B.store_transaction(w, lane, R.Transaction.with_renderQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, lane)), [id])))),
-        _ => B.choose(~R.World, is_user(R.Node.kind(B.node(w, id))),
+        _ => B.choose(~R.World, userQueue(R.Node.kind(B.node(w, id))),
         _ => R.World.with_userQueue(w, B.append(Nat, R.World.userQueue(w), [id])),
         _ => R.World.with_renderQueue(w, B.append(Nat, R.World.renderQueue(w), [id]))))
       B.schedule(w),

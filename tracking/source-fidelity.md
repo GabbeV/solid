@@ -26,6 +26,13 @@ records shared mutation segments, source ordering, tests, closed laws and limits
 Older staged notes below retain the history of that migration. No pin change or
 semantic workaround is active.
 
+## Tracked effect execution
+
+The specialized tracked effect now follows its distinct heap-to-user-phase path;
+it is not implemented as an ordinary user effect. Source stale scope is represented
+explicitly and restored through normal/exceptional return points. See
+[tracked-effects.md](tracked-effects.md) for the scoped completion and limitations.
+
 ## What line by line means here
 
 Each source function and meaningful operation should be locatable in Bend: branch

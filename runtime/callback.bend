@@ -41,6 +41,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.WriteExpr{signal, bind(value, first, second), updater}
     case R.EffectCreate{compute, spec}:
       R.EffectCreate{bind(compute, first, second), spec}
+    case R.TrackedCreate{body}:
+      R.TrackedCreate{bind(body, first, second)}
     case R.MemoAccessor{compute, options}:
       R.MemoAccessor{bind(compute, first, second), options}
     case R.MemoRead{compute, options}:

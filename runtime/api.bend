@@ -74,6 +74,17 @@ def createEffectWithOptions(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, tar
 def createEffect(fuel: Nat, w: R.World, expr: R.Expr, user: Bool, target: Nat, scheduled: Bool, deferred: Bool, parent: Nat) -> R.World:
   createEffectWithOptions(fuel, w, expr, user, target, scheduled, deferred, N.defaults(), parent)
 
+# signals.ts:createTrackedEffect, production BaseEffectOptions has no behavior knobs.
+def createTrackedEffect(fuel: Nat, +w: R.World, body: R.Expr, +parent: Nat) -> R.World:
+  +context = R.World.context(w)
+  +tracking = R.World.tracking(w)
+  +w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  +w = C.world(C.eval(fuel, w, R.TrackedCreate{body}, R.Undefined{}))
+  R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+def trackedCreate(body: R.Expr) -> R.Expr:
+  R.TrackedCreate{body}
+
 # Presence of loadingValue is independent from its payload being undefined.
 def nodeOptions(equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, loadingPresent: Bool, loadingValue: R.Value, unobserved: Nat) -> R.NodeOptions:
   R.NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, 0,

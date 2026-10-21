@@ -55,6 +55,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
               R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
             case R.SomeInlineBody{expr, returnsCleanup}:
               R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bind(expr, depth, signal), returnsCleanup}}}
+    case R.TrackedCreate{body}:
+      R.TrackedCreate{bind(body, depth, signal)}
     case R.ContextGet{key, owner}:
       R.ContextGet{key, bind(owner, depth, signal)}
     case R.ContextSet{key, value, owner}:

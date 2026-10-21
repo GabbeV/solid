@@ -40,7 +40,7 @@ def notifyEffectStatusOf(+w: R.World, +id: Nat, +status: U32, +error: R.Value) -
       _ => B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_ERROR()),
         _ => W.enqueue(B.store_node(w, id, R.Node.with_modified(n, True{})), id), _ => w),
       _ => R.World.with_fault(haltReactivity(w, unwrapStatusError(error)), R.CallbackThrown{error})),
-    _ => B.choose(~R.World, Bool.and(Bool.not(W.is_user(R.Node.kind(n))), B.has(status, K.STATUS_PENDING())),
+    _ => B.choose(~R.World, Bool.and(X.isRender(R.Node.kind(n)), B.has(status, K.STATUS_PENDING())),
       _ => X.joinFuture(w, 0n), _ => w))
 
 def notifyEffectStatus(+w: R.World, +id: Nat) -> R.World:

@@ -33,7 +33,7 @@ try{
     halted:w.halted,haltNotified:w.haltNotified,exception:'cause'in w.fault?decode(w.fault.cause):undefined,reports:list(w.reports).map(r=>[r.kind,'value'in r.cause?decode(r.cause.value):undefined])};}
   function reference(op,kind,status,config,code,sources){
     S.probeReset();S.setContextInternal(null);const r=S.createOwner();S.setContextInternal(r);
-    const n=kind===0?S.computed(()=>7,{lazy:true}):S.createEffectNode(()=>7,()=>{},undefined,kind===1?K.EFFECT_USER:K.EFFECT_RENDER,{lazy:true});
+    const n=kind===0?S.computed(()=>7,{lazy:true}):S.createEffectNode(()=>7,()=>{},undefined,kind===1?K.EFFECT_USER:kind===3?K.EFFECT_TRACKED:K.EFFECT_RENDER,{lazy:true});
     const a=S.computed(()=>11,{lazy:true}),b=S.computed(()=>13,{lazy:true});S.setContextInternal(null);
     const nodes=[null,r,n,a,b],id=n=>n?nodes.indexOf(n):0,errors=new Map(),reports=[];
     const value=[undefined,null,false,42][code];S.link(n,a);S.link(a,b);S.link(n,b);n._statusFlags=status;a._config=config;
@@ -47,8 +47,8 @@ try{
       halted:S.probeHalted,haltNotified:S.probeHaltNotified,exception:decode(exception),reports:reports.map(([kind,cause])=>[kind,decode(cause)])};
   }
   let count=0;
-  for(const op of [0,1,2,3,4])for(const kind of [0,1,2])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
+  for(const op of [0,1,2,3,4])for(const kind of [0,1,2,3])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
     assert.deepEqual(actual(B.run(op,kind,status,config,code,sources)),reference(op,kind,status,config,code,sources),JSON.stringify({op,kind,status,config,code,sources}));count++;
   }
-  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Pending execution remains unfinished.`);
+  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Tracked effects retain their distinct pending/error notifier branches.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

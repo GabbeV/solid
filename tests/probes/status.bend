@@ -17,7 +17,7 @@ def fixture(+op: U32, +kind: U32, status: U32, config: U32, +value: R.Value, sou
   +w = N.createOwner(R.World.with_clock(B.empty(), 5n), 0n, False{})
   +opts = R.NodeOptions.with_lazy(N.defaults(), True{})
   +w = B.choose(~R.World, U32.is_eq(kind, 0), _ => N.computed(0n, w, R.Literal{R.Number{7n}}, opts, 1n),
-    _ => N.createEffectNode(w, R.Literal{R.Number{7n}}, B.choose(~R.NodeKind, U32.is_eq(kind, 1), _ => R.User{}, _ => R.Render{}), 2n, opts, 1n, 0n, 0n))
+    _ => N.createEffectNode(w, R.Literal{R.Number{7n}}, B.choose(~R.NodeKind, U32.is_eq(kind, 1), _ => R.User{}, _ => B.choose(~R.NodeKind, U32.is_eq(kind, 3), _ => R.Tracked{}, _ => R.Render{})), 2n, opts, 1n, 0n, 0n))
   +w = N.computed(0n, w, R.Literal{R.Number{11n}}, opts, 1n)
   +w = N.computed(0n, w, R.Literal{R.Number{13n}}, opts, 1n)
   +w = G.link(G.link(G.link(w, 2n, 3n), 3n, 4n), 2n, 4n)

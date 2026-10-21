@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories: 2169 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect histories: 2216 total, plus explicit host object-identity and native timeout
   checks. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -17,7 +17,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   checkpoints do not settle or wait for unresolved external promises.
 - alignment runs read-only upstream-impact checks and actual pinned helpers / source
   closures: 10,752 constructor, 4,608 commit, 768 read (+24 held stash, +24 verdict
-  carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 2,880 status, 2,880 pending (+9 Set alias),
+  carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,840 status (+32 tracked-run closure), 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
   comparisons. The latter include genuine foreign-realm Error prototype controls;
@@ -27,16 +27,16 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 101 isolated source-changing copies and requires parity
+- mutations compiles 105 isolated source-changing copies and requires parity
   assertions to reject them. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
   change during the run, and seals source/output hashes only after success.
 
-The roots now contain forty-nine closed composed regressions: nine earlier
+The roots now contain fifty-one closed composed regressions: nine earlier
 chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
-landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, plus four upstream
+landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, two tracked-effect phase/write and rerun/disposal-cleanup cases, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, plus four upstream
 integration regressions for lazy reuse, writable error display/commit, protocol
 throw containment and empty flatten. The original negative laws remain on
 baseline/solid-d2ad8b28. A new explicitly negative collector-leak law preserves the

@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2169 differential histories, 101 rejected compiled mutations,
-and 49 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2216 differential histories, 105 rejected compiled mutations,
+and 51 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -12,6 +12,16 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Tracked effects milestone
+
+`createTrackedEffect` now uses the actual lazy-computed/heap/user-queue path.
+Its body tracks reads, writes only to the next commit, and returns cleanup that
+runs before its next body or disposal. The source modified/disposed gates,
+children-forbidden posture, pending/error notifier and immediate trim are retained.
+[The review](tracked-effects.md) records source segments, 47 public histories,
+32 native runner comparisons and two concrete laws. This unlocks the owned
+`onSettled` implementation; general unowned queue callbacks remain the next gap.
 
 ## Current source update
 

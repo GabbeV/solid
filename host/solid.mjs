@@ -65,6 +65,10 @@ export class SolidRuntime {
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
     if(e.owner)return this.S.getOwner();
     if(e.observer)return this.S.getObserver();
+    if(e.trackedCreate){
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      return this.createTracked(name,e.trackedCreate,values,locals);
+    }
     if(e.signalComputeScope){
       const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
       requireTeardownProgram(this.programActions,options.unobserved);
@@ -391,6 +395,18 @@ export class SolidRuntime {
     // Read-only construction observation: a lazy body has not called getOwner
     // yet. In this grammar it cannot construct children before its first pass.
     if(options.lazy&&parent)this.namedOwners.set(parent._firstChild,name);
+  }
+  createTracked(name,body,values=[],locals=[]){
+    const parent=this.S.getOwner();
+    this.S.createTrackedEffect(()=>{
+      const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+      this.traceEvents.push(['compute',name]);
+      return this.returnedCleanup(this.evaluate(body,undefined,values,locals));
+    });
+    if(parent){const node=parent._firstChild;this.sourceNames.set(node,name);this.notPending??=node._pendingValue;}
+  }
+  tracked(name,body,{owner='root'}={}){
+    return this.S.runWithOwner(this.ownerFor(owner),()=>this.createTracked(name,body));
   }
   effect(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);

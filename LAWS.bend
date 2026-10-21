@@ -22,6 +22,7 @@ import ./proof/setters.bend as Setters
 import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/getter-cleanup.bend as GetterCleanup
+import ./proof/tracked-effects.bend as TrackedEffects
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/callback-values.bend as CallbackValues
@@ -230,3 +231,9 @@ law empty_flatten_returns_undefined:
 # Negative upstream regression at 71153bf0, not a desired cleanup guarantee.
 law throwing_teardown_leaks_release_collector:
   {Integrated.collectorLeak() == Integrated.expectedCollectorLeak() : Integrated.LeakView}
+
+law tracked_effect_runs_after_commit:
+  {TrackedEffects.phase() == TrackedEffects.expectedPhase() : TrackedEffects.View}
+
+law tracked_effect_cleans_before_rerun_and_disposal:
+  {TrackedEffects.cleanup() == TrackedEffects.expectedCleanup() : TrackedEffects.View}

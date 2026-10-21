@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['tracked heap visit runs before the commit seam','runtime/core.bend','Machine{S.enqueue(w, id), HeapLoop{} <> rest, stack}','Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}','tests/tracked-effects.mjs','visitHeap'],
+  ['tracked runner ignores its modified gate','runtime/core.bend','Bool.and(R.Node.modified(B.node(w, id)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))','Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()))','tests/tracked-alignment.mjs','runTracked'],
+  ['tracked body keeps its prior cleanup installed','runtime/core.bend','R.Node.with_cleanup(B.node(w, id), 0n)','B.node(w, id)','tests/tracked-effects.mjs','trackedBody'],
+  ['tracked pass forgets its incoming stale scope','runtime/core.bend','+w = R.World.with_stale(w, stale)','+w = R.World.with_stale(w, False{})','tests/tracked-alignment.mjs','passFinally'],
   ['getter cleanup reads the ambient receiver','runtime/core.bend','Machine{w, ReadNode{signal} <> rest, stack}','Machine{w, ReadNode{R.World.context(w)} <> rest, stack}','tests/getter-cleanup.mjs','callbackAction'],
   ['getter cleanup loses its returned identity','runtime/core.bend','Machine{J.cleanupAccessor(w, R.World.context(w), signal), rest, R.AccessorReference{signal} <> tail}','Machine{J.cleanupAccessor(w, R.World.context(w), signal), rest, R.Undefined{} <> tail}','tests/getter-cleanup.mjs','onCleanupValue'],
   ['getter cleanup allocates a fresh callable per registration','runtime/callable.bend','+old = findAccessor(R.World.cleanupPrograms(w), signal, 0n)','+old = {0n : Nat}','tests/getter-cleanup.mjs','encodeAccessor'],

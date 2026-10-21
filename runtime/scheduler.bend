@@ -71,7 +71,7 @@ def commitAnswerValue(+w: R.World, +id: Nat) -> R.World:
         _ =>
           +w = B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), False{}))
           B.store_extension(w, id, R.NodeExtension.with_flushed(B.extension(w, id), R.Empty{})), _ => w)
-      B.choose(~R.World, B.effect(R.Node.kind(n)),
+      B.choose(~R.World, Bool.and(B.effect(R.Node.kind(n)), Bool.not(B.tracked(R.Node.kind(n)))),
         _ => enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id), _ => w),
     _ => w)
 
