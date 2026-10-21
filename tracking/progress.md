@@ -30,8 +30,8 @@ closures/protocol objects and dev/observe behavior. [The action readiness review
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
 invokes its callback without draining; the review explicitly preserves that arm. Arbitrary
-graph/history correctness and repeated-update symbolic graph families remain
-open. None of the test counts should be read as that fraction of Solid completed.
+graph/history correctness and arbitrary-length symbolic histories remain open.
+The new fixed zero-initial scalar-memo family proves exactly two updates. None of the test counts should be read as that fraction of Solid completed.
 
 
 The latest proof checkpoint closes the previously explicit scalar-memo boundary:
@@ -56,7 +56,8 @@ The reviewed d682022c update adds twelve paired effect-equality histories and
 keeps two native projection rejection controls explicitly source-only. Its full
 signals suite passes 330 files / 5,432 tests. Active dev diagnostics and projection
 families remain outside the Bend implementation; prior integrated fixes and the
-two deliberately preserved bugs are revalidated.
+two then-preserved bugs were revalidated at that historical pin. Both are fixed
+at the current pin.
 
 The preceding checkpoint established the two-memo/render conditional 95-step
 drain, exact application trace and fixed constructor boundary for every natural
@@ -92,3 +93,9 @@ Original repros and controls distinguish old/new pins; both former negative laws
 now state passing behavior. Two new quantified continuation properties preserve
 the exact exceptional machine and captured node. Active verdict-mount fix #4207
 is checked only in native Solid because those engines remain outside Bend.
+
+[Two successive memo updates](memo-repeat-proof.md) now compose the real
+constructor, both public setters and both drains for every natural proposal pair
+and independent budgets >= 40. Three new public staging/final-World/view laws
+close the second-update boundary. Sixty-four finite native/canonical controls are
+separate evidence; no runtime, source pin or deviation changed.

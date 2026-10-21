@@ -81,8 +81,9 @@ translated, not a semantic workaround. No source-node field was added.
   checked. These are fixed program laws, not general graph correctness or
   TypeScript/Bend equivalence.
 
-Current totals are 2,216 public histories, full helper alignment including the
+Historical milestone totals were 2,216 public histories, full helper alignment including the
 32 tracked-run probes and 136 separate owner/core probes, 105 compiled mutations,
 and 51 concrete kernel regressions (50 positive, one preserved collector-leak
 counterexample), plus the existing general helper laws. The three original merged
-upstream fixes remain validated; #4176's unmerged finally change is not applied.
+upstream fixes were validated at that checkpoint. Current verification supersedes
+these totals; #4176 is now merged and integrated at 0222d684.

@@ -1,4 +1,5 @@
 import Base
+import ./proof/memo-repeat-public.bend as MemoRepeat
 import ./proof/direct-owner-laws.bend as DirectOwners
 import ./proof/argument-vector-laws.bend as ArgumentVectors
 import ./proof/chain-setter.bend as ChainSetter
@@ -496,3 +497,12 @@ def Laws.throwing_teardown_finally_restores_previous_collector(w, rest, stack, i
 
 def Laws.reaction_returns_captured_node(w, rest, stack, node):
   {==}
+
+def Laws.scalar_memo_second_public_staging(first, second, firstExtra):
+  MemoRepeat.public_staged(first, second, firstExtra)
+
+def Laws.scalar_memo_two_updates_final_world(first, second, firstExtra, secondExtra):
+  MemoRepeat.world(first, second, firstExtra, secondExtra)
+
+def Laws.scalar_memo_two_updates_complete(first, second, firstExtra, secondExtra):
+  MemoRepeat.complete(first, second, firstExtra, secondExtra)

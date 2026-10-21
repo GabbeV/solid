@@ -126,7 +126,11 @@ issue/fix links, exact affected source, baseline versus patched expectations, an
 what will cause the workaround to be removed. Present report-ready evidence to
 the user; filing or contacting maintainers requires the user's explicit instruction.
 
-## Preserved upstream counterexample
+## Historical upstream counterexamples
+
+The following paragraphs describe the original d2ad8b28 reports. All five tracked
+fixes are integrated at the current pin; see upstream-issues.json and the latest
+pin review. Original source snapshots/negative laws remain in Git history.
 
 [SOLID-EMPTY-FLATTEN-001](upstream/empty-flatten.md) records a current-next-head
 source-only object leak for an immediately settled promise of an immediately

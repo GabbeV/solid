@@ -1,4 +1,6 @@
 import Base
+import ./proof/memo-repeat-public.bend as MemoRepeat
+import ./proof/memo-repeat-states.bend as MemoRepeatStates
 import ./runtime/construct-state.bend as OwnerConstruction
 import ./runtime/owner-state.bend as OwnerLiteral
 import ./proof/direct-owner-laws.bend as DirectOwners
@@ -922,3 +924,25 @@ law reaction_returns_captured_node:
   for +node: Nat
   {Core.dispatch(w, Core.ReactionReturn{node} <> rest, stack)
     == Core.Machine{w, rest, R.OwnerReference{node} <> stack} : Core.Machine}
+
+# Fixed zero-initial scalar graph, two arbitrary successive proposals and both
+# drain budgets >= 40. The constructor and first update are included.
+law scalar_memo_second_public_staging:
+  for +first: Nat
+  for +second: Nat
+  for +firstExtra: Nat
+  {API.setSignal(API.flush(Nat.add(40n, firstExtra), API.setSignal(MemoDriver.base(), 2n, R.Number{first})), 2n, R.Number{second}) == Core.world(MemoRepeatStates.state_0(first, second)) : R.World}
+
+law scalar_memo_two_updates_final_world:
+  for +first: Nat
+  for +second: Nat
+  for +firstExtra: Nat
+  for +secondExtra: Nat
+  {API.flush(Nat.add(40n, secondExtra), API.setSignal(API.flush(Nat.add(40n, firstExtra), API.setSignal(MemoDriver.base(), 2n, R.Number{first})), 2n, R.Number{second})) == MemoRepeatStates.finalWorld(first, second) : R.World}
+
+law scalar_memo_two_updates_complete:
+  for +first: Nat
+  for +second: Nat
+  for +firstExtra: Nat
+  for +secondExtra: Nat
+  {MemoDriver.view(API.flush(Nat.add(40n, secondExtra), API.setSignal(API.flush(Nat.add(40n, firstExtra), API.setSignal(MemoDriver.base(), 2n, R.Number{first})), 2n, R.Number{second}))) == MemoDriver.expected(second) : MemoDriver.View}

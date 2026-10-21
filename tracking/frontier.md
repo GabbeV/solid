@@ -89,6 +89,14 @@ graphs remain outside that result. Three general transaction-merge laws
 now cover open-count sums, redirects and action markers in both directions
 between two represented ordinary roots.
 
+## Two successive memo updates
+
+[The two-update family](memo-repeat-proof.md) now covers the actual fixed
+constructor, two arbitrary natural proposals, both public setters and independent
+>=40-step drains. Three root laws identify the second staged World, final World
+and committed values. Sixty-four native/canonical controls support correspondence
+separately; arbitrary-length histories and arbitrary graphs remain open.
+
 ## Two-memo/render proof milestone
 
 The [larger graph drain](chain-proof.md) now has a checked 95-step completion
