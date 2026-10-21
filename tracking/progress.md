@@ -11,7 +11,7 @@ the complete b0ad1df5 checkpoint on baseline/solid-b0ad1df5. The semantic deviat
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
 | General local guarantees | Existing publication/read/signal and representation laws | 34 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
-| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; two-memo/render conditional 95-step drain, constructor and exact application trace now checked (larger setter bridge open) |
+| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, two call arguments and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Public comparison corpus | 2,348 histories | 2,678 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 65, including two deliberately preserved upstream bugs |
@@ -30,7 +30,7 @@ closures/protocol objects and dev/observe behavior. [The action readiness review
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
 invokes its callback without draining; the review explicitly preserves that arm. Arbitrary
-graph/history correctness and the larger two-memo/render public setter bridge remain
+graph/history correctness and repeated-update symbolic graph families remain
 open. None of the test counts should be read as that fraction of Solid completed.
 
 
@@ -58,10 +58,17 @@ signals suite passes 330 files / 5,432 tests. Active dev diagnostics and project
 families remain outside the Bend implementation; prior integrated fixes and the
 two deliberately preserved bugs are revalidated.
 
-The larger two-memo/render family now has a kernel-checked 95-step drain and
-exact final-application trace for all natural proposals and sufficient budgets,
-plus its fixed constructor boundary. This closes the former composed-drain gap.
-The public setter bridge is still open and explicitly excluded from the claim.
-Eight finite native/canonical controls support it without proving it. Two general
+The preceding checkpoint established the two-memo/render conditional 95-step
+drain, exact application trace and fixed constructor boundary for every natural
+proposal and sufficient budget. Its public setter bridge was still open then.
+Eight finite native/canonical controls supported it without proving it. Two general
 publication composition laws and two additional rejected compiled variants were
 added; the runtime did not change. See [the proof boundary](chain-proof.md).
+
+The next continuation closes that larger graph's public setter bridge. A single
+subscriber iteration is checked with symbolic remaining fuel and the actual
+canonical arena, then the two iterations compose at the real setter's return
+points. Four public properties now connect the fixed constructor, actual setter,
+complete final World, values and exact render applications for every natural
+proposal and drain budget >= 95. The runtime and original kernel are unchanged.
+The earlier staged-arena condition remains only on the supporting drain lemma.

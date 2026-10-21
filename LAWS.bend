@@ -1,4 +1,6 @@
 import Base
+import ./proof/chain-setter.bend as ChainSetter
+import ./proof/chain-public-program.bend as ChainPublic
 import ./proof/chain-states.bend as ChainStates
 import ./proof/chain-staging.bend as ChainStaging
 import ./proof/chain-observation.bend as ChainObservation
@@ -783,3 +785,23 @@ law staged_graph_renders_only_its_final_proposal:
   for +input: Nat
   for +extra: Nat
   {ChainObservation.applications(R.World.events(API.flush(Nat.add(95n, extra), Core.world(ChainStates.state_0(input))))) == [R.Number{2n}, Chain.answer(input)] : List<&2, R.Value>}
+
+# Complete constructor/setter/drain family for the actual fixed graph program.
+law two_memo_render_public_setter:
+  for +input: Nat
+  {API.setSignal(Chain.initial(), 2n, R.Number{input}) == Core.world(ChainStates.state_0(input)) : R.World}
+
+law two_memo_render_public_program:
+  for +input: Nat
+  for +extra: Nat
+  {Chain.view(API.flush(Nat.add(95n, extra), API.setSignal(Chain.initial(), 2n, R.Number{input}))) == Chain.expected(input) : Chain.View}
+
+law two_memo_render_public_final_world:
+  for +input: Nat
+  for +extra: Nat
+  {API.flush(Nat.add(95n, extra), API.setSignal(Chain.initial(), 2n, R.Number{input})) == ChainStates.finalWorld(input) : R.World}
+
+law two_memo_render_public_application_trace:
+  for +input: Nat
+  for +extra: Nat
+  {ChainObservation.applications(R.World.events(API.flush(Nat.add(95n, extra), API.setSignal(Chain.initial(), 2n, R.Number{input})))) == [R.Number{2n}, Chain.answer(input)] : List<&2, R.Value>}

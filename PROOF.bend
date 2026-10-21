@@ -1,4 +1,6 @@
 import Base
+import ./proof/chain-setter.bend as ChainSetter
+import ./proof/chain-public-program.bend as ChainPublic
 import ./proof/chain-staging.bend as ChainStaging
 import ./proof/chain-observation.bend as ChainObservation
 import ./proof/chain-publication.bend as ChainPublication
@@ -429,3 +431,15 @@ def Laws.staged_two_memo_render_graph_completes(input, extra):
 
 def Laws.staged_graph_renders_only_its_final_proposal(input, extra):
   ChainObservation.completes(input, extra)
+
+def Laws.two_memo_render_public_setter(input):
+  ChainSetter.constructed(input)
+
+def Laws.two_memo_render_public_program(input, extra):
+  ChainPublic.complete(input, extra)
+
+def Laws.two_memo_render_public_final_world(input, extra):
+  ChainPublic.world(input, extra)
+
+def Laws.two_memo_render_public_application_trace(input, extra):
+  ChainPublic.applications(input, extra)

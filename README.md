@@ -200,7 +200,8 @@ at least 14 steps. General transaction merge laws also preserve summed open
 counts, redirect identity and the action marker for two ordinary roots. These
 remain scoped semantic properties of the actual Bend code.
 
-The [larger graph proof](tracking/chain-proof.md) now checks a 95-step two-memo /
-render drain and its exact application trace for every natural proposal, from the
-specified staged arena. Its constructor is checked; the larger public setter
-bridge remains open. The complete scalar-memo public theorem remains separate.
+The [larger graph proof](tracking/chain-proof.md) now also has a checked public setter bridge and complete
+constructor/setter/flush family for every natural proposal and drain budget >= 95,
+including its complete final World and exact render-application trace. The staged
+precondition remains on the supporting drain lemma, not on the composed public
+program. See [the graph proof boundary](tracking/chain-proof.md).

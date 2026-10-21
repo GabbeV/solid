@@ -1,5 +1,5 @@
-// Finite public/canonical/native graph controls. The independent theorem starts
-// at its explicit staged arena; these controls do not prove the setter bridge.
+// Finite public/canonical/native graph controls. The independent program theorem
+// and its setter bridge are checked separately; these controls are finite.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -48,5 +48,5 @@ try{
    assert.deepEqual(b.trace().filter(e=>e[0]==='apply').map(e=>e[2]),[2,(next+1)*2+next],'one application per update, including equal-value input');
   }finally{for(const r of [b,s]){r.attempt('dispose');r.attempt('flush');}await setImmediate();}
  }
- console.log('8 finite two-memo/render controls match actual constructors/setters, complete canonical Worlds, native traces and exactly one final render application per update; the public setter bridge remains a separate open proof.');
+ console.log('8 finite two-memo/render controls match actual constructors/setters, complete canonical Worlds, native traces and exactly one final render application per update; the quantified public program and setter bridge are independently kernel-checked.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

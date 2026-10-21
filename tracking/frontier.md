@@ -63,8 +63,8 @@ two-step setter close the previous staged-arena precondition. The original theor
 initial value and proposal, all constructor budgets >= 14 and drain budgets >= 40.
 Graph topology is fixed and has no effects. This is a complete quantified
 program result within that domain, with no runtime change or TS equivalence claim.
-The two-memo/render conditional drain and constructor are now checked; its
-public setter bridge remains open.
+The two-memo/render constructor, setter bridge and complete public drain are
+now checked as well.
 
 The constructor is also proved separately for every natural initial value and
 all budgets >= 14, using a symbolic path. The complete update/drain family now also quantifies the initial value; arbitrary
@@ -77,8 +77,10 @@ between two represented ordinary roots.
 The [larger graph drain](chain-proof.md) now has a checked 95-step completion
 path and exact render-application trace for every natural proposal and all larger
 budgets, from its explicit staged arena. Its fixed constructor is also checked.
-The public setter bridge remains open; eight finite native/canonical controls
-pass but do not establish that missing theorem. Two general successful-publication
+The setter bridge now closes that starting-state precondition: four public
+constructor/setter/drain/final-World/trace properties quantify every natural
+proposal and drain budget >= 95. Eight finite native/canonical controls pass
+separately. Two general successful-publication
 composition laws also check. The runtime is unchanged by this proof milestone.
 
 ## Allocation and cleanup proof milestone
@@ -88,8 +90,8 @@ now prove exact identity, single append, default fields and idempotence under th
 sentinel invariant. Three [cleanup laws](general-properties.md#reactive-cleanup-capture)
 prove normal-frame detachment before invocation, non-replay and reverse order.
 These are quantified local results over arbitrary surrounding state; the runtime
-is unchanged. The two-memo/render public setter bridge remains resource limited; its
-conditional 95-step drain is now checked.
+is unchanged. The two-memo/render setter bridge and complete public program
+are now also checked; see the graph milestone above.
 
 ## Memo staging proof milestone
 

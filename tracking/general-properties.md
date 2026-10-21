@@ -323,9 +323,9 @@ quantified result. The original fixed-initial theorem and witnesses remain check
 
 [The graph proof boundary](chain-proof.md) records the completed conditional
 95-step drain, exact render-application trace, supporting fixed constructor lemma
-and the still-open public setter bridge. The proposal is arbitrary Nat, the drain
-budget is `95 + extra`, and the topology/initial zero value are fixed. The larger
-public constructor/setter/flush program is not claimed proved. Eight additional
+and, now, its separately checked public setter bridge. The proposal is arbitrary
+Nat, the drain budget is `95 + extra`, and the topology/initial zero value are
+fixed. The complete public composition is recorded in the next section. Eight additional
 finite controls compare public entry behavior and whole Worlds with pinned Solid;
 they are separate from the quantified results.
 
@@ -341,5 +341,23 @@ laws through the default comparison entry.
 
 Earlier scratch references above retain the old failed larger-graph experiment.
 The active `chain-staging.bend` supersedes that experiment's composed-drain limit;
-the larger setter bridge remains a separate unproved obligation. Resource-limited
+the new setter proof below closes its remaining boundary. Resource-limited
 scratch attempts were discarded rather than counted as positive proof evidence.
+
+## Complete public two-memo/render program
+
+The staged-arena precondition above is now discharged by
+`proof/chain-setter.bend`. `chain-subscriber-step.bend` proves each of the two
+actual notification iterations for arbitrary remaining fuel in its canonical
+arena. Keeping that fuel symbolic prevents conversion from unfolding subsequent
+heap work. `chain-notification.bend` composes those lemmas with the actual heap,
+stamp and scheduling checkpoints. No source algorithm or kernel budget changes.
+
+`chain-public-program.bend` composes the fixed constructor in `Chain.initial`,
+actual public setter and actual public flush for every natural proposal and
+budget `95 + extra`. Four root properties identify the staged arena, complete
+final World, committed/displayed values and exact application trace `[2, 3n+2]`.
+The equal write `n=0` has one new application as the memos use equals:false.
+This supersedes the previously recorded missing setter bridge. Constructor
+budgets remain fixed at 256; arbitrary initial values, repeated-update histories,
+arbitrary graph topology and formal TypeScript equivalence remain unproved.

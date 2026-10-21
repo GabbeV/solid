@@ -55,8 +55,8 @@ TS/Bend equivalence or compiler/browser verification is claimed.
 
 Earlier direct arbitrary-payload/open-context proof attempts exhausted
 resources. The new canonical signal witness and small equality transports prove
-the fixed signal family without changing the kernel; the larger two-memo/render public setter boundary
-is still unfinished. The ordinary-flight fuel failure was separately
+the fixed signal family without changing the kernel. The larger two-memo/render
+setter boundary is now also closed by symbolic-fuel subscriber-step lemmas. The ordinary-flight fuel failure was separately
 diagnosed: unary Nat forced expansion of the source 0x7fffffff question ID. Exact
 binary naturals repair that representation cost; the new direct proofs require no
 generated endpoint/result, axiom, unsafe code, alternate runtime or modified kernel.
@@ -152,8 +152,12 @@ coverage; the admitted production profile has no family-bearing projection nodes
 The larger graph milestone adds two conditional quantified properties for a
 95-step two-memo/render drain and its exact render-application values, plus two
 general default-publication composition properties and a fixed constructor lemma.
-Its public setter bridge remains unproved. `tools/chain-witness.mjs --check` is
-part of the seal. Eight new finite controls do not establish the missing bridge.
+The setter bridge is now proved separately, and four additional public program
+properties compose the actual constructor, setter, final World and application
+trace for every natural proposal and drain budget >= 95. Constructor budgets
+remain the fixed 256 of `Chain.initial`; arbitrary graph/history correctness is
+not claimed. `tools/chain-witness.mjs --check` is part of the seal. Eight finite
+controls support correspondence separately from these quantified results.
 Negative proof subprocesses use a 4 GiB process-group RSS cap (Linux), a 90-second
 time limit and a 1 MiB output cap. Limit/resource failures remain infrastructure
 Errors, never counted assertion rejections. The actual proof kernel is unchanged.
