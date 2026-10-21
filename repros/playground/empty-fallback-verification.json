@@ -1,0 +1,210 @@
+{
+  "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "case-production-for-zero",
+      "profile": "production",
+      "helper": "For",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-production-for-control",
+      "profile": "production",
+      "helper": "For",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    },
+    {
+      "name": "case-production-repeat-zero",
+      "profile": "production",
+      "helper": "Repeat",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-production-repeat-control",
+      "profile": "production",
+      "helper": "Repeat",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    },
+    {
+      "name": "case-development-for-zero",
+      "profile": "development",
+      "helper": "For",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-development-for-control",
+      "profile": "development",
+      "helper": "For",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    },
+    {
+      "name": "case-development-repeat-zero",
+      "profile": "development",
+      "helper": "Repeat",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-development-repeat-control",
+      "profile": "development",
+      "helper": "Repeat",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    },
+    {
+      "name": "case-observe-for-zero",
+      "profile": "observe",
+      "helper": "For",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-observe-for-control",
+      "profile": "observe",
+      "helper": "For",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    },
+    {
+      "name": "case-observe-repeat-zero",
+      "profile": "observe",
+      "helper": "Repeat",
+      "truthy": false,
+      "afterFirst": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted",
+        "Empty cleaned",
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows0",
+      "errors": []
+    },
+    {
+      "name": "case-observe-repeat-control",
+      "profile": "observe",
+      "helper": "Repeat",
+      "truthy": true,
+      "afterFirst": [
+        "Empty mounted"
+      ],
+      "afterSecond": [
+        "Empty mounted"
+      ],
+      "text": "Reload empty rows1",
+      "errors": []
+    }
+  ]
+}

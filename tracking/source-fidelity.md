@@ -128,7 +128,7 @@ the user; filing or contacting maintainers requires the user's explicit instruct
 
 ## Historical upstream counterexamples
 
-The following paragraphs describe the original d2ad8b28 reports. All five tracked
+The following paragraphs describe the original d2ad8b28 reports. All five earlier tracked
 fixes are integrated at the current pin; see upstream-issues.json and the latest
 pin review. Original source snapshots/negative laws remain in Git history.
 

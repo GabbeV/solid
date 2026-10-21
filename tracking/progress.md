@@ -100,3 +100,8 @@ constructor, both public setters and both drains for every natural initial value
 and proposal pair, every constructor budget >=14 and independent drain budgets >=40. Three new public staging/final-World/view laws
 close the second-update boundary. 512 finite native/canonical controls are
 separate evidence; no runtime, source pin or deviation changed.
+
+The next list-helper audit found a source-only successful-falsy-fallback remount
+case, with 14 native controls and twelve real For/Repeat JSX browser cases. It
+is tracked separately from implemented capabilities and formal proofs; no issue,
+PR, source patch or active semantic deviation was introduced.

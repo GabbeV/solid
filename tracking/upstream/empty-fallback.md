@@ -1,0 +1,68 @@
+# Successful falsy empty fallbacks are recreated
+
+Source-only reproduced bug at unchanged Solid next
+0222d684365f08a29dfc1d613e664659f06948c8 (rc.16), 2026-10-21.
+No issue or PR has been filed. This does not affect implemented Bend code:
+mapArray/repeat and their array payloads remain unported. No workaround or
+semantic deviation is active.
+
+[Open the saved playground](https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg), pinned
+to released rc.16. Saved source and lifecycle output were checked after reloading.
+
+## Minimal application
+
+[JSX component](../../repros/playground/empty-fallback.tsx) uses one rows signal,
+`<For>` and an `Empty` component that registers `onCleanup`, logs its lifecycle
+and returns the valid rendered value 0. Click **Reload empty rows**: the list
+stays empty, but the console adds `Empty cleaned`, then `Empty mounted` again.
+Each further empty reload repeats this teardown/recreation. Changing only
+`return 0` to `return 1` preserves the existing component across those reloads.
+The same behavior occurs with `<Repeat count={rows().length}>`.
+
+A new empty array is a normal changed list input. There is no equals:false,
+manual effect, explicit flush, timer, thenable or thrown error in the component.
+The fallback result retains its array identity; the visible 0 stays 0. The bug
+is an unnecessary component/owner lifecycle reset, not a memory leak: final
+root disposal balances every owner created.
+
+## Mechanism and related history
+
+map.ts's updateKeyedMap and updateRepeat both use
+`this._fallback && !this._mappings[0]` to detect a fallback that has not completed.
+A successful result of 0, false, null, undefined or empty string is falsy too.
+The helper disposes its existing fallback owner and invokes the fallback again.
+A truthy result skips this branch and retains that owner.
+
+[#2903](https://github.com/solidjs/solid/issues/2903) and
+[Ryan's fix explanation](https://github.com/solidjs/solid/issues/2903#issuecomment-5006772768)
+establish the staged-commit and aborted-fallback retry policy. That report
+concerns throwing/pending mappers, not this successful falsy return. Current
+mapArray-notready-safety.test.ts includes fallback-abort owner-balance cases for
+both helpers; those tests pass in the full upstream suite. Searches of the user's
+fallback reports and repository mapArray/falsy-fallback reports found no duplicate.
+The file is unchanged by the latest nine-commit pin update; this is not a claim
+that one of the recently merged fixes introduced it.
+
+A likely local correction is to test the presence of an output slot instead of
+its truthiness, while keeping failed-RHS retry and owner disposal order. No fix
+is applied or claimed validated here; any correction must retain the existing
+NotReadyError/fallback-abort tests. Do not replace the helper's staged algorithm.
+
+## Evidence
+
+- `tests/upstream/empty-fallback.mjs`: 14 native source controls across both
+  helpers, five falsy results and two truthy controls, using ordinary fresh empty
+  array updates. Default mode asserts the reproduced behavior; --expect-fixed
+  asserts retention for all values. It is source-only, not a paired Bend history.
+- `repros/playground/verify-empty-fallback.cjs`: unchanged source compiler and
+  runtime in Chromium 154, production/development/observe, For/Repeat and 0/1
+  returns: twelve passing repro/control cases. Every zero case creates twice
+  and cleans once after the first click, then creates three times and cleans
+  twice after the second. Every one-valued control stays at one creation and
+  zero cleanups. No page errors occur.
+- `repros/playground/empty-fallback-verification.json` retains the exact browser
+  results and source pin. The hosted share uses released rc.16; local source
+  verification is against 0222d684. Hosted evidence is recorded separately.
+
+The source snapshots stay unchanged. There is no Bend law for this unimplemented
+API, and none of the existing 68 positive closed regressions changes classification.

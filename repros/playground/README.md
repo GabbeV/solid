@@ -156,3 +156,15 @@ site `/api/session` request returns 401; no page exceptions occur.
 [Source-built verification](reaction-pending-rearm-verification.json) separately
 checks unchanged upstream b0ad1df5 in production, development and observe. The
 hosted package version is not asserted to identify that exact upstream commit.
+
+## Successful empty fallback returning zero
+
+[Open the playground](https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg), pinned to rc.16.
+Source: [empty-fallback.tsx](empty-fallback.tsx).
+
+Click **Reload empty rows**. The console adds `Empty cleaned`, then
+`Empty mounted` again, although the list stays empty. Changing just `return 0`
+to `return 1` prevents that remount. The saved source and behavior were checked
+after loading the share. Real For/Repeat JSX also reproduces with unchanged
+source-built next@0222d684 in production, development and observe builds.
+No report or PR has been filed. See the tracked source-only report.

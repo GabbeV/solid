@@ -23,6 +23,14 @@ repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
 
+## Source-only list-helper candidate
+
+[The empty fallback report](upstream/empty-fallback.md) records successful falsy
+fallbacks being recreated on empty-to-empty For/Repeat updates. Fourteen native
+controls and twelve real JSX browser cases reproduce it, with a one-line truthy
+control. These helpers are unported: no Bend proof, paired-history credit,
+source patch or semantic workaround is claimed. No issue/PR has been filed.
+
 ## Typed action milestone
 
 [Action invocations](actions.md) now use the existing transaction/core driver for
