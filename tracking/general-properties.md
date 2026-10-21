@@ -133,3 +133,39 @@ loaded form names the original effect/subscriber locals and is checked against
 the actual runtime helper. No runtime operation was changed to obtain this proof.
 A compiled mutation that overwrites the committed value instead of staging is
 rejected by the quantified kernel checks.
+
+## Lazy extension allocation
+
+[extension-laws.bend](../proof/extension-laws.bend) proves four properties of the
+actual ext helper for every existing node position and surrounding arena:
+an already nonzero extension ID leaves the entire World exactly unchanged;
+a first allocation appends exactly one blank extension and changes exactly the
+node's x field; the new pointer retrieves the exact default record; and repeated
+allocation is idempotent. Worlds, node fields and extension lists are quantified.
+Idempotence requires a nonempty extension list, the runtime's sentinel-storage
+invariant. Without that premise, an empty arena would allocate index zero, which
+still means absent; no theorem silently assumes arbitrary records are valid.
+Existing nonzero IDs are not asserted valid merely because ext returns early.
+
+## Reactive cleanup capture
+
+[cleanup-laws.bend](../proof/cleanup-laws.bend) proves three local properties of
+the actual normal-frame runDisposal/dispatch return points. Every admitted list
+representation (none, one callback, an array) is detached from its owner before
+any invocation, with the exact captured callback tasks followed by EffectCleanup.
+A detached list is not replayed, and the loop selects the last registered callback
+before the preceding prefix. World/node fields, callback IDs, arrays, caller tasks
+and the self flag are quantified; unrelated World fields remain unchanged.
+
+These are reactive onCleanup list properties, not an error-policy ruling or a
+claim that teardown continues after a throw. They do not say an effect-returned
+cleanup cannot still run, that reentrant registration is discarded, or that a
+zombie-frame disposal uses the normal field. The module-global collector leak
+remains preserved at its source prelude. Existing public teardown/reentry/error
+histories remain the behavioral evidence for interactions outside these helpers.
+
+All seven properties use proof-only loaded locals checked against actual source
+helpers; no runtime refactor or alternative evaluator was introduced. Three more
+compiled mutations are rejected by proof-property assertions (the checker may
+reject a corrupted theorem before reaching the independent kernel). Positive
+proof claims always require the independent verdict.

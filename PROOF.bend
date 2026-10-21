@@ -1,4 +1,6 @@
 import Base
+import ./proof/extension-laws.bend as ExtensionLaws
+import ./proof/cleanup-laws.bend as CleanupLaws
 import ./LAWS.bend as Laws
 import ./proof/flush-callbacks.bend as FlushCallbacks
 import ./proof/comparators.bend as Comparators
@@ -305,3 +307,25 @@ def Laws.pending_stage_preserves_other_fields(w, prefix, node, suffix, value):
 
 def Laws.changed_unobserved_memo_preserves_committed_world(w, prefix, node, suffix, value, height, joined):
   StagePublication.unobserved_memo_stages_without_committing(w, prefix, node, suffix, value, height, joined)
+
+
+def Laws.existing_extension_preserves_entire_world(w, prefix, node, suffix, x):
+  ExtensionLaws.existing_extension_is_exact_identity(w, prefix, node, suffix, x)
+
+def Laws.extension_allocation_appends_one_record(w, prefix, node, suffix, extensions):
+  ExtensionLaws.fresh_extension_appends_exactly_once(w, prefix, node, suffix, extensions)
+
+def Laws.extension_allocation_is_idempotent(w, prefix, node, suffix, head, tail):
+  ExtensionLaws.extension_allocation_is_idempotent(w, prefix, node, suffix, head, tail)
+
+def Laws.new_extension_has_exact_default_fields(w, prefix, node, suffix, extensions):
+  ExtensionLaws.fresh_extension_points_to_default_record(w, prefix, node, suffix, extensions)
+
+def Laws.reactive_cleanup_detaches_before_invocation(w, prefix, node, suffix, rest, self):
+  CleanupLaws.normal_disposal_detaches_before_callbacks(w, prefix, node, suffix, rest, self)
+
+def Laws.detached_cleanup_list_is_not_replayed(w, prefix, node, suffix, rest, self):
+  CleanupLaws.detached_list_is_not_replayed(w, prefix, node, suffix, rest, self)
+
+def Laws.reactive_cleanup_uses_reverse_registration_order(w, prefix, callback, rest):
+  CleanupLaws.last_registered_cleanup_is_first(w, prefix, callback, rest)

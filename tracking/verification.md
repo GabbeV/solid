@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 135 isolated source-changing copies: 132 are rejected by
-  differential assertions and three by quantified kernel properties. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 138 isolated source-changing copies: 132 are rejected by
+  differential assertions and six by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -107,3 +107,10 @@ Three additional quantified staging properties cover recompute's changed,
 non-creation, non-effect helper, exact pending-slot preservation, and its complete
 no-subscriber memo arm. They retain the committed value until the seam; the
 source runtime is unchanged. See [general-properties.md](general-properties.md).
+
+Four quantified extension-allocation laws and three normal-frame cleanup
+capture/order laws are also included in the independent root. Exact domains,
+sentinel and normal-frame premises are in [general-properties.md](general-properties.md).
+Mutation rejection counts refer to assertion oracles; corrupted proof properties
+may be rejected before the kernel starts. Every positive proof claim still needs
+ALL PROOFS CHECK from the independent kernel.

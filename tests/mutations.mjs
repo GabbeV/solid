@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["existing extension reallocates","runtime/extension.bend","Nat.is_ne(R.Node.x(B.node(w, id)), 0n)","False{}","tests/proof-properties.mjs","ext"],
+  ["reactive disposal leaves captured callbacks installed","runtime/owner.bend","R.Node.with_disposal(B.node(w, id), R.NoDisposal{})","B.node(w, id)","tests/proof-properties.mjs","runDisposal"],
+  ["reactive disposal invokes the first callback instead of the last","runtime/owner.bend","Invoke{B.get(Nat, callbacks, p, 0n)}","Invoke{B.get(Nat, callbacks, 0n, 0n)}","tests/proof-properties.mjs","dispatch"],
   ["memo change overwrites committed value before the seam","runtime/core.bend","R.Node.with_pending(B.node(w, id), R.Present{value})","R.Node.with_value(B.node(w, id), value)","tests/proof-properties.mjs","publishValueChanged"],
   ["signal loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","signal"],
   ["computed loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","computed"],

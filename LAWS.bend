@@ -1,4 +1,8 @@
 import Base
+import ./proof/extension-laws.bend as ExtensionLaws
+import ./proof/cleanup-laws.bend as CleanupLaws
+import ./runtime/extension.bend as Extension
+import ./runtime/owner.bend as DisposalOwner
 import ./proof/upstream-integration.bend as Integrated
 import ./representation/base.bend as B
 import ./representation/records.bend as R
@@ -498,3 +502,68 @@ law changed_unobserved_memo_preserves_committed_world:
   for joined: Bool
   {Core.publishValueChanged(Arena.arena(w, prefix, StagePublication.memoShape(node), suffix), B.length(R.Node, prefix), value, False{}, height, joined, True{})
     == B.Bundle{Arena.arena(w, prefix, R.Node.with_pending(StagePublication.memoShape(node), R.Present{value}), suffix), True{}} : B.Bundle<R.World, Bool>}
+
+
+law existing_extension_preserves_entire_world:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +x: Nat
+  {Extension.ext(Arena.arena(w, prefix, R.Node.with_x(node, 1n+x), suffix), B.length(R.Node, prefix))
+    == Arena.arena(w, prefix, R.Node.with_x(node, 1n+x), suffix) : R.World}
+
+law extension_allocation_appends_one_record:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  {Extension.ext(ExtensionLaws.scope(w, prefix, R.Node.with_x(node, 0n), suffix, extensions), B.length(R.Node, prefix))
+    == ExtensionLaws.extended(w, prefix, R.Node.with_x(node, 0n), suffix, extensions) : R.World}
+
+law extension_allocation_is_idempotent:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +head: R.NodeExtension
+  for +tail: List<&2, R.NodeExtension>
+  {Extension.ext(Extension.ext(ExtensionLaws.scope(w, prefix, node, suffix, head <> tail), B.length(R.Node, prefix)), B.length(R.Node, prefix))
+    == Extension.ext(ExtensionLaws.scope(w, prefix, node, suffix, head <> tail), B.length(R.Node, prefix)) : R.World}
+
+law new_extension_has_exact_default_fields:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  {B.extension(Extension.ext(ExtensionLaws.scope(w, prefix, R.Node.with_x(node, 0n), suffix, extensions), B.length(R.Node, prefix)), B.length(R.Node, prefix)) == B.blank_extension() : R.NodeExtension}
+
+law reactive_cleanup_detaches_before_invocation:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +rest: List<&2, DisposalOwner.Task>
+  for +self: Bool
+  {DisposalOwner.runDisposal(Arena.arena(w, prefix, node, suffix), rest, B.length(R.Node, prefix), self, False{})
+    == DisposalOwner.Machine{Arena.arena(w, prefix, R.Node.with_disposal(node, R.NoDisposal{}), suffix), B.append(DisposalOwner.Task, DisposalOwner.disposalTasks(R.Node.disposal(node)), DisposalOwner.EffectCleanup{B.length(R.Node, prefix), self} <> rest)} : DisposalOwner.Machine}
+
+law detached_cleanup_list_is_not_replayed:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +rest: List<&2, DisposalOwner.Task>
+  for +self: Bool
+  {DisposalOwner.runDisposal(Arena.arena(w, prefix, R.Node.with_disposal(node, R.NoDisposal{}), suffix), rest, B.length(R.Node, prefix), self, False{})
+    == DisposalOwner.Machine{Arena.arena(w, prefix, R.Node.with_disposal(node, R.NoDisposal{}), suffix), DisposalOwner.EffectCleanup{B.length(R.Node, prefix), self} <> rest} : DisposalOwner.Machine}
+
+law reactive_cleanup_uses_reverse_registration_order:
+  for +w: R.World
+  for +prefix: List<&2, Nat>
+  for +callback: Nat
+  for +rest: List<&2, DisposalOwner.Task>
+  {DisposalOwner.dispatch(w, DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), 1n+B.length(Nat, prefix)} <> rest)
+    == DisposalOwner.Machine{w, DisposalOwner.Invoke{callback} <> DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : DisposalOwner.Machine}

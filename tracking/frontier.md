@@ -2,7 +2,7 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2546 differential histories, 135 rejected compiled mutations,
+Current verification: 2546 differential histories, 138 rejected compiled mutations,
 and 62 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -30,6 +30,16 @@ public histories, eight native scheduling-IO controls, two closed execution laws
 and three quantified entry/finally properties. Public actions remain unfinished.
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
 open and tracked; its change is not applied to the active source pin.
+
+## Allocation and cleanup proof milestone
+
+Four [extension allocation laws](general-properties.md#lazy-extension-allocation)
+now prove exact identity, single append, default fields and idempotence under the
+sentinel invariant. Three [cleanup laws](general-properties.md#reactive-cleanup-capture)
+prove normal-frame detachment before invocation, non-replay and reverse order.
+These are quantified local results over arbitrary surrounding state; the runtime
+is unchanged. The larger complete symbolic memo-program proof remains resource
+limited and uncounted.
 
 ## Memo staging proof milestone
 

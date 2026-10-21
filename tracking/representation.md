@@ -253,3 +253,8 @@ and the immutable World.comparators program-ID registry. This side metadata does
 not allocate NodeExtension or participate in node/edge identity. See
 [comparators.md](comparators.md); registry restoration is proved to preserve the
 entire original World.
+
+The ext helper now has quantified identity/single-append/default/idempotence
+proofs. Idempotence explicitly requires nonempty sentinel storage; it does not
+assert arbitrary manually constructed World records satisfy that invariant.
+See [general-properties.md](general-properties.md#lazy-extension-allocation).

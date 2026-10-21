@@ -35,7 +35,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 135 source-changing variants
+npm run mutations                # reject 138 source-changing variants
 npm run example                  # Number{14n}
 ```
 
