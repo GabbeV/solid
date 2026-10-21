@@ -26,9 +26,9 @@
       "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
       "currentProof": "LAWS.bend:empty_flatten_returns_undefined",
       "lastRevalidation": {
-        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-d682022c-validation.json",
+        "record": "tracking/reviews/solid-0222d684-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
@@ -60,9 +60,9 @@
       "supersededReason": "PR #4148 closed without merge; #4156 clears prior staged errors at the next pass prelude. Related setter case lands in #4167.",
       "currentProof": "LAWS.bend:staged_error_recovers_before_landing",
       "lastRevalidation": {
-        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-d682022c-validation.json",
+        "record": "tracking/reviews/solid-0222d684-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
@@ -102,16 +102,16 @@
       "fixMergedCommit": "7014aca40e38afa58ba917ba6c534e45bde14430",
       "currentProof": "LAWS.bend:held_function_result_stays_data",
       "lastRevalidation": {
-        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-d682022c-validation.json",
+        "record": "tracking/reviews/solid-0222d684-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
     {
       "id": "SOLID-DEFERRED-RELEASE-THROW-004",
       "classification": "suspected-upstream-regression",
-      "status": "upstream-pr-open",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "71153bf0dbd1325cf29f81cb1e7a34e380e694d2",
       "sourceUnit": "core/core.ts:recompute pre-body deferred-release collection",
       "introducedBy": "6371b910",
@@ -120,7 +120,7 @@
       "reproducer": "tests/upstream/deferred-release-throw.mjs",
       "parityReproducer": "tests/upstream-integration.mjs",
       "baselineProof": "LAWS.bend:throwing_teardown_leaks_release_collector",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "checkedRemoteHead": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
@@ -131,7 +131,7 @@
       "candidateCompareUrl": "https://github.com/solidjs/solid/compare/next...GabbeV:fix/restore-deferred-releases?expand=1",
       "candidateSizeRecord": "tracking/upstream/deferred-release-fix-size.json",
       "candidateBenchmarkRecord": "tracking/upstream/deferred-release-fix-benchmark.json",
-      "candidateFixDisposition": "User submitted PR #4176 with the tested finally restoration and verified playground; active Bend behavior remains at the pinned upstream implementation.",
+      "candidateFixDisposition": "Merged upstream and integrated verbatim at 0222d684. Original candidate records remain historical evidence; no active deviation.",
       "relatedPolicyReports": [
         2496,
         2839,
@@ -144,16 +144,25 @@
       "playgroundVerification": "repros/playground/cleanup-throw-hosted.json",
       "fixUrl": "https://github.com/solidjs/solid/pull/4176",
       "lastRevalidation": {
-        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-d682022c-validation.json",
-        "result": "regression-preserved"
-      }
+        "record": "tracking/reviews/solid-0222d684-validation.json",
+        "result": "upstream-fix-still-passes"
+      },
+      "fixMergedCommit": "b2d9ed021caf6dc56e885812526ad8fd0f52cf24",
+      "historicalBaseline": {
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "bendCommit": "c11277e329abf19af25fc2445c2e605ef64309b4",
+        "branch": "baseline/solid-d682022c"
+      },
+      "currentProof": "LAWS.bend:throwing_teardown_restores_release_collector",
+      "validatedSourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
+      "validationRecord": "tracking/reviews/solid-0222d684-validation.json"
     },
     {
       "id": "SOLID-REACTION-PENDING-001",
       "classification": "reproduced-upstream-bug",
-      "status": "upstream-pr-open",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
       "sourceUnit": "signals.ts:createReaction",
       "record": "tracking/upstream/reaction-pending-rearm.md",
@@ -161,30 +170,39 @@
       "playgroundReproducer": "repros/playground/reaction-pending-rearm.tsx",
       "playgroundVerification": "repros/playground/reaction-pending-rearm-verification.json",
       "playgroundUrl": "https://s.olid.uk/id/iZOM74C9Sda3qJWUKNHJLw",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4188",
       "relatedIssueUrl": "https://github.com/solidjs/solid/issues/2861",
       "relatedFixCommit": "40d13a9ef3e6f3dc2197885bb2eaec3e294b8c16",
-      "currentProof": "LAWS.bend:pending_reaction_arm_survives_replacement",
+      "currentProof": "LAWS.bend:pending_reaction_arm_is_replaced",
       "controlProof": "LAWS.bend:seeded_reaction_arm_is_replaced",
       "lastRevalidation": {
-        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-d682022c-validation.json",
-        "result": "regression-preserved"
+        "record": "tracking/reviews/solid-0222d684-validation.json",
+        "result": "upstream-fix-still-passes"
       },
       "candidateFixBranch": "fix/reaction-pending-arm",
       "candidateFixCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",
       "candidateBaseCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
       "candidateFixRecord": "tracking/upstream/reaction-pending-rearm-fix.md",
       "candidateFixPatch": "tracking/upstream/reaction-pending-rearm.patch",
-      "candidateFixDisposition": "User submitted PR #4188. Tested fix remains separate; active Bend preserves pinned upstream behavior.",
+      "candidateFixDisposition": "Merged upstream and integrated verbatim at 0222d684. Original candidate records remain historical evidence; no active deviation.",
       "candidateCompareUrl": "https://github.com/solidjs/solid/compare/next...GabbeV:fix/reaction-pending-arm?expand=1",
       "candidatePublishedCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",
       "playgroundPackageVersion": "2.0.0-rc.16",
-      "playgroundHostedVerification": "repros/playground/reaction-pending-rearm-hosted.json"
+      "playgroundHostedVerification": "repros/playground/reaction-pending-rearm-hosted.json",
+      "fixMergedCommit": "f7f30b982ec486460cbf09accf8249fe304336fb",
+      "historicalBaseline": {
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+        "bendCommit": "c11277e329abf19af25fc2445c2e605ef64309b4",
+        "branch": "baseline/solid-d682022c"
+      },
+      "baselineProof": "LAWS.bend:pending_reaction_arm_survives_replacement",
+      "validatedSourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
+      "validationRecord": "tracking/reviews/solid-0222d684-validation.json"
     }
   ]
 }

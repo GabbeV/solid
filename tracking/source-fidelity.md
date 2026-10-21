@@ -1,10 +1,11 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid d682022c (rc.16). [The latest review](reviews/solid-d682022c.md)
-records the nine-commit update from b0ad1df5, the projection-family error guard and
-inactive dev/observe diagnostic changes. The previous checkpoint is preserved at
-baseline/solid-b0ad1df5 (523673d). Earlier reviews retain their historical context.
-No active semantic deviation exists. Projection/lane/store engines stay unfinished.
+Current pin: Solid 0222d684 (rc.16). [The latest review](reviews/solid-0222d684.md)
+records nine commits after d682022c, including merged fixes #4176 and #4188.
+The complete earlier checkpoint is c11277e on baseline/solid-d682022c and in the
+feature branch history. Both formerly preserved bugs now have passing positive
+regressions. No active semantic deviation exists; active verdict/lane/store and
+dev/observe engines stay unfinished.
 
 
 The user has explicitly set the engineering target: a translation close enough to
@@ -263,8 +264,8 @@ reactive node is introduced for unowned callbacks. See [settled.md](settled.md).
 
 createReaction now retains the source cl/owner/arm cells, callable identities,
 conditional old-arm disposal/clear, deferred ordinary user effects and assignment
-order. The missing-async-read hole in #2861 is preserved with a paired control and
-an explicit negative law; see [reactions.md](reactions.md). No repair is active.
+order. Merged #4188 now captures the arm before tracking; pending/error replacement
+and the seeded control pass positive regressions; see [reactions.md](reactions.md).
 
 Custom comparator programs now execute through the source isSame catch and all
 active write/publication/async/seam sites. The side registry decomposes function

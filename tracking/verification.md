@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid d682022c21eb863edc1a1abac687b2353c55ab6f (rc.16); Bend
+Pins: Solid 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 176 isolated source-changing copies: 166 are rejected by
+- mutations compiles 177 isolated source-changing copies: 167 are rejected by
   differential assertions and ten by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
@@ -39,9 +39,9 @@ chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
 landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, two tracked-effect phase/write and rerun/disposal-cleanup cases, two owned/unowned settled callback cases, two nested-flush/error-precedence cases, four custom-comparator cases, two positive reaction lifecycle/seeded replacement cases, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, three action hold/resume/reusable-wrapper executions, two nine-argument callback/action executions, one direct-owner clear/reuse/final-dispose execution, plus four upstream
 integration regressions for lazy reuse, writable error display/commit, protocol
 throw containment and empty flatten. The original negative laws remain on
-baseline/solid-d2ad8b28. Two explicitly negative laws preserve the
-collector-leak and pending-reaction-replacement bugs; neither states a desired
-correctness guarantee. Two payload laws, three general question-representation
+baseline/solid-d2ad8b28. The collector-leak and pending-reaction-replacement laws are now positive
+regressions after integrating merged #4176/#4188 at 0222d684. Their two negative
+counterexamples remain at c11277e (baseline/solid-d682022c). Two payload laws, three general question-representation
 laws, four general callback-binding and six general lexical-binding helper laws,
 and generic execution-path lemmas also check. Thirteen additional quantified semantic
 properties cover publication/read policy, the complete fixed data-signal
@@ -71,8 +71,8 @@ All three originally tracked upstream bugs have accepted fixes integrated at thi
 was superseded by #4156; #4163 and #4144 merged. The original before/after matrix,
 operation-level audit and upstream test results are in
 [the earlier pin review](reviews/solid-71153bf0.md).
-[The current update](reviews/solid-d682022c.md) revalidates those fixes and records
-new upstream dev/lane regressions separately from Bend support. The translation
+[The current update](reviews/solid-0222d684.md) integrates merged #4176/#4188 and
+revalidates all five tracked fixes, with active mount/lane coverage kept source-only. The translation
 now uses `feat/solid-signals-bend` with `origin` at `GabbeV/solid`. The user has
 authorized regular pushes of completed verified checkpoints; see AGENTS.md.
 No package was published. Historical standalone
@@ -98,7 +98,7 @@ reports; they omit read trace comparisons rather than synthesize native events.
 Existing suites retain their complete admitted read-trace checks. See
 [getter-cleanup.md](getter-cleanup.md).
 
-Reaction traces have explicit observation limits: internal application markers are omitted; original function-value calls compare states, ordered edges, returns and cleanup emits rather than compute/read/application traces. See [reactions.md](reactions.md). The new pending-replacement negative law preserves the source failure, separately from successful replacement controls.
+Reaction traces have explicit observation limits: internal application markers are omitted; original function-value calls compare states, ordered edges, returns and cleanup emits rather than compute/read/application traces. See [reactions.md](reactions.md). The pending-replacement law is now positive after merged #4188; its historical failure remains at c11277e.
 
 Custom comparator evidence also includes five quantified local laws for fast-path
 selection, exact callback arguments, NotReady/error handling and registry-only
@@ -175,3 +175,9 @@ complete lifecycle execution. Four additional compiled variants use finite
 assertion oracles. An earlier scheduling-variant proof trial hit the output cap
 and is excluded; its finite native-IO/queue control provides the counted rejection.
 The original independent kernel remains unchanged. See direct-owners.md.
+
+The 0222d684 update replaces both preserved-bug laws with positive regressions,
+adds two quantified whole-machine continuation laws (exceptional collector
+restoration and captured reaction-node return), and reverses/adds finite mutation
+checks for the integrated changes. Two source-only verdict-mount controls stay
+separate from the 2773 paired histories and do not imply active lane support.

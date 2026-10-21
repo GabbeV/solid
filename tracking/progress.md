@@ -3,19 +3,19 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is d682022c. Nine upstream commits were reviewed and integrated after preserving
-the complete b0ad1df5 checkpoint on baseline/solid-b0ad1df5. The semantic deviation register remains empty.
+is 0222d684. Nine more upstream commits were reviewed, including merged #4176
+and #4188, after preserving the complete d682022c checkpoint at c11277e. The semantic deviation register remains empty.
 
 | Area | Starting checkpoint | Current checked work |
 | --- | --- | --- |
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
-| General local guarantees | Existing publication/read/signal and representation laws | 46 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
+| General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Public comparison corpus | 2,348 histories | 2,773 histories, plus separate native scheduling and finite memo-boundary controls |
-| Closed semantic regressions | 56 | 68, including two deliberately preserved upstream bugs |
-| Compiled mutation checks | 116 | 176; resource/infrastructure failures are excluded from useful rejections |
+| Closed semantic regressions | 56 | 68 positive regressions; two formerly preserved bugs now pass their merged fixes |
+| Compiled mutation checks | 116 | 177; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -86,3 +86,9 @@ for child-only clear/reuse; the source-bound createRoot disposer remains true.
 Twenty-five new histories, four quantified frame/entry laws and a complete
 lifecycle execution extend coverage. Four finite mutation assertions pass. The
 runtime continues to preserve the source's production dead-parent behavior.
+
+The 0222d684 source update integrates both user-submitted fixes #4176/#4188.
+Original repros and controls distinguish old/new pins; both former negative laws
+now state passing behavior. Two new quantified continuation properties preserve
+the exact exceptional machine and captured node. Active verdict-mount fix #4207
+is checked only in native Solid because those engines remain outside Bend.

@@ -2,7 +2,7 @@
 // a later, unrelated lazy memo must still release when its observer is disposed.
 import assert from 'node:assert/strict';
 const reference=process.env.SOLID_REFERENCE??new URL('../../build/solid.mjs',import.meta.url).href;
-const fixed=process.argv.includes('--baseline')||process.argv.includes('--expect-fixed'),rows=[];
+const fixed=!process.argv.includes('--expect-broken'),rows=[];
 for(const throws of [false,true]){
  const S=await import(reference+'?deferred-release-throw='+throws);
  let bump,disposeBroken,disposeOther,releaseObserver,cleaned=0;

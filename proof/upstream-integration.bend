@@ -119,8 +119,8 @@ def emptyFlatten() -> EmptyView:
 def expectedEmpty() -> EmptyView:
   EmptyView{R.Undefined{}, 0, False{}, True{}, R.Healthy{}}
 
-# Negative current-pin evidence (#4164 regression): a pre-body teardown throw
-# leaves the collector active and suppresses a later unrelated lazy release.
+# Upstream #4176 restores the collector after a pre-body teardown throw,
+# preserving the escaped error and allowing a later unrelated lazy release.
 type LeakView is Data:
   LeakView{escaped: R.Value, lazyDead: Bool, cleanups: Nat, collectorActive: Bool,
     queued: List<&2, Nat>, context: Nat, tracking: Bool, running: Bool, fault: R.Fault}
@@ -160,5 +160,5 @@ def collectorLeak() -> LeakView:
     B.get(List<&2, Nat>, R.World.releaseLists(done), R.World.deferredReleases(done), []),
     R.World.context(done), R.World.tracking(done), R.World.running(done), R.World.fault(done)}
 
-def expectedCollectorLeak() -> LeakView:
-  LeakView{R.Number{99n}, False{}, 0n, True{}, [5n], 0n, False{}, False{}, R.Healthy{}}
+def expectedCollectorRestored() -> LeakView:
+  LeakView{R.Number{99n}, True{}, 1n, False{}, [], 0n, False{}, False{}, R.Healthy{}}

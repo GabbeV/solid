@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+    "commit": "0222d684365f08a29dfc1d613e664659f06948c8",
     "branch": "next",
     "version": "2.0.0-rc.16"
   },
@@ -164,8 +164,8 @@
     "upstream/solid/packages/signals/src/core/attribution.ts": "a219aa1cc6566b0be0ffe0196d3e6cbf6effeed2d4a0acc478b15c26783a776f",
     "upstream/solid/packages/signals/src/core/constants.ts": "b52ee01afff74a64965131f7c010ccc8f4b89096dc69666706d10d4dbc904dea",
     "upstream/solid/packages/signals/src/core/context.ts": "c8e48ff3653fced14c8cd06a86e25b9b46bab609cd74794d27a32c3042a24e0c",
-    "upstream/solid/packages/signals/src/core/core.ts": "9021903b4d2aa6770ed585b99eddce5fd460d120209c58edf6133a7d78b5fca7",
-    "upstream/solid/packages/signals/src/core/dev.ts": "163ac64ea819e559d4a77b6d52f8431ce53bbe86246ba5015d5e652e5c6da1e9",
+    "upstream/solid/packages/signals/src/core/core.ts": "11f03840af7f6771973ecb7a4bbb41d63a53c516be7196218bca2bd3443b95bd",
+    "upstream/solid/packages/signals/src/core/dev.ts": "3226dffdaee7a6eb6e9d5dab5cc85575de6cd15a6300ed6f6e60f56f621cd544",
     "upstream/solid/packages/signals/src/core/effect.ts": "b9b7456aa604183362ad3f97cf6011c74bb3cb3c55296debb277a31632880229",
     "upstream/solid/packages/signals/src/core/error-hooks.ts": "5b58b7db8056352e1995061bd37e85b67ae89cae4dadbfe4a0832daf6ed816e0",
     "upstream/solid/packages/signals/src/core/error.ts": "b79034a005efe675dfee0063460c424a1b78512bf1353f8dd449cb05bfdf74ef",
@@ -187,7 +187,7 @@
     "upstream/solid/packages/signals/src/index.ts": "a8652e3c27c12535f1d1b37a768a2080055c476688f23fe3bcfa2b07cb012b74",
     "upstream/solid/packages/signals/src/map.ts": "d25e8fea497a489d9c93d2d0838d974d20b1d5ac279fea0565ce8bc19be42def",
     "upstream/solid/packages/signals/src/reveal.ts": "d4c0e7dfabf3b0f52aca91169863e2bfade6a57738d294330e02a05bba3d0129",
-    "upstream/solid/packages/signals/src/signals.ts": "5946385b4c0c8f14acf30d766f5a870ffa5eb477b7309f2aedf925f0bf41aa33",
+    "upstream/solid/packages/signals/src/signals.ts": "d3d7dabbfa45dcd47b7ea3ccc12168c83a1cf646d519a6880013b8428b23a4f1",
     "upstream/solid/packages/signals/src/store/affects.ts": "3adca4d18279788835eee80fb357cd40cbb0e2ae0d124922ce5b4b6605f4eda5",
     "upstream/solid/packages/signals/src/store/edges.ts": "9cb1068d792e4fcb6233e1a47bc76d2dc46823691a94e21b9e6ea85bae3aae42",
     "upstream/solid/packages/signals/src/store/hooks.ts": "8db334561528a83f4b60b7ccd90cca863a3dd1665d01cfa39ff6c1dbe1e4dd1f",

@@ -278,9 +278,9 @@ law later_iterator_throw_reaches_memo:
 law empty_flatten_returns_undefined:
   {Integrated.emptyFlatten() == Integrated.expectedEmpty() : Integrated.EmptyView}
 
-# Negative upstream regression at 71153bf0, not a desired cleanup guarantee.
-law throwing_teardown_leaks_release_collector:
-  {Integrated.collectorLeak() == Integrated.expectedCollectorLeak() : Integrated.LeakView}
+# Positive regression for upstream #4176; the negative remains at baseline/solid-d682022c.
+law throwing_teardown_restores_release_collector:
+  {Integrated.collectorLeak() == Integrated.expectedCollectorRestored() : Integrated.LeakView}
 
 law tracked_effect_runs_after_commit:
   {TrackedEffects.phase() == TrackedEffects.expectedPhase() : TrackedEffects.View}
@@ -306,10 +306,9 @@ law lexical_settled_binding:
 law reaction_replaces_arms_and_retains_cleanup:
   {Reactions.lifecycle() == Reactions.expectedLifecycle() : Reactions.View}
 
-# Negative upstream counterexample: this claims the observed bug, not the
-# desired replacement guarantee. Kept separate from positive capability laws.
-law pending_reaction_arm_survives_replacement:
-  {Reactions.pendingReplacement(False{}) == Reactions.expectedPendingBug() : Reactions.PendingView}
+# Positive regression for upstream #4188, including a suspended tracking read.
+law pending_reaction_arm_is_replaced:
+  {Reactions.pendingReplacement(False{}) == Reactions.expectedSeededControl() : Reactions.PendingView}
 
 law seeded_reaction_arm_is_replaced:
   {Reactions.pendingReplacement(True{}) == Reactions.expectedSeededControl() : Reactions.PendingView}
@@ -902,3 +901,24 @@ law owner_dispose_method_forwards_self_flag:
 
 law direct_owner_can_clear_reuse_and_dispose:
   {DirectOwners.lifecycle() == DirectOwners.View{True{}, True{}, True{}, True{}, 0n, [R.CleanupObserved{2n, 2n}, R.CleanupObserved{1n, 1n}, R.CleanupObserved{2n, 2n}], 0n, False{}, False{}, R.Healthy{}} : DirectOwners.View}
+
+# Upstream #4176: the exceptional finally changes only the collector field.
+# Arbitrary World/fault, captured collector, continuation and value stack.
+law throwing_teardown_finally_restores_previous_collector:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for id: Nat
+  for +previous: Nat
+  for released: Nat
+  {Core.unwind(w, Core.RestoreDeferredReleases{id, previous, released} <> rest, stack)
+    == Core.Machine{R.World.with_deferredReleases(w, previous), rest, stack} : Core.Machine}
+
+# Upstream #4188 returns the captured node independently of later arm changes.
+law reaction_returns_captured_node:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +node: Nat
+  {Core.dispatch(w, Core.ReactionReturn{node} <> rest, stack)
+    == Core.Machine{w, rest, R.OwnerReference{node} <> stack} : Core.Machine}

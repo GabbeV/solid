@@ -4,9 +4,9 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2773 differential histories, 176 rejected compiled mutations,
+Current verification: 2773 differential histories, 177 rejected compiled mutations,
 and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at d682022c (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at 0222d684 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -17,12 +17,11 @@ TS/Bend equivalence proof is not required; no silent semantic repairs are allowe
 
 ## Reviewed next update
 
-The [d682022c review](reviews/solid-d682022c.md) integrates nine upstream commits.
-The production projection error fix is source-only coverage because projection
-families are not yet represented. Dev diagnostic changes leave the admitted
-production behavior unchanged. Twelve new paired equal-compute effect histories
-and two source-only projection controls pass; prior fixes and preserved bugs are
-revalidated. The b0ad1df5 checkpoint remains on its own baseline branch.
+The [0222d684 review](reviews/solid-0222d684.md) integrates nine commits after
+c11277e's d682022c pin. Merged #4176 and #4188 are ported in source order; original
+repros now pass, and both negative closed laws become positive regressions.
+The verdict-mounted pending fix #4207 is native source-only evidence because
+active lane/mount scopes are not admitted. No active semantic deviation exists.
 
 ## Typed action milestone
 
@@ -70,7 +69,7 @@ identity, finally-on-throw and drain-error precedence. The milestone adds 64
 public histories, eight native scheduling-IO controls, two closed execution laws
 and three quantified entry/finally properties. Typed production action invocations now execute; the full action API remains unfinished.
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
-open and tracked; its change is not applied to the active source pin.
+merged and integrated at 0222d684 with the original repro and positive regression.
 
 ## Complete scalar-memo proof milestone
 
@@ -146,9 +145,9 @@ identity when dirty derivations make it requeue. [The review](settled.md) record
 concrete laws and two general input-binding laws. [Reactions](reactions.md) now also retain the source closure's cleanup/current arm,
 replacement disposal, captured owner, deferred user effects and first-class track
 function. The milestone adds 66 expression histories and 12 original function
-histories, two positive concrete laws and one negative pending-arm counterexample.
-[The new source bug](upstream/reaction-pending-rearm.md) is an uncovered pending
-case of #2861, reproduced in Chromium on current next; no workaround is applied.
+histories and three positive concrete laws after integrating #4188.
+[The source report](upstream/reaction-pending-rearm.md) records the original pending
+case of #2861; its merged #4188 fix is now integrated without a deviation.
 Richer callable closures and active lanes/boundaries remain
 unfinished.
 
@@ -179,7 +178,7 @@ same read driver. [The getter review](getter-cleanup.md) records 54 new historie
 canonical owner/effect aliases, a concrete law and native trace limits.
 Remaining callable work includes arbitrary callable initializers and richer closures; arbitrary comparator closures and
 active boundary/lane/store engines remain outside this profile. PR #4176 is
-open; its proposed source fix is not silently applied to Bend.
+merged; its finally restoration is now part of the reviewed source translation.
 
 ## Established execution path
 
@@ -504,8 +503,7 @@ See [the pin review](reviews/solid-71153bf0.md) for exact source operations,
 inactive/unported branches, before/after evidence and current validation. Older
 milestone paragraphs above describe their original pin unless superseded here.
 
-The repin review also found a new upstream collector-leak regression after a
-throwing pre-body cleanup. One of the 45 current concrete laws is explicitly
-negative; two public controls preserve it without an active workaround. See
-[SOLID-DEFERRED-RELEASE-THROW-004](upstream/deferred-release-throw.md). The candidate
-is isolated on integrate/solid-next-fixes; main retains the old baseline.
+That historical review found the collector-leak regression after a throwing
+pre-body cleanup. At the current 0222d684 pin, merged #4176 fixes it and its law
+is positive. The old negative remains at c11277e. See
+[SOLID-DEFERRED-RELEASE-THROW-004](upstream/deferred-release-throw.md).

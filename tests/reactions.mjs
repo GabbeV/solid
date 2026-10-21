@@ -113,22 +113,21 @@ for(const cleanup of [false,true]){
   ['track','ready',select(read('fail'),{raise:9},read('x'))],['flush'],['read','error'],['dispose'],['flush']
  ],(op,args,result)=>{if(op==='read')assert.deepEqual(result,['return',9]);});
 }
-// Deliberately preserve the pinned source's #2861 pending-arm hole. A loading
-// seed makes tracking return successfully, so the replacement control works.
+// Upstream #4188 replaces suspended arms; the loading seed remains a control.
 for(const immediate of [false,true])for(const seeded of [false,true])for(const flushBetween of [false,true]){
  let reads=0;
- await scenario('pending replacement source bug/control '+JSON.stringify({immediate,seeded,flushBetween}),[
+ await scenario('pending replacement fixed/control '+JSON.stringify({immediate,seeded,flushBetween}),[
   ['signal','current',0],['signal','count',0],['future','old',{immediate}],['memo','obsolete',future('old'),seeded?{loadingValue:0}:{}],
   ['program','fire',[['updateExpr','count',{add:[{prev:true},lit(1)]}]]],['reaction','ready',body({call:'fire'})],
   ['track','ready',read('obsolete')],...(flushBetween?[['flush']]:[]),['track','ready',read('current')],['flush'],
   ['resolve','old',7],['tick'],['flush'],['read','count'],['set','current',1],['flush'],['read','count'],['dispose'],['flush']
- ],(op,args,result)=>{if(op==='read'){assert.deepEqual(result,['return',(seeded?0:1)+reads]);reads++;}});
+ ],(op,args,result)=>{if(op==='read'){assert.deepEqual(result,['return',reads]);reads++;}});
 }
 let recoveredArmReads=0;
-await scenario('superseded initial tracking error retains its pinned arm',[
+await scenario('superseded initial tracking error releases its previous arm',[
  ['signal','failed',true],['signal','current',0],['signal','count',0],['program','handle',[['emit',41]]],
  ['program','fire',[['updateExpr','count',{add:[{prev:true},lit(1)]}]]],['reaction','ready',body({call:'fire'}),{errorProgram:'handle'}],
  ['track','ready',select(read('failed'),{raise:8},lit(undefined))],['track','ready',read('current')],['flush'],
  ['set','failed',false],['flush'],['read','count'],['set','current',1],['flush'],['read','count'],['dispose'],['flush']
-],(op,args,result)=>{if(op==='read')assert.deepEqual(result,['return',++recoveredArmReads]);});
+],(op,args,result)=>{if(op==='read')assert.deepEqual(result,['return',recoveredArmReads++]);});
 console.log(`${count} reaction histories match actual replacement arms, one-shot firing, re-arming, cleanup, pending/errors, owner capture and returned identity.`);

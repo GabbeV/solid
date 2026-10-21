@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21",
+  "previousSource": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+  "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
+  "previousBendCheckpoint": "c11277e329abf19af25fc2445c2e605ef64309b4",
+  "previousBranch": "baseline/solid-d682022c",
+  "vendoredFilesCompared": 76,
+  "changedSourceFiles": 3,
+  "sourcePatched": false,
+  "activeSemanticDeviations": [],
+  "upstreamPackageChecks": {
+    "javascriptTiers": [
+      "dev",
+      "prod",
+      "observe"
+    ],
+    "sourceDeclarations": "pass",
+    "fullDevelopmentSuite": {
+      "files": 332,
+      "passed": 5439,
+      "expectedFailures": 3,
+      "skipped": 2
+    },
+    "unchangedNewTestsOnOldPin": {
+      "files": 3,
+      "passed": 8,
+      "failed": 4
+    },
+    "productionRuntimeControls": {
+      "passed": 11,
+      "developmentOnlyExcluded": 1
+    },
+    "observeRuntimeControls": {
+      "passed": 11,
+      "developmentOnlyExcluded": 1
+    },
+    "toolingNote": "pnpm runner refused reused symlink node_modules work-state; identical package build:clean/build:js/types scripts run via npm without source/lock changes. Unfiltered non-dev controls fail only the existing dev-only invalid-cleanup diagnostic assertion."
+  },
+  "originalRepros": [
+    {
+      "name": "reaction-old",
+      "file": "repros/solid-signals/reaction-pending-rearm.mjs",
+      "args": [
+        "pending"
+      ],
+      "environment": {
+        "SOLID_MODULE": "/workspace/scratch/solid-d682022c-before-0222d684.mjs"
+      },
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "log": "/workspace/scratch/repin-0222-reaction-old.log",
+      "logSha256": "e88c39c9ea7a8f666f707ad5708b34030bcd5557ae9c77e56a86d357392c1cf8"
+    },
+    {
+      "name": "reaction-new",
+      "file": "repros/solid-signals/reaction-pending-rearm.mjs",
+      "args": [
+        "pending"
+      ],
+      "environment": {
+        "SOLID_MODULE": "/workspace/scratch/solid-0222d684-production.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-reaction-new.log",
+      "logSha256": "5183d03fa0599b30088ce159e1e4c4e6be6d0b879df24b8c4de705cbe5fb6d72"
+    },
+    {
+      "name": "reaction-old-seeded",
+      "file": "repros/solid-signals/reaction-pending-rearm.mjs",
+      "args": [
+        "seeded"
+      ],
+      "environment": {
+        "SOLID_MODULE": "/workspace/scratch/solid-d682022c-before-0222d684.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-reaction-old-seeded.log",
+      "logSha256": "807a267980c1ef5430e9349ea0c05487aa3f5636f4d90ad87e7b4df73c0a931c"
+    },
+    {
+      "name": "reaction-new-seeded",
+      "file": "repros/solid-signals/reaction-pending-rearm.mjs",
+      "args": [
+        "seeded"
+      ],
+      "environment": {
+        "SOLID_MODULE": "/workspace/scratch/solid-0222d684-production.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-reaction-new-seeded.log",
+      "logSha256": "807a267980c1ef5430e9349ea0c05487aa3f5636f4d90ad87e7b4df73c0a931c"
+    },
+    {
+      "name": "collector-old",
+      "file": "tests/upstream/deferred-release-throw.mjs",
+      "args": [
+        "--expect-broken",
+        "--json"
+      ],
+      "environment": {
+        "SOLID_REFERENCE": "/workspace/scratch/solid-d682022c-before-0222d684.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-collector-old.log",
+      "logSha256": "0ad13820bedd7d4465f18736e398056dcbbd015213e99ce8291b56180507630b"
+    },
+    {
+      "name": "collector-new",
+      "file": "tests/upstream/deferred-release-throw.mjs",
+      "args": [
+        "--json"
+      ],
+      "environment": {
+        "SOLID_REFERENCE": "/workspace/scratch/solid-0222d684-production.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-collector-new.log",
+      "logSha256": "c62364051cccf9d66d8d294e143f1a74b80f70b40e73bd9129fa61807a5c6409"
+    },
+    {
+      "name": "mount-old",
+      "file": "tests/upstream/unread-pending-mount.mjs",
+      "args": [],
+      "environment": {
+        "SOLID_REFERENCE": "/workspace/scratch/solid-d682022c-before-0222d684.mjs"
+      },
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "log": "/workspace/scratch/repin-0222-mount-old.log",
+      "logSha256": "a64a5ac0306378995c048004e1e27134804cabcac8f83d6394ae0ed6534e753b"
+    },
+    {
+      "name": "mount-new",
+      "file": "tests/upstream/unread-pending-mount.mjs",
+      "args": [],
+      "environment": {
+        "SOLID_REFERENCE": "/workspace/scratch/solid-0222d684-production.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-mount-new.log",
+      "logSha256": "e795a26808bbca89588c7177273eee87be5c2a946f43ddbf89abeae8cee404b5"
+    },
+    {
+      "name": "mount-old-settled",
+      "file": "tests/upstream/unread-pending-mount.mjs",
+      "args": [
+        "--settled-control"
+      ],
+      "environment": {
+        "SOLID_REFERENCE": "/workspace/scratch/solid-d682022c-before-0222d684.mjs"
+      },
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "log": "/workspace/scratch/repin-0222-mount-old-settled.log",
+      "logSha256": "e795a26808bbca89588c7177273eee87be5c2a946f43ddbf89abeae8cee404b5"
+    }
+  ],
+  "nativeLogSha256": {
+    "solid-0222d684-native-build-direct.log": "12d4135bae28455aa1b6f310aa4092f571a8897a14b7ccc6f2ffaf67e8bf822a",
+    "solid-0222d684-native-tests.log": "1bbd32ebd093e8d9048a58551c354de15088fc9396d7719dccb01e1982ead583",
+    "solid-d682-new-regression-controls.log": "56284291ac80788a4edab9cb127f19b2735551831ef2e8483ff4d120be2c73a9",
+    "solid-0222d684-prod-runtime-controls.log": "cb37775bd7a7ebcccd29e6032dacb733b27c4bb9fee0880889712f2c451ce683",
+    "solid-0222d684-observe-runtime-controls.log": "751984b2344094a083bf02e9a35322f8da4af89a19adee48dd8d4672d357f01c",
+    "solid-0222d684-prod-controls.log": "7dcec588502316e39d38398f8db76d6b18082dab47f778f499121b0552a98c12",
+    "solid-0222d684-observe-controls.log": "59c7a4695f48d461180b7784353b1502ad051866e5e27fd6abd07e9c769ac8ce"
+  },
+  "portValidation": {
+    "histories": 2773,
+    "compiledMutations": 177,
+    "finiteMutationAssertions": 167,
+    "proofPropertyMutationAssertions": 10,
+    "closedRegressions": 68,
+    "negativeClosedRegressions": 0,
+    "newQuantifiedContinuationLaws": 2,
+    "sourceOnlyMountControls": 2,
+    "completeVerificationSeal": "tracking/checked.json"
+  }
+}

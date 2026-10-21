@@ -95,10 +95,9 @@ for(const immediate of [false,true])for(const flatten of [false,true])for(const 
   ['resolveStep','first',7],['tick'],...(rejected?[['reject','second',99],['tick']]:[]),['flush'],['read','value'],['dispose'],['flush']
  ],(op,args,actual,wanted,b,s)=>{if(op==='read'){assert.equal(wanted[0],'throw');assert.equal(wanted[1].cause,99);assert.deepEqual(s.asyncErrors,[],'native protocol failure is contained by its memo');}});
 }
-// Preserve the newly found Source regression: a failed pre-body teardown does
-// not restore graph's active release array. This is not a desired guarantee.
+// Upstream #4176 restores the release collector after pre-body cleanup throws.
 for(const throws of [false,true]){
- await scenario('upstream deferred collector survives a throwing teardown '+throws,[
+ await scenario('upstream deferred collector is restored after teardown '+throws,[
   ['signal','tick',0],['future','p',{immediate:true}],['program','boom',throws?[['throw',99]]:[]],
   ['memo','broken',seq(read('tick'),{onCleanup:lit({callback:'boom'})},future('p'))],['flush'],['set','tick',1],['flush'],
   ['program','gone',[['emit',55]]],['root','other',lit(0)],
@@ -106,7 +105,7 @@ for(const throws of [false,true]){
   ['root','observer',lit(0),{owner:'other'}],['effect','view',read('lazy'),{owner:'observer'}],['flush'],
   ['disposeOwner','observer'],['flush']
  ],(op,args,actual,wanted,b,s)=>{
-  if(op==='disposeOwner')assert.equal(s.traceEvents.filter(e=>e[0]==='cleanup'&&e[2]===55).length,throws?0:1,'native unrelated cleanup is lost only after the throwing prelude');
+  if(op==='disposeOwner')assert.equal(s.traceEvents.filter(e=>e[0]==='cleanup'&&e[2]===55).length,1,'native unrelated cleanup still runs after the throwing prelude');
  });
 }
 console.log(`${count} upstream-integration histories match actual Solid, with independent lazy-run/release, writable recovery, flight replacement and protocol-error assertions.`);

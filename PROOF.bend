@@ -207,7 +207,7 @@ def Laws.later_iterator_throw_reaches_memo():
 def Laws.empty_flatten_returns_undefined():
   {==}
 
-def Laws.throwing_teardown_leaks_release_collector():
+def Laws.throwing_teardown_restores_release_collector():
   {==}
 
 def Laws.tracked_effect_runs_after_commit():
@@ -231,7 +231,7 @@ def Laws.lexical_settled_binding(signal):
 def Laws.reaction_replaces_arms_and_retains_cleanup():
   {==}
 
-def Laws.pending_reaction_arm_survives_replacement():
+def Laws.pending_reaction_arm_is_replaced():
   {==}
 
 def Laws.seeded_reaction_arm_is_replaced():
@@ -490,3 +490,9 @@ def Laws.owner_dispose_method_forwards_self_flag(w, rest, stack, id, self, root)
 
 def Laws.direct_owner_can_clear_reuse_and_dispose():
   DirectOwners.lifecycle_complete()
+
+def Laws.throwing_teardown_finally_restores_previous_collector(w, rest, stack, id, previous, released):
+  {==}
+
+def Laws.reaction_returns_captured_node(w, rest, stack, node):
+  {==}

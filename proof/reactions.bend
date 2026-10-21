@@ -1,5 +1,5 @@
-# Actual createReaction closure, arm replacement, callbacks and cleanup. A
-# separate negative fixture retains the pinned source's pending-arm hole.
+# Actual createReaction closure, arm replacement, callbacks and cleanup.
+# Upstream #4188 captures the arm before tracking, including suspension/errors.
 import Base
 import ../runtime/api.bend as A
 import ../runtime/core.bend as C
@@ -55,10 +55,6 @@ def pendingReplacement(+seeded: Bool) -> PendingView:
   +obsolete = A.flush(8192n, A.resolveThenable(8192n, replaced, 1n, False{}, R.Number{7n}))
   +current = A.flush(8192n, A.setSignal(obsolete, 2n, R.Number{1n}))
   PendingView{R.Node.value(B.node(obsolete, 3n)), R.Node.value(B.node(current, 3n)), R.ReactionState.arm(Reaction.get(pending, 0n)), Bool.not(B.has(R.Node.flags(B.node(replaced, 5n)), K.REACTIVE_DISPOSED())), R.World.fault(current)}
-
-# This intentionally states the failure, not the desired replacement property.
-def expectedPendingBug() -> PendingView:
-  PendingView{R.Number{1n}, R.Number{2n}, 0n, True{}, R.Healthy{}}
 
 def expectedSeededControl() -> PendingView:
   PendingView{R.Number{0n}, R.Number{1n}, 5n, False{}, R.Healthy{}}

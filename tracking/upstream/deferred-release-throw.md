@@ -1,5 +1,10 @@
 # SOLID-DEFERRED-RELEASE-THROW-004
 
+Current status (2026-10-21): the user-submitted fix merged upstream and is now
+integrated at 0222d684. Original repros pass; the earlier bug and negative Bend law
+remain in checkpoint c11277e. See [the integration review](../reviews/solid-0222d684.md).
+The investigation below records historical evidence.
+
 Classification: reproduced suspected upstream regression; not filed. Discovered
 while validating the pin update, 2026-10-20 (Europe/Stockholm).
 

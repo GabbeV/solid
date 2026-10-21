@@ -1,5 +1,10 @@
 # Pending reaction arm is not replaced
 
+Current status (2026-10-21): the user-submitted fix merged upstream and is now
+integrated at 0222d684. Original repros pass; the earlier bug and negative Bend law
+remain in checkpoint c11277e. See [the integration review](../reviews/solid-0222d684.md).
+The investigation below records historical evidence.
+
 Status: reported in [PR #4188](https://github.com/solidjs/solid/pull/4188), open. Source b0ad1df5 (rc.16), still the next
 branch head when checked through the GitHub API on 2026-10-21. No fix or deviation
 is applied to the active Bend runtime.

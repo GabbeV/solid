@@ -43,6 +43,9 @@ type SeamFrame is Data:
 # b0ad1df5/#4171 adds prevMount/mount and laneRoot save/restore in Source.
 # Active lanes are outside this profile: prevLane and inherited mount stay
 # falsy, so joined still tests REACTIVE_JOINED alone at both finally entries.
+# 0222d684/#4207 further requires prevLane || isEffect || !STATUS_PENDING
+# before a mount includes STAGED_READ. With mount false the mask is unchanged;
+# active verdict-mounted pending derivations remain outside this profile.
 # Full-index TS installs lane hooks; their presence does not create a lane.
 type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
@@ -170,7 +173,7 @@ type Task is Data:
   RunEffect{id: Nat}
   ReactionArmClear{reaction: Nat}
   ReactionArmAfterDispose{reaction: Nat, tracking: R.Expr}
-  ReactionRemember{reaction: Nat}
+  ReactionReturn{node: Nat}
   ReactionFireValue{reaction: Nat}
   ReactionCallBody{reaction: Nat, node: Nat}
   ReactionAssignCleanup{reaction: Nat, node: Nat}
@@ -491,8 +494,10 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{B.first(R.World, R.Value, pair), rest, B.second(R.World, R.Value, pair) <> stack}
     case R.ReactionArm{callee, tracking}:
       Machine{w, Evaluate{callee, prev} <> ReactionArmValue{tracking} <> rest, stack}
-    case R.ReactionTracking{reaction, body}:
-      Machine{w, Evaluate{body, R.Undefined{}} <> Discard{} <> ReactionRemember{reaction} <> rest, stack}
+    case R.ReactionTracking{+reaction, body}:
+      +node = R.World.context(w)
+      w = Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), node))
+      Machine{w, Evaluate{body, R.Undefined{}} <> Discard{} <> ReactionReturn{node} <> rest, stack}
     case R.ReactionFire{reaction, node}:
       Machine{w, Evaluate{node, prev} <> ReactionFireValue{reaction} <> rest, stack}
     case R.OnSettled{body}:
@@ -2539,8 +2544,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), 0n)), rest, stack}
     case ReactionArmAfterDispose{reaction, tracking} <> rest:
       reactionArmAfterDispose(w, rest, stack, reaction, tracking)
-    case ReactionRemember{+reaction} <> rest:
-      Machine{Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), R.World.context(w))), rest, R.OwnerReference{R.World.context(w)} <> stack}
+    case ReactionReturn{node} <> rest:
+      Machine{w, rest, R.OwnerReference{node} <> stack}
     case ReactionFireValue{reaction} <> rest:
       match stack:
         case R.OwnerReference{node} <> tail:
@@ -2678,6 +2683,10 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       watchCause(w, rest, saved, awaiter, R.World.fault(w))
     case ProtocolCatch{id, result, saved, successAuto, errorAuto} <> rest:
       catchProtocol(w, rest, saved, id, result, errorAuto, R.World.fault(w))
+    # core.ts recompute's finally: restore even when pre-body teardown throws.
+    # Do not resume the interrupted teardown or drain its captured candidates.
+    case RestoreDeferredReleases{id, previous, released} <> rest:
+      Machine{R.World.with_deferredReleases(w, previous), rest, stack}
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case RestoreStale{stale} <> rest:

@@ -26,18 +26,19 @@ landings and held seams; see [comparator coverage](tracking/comparators.md).
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `d682022c` (rc.16), matching `next` when fetched
-on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-d682022c.md).
+The reviewed Solid pin is now `0222d684` (rc.16), matching `next` when fetched
+on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-0222d684.md).
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
-This integration branch preserves a newly found [cleanup collector regression](tracking/upstream/deferred-release-throw.md);
-`main` retains the old pin pending review.
+The merged cleanup-collector (#4176) and reaction-arm (#4188) fixes now pass their
+original repros and positive Bend regressions. Their former counterexamples remain
+in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 154 source-changing variants
+npm run mutations                # reject 177 source-changing variants
 npm run example                  # Number{14n}
 ```
 

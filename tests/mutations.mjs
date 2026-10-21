@@ -74,6 +74,7 @@ const mutations=[
 
   ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue',"publication"],
   ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast',"read-policy"],
+  ['reaction tracking forgets its pending or throwing arm','runtime/core.bend','w = Reaction.store(w, reaction, R.ReactionState.with_arm(Reaction.get(w, reaction), node))','w = w','tests/reactions.mjs','evaluate'],
   ['reaction replacement leaves the old arm live','runtime/core.bend','OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending','ending','tests/reactions.mjs','reactionArm'],
   ['reaction cleanup is cleared before it throws','runtime/core.bend','+ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','+w = Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), R.Undefined{}))\n  +ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','tests/reactions.mjs','reactionFire'],
   ['reaction fire omits full dependency disposal','runtime/core.bend','OwnerTasks{[O.Dispose{node}]}','OwnerTasks{[O.Enter{node, True{}, False{}}]}','tests/reactions.mjs','dispatch'],
@@ -95,7 +96,7 @@ const mutations=[
   ['pending release skips its next captured candidate','runtime/core.bend','Q.Release{1n+index} <> tail','Q.Release{2n+index} <> tail','tests/teardown-expressions.mjs','pendingTasks'],
   ['flight settlement omits last-observer cleanup','runtime/core.bend','Machine{w, B.choose(~List<&2, Task>, F.shouldSettleAutodispose(w, id),\n        _ => OwnerTasks{[O.Unobserved{id}]} <> rest, _ => rest), stack}','Machine{w, rest, stack}','tests/teardown-expressions.mjs','dispatch'],
   ['real flight error skips stranded-dependent release','runtime/core.bend','pendingResume(rest, stack, Q.beginReleaseSettledDependents(w, id))','Machine{w, rest, stack}','tests/teardown-expressions.mjs','finishHandleError'],
-  ['unregistered restore-after-throw workaround','runtime/core.bend','    case RestoreTracking{tracking} <> rest:', '    case RestoreDeferredReleases{id, previous, released} <> rest:\n      Machine{R.World.with_deferredReleases(w, previous), rest, stack}\n    case RestoreTracking{tracking} <> rest:','tests/upstream-integration.mjs','unwind'],
+  ['throwing teardown omits upstream finally restoration','runtime/core.bend','    case RestoreDeferredReleases{id, previous, released} <> rest:\n      Machine{R.World.with_deferredReleases(w, previous), rest, stack}\n','', 'tests/upstream-integration.mjs','unwind'],
   ['writable memo keeps its stale error status','runtime/memo-write.bend','B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())','False{}','tests/upstream-integration.mjs','recover'],
   ['writable memo leaves staged-error classification on the write','runtime/memo-write.bend','B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR())','R.Node.config(B.node(w, id))','tests/upstream-integration.mjs','finish'],
   ['frame teardown releases the lazy source immediately','runtime/owner.bend','Nat.is_ne(R.World.deferredReleases(w), 0n)','False{}','tests/upstream-integration.mjs','dispatch'],
