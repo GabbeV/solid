@@ -183,7 +183,8 @@ checks for the integrated changes. Two source-only verdict-mount controls stay
 separate from the 2773 paired histories and do not imply active lane support.
 
 The two-update scalar-memo theorem adds three quantified public program laws,
-not closed regression or history counts. Its 64 native/canonical controls bring
-the separate finite memo/graph controls to 152 (80 single-update/constructor,
-eight larger-graph, 64 two-update). Runtime, source/toolchain pins, 2773 histories,
+not closed regression or history counts. It quantifies every natural initial value and
+both proposals, constructor budgets >=14 and both drain budgets >=40. Its 512
+native/canonical controls bring the separate finite memo/graph controls to 600
+(80 single-update/constructor, eight larger-graph, 512 two-update). Runtime, source/toolchain pins, 2773 histories,
 68 positive closed regressions and 177 mutation assertions are unchanged.

@@ -25,7 +25,7 @@ function qualified(type,ns){
 }
 function intern(body,type){
  const key=type+'#'+body;if(shared.has(key))return shared.get(key);
- const name='data_'+shared.size,variables=(both?['first','input']:[variable]).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ const name='data_'+shared.size,variables=(both?['initial','first','input']:[variable]).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
  declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;
 }
 function show(value,type,ns='R'){
@@ -34,7 +34,7 @@ function show(value,type,ns='R'){
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
  if(family==='R.Value'&&value.$==='Number'){
-  const terms=both?{11:'first',12:'Nat.add(first, 1n)',17:'input',18:'Nat.add(input, 1n)'}:generalInitial?{11:'first',12:'Nat.add(first, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
+  const terms=both?{23:'initial',24:'Nat.add(initial, 1n)',11:'first',12:'Nat.add(first, 1n)',17:'input',18:'Nat.add(input, 1n)'}:generalInitial?{23:'initial',24:'Nat.add(initial, 1n)',11:'first',12:'Nat.add(first, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
   if(terms[value.n])return intern('R.Number{'+terms[value.n]+'}','R.Value');
  }
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+type+' '+JSON.stringify(value));
@@ -59,7 +59,7 @@ try{
  if(built.status!==0)throw Error(built.stderr);
  const {default:D}=await import(pathToFileURL(emitted)),{show,declarations}=serializer(root,false,true);
  let body='';
- for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])body+=`def ${name}(${['origin','queued'].includes(name)?'+first: Nat':'+first: Nat, +input: Nat'}) -> R.World:\n  ${show(D[name](11,17),'World')}\n\n`;
+ for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])body+=`def ${name}(${['origin','queued'].includes(name)?'+initial: Nat, +first: Nat':'+initial: Nat, +first: Nat, +input: Nat'}) -> R.World:\n  ${show(D[name](23,11,17),'World')}\n\n`;
  output('proof/memo-repeat-setter-data.bend',header+declarations.join('\n')+'\n'+body);
  console.log(process.argv.includes('--check')?'Second-update setter canonical data are current.':'Regenerated second-update setter data; run the independent kernel before trusting it.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

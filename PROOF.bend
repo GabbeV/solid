@@ -498,11 +498,11 @@ def Laws.throwing_teardown_finally_restores_previous_collector(w, rest, stack, i
 def Laws.reaction_returns_captured_node(w, rest, stack, node):
   {==}
 
-def Laws.scalar_memo_second_public_staging(first, second, firstExtra):
-  MemoRepeat.public_staged(first, second, firstExtra)
+def Laws.scalar_memo_second_public_staging(initial, first, input, constructorExtra, firstExtra):
+  MemoRepeat.public_staged(initial, first, input, constructorExtra, firstExtra)
 
-def Laws.scalar_memo_two_updates_final_world(first, second, firstExtra, secondExtra):
-  MemoRepeat.world(first, second, firstExtra, secondExtra)
+def Laws.scalar_memo_two_updates_final_world(initial, first, input, constructorExtra, firstExtra, secondExtra):
+  MemoRepeat.world(initial, first, input, constructorExtra, firstExtra, secondExtra)
 
-def Laws.scalar_memo_two_updates_complete(first, second, firstExtra, secondExtra):
-  MemoRepeat.complete(first, second, firstExtra, secondExtra)
+def Laws.scalar_memo_two_updates_complete(initial, first, input, constructorExtra, firstExtra, secondExtra):
+  MemoRepeat.complete(initial, first, input, constructorExtra, firstExtra, secondExtra)

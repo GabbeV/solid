@@ -5,21 +5,21 @@ import ../representation/base.bend as B
 import ../representation/records.bend as R
 import ./memo-repeat-states.bend as M
 
-def origin(first: Nat) -> R.World:
-  M.origin(first)
+def origin(+initial: Nat, first: Nat) -> R.World:
+  M.origin(initial, first)
 
-def queued(+first: Nat) -> R.World:
-  W.queuePendingNode(origin(first), 2n)
+def queued(+initial: Nat, +first: Nat) -> R.World:
+  W.queuePendingNode(origin(initial, first), 2n)
 
-def slotted(+first: Nat, +input: Nat) -> R.World:
-  B.store_node(queued(first), 2n, R.Node.with_pending(B.node(queued(first), 2n), R.Present{R.Number{input}}))
+def slotted(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
+  B.store_node(queued(initial, first), 2n, R.Node.with_pending(B.node(queued(initial, first), 2n), R.Present{R.Number{input}}))
 
-def stamped(first: Nat, +input: Nat) -> R.World:
-  +w = slotted(first, input)
+def stamped(+initial: Nat, first: Nat, +input: Nat) -> R.World:
+  +w = slotted(initial, first, input)
   B.store_node(w, 2n, R.Node.with_notified(B.node(w, 2n), R.Stamped{R.World.epoch(w)}))
 
-def inserted(first: Nat, input: Nat) -> R.World:
-  H.enqueueSub(stamped(first, input), 3n)
+def inserted(+initial: Nat, first: Nat, input: Nat) -> R.World:
+  H.enqueueSub(stamped(initial, first, input), 3n)
 
-def scheduled(first: Nat, input: Nat) -> R.World:
-  B.schedule(inserted(first, input))
+def scheduled(+initial: Nat, first: Nat, input: Nat) -> R.World:
+  B.schedule(inserted(initial, first, input))

@@ -20,7 +20,7 @@ The implementation, differential tests, and composed proofs use the same runtime
 publication slots/payloads, read policies and a complete numeric signal program.
 There is no second scheduler hidden behind the proof. A [two-update memo family](tracking/memo-repeat-proof.md)
 now includes the constructor and both public setter/flush pairs for every natural
-proposal pair; arbitrary-length histories and general graphs remain open.
+initial value and proposal pair, with sufficient constructor/drain budgets; arbitrary-length histories and general graphs remain open.
 The public `flush(() => ...)` overload now supports nested synchronous drains,
 returned values and exception-safe depth restoration; see [flush callbacks](tracking/flush-callbacks.md).
 Custom comparator programs now run through signal writes, memo publication, async

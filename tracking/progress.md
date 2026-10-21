@@ -31,7 +31,8 @@ records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
 invokes its callback without draining; the review explicitly preserves that arm. Arbitrary
 graph/history correctness and arbitrary-length symbolic histories remain open.
-The new fixed zero-initial scalar-memo family proves exactly two updates. None of the test counts should be read as that fraction of Solid completed.
+The scalar-memo family now proves exactly two updates for every natural
+initial value and both proposals, with constructor/drain budgets >=14/40. None of the test counts should be read as that fraction of Solid completed.
 
 
 The latest proof checkpoint closes the previously explicit scalar-memo boundary:
@@ -95,7 +96,7 @@ the exact exceptional machine and captured node. Active verdict-mount fix #4207
 is checked only in native Solid because those engines remain outside Bend.
 
 [Two successive memo updates](memo-repeat-proof.md) now compose the real
-constructor, both public setters and both drains for every natural proposal pair
-and independent budgets >= 40. Three new public staging/final-World/view laws
-close the second-update boundary. Sixty-four finite native/canonical controls are
+constructor, both public setters and both drains for every natural initial value
+and proposal pair, every constructor budget >=14 and independent drain budgets >=40. Three new public staging/final-World/view laws
+close the second-update boundary. 512 finite native/canonical controls are
 separate evidence; no runtime, source pin or deviation changed.

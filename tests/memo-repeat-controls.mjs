@@ -14,21 +14,21 @@ try{
   assert.equal(built.status,0,built.stderr);modules[name]=(await import(pathToFileURL(output))).default;
  }
  const {D,M,V}=modules,values=[0,1,2,17,255,65535,2**32+3,2**48-2];
- for(const first of values)for(const second of values){
-  const before=D.before(first,second);assert.deepEqual(before,M.state_0(first,second),'actual first update and second setter');
-  const world=D.program(first,second,(first+second)%3,(first*3+second)%5);
-  assert.deepEqual(world,M.finalWorld(first,second),'complete final World across two actual updates');
+ for(const initial of values)for(const first of values)for(const second of values){
+  const before=D.before(initial,first,second);assert.deepEqual(before,M.state_0(initial,first,second),'actual first update and second setter');
+  const world=D.program(initial,first,second,(initial+first+second)%2?0:242,(first+second)%3,(first*3+second)%5);
+  assert.deepEqual(world,M.finalWorld(initial,first,second),'complete final World across two actual updates');
   assert.deepEqual(V.view(world),V.expected(second));
-  const S=await import('../build/solid.mjs?memo-repeat-control='+first+'-'+second);
+  const S=await import('../build/solid.mjs?memo-repeat-control='+initial+'-'+first+'-'+second);
   let read,set,derived;
   const dispose=S.createRoot(dispose=>{
-   [read,set]=S.createSignal(0,{equals:false});derived=S.createMemo(()=>read()+1,{equals:false});return dispose;
+   [read,set]=S.createSignal(initial,{equals:false});derived=S.createMemo(()=>read()+1,{equals:false});return dispose;
   });
   try{
-   set(first);assert.deepEqual([read(),derived()],[0,1]);S.flush();assert.deepEqual([read(),derived()],[first,first+1]);
+   set(first);assert.deepEqual([read(),derived()],[initial,initial+1]);S.flush();assert.deepEqual([read(),derived()],[first,first+1]);
    set(second);assert.deepEqual([read(),derived()],[first,first+1]);S.flush();assert.deepEqual([read(),derived()],[second,second+1]);
    assert.deepEqual([V.view(world).source.n,V.view(world).memo.n],[read(),derived()]);
   }finally{dispose();S.flush();}
  }
- console.log('64 finite two-update scalar-memo controls match actual public constructors/setters/flushes, canonical final Worlds and native Solid values.');
+ console.log('512 finite two-update scalar-memo controls match actual public constructors/setters/flushes, canonical final Worlds and native Solid values.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

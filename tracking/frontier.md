@@ -91,10 +91,10 @@ between two represented ordinary roots.
 
 ## Two successive memo updates
 
-[The two-update family](memo-repeat-proof.md) now covers the actual fixed
-constructor, two arbitrary natural proposals, both public setters and independent
->=40-step drains. Three root laws identify the second staged World, final World
-and committed values. Sixty-four native/canonical controls support correspondence
+[The two-update family](memo-repeat-proof.md) now covers every natural initial
+value and both proposals, actual constructor budgets >=14, both public setters
+and independent >=40-step drains. Three root laws identify the second staged
+World, final World and committed values. 512 native/canonical controls support correspondence
 separately; arbitrary-length histories and arbitrary graphs remain open.
 
 ## Two-memo/render proof milestone

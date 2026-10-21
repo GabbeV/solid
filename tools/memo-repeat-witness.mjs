@@ -31,7 +31,7 @@ function qualified(type,ns){
 }
 function intern(body,type){
  const key=type+'#'+body;if(shared.has(key))return shared.get(key);
- const name='data_'+shared.size,variables=(generic?['first','input']:['input']).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ const name='data_'+shared.size,variables=(generic?['initial','first','input']:['input']).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
  declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;
 }
 function show(value,type,ns='R'){
@@ -40,25 +40,25 @@ function show(value,type,ns='R'){
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
  if(family==='R.Value'&&value.$==='Number'){
-  const terms=generic?{11:'first',12:'Nat.add(first, 1n)',17:'input',18:'Nat.add(input, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
+  const terms=generic?{23:'initial',24:'Nat.add(initial, 1n)',11:'first',12:'Nat.add(first, 1n)',17:'input',18:'Nat.add(input, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
   if(terms[value.n])return intern('R.Number{'+terms[value.n]+'}','R.Value');
  }
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+type+' '+JSON.stringify(value));
  return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+value.$+'.'+name+' keys '+Object.keys(value));return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
 }
-let m=generic?D.before(11,17):D.before(17),states=[m];
+let m=generic?D.before(23,11,17):D.before(17),states=[m];
 for(let i=0;i<256&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
 if('head'in m.tasks)throw Error('Driver did not finish');
 const steps=states.length-1;if(steps!==40||m.world.fault.$!=='Healthy')throw Error('The memo witness requires a source review after this runtime change');
 let out=`# SHARED_DATA\n# Canonical data from the actual emitted core.step. The equations in\n# memo-staging check it for arbitrary proposals; generation is not trusted.\nimport Base\nimport ../runtime/api.bend as A\nimport ../runtime/core.bend as C\nimport ../representation/base.bend as B\nimport ../representation/records.bend as R\nimport ../proof/paths.bend as P\nimport ./${phase}-driver.bend as Driver\nimport ../runtime/owner.bend as O\nimport ../runtime/pending.bend as Q\n\n`;
-out+=`def origin(${generic?'+first: Nat':''}) -> R.World:\n  ${show(D.base(generic?11:undefined),'World')}\n\n`;
-for(let i=0;i<states.length;i++)out+=`def state_${i}(${generic?'+first: Nat, ':''}+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
-out+=`def finalWorld(${generic?'+first: Nat, ':''}+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\n`;
+out+=`def origin(${generic?'+initial: Nat, +first: Nat':''}) -> R.World:\n  ${show(D.base(23,11),'World')}\n\n`;
+for(let i=0;i<states.length;i++)out+=`def state_${i}(${generic?'+initial: Nat, +first: Nat, ':''}+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
+out+=`def finalWorld(${generic?'+initial: Nat, +first: Nat, ':''}+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\n`;
 out+=`# Isolate the actual publication helper to avoid re-expanding the entire
 # pass-finally prefix during kernel conversion. This equation is checked.
-def publication_13(${generic?'+first: Nat, ':''}+input: Nat) ->
-  {C.publishValue(C.world(state_13(${generic?'first, ':''}input)), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{})
-    == B.Bundle{C.world(state_14(${generic?'first, ':''}input)), True{}} : B.Bundle<R.World, Bool>}:
+def publication_13(${generic?'+initial: Nat, +first: Nat, ':''}+input: Nat) ->
+  {C.publishValue(C.world(state_13(${generic?'initial, first, ':''}input)), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{})
+    == B.Bundle{C.world(state_14(${generic?'initial, first, ':''}input)), True{}} : B.Bundle<R.World, Bool>}:
   {==}
 `;
 out=out.replace('# SHARED_DATA\n','');const index=out.indexOf('def origin(');out=out.slice(0,index)+declarations.join('\n')+'\n'+out.slice(index);const target=path.join(root,'proof/'+phase+'-states.bend');
