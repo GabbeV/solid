@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 114 isolated source-changing copies and requires parity
-  assertions to reject them. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 116 isolated source-changing copies: 114 are rejected by
+  differential assertions and two by quantified kernel properties. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -43,16 +43,20 @@ baseline/solid-d2ad8b28. Two explicitly negative laws preserve the
 collector-leak and pending-reaction-replacement bugs; neither states a desired
 correctness guarantee. Two payload laws, three general question-representation
 laws, four general callback-binding and six general lexical-binding helper laws,
-and generic execution-path lemmas also check.
+and generic execution-path lemmas also check. Ten additional quantified semantic
+properties cover publication/read policy and the complete fixed data-signal
+program; see [general-properties.md](general-properties.md).
 
 The async laws use explicit external thenable settlement; until checks explicit
 delivery of its actually queued callback payloads. Native JS reaction timing,
-iterators, refresh/resolve watchers, arbitrary payload/graph/history families,
+iterators, refresh/resolve watchers, general graph/history families,
 active scopes and general progress remain tested or unfinished domains. No formal
 TS/Bend equivalence or compiler/browser verification is claimed.
 
-Earlier arbitrary-payload/open-context proof attempts exhausted memory/reduction
-resources and are not counted. The ordinary-flight fuel failure was separately
+Earlier direct arbitrary-payload/open-context proof attempts exhausted
+resources. The new canonical signal witness and small equality transports prove
+the fixed signal family without changing the kernel; the full memo-chain family
+is still unfinished. The ordinary-flight fuel failure was separately
 diagnosed: unary Nat forced expansion of the source 0x7fffffff question ID. Exact
 binary naturals repair that representation cost; the new direct proofs require no
 generated endpoint/result, axiom, unsafe code, alternate runtime or modified kernel.

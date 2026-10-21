@@ -1,0 +1,83 @@
+# General semantic properties
+
+These are quantified properties of the actual Bend runtime, separately from the
+56 concrete end-to-end regressions and separately from TS/Bend correspondence.
+No source operation or runtime representation changed to make these proofs pass.
+
+## Publication at any existing slot
+
+[publication.bend](../proof/publication.bend) quantifies over every World, every
+finite arena prefix/suffix, every node and every admitted Value. The target index
+is the prefix length, so it exists by construction; no unchecked index or graph
+invariant is assumed.
+
+- commitValue publishes the exact pending value and clears its pending slot.
+- All other node fields, all surrounding nodes and all other World fields remain
+  identical. This includes dependencies, queues, owner links, callbacks and IO.
+- An empty pending slot makes commitValue exact identity.
+- Repeating commitValue is idempotent, for either pending-slot shape.
+
+The proof uses general list get/set lenses in [arena.bend](../proof/arena.bend).
+Its loaded/clear expressions are proof-only algebraic forms of the two actual
+stores; loadedEq checks them against scheduler.commitValue. They are not another
+scheduler or an assumed reference algorithm. This does not prove computed-node
+commit, effect execution, or completion of the whole transaction machinery.
+
+## Read policy
+
+[read-policy.bend](../proof/read-policy.bend) quantifies over Worlds, node arenas,
+target IDs, caller task continuations, stacks and payloads:
+
+- The plain-signal fast-read helper, with a normal zero sentinel and no owner,
+  serves the committed value, records its read event and preserves tasks/stack.
+- enterRead with no reactive reader leaves the World unchanged and joins no hold.
+- At serveSelected after status/unflushed selection, no reader selects the
+  committed value when no unflushed value was supplied.
+- A supplied unflushed value takes precedence and marks the late linker.
+
+These are properties at the named source helper return points. They do not say
+every read reaches those points: eligibility, missing/error status, pulling and
+active scope policies still matter at the callers.
+
+## Complete numeric data-signal program
+
+[signal-staging.bend](../proof/signal-staging.bend) proves a whole program for all
+numeric initial and next values, with equals:false:
+
+1. Construct the normal root and a data signal using the actual API.
+2. Set its next value. A public read before flush returns the initial value.
+3. Flush. A public read returns the next value.
+4. The flush completes in 19 core steps. For every additional fuel allowance,
+   the same final state has an empty pending/render/user queue, cleared pending
+   slot, restored context/tracking/stale/running state and a healthy fault slot.
+
+The ordinary host-job queue is not claimed empty: a manual flush leaves the
+already-requested external flush job for the host to consume.
+
+[signal-driver.bend](../proof/signal-driver.bend) supplies actual API inputs and
+core.step. [The generator](../tools/signal-witness.mjs) records canonical states
+from one emitted execution, replaces the two payloads with variables, and emits
+19 step equations plus a finite Path. Every equation is checked by the independent
+kernel for all numeric inputs; the generator and its sampled execution are not
+trusted to establish the result. Existing generic Path.realizes composes those
+steps, and checked equality transports connect them to the original API program.
+Regeneration is deterministic and tools/check verifies the artifact is current.
+
+This is a general payload/progress result for one fixed graph and comparator
+setting, not arbitrary graph/history correctness or TS equivalence. Directly
+unfolding even this symbolic flush exceeded the pinned kernel's reduction fuel;
+canonical transitions and small equality transports avoid that expansion without
+changing the runtime, raising the kernel budget or adding an axiom. The larger
+arbitrary-payload memo-chain proof is still a separate unfinished step.
+
+## Sensitivity and limits
+
+Two additional compiled source variants are rejected by the quantified kernel
+properties themselves: losing the new value during publication, and serving a
+staged value from an unowned fast read. The other 114 mutation variants remain
+differential/observation checks. These evidence families are not conflated.
+
+General structural validity of all graphs, arbitrary callback/async/lane scopes,
+full progress bounds for variable graphs and arbitrary-length histories remain
+open. Numeric theorem parameters are Bend terms; this is not a new claim about
+unbounded JavaScript integer execution or the compiler's correctness.

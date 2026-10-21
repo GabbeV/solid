@@ -2,7 +2,7 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2347 differential histories, 114 rejected compiled mutations,
+Current verification: 2347 differential histories, 116 rejected compiled mutations,
 and 56 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -12,6 +12,16 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## General semantic proof milestone
+
+[The semantic review](general-properties.md) adds seven quantified publication/read
+properties and three complete data-signal properties. Publication covers any
+existing arena position and Value while preserving the rest of the World. For a
+single numeric signal with equals:false, public reads see the old value before
+flush and the new value after; a checked 19-step path proves completion for any
+larger budget. These are general results within their explicit domains, beyond
+closed examples and binding laws. Arbitrary graph/history correctness remains open.
 
 ## Tracked effects milestone
 

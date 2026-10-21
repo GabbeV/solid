@@ -16,6 +16,8 @@ render/user queue ordering, and a mechanical text tree. It evaluates the stored
 callback expressions. JavaScript supplies the test host and payload encoding.
 
 The implementation, differential tests, and composed proofs use the same runtime.
+[General semantic properties](tracking/general-properties.md) now cover arbitrary
+publication slots/payloads, read policies and a complete numeric signal program.
 There is no second scheduler hidden behind the proof.
 
 The reviewed Solid pin is now `b0ad1df5` (rc.16), matching `next` when fetched
@@ -29,7 +31,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 114 source-changing variants
+npm run mutations                # reject 116 source-changing variants
 npm run example                  # Number{14n}
 ```
 

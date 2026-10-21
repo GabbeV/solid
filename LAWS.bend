@@ -25,6 +25,16 @@ import ./proof/getter-cleanup.bend as GetterCleanup
 import ./proof/tracked-effects.bend as TrackedEffects
 import ./proof/settled.bend as Settled
 import ./proof/reactions.bend as Reactions
+import ./proof/publication.bend as Publication
+import ./proof/read-policy.bend as ReadPolicy
+import ./proof/signal-staging.bend as SignalStaging
+import ./proof/signal-driver.bend as SignalDriver
+import ./runtime/api.bend as API
+import ./runtime/core.bend as Core
+import ./runtime/scheduler.bend as Scheduler
+import ./runtime/transaction.bend as Transactions
+import ./runtime/read-state.bend as ReadState
+import ./proof/arena.bend as Arena
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/callback-values.bend as CallbackValues
@@ -276,3 +286,83 @@ law lexical_reaction_tracking_binding:
   for +signal: Nat
   {Lexical.bind(R.ReactionArm{R.Literal{R.ProgramReference{1n}}, R.LocalRead{0n}}, 0n, signal)
     == R.ReactionArm{R.Literal{R.ProgramReference{1n}}, R.Read{signal}} : R.Expr}
+
+# General semantic helper properties, with arbitrary payloads, surrounding
+# arena entries, World fields, caller tasks and stack. Not closed regressions.
+law pending_value_publication:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +value: R.Value
+  {Scheduler.commitValue(Arena.arena(w, prefix, R.Node.with_pending(node, R.Present{value}), suffix), B.length(R.Node, prefix))
+    == Arena.arena(w, prefix, R.Node.with_pending(R.Node.with_value(node, value), R.Empty{}), suffix) : R.World}
+
+law unowned_fast_read_committed:
+  for +w: R.World
+  for +arena: List<&2, R.Node>
+  for +tasks: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  {Core.readSignalFast(ReadPolicy.scope(w, arena), tasks, stack, id)
+    == Core.Machine{B.event(ReadPolicy.scope(w, arena), R.ReadValue{0n, id, R.Node.value(B.node(ReadPolicy.scope(w, arena), id))}),
+      tasks, R.Node.value(B.node(ReadPolicy.scope(w, arena), id)) <> stack} : Core.Machine}
+
+law unowned_read_does_not_join:
+  for +w: R.World
+  for +id: Nat
+  for slow: Bool
+  {Transactions.enterRead(w, 0n, id, slow) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
+
+law unowned_selected_read:
+  for +w: R.World
+  for +tasks: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  {Core.serveSelected(w, tasks, stack, id, 0n, R.Empty{})
+    == Core.served(w, tasks, stack, 0n, id, R.Node.value(B.node(w, id))) : Core.Machine}
+
+law unflushed_value_is_selected:
+  for +w: R.World
+  for +tasks: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +reader: Nat
+  for +value: R.Value
+  {Core.serveSelected(w, tasks, stack, id, reader, R.Present{value})
+    == Core.served(ReadState.markLateLinker(w, reader), tasks, stack, reader, id, value) : Core.Machine}
+
+law empty_pending_publication_is_identity:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  {Scheduler.commitValue(Arena.arena(w, prefix, R.Node.with_pending(node, R.Empty{}), suffix), B.length(R.Node, prefix))
+    == Arena.arena(w, prefix, R.Node.with_pending(node, R.Empty{}), suffix) : R.World}
+
+law publication_is_idempotent:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  {Scheduler.commitValue(Scheduler.commitValue(Arena.arena(w, prefix, node, suffix), B.length(R.Node, prefix)), B.length(R.Node, prefix))
+    == Scheduler.commitValue(Arena.arena(w, prefix, node, suffix), B.length(R.Node, prefix)) : R.World}
+
+# Complete fixed data-signal program, parameterized over every numeric initial
+# and next value. The comparator is deliberately disabled, as in Chain.
+law signal_reads_committed_before_flush:
+  for +initial: Nat
+  for next: Nat
+  {API.resultValue(API.read(64n, SignalStaging.input(initial, next), 2n)) == R.Number{initial} : R.Value}
+
+law signal_reads_new_value_after_flush:
+  for initial: Nat
+  for +next: Nat
+  {API.resultValue(API.read(64n, API.flush(64n, SignalStaging.input(initial, next)), 2n)) == R.Number{next} : R.Value}
+
+law signal_completes_for_every_sufficient_budget:
+  for initial: Nat
+  for +next: Nat
+  for extra: Nat
+  {SignalStaging.outcome(API.flush(Nat.add(19n, extra), SignalStaging.input(initial, next)))
+    == SignalStaging.expected(next) : SignalStaging.Outcome}

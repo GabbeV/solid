@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue'],
+  ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast'],
   ['reaction replacement leaves the old arm live','runtime/core.bend','OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending','ending','tests/reactions.mjs','reactionArm'],
   ['reaction cleanup is cleared before it throws','runtime/core.bend','+ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','+w = Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), R.Undefined{}))\n  +ending = {ReactionCallBody{reaction, node} <> rest : List<&2, Task>}','tests/reactions.mjs','reactionFire'],
   ['reaction fire omits full dependency disposal','runtime/core.bend','OwnerTasks{[O.Dispose{node}]}','OwnerTasks{[O.Enter{node, True{}, False{}}]}','tests/reactions.mjs','dispatch'],
@@ -142,4 +144,4 @@ for(const [name,file,before,after,test='tests/differential.mjs',anchor] of mutat
     caught++;console.log('Rejected mutation: '+name);
   } finally {await fs.rm(dir,{recursive:true,force:true});}
 }
-console.log(`${caught} source-changing variants rejected by differential assertions.`);
+console.log(`${caught} source-changing variants rejected by differential or kernel assertions.`);

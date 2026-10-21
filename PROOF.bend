@@ -1,6 +1,9 @@
 import Base
 import ./LAWS.bend as Laws
 import ./proof/paths.bend as Paths
+import ./proof/publication.bend as Publication
+import ./proof/read-policy.bend as ReadPolicy
+import ./proof/signal-staging.bend as SignalStaging
 import ./proof/question.bend as Question
 
 def Laws.chain_once():
@@ -215,3 +218,33 @@ def Laws.callback_reaction_binding(first, second):
 
 def Laws.lexical_reaction_tracking_binding(signal):
   {==}
+
+def Laws.pending_value_publication(w, prefix, node, suffix, value):
+  Publication.publication(w, prefix, node, suffix, value)
+
+def Laws.unowned_fast_read_committed(w, arena, tasks, stack, id):
+  ReadPolicy.committed_fast_read(w, arena, tasks, stack, id)
+
+def Laws.unowned_read_does_not_join(w, id, slow):
+  ReadPolicy.unowned_read_does_not_join(w, id, slow)
+
+def Laws.unowned_selected_read(w, tasks, stack, id):
+  ReadPolicy.unowned_selected_read(w, tasks, stack, id)
+
+def Laws.unflushed_value_is_selected(w, tasks, stack, id, reader, value):
+  ReadPolicy.unflushed_value_is_selected(w, tasks, stack, id, reader, value)
+
+def Laws.empty_pending_publication_is_identity(w, prefix, node, suffix):
+  Publication.noPending(w, prefix, node, suffix)
+
+def Laws.publication_is_idempotent(w, prefix, node, suffix):
+  Publication.idempotent(w, prefix, node, suffix)
+
+def Laws.signal_reads_committed_before_flush(initial, next):
+  SignalStaging.read_before_commit(initial, next)
+
+def Laws.signal_reads_new_value_after_flush(initial, next):
+  SignalStaging.read_after_commit(initial, next)
+
+def Laws.signal_completes_for_every_sufficient_budget(initial, next, extra):
+  SignalStaging.complete(initial, next, extra)
