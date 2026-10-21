@@ -26,8 +26,8 @@ landings and held seams; see [comparator coverage](tracking/comparators.md).
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `b0ad1df5` (rc.16), matching `next` when fetched
-on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-b0ad1df5.md).
+The reviewed Solid pin is now `d682022c` (rc.16), matching `next` when fetched
+on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-d682022c.md).
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.

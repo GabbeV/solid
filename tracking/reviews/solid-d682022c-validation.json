@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21",
+  "previousSource": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+  "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
+  "previousBendCheckpoint": "523673d",
+  "previousBranch": "baseline/solid-b0ad1df5",
+  "vendoredFilesCompared": 76,
+  "changedSourceFiles": 8,
+  "sourcePatched": false,
+  "activeSemanticDeviations": [],
+  "nativeControls": [
+    {
+      "source": "b0ad",
+      "tier": "dev",
+      "exitCode": 1,
+      "log": "/workspace/scratch/solid-b0ad-dev-new-controls.log",
+      "sha256": "ac1f9890ca10e97a283c918b049723f40fd037834560a119add236d1f1667919"
+    },
+    {
+      "source": "b0ad",
+      "tier": "prod",
+      "exitCode": 1,
+      "log": "/workspace/scratch/solid-b0ad-prod-new-controls.log",
+      "sha256": "45c0ce257d94a34eaeb5bf590bb1b2b9f99339880ae2e6ff60c84e4fae51bef2"
+    },
+    {
+      "source": "b0ad",
+      "tier": "observe",
+      "exitCode": 1,
+      "log": "/workspace/scratch/solid-b0ad-observe-new-controls.log",
+      "sha256": "52e5561919b33724c3639a5f80dcf55e7dc845ac3c68204fe75874593c832f03"
+    },
+    {
+      "source": "d682",
+      "tier": "dev",
+      "exitCode": 0,
+      "log": "/workspace/scratch/solid-d682-dev-new-controls.log",
+      "sha256": "05af80584ddf92d5a31df348142535c7adb569174b3630fb487d45d5f6cafefb"
+    },
+    {
+      "source": "d682",
+      "tier": "prod",
+      "exitCode": 0,
+      "log": "/workspace/scratch/solid-d682-prod-new-controls.log",
+      "sha256": "0cb794b089d42b814b9bcb9426b8fdcfad28d61c3cf4f56f4f5d4257d6f85e8a"
+    },
+    {
+      "source": "d682",
+      "tier": "observe",
+      "exitCode": 0,
+      "log": "/workspace/scratch/solid-d682-observe-new-controls.log",
+      "sha256": "18a08e104d89168f33e40cb0d16e94ab981f470a206a5dc048f0279bd2fcb257"
+    }
+  ],
+  "upstreamPackageChecks": {
+    "javascriptTiers": [
+      "dev",
+      "prod",
+      "observe"
+    ],
+    "declarations": "pass",
+    "testFiles": 330,
+    "passedTests": 5432,
+    "expectedFailures": 3,
+    "skips": 2
+  },
+  "logHashes": {
+    "solid-d682-build.log": "6fdfb16227e08abc7710e91c2351f51f79083d60cdd270f5dfcc5a1c8143a0e4",
+    "solid-d682-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "solid-d682-full-tests.log": "cc31f4718fd73467728a733c693bc170c03f5df66eb1be75642b84a25cb9f97f"
+  },
+  "portScope": "No active projection family/lane/store scopes or dev/observe diagnostic implementation; source-only projection regressions are not Bend coverage.",
+  "bendChecks": {
+    "histories": 2678,
+    "compiledMutations": 162,
+    "closedRegressions": 65,
+    "nativeActionControls": 21,
+    "finiteMemoControls": 80,
+    "tests": "pass",
+    "helperAlignment": "pass",
+    "mutations": "pass",
+    "logs": {
+      "solid-d682-bend-build.log": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125",
+      "solid-d682-all-tests.log": "d9c5561737bc6cb5a75721260eacadeae69c6a6513c2839f51769ee5dbf5c519",
+      "solid-d682-alignment.log": "d1e784fd13ae0bca1f4bd8d60273dd99fa751680e7b7a1820c5948f6daaea5e6",
+      "solid-d682-mutations.log": "52923aac021654ebd01aa1224a8f55a8e4243cf5ce6403e607d35464193cfedb",
+      "solid-d682-paired-controls.log": "ed757e7b94d80b8bbacf3599ed63a9932ba7d163974d05f378d9b633e984640d",
+      "solid-d682-native-projection.log": "d835b3d3f52f903495e78a9d1d384c6c97334d03ae96334fd56fe4d54983da44"
+    }
+  }
+}

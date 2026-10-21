@@ -4,9 +4,9 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2666 differential histories, 162 rejected compiled mutations,
+Current verification: 2678 differential histories, 162 rejected compiled mutations,
 and 65 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at d682022c (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -14,6 +14,15 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Reviewed next update
+
+The [d682022c review](reviews/solid-d682022c.md) integrates nine upstream commits.
+The production projection error fix is source-only coverage because projection
+families are not yet represented. Dev diagnostic changes leave the admitted
+production behavior unchanged. Twelve new paired equal-compute effect histories
+and two source-only projection controls pass; prior fixes and preserved bugs are
+revalidated. The b0ad1df5 checkpoint remains on its own baseline branch.
 
 ## Typed action milestone
 

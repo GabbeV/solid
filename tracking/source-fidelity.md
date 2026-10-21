@@ -1,10 +1,10 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid b0ad1df5 (rc.16). [The latest review](reviews/solid-b0ad1df5.md)
-records the eight-commit update from 71153bf0 and its inactive lane/dev limits.
-The initial audit and milestone notes below retain their historical context;
-[the earlier integration review](reviews/solid-71153bf0.md) records the original
-three upstream fixes. No active semantic deviation exists.
+Current pin: Solid d682022c (rc.16). [The latest review](reviews/solid-d682022c.md)
+records the nine-commit update from b0ad1df5, the projection-family error guard and
+inactive dev/observe diagnostic changes. The previous checkpoint is preserved at
+baseline/solid-b0ad1df5 (523673d). Earlier reviews retain their historical context.
+No active semantic deviation exists. Projection/lane/store engines stay unfinished.
 
 
 The user has explicitly set the engineering target: a translation close enough to

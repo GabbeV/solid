@@ -3,8 +3,8 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is still b0ad1df5. A read-only upstream check on 2026-10-21 found candidate next@d682022c; its
-integration is a separate reviewed step after this checkpoint. The semantic deviation register remains empty.
+is d682022c. Nine upstream commits were reviewed and integrated after preserving
+the complete b0ad1df5 checkpoint on baseline/solid-b0ad1df5. The semantic deviation register remains empty.
 
 | Area | Starting checkpoint | Current checked work |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ integration is a separate reviewed step after this checkpoint. The semantic devi
 | General local guarantees | Existing publication/read/signal and representation laws | 32 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked |
 | Typed actions | No public action engine | Reusable function identities, two call arguments and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
-| Public comparison corpus | 2,348 histories | 2,666 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 2,678 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 65, including two deliberately preserved upstream bugs |
 | Compiled mutation checks | 116 | 162; resource/infrastructure failures are excluded from useful rejections |
 
@@ -51,3 +51,9 @@ compiled-mutation rejections, six quantified local action/capture properties and
 one closed repeated-call regression. The new two-parameter memo family proves
 both the public staging boundary and the full constructor/setter/flush program;
 64 additional finite native/canonical controls are separate supporting evidence.
+
+The reviewed d682022c update adds twelve paired effect-equality histories and
+keeps two native projection rejection controls explicitly source-only. Its full
+signals suite passes 330 files / 5,432 tests. Active dev diagnostics and projection
+families remain outside the Bend implementation; prior integrated fixes and the
+two deliberately preserved bugs are revalidated.

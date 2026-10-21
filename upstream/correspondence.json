@@ -495,7 +495,7 @@
     "core/async.ts:stageError": {
       "bend": "runtime/pending.bend:stageError, stageWrap; runtime/pending.bend:beginStageError; runtime/core.bend:ErrorStageSettle, ErrorAfterStage, CatchStageSettle, CatchStageFinish",
       "status": "partial",
-      "restrictions": "Source held/in-pass-staged-read transaction guard, blocked/set retirement, error-status preservation, wrapped staging and settlement before schedule/return retained. Async rejection and recompute catch callers now suspend through deferred owner releases. The recompute stagedErr assignment remains incomplete if settlement throws. Reviewed #4156: staged-read errors stage while globalQueue is running before a hold necessarily joins."
+      "restrictions": "Source held/in-pass-staged-read transaction guard, blocked/set retirement, error-status preservation, wrapped staging and settlement before schedule/return retained. Async rejection and recompute catch callers now suspend through deferred owner releases. The recompute stagedErr assignment remains incomplete if settlement throws. Reviewed #4156: staged-read errors stage while globalQueue is running before a hold necessarily joins. At d682022c, the new !el.fam predicate excludes projection derives from in-pass staging (#4195). Projection-family nodes remain unrepresentable/unported; this predicate is always true for admitted nodes. Native projection regressions are source-only, not Bend coverage."
     },
     "core/scheduler.ts:deferZombie": {
       "bend": "runtime/scheduler.bend:deferZombie; runtime/core.bend:heapLoop",
@@ -701,6 +701,11 @@
       "bend": "runtime/action-state.bend:exit",
       "status": "restricted",
       "restrictions": "Source depth increment/decrement retained; well-formed balanced entry assumption for natural representation. General whole-World entry/exit law and native nested/depth/error controls. Dev/observe brackets remain separate unfinished branches."
+    },
+    "core/scheduler.ts:haltReactivityAt": {
+      "bend": null,
+      "status": "unported",
+      "restrictions": "New dev call-site diagnostic-subject wrapper at d682022c. Production callers retain haltReactivity(cause); dev/observe attribution and diagnostic owner paths remain unported."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

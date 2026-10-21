@@ -26,9 +26,9 @@
       "validationRecord": "tracking/reviews/solid-71153bf0-validation.json",
       "currentProof": "LAWS.bend:empty_flatten_returns_undefined",
       "lastRevalidation": {
-        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "record": "tracking/reviews/solid-d682022c-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
@@ -60,9 +60,9 @@
       "supersededReason": "PR #4148 closed without merge; #4156 clears prior staged errors at the next pass prelude. Related setter case lands in #4167.",
       "currentProof": "LAWS.bend:staged_error_recovers_before_landing",
       "lastRevalidation": {
-        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "record": "tracking/reviews/solid-d682022c-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
@@ -102,9 +102,9 @@
       "fixMergedCommit": "7014aca40e38afa58ba917ba6c534e45bde14430",
       "currentProof": "LAWS.bend:held_function_result_stays_data",
       "lastRevalidation": {
-        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "record": "tracking/reviews/solid-d682022c-validation.json",
         "result": "upstream-fix-still-passes"
       }
     },
@@ -144,9 +144,9 @@
       "playgroundVerification": "repros/playground/cleanup-throw-hosted.json",
       "fixUrl": "https://github.com/solidjs/solid/pull/4176",
       "lastRevalidation": {
-        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
         "date": "2026-10-21",
-        "record": "tracking/reviews/solid-b0ad1df5-validation.json",
+        "record": "tracking/reviews/solid-d682022c-validation.json",
         "result": "regression-preserved"
       }
     },
@@ -170,9 +170,10 @@
       "currentProof": "LAWS.bend:pending_reaction_arm_survives_replacement",
       "controlProof": "LAWS.bend:seeded_reaction_arm_is_replaced",
       "lastRevalidation": {
-        "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+        "sourceCommit": "d682022c21eb863edc1a1abac687b2353c55ab6f",
         "date": "2026-10-21",
-        "result": "current-next-reproduces; production/development/observe Chromium cases and loading-seeded controls"
+        "record": "tracking/reviews/solid-d682022c-validation.json",
+        "result": "regression-preserved"
       },
       "candidateFixBranch": "fix/reaction-pending-arm",
       "candidateFixCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",

@@ -149,6 +149,9 @@ def stageWrap(w: R.World, id: Nat, error: R.Value) -> B.Bundle<R.World, R.Value>
     case other:
       A.statusError(w, id, other)
 
+# next@d682022c: source excludes projection derives (el.fam) from the in-pass
+# staged-read arm (#4195). Projection-family nodes cannot be constructed in
+# this admitted profile; the missing active family branch remains unported.
 def beginStageError(+w: R.World, +id: Nat, error: R.Value, inPass: Bool) -> B.Bundle<R.World, Bool>:
   stage = Bool.and(Bool.or(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
     Bool.and(inPass, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_STAGED_READ()), R.World.running(w)))), Nat.is_eq(R.World.passLane(w), 0n))
