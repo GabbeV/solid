@@ -62,4 +62,4 @@ positive 0/1 control. This failure is not relabeled as successful replacement.
 No report, playground upload, PR or maintainer message has been sent for this
 finding. A fix needs to capture the actual arm even when tracking throws, while
 checking that reentrant tracking, callback re-arming and disposal still retain
-their existing order. No untested source patch is proposed here.
+their existing order. A tested local candidate is now recorded in [the fix review](reaction-pending-rearm-fix.md), separately from the pinned runtime. An additional paired history preserves the analogous initially-throwing tracking case.

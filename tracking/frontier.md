@@ -2,7 +2,7 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2347 differential histories, 116 rejected compiled mutations,
+Current verification: 2348 differential histories, 116 rejected compiled mutations,
 and 56 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -40,7 +40,7 @@ identity when dirty derivations make it requeue. [The review](settled.md) record
 54 public histories, 48 native fire-closure cases, cleanup/throw behavior, two
 concrete laws and two general input-binding laws. [Reactions](reactions.md) now also retain the source closure's cleanup/current arm,
 replacement disposal, captured owner, deferred user effects and first-class track
-function. The milestone adds 65 expression histories and 12 original function
+function. The milestone adds 66 expression histories and 12 original function
 histories, two positive concrete laws and one negative pending-arm counterexample.
 [The new source bug](upstream/reaction-pending-rearm.md) is an uncovered pending
 case of #2861, reproduced in Chromium on current next; no workaround is applied.

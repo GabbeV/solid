@@ -124,4 +124,11 @@ for(const immediate of [false,true])for(const seeded of [false,true])for(const f
   ['resolve','old',7],['tick'],['flush'],['read','count'],['set','current',1],['flush'],['read','count'],['dispose'],['flush']
  ],(op,args,result)=>{if(op==='read'){assert.deepEqual(result,['return',(seeded?0:1)+reads]);reads++;}});
 }
+let recoveredArmReads=0;
+await scenario('superseded initial tracking error retains its pinned arm',[
+ ['signal','failed',true],['signal','current',0],['signal','count',0],['program','handle',[['emit',41]]],
+ ['program','fire',[['updateExpr','count',{add:[{prev:true},lit(1)]}]]],['reaction','ready',body({call:'fire'}),{errorProgram:'handle'}],
+ ['track','ready',select(read('failed'),{raise:8},lit(undefined))],['track','ready',read('current')],['flush'],
+ ['set','failed',false],['flush'],['read','count'],['set','current',1],['flush'],['read','count'],['dispose'],['flush']
+],(op,args,result)=>{if(op==='read')assert.deepEqual(result,['return',++recoveredArmReads]);});
 console.log(`${count} reaction histories match actual replacement arms, one-shot firing, re-arming, cleanup, pending/errors, owner capture and returned identity.`);

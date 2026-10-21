@@ -1,0 +1,119 @@
+diff --git a/.changeset/reaction-pending-arm.md b/.changeset/reaction-pending-arm.md
+new file mode 100644
+index 00000000..a30b8233
+--- /dev/null
++++ b/.changeset/reaction-pending-arm.md
+@@ -0,0 +1,5 @@
++---
++"@solidjs/signals": patch
++---
++
++Dispose superseded createReaction arms even when their initial tracking read suspends or throws.
+diff --git a/packages/signals/src/signals.ts b/packages/signals/src/signals.ts
+index 8dbb3da1..a7dbb4d2 100644
+--- a/packages/signals/src/signals.ts
++++ b/packages/signals/src/signals.ts
+@@ -742,7 +742,12 @@ export function createReaction(
+     }
+     runWithOwner(owner!, () => {
+       effect(
+-        () => (tracking(), (arm = getOwner()!)),
++        () => {
++          const node = getOwner()!;
++          arm = node;
++          tracking();
++          return node;
++        },
+         node => {
+           arm = undefined;
+           cl?.();
+diff --git a/packages/signals/tests/createReaction.test.ts b/packages/signals/tests/createReaction.test.ts
+index 66932851..af60f8ae 100644
+--- a/packages/signals/tests/createReaction.test.ts
++++ b/packages/signals/tests/createReaction.test.ts
+@@ -1,4 +1,11 @@
+-import { createReaction, createRoot, createSignal, flush, resetErrorHalt } from "../src/index.js";
++import {
++  createMemo,
++  createReaction,
++  createRoot,
++  createSignal,
++  flush,
++  resetErrorHalt
++} from "../src/index.js";
+ 
+ describe("createReaction", () => {
+   test("Create and trigger a Reaction", () => {
+@@ -121,3 +128,72 @@ describe("createReaction", () => {
+     resetErrorHalt();
+   });
+ });
++
++describe("replacing an arm whose tracking read did not finish", () => {
++  test.each([false, true])("pending arm is replaced (loading seed: %s)", async seeded => {
++    let finish!: (value: number) => void;
++    let dispose!: () => void;
++    let calls = 0;
++    const { setCurrent } = createRoot(d => {
++      dispose = d;
++      const oldResult = createMemo(
++        () => new Promise<number>(resolve => (finish = resolve)),
++        seeded ? { loadingValue: 0 } : undefined
++      );
++      const [current, setCurrent] = createSignal(0);
++      const track = createReaction(() => {
++        calls++;
++      });
++      track(oldResult);
++      track(current);
++      return { setCurrent };
++    });
++    try {
++      flush();
++      finish(1);
++      await Promise.resolve();
++      flush();
++      expect(calls).toBe(0);
++      setCurrent(1);
++      flush();
++      expect(calls).toBe(1);
++    } finally {
++      dispose();
++    }
++  });
++
++  test("a superseded tracking error does not retain a live arm", () => {
++    let dispose!: () => void;
++    const error = new Error("old tracking failed");
++    const onError = vi.fn();
++    let calls = 0;
++    const { setFailed, setCurrent } = createRoot(d => {
++      dispose = d;
++      const [failed, setFailed] = createSignal(true);
++      const [current, setCurrent] = createSignal(0);
++      const track = createReaction({
++        effect: () => {
++          calls++;
++        },
++        error: onError
++      });
++      track(() => {
++        if (failed()) throw error;
++      });
++      track(current);
++      return { setFailed, setCurrent };
++    });
++    try {
++      flush();
++      expect(onError).not.toHaveBeenCalled();
++      setFailed(false);
++      flush();
++      expect(calls).toBe(0);
++      setCurrent(1);
++      flush();
++      expect(calls).toBe(1);
++    } finally {
++      dispose();
++    }
++  });
++});

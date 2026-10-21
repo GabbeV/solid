@@ -1,0 +1,128 @@
+{
+  "baseCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+  "candidateCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",
+  "bundler": "Rolldown 1.2.11",
+  "standardBase": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7350,
+      "minified": 19991,
+      "limit": 7390,
+      "passed": true,
+      "capMinified": 19991,
+      "lazy": [],
+      "packages": {
+        "signals": 19948,
+        "other": 44
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14914,
+      "minified": 45145,
+      "limit": 14950,
+      "passed": true,
+      "capMinified": 45145,
+      "lazy": [],
+      "packages": {
+        "signals": 45086,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10173,
+      "minified": 28463,
+      "limit": 10190,
+      "passed": true,
+      "capMinified": 28463,
+      "lazy": [],
+      "packages": {
+        "signals": 28403,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7960,
+      "minified": 21802,
+      "limit": 7980,
+      "passed": true,
+      "capMinified": 21802,
+      "lazy": [],
+      "packages": {
+        "signals": 21748,
+        "other": 54
+      }
+    }
+  ],
+  "standardPatched": [
+    {
+      "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+      "size": 7350,
+      "minified": 19991,
+      "limit": 7390,
+      "passed": true,
+      "capMinified": 19991,
+      "lazy": [],
+      "packages": {
+        "signals": 19948,
+        "other": 44
+      }
+    },
+    {
+      "name": "signals: + createStore",
+      "size": 14914,
+      "minified": 45145,
+      "limit": 14950,
+      "passed": true,
+      "capMinified": 45145,
+      "lazy": [],
+      "packages": {
+        "signals": 45086,
+        "other": 57
+      }
+    },
+    {
+      "name": "signals: + isPending/latest",
+      "size": 10173,
+      "minified": 28463,
+      "limit": 10190,
+      "passed": true,
+      "capMinified": 28463,
+      "lazy": [],
+      "packages": {
+        "signals": 28403,
+        "other": 58
+      }
+    },
+    {
+      "name": "signals: + until/refresh (truth readers, no optimism)",
+      "size": 7960,
+      "minified": 21802,
+      "limit": 7980,
+      "passed": true,
+      "capMinified": 21802,
+      "lazy": [],
+      "packages": {
+        "signals": 21748,
+        "other": 54
+      }
+    }
+  ],
+  "focusedBase": {
+    "name": "signals: createReaction",
+    "min": 16562,
+    "br": 6301
+  },
+  "focusedPatched": {
+    "name": "signals: createReaction",
+    "min": 16579,
+    "br": 6301
+  },
+  "focusedDelta": {
+    "minified": 17,
+    "brotli": 0
+  },
+  "note": "Four standard comparison gates pass with identical byte counts; no caps changed. Focused entry imports createReaction."
+}

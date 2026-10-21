@@ -24,7 +24,7 @@ disposes the firing node. A throw skips later assignments/disposal. Re-arming fr
 the callback is retained. Bundle errors use the existing user-effect error arm;
 that arm's previous-cleanup helper addresses the effect node's cleanup, not cl.
 
-The 65 expression-ABI histories cover ownerless/owned construction, schedule/sync
+The 66 expression-ABI histories cover ownerless/owned construction, schedule/sync
 options, normal and already-queued replacement, re-arming, callback cleanup types,
 pending/loading/rejection, error bundles and helper arguments, thrown callbacks or
 cleanups, zero-dependency reruns, owner capture, returned callable identity and the

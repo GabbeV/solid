@@ -173,7 +173,13 @@
         "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
         "date": "2026-10-21",
         "result": "current-next-reproduces; production/development/observe Chromium cases and loading-seeded controls"
-      }
+      },
+      "candidateFixBranch": "fix/reaction-pending-arm",
+      "candidateFixCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",
+      "candidateBaseCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+      "candidateFixRecord": "tracking/upstream/reaction-pending-rearm-fix.md",
+      "candidateFixPatch": "tracking/upstream/reaction-pending-rearm.patch",
+      "candidateFixDisposition": "Committed locally in separate workspace; not published. Active Bend behavior remains at the unchanged upstream pin."
     }
   ]
 }

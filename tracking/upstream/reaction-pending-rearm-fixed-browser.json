@@ -1,0 +1,77 @@
+{
+  "sourceCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+  "sourceDirty": "M packages/signals/src/signals.ts",
+  "candidate": true,
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "issue-production-pending",
+      "profile": "production",
+      "dev": false,
+      "observe": false,
+      "seeded": false,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-production-control",
+      "profile": "production",
+      "dev": false,
+      "observe": false,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-development-pending",
+      "profile": "development",
+      "dev": true,
+      "observe": true,
+      "seeded": false,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-development-control",
+      "profile": "development",
+      "dev": true,
+      "observe": true,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-observe-pending",
+      "profile": "observe",
+      "dev": false,
+      "observe": true,
+      "seeded": false,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "issue-observe-control",
+      "profile": "observe",
+      "dev": false,
+      "observe": true,
+      "seeded": true,
+      "afterOld": "Reaction calls: 0",
+      "afterCurrent": "Reaction calls: 1",
+      "errors": [],
+      "reports": []
+    }
+  ],
+  "candidateCommit": "5c6f441144ab34b8e0b8645bca5c4a748e7e1f84",
+  "baseCommit": "b0ad1df505b835058a4b3750ab37d6576bb18c01",
+  "captureNote": "Captured before committing the source-only change; sourceDirty records the checked edit. Candidate commit below contains that identical source and the added tests/changeset."
+}

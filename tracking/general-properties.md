@@ -68,7 +68,11 @@ setting, not arbitrary graph/history correctness or TS equivalence. Directly
 unfolding even this symbolic flush exceeded the pinned kernel's reduction fuel;
 canonical transitions and small equality transports avoid that expansion without
 changing the runtime, raising the kernel budget or adding an axiom. The larger
-arbitrary-payload memo-chain proof is still a separate unfinished step.
+arbitrary-payload memo-chain proof is still a separate unfinished step. A scratch
+95-transition chain witness passed its individual symbolic steps and typed Path,
+but the setter-to-staged bridge and composed flush proof exceeded the available
+16 GiB memory. That experiment is outside the active proof roots and is not
+counted as a completed semantic theorem.
 
 ## Sensitivity and limits
 
