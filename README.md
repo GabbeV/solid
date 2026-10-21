@@ -19,6 +19,8 @@ The implementation, differential tests, and composed proofs use the same runtime
 [General semantic properties](tracking/general-properties.md) now cover arbitrary
 publication slots/payloads, read policies and a complete numeric signal program.
 There is no second scheduler hidden behind the proof.
+The public `flush(() => ...)` overload now supports nested synchronous drains,
+returned values and exception-safe depth restoration; see [flush callbacks](tracking/flush-callbacks.md).
 
 The reviewed Solid pin is now `b0ad1df5` (rc.16), matching `next` when fetched
 on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-b0ad1df5.md).
@@ -31,7 +33,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 116 source-changing variants
+npm run mutations                # reject 124 source-changing variants
 npm run example                  # Number{14n}
 ```
 

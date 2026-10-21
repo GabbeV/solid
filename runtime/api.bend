@@ -526,3 +526,13 @@ def reactionCreate(body: R.Expr, errorProgram: Nat, options: R.NodeOptions, sche
 
 def reactionArm(callee: R.Expr, tracking: R.Expr) -> R.Expr:
   R.ReactionArm{callee, tracking}
+
+# Public flush callback/value expressions use the same core continuation driver.
+def flushCallback(body: R.Expr) -> R.Expr:
+  R.FlushCallback{body}
+
+def flushValue(callee: R.Expr) -> R.Expr:
+  R.FlushValue{callee}
+
+def flushNow() -> R.Expr:
+  R.FlushNow{}

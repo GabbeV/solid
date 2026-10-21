@@ -1,6 +1,6 @@
 # Pending reaction arm is not replaced
 
-Status: reproduced upstream, unreported. Source b0ad1df5 (rc.16), still the next
+Status: reported in [PR #4188](https://github.com/solidjs/solid/pull/4188), open. Source b0ad1df5 (rc.16), still the next
 branch head when checked through the GitHub API on 2026-10-21. No fix or deviation
 is applied to the active Bend runtime.
 
@@ -65,6 +65,6 @@ reloads preserve 0/1/2 and a local loading-value control gives 0/0/1.
 [Hosted verification](../../repros/playground/reaction-pending-rearm-hosted.json)
 records this separately from the source-built b0ad1df5 checks. The playground
 reports an unauthenticated /api/session 401; there are no page exceptions.
-No report, PR or maintainer message has been sent for this finding. A fix needs to capture the actual arm even when tracking throws, while
+The user submitted the tested candidate as PR #4188; it is not applied to this pin. A fix needs to capture the actual arm even when tracking throws, while
 checking that reentrant tracking, callback re-arming and disposal still retain
 their existing order. A tested local candidate is now recorded in [the fix review](reaction-pending-rearm-fix.md), separately from the pinned runtime. An additional paired history preserves the analogous initially-throwing tracking case.

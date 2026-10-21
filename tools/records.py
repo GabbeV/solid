@@ -135,6 +135,9 @@ type Expr is Data:
   Same{left: Expr, right: Expr}
   Select{condition: Expr, yes: Expr, no: Expr}
   Untracked{body: Expr}
+  FlushCallback{body: Expr}
+  FlushValue{callee: Expr}
+  FlushNow{}
   WithOwner{owner: Expr, body: Expr}
   CurrentOwner{}
   CurrentObserver{}

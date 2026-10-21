@@ -158,9 +158,9 @@
       "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty. Reviewed comparator moved last after parked frame predicates; strict/disabled comparator subset uses shared equality.isSame. Other throws/NotReady comparator callbacks remain unadmitted."
     },
     "core/scheduler.ts:flush": {
-      "bend": "runtime/core.bend:flush, run",
+      "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
       "status": "partial",
-      "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
+      "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
     },
     "core/effect.ts:effect": {
       "bend": "runtime/api.bend:createEffectWithHandlers, nestedEffect; runtime/core.bend:evaluate(EffectCreate), InitialEffect",
@@ -325,7 +325,7 @@
     "core/scheduler.ts:schedule": {
       "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs",
       "status": "partial",
-      "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) are retained as host outbox IO. Public flush callback overload and actionDepth scopes unfinished. Draining the outbox is a host harness choice."
+      "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) retained as host outbox IO. Public flush callbacks now maintain syncDepth at their actual source entry/finally sites; native scheduling controls cover suppression and restoration. ActionDepth scopes remain unfinished. Draining the outbox is a host harness choice."
     },
     "core/scheduler.ts:resetErrorHalt": {
       "bend": "runtime/api.bend:resetErrorHalt",

@@ -5,6 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["flush callback omits sync depth entry", "runtime/core.bend", "R.World.with_syncDepth(w, 1n+R.World.syncDepth(w))", "w", "tests/flush-callbacks.mjs", "flushCallback"],
+  ["flush callback skips its finally drain", "runtime/core.bend", "publicFlush(R.World.with_fault(w, R.Healthy{}), FlushCallbackRestore{prior, values} <> rest, values)", "Machine{R.World.with_fault(w, R.Healthy{}), FlushCallbackRestore{prior, values} <> rest, values}", "tests/flush-callbacks.mjs", "flushCallbackFinally"],
+  ["flush callback leaks sync depth", "runtime/core.bend", "Nat.sub(R.World.syncDepth(w), 1n)", "R.World.syncDepth(w)", "tests/flush-callbacks.mjs", "flushCallbackRestore"],
+  ["successful flush drain loses callback error", "runtime/core.bend", "flushCallbackRestore(w, rest, saved, prior)", "flushCallbackRestore(w, rest, saved, R.Healthy{})", "tests/flush-callbacks.mjs", "dispatch"],
+  ["flush callback error replaces later drain error", "runtime/core.bend", "flushCallbackRestore(w, rest, saved, R.World.fault(w))", "flushCallbackRestore(w, rest, saved, prior)", "tests/flush-callbacks.mjs", "unwind"],
+  ["flush callback drops its saved return", "runtime/core.bend", "+values = B.choose(~List<&2, R.Value>, healthy(prior), _ => stack, _ => saved)", "+values = saved", "tests/flush-callbacks.mjs", "flushCallbackFinally"],
+  ["flush callback loses captured arguments", "runtime/callback.bend", "R.FlushCallback{bind(body, first, second)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
+  ["flush callback loses lexical signals", "runtime/lexical.bend", "R.FlushCallback{bind(body, depth, signal)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
+
   ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue'],
   ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast'],
   ['reaction replacement leaves the old arm live','runtime/core.bend','OwnerTasks{[O.Dispose{arm}]} <> ReactionArmClear{reaction} <> ending','ending','tests/reactions.mjs','reactionArm'],

@@ -33,6 +33,14 @@ it is not implemented as an ordinary user effect. Source stale scope is represen
 explicitly and restored through normal/exceptional return points. See
 [tracked-effects.md](tracked-effects.md) for the scoped completion and limitations.
 
+## Public flush callbacks
+
+The callback overload follows source syncDepth entry, callback return, outer
+finally drain and inner finally decrement through the existing core driver.
+The active production profile excludes actionDepth/action bodies and dev guards;
+these remain unported rather than silently approximated. See
+[flush-callbacks.md](flush-callbacks.md) for source return points and proof scope.
+
 ## What line by line means here
 
 Each source function and meaningful operation should be locatable in Bend: branch

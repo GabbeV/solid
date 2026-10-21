@@ -18148,7 +18148,7 @@
           "mapping": {
             "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs",
             "status": "partial",
-            "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) are retained as host outbox IO. Public flush callback overload and actionDepth scopes unfinished. Draining the outbox is a host harness choice."
+            "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) retained as host outbox IO. Public flush callbacks now maintain syncDepth at their actual source entry/finally sites; native scheduling controls cover suppression and restoration. ActionDepth scopes remain unfinished. Draining the outbox is a host harness choice."
           }
         },
         {
@@ -18378,9 +18378,9 @@
           "sha256": "346ee8d21c9f0955344ac34013b2df1bd24e5b2009398bc7a229de1204c15c52",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, run",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
             "status": "partial",
-            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {
@@ -18390,9 +18390,9 @@
           "sha256": "25049013391b351e71e99667061f0dd20e9304d6b267c793870a4c94f489ec29",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, run",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
             "status": "partial",
-            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {
@@ -18402,9 +18402,9 @@
           "sha256": "b01f72838d14f5079bfdcc941c9aed9f75b65155d5d4db46a24022799a17f803",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, run",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
             "status": "partial",
-            "restrictions": "Explicit host-driven drain with source halt/running/scheduled guards. Microtask delivery, flush(fn), actions and transaction landing unfinished."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {

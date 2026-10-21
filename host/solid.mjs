@@ -171,6 +171,9 @@ export class SolidRuntime {
     if(e.mul) return this.evaluate(e.mul[0],prev,values,locals)*this.evaluate(e.mul[1],prev,values,locals);
     if(e.same) return this.evaluate(e.same[0],prev,values,locals)===this.evaluate(e.same[1],prev,values,locals);
     if(e.select) return this.evaluate(e.select[0],prev,values,locals) ? this.evaluate(e.select[1],prev,values,locals) : this.evaluate(e.select[2],prev,values,locals);
+    if(Object.hasOwn(e,'flush'))return this.S.flush(()=>this.evaluate(e.flush,prev,values,locals));
+    if(Object.hasOwn(e,'flushCall'))return this.S.flush(this.evaluate(e.flushCall,prev,values,locals));
+    if(e.flushNow)return this.S.flush();
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
     if(e.invokeArgs){
@@ -483,7 +486,7 @@ export class SolidRuntime {
     const value=this.accessors[name](),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
     this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
   }
-  flush() { this.S.flush(); }
+  flush(body) { if(arguments.length)return this.S.flush(()=>this.evaluate(body));return this.S.flush(); }
   refresh(name) { this.awaitRefresh('refresh#'+Object.keys(this.ports).length,name); }
   resetErrorHalt() { this.S.resetErrorHalt(); }
   dispose() { this.disposeRoot(); }

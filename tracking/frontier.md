@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2348 differential histories, 116 rejected compiled mutations,
-and 56 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2412 differential histories, 124 rejected compiled mutations,
+and 58 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -12,6 +12,16 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Flush callback milestone
+
+[Public flush callbacks](flush-callbacks.md) now use the shared machine, retaining
+nested synchronous drains, exact callback returns, ambient scope, native callback
+identity, finally-on-throw and drain-error precedence. The milestone adds 64
+public histories, eight native scheduling-IO controls, two closed execution laws
+and three quantified entry/finally properties. Public actions remain unfinished.
+User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
+open and tracked; its change is not applied to the active source pin.
 
 ## General semantic proof milestone
 

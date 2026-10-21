@@ -106,6 +106,9 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.observer) return R.currentObserver();
   if(e.reactionCreate){const {body,options={}}=e.reactionCreate;return R.reactionCreate(expression(body,ids,programs,futures,encodeValue,contexts),programs[options.errorProgram]??0,nodeOptions(options,programs,encodeValue),options.schedule??false);}
   if(e.reactionArm)return R.reactionArm(expression(e.reactionArm.callee,ids,programs,futures,encodeValue,contexts),expression(e.reactionArm.tracking,ids,programs,futures,encodeValue,contexts));
+  if(Object.hasOwn(e,'flush'))return R.flushCallback(expression(e.flush,ids,programs,futures,encodeValue,contexts));
+  if(Object.hasOwn(e,'flushCall'))return R.flushValue(expression(e.flushCall,ids,programs,futures,encodeValue,contexts));
+  if(e.flushNow)return R.flushNow();
   if(e.settled)return R.settled(expression(e.settled,ids,programs,futures,encodeValue,contexts));
   if(e.trackedCreate)return R.trackedCreate(expression(e.trackedCreate,ids,programs,futures,encodeValue,contexts));
   if(e.signalComputeScope){
@@ -472,7 +475,7 @@ export class BendRuntime {
     const m=R.read(this.fuel,this.world,this.ids[name]);
     this.world=R.resultWorld(m); this.check(); return this.decode(R.resultValue(m));
   }
-  flush() { this.world=R.flush(this.fuel,this.world); this.check(); }
+  flush(body) { if(arguments.length)return this.evaluate({flush:body});this.world=R.flush(this.fuel,this.world); this.check(); }
   markRefresh(name) { this.world=R.markRefresh(this.world,this.ids[name]); this.check(); }
   refresh(name) { this.awaitRefresh('refresh#'+Object.keys(this.ports).length,name); }
   resetErrorHalt() { this.world=R.resetErrorHalt(this.world); }

@@ -1,5 +1,6 @@
 import Base
 import ./LAWS.bend as Laws
+import ./proof/flush-callbacks.bend as FlushCallbacks
 import ./proof/paths.bend as Paths
 import ./proof/publication.bend as Publication
 import ./proof/read-policy.bend as ReadPolicy
@@ -248,3 +249,19 @@ def Laws.signal_reads_new_value_after_flush(initial, next):
 
 def Laws.signal_completes_for_every_sufficient_budget(initial, next, extra):
   SignalStaging.complete(initial, next, extra)
+
+
+def Laws.nested_flush_callback_returns_before_outer_drain():
+  {==}
+
+def Laws.flush_drain_error_overrides_callback_error():
+  {==}
+
+def Laws.flush_callback_entry_preserves_caller(w, rest, saved, body, prev):
+  FlushCallbacks.entry(w, rest, saved, body, prev)
+
+def Laws.flush_finally_restores_depth_and_operands(w, depth, rest, saved, fault):
+  FlushCallbacks.restores(w, depth, rest, saved, fault)
+
+def Laws.throwing_flush_callback_still_drains(w, rest, partial, saved, error):
+  FlushCallbacks.thrown_drains(w, rest, partial, saved, error)

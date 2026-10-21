@@ -33,6 +33,10 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.Select{bind(condition, depth, signal), bind(yes, depth, signal), bind(no, depth, signal)}
     case R.Untracked{body}:
       R.Untracked{bind(body, depth, signal)}
+    case R.FlushCallback{body}:
+      R.FlushCallback{bind(body, depth, signal)}
+    case R.FlushValue{callee}:
+      R.FlushValue{bind(callee, depth, signal)}
     case R.WithOwner{owner, body}:
       R.WithOwner{bind(owner, depth, signal), bind(body, depth, signal)}
     case R.OwnerDisposed{owner}:

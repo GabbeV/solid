@@ -6,7 +6,8 @@ unchanged next `b0ad1df505b835058a4b3750ab37d6576bb18c01` (rc.16).
 The [portable patch](reaction-pending-rearm.patch) includes source, tests and a
 patch changeset. At the user’s request, this exact commit was pushed to
 `GabbeV/solid:fix/reaction-pending-arm` and a filled-out comparison form prepared
-for the user to review and submit. No PR has been submitted by the agent. The active Bend runtime,
+for review. The user has now submitted [PR #4188](https://github.com/solidjs/solid/pull/4188);
+its head is the tested candidate commit, and it is open. The active Bend runtime,
 source pin and negative law continue to preserve the upstream bug.
 
 The [source report](reaction-pending-rearm.md) links the minimal JSX repro and

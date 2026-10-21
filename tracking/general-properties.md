@@ -1,7 +1,7 @@
 # General semantic properties
 
 These are quantified properties of the actual Bend runtime, separately from the
-56 concrete end-to-end regressions and separately from TS/Bend correspondence.
+58 concrete end-to-end regressions and separately from TS/Bend correspondence.
 No source operation or runtime representation changed to make these proofs pass.
 
 ## Publication at any existing slot
@@ -74,11 +74,24 @@ but the setter-to-staged bridge and composed flush proof exceeded the available
 16 GiB memory. That experiment is outside the active proof roots and is not
 counted as a completed semantic theorem.
 
+## Flush callback scope and finally
+
+[flush-callbacks.bend](../proof/flush-callbacks.bend) adds three quantified local
+properties: entry changes only syncDepth and installs the body/finally tasks;
+restoration keeps the drain's World while restoring the immediately enclosing
+depth and saved operands; and a callback throw still enters the public drain
+with its original error retained in a finally task. They quantify over arbitrary
+Worlds, continuations, operands, callback syntax and fault/value inputs as stated.
+Two separate closed executions check nested return/commit order and error
+precedence. These do not prove arbitrary callback completion or a global drain
+progress bound. [The source review](flush-callbacks.md) records the action/dev
+exclusions and original-function read-observation boundary.
+
 ## Sensitivity and limits
 
 Two additional compiled source variants are rejected by the quantified kernel
 properties themselves: losing the new value during publication, and serving a
-staged value from an unowned fast read. The other 114 mutation variants remain
+staged value from an unowned fast read. The other 122 mutation variants remain
 differential/observation checks. These evidence families are not conflated.
 
 General structural validity of all graphs, arbitrary callback/async/lane scopes,

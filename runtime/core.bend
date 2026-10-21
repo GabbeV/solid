@@ -167,6 +167,9 @@ type Task is Data:
   InstallReturnedCleanup{id: Nat}
   EffectFinally{id: Nat, clean: Bool, saved: List<&2, R.Value>}
   ErrorArmFinally{parameter: Nat, saved: List<&2, R.Value>}
+  FlushArgument{}
+  FlushCallbackFinally{saved: List<&2, R.Value>}
+  FlushCallbackRestore{prior: R.Fault, saved: List<&2, R.Value>}
   Round{}
   HeapLoop{}
   Seam{}
@@ -384,6 +387,29 @@ def reactionFire(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +
   Machine{w, B.choose(~List<&2, Task>, B.nullish(R.ReactionState.cleanup(state)), _ => ending,
     _ => Evaluate{R.Invoke{R.Literal{R.ReactionState.cleanup(state)}}, R.Undefined{}} <> Discard{} <> ending), stack}
 
+# scheduler.ts:flush callback arm. The callback keeps the caller's ambient
+# owner/tracking; only syncDepth changes. Actions/dev diagnostics remain outside
+# this production, action-free profile.
+def flushCallback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, body: R.Expr, prev: R.Value) -> Machine:
+  Machine{R.World.with_syncDepth(w, 1n+R.World.syncDepth(w)), Evaluate{body, prev} <> FlushCallbackFinally{stack} <> rest, stack}
+
+# scheduler.ts:flush no-callback arm, including its running/halted no-op guards.
+# The Round tasks implement the actual while(scheduled) drain.
+def publicFlush(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+  B.choose(~Machine, Bool.or(R.World.running(w), Bool.or(R.World.halted(w), Bool.not(R.World.scheduled(w)))),
+    _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
+
+# Source nested finally: drain even after callback throw; a drain throw overrides
+# that error. Save the return stack across the drain and decrement after either
+# success or failure. Partial callback operands are discarded on a throw.
+def flushCallbackFinally(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, saved: List<&2, R.Value>) -> Machine:
+  +prior = R.World.fault(w)
+  +values = B.choose(~List<&2, R.Value>, healthy(prior), _ => stack, _ => saved)
+  publicFlush(R.World.with_fault(w, R.Healthy{}), FlushCallbackRestore{prior, values} <> rest, values)
+
+def flushCallbackRestore(+w: R.World, rest: List<&2, Task>, saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
+  Machine{R.World.with_fault(R.World.with_syncDepth(w, Nat.sub(R.World.syncDepth(w), 1n)), fault), rest, saved}
+
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
     case R.ReactionCreate{body, errorProgram, options, scheduled}:
@@ -417,6 +443,12 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{left, prev} <> Evaluate{right, prev} <> Binary{2} <> rest, stack}
     case R.Select{condition, yes, no}:
       Machine{w, Evaluate{condition, prev} <> Branch{yes, no, prev} <> rest, stack}
+    case R.FlushCallback{body}:
+      flushCallback(w, rest, stack, body, prev)
+    case R.FlushValue{callee}:
+      Machine{w, Evaluate{callee, prev} <> FlushArgument{} <> rest, stack}
+    case R.FlushNow{}:
+      publicFlush(w, rest, R.Undefined{} <> stack)
     case R.Untracked{body}:
       Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev} <> RestoreTracking{R.World.tracking(w)} <> rest, stack}
     case R.WithOwner{owner, body}:
@@ -2149,6 +2181,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:
       Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
+    case FlushArgument{} <> +rest:
+      match stack:
+        case +callee <> +tail:
+          B.choose(~Machine, B.truth(callee),
+            _ => flushCallback(w, rest, tail, R.Invoke{R.Literal{callee}}, R.Undefined{}),
+            _ => publicFlush(w, rest, R.Undefined{} <> tail))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FlushCallbackFinally{saved} <> rest:
+      flushCallbackFinally(w, rest, stack, saved)
+    case FlushCallbackRestore{prior, saved} <> rest:
+      flushCallbackRestore(w, rest, saved, prior)
     case Round{} <> +rest:
       round(w, rest, stack)
     case HeapLoop{} <> +rest:
@@ -2236,6 +2280,10 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       Machine{w, rest, passStack(frame)}
     case TrimFinallyRestore{prior, saved} <> rest:
       Machine{w, rest, saved}
+    case FlushCallbackFinally{saved} <> rest:
+      flushCallbackFinally(w, rest, stack, saved)
+    case FlushCallbackRestore{prior, saved} <> rest:
+      flushCallbackRestore(w, rest, saved, R.World.fault(w))
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case task <> rest:

@@ -23,6 +23,7 @@ import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/getter-cleanup.bend as GetterCleanup
 import ./proof/tracked-effects.bend as TrackedEffects
+import ./proof/flush-callbacks.bend as FlushCallbacks
 import ./proof/settled.bend as Settled
 import ./proof/reactions.bend as Reactions
 import ./proof/publication.bend as Publication
@@ -366,3 +367,37 @@ law signal_completes_for_every_sufficient_budget:
   for extra: Nat
   {SignalStaging.outcome(API.flush(Nat.add(19n, extra), SignalStaging.input(initial, next)))
     == SignalStaging.expected(next) : SignalStaging.Outcome}
+
+
+law nested_flush_callback_returns_before_outer_drain:
+  {FlushCallbacks.nested() == FlushCallbacks.expectedNested() : FlushCallbacks.View}
+
+law flush_drain_error_overrides_callback_error:
+  {FlushCallbacks.override() == FlushCallbacks.expectedOverride() : FlushCallbacks.View}
+
+law flush_callback_entry_preserves_caller:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for body: R.Expr
+  for prev: R.Value
+  {Core.evaluate(w, rest, saved, R.FlushCallback{body}, prev)
+    == Core.Machine{R.World.with_syncDepth(w, 1n+R.World.syncDepth(w)), Core.Evaluate{body, prev} <> Core.FlushCallbackFinally{saved} <> rest, saved} : Core.Machine}
+
+law flush_finally_restores_depth_and_operands:
+  for +w: R.World
+  for depth: Nat
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  for fault: R.Fault
+  {Core.flushCallbackRestore(R.World.with_syncDepth(w, 1n+depth), rest, saved, fault)
+    == Core.Machine{R.World.with_fault(R.World.with_syncDepth(w, depth), fault), rest, saved} : Core.Machine}
+
+law throwing_flush_callback_still_drains:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for partial: List<&2, R.Value>
+  for +saved: List<&2, R.Value>
+  for +error: R.Value
+  {Core.flushCallbackFinally(R.World.with_fault(w, R.CallbackThrown{error}), rest, partial, saved)
+    == Core.publicFlush(R.World.with_fault(w, R.Healthy{}), Core.FlushCallbackRestore{R.CallbackThrown{error}, saved} <> rest, saved) : Core.Machine}
