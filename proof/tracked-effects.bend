@@ -9,7 +9,7 @@ import ../representation/records.bend as R
 type View is Data:
   View{before: R.Value, first: R.Value, second: R.Value, input: R.Value,
     cleanup: R.Value, dead: Bool, context: Nat, tracking: Bool, stale: Bool,
-    pending: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, Nat>,
+    pending: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>,
     scheduled: Bool, fault: R.Fault}
 
 def phase() -> View:

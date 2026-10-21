@@ -22641,8 +22641,12 @@
           "start": 1195,
           "end": 1225,
           "sha256": "598a91754e51c5cdc84ec7c583cfebbba3f535c11aa6ed73e7bd74759f686560",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:onSettled, fireSettled, user_task, user_tasks; runtime/write.bend:enqueueUserCallback; runtime/api.bend:onSettled",
+            "status": "restricted",
+            "restrictions": "Production owned trackedEffect/untrack branch and unowned or children-forbidden plain fire closure. Stable closure identities, dirty heap gate, ordered snapshot queues, default passLane routing and ignored returns. Arbitrary closures, dev/observe diagnostics and active lane/boundary hooks remain unfinished."
+          }
         }
       ],
       "branches": [

@@ -29,7 +29,7 @@ def initial(+running: Bool, +own: Bool, +config: U32, +status: U32, +extra: Bool
   +w = B.first(R.World, Nat, T.newTransaction(w, True{}, 1n))
   +w = T.list(T.list(w, 3n, 1n), 2n, 2n)
   +w = meta(meta(w, 1n, 0n, False{}, own), 2n, 1n, True{}, extra)
-  +w = B.store_transaction(w, 1n, R.Transaction.with_userQueue(R.Transaction.with_renderQueue(B.transaction(w, 1n), [4n]), [5n]))
+  +w = B.store_transaction(w, 1n, R.Transaction.with_userQueue(R.Transaction.with_renderQueue(B.transaction(w, 1n), [4n]), [R.NodeRun{5n}]))
   +w = B.store_transaction(w, 2n, R.Transaction.with_reruns(R.Transaction.with_renderQueue(B.transaction(w, 2n), [4n, 4n]), [3n]))
   +w = B.store_node(w, 3n, R.Node.with_flags(R.Node.with_status(R.Node.with_config(B.node(w, 3n), config), status), 0))
   +w = B.store_node(w, 4n, R.Node.with_status(B.node(w, 4n), status))

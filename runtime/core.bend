@@ -33,7 +33,7 @@ import ./lexical.bend as Local
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
-  SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, Nat>}
+  SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>}
 
 # Locals captured by recompute's try/catch/finally return point.
 # b0ad1df5/#4171 adds prevMount/mount and laneRoot save/restore in Source.
@@ -151,6 +151,7 @@ type Task is Data:
   DeliverObservers{observers: List<&2, Nat>, immediate: Bool, rejected: Bool, value: R.Value}
   InitialEffect{id: Nat, scheduled: Bool, deferred: Bool}
   RunEffect{id: Nat}
+  FireSettled{callback: Nat}
   RunTracked{id: Nat}
   TrackedAfterCleanup{id: Nat, body: R.Expr}
   ApplyEffect{id: Nat}
@@ -277,6 +278,16 @@ def trackedEffect(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, b
   +w = B.store_node(w, id, R.Node.with_kind(n, R.Tracked{}))
   Machine{B.schedule(H.enqueueSub(w, id)), rest, R.Undefined{} <> stack}
 
+# signals.ts:onSettled: the owned branch uses trackedEffect/untrack. The other
+# branch captures one plain fire closure; it must not allocate a reactive node.
+def onSettled(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +body: R.Expr) -> Machine:
+  B.choose(~Machine, Bool.and(Nat.is_ne(R.World.context(w), 0n), Bool.not(B.has(R.Node.config(B.node(w, R.World.context(w))), K.CONFIG_CHILDREN_FORBIDDEN()))),
+    _ => trackedEffect(w, rest, stack, R.Untracked{body}),
+    _ =>
+      +id = B.length(R.Expr, R.World.settledCallbacks(w))
+      +w = R.World.with_settledCallbacks(w, B.append(R.Expr, R.World.settledCallbacks(w), [body]))
+      Machine{W.enqueueUserCallback(w, R.SettledFire{id}), rest, R.Undefined{} <> stack})
+
 # Its compute wrapper clears previous cleanup before calling it. staleValues
 # surrounds only fn; assignment of its returned cleanup follows successful return.
 def trackedBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, body: R.Expr) -> Machine:
@@ -337,6 +348,8 @@ def selectedUpdater(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.OnSettled{body}:
+      onSettled(w, rest, stack, body)
     case R.TrackedCreate{body}:
       trackedEffect(w, rest, stack, body)
     case R.TrackedBody{body}:
@@ -1530,6 +1543,28 @@ def queue_tasks(+w: R.World, ids: List<&2, Nat>) -> List<&2, Task>:
     case +id <> +rest:
       B.choose(~Task, B.tracked(R.Node.kind(B.node(w, id))), _ => RunTracked{id}, _ => RunEffect{id}) <> queue_tasks(w, rest)
 
+# Source user queues hold callable identities, including node-free onSettled.fire.
+def user_task(+w: R.World, entry: R.QueueEntry) -> Task:
+  match entry:
+    case R.NodeRun{+id}:
+      B.choose(~Task, B.tracked(R.Node.kind(B.node(w, id))), _ => RunTracked{id}, _ => RunEffect{id})
+    case R.SettledFire{callback}:
+      FireSettled{callback}
+
+def user_tasks(+w: R.World, entries: List<&2, R.QueueEntry>) -> List<&2, Task>:
+  match entries:
+    case Nil{}:
+      []
+    case entry <> tail:
+      user_task(w, entry) <> user_tasks(w, tail)
+
+# signals.ts:onSettled.fire. Requeue the same closure while derivations remain;
+# production drops its result. A throw retains the queue's existing unwind path.
+def fireSettled(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +callback: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(R.World.maximum(w), R.World.minimum(w)),
+    _ => Machine{W.enqueueUserCallback(w, R.SettledFire{callback}), rest, stack},
+    _ => Machine{w, Evaluate{B.get(R.Expr, R.World.settledCallbacks(w), callback, R.Literal{R.Undefined{}}), R.Undefined{}} <> Discard{} <> rest, stack})
+
 # core/effect.ts:trackedEffect.run. Multiple heap visits can enqueue this same
 # bound closure: modified deduplicates its actual pass, not its queue entries.
 def runTracked(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
@@ -1678,10 +1713,10 @@ def completeSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, 
       +w = B.choose(~R.World, Nat.is_ne(live, 0n),
         _ =>
           +w = B.store_transaction(w, live, R.Transaction.with_renderQueue(B.transaction(w, live), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)))
-          B.store_transaction(w, live, R.Transaction.with_userQueue(B.transaction(w, live), B.append(Nat, R.Transaction.userQueue(B.transaction(w, live)), users))),
+          B.store_transaction(w, live, R.Transaction.with_userQueue(B.transaction(w, live), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, live)), users))),
         _ =>
           +w = R.World.with_renderQueue(w, B.append(Nat, renders, R.World.renderQueue(w)))
-          R.World.with_userQueue(w, B.append(Nat, users, R.World.userQueue(w))))
+          R.World.with_userQueue(w, B.append(R.QueueEntry, users, R.World.userQueue(w))))
       zombies = S.sortHeights(w, R.World.deferredZombies(w))
       Machine{R.World.with_deferredZombies(w, []), ZombieLoop{zombies} <> rest, stack}
 
@@ -2019,6 +2054,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           _ => Machine{S.enqueue(w, id), rest, stack}, _ => Machine{w, RunEffect{id} <> rest, stack}))
     case RunEffect{id} <> +rest:
       runEffect(w, rest, stack, id)
+    case FireSettled{callback} <> rest:
+      fireSettled(w, rest, stack, callback)
     case RunTracked{id} <> rest:
       runTracked(w, rest, stack, id)
     case TrackedAfterCleanup{+id, body} <> rest:
@@ -2058,9 +2095,9 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
         _ => Machine{w, UserQueue{} <> rest, stack},
         _ => Machine{R.World.with_renderQueue(w, []), B.append(Task, queue_tasks(w, R.World.renderQueue(w)), UserQueue{} <> rest), stack})
     case UserQueue{} <> +rest:
-      B.choose(~Machine, List.is_empty(&2, Nat, R.World.userQueue(w)),
+      B.choose(~Machine, List.is_empty(&2, R.QueueEntry, R.World.userQueue(w)),
         _ => Machine{w, rest, stack},
-        _ => Machine{R.World.with_userQueue(w, []), B.append(Task, queue_tasks(w, R.World.userQueue(w)), rest), stack})
+        _ => Machine{R.World.with_userQueue(w, []), B.append(Task, user_tasks(w, R.World.userQueue(w)), rest), stack})
     case FlushFinally{} <> rest:
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case RoundEnd{} <> +rest:

@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2216 differential histories, 105 rejected compiled mutations,
-and 51 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2270 differential histories, 109 rejected compiled mutations,
+and 53 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -20,8 +20,16 @@ Its body tracks reads, writes only to the next commit, and returns cleanup that
 runs before its next body or disposal. The source modified/disposed gates,
 children-forbidden posture, pending/error notifier and immediate trim are retained.
 [The review](tracked-effects.md) records source segments, 47 public histories,
-32 native runner comparisons and two concrete laws. This unlocks the owned
-`onSettled` implementation; general unowned queue callbacks remain the next gap.
+32 native runner comparisons and two concrete laws. This now underpins owned `onSettled` callbacks.
+
+## Settled callback milestone
+
+`onSettled` now follows both source branches: an owned untracked body in a tracked
+leaf, or a node-free plain callback in the user queue. The latter retains its
+identity when dirty derivations make it requeue. [The review](settled.md) records
+54 public histories, 48 native fire-closure cases, cleanup/throw behavior, two
+concrete laws and two general input-binding laws. Reactions and richer callable
+closures are the next public API gaps; active lanes/boundaries remain unfinished.
 
 ## Current source update
 

@@ -51,7 +51,7 @@ def visibleEvents(events: List<&2, R.TraceEvent>) -> List<&2, R.TraceEvent>:
 
 
 type EffectView is Data:
-  EffectView{result: R.Value, initialQueue: List<&2, Nat>,
+  EffectView{result: R.Value, initialQueue: List<&2, R.QueueEntry>,
     events: List<&2, R.TraceEvent>, modified: Bool, previous: R.Value,
     value: R.Value, dead: Bool, child: Nat, context: Nat,
     tracking: Bool, fault: R.Fault}
@@ -70,10 +70,10 @@ def effectView(+early: Bool) -> EffectView:
 
 
 def expectedEffect() -> EffectView:
-  EffectView{R.Undefined{}, [3n], [R.Invoked{3n}, R.Applied{3n, R.Number{5n}, R.Undefined{}}],
+  EffectView{R.Undefined{}, [R.NodeRun{3n}], [R.Invoked{3n}, R.Applied{3n, R.Number{5n}, R.Undefined{}}],
     False{}, R.Number{5n}, R.Number{5n}, False{}, 3n, 0n, False{}, R.Healthy{}}
 
 
 def expectedEarlyDisposal() -> EffectView:
-  EffectView{R.Undefined{}, [3n], [R.Invoked{3n}], True{}, R.Undefined{},
+  EffectView{R.Undefined{}, [R.NodeRun{3n}], [R.Invoked{3n}], True{}, R.Undefined{},
     R.Number{5n}, True{}, 0n, 0n, False{}, R.Healthy{}}

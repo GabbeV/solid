@@ -18,7 +18,7 @@ def landed() -> R.World:
 
 type View is Data:
   View{value: R.Value, pending: R.Slot, loading: Bool, status: U32,
-    flight: Nat, text: R.Value, renders: List<&2, Nat>, users: List<&2, Nat>,
+    flight: Nat, text: R.Value, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>,
     intake: List<&2, Nat>, running: Bool, scheduled: Bool, context: Nat,
     tracking: Bool, fault: R.Fault}
 
@@ -79,7 +79,7 @@ type DiamondView is Data:
   DiamondView{source: R.Value, left: R.Value, right: R.Value, joined: R.Value,
     text: R.Value, sourceStatus: U32, leftStatus: U32, rightStatus: U32,
     joinedStatus: U32, renderStatus: U32, live: List<&2, Nat>,
-    intake: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, Nat>,
+    intake: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>,
     running: Bool, scheduled: Bool, context: Nat, tracking: Bool, fault: R.Fault}
 
 def diamondView(+w: R.World) -> DiamondView:

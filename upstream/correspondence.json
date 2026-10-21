@@ -671,6 +671,11 @@
       "bend": "runtime/core.bend:RestoreStale, TrackedAfterCleanup; representation/records.bend:World.stale",
       "status": "partial",
       "restrictions": "Source module-global stale is now a threaded World field. Tracked callback staleValues sets true, restores on success/throw, then assigns cleanup. Recompute sets stale for render/tracked passes and restores its captured incoming value in finally. Public arbitrary staleValues callbacks are not exposed by the host ABI; active verdict/lane consumers remain unfinished."
+    },
+    "signals.ts:onSettled": {
+      "bend": "runtime/core.bend:onSettled, fireSettled, user_task, user_tasks; runtime/write.bend:enqueueUserCallback; runtime/api.bend:onSettled",
+      "status": "restricted",
+      "restrictions": "Production owned trackedEffect/untrack branch and unowned or children-forbidden plain fire closure. Stable closure identities, dirty heap gate, ordered snapshot queues, default passLane routing and ignored returns. Arbitrary closures, dev/observe diagnostics and active lane/boundary hooks remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

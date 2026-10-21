@@ -24,7 +24,7 @@ def landed() -> R.World:
 type View is Data:
   View{source: R.Value, output: R.Value, memo: R.Value, effect: R.Value,
     previous: R.Value, deps: Nat, tail: Nat, modified: Bool,
-    pending: List<&2, Nat>, users: List<&2, Nat>, context: Nat,
+    pending: List<&2, Nat>, users: List<&2, R.QueueEntry>, context: Nat,
     tracking: Bool, running: Bool, scheduled: Bool, fault: R.Fault}
 
 def view(+w: R.World) -> View:

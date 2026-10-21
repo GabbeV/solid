@@ -14,7 +14,7 @@ import ../representation/records.bend as R
 type AsyncCleanupView is Data:
   AsyncCleanupView{value: R.Value, marker: R.Value, reader: R.Value,
     released: Bool, deps: Nat, disposal: R.Disposal, ownerDead: Bool,
-    renders: List<&2, Nat>, users: List<&2, Nat>, intake: List<&2, Nat>,
+    renders: List<&2, Nat>, users: List<&2, R.QueueEntry>, intake: List<&2, Nat>,
     context: Nat, tracking: Bool, running: Bool, scheduled: Bool, fault: R.Fault}
 
 def asyncCleanupView(+w: R.World, published: Nat, +released: Nat, marker: Nat, reader: Nat) -> AsyncCleanupView:

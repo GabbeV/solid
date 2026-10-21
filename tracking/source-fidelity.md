@@ -242,3 +242,10 @@ their original pin. Negative laws are retained on baseline/solid-d2ad8b28 and
 replaced by positive current-pin regressions. The complete changed-file/operation
 audit, inactive hook exclusions, original repro matrix and validation are in
 [the pin review](reviews/solid-71153bf0.md). No active semantic deviation exists.
+
+## Settled callback source operations
+
+The public onSettled branches now retain their distinct owner test, tracked/untrack
+wrapper, plain closure identity, heap gate, passLane routing and production return
+drop. User queue entries represent actual source callable identities; no synthetic
+reactive node is introduced for unowned callbacks. See [settled.md](settled.md).

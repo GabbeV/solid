@@ -104,6 +104,7 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
   if (e.observer) return R.currentObserver();
+  if(e.settled)return R.settled(expression(e.settled,ids,programs,futures,encodeValue,contexts));
   if(e.trackedCreate)return R.trackedCreate(expression(e.trackedCreate,ids,programs,futures,encodeValue,contexts));
   if(e.signalComputeScope){
     const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
@@ -420,6 +421,12 @@ export class BendRuntime {
     requireTeardownProgram(this.programActions,options.unobserved);
     const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
     this.world=R.createMemoWithOptions(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
+  }
+  settled(name,body,{owner='root'}={}) {
+    const before=R.nextId(this.world);
+    this.world=R.onSettled(this.fuel,this.world,expression(body,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),this.ownerId(owner));
+    if(R.nextId(this.world)>before){this.ids[name]=before;this.reverse[before]=name;}
+    this.check();
   }
   tracked(name,body,{owner='root'}={}) {
     const id=R.nextId(this.world);this.ids[name]=id;this.reverse[id]=name;

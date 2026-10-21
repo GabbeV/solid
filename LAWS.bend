@@ -23,6 +23,7 @@ import ./proof/writable-signals.bend as WritableSignals
 import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/getter-cleanup.bend as GetterCleanup
 import ./proof/tracked-effects.bend as TrackedEffects
+import ./proof/settled.bend as Settled
 import ./proof/returned-cleanup.bend as ReturnedCleanup
 import ./proof/callable-initializers.bend as CallableInitializers
 import ./proof/callback-values.bend as CallbackValues
@@ -237,3 +238,18 @@ law tracked_effect_runs_after_commit:
 
 law tracked_effect_cleans_before_rerun_and_disposal:
   {TrackedEffects.cleanup() == TrackedEffects.expectedCleanup() : TrackedEffects.View}
+
+law owned_settled_runs_once_and_cleans_on_disposal:
+  {Settled.scenario(True{}) == Settled.expectedOwned() : Settled.View}
+
+law unowned_settled_drops_cleanup_without_creating_node:
+  {Settled.scenario(False{}) == Settled.expectedUnowned() : Settled.View}
+
+law callback_settled_binding:
+  for +first: R.Value
+  for second: R.Value
+  {Callback.bind(R.OnSettled{R.Argument{0n}}, first, second) == R.OnSettled{R.Literal{first}} : R.Expr}
+
+law lexical_settled_binding:
+  for +signal: Nat
+  {Lexical.bind(R.OnSettled{R.LocalRead{0n}}, 0n, signal) == R.OnSettled{R.Read{signal}} : R.Expr}

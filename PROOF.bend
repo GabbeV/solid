@@ -188,3 +188,15 @@ def Laws.tracked_effect_runs_after_commit():
 
 def Laws.tracked_effect_cleans_before_rerun_and_disposal():
   {==}
+
+def Laws.owned_settled_runs_once_and_cleans_on_disposal():
+  {==}
+
+def Laws.unowned_settled_drops_cleanup_without_creating_node():
+  {==}
+
+def Laws.callback_settled_binding(first, second):
+  {==}
+
+def Laws.lexical_settled_binding(signal):
+  {==}

@@ -222,7 +222,7 @@ def reruns(+w: R.World, +t: Nat) -> R.World:
 def releaseQueues(+w: R.World, +t: Nat) -> R.World:
   +w = R.World.with_renderQueue(w, B.append(Nat, R.World.renderQueue(w), R.Transaction.renderQueue(B.transaction(w, t))))
   +w = B.store_transaction(w, t, R.Transaction.with_renderQueue(B.transaction(w, t), []))
-  +w = R.World.with_userQueue(w, B.append(Nat, R.World.userQueue(w), R.Transaction.userQueue(B.transaction(w, t))))
+  +w = R.World.with_userQueue(w, B.append(R.QueueEntry, R.World.userQueue(w), R.Transaction.userQueue(B.transaction(w, t))))
   B.store_transaction(w, t, R.Transaction.with_userQueue(B.transaction(w, t), []))
 
 # Stable ascending height order used by the seam's detached zombie array.

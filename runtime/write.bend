@@ -29,10 +29,10 @@ def enqueueIn(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
     _ =>
       +w = B.choose(~R.World, Nat.is_ne(lane, 0n),
         _ => B.choose(~R.World, userQueue(R.Node.kind(B.node(w, id))),
-          _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.userQueue(B.transaction(w, lane)), [id]))),
+          _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, lane)), [R.NodeRun{id}]))),
           _ => B.store_transaction(w, lane, R.Transaction.with_renderQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, lane)), [id])))),
         _ => B.choose(~R.World, userQueue(R.Node.kind(B.node(w, id))),
-        _ => R.World.with_userQueue(w, B.append(Nat, R.World.userQueue(w), [id])),
+        _ => R.World.with_userQueue(w, B.append(R.QueueEntry, R.World.userQueue(w), [R.NodeRun{id}])),
         _ => R.World.with_renderQueue(w, B.append(Nat, R.World.renderQueue(w), [id]))))
       B.schedule(w),
     _ => B.schedule(w))
@@ -85,3 +85,11 @@ def setResolved(+w: R.World, +id: Nat, currentValue: R.Value, +value: R.Value) -
 def setSignal(+w: R.World, +id: Nat, value: R.Value) -> R.World:
   setResolved(w, id, B.current(B.node(w, id)), value)
 
+
+# GlobalQueue.enqueue(EFFECT_USER, fn), including plain callbacks without nodes.
+def enqueueUserCallback(+w: R.World, +entry: R.QueueEntry) -> R.World:
+  +lane = R.World.passLane(w)
+  +w = B.choose(~R.World, Nat.is_ne(lane, 0n),
+    _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, lane)), [entry]))),
+    _ => R.World.with_userQueue(w, B.append(R.QueueEntry, R.World.userQueue(w), [entry])))
+  B.schedule(w)

@@ -72,7 +72,7 @@ def mergeResolved(+w: R.World, +t: Nat, +f: Nat) -> R.World:
       +into = R.Transaction.with_acted(into, Bool.or(R.Transaction.acted(into), R.Transaction.acted(from)))
       +into = R.Transaction.with_nodes(into, B.append(Nat, R.Transaction.nodes(into), R.Transaction.nodes(from)))
       +into = R.Transaction.with_renderQueue(into, B.append(Nat, R.Transaction.renderQueue(into), R.Transaction.renderQueue(from)))
-      +into = R.Transaction.with_userQueue(into, B.append(Nat, R.Transaction.userQueue(into), R.Transaction.userQueue(from)))
+      +into = R.Transaction.with_userQueue(into, B.append(R.QueueEntry, R.Transaction.userQueue(into), R.Transaction.userQueue(from)))
       +into = R.Transaction.with_reruns(into, B.append(Nat, R.Transaction.reruns(into), R.Transaction.reruns(from)))
       +into = R.Transaction.with_marks(into, appendMarks(R.Transaction.marks(into), R.Transaction.marks(from)))
       +w = B.store_transaction(w, f, into)

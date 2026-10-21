@@ -29,7 +29,7 @@ try{
   const list=xs=>{const a=[];while('head'in xs){a.push(xs.head);xs=xs.tail;}return a;};
   function actual({world:w,answer}){const xs=list(w.extensions);assert.equal(w.fault.$,'Healthy');return {answer,
     nodes:list(w.nodes).slice(1).map(n=>({config:n.config,flags:n.flags,status:n.status,tx:xs[n.x]?.transaction??0,first:n.firstChild,next:n.nextSibling,prev:n.prevSibling})),
-    transactions:list(w.txArena).slice(1).map(t=>({nodes:list(t.nodes),render:list(t.renderQueue),user:list(t.userQueue),reruns:list(t.reruns),into:t.into,parent:t.parent,lane:t.lane,verdict:t.verdict,open:t.open,acted:t.acted,links:t.links,shown:t.shown,held:t.held,marks:'items'in t.marks?list(t.marks.items):null})),
+    transactions:list(w.txArena).slice(1).map(t=>({nodes:list(t.nodes),render:list(t.renderQueue),user:list(t.userQueue).map(e=>e.node),reruns:list(t.reruns),into:t.into,parent:t.parent,lane:t.lane,verdict:t.verdict,open:t.open,acted:t.acted,links:t.links,shown:t.shown,held:t.held,marks:'items'in t.marks?list(t.marks.items):null})),
     live:list(w.transactions),flush:w.flushTransaction,pass:w.passTx,lane:w.passLane,judge:w.judge,scheduled:w.scheduled,running:w.running};}
   function reference(op,running,own,config,status,extra){
     S.probeReset();S.setContextInternal(null);const r=S.createOwner(),x=S.signal(7);S.setContextInternal(r);

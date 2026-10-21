@@ -20,7 +20,7 @@ type View is Data:
   View{first: R.Value, second: R.Value, user: R.Value, prev: R.Value,
     firstStatus: U32, secondStatus: U32, userStatus: U32,
     firstError: R.Value, secondError: R.Value, userError: R.Value,
-    modified: Bool, halted: Bool, pending: List<&2, Nat>, users: List<&2, Nat>,
+    modified: Bool, halted: Bool, pending: List<&2, Nat>, users: List<&2, R.QueueEntry>,
     context: Nat, tracking: Bool, running: Bool, scheduled: Bool, reports: List<&2, R.Report>, fault: R.Fault}
 
 def view(+w: R.World) -> View:

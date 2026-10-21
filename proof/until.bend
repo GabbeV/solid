@@ -23,7 +23,7 @@ def trueDelivered() -> R.World:
 type View is Data:
   View{value: R.Value, answer: R.AsyncSettlement, rootDead: Bool,
     watcherDead: Bool, sourceObserved: Bool, outcome: List<&2, R.HostJob>,
-    pending: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, Nat>,
+    pending: List<&2, Nat>, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>,
     context: Nat, tracking: Bool, running: Bool, scheduled: Bool, fault: R.Fault}
 
 def view(+w: R.World) -> View:

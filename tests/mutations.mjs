@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['owned settled tracks ordinary reads','runtime/core.bend','trackedEffect(w, rest, stack, R.Untracked{body})','trackedEffect(w, rest, stack, body)','tests/settled.mjs','onSettled'],
+  ['unowned settled ignores dirty derivations','runtime/core.bend','Nat.is_ge(R.World.maximum(w), R.World.minimum(w))','False{}','tests/settled-alignment.mjs','fireSettled'],
+  ['settled requeue changes closure identity','runtime/core.bend','W.enqueueUserCallback(w, R.SettledFire{callback})','W.enqueueUserCallback(w, R.SettledFire{1n+callback})','tests/settled-alignment.mjs','fireSettled'],
+  ['settled callback ignores current lane queue','runtime/write.bend','+lane = R.World.passLane(w)','+lane = {0n : Nat}','tests/settled-alignment.mjs','enqueueUserCallback'],
   ['tracked heap visit runs before the commit seam','runtime/core.bend','Machine{S.enqueue(w, id), HeapLoop{} <> rest, stack}','Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}','tests/tracked-effects.mjs','visitHeap'],
   ['tracked runner ignores its modified gate','runtime/core.bend','Bool.and(R.Node.modified(B.node(w, id)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))','Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()))','tests/tracked-alignment.mjs','runTracked'],
   ['tracked body keeps its prior cleanup installed','runtime/core.bend','R.Node.with_cleanup(B.node(w, id), 0n)','B.node(w, id)','tests/tracked-effects.mjs','trackedBody'],

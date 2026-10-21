@@ -38,7 +38,7 @@ def view(+w: R.World) -> View:
     R.Node.value(B.node(w, 4n)), A.displayed(w, 2n), T.visible(4n, w, 2n),
     R.World.scheduled(w), R.World.running(w), R.World.context(w), R.World.tracking(w),
     B.length(Nat, R.World.pendingNodes(w)), B.length(Nat, R.World.renderQueue(w)),
-    B.length(Nat, R.World.userQueue(w)), R.World.fault(w),
+    B.length(R.QueueEntry, R.World.userQueue(w)), R.World.fault(w),
     R.World.unflushedStaged(w), B.length(Nat, R.World.promotedWrites(w)),
     B.length(R.NodeExtension, R.World.extensions(w))}
 

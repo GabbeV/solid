@@ -25,7 +25,7 @@ def landed() -> R.World:
 type View is Data:
   View{value: R.Value, staging: R.Slot, held: Bool, stamp: Nat, text: R.Value,
     live: List<&2, Nat>, txNodes: List<&2, Nat>, txRenders: List<&2, Nat>,
-    renders: List<&2, Nat>, users: List<&2, Nat>, pending: List<&2, Nat>,
+    renders: List<&2, Nat>, users: List<&2, R.QueueEntry>, pending: List<&2, Nat>,
     running: Bool, scheduled: Bool, context: Nat, tracking: Bool, fault: R.Fault}
 
 def view(+w: R.World) -> View:

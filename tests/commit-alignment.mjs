@@ -49,7 +49,7 @@ try {
     const ns=list(w.nodes),n=ns[2],dep=ns[3];
     return {config:n.config,flags:n.flags,status:n.status,loading:n.loading,value:numeric(n.value),
       staging:Object.hasOwn(n.pending,'value'),pending:numeric(n.pending.value??{}),modified:n.modified,
-      deps:n.deps!==0,subs:dep.subs!==0,render:list(w.renderQueue).length,user:list(w.userQueue).length,
+      deps:n.deps!==0,subs:dep.subs!==0,render:list(w.renderQueue).length,user:list(w.userQueue).map(e=>e.node).length,
       scheduled:w.scheduled,intake:list(w.pendingNodes).length,extension:bendExtension(w,n)};
   }
   function reference(k,config,flags,status,stage,loading,modified,sweep,mode=0) {

@@ -500,3 +500,14 @@ def vProgram(callback: Nat) -> R.Value:
 
 def invokeArguments(callee: R.Expr, first: R.Expr, second: R.Expr) -> R.Expr:
   R.InvokeArguments{callee, first, second}
+
+# Public onSettled entry runs under the caller-selected actual owner.
+def onSettled(fuel: Nat, +w: R.World, body: R.Expr, +parent: Nat) -> R.World:
+  +context = R.World.context(w)
+  +tracking = R.World.tracking(w)
+  +w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  +w = C.world(C.eval(fuel, w, R.OnSettled{body}, R.Undefined{}))
+  R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+def settled(body: R.Expr) -> R.Expr:
+  R.OnSettled{body}
