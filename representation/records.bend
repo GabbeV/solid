@@ -116,6 +116,8 @@ type Expr is Data:
   FlushValue{callee: Expr}
   FlushNow{}
   ActionInvoke{factory: Expr, methods: Expr}
+  ActionCreate{factory: Expr, methods: Expr}
+  ActionParameter{depth: Nat, index: Nat}
   ActionMethods{next: Expr, catches: Bool, thrown: Expr, tail: Expr}
   ActionEnd{}
   IteratorResult{done: Bool, value: Expr}
@@ -171,6 +173,7 @@ type CleanupAction is Data:
   CleanupBoundSetter{signal: Nat}
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
+  ActionFunction{factory: Expr, methods: Expr, previous: Value}
   ReactionTrack{reaction: Nat}
   ReactionLifecycle{reaction: Nat}
   CallbackEvaluate{expr: Expr}

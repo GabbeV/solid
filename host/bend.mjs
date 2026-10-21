@@ -101,12 +101,14 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
-  if(e.action){
-    requireActionProtocol(e.action);
+  if(e.action||e.actionCreate){
+    const plan=e.action??e.actionCreate;
+    requireActionProtocol(plan);
     let methods=R.emptyActionMethods();
-    for(const step of [...e.action.steps].reverse())methods=R.actionMethod(expression(step.next,ids,programs,futures,encodeValue,contexts),Object.hasOwn(step,'throw'),expression(step.throw??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
-    return R.actionInvoke(expression(e.action.factory??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
+    for(const step of [...plan.steps].reverse())methods=R.actionMethod(expression(step.next,ids,programs,futures,encodeValue,contexts),Object.hasOwn(step,'throw'),expression(step.throw??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
+    return (e.actionCreate?R.actionCreate:R.actionInvoke)(expression(plan.factory??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
   }
+  if(Object.hasOwn(e,'actionArgument')){const arg=e.actionArgument;return R.actionParameter(typeof arg==='number'?0:arg.depth??0,typeof arg==='number'?arg:arg.index??0);}
   if(e.iteratorResult)return R.iteratorResult(e.iteratorResult.done??false,expression(e.iteratorResult.value??{lit:undefined},ids,programs,futures,encodeValue,contexts));
   if (e.getContext){const {name,owner={lit:undefined}}=e.getContext;return R.contextGet(contexts[name],expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
@@ -190,7 +192,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0),callback===undefined?0:programs[callback]);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,first,second)=>this.evaluate({call:this.programNames.get(id),args:[{lit:first},{lit:second}]})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,first,second)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:[{lit:first},{lit:second}]}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters,this.callbacks);}
   ownerId(name){
     if(name===null)return 0;
@@ -326,6 +328,11 @@ export class BendRuntime {
       let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
       promise.catch(()=>{}); // observe rejection through explicit user ports
       this.actionPorts.set(state.result,{promise,resolve,reject});this.asyncRefs.set(state.result,promise);
+    }
+    // Generated action callables share the function arena, not the reactive tree.
+    for(const [id,program]of list(this.world.cleanupPrograms).entries())if(list(program.actions).some(action=>action.$==='ActionFunction')&&!this.programNames.has(id)){
+      const name='@action'+(this.actionFunctionSerial=(this.actionFunctionSerial??0)+1);
+      this.programNames.set(id,name);this.programs[name]=id;this.programActions.set(name,[]);
     }
     // Observe returned source closures; these labels do not create or arm nodes.
     for(const [index,state]of list(this.world.reactions).entries())if(!this.programNames.has(state.track)){

@@ -144,4 +144,33 @@ for(const reverse of [false,true]){
  }finally{await finish();}
 }
 
-console.log(`${count} native-generator controls validate the action method ABI, held writes, rejection, nested slices, production flush callbacks, native return adoption and duplicate yield callbacks.`);
+// One real generator wrapper is called twice with independent arguments. These
+// controls do not construct the source generator through the typed plan adapter.
+for(const rejected of [false,true])for(const reverse of [false,true]){
+ const {S,b,get,set,assertState,finish}=await setup();
+ try{
+  const ends=[];
+  const requests=[0,1].map(i=>new Promise((yes,no)=>{ends[i]=rejected?no:yes;}));
+  for(const request of requests)request.catch(()=>{});
+  b.future('a');b.future('b');
+  const wrapper=S.action(function*(request,n){
+   set(n);
+   let value;try{value=yield request;}catch(error){value=error;}
+   set(value+n);return n;
+  });
+  const parameter=i=>({actionArgument:i});
+  const finishExpr=seq(write({add:[arg,parameter(1)]}),result(parameter(1),true));
+  const fn=b.evaluate({actionCreate:{steps:[{next:seq(write(parameter(1)),result(parameter(0)))},{next:finishExpr,throw:finishExpr}]}});
+  assert.equal(b.decode(b.encode(fn)),fn);assert.equal(S.flushTransaction,null);
+  const native=requests.map((request,i)=>wrapper(request,i?11:3));
+  const ports=['a','b'].map((gate,i)=>fn(b.decode(ABI.vAsync(b.futures[gate])),i?11:3));
+  assert.notEqual(native[0],native[1]);assert.notEqual(ports[0],ports[1]);
+  S.flush();b.flush();assertState();assert.equal(get(),0);
+  for(const i of reverse?[1,0]:[0,1]){
+   ends[i](5);b[rejected?'reject':'resolve'](i?'b':'a',5);
+   assert.equal(await ports[i],await native[i]);await setImmediate();assertState();
+  }
+ }finally{await finish();}
+}
+
+console.log(`${count} native-generator controls validate the action method ABI, held writes, rejection, nested slices, production flush callbacks, native return adoption duplicate yield callbacks and reused wrappers with independent invocation arguments.`);

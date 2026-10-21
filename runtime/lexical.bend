@@ -33,6 +33,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.Select{bind(condition, depth, signal), bind(yes, depth, signal), bind(no, depth, signal)}
     case R.Untracked{body}:
       R.Untracked{bind(body, depth, signal)}
+    case R.ActionCreate{factory, methods}:
+      R.ActionCreate{bind(factory, depth, signal), bind(methods, depth, signal)}
     case R.ActionInvoke{factory, methods}:
       R.ActionInvoke{bind(factory, depth, signal), bind(methods, depth, signal)}
     case R.ActionMethods{next, catches, thrown, tail}:

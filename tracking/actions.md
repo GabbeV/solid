@@ -34,7 +34,7 @@ ActionMethods/ActionEnd form a typed external generator state chain. A method's
 next/throw expression receives the resumed value and rejection flag and returns
 IteratorResult(done, value) or an admitted result thenable. Advancing this user
 protocol is separate from the source action engine. The reference adapter gives
-the same protocol to the actual pinned action(); seventeen additional controls use
+the same protocol to the actual pinned action(); 21 controls use
 independently authored native generators and inspect the source question/depth
 exports read-only, including joined open counts and the acted marker. The original four native action-contract controls remain
 source-only evidence, separate from the paired histories.
@@ -57,8 +57,8 @@ profile. Existing future input restrictions still apply. The adapter creates
 native Promise ports and drains requests; it does not decide reactive transaction
 membership, depth, question provenance, publication or when a slice drains.
 
-The grammar exposes invocations, not first-class reusable action-function
-identities or arbitrary JavaScript generator closures. General async-generator
+The grammar now also exposes reusable first-class action functions. Arbitrary
+JavaScript generator closures remain outside the admitted protocol. General async-generator
 internal await behavior is not encoded. User method bodies may return an admitted
 Promise of IteratorResult; this covers the engine's result-Promise branch without
 claiming that code after a native async generator's internal await is tracked.
@@ -94,3 +94,54 @@ All old canonical signal/memo witnesses were regenerated for the extended World;
 each claimed equation still requires the independent kernel. The memo witness's
 final arena now has a named generated projection, avoiding an accidental reliance
 on an interning index when record shapes change.
+
+## Reusable action functions
+
+`ActionCreate(factory, methods)` translates `action(genFn)` separately from its
+returned wrapper's invocation. It appends one `ActionFunction` to the existing
+callable arena, capturing the factory's ambient previous value, and returns its canonical `ProgramReference`. Creating a wrapper
+allocates no reactive node, transaction, question or Promise and schedules no
+work. Two constructors return different callable identities. Storing the function
+as signal data, returning/passing it through callbacks and repeated decoding retain
+that identity.
+
+Calling the function enters the existing `ActionInvoke` path each time. That
+allocates a fresh invocation Promise and method cursor before calling the factory;
+the transaction is still opened only after factory success. Overlapping calls
+therefore have distinct invocation state and argument captures. No new scheduler,
+owner scope or transaction-sharing policy was introduced. `onCleanup` also invokes
+the function through the shared callback driver and ignores its Promise return.
+
+The typed ABI admits at most two invocation arguments. `ActionParameter(depth,
+index)` captures them independently of `Argument(index)`, which belongs to the
+generator method's resume value/rejection flag. Depth zero selects the invoked
+action's parameters. A nested `ActionCreate` shadows depth zero while explicit
+depth-one references capture the outer invocation. Lexical local-signal bindings
+are captured across both factory and methods. An enclosing ordinary callback's
+arguments are captured in the factory; method `Argument` occurrences retain their
+existing resume binder. General captured JavaScript variable environments and
+variadic calls remain unfinished.
+
+The reference returns the actual pinned `S.action(...)` function unchanged; it
+never substitutes an identity wrapper. Its generator factory reserves an external
+observation ID before user code. Explicit call boundaries label the actual native
+Promise afterward. Direct native calls in the tests are labeled after the call,
+without replacing the function or Promise, as with original reaction functions.
+This does not provide general identity observation for Promises returned by
+implicit arbitrary source calls. Unhandled native Promise reporting is outside
+the harness, as in the existing invocation ports; the cleanup control uses a
+successful action. No new engine policy is inferred from this observation ABI.
+
+This extension adds 45 differential histories and four independent hand-written
+native-generator controls (21 native controls in total). Six quantified local
+laws check complete construction state, shared invocation entry, parameter capture,
+resume-binder preservation, nested shadowing and factory callback capture. A closed
+kernel execution calls the same wrapper twice with different arguments, obtaining
+two independent fulfilled results. These add no arbitrary-generator progress or
+full action API completeness claim.
+
+The wrapper also captures the factory's `Previous` payload at creation, as the
+original generator closure does. Four updater-creation histories cover that
+capture, and a mutation that substitutes the later call's undefined previous
+value is rejected. Method `Previous` remains its existing undefined resume ABI;
+this does not add an arbitrary JavaScript lexical-variable environment.

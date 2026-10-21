@@ -23,6 +23,8 @@ def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
       R.Select{bind(condition, first, second), bind(yes, first, second), bind(no, first, second)}
     case R.Untracked{body}:
       R.Untracked{bind(body, first, second)}
+    case R.ActionCreate{factory, methods}:
+      R.ActionCreate{bind(factory, first, second), methods}
     case R.ActionInvoke{factory, methods}:
       R.ActionInvoke{bind(factory, first, second), methods}
     case R.IteratorResult{done, value}:

@@ -1,4 +1,10 @@
 import Base
+import ./proof/memo-general-setter.bend as MemoGeneralSetter
+import ./proof/memo-general-public.bend as MemoGeneralPublic
+import ./proof/memo-general-states.bend as MemoGeneralStates
+import ./proof/memo-general-setter-data.bend as MemoGeneralSetterData
+import ./proof/action-function-laws.bend as ActionFunctions
+import ./runtime/action-arguments.bend as ActionArgs
 import ./proof/memo-initial.bend as MemoInitial
 import ./proof/memo-initial-driver.bend as MemoInitialDriver
 import ./proof/memo-constructor-cuts.bend as MemoConstructorCuts
@@ -674,3 +680,67 @@ law merged_transactions_preserve_action_marker:
   for +suffix: List<&2, R.Transaction>
   for +reverse: Bool
   {R.Transaction.acted(B.transaction(TxMerge.merged(w, source, target, suffix, reverse), TxMerge.targetId(reverse))) == Bool.or(R.Transaction.acted(target), R.Transaction.acted(source)) : Bool}
+
+# General reusable-action construction/call and parameter-capture properties.
+law action_function_creation_has_no_reactive_effect:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +factory: R.Expr
+  for +methods: R.Expr
+  for +previous: R.Value
+  {Core.evaluate(w, rest, stack, R.ActionCreate{factory, methods}, previous) == Core.Machine{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), rest, R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))} <> stack} : Core.Machine}
+
+law action_function_call_uses_shared_invocation:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for id: Nat
+  for tail: List<&2, R.CleanupAction>
+  for +first: R.Value
+  for +second: R.Value
+  for +factory: R.Expr
+  for +methods: R.Expr
+  for +previous: R.Value
+  {Core.callbackAction(w, rest, stack, id, tail, first, second, R.ActionFunction{factory, methods, previous}) == Core.Machine{w, Core.Evaluate{R.ActionInvoke{ActionArgs.bind(factory, 0n, first, second), ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack} : Core.Machine}
+
+law action_call_parameter_is_captured:
+  for +first: R.Value
+  for +second: R.Value
+  for +index: Nat
+  {ActionArgs.bind(R.ActionParameter{0n, index}, 0n, first, second) == R.Literal{Callback.argument(index, first, second)} : R.Expr}
+
+law action_capture_preserves_resume_binder:
+  for +first: R.Value
+  for +second: R.Value
+  for +depth: Nat
+  for +index: Nat
+  {ActionArgs.bind(R.Argument{index}, depth, first, second) == R.Argument{index} : R.Expr}
+
+law nested_action_parameter_shadow_and_capture:
+  for +first: R.Value
+  for +second: R.Value
+  {ActionArgs.bind(R.ActionCreate{R.ActionParameter{0n, 0n}, R.ActionMethods{R.ActionParameter{1n, 1n}, False{}, R.Argument{0n}, R.ActionEnd{}}}, 0n, first, second) == R.ActionCreate{R.ActionParameter{0n, 0n}, R.ActionMethods{R.Literal{second}, False{}, R.Argument{0n}, R.ActionEnd{}}} : R.Expr}
+
+law callback_action_factory_capture:
+  for +first: R.Value
+  for +second: R.Value
+  for +methods: R.Expr
+  {Callback.bind(R.ActionCreate{R.Argument{0n}, methods}, first, second) == R.ActionCreate{R.Literal{first}, methods} : R.Expr}
+
+law reusable_action_has_distinct_invocations:
+  {ActionFunctions.view(ActionFunctions.recalled()) == ActionFunctions.View{R.Fulfilled{R.Number{16n}}, R.Fulfilled{R.Number{28n}}, 2n, 2n, 0n, 0n, R.Healthy{}} : ActionFunctions.View}
+
+# Fixed topology, arbitrary natural initial/proposed values and sufficient budgets.
+law scalar_memo_public_setter_all_initial_values:
+  for +initial: Nat
+  for +input: Nat
+  for +constructorExtra: Nat
+  {API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{input}) == MemoGeneralSetterData.scheduled(initial, input) : R.World}
+
+law scalar_memo_public_program_all_initial_values:
+  for +initial: Nat
+  for +input: Nat
+  for +constructorExtra: Nat
+  for +drainExtra: Nat
+  {MemoDriver.view(API.flush(Nat.add(40n, drainExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{input}))) == MemoDriver.expected(input) : MemoDriver.View}

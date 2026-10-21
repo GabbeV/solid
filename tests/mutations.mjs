@@ -5,6 +5,16 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['action wrapper drops captured previous value','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack}','ActionArgs.bind(methods, 0n, first, second)}, R.Undefined{}} <> rest, stack}','tests/action-functions.mjs','callbackAction'],
+
+  ['action wrapper creation schedules work','runtime/action-state.bend','B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), R.ProgramReference{callback}}','B.Bundle{B.schedule(R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}]))), R.ProgramReference{callback}}','tests/action-functions.mjs','function'],
+  ['action wrapper discards captured methods','runtime/action-state.bend','[R.ActionFunction{factory, methods, previous}]','[R.ActionFunction{factory, R.ActionEnd{}, previous}]','tests/action-functions.mjs','function'],
+  ['action wrapper loses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','methods','tests/action-functions.mjs','callbackAction'],
+  ['action wrapper reverses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','ActionArgs.bind(methods, 0n, second, first)','tests/action-functions.mjs','callbackAction'],
+  ['nested action fails to shadow parameter capture','runtime/action-arguments.bend','R.ActionCreate{bind(factory, 1n+depth, first, second), bind(methods, 1n+depth, first, second)}','R.ActionCreate{bind(factory, depth, first, second), bind(methods, depth, first, second)}','tests/action-functions.mjs','bind'],
+  ['action wrapper loses captured local signals','runtime/lexical.bend','R.ActionCreate{bind(factory, depth, signal), bind(methods, depth, signal)}','R.ActionCreate{bind(factory, depth, signal), methods}','tests/action-functions.mjs','bind'],
+  ['action wrapper factory loses enclosing callback argument','runtime/callback.bend','R.ActionCreate{bind(factory, first, second), methods}','R.ActionCreate{factory, methods}','tests/action-functions.mjs','bind'],
+
   ["memo constructor discards its compute expression","runtime/construct-state.bend","parent, 0n, 0n, 0n, expr, False{}","parent, 0n, 0n, 0n, R.Literal{R.Number{0n}}, False{}","tests/proof-properties.mjs","computed","memo-public-program"],
   ["public memo setter omits subscriber intake","runtime/write.bend","B.schedule(insertSubs(w, id))","B.schedule(w)","tests/memo-witness-controls.mjs","stageResolved"],
   ["action omits its acted marker","runtime/action-state.bend","R.Transaction.with_acted(B.transaction(w, t), True{})","R.Transaction.with_acted(B.transaction(w, t), False{})","tests/actions-native.mjs","open"],

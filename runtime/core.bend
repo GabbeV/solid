@@ -32,6 +32,7 @@ import ./construct-state.bend as N
 import ./lexical.bend as Local
 import ./reaction-state.bend as Reaction
 import ./action-state.bend as Action
+import ./action-arguments.bend as ActionArgs
 import ./question.bend as Question
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
@@ -467,6 +468,11 @@ def flushCallbackRestore(+w: R.World, rest: List<&2, Task>, saved: List<&2, R.Va
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.ActionParameter{depth, index}:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
+    case R.ActionCreate{factory, methods}:
+      +pair = Action.function(w, factory, methods, prev)
+      Machine{B.first(R.World, R.Value, pair), rest, B.second(R.World, R.Value, pair) <> stack}
     case R.ActionMethods{next, catches, thrown, tail}:
       Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
     case R.ActionEnd{}:
@@ -592,6 +598,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.ActionFunction{factory, methods, previous}:
+      Machine{w, Evaluate{R.ActionInvoke{ActionArgs.bind(factory, 0n, first, second), ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack}
     case R.ReactionTrack{reaction}:
       reactionArm(w, rest, stack, reaction, R.InvokeWith{R.Literal{first}, R.Literal{R.Undefined{}}, False{}})
     case R.ReactionLifecycle{+reaction}:

@@ -293,3 +293,28 @@ landing progress or active optimistic/lane/mark/store engines. They support the
 action invocation work's shared open-count and redirect machinery; seventeen
 native-generator controls separately compare actual action behavior and joined
 source open/action fields. The runtime was not changed for these proofs.
+
+## Reusable action functions and general scalar-memo program
+
+`proof/action-function-laws.bend` adds six local laws over arbitrary admitted
+World/Expr/Value/task/stack data: wrapper construction modifies only the callable
+arena; invocation enters the existing action engine with independent argument
+capture; action parameters bind without consuming the resume binder; nested
+wrappers shadow/capture parameters; enclosing callback parameters bind the factory.
+Its repeated-call fixture is a separate closed execution, not a termination law.
+
+`proof/memo-general-public.bend` proves the actual public constructor/setter/flush
+composition for every pair of natural initial/proposed values, every constructor
+budget `14 + extra` and every drain budget `40 + extra`. The graph is one data
+signal and one memo computing source + 1, with equals:false, under the root and no
+effects. `memo-general-setter.bend` closes the two-step public setter boundary;
+`memo-general-staging.bend` checks all 40 actual drain steps. The previous-value
+frame cuts now quantify the previous payload rather than assuming Number(1).
+
+`tools/memo-witness.mjs` and `tools/memo-boundaries.mjs` generate the two-parameter
+canonical data from actual emitted helpers/core.step. Only numeric payload samples
+are replaced by the two symbolic parameters, independently. All resulting equations
+and public API composition still need the original kernel's positive verdict.
+Sixty-four additional canonical/native finite controls cover zero, equal values,
+reversed values and large natural payloads. They support but do not establish the
+quantified result. The original fixed-initial theorem and witnesses remain checked.

@@ -1,5 +1,5 @@
 import {requireTeardownProgram,requireFunctionProgram} from './programs.mjs';
-import {requireActionProtocol} from './actions.mjs';
+import {requireActionProtocol,bindActionArguments} from './actions.mjs';
 import * as DefaultSolid from '../build/solid.mjs';
 import {HostErrors} from './errors.mjs';
 export class SolidRuntime {
@@ -69,27 +69,9 @@ export class SolidRuntime {
   evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
-    if(e.action){
-      requireActionProtocol(e.action);
-      const id=this.nextFuture++,self=this;
-      const promise=this.S.action(function(){
-        self.evaluate(e.action.factory??{lit:undefined},prev,values,locals);
-        let cursor=0,closed=false;
-        const step=(value,rejected)=>{
-          if(closed){if(rejected)throw value;return {done:true,value:undefined};}
-          const method=e.action.steps[cursor++];
-          if(!method){closed=true;if(rejected)throw value;return {done:true,value:undefined};}
-          try{
-            if(rejected&&!Object.hasOwn(method,'throw'))throw value;
-            const result=self.evaluate(rejected?method.throw:method.next,undefined,[value,rejected],locals);
-            if(result?.done)closed=true;
-            return result;
-          }catch(error){closed=true;throw error;}
-        };
-        return {next:value=>step(value,false),throw:error=>step(error,true)};
-      })();
-      promise.catch(()=>{});this.futureIdentities.set(promise,id);return promise;
-    }
+    if(e.actionCreate)return this.createAction(e.actionCreate,prev,values,locals,true);
+    if(e.action){const fn=this.createAction(e.action,prev,values,locals,false);return this.invokeAction(fn,[]);}
+    if(Object.hasOwn(e,'actionArgument'))throw new TypeError('Unbound action argument');
     if(e.iteratorResult)return {done:e.iteratorResult.done??false,value:this.evaluate(e.iteratorResult.value??{lit:undefined},prev,values,locals)};
     if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values,locals));}
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
@@ -207,7 +189,7 @@ export class SolidRuntime {
       const {callee,args=[]}=e.invokeArgs;
       if(args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
       const fn=this.evaluate(callee,prev,values,locals),arguments_=args.map(arg=>this.evaluate(arg,prev,values,locals));
-      const result=this.setterIdentities.has(fn)?this.writeValue(fn,arguments_[0]):fn(...arguments_);
+      const result=this.setterIdentities.has(fn)?this.writeValue(fn,arguments_[0]):this.invokeAction(fn,arguments_);
       if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
       return result;
     }
@@ -220,12 +202,12 @@ export class SolidRuntime {
         if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
         return result;
       }
-      const argument=this.evaluate(value,prev,values,locals),result=this.setterIdentities.has(fn)?this.writeValue(fn,argument):fn(argument);
+      const argument=this.evaluate(value,prev,values,locals),result=this.setterIdentities.has(fn)?this.writeValue(fn,argument):this.invokeAction(fn,[argument]);
       if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
       return result;
     }
     if(e.invoke){
-      const callee=this.evaluate(e.invoke,prev,values,locals),value=callee();
+      const callee=this.evaluate(e.invoke,prev,values,locals),value=this.invokeAction(callee,[]);
       if(this.accessorIdentities.has(callee))this.observeAccessorRead(callee,value);
       return value;
     }
@@ -241,6 +223,48 @@ export class SolidRuntime {
     if(e.seq){let value;for(const part of e.seq)value=this.evaluate(part,prev,values,locals);return value;}
     if(Object.hasOwn(e,'raise')) throw this.value(e.raise);
     throw new TypeError('Unknown expression');
+  }
+  createAction(plan,prev,values,locals,firstClass){
+    requireActionProtocol(plan);
+    const self=this,state={calls:[]};
+    const fn=this.S.action(function(...args){
+      // Reserve before user factory code, as the invocation Promise already
+      // exists when Solid enters genFn. This is an observation identity only.
+      state.calls.push(self.nextFuture++);
+      const bound=bindActionArguments(plan,args);
+      self.evaluate(bound.factory??{lit:undefined},prev,values,locals);
+      let cursor=0,closed=false;
+      const step=(value,rejected)=>{
+        if(closed){if(rejected)throw value;return {done:true,value:undefined};}
+        const method=bound.steps[cursor++];
+        if(!method){closed=true;if(rejected)throw value;return {done:true,value:undefined};}
+        try{
+          if(rejected&&!Object.hasOwn(method,'throw'))throw value;
+          const result=self.evaluate(rejected?method.throw:method.next,undefined,[value,rejected],locals);
+          if(result?.done)closed=true;
+          return result;
+        }catch(error){closed=true;throw error;}
+      };
+      return {next:value=>step(value,false),throw:error=>step(error,true)};
+    });
+    (this.actionFunctions??=new Map()).set(fn,state);
+    if(firstClass){
+      const name='@action'+(this.actionFunctionSerial=(this.actionFunctionSerial??0)+1);
+      this.callbackFunctions.set(name,fn);this.callbackIdentities.set(fn,name);this.programActions.set(name,[]);
+      this.programs[name]=(_helper,...args)=>this.invokeAction(fn,args);
+    }
+    return fn;
+  }
+  invokeAction(fn,args){
+    const state=this.actionFunctions?.get(fn),before=state?.calls.length;
+    const result=fn(...args);
+    if(state)this.observeActionReturn(fn,result,before);
+    return result;
+  }
+  observeActionReturn(fn,promise,index){
+    const state=this.actionFunctions.get(fn),id=state.calls[index];
+    if(id===undefined)throw new Error('Missing native action invocation observation');
+    promise.catch(()=>{});this.futureIdentities.set(promise,id);return promise;
   }
   root(name,expr,{owner='root',transparent=false}={}){
     return this.S.runWithOwner(this.ownerFor(owner),()=>this.S.createRoot(dispose=>{

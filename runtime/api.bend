@@ -547,6 +547,12 @@ def actionInvoke(factory: R.Expr, methods: R.Expr) -> R.Expr:
 def actionMethod(next: R.Expr, catches: Bool, thrown: R.Expr, tail: R.Expr) -> R.Expr:
   R.ActionMethods{next, catches, thrown, tail}
 
+def actionCreate(factory: R.Expr, methods: R.Expr) -> R.Expr:
+  R.ActionCreate{factory, methods}
+
+def actionParameter(depth: Nat, index: Nat) -> R.Expr:
+  R.ActionParameter{depth, index}
+
 def emptyActionMethods() -> R.Expr:
   R.ActionEnd{}
 

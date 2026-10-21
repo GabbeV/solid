@@ -4,8 +4,8 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2621 differential histories, 154 rejected compiled mutations,
-and 64 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2666 differential histories, 162 rejected compiled mutations,
+and 65 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -21,9 +21,10 @@ TS/Bend equivalence proof is not required; no silent semantic repairs are allowe
 initial and resumed slices, held writes, question provenance, nested/overlapping
 actions, rejection and typed return adoption. Captured local signals continue
 across yields and root disposal. The milestone adds 67 public plus eight lexical
-histories, seventeen independent native-generator controls, five quantified local
-properties and two closed action park/land laws. First-class action-function
-identities, arbitrary protocols/internal awaits and active optimistic/lane/store
+histories; the reusable-wrapper extension adds 45 histories, for 120 action histories,
+21 independent native-generator controls, eleven quantified local/capture properties
+and three closed action executions. Reusable action-function identities, two
+invocation arguments and nested action parameter capture now execute; arbitrary protocols/internal awaits and active optimistic/lane/store
 engines remain unfinished. No source pin or semantic deviation changed.
 
 ## Custom comparator milestone
@@ -49,14 +50,15 @@ open and tracked; its change is not applied to the active source pin.
 The [public program theorem](general-properties.md#complete-scalar-memo-public-program)
 now composes the actual constructor, public setter and 40-step drain for every
 natural proposal and larger drain budget. A checked 14-step constructor and
-two-step setter close the previous staged-arena precondition. The signal starts
-at zero; graph topology is fixed and has no effects. This is a complete quantified
+two-step setter close the previous staged-arena precondition. The original theorem starts at zero. A new complete family covers every natural
+initial value and proposal, all constructor budgets >= 14 and drain budgets >= 40.
+Graph topology is fixed and has no effects. This is a complete quantified
 program result within that domain, with no runtime change or TS equivalence claim.
 The larger two-memo/render theorem remains open.
 
 The constructor is also proved separately for every natural initial value and
-all budgets >= 14, using a symbolic path. This does not generalize the complete
-update/drain program's fixed initial value. Three general transaction-merge laws
+all budgets >= 14, using a symbolic path. The complete update/drain family now also quantifies the initial value; arbitrary
+graphs remain outside that result. Three general transaction-merge laws
 now cover open-count sums, redirects and action markers in both directions
 between two represented ordinary roots.
 

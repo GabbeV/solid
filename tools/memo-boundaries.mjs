@@ -6,7 +6,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-function serializer(root,generalInitial=false){
+function serializer(root,generalInitial=false,both=false){
 const variable=generalInitial?'initial':'input';
 const constructors=new Map();
 function split(text){let depth=0,start=0,out=[];for(let i=0;i<text.length;i++){if('<({'.includes(text[i]))depth++;if('>)}'.includes(text[i]))depth--;if(text[i]===','&&depth===0){out.push(text.slice(start,i).trim());start=i+1;}}if(text.slice(start).trim())out.push(text.slice(start).trim());return out;}
@@ -25,8 +25,8 @@ function qualified(type,ns){
 }
 function intern(body,type){
  const key=type+'#'+body;if(shared.has(key))return shared.get(key);
- const name='data_'+shared.size,open=new RegExp('\\b'+variable+'\\b').test(body),call=name+(open?'('+variable+')':'()');shared.set(key,call);
- declarations.push(`def ${name}(${open?'+'+variable+': Nat':''}) -> ${type}:\n  ${body}\n`);return call;
+ const name='data_'+shared.size,variables=(both?['initial','input']:[variable]).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;
 }
 function show(value,type,ns='R'){
  const plain=type.replace(/^\w+\./,'');
@@ -34,7 +34,7 @@ function show(value,type,ns='R'){
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
  if(family==='R.Value'&&value.$==='Number'){
-  const terms=generalInitial?{11:'initial',12:'Nat.add(initial, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
+  const terms=both?{11:'initial',12:'Nat.add(initial, 1n)',17:'input',18:'Nat.add(input, 1n)'}:generalInitial?{11:'initial',12:'Nat.add(initial, 1n)'}:{17:'input',18:'Nat.add(input, 1n)'};
   if(terms[value.n])return intern('R.Number{'+terms[value.n]+'}','R.Value');
  }
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+type+' '+JSON.stringify(value));
@@ -54,13 +54,15 @@ import ../runtime/pending.bend as Q
 `;
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-memo-boundaries-'));
 try{
-for(const phase of ['setter','constructor','initial']){
+for(const phase of ['setter','constructor','initial','general-setter']){
  const emitted=path.join(dir,phase+'.mjs');
  const built=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','proof/memo-'+phase+'-driver.bend','-o',emitted],{cwd:root,encoding:'utf8'});
  if(built.status!==0)throw Error(built.stderr);
- const {default:D}=await import(pathToFileURL(emitted)),{show,declarations}=serializer(root,phase==='initial');
+ const {default:D}=await import(pathToFileURL(emitted)),{show,declarations}=serializer(root,phase==='initial',phase==='general-setter');
  let body='';
- if(phase==='setter'){
+ if(phase==='general-setter'){
+  for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])body+=`def ${name}(${['origin','queued'].includes(name)?'+initial: Nat':'+initial: Nat, +input: Nat'}) -> R.World:\n  ${show(D[name](11,17),'World')}\n\n`;
+ }else if(phase==='setter'){
   for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])body+=`def ${name}(${['origin','queued'].includes(name)?'':'+input: Nat'}) -> R.World:\n  ${show(D[name](17),'World')}\n\n`;
  }else{
   const generic=phase==='initial',args=generic?'initial':'',params=generic?'+initial: Nat':'';

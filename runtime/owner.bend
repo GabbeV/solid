@@ -430,6 +430,8 @@ def admittedAction(action: R.CleanupAction) -> Bool:
   match action:
     case R.CallbackEvaluate{expr}:
       False{}
+    case R.ActionFunction{factory, methods, previous}:
+      False{}
     case R.CallbackReturn{expr}:
       False{}
     case R.CallbackWrite{signal, expr}:

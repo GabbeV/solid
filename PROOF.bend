@@ -1,4 +1,7 @@
 import Base
+import ./proof/memo-general-setter.bend as MemoGeneralSetter
+import ./proof/memo-general-public.bend as MemoGeneralPublic
+import ./proof/action-function-laws.bend as ActionFunctions
 import ./proof/memo-initial.bend as MemoInitial
 import ./proof/transaction-merge-laws.bend as TxMerge
 import ./proof/memo-public-program.bend as MemoPublic
@@ -380,3 +383,30 @@ def Laws.merged_transaction_redirects_to_target(w, source, target, suffix, rever
 
 def Laws.merged_transactions_preserve_action_marker(w, source, target, suffix, reverse):
   TxMerge.acted_union(w, source, target, suffix, reverse)
+
+def Laws.action_function_creation_has_no_reactive_effect(w, rest, stack, factory, methods, previous):
+  ActionFunctions.entry(w, rest, stack, factory, methods, previous)
+
+def Laws.action_function_call_uses_shared_invocation(w, rest, stack, id, tail, first, second, factory, methods, previous):
+  ActionFunctions.invocation(w, rest, stack, id, tail, first, second, factory, methods, previous)
+
+def Laws.action_call_parameter_is_captured(first, second, index):
+  ActionFunctions.parameter(first, second, index)
+
+def Laws.action_capture_preserves_resume_binder(first, second, depth, index):
+  ActionFunctions.resume(first, second, depth, index)
+
+def Laws.nested_action_parameter_shadow_and_capture(first, second):
+  ActionFunctions.nested(first, second)
+
+def Laws.callback_action_factory_capture(first, second, methods):
+  ActionFunctions.callback_capture(first, second, methods)
+
+def Laws.reusable_action_has_distinct_invocations():
+  ActionFunctions.repeated()
+
+def Laws.scalar_memo_public_setter_all_initial_values(initial, input, constructorExtra):
+  MemoGeneralSetter.public_program(initial, input, constructorExtra)
+
+def Laws.scalar_memo_public_program_all_initial_values(initial, input, constructorExtra, drainExtra):
+  MemoGeneralPublic.complete(initial, input, constructorExtra, drainExtra)
