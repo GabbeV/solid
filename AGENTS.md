@@ -46,3 +46,15 @@ prior approaches described in the uploaded restart guide.
   when a fix lands, port the upstream implementation, remove the temporary delta,
   rerun the original repro and affected checks, and retire (never erase) the record.
   No fresh permission is required for every routine deviation within this scope.
+
+## Git checkpoint workflow
+
+The user has authorized regular synchronization of this translation to their
+GitHub fork. Work on `feat/solid-signals-bend`, with `origin` set to
+`https://github.com/GabbeV/solid.git`. Commit and push completed, verified
+checkpoints during sustained work and before ending a continuation. Verify that
+the remote branch reaches the local commit. Use normal fast-forward pushes;
+inspect unexpected remote changes before integrating them. Local Git bundles are
+optional recovery artifacts, not a substitute for GitHub synchronization.
+This authorization covers the translation branch, not upstream PRs/issues or
+other feature branches.

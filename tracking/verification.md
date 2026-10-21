@@ -72,8 +72,10 @@ was superseded by #4156; #4163 and #4144 merged. The original before/after matri
 operation-level audit and upstream test results are in
 [the earlier pin review](reviews/solid-71153bf0.md).
 [The current update](reviews/solid-d682022c.md) revalidates those fixes and records
-new upstream dev/lane regressions separately from Bend support. The separate integration branch is local;
-no translation remote is configured. No package was published. Historical standalone
+new upstream dev/lane regressions separately from Bend support. The translation
+now uses `feat/solid-signals-bend` with `origin` at `GabbeV/solid`. The user has
+authorized regular pushes of completed verified checkpoints; see AGENTS.md.
+No package was published. Historical standalone
 npm/playground repro artifacts retain their original versions and evidence.
 The original vendored source and negative laws remain at baseline/solid-d2ad8b28
 (Bend commit 76361a4). Current source-only repro tests check corrected behavior by

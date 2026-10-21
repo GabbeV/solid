@@ -299,7 +299,7 @@
     "tracking/reviews/solid-d682022c.md": "1f33f8ec4c9a7358059f81971162de6a1bc8e2fe5aebff8dc625640f701f6602",
     "tracking/reviews/solid-d682022c-impact.json": "5c7055f748d4be457359fc96c27796b380681cbbfe32180e44ff60cdab5902ad",
     "tracking/reviews/solid-d682022c-validation.json": "1acceed0c35b0b44bb0dcfcf99e307e3325ad0cc526472ee890f411b500feb00",
-    "tracking/verification.md": "65c3607aa0aea1f7feb4651f2aff7347965322beaf9eac4007aa40c301e2c923",
+    "tracking/verification.md": "cafd27b503a985601b0b22f8cbb1b696561812ec6a93abdbdb1c97a4bc5c546d",
     "tracking/reviews/function-values.md": "602565de8f531697118f57c27dd0596138c060e165a07568eff9eb47b7dbde1c",
     "tracking/reviews/function-values-impact.json": "a4c00521df130a47d4542290794a606d013769d617335c6b5af8b83ba207df5c",
     "tracking/upstream-issues.json": "17d3c14bb188a34a15bc8debcb7621748ccc6356855e85fed74bb88893434eb6",
@@ -321,7 +321,7 @@
     "tracking/upstream/held-function-allocation-free-benchmark.json": "4d57032b9326d887bd6f1ae2a1da6e88ef07897f08d52c70778c757b06fe32fd",
     "tracking/upstream/held-function-wrapper-pr.md": "40228b5a19b1b7228b384aec116bc6b46c2bcfb29b4b96af5548c45166b18951",
     "tracking/upstream/held-function-wrapper-size.json": "b9782b0ef309c31045c4632e14dcedb880a8d2cd964cfb8e187999fdfb96e317",
-    "AGENTS.md": "496a9ff067a4b8d6dda3bd0c326a3ce3d43f7e189786bf0c0cb5e8265280b61c",
+    "AGENTS.md": "4df36b6e9c9245a853e91c3264fd86ea1c04f867fd2a62da0a750b9dabcf3122",
     "repros/solid-signals/.gitignore": "c6ec5a3200db5f4461b64b72cd69529e357230585697d3ea52af9bd356710c81",
     "repros/solid-signals/README.md": "c83e1ac386fd5a9feb80a2c0add7675e4b6410c1d5d61b6bec767176c09729c5",
     "repros/solid-signals/bench-held-function.mjs": "0bde1c56c83ccff179c8a7cdcee022802359de8727c3568f9b0f1d62988ab861",
@@ -369,7 +369,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 100.06688019900001,
+    "seconds": 102.346705191,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {
