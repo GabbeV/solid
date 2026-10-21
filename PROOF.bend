@@ -1,4 +1,5 @@
 import Base
+import ./proof/memo-history-public.bend as MemoHistory
 import ./proof/memo-repeat-public.bend as MemoRepeat
 import ./proof/direct-owner-laws.bend as DirectOwners
 import ./proof/argument-vector-laws.bend as ArgumentVectors
@@ -506,3 +507,12 @@ def Laws.scalar_memo_two_updates_final_world(initial, first, input, constructorE
 
 def Laws.scalar_memo_two_updates_complete(initial, first, input, constructorExtra, firstExtra, secondExtra):
   MemoRepeat.complete(initial, first, input, constructorExtra, firstExtra, secondExtra)
+
+def Laws.scalar_memo_repeatable_public_update(tick, previous, input, events, jobs, extra):
+  MemoHistory.update(tick, previous, input, events, jobs, extra)
+
+def Laws.scalar_memo_finite_history_final_world(initial, first, constructorExtra, firstExtra, updates):
+  MemoHistory.world(initial, first, constructorExtra, firstExtra, updates)
+
+def Laws.scalar_memo_finite_history_complete(initial, first, constructorExtra, firstExtra, updates):
+  MemoHistory.complete(initial, first, constructorExtra, firstExtra, updates)

@@ -2,7 +2,8 @@
 
 Source-only reproduced bug at unchanged Solid next
 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16), 2026-10-21.
-No issue or PR has been filed. This does not affect implemented Bend code:
+The user submitted fix PR [#4211](https://github.com/solidjs/solid/pull/4211).
+This does not affect implemented Bend code:
 mapArray/repeat and their array payloads remain unported. No workaround or
 semantic deviation is active.
 
@@ -43,10 +44,22 @@ fallback reports and repository mapArray/falsy-fallback reports found no duplica
 The file is unchanged by the latest nine-commit pin update; this is not a claim
 that one of the recently merged fixes introduced it.
 
-A likely local correction is to test the presence of an output slot instead of
-its truthiness, while keeping failed-RHS retry and owner disposal order. No fix
-is applied or claimed validated here; any correction must retain the existing
-NotReadyError/fallback-abort tests. Do not replace the helper's staged algorithm.
+The separate upstream PR changes both guards to `!this._mappings.length`.
+A successful RHS creates slot zero even for undefined; a thrown or suspended
+RHS leaves the array empty. The existing failed-attempt cleanup/retry order is
+retained without adding state or allocating another object. The pinned reference
+and Bend runtime are unchanged.
+
+The PR is committed as ce9572c0 on GabbeV:fix/falsy-empty-fallback, based on
+next@a2a5b6f8. Twelve new falsy cases fail before the fix and four truthy controls
+pass; all sixteen pass afterward. Together with the existing fallback-abort
+regressions, 28 focused tests pass in development, production and observe.
+Signals builds/declarations, the full 333-file / 5,455-passing-test suite,
+format/release checks and twelve real JSX browser cases pass. The standard size
+scenarios are unchanged; focused imports add four minified bytes per helper.
+Local production timings showed no clear slowdown (noisy microbenchmarks).
+This is validation of the separate candidate, not a baseline repin or a Bend
+proof of an unimplemented API.
 
 ## Evidence
 

@@ -18,9 +18,11 @@ callback expressions. JavaScript supplies the test host and payload encoding.
 The implementation, differential tests, and composed proofs use the same runtime.
 [General semantic properties](tracking/general-properties.md) now cover arbitrary
 publication slots/payloads, read policies and a complete numeric signal program.
-There is no second scheduler hidden behind the proof. A [two-update memo family](tracking/memo-repeat-proof.md)
-now includes the constructor and both public setter/flush pairs for every natural
-initial value and proposal pair, with sufficient constructor/drain budgets; arbitrary-length histories and general graphs remain open.
+There is no second scheduler hidden behind the proof. The
+[scalar-memo history family](tracking/memo-history-proof.md) now proves any finite
+nonempty sequence of writes/flushes for every natural initial value and proposal,
+including the real constructor, sufficient per-update budgets and exact final
+state. General graphs, effects and async histories remain open.
 The public `flush(() => ...)` overload now supports nested synchronous drains,
 returned values and exception-safe depth restoration; see [flush callbacks](tracking/flush-callbacks.md).
 Custom comparator programs now run through signal writes, memo publication, async

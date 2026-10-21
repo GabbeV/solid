@@ -385,3 +385,15 @@ validity or progress for malformed arenas. One complete public execution checks
 child-only teardown, reuse, final disposal and exact cleanup order. No source
 algorithm or kernel budget was changed. See [direct-owners.md](direct-owners.md)
 for native controls and the remaining ID/reflection/active-scope boundaries.
+
+## Arbitrary finite scalar-memo histories
+
+[The history family](memo-history-proof.md) proves any finite nonempty list of
+natural proposals with the actual constructor, setters and independently
+sufficient drains. Its repeatable steady pass checks the unchanged setter and
+forty core transitions over symbolic counters and arbitrary existing trace/job
+prefixes; the complete program theorem then inducts over the update list.
+Three new root properties cover that pass, exact final World and committed view.
+No state is reset at the induction boundary. This removes the earlier
+exactly-two-write limit only for the fixed equals:false signal/memo graph.
+Arbitrary graph/effect/async histories and formal TS equivalence remain open.

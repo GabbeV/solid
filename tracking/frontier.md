@@ -29,7 +29,21 @@ active lane/mount scopes are not admitted. No active semantic deviation exists.
 fallbacks being recreated on empty-to-empty For/Repeat updates. Fourteen native
 controls and twelve real JSX browser cases reproduce it, with a one-line truthy
 control. These helpers are unported: no Bend proof, paired-history credit,
-source patch or semantic workaround is claimed. No issue/PR has been filed.
+source patch or semantic workaround is claimed. The user submitted fix PR
+[#4211](https://github.com/solidjs/solid/pull/4211) from a separate upstream workspace;
+the pinned source is unchanged.
+
+## Arbitrary finite scalar-memo histories
+
+[The new history family](memo-history-proof.md) removes the exactly-two-update
+limit for the fixed equals:false signal/memo program. Three root laws check a
+repeatable public update, full final World and committed view for any finite
+nonempty sequence of natural proposals, with the actual constructor and
+independent sufficient budgets for every flush. List induction preserves
+counters, generations, trace and queued host jobs across all passes. Forty-nine
+finite public programs / 1,260 prefixes and 36 synthetic steady-pass controls
+support correspondence separately. General graph/effect/async histories remain
+open; the runtime and source pin are unchanged.
 
 ## Typed action milestone
 
@@ -103,7 +117,8 @@ between two represented ordinary roots.
 value and both proposals, actual constructor budgets >=14, both public setters
 and independent >=40-step drains. Three root laws identify the second staged
 World, final World and committed values. 512 native/canonical controls support correspondence
-separately; arbitrary-length histories and arbitrary graphs remain open.
+separately. The newer arbitrary-finite-history family above removes this length
+limit for the same fixed scalar graph; arbitrary graphs remain open.
 
 ## Two-memo/render proof milestone
 

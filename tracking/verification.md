@@ -9,7 +9,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
   99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity and 25 direct-owner histories: 2773 total, plus explicit host object-identity and native timeout
-  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, eight two-memo/render canonical/native controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
+  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten, eight staged-error-recovery and twelve held-function-value cases. The original arbitrary replacement-function cases remain source-only; an admitted bound-function counterpart now also has Bend parity and a positive merged-fix law. No expected
@@ -188,3 +188,17 @@ both proposals, constructor budgets >=14 and both drain budgets >=40. Its 512
 native/canonical controls bring the separate finite memo/graph controls to 600
 (80 single-update/constructor, eight larger-graph, 512 two-update). Runtime, source/toolchain pins, 2773 histories,
 68 positive closed regressions and 177 mutation assertions are unchanged.
+
+## Quantified finite scalar-memo histories
+
+The [history theorem](memo-history-proof.md) now proves any finite nonempty
+sequence of natural proposals for the fixed equals:false signal/memo program,
+with the actual constructor and sufficient independent flush budgets. Three
+new roots establish the repeatable public update, exact final World and committed
+view through list induction. Counters, dependency generations, trace and queued
+host jobs are retained across iterations. This supersedes the two-update limit
+for that graph; arbitrary graph/effect/async histories remain open. The 49 finite
+programs / 1,260 prefixes and 36 synthetic controls are separate executable
+correspondence evidence. Closed regression and paired-history totals do not grow
+from this proof-only extension. Source-only fallback PR #4211 has been submitted;
+no fix is installed into the pinned baseline or an unimplemented Bend helper.

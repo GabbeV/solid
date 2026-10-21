@@ -1,4 +1,6 @@
 import Base
+import ./proof/memo-history-states.bend as MemoHistoryStates
+import ./proof/memo-history-public.bend as MemoHistory
 import ./proof/memo-repeat-public.bend as MemoRepeat
 import ./proof/memo-repeat-states.bend as MemoRepeatStates
 import ./runtime/construct-state.bend as OwnerConstruction
@@ -951,3 +953,30 @@ law scalar_memo_two_updates_complete:
   for +firstExtra: Nat
   for +secondExtra: Nat
   {MemoDriver.view(API.flush(Nat.add(40n, secondExtra), API.setSignal(API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})), 2n, R.Number{input}))) == MemoDriver.expected(input) : MemoDriver.View}
+
+# Any finite nonempty sequence in the fixed equals:false signal/memo program.
+# Each tail element carries its own drain budget 40 + extra.
+law scalar_memo_repeatable_public_update:
+  for +tick: Nat
+  for +previous: Nat
+  for +input: Nat
+  for +events: List<&2, R.TraceEvent>
+  for +jobs: List<&2, R.HostJob>
+  for +extra: Nat
+  {API.flush(Nat.add(40n, extra), API.setSignal(MemoHistoryStates.origin(tick, previous, events, jobs), 2n, R.Number{input})) == MemoHistoryStates.origin(1n+tick, input, MemoHistory.nextEvents(events, input), MemoHistory.nextJobs(jobs)) : R.World}
+
+law scalar_memo_finite_history_final_world:
+  for +initial: Nat
+  for +first: Nat
+  for +constructorExtra: Nat
+  for +firstExtra: Nat
+  for +updates: List<&2, MemoHistory.Update>
+  {MemoHistory.run(updates, API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first}))) == MemoHistory.result(updates, 0n, first, MemoHistory.initialEvents(initial, first), [R.FlushJob{}]) : R.World}
+
+law scalar_memo_finite_history_complete:
+  for +initial: Nat
+  for +first: Nat
+  for +constructorExtra: Nat
+  for +firstExtra: Nat
+  for +updates: List<&2, MemoHistory.Update>
+  {MemoDriver.view(MemoHistory.run(updates, API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})))) == MemoDriver.expected(MemoHistory.last(updates, first)) : MemoDriver.View}

@@ -11,7 +11,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
 | General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
-| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
+| Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor and arbitrary finite nonempty write/flush history for every natural initial/proposed value, constructor budget >= 14 and each drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Public comparison corpus | 2,348 histories | 2,773 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 68 positive regressions; two formerly preserved bugs now pass their merged fixes |
@@ -29,10 +29,9 @@ active verdict/lane/boundary/mark/deferred engines, stores/array helpers, richer
 closures/protocol objects and dev/observe behavior. [The action readiness review](reviews/action-readiness.md)
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
-invokes its callback without draining; the review explicitly preserves that arm. Arbitrary
-graph/history correctness and arbitrary-length symbolic histories remain open.
-The scalar-memo family now proves exactly two updates for every natural
-initial value and both proposals, with constructor/drain budgets >=14/40. None of the test counts should be read as that fraction of Solid completed.
+invokes its callback without draining; the review explicitly preserves that arm. Arbitrary graph/effect/async-history correctness remains open.
+The scalar-memo family now proves any finite nonempty sequence of updates for
+every natural initial value and proposal, with constructor/drain budgets >=14/40. None of the test counts should be read as that fraction of Solid completed.
 
 
 The latest proof checkpoint closes the previously explicit scalar-memo boundary:
@@ -105,3 +104,12 @@ The next list-helper audit found a source-only successful-falsy-fallback remount
 case, with 14 native controls and twelve real For/Repeat JSX browser cases. It
 is tracked separately from implemented capabilities and formal proofs; no issue,
 PR, source patch or active semantic deviation was introduced.
+
+The next proof checkpoint removes that fixed two-update limit. Three new root
+laws establish the repeatable public update, exact final World and committed
+view for any finite nonempty list of scalar-memo writes/flushes. The proof
+inducts on the list while keeping clocks, generations and accumulated trace/jobs.
+Forty-nine finite public programs / 1,260 prefixes and 36 synthetic pass controls
+support correspondence separately. Runtime, source pin, existing history/mutation
+counts and the empty deviation register are unchanged. The user also submitted
+source-only fallback fix PR #4211; it remains separate from the pinned baseline.

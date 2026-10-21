@@ -207,7 +207,7 @@
     {
       "id": "SOLID-EMPTY-FALLBACK-006",
       "classification": "reproduced-upstream-bug",
-      "status": "reproduced-unfiled",
+      "status": "fix-pr-submitted",
       "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
       "sourceUnit": "map.ts:updateKeyedMap/updateRepeat empty fallback guards",
       "record": "tracking/upstream/empty-fallback.md",
@@ -217,12 +217,14 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
-      "fixUrl": null,
+      "fixUrl": "https://github.com/solidjs/solid/pull/4211",
       "bendScope": "Affected list/array APIs are unported; native source-only repro, no Bend law or workaround.",
       "relatedIssueUrl": "https://github.com/solidjs/solid/issues/2903",
       "playgroundUrl": "https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg",
       "playgroundPackageVersion": "2.0.0-rc.16",
-      "playgroundHostedVerification": "repros/playground/empty-fallback-hosted.json"
+      "playgroundHostedVerification": "repros/playground/empty-fallback-hosted.json",
+      "candidateFixCommit": "ce9572c008cf08436b72d3ef66e894f767a28699",
+      "candidateFixBase": "a2a5b6f8f54addab694a1040721a86208349b8ea"
     }
   ]
 }

@@ -42,6 +42,13 @@ normalization and strengthens the result. No checker cap, runtime budget, source
 operation or trusted kernel changed. The completed proof
 passes the original independent kernel and regular roots.
 
+## Superseding history theorem
+
+[The arbitrary finite history family](memo-history-proof.md) now removes the
+two-update limit for this same fixed scalar graph using a repeatable pass and
+list induction. These earlier two-update laws remain checked as supporting
+milestones. The remaining scope below describes their original boundary.
+
 ## Remaining scope
 
 This family has one memo and exactly two writes/flushes. The initial value and
