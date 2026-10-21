@@ -59,9 +59,15 @@ def errorMessage(+original: R.Value) -> String:
       stringify(other)
 
 def statusError(+w: R.World, source: Nat, +original: R.Value) -> B.Bundle<R.World, R.Value>:
-  +serial = Nat.add(1n, R.World.errorSerial(w))
-  +message = errorMessage(original)
-  B.Bundle{R.World.with_errorSerial(w, serial), R.StatusFailure{serial, source, original, message}}
+  match original:
+    # Array-to-string coercion in a StatusError is not translated yet. Refuse
+    # explicitly rather than synthesize the ordinary-object message for arrays.
+    case R.ArrayReference{id}:
+      B.Bundle{R.World.with_fault(w, R.Unsupported{81n}), R.Undefined{}}
+    case other:
+      +serial = Nat.add(1n, R.World.errorSerial(w))
+      +message = errorMessage(other)
+      B.Bundle{R.World.with_errorSerial(w, serial), R.StatusFailure{serial, source, other, message}}
 
 def unwrapStatusError(error: R.Value) -> R.Value:
   match error:

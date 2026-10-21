@@ -8,6 +8,22 @@ import ./callable.bend as Callable
 
 def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
   match expr:
+    case R.ArrayLiteral{values}:
+      R.ArrayLiteral{bind(values, depth, signal)}
+    case R.ArrayAt{array, index}:
+      R.ArrayAt{bind(array, depth, signal), bind(index, depth, signal)}
+    case R.ArrayLength{array}:
+      R.ArrayLength{bind(array, depth, signal)}
+    case R.RepeatCreate{+count, +mapper, from, fallback}:
+      match from fallback:
+        case R.NoInlineBody{} R.NoInlineBody{}:
+          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}, R.NoInlineBody{}}
+        case R.SomeInlineBody{expr, returns} R.NoInlineBody{}:
+          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(expr, depth, signal), returns}, R.NoInlineBody{}}
+        case R.NoInlineBody{} R.SomeInlineBody{expr, returns}:
+          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}, R.SomeInlineBody{bind(expr, depth, signal), returns}}
+        case R.SomeInlineBody{fromExpr, fromReturns} R.SomeInlineBody{fallbackExpr, fallbackReturns}:
+          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(fromExpr, depth, signal), fromReturns}, R.SomeInlineBody{bind(fallbackExpr, depth, signal), fallbackReturns}}
     case R.LocalRead{+index}:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Read{signal}, _ => R.LocalRead{index})
     case R.LocalAccessor{+index}:

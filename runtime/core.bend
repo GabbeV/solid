@@ -2,6 +2,8 @@
 # Defunctionalized expressions are reusable callbacks. The same machine drives
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
+import ./arrays.bend as Arrays
+import ./map.bend as Maps
 import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -64,6 +66,26 @@ def passId(frame: PassFrame) -> Nat:
       id
 
 type Task is Data:
+  RepeatMapper{count: R.Expr, from: R.InlineBody, fallback: R.InlineBody}
+  RepeatReady{node: Nat}
+  RepeatCount{id: Nat}
+  RepeatFrom{id: Nat, newLen: Nat}
+  RepeatClear{id: Nat}
+  RepeatEmpty{id: Nat}
+  RepeatFallbackCreate{id: Nat}
+  RepeatFallbackStore{id: Nat}
+  RepeatReturn{id: Nat}
+  RepeatCopy{frame: R.RepeatFrame, index: Nat}
+  RepeatRows{frame: R.RepeatFrame, index: Nat}
+  RepeatMapped{frame: R.RepeatFrame, index: Nat, saved: List<&2, R.Value>}
+  RepeatAbort{frame: R.RepeatFrame, index: Nat, prior: R.Fault}
+  RepeatCommit{frame: R.RepeatFrame}
+  RepeatLeaving{frame: R.RepeatFrame, index: Nat}
+  RepeatPublish{frame: R.RepeatFrame}
+  ArrayItems{values: R.Expr, reversed: List<&2, R.Value>, previous: R.Value}
+  ArrayItemValue{values: R.Expr, reversed: List<&2, R.Value>, previous: R.Value}
+  ArrayAt{}
+  ArrayLength{}
   ActionOpened{action: Nat}
   ActionExecutorEnd{action: Nat, saved: List<&2, R.Value>}
   ActionStepReturn{action: Nat, saved: List<&2, R.Value>}
@@ -471,8 +493,22 @@ def flushCallbackFinally(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.V
 def flushCallbackRestore(+w: R.World, rest: List<&2, Task>, saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
   Machine{R.World.with_fault(R.World.with_syncDepth(w, Nat.sub(R.World.syncDepth(w), 1n)), fault), rest, saved}
 
+def repeatRead(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +w = Maps.updateParent(w, id)
+  Machine{w, Evaluate{R.RepeatState.count(Maps.get(w, id)), R.Undefined{}} <> RepeatCount{id} <> rest, stack}
+
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.ArrayLiteral{values}:
+      Machine{w, ArrayItems{values, [], prev} <> rest, stack}
+    case R.ArrayAt{array, index}:
+      Machine{w, Evaluate{array, prev} <> Evaluate{index, prev} <> ArrayAt{} <> rest, stack}
+    case R.ArrayLength{array}:
+      Machine{w, Evaluate{array, prev} <> ArrayLength{} <> rest, stack}
+    case R.RepeatCreate{count, mapper, from, fallback}:
+      Machine{w, Evaluate{mapper, prev} <> RepeatMapper{count, from, fallback} <> rest, stack}
+    case R.RepeatRead{id}:
+      repeatRead(w, rest, stack, id)
     case R.ActionParameter{depth, index}:
       Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
     case R.ActionCreate{factory, methods}:
@@ -612,6 +648,18 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # User callback ABI, not a Solid scheduling operation. Statements execute in
 # order in the current source callback scope. Arguments are bound as user-code
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
+# JavaScript dense array-literal evaluation: left to right, once, then allocate.
+# The linked syntax is shared with user call vectors; no scheduler runs here.
+def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, values: R.Expr, +reversed: List<&2, R.Value>, +previous: R.Value) -> Machine:
+  match values:
+    case R.CallArgumentsEnd{}:
+      +pair = Arrays.allocate(w, Arrays.slots(List.reverse(&2, R.Value, reversed)))
+      Machine{B.first(R.World, Nat, pair), rest, R.ArrayReference{B.second(R.World, Nat, pair)} <> stack}
+    case R.CallArgumentsItem{value, tail}:
+      Machine{w, Evaluate{value, previous} <> ArrayItemValue{tail, reversed, previous} <> rest, stack}
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}
+
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
     case R.ActionFunction{factory, methods, previous}:
@@ -2202,8 +2250,207 @@ def ownerTasks(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, ta
     case other:
       ownerResume(rest, stack, O.dispatch(w, other))
 
+# src/map.ts repeat/updateRepeat return-point continuations.
+def repeatCreate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, count: R.Expr, mapper: R.Value, from: R.InlineBody, fallback: R.InlineBody) -> Machine:
+  +pair = Maps.repeat(w, count, mapper, from, fallback)
+  +w = B.first(R.World, Nat, pair)
+  +repeat = B.second(R.World, Nat, pair)
+  +node = B.length(R.Node, R.World.nodes(w))
+  +w = B.event(w, R.Constructed{node})
+  +w = N.computed(w, R.RepeatRead{repeat}, N.defaults(), R.World.context(w))
+  Machine{w, Recompute{node, True{}} <> RepeatReady{node} <> rest, stack}
+
+# updateRepeat: parentComputed store, then count, then optional from, all before
+# entering the internal owner. Existing read/throw/pending machinery is shared.
+def repeatBegin(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +newLen: Nat, +from: Nat) -> Machine:
+  +state = Maps.get(w, id)
+  +ending = {RestoreContext{R.World.context(w), R.World.tracking(w)} <> RepeatReturn{id} <> rest : List<&2, Task>}
+  +w = L.enterOwner(w, R.RepeatState.owner(state))
+  B.choose(~Machine, Nat.is_eq(newLen, 0n),
+    _ => B.choose(~Machine, Nat.is_ne(R.RepeatState.len(state), 0n),
+      _ => Machine{w, OwnerTasks{[O.Enter{R.RepeatState.owner(state), False{}, False{}}]} <> RepeatClear{id} <> ending, stack},
+      _ => Machine{w, RepeatEmpty{id} <> ending, stack}),
+    _ =>
+      +pair = Arrays.fresh(w, newLen)
+      +w = B.first(R.World, Nat, pair)
+      +frame = Maps.frame(id, state, newLen, from, B.second(R.World, Nat, pair))
+      Machine{w, RepeatCopy{frame, R.RepeatFrame.keepStart(frame)} <> ending, stack})
+
+# updateRepeat: options.from?.() || 0, within the natural offset profile.
+def repeatFromValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +newLen: Nat, value: R.Value) -> Machine:
+  match value:
+    case R.Number{from}:
+      repeatBegin(w, rest, stack, id, newLen, from)
+    case other:
+      B.choose(~Machine, B.truth(other), _ => Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}, _ => repeatBegin(w, rest, stack, id, newLen, 0n))
+
+def repeatFrom(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +newLen: Nat) -> Machine:
+  match stack:
+    case value <> tail:
+      repeatFromValue(w, rest, tail, id, newLen, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+def repeatFromBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +newLen: Nat, body: R.InlineBody) -> Machine:
+  match body:
+    case R.NoInlineBody{}:
+      repeatFrom(w, rest, R.Number{0n} <> stack, id, newLen)
+    case R.SomeInlineBody{expr, returns}:
+      Machine{w, Evaluate{expr, R.Undefined{}} <> RepeatFrom{id, newLen} <> rest, stack}
+
+def repeatCount(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  match stack:
+    case R.Number{+newLen} <> +tail:
+      repeatFromBody(w, rest, tail, id, newLen, R.RepeatState.from(Maps.get(w, id)))
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}
+
+# Empty fallback guard is the pinned source's truthiness test (SOLID-EMPTY-
+# FALLBACK-006 / proposed #4211), including its successful-falsy remount bug.
+def repeatEmptyBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, fallback: R.InlineBody) -> Machine:
+  match fallback:
+    case R.NoInlineBody{}:
+      Machine{w, rest, stack}
+    case R.SomeInlineBody{expr, returns}:
+      +state = Maps.get(w, id)
+      +old = B.get(Nat, R.RepeatState.nodes(state), 0n, 0n)
+      B.choose(~Machine, B.truth(Arrays.at(w, R.RepeatState.mappings(state), 0n)), _ => Machine{w, rest, stack},
+        _ => Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(old, 0n), _ => OwnerTasks{[O.Enter{old, True{}, False{}}]} <> RepeatFallbackCreate{id} <> rest, _ => RepeatFallbackCreate{id} <> rest), stack})
+
+def repeatFallbackBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +owner: Nat, body: R.InlineBody) -> Machine:
+  match body:
+    case R.NoInlineBody{}:
+      Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}
+    case R.SomeInlineBody{expr, returns}:
+      Machine{L.enterOwner(w, owner), Evaluate{expr, R.Undefined{}} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> RepeatFallbackStore{id} <> rest, stack}
+
+def repeatFallbackCreate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +owner = B.length(R.Node, R.World.nodes(w))
+  +w = D.createOwner(w, R.World.context(w), False{})
+  +state = Maps.get(w, id)
+  +w = Maps.store(w, id, R.RepeatState.with_nodes(state, B.put(Nat, R.RepeatState.nodes(state), 0n, 0n, owner)))
+  repeatFallbackBody(w, rest, stack, id, owner, R.RepeatState.fallback(state))
+
+def repeatCopy(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.RepeatFrame, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.RepeatFrame.keepEnd(frame)),
+    _ =>
+      +state = Maps.get(w, R.RepeatFrame.repeat(frame))
+      +to = Nat.sub(index, R.RepeatFrame.from(frame))
+      +at = Nat.sub(index, R.RepeatState.offset(state))
+      +nodes = B.put(Nat, R.RepeatFrame.nodes(frame), to, 0n, B.get(Nat, R.RepeatState.nodes(state), at, 0n))
+      +w = Arrays.put(w, R.RepeatFrame.mappings(frame), to, Arrays.at(w, R.RepeatState.mappings(state), at))
+      Machine{w, RepeatCopy{R.RepeatFrame.with_nodes(frame, nodes), 1n+index} <> rest, stack},
+    _ => Machine{w, RepeatRows{frame, R.RepeatFrame.from(frame)} <> rest, stack})
+
+def repeatRows(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.RepeatFrame, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.RepeatFrame.to(frame)),
+    _ => B.choose(~Machine, Maps.retained(frame, index),
+      _ => Machine{w, RepeatRows{frame, 1n+index} <> rest, stack},
+      _ =>
+        +owner = B.length(R.Node, R.World.nodes(w))
+        +w = D.createOwner(w, R.World.context(w), False{})
+        +nodes = B.put(Nat, R.RepeatFrame.nodes(frame), Nat.sub(index, R.RepeatFrame.from(frame)), 0n, owner)
+        +frame = R.RepeatFrame.with_nodes(frame, nodes)
+        +mapper = R.RepeatState.mapper(Maps.get(w, R.RepeatFrame.repeat(frame)))
+        invokeMany(L.enterOwner(w, owner), RestoreContext{R.World.context(w), R.World.tracking(w)} <> RepeatMapped{frame, index, stack} <> rest, stack, mapper, [R.Number{index}])),
+    _ => Machine{w, RepeatCommit{frame} <> rest, stack})
+
+# This return point is also the mapper try/catch edge in unwind. Catch scope
+# ends before the commit's disposal loop, so commit throws do not clean temps.
+def repeatMapped(+w: R.World, +rest: List<&2, Task>, +frame: R.RepeatFrame, +index: Nat, saved: List<&2, R.Value>, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case value <> tail:
+      Machine{Arrays.put(w, R.RepeatFrame.mappings(frame), Nat.sub(index, R.RepeatFrame.from(frame)), value), RepeatRows{frame, 1n+index} <> rest, tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, saved}
+
+def repeatAbort(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.RepeatFrame, +index: Nat, +prior: R.Fault) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.RepeatFrame.to(frame)),
+    _ =>
+      +owner = B.get(Nat, R.RepeatFrame.nodes(frame), Nat.sub(index, R.RepeatFrame.from(frame)), 0n)
+      +ending = {RepeatAbort{frame, 1n+index, prior} <> rest : List<&2, Task>}
+      Machine{w, B.choose(~List<&2, Task>, Bool.and(Bool.not(Maps.retained(frame, index)), Nat.is_ne(owner, 0n)), _ => OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> ending, _ => ending), stack},
+    _ => Machine{R.World.with_fault(w, prior), rest, stack})
+
+def repeatCommit(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.RepeatFrame) -> Machine:
+  +state = Maps.get(w, R.RepeatFrame.repeat(frame))
+  +old = B.get(Nat, R.RepeatState.nodes(state), 0n, 0n)
+  B.choose(~Machine, Nat.is_eq(R.RepeatState.len(state), 0n),
+    _ => Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(old, 0n), _ => OwnerTasks{[O.Enter{old, True{}, False{}}]} <> RepeatPublish{frame} <> rest, _ => RepeatPublish{frame} <> rest), stack},
+    _ => Machine{w, RepeatLeaving{frame, R.RepeatState.offset(state)} <> rest, stack})
+
+def repeatLeaving(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.RepeatFrame, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.RepeatFrame.prevTo(frame)),
+    _ =>
+      +state = Maps.get(w, R.RepeatFrame.repeat(frame))
+      +owner = B.get(Nat, R.RepeatState.nodes(state), Nat.sub(index, R.RepeatState.offset(state)), 0n)
+      +ending = {RepeatLeaving{frame, 1n+index} <> rest : List<&2, Task>}
+      Machine{w, B.choose(~List<&2, Task>, Bool.or(Nat.is_lt(index, R.RepeatFrame.from(frame)), Nat.is_ge(index, R.RepeatFrame.to(frame))), _ => OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> ending, _ => ending), stack},
+    _ => Machine{w, RepeatPublish{frame} <> rest, stack})
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case RepeatMapper{count, from, fallback} <> rest:
+      match stack:
+        case mapper <> tail:
+          repeatCreate(w, rest, tail, count, mapper, from, fallback)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case RepeatReady{+node} <> rest:
+      +w = B.store_node(w, node, R.Node.with_config(B.node(w, node), B.clear(R.Node.config(B.node(w, node)), K.CONFIG_AUTO_DISPOSE())))
+      Machine{B.event(w, R.AccessorBound{node}), rest, R.AccessorReference{node} <> stack}
+    case RepeatCount{id} <> rest:
+      repeatCount(w, rest, stack, id)
+    case RepeatFrom{id, newLen} <> rest:
+      repeatFrom(w, rest, stack, id, newLen)
+    case RepeatClear{+id} <> rest:
+      Machine{Maps.clear(w, id), RepeatEmpty{id} <> rest, stack}
+    case RepeatEmpty{+id} <> rest:
+      repeatEmptyBody(w, rest, stack, id, R.RepeatState.fallback(Maps.get(w, id)))
+    case RepeatFallbackCreate{id} <> rest:
+      repeatFallbackCreate(w, rest, stack, id)
+    case RepeatFallbackStore{id} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{Arrays.put(w, R.RepeatState.mappings(Maps.get(w, id)), 0n, value), rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case RepeatReturn{id} <> rest:
+      Machine{w, rest, R.ArrayReference{R.RepeatState.mappings(Maps.get(w, id))} <> stack}
+    case RepeatCopy{frame, index} <> rest:
+      repeatCopy(w, rest, stack, frame, index)
+    case RepeatRows{frame, index} <> rest:
+      repeatRows(w, rest, stack, frame, index)
+    case RepeatMapped{frame, index, saved} <> rest:
+      repeatMapped(w, rest, frame, index, saved, stack)
+    case RepeatAbort{frame, index, prior} <> rest:
+      repeatAbort(w, rest, stack, frame, index, prior)
+    case RepeatCommit{frame} <> rest:
+      repeatCommit(w, rest, stack, frame)
+    case RepeatLeaving{frame, index} <> rest:
+      repeatLeaving(w, rest, stack, frame, index)
+    case RepeatPublish{frame} <> rest:
+      Machine{Maps.publish(w, frame), rest, stack}
+    case ArrayItems{values, reversed, previous} <> rest:
+      arrayItems(w, rest, stack, values, reversed, previous)
+    case ArrayItemValue{values, reversed, previous} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{w, ArrayItems{values, value <> reversed, previous} <> rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case ArrayAt{} <> rest:
+      match stack:
+        case R.Number{index} <> R.ArrayReference{id} <> tail:
+          Machine{w, rest, Arrays.at(w, id, index) <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, []}
+    case ArrayLength{} <> rest:
+      match stack:
+        case R.ArrayReference{id} <> tail:
+          Machine{w, rest, R.Number{Arrays.length(w, id)} <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, []}
     case Nil{}:
       Machine{w, [], stack}
     case ActionOpened{+id} <> rest:
@@ -2669,6 +2916,8 @@ def actionExecutorThrow(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.V
 
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case RepeatMapped{+frame, index, saved} <> rest:
+      Machine{R.World.with_fault(w, R.Healthy{}), RepeatAbort{frame, R.RepeatFrame.from(frame), R.World.fault(w)} <> rest, saved}
     case ActionYieldCatch{observer, saved} <> rest:
       actionYieldThrow(w, rest, saved, observer, R.World.fault(w))
     case ActionStepReturn{id, saved} <> rest:

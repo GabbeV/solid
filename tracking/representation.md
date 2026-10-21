@@ -270,3 +270,17 @@ owner arena/literal, context-record references and teardown tasks as createRoot.
 No bound disposer is allocated by direct creation; caller context/tracking are
 retained. The source's initializer disposer stays permanently self=true. See
 [direct-owners.md](direct-owners.md); owner IDs/properties/reflection remain limited.
+
+## Array payloads and repeat state
+
+World now contains arrays and repeats arenas. ArrayReference IDs preserve native
+strict identity and truthiness; ArrayData uses Empty/Present slots to distinguish
+holes from present undefined. RepeatState mirrors the production helper data;
+RepeatFrame retains the source pass bounds and staged mappings/nodes. Existing
+owner IDs and the shared core callback/teardown machine implement row lifetimes.
+The host materializer maintains aliases only; it makes no reconciliation or
+scheduling decisions. Generic World proof patterns preserve the new arenas, and
+concrete old witnesses use empty arenas. See [repeat.md](repeat.md) for exact
+correspondence and limits, including explicit Unsupported(81) for unported
+reactive array-error string coercion. External array mutation, sparse input
+literals, prototypes/methods and cyclic observation remain outside the profile.

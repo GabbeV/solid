@@ -1,10 +1,10 @@
 # Successful falsy empty fallbacks are recreated
 
-Source-only reproduced bug at unchanged Solid next
+Originally reproduced in native Solid at unchanged next
 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16), 2026-10-21.
 The user submitted fix PR [#4211](https://github.com/solidjs/solid/pull/4211).
-This does not affect implemented Bend code:
-mapArray/repeat and their array payloads remain unported. No workaround or
+The repeat helper and typed array payloads now execute and preserve the pinned
+bug in paired comparisons; mapArray remains unported. No workaround or
 semantic deviation is active.
 
 [Open the saved playground](https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg), pinned

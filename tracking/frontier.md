@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2773 differential histories, 177 rejected compiled mutations,
+Current verification: 2849 differential histories, 184 rejected compiled mutations,
 and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -31,13 +31,26 @@ repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
 
-## Source-only list-helper candidate
+## Typed arrays and repeat
+
+[The repeat milestone](repeat.md) adds executable array identities/slots and the
+production repeat/updateRepeat path: retained windows, new-row staging, mapper
+abort, leaving-row disposal and final publication through the existing core.
+Twenty-two array and 54 repeat histories compare native Solid, including owner
+trees, callback/cleanup order, pending retries, captured parameters and nested
+helpers. Seven additional mutations check selected failure modes. Existing
+proofs are rechecked with the extended representation; no general repeat proof
+is claimed. Natural count/offsets and the typed callable/array profile are the
+limits; keyed mapArray, richer array protocols/coercion and active engines remain
+unfinished. This closes an implementation gap after the proof-only checkpoints.
+
+## Pinned list-helper candidate
 
 [The empty fallback report](upstream/empty-fallback.md) records successful falsy
 fallbacks being recreated on empty-to-empty For/Repeat updates. Fourteen native
 controls and twelve real JSX browser cases reproduce it, with a one-line truthy
-control. These helpers are unported: no Bend proof, paired-history credit,
-source patch or semantic workaround is claimed. The user submitted fix PR
+control. The new repeat port preserves this bug and checks it against native Solid;
+mapArray remains source-only. No semantic workaround or repeat proof is claimed. The user submitted fix PR
 [#4211](https://github.com/solidjs/solid/pull/4211) from a separate upstream workspace;
 the pinned source is unchanged.
 

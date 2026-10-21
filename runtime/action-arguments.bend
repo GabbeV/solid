@@ -7,6 +7,22 @@ import ./callback.bend as Z
 
 def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
   match expr:
+    case R.ArrayLiteral{values}:
+      R.ArrayLiteral{bindWith(values, depth, args)}
+    case R.ArrayAt{array, index}:
+      R.ArrayAt{bindWith(array, depth, args), bindWith(index, depth, args)}
+    case R.ArrayLength{array}:
+      R.ArrayLength{bindWith(array, depth, args)}
+    case R.RepeatCreate{+count, +mapper, from, fallback}:
+      match from fallback:
+        case R.NoInlineBody{} R.NoInlineBody{}:
+          R.RepeatCreate{bindWith(count, depth, args), bindWith(mapper, depth, args), R.NoInlineBody{}, R.NoInlineBody{}}
+        case R.SomeInlineBody{expr, returns} R.NoInlineBody{}:
+          R.RepeatCreate{bindWith(count, depth, args), bindWith(mapper, depth, args), R.SomeInlineBody{bindWith(expr, depth, args), returns}, R.NoInlineBody{}}
+        case R.NoInlineBody{} R.SomeInlineBody{expr, returns}:
+          R.RepeatCreate{bindWith(count, depth, args), bindWith(mapper, depth, args), R.NoInlineBody{}, R.SomeInlineBody{bindWith(expr, depth, args), returns}}
+        case R.SomeInlineBody{fromExpr, fromReturns} R.SomeInlineBody{fallbackExpr, fallbackReturns}:
+          R.RepeatCreate{bindWith(count, depth, args), bindWith(mapper, depth, args), R.SomeInlineBody{bindWith(fromExpr, depth, args), fromReturns}, R.SomeInlineBody{bindWith(fallbackExpr, depth, args), fallbackReturns}}
     case R.ActionParameter{+indexDepth, +index}:
       B.choose(~R.Expr, Nat.is_eq(indexDepth, depth),
         _ => R.Literal{Z.at(index, args)},

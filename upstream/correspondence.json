@@ -706,6 +706,16 @@
       "bend": null,
       "status": "unported",
       "restrictions": "New dev call-site diagnostic-subject wrapper at d682022c. Production callers retain haltReactivity(cause); dev/observe attribution and diagnostic owner paths remain unported."
+    },
+    "map.ts:repeat": {
+      "bend": "runtime/map.bend:repeat; runtime/core.bend:repeatCreate, RepeatReady",
+      "status": "restricted",
+      "restrictions": "Production count/offset naturals and admitted existing mapper callables; row owner/data before eager computed, AUTO_DISPOSE clear afterward. Count/from/fallback are captured expression callbacks; arrays use stable arena identity and hole-aware slots. Dev names/strict-read diagnostics, arbitrary host protocols and general array mutation remain unfinished."
+    },
+    "map.ts:updateRepeat": {
+      "bend": "runtime/map.bend:updateParent, frame, retained, clear, publish; runtime/core.bend:repeatRead, repeatCount, repeatFromBody, repeatFromValue, repeatBegin, repeatEmptyBody, repeatFallbackCreate, repeatFallbackBody, repeatCopy, repeatRows, repeatMapped, repeatAbort, repeatCommit, repeatLeaving, RepeatReturn",
+      "status": "restricted",
+      "restrictions": "Source parentComputed store, tracked count/from, untracked internal owner and row callbacks, pinned falsy fallback guard, staged overlap/create/catch/commit loops and live disposal lookups retained. Mapper abort disposes only new owners in source index order and rethrows unless cleanup overrides. Commit errors do not enter mapper catch. Active lanes/stores/dev/observe, arbitrary counts/coercion and general protocol/closure inputs remain outside the profile."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

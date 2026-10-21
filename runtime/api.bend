@@ -594,3 +594,25 @@ def nodeComparator(options: R.NodeOptions, callback: Nat) -> R.NodeOptions:
 # recomputes, async landings and held seams use this same core implementation.
 def compareValues(fuel: Nat, w: R.World, id: Nat, a: R.Value, b: R.Value) -> C.Machine:
   C.run(fuel, C.isSame(w, [], [], id, a, b))
+
+# Typed user array syntax; allocation/reads happen inside the shared core driver.
+def vArray(id: Nat) -> R.Value:
+  R.ArrayReference{id}
+
+def arrayLiteral(values: R.Expr) -> R.Expr:
+  R.ArrayLiteral{values}
+
+def arrayAt(array: R.Expr, index: R.Expr) -> R.Expr:
+  R.ArrayAt{array, index}
+
+def arrayLength(array: R.Expr) -> R.Expr:
+  R.ArrayLength{array}
+
+def repeatCreate(count: R.Expr, mapper: R.Expr, from: R.InlineBody, fallback: R.InlineBody) -> R.Expr:
+  R.RepeatCreate{count, mapper, from, fallback}
+
+def noRepeatBody() -> R.InlineBody:
+  R.NoInlineBody{}
+
+def repeatBody(expr: R.Expr) -> R.InlineBody:
+  R.SomeInlineBody{expr, False{}}

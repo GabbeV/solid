@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['repeat loses the internal owner reader','runtime/map.bend','R.Node.with_parentComputed(B.node(w, owner), R.World.context(w))','R.Node.with_parentComputed(B.node(w, owner), 0n)','tests/repeat.mjs','updateParent'],
+  ['repeat recreates retained rows','runtime/core.bend','Maps.retained(frame, index)','False{}','tests/repeat.mjs','repeatRows'],
+  ['repeat skips exited row disposal','runtime/core.bend','RepeatCommit{frame} <> rest','RepeatPublish{frame} <> rest','tests/repeat.mjs','repeatRows'],
+  ['repeat abort disposes retained rows','runtime/core.bend','Bool.and(Bool.not(Maps.retained(frame, index)), Nat.is_ne(owner, 0n))','Nat.is_ne(owner, 0n)','tests/repeat.mjs','repeatAbort'],
+  ['repeat silently applies the unmerged falsy fallback fix','runtime/core.bend','B.truth(Arrays.at(w, R.RepeatState.mappings(state), 0n))','Nat.is_ne(Arrays.length(w, R.RepeatState.mappings(state)), 0n)','tests/repeat.mjs','repeatEmptyBody'],
+  ['arrays compare by kind instead of identity','representation/base.bend','case R.ArrayReference{x} R.ArrayReference{y}:\n      Nat.is_eq(x, y)','case R.ArrayReference{x} R.ArrayReference{y}:\n      True{}','tests/arrays.mjs','equal'],
+  ['arrays are treated as falsy','representation/base.bend','case R.ArrayReference{id}:\n      True{}','case R.ArrayReference{id}:\n      False{}','tests/arrays.mjs','truth'],
   ['direct owner ignores its ambient parent','runtime/core.bend','N.createOwner(w, R.World.context(w), transparent)','N.createOwner(w, 0n, transparent)','tests/direct-owners.mjs','evaluate'],
   ['direct owner replaces the caller context','runtime/core.bend','Machine{N.createOwner(w, R.World.context(w), transparent), rest, R.OwnerReference{id} <> stack}','Machine{R.World.with_context(N.createOwner(w, R.World.context(w), transparent), id), rest, R.OwnerReference{id} <> stack}','tests/direct-owners.mjs','evaluate'],
   ['owner method ignores child-only disposal','runtime/core.bend','O.Enter{id, self, False{}}','O.Enter{id, True{}, False{}}','tests/direct-owners.mjs','disposeRootValue'],

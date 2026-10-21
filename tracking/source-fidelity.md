@@ -29,6 +29,17 @@ records shared mutation segments, source ordering, tests, closed laws and limits
 Older staged notes below retain the history of that migration. No pin change or
 semantic workaround is active.
 
+## Repeat and array representation
+
+The production repeat/updateRepeat helpers now follow the source retained-window
+algorithm and its mapper catch/commit boundary through the shared core. Stable
+array IDs preserve identity and holes separately from present undefined.
+[The operation table](repeat.md) records each return point, live/captured state,
+owner routing and callback order. The pinned falsy fallback bug is preserved.
+Keyed mapArray, general array mutation/protocols, array StatusError string
+coercion and non-natural count/offset domains remain unfinished. No active
+semantic deviation or new general repeat proof is claimed.
+
 ## Tracked effect execution
 
 The specialized tracked effect now follows its distinct heap-to-user-phase path;

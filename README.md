@@ -29,6 +29,10 @@ returned values and exception-safe depth restoration; see [flush callbacks](trac
 Custom comparator programs now run through signal writes, memo publication, async
 landings and held seams; see [comparator coverage](tracking/comparators.md).
 
+The production `repeat` helper now executes retained-window mapping, staged
+commit and exception cleanup with typed array identities; see
+[repeat coverage and limits](tracking/repeat.md). Keyed `mapArray` remains unfinished.
+
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
 The reviewed Solid pin is now `a2a5b6f8` (rc.16), matching `next` when fetched
@@ -45,7 +49,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 177 source-changing variants
+npm run mutations                # reject 184 source-changing variants
 npm run example                  # Number{14n}
 ```
 

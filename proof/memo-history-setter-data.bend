@@ -216,74 +216,80 @@ def data_67() -> List<&2, R.ActionState>:
 def data_68() -> List<&2, R.ActionWait>:
   []
 
-def data_69(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_20(tick, previous), data_23(tick), data_24(), 1n, 0n, False{}, data_25(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), False{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+def data_69() -> List<&2, R.ArrayData>:
+  []
 
-def data_70() -> List<&2, Nat>:
-  [2n]
+def data_70() -> List<&2, R.RepeatState>:
+  []
 
 def data_71(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_20(tick, previous), data_23(tick), data_24(), 1n, 0n, False{}, data_70(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+  R.World{data_20(tick, previous), data_23(tick), data_24(), 1n, 0n, False{}, data_25(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), False{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
 
-def data_72(+input: Nat) -> R.Value:
+def data_72() -> List<&2, Nat>:
+  [2n]
+
+def data_73(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  R.World{data_20(tick, previous), data_23(tick), data_24(), 1n, 0n, False{}, data_72(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
+
+def data_74(+input: Nat) -> R.Value:
   R.Number{input}
 
-def data_73(+input: Nat) -> R.Slot:
-  R.Present{data_72(input)}
+def data_75(+input: Nat) -> R.Slot:
+  R.Present{data_74(input)}
 
-def data_74(+tick: Nat, +previous: Nat, +input: Nat) -> R.Node:
-  R.Node{data_9(), data_10(previous), data_73(input), False{}, 0, 0, 0, 0n, data_11(tick), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+def data_76(+tick: Nat, +previous: Nat, +input: Nat) -> R.Node:
+  R.Node{data_9(), data_10(previous), data_75(input), False{}, 0, 0, 0, 0n, data_11(tick), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_75(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_74(tick, previous, input), data_19(tick, previous)]
+def data_77(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_76(tick, previous, input), data_19(tick, previous)]
 
-def data_76(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_75(tick, previous, input), data_23(tick), data_24(), 1n, 0n, False{}, data_70(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+def data_78(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  R.World{data_77(tick, previous, input), data_23(tick), data_24(), 1n, 0n, False{}, data_72(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
 
-def data_77(+tick: Nat) -> R.Stamp:
+def data_79(+tick: Nat) -> R.Stamp:
   R.Stamped{Nat.add(3n, tick)}
 
-def data_78(+tick: Nat, +previous: Nat, +input: Nat) -> R.Node:
-  R.Node{data_9(), data_10(previous), data_73(input), False{}, 0, 0, 0, 0n, data_77(tick), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+def data_80(+tick: Nat, +previous: Nat, +input: Nat) -> R.Node:
+  R.Node{data_9(), data_10(previous), data_75(input), False{}, 0, 0, 0, 0n, data_79(tick), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_79(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_78(tick, previous, input), data_19(tick, previous)]
+def data_81(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_80(tick, previous, input), data_19(tick, previous)]
 
-def data_80(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_79(tick, previous, input), data_23(tick), data_24(), 1n, 0n, False{}, data_70(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+def data_82(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  R.World{data_81(tick, previous, input), data_23(tick), data_24(), 1n, 0n, False{}, data_72(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
 
-def data_81(+tick: Nat, +previous: Nat) -> R.Node:
+def data_83(+tick: Nat, +previous: Nat) -> R.Node:
   R.Node{data_13(), data_14(previous), data_2(), False{}, 0, 16392, 0, tick, data_3(), 1n, 1n, Nat.add(2n, tick), 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_18(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_82(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_78(tick, previous, input), data_81(tick, previous)]
+def data_84(+tick: Nat, +previous: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_80(tick, previous, input), data_83(tick, previous)]
 
-def data_83() -> List<&2, Nat>:
+def data_85() -> List<&2, Nat>:
   [3n]
 
-def data_84(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_82(tick, previous, input), data_23(tick), data_83(), 0n, 0n, False{}, data_70(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+def data_86(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  R.World{data_84(tick, previous, input), data_23(tick), data_85(), 0n, 0n, False{}, data_72(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), jobs, 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
 
-def data_85() -> R.HostJob:
+def data_87() -> R.HostJob:
   R.FlushJob{}
 
-def data_86(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  R.World{data_82(tick, previous, input), data_23(tick), data_83(), 0n, 0n, False{}, data_70(), data_25(), data_25(), data_26(), 0n, False{}, False{}, True{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), B.append(R.HostJob, jobs, [data_85()]), 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68()}
+def data_88(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  R.World{data_84(tick, previous, input), data_23(tick), data_85(), 0n, 0n, False{}, data_72(), data_25(), data_25(), data_26(), 0n, False{}, False{}, True{}, Nat.add(1n, tick), Nat.add(3n, tick), data_28(), events, data_29(), True{}, data_25(), data_33(), data_36(), data_25(), 0n, False{}, False{}, data_37(), 0n, data_40(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_31(), data_41(), data_44(), data_46(), B.append(R.HostJob, jobs, [data_87()]), 0n, data_49(), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_31(), data_58(), data_60(), data_63(), 0n, data_41(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70()}
 
 def origin(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  data_69(tick, previous, events, jobs)
-
-def queued(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
   data_71(tick, previous, events, jobs)
 
+def queued(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
+  data_73(tick, previous, events, jobs)
+
 def slotted(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  data_76(tick, previous, input, events, jobs)
+  data_78(tick, previous, input, events, jobs)
 
 def stamped(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  data_80(tick, previous, input, events, jobs)
+  data_82(tick, previous, input, events, jobs)
 
 def inserted(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  data_84(tick, previous, input, events, jobs)
+  data_86(tick, previous, input, events, jobs)
 
 def scheduled(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
-  data_86(tick, previous, input, events, jobs)
+  data_88(tick, previous, input, events, jobs)

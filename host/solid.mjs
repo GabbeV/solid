@@ -69,13 +69,27 @@ export class SolidRuntime {
   evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.repeat){
+      const {count,map,from,fallback}=e.repeat,mapper=this.evaluate(map,prev,values,locals);
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={};
+      if(Object.hasOwn(e.repeat,'from'))options.from=()=>this.evaluate(from,undefined,values,locals);
+      if(Object.hasOwn(e.repeat,'fallback'))options.fallback=()=>this.evaluate(fallback,undefined,values,locals);
+      const get=this.S.repeat(this.callback(name,count,values,locals),mapper,options);
+      this.registerComputedAccessor(get,name);return get;
+    }
+    if(e.array){
+      if(!Array.isArray(e.array)||Array.from({length:e.array.length},(_,i)=>Object.hasOwn(e.array,i)).some(own=>!own))throw new TypeError('Typed array literals require dense expression syntax');
+      return e.array.map(part=>this.evaluate(part,prev,values,locals));
+    }
+    if(e.arrayAt){const array=this.evaluate(e.arrayAt.array,prev,values,locals),index=this.evaluate(e.arrayAt.index,prev,values,locals);return array[index];}
+    if(e.arrayLength)return this.evaluate(e.arrayLength,prev,values,locals).length;
     if(e.actionCreate)return this.createAction(e.actionCreate,prev,values,locals,true);
     if(e.action){const fn=this.createAction(e.action,prev,values,locals,false);return this.invokeAction(fn,[]);}
     if(Object.hasOwn(e,'actionArgument'))throw new TypeError('Unbound action argument');
     if(e.iteratorResult)return {done:e.iteratorResult.done??false,value:this.evaluate(e.iteratorResult.value??{lit:undefined},prev,values,locals)};
     if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values,locals));}
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
-    if(e.owner)return this.S.getOwner();
+    if(e.owner){const owner=this.S.getOwner();if(owner?._root)this.ownerObjects.add(owner);return owner;}
     if(e.observer)return this.S.getObserver();
     if(e.reactionCreate){return this.createReaction(e.reactionCreate.body,e.reactionCreate.options??{},values,locals);}
     if(e.reactionArm){
@@ -289,6 +303,10 @@ export class SolidRuntime {
     this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,this.accessorIdentities.get(callee),value]);
   }
   observe(value) {
+    if(Array.isArray(value)){
+      this.observingArrays??=new Set();if(this.observingArrays.has(value))throw new TypeError('Cyclic arrays are outside the observation grammar');this.observingArrays.add(value);
+      try{return value.map(item=>this.observe(item));}finally{this.observingArrays.delete(value);}
+    }
     if(this.callbackIdentities.has(value))return {callback:this.callbackIdentities.get(value)};
     if(value instanceof this.S.NoOwnerError||value instanceof this.S.ContextNotFoundError){
       if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);

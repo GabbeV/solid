@@ -14,9 +14,10 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor and arbitrary finite nonempty write/flush history for every natural initial/proposed value, constructor budget >= 14 and each drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
-| Public comparison corpus | 2,348 histories | 2,773 histories, plus separate native scheduling and finite memo-boundary controls |
+| Collection helper | Array payloads/repeat unported | Typed array identity/slots and production repeat retained-window/staged-commit/abort paths through the existing core; keyed mapArray remains open |
+| Public comparison corpus | 2,348 histories | 2,849 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 68 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 177; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 184; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -26,7 +27,7 @@ quantified theorems. Every positive formal claim requires the independent kernel
 [general properties](general-properties.md) states the theorem domains and gaps.
 
 The remaining package work is substantial: arbitrary action closures/arguments/generator protocols,
-active verdict/lane/boundary/mark/deferred engines, stores/array helpers, richer
+active verdict/lane/boundary/mark/deferred engines, stores/keyed array helpers, richer
 closures/protocol objects and dev/observe behavior. [The action readiness review](reviews/action-readiness.md)
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
@@ -126,3 +127,11 @@ history/mutation/closed-regression counts stay unchanged.
 The final a2a5b6f8 repin catches up with the fetched next tip. Its one additional
 commit changes only release/size metadata; all 76 vendored Solid files and the
 runtime are unchanged. No proof/test count is credited for a metadata-only pin.
+
+The next implementation checkpoint adds typed array identities/slots and the
+production repeat helper, with retained overlap, staged new rows, abort cleanup
+and source-ordered commit disposal. It adds 76 paired histories and seven
+compiled mutation checks. Existing kernel properties are rechecked after the
+World extension; the 68 closed-regression count is unchanged and no general
+repeat theorem is claimed. The pinned falsy-fallback bug is preserved while
+#4211 remains outside the baseline. See [the implementation boundary](repeat.md).

@@ -24,6 +24,22 @@ def at(+index: Nat, args: Arguments) -> R.Value:
 
 def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
   match expr:
+    case R.ArrayLiteral{values}:
+      R.ArrayLiteral{bindWith(values, args)}
+    case R.ArrayAt{array, index}:
+      R.ArrayAt{bindWith(array, args), bindWith(index, args)}
+    case R.ArrayLength{array}:
+      R.ArrayLength{bindWith(array, args)}
+    case R.RepeatCreate{+count, +mapper, from, fallback}:
+      match from fallback:
+        case R.NoInlineBody{} R.NoInlineBody{}:
+          R.RepeatCreate{bindWith(count, args), bindWith(mapper, args), R.NoInlineBody{}, R.NoInlineBody{}}
+        case R.SomeInlineBody{expr, returns} R.NoInlineBody{}:
+          R.RepeatCreate{bindWith(count, args), bindWith(mapper, args), R.SomeInlineBody{bindWith(expr, args), returns}, R.NoInlineBody{}}
+        case R.NoInlineBody{} R.SomeInlineBody{expr, returns}:
+          R.RepeatCreate{bindWith(count, args), bindWith(mapper, args), R.NoInlineBody{}, R.SomeInlineBody{bindWith(expr, args), returns}}
+        case R.SomeInlineBody{fromExpr, fromReturns} R.SomeInlineBody{fallbackExpr, fallbackReturns}:
+          R.RepeatCreate{bindWith(count, args), bindWith(mapper, args), R.SomeInlineBody{bindWith(fromExpr, args), fromReturns}, R.SomeInlineBody{bindWith(fallbackExpr, args), fallbackReturns}}
     case R.Argument{index}:
       R.Literal{at(index, args)}
     case R.Add{left, right}:

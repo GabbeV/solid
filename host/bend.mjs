@@ -1,3 +1,4 @@
+import {RuntimeArrays} from './arrays.mjs';
 import {RootDisposers,SourceAccessors,SourceSetters,ProgramFunctions} from './functions.mjs';
 import {requireTeardownProgram,requireFunctionProgram} from './programs.mjs';
 import {requireActionProtocol} from './actions.mjs';
@@ -13,7 +14,7 @@ export function list(xs) {
   return out;
 }
 const tags = {
-  undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
+  array:R.vArray(0).$, undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
   contextFailure:R.vContextFailure(0,0).$, timeout:R.vTimeout(0).$, disposer:R.vRootDisposer(0).$, accessor:R.vAccessor(0).$, setter:R.vSetter(0).$, callback:R.vProgram(0).$,
@@ -37,16 +38,17 @@ export class BendStatusError extends Error {
 export class BendNotReady extends Error {
   constructor(identity,source){super();this.identity=identity;this.source=source;}
 }
-export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),externalErrors=new HostErrors(),rootDisposers=new RootDisposers(()=>{throw new TypeError('A bound disposer needs its runtime');}),accessors=new SourceAccessors(()=>{throw new TypeError('An accessor needs its runtime');}),setters=new SourceSetters(()=>{throw new TypeError('A setter needs its runtime');}),callbacks=new ProgramFunctions(()=>{throw new TypeError('A callback needs its runtime');})) {
+export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),externalErrors=new HostErrors(),rootDisposers=new RootDisposers(()=>{throw new TypeError('A bound disposer needs its runtime');}),accessors=new SourceAccessors(()=>{throw new TypeError('An accessor needs its runtime');}),setters=new SourceSetters(()=>{throw new TypeError('A setter needs its runtime');}),callbacks=new ProgramFunctions(()=>{throw new TypeError('A callback needs its runtime');}),arrayValue=()=>{throw new TypeError('An array needs its runtime');}) {
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'source')&&!Object.hasOwn(v,'cause')) {
     if(!errors.has(v.identity))errors.set(v.identity,new BendNotReady(v.identity,v.source));
     return errors.get(v.identity);
   }
   if (Object.hasOwn(v,'identity')&&Object.hasOwn(v,'cause')) {
-    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors,refs,asyncRefs,externalErrors,rootDisposers,accessors,setters,callbacks),typeof v.message==='string'?v.message:decodeString(v.message)));
+    if(!errors.has(v.identity))errors.set(v.identity,new BendStatusError(v.identity,v.source,decode(v.cause,errors,refs,asyncRefs,externalErrors,rootDisposers,accessors,setters,callbacks,arrayValue),typeof v.message==='string'?v.message:decodeString(v.message)));
     return errors.get(v.identity);
   }
   switch (v.$) {
+    case tags.array: return arrayValue(v.id);
     case tags.undefined: return undefined;
     case tags.null: return null;
     case tags.number: return v.n;
@@ -105,6 +107,16 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if(e.repeat){
+    const {count,map,from,fallback}=e.repeat;
+    return R.repeatCreate(expression(count,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.repeat,'from')?R.repeatBody(expression(from,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody(),Object.hasOwn(e.repeat,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody());
+  }
+  if(e.array){
+    if(!Array.isArray(e.array)||Array.from({length:e.array.length},(_,i)=>Object.hasOwn(e.array,i)).some(own=>!own))throw new TypeError('Typed array literals require dense expression syntax');
+    return R.arrayLiteral(argumentSyntax(e.array.map(part=>expression(part,ids,programs,futures,encodeValue,contexts))));
+  }
+  if (e.arrayAt)return R.arrayAt(expression(e.arrayAt.array,ids,programs,futures,encodeValue,contexts),expression(e.arrayAt.index,ids,programs,futures,encodeValue,contexts));
+  if (e.arrayLength)return R.arrayLength(expression(e.arrayLength,ids,programs,futures,encodeValue,contexts));
   if(e.action||e.actionCreate){
     const plan=e.action??e.actionCreate;
     requireActionProtocol(plan);
@@ -201,8 +213,8 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0),callback===undefined?0:programs[callback]);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,...args)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:args.map(lit=>({lit}))}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
-  decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters,this.callbacks);}
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.arrayViews=new RuntimeArrays(id=>{const item=list(this.world.arrays)[id];if(!item)throw new TypeError('Unknown array identity');return list(item.slots);},value=>this.decode(value)); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,...args)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:args.map(lit=>({lit}))}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
+  decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters,this.callbacks,id=>this.arrayViews.get(id));}
   ownerId(name){
     if(name===null)return 0;
     const id=name==='root'?1:this.ids[name];
@@ -210,6 +222,9 @@ export class BendRuntime {
     return id;
   }
   encode(value){
+    if(Array.isArray(value)){
+      const id=this.arrayViews.identity(value);if(id===undefined)throw new TypeError('Build arrays with the typed array expression');return R.vArray(id);
+    }
     for(const [id,port]of this.actionPorts??[])if(value===port.promise)return R.vAsync(id);
     if(value&&typeof value==='object'&&typeof value.reaction==='string'){
       const ref=this.reactionValues?.get(value.reaction);if(!ref)throw new TypeError('Unknown reaction: '+value.reaction);return ref;
@@ -255,6 +270,10 @@ export class BendRuntime {
     this.world=R.createContext(this.world,encoded,description===undefined?R.noDescription():R.contextDescription(description));this.contexts[name]=id;this.check();return id;
   }
   observe(value){
+    if(Array.isArray(value)){
+      this.observingArrays??=new Set();if(this.observingArrays.has(value))throw new TypeError('Cyclic arrays are outside the observation grammar');this.observingArrays.add(value);
+      try{return value.map(item=>this.observe(item));}finally{this.observingArrays.delete(value);}
+    }
     for(const [id,port]of this.actionPorts??[])if(value===port.promise)return {async:id};
     const callback=this.callbacks.identity(value);
     if(callback!==undefined)return {callback:this.programNames.get(callback)};
@@ -357,6 +376,7 @@ export class BendRuntime {
       if('boundSetter'in event){this.writableSetters.add(event.boundSetter);this.boundAccessors.add(event.boundSetter);}
       if('boundAccessor'in event)this.boundAccessors.add(event.boundAccessor);
     }
+    this.arrayViews.sync();
     this.drainJobs();
     if(this.world.fault.$ === tags.healthy)return;
     if(Object.hasOwn(this.world.fault,'cause')) {
