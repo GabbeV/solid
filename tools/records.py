@@ -4,8 +4,10 @@ root=Path(__file__).resolve().parents[1]
 schemas={
 'ArrayData': [('slots','List<&2, Slot>')],
 'RepeatFrame': [('repeat','Nat'),('newLen','Nat'),('from','Nat'),('to','Nat'),('prevTo','Nat'),('keepStart','Nat'),('keepEnd','Nat'),('mappings','Nat'),('nodes','List<&2, Nat>')],
+'SmallScan': [('srcPos','List<&2, Nat>'),('dstPos','List<&2, Nat>'),('runs','List<&2, Nat>'),('budget','Nat'),('i','Nat'),('j','Nat'),('inRun','Bool')],
+'SmallPlan': [('applied','Bool'),('oldNodes','List<&2, Nat>'),('srcPos','List<&2, Nat>'),('consumed','List<&2, Bool>')],
 'MapEntry': [('key','Value'),('position','MapIndex')],
-'MapState': [('owner','Nat'),('len','Nat'),('list','Expr'),('items','Nat'),('mapper','Value'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('fallback','InlineBody')],
+'MapState': [('owner','Nat'),('len','Nat'),('list','Expr'),('items','Nat'),('mapper','Value'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('fallback','InlineBody'),('byIndex','Bool')],
 'MapFrame': [('map','Nat'),('newItems','Nat'),('newLen','Nat'),('start','Nat'),('end','Nat'),('newEnd','Nat'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('created','List<&2, Nat>'),('removed','List<&2, Nat>'),('initial','Bool'),('indices','List<&2, MapEntry>'),('next','List<&2, MapIndex>')],
 'RepeatState': [('owner','Nat'),('len','Nat'),('offset','Nat'),('count','Expr'),('mapper','Value'),('from','InlineBody'),('fallback','InlineBody'),('nodes','List<&2, Nat>'),('mappings','Nat')],
 'AsyncObject': [('immediate','Bool'),('state','AsyncSettlement'),('observers','List<&2, Nat>'),('stream','Nat')],
@@ -149,7 +151,7 @@ type Expr is Data:
   ArrayLength{array: Expr}
   RepeatCreate{count: Expr, mapper: Expr, from: InlineBody, fallback: InlineBody}
   RepeatRead{id: Nat}
-  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody}
+  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, byIndex: Bool}
   MapArrayRead{id: Nat}
   Literal{value: Value}
   Read{id: Nat}

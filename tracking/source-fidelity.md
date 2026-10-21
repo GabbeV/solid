@@ -29,6 +29,15 @@ records shared mutation segments, source ordering, tests, closed laws and limits
 Older staged notes below retain the history of that migration. No pin change or
 semantic workaround is active.
 
+## Plain identity-keyed mapArray
+
+[The source-operation review](map-keyed.md) now follows the plain keyed path,
+including duplicate-chain Map matching, pure-removal scratch reset, live suffix
+shifts and the separate small-move scan/commit. Its comparison budget, ledgers,
+probe, duplicate safeguard and cleanup return point remain source controls.
+Private helper probes and public histories are separate from formal claims.
+Extracted keys/index accessors and packed-index overflow remain unfinished.
+
 ## mapArray keyed:false
 
 [The operation review](map-index.md) records the production by-index profile:

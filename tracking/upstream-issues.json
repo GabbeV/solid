@@ -218,7 +218,7 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4211",
-      "bendScope": "Repeat and mapArray keyed:false now execute and preserve the pinned bug in paired comparisons; other mapArray modes remain source-only. No general list-helper theorem or semantic workaround.",
+      "bendScope": "Repeat plus mapArray keyed:false and plain identity-keyed modes preserve the pinned bug in paired comparisons; extracted-key/index-accessor modes remain source-only. No general list-helper theorem or semantic workaround.",
       "relatedIssueUrl": "https://github.com/solidjs/solid/issues/2903",
       "playgroundUrl": "https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg",
       "playgroundPackageVersion": "2.0.0-rc.16",

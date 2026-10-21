@@ -617,5 +617,5 @@ def noRepeatBody() -> R.InlineBody:
 def repeatBody(expr: R.Expr) -> R.InlineBody:
   R.SomeInlineBody{expr, False{}}
 
-def mapArrayCreate(list: R.Expr, mapper: R.Expr, fallback: R.InlineBody) -> R.Expr:
-  R.MapArrayCreate{list, mapper, fallback}
+def mapArrayCreate(list: R.Expr, mapper: R.Expr, fallback: R.InlineBody, byIndex: Bool) -> R.Expr:
+  R.MapArrayCreate{list, mapper, fallback, byIndex}

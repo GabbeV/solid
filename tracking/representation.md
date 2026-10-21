@@ -296,3 +296,10 @@ source inclusive counters plus one, including -1 as zero. MapIndex distinguishes
 undefined, -1 and a real index; the typed JS Map entry representation uses
 SameValueZero rather than prefix strict equality. See [map-index.md](map-index.md)
 for operation order, host observation and unfinished keying modes.
+
+MapState now distinguishes row-signal by-index mapping from plain identity-keyed
+mapping; absent row/index vectors do not allocate scratch signal stages. SmallScan
+holds source cursor/budget/flat-run/position ledgers, and SmallPlan retains the
+post-publication cleanup return point. Strict scan equality and SameValueZero
+Map/Set equality remain distinct. Positive packed positions preserve the source
+bit layout; overflow refuses explicitly. See [map-keyed.md](map-keyed.md).

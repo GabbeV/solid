@@ -115,7 +115,7 @@ type Expr is Data:
   ArrayLength{array: Expr}
   RepeatCreate{count: Expr, mapper: Expr, from: InlineBody, fallback: InlineBody}
   RepeatRead{id: Nat}
-  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody}
+  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, byIndex: Bool}
   MapArrayRead{id: Nat}
   Literal{value: Value}
   Read{id: Nat}
@@ -328,6 +328,122 @@ def RepeatFrame.with_nodes(r: RepeatFrame, v: List<&2, Nat>) -> RepeatFrame:
     case RepeatFrame{repeat, newLen, from, to, prevTo, keepStart, keepEnd, mappings, nodes}:
       RepeatFrame{repeat, newLen, from, to, prevTo, keepStart, keepEnd, mappings, v}
 
+type SmallScan is Data:
+  SmallScan{srcPos: List<&2, Nat>, dstPos: List<&2, Nat>, runs: List<&2, Nat>, budget: Nat, i: Nat, j: Nat, inRun: Bool}
+
+def SmallScan.srcPos(r: SmallScan) -> List<&2, Nat>:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      srcPos
+
+def SmallScan.with_srcPos(r: SmallScan, v: List<&2, Nat>) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{v, dstPos, runs, budget, i, j, inRun}
+
+def SmallScan.dstPos(r: SmallScan) -> List<&2, Nat>:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      dstPos
+
+def SmallScan.with_dstPos(r: SmallScan, v: List<&2, Nat>) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, v, runs, budget, i, j, inRun}
+
+def SmallScan.runs(r: SmallScan) -> List<&2, Nat>:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      runs
+
+def SmallScan.with_runs(r: SmallScan, v: List<&2, Nat>) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, dstPos, v, budget, i, j, inRun}
+
+def SmallScan.budget(r: SmallScan) -> Nat:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      budget
+
+def SmallScan.with_budget(r: SmallScan, v: Nat) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, dstPos, runs, v, i, j, inRun}
+
+def SmallScan.i(r: SmallScan) -> Nat:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      i
+
+def SmallScan.with_i(r: SmallScan, v: Nat) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, dstPos, runs, budget, v, j, inRun}
+
+def SmallScan.j(r: SmallScan) -> Nat:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      j
+
+def SmallScan.with_j(r: SmallScan, v: Nat) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, dstPos, runs, budget, i, v, inRun}
+
+def SmallScan.inRun(r: SmallScan) -> Bool:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      inRun
+
+def SmallScan.with_inRun(r: SmallScan, v: Bool) -> SmallScan:
+  match r:
+    case SmallScan{srcPos, dstPos, runs, budget, i, j, inRun}:
+      SmallScan{srcPos, dstPos, runs, budget, i, j, v}
+
+type SmallPlan is Data:
+  SmallPlan{applied: Bool, oldNodes: List<&2, Nat>, srcPos: List<&2, Nat>, consumed: List<&2, Bool>}
+
+def SmallPlan.applied(r: SmallPlan) -> Bool:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      applied
+
+def SmallPlan.with_applied(r: SmallPlan, v: Bool) -> SmallPlan:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      SmallPlan{v, oldNodes, srcPos, consumed}
+
+def SmallPlan.oldNodes(r: SmallPlan) -> List<&2, Nat>:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      oldNodes
+
+def SmallPlan.with_oldNodes(r: SmallPlan, v: List<&2, Nat>) -> SmallPlan:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      SmallPlan{applied, v, srcPos, consumed}
+
+def SmallPlan.srcPos(r: SmallPlan) -> List<&2, Nat>:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      srcPos
+
+def SmallPlan.with_srcPos(r: SmallPlan, v: List<&2, Nat>) -> SmallPlan:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      SmallPlan{applied, oldNodes, v, consumed}
+
+def SmallPlan.consumed(r: SmallPlan) -> List<&2, Bool>:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      consumed
+
+def SmallPlan.with_consumed(r: SmallPlan, v: List<&2, Bool>) -> SmallPlan:
+  match r:
+    case SmallPlan{applied, oldNodes, srcPos, consumed}:
+      SmallPlan{applied, oldNodes, srcPos, v}
+
 type MapEntry is Data:
   MapEntry{key: Value, position: MapIndex}
 
@@ -352,97 +468,107 @@ def MapEntry.with_position(r: MapEntry, v: MapIndex) -> MapEntry:
       MapEntry{key, v}
 
 type MapState is Data:
-  MapState{owner: Nat, len: Nat, list: Expr, items: Nat, mapper: Value, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, fallback: InlineBody}
+  MapState{owner: Nat, len: Nat, list: Expr, items: Nat, mapper: Value, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, fallback: InlineBody, byIndex: Bool}
 
 def MapState.owner(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       owner
 
 def MapState.with_owner(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{v, len, list, items, mapper, mappings, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{v, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}
 
 def MapState.len(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       len
 
 def MapState.with_len(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, v, list, items, mapper, mappings, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, v, list, items, mapper, mappings, nodes, rows, fallback, byIndex}
 
 def MapState.list(r: MapState) -> Expr:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       list
 
 def MapState.with_list(r: MapState, v: Expr) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, v, items, mapper, mappings, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, v, items, mapper, mappings, nodes, rows, fallback, byIndex}
 
 def MapState.items(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       items
 
 def MapState.with_items(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, v, mapper, mappings, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, v, mapper, mappings, nodes, rows, fallback, byIndex}
 
 def MapState.mapper(r: MapState) -> Value:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       mapper
 
 def MapState.with_mapper(r: MapState, v: Value) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, items, v, mappings, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, v, mappings, nodes, rows, fallback, byIndex}
 
 def MapState.mappings(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       mappings
 
 def MapState.with_mappings(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, items, mapper, v, nodes, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, mapper, v, nodes, rows, fallback, byIndex}
 
 def MapState.nodes(r: MapState) -> List<&2, Nat>:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       nodes
 
 def MapState.with_nodes(r: MapState, v: List<&2, Nat>) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, items, mapper, mappings, v, rows, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, mapper, mappings, v, rows, fallback, byIndex}
 
 def MapState.rows(r: MapState) -> List<&2, Nat>:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       rows
 
 def MapState.with_rows(r: MapState, v: List<&2, Nat>) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, items, mapper, mappings, nodes, v, fallback}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, v, fallback, byIndex}
 
 def MapState.fallback(r: MapState) -> InlineBody:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
       fallback
 
 def MapState.with_fallback(r: MapState, v: InlineBody) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback}:
-      MapState{owner, len, list, items, mapper, mappings, nodes, rows, v}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, v, byIndex}
+
+def MapState.byIndex(r: MapState) -> Bool:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      byIndex
+
+def MapState.with_byIndex(r: MapState, v: Bool) -> MapState:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, v}
 
 type MapFrame is Data:
   MapFrame{map: Nat, newItems: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, created: List<&2, Nat>, removed: List<&2, Nat>, initial: Bool, indices: List<&2, MapEntry>, next: List<&2, MapIndex>}

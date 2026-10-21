@@ -32,7 +32,9 @@ landings and held seams; see [comparator coverage](tracking/comparators.md).
 The production `repeat` helper now executes retained-window mapping, staged
 commit and exception cleanup with typed array identities; see
 [repeat coverage and limits](tracking/repeat.md). The `mapArray` keyed:false profile now executes too; see
-[index-mode coverage](tracking/map-index.md). Identity-keyed modes remain unfinished.
+[index-mode coverage](tracking/map-index.md). The [plain identity-keyed profile](tracking/map-keyed.md) now includes duplicate
+matching, pure removals and the source small-move optimization. Extracted keys
+and index-accessor modes remain unfinished.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
@@ -50,7 +52,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 192 source-changing variants
+npm run mutations                # reject 201 source-changing variants
 npm run example                  # Number{14n}
 ```
 

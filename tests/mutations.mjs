@@ -5,10 +5,20 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['keyed Map compares NaN with strict equality','runtime/keyed-map.bend','case R.NotANumber{} R.NotANumber{}:\n      True{}','case R.NotANumber{} R.NotANumber{}:\n      False{}','tests/map-keyed.mjs','sameKey'],
+  ['keyed duplicate chain is discarded','runtime/core.bend','B.get(R.MapIndex, R.MapFrame.next(frame), slot, R.MapMissing{})','{R.MapMissing{} : R.MapIndex}','tests/map-keyed.mjs','mapOldPosition'],
+  ['keyed retained rows are treated as missing','runtime/core.bend','KeyedMap.indexGet(R.MapFrame.indices(frame), item)','R.MapMissing{}','tests/map-keyed.mjs','mapOld'],
+  ['keyed suffix copies use new positions','runtime/core.bend','KeyedMap.sourceSlot(R.MapFrame.newLen(frame), R.MapState.len(state), index)','index','tests/map-keyed.mjs','mapCommitSuffix'],
+  ['keyed growing suffix reads the previous slot','runtime/core.bend','Nat.sub(cursor, 1n)','Nat.sub(cursor, 2n)','tests/map-keyed.mjs','mapWindowGrowShift'],
+  ['small move skips shifted runs','runtime/small-move.bend','Nat.is_eq(old, next)','True{}','tests/map-keyed.mjs','copyRuns'],
+  ['small move ignores duplicate ambiguity','runtime/small-move.bend','duplicateRun(R.SmallScan.runs(scan), w, oldItems, displaced)','False{}','tests/map-keyed.mjs','paired'],
+  ['small move disposes matched rows','runtime/core.bend','B.get(Bool, R.SmallPlan.consumed(plan), index, False{})','False{}','tests/map-keyed.mjs','mapSmallCleanup'],
+  ['keyed engine silently bypasses small moves','runtime/core.bend','mapSmallMove(w, rest, stack, id, items, newLen, start, end, newEnd)','mapGeneralStage(w, rest, stack, id, items, newLen, start, end, newEnd)','tests/map-alignment.mjs','mapAfterTrim'],
+
   ['mapArray loses the row reader','runtime/keyed-map.bend','R.Node.with_parentComputed(B.node(w, owner), R.World.context(w))','R.Node.with_parentComputed(B.node(w, owner), 0n)','tests/map-index.mjs','updateParent'],
-  ['mapArray row signals reject owned writes','runtime/core.bend','R.NodeOptions.with_ownedWrite(N.defaults(), True{})','N.defaults()','tests/map-index.mjs','mapRows'],
+  ['mapArray row signals reject owned writes','runtime/core.bend','R.NodeOptions.with_ownedWrite(N.defaults(), True{})','N.defaults()','tests/map-index.mjs','mapInvokeRow'],
   ['mapArray skips retained row updates','runtime/core.bend','W.setSignal(w, row, Arrays.at(w, items, index))','w','tests/map-index.mjs','mapPrefix'],
-  ['mapArray maps raw items instead of row accessors','runtime/core.bend','[R.AccessorReference{row}, R.Number{index}]','[Arrays.at(w, R.MapFrame.newItems(frame), index), R.Number{index}]','tests/map-index.mjs','mapRows'],
+  ['mapArray maps raw items instead of row accessors','runtime/core.bend','[R.AccessorReference{row}, R.Number{index}]','[Arrays.at(w, R.MapFrame.newItems(frame), index), R.Number{index}]','tests/map-index.mjs','mapInvokeRow'],
   ['mapArray skips previous fallback disposal','runtime/core.bend','Nat.is_ne(old, 0n)','False{}','tests/map-index.mjs','mapInitialCommit'],
   ['mapArray skips removed row disposal','runtime/core.bend','OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapRemoved{tail} <> rest','MapRemoved{tail} <> rest','tests/map-index.mjs','mapRemoved'],
   ['mapArray abort leaves created owners live','runtime/core.bend','OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapAbort{tail, prior} <> rest','MapAbort{tail, prior} <> rest','tests/map-index.mjs','mapAbort'],

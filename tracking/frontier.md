@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2906 differential histories, 192 rejected compiled mutations,
+Current verification: 2968 differential histories, 201 rejected compiled mutations,
 and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -31,6 +31,18 @@ repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
 
+## Plain identity-keyed mapArray
+
+[The keyed milestone](map-keyed.md) adds actual prefix/suffix matching,
+SameValueZero duplicate chains, pure-removal probing/reset, window-sized staging,
+direction-safe in-place suffix shifts and publication/removal order. It also
+ports the separate source small-move scan/commit with its probe, 256 budget,
+32-entry ledgers and duplicate safeguard. Sixty-two new paired histories and
+90 separate helper/return-point probes cover normal, boundary and exceptional
+paths; nine added mutations target selected missed operations. Existing proofs
+are rechecked, without a general mapArray theorem. Extracted keys and index
+accessors remain unfinished; packing overflow is explicitly refused.
+
 ## mapArray by index
 
 [The index-mode milestone](map-index.md) implements production mapArray with
@@ -40,8 +52,8 @@ and source-ordered commit/cleanup. Fifty-seven new paired histories compare
 actual Solid, including pending/error retries, partial writes/throws, row state,
 ownership and callback/local/action capture. Eight additional mutations target
 selected missed operations. Existing proofs are rechecked; no general mapArray
-theorem is claimed. Identity-keyed/extracted-key modes, small moves, index
-accessors and general keyed matching remain refused and unfinished.
+theorem is claimed. Plain identity-keyed matching/small moves now execute separately. Extracted
+keys and index-accessor modes remain refused and unfinished.
 
 ## Typed arrays and repeat
 

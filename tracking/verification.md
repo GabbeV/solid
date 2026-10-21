@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode histories: 2906 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed histories: 2968 total, plus explicit host object-identity and native timeout
   checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 192 isolated source-changing copies: 182 are rejected by
+- mutations compiles 201 isolated source-changing copies: 191 are rejected by
   differential assertions and ten by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
@@ -231,3 +231,10 @@ mutations. Owner/row-signal state, accessor/output identity, staging, partial
 errors and callback/local/action captures compare actual native Solid. Existing
 proofs are rechecked with World.maps, without adding a general mapArray theorem.
 Other keying modes remain unported; see [map-index.md](map-index.md).
+
+Plain keyed mapArray adds 62 paired histories and nine compiled mutations,
+including large small-move/fallback cases and cleanup-error publication. Ninety
+separate actual-helper/engine-return-point probes compare scan verdicts, scratch
+reset, row identities, commit state and cleanup order. Synthetic labels in those
+probes are not full graphs. Seven packing-admission cases are separate too. No
+general mapArray theorem is claimed; see [map-keyed.md](map-keyed.md).

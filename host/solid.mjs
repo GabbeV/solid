@@ -71,16 +71,21 @@ export class SolidRuntime {
     if(e.prev) return prev;
     if(e.mapArray){
       const {list,map,fallback,keyed}=e.mapArray;
-      if(keyed!==false)throw new TypeError('Only mapArray keyed:false is translated in this profile');
-      const mapper=this.evaluate(map,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed:false};
+      if(keyed!==undefined&&typeof keyed!=='boolean')throw new TypeError('Extracted-key mapArray remains unported');
+      const mapper=this.evaluate(map,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed};
+      if(mapper.length>1)throw new TypeError('mapArray index-accessor mode remains unported');
       if(Object.hasOwn(e.mapArray,'fallback'))options.fallback=()=>this.evaluate(fallback,undefined,values,locals);
-      const observeMapper=(item,index)=>{
-        const label='#row'+(this.rowSerial=(this.rowSerial??0)+1);
-        this.accessorIdentities.set(item,label);this.accessors[label]=item;
-        const node=Object.getOwnPropertySymbols(item).map(key=>item[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
-        if(!node)throw new Error('Missing native row accessor metadata');
-        (this.rowSources??=new Map()).set(node,label);
-        return mapper(item,index);
+      const observeMapper=(...args)=>{
+        if(keyed===false){
+          const item=args[0],label='#row'+(this.rowSerial=(this.rowSerial??0)+1);
+          this.accessorIdentities.set(item,label);this.accessors[label]=item;
+          const node=Object.getOwnPropertySymbols(item).map(key=>item[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+          if(!node)throw new Error('Missing native row accessor metadata');
+          (this.rowSources??=new Map()).set(node,label);
+        }
+        const result=mapper(...args);
+        if(this.accessorIdentities.has(mapper))this.observeAccessorRead(mapper,result);
+        return result;
       };
       const get=this.S.mapArray(this.callback(name,list,values,locals),observeMapper,options);
       this.registerComputedAccessor(get,name);return get;

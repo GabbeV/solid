@@ -14,10 +14,10 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor and arbitrary finite nonempty write/flush history for every natural initial/proposed value, constructor budget >= 14 and each drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
-| Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; identity-keyed modes remain open |
-| Public comparison corpus | 2,348 histories | 2,906 histories, plus separate native scheduling and finite memo-boundary controls |
+| Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys/index accessors remain open |
+| Public comparison corpus | 2,348 histories | 2,968 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 68 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 192; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 201; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -143,3 +143,10 @@ identity, staged tail edits and error/cleanup ordering follow source. Fifty-seve
 paired histories and eight mutations are added. Existing kernel claims pass on
 the extended World; general keyed modes and a general mapArray theorem remain
 open. See [map-index.md](map-index.md).
+
+The next checkpoint adds the production plain identity-keyed mapArray path,
+including duplicate chains, pure removals, in-place window commit and the source
+small-move optimization. It adds 62 public comparisons, 90 distinct private
+helper/engine-return-point probes and nine mutation assertions. Existing formal
+claims are rechecked; no general map theorem is added. Extracted keys, index
+accessors and active engines remain unfinished; see [map-keyed.md](map-keyed.md).

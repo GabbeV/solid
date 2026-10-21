@@ -109,8 +109,8 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.prev) return R.previous();
   if(e.mapArray){
     const {list,map,fallback,keyed}=e.mapArray;
-    if(keyed!==false)throw new TypeError('Only mapArray keyed:false is translated in this profile');
-    return R.mapArrayCreate(expression(list,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.mapArray,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody());
+    if(keyed!==undefined&&typeof keyed!=='boolean')throw new TypeError('Extracted-key mapArray remains unported');
+    return R.mapArrayCreate(expression(list,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.mapArray,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody(),keyed===false);
   }
   if(e.repeat){
     const {count,map,from,fallback}=e.repeat;

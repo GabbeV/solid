@@ -5,10 +5,10 @@ now executes through Bend's existing core. Rows stay at their positions; each
 mapper receives a stable item accessor and a numeric index. Reading that accessor
 later observes the row signal through the ordinary core read machine.
 
-This is a deliberately restricted constructor profile. Identity-keyed mapping,
-extracted keys, index accessors, the small-move optimization and general keyed
-window matching remain unfinished. They are refused at entry rather than
-replaced with position mapping. Active stores/lanes/dev/observe and arbitrary
+This is a deliberately restricted constructor profile. The [plain identity-keyed profile](map-keyed.md), including its small-move
+optimization and general matching, now executes separately. Extracted keys and
+index accessors remain unfinished. The unfinished modes are refused at entry rather than replaced with position
+mapping. Active stores/lanes/dev/observe and arbitrary
 array protocols/closure environments remain outside the existing typed profile.
 
 ## Correspondence
@@ -21,7 +21,7 @@ array protocols/closure environments remain outside the existing typed profile.
 | Top-level `$TRACK` read | Inert for admitted plain arrays; store/proxy arrays/getters are unported, not simulated |
 | Internal `runWithOwner` | Existing owner entry, saved RestoreContext and MapReturn through normal/exceptional unwind |
 | Empty transition and fallback attempt | `keyed-map.clear`, `core.mapEmptyBody/mapFallbackCreate/mapFallbackBody`; source disposal/store/callback order and pinned truthy guard |
-| Create-all staged arrays and mapper | MapFrame, `core.mapRows/mapMapped`; create/store owner first, allocate raw core `signal(item, { ownedWrite:true })`, then call map(accessor, index) |
+| Create-all staged arrays and mapper | MapFrame, `core.mapRows/mapInvokeRow/mapMapped`; create/store owner first, allocate raw core `signal(item, { ownedWrite:true })`, then call map(accessor, index) |
 | Create-all mapper catch and fallback commit | `core.mapAbort/mapInitialCommit`, then `keyed-map.publishInitial`; cleanup throws override and interrupt exactly as in source |
 | Common prefix | `core.mapPrefix`; strict identity or `compare(undefined,...)` matches, then actual setSignal on the live row signal |
 | Common suffix and stable-length return | `core.mapSuffix`; prefix always exhausts one side in this profile, so the suffix is empty; equal lengths save an items slice and retain mappings identity |
