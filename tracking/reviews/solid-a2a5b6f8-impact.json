@@ -1,0 +1,16 @@
+{
+  "baseline": {
+    "repository": "https://github.com/solidjs/solid",
+    "commit": "0222d684365f08a29dfc1d613e664659f06948c8",
+    "branch": "next",
+    "version": "2.0.0-rc.16"
+  },
+  "candidate": {
+    "path": "/workspace/solid-repin-a2a5b6f8/packages/signals/src",
+    "kind": "local working-tree snapshot; commit and cleanliness not asserted"
+  },
+  "scope": "signals src/**/*.ts; separately review tests, documentation, build conditions and initialization reachability",
+  "evidence": "No source-file drift detected; this is not a semantic equivalence claim.",
+  "deviationsToReview": [],
+  "changedFiles": []
+}

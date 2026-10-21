@@ -3,7 +3,8 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is 0222d684. Nine more upstream commits were reviewed, including merged #4176
+is a2a5b6f8. The latest metadata-only commit preserves all 76 vendored Solid
+files byte for byte. Nine earlier upstream commits were reviewed, including merged #4176
 and #4188, after preserving the complete d682022c checkpoint at c11277e. The semantic deviation register remains empty.
 
 | Area | Starting checkpoint | Current checked work |
@@ -113,3 +114,15 @@ Forty-nine finite public programs / 1,260 prefixes and 36 synthetic pass control
 support correspondence separately. Runtime, source pin, existing history/mutation
 counts and the empty deviation register are unchanged. The user also submitted
 source-only fallback fix PR #4211; it remains separate from the pinned baseline.
+
+The coalescing extension removes the one-write-per-flush restriction too. Four
+further quantified roots cover pending replacement, arbitrary batch staging,
+complete public final World and committed view. Both batch sizes and history
+length are arbitrary finite nonempty lists, from the actual constructor.
+Thirty-five native/canonical programs compare 182 prefixes and 791 writes,
+including equal and net-zero batches. The runtime, source pin and prior
+history/mutation/closed-regression counts stay unchanged.
+
+The final a2a5b6f8 repin catches up with the fetched next tip. Its one additional
+commit changes only release/size metadata; all 76 vendored Solid files and the
+runtime are unchanged. No proof/test count is credited for a metadata-only pin.

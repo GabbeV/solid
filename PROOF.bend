@@ -1,4 +1,6 @@
 import Base
+import ./proof/memo-batches.bend as MemoBatches
+import ./proof/memo-coalescing.bend as MemoCoalescing
 import ./proof/memo-history-public.bend as MemoHistory
 import ./proof/memo-repeat-public.bend as MemoRepeat
 import ./proof/direct-owner-laws.bend as DirectOwners
@@ -516,3 +518,15 @@ def Laws.scalar_memo_finite_history_final_world(initial, first, constructorExtra
 
 def Laws.scalar_memo_finite_history_complete(initial, first, constructorExtra, firstExtra, updates):
   MemoHistory.complete(initial, first, constructorExtra, firstExtra, updates)
+
+def Laws.scalar_memo_pending_write_coalesces(tick, previous, pending, input, events, jobs):
+  MemoCoalescing.public_setter(tick, previous, pending, input, events, jobs)
+
+def Laws.scalar_memo_batch_stages_last_proposal(tick, previous, first, rest, events, jobs):
+  MemoBatches.staged(tick, previous, first, rest, events, jobs)
+
+def Laws.scalar_memo_batched_history_final_world(initial, first, rest, constructorExtra, firstExtra, batches):
+  MemoBatches.world(initial, first, rest, constructorExtra, firstExtra, batches)
+
+def Laws.scalar_memo_batched_history_complete(initial, first, rest, constructorExtra, firstExtra, batches):
+  MemoBatches.complete(initial, first, rest, constructorExtra, firstExtra, batches)

@@ -51,4 +51,3 @@ def completes(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.Trace
 
 def public_setter(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> {A.setSignal(M.origin(tick, previous, events, jobs), 2n, R.Number{input}) == D.scheduled(tick, previous, input, events, jobs) : R.World}:
   Cuts.api_set_completed(M.origin(tick, previous, events, jobs), 2n, R.Number{input}, 24n, start(tick, previous, input, events, jobs), end(tick, previous, input, events, jobs), D.scheduled(tick, previous, input, events, jobs), {==}, {==}, {==}, {==}, completes(tick, previous, input, events, jobs), {==})
-

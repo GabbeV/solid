@@ -73,6 +73,7 @@ out+=`def publication_13(${args}) ->\n  {C.publishValue(C.world(state_13(${call}
 for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])out+=`def ${name}(${['origin','queued'].includes(name)?args.replace('+input: Nat, ',''):args}) -> R.World:\n  ${show(D[name](23,11,17),'World')}\n\n`;
 }
 out=out.replace('# SHARED_DATA\n','');const index=out.indexOf('def origin(');out=out.slice(0,index)+declarations.join('\n')+'\n'+out.slice(index);const target=path.join(root,'proof/'+phase+(kind==='pass'?'-states.bend':'-setter-data.bend'));
+out=out.trimEnd()+'\n';
 if(process.argv.includes('--check')){
  if(fs.readFileSync(target,'utf8')!==out)throw Error('Memo witness is stale; regenerate and run the independent kernel');
 }else{

@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "0222d684365f08a29dfc1d613e664659f06948c8",
+    "commit": "a2a5b6f8f54addab694a1040721a86208349b8ea",
     "branch": "next",
     "version": "2.0.0-rc.16"
   },

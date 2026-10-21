@@ -66,8 +66,40 @@ controls and 2,773 public comparison histories remain separate counts.
 
 The theorem's topology stays one data signal and one eager scalar memo with
 `equals:false`. It does not quantify arbitrary graphs, changing dependencies,
-effects, errors, async inputs, active scopes, batching multiple writes into one
-flush, or native scheduling. It is a mathematical result over natural payloads;
+effects, errors, async inputs, active scopes or native scheduling. The later
+batching extension below removes the original one-write-per-flush limit. It is a mathematical result over natural payloads;
 JavaScript numbers outside the supported exact host range and formal TS/Bend
 equivalence are not claimed. Whole-package progress and consistency remain
 unfinished. This supersedes only the earlier two-update history-length limit.
+
+## Arbitrary batches before each flush
+
+Four further root properties now allow **any finite nonempty batch of writes
+before each flush**, including the first batch after the actual constructor.
+Both the batch sizes and the number of batches are arbitrary, as are all natural
+payloads and the independent sufficient constructor/drain budgets.
+
+`proof/memo-coalescing.bend` proves that a second public setter replaces only
+the already-staged value: the source's notified-stamp/epoch gate suppresses
+another subscriber notification and scheduled native flush job. Its small
+natural-reflexivity lemma justifies that gate for symbolic counters.
+`memo-first-coalescing.bend` checks the corresponding constructor/first-pass
+shape. `memo-batches.bend` inducts over each batch's actual setters, then over
+all actual setter/flush batches. The first proposal is explicit in each Batch
+record, so no empty batch is silently treated as a changed pass.
+
+The exact staged World retains the old committed values and the final pending
+proposal. The exact completed World contains one memo evaluation and one queued
+flush job per nonempty batch, rather than one per write. Intermediate proposals
+are not read by that memo. Equal and net-zero batches retain equals:false
+behavior; no equality suppression is invented. This adds no runtime operation,
+API substitution, source patch or semantic deviation.
+
+Thirty-five separate native/canonical programs compare 182 completed prefixes
+and 791 individual writes. Every intermediate native read stays committed;
+only a flush computes, once per batch. Whole canonical Worlds, exact invocation
+counts and queued-job counts are checked separately from the quantified kernel
+proof. These do not increase the 2,773 paired-history or 68 closed-regression
+counts. The graph is still the same fixed scalar signal/memo pair with
+equals:false: default-equality branches, empty flushes, errors/effects/async and
+arbitrary graphs remain outside this family.

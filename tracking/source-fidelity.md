@@ -1,6 +1,8 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid 0222d684 (rc.16). [The latest review](reviews/solid-0222d684.md)
+Current pin: Solid a2a5b6f8 (rc.16). [The metadata-only update](reviews/solid-a2a5b6f8.md)
+compares all 76 vendored inputs byte for byte: no source/runtime change.
+[The preceding runtime review](reviews/solid-0222d684.md)
 records nine commits after d682022c, including merged fixes #4176 and #4188.
 The complete earlier checkpoint is c11277e on baseline/solid-d682022c and in the
 feature branch history. Both formerly preserved bugs now have passing positive

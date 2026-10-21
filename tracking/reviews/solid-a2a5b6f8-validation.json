@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21T21:38:30.716075+00:00",
+  "previousSource": "0222d684365f08a29dfc1d613e664659f06948c8",
+  "sourceCommit": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+  "previousBendCheckpoint": "8032b847728a3033b6ed7a4756cae911c5e7f2d1",
+  "vendoredFilesCompared": 76,
+  "changedVendoredFiles": [],
+  "changedSourceFiles": 0,
+  "finalCommitPaths": [
+    ".changeset/docs-from-deferred-settled.md",
+    "scripts/size/scenarios.js"
+  ],
+  "sourcePatched": false,
+  "activeSemanticDeviations": [],
+  "candidateClean": true,
+  "signalCodeAndInitialization": "Identical bytes for every vendored Solid input; no runtime/source copy required. Existing build, tests and proofs execute the same program.",
+  "upstreamTestsRerunForMetadataOnlyCommit": false,
+  "note": "The commit message describes a tentative pre-throw release drain and its revert. The final tree contains no such change; do not integrate an intermediate patch from the message."
+}

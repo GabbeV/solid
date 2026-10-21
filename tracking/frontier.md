@@ -6,7 +6,7 @@ turning test counts into a package-completion percentage.
 
 Current verification: 2773 differential histories, 177 rejected compiled mutations,
 and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at 0222d684 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -15,7 +15,15 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
-## Reviewed next update
+## Latest next update
+
+[The a2a5b6f8 review](reviews/solid-a2a5b6f8.md) advances to the fetched next tip.
+Only a documentation changeset and compiled CSR size metadata changed; all 76
+vendored Solid files match byte for byte. The tentative runtime fix described
+and reverted in the squash message is absent from the final tree. Existing
+collector restoration, source repros and the empty deviation register stay as-is.
+
+## Previous runtime-bearing next update
 
 The [0222d684 review](reviews/solid-0222d684.md) integrates nine commits after
 c11277e's d682022c pin. Merged #4176 and #4188 are ported in source order; original
@@ -44,6 +52,13 @@ counters, generations, trace and queued host jobs across all passes. Forty-nine
 finite public programs / 1,260 prefixes and 36 synthetic steady-pass controls
 support correspondence separately. General graph/effect/async histories remain
 open; the runtime and source pin are unchanged.
+
+Four further batch/coalescing laws now allow any finite nonempty number of
+writes before each flush, including the first batch after construction. Actual
+setter calls retain old committed slots, replace the pending proposal and
+schedule/compute once per batch. Thirty-five native/canonical programs check
+182 completed prefixes and 791 writes separately from the proof. The graph and
+equals:false domain remain fixed; default equality and empty flushes stay open.
 
 ## Typed action milestone
 
@@ -182,9 +197,9 @@ case of #2861; its merged #4188 fix is now integrated without a deviation.
 Richer callable closures and active lanes/boundaries remain
 unfinished.
 
-## Current source update
+## Historical b0ad1df5 source update
 
-The active pin is b0ad1df5, the fetched `next` head on 2026-10-21
+At that checkpoint the active pin was b0ad1df5, the fetched `next` head on 2026-10-21
 (Europe/Stockholm). [The review](reviews/solid-b0ad1df5.md) covers the eight
 commits since 71153bf0, two changed source files, dev-only cleanup-write guards,
 mount inheritance for active lanes, and untrack documentation. No active lane or

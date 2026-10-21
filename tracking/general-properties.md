@@ -397,3 +397,10 @@ Three new root properties cover that pass, exact final World and committed view.
 No state is reset at the induction boundary. This removes the earlier
 exactly-two-write limit only for the fixed equals:false signal/memo graph.
 Arbitrary graph/effect/async histories and formal TS equivalence remain open.
+
+The same family now also admits arbitrarily many setter calls before each
+flush, including its first pass after construction. Four more roots prove
+pending replacement, batch staging and the complete batched public program's
+World/view. Every nonempty batch schedules and computes once, with only its
+last pending proposal read by the memo. The exact source stamp gate and old
+committed values are preserved; equals:false remains an explicit restriction.

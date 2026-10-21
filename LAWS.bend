@@ -1,4 +1,6 @@
 import Base
+import ./proof/memo-batches.bend as MemoBatches
+import ./proof/memo-coalescing.bend as MemoCoalescing
 import ./proof/memo-history-states.bend as MemoHistoryStates
 import ./proof/memo-history-public.bend as MemoHistory
 import ./proof/memo-repeat-public.bend as MemoRepeat
@@ -980,3 +982,40 @@ law scalar_memo_finite_history_complete:
   for +firstExtra: Nat
   for +updates: List<&2, MemoHistory.Update>
   {MemoDriver.view(MemoHistory.run(updates, API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})))) == MemoDriver.expected(MemoHistory.last(updates, first)) : MemoDriver.View}
+
+# Every pending replacement keeps the existing notification and scheduled job.
+law scalar_memo_pending_write_coalesces:
+  for +tick: Nat
+  for +previous: Nat
+  for +pending: Nat
+  for +input: Nat
+  for +events: List<&2, R.TraceEvent>
+  for +jobs: List<&2, R.HostJob>
+  {API.setSignal(Core.world(MemoHistoryStates.state_0(tick, previous, pending, events, jobs)), 2n, R.Number{input}) == Core.world(MemoHistoryStates.state_0(tick, previous, input, events, jobs)) : R.World}
+
+law scalar_memo_batch_stages_last_proposal:
+  for +tick: Nat
+  for +previous: Nat
+  for +first: Nat
+  for +rest: List<&2, Nat>
+  for +events: List<&2, R.TraceEvent>
+  for +jobs: List<&2, R.HostJob>
+  {MemoBatches.writes(rest, API.setSignal(MemoHistoryStates.origin(tick, previous, events, jobs), 2n, R.Number{first})) == Core.world(MemoHistoryStates.state_0(tick, previous, MemoBatches.last(rest, first), events, jobs)) : R.World}
+
+law scalar_memo_batched_history_final_world:
+  for +initial: Nat
+  for +first: Nat
+  for +rest: List<&2, Nat>
+  for +constructorExtra: Nat
+  for +firstExtra: Nat
+  for +batches: List<&2, MemoBatches.Batch>
+  {MemoBatches.run(batches, API.flush(Nat.add(40n, firstExtra), MemoBatches.writes(rest, API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})))) == MemoBatches.result(batches, 0n, MemoBatches.last(rest, first), MemoHistory.initialEvents(initial, MemoBatches.last(rest, first)), [R.FlushJob{}]) : R.World}
+
+law scalar_memo_batched_history_complete:
+  for +initial: Nat
+  for +first: Nat
+  for +rest: List<&2, Nat>
+  for +constructorExtra: Nat
+  for +firstExtra: Nat
+  for +batches: List<&2, MemoBatches.Batch>
+  {MemoDriver.view(MemoBatches.run(batches, API.flush(Nat.add(40n, firstExtra), MemoBatches.writes(rest, API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first}))))) == MemoDriver.expected(MemoBatches.lastBatch(batches, MemoBatches.last(rest, first))) : MemoDriver.View}

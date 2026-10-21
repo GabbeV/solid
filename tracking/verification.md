@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16); Bend
+Pins: Solid a2a5b6f8f54addab694a1040721a86208349b8ea (rc.16); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -202,3 +202,17 @@ programs / 1,260 prefixes and 36 synthetic controls are separate executable
 correspondence evidence. Closed regression and paired-history totals do not grow
 from this proof-only extension. Source-only fallback PR #4211 has been submitted;
 no fix is installed into the pinned baseline or an unimplemented Bend helper.
+
+Four further batched-history/coalescing roots extend that family to arbitrary
+finite nonempty batches before each flush, starting from the actual constructor.
+Thirty-five additional finite programs check 182 completed prefixes and 791
+individual writes against native source values and complete canonical Worlds.
+These remain separate from the quantified proof and the existing paired-history
+and closed-regression totals. Default equality, empty batches/flushes and general
+graphs remain outside this family.
+
+The metadata-only a2a5b6f8 update is now the reviewed source pin. All 76
+vendored Solid inputs match the preceding 0222d684 pin byte for byte; neither
+runtime nor source inventory changed. The unmerged #4211 candidate is separate.
+See [the review](reviews/solid-a2a5b6f8.md) for the final two-file diff and the
+explicit exclusion of a runtime patch reverted before the commit's final tree.

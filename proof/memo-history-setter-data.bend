@@ -287,4 +287,3 @@ def inserted(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceE
 
 def scheduled(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
   data_86(tick, previous, input, events, jobs)
-

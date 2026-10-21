@@ -20,7 +20,8 @@ The implementation, differential tests, and composed proofs use the same runtime
 publication slots/payloads, read policies and a complete numeric signal program.
 There is no second scheduler hidden behind the proof. The
 [scalar-memo history family](tracking/memo-history-proof.md) now proves any finite
-nonempty sequence of writes/flushes for every natural initial value and proposal,
+nonempty sequence of write/flush batches of any finite nonempty size for every
+natural initial value and proposal,
 including the real constructor, sufficient per-update budgets and exact final
 state. General graphs, effects and async histories remain open.
 The public `flush(() => ...)` overload now supports nested synchronous drains,
@@ -30,8 +31,10 @@ landings and held seams; see [comparator coverage](tracking/comparators.md).
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `0222d684` (rc.16), matching `next` when fetched
-on 2026-10-21 (Europe/Stockholm). [Current pin review and validation](tracking/reviews/solid-0222d684.md).
+The reviewed Solid pin is now `a2a5b6f8` (rc.16), matching `next` when fetched
+on 2026-10-21. [Current metadata-only pin review](tracking/reviews/solid-a2a5b6f8.md):
+all 76 vendored Solid files are unchanged from the preceding runtime review at
+[0222d684](tracking/reviews/solid-0222d684.md).
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
