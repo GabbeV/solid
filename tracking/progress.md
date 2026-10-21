@@ -10,12 +10,12 @@ the complete b0ad1df5 checkpoint on baseline/solid-b0ad1df5. The semantic deviat
 | --- | --- | --- |
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
-| General local guarantees | Existing publication/read/signal and representation laws | 34 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
+| General local guarantees | Existing publication/read/signal and representation laws | 42 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor/setter/flush for every natural initial/proposed value, constructor budget >= 14 and drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
-| Typed actions | No public action engine | Reusable function identities, two call arguments and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
-| Public comparison corpus | 2,348 histories | 2,678 histories, plus separate native scheduling and finite memo-boundary controls |
-| Closed semantic regressions | 56 | 65, including two deliberately preserved upstream bugs |
-| Compiled mutation checks | 116 | 164; resource/infrastructure failures are excluded from useful rejections |
+| Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
+| Public comparison corpus | 2,348 histories | 2,748 histories, plus separate native scheduling and finite memo-boundary controls |
+| Closed semantic regressions | 56 | 67, including two deliberately preserved upstream bugs |
+| Compiled mutation checks | 116 | 172; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -72,3 +72,10 @@ points. Four public properties now connect the fixed constructor, actual setter,
 complete final World, values and exact render applications for every natural
 proposal and drain budget >= 95. The runtime and original kernel are unchanged.
 The earlier staged-arena condition remains only on the supporting drain lemma.
+
+The argument-vector extension removes the callable ABI's two-argument cap while
+keeping internal source pair calls and the existing callback/action engines.
+It adds 70 paired histories, six independent native generators/factories, eight
+quantified binding/order laws and two complete nine-argument executions. Eight
+additional compiled variants are rejected separately. No source pin, trusted
+kernel or semantic deviation changed. See [the call boundary](argument-vectors.md).

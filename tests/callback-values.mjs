@@ -149,7 +149,7 @@ for(const r of [new BendRuntime(),new SolidRuntime({module:await import('../buil
     assert.equal(r.evaluate(onCleanup(fn('f'))),f,'no-owner cleanup returns the same function without installing it');
     r.signal('saved',undefined);assert.equal(r.update('saved',fn('f')),f);r.flush();assert.equal(r.read('saved'),f);
     assert.throws(()=>r.program('f',[]),/cannot be redefined/);
-    assert.throws(()=>r.evaluate(invokeArgs(fn('f'),lit(1),lit(2),lit(3))),/at most two/);
+    assert.equal(r.evaluate(invokeArgs(fn('f'),lit(1),lit(2),lit(3))),3,'extra user arguments are evaluated and may be ignored');
   }finally{r.attempt('dispose');r.resetErrorHalt();r.attempt('flush');}
 }
 console.log(`${count} first-class callback histories match pinned TS calls, aliases, arguments, initializers, updates, promise data and imperative cleanup selection.`);

@@ -4,8 +4,8 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2678 differential histories, 164 rejected compiled mutations,
-and 65 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2748 differential histories, 172 rejected compiled mutations,
+and 67 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at d682022c (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -31,10 +31,19 @@ initial and resumed slices, held writes, question provenance, nested/overlapping
 actions, rejection and typed return adoption. Captured local signals continue
 across yields and root disposal. The milestone adds 67 public plus eight lexical
 histories; the reusable-wrapper extension adds 45 histories, for 120 action histories,
-21 independent native-generator controls, eleven quantified local/capture properties
-and three closed action executions. Reusable action-function identities, two
-invocation arguments and nested action parameter capture now execute; arbitrary protocols/internal awaits and active optimistic/lane/store
+27 independent native-generator/factory controls, eleven quantified local/capture properties
+and three closed action executions. Reusable action-function identities, finite
+invocation argument vectors and nested action parameter capture now execute; arbitrary protocols/internal awaits and active optimistic/lane/store
 engines remain unfinished. No source pin or semantic deviation changed.
+
+## Variable-arity calls
+
+[User-call vectors](argument-vectors.md) remove the two-argument admission limit
+for the existing callback/action callables. Callee/arguments evaluate once in
+order before the same callback and action engines run. Seventy new paired
+histories, six independent native generator/factory controls, eight local
+quantified binding/order laws and two closed nine-argument executions pass.
+General JS closures, generator progress and active engines remain unfinished.
 
 ## Custom comparator milestone
 

@@ -361,3 +361,16 @@ The equal write `n=0` has one new application as the memos use equals:false.
 This supersedes the previously recorded missing setter bridge. Constructor
 budgets remain fixed at 256; arbitrary initial values, repeated-update histories,
 arbitrary graph topology and formal TypeScript equivalence remain unproved.
+
+## Variable-arity user-call bindings
+
+`proof/argument-vector-laws.bend` adds eight quantified local properties for
+arbitrary admitted lists, indices, values and surrounding machine state: callback
+lookup, action parameter lookup, independent resume binder, root shadowing,
+action-factory capture, nested action shadow/capture, callee-first entry and
+next-argument evaluation before invocation. Two closed complete executions call
+a named callback and a reusable action wrapper with nine arguments. They obtain
+the real ninth value and the action Promise's fulfilled result through the actual
+public evaluator. These are not arbitrary callback/generator termination or
+formal JavaScript equivalence results. The source-alignment and finite evidence
+boundary is in [argument-vectors.md](argument-vectors.md).

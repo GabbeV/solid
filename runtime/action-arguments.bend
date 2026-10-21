@@ -5,89 +5,99 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./callback.bend as Z
 
-def bind(expr: R.Expr, +depth: Nat, +first: R.Value, +second: R.Value) -> R.Expr:
+def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
   match expr:
     case R.ActionParameter{+indexDepth, +index}:
       B.choose(~R.Expr, Nat.is_eq(indexDepth, depth),
-        _ => R.Literal{Z.argument(index, first, second)},
+        _ => R.Literal{Z.at(index, args)},
         _ => R.ActionParameter{indexDepth, index})
     case R.LocalWrite{index, value, updater}:
-      R.LocalWrite{index, bind(value, depth, first, second), updater}
+      R.LocalWrite{index, bindWith(value, depth, args), updater}
     case R.SignalComputeScope{compute, options, body}:
-      R.SignalComputeScope{bind(compute, depth, first, second), options, bind(body, depth, first, second)}
+      R.SignalComputeScope{bindWith(compute, depth, args), options, bindWith(body, depth, args)}
     case R.SignalScope{initial, options, body}:
-      R.SignalScope{bind(initial, depth, first, second), options, bind(body, depth, first, second)}
+      R.SignalScope{bindWith(initial, depth, args), options, bindWith(body, depth, args)}
     case R.WriteExpr{id, value, updater}:
-      R.WriteExpr{id, bind(value, depth, first, second), updater}
+      R.WriteExpr{id, bindWith(value, depth, args), updater}
     case R.Add{left, right}:
-      R.Add{bind(left, depth, first, second), bind(right, depth, first, second)}
+      R.Add{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Multiply{left, right}:
-      R.Multiply{bind(left, depth, first, second), bind(right, depth, first, second)}
+      R.Multiply{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Same{left, right}:
-      R.Same{bind(left, depth, first, second), bind(right, depth, first, second)}
+      R.Same{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Select{condition, yes, no}:
-      R.Select{bind(condition, depth, first, second), bind(yes, depth, first, second), bind(no, depth, first, second)}
+      R.Select{bindWith(condition, depth, args), bindWith(yes, depth, args), bindWith(no, depth, args)}
     case R.Untracked{body}:
-      R.Untracked{bind(body, depth, first, second)}
+      R.Untracked{bindWith(body, depth, args)}
     case R.ActionCreate{factory, methods}:
-      R.ActionCreate{bind(factory, 1n+depth, first, second), bind(methods, 1n+depth, first, second)}
+      R.ActionCreate{bindWith(factory, 1n+depth, args), bindWith(methods, 1n+depth, args)}
     case R.ActionInvoke{factory, methods}:
-      R.ActionInvoke{bind(factory, depth, first, second), bind(methods, depth, first, second)}
+      R.ActionInvoke{bindWith(factory, depth, args), bindWith(methods, depth, args)}
     case R.ActionMethods{next, catches, thrown, tail}:
-      R.ActionMethods{bind(next, depth, first, second), catches, bind(thrown, depth, first, second), bind(tail, depth, first, second)}
+      R.ActionMethods{bindWith(next, depth, args), catches, bindWith(thrown, depth, args), bindWith(tail, depth, args)}
     case R.IteratorResult{done, value}:
-      R.IteratorResult{done, bind(value, depth, first, second)}
+      R.IteratorResult{done, bindWith(value, depth, args)}
     case R.FlushCallback{body}:
-      R.FlushCallback{bind(body, depth, first, second)}
+      R.FlushCallback{bindWith(body, depth, args)}
     case R.FlushValue{callee}:
-      R.FlushValue{bind(callee, depth, first, second)}
+      R.FlushValue{bindWith(callee, depth, args)}
     case R.WithOwner{owner, body}:
-      R.WithOwner{bind(owner, depth, first, second), bind(body, depth, first, second)}
+      R.WithOwner{bindWith(owner, depth, args), bindWith(body, depth, args)}
     case R.OwnerDisposed{owner}:
-      R.OwnerDisposed{bind(owner, depth, first, second)}
+      R.OwnerDisposed{bindWith(owner, depth, args)}
     case R.DisposeRoot{owner}:
-      R.DisposeRoot{bind(owner, depth, first, second)}
+      R.DisposeRoot{bindWith(owner, depth, args)}
     case R.CallWith{callback, left, right}:
-      R.CallWith{callback, bind(left, depth, first, second), bind(right, depth, first, second)}
+      R.CallWith{callback, bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.RootScope{body, transparent}:
-      R.RootScope{bind(body, depth, first, second), transparent}
+      R.RootScope{bindWith(body, depth, args), transparent}
     case R.MemoAccessor{compute, options}:
-      R.MemoAccessor{bind(compute, depth, first, second), options}
+      R.MemoAccessor{bindWith(compute, depth, args), options}
     case R.MemoRead{compute, options}:
-      R.MemoRead{bind(compute, depth, first, second), options}
+      R.MemoRead{bindWith(compute, depth, args), options}
     case R.EffectCreate{+compute, spec}:
       match spec:
         case R.EffectSpec{+user, +target, +options, +scheduled, +deferred, +program, +cleanup, +error, body}:
           match body:
             case R.NoInlineBody{}:
-              R.EffectCreate{bind(compute, depth, first, second), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
+              R.EffectCreate{bindWith(compute, depth, args), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
             case R.SomeInlineBody{expr, returnsCleanup}:
-              R.EffectCreate{bind(compute, depth, first, second), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bind(expr, depth, first, second), returnsCleanup}}}
+              R.EffectCreate{bindWith(compute, depth, args), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bindWith(expr, depth, args), returnsCleanup}}}
     case R.ReactionCreate{body, errorProgram, options, scheduled}:
-      R.ReactionCreate{bind(body, depth, first, second), errorProgram, options, scheduled}
+      R.ReactionCreate{bindWith(body, depth, args), errorProgram, options, scheduled}
     case R.ReactionArm{callee, tracking}:
-      R.ReactionArm{bind(callee, depth, first, second), bind(tracking, depth, first, second)}
+      R.ReactionArm{bindWith(callee, depth, args), bindWith(tracking, depth, args)}
     case R.ReactionFire{reaction, node}:
-      R.ReactionFire{reaction, bind(node, depth, first, second)}
+      R.ReactionFire{reaction, bindWith(node, depth, args)}
     case R.OnSettled{body}:
-      R.OnSettled{bind(body, depth, first, second)}
+      R.OnSettled{bindWith(body, depth, args)}
     case R.TrackedCreate{body}:
-      R.TrackedCreate{bind(body, depth, first, second)}
+      R.TrackedCreate{bindWith(body, depth, args)}
     case R.ContextGet{key, owner}:
-      R.ContextGet{key, bind(owner, depth, first, second)}
+      R.ContextGet{key, bindWith(owner, depth, args)}
     case R.ContextSet{key, value, owner}:
-      R.ContextSet{key, bind(value, depth, first, second), bind(owner, depth, first, second)}
+      R.ContextSet{key, bindWith(value, depth, args), bindWith(owner, depth, args)}
+    case R.InvokeMany{callee, values}:
+      R.InvokeMany{bindWith(callee, depth, args), bindWith(values, depth, args)}
+    case R.CallArgumentsItem{value, tail}:
+      R.CallArgumentsItem{bindWith(value, depth, args), bindWith(tail, depth, args)}
     case R.InvokeArguments{callee, a, b}:
-      R.InvokeArguments{bind(callee, depth, first, second), bind(a, depth, first, second), bind(b, depth, first, second)}
+      R.InvokeArguments{bindWith(callee, depth, args), bindWith(a, depth, args), bindWith(b, depth, args)}
     case R.InvokeWith{callee, value, updater}:
-      R.InvokeWith{bind(callee, depth, first, second), bind(value, depth, first, second), updater}
+      R.InvokeWith{bindWith(callee, depth, args), bindWith(value, depth, args), updater}
     case R.Invoke{callee}:
-      R.Invoke{bind(callee, depth, first, second)}
+      R.Invoke{bindWith(callee, depth, args)}
     case R.OnCleanup{callee}:
-      R.OnCleanup{bind(callee, depth, first, second)}
+      R.OnCleanup{bindWith(callee, depth, args)}
     case R.WatchExpr{awaiter, body}:
-      R.WatchExpr{awaiter, bind(body, depth, first, second)}
+      R.WatchExpr{awaiter, bindWith(body, depth, args)}
     case R.Then{left, right}:
-      R.Then{bind(left, depth, first, second), bind(right, depth, first, second)}
+      R.Then{bindWith(left, depth, args), bindWith(right, depth, args)}
     case other:
       other
+
+def bind(expr: R.Expr, depth: Nat, first: R.Value, second: R.Value) -> R.Expr:
+  bindWith(expr, depth, Z.Pair{first, second})
+
+def bindMany(expr: R.Expr, depth: Nat, values: List<&2, R.Value>) -> R.Expr:
+  bindWith(expr, depth, Z.Many{values})

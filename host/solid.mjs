@@ -187,7 +187,6 @@ export class SolidRuntime {
     if(Object.hasOwn(e,'argument'))return values[e.argument];
     if(e.invokeArgs){
       const {callee,args=[]}=e.invokeArgs;
-      if(args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
       const fn=this.evaluate(callee,prev,values,locals),arguments_=args.map(arg=>this.evaluate(arg,prev,values,locals));
       const result=this.setterIdentities.has(fn)?this.writeValue(fn,arguments_[0]):this.invokeAction(fn,arguments_);
       if(this.accessorIdentities.has(fn))this.observeAccessorRead(fn,result);
@@ -217,7 +216,6 @@ export class SolidRuntime {
       return this.S.onCleanup(callee);
     }
     if(e.call){
-      if((e.args?.length??0)>2)throw new TypeError('Callback ABI currently admits at most two arguments');
       return this.programs[e.call](undefined,...(e.args??[]).map(arg=>this.evaluate(arg,prev,values,locals)));
     }
     if(e.seq){let value;for(const part of e.seq)value=this.evaluate(part,prev,values,locals);return value;}

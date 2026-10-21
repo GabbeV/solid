@@ -145,3 +145,16 @@ original generator closure does. Four updater-creation histories cover that
 capture, and a mutation that substitutes the later call's undefined previous
 value is rejected. Method `Previous` remains its existing undefined resume ABI;
 this does not add an arbitrary JavaScript lexical-variable environment.
+
+## Variable-arity invocation extension
+
+The user-call ABI now forwards finite parameter vectors without a fixed arity
+limit, matching the source wrapper's `(...args)` / `genFn(...args)`. The original
+pair representation remains for internal source calls; no transaction, Promise,
+question, scheduling or generator-resume decision changed. Twenty-two additional
+action-related histories are part of the separate 70-case vector corpus, and six
+independent native generators/factories extend the native controls from 21 to 27.
+Eight binding/order properties and two nine-argument closed executions are checked
+by the original kernel; these include ordinary callbacks too. The original eleven
+action-local laws and three closed action regressions remain checked separately.
+[The vector boundary](argument-vectors.md) records exact representation and limits.

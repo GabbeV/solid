@@ -96,6 +96,10 @@ export function encode(v) {
   if (typeof v === 'object' && Number.isSafeInteger(v.error) && typeof v.native==='boolean')return R.vExternalError(v.error,v.explicit,errorKind(v),v.name,v.message,v.native,v.code);
   throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
 }
+// The linked argument syntax is user-code data, not a runtime JS evaluator.
+function argumentSyntax(parts){
+  return parts.reduceRight((tail,part)=>R.callArgumentsItem(part,tail),R.callArgumentsEnd());
+}
 export function expression(e, ids, programs={},futures={},encodeValue=encode,contexts={}) {
   if (Object.hasOwn(e,'lit')) return R.literal(encodeValue(e.lit));
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
@@ -169,13 +173,17 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.select) return R.select(...e.select.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
   if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue,contexts));
   if (Object.hasOwn(e,'argument'))return R.argument(e.argument);
-  if(e.invokeArgs){const {callee,args=[]}=e.invokeArgs;if(args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');return R.invokeArguments(expression(callee,ids,programs,futures,encodeValue,contexts),...Array.from({length:2},(_,i)=>expression(args[i]??{lit:undefined},ids,programs,futures,encodeValue,contexts)));}
+  if(e.invokeArgs){
+    const {callee,args=[]}=e.invokeArgs,fn=expression(callee,ids,programs,futures,encodeValue,contexts);
+    if(args.length>2)return R.invokeMany(fn,argumentSyntax(args.map(arg=>expression(arg,ids,programs,futures,encodeValue,contexts))));
+    return R.invokeArguments(fn,...Array.from({length:2},(_,i)=>expression(args[i]??{lit:undefined},ids,programs,futures,encodeValue,contexts)));
+  }
   if(e.invokeWith){const {callee,value={lit:undefined},updater=false}=e.invokeWith;return R.invokeWith(expression(callee,ids,programs,futures,encodeValue,contexts),expression(value,ids,programs,futures,encodeValue,contexts),updater);}
   if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue,contexts));
   if (e.onCleanup)return R.onCleanup(expression(e.onCleanup,ids,programs,futures,encodeValue,contexts));
   if (e.call){
     if(e.args){
-      if(e.args.length>2)throw new TypeError('Callback ABI currently admits at most two arguments');
+      if(e.args.length>2)return R.invokeMany(R.literal(R.vProgram(programs[e.call])),argumentSyntax(e.args.map(arg=>expression(arg,ids,programs,futures,encodeValue,contexts))));
       return R.callWith(programs[e.call],...Array.from({length:2},(_,i)=>expression(e.args[i]??{lit:undefined},ids,programs,futures,encodeValue,contexts)));
     }
     return R.callProgram(programs[e.call]);
@@ -192,7 +200,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0),callback===undefined?0:programs[callback]);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,first,second)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:[{lit:first},{lit:second}]}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,...args)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:args.map(lit=>({lit}))}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters,this.callbacks);}
   ownerId(name){
     if(name===null)return 0;

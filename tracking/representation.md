@@ -258,3 +258,9 @@ The ext helper now has quantified identity/single-append/default/idempotence
 proofs. Idempotence explicitly requires nonempty sentinel storage; it does not
 assert arbitrary manually constructed World records satisfy that invariant.
 See [general-properties.md](general-properties.md#lazy-extension-allocation).
+
+User-call parameter vectors now use immutable value lists and linked argument
+syntax, following the existing linked generator-method representation. Internal
+source call pairs keep their old continuations. The binding pack is user-code
+representation; no new reactive nodes, callable identities, transaction fields or
+scheduler decisions are introduced. See [argument-vectors.md](argument-vectors.md).

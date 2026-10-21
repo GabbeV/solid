@@ -9,79 +9,102 @@ def argument(+index: Nat, +first: R.Value, second: R.Value) -> R.Value:
   B.choose(~R.Value, Nat.is_eq(index, 0n), _ => first,
     _ => B.choose(~R.Value, Nat.is_eq(index, 1n), _ => second, _ => R.Undefined{}))
 
-def bind(expr: R.Expr, +first: R.Value, +second: R.Value) -> R.Expr:
+# Internal source call sites retain the pair form; user-call vectors have no
+# fixed arity. This data binds user syntax and makes no reactive decisions.
+type Arguments is Data:
+  Pair{first: R.Value, second: R.Value}
+  Many{values: List<&2, R.Value>}
+
+def at(+index: Nat, args: Arguments) -> R.Value:
+  match args:
+    case Pair{first, second}:
+      argument(index, first, second)
+    case Many{values}:
+      B.get(R.Value, values, index, R.Undefined{})
+
+def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
   match expr:
     case R.Argument{index}:
-      R.Literal{argument(index, first, second)}
+      R.Literal{at(index, args)}
     case R.Add{left, right}:
-      R.Add{bind(left, first, second), bind(right, first, second)}
+      R.Add{bindWith(left, args), bindWith(right, args)}
     case R.Multiply{left, right}:
-      R.Multiply{bind(left, first, second), bind(right, first, second)}
+      R.Multiply{bindWith(left, args), bindWith(right, args)}
     case R.Same{left, right}:
-      R.Same{bind(left, first, second), bind(right, first, second)}
+      R.Same{bindWith(left, args), bindWith(right, args)}
     case R.Select{condition, yes, no}:
-      R.Select{bind(condition, first, second), bind(yes, first, second), bind(no, first, second)}
+      R.Select{bindWith(condition, args), bindWith(yes, args), bindWith(no, args)}
     case R.Untracked{body}:
-      R.Untracked{bind(body, first, second)}
+      R.Untracked{bindWith(body, args)}
     case R.ActionCreate{factory, methods}:
-      R.ActionCreate{bind(factory, first, second), methods}
+      R.ActionCreate{bindWith(factory, args), methods}
     case R.ActionInvoke{factory, methods}:
-      R.ActionInvoke{bind(factory, first, second), methods}
+      R.ActionInvoke{bindWith(factory, args), methods}
     case R.IteratorResult{done, value}:
-      R.IteratorResult{done, bind(value, first, second)}
+      R.IteratorResult{done, bindWith(value, args)}
     case R.FlushCallback{body}:
-      R.FlushCallback{bind(body, first, second)}
+      R.FlushCallback{bindWith(body, args)}
     case R.FlushValue{callee}:
-      R.FlushValue{bind(callee, first, second)}
+      R.FlushValue{bindWith(callee, args)}
     case R.WithOwner{owner, body}:
-      R.WithOwner{bind(owner, first, second), bind(body, first, second)}
+      R.WithOwner{bindWith(owner, args), bindWith(body, args)}
     case R.OwnerDisposed{owner}:
-      R.OwnerDisposed{bind(owner, first, second)}
+      R.OwnerDisposed{bindWith(owner, args)}
     case R.DisposeRoot{owner}:
-      R.DisposeRoot{bind(owner, first, second)}
+      R.DisposeRoot{bindWith(owner, args)}
     case R.CallWith{callback, left, right}:
-      R.CallWith{callback, bind(left, first, second), bind(right, first, second)}
+      R.CallWith{callback, bindWith(left, args), bindWith(right, args)}
     case R.SignalComputeScope{compute, options, body}:
-      R.SignalComputeScope{bind(compute, first, second), options, bind(body, first, second)}
+      R.SignalComputeScope{bindWith(compute, args), options, bindWith(body, args)}
     case R.SignalScope{initial, options, body}:
-      R.SignalScope{bind(initial, first, second), options, bind(body, first, second)}
+      R.SignalScope{bindWith(initial, args), options, bindWith(body, args)}
     case R.LocalWrite{depth, value, updater}:
-      R.LocalWrite{depth, bind(value, first, second), updater}
+      R.LocalWrite{depth, bindWith(value, args), updater}
     case R.WriteExpr{signal, value, updater}:
-      R.WriteExpr{signal, bind(value, first, second), updater}
+      R.WriteExpr{signal, bindWith(value, args), updater}
     case R.EffectCreate{compute, spec}:
-      R.EffectCreate{bind(compute, first, second), spec}
+      R.EffectCreate{bindWith(compute, args), spec}
     case R.ReactionCreate{body, errorProgram, options, scheduled}:
-      R.ReactionCreate{bind(body, first, second), errorProgram, options, scheduled}
+      R.ReactionCreate{bindWith(body, args), errorProgram, options, scheduled}
     case R.ReactionArm{callee, tracking}:
-      R.ReactionArm{bind(callee, first, second), bind(tracking, first, second)}
+      R.ReactionArm{bindWith(callee, args), bindWith(tracking, args)}
     case R.ReactionFire{reaction, node}:
-      R.ReactionFire{reaction, bind(node, first, second)}
+      R.ReactionFire{reaction, bindWith(node, args)}
     case R.OnSettled{body}:
-      R.OnSettled{bind(body, first, second)}
+      R.OnSettled{bindWith(body, args)}
     case R.TrackedCreate{body}:
-      R.TrackedCreate{bind(body, first, second)}
+      R.TrackedCreate{bindWith(body, args)}
     case R.MemoAccessor{compute, options}:
-      R.MemoAccessor{bind(compute, first, second), options}
+      R.MemoAccessor{bindWith(compute, args), options}
     case R.MemoRead{compute, options}:
-      R.MemoRead{bind(compute, first, second), options}
+      R.MemoRead{bindWith(compute, args), options}
     case R.RootScope{body, transparent}:
       R.RootScope{body, transparent}
     case R.ContextGet{key, owner}:
-      R.ContextGet{key, bind(owner, first, second)}
+      R.ContextGet{key, bindWith(owner, args)}
     case R.ContextSet{key, value, owner}:
-      R.ContextSet{key, bind(value, first, second), bind(owner, first, second)}
+      R.ContextSet{key, bindWith(value, args), bindWith(owner, args)}
+    case R.InvokeMany{callee, values}:
+      R.InvokeMany{bindWith(callee, args), bindWith(values, args)}
+    case R.CallArgumentsItem{value, tail}:
+      R.CallArgumentsItem{bindWith(value, args), bindWith(tail, args)}
     case R.InvokeArguments{callee, a, b}:
-      R.InvokeArguments{bind(callee, first, second), bind(a, first, second), bind(b, first, second)}
+      R.InvokeArguments{bindWith(callee, args), bindWith(a, args), bindWith(b, args)}
     case R.InvokeWith{callee, value, updater}:
-      R.InvokeWith{bind(callee, first, second), bind(value, first, second), updater}
+      R.InvokeWith{bindWith(callee, args), bindWith(value, args), updater}
     case R.Invoke{callee}:
-      R.Invoke{bind(callee, first, second)}
+      R.Invoke{bindWith(callee, args)}
     case R.OnCleanup{callee}:
-      R.OnCleanup{bind(callee, first, second)}
+      R.OnCleanup{bindWith(callee, args)}
     case R.WatchExpr{awaiter, body}:
-      R.WatchExpr{awaiter, bind(body, first, second)}
+      R.WatchExpr{awaiter, bindWith(body, args)}
     case R.Then{left, right}:
-      R.Then{bind(left, first, second), bind(right, first, second)}
+      R.Then{bindWith(left, args), bindWith(right, args)}
     case other:
       other
+
+def bind(expr: R.Expr, first: R.Value, second: R.Value) -> R.Expr:
+  bindWith(expr, Pair{first, second})
+
+def bindMany(expr: R.Expr, values: List<&2, R.Value>) -> R.Expr:
+  bindWith(expr, Many{values})

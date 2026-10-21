@@ -1,4 +1,5 @@
 import Base
+import ./proof/argument-vector-laws.bend as ArgumentVectors
 import ./proof/chain-setter.bend as ChainSetter
 import ./proof/chain-public-program.bend as ChainPublic
 import ./proof/chain-states.bend as ChainStates
@@ -805,3 +806,63 @@ law two_memo_render_public_application_trace:
   for +input: Nat
   for +extra: Nat
   {ChainObservation.applications(R.World.events(API.flush(Nat.add(95n, extra), API.setSignal(Chain.initial(), 2n, R.Number{input})))) == [R.Number{2n}, Chain.answer(input)] : List<&2, R.Value>}
+
+# Variable-arity user-call binding; no arbitrary JS execution claim.
+law vector_callback_parameter:
+  for +index: Nat
+  for +values: List<&2, R.Value>
+  {Callback.bindMany(R.Argument{index}, values) == R.Literal{B.get(R.Value, values, index, R.Undefined{})} : R.Expr}
+
+law vector_action_parameter:
+  for +index: Nat
+  for +values: List<&2, R.Value>
+  {ActionArgs.bindMany(R.ActionParameter{0n, index}, 0n, values) == R.Literal{B.get(R.Value, values, index, R.Undefined{})} : R.Expr}
+
+law vector_action_preserves_resume_binder:
+  for +depth: Nat
+  for +index: Nat
+  for +values: List<&2, R.Value>
+  {ActionArgs.bindMany(R.Argument{index}, depth, values) == R.Argument{index} : R.Expr}
+
+law vector_root_shadows_parameters:
+  for +body: R.Expr
+  for +values: List<&2, R.Value>
+  {Callback.bindMany(R.RootScope{body, False{}}, values) == R.RootScope{body, False{}} : R.Expr}
+
+law vector_callback_captures_action_factory:
+  for +index: Nat
+  for +methods: R.Expr
+  for +values: List<&2, R.Value>
+  {Callback.bindMany(R.ActionCreate{R.Argument{index}, methods}, values) == R.ActionCreate{R.Literal{B.get(R.Value, values, index, R.Undefined{})}, methods} : R.Expr}
+
+law vector_nested_action_shadow_and_capture:
+  for +inner: Nat
+  for +outer: Nat
+  for +values: List<&2, R.Value>
+  {ActionArgs.bindMany(R.ActionCreate{R.ActionParameter{0n, inner}, R.ActionMethods{R.ActionParameter{1n, outer}, False{}, R.Argument{0n}, R.ActionEnd{}}}, 0n, values) == R.ActionCreate{R.ActionParameter{0n, inner}, R.ActionMethods{R.Literal{B.get(R.Value, values, outer, R.Undefined{})}, False{}, R.Argument{0n}, R.ActionEnd{}}} : R.Expr}
+
+law vector_call_evaluates_callee_first:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +callee: R.Expr
+  for +args: R.Expr
+  for +previous: R.Value
+  {Core.evaluate(w, rest, stack, R.InvokeMany{callee, args}, previous) == Core.Machine{w, Core.Evaluate{callee, previous} <> Core.InvokeManyCallee{args, previous} <> rest, stack} : Core.Machine}
+
+law vector_call_evaluates_next_argument:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +callee: R.Value
+  for +head: R.Expr
+  for +tail: R.Expr
+  for +reversed: List<&2, R.Value>
+  for +previous: R.Value
+  {Core.invokeManyArguments(w, rest, stack, callee, R.CallArgumentsItem{head, tail}, reversed, previous) == Core.Machine{w, Core.Evaluate{head, previous} <> Core.InvokeManyValue{callee, tail, reversed, previous} <> rest, stack} : Core.Machine}
+
+law nine_argument_callback_returns_its_last_parameter:
+  {ArgumentVectors.callback_case() == ArgumentVectors.View{R.Number{9n}, R.Unresolved{}, 0n, 2n, 0n, False{}, 0n, R.Healthy{}} : ArgumentVectors.View}
+
+law nine_argument_action_fulfills_with_its_last_parameter:
+  {ArgumentVectors.action_case() == ArgumentVectors.View{R.AsyncValue{1n}, R.Fulfilled{R.Number{9n}}, 1n, 2n, 0n, False{}, 0n, R.Healthy{}} : ArgumentVectors.View}

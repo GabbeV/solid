@@ -1,4 +1,5 @@
 import Base
+import ./proof/argument-vector-laws.bend as ArgumentVectors
 import ./proof/chain-setter.bend as ChainSetter
 import ./proof/chain-public-program.bend as ChainPublic
 import ./proof/chain-staging.bend as ChainStaging
@@ -443,3 +444,33 @@ def Laws.two_memo_render_public_final_world(input, extra):
 
 def Laws.two_memo_render_public_application_trace(input, extra):
   ChainPublic.applications(input, extra)
+
+def Laws.vector_callback_parameter(index, values):
+  ArgumentVectors.callback_lookup(index, values)
+
+def Laws.vector_action_parameter(index, values):
+  ArgumentVectors.action_lookup(index, values)
+
+def Laws.vector_action_preserves_resume_binder(depth, index, values):
+  ArgumentVectors.resume(depth, index, values)
+
+def Laws.vector_root_shadows_parameters(body, values):
+  ArgumentVectors.root_shadow(body, values)
+
+def Laws.vector_callback_captures_action_factory(index, methods, values):
+  ArgumentVectors.callback_factory(index, methods, values)
+
+def Laws.vector_nested_action_shadow_and_capture(inner, outer, values):
+  ArgumentVectors.nested_capture(inner, outer, values)
+
+def Laws.vector_call_evaluates_callee_first(w, rest, stack, callee, args, previous):
+  ArgumentVectors.callee_first(w, rest, stack, callee, args, previous)
+
+def Laws.vector_call_evaluates_next_argument(w, rest, stack, callee, head, tail, reversed, previous):
+  ArgumentVectors.next_argument(w, rest, stack, callee, head, tail, reversed, previous)
+
+def Laws.nine_argument_callback_returns_its_last_parameter():
+  ArgumentVectors.callback_complete()
+
+def Laws.nine_argument_action_fulfills_with_its_last_parameter():
+  ArgumentVectors.action_complete()

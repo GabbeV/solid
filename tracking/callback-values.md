@@ -8,11 +8,11 @@ closures, reflection and arbitrary JavaScript functions remain unfinished.
 
 A `ProgramReference` retains the program ID. Zero/one-argument calls and
 `invokeArgs(callee, args)` enter the same core callback machine as named calls;
-the latter admits up to two arguments and evaluates callee, first and second in
-that order. Extra arguments to a getter/setter/disposer are evaluated even though
+the latter now admits finite argument vectors without a fixed arity limit,
+evaluating callee and arguments once from left to right. See argument-vectors.md. Extra arguments to a getter/setter/disposer are evaluated even though
 its bound entry ignores them. Callback argument substitution and lexical signal
 binding traverse this expression, so higher-order calls retain both environments.
-Named bodies see their two argument slots; their `prev` expression remains
+Named bodies see the supplied indexed arguments (missing slots are undefined); their `prev` expression remains
 undefined. Updater closure arguments to a general callback value are still outside
 the represented function family and report an explicit domain fault.
 
@@ -65,3 +65,7 @@ cleanup under the implicit disposal budget; see [owner-core.md](owner-core.md).
 
 Current continuation coverage and public teardown histories are recorded in
 [the operation review](reviews/teardown-closure.md).
+
+The variable-arity extension adds 48 callback/entry histories in the shared
+70-case corpus. Its linked argument syntax and captures use the same callback
+driver; the older fixed-pair source calls remain intact. See argument-vectors.md.

@@ -150,7 +150,7 @@ for(const Runtime of [BendRuntime,SolidRuntime]){
   dispose();
   assert.deepEqual(runtime.trace().filter(e=>e[0]==='cleanup'),[['cleanup',1,30]],'repeated disposer call is inert');
   runtime.signal('disposerInitializer',dispose);assert.equal(runtime.read('disposerInitializer'),undefined,'a disposer initializer selects the computed overload');
-  assert.throws(()=>runtime.evaluate(callWith('body',lit(1),lit(2),lit(3))),/at most two arguments/);
+  assert.equal(runtime.evaluate(callWith('body',lit(1),lit(2),lit(3))),1,'a three-argument call preserves the first argument');
   runtime.dispose();runtime.flush();
 }
 console.log(`${count} callback-argument histories match pinned TS binding/order, effect/error parameters, callable root disposers and setter function branches.`);

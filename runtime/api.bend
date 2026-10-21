@@ -498,12 +498,24 @@ def contextDescription(description: String) -> R.Slot:
 def vContextFailure(identity: Nat, kind: U32) -> R.Value:
   R.ContextFailure{identity, kind}
 
-# Named callback function values retain the program's own two user arguments.
+# Named callback function values retain their canonical function identity.
 def vProgram(callback: Nat) -> R.Value:
   R.ProgramReference{callback}
 
 def invokeArguments(callee: R.Expr, first: R.Expr, second: R.Expr) -> R.Expr:
   R.InvokeArguments{callee, first, second}
+
+# Argument syntax uses the same typed linked-expression representation as
+# generator methods, so recursive captures traverse it through the same binder.
+def callArgumentsEnd() -> R.Expr:
+  R.CallArgumentsEnd{}
+
+def callArgumentsItem(value: R.Expr, tail: R.Expr) -> R.Expr:
+  R.CallArgumentsItem{value, tail}
+
+# Longer user-call argument lists share the same callable/transaction engine.
+def invokeMany(callee: R.Expr, args: R.Expr) -> R.Expr:
+  R.InvokeMany{callee, args}
 
 # Public onSettled entry runs under the caller-selected actual owner.
 def onSettled(fuel: Nat, +w: R.World, body: R.Expr, +parent: Nat) -> R.World:

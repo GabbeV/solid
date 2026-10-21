@@ -181,6 +181,9 @@ type Expr is Data:
   Invoke{callee: Expr}
   InvokeWith{callee: Expr, value: Expr, updater: Bool}
   InvokeArguments{callee: Expr, first: Expr, second: Expr}
+  InvokeMany{callee: Expr, args: Expr}
+  CallArgumentsEnd{}
+  CallArgumentsItem{value: Expr, tail: Expr}
   OnCleanup{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}

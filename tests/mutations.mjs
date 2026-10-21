@@ -5,6 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['call vectors reverse their values','runtime/core.bend','List.reverse(&2, R.Value, reversed)','reversed','tests/argument-vectors.mjs','invokeManyArguments'],
+  ['call vectors skip argument expression effects','runtime/core.bend','Evaluate{head, previous}','Evaluate{R.Literal{R.Undefined{}}, previous}','tests/argument-vectors.mjs','invokeManyArguments'],
+  ['vector callback return loses higher parameters','runtime/core.bend','R.CallbackReturn{Z.bindMany(expr, args)}','R.CallbackReturn{Z.bind(expr, B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{}))}','tests/argument-vectors.mjs','bindCallAction'],
+  ['vector action methods lose parameter capture','runtime/core.bend','ActionArgs.bindMany(methods, 0n, args)','methods','tests/argument-vectors.mjs','bindCallAction'],
+  ['vector action factory loses parameter capture','runtime/core.bend','ActionArgs.bindMany(factory, 0n, args)','factory','tests/argument-vectors-native.mjs','bindCallAction'],
+  ['vector arguments lose enclosing signal bindings','runtime/lexical.bend','R.CallArgumentsItem{bind(value, depth, signal), bind(tail, depth, signal)}','R.CallArgumentsItem{value, tail}','tests/argument-vectors.mjs','bind'],
+  ['nested call vector loses enclosing parameters','runtime/callback.bend','R.CallArgumentsItem{bindWith(value, args), bindWith(tail, args)}','R.CallArgumentsItem{value, tail}','tests/argument-vectors.mjs','bindWith'],
+  ['vector lookup discards its parameter','runtime/callback.bend','B.get(R.Value, values, index, R.Undefined{})','R.Undefined{}','tests/proof-properties.mjs','at','argument-vector-laws'],
+
   ['memo publication drops the staged payload','runtime/core.bend','R.Node.with_pending(B.node(w, id), R.Present{value})','R.Node.with_pending(B.node(w, id), R.Present{R.Undefined{}})','tests/chain-witness-controls.mjs','publishValueChanged'],
   ['memo chain multiplication drops its second operand','runtime/core.bend','R.Number{Nat.mul(a, b)}','R.Number{a}','tests/chain-witness-controls.mjs','arithmetic'],
 
@@ -14,9 +23,9 @@ const mutations=[
   ['action wrapper discards captured methods','runtime/action-state.bend','[R.ActionFunction{factory, methods, previous}]','[R.ActionFunction{factory, R.ActionEnd{}, previous}]','tests/action-functions.mjs','function'],
   ['action wrapper loses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','methods','tests/action-functions.mjs','callbackAction'],
   ['action wrapper reverses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','ActionArgs.bind(methods, 0n, second, first)','tests/action-functions.mjs','callbackAction'],
-  ['nested action fails to shadow parameter capture','runtime/action-arguments.bend','R.ActionCreate{bind(factory, 1n+depth, first, second), bind(methods, 1n+depth, first, second)}','R.ActionCreate{bind(factory, depth, first, second), bind(methods, depth, first, second)}','tests/action-functions.mjs','bind'],
+  ['nested action fails to shadow parameter capture','runtime/action-arguments.bend','R.ActionCreate{bindWith(factory, 1n+depth, args), bindWith(methods, 1n+depth, args)}','R.ActionCreate{bindWith(factory, depth, args), bindWith(methods, depth, args)}','tests/action-functions.mjs','bindWith'],
   ['action wrapper loses captured local signals','runtime/lexical.bend','R.ActionCreate{bind(factory, depth, signal), bind(methods, depth, signal)}','R.ActionCreate{bind(factory, depth, signal), methods}','tests/action-functions.mjs','bind'],
-  ['action wrapper factory loses enclosing callback argument','runtime/callback.bend','R.ActionCreate{bind(factory, first, second), methods}','R.ActionCreate{factory, methods}','tests/action-functions.mjs','bind'],
+  ['action wrapper factory loses enclosing callback argument','runtime/callback.bend','R.ActionCreate{bindWith(factory, args), methods}','R.ActionCreate{factory, methods}','tests/action-functions.mjs','bindWith'],
 
   ["memo constructor discards its compute expression","runtime/construct-state.bend","parent, 0n, 0n, 0n, expr, False{}","parent, 0n, 0n, 0n, R.Literal{R.Number{0n}}, False{}","tests/proof-properties.mjs","computed","memo-public-program"],
   ["public memo setter omits subscriber intake","runtime/write.bend","B.schedule(insertSubs(w, id))","B.schedule(w)","tests/memo-witness-controls.mjs","stageResolved"],
@@ -55,7 +64,7 @@ const mutations=[
   ["successful flush drain loses callback error", "runtime/core.bend", "flushCallbackRestore(w, rest, saved, prior)", "flushCallbackRestore(w, rest, saved, R.Healthy{})", "tests/flush-callbacks.mjs", "dispatch"],
   ["flush callback error replaces later drain error", "runtime/core.bend", "flushCallbackRestore(w, rest, saved, R.World.fault(w))", "flushCallbackRestore(w, rest, saved, prior)", "tests/flush-callbacks.mjs", "unwind"],
   ["flush callback drops its saved return", "runtime/core.bend", "+values = B.choose(~List<&2, R.Value>, healthy(prior), _ => stack, _ => saved)", "+values = saved", "tests/flush-callbacks.mjs", "flushCallbackFinally"],
-  ["flush callback loses captured arguments", "runtime/callback.bend", "R.FlushCallback{bind(body, first, second)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
+  ["flush callback loses captured arguments", "runtime/callback.bend", "R.FlushCallback{bindWith(body, args)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
   ["flush callback loses lexical signals", "runtime/lexical.bend", "R.FlushCallback{bind(body, depth, signal)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
 
   ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue',"publication"],
@@ -125,7 +134,7 @@ const mutations=[
   ['writable-memo setter selects plain setter policy','runtime/core.bend','_ => SetMemoArgument{id}, _ => SetSignalArgument{id}','_ => SetSignalArgument{id}, _ => SetSignalArgument{id}','tests/writable-signals.mjs'],
   ['setter raw argument discards its effects','runtime/core.bend','Evaluate{value, previous} <> InvokeApplied{callee}','Evaluate{R.Literal{R.Undefined{}}, previous} <> InvokeApplied{callee}','tests/setters.mjs'],
   ['computed accessor disables lazy creation','runtime/core.bend','memoExpression(w, rest, stack, compute, options, False{})','memoExpression(w, rest, stack, compute, R.NodeOptions.with_lazy(options, False{}), False{})','tests/computed-accessors.mjs'],
-  ['computed accessor drops captured parameters','runtime/callback.bend','R.MemoAccessor{bind(compute, first, second), options}','R.MemoAccessor{compute, options}','tests/computed-accessors.mjs'],
+  ['computed accessor drops captured parameters','runtime/callback.bend','R.MemoAccessor{bindWith(compute, args), options}','R.MemoAccessor{compute, options}','tests/computed-accessors.mjs'],
   ['escaped accessor binds outer signal incorrectly','runtime/lexical.bend','_ => R.Literal{Callable.accessor(signal)}, _ => R.LocalAccessor{index}','_ => R.Literal{R.AccessorReference{1n}}, _ => R.LocalAccessor{index}','tests/locals.mjs'],
   ['escaped accessor invocation drops tracking','runtime/core.bend','Machine{w, ReadNode{id} <> rest, tail}','Machine{R.World.with_tracking(w, False{}), ReadNode{id} <> rest, tail}','tests/locals.mjs'],
   ['accessor updater result is invoked again','runtime/core.bend','setResolved(w, rest, tail, signal, current, value)','match value:\n            case R.AccessorReference{id}:\n              Machine{w, ReadNode{id} <> SetSignalResolved{signal, current} <> rest, tail}\n            case other:\n              setResolved(w, rest, tail, signal, current, other)','tests/locals.mjs'],
@@ -137,11 +146,11 @@ const mutations=[
   ['local updater sees committed instead of staged slot','runtime/core.bend','+current = B.current(B.node(w, signal))','+current = R.Node.value(B.node(w, signal))','tests/locals.mjs'],
   ['local updater result function is invoked again','runtime/core.bend','Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest','Evaluate{value, current} <> SetSignalArgument{signal} <> rest','tests/locals.mjs'],
   ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair)','R.EffectSpec.options(spec), 0n, B.second(R.World, Nat, pair)','tests/nested.mjs'],
-  ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bind(compute, first, second), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
+  ['nested effect loses captured arguments','runtime/callback.bend','R.EffectCreate{bindWith(compute, args), spec}','R.EffectCreate{compute, spec}','tests/nested.mjs'],
   ['nested effect untracks its caller','runtime/core.bend','case R.EffectCreate{compute, +spec}:','case R.EffectCreate{compute, +spec}:\n      +w = R.World.with_tracking(w, False{})','tests/nested.mjs'],
   ['initial effect ignores staged first value','runtime/core.bend','Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))),','Bool.or(deferred, Bool.or(False{},','tests/nested.mjs'],
   ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs','memoExpression'],
-  ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bind(compute, first, second), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
+  ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bindWith(compute, args), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
   ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ending)','_ => ending)','tests/nested.mjs'],
   ['onCleanup loses return identity','runtime/core.bend','rest, R.RootDisposerReference{root} <> tail}','rest, R.Undefined{} <> tail}','tests/cleanup-values.mjs'],
   ['same bound cleanup receives fresh callable IDs','runtime/callable.bend','+old = find(R.World.cleanupPrograms(w), root, 0n)','+old = {0n : Nat}','tests/cleanup-values.mjs'],
@@ -150,7 +159,7 @@ const mutations=[
   ['context record mutated in place','runtime/context.bend','+next = B.length(R.ContextRecord, R.World.contextRecords(w))\n      +w = R.World.with_contextRecords(w, B.append(R.ContextRecord, R.World.contextRecords(w), [R.ContextRecord{copyWith(entries, id, value)}]))','+next = R.Node.scope(B.node(w, owner))\n      +w = R.World.with_contextRecords(w, List.set(&2, R.ContextRecord, R.World.contextRecords(w), next, R.ContextRecord{copyWith(entries, id, value)}))','tests/contexts.mjs'],
   ['new root drops inherited context','runtime/owner-state.bend','R.Node.scope(B.node(w, parent))','0n','tests/contexts.mjs'],
   ['context read without owner returns default','runtime/context.bend','Nat.is_eq(owner, 0n),\n    _ => B.Bundle{failure(w, 0), R.Undefined{}}','False{},\n    _ => B.Bundle{failure(w, 0), R.Undefined{}}','tests/contexts.mjs'],
-  ['nested root captures outer disposer argument','runtime/callback.bend','case R.RootScope{body, transparent}:\n      R.RootScope{body, transparent}','case R.RootScope{body, transparent}:\n      R.RootScope{bind(body, first, second), transparent}','tests/arguments.mjs'],
+  ['nested root captures outer disposer argument','runtime/callback.bend','case R.RootScope{body, transparent}:\n      R.RootScope{body, transparent}','case R.RootScope{body, transparent}:\n      R.RootScope{bindWith(body, args), transparent}','tests/arguments.mjs'],
   ['function updater result is invoked again','runtime/api.bend','R.WriteExpr{id, expr, True{}}','R.WriteExpr{id, expr, False{}}','tests/arguments.mjs'],
   ['bound disposer uses ambient owner','runtime/core.bend','case R.RootDisposerReference{id}:\n      Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}]} <> rest, R.Undefined{} <> tail}','case R.RootDisposerReference{id}:\n      Machine{w, OwnerTasks{[O.Enter{R.World.context(w), True{}, False{}}]} <> rest, R.Undefined{} <> tail}','tests/arguments.mjs'],
   ['effect callback arguments reversed','runtime/core.bend','R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}','R.CallWith{callback, R.Literal{R.Node.prevValue(B.node(w, id))}, R.Literal{R.Node.value(B.node(w, id))}}','tests/arguments.mjs'],

@@ -36,7 +36,7 @@ export class SourceSetters {
 export class ProgramFunctions extends SourceSetters {
   get(program){
     if(!this.bySignal.has(program)){
-      const call=(first,second)=>this.invoke(program,first,second);
+      const call=(...args)=>this.invoke(program,...args);
       this.bySignal.set(program,call);this.identities.set(call,program);
     }
     return this.bySignal.get(program);

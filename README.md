@@ -205,3 +205,9 @@ constructor/setter/flush family for every natural proposal and drain budget >= 9
 including its complete final World and exact render-application trace. The staged
 precondition remains on the supporting drain lemma, not on the composed public
 program. See [the graph proof boundary](tracking/chain-proof.md).
+
+The [user-call ABI](tracking/argument-vectors.md) now supports finite callback and
+action argument vectors without a fixed two-argument cap, while internal source
+calls retain their existing pair representation. Seventy paired histories and six
+hand-written native generator controls are separate from eight quantified local
+binding/order laws and two kernel-checked nine-argument executions.

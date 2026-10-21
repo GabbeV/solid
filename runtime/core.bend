@@ -78,6 +78,8 @@ type Task is Data:
   InvokeArgument{value: R.Expr, updater: Bool, previous: R.Value}
   InvokeApplied{callee: R.Value}
   InvokeArguments{}
+  InvokeManyCallee{args: R.Expr, previous: R.Value}
+  InvokeManyValue{callee: R.Value, args: R.Expr, reversed: List<&2, R.Value>, previous: R.Value}
   OwnerTasks{tasks: List<&2, O.Task>}
   PendingTasks{tasks: List<&2, Q.Task>, visited: List<&2, Nat>, released: List<&2, Nat>, scheduled: Bool}
   RetireSources{id: Nat, set: Nat, index: Nat, onlyDropped: Bool}
@@ -576,6 +578,12 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, R.Undefined{} <> stack}
     case R.CallWith{callback, first, second}:
       Machine{w, Evaluate{first, prev} <> Evaluate{second, prev} <> CallArguments{callback} <> rest, stack}
+    case R.CallArgumentsEnd{}:
+      Machine{R.World.with_fault(w, R.Unsupported{60n}), rest, stack}
+    case R.CallArgumentsItem{value, tail}:
+      Machine{R.World.with_fault(w, R.Unsupported{60n}), rest, stack}
+    case R.InvokeMany{callee, args}:
+      Machine{w, Evaluate{callee, prev} <> InvokeManyCallee{args, prev} <> rest, stack}
     case R.InvokeArguments{callee, first, second}:
       Machine{w, Evaluate{callee, prev} <> Evaluate{first, prev} <> Evaluate{second, prev} <> InvokeArguments{} <> rest, stack}
     case R.InvokeWith{callee, value, updater}:
@@ -799,6 +807,53 @@ def onCleanup(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> M
 
 # core/context.ts argument/default-parameter seams. The value argument of a
 # write is evaluated before the owner argument, as in the source call.
+# User-code argument binding, not a source scheduler or callback replacement.
+# Source functions stay identified by the original program ID; only parameter
+# occurrences in their admitted syntax are captured before entering the same
+# callback/action driver. Root and generator-resume binders remain distinct.
+def bindCallAction(action: R.CleanupAction, +args: List<&2, R.Value>) -> R.CleanupAction:
+  match action:
+    case R.ActionFunction{factory, methods, previous}:
+      R.ActionFunction{ActionArgs.bindMany(factory, 0n, args), ActionArgs.bindMany(methods, 0n, args), previous}
+    case R.CallbackEvaluate{expr}:
+      R.CallbackEvaluate{Z.bindMany(expr, args)}
+    case R.CallbackReturn{expr}:
+      R.CallbackReturn{Z.bindMany(expr, args)}
+    case R.CallbackWrite{signal, expr}:
+      R.CallbackWrite{signal, Z.bindMany(expr, args)}
+    case R.CallbackUpdate{signal, expr}:
+      R.CallbackUpdate{signal, Z.bindMany(expr, args)}
+    case R.CallbackThrow{expr}:
+      R.CallbackThrow{Z.bindMany(expr, args)}
+    case other:
+      other
+
+def bindCallActions(actions: List<&2, R.CleanupAction>, args: List<&2, R.Value>) -> List<&2, R.CleanupAction>:
+  B.mapWith(R.CleanupAction, R.CleanupAction, List<&2, R.Value>, values => action => bindCallAction(action, values), args, actions)
+
+# JavaScript calls evaluate all arguments, even those a particular callable
+# ignores. The ordinary bound getter/setter/disposer cases use their existing
+# entry; named functions and action wrappers share callback's source behavior.
+def invokeMany(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, callee: R.Value, +args: List<&2, R.Value>) -> Machine:
+  match callee:
+    case R.ProgramReference{+id}:
+      B.choose(~Machine, callbackExists(w, id),
+        _ => Machine{w, Callback{id, bindCallActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}})), args), B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{})} <> rest, stack},
+        _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
+    case other:
+      invokeApplied(w, rest, stack, other, B.get(R.Value, args, 0n, R.Undefined{}))
+
+# Callee first, then arguments left to right, once each. Accumulate in reverse
+# so the immutable representation adds no quadratic argument-list copying.
+def invokeManyArguments(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +callee: R.Value, args: R.Expr, +reversed: List<&2, R.Value>, +previous: R.Value) -> Machine:
+  match args:
+    case R.CallArgumentsEnd{}:
+      invokeMany(w, rest, stack, callee, List.reverse(&2, R.Value, reversed))
+    case R.CallArgumentsItem{head, tail}:
+      Machine{w, Evaluate{head, previous} <> InvokeManyValue{callee, tail, reversed, previous} <> rest, stack}
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{60n}), rest, stack}
+
 def contextGetAt(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, key: Nat, owner: Nat) -> Machine:
   +pair = Y.getContext(w, key, owner)
   +w = B.first(R.World, R.Value, pair)
@@ -2305,6 +2360,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       recomputePrepared(w, rest, stack, id, create, released)
     case PassReleases{frame, index, value, joined, stagedErr, missed, prior} <> rest:
       passReleases(w, rest, stack, frame, index, value, joined, stagedErr, missed, prior)
+    case InvokeManyCallee{args, previous} <> rest:
+      match stack:
+        case callee <> tail:
+          invokeManyArguments(w, rest, tail, callee, args, [], previous)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case InvokeManyValue{callee, args, reversed, previous} <> rest:
+      match stack:
+        case value <> tail:
+          invokeManyArguments(w, rest, tail, callee, args, value <> reversed, previous)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case InvokeArguments{} <> +rest:
       match stack:
         case second <> first <> callee <> tail:

@@ -81,6 +81,10 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.ContextGet{key, bind(owner, depth, signal)}
     case R.ContextSet{key, value, owner}:
       R.ContextSet{key, bind(value, depth, signal), bind(owner, depth, signal)}
+    case R.InvokeMany{callee, values}:
+      R.InvokeMany{bind(callee, depth, signal), bind(values, depth, signal)}
+    case R.CallArgumentsItem{value, tail}:
+      R.CallArgumentsItem{bind(value, depth, signal), bind(tail, depth, signal)}
     case R.InvokeArguments{callee, a, b}:
       R.InvokeArguments{bind(callee, depth, signal), bind(a, depth, signal), bind(b, depth, signal)}
     case R.InvokeWith{callee, value, updater}:

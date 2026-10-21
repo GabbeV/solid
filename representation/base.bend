@@ -12,6 +12,15 @@ def choose(~A: Type, b: Bool, yes: Unit -> A, no: Unit -> A) -> A:
 def append(-A: Data, xs: List<&2, A>, ys: List<&2, A>) -> List<&2, A>:
   List.append(&2, A, xs, ys)
 
+# User-code list traversal with an explicit immutable environment. The callback
+# is closed code; captured data is passed at runtime, not hidden in a template.
+def mapWith(~A: Data, ~C: Data, ~E: Data, ~f: E -> A -> C, +env: E, xs: List<&2, A>) -> List<&2, C>:
+  match xs:
+    case Nil{}:
+      []
+    case head <> tail:
+      f(env, head) <> mapWith(A, C, E, f, env, tail)
+
 def length(-A: Data, xs: List<&2, A>) -> Nat:
   List.length(&2, A, xs)
 
