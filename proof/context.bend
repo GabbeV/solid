@@ -17,7 +17,7 @@ def allocated() -> R.World:
   A.flush(512n, A.resultWorld(m))
 
 def disposed() -> R.World:
-  A.resultWorld(A.evaluateExpression(512n, allocated(), R.DisposeRoot{R.Read{2n}}, R.Undefined{}))
+  A.resultWorld(A.evaluateExpression(512n, allocated(), R.DisposeRoot{R.Read{2n}, True{}}, R.Undefined{}))
 
 def cleanupEvents(events: List<&2, R.TraceEvent>) -> List<&2, R.TraceEvent>:
   match events:

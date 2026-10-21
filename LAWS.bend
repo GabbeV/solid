@@ -1,4 +1,7 @@
 import Base
+import ./runtime/construct-state.bend as OwnerConstruction
+import ./runtime/owner-state.bend as OwnerLiteral
+import ./proof/direct-owner-laws.bend as DirectOwners
 import ./proof/argument-vector-laws.bend as ArgumentVectors
 import ./proof/chain-setter.bend as ChainSetter
 import ./proof/chain-public-program.bend as ChainPublic
@@ -866,3 +869,36 @@ law nine_argument_callback_returns_its_last_parameter:
 
 law nine_argument_action_fulfills_with_its_last_parameter:
   {ArgumentVectors.action_case() == ArgumentVectors.View{R.AsyncValue{1n}, R.Fulfilled{R.Number{9n}}, 1n, 2n, 0n, False{}, 0n, R.Healthy{}} : ArgumentVectors.View}
+
+# Production direct owner creation and the actual root receiver/self entry.
+law direct_owner_uses_ambient_parent:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +transparent: Bool
+  for +previous: R.Value
+  {Core.evaluate(w, rest, stack, R.OwnerCreate{transparent}, previous) == Core.Machine{OwnerConstruction.createOwner(w, R.World.context(w), transparent), rest, R.OwnerReference{B.length(R.Node, R.World.nodes(w))} <> stack} : Core.Machine}
+
+law owner_linking_preserves_ambient_state:
+  for +w: R.World
+  for +parent: Nat
+  for +id: Nat
+  {DirectOwners.ambient(DisposalOwner.linkChild(w, parent, id)) == DirectOwners.ambient(w) : DirectOwners.Ambient}
+
+law owner_constructor_preserves_ambient_state:
+  for +w: R.World
+  for +parent: Nat
+  for +transparent: Bool
+  {DirectOwners.ambient(OwnerLiteral.createOwner(w, parent, transparent)) == DirectOwners.ambient(w) : DirectOwners.Ambient}
+
+law owner_dispose_method_forwards_self_flag:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +self: Bool
+  for root: {B.root(R.Node.kind(B.node(w, id))) == True{} : Bool}
+  {Core.disposeRootValue(w, rest, stack, R.OwnerReference{id}, self) == Core.Machine{w, Core.OwnerTasks{[DisposalOwner.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> stack} : Core.Machine}
+
+law direct_owner_can_clear_reuse_and_dispose:
+  {DirectOwners.lifecycle() == DirectOwners.View{True{}, True{}, True{}, True{}, 0n, [R.CleanupObserved{2n, 2n}, R.CleanupObserved{1n, 1n}, R.CleanupObserved{2n, 2n}], 0n, False{}, False{}, R.Healthy{}} : DirectOwners.View}

@@ -45,8 +45,8 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.WithOwner{bindWith(owner, depth, args), bindWith(body, depth, args)}
     case R.OwnerDisposed{owner}:
       R.OwnerDisposed{bindWith(owner, depth, args)}
-    case R.DisposeRoot{owner}:
-      R.DisposeRoot{bindWith(owner, depth, args)}
+    case R.DisposeRoot{owner, self}:
+      R.DisposeRoot{bindWith(owner, depth, args), self}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.RootScope{body, transparent}:

@@ -4,8 +4,8 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2748 differential histories, 172 rejected compiled mutations,
-and 67 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2773 differential histories, 176 rejected compiled mutations,
+and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at d682022c (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -44,6 +44,15 @@ order before the same callback and action engines run. Seventy new paired
 histories, six independent native generator/factory controls, eight local
 quantified binding/order laws and two closed nine-argument executions pass.
 General JS closures, generator progress and active engines remain unfinished.
+
+## Direct owner entry
+
+[Direct owners](direct-owners.md) now use the existing constructor without
+entering the returned owner. Its boolean self flag reaches the shared method
+teardown path, including child-only clear/reuse. Twenty-five paired histories,
+four quantified ambient/entry properties and one complete lifecycle execution
+pass. Hydration IDs, properties/reflection and active dev/observe scopes remain
+unfinished; no source algorithm or semantic deviation changed.
 
 ## Custom comparator milestone
 

@@ -264,3 +264,9 @@ syntax, following the existing linked generator-method representation. Internal
 source call pairs keep their old continuations. The binding pack is user-code
 representation; no new reactive nodes, callable identities, transaction fields or
 scheduler decisions are introduced. See [argument-vectors.md](argument-vectors.md).
+
+Direct owner construction and the root method's boolean self flag use the same
+owner arena/literal, context-record references and teardown tasks as createRoot.
+No bound disposer is allocated by direct creation; caller context/tracking are
+retained. The source's initializer disposer stays permanently self=true. See
+[direct-owners.md](direct-owners.md); owner IDs/properties/reflection remain limited.

@@ -60,7 +60,8 @@ or pinned source/toolchain change is active.
   with nine arguments and obtain the actual ninth value / fulfilled result.
 - Eight new compiled mutation variants exercise vector reversal, dropped argument
   evaluation, callback/action/factory capture, linked-syntax capture and lookup.
-  Seven use finite assertion oracles; one uses the independent proof kernel.
+  Seven use finite assertion oracles; one uses a proof-property assertion oracle, which can reject a false equation
+  in the frontend before the independent kernel starts.
   Resource/infrastructure failures remain excluded from useful rejections.
 
 The existing two-argument rejection controls now assert successful source behavior

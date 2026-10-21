@@ -49,8 +49,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.WithOwner{bind(owner, depth, signal), bind(body, depth, signal)}
     case R.OwnerDisposed{owner}:
       R.OwnerDisposed{bind(owner, depth, signal)}
-    case R.DisposeRoot{owner}:
-      R.DisposeRoot{bind(owner, depth, signal)}
+    case R.DisposeRoot{owner, self}:
+      R.DisposeRoot{bind(owner, depth, signal), self}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bind(left, depth, signal), bind(right, depth, signal)}
     case R.RootScope{body, transparent}:

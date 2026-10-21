@@ -58,3 +58,6 @@ inspect unexpected remote changes before integrating them. Local Git bundles are
 optional recovery artifacts, not a substitute for GitHub synchronization.
 This authorization covers the translation branch, not upstream PRs/issues or
 other feature branches.
+
+Before pushing a checkpoint, verify that every input listed in
+`tracking/checked.json` is tracked by Git, including newly created proof modules.

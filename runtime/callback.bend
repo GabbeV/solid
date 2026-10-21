@@ -50,8 +50,8 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.WithOwner{bindWith(owner, args), bindWith(body, args)}
     case R.OwnerDisposed{owner}:
       R.OwnerDisposed{bindWith(owner, args)}
-    case R.DisposeRoot{owner}:
-      R.DisposeRoot{bindWith(owner, args)}
+    case R.DisposeRoot{owner, self}:
+      R.DisposeRoot{bindWith(owner, args), self}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bindWith(left, args), bindWith(right, args)}
     case R.SignalComputeScope{compute, options, body}:

@@ -143,7 +143,8 @@ type Expr is Data:
   TrackedCreate{body: Expr}
   TrackedBody{body: Expr}
   RootScope{body: Expr, transparent: Bool}
-  DisposeRoot{owner: Expr}
+  OwnerCreate{transparent: Bool}
+  DisposeRoot{owner: Expr, self: Bool}
   ContextGet{key: Nat, owner: Expr}
   ContextSet{key: Nat, value: Expr, owner: Expr}
   Raise{cause: Value}

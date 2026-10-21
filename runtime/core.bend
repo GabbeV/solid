@@ -124,7 +124,7 @@ type Task is Data:
   EnterOwner{body: R.Expr, previous: R.Value}
   RestoreContext{owner: Nat, tracking: Bool}
   CheckDisposed{}
-  DisposeRoot{}
+  DisposeRoot{self: Bool}
   ContextGet{key: Nat}
   ContextSet{key: Nat}
   ReadNode{id: Nat}
@@ -568,8 +568,11 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       +id = B.length(R.Node, R.World.nodes(w))
       Machine{L.enterOwner(D.createOwner(w, R.World.context(w), transparent), id),
         Evaluate{Z.bind(body, R.RootDisposerReference{id}, R.Undefined{}), prev} <> RestoreContext{R.World.context(w), R.World.tracking(w)} <> rest, stack}
-    case R.DisposeRoot{owner}:
-      Machine{w, Evaluate{owner, prev} <> DisposeRoot{} <> rest, stack}
+    case R.OwnerCreate{transparent}:
+      +id = B.length(R.Node, R.World.nodes(w))
+      Machine{N.createOwner(w, R.World.context(w), transparent), rest, R.OwnerReference{id} <> stack}
+    case R.DisposeRoot{owner, self}:
+      Machine{w, Evaluate{owner, prev} <> DisposeRoot{self} <> rest, stack}
     case R.ContextGet{key, owner}:
       Machine{w, Evaluate{owner, prev} <> ContextGet{key} <> rest, stack}
     case R.ContextSet{key, value, owner}:
@@ -687,22 +690,22 @@ def checkDisposed(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) 
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
-# owner.ts:disposeRootSelf with its bound receiver, self=true. Only actual root
+# owner.ts:disposeRootSelf with its receiver and supplied self flag. Only actual root
 # handles enter this user ABI operation; computed disposal has another source
 # entry and must not be substituted for a root's dispose method.
-def disposeRootValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
+def disposeRootValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value, +self: Bool) -> Machine:
   match value:
     case R.OwnerReference{+id}:
       B.choose(~Machine, B.root(R.Node.kind(B.node(w, id))),
-        _ => Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}]} <> rest, R.Undefined{} <> tail},
+        _ => Machine{w, OwnerTasks{[O.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> tail},
         _ => Machine{R.World.with_fault(w, R.TypeError{}), rest, tail})
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
 
-def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +self: Bool) -> Machine:
   match stack:
     case value <> tail:
-      disposeRootValue(w, rest, tail, value)
+      disposeRootValue(w, rest, tail, value, self)
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -2426,8 +2429,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{L.restore(w, owner, tracking), rest, stack}
     case CheckDisposed{} <> rest:
       checkDisposed(w, rest, stack)
-    case DisposeRoot{} <> rest:
-      disposeRoot(w, rest, stack)
+    case DisposeRoot{self} <> rest:
+      disposeRoot(w, rest, stack, self)
     case ContextGet{key} <> rest:
       contextGet(w, rest, stack, key)
     case ContextSet{key} <> rest:

@@ -211,3 +211,9 @@ action argument vectors without a fixed two-argument cap, while internal source
 calls retain their existing pair representation. Seventy paired histories and six
 hand-written native generator controls are separate from eight quantified local
 binding/order laws and two kernel-checked nine-argument executions.
+
+[Direct owner creation](tracking/direct-owners.md) now returns the fresh owner
+without entering it. The same teardown driver supports children-only clear and
+reuse via the owner method's boolean self flag. Twenty-five paired histories,
+four quantified frame/entry laws and one complete lifecycle execution check this
+production subset; hydration IDs and owner reflection remain unfinished.

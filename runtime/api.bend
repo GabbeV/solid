@@ -206,8 +206,16 @@ def memoRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
 def rootScope(body: R.Expr, transparent: Bool) -> R.Expr:
   R.RootScope{body, transparent}
 
+# Public owner.ts:createOwner returns the fresh owner without entering it.
+def ownerCreate(transparent: Bool) -> R.Expr:
+  R.OwnerCreate{transparent}
+
 def disposeRoot(owner: R.Expr) -> R.Expr:
-  R.DisposeRoot{owner}
+  R.DisposeRoot{owner, True{}}
+
+# Owner.dispose(self), separate from createRoot's permanently self=true disposer.
+def disposeRootWithSelf(owner: R.Expr, self: Bool) -> R.Expr:
+  R.DisposeRoot{owner, self}
 
 def evaluateExpression(fuel: Nat, w: R.World, expr: R.Expr, previous: R.Value) -> C.Machine:
   C.eval(fuel, w, expr, previous)

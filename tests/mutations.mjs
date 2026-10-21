@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['direct owner ignores its ambient parent','runtime/core.bend','N.createOwner(w, R.World.context(w), transparent)','N.createOwner(w, 0n, transparent)','tests/direct-owners.mjs','evaluate'],
+  ['direct owner replaces the caller context','runtime/core.bend','Machine{N.createOwner(w, R.World.context(w), transparent), rest, R.OwnerReference{id} <> stack}','Machine{R.World.with_context(N.createOwner(w, R.World.context(w), transparent), id), rest, R.OwnerReference{id} <> stack}','tests/direct-owners.mjs','evaluate'],
+  ['owner method ignores child-only disposal','runtime/core.bend','O.Enter{id, self, False{}}','O.Enter{id, True{}, False{}}','tests/direct-owners.mjs','disposeRootValue'],
+  ['owner creation schedules reactive work','runtime/owner-state.bend','+w = R.World.with_nodes(w, B.append(R.Node, R.World.nodes(w), [n]))','+w = B.schedule(R.World.with_nodes(w, B.append(R.Node, R.World.nodes(w), [n])))','tests/direct-owners.mjs','createOwner'],
+
   ['call vectors reverse their values','runtime/core.bend','List.reverse(&2, R.Value, reversed)','reversed','tests/argument-vectors.mjs','invokeManyArguments'],
   ['call vectors skip argument expression effects','runtime/core.bend','Evaluate{head, previous}','Evaluate{R.Literal{R.Undefined{}}, previous}','tests/argument-vectors.mjs','invokeManyArguments'],
   ['vector callback return loses higher parameters','runtime/core.bend','R.CallbackReturn{Z.bindMany(expr, args)}','R.CallbackReturn{Z.bind(expr, B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{}))}','tests/argument-vectors.mjs','bindCallAction'],

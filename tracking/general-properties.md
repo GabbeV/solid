@@ -374,3 +374,14 @@ the real ninth value and the action Promise's fulfilled result through the actua
 public evaluator. These are not arbitrary callback/generator termination or
 formal JavaScript equivalence results. The source-alignment and finite evidence
 boundary is in [argument-vectors.md](argument-vectors.md).
+
+## Direct owner frame and lifecycle properties
+
+`proof/direct-owner-laws.bend` proves the actual expression's ambient-parent entry,
+child-link and constructor preservation of the eight-field ambient snapshot, and
+root-method self-flag forwarding under an explicit root-kind premise. These
+quantify arbitrary represented surrounding state; they do not assert graph
+validity or progress for malformed arenas. One complete public execution checks
+child-only teardown, reuse, final disposal and exact cleanup order. No source
+algorithm or kernel budget was changed. See [direct-owners.md](direct-owners.md)
+for native controls and the remaining ID/reflection/active-scope boundaries.

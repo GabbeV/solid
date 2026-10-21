@@ -52,3 +52,9 @@ Function-initializer signals, escaping memo accessors, arbitrary functions,
 teardown expression suspension, arbitrary callbacks and active context-provider /
 boundary / lane / snapshot scopes remain unfinished. The deviation register is
 unchanged and empty; both upstream counterexamples remain baseline-preserved.
+
+The direct production `createOwner` entry now returns a fresh owner without
+entering it. Its method accepts the represented boolean self flag, including
+children-only teardown/reuse. The existing initializer disposer remains bound to
+self=true. See [direct-owners.md](direct-owners.md) for 25 paired histories, four
+quantified frame/entry properties, one complete lifecycle execution and limits.

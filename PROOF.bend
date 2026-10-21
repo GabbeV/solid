@@ -1,4 +1,5 @@
 import Base
+import ./proof/direct-owner-laws.bend as DirectOwners
 import ./proof/argument-vector-laws.bend as ArgumentVectors
 import ./proof/chain-setter.bend as ChainSetter
 import ./proof/chain-public-program.bend as ChainPublic
@@ -474,3 +475,18 @@ def Laws.nine_argument_callback_returns_its_last_parameter():
 
 def Laws.nine_argument_action_fulfills_with_its_last_parameter():
   ArgumentVectors.action_complete()
+
+def Laws.direct_owner_uses_ambient_parent(w, rest, stack, transparent, previous):
+  DirectOwners.entry(w, rest, stack, transparent, previous)
+
+def Laws.owner_linking_preserves_ambient_state(w, parent, id):
+  DirectOwners.link_ambient(w, parent, id)
+
+def Laws.owner_constructor_preserves_ambient_state(w, parent, transparent):
+  DirectOwners.creation_ambient(w, parent, transparent)
+
+def Laws.owner_dispose_method_forwards_self_flag(w, rest, stack, id, self, root):
+  DirectOwners.disposal(w, rest, stack, id, self, root)
+
+def Laws.direct_owner_can_clear_reuse_and_dispose():
+  DirectOwners.lifecycle_complete()

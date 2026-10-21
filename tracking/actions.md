@@ -112,7 +112,8 @@ therefore have distinct invocation state and argument captures. No new scheduler
 owner scope or transaction-sharing policy was introduced. `onCleanup` also invokes
 the function through the shared callback driver and ignores its Promise return.
 
-The typed ABI admits at most two invocation arguments. `ActionParameter(depth,
+At the reusable-wrapper checkpoint the typed ABI admitted two invocation
+arguments; the variable-arity extension below removes that cap. `ActionParameter(depth,
 index)` captures them independently of `Argument(index)`, which belongs to the
 generator method's resume value/rejection flag. Depth zero selects the invoked
 action's parameters. A nested `ActionCreate` shadows depth zero while explicit

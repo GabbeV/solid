@@ -164,7 +164,8 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
     return R.memoRead(expression(e.memoRead,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
   }
   if (e.root) return R.rootScope(expression(e.root,ids,programs,futures,encodeValue,contexts),e.transparent??false);
-  if (e.disposeRoot) return R.disposeRoot(expression(e.disposeRoot,ids,programs,futures,encodeValue,contexts));
+  if (e.createOwner) return R.ownerCreate(e.createOwner.transparent??false);
+  if (e.disposeRoot) return R.disposeRootWithSelf(expression(e.disposeRoot,ids,programs,futures,encodeValue,contexts),e.self??true);
   if (e.disposed) return R.ownerDisposed(expression(e.disposed,ids,programs,futures,encodeValue,contexts));
   if (e.withOwner) return R.withOwner(...e.withOwner.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
   if (e.add) return R.add(...e.add.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));

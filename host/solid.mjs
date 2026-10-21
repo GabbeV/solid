@@ -171,7 +171,8 @@ export class SolidRuntime {
       this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
     }
     if(e.root)return this.S.createRoot(dispose=>{const owner=this.S.getOwner();this.ownerObjects.add(owner);this.rootDisposers.set(dispose,owner);return this.evaluate(e.root,prev,[dispose],locals);},{transparent:e.transparent??false});
-    if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev,values,locals).dispose();
+    if(e.createOwner){const owner=this.S.createOwner({transparent:e.createOwner.transparent??false});this.ownerObjects.add(owner);return owner;}
+    if(e.disposeRoot)return this.evaluate(e.disposeRoot,prev,values,locals).dispose(e.self??true);
     if(e.disposed)return this.S.isDisposed(this.evaluate(e.disposed,prev,values,locals));
     if(e.withOwner)return this.S.runWithOwner(this.evaluate(e.withOwner[0],prev,values,locals),()=>this.evaluate(e.withOwner[1],prev,values,locals));
     if(e.future)return this.futures[e.future].object;

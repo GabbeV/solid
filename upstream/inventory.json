@@ -17424,7 +17424,7 @@
           "mapping": {
             "bend": "runtime/core.bend:disposeRoot, disposeRootValue; runtime/owner.bend:disposeChildren; runtime/core.bend:invoke, invokeValue; runtime/api.bend:invokeRootDisposer",
             "status": "restricted",
-            "restrictions": "Typed root method receiver or init-bound disposer, self=true. The receiver is retained independently of ambient context. Arbitrary function binding/properties and explicit self=false invocation outside the grammar."
+            "restrictions": "Typed root receiver and boolean self argument (default true) use the existing owner teardown driver. self=false clears children/cleanup while retaining the live owner. The receiver is independent of ambient context. createRoot init binds self=true permanently, so its disposer still ignores call arguments. Arbitrary function binding/properties and non-boolean self coercions are outside the grammar. See tracking/direct-owners.md."
           }
         },
         {
@@ -17434,9 +17434,9 @@
           "sha256": "04269a8146cb5a128073311a214670a520bb24b1afbde4e9af532d27c8da80df",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/owner-state.bend:createOwner; runtime/construct.bend:createOwner",
+            "bend": "runtime/owner-state.bend:createOwner; runtime/construct.bend:createOwner; runtime/construct-state.bend:createOwner; runtime/core.bend:evaluate OwnerCreate; runtime/api.bend:ownerCreate",
             "status": "partial",
-            "restrictions": "Separate production root literal, inherited context-record identity, parentComputed forwarding and child linking. Callback-based roots bind their actual disposer; selected owner/context operations execute. Hydration IDs, arbitrary root properties and dev/observe hooks unfinished."
+            "restrictions": "Separate production root literal, inherited context-record identity, parentComputed forwarding and child linking. Callback-based roots bind their actual disposer; selected owner/context operations execute. Hydration IDs, arbitrary root properties and dev/observe hooks unfinished. Direct ambient-parent entry returns the owner without entering a scope. Transparent, detached/computed parent, context-snapshot and no-schedule controls; four quantified frame/entry properties and one complete owner-reuse fixture. See tracking/direct-owners.md."
           }
         },
         {
