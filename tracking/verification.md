@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 134 isolated source-changing copies: 132 are rejected by
-  differential assertions and two by quantified kernel properties. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 135 isolated source-changing copies: 132 are rejected by
+  differential assertions and three by quantified kernel properties. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -102,3 +102,8 @@ Custom comparator evidence also includes five quantified local laws for fast-pat
 selection, exact callback arguments, NotReady/error handling and registry-only
 metadata changes. See [comparators.md](comparators.md) for representation,
 call-site coverage, default-only internal facades and remaining closure limits.
+
+Three additional quantified staging properties cover recompute's changed,
+non-creation, non-effect helper, exact pending-slot preservation, and its complete
+no-subscriber memo arm. They retain the committed value until the seam; the
+source runtime is unchanged. See [general-properties.md](general-properties.md).

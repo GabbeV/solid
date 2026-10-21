@@ -32,6 +32,7 @@ import ./runtime/status.bend as Status
 import ./proof/settled.bend as Settled
 import ./proof/reactions.bend as Reactions
 import ./proof/publication.bend as Publication
+import ./proof/publication-stage.bend as StagePublication
 import ./proof/read-policy.bend as ReadPolicy
 import ./proof/signal-staging.bend as SignalStaging
 import ./proof/signal-driver.bend as SignalDriver
@@ -466,3 +467,34 @@ law comparator_registration_preserves_graph:
   for id: Nat
   for callback: Nat
   {R.World.with_comparators(Equality.register(w, id, callback), R.World.comparators(w)) == w : R.World}
+
+
+law changed_memo_stages_then_notifies:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +height: Nat
+  for +joined: Bool
+  for nonEffect: {B.effect(R.Node.kind(B.node(w, id))) == False{} : Bool}
+  {Core.publishValueChanged(w, id, value, False{}, height, joined, True{})
+    == StagePublication.stagedAndNotify(w, id, value, R.Node.subs(B.node(w, id))) : B.Bundle<R.World, Bool>}
+
+law pending_stage_preserves_other_fields:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +value: R.Value
+  {StagePublication.staged(Arena.arena(w, prefix, node, suffix), B.length(R.Node, prefix), value)
+    == Arena.arena(w, prefix, R.Node.with_pending(node, R.Present{value}), suffix) : R.World}
+
+law changed_unobserved_memo_preserves_committed_world:
+  for +w: R.World
+  for +prefix: List<&2, R.Node>
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +value: R.Value
+  for height: Nat
+  for joined: Bool
+  {Core.publishValueChanged(Arena.arena(w, prefix, StagePublication.memoShape(node), suffix), B.length(R.Node, prefix), value, False{}, height, joined, True{})
+    == B.Bundle{Arena.arena(w, prefix, R.Node.with_pending(StagePublication.memoShape(node), R.Present{value}), suffix), True{}} : B.Bundle<R.World, Bool>}

@@ -4,6 +4,7 @@ import ./proof/flush-callbacks.bend as FlushCallbacks
 import ./proof/comparators.bend as Comparators
 import ./proof/paths.bend as Paths
 import ./proof/publication.bend as Publication
+import ./proof/publication-stage.bend as StagePublication
 import ./proof/read-policy.bend as ReadPolicy
 import ./proof/signal-staging.bend as SignalStaging
 import ./proof/question.bend as Question
@@ -294,3 +295,13 @@ def Laws.comparator_error_routes_status(w, rest, saved, id, error, known):
 
 def Laws.comparator_registration_preserves_graph(w, id, callback):
   Comparators.registry_preserves_world(w, id, callback)
+
+
+def Laws.changed_memo_stages_then_notifies(w, id, value, height, joined, nonEffect):
+  StagePublication.memo_change(w, id, value, height, joined, nonEffect)
+
+def Laws.pending_stage_preserves_other_fields(w, prefix, node, suffix, value):
+  StagePublication.stage_store(w, prefix, node, suffix, value)
+
+def Laws.changed_unobserved_memo_preserves_committed_world(w, prefix, node, suffix, value, height, joined):
+  StagePublication.unobserved_memo_stages_without_committing(w, prefix, node, suffix, value, height, joined)

@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["memo change overwrites committed value before the seam","runtime/core.bend","R.Node.with_pending(B.node(w, id), R.Present{value})","R.Node.with_value(B.node(w, id), value)","tests/proof-properties.mjs","publishValueChanged"],
   ["signal loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","signal"],
   ["computed loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","computed"],
   ["custom comparator swaps old and new","runtime/core.bend","R.CallWith{callback, R.Literal{a}, R.Literal{b}}","R.CallWith{callback, R.Literal{b}, R.Literal{a}}","tests/comparator-alignment.mjs","isSame"],

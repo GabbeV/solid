@@ -112,3 +112,24 @@ premises select the source arm. Four additional closed public executions cover
 suppression, changed publication, ordinary errors and pending reads. These are
 local semantic guarantees and fixed-program regressions, not general comparator
 termination or graph correctness.
+
+## Staging a changed memo
+
+[publication-stage.bend](../proof/publication-stage.bend) adds three quantified
+properties at recompute's actual publishValueChanged helper, complementing the
+commitValue properties. After a successful equality gate, an existing non-effect
+stages its proposal and then conditionally calls the actual subscriber notifier;
+it does not use the direct creation/effect arm. The isolated pending-slot store
+preserves every other World/node field at any existing arena position. For a
+memo with no subscribers, the complete helper therefore updates exactly that
+pending slot, preserving the old committed value and the entire remaining World.
+
+Worlds, arena prefixes/suffixes, payloads, old heights and joined flags are
+quantified. memoShape explicitly fixes Memo kind and a null subscriber head;
+it does not claim arbitrary well-formedness. The changed flag is the caller's
+successful gate, and create is false: this is not a proof of comparator policy,
+all recompute paths, notification correctness or eventual commit. The proof-only
+loaded form names the original effect/subscriber locals and is checked against
+the actual runtime helper. No runtime operation was changed to obtain this proof.
+A compiled mutation that overwrites the committed value instead of staging is
+rejected by the quantified kernel checks.

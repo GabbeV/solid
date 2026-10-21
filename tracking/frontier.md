@@ -2,7 +2,7 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2546 differential histories, 134 rejected compiled mutations,
+Current verification: 2546 differential histories, 135 rejected compiled mutations,
 and 62 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -30,6 +30,13 @@ public histories, eight native scheduling-IO controls, two closed execution laws
 and three quantified entry/finally properties. Public actions remain unfinished.
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
 open and tracked; its change is not applied to the active source pin.
+
+## Memo staging proof milestone
+
+Three [general staging properties](general-properties.md#staging-a-changed-memo)
+now cover the actual successful memo publication helper: stage before notifying,
+exact preservation by the pending-slot store, and the full no-subscriber arm.
+They complement the existing commit proofs and preserve the runtime unchanged.
 
 ## General semantic proof milestone
 
