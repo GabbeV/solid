@@ -1,6 +1,7 @@
 import Base
 import ./LAWS.bend as Laws
 import ./proof/flush-callbacks.bend as FlushCallbacks
+import ./proof/comparators.bend as Comparators
 import ./proof/paths.bend as Paths
 import ./proof/publication.bend as Publication
 import ./proof/read-policy.bend as ReadPolicy
@@ -265,3 +266,31 @@ def Laws.flush_finally_restores_depth_and_operands(w, depth, rest, saved, fault)
 
 def Laws.throwing_flush_callback_still_drains(w, rest, partial, saved, error):
   FlushCallbacks.thrown_drains(w, rest, partial, saved, error)
+
+
+def Laws.custom_comparator_suppresses_publication():
+  Comparators.equal_case()
+
+def Laws.custom_comparator_publishes_change():
+  Comparators.changed_case()
+
+def Laws.comparator_error_is_node_status():
+  Comparators.error_case()
+
+def Laws.pending_comparator_read_means_changed():
+  Comparators.pending_case()
+
+def Laws.default_comparator_keeps_fast_path(w, rest, stack, id, a, b, known):
+  Comparators.default_fast(w, rest, stack, id, a, b, known)
+
+def Laws.custom_comparator_preserves_call_arguments(w, rest, stack, id, a, b, callback, known):
+  Comparators.custom_call(w, rest, stack, id, a, b, callback, known)
+
+def Laws.comparator_not_ready_returns_undefined(w, rest, saved, id, identity, source):
+  Comparators.not_ready(w, rest, saved, id, identity, source)
+
+def Laws.comparator_error_routes_status(w, rest, saved, id, error, known):
+  Comparators.ordinary_error(w, rest, saved, id, error, known)
+
+def Laws.comparator_registration_preserves_graph(w, id, callback):
+  Comparators.registry_preserves_world(w, id, callback)

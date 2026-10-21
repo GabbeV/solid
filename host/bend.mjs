@@ -176,8 +176,10 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
 }
 function nodeOptions(options={},programs={},encodeValue=encode) {
   const {equals=true,transparent=false,ownedWrite=false,lazy=false,sync=false,noSnapshot=false}=options;
-  return R.nodeOptions(equals,transparent,ownedWrite,lazy,sync,noSnapshot,
-    Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0);
+  const callback=equals&&typeof equals==='object'?equals.callback:undefined;
+  if(callback!==undefined&&programs.teardownActions)requireFunctionProgram(programs.teardownActions,callback);
+  return R.nodeComparator(R.nodeOptions(equals!==false,transparent,ownedWrite,lazy,sync,noSnapshot,
+    Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0),callback===undefined?0:programs[callback]);
 }
 export class BendRuntime {
   constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,first,second)=>this.evaluate({call:this.programNames.get(id),args:[{lit:first},{lit:second}]})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }

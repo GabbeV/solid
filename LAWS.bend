@@ -24,6 +24,11 @@ import ./proof/setter-cleanup.bend as SetterCleanup
 import ./proof/getter-cleanup.bend as GetterCleanup
 import ./proof/tracked-effects.bend as TrackedEffects
 import ./proof/flush-callbacks.bend as FlushCallbacks
+import ./proof/comparators.bend as Comparators
+import ./runtime/equality.bend as Equality
+import ./runtime/constants.bend as K
+import ./runtime/pending-state.bend as PendingState
+import ./runtime/status.bend as Status
 import ./proof/settled.bend as Settled
 import ./proof/reactions.bend as Reactions
 import ./proof/publication.bend as Publication
@@ -401,3 +406,63 @@ law throwing_flush_callback_still_drains:
   for +error: R.Value
   {Core.flushCallbackFinally(R.World.with_fault(w, R.CallbackThrown{error}), rest, partial, saved)
     == Core.publicFlush(R.World.with_fault(w, R.Healthy{}), Core.FlushCallbackRestore{R.CallbackThrown{error}, saved} <> rest, saved) : Core.Machine}
+
+
+law custom_comparator_suppresses_publication:
+  {Comparators.verdict(True{}) == Comparators.expectedVerdict(0n) : Comparators.View}
+
+law custom_comparator_publishes_change:
+  {Comparators.verdict(False{}) == Comparators.expectedVerdict(1n) : Comparators.View}
+
+law comparator_error_is_node_status:
+  {Comparators.caught_error() == Comparators.expectedError() : Comparators.View}
+
+law pending_comparator_read_means_changed:
+  {Comparators.pending_read() == Comparators.expectedVerdict(1n) : Comparators.View}
+
+law default_comparator_keeps_fast_path:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +a: R.Value
+  for +b: R.Value
+  for known: {Equality.custom(w, id) == 0n : Nat}
+  {Core.isSame(w, rest, stack, id, a, b) == Core.Machine{w, rest, R.Boolean{Equality.isSame(w, id, a, b)} <> stack} : Core.Machine}
+
+law custom_comparator_preserves_call_arguments:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +a: R.Value
+  for +b: R.Value
+  for +callback: Nat
+  for known: {Equality.custom(w, id) == 1n+callback : Nat}
+  {Core.isSame(w, rest, stack, id, a, b) == Core.Machine{w, Core.Evaluate{R.CallWith{1n+callback, R.Literal{a}, R.Literal{b}}, R.Undefined{}} <> Core.EqualityCatch{id, stack} <> rest, stack} : Core.Machine}
+
+law comparator_not_ready_returns_undefined:
+  for +w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  for id: Nat
+  for identity: Nat
+  for source: Nat
+  {Core.equalityCatch(w, rest, saved, id, R.CallbackThrown{R.NotReadyFailure{identity, source}})
+    == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, R.Undefined{} <> saved} : Core.Machine}
+
+law comparator_error_routes_status:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for +id: Nat
+  for +error: R.Value
+  for known: {PendingState.isNotReady(error) == False{} : Bool}
+  {Core.equalityCatch(w, rest, saved, id, R.CallbackThrown{error})
+    == Core.Machine{Status.notifyStatusWith(R.World.with_fault(w, R.Healthy{}), id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved} : Core.Machine}
+
+law comparator_registration_preserves_graph:
+  for +w: R.World
+  for id: Nat
+  for callback: Nat
+  {R.World.with_comparators(Equality.register(w, id, callback), R.World.comparators(w)) == w : R.World}

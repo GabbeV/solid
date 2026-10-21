@@ -247,3 +247,9 @@ array duplicates and live bounds are retained. PassFrame.released captures each
 pass's array; the prior active handle restores only after successful pre-body
 teardown, matching Source. PassReleases resumes callbacks through the existing
 core machine after context restoration. See [the pin review](reviews/solid-71153bf0.md).
+
+Custom `_equals` function identity is represented by Node.equals (default/disabled)
+and the immutable World.comparators program-ID registry. This side metadata does
+not allocate NodeExtension or participate in node/edge identity. See
+[comparators.md](comparators.md); registry restoration is proved to preserve the
+entire original World.

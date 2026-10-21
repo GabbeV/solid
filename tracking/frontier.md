@@ -2,8 +2,8 @@
 
 This is an incremental executable translation, not a completed package port.
 
-Current verification: 2412 differential histories, 124 rejected compiled mutations,
-and 58 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2546 differential histories, 134 rejected compiled mutations,
+and 62 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -12,6 +12,14 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Custom comparator milestone
+
+[Custom comparator programs](comparators.md) now execute at all active source
+call sites, including pending/error handling, async results, held seams and
+setter cleanups. The milestone adds 134 public histories, 46 direct native helper
+comparisons, four closed execution laws and five quantified local helper laws.
+Arbitrary closure environments and active scope engines remain unfinished.
 
 ## Flush callback milestone
 
@@ -54,7 +62,7 @@ function. The milestone adds 66 expression histories and 12 original function
 histories, two positive concrete laws and one negative pending-arm counterexample.
 [The new source bug](upstream/reaction-pending-rearm.md) is an uncovered pending
 case of #2861, reproduced in Chromium on current next; no workaround is applied.
-Richer callable closures, custom comparators and active lanes/boundaries remain
+Richer callable closures and active lanes/boundaries remain
 unfinished.
 
 ## Current source update
@@ -82,7 +90,7 @@ proof. Earlier staged progress sections below describe the historical boundary.
 Direct bound getters now register and return as cleanup functions through the
 same read driver. [The getter review](getter-cleanup.md) records 54 new histories,
 canonical owner/effect aliases, a concrete law and native trace limits.
-Remaining callable work includes arbitrary callable initializers and richer closures; custom comparators and
+Remaining callable work includes arbitrary callable initializers and richer closures; arbitrary comparator closures and
 active boundary/lane/store engines remain outside this profile. PR #4176 is
 open; its proposed source fix is not silently applied to Bend.
 
@@ -126,8 +134,9 @@ proof credit was imported.
   execute through core catches/reads. Mainline transactions join, merge, park,
   judge blockers and land through the same flush. Typed promise-like programs now execute registration and callback delivery.
   Typed iterator consumption/flattening executes; active boundary/lane scopes remain unfinished.
-- Default strict equality and `equals:false`; arbitrary/throwing comparators are
-  open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
+- Default strict equality, `equals:false` and named custom comparator programs
+  execute; see [comparators.md](comparators.md). Arbitrary comparator closures
+  remain open. No equality-equivalence axiom is assumed. NaN is nonreflexive.
 - Payloads distinguish absent staging, undefined, null, booleans, naturals, NaN,
   text, and opaque reference identities. Reference tokens must preserve host
   identity. Signed zero has strict-equality semantics. General binary64 numeric
@@ -341,7 +350,7 @@ manual previous-value rederivation and the preserved held-function counterexampl
 Constructor comparisons total 10,752. See [writable-signals.md](writable-signals.md).
 The next callback dependencies are arbitrary callable initializers and expression
 reads in teardown callbacks. General closures/functions, general
-returned cleanup closures, custom comparators and active boundary/lane/
+returned cleanup closures, arbitrary comparator closures and active boundary/lane/
 snapshot/truth/action engines remain unfinished. Missing operations are explicit
 port limits, not source bugs or unregistered semantic repairs.
 

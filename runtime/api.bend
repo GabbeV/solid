@@ -88,7 +88,7 @@ def trackedCreate(body: R.Expr) -> R.Expr:
 # Presence of loadingValue is independent from its payload being undefined.
 def nodeOptions(equals: Bool, transparent: Bool, ownedWrite: Bool, lazy: Bool, sync: Bool, noSnapshot: Bool, loadingPresent: Bool, loadingValue: R.Value, unobserved: Nat) -> R.NodeOptions:
   R.NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, 0,
-    B.choose(~R.Slot, loadingPresent, _ => R.Present{loadingValue}, _ => R.Empty{}), unobserved}
+    B.choose(~R.Slot, loadingPresent, _ => R.Present{loadingValue}, _ => R.Empty{}), unobserved, 0n}
 
 def read(fuel: Nat, w: R.World, id: Nat) -> C.Machine:
   C.run(fuel, C.Machine{w, [C.ReadNode{id}], []})
@@ -536,3 +536,12 @@ def flushValue(callee: R.Expr) -> R.Expr:
 
 def flushNow() -> R.Expr:
   R.FlushNow{}
+
+# Custom _equals function identity, encoded using the existing program arena.
+def nodeComparator(options: R.NodeOptions, callback: Nat) -> R.NodeOptions:
+  R.NodeOptions.with_comparator(options, callback)
+
+# core.ts:isSame entry for direct source-helper comparisons. Public setters,
+# recomputes, async landings and held seams use this same core implementation.
+def compareValues(fuel: Nat, w: R.World, id: Nat, a: R.Value, b: R.Value) -> C.Machine:
+  C.run(fuel, C.isSame(w, [], [], id, a, b))

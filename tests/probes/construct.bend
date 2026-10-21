@@ -13,7 +13,7 @@ def options(+bits: U32, +load: U32, unobserved: Bool) -> R.NodeOptions:
     B.has(bits, 4), B.has(bits, 8), B.has(bits, 16), K.CONFIG_FRESH_READ(),
     B.choose(~R.Slot, U32.is_eq(load, 0), _ => R.Empty{},
       _ => R.Present{B.choose(~R.Value, U32.is_eq(load, 1), _ => R.Number{5n}, _ => R.Undefined{})}),
-    B.choose(~Nat, unobserved, _ => 1n, _ => 0n)}
+    B.choose(~Nat, unobserved, _ => 1n, _ => 0n), 0n}
 
 def parents() -> R.World:
   +w = N.createOwner(B.empty(), 0n, False{})

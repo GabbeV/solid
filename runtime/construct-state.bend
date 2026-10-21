@@ -7,12 +7,13 @@ import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./constants.bend as K
+import ./equality.bend as EQ
 import ./extension.bend as E
 import ./owner.bend as O
 import ./owner-state.bend as V
 
 def defaults() -> R.NodeOptions:
-  R.NodeOptions{True{}, False{}, False{}, False{}, False{}, False{}, 0, R.Empty{}, 0n}
+  R.NodeOptions{True{}, False{}, False{}, False{}, False{}, False{}, 0, R.Empty{}, 0n, 0n}
 
 def bit(enabled: Bool, value: U32) -> U32:
   B.choose(~U32, enabled, _ => value, _ => 0)
@@ -35,7 +36,7 @@ def signal(+w: R.World, value: R.Value, +options: R.NodeOptions) -> R.World:
     0, 0, R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     0n, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
     0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
-  installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
+  installUnobserved(EQ.register(append(w, n), id, R.NodeOptions.comparator(options)), id, R.NodeOptions.unobserved(options))
 
 # Shared literal; callback-based roots also allocate through this definition.
 def createOwner(w: R.World, parent: Nat, transparent: Bool) -> R.World:
@@ -67,7 +68,7 @@ def computed(+w: R.World, expr: R.Expr, +options: R.NodeOptions, +parent: Nat) -
     R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     parent, 0n, 0n, 0n, expr, False{}, R.Undefined{}, 0n, loading,
     0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
-  +w = installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
+  +w = installUnobserved(EQ.register(append(w, n), id, R.NodeOptions.comparator(options)), id, R.NodeOptions.unobserved(options))
   setupComputedNode(w, id)
 
 # core/core.ts:createEffectNode production literal. Loading, equals, lazy,

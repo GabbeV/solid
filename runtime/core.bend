@@ -61,6 +61,9 @@ type Task is Data:
   Evaluate{expr: R.Expr, previous: R.Value}
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
+  EqualityCatch{id: Nat, saved: List<&2, R.Value>}
+  SetSignalCompared{id: Nat, value: R.Value}
+  PublishCompared{id: Nat, value: R.Value, create: Bool, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool}
   Invoke{}
   InvokeArgument{value: R.Expr, updater: Bool, previous: R.Value}
   InvokeApplied{callee: R.Value}
@@ -142,6 +145,7 @@ type Task is Data:
   AsyncFulfill{observer: Nat, value: R.Value}
   AsyncReject{observer: Nat, error: R.Value}
   AsyncFlush{}
+  AsyncWriteAfterSetter{id: Nat, then: List<&2, Task>}
   AsyncWriteAfterTrim{id: Nat}
   AsyncWriteSchedule{}
   ErrorAfterStage{id: Nat, error: R.Value}
@@ -173,6 +177,9 @@ type Task is Data:
   Round{}
   HeapLoop{}
   Seam{}
+  ParkIntake{transaction: Nat, index: Nat, count: Nat}
+  ParkCompared{node: Nat, transaction: Nat, index: Nat, count: Nat}
+  AfterPark{transaction: Nat}
   Settle{}
   AfterSettle{}
   LandTransactions{frame: SeamFrame, remaining: Nat}
@@ -253,6 +260,38 @@ def inlineProgram(+w: R.World, body: R.InlineBody, program: Nat) -> B.Bundle<R.W
       action = B.choose(~R.CleanupAction, returnsCleanup, _ => R.CallbackReturn{expr}, _ => R.CallbackEvaluate{expr})
       w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[action], returnsCleanup}]))
       B.Bundle{w, id}
+
+# core.ts:isSame. Custom functions keep their original program identity and
+# execute in the existing ambient scope with actual (a,b) arguments.
+def isSame(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +a: R.Value, +b: R.Value) -> Machine:
+  +callback = EQ.custom(w, id)
+  B.choose(~Machine, Nat.is_eq(callback, 0n),
+    _ => Machine{w, rest, R.Boolean{EQ.isSame(w, id, a, b)} <> stack},
+    _ => Machine{w, Evaluate{R.CallWith{callback, R.Literal{a}, R.Literal{b}}, R.Undefined{}} <> EqualityCatch{id, stack} <> rest, stack})
+
+# The isSame catch contains ordinary throws in node status, answering true;
+# NotReady is ignored and answers undefined (falsy/change). A notifier throw
+# escapes this catch just as it does in Source's catch clause.
+def equalityCatch(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +id: Nat, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{+error}:
+      +w = R.World.with_fault(w, R.Healthy{})
+      B.choose(~Machine, P.isNotReady(error),
+        _ => Machine{w, rest, R.Undefined{} <> saved},
+        _ => Machine{A.notifyStatusWith(w, id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved})
+    case other:
+      Machine{w, rest, saved}
+
+# core.ts:setSignal following updater execution. The entry value is never
+# reloaded after a user callback. Default/disabled equality keeps its fast path.
+def setResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value) -> Machine:
+  B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
+    _ => Machine{W.setResolved(w, id, current, value), rest, value <> stack},
+    _ =>
+      +w = W.beforeCompare(w, id)
+      B.choose(~Machine, W.skipCompare(w, id),
+        _ => Machine{W.stageResolved(w, id, value), rest, value <> stack},
+        _ => isSame(w, SetSignalCompared{id, value} <> rest, stack, id, current, value)))
 
 # core.ts:setSignal's updater call, with the source currentValue captured
 # before evaluating the admitted function body. Every user updater entry shares
@@ -1044,11 +1083,9 @@ def bornHeld(+w: R.World, joined: Bool) -> Bool:
 def publicationTx(+w: R.World) -> Nat:
   B.choose(~Nat, Nat.is_ne(R.World.flushTransaction(w), 0n), _ => R.World.flushTransaction(w), _ => R.World.passTx(w))
 
-def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +joined: Bool) -> B.Bundle<R.World, Bool>:
+def publishValueChanged(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, joined: Bool, +changed: Bool) -> B.Bundle<R.World, Bool>:
   +n = B.node(w, id)
   +isEffect = B.effect(R.Node.kind(n))
-  +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
-    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(EQ.isSame(w, id, B.current(n), value))))
   +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
     _ =>
       +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
@@ -1068,6 +1105,13 @@ def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeig
     _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
       _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
   B.Bundle{w, changed}
+
+def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +joined: Bool) -> B.Bundle<R.World, Bool>:
+  +n = B.node(w, id)
+  +isEffect = B.effect(R.Node.kind(n))
+  +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
+    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(EQ.isSame(w, id, B.current(n), value))))
+  publishValueChanged(w, id, value, create, oldHeight, joined, changed)
 
 # recompute's queue decision is after its successful dependency trim callback.
 def queuePublication(+w: R.World, +id: Nat, create: Bool) -> R.World:
@@ -1093,19 +1137,32 @@ def finishPublication(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
     _ => Machine{w, ending, stack})
 
 
-def publishState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, value: R.Value, +create: Bool, oldHeight: Nat, wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, joined: Bool, stagedErr: Bool) -> Machine:
-  errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
-  B.choose(~Machine, errored, _ => Machine{w, rest, stack},
+def publicationCompleted(+rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +pair: B.Bundle<R.World, Bool>) -> Machine:
+  +w = B.first(R.World, Bool, pair)
+  +changed = B.second(R.World, Bool, pair)
+  +ending = {PublishSettleSelf{id, wasPendingSource} <> rest : List<&2, Task>}
+  B.choose(~Machine, Bool.and(Bool.not(changed), Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))),
     _ =>
-      +pair = publishValue(w, id, value, create, oldHeight, wasUninitialized, joined)
-      +w = B.first(R.World, Bool, pair)
-      +changed = B.second(R.World, Bool, pair)
-      +ending = {PublishSettleSelf{id, wasPendingSource} <> rest : List<&2, Task>}
-      B.choose(~Machine, Bool.and(Bool.not(changed), Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))),
-        _ =>
-          +w = B.choose(~R.World, B.equal(outgoing, R.Undefined{}), _ => w, _ => A.settleErroredDependents(w, id, outgoing))
-          retireOutgoing(w, ending, stack, id, outgoingSources, False{}),
-        _ => Machine{w, ending, stack}))
+      +w = B.choose(~R.World, B.equal(outgoing, R.Undefined{}), _ => w, _ => A.settleErroredDependents(w, id, outgoing))
+      retireOutgoing(w, ending, stack, id, outgoingSources, False{}),
+    _ => Machine{w, ending, stack})
+
+# Equality can read/write/throw before any publication stores. Preserve the
+# recompute's captured value/height/outgoing locals across that callback.
+def publishCompared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, value: R.Value, create: Bool, oldHeight: Nat, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, joined: Bool, changed: Bool) -> Machine:
+  # Source's errored local was captured before the comparator; do not re-test
+  # the live error here. A caught comparator answers same, then height/self
+  # settlement still follows the original successful-body branch.
+  publicationCompleted(rest, stack, id, outgoing, outgoingSources, wasPendingSource, publishValueChanged(w, id, value, create, oldHeight, joined, changed))
+
+def publishState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, +wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, +stagedErr: Bool) -> Machine:
+  +errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
+  B.choose(~Machine, errored, _ => Machine{w, rest, stack},
+    _ => B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
+      _ => publicationCompleted(rest, stack, id, outgoing, outgoingSources, wasPendingSource, publishValue(w, id, value, create, oldHeight, wasUninitialized, joined)),
+      _ => B.choose(~Machine, Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), wasUninitialized), B.truth(R.NodeExtension.shownError(B.extension(w, id)))),
+        _ => publishCompared(w, rest, stack, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, True{}),
+        _ => isSame(w, PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr} <> rest, stack, id, B.current(B.node(w, id)), value))))
 
 # recompute's finally is shared by normal return and exceptional unwind.
 def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool, stale: Bool) -> R.World:
@@ -1428,16 +1485,26 @@ def afterConsume(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +
 
 # async.ts:asyncWrite. The optional `then` callback runs only after
 # trim, pending-source release, schedule and the synchronous flush.
-def asyncWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, result: Nat, value: R.Value, then: List<&2, Task>) -> Machine:
-  +pair = F.beginAsyncWrite(w, id, result, value)
-  +w = B.first(R.World, Bool, pair)
-  B.choose(~Machine, B.second(R.World, Bool, pair),
+def asyncWriteAfterValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, then: List<&2, Task>) -> Machine:
+  +ending = {AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> AsyncFlush{} <> B.append(Task, then, rest) : List<&2, Task>}
+  B.choose(~Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
+    _ => Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), OwnerTasks{[O.TrimDeps{id}]} <> ending, stack},
+    _ => Machine{w, ending, stack})
+
+# The default facade and custom call share source before/after-write segments.
+def asyncWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +value: R.Value, +then: List<&2, Task>) -> Machine:
+  B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
     _ =>
-      +ending = {AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> AsyncFlush{} <> B.append(Task, then, rest) : List<&2, Task>}
-      B.choose(~Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
-        _ => Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), OwnerTasks{[O.TrimDeps{id}]} <> ending, stack},
-        _ => Machine{w, ending, stack}),
-    _ => Machine{w, rest, stack})
+      +pair = F.beginAsyncWrite(w, id, result, value)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~Machine, B.second(R.World, Bool, pair),
+        _ => asyncWriteAfterValue(w, rest, stack, id, then), _ => Machine{w, rest, stack}),
+    _ =>
+      +pair = F.prepareAsyncWrite(w, id, result)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~Machine, B.second(R.World, Bool, pair),
+        _ => setResolved(w, Discard{} <> AsyncWriteAfterSetter{id, then} <> rest, stack, id, B.current(B.node(w, id)), value),
+        _ => Machine{w, rest, stack}))
 
 def stepDone(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +stream: Nat) -> Machine:
   +s = B.stream(w, stream)
@@ -1734,6 +1801,20 @@ def finishSettleIntake(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Valu
   +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
   Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
 
+def parkIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t: Nat, +index: Nat, +count: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, count), _ => Machine{w, rest, stack},
+    _ =>
+      +id = B.get(Nat, R.World.pendingNodes(w), index, 0n)
+      +ending = {ParkIntake{t, 1n+index, count} <> rest : List<&2, Task>}
+      B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
+        _ => Machine{S.parkPendingNode(w, id, t), ending, stack},
+        _ =>
+          +eligible = S.parkEligible(w, id)
+          B.choose(~Machine, Bool.and(eligible, S.parkLoading(w, id)), _ => Machine{w, ending, stack},
+            _ => B.choose(~Machine, Bool.and(eligible, S.parkCanCompare(w, id)),
+              _ => isSame(w, ParkCompared{id, t, index, count} <> rest, stack, id, R.Node.value(B.node(w, id)), B.current(B.node(w, id))),
+              _ => Machine{S.parkChanged(w, id, t, eligible), ending, stack}))))
+
 def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   +joined = R.World.flushTransaction(w)
   +w = R.World.with_flushTransaction(w, 0n)
@@ -1743,9 +1824,12 @@ def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -
   +t = B.second(R.World, Nat, pair)
   B.choose(~Machine, Nat.is_ne(t, 0n),
     _ =>
-      +w = S.parkPendingNodes(w, t)
-      w = B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w)
-      Machine{w, FinishSettleIntake{t} <> rest, stack},
+      B.choose(~Machine, List.is_empty(&2, R.ComparatorBinding, R.World.comparators(w)),
+        _ =>
+          +w = S.parkPendingNodes(w, t)
+          w = B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w)
+          Machine{w, FinishSettleIntake{t} <> rest, stack},
+        _ => Machine{w, ParkIntake{t, 0n, B.length(Nat, R.World.pendingNodes(w))} <> AfterPark{t} <> rest, stack}),
     _ => Machine{w, CommitIntake{0n} <> TrimIntake{0n} <> FinishSettleIntake{t} <> rest, stack})
 
 # Reverse scan restarts after each landing, since its commits can remove a
@@ -1855,6 +1939,13 @@ def ownerTasks(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, ta
       Machine{w, rest, stack}
     case O.Invoke{callback} <> tail:
       Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail} <> rest, stack}
+    case O.WriteValue{+id, current, value} <> tail:
+      setResolved(w, Discard{} <> OwnerTasks{tail} <> rest, stack, id, current, value)
+    case O.WriteForward{+id, value} <> tail:
+      +w = MW.recover(w, id)
+      setResolved(w, Discard{} <> OwnerTasks{tail} <> rest, stack, id, B.current(B.node(w, id)), value)
+    case O.Action{callback, R.CleanupBoundSetter{id}} <> tail:
+      Machine{w, setterTask(w, id) <> Discard{} <> OwnerTasks{tail} <> rest, R.Undefined{} <> stack}
     case other:
       ownerResume(rest, stack, O.dispatch(w, other))
 
@@ -1902,6 +1993,20 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       # Failed constructors never bind/return that setter function.
       +w = B.event(w, R.SetterBound{signal})
       Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case EqualityCatch{id, saved} <> rest:
+      Machine{w, rest, stack}
+    case SetSignalCompared{+id, +value} <> rest:
+      match stack:
+        case equal <> tail:
+          Machine{B.choose(~R.World, B.truth(equal), _ => w, _ => W.stageResolved(w, id, value)), rest, value <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr} <> rest:
+      match stack:
+        case equal <> tail:
+          publishCompared(w, rest, tail, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, Bool.not(B.truth(equal)))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case SetMemoArgument{+signal} <> +rest:
       match stack:
         case +value <> +tail:
@@ -1926,7 +2031,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case SetSignalResolved{signal, current} <> rest:
       match stack:
         case +value <> tail:
-          Machine{W.setResolved(w, signal, current, value), rest, value <> tail}
+          setResolved(w, rest, tail, signal, current, value)
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case CommitPending{id} <> rest:
@@ -2116,6 +2221,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case AsyncFlush{} <> +rest:
       B.choose(~Machine, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))),
         _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
+    case AsyncWriteAfterSetter{id, then} <> rest:
+      asyncWriteAfterValue(w, rest, stack, id, then)
     case AsyncWriteAfterTrim{+id} <> rest:
       pendingResume(rest, stack, Q.beginSettlement(w, id, id))
     case AsyncWriteSchedule{} <> rest:
@@ -2199,6 +2306,16 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       heapLoop(w, rest, stack)
     case Seam{} <> rest:
       Machine{w, Settle{} <> AfterSettle{} <> rest, stack}
+    case ParkIntake{t, index, count} <> rest:
+      parkIntake(w, rest, stack, t, index, count)
+    case ParkCompared{+id, +t, index, count} <> rest:
+      match stack:
+        case equal <> tail:
+          Machine{B.choose(~R.World, B.truth(equal), _ => S.parkEqual(w, id), _ => S.parkChanged(w, id, t, True{})), ParkIntake{t, 1n+index, count} <> rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case AfterPark{t} <> rest:
+      Machine{R.World.with_deferredZombies(R.World.with_pendingNodes(w, []), []), FinishSettleIntake{t} <> rest, stack}
     case Settle{} <> rest:
       beginSettle(w, rest, stack)
     case AfterSettle{} <> rest:
@@ -2240,6 +2357,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
   match tasks:
     case Nil{}:
       Machine{w, [], stack}
+    case EqualityCatch{id, saved} <> rest:
+      equalityCatch(w, rest, saved, id, R.World.fault(w))
     case WatchFinish{awaiter, saved} <> rest:
       watchCause(w, rest, saved, awaiter, R.World.fault(w))
     case ProtocolCatch{id, result, saved, successAuto, errorAuto} <> rest:

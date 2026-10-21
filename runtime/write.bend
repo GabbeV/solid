@@ -63,23 +63,34 @@ def insertSubs(+w: R.World, +id: Nat) -> R.World:
 # Source returns v even when equality suppresses the write.
 # core.ts:setSignal after invoking v(currentValue). currentValue is the
 # entry local, not a second slot read after an updater's reentrant writes.
-def setResolved(+w: R.World, +id: Nat, currentValue: R.Value, +value: R.Value) -> R.World:
-  +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w)
+# Source setSignal's held join is before the comparator, after the updater.
+def beforeCompare(+w: R.World, +id: Nat) -> R.World:
+  B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w)
+
+def skipCompare(+w: R.World, +id: Nat) -> Bool:
+  Bool.or(B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()), B.truth(R.NodeExtension.shownError(B.extension(w, id))))
+
+# Source stores after the verdict. Reload live fields here: a comparator can
+# write reentrantly. currentValue remains the setter's separate entry local.
+def stageResolved(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
   +n = B.node(w, id)
-  changed = Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),
-    Bool.not(EQ.isSame(w, id, currentValue, value))))
-  B.choose(~R.World, changed,
-    _ =>
-      +staged = B.present(R.Node.pending(n))
-      +w = B.choose(~R.World, staged,
-        _ => B.choose(~R.World, Bool.and(B.has(R.Node.config(n), K.CONFIG_HELD()), Bool.not(R.World.running(w))), _ => V.stashFlushed(w, id), _ => w),
-        _ => queuePendingNode(w, id))
-      +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
-      +w = B.choose(~R.World, Nat.is_ne(R.World.context(w), 0n), _ => V.notePromotedWrite(w, id), _ => w)
-      +w = B.choose(~R.World, B.computed(R.Node.kind(n)), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
-      B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(n), R.World.epoch(w))), _ => w,
-        _ => B.schedule(insertSubs(w, id))),
-    _ => w)
+  +staged = B.present(R.Node.pending(n))
+  +w = B.choose(~R.World, staged,
+    _ => B.choose(~R.World, Bool.and(B.has(R.Node.config(n), K.CONFIG_HELD()), Bool.not(R.World.running(w))), _ => V.stashFlushed(w, id), _ => w),
+    _ => queuePendingNode(w, id))
+  +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
+  +w = B.choose(~R.World, Nat.is_ne(R.World.context(w), 0n), _ => V.notePromotedWrite(w, id), _ => w)
+  +w = B.choose(~R.World, B.computed(R.Node.kind(n)), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
+  B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(n), R.World.epoch(w))), _ => w,
+    _ => B.schedule(insertSubs(w, id)))
+
+# Restricted direct facade for World-only probes/proof constructors. Active
+# custom functions run in core.setResolved with read-capable continuations.
+def setResolved(+w: R.World, +id: Nat, currentValue: R.Value, +value: R.Value) -> R.World:
+  +w = beforeCompare(w, id)
+  B.choose(~R.World, skipCompare(w, id), _ => stageResolved(w, id, value),
+    _ => B.choose(~R.World, Nat.is_ne(EQ.custom(w, id), 0n), _ => R.World.with_fault(w, R.Unsupported{23n}),
+      _ => B.choose(~R.World, EQ.isSame(w, id, currentValue, value), _ => w, _ => stageResolved(w, id, value))))
 
 
 def setSignal(+w: R.World, +id: Nat, value: R.Value) -> R.World:

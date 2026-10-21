@@ -157,19 +157,35 @@ def deferZombie(+w: R.World, +id: Nat) -> R.World:
   R.World.with_deferredZombies(w, B.append(Nat, R.World.deferredZombies(w), [id]))
 
 # scheduler.ts:GlobalQueue.settle, one captured-intake member on the park path.
-def parkPendingNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:
+def parkEligible(+w: R.World, +id: Nat) -> Bool:
   +n = B.node(w, id)
-  +eligible = Bool.and(Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_OVERRIDE()))),
+  Bool.and(Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_OVERRIDE()))),
     Bool.not(R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, id))))))
-  +loading = Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.not(X.isRender(R.Node.kind(n)))))
-  +unchanged = Bool.and(B.present(R.Node.pending(n)), Bool.and(Bool.not(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))),
-    Bool.and(Bool.not(O.parked(w, id)), EQ.isSame(w, id, R.Node.value(n), B.current(n)))))
-  B.choose(~R.World, Bool.and(eligible, loading), _ => w,
-    _ => B.choose(~R.World, Bool.and(eligible, unchanged),
-      _ => B.store_node(w, id, R.Node.with_pending(R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_STAGED())), R.Empty{})),
-      _ =>
-        +w = B.choose(~R.World, eligible, _ => X.holdNode(w, id, t), _ => w)
-        B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()), _ => X.holdFrame(w, id, t), _ => w)))
+
+def parkLoading(+w: R.World, +id: Nat) -> Bool:
+  +n = B.node(w, id)
+  Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.and(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), Bool.not(X.isRender(R.Node.kind(n)))))
+
+def parkCanCompare(+w: R.World, +id: Nat) -> Bool:
+  +n = B.node(w, id)
+  Bool.and(B.present(R.Node.pending(n)), Bool.and(Bool.not(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED()))), Bool.not(O.parked(w, id))))
+
+def parkEqual(+w: R.World, +id: Nat) -> R.World:
+  B.store_node(w, id, R.Node.with_pending(R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED())), R.Empty{}))
+
+def parkChanged(+w: R.World, +id: Nat, +t: Nat, eligible: Bool) -> R.World:
+  +w = B.choose(~R.World, eligible, _ => X.holdNode(w, id, t), _ => w)
+  B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()), _ => X.holdFrame(w, id, t), _ => w)
+
+# Default-only facade; the active core park loop suspends for custom calls.
+def parkPendingNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:
+  +eligible = parkEligible(w, id)
+  B.choose(~R.World, Bool.and(eligible, parkLoading(w, id)), _ => w,
+    _ => B.choose(~R.World, Bool.and(eligible, parkCanCompare(w, id)),
+      _ => B.choose(~R.World, Nat.is_ne(EQ.custom(w, id), 0n), _ => R.World.with_fault(w, R.Unsupported{23n}),
+        _ => B.choose(~R.World, EQ.isSame(w, id, R.Node.value(B.node(w, id)), B.current(B.node(w, id))),
+          _ => parkEqual(w, id), _ => parkChanged(w, id, t, eligible))),
+      _ => parkChanged(w, id, t, eligible)))
 
 def park_list(fuel: Nat, +w: R.World, +t: Nat, +index: Nat, +count: Nat) -> R.World:
   match fuel:

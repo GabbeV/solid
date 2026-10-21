@@ -1,7 +1,7 @@
 # General semantic properties
 
 These are quantified properties of the actual Bend runtime, separately from the
-58 concrete end-to-end regressions and separately from TS/Bend correspondence.
+62 concrete end-to-end regressions and separately from TS/Bend correspondence.
 No source operation or runtime representation changed to make these proofs pass.
 
 ## Publication at any existing slot
@@ -98,3 +98,17 @@ General structural validity of all graphs, arbitrary callback/async/lane scopes,
 full progress bounds for variable graphs and arbitrary-length histories remain
 open. Numeric theorem parameters are Bend terms; this is not a new claim about
 unbounded JavaScript integer execution or the compiler's correctness.
+
+## Comparator call and catch properties
+
+[comparators.bend](../proof/comparators.bend) proves five quantified local
+properties over arbitrary Worlds, caller continuations, operand stacks and
+relevant values: default selection retains the old fast helper; custom selection
+calls the original identity with exact old/new arguments; NotReady returns raw
+undefined and clears the control throw; ordinary errors route through the node
+status notifier and return true, retaining any notifier failure; registering
+metadata preserves the entire remaining World. Explicit lookup/classification
+premises select the source arm. Four additional closed public executions cover
+suppression, changed publication, ordinary errors and pending reads. These are
+local semantic guarantees and fixed-program regressions, not general comparator
+termination or graph correctness.

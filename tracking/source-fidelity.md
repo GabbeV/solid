@@ -264,3 +264,9 @@ createReaction now retains the source cl/owner/arm cells, callable identities,
 conditional old-arm disposal/clear, deferred ordinary user effects and assignment
 order. The missing-async-read hole in #2861 is preserved with a paired control and
 an explicit negative law; see [reactions.md](reactions.md). No repair is active.
+
+Custom comparator programs now execute through the source isSame catch and all
+active write/publication/async/seam sites. The side registry decomposes function
+identity without changing `_x` allocation. Default-only World facades refuse a
+required custom call rather than approximate it. See [comparators.md](comparators.md)
+for exact return points, source observations, evidence and remaining closure limits.

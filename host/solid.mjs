@@ -8,6 +8,10 @@ export class SolidRuntime {
     this.accessors={}; this.setters={}; this.traceEvents=[]; this.current=null; this.screens={};
     this.futures={};this.futureIdentities=new Map();this.asyncErrors=[];this.nextFuture=1;this.nextIterator=1;this.iteratorEvents=[];this.ports={};this.portEvents=[];this.portSnapshots=[];this.sourceNames=new Map(); this.encountered=new Map(); this.refs=new Map(); this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.callbackFunctions=new Map();this.callbackIdentities=new Map(); this.nextProgram=1; this.S.createRoot(dispose=> { this.disposeRoot=dispose; this.owner=this.S.getOwner(); });this.owners={root:this.owner};this.namedOwners=new Map();this.ownerObjects=new WeakSet();this.anonymousOwners=new Map();this.rootDisposers=new Map([[this.disposeRoot,this.owner]]);this.memoSetters=new WeakSet();this.setterIdentities=new Map();this.setterFunctions=new Map();this.accessorIdentities=new Map();this.programActions.isAccessor=value=>this.accessorIdentities.has(value)||this.setterIdentities.has(value)||this.callbackIdentities.has(value);
   }
+  comparator(value){
+    if(value&&typeof value==='object'&&typeof value.callback==='string')return this.callbackValue(value.callback);
+    return value===false?false:undefined;
+  }
   ownerFor(name){
     if(name===null)return null;
     const owner=this.owners[name]??[...this.sourceNames,...this.namedOwners].find(([,label])=>label===name)?.[0];
@@ -86,7 +90,7 @@ export class SolidRuntime {
       const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
       requireTeardownProgram(this.programActions,options.unobserved);
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
-      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
       if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
       const [get,set]=this.S.createSignal(next=>{
         const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
@@ -101,7 +105,7 @@ export class SolidRuntime {
       requireTeardownProgram(this.programActions,options.unobserved);
       const value=this.evaluate(initial,prev,values,locals);
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
-      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
       if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
       const [get,set]=this.S.createSignal(typeof value==='function'?this.initializerCallback(name,value):value,opts);
       const binding={get,set,name};
@@ -150,7 +154,7 @@ export class SolidRuntime {
     if(e.memoRead||e.memoAccessor){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);
-      const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
       if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
       const get=this.S.createMemo(next=>{
         const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
@@ -257,16 +261,20 @@ export class SolidRuntime {
     if(this.futureIdentities.has(value))return {async:this.futureIdentities.get(value)};
     return this.hostErrors.observe(value);
   }
+  sourceLabel(node){
+    const named=this.sourceNames.get(node);if(named!==undefined)return named;
+    for(const [name,get]of Object.entries(this.accessors))if(Object.getOwnPropertySymbols(get).some(key=>get[key]===node))return name;
+  }
   errorShape(e) {
     if(e instanceof this.S.TimeoutError)return {timeoutError:true,name:e.name,message:e.message};
     if(e instanceof this.S.NotReadyError){
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
-      return {notReady:this.encountered.get(e),source:this.sourceNames.get(e.source)??null};
+      return {notReady:this.encountered.get(e),source:this.sourceLabel(e.source)??null};
     }
     if(this.hostErrors.ids.has(e))return this.observe(e);
     if(e instanceof Error&&Object.hasOwn(e,'source')&&Object.hasOwn(e,'cause')){
       if(!this.encountered.has(e))this.encountered.set(e,this.encountered.size+1);
-      return {statusError:this.encountered.get(e),source:this.sourceNames.get(e.source),cause:this.errorShape(e.cause),message:e.message};
+      return {statusError:this.encountered.get(e),source:this.sourceLabel(e.source),cause:this.errorShape(e.cause),message:e.message};
     }
     return this.observe(e);
   }
@@ -378,7 +386,7 @@ export class SolidRuntime {
     const opts=typeof equals==='boolean'?{equals}:equals;
     requireTeardownProgram(this.programActions,opts.unobserved);
     const initial=this.value(value);
-    const options={...opts,equals:opts.equals===false?false:undefined,_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]};
+    const options={...opts,equals:this.comparator(opts.equals),_noSnapshot:opts.noSnapshot,unobserved:this.programs[opts.unobserved]};
     if(Object.hasOwn(opts,'loadingValue'))options.loadingValue=this.value(opts.loadingValue);
     const [get,set]=this.S.createSignal(typeof initial==='function'?this.initializerCallback(name,initial):initial,options);
     this.accessors[name]=get; this.setters[name]=set;this.accessorIdentities.set(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
@@ -403,7 +411,7 @@ export class SolidRuntime {
   }; }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
-    const opts={...options,equals:options.equals===false?false:undefined,_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+    const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
     if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
     const parent=this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root');
     this.accessors[name]=this.S.runWithOwner(parent,()=>this.S.createMemo(this.callback(name,expr),opts));

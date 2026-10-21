@@ -104,14 +104,18 @@ def handleError(w: R.World, +id: Nat, result: Nat, +error: R.Value) -> R.World:
 # asyncWrite before the dependency-tail trim. The active core driver retains
 # the return points after trim and pending-source release; the direct helper
 # below composes the same segments for restricted World-only probes.
-def beginAsyncWrite(+w: R.World, +id: Nat, +result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
+def prepareAsyncWrite(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())),
     _ => B.Bundle{w, False{}},
     _ =>
       +w = Q.landStatus(w, id, False{})
-      +w = B.choose(~R.World, B.ok(w),
-        _ => W.setSignal(w, id, value), _ => w)
       B.Bundle{w, B.ok(w)})
+
+def beginAsyncWrite(w: R.World, +id: Nat, result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
+  +pair = prepareAsyncWrite(w, id, result)
+  +w = B.first(R.World, Bool, pair)
+  +w = B.choose(~R.World, B.second(R.World, Bool, pair), _ => W.setSignal(w, id, value), _ => w)
+  B.Bundle{w, Bool.and(B.second(R.World, Bool, pair), B.ok(w))}
 
 def asyncWrite(+w: R.World, +id: Nat, result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
   +pair = beginAsyncWrite(w, id, result, value)
