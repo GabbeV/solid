@@ -34,9 +34,10 @@ export class SourceSetters {
 // The public named function binds the helper parameter to undefined. It keeps
 // its own stable identity, separate from the static cleanup program wrapper.
 export class ProgramFunctions extends SourceSetters {
+  constructor(invoke,arity=()=>0){super(invoke);this.arity=arity;}
   get(program){
     if(!this.bySignal.has(program)){
-      const call=(...args)=>this.invoke(program,...args);
+      const call=(...args)=>this.invoke(program,...args);Object.defineProperty(call,'length',{value:this.arity(program)});
       this.bySignal.set(program,call);this.identities.set(call,program);
     }
     return this.bySignal.get(program);

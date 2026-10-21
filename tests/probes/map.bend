@@ -46,7 +46,7 @@ def setup(+old: List<&2, R.Value>, +next: List<&2, R.Value>) -> R.World:
   +items = Arrays.allocate(A.createWorld(), Arrays.slots(old))
   +mapped = Arrays.allocate(B.first(R.World, Nat, items), Arrays.slots(mappings(size, 1n)))
   +incoming = Arrays.allocate(B.first(R.World, Nat, mapped), Arrays.slots(next))
-  R.World.with_maps(B.first(R.World, Nat, incoming), [R.MapState{0n, size, R.Literal{R.Undefined{}}, 0n, R.Undefined{}, 1n, labels(size, 1n), [], R.NoInlineBody{}, False{}}])
+  R.World.with_maps(B.first(R.World, Nat, incoming), [R.MapState{0n, size, R.Literal{R.Undefined{}}, 0n, R.Undefined{}, 1n, labels(size, 1n), [], R.NoInlineBody{}, False{}, [], False{}, R.Undefined{}}])
 
 def direct(+old: List<&2, R.Value>, +next: List<&2, R.Value>, +start: Nat) -> B.Bundle<R.World, R.SmallPlan>:
   Small.trySmallMove(setup(old, next), 0n, 2n, B.length(R.Value, next), start)
@@ -82,7 +82,7 @@ def removal(+old: List<&2, R.Value>, +next: List<&2, R.Value>, +start: Nat, +end
   +w = setup(old, next)
   +temp = Arrays.fresh(w, B.length(R.Value, next))
   +w = B.first(R.World, Nat, temp)
-  +frame = M.frame(0n, 2n, B.length(R.Value, next), end, start, B.second(R.World, Nat, temp), False{}, newEnd, False{})
+  +frame = M.frame(0n, 2n, B.length(R.Value, next), end, start, B.second(R.World, Nat, temp), False{}, newEnd, False{}, False{})
   runRemoval(4096n, C.Machine{w, [C.MapRemovalMatch{frame, start, start}], []})
 
 # Stop just before mapWindowRows' final publication: this is commitWindow only.
@@ -108,7 +108,7 @@ def window(+old: List<&2, R.Value>, +next: List<&2, R.Value>, +start: Nat, +end:
   +w = setup(old, next)
   +temp = Arrays.fresh(w, B.length(R.Value, next))
   +w = B.first(R.World, Nat, temp)
-  +frame = M.frame(0n, 2n, B.length(R.Value, next), end, start, B.second(R.World, Nat, temp), False{}, newEnd, False{})
+  +frame = M.frame(0n, 2n, B.length(R.Value, next), end, start, B.second(R.World, Nat, temp), False{}, newEnd, False{}, False{})
   +frame = R.MapFrame.with_nodes(frame, labels(Nat.sub(newEnd, start), Nat.add(B.length(R.Value, old), 1n)))
   runWindow(4096n, C.mapWindow(w, [], [], frame))
 

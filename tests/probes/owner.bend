@@ -9,7 +9,7 @@ import ../../runtime/extension.bend as E
 import ../../runtime/constants.bend as K
 
 def emit(code: Nat) -> R.CleanupProgram:
-  R.CleanupProgram{[R.CleanupEmit{code}], False{}}
+  R.CleanupProgram{[R.CleanupEmit{code}], False{}, 0n}
 
 def callbacks(+mode: U32) -> List<&2, R.CleanupProgram>:
   +tail = B.choose(~List<&2, R.CleanupAction>, Bool.or(U32.is_eq(mode, 3), U32.is_eq(mode, 7)),
@@ -17,9 +17,9 @@ def callbacks(+mode: U32) -> List<&2, R.CleanupProgram>:
     _ => B.choose(~List<&2, R.CleanupAction>, U32.is_eq(mode, 4), _ => [R.CleanupDispose{1n}],
       _ => B.choose(~List<&2, R.CleanupAction>, Bool.or(U32.is_eq(mode, 5), U32.is_eq(mode, 6)),
         _ => [R.CleanupRegister{3n, 1n}], _ => [])))
-  [R.CleanupProgram{[], False{}}, emit(101n), emit(102n), emit(103n), emit(104n), B.choose(~R.CleanupProgram, U32.is_eq(mode, 15),
-      _ => R.CleanupProgram{[R.CleanupEmit{105n}, R.CleanupDispose{3n}], False{}}, _ => emit(105n)), emit(106n), emit(107n),
-    R.CleanupProgram{R.CleanupEmit{208n} <> tail, False{}}]
+  [R.CleanupProgram{[], False{}, 0n}, emit(101n), emit(102n), emit(103n), emit(104n), B.choose(~R.CleanupProgram, U32.is_eq(mode, 15),
+      _ => R.CleanupProgram{[R.CleanupEmit{105n}, R.CleanupDispose{3n}], False{}, 0n}, _ => emit(105n)), emit(106n), emit(107n),
+    R.CleanupProgram{R.CleanupEmit{208n} <> tail, False{}, 0n}]
 
 def initial() -> R.World:
   +w = N.createOwner(B.empty(), 0n, False{})

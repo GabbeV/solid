@@ -70,23 +70,31 @@ export class SolidRuntime {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
     if(e.mapArray){
-      const {list,map,fallback,keyed}=e.mapArray;
-      if(keyed!==undefined&&typeof keyed!=='boolean')throw new TypeError('Extracted-key mapArray remains unported');
-      const mapper=this.evaluate(map,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed};
-      if(mapper.length>1)throw new TypeError('mapArray index-accessor mode remains unported');
+      const {list,map,fallback,keyed:inputKeyed}=e.mapArray;
+      const mapper=this.evaluate(map,prev,values,locals),keyed=inputKeyed===undefined||typeof inputKeyed==='boolean'?inputKeyed:this.evaluate(inputKeyed,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed};
+      if(keyed!==undefined&&typeof keyed!=='boolean'&&typeof keyed!=='function')throw new TypeError('Unsupported mapArray keying mode');
+      if(typeof keyed==='function')options.keyed=item=>{const value=keyed(item);if(this.accessorIdentities.has(keyed))this.observeAccessorRead(keyed,value);return value;};
       if(Object.hasOwn(e.mapArray,'fallback'))options.fallback=()=>this.evaluate(fallback,undefined,values,locals);
       const observeMapper=(...args)=>{
-        if(keyed===false){
+        if(keyed===false||typeof keyed==='function'){
           const item=args[0],label='#row'+(this.rowSerial=(this.rowSerial??0)+1);
           this.accessorIdentities.set(item,label);this.accessors[label]=item;
           const node=Object.getOwnPropertySymbols(item).map(key=>item[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
           if(!node)throw new Error('Missing native row accessor metadata');
           (this.rowSources??=new Map()).set(node,label);
         }
+        if(keyed!==false&&mapper.length>1){
+          const accessor=args[1],label='#listIndex'+(this.listIndexSerial=(this.listIndexSerial??0)+1);
+          this.accessorIdentities.set(accessor,label);this.accessors[label]=accessor;
+          const node=Object.getOwnPropertySymbols(accessor).map(key=>accessor[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+          if(!node)throw new Error('Missing native index accessor metadata');
+          (this.rowSources??=new Map()).set(node,label);
+        }
         const result=mapper(...args);
         if(this.accessorIdentities.has(mapper))this.observeAccessorRead(mapper,result);
         return result;
       };
+      Object.defineProperty(observeMapper,'length',{value:mapper.length});
       const get=this.S.mapArray(this.callback(name,list,values,locals),observeMapper,options);
       this.registerComputedAccessor(get,name);return get;
     }
@@ -374,7 +382,8 @@ export class SolidRuntime {
     try{return fn();}finally{globalThis.queueMicrotask=original;globalThis.setTimeout=originalSet;globalThis.clearTimeout=originalClear;}
   }
   attempt(op,...args) {try{return ['return',this.observe(this.withJobs(()=>this[op](...args)))];}catch(e){return ['throw',this.errorShape(e)];}}
-  program(name,actions) {
+  program(name,actions,arity=0) {
+    if(!Number.isSafeInteger(arity)||arity<0)throw new TypeError('Function arity must be a natural number');
     if(this.programActions.has(name))throw new TypeError('Callback programs cannot be redefined');
     for(const [op,name] of actions)if(op==='cleanup')requireTeardownProgram(this.programActions,name);
     this.programActions.set(name,actions);
@@ -395,6 +404,7 @@ export class SolidRuntime {
         else throw new TypeError('Unsupported callback action');
       }
     };
+    Object.defineProperty(this.programs[name],'length',{value:arity+1});
     return id;
   }
   recordPort(name,promise){

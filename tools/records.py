@@ -7,8 +7,8 @@ schemas={
 'SmallScan': [('srcPos','List<&2, Nat>'),('dstPos','List<&2, Nat>'),('runs','List<&2, Nat>'),('budget','Nat'),('i','Nat'),('j','Nat'),('inRun','Bool')],
 'SmallPlan': [('applied','Bool'),('oldNodes','List<&2, Nat>'),('srcPos','List<&2, Nat>'),('consumed','List<&2, Bool>')],
 'MapEntry': [('key','Value'),('position','MapIndex')],
-'MapState': [('owner','Nat'),('len','Nat'),('list','Expr'),('items','Nat'),('mapper','Value'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('fallback','InlineBody'),('byIndex','Bool')],
-'MapFrame': [('map','Nat'),('newItems','Nat'),('newLen','Nat'),('start','Nat'),('end','Nat'),('newEnd','Nat'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('created','List<&2, Nat>'),('removed','List<&2, Nat>'),('initial','Bool'),('indices','List<&2, MapEntry>'),('next','List<&2, MapIndex>')],
+'MapState': [('owner','Nat'),('len','Nat'),('list','Expr'),('items','Nat'),('mapper','Value'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('fallback','InlineBody'),('byIndex','Bool'),('indexes','List<&2, Nat>'),('hasIndexes','Bool'),('key','Value')],
+'MapFrame': [('map','Nat'),('newItems','Nat'),('newLen','Nat'),('start','Nat'),('end','Nat'),('newEnd','Nat'),('mappings','Nat'),('nodes','List<&2, Nat>'),('rows','List<&2, Nat>'),('created','List<&2, Nat>'),('removed','List<&2, Nat>'),('initial','Bool'),('keyIndices','List<&2, MapEntry>'),('next','List<&2, MapIndex>'),('indexes','List<&2, Nat>')],
 'RepeatState': [('owner','Nat'),('len','Nat'),('offset','Nat'),('count','Expr'),('mapper','Value'),('from','InlineBody'),('fallback','InlineBody'),('nodes','List<&2, Nat>'),('mappings','Nat')],
 'AsyncObject': [('immediate','Bool'),('state','AsyncSettlement'),('observers','List<&2, Nat>'),('stream','Nat')],
 'AsyncObserver': [('node','Nat'),('result','Nat'),('isSync','Bool'),('resolved','Bool'),('rejected','Bool'),('syncValue','Value'),('syncError','Value'),('stream','Nat')],
@@ -25,7 +25,7 @@ schemas={
 'ContextKey': [('defaultValue','Value'),('description','Slot')],
 'ContextEntry': [('key','Nat'),('value','Value')],
 'ContextRecord': [('entries','List<&2, ContextEntry>')],
-'CleanupProgram': [('actions','List<&2, CleanupAction>'),('returnsCleanup','Bool')],
+'CleanupProgram': [('actions','List<&2, CleanupAction>'),('returnsCleanup','Bool'),('arity','Nat')],
 'EffectSpec': [('user','Bool'),('target','Nat'),('options','NodeOptions'),('scheduled','Bool'),('deferred','Bool'),('program','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat'),('body','InlineBody')],
 'NodeOptions': [('equals','Bool'),('transparent','Bool'),('ownedWrite','Bool'),('lazy','Bool'),('sync','Bool'),('noSnapshot','Bool'),('extraConfig','U32'),('loading','Slot'),('unobserved','Nat'),('comparator','Nat')],
 'NodeExtension': [('inFlight','Nat'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
@@ -151,7 +151,7 @@ type Expr is Data:
   ArrayLength{array: Expr}
   RepeatCreate{count: Expr, mapper: Expr, from: InlineBody, fallback: InlineBody}
   RepeatRead{id: Nat}
-  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, byIndex: Bool}
+  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, keyed: Expr}
   MapArrayRead{id: Nat}
   Literal{value: Value}
   Read{id: Nat}
@@ -251,6 +251,7 @@ type TraceEvent is Data:
   SetterBound{boundSetter: Nat}
   AccessorBound{boundAccessor: Nat}
   MapRowBound{rowBound: Nat}
+  MapIndexBound{indexBound: Nat}
   Invoked{id: Nat}
   ReadValue{reader: Nat, source: Nat, value: Value}
   Applied{id: Nat, value: Value, previous: Value}

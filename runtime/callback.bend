@@ -24,12 +24,12 @@ def at(+index: Nat, args: Arguments) -> R.Value:
 
 def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
   match expr:
-    case R.MapArrayCreate{+list, +mapper, fallback, byIndex}:
+    case R.MapArrayCreate{+list, +mapper, fallback, +keyed}:
       match fallback:
         case R.NoInlineBody{}:
-          R.MapArrayCreate{bindWith(list, args), bindWith(mapper, args), R.NoInlineBody{}, byIndex}
+          R.MapArrayCreate{bindWith(list, args), bindWith(mapper, args), R.NoInlineBody{}, bindWith(keyed, args)}
         case R.SomeInlineBody{expr, returns}:
-          R.MapArrayCreate{bindWith(list, args), bindWith(mapper, args), R.SomeInlineBody{bindWith(expr, args), returns}, byIndex}
+          R.MapArrayCreate{bindWith(list, args), bindWith(mapper, args), R.SomeInlineBody{bindWith(expr, args), returns}, bindWith(keyed, args)}
     case R.ArrayLiteral{values}:
       R.ArrayLiteral{bindWith(values, args)}
     case R.ArrayAt{array, index}:

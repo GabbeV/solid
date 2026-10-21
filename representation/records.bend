@@ -115,7 +115,7 @@ type Expr is Data:
   ArrayLength{array: Expr}
   RepeatCreate{count: Expr, mapper: Expr, from: InlineBody, fallback: InlineBody}
   RepeatRead{id: Nat}
-  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, byIndex: Bool}
+  MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, keyed: Expr}
   MapArrayRead{id: Nat}
   Literal{value: Value}
   Read{id: Nat}
@@ -215,6 +215,7 @@ type TraceEvent is Data:
   SetterBound{boundSetter: Nat}
   AccessorBound{boundAccessor: Nat}
   MapRowBound{rowBound: Nat}
+  MapIndexBound{indexBound: Nat}
   Invoked{id: Nat}
   ReadValue{reader: Nat, source: Nat, value: Value}
   Applied{id: Nat, value: Value, previous: Value}
@@ -468,250 +469,290 @@ def MapEntry.with_position(r: MapEntry, v: MapIndex) -> MapEntry:
       MapEntry{key, v}
 
 type MapState is Data:
-  MapState{owner: Nat, len: Nat, list: Expr, items: Nat, mapper: Value, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, fallback: InlineBody, byIndex: Bool}
+  MapState{owner: Nat, len: Nat, list: Expr, items: Nat, mapper: Value, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, fallback: InlineBody, byIndex: Bool, indexes: List<&2, Nat>, hasIndexes: Bool, key: Value}
 
 def MapState.owner(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       owner
 
 def MapState.with_owner(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{v, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{v, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.len(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       len
 
 def MapState.with_len(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, v, list, items, mapper, mappings, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, v, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.list(r: MapState) -> Expr:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       list
 
 def MapState.with_list(r: MapState, v: Expr) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, v, items, mapper, mappings, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, v, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.items(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       items
 
 def MapState.with_items(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, v, mapper, mappings, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, v, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.mapper(r: MapState) -> Value:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       mapper
 
 def MapState.with_mapper(r: MapState, v: Value) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, v, mappings, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, v, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.mappings(r: MapState) -> Nat:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       mappings
 
 def MapState.with_mappings(r: MapState, v: Nat) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, mapper, v, nodes, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, v, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.nodes(r: MapState) -> List<&2, Nat>:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       nodes
 
 def MapState.with_nodes(r: MapState, v: List<&2, Nat>) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, mapper, mappings, v, rows, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, v, rows, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.rows(r: MapState) -> List<&2, Nat>:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       rows
 
 def MapState.with_rows(r: MapState, v: List<&2, Nat>) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, mapper, mappings, nodes, v, fallback, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, v, fallback, byIndex, indexes, hasIndexes, key}
 
 def MapState.fallback(r: MapState) -> InlineBody:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       fallback
 
 def MapState.with_fallback(r: MapState, v: InlineBody) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, mapper, mappings, nodes, rows, v, byIndex}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, v, byIndex, indexes, hasIndexes, key}
 
 def MapState.byIndex(r: MapState) -> Bool:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
       byIndex
 
 def MapState.with_byIndex(r: MapState, v: Bool) -> MapState:
   match r:
-    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex}:
-      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, v}
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, v, indexes, hasIndexes, key}
+
+def MapState.indexes(r: MapState) -> List<&2, Nat>:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      indexes
+
+def MapState.with_indexes(r: MapState, v: List<&2, Nat>) -> MapState:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, v, hasIndexes, key}
+
+def MapState.hasIndexes(r: MapState) -> Bool:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      hasIndexes
+
+def MapState.with_hasIndexes(r: MapState, v: Bool) -> MapState:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, v, key}
+
+def MapState.key(r: MapState) -> Value:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      key
+
+def MapState.with_key(r: MapState, v: Value) -> MapState:
+  match r:
+    case MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, key}:
+      MapState{owner, len, list, items, mapper, mappings, nodes, rows, fallback, byIndex, indexes, hasIndexes, v}
 
 type MapFrame is Data:
-  MapFrame{map: Nat, newItems: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, created: List<&2, Nat>, removed: List<&2, Nat>, initial: Bool, indices: List<&2, MapEntry>, next: List<&2, MapIndex>}
+  MapFrame{map: Nat, newItems: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat, mappings: Nat, nodes: List<&2, Nat>, rows: List<&2, Nat>, created: List<&2, Nat>, removed: List<&2, Nat>, initial: Bool, keyIndices: List<&2, MapEntry>, next: List<&2, MapIndex>, indexes: List<&2, Nat>}
 
 def MapFrame.map(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       map
 
 def MapFrame.with_map(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{v, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{v, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.newItems(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       newItems
 
 def MapFrame.with_newItems(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, v, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, v, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.newLen(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       newLen
 
 def MapFrame.with_newLen(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, v, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, v, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.start(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       start
 
 def MapFrame.with_start(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, v, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, v, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.end(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       end
 
 def MapFrame.with_end(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, v, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, v, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.newEnd(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       newEnd
 
 def MapFrame.with_newEnd(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, v, mappings, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, v, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.mappings(r: MapFrame) -> Nat:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       mappings
 
 def MapFrame.with_mappings(r: MapFrame, v: Nat) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, v, nodes, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, v, nodes, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.nodes(r: MapFrame) -> List<&2, Nat>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       nodes
 
 def MapFrame.with_nodes(r: MapFrame, v: List<&2, Nat>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, v, rows, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, v, rows, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.rows(r: MapFrame) -> List<&2, Nat>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       rows
 
 def MapFrame.with_rows(r: MapFrame, v: List<&2, Nat>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, v, created, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, v, created, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.created(r: MapFrame) -> List<&2, Nat>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       created
 
 def MapFrame.with_created(r: MapFrame, v: List<&2, Nat>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, v, removed, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, v, removed, initial, keyIndices, next, indexes}
 
 def MapFrame.removed(r: MapFrame) -> List<&2, Nat>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       removed
 
 def MapFrame.with_removed(r: MapFrame, v: List<&2, Nat>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, v, initial, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, v, initial, keyIndices, next, indexes}
 
 def MapFrame.initial(r: MapFrame) -> Bool:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       initial
 
 def MapFrame.with_initial(r: MapFrame, v: Bool) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, v, indices, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, v, keyIndices, next, indexes}
 
-def MapFrame.indices(r: MapFrame) -> List<&2, MapEntry>:
+def MapFrame.keyIndices(r: MapFrame) -> List<&2, MapEntry>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      indices
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      keyIndices
 
-def MapFrame.with_indices(r: MapFrame, v: List<&2, MapEntry>) -> MapFrame:
+def MapFrame.with_keyIndices(r: MapFrame, v: List<&2, MapEntry>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, v, next}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, v, next, indexes}
 
 def MapFrame.next(r: MapFrame) -> List<&2, MapIndex>:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
       next
 
 def MapFrame.with_next(r: MapFrame, v: List<&2, MapIndex>) -> MapFrame:
   match r:
-    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, next}:
-      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, indices, v}
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, v, indexes}
+
+def MapFrame.indexes(r: MapFrame) -> List<&2, Nat>:
+  match r:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      indexes
+
+def MapFrame.with_indexes(r: MapFrame, v: List<&2, Nat>) -> MapFrame:
+  match r:
+    case MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, indexes}:
+      MapFrame{map, newItems, newLen, start, end, newEnd, mappings, nodes, rows, created, removed, initial, keyIndices, next, v}
 
 type RepeatState is Data:
   RepeatState{owner: Nat, len: Nat, offset: Nat, count: Expr, mapper: Value, from: InlineBody, fallback: InlineBody, nodes: List<&2, Nat>, mappings: Nat}
@@ -1632,27 +1673,37 @@ def ContextRecord.with_entries(r: ContextRecord, v: List<&2, ContextEntry>) -> C
       ContextRecord{v}
 
 type CleanupProgram is Data:
-  CleanupProgram{actions: List<&2, CleanupAction>, returnsCleanup: Bool}
+  CleanupProgram{actions: List<&2, CleanupAction>, returnsCleanup: Bool, arity: Nat}
 
 def CleanupProgram.actions(r: CleanupProgram) -> List<&2, CleanupAction>:
   match r:
-    case CleanupProgram{actions, returnsCleanup}:
+    case CleanupProgram{actions, returnsCleanup, arity}:
       actions
 
 def CleanupProgram.with_actions(r: CleanupProgram, v: List<&2, CleanupAction>) -> CleanupProgram:
   match r:
-    case CleanupProgram{actions, returnsCleanup}:
-      CleanupProgram{v, returnsCleanup}
+    case CleanupProgram{actions, returnsCleanup, arity}:
+      CleanupProgram{v, returnsCleanup, arity}
 
 def CleanupProgram.returnsCleanup(r: CleanupProgram) -> Bool:
   match r:
-    case CleanupProgram{actions, returnsCleanup}:
+    case CleanupProgram{actions, returnsCleanup, arity}:
       returnsCleanup
 
 def CleanupProgram.with_returnsCleanup(r: CleanupProgram, v: Bool) -> CleanupProgram:
   match r:
-    case CleanupProgram{actions, returnsCleanup}:
-      CleanupProgram{actions, v}
+    case CleanupProgram{actions, returnsCleanup, arity}:
+      CleanupProgram{actions, v, arity}
+
+def CleanupProgram.arity(r: CleanupProgram) -> Nat:
+  match r:
+    case CleanupProgram{actions, returnsCleanup, arity}:
+      arity
+
+def CleanupProgram.with_arity(r: CleanupProgram, v: Nat) -> CleanupProgram:
+  match r:
+    case CleanupProgram{actions, returnsCleanup, arity}:
+      CleanupProgram{actions, returnsCleanup, v}
 
 type EffectSpec is Data:
   EffectSpec{user: Bool, target: Nat, options: NodeOptions, scheduled: Bool, deferred: Bool, program: Nat, returnedCleanup: Nat, errorProgram: Nat, body: InlineBody}

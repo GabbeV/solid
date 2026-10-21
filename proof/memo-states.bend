@@ -122,7 +122,7 @@ def data_36() -> List<&2, R.CleanupAction>:
   []
 
 def data_37() -> R.CleanupProgram:
-  R.CleanupProgram{data_36(), False{}}
+  R.CleanupProgram{data_36(), False{}, 0n}
 
 def data_38() -> List<&2, R.CleanupProgram>:
   [data_37()]

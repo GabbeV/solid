@@ -21042,9 +21042,9 @@
           "sha256": "4e9996e12bf2e42a567a97045f15d99630db2ac852470b7ee35efa246f64b27d",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/callable.bend:functionLength, isFunction; runtime/core.bend:mapInput, mapCreate, RepeatReady",
             "status": "restricted",
-            "restrictions": "Production keyed:false or plain identity-keyed/default modes with admitted mapper arity zero/one. Row signals/item accessors for keyed:false; raw items without index accessors for plain keyed. Extracted keys, index-accessor arity, dev/observe/store/lane/protocol domains remain unfinished."
+            "restrictions": "All three production keying modes within the typed array/callable profile. Formal mapper length selects optional index signals independently of actual argument count. Raw ownedWrite item/index signals, stable getter identities and original key callbacks execute. Arbitrary function reflection/mutation, dev/observe/store/lane/array-protocol domains remain unfinished. See tracking/map-modes.md."
           }
         },
         {
@@ -21054,9 +21054,9 @@
           "sha256": "8e1a19f7b25016988a4fa4b877660535c66291a9df8b7264b0f1202b2b41d99a",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/callable.bend:functionLength, isFunction; runtime/core.bend:mapInput, mapCreate, RepeatReady",
             "status": "restricted",
-            "restrictions": "Production keyed:false or plain identity-keyed/default modes with admitted mapper arity zero/one. Row signals/item accessors for keyed:false; raw items without index accessors for plain keyed. Extracted keys, index-accessor arity, dev/observe/store/lane/protocol domains remain unfinished."
+            "restrictions": "All three production keying modes within the typed array/callable profile. Formal mapper length selects optional index signals independently of actual argument count. Raw ownedWrite item/index signals, stable getter identities and original key callbacks execute. Arbitrary function reflection/mutation, dev/observe/store/lane/array-protocol domains remain unfinished. See tracking/map-modes.md."
           }
         },
         {
@@ -21066,9 +21066,9 @@
           "sha256": "491a793934826b52e22644b9965122445a85be8fac39ba40d79873b7ebce3b18",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/callable.bend:functionLength, isFunction; runtime/core.bend:mapInput, mapCreate, RepeatReady",
             "status": "restricted",
-            "restrictions": "Production keyed:false or plain identity-keyed/default modes with admitted mapper arity zero/one. Row signals/item accessors for keyed:false; raw items without index accessors for plain keyed. Extracted keys, index-accessor arity, dev/observe/store/lane/protocol domains remain unfinished."
+            "restrictions": "All three production keying modes within the typed array/callable profile. Formal mapper length selects optional index signals independently of actual argument count. Raw ownedWrite item/index signals, stable getter identities and original key callbacks execute. Arbitrary function reflection/mutation, dev/observe/store/lane/array-protocol domains remain unfinished. See tracking/map-modes.md."
           }
         },
         {
@@ -21078,9 +21078,9 @@
           "sha256": "8bf263736cb0c32baea3ba19e112295f3ebd9fced3e709bdf0cd013ca358165a",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/callable.bend:functionLength, isFunction; runtime/core.bend:mapInput, mapCreate, RepeatReady",
             "status": "restricted",
-            "restrictions": "Production keyed:false or plain identity-keyed/default modes with admitted mapper arity zero/one. Row signals/item accessors for keyed:false; raw items without index accessors for plain keyed. Extracted keys, index-accessor arity, dev/observe/store/lane/protocol domains remain unfinished."
+            "restrictions": "All three production keying modes within the typed array/callable profile. Formal mapper length selects optional index signals independently of actual argument count. Raw ownedWrite item/index signals, stable getter identities and original key callbacks execute. Arbitrary function reflection/mutation, dev/observe/store/lane/array-protocol domains remain unfinished. See tracking/map-modes.md."
           }
         },
         {
@@ -21122,9 +21122,9 @@
           "sha256": "5439567662ad189d008b3d2ee4ed7bab752e5c34cc03b97851db5ab8afd1062e",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/core.bend:mapRemovalMatch, mapRemoval",
+            "bend": "runtime/core.bend:mapRemovalMatch, mapRemovalOld, mapRemovalOldKey, mapRemovalFound, mapRemovalFailed, mapRemoval",
             "status": "restricted",
-            "restrictions": "Identity comparisons, forward pure-removal stage, scratch node reset on failed probe and ordered final leavers; extracted key callbacks and row/index stages outside keyed:false remain unfinished."
+            "restrictions": "All typed keying profiles: one cached new key per destination before old-side exhaustion check, forward old key comparisons, mapping/node/optional row/index stages, node scratch reset on failed probe and ordered final leavers. Arbitrary protocol objects and active engines unfinished."
           }
         },
         {
@@ -21134,9 +21134,9 @@
           "sha256": "de1fea1b05bcc0842063d78e1ecac2a699b6d99c4e507fd5ede1d94e7b13e0a8",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/core.bend:mapWindow, mapWindowGrowShift, mapWindowShrinkShift, mapWindowRows",
+            "bend": "runtime/core.bend:mapWindow, mapWindowGrowShift, mapWindowShrinkShift, mapWindowRows, mapWindowSuffix",
             "status": "restricted",
-            "restrictions": "Plain keyed or keyed:false modes; source resize/copy direction and live node/row stores preserved. Extracted-key rows, index accessor vectors and active lane slot writes remain unfinished."
+            "restrictions": "All typed keying modes: source resize/copy direction and node/optional row/item-write/optional index/index-write order, then retained suffix updates only on length change. Active lane slot writes remain unfinished."
           }
         },
         {
@@ -21146,9 +21146,9 @@
           "sha256": "79beadbeeea17a2b10949898895b2c3caa85312aafc38865efd740d4a51ee9ef",
           "status": "restricted",
           "mapping": {
-            "bend": "runtime/keyed-map.bend:updateParent, clear, frame, matches, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapMapped, mapAbort, mapPrefix, mapSuffix, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapRemoved",
+            "bend": "runtime/keyed-map.bend:updateParent, clear, frame, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapInvokeRow, mapInvokeIndex, mapMapped, mapAbort, mapPrefix, mapSuffix, mapPrepareStart, mapPrepare, mapPrepared, mapOld, mapOldPosition, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapWindowSuffix, mapRemoved",
             "status": "restricted",
-            "restrictions": "Production plain identity-keyed or keyed:false profiles: tracked list/owner routing, prefix/suffix trims, stable identity, pure-removal reset, reverse SameValueZero key chains, ordered staging/catch/commit/disposal and source small-move gate/probe/scan/commit retained. Extracted-key and index-accessor modes, packed-index overflow and active engines remain unfinished. Pinned falsy fallback retained."
+            "restrictions": "All three typed production keying modes, optional item/index signals and actual key callbacks. Captured prefix limit, strict prefix/suffix comparison, stable identity, pure-removal reset, reverse SameValueZero duplicate chains, source mapper catch/commit/disposal and no-row/no-index small-move gate retained. Key callbacks remain outside mapper catch. Packed-index overflow and active engines remain unfinished. Pinned falsy fallback retained."
           }
         },
         {
@@ -21180,8 +21180,12 @@
           "start": 820,
           "end": 822,
           "sha256": "82314e5ffabc556ed9e7d57d2dc801b8a4c6e59fc1052db22747bd01ec1934bf",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:mapCompare, mapMatched, MapCompareOld, MapCompareNew",
+            "status": "restricted",
+            "restrictions": "Strict raw identity guard first; no-key row mode true; extracted key old then new calls with captured arguments/callee, strict returned-key comparison. Actual typed callables and outer compute catch; arbitrary protocol/function reflection remains unfinished."
+          }
         }
       ],
       "branches": [

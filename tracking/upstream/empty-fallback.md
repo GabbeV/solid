@@ -5,9 +5,8 @@ Originally reproduced in native Solid at unchanged next
 The user submitted fix PR [#4211](https://github.com/solidjs/solid/pull/4211).
 The repeat helper and typed array payloads now execute and preserve the pinned
 bug in paired comparisons. The mapArray keyed:false profile now preserves it
-too, as does the plain identity-keyed mode. Extracted-key/index-accessor modes
-remain unported. No workaround or
-semantic deviation is active.
+too, as do plain identity-keyed and extracted-key/index-accessor modes. All retain the
+pinned source guard. No workaround or semantic deviation is active.
 
 [Open the saved playground](https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg), pinned
 to released rc.16. Saved source and lifecycle output were checked after reloading.

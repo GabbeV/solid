@@ -20,12 +20,12 @@ def fixture(+op: U32, +auto: Bool, flags: U32, pending: Bool, +hook: U32) -> R.W
   +w = G.link(w, 2n, 3n)
   +w = B.choose(~R.World, U32.is_eq(op, 3), _ => G.queueDormant(w, 3n), _ => G.link(w, 3n, 5n))
   +w = O.cleanup(w, 3n, 3n)
-  +w = R.World.with_cleanupPrograms(w, [R.CleanupProgram{[], False{}},
-    R.CleanupProgram{[R.CleanupEmit{101n}], False{}},
+  +w = R.World.with_cleanupPrograms(w, [R.CleanupProgram{[], False{}, 0n},
+    R.CleanupProgram{[R.CleanupEmit{101n}], False{}, 0n},
     R.CleanupProgram{R.CleanupEmit{102n} <> B.choose(~List<&2, R.CleanupAction>, U32.is_eq(hook, 1),
       _ => [R.CleanupThrow{R.Number{99n}}],
-      _ => B.choose(~List<&2, R.CleanupAction>, U32.is_eq(hook, 2), _ => [R.CleanupWrite{2n, R.Number{9n}}], _ => [])), False{}},
-    R.CleanupProgram{[R.CleanupEmit{103n}], False{}}])
+      _ => B.choose(~List<&2, R.CleanupAction>, U32.is_eq(hook, 2), _ => [R.CleanupWrite{2n, R.Number{9n}}], _ => [])), False{}, 0n},
+    R.CleanupProgram{[R.CleanupEmit{103n}], False{}, 0n}])
   B.choose(~R.World, U32.is_eq(op, 0), _ => G.clearDeps(w, 5n),
     _ => B.choose(~R.World, U32.is_eq(op, 1),
       _ => G.trimStaleDeps(B.store_node(w, 5n, R.Node.with_depsTail(B.node(w, 5n), 0n)), 5n),

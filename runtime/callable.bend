@@ -6,6 +6,30 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./owner.bend as O
 
+# Function.length for admitted callable identities; metadata is independent of
+# actual argument count. Arbitrary JS function/property protocols stay unported.
+def isFunction(value: R.Value) -> Bool:
+  match value:
+    case R.ProgramReference{id}:
+      True{}
+    case R.AccessorReference{id}:
+      True{}
+    case R.SetterReference{id}:
+      True{}
+    case R.RootDisposerReference{id}:
+      True{}
+    case other:
+      False{}
+
+def functionLength(+w: R.World, value: R.Value) -> Nat:
+  match value:
+    case R.ProgramReference{callback}:
+      R.CleanupProgram.arity(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))
+    case R.SetterReference{signal}:
+      1n
+    case other:
+      0n
+
 def bound(actions: List<&2, R.CleanupAction>, +root: Nat) -> Bool:
   match actions:
     case R.CleanupBoundRoot{owner} <> Nil{}:
@@ -26,7 +50,7 @@ def encode(+w: R.World, +root: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundRoot{root}], False{}}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundRoot{root}], False{}, 0n}])), next})
 
 # Source cleanup returns without touching a disposal slot when context is null.
 def cleanup(+w: R.World, +owner: Nat, root: Nat) -> R.World:
@@ -69,7 +93,7 @@ def encodeSetter(+w: R.World, +signal: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundSetter{signal}], False{}}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundSetter{signal}], False{}, 1n}])), next})
 
 def cleanupSetter(+w: R.World, +owner: Nat, signal: Nat) -> R.World:
   B.choose(~R.World, Nat.is_eq(owner, 0n), _ => w,
@@ -99,7 +123,7 @@ def encodeAccessor(+w: R.World, +signal: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundAccessor{signal}], False{}}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundAccessor{signal}], False{}, 0n}])), next})
 
 def cleanupAccessor(+w: R.World, +owner: Nat, signal: Nat) -> R.World:
   B.choose(~R.World, Nat.is_eq(owner, 0n), _ => w,
@@ -129,4 +153,4 @@ def encodeProgram(+w: R.World, +callback: Nat) -> B.Bundle<R.World, Nat>:
   B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(old, 0n), _ => B.Bundle{w, old},
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundProgram{callback}], False{}}])), next})
+      B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundProgram{callback}], False{}, 0n}])), next})

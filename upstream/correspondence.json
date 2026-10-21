@@ -718,24 +718,24 @@
       "restrictions": "Source parentComputed store, tracked count/from, untracked internal owner and row callbacks, pinned falsy fallback guard, staged overlap/create/catch/commit loops and live disposal lookups retained. Mapper abort disposes only new owners in source index order and rethrows unless cleanup overrides. Commit errors do not enter mapper catch. Active lanes/stores/dev/observe, arbitrary counts/coercion and general protocol/closure inputs remain outside the profile."
     },
     "map.ts:mapArray": {
-      "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+      "bend": "runtime/keyed-map.bend:mapArray; runtime/callable.bend:functionLength, isFunction; runtime/core.bend:mapInput, mapCreate, RepeatReady",
       "status": "restricted",
-      "restrictions": "Production keyed:false or plain identity-keyed/default modes with admitted mapper arity zero/one. Row signals/item accessors for keyed:false; raw items without index accessors for plain keyed. Extracted keys, index-accessor arity, dev/observe/store/lane/protocol domains remain unfinished."
+      "restrictions": "All three production keying modes within the typed array/callable profile. Formal mapper length selects optional index signals independently of actual argument count. Raw ownedWrite item/index signals, stable getter identities and original key callbacks execute. Arbitrary function reflection/mutation, dev/observe/store/lane/array-protocol domains remain unfinished. See tracking/map-modes.md."
     },
     "map.ts:updateKeyedMap": {
-      "bend": "runtime/keyed-map.bend:updateParent, clear, frame, matches, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapMapped, mapAbort, mapPrefix, mapSuffix, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapRemoved",
+      "bend": "runtime/keyed-map.bend:updateParent, clear, frame, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapInvokeRow, mapInvokeIndex, mapMapped, mapAbort, mapPrefix, mapSuffix, mapPrepareStart, mapPrepare, mapPrepared, mapOld, mapOldPosition, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapWindowSuffix, mapRemoved",
       "status": "restricted",
-      "restrictions": "Production plain identity-keyed or keyed:false profiles: tracked list/owner routing, prefix/suffix trims, stable identity, pure-removal reset, reverse SameValueZero key chains, ordered staging/catch/commit/disposal and source small-move gate/probe/scan/commit retained. Extracted-key and index-accessor modes, packed-index overflow and active engines remain unfinished. Pinned falsy fallback retained."
+      "restrictions": "All three typed production keying modes, optional item/index signals and actual key callbacks. Captured prefix limit, strict prefix/suffix comparison, stable identity, pure-removal reset, reverse SameValueZero duplicate chains, source mapper catch/commit/disposal and no-row/no-index small-move gate retained. Key callbacks remain outside mapper catch. Packed-index overflow and active engines remain unfinished. Pinned falsy fallback retained."
     },
     "map.ts:stageRemoval": {
-      "bend": "runtime/core.bend:mapRemovalMatch, mapRemoval",
+      "bend": "runtime/core.bend:mapRemovalMatch, mapRemovalOld, mapRemovalOldKey, mapRemovalFound, mapRemovalFailed, mapRemoval",
       "status": "restricted",
-      "restrictions": "Identity comparisons, forward pure-removal stage, scratch node reset on failed probe and ordered final leavers; extracted key callbacks and row/index stages outside keyed:false remain unfinished."
+      "restrictions": "All typed keying profiles: one cached new key per destination before old-side exhaustion check, forward old key comparisons, mapping/node/optional row/index stages, node scratch reset on failed probe and ordered final leavers. Arbitrary protocol objects and active engines unfinished."
     },
     "map.ts:commitWindow": {
-      "bend": "runtime/core.bend:mapWindow, mapWindowGrowShift, mapWindowShrinkShift, mapWindowRows",
+      "bend": "runtime/core.bend:mapWindow, mapWindowGrowShift, mapWindowShrinkShift, mapWindowRows, mapWindowSuffix",
       "status": "restricted",
-      "restrictions": "Plain keyed or keyed:false modes; source resize/copy direction and live node/row stores preserved. Extracted-key rows, index accessor vectors and active lane slot writes remain unfinished."
+      "restrictions": "All typed keying modes: source resize/copy direction and node/optional row/item-write/optional index/index-write order, then retained suffix updates only on length change. Active lane slot writes remain unfinished."
     },
     "map.ts:trySmallMove": {
       "bend": "runtime/small-move.bend:trySmallMove, scanLoop, look, finishTails; runtime/core.bend:mapSmallMove",
@@ -746,6 +746,11 @@
       "bend": "runtime/small-move.bend:pairLoops, paired, duplicateRun, copyRuns, copyDisplaced, commit; runtime/core.bend:mapSmallCleanup",
       "status": "restricted",
       "restrictions": "Original strict pairing, SameValueZero duplicate safeguard, sliced arrays, run/displaced copies, mappings/nodes/len/items stores and final cleanup return point. Positive signed-32 packed-index domain; overflow refuses Unsupported(84). Production dev counter/observe attribution remain unfinished."
+    },
+    "map.ts:compare": {
+      "bend": "runtime/core.bend:mapCompare, mapMatched, MapCompareOld, MapCompareNew",
+      "status": "restricted",
+      "restrictions": "Strict raw identity guard first; no-key row mode true; extracted key old then new calls with captured arguments/callee, strict returned-key comparison. Actual typed callables and outer compute catch; arbitrary protocol/function reflection remains unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

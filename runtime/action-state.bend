@@ -28,7 +28,7 @@ def create(+w: R.World, methods: R.Expr) -> B.Bundle<R.World, Nat>:
 # Promise or reactive node is allocated until that callable is invoked.
 def function(+w: R.World, factory: R.Expr, methods: R.Expr, previous: R.Value) -> B.Bundle<R.World, R.Value>:
   +callback = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-  B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), R.ProgramReference{callback}}
+  B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}])), R.ProgramReference{callback}}
 
 def open(+w: R.World, +id: Nat) -> R.World:
   +pair = X.newTransaction(w, False{}, 0n)

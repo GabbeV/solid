@@ -404,3 +404,32 @@ pending replacement, batch staging and the complete batched public program's
 World/view. Every nonempty batch schedules and computes once, with only its
 last pending proposal read by the memo. The exact source stamp gate and old
 committed values are preserved; equals:false remains an explicit restriction.
+
+## Typed array storage and concrete map lifecycles
+
+Five properties in `proof/array-laws.bend`, exposed by LAWS/PROOF, quantify the
+actual storage helpers rather than a second array model:
+
+- `holes_length(size)`: any natural length produces exactly that many slots.
+- `hole_slot(prefix,suffix)`: every in-bounds slot in a fresh hole vector is
+  Empty, with Present(Undefined) as the lookup default to distinguish presence.
+- `dense_read(prefix,value,suffix)`: arbitrary value vectors retain the exact
+  Present(value) slot, including undefined and reference payloads.
+- `slot_put_read(prefix,old,suffix,value)`: replacing an existing slot retains
+  the exact Present(value), with arbitrary surrounding slots and payloads.
+- `allocation_contract(world,slots)`: Arrays.allocate returns the previous arena
+  length as identity, appends exactly one supplied array without changing earlier
+  arrays, retrieves its exact slots and preserves every non-array World field.
+
+The proofs use structural induction and the existing arena append lookup lemma.
+They do not claim general JavaScript array/property/coercion semantics or a
+mapArray/repeat theorem. Two compiled array mutations are rejected by these
+quantified assertions, separately from their positive independent-kernel check.
+
+`proof/map-lifecycle.bend` adds three closed executions of the actual public
+constructor, setter, committed read, flush, bound item/index reads and root
+teardown. A two-item list becomes [2,1,3] in each mode. The checked View contains
+items/indexes, the pre-flush committed list, retained row identity, all final row
+and map disposals, exactly three cleanup events and restored ambient/fault state.
+These are concrete programs with fixed sufficient budgets and a projected final
+view, not arbitrary histories, a full-final-World equality or formal TS equivalence.

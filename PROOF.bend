@@ -1,4 +1,6 @@
 import Base
+import ./proof/array-laws.bend as ArrayLaws
+import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
 import ./proof/memo-history-public.bend as MemoHistory
@@ -530,3 +532,27 @@ def Laws.scalar_memo_batched_history_final_world(initial, first, rest, construct
 
 def Laws.scalar_memo_batched_history_complete(initial, first, rest, constructorExtra, firstExtra, batches):
   MemoBatches.complete(initial, first, rest, constructorExtra, firstExtra, batches)
+
+def Laws.array_holes_have_exact_length(size):
+  ArrayLaws.holes_length(size)
+
+def Laws.fresh_array_slots_are_holes(prefix, suffix):
+  ArrayLaws.hole_slot(prefix, suffix)
+
+def Laws.dense_array_slot_preserves_payload(prefix, value, suffix):
+  ArrayLaws.dense_read(prefix, value, suffix)
+
+def Laws.array_write_retains_present_payload(prefix, old, suffix, value):
+  ArrayLaws.slot_put_read(prefix, old, suffix, value)
+
+def Laws.array_allocation_contract(w, slots):
+  ArrayLaws.allocation_contract(w, slots)
+
+def Laws.plain_keyed_map_lifecycle():
+  MapLifecycle.plain_complete()
+
+def Laws.positional_map_lifecycle():
+  MapLifecycle.index_complete()
+
+def Laws.extracted_key_map_lifecycle():
+  MapLifecycle.extracted_complete()

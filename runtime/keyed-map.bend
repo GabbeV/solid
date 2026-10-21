@@ -9,7 +9,7 @@ import ./owner-state.bend as Owner
 import ./map.bend as Repeat
 
 def blank() -> R.MapState:
-  R.MapState{0n, 0n, R.Literal{R.Undefined{}}, 0n, R.Undefined{}, 0n, [], [], R.NoInlineBody{}, True{}}
+  R.MapState{0n, 0n, R.Literal{R.Undefined{}}, 0n, R.Undefined{}, 0n, [], [], R.NoInlineBody{}, True{}, [], False{}, R.Undefined{}}
 
 def get(+w: R.World, +id: Nat) -> R.MapState:
   B.get(R.MapState, R.World.maps(w), id, blank())
@@ -17,19 +17,24 @@ def get(+w: R.World, +id: Nat) -> R.MapState:
 def store(+w: R.World, +id: Nat, +state: R.MapState) -> R.World:
   R.World.with_maps(w, List.set(&2, R.MapState, R.World.maps(w), id, state))
 
-def mapArray(+w: R.World, +list: R.Expr, +mapper: R.Value, +fallback: R.InlineBody, +byIndex: Bool) -> B.Bundle<R.World, Nat>:
+def mapArray(+w: R.World, +list: R.Expr, +mapper: R.Value, +fallback: R.InlineBody, +byIndex: Bool, +arity: Nat, +key: R.Value) -> B.Bundle<R.World, Nat>:
+  +hasIndexes = Bool.and(Nat.is_gt(arity, 1n), Bool.not(byIndex))
   +owner = B.length(R.Node, R.World.nodes(w))
   +w = Owner.createOwner(w, R.World.context(w), False{})
   +items = Arrays.fresh(w, 0n)
   +mappings = Arrays.fresh(B.first(R.World, Nat, items), 0n)
   +w = B.first(R.World, Nat, mappings)
   +id = B.length(R.MapState, R.World.maps(w))
-  +state = {R.MapState{owner, 0n, list, B.second(R.World, Nat, items), mapper, B.second(R.World, Nat, mappings), [], [], fallback, byIndex} : R.MapState}
+  +state = {R.MapState{owner, 0n, list, B.second(R.World, Nat, items), mapper, B.second(R.World, Nat, mappings), [], [], fallback, byIndex, [], hasIndexes, key} : R.MapState}
   B.Bundle{R.World.with_maps(w, B.append(R.MapState, R.World.maps(w), [state])), id}
 
 def updateParent(+w: R.World, +id: Nat) -> R.World:
   +owner = R.MapState.owner(get(w, id))
   B.store_node(w, owner, R.Node.with_parentComputed(B.node(w, owner), R.World.context(w)))
+
+# The source row vector is present for index keying or an extracted key.
+def hasRows(+state: R.MapState) -> Bool:
+  Bool.or(R.MapState.byIndex(state), B.truth(R.MapState.key(state)))
 
 # Empty transition after successful owner.dispose(false), exact store order.
 def clear(+w: R.World, +id: Nat) -> R.World:
@@ -39,7 +44,8 @@ def clear(+w: R.World, +id: Nat) -> R.World:
   +pair = Arrays.fresh(w, 0n)
   +w = store(B.first(R.World, Nat, pair), id, R.MapState.with_mappings(get(B.first(R.World, Nat, pair), id), B.second(R.World, Nat, pair)))
   +w = store(w, id, R.MapState.with_len(get(w, id), 0n))
-  store(w, id, R.MapState.with_rows(get(w, id), []))
+  +w = B.choose(~R.World, hasRows(get(w, id)), _ => store(w, id, R.MapState.with_rows(get(w, id), [])), _ => w)
+  B.choose(~R.World, R.MapState.hasIndexes(get(w, id)), _ => store(w, id, R.MapState.with_indexes(get(w, id), [])), _ => w)
 
 # compare(undefined, old, next) in this profile. Keep the === fast disjunct
 # before that always-true row-mode comparison; there is no extracted key call.
@@ -49,9 +55,9 @@ def matches(+w: R.World, oldItems: Nat, newItems: Nat, oldIndex: Nat, newIndex: 
 
 # Inclusive TS end/newEnd use exclusive bounds here (source index plus one),
 # representing -1 exactly as zero. All loop guards account for this encoding.
-def frame(+id: Nat, +items: Nat, +newLen: Nat, +oldLen: Nat, +start: Nat, +mappings: Nat, +initial: Bool, +newEnd: Nat, +byIndex: Bool) -> R.MapFrame:
+def frame(+id: Nat, +items: Nat, +newLen: Nat, +oldLen: Nat, +start: Nat, +mappings: Nat, +initial: Bool, +newEnd: Nat, +hasRows: Bool, +hasIndexes: Bool) -> R.MapFrame:
   +size = B.choose(~Nat, initial, _ => newLen, _ => Nat.sub(newEnd, start))
-  R.MapFrame{id, items, newLen, start, oldLen, newEnd, mappings, Repeat.emptyNodes(size), B.choose(~List<&2, Nat>, byIndex, _ => Repeat.emptyNodes(size), _ => []), [], [], initial, [], []}
+  R.MapFrame{id, items, newLen, start, oldLen, newEnd, mappings, Repeat.emptyNodes(size), B.choose(~List<&2, Nat>, hasRows, _ => Repeat.emptyNodes(size), _ => []), [], [], initial, [], [], B.choose(~List<&2, Nat>, hasIndexes, _ => Repeat.emptyNodes(size), _ => [])}
 
 # SameValueZero is the JS Map key relation, unlike source prefix strict ===.
 def sameKey(+a: R.Value, +b: R.Value) -> Bool:
@@ -94,9 +100,9 @@ def prepareIndices(cursor: Nat, +w: R.World, +frame: R.MapFrame) -> R.MapFrame:
       B.choose(~R.MapFrame, Nat.is_ge(j, R.MapFrame.start(frame)),
         _ =>
           +item = Arrays.at(w, R.MapFrame.newItems(frame), j)
-          +old = indexGet(R.MapFrame.indices(frame), item)
+          +old = indexGet(R.MapFrame.keyIndices(frame), item)
           +frame = R.MapFrame.with_next(frame, B.put(R.MapIndex, R.MapFrame.next(frame), Nat.sub(j, R.MapFrame.start(frame)), R.MapMissing{}, nextIndex(old)))
-          +frame = R.MapFrame.with_indices(frame, indexSet(R.MapFrame.indices(frame), item, R.MapAt{j}))
+          +frame = R.MapFrame.with_keyIndices(frame, indexSet(R.MapFrame.keyIndices(frame), item, R.MapAt{j}))
           prepareIndices(j, w, frame),
         _ => frame)
 
@@ -110,7 +116,8 @@ def publishInitial(+w: R.World, +frame: R.MapFrame) -> R.World:
   +id = R.MapFrame.map(frame)
   +w = store(w, id, R.MapState.with_mappings(get(w, id), R.MapFrame.mappings(frame)))
   +w = store(w, id, R.MapState.with_nodes(get(w, id), R.MapFrame.nodes(frame)))
-  +w = B.choose(~R.World, R.MapState.byIndex(get(w, id)), _ => store(w, id, R.MapState.with_rows(get(w, id), R.MapFrame.rows(frame))), _ => w)
+  +w = B.choose(~R.World, hasRows(get(w, id)), _ => store(w, id, R.MapState.with_rows(get(w, id), R.MapFrame.rows(frame))), _ => w)
+  +w = B.choose(~R.World, R.MapState.hasIndexes(get(w, id)), _ => store(w, id, R.MapState.with_indexes(get(w, id), R.MapFrame.indexes(frame))), _ => w)
   +w = saveItems(w, id, R.MapFrame.newItems(frame))
   store(w, id, R.MapState.with_len(get(w, id), R.MapFrame.newLen(frame)))
 

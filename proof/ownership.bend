@@ -7,9 +7,9 @@ import ../runtime/owner.bend as O
 
 def scenario() -> R.World:
   +w = N.createOwner(N.createOwner(B.empty(), 0n, False{}), 1n, False{})
-  +programs = {[R.CleanupProgram{[], False{}}, R.CleanupProgram{[R.CleanupEmit{11n}], False{}},
-    R.CleanupProgram{[R.CleanupEmit{22n}, R.CleanupDispose{1n}], False{}},
-    R.CleanupProgram{[R.CleanupEmit{33n}], False{}}, R.CleanupProgram{[R.CleanupEmit{44n}], False{}}] : List<&2, R.CleanupProgram>}
+  +programs = {[R.CleanupProgram{[], False{}, 0n}, R.CleanupProgram{[R.CleanupEmit{11n}], False{}, 0n},
+    R.CleanupProgram{[R.CleanupEmit{22n}, R.CleanupDispose{1n}], False{}, 0n},
+    R.CleanupProgram{[R.CleanupEmit{33n}], False{}, 0n}, R.CleanupProgram{[R.CleanupEmit{44n}], False{}, 0n}] : List<&2, R.CleanupProgram>}
   +w = R.World.with_cleanupPrograms(w, programs)
   +w = O.cleanup(O.cleanup(O.cleanup(w, 1n, 3n), 2n, 1n), 2n, 2n)
   +w = B.store_node(w, 2n, R.Node.with_cleanup(B.node(w, 2n), 4n))

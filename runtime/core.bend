@@ -67,15 +67,28 @@ def passId(frame: PassFrame) -> Nat:
     case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
       id
 
+type MapMatch is Data:
+  PrefixMatch{id: Nat, items: Nat, newLen: Nat, index: Nat, limit: Nat}
+  SuffixMatch{id: Nat, items: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat}
+
 type Task is Data:
-  MapMapper{list: R.Expr, fallback: R.InlineBody, byIndex: Bool}
+  MapMapper{list: R.Expr, fallback: R.InlineBody, keyed: R.Expr, previous: R.Value}
+  MapInput{list: R.Expr, fallback: R.InlineBody, mapper: R.Value}
+  MapCompareOld{matchFrame: MapMatch, key: R.Value, newItem: R.Value}
+  MapCompareNew{matchFrame: MapMatch, oldKey: R.Value}
+  MapPrepare{frame: R.MapFrame, cursor: Nat}
+  MapPrepared{frame: R.MapFrame, index: Nat}
+  MapOldKey{frame: R.MapFrame, index: Nat}
+  MapRemovalNewKey{frame: R.MapFrame, oldIndex: Nat, newIndex: Nat}
+  MapRemovalOld{frame: R.MapFrame, oldIndex: Nat, newIndex: Nat, newKey: R.Value}
+  MapRemovalOldKey{frame: R.MapFrame, oldIndex: Nat, newIndex: Nat, newKey: R.Value}
   MapList{id: Nat}
   MapClear{id: Nat}
   MapEmpty{id: Nat}
   MapFallbackCreate{id: Nat}
   MapFallbackStore{id: Nat}
   MapReturn{id: Nat}
-  MapPrefix{id: Nat, items: Nat, newLen: Nat, index: Nat}
+  MapPrefix{id: Nat, items: Nat, newLen: Nat, index: Nat, limit: Nat}
   MapSuffix{id: Nat, items: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat}
   MapAfterTrim{id: Nat, items: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat}
   MapRemoval{frame: R.MapFrame, index: Nat}
@@ -92,6 +105,7 @@ type Task is Data:
   MapCommitPrefix{frame: R.MapFrame, index: Nat}
   MapWindow{frame: R.MapFrame}
   MapWindowRows{frame: R.MapFrame, index: Nat}
+  MapWindowSuffix{frame: R.MapFrame, index: Nat}
   MapRemoved{nodes: List<&2, Nat>}
   MapSmallCleanup{plan: R.SmallPlan, index: Nat}
   RepeatMapper{count: R.Expr, from: R.InlineBody, fallback: R.InlineBody}
@@ -323,7 +337,7 @@ def inlineProgram(+w: R.World, body: R.InlineBody, program: Nat) -> B.Bundle<R.W
     case R.SomeInlineBody{+expr, +returnsCleanup}:
       +id = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
       action = B.choose(~R.CleanupAction, returnsCleanup, _ => R.CallbackReturn{expr}, _ => R.CallbackEvaluate{expr})
-      w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[action], returnsCleanup}]))
+      w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[action], returnsCleanup, 0n}]))
       B.Bundle{w, id}
 
 # core.ts:isSame. Custom functions keep their original program identity and
@@ -531,8 +545,8 @@ def mapRead(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: 
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
-    case R.MapArrayCreate{list, mapper, fallback, byIndex}:
-      Machine{w, Evaluate{mapper, prev} <> MapMapper{list, fallback, byIndex} <> rest, stack}
+    case R.MapArrayCreate{list, mapper, fallback, keyed}:
+      Machine{w, Evaluate{mapper, prev} <> MapMapper{list, fallback, keyed, prev} <> rest, stack}
     case R.MapArrayRead{id}:
       mapRead(w, rest, stack, id)
     case R.ArrayLiteral{values}:
@@ -674,7 +688,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{callee, prev} <> OnCleanup{} <> rest, stack}
     case R.CallProgram{+callback}:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}})), R.Undefined{}, R.Undefined{}} <> rest, stack},
+        _ => Machine{w, Callback{callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n})), R.Undefined{}, R.Undefined{}} <> rest, stack},
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
     case R.Then{first, second}:
       Machine{w, Evaluate{first, prev} <> Discard{} <> Evaluate{second, prev} <> rest, stack}
@@ -930,7 +944,7 @@ def invokeMany(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, ca
   match callee:
     case R.ProgramReference{+id}:
       B.choose(~Machine, callbackExists(w, id),
-        _ => Machine{w, Callback{id, bindCallActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}})), args), B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{})} <> rest, stack},
+        _ => Machine{w, Callback{id, bindCallActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}, 0n})), args), B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{})} <> rest, stack},
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, stack})
     case other:
       invokeApplied(w, rest, stack, other, B.get(R.Value, args, 0n, R.Undefined{}))
@@ -2001,7 +2015,7 @@ def applyEffect(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
   +w = B.choose(~R.World, S.is_user(R.Node.kind(B.node(w, id))), _ => w,
     _ => T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id))))
   +callback = R.Node.effectProgram(B.node(w, id))
-  +returnsCleanup = R.CleanupProgram.returnsCleanup(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}}))
+  +returnsCleanup = R.CleanupProgram.returnsCleanup(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))
   +call = {Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Node.prevValue(B.node(w, id))}}, R.Undefined{}} : Task}
   +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n),
     _ => B.choose(~List<&2, Task>, returnsCleanup,
@@ -2426,14 +2440,23 @@ def repeatLeaving(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
 
 # src/map.ts mapArray/updateKeyedMap, plain keyed or keyed:false admission. General callbacks
 # and teardown re-enter this same machine; no host reconciliation is involved.
-def mapCreate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +list: R.Expr, +mapper: R.Value, +fallback: R.InlineBody, +byIndex: Bool) -> Machine:
-  +pair = KeyedMap.mapArray(w, list, mapper, fallback, byIndex)
+def mapCreate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +list: R.Expr, +mapper: R.Value, +fallback: R.InlineBody, +byIndex: Bool, +key: R.Value) -> Machine:
+  +pair = KeyedMap.mapArray(w, list, mapper, fallback, byIndex, J.functionLength(w, mapper), key)
   +w = B.first(R.World, Nat, pair)
   +map = B.second(R.World, Nat, pair)
   +node = B.length(R.Node, R.World.nodes(w))
   +w = B.event(w, R.Constructed{node})
   +w = N.computed(w, R.MapArrayRead{map}, N.defaults(), R.World.context(w))
   Machine{w, Recompute{node, True{}} <> RepeatReady{node} <> rest, stack}
+
+def mapInput(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +list: R.Expr, +fallback: R.InlineBody, +mapper: R.Value, +keyed: R.Value) -> Machine:
+  match keyed:
+    case R.Undefined{}:
+      mapCreate(w, rest, stack, list, mapper, fallback, False{}, R.Undefined{})
+    case R.Boolean{byKey}:
+      mapCreate(w, rest, stack, list, mapper, fallback, Bool.not(byKey), R.Undefined{})
+    case other:
+      B.choose(~Machine, J.isFunction(other), _ => mapCreate(w, rest, stack, list, mapper, fallback, False{}, other), _ => Machine{R.World.with_fault(w, R.Unsupported{86n}), rest, stack})
 
 def mapBegin(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat) -> Machine:
   +state = KeyedMap.get(w, id)
@@ -2447,9 +2470,9 @@ def mapBegin(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
     _ => B.choose(~Machine, Nat.is_eq(R.MapState.len(state), 0n),
       _ =>
         +pair = Arrays.fresh(w, newLen)
-        +frame = KeyedMap.frame(id, items, newLen, 0n, 0n, B.second(R.World, Nat, pair), True{}, newLen, R.MapState.byIndex(state))
+        +frame = KeyedMap.frame(id, items, newLen, 0n, 0n, B.second(R.World, Nat, pair), True{}, newLen, KeyedMap.hasRows(state), R.MapState.hasIndexes(state))
         Machine{B.first(R.World, Nat, pair), MapRows{frame, 0n} <> ending, stack},
-      _ => Machine{w, MapPrefix{id, items, newLen, 0n} <> ending, stack}))
+      _ => Machine{w, MapPrefix{id, items, newLen, 0n, Nat.min(R.MapState.len(state), newLen)} <> ending, stack}))
 
 def mapListValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value) -> Machine:
   match value:
@@ -2485,35 +2508,71 @@ def mapFallbackCreate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
   +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, B.put(Nat, R.MapState.nodes(state), 0n, 0n, owner)))
   mapFallbackBody(w, rest, stack, id, owner, R.MapState.fallback(state))
 
-# Source compare(undefined, old, next) is true for the by-index row mode.
-# The strict identity disjunct is still evaluated first. No mapper runs here.
-def mapPrefix(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +index: Nat) -> Machine:
-  +state = KeyedMap.get(w, id)
-  B.choose(~Machine, Bool.and(Nat.is_lt(index, Nat.min(R.MapState.len(state), newLen)), KeyedMap.matches(w, R.MapState.items(state), items, index, index, R.MapState.byIndex(state))),
-    _ =>
-      +row = B.get(Nat, R.MapState.rows(state), index, 0n)
-      +w = B.choose(~R.World, R.MapState.byIndex(state), _ => W.setSignal(w, row, Arrays.at(w, items, index)), _ => w)
-      Machine{w, MapPrefix{id, items, newLen, 1n+index} <> rest, stack},
-    _ => Machine{w, MapSuffix{id, items, newLen, index, R.MapState.len(state), newLen} <> rest, stack})
+# compare(key,a,b) return points. The raw identity guard precedes key calls;
+# both arguments and the key function are captured before its first callback.
+def mapMatched(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, matchFrame: MapMatch, +matched: Bool) -> Machine:
+  match matchFrame:
+    case PrefixMatch{+id, +items, +newLen, +index, +limit}:
+      +state = KeyedMap.get(w, id)
+      B.choose(~Machine, matched,
+        _ =>
+          +row = B.get(Nat, R.MapState.rows(state), index, 0n)
+          +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => W.setSignal(w, row, Arrays.at(w, items, index)), _ => w)
+          Machine{w, MapPrefix{id, items, newLen, 1n+index, limit} <> rest, stack},
+        _ => Machine{w, MapSuffix{id, items, newLen, index, R.MapState.len(state), newLen} <> rest, stack})
+    case SuffixMatch{+id, +items, +newLen, +start, +end, +newEnd}:
+      B.choose(~Machine, matched,
+        _ => Machine{w, MapSuffix{id, items, newLen, start, Nat.sub(end, 1n), Nat.sub(newEnd, 1n)} <> rest, stack},
+        _ => Machine{w, MapAfterTrim{id, items, newLen, start, end, newEnd} <> rest, stack})
 
-# Exclusive end bounds encode TS -1. Plain keyed mode compares the retained
-# suffix after the prefix; by-index prefix matching exhausts a side.
-def mapSuffix(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +start: Nat, +end: Nat, +newEnd: Nat) -> Machine:
+def mapCompare(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +matchFrame: MapMatch, +id: Nat, +oldItem: R.Value, +newItem: R.Value) -> Machine:
   +state = KeyedMap.get(w, id)
+  B.choose(~Machine, B.equal(oldItem, newItem),
+    _ => mapMatched(w, rest, stack, matchFrame, True{}),
+    _ => B.choose(~Machine, KeyedMap.hasRows(state),
+      _ => B.choose(~Machine, B.truth(R.MapState.key(state)),
+        _ => invokeMany(w, MapCompareOld{matchFrame, R.MapState.key(state), newItem} <> rest, stack, R.MapState.key(state), [oldItem]),
+        _ => mapMatched(w, rest, stack, matchFrame, True{})),
+      _ => mapMatched(w, rest, stack, matchFrame, False{})))
+
+def mapPrefix(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +index: Nat, +limit: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, limit),
+    _ => mapCompare(w, rest, stack, PrefixMatch{id, items, newLen, index, limit}, id, Arrays.at(w, R.MapState.items(KeyedMap.get(w, id)), index), Arrays.at(w, items, index)),
+    _ => Machine{w, MapSuffix{id, items, newLen, index, R.MapState.len(KeyedMap.get(w, id)), newLen} <> rest, stack})
+
+def mapSuffix(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +start: Nat, +end: Nat, +newEnd: Nat) -> Machine:
   B.choose(~Machine, Bool.and(Nat.is_gt(end, start), Nat.is_gt(newEnd, start)),
-    _ => B.choose(~Machine, KeyedMap.matches(w, R.MapState.items(state), items, Nat.sub(end, 1n), Nat.sub(newEnd, 1n), R.MapState.byIndex(state)),
-      _ => Machine{w, MapSuffix{id, items, newLen, start, Nat.sub(end, 1n), Nat.sub(newEnd, 1n)} <> rest, stack},
-      _ => Machine{w, MapAfterTrim{id, items, newLen, start, end, newEnd} <> rest, stack}),
+    _ => mapCompare(w, rest, stack, SuffixMatch{id, items, newLen, start, end, newEnd}, id, Arrays.at(w, R.MapState.items(KeyedMap.get(w, id)), Nat.sub(end, 1n)), Arrays.at(w, items, Nat.sub(newEnd, 1n))),
     _ => Machine{w, MapAfterTrim{id, items, newLen, start, end, newEnd} <> rest, stack})
+
+# Keyed callbacks are outside the mapper catch. The no-key reverse loop keeps
+# the existing pure helper; extracted keys resume one source call at a time.
+def mapPrepareStart(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame) -> Machine:
+  B.choose(~Machine, B.truth(R.MapState.key(KeyedMap.get(w, R.MapFrame.map(frame)))),
+    _ => Machine{w, MapPrepare{frame, R.MapFrame.newEnd(frame)} <> rest, stack},
+    _ => Machine{w, MapOld{KeyedMap.prepareIndices(R.MapFrame.newEnd(frame), w, frame), R.MapFrame.start(frame)} <> rest, stack})
+
+def mapPrepare(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +cursor: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_gt(cursor, R.MapFrame.start(frame)),
+    _ =>
+      +index = Nat.sub(cursor, 1n)
+      invokeMany(w, MapPrepared{frame, index} <> rest, stack, R.MapState.key(KeyedMap.get(w, R.MapFrame.map(frame))), [Arrays.at(w, R.MapFrame.newItems(frame), index)]),
+    _ => Machine{w, MapOld{frame, R.MapFrame.start(frame)} <> rest, stack})
+
+def mapPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat, +key: R.Value) -> Machine:
+  +old = KeyedMap.indexGet(R.MapFrame.keyIndices(frame), key)
+  +frame = R.MapFrame.with_next(frame, B.put(R.MapIndex, R.MapFrame.next(frame), Nat.sub(index, R.MapFrame.start(frame)), R.MapMissing{}, KeyedMap.nextIndex(old)))
+  +frame = R.MapFrame.with_keyIndices(frame, KeyedMap.indexSet(R.MapFrame.keyIndices(frame), key, R.MapAt{index}))
+  Machine{w, MapPrepare{frame, index} <> rest, stack}
 
 def mapGeneralStage(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +start: Nat, +end: Nat, +newEnd: Nat) -> Machine:
   +oldLen = R.MapState.len(KeyedMap.get(w, id))
   +pair = Arrays.fresh(w, newLen)
   +w = B.first(R.World, Nat, pair)
-  +frame = KeyedMap.frame(id, items, newLen, end, start, B.second(R.World, Nat, pair), False{}, newEnd, R.MapState.byIndex(KeyedMap.get(w, id)))
+  +frame = KeyedMap.frame(id, items, newLen, end, start, B.second(R.World, Nat, pair), False{}, newEnd, KeyedMap.hasRows(KeyedMap.get(w, id)), R.MapState.hasIndexes(KeyedMap.get(w, id)))
   B.choose(~Machine, Nat.is_lt(newLen, oldLen),
     _ => Machine{w, MapRemovalMatch{frame, start, start} <> rest, stack},
-    _ => Machine{w, MapOld{KeyedMap.prepareIndices(newEnd, w, frame), start} <> rest, stack})
+    _ => mapPrepareStart(w, rest, stack, frame))
 
 def mapSmallMove(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +items: Nat, +newLen: Nat, +start: Nat, +end: Nat, +newEnd: Nat) -> Machine:
   B.choose(~Machine, SmallMoves.probe(w, id, items, start, end, newEnd),
@@ -2539,57 +2598,10 @@ def mapAfterTrim(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
   +state = KeyedMap.get(w, id)
   B.choose(~Machine, Bool.and(Nat.is_eq(start, newLen), Nat.is_eq(R.MapState.len(state), newLen)),
     _ => Machine{KeyedMap.saveItems(w, id, items), rest, stack},
-    _ => B.choose(~Machine, Bool.and(Bool.and(Nat.is_le(newLen, R.MapState.len(state)), Nat.is_gt(Nat.sub(end, start), 65n)), Bool.not(R.MapState.byIndex(state))),
+    _ => B.choose(~Machine, Bool.and(Bool.and(Nat.is_le(newLen, R.MapState.len(state)), Nat.is_gt(Nat.sub(end, start), 65n)), Bool.and(Bool.not(KeyedMap.hasRows(state)), Bool.not(R.MapState.hasIndexes(state)))),
       _ => mapSmallMove(w, rest, stack, id, items, newLen, start, end, newEnd),
       _ => mapGeneralStage(w, rest, stack, id, items, newLen, start, end, newEnd)))
 
-# stageRemoval's forward scan and source failure reset. Scratch mappings/rows
-# survive a failed probe, but tempNodes must be cleared before map matching.
-def mapRemovalMatch(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +oldIndex: Nat, +newIndex: Nat) -> Machine:
-  B.choose(~Machine, Nat.is_lt(newIndex, R.MapFrame.newEnd(frame)),
-    _ => B.choose(~Machine, Nat.is_lt(oldIndex, R.MapFrame.end(frame)),
-      _ =>
-        +state = KeyedMap.get(w, R.MapFrame.map(frame))
-        B.choose(~Machine, B.equal(Arrays.at(w, R.MapState.items(state), oldIndex), Arrays.at(w, R.MapFrame.newItems(frame), newIndex)),
-          _ =>
-            +w = Arrays.put(w, R.MapFrame.mappings(frame), newIndex, Arrays.at(w, R.MapState.mappings(state), oldIndex))
-            +frame = R.MapFrame.with_nodes(frame, B.put(Nat, R.MapFrame.nodes(frame), Nat.sub(newIndex, R.MapFrame.start(frame)), 0n, B.get(Nat, R.MapState.nodes(state), oldIndex, 0n)))
-            +frame = B.choose(~R.MapFrame, R.MapState.byIndex(state), _ => R.MapFrame.with_rows(frame, B.put(Nat, R.MapFrame.rows(frame), Nat.sub(newIndex, R.MapFrame.start(frame)), 0n, B.get(Nat, R.MapState.rows(state), oldIndex, 0n))), _ => frame)
-            Machine{w, MapRemovalMatch{frame, 1n+oldIndex, 1n+newIndex} <> rest, stack},
-          _ =>
-            +removed = B.append(Nat, R.MapFrame.removed(frame), [B.get(Nat, R.MapState.nodes(state), oldIndex, 0n)])
-            Machine{w, MapRemovalMatch{R.MapFrame.with_removed(frame, removed), 1n+oldIndex, newIndex} <> rest, stack}),
-      _ =>
-        +frame = R.MapFrame.with_nodes(frame, Maps.emptyNodes(Nat.sub(R.MapFrame.newEnd(frame), R.MapFrame.start(frame))))
-        +frame = R.MapFrame.with_removed(frame, [])
-        Machine{w, MapOld{KeyedMap.prepareIndices(R.MapFrame.newEnd(frame), w, frame), R.MapFrame.start(frame)} <> rest, stack}),
-    _ => Machine{w, MapRemoval{frame, oldIndex} <> rest, stack})
-
-# The old changed-window walk consumes the duplicate chain in occurrence order.
-def mapOldPosition(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat, +item: R.Value, position: R.MapIndex) -> Machine:
-  match position:
-    case R.MapAt{+j}:
-      +state = KeyedMap.get(w, R.MapFrame.map(frame))
-      +slot = Nat.sub(j, R.MapFrame.start(frame))
-      +w = Arrays.put(w, R.MapFrame.mappings(frame), j, Arrays.at(w, R.MapState.mappings(state), index))
-      +frame = R.MapFrame.with_nodes(frame, B.put(Nat, R.MapFrame.nodes(frame), slot, 0n, B.get(Nat, R.MapState.nodes(state), index, 0n)))
-      +frame = B.choose(~R.MapFrame, R.MapState.byIndex(state), _ => R.MapFrame.with_rows(frame, B.put(Nat, R.MapFrame.rows(frame), slot, 0n, B.get(Nat, R.MapState.rows(state), index, 0n))), _ => frame)
-      +next = B.get(R.MapIndex, R.MapFrame.next(frame), slot, R.MapMissing{})
-      +frame = R.MapFrame.with_indices(frame, KeyedMap.indexSet(R.MapFrame.indices(frame), item, next))
-      Machine{w, MapOld{frame, 1n+index} <> rest, stack}
-    case other:
-      +owner = B.get(Nat, R.MapState.nodes(KeyedMap.get(w, R.MapFrame.map(frame))), index, 0n)
-      Machine{w, MapOld{R.MapFrame.with_removed(frame, B.append(Nat, R.MapFrame.removed(frame), [owner])), 1n+index} <> rest, stack}
-
-def mapOld(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
-  B.choose(~Machine, Nat.is_lt(index, R.MapFrame.end(frame)),
-    _ =>
-      +item = Arrays.at(w, R.MapState.items(KeyedMap.get(w, R.MapFrame.map(frame))), index)
-      mapOldPosition(w, rest, stack, frame, index, item, KeyedMap.indexGet(R.MapFrame.indices(frame), item)),
-    _ => Machine{w, MapRows{frame, R.MapFrame.start(frame)} <> rest, stack})
-
-# stageRemoval final loop: after every new survivor matched, collect the
-# remaining old owners in ascending order.
 def mapRemoval(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
   B.choose(~Machine, Nat.is_lt(index, R.MapFrame.end(frame)),
     _ =>
@@ -2600,17 +2612,102 @@ def mapRemoval(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +f
 
 # Mapper closures: by-index uses a raw ownedWrite core signal and accessor;
 # plain keyed mode passes the raw item. Callable items remain ordinary data.
+
+def mapRemovalFound(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +oldIndex: Nat, +newIndex: Nat) -> Machine:
+  +state = KeyedMap.get(w, R.MapFrame.map(frame))
+  +slot = Nat.sub(newIndex, R.MapFrame.start(frame))
+  +w = Arrays.put(w, R.MapFrame.mappings(frame), newIndex, Arrays.at(w, R.MapState.mappings(state), oldIndex))
+  +frame = R.MapFrame.with_nodes(frame, B.put(Nat, R.MapFrame.nodes(frame), slot, 0n, B.get(Nat, R.MapState.nodes(state), oldIndex, 0n)))
+  +frame = B.choose(~R.MapFrame, KeyedMap.hasRows(state), _ => R.MapFrame.with_rows(frame, B.put(Nat, R.MapFrame.rows(frame), slot, 0n, B.get(Nat, R.MapState.rows(state), oldIndex, 0n))), _ => frame)
+  +frame = B.choose(~R.MapFrame, R.MapState.hasIndexes(state), _ => R.MapFrame.with_indexes(frame, B.put(Nat, R.MapFrame.indexes(frame), slot, 0n, B.get(Nat, R.MapState.indexes(state), oldIndex, 0n))), _ => frame)
+  Machine{w, MapRemovalMatch{frame, 1n+oldIndex, 1n+newIndex} <> rest, stack}
+
+def mapRemovalFailed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame) -> Machine:
+  +frame = R.MapFrame.with_nodes(frame, Maps.emptyNodes(Nat.sub(R.MapFrame.newEnd(frame), R.MapFrame.start(frame))))
+  mapPrepareStart(w, rest, stack, R.MapFrame.with_removed(frame, []))
+
+# Source stageRemoval caches each new key for its complete old-side scan.
+def mapRemovalOld(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +oldIndex: Nat, +newIndex: Nat, +newKey: R.Value) -> Machine:
+  B.choose(~Machine, Nat.is_lt(oldIndex, R.MapFrame.end(frame)),
+    _ => invokeMany(w, MapRemovalOldKey{frame, oldIndex, newIndex, newKey} <> rest, stack, R.MapState.key(KeyedMap.get(w, R.MapFrame.map(frame))), [Arrays.at(w, R.MapState.items(KeyedMap.get(w, R.MapFrame.map(frame))), oldIndex)]),
+    _ => mapRemovalFailed(w, rest, stack, frame))
+
+def mapRemovalOldKey(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +oldIndex: Nat, +newIndex: Nat, +newKey: R.Value, oldKey: R.Value) -> Machine:
+  B.choose(~Machine, B.equal(oldKey, newKey),
+    _ => mapRemovalFound(w, rest, stack, frame, oldIndex, newIndex),
+    _ =>
+      +state = KeyedMap.get(w, R.MapFrame.map(frame))
+      +removed = B.append(Nat, R.MapFrame.removed(frame), [B.get(Nat, R.MapState.nodes(state), oldIndex, 0n)])
+      Machine{w, MapRemovalOld{R.MapFrame.with_removed(frame, removed), 1n+oldIndex, newIndex, newKey} <> rest, stack})
+
+# Plain comparisons have no callback. Extracted-key mode invokes the new key
+# before testing old-side exhaustion, then caches it through that inner loop.
+def mapRemovalMatch(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +oldIndex: Nat, +newIndex: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(newIndex, R.MapFrame.newEnd(frame)),
+    _ => B.choose(~Machine, B.truth(R.MapState.key(KeyedMap.get(w, R.MapFrame.map(frame)))),
+      _ => invokeMany(w, MapRemovalNewKey{frame, oldIndex, newIndex} <> rest, stack, R.MapState.key(KeyedMap.get(w, R.MapFrame.map(frame))), [Arrays.at(w, R.MapFrame.newItems(frame), newIndex)]),
+      _ => B.choose(~Machine, Nat.is_lt(oldIndex, R.MapFrame.end(frame)),
+        _ =>
+          +state = KeyedMap.get(w, R.MapFrame.map(frame))
+          B.choose(~Machine, B.equal(Arrays.at(w, R.MapState.items(state), oldIndex), Arrays.at(w, R.MapFrame.newItems(frame), newIndex)),
+            _ => mapRemovalFound(w, rest, stack, frame, oldIndex, newIndex),
+            _ =>
+              +removed = B.append(Nat, R.MapFrame.removed(frame), [B.get(Nat, R.MapState.nodes(state), oldIndex, 0n)])
+              Machine{w, MapRemovalMatch{R.MapFrame.with_removed(frame, removed), 1n+oldIndex, newIndex} <> rest, stack}),
+        _ => mapRemovalFailed(w, rest, stack, frame))),
+    _ => Machine{w, MapRemoval{frame, oldIndex} <> rest, stack})
+
+# The old changed-window walk consumes the duplicate chain in occurrence order.
+def mapOldPosition(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat, +item: R.Value, position: R.MapIndex) -> Machine:
+  match position:
+    case R.MapAt{+j}:
+      +state = KeyedMap.get(w, R.MapFrame.map(frame))
+      +slot = Nat.sub(j, R.MapFrame.start(frame))
+      +w = Arrays.put(w, R.MapFrame.mappings(frame), j, Arrays.at(w, R.MapState.mappings(state), index))
+      +frame = R.MapFrame.with_nodes(frame, B.put(Nat, R.MapFrame.nodes(frame), slot, 0n, B.get(Nat, R.MapState.nodes(state), index, 0n)))
+      +frame = B.choose(~R.MapFrame, KeyedMap.hasRows(state), _ => R.MapFrame.with_rows(frame, B.put(Nat, R.MapFrame.rows(frame), slot, 0n, B.get(Nat, R.MapState.rows(state), index, 0n))), _ => frame)
+      +frame = B.choose(~R.MapFrame, R.MapState.hasIndexes(state), _ => R.MapFrame.with_indexes(frame, B.put(Nat, R.MapFrame.indexes(frame), slot, 0n, B.get(Nat, R.MapState.indexes(state), index, 0n))), _ => frame)
+      +next = B.get(R.MapIndex, R.MapFrame.next(frame), slot, R.MapMissing{})
+      +frame = R.MapFrame.with_keyIndices(frame, KeyedMap.indexSet(R.MapFrame.keyIndices(frame), item, next))
+      Machine{w, MapOld{frame, 1n+index} <> rest, stack}
+    case other:
+      +owner = B.get(Nat, R.MapState.nodes(KeyedMap.get(w, R.MapFrame.map(frame))), index, 0n)
+      Machine{w, MapOld{R.MapFrame.with_removed(frame, B.append(Nat, R.MapFrame.removed(frame), [owner])), 1n+index} <> rest, stack}
+
+def mapOld(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.MapFrame.end(frame)),
+    _ =>
+      +state = KeyedMap.get(w, R.MapFrame.map(frame))
+      +item = Arrays.at(w, R.MapState.items(state), index)
+      B.choose(~Machine, B.truth(R.MapState.key(state)),
+        _ => invokeMany(w, MapOldKey{frame, index} <> rest, stack, R.MapState.key(state), [item]),
+        _ => mapOldPosition(w, rest, stack, frame, index, item, KeyedMap.indexGet(R.MapFrame.keyIndices(frame), item))),
+    _ => Machine{w, MapRows{frame, R.MapFrame.start(frame)} <> rest, stack})
+
+# Mapper closures: by-index uses a raw ownedWrite core signal and accessor;
+# plain keyed mode passes the raw item. Callable items remain ordinary data.
+def mapInvokeIndex(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat, +first: R.Value, +context: Nat, +tracking: Bool) -> Machine:
+  +signal = B.length(R.Node, R.World.nodes(w))
+  +w = N.signal(w, R.Number{index}, R.NodeOptions.with_ownedWrite(N.defaults(), True{}))
+  +frame = R.MapFrame.with_indexes(frame, B.put(Nat, R.MapFrame.indexes(frame), Nat.sub(index, R.MapFrame.start(frame)), 0n, signal))
+  +w = B.event(w, R.MapIndexBound{signal})
+  invokeMany(w, RestoreContext{context, tracking} <> MapMapped{frame, index, stack} <> rest, stack, R.MapState.mapper(KeyedMap.get(w, R.MapFrame.map(frame))), [first, R.AccessorReference{signal}])
+
 def mapInvokeRow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat, +context: Nat, +tracking: Bool) -> Machine:
   +state = KeyedMap.get(w, R.MapFrame.map(frame))
   +ending = {RestoreContext{context, tracking} <> MapMapped{frame, index, stack} <> rest : List<&2, Task>}
-  B.choose(~Machine, R.MapState.byIndex(state),
+  B.choose(~Machine, KeyedMap.hasRows(state),
     _ =>
       +row = B.length(R.Node, R.World.nodes(w))
       +w = N.signal(w, Arrays.at(w, R.MapFrame.newItems(frame), index), R.NodeOptions.with_ownedWrite(N.defaults(), True{}))
       +frame = R.MapFrame.with_rows(frame, B.put(Nat, R.MapFrame.rows(frame), Nat.sub(index, R.MapFrame.start(frame)), 0n, row))
       +w = B.event(w, R.MapRowBound{row})
-      invokeMany(w, RestoreContext{context, tracking} <> MapMapped{frame, index, stack} <> rest, stack, R.MapState.mapper(state), [R.AccessorReference{row}, R.Number{index}]),
-    _ => invokeMany(w, ending, stack, R.MapState.mapper(state), [Arrays.at(w, R.MapFrame.newItems(frame), index)]))
+      B.choose(~Machine, R.MapState.byIndex(state),
+        _ => invokeMany(w, RestoreContext{context, tracking} <> MapMapped{frame, index, stack} <> rest, stack, R.MapState.mapper(state), [R.AccessorReference{row}, R.Number{index}]),
+        _ => B.choose(~Machine, R.MapState.hasIndexes(state),
+          _ => mapInvokeIndex(w, rest, stack, frame, index, R.AccessorReference{row}, context, tracking),
+          _ => invokeMany(w, RestoreContext{context, tracking} <> MapMapped{frame, index, stack} <> rest, stack, R.MapState.mapper(state), [R.AccessorReference{row}, R.Undefined{}]))),
+    _ => B.choose(~Machine, R.MapState.hasIndexes(state), _ => mapInvokeIndex(w, rest, stack, frame, index, Arrays.at(w, R.MapFrame.newItems(frame), index), context, tracking), _ => invokeMany(w, ending, stack, R.MapState.mapper(state), [Arrays.at(w, R.MapFrame.newItems(frame), index)])))
 
 def mapRows(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
   B.choose(~Machine, Nat.is_lt(index, R.MapFrame.newEnd(frame)),
@@ -2675,7 +2772,9 @@ def mapWindow(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +fr
       +nodes = B.append(Nat, R.MapState.nodes(state), Maps.emptyNodes(Nat.sub(R.MapFrame.newLen(frame), oldLen)))
       +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, nodes))
       +state = KeyedMap.get(w, id)
-      +w = B.choose(~R.World, R.MapState.byIndex(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.append(Nat, R.MapState.rows(state), Maps.emptyNodes(Nat.sub(R.MapFrame.newLen(frame), oldLen))))), _ => w)
+      +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.append(Nat, R.MapState.rows(state), Maps.emptyNodes(Nat.sub(R.MapFrame.newLen(frame), oldLen))))), _ => w)
+      +state = KeyedMap.get(w, id)
+      +w = B.choose(~R.World, R.MapState.hasIndexes(state), _ => KeyedMap.store(w, id, R.MapState.with_indexes(state, B.append(Nat, R.MapState.indexes(state), Maps.emptyNodes(Nat.sub(R.MapFrame.newLen(frame), oldLen))))), _ => w)
       Machine{w, MapWindowGrowShift{frame, oldLen, R.MapFrame.newLen(frame)} <> rest, stack},
     _ => B.choose(~Machine, Nat.is_lt(R.MapFrame.newLen(frame), oldLen),
       _ => Machine{w, MapWindowShrinkShift{frame, R.MapFrame.end(frame), R.MapFrame.newEnd(frame)} <> rest, stack},
@@ -2690,7 +2789,9 @@ def mapWindowGrowShift(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Va
       +next = Nat.sub(destination, 1n)
       +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, B.put(Nat, R.MapState.nodes(state), next, 0n, B.get(Nat, R.MapState.nodes(state), old, 0n))))
       +state = KeyedMap.get(w, id)
-      +w = B.choose(~R.World, R.MapState.byIndex(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.put(Nat, R.MapState.rows(state), next, 0n, B.get(Nat, R.MapState.rows(state), old, 0n)))), _ => w)
+      +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.put(Nat, R.MapState.rows(state), next, 0n, B.get(Nat, R.MapState.rows(state), old, 0n)))), _ => w)
+      +state = KeyedMap.get(w, id)
+      +w = B.choose(~R.World, R.MapState.hasIndexes(state), _ => KeyedMap.store(w, id, R.MapState.with_indexes(state, B.put(Nat, R.MapState.indexes(state), next, 0n, B.get(Nat, R.MapState.indexes(state), old, 0n)))), _ => w)
       Machine{w, MapWindowGrowShift{frame, old, next} <> rest, stack},
     _ => Machine{w, MapWindowRows{frame, R.MapFrame.start(frame)} <> rest, stack})
 
@@ -2701,12 +2802,16 @@ def mapWindowShrinkShift(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.
     _ =>
       +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, B.put(Nat, R.MapState.nodes(state), destination, 0n, B.get(Nat, R.MapState.nodes(state), index, 0n))))
       +state = KeyedMap.get(w, id)
-      +w = B.choose(~R.World, R.MapState.byIndex(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.put(Nat, R.MapState.rows(state), destination, 0n, B.get(Nat, R.MapState.rows(state), index, 0n)))), _ => w)
+      +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, B.put(Nat, R.MapState.rows(state), destination, 0n, B.get(Nat, R.MapState.rows(state), index, 0n)))), _ => w)
+      +state = KeyedMap.get(w, id)
+      +w = B.choose(~R.World, R.MapState.hasIndexes(state), _ => KeyedMap.store(w, id, R.MapState.with_indexes(state, B.put(Nat, R.MapState.indexes(state), destination, 0n, B.get(Nat, R.MapState.indexes(state), index, 0n)))), _ => w)
       Machine{w, MapWindowShrinkShift{frame, 1n+index, 1n+destination} <> rest, stack},
     _ =>
       +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, KeyedMap.takeNodes(R.MapFrame.newLen(frame), R.MapState.nodes(state))))
       +state = KeyedMap.get(w, id)
-      +w = B.choose(~R.World, R.MapState.byIndex(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, KeyedMap.takeNodes(R.MapFrame.newLen(frame), R.MapState.rows(state)))), _ => w)
+      +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => KeyedMap.store(w, id, R.MapState.with_rows(state, KeyedMap.takeNodes(R.MapFrame.newLen(frame), R.MapState.rows(state)))), _ => w)
+      +state = KeyedMap.get(w, id)
+      +w = B.choose(~R.World, R.MapState.hasIndexes(state), _ => KeyedMap.store(w, id, R.MapState.with_indexes(state, KeyedMap.takeNodes(R.MapFrame.newLen(frame), R.MapState.indexes(state)))), _ => w)
       Machine{w, MapWindowRows{frame, R.MapFrame.start(frame)} <> rest, stack})
 
 def mapWindowRows(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
@@ -2717,13 +2822,31 @@ def mapWindowRows(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
       +state = KeyedMap.get(w, id)
       +w = KeyedMap.store(w, id, R.MapState.with_nodes(state, B.put(Nat, R.MapState.nodes(state), index, 0n, B.get(Nat, R.MapFrame.nodes(frame), slot, 0n))))
       +state = KeyedMap.get(w, id)
-      +w = B.choose(~R.World, R.MapState.byIndex(state),
+      +w = B.choose(~R.World, KeyedMap.hasRows(state),
         _ =>
           +row = B.get(Nat, R.MapFrame.rows(frame), slot, 0n)
           +w = KeyedMap.store(w, id, R.MapState.with_rows(state, B.put(Nat, R.MapState.rows(state), index, 0n, row)))
           W.setSignal(w, row, Arrays.at(w, R.MapFrame.newItems(frame), index)),
         _ => w)
+      +state = KeyedMap.get(w, id)
+      +w = B.choose(~R.World, R.MapState.hasIndexes(state),
+        _ =>
+          +signal = B.get(Nat, R.MapFrame.indexes(frame), slot, 0n)
+          +w = KeyedMap.store(w, id, R.MapState.with_indexes(state, B.put(Nat, R.MapState.indexes(state), index, 0n, signal)))
+          W.setSignal(w, signal, R.Number{index}),
+        _ => w)
       Machine{w, MapWindowRows{frame, 1n+index} <> rest, stack},
+    _ => Machine{w, MapWindowSuffix{frame, R.MapFrame.newEnd(frame)} <> rest, stack})
+
+# commitWindow's suffix slot writes precede the caller's publication. Index
+# signals update only when length changed; row slots retain their source guard.
+def mapWindowSuffix(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: R.MapFrame, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_lt(index, R.MapFrame.newLen(frame)),
+    _ =>
+      +state = KeyedMap.get(w, R.MapFrame.map(frame))
+      +w = B.choose(~R.World, KeyedMap.hasRows(state), _ => W.setSignal(w, B.get(Nat, R.MapState.rows(state), index, 0n), Arrays.at(w, R.MapFrame.newItems(frame), index)), _ => w)
+      +w = B.choose(~R.World, Bool.and(R.MapState.hasIndexes(state), Nat.is_ne(R.MapFrame.newLen(frame), R.MapState.len(state))), _ => W.setSignal(w, B.get(Nat, R.MapState.indexes(state), index, 0n), R.Number{index}), _ => w)
+      Machine{w, MapWindowSuffix{frame, 1n+index} <> rest, stack},
     _ => Machine{KeyedMap.publishWindow(w, frame), MapRemoved{R.MapFrame.removed(frame)} <> rest, stack})
 
 def mapRemoved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +nodes: List<&2, Nat>) -> Machine:
@@ -2735,10 +2858,56 @@ def mapRemoved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +n
 
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
-    case MapMapper{list, fallback, byIndex} <> rest:
+    case MapInput{list, fallback, mapper} <> rest:
+      match stack:
+        case keyed <> tail:
+          mapInput(w, rest, tail, list, fallback, mapper, keyed)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapCompareOld{matchFrame, key, newItem} <> rest:
+      match stack:
+        case oldKey <> tail:
+          invokeMany(w, MapCompareNew{matchFrame, oldKey} <> rest, tail, key, [newItem])
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapCompareNew{matchFrame, oldKey} <> rest:
+      match stack:
+        case newKey <> tail:
+          mapMatched(w, rest, tail, matchFrame, B.equal(oldKey, newKey))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapPrepare{frame, cursor} <> rest:
+      mapPrepare(w, rest, stack, frame, cursor)
+    case MapPrepared{frame, index} <> rest:
+      match stack:
+        case key <> tail:
+          mapPrepared(w, rest, tail, frame, index, key)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapOldKey{+frame, index} <> rest:
+      match stack:
+        case +key <> tail:
+          mapOldPosition(w, rest, tail, frame, index, key, KeyedMap.indexGet(R.MapFrame.keyIndices(frame), key))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapRemovalNewKey{frame, oldIndex, newIndex} <> rest:
+      match stack:
+        case newKey <> tail:
+          mapRemovalOld(w, rest, tail, frame, oldIndex, newIndex, newKey)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapRemovalOld{frame, oldIndex, newIndex, newKey} <> rest:
+      mapRemovalOld(w, rest, stack, frame, oldIndex, newIndex, newKey)
+    case MapRemovalOldKey{frame, oldIndex, newIndex, newKey} <> rest:
+      match stack:
+        case oldKey <> tail:
+          mapRemovalOldKey(w, rest, tail, frame, oldIndex, newIndex, newKey, oldKey)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case MapMapper{list, fallback, keyed, previous} <> rest:
       match stack:
         case mapper <> tail:
-          mapCreate(w, rest, tail, list, mapper, fallback, byIndex)
+          Machine{w, Evaluate{keyed, previous} <> MapInput{list, fallback, mapper} <> rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case MapList{id} <> rest:
@@ -2761,8 +2930,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case MapReturn{id} <> rest:
       Machine{w, rest, R.ArrayReference{R.MapState.mappings(KeyedMap.get(w, id))} <> stack}
-    case MapPrefix{id, items, newLen, index} <> rest:
-      mapPrefix(w, rest, stack, id, items, newLen, index)
+    case MapPrefix{id, items, newLen, index, limit} <> rest:
+      mapPrefix(w, rest, stack, id, items, newLen, index, limit)
     case MapSuffix{id, items, newLen, start, end, newEnd} <> rest:
       mapSuffix(w, rest, stack, id, items, newLen, start, end, newEnd)
     case MapSmallCleanup{plan, index} <> rest:
@@ -2795,6 +2964,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       mapCommitPrefix(w, rest, stack, frame, index)
     case MapWindow{frame} <> rest:
       mapWindow(w, rest, stack, frame)
+    case MapWindowSuffix{frame, index} <> rest:
+      mapWindowSuffix(w, rest, stack, frame, index)
     case MapWindowRows{frame, index} <> rest:
       mapWindowRows(w, rest, stack, frame, index)
     case MapRemoved{nodes} <> rest:
@@ -2896,7 +3067,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       match stack:
         case second <> first <> +tail:
           B.choose(~Machine, Bool.and(Nat.is_ne(id, 0n), Nat.is_lt(id, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-            _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}})), first, second} <> rest, tail},
+            _ => Machine{w, Callback{id, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), id, R.CleanupProgram{[], False{}, 0n})), first, second} <> rest, tail},
             _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, tail})
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
@@ -3193,7 +3364,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case ReactionArmValue{tracking} <> rest:
       match stack:
         case R.ProgramReference{callback} <> tail:
-          reactionArmExpression(w, rest, tail, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}})), tracking)
+          reactionArmExpression(w, rest, tail, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n})), tracking)
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
     case ReactionArmClear{+reaction} <> rest:

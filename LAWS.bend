@@ -1,4 +1,7 @@
 import Base
+import ./runtime/arrays.bend as Arrays
+import ./proof/array-laws.bend as ArrayLaws
+import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
 import ./proof/memo-history-states.bend as MemoHistoryStates
@@ -705,7 +708,7 @@ law action_function_creation_has_no_reactive_effect:
   for +factory: R.Expr
   for +methods: R.Expr
   for +previous: R.Value
-  {Core.evaluate(w, rest, stack, R.ActionCreate{factory, methods}, previous) == Core.Machine{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), rest, R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))} <> stack} : Core.Machine}
+  {Core.evaluate(w, rest, stack, R.ActionCreate{factory, methods}, previous) == Core.Machine{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}])), rest, R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))} <> stack} : Core.Machine}
 
 law action_function_call_uses_shared_invocation:
   for +w: R.World
@@ -1019,3 +1022,39 @@ law scalar_memo_batched_history_complete:
   for +firstExtra: Nat
   for +batches: List<&2, MemoBatches.Batch>
   {MemoDriver.view(MemoBatches.run(batches, API.flush(Nat.add(40n, firstExtra), MemoBatches.writes(rest, API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first}))))) == MemoDriver.expected(MemoBatches.lastBatch(batches, MemoBatches.last(rest, first))) : MemoDriver.View}
+
+law array_holes_have_exact_length:
+  for +size: Nat
+  {B.length(R.Slot, Arrays.holes(size)) == size : Nat}
+
+law fresh_array_slots_are_holes:
+  for +prefix: Nat
+  for +suffix: Nat
+  {B.get(R.Slot, Arrays.holes(Nat.add(1n+prefix, suffix)), prefix, R.Present{R.Undefined{}}) == R.Empty{} : R.Slot}
+
+law dense_array_slot_preserves_payload:
+  for +prefix: List<&2, R.Value>
+  for +value: R.Value
+  for +suffix: List<&2, R.Value>
+  {B.get(R.Slot, Arrays.slots(B.append(R.Value, prefix, value <> suffix)), B.length(R.Value, prefix), R.Empty{}) == R.Present{value} : R.Slot}
+
+law array_write_retains_present_payload:
+  for +prefix: List<&2, R.Slot>
+  for +old: R.Slot
+  for +suffix: List<&2, R.Slot>
+  for +value: R.Value
+  {B.get(R.Slot, B.put(R.Slot, B.append(R.Slot, prefix, old <> suffix), B.length(R.Slot, prefix), R.Empty{}, R.Present{value}), B.length(R.Slot, prefix), R.Empty{}) == R.Present{value} : R.Slot}
+
+law array_allocation_contract:
+  for +w: R.World
+  for +slots: List<&2, R.Slot>
+  {ArrayLaws.allocation(w, slots) == ArrayLaws.Allocation{B.length(R.ArrayData, R.World.arrays(w)), slots, B.append(R.ArrayData, R.World.arrays(w), [R.ArrayData{slots}]), w} : ArrayLaws.Allocation}
+
+law plain_keyed_map_lifecycle:
+  {MapLifecycle.lifecycle(0n) == MapLifecycle.expected() : MapLifecycle.View}
+
+law positional_map_lifecycle:
+  {MapLifecycle.lifecycle(1n) == MapLifecycle.expected() : MapLifecycle.View}
+
+law extracted_key_map_lifecycle:
+  {MapLifecycle.lifecycle(2n) == MapLifecycle.expected() : MapLifecycle.View}

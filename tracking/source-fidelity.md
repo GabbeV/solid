@@ -36,7 +36,8 @@ including duplicate-chain Map matching, pure-removal scratch reset, live suffix
 shifts and the separate small-move scan/commit. Its comparison budget, ledgers,
 probe, duplicate safeguard and cleanup return point remain source controls.
 Private helper probes and public histories are separate from formal claims.
-Extracted keys/index accessors and packed-index overflow remain unfinished.
+Extracted keys/index accessors now execute as reviewed below; packed-index
+overflow remains refused.
 
 ## mapArray keyed:false
 
@@ -44,10 +45,22 @@ Extracted keys/index accessors and packed-index overflow remain unfinished.
 raw ownedWrite row signals, actual item accessors, prefix writes, stable-result
 identity, staged tail edits and exact mapper catch/commit/cleanup order. The
 prefix exhausts a side in this profile, leaving suffix/key matching paths for
-other modes explicitly unfinished. Source Map index preparation retains
-SameValueZero and undefined/-1/index distinctions. Identity-keyed/extracted-key
-constructors remain refused rather than being approximated by position mapping.
+the separate matching paths described in [map-modes.md](map-modes.md). Source
+Map index preparation retains SameValueZero and undefined/-1/index distinctions.
+All three typed keying modes execute without substituting position mapping.
 No semantic workaround or new general mapArray theorem is claimed.
+
+## Extracted keys and mapper arity
+
+[The mode review](map-modes.md) maps function-length selection, actual item/index
+signal allocation, compare callback return points, descending key preparation,
+old-window callbacks and the cached new key in stageRemoval. Key errors remain
+outside the mapper catch. Captured prefix bounds survive callbacks; live source
+stores and partial prefix writes stay live. Optional rows/index vectors retain
+separate presence flags, and small moves stay restricted to no-row/no-index
+mapping. Native adapters observe the actual public helper and preserve mapper
+formal arity; they do not reconcile or schedule. Five general array-storage laws
+and three closed map executions are separate from finite native comparisons.
 
 ## Repeat and array representation
 
@@ -56,7 +69,7 @@ algorithm and its mapper catch/commit boundary through the shared core. Stable
 array IDs preserve identity and holes separately from present undefined.
 [The operation table](repeat.md) records each return point, live/captured state,
 owner routing and callback order. The pinned falsy fallback bug is preserved.
-Keyed mapArray, general array mutation/protocols, array StatusError string
+General array mutation/protocols, array StatusError string
 coercion and non-natural count/offset domains remain unfinished. No active
 semantic deviation or new general repeat proof is claimed.
 

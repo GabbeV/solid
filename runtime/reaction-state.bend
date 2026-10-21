@@ -19,7 +19,7 @@ def create(+w: R.World, body: R.Expr, errorProgram: Nat, options: R.NodeOptions,
   +lifecycle = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
   +track = Nat.add(1n, lifecycle)
   +w = R.World.with_reactions(w, B.append(R.ReactionState, R.World.reactions(w), [R.ReactionState{0n, 0n, R.Undefined{}, body, errorProgram, options, scheduled, track}]))
-  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ReactionLifecycle{id}], False{}}, R.CleanupProgram{[R.ReactionTrack{id}], False{}}]))
+  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ReactionLifecycle{id}], False{}, 0n}, R.CleanupProgram{[R.ReactionTrack{id}], False{}, 1n}]))
   +w = O.cleanup(w, R.World.context(w), lifecycle)
   +w = store(w, id, R.ReactionState.with_owner(get(w, id), R.World.context(w)))
   B.Bundle{w, R.ProgramReference{track}}

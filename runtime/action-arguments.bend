@@ -7,12 +7,12 @@ import ./callback.bend as Z
 
 def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
   match expr:
-    case R.MapArrayCreate{+list, +mapper, fallback, byIndex}:
+    case R.MapArrayCreate{+list, +mapper, fallback, +keyed}:
       match fallback:
         case R.NoInlineBody{}:
-          R.MapArrayCreate{bindWith(list, depth, args), bindWith(mapper, depth, args), R.NoInlineBody{}, byIndex}
+          R.MapArrayCreate{bindWith(list, depth, args), bindWith(mapper, depth, args), R.NoInlineBody{}, bindWith(keyed, depth, args)}
         case R.SomeInlineBody{expr, returns}:
-          R.MapArrayCreate{bindWith(list, depth, args), bindWith(mapper, depth, args), R.SomeInlineBody{bindWith(expr, depth, args), returns}, byIndex}
+          R.MapArrayCreate{bindWith(list, depth, args), bindWith(mapper, depth, args), R.SomeInlineBody{bindWith(expr, depth, args), returns}, bindWith(keyed, depth, args)}
     case R.ArrayLiteral{values}:
       R.ArrayLiteral{bindWith(values, depth, args)}
     case R.ArrayAt{array, index}:

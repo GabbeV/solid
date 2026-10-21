@@ -287,7 +287,7 @@ literals, prototypes/methods and cyclic observation remain outside the profile.
 
 ## mapArray row state
 
-World.maps holds the stable bound MapData receiver for the keyed:false profile.
+World.maps holds the stable bound MapData receiver for all three typed keying modes.
 MapFrame stores the source pass locals/stages and created/removed owner ledgers.
 Row values are actual existing core signals with ownedWrite:true, exposed through
 canonical AccessorReference values. Internal node/row vectors use finite lists;
@@ -295,11 +295,28 @@ saved items/mapped outputs use stable arrays. Exclusive end bounds represent
 source inclusive counters plus one, including -1 as zero. MapIndex distinguishes
 undefined, -1 and a real index; the typed JS Map entry representation uses
 SameValueZero rather than prefix strict equality. See [map-index.md](map-index.md)
-for operation order, host observation and unfinished keying modes.
+for positional operation order and host observation; [map-modes.md](map-modes.md)
+adds extracted keys and formal-arity-selected indexes.
 
 MapState now distinguishes row-signal by-index mapping from plain identity-keyed
-mapping; absent row/index vectors do not allocate scratch signal stages. SmallScan
+mapping and extracted-key item signals. The key is an actual admitted callable;
+indexes has a separate hasIndexes presence bit even when its vector is empty.
+Absent row/index vectors do not allocate scratch signal stages. SmallScan
 holds source cursor/budget/flat-run/position ledgers, and SmallPlan retains the
 post-publication cleanup return point. Strict scan equality and SameValueZero
 Map/Set equality remain distinct. Positive packed positions preserve the source
 bit layout; overflow refuses explicitly. See [map-keyed.md](map-keyed.md).
+
+CleanupProgram now stores formal arity as immutable typed callback metadata.
+The actual argument vector remains independent: declaring nine parameters does
+not manufacture nine passed arguments. Canonical native functions and callback
+wrappers retain this length before Solid reads map.length. Bound signal getters,
+setters, root disposers and reaction trackers keep their source lengths. Arbitrary
+function property mutation/reflection remains outside this profile.
+
+MapFrame.keyIndices is the source key-map dictionary; MapFrame.indexes is the
+separate reactive index-signal stage. MapMatch.PrefixMatch captures the initial
+min(len,newLen) bound across callbacks, while suffix initialization and live
+state reads occur at their source return points. MapRowBound/MapIndexBound are
+observation metadata for actual allocated core signals, excluded from public
+traces; adapters do not decide matching, ownership, publication or scheduling.

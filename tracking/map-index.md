@@ -6,9 +6,9 @@ mapper receives a stable item accessor and a numeric index. Reading that accesso
 later observes the row signal through the ordinary core read machine.
 
 This is a deliberately restricted constructor profile. The [plain identity-keyed profile](map-keyed.md), including its small-move
-optimization and general matching, now executes separately. Extracted keys and
-index accessors remain unfinished. The unfinished modes are refused at entry rather than replaced with position
-mapping. Active stores/lanes/dev/observe and arbitrary
+optimization and general matching, now executes separately. [Extracted keys and
+index accessors](map-modes.md) also execute through their source paths.
+Active stores/lanes/dev/observe and arbitrary
 array protocols/closure environments remain outside the existing typed profile.
 
 ## Correspondence

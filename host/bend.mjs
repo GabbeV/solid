@@ -109,8 +109,8 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.prev) return R.previous();
   if(e.mapArray){
     const {list,map,fallback,keyed}=e.mapArray;
-    if(keyed!==undefined&&typeof keyed!=='boolean')throw new TypeError('Extracted-key mapArray remains unported');
-    return R.mapArrayCreate(expression(list,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.mapArray,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody(),keyed===false);
+    const mode=keyed===undefined||typeof keyed==='boolean'?R.literal(encodeValue(keyed)):expression(keyed,ids,programs,futures,encodeValue,contexts);
+    return R.mapArrayInput(expression(list,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.mapArray,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody(),mode);
   }
   if(e.repeat){
     const {count,map,from,fallback}=e.repeat;
@@ -218,7 +218,7 @@ function nodeOptions(options={},programs={},encodeValue=encode) {
     Object.hasOwn(options,'loadingValue'),encodeValue(options.loadingValue),programs[options.unobserved]??0),callback===undefined?0:programs[callback]);
 }
 export class BendRuntime {
-  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.arrayViews=new RuntimeArrays(id=>{const item=list(this.world.arrays)[id];if(!item)throw new TypeError('Unknown array identity');return list(item.slots);},value=>this.decode(value)); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,...args)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:args.map(lit=>({lit}))}})); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
+  constructor({fuel=100000,async=false,clock}={}) { this.world=R.createWorld(); this.arrayViews=new RuntimeArrays(id=>{const item=list(this.world.arrays)[id];if(!item)throw new TypeError('Unknown array identity');return list(item.slots);},value=>this.decode(value)); this.ids={}; this.fuel=fuel; this.reverse={1:'root'}; this.programs={};this.contexts=Object.create(null);this.programActions=new Map();this.programNames=new Map();this.callbacks=new ProgramFunctions((id,...args)=>this.evaluate({invokeArgs:{callee:{lit:this.callbacks.get(id)},args:args.map(lit=>({lit}))}}),id=>list(this.world.cleanupPrograms)[id]?.arity??0); this.errors=new Map();this.refs=new Map();this.asyncRefs=new Map(); this.encountered=new Map(); this.futures={};this.programLabels=new Map();this.hostAsync=async;this.asyncErrors=[];this.ports={};this.portNames=new Map();this.portEvents=[];this.portSnapshots=[];this.hiddenNodes=new Set();this.clock=clock??{setTimeout,clearTimeout};this.timers=new Map();this.controllers={};this.abortNames=new Map();this.abortListeners=new Map();this.hostErrors=new HostErrors();this.anonymousOwners=new Map();this.rootDisposers=new RootDisposers(id=>{this.world=R.invokeRootDisposer(this.world,id);this.check();}); this.accessors=new SourceAccessors(id=>this.evaluate({invoke:{lit:this.accessors.get(id)}}));this.boundAccessors=new Set();this.writableSetters=new Set();this.setters=new SourceSetters((id,value)=>this.evaluate({invokeWith:{callee:{lit:this.setters.get(id)},value:{lit:value}}}));this.programActions.isAccessor=value=>this.accessors.identity(value)!==undefined||this.setters.identity(value)!==undefined||this.callbacks.identity(value)!==undefined; }
   decode(value){return decode(value,this.errors,this.refs,this.asyncRefs,this.hostErrors,this.rootDisposers,this.accessors,this.setters,this.callbacks,id=>this.arrayViews.get(id));}
   ownerId(name){
     if(name===null)return 0;
@@ -380,6 +380,9 @@ export class BendRuntime {
     for(const event of list(this.world.events)){
       if('boundSetter'in event){this.writableSetters.add(event.boundSetter);this.boundAccessors.add(event.boundSetter);}
       if('boundAccessor'in event)this.boundAccessors.add(event.boundAccessor);
+      if('indexBound'in event&&!this.reverse[event.indexBound]){
+        const name='#listIndex'+(this.listIndexSerial=(this.listIndexSerial??0)+1);this.ids[name]=event.indexBound;this.reverse[event.indexBound]=name;this.boundAccessors.add(event.indexBound);
+      }
       if('rowBound'in event&&!this.reverse[event.rowBound]){
         const name='#row'+(this.rowSerial=(this.rowSerial??0)+1);this.ids[name]=event.rowBound;this.reverse[event.rowBound]=name;this.boundAccessors.add(event.rowBound);
       }
@@ -405,7 +408,8 @@ export class BendRuntime {
     return this.observe(e);
   }
   attempt(op,...args) {try{return ['return',this.observe(this[op](...args))];}catch(e){return ['throw',this.errorShape(e)];}}
-  program(name,actions) {
+  program(name,actions,arity=0) {
+    if(!Number.isSafeInteger(arity)||arity<0)throw new TypeError('Function arity must be a natural number');
     if(this.programActions.has(name))throw new TypeError('Callback programs cannot be redefined');
     for(const [op,name] of actions)if(op==='cleanup')requireTeardownProgram(this.programActions,name);
     this.programActions.set(name,actions);
@@ -425,7 +429,7 @@ export class BendRuntime {
       else throw new TypeError('Unsupported callback action');
     }
     const id=R.nextProgramId(this.world);this.programs[name]=id;this.programNames.set(id,name);this.programLabels.set(id,this.programLabels.size+1);
-    this.world=R.registerProgram(this.world,p);this.check();return id;
+    this.world=R.registerProgram(this.world,R.programArity(p,arity));this.check();return id;
   }
   makePort(name,id){
     let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});
@@ -557,7 +561,7 @@ export class BendRuntime {
   nodes() { return list(this.world.nodes); }
   trace() {
     const name=id=>this.reverse[id] ?? null;
-    return list(this.world.events).filter(e=>!('created'in e)&&!('boundSetter'in e)&&!('boundAccessor'in e)&&!('rowBound'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
+    return list(this.world.events).filter(e=>!('created'in e)&&!('boundSetter'in e)&&!('boundAccessor'in e)&&!('rowBound'in e)&&!('indexBound'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),this.observe(this.decode(e.value)),this.observe(this.decode(e.previous))];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),this.observe(this.decode(e.value))];

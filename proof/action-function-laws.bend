@@ -14,14 +14,14 @@ import ../representation/base.bend as B
 # changes no question/depth and schedules no reactive work.
 def creation(+w: R.World, +factory: R.Expr, +methods: R.Expr, +previous: R.Value) ->
   {Action.function(w, factory, methods, previous)
-    == B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))}} : B.Bundle<R.World, R.Value>}:
+    == B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}])), R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))}} : B.Bundle<R.World, R.Value>}:
   {==}
 
 # The actual expression constructor forwards its current previous payload into
 # the function environment, preserving the caller's continuation and operands.
 def entry(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +factory: R.Expr, +methods: R.Expr, +previous: R.Value) ->
   {C.evaluate(w, rest, stack, R.ActionCreate{factory, methods}, previous)
-    == C.Machine{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), rest, R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))} <> stack} : C.Machine}:
+    == C.Machine{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}])), rest, R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))} <> stack} : C.Machine}:
   {==}
 
 # The callable's return enters the same ActionInvoke engine on every call;

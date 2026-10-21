@@ -4,8 +4,9 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2968 differential histories, 201 rejected compiled mutations,
-and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 3048 differential histories, 213 rejected compiled mutations,
+and 71 composed closed Bend regressions, plus quantified array-storage and
+general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -31,6 +32,20 @@ repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
 
+## Extracted keys, index accessors and array proofs
+
+[The key/index review](map-modes.md) closes all three production keying modes
+within the typed array/callable profile. Mapper formal arity selects real index
+signals; extracted keys run as original callbacks at each source return point.
+Eighty new paired histories and ten finite mutation assertions cover callback
+order, cached removal keys, item/index identity and updates, pending/errors and
+partial writes. Five quantified storage properties prove exact holes, dense
+slots, existing-slot writes and append-only allocation for arbitrary worlds.
+Three closed map programs prove committed reads, retained rows, reactive index
+values and final cleanup; they are not a general mapArray theorem. Two further
+proof mutations check the new properties. The pin and empty deviation register
+are unchanged, and the pinned fallback bug remains.
+
 ## Plain identity-keyed mapArray
 
 [The keyed milestone](map-keyed.md) adds actual prefix/suffix matching,
@@ -40,8 +55,8 @@ ports the separate source small-move scan/commit with its probe, 256 budget,
 32-entry ledgers and duplicate safeguard. Sixty-two new paired histories and
 90 separate helper/return-point probes cover normal, boundary and exceptional
 paths; nine added mutations target selected missed operations. Existing proofs
-are rechecked, without a general mapArray theorem. Extracted keys and index
-accessors remain unfinished; packing overflow is explicitly refused.
+are rechecked, without a general mapArray theorem. The key/index extension
+above now executes; packing overflow is explicitly refused.
 
 ## mapArray by index
 
@@ -53,7 +68,7 @@ actual Solid, including pending/error retries, partial writes/throws, row state,
 ownership and callback/local/action capture. Eight additional mutations target
 selected missed operations. Existing proofs are rechecked; no general mapArray
 theorem is claimed. Plain identity-keyed matching/small moves now execute separately. Extracted
-keys and index-accessor modes remain refused and unfinished.
+keys and index-accessor modes now execute as described above.
 
 ## Typed arrays and repeat
 
@@ -65,7 +80,7 @@ trees, callback/cleanup order, pending retries, captured parameters and nested
 helpers. Seven additional mutations check selected failure modes. Existing
 proofs are rechecked with the extended representation; no general repeat proof
 is claimed. Natural count/offsets and the typed callable/array profile are the
-limits; keyed mapArray, richer array protocols/coercion and active engines remain
+limits; richer array protocols/coercion and active engines remain
 unfinished. This closes an implementation gap after the proof-only checkpoints.
 
 ## Pinned list-helper candidate
@@ -74,7 +89,7 @@ unfinished. This closes an implementation gap after the proof-only checkpoints.
 fallbacks being recreated on empty-to-empty For/Repeat updates. Fourteen native
 controls and twelve real JSX browser cases reproduce it, with a one-line truthy
 control. The new repeat port preserves this bug and checks it against native Solid;
-mapArray keyed:false now preserves it too. No semantic workaround or general
+all three mapArray keying modes now preserve it too. No semantic workaround or general
 list-helper proof is claimed. The user submitted fix PR
 [#4211](https://github.com/solidjs/solid/pull/4211) from a separate upstream workspace;
 the pinned source is unchanged.

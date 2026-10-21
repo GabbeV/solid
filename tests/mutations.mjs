@@ -5,9 +5,23 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['dense arrays silently allocate holes','runtime/arrays.bend','R.Present{value} <> slots(rest)','R.Empty{} <> slots(rest)','tests/proof-properties.mjs','slots','array-laws'],
+  ['array allocation drops its supplied slots','runtime/arrays.bend','[R.ArrayData{items}]','[R.ArrayData{[]}]','tests/proof-properties.mjs','allocate','array-laws'],
+
+  ['mapper metadata ignores formal arity','runtime/callable.bend','R.CleanupProgram.arity(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))','0n','tests/map-indices.mjs','functionLength'],
+  ['index signals start at zero for every row','runtime/core.bend','N.signal(w, R.Number{index}, R.NodeOptions.with_ownedWrite(N.defaults(), True{}))','N.signal(w, R.Number{0n}, R.NodeOptions.with_ownedWrite(N.defaults(), True{}))','tests/map-indices.mjs','mapInvokeIndex'],
+  ['changed window does not publish index updates','runtime/core.bend','W.setSignal(w, signal, R.Number{index})','w','tests/map-indices.mjs','mapWindowRows'],
+  ['retained suffix does not update indices','runtime/core.bend','W.setSignal(w, B.get(Nat, R.MapState.indexes(state), index, 0n), R.Number{index})','w','tests/map-indices.mjs','mapWindowSuffix'],
+  ['key comparison invokes the new key twice','runtime/core.bend','R.MapState.key(state), [oldItem]','R.MapState.key(state), [newItem]','tests/map-keys.mjs','mapCompare'],
+  ['keyed reverse preparation ends after one key','runtime/core.bend','MapPrepare{frame, index} <> rest','MapPrepare{frame, R.MapFrame.start(frame)} <> rest','tests/map-keys.mjs','mapPrepared'],
+  ['pure removal recalculates its cached new key','runtime/core.bend','MapRemovalOld{R.MapFrame.with_removed(frame, removed), 1n+oldIndex, newIndex, newKey}','MapRemovalMatch{R.MapFrame.with_removed(frame, removed), 1n+oldIndex, newIndex}','tests/map-keys.mjs','mapRemovalOldKey'],
+  ['extracted keys skip prefix item writes','runtime/core.bend','KeyedMap.hasRows(state)','R.MapState.byIndex(state)','tests/map-keys.mjs','mapMatched'],
+  ['extracted keys pass raw items to the mapper','runtime/core.bend','KeyedMap.hasRows(state)','R.MapState.byIndex(state)','tests/map-keys.mjs','mapInvokeRow'],
+  ['indexed maps take the no-index small-move path','runtime/core.bend','Bool.not(R.MapState.hasIndexes(state))','True{}','tests/map-indices.mjs','mapAfterTrim'],
+
   ['keyed Map compares NaN with strict equality','runtime/keyed-map.bend','case R.NotANumber{} R.NotANumber{}:\n      True{}','case R.NotANumber{} R.NotANumber{}:\n      False{}','tests/map-keyed.mjs','sameKey'],
   ['keyed duplicate chain is discarded','runtime/core.bend','B.get(R.MapIndex, R.MapFrame.next(frame), slot, R.MapMissing{})','{R.MapMissing{} : R.MapIndex}','tests/map-keyed.mjs','mapOldPosition'],
-  ['keyed retained rows are treated as missing','runtime/core.bend','KeyedMap.indexGet(R.MapFrame.indices(frame), item)','R.MapMissing{}','tests/map-keyed.mjs','mapOld'],
+  ['keyed retained rows are treated as missing','runtime/core.bend','KeyedMap.indexGet(R.MapFrame.keyIndices(frame), item)','R.MapMissing{}','tests/map-keyed.mjs','mapOld'],
   ['keyed suffix copies use new positions','runtime/core.bend','KeyedMap.sourceSlot(R.MapFrame.newLen(frame), R.MapState.len(state), index)','index','tests/map-keyed.mjs','mapCommitSuffix'],
   ['keyed growing suffix reads the previous slot','runtime/core.bend','Nat.sub(cursor, 1n)','Nat.sub(cursor, 2n)','tests/map-keyed.mjs','mapWindowGrowShift'],
   ['small move skips shifted runs','runtime/small-move.bend','Nat.is_eq(old, next)','True{}','tests/map-keyed.mjs','copyRuns'],
@@ -17,7 +31,7 @@ const mutations=[
 
   ['mapArray loses the row reader','runtime/keyed-map.bend','R.Node.with_parentComputed(B.node(w, owner), R.World.context(w))','R.Node.with_parentComputed(B.node(w, owner), 0n)','tests/map-index.mjs','updateParent'],
   ['mapArray row signals reject owned writes','runtime/core.bend','R.NodeOptions.with_ownedWrite(N.defaults(), True{})','N.defaults()','tests/map-index.mjs','mapInvokeRow'],
-  ['mapArray skips retained row updates','runtime/core.bend','W.setSignal(w, row, Arrays.at(w, items, index))','w','tests/map-index.mjs','mapPrefix'],
+  ['mapArray skips retained row updates','runtime/core.bend','W.setSignal(w, row, Arrays.at(w, items, index))','w','tests/map-index.mjs','mapMatched'],
   ['mapArray maps raw items instead of row accessors','runtime/core.bend','[R.AccessorReference{row}, R.Number{index}]','[Arrays.at(w, R.MapFrame.newItems(frame), index), R.Number{index}]','tests/map-index.mjs','mapInvokeRow'],
   ['mapArray skips previous fallback disposal','runtime/core.bend','Nat.is_ne(old, 0n)','False{}','tests/map-index.mjs','mapInitialCommit'],
   ['mapArray skips removed row disposal','runtime/core.bend','OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapRemoved{tail} <> rest','MapRemoved{tail} <> rest','tests/map-index.mjs','mapRemoved'],
@@ -50,7 +64,7 @@ const mutations=[
 
   ['action wrapper drops captured previous value','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack}','ActionArgs.bind(methods, 0n, first, second)}, R.Undefined{}} <> rest, stack}','tests/action-functions.mjs','callbackAction'],
 
-  ['action wrapper creation schedules work','runtime/action-state.bend','B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}])), R.ProgramReference{callback}}','B.Bundle{B.schedule(R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}}]))), R.ProgramReference{callback}}','tests/action-functions.mjs','function'],
+  ['action wrapper creation schedules work','runtime/action-state.bend','B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}])), R.ProgramReference{callback}}','B.Bundle{B.schedule(R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.ActionFunction{factory, methods, previous}], False{}, 0n}]))), R.ProgramReference{callback}}','tests/action-functions.mjs','function'],
   ['action wrapper discards captured methods','runtime/action-state.bend','[R.ActionFunction{factory, methods, previous}]','[R.ActionFunction{factory, R.ActionEnd{}, previous}]','tests/action-functions.mjs','function'],
   ['action wrapper loses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','methods','tests/action-functions.mjs','callbackAction'],
   ['action wrapper reverses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','ActionArgs.bind(methods, 0n, second, first)','tests/action-functions.mjs','callbackAction'],

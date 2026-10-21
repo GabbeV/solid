@@ -288,7 +288,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
       effectCleanup(w, rest, id, self)
     case Invoke{+callback} <> rest:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-        _ => Machine{w, B.append(Task, actions(callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}}))), rest)},
+        _ => Machine{w, B.append(Task, actions(callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))), rest)},
         _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), []})
     case Action{callback, value} <> rest:
       action(w, rest, callback, value)
@@ -456,4 +456,4 @@ def admittedActions(actions: List<&2, R.CleanupAction>) -> Bool:
 
 def admittedProgram(+w: R.World, +callback: Nat) -> Bool:
   Bool.and(Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
-    admittedActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}}))))
+    admittedActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))))

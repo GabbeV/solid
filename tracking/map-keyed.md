@@ -3,8 +3,8 @@
 At Solid `a2a5b6f8` (rc.16), default/`keyed:true` mapArray now executes the plain
 identity-keyed mode without index accessors. This extends the separate
 [keyed:false profile](map-index.md); it does not substitute one for the other.
-The admitted callable metadata has native arity zero or one. Extracted keys and
-index-accessor mapper modes remain unfinished. Stores/proxies, dev/observe names,
+This review describes the no-index path. [The subsequent mode review](map-modes.md)
+adds extracted keys and formal-arity-selected index accessors. Stores/proxies, dev/observe names,
 active lanes and arbitrary array/closure protocols remain outside the profile.
 The JSX `<For>` component/compiler is not itself a Bend translation.
 
@@ -13,7 +13,8 @@ The JSX `<For>` component/compiler is not itself a Bend translation.
 `mapArray` still constructs its internal owner/data before its eager computed,
 clears AUTO_DISPOSE afterward and returns the existing bound accessor. MapState
 now tags the by-index versus plain mode: rows are absent for the latter, and
-indexes/key callbacks remain absent in both. Empty/fallback/create-all and
+indexes/key callbacks remain absent in the two profiles described here; the
+subsequent extension adds their actual signal/callback paths. Empty/fallback/create-all and
 exception continuations retain their distinct source commit/store order.
 
 | Pinned `src/map.ts` operation | Bend return points / helpers |

@@ -11,13 +11,13 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | --- | --- | --- |
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
-| General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties |
+| General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties, plus five array-storage properties |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor and arbitrary finite nonempty write/flush history for every natural initial/proposed value, constructor budget >= 14 and each drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
-| Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys/index accessors remain open |
-| Public comparison corpus | 2,348 histories | 2,968 histories, plus separate native scheduling and finite memo-boundary controls |
-| Closed semantic regressions | 56 | 68 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 201; resource/infrastructure failures are excluded from useful rejections |
+| Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
+| Public comparison corpus | 2,348 histories | 3,048 histories, plus separate native scheduling and finite memo-boundary controls |
+| Closed semantic regressions | 56 | 71 positive regressions; two formerly preserved bugs now pass their merged fixes |
+| Compiled mutation checks | 116 | 213; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -27,7 +27,7 @@ quantified theorems. Every positive formal claim requires the independent kernel
 [general properties](general-properties.md) states the theorem domains and gaps.
 
 The remaining package work is substantial: arbitrary action closures/arguments/generator protocols,
-active verdict/lane/boundary/mark/deferred engines, stores/keyed array helpers, richer
+active verdict/lane/boundary/mark/deferred engines, richer
 closures/protocol objects and dev/observe behavior. [The action readiness review](reviews/action-readiness.md)
 records the original dependency review; [the action milestone](actions.md) now
 records 120 paired histories, 21 native-generator controls, eleven local properties and three closed laws. Production flush(fn) inside an action
@@ -150,3 +150,16 @@ small-move optimization. It adds 62 public comparisons, 90 distinct private
 helper/engine-return-point probes and nine mutation assertions. Existing formal
 claims are rechecked; no general map theorem is added. Extracted keys, index
 accessors and active engines remain unfinished; see [map-keyed.md](map-keyed.md).
+
+The next checkpoint closes extracted-key callbacks and reactive index accessors
+for typed mapArray. Formal arity is distinct from actual call argument count;
+item/index signals, key comparisons, reverse key preparation, cached removal keys
+and suffix writes follow source return points. Eighty paired histories and ten
+finite mutation assertions are added. Five quantified storage properties prove
+hole/present distinctions, payload retention and exact append-only allocation
+with preservation of arbitrary surrounding World state. Three concrete complete
+map lifecycle executions and two proof-property mutation rejections add separate
+formal evidence. This brings the totals to 3,048 histories, 213 rejected compiled
+variants and 71 closed positive regressions. No general mapArray theorem, source
+pin change, kernel modification or semantic deviation is introduced. See
+[the mode/arity operation review](map-modes.md).

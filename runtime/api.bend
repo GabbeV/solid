@@ -315,40 +315,40 @@ def flushMachine(w: R.World) -> C.Machine:
 
 # Reusable typed callback-program construction; no host scheduler is hidden here.
 def emptyProgram() -> R.CleanupProgram:
-  R.CleanupProgram{[], False{}}
+  R.CleanupProgram{[], False{}, 0n}
 
 def programEmit(code: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupEmit{code} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupEmit{code} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programWrite(signal: Nat, value: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupWrite{signal, value} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupWrite{signal, value} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programDispose(owner: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupDispose{owner} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupDispose{owner} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programDisposeCurrent(tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupDisposeCurrent{} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupDisposeCurrent{} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programCleanup(callback: Nat, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupRegisterCurrent{callback} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupRegisterCurrent{callback} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programThrow(cause: R.Value, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupThrow{cause} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programEvaluate(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackEvaluate{expr} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CallbackEvaluate{expr} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programReturn(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackReturn{expr} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CallbackReturn{expr} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programWriteExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CallbackWrite{signal, expr} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programUpdateExpr(signal: Nat, expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackUpdate{signal, expr} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CallbackUpdate{signal, expr} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def programThrowExpr(expr: R.Expr, tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CallbackThrow{expr} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 def registerProgram(+w: R.World, program: R.CleanupProgram) -> R.World:
   R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [program]))
@@ -370,7 +370,7 @@ def resetErrorHalt(w: R.World) -> R.World:
   R.World.with_haltNotified(R.World.with_halted(w, False{}), False{})
 
 def programPreviousCleanup(tail: R.CleanupProgram) -> R.CleanupProgram:
-  R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail), False{}}
+  R.CleanupProgram{R.CleanupPriorEffect{} <> R.CleanupProgram.actions(tail), False{}, 0n}
 
 # PromiseLike host protocol: object identity and settlement are external inputs;
 # registration, status, publication and flushing remain Bend engine operations.
@@ -618,4 +618,10 @@ def repeatBody(expr: R.Expr) -> R.InlineBody:
   R.SomeInlineBody{expr, False{}}
 
 def mapArrayCreate(list: R.Expr, mapper: R.Expr, fallback: R.InlineBody, byIndex: Bool) -> R.Expr:
-  R.MapArrayCreate{list, mapper, fallback, byIndex}
+  R.MapArrayCreate{list, mapper, fallback, R.Literal{R.Boolean{Bool.not(byIndex)}}}
+
+def programArity(program: R.CleanupProgram, arity: Nat) -> R.CleanupProgram:
+  R.CleanupProgram.with_arity(program, arity)
+
+def mapArrayInput(list: R.Expr, mapper: R.Expr, fallback: R.InlineBody, keyed: R.Expr) -> R.Expr:
+  R.MapArrayCreate{list, mapper, fallback, keyed}
