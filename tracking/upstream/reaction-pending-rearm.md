@@ -59,7 +59,12 @@ observed negative program: the first handle is zero, its old arm remains live,
 and callback counts become 1 and 2. `seeded_reaction_arm_is_replaced` is the
 positive 0/1 control. This failure is not relabeled as successful replacement.
 
-No report, playground upload, PR or maintainer message has been sent for this
-finding. A fix needs to capture the actual arm even when tracking throws, while
+At the user’s request, [a hosted repro](https://s.olid.uk/id/iZOM74C9Sda3qJWUKNHJLw) is now saved,
+pinned to npm 2.0.0-rc.16. Its source matches the component above; saved-share
+reloads preserve 0/1/2 and a local loading-value control gives 0/0/1.
+[Hosted verification](../../repros/playground/reaction-pending-rearm-hosted.json)
+records this separately from the source-built b0ad1df5 checks. The playground
+reports an unauthenticated /api/session 401; there are no page exceptions.
+No report, PR or maintainer message has been sent for this finding. A fix needs to capture the actual arm even when tracking throws, while
 checking that reentrant tracking, callback re-arming and disposal still retain
 their existing order. A tested local candidate is now recorded in [the fix review](reaction-pending-rearm-fix.md), separately from the pinned runtime. An additional paired history preserves the analogous initially-throwing tracking case.

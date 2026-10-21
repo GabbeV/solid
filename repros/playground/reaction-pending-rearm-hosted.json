@@ -1,0 +1,39 @@
+{
+  "shareUrl": "https://s.olid.uk/id/iZOM74C9Sda3qJWUKNHJLw",
+  "solidVersion": "2.0.0-rc.16",
+  "importMap": {
+    "imports": {
+      "solid-js": "https://esm.sh/solid-js@2.0.0-rc.16?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+      "@solidjs/signals": "https://esm.sh/@solidjs/signals@2.0.0-rc.16?dev",
+      "solid-js/web": "https://esm.sh/@solidjs/web@2.0.0-rc.16?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+      "solid-js/store": "https://esm.sh/solid-js@2.0.0-rc.16?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+      "@solidjs/web": "https://esm.sh/@solidjs/web@2.0.0-rc.16?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+      "solid-js/internal": "https://esm.sh/solid-js@2.0.0-rc.16/internal?dev&external=solid-js,@solidjs/signals"
+    }
+  },
+  "browser": "154.0.8037.57",
+  "sourceMatches": true,
+  "actual": {
+    "arm": "Reaction calls: 0",
+    "old": "Reaction calls: 1",
+    "current": "Reaction calls: 2"
+  },
+  "control": {
+    "arm": "Reaction calls: 0",
+    "old": "Reaction calls: 0",
+    "current": "Reaction calls: 1"
+  },
+  "errors": [],
+  "reports": [
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "checkedAt": "2026-10-21T03:23:00.762Z",
+  "savedShareReloadPreservedOriginal": true,
+  "resourceFailures": [
+    {
+      "status": 401,
+      "url": "https://s.olid.uk/api/session"
+    }
+  ]
+}

@@ -14,6 +14,10 @@ Ryan's existing #2861 replacement ruling. This candidate addresses an uncovered
 case of that fix: initial pending or throwing tracking exits before the arm is
 recorded, so a later track cannot dispose the superseded effect.
 
+The filled-out PR form now links the [hosted JSX repro](https://s.olid.uk/id/iZOM74C9Sda3qJWUKNHJLw),
+pinned to npm 2.0.0-rc.16, with verified failing and loading-value control counts.
+It retains the separate source-built b0ad1df5 and patched-source validation.
+
 ## Source change
 
 The existing compute wrapper now reads its current owner into a local `node`,

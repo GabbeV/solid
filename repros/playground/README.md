@@ -141,3 +141,18 @@ replaces the former absence of a verified hosted reproduction.
 
 The [issue draft](../../tracking/upstream/deferred-release-throw-issue.md) now
 links this share and retains the separate local upstream-source validation.
+
+## Replacing a pending reaction subscription
+
+[Open the playground](https://s.olid.uk/id/iZOM74C9Sda3qJWUKNHJLw), pinned to npm
+2.0.0-rc.16. Source: [reaction-pending-rearm.tsx](reaction-pending-rearm.tsx).
+Click **Arm**, **Finish old result**, **Change current field**. Expected counts
+are 0,0,1; actual counts are 0,1,2. Adding `{ loadingValue: 0 }` to the memo is a
+passing 0,0,1 control. [Hosted verification](reaction-pending-rearm-hosted.json)
+checks source agreement, pinned import maps, saved-share reloads and the locally
+edited control. The saved share retains the original failure. An unauthenticated
+site `/api/session` request returns 401; no page exceptions occur.
+
+[Source-built verification](reaction-pending-rearm-verification.json) separately
+checks unchanged upstream b0ad1df5 in production, development and observe. The
+hosted package version is not asserted to identify that exact upstream commit.
