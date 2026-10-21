@@ -4,7 +4,9 @@ Candidate `5c6f441144ab34b8e0b8645bca5c4a748e7e1f84` is committed on
 `fix/reaction-pending-arm` in `/workspace/solid-reaction-pending-fix`, based on
 unchanged next `b0ad1df505b835058a4b3750ab37d6576bb18c01` (rc.16).
 The [portable patch](reaction-pending-rearm.patch) includes source, tests and a
-patch changeset. Nothing has been pushed or submitted. The active Bend runtime,
+patch changeset. At the user’s request, this exact commit was pushed to
+`GabbeV/solid:fix/reaction-pending-arm` and a filled-out comparison form prepared
+for the user to review and submit. No PR has been submitted by the agent. The active Bend runtime,
 source pin and negative law continue to preserve the upstream bug.
 
 The [source report](reaction-pending-rearm.md) links the minimal JSX repro and
