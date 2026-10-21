@@ -69,6 +69,22 @@ export class SolidRuntime {
   evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.mapArray){
+      const {list,map,fallback,keyed}=e.mapArray;
+      if(keyed!==false)throw new TypeError('Only mapArray keyed:false is translated in this profile');
+      const mapper=this.evaluate(map,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed:false};
+      if(Object.hasOwn(e.mapArray,'fallback'))options.fallback=()=>this.evaluate(fallback,undefined,values,locals);
+      const observeMapper=(item,index)=>{
+        const label='#row'+(this.rowSerial=(this.rowSerial??0)+1);
+        this.accessorIdentities.set(item,label);this.accessors[label]=item;
+        const node=Object.getOwnPropertySymbols(item).map(key=>item[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+        if(!node)throw new Error('Missing native row accessor metadata');
+        (this.rowSources??=new Map()).set(node,label);
+        return mapper(item,index);
+      };
+      const get=this.S.mapArray(this.callback(name,list,values,locals),observeMapper,options);
+      this.registerComputedAccessor(get,name);return get;
+    }
     if(e.repeat){
       const {count,map,from,fallback}=e.repeat,mapper=this.evaluate(map,prev,values,locals);
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={};

@@ -29,6 +29,17 @@ records shared mutation segments, source ordering, tests, closed laws and limits
 Older staged notes below retain the history of that migration. No pin change or
 semantic workaround is active.
 
+## mapArray keyed:false
+
+[The operation review](map-index.md) records the production by-index profile:
+raw ownedWrite row signals, actual item accessors, prefix writes, stable-result
+identity, staged tail edits and exact mapper catch/commit/cleanup order. The
+prefix exhausts a side in this profile, leaving suffix/key matching paths for
+other modes explicitly unfinished. Source Map index preparation retains
+SameValueZero and undefined/-1/index distinctions. Identity-keyed/extracted-key
+constructors remain refused rather than being approximated by position mapping.
+No semantic workaround or new general mapArray theorem is claimed.
+
 ## Repeat and array representation
 
 The production repeat/updateRepeat helpers now follow the source retained-window

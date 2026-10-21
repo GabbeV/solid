@@ -107,6 +107,11 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if(e.mapArray){
+    const {list,map,fallback,keyed}=e.mapArray;
+    if(keyed!==false)throw new TypeError('Only mapArray keyed:false is translated in this profile');
+    return R.mapArrayCreate(expression(list,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.mapArray,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody());
+  }
   if(e.repeat){
     const {count,map,from,fallback}=e.repeat;
     return R.repeatCreate(expression(count,ids,programs,futures,encodeValue,contexts),expression(map,ids,programs,futures,encodeValue,contexts),Object.hasOwn(e.repeat,'from')?R.repeatBody(expression(from,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody(),Object.hasOwn(e.repeat,'fallback')?R.repeatBody(expression(fallback,ids,programs,futures,encodeValue,contexts)):R.noRepeatBody());
@@ -375,6 +380,9 @@ export class BendRuntime {
     for(const event of list(this.world.events)){
       if('boundSetter'in event){this.writableSetters.add(event.boundSetter);this.boundAccessors.add(event.boundSetter);}
       if('boundAccessor'in event)this.boundAccessors.add(event.boundAccessor);
+      if('rowBound'in event&&!this.reverse[event.rowBound]){
+        const name='#row'+(this.rowSerial=(this.rowSerial??0)+1);this.ids[name]=event.rowBound;this.reverse[event.rowBound]=name;this.boundAccessors.add(event.rowBound);
+      }
     }
     this.arrayViews.sync();
     this.drainJobs();
@@ -549,7 +557,7 @@ export class BendRuntime {
   nodes() { return list(this.world.nodes); }
   trace() {
     const name=id=>this.reverse[id] ?? null;
-    return list(this.world.events).filter(e=>!('created'in e)&&!('boundSetter'in e)&&!('boundAccessor'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
+    return list(this.world.events).filter(e=>!('created'in e)&&!('boundSetter'in e)&&!('boundAccessor'in e)&&!('rowBound'in e)&&!this.hiddenNodes.has(e.reader??e.id)).map(e=> {
       if ('callback' in e) return ['cleanup',this.programLabels.get(e.callback)??e.callback,e.code];
       if ('previous' in e) return ['apply',name(e.id),this.observe(this.decode(e.value)),this.observe(this.decode(e.previous))];
       if ('reader' in e) return ['read',name(e.reader),name(e.source),this.observe(this.decode(e.value))];

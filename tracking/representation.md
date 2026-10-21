@@ -284,3 +284,15 @@ concrete old witnesses use empty arenas. See [repeat.md](repeat.md) for exact
 correspondence and limits, including explicit Unsupported(81) for unported
 reactive array-error string coercion. External array mutation, sparse input
 literals, prototypes/methods and cyclic observation remain outside the profile.
+
+## mapArray row state
+
+World.maps holds the stable bound MapData receiver for the keyed:false profile.
+MapFrame stores the source pass locals/stages and created/removed owner ledgers.
+Row values are actual existing core signals with ownedWrite:true, exposed through
+canonical AccessorReference values. Internal node/row vectors use finite lists;
+saved items/mapped outputs use stable arrays. Exclusive end bounds represent
+source inclusive counters plus one, including -1 as zero. MapIndex distinguishes
+undefined, -1 and a real index; the typed JS Map entry representation uses
+SameValueZero rather than prefix strict equality. See [map-index.md](map-index.md)
+for operation order, host observation and unfinished keying modes.

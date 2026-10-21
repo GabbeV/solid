@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2849 differential histories, 184 rejected compiled mutations,
+Current verification: 2906 differential histories, 192 rejected compiled mutations,
 and 68 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -31,6 +31,18 @@ repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
 
+## mapArray by index
+
+[The index-mode milestone](map-index.md) implements production mapArray with
+keyed:false: stable item accessors, raw ownedWrite row signals, prefix updates,
+stable output identity at equal length, staged tail growth/shrink, mapper abort
+and source-ordered commit/cleanup. Fifty-seven new paired histories compare
+actual Solid, including pending/error retries, partial writes/throws, row state,
+ownership and callback/local/action capture. Eight additional mutations target
+selected missed operations. Existing proofs are rechecked; no general mapArray
+theorem is claimed. Identity-keyed/extracted-key modes, small moves, index
+accessors and general keyed matching remain refused and unfinished.
+
 ## Typed arrays and repeat
 
 [The repeat milestone](repeat.md) adds executable array identities/slots and the
@@ -50,7 +62,8 @@ unfinished. This closes an implementation gap after the proof-only checkpoints.
 fallbacks being recreated on empty-to-empty For/Repeat updates. Fourteen native
 controls and twelve real JSX browser cases reproduce it, with a one-line truthy
 control. The new repeat port preserves this bug and checks it against native Solid;
-mapArray remains source-only. No semantic workaround or repeat proof is claimed. The user submitted fix PR
+mapArray keyed:false now preserves it too. No semantic workaround or general
+list-helper proof is claimed. The user submitted fix PR
 [#4211](https://github.com/solidjs/solid/pull/4211) from a separate upstream workspace;
 the pinned source is unchanged.
 

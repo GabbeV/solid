@@ -21040,32 +21040,48 @@
           "start": 51,
           "end": 55,
           "sha256": "4e9996e12bf2e42a567a97045f15d99630db2ac852470b7ee35efa246f64b27d",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "status": "restricted",
+            "restrictions": "Production keyed:false profile only, admitted typed arrays/list/mapper/fallback callbacks; _rows present, _key/_indexes absent, _byIndex true. Raw ownedWrite row signal and item accessor/numeric-index mapper ABI retained. Other keying modes and source dev/observe/store/lane/protocol domains remain unfinished and are refused at entry."
+          }
         },
         {
           "key": "map.ts:mapArray",
           "start": 56,
           "end": 60,
           "sha256": "8e1a19f7b25016988a4fa4b877660535c66291a9df8b7264b0f1202b2b41d99a",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "status": "restricted",
+            "restrictions": "Production keyed:false profile only, admitted typed arrays/list/mapper/fallback callbacks; _rows present, _key/_indexes absent, _byIndex true. Raw ownedWrite row signal and item accessor/numeric-index mapper ABI retained. Other keying modes and source dev/observe/store/lane/protocol domains remain unfinished and are refused at entry."
+          }
         },
         {
           "key": "map.ts:mapArray",
           "start": 61,
           "end": 65,
           "sha256": "491a793934826b52e22644b9965122445a85be8fac39ba40d79873b7ebce3b18",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "status": "restricted",
+            "restrictions": "Production keyed:false profile only, admitted typed arrays/list/mapper/fallback callbacks; _rows present, _key/_indexes absent, _byIndex true. Raw ownedWrite row signal and item accessor/numeric-index mapper ABI retained. Other keying modes and source dev/observe/store/lane/protocol domains remain unfinished and are refused at entry."
+          }
         },
         {
           "key": "map.ts:mapArray",
           "start": 66,
           "end": 107,
           "sha256": "8bf263736cb0c32baea3ba19e112295f3ebd9fced3e709bdf0cd013ca358165a",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+            "status": "restricted",
+            "restrictions": "Production keyed:false profile only, admitted typed arrays/list/mapper/fallback callbacks; _rows present, _key/_indexes absent, _byIndex true. Raw ownedWrite row signal and item accessor/numeric-index mapper ABI retained. Other keying modes and source dev/observe/store/lane/protocol domains remain unfinished and are refused at entry."
+          }
         },
         {
           "key": "map.ts:__smallMoveHits",
@@ -21096,24 +21112,36 @@
           "start": 311,
           "end": 341,
           "sha256": "5439567662ad189d008b3d2ee4ed7bab752e5c34cc03b97851db5ab8afd1062e",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:mapRemoval",
+            "status": "partial",
+            "restrictions": "Only reachable final tail-owner collection for keyed:false. Its changed destination window is empty after prefix matching; nonempty-window comparison, key callbacks and failed-probe reset remain unfinished for other modes."
+          }
         },
         {
           "key": "map.ts:commitWindow",
           "start": 349,
           "end": 396,
           "sha256": "de1fea1b05bcc0842063d78e1ecac2a699b6d99c4e507fd5ede1d94e7b13e0a8",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:mapWindow, mapWindowRows",
+            "status": "partial",
+            "restrictions": "keyed:false: empty retained suffix, live node/row vector resizing and changed-slot node/row/write order. Nonempty suffix shifts, index vectors and general keyed window commits remain unfinished."
+          }
         },
         {
           "key": "map.ts:updateKeyedMap",
           "start": 398,
           "end": 695,
           "sha256": "79beadbeeea17a2b10949898895b2c3caa85312aafc38865efd740d4a51ee9ef",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/keyed-map.bend:updateParent, clear, frame, matches, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapMapped, mapAbort, mapPrefix, mapSuffix, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapRemoved",
+            "status": "partial",
+            "restrictions": "keyed:false only: source tracked list and owner routing, prefix row writes, stable-array arm, staged create-all/tail grow/shrink and exact catch/commit/disposal order. Prefix exhausts a side, so suffix/window matching paths for other modes remain unported. Pinned falsy fallback remount preserved. Array/coercion, store hooks and active engines remain outside profile; no general map theorem."
+          }
         },
         {
           "key": "map.ts:repeat",

@@ -4,8 +4,8 @@ At Solid `a2a5b6f8` (rc.16), `repeat` / `updateRepeat` now execute through the
 same Bend core used by signals, memos, effects and teardown. This implements the
 production helper underlying `<Repeat>` within the typed callback/natural-number
 profile. JSX compilation and the component wrapper are not ported. `mapArray`
-remains unported; no keyed diff, small-move optimization or row-signal machinery
-has been substituted with this simpler helper.
+now has a separate [keyed:false profile](map-index.md). Identity-keyed diff and
+small-move optimization remain unported; repeat is not used to substitute them.
 
 ## Source return points
 

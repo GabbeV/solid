@@ -8,6 +8,12 @@ import ./callable.bend as Callable
 
 def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
   match expr:
+    case R.MapArrayCreate{+list, +mapper, fallback}:
+      match fallback:
+        case R.NoInlineBody{}:
+          R.MapArrayCreate{bind(list, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}}
+        case R.SomeInlineBody{expr, returns}:
+          R.MapArrayCreate{bind(list, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(expr, depth, signal), returns}}
     case R.ArrayLiteral{values}:
       R.ArrayLiteral{bind(values, depth, signal)}
     case R.ArrayAt{array, index}:

@@ -4,7 +4,8 @@ Originally reproduced in native Solid at unchanged next
 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16), 2026-10-21.
 The user submitted fix PR [#4211](https://github.com/solidjs/solid/pull/4211).
 The repeat helper and typed array payloads now execute and preserve the pinned
-bug in paired comparisons; mapArray remains unported. No workaround or
+bug in paired comparisons. The mapArray keyed:false profile now preserves it
+too; other keying modes remain unported. No workaround or
 semantic deviation is active.
 
 [Open the saved playground](https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg), pinned

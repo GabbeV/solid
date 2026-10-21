@@ -716,6 +716,26 @@
       "bend": "runtime/map.bend:updateParent, frame, retained, clear, publish; runtime/core.bend:repeatRead, repeatCount, repeatFromBody, repeatFromValue, repeatBegin, repeatEmptyBody, repeatFallbackCreate, repeatFallbackBody, repeatCopy, repeatRows, repeatMapped, repeatAbort, repeatCommit, repeatLeaving, RepeatReturn",
       "status": "restricted",
       "restrictions": "Source parentComputed store, tracked count/from, untracked internal owner and row callbacks, pinned falsy fallback guard, staged overlap/create/catch/commit loops and live disposal lookups retained. Mapper abort disposes only new owners in source index order and rethrows unless cleanup overrides. Commit errors do not enter mapper catch. Active lanes/stores/dev/observe, arbitrary counts/coercion and general protocol/closure inputs remain outside the profile."
+    },
+    "map.ts:mapArray": {
+      "bend": "runtime/keyed-map.bend:mapArray; runtime/core.bend:mapCreate, RepeatReady",
+      "status": "restricted",
+      "restrictions": "Production keyed:false profile only, admitted typed arrays/list/mapper/fallback callbacks; _rows present, _key/_indexes absent, _byIndex true. Raw ownedWrite row signal and item accessor/numeric-index mapper ABI retained. Other keying modes and source dev/observe/store/lane/protocol domains remain unfinished and are refused at entry."
+    },
+    "map.ts:updateKeyedMap": {
+      "bend": "runtime/keyed-map.bend:updateParent, clear, frame, matches, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapMapped, mapAbort, mapPrefix, mapSuffix, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapRemoved",
+      "status": "partial",
+      "restrictions": "keyed:false only: source tracked list and owner routing, prefix row writes, stable-array arm, staged create-all/tail grow/shrink and exact catch/commit/disposal order. Prefix exhausts a side, so suffix/window matching paths for other modes remain unported. Pinned falsy fallback remount preserved. Array/coercion, store hooks and active engines remain outside profile; no general map theorem."
+    },
+    "map.ts:stageRemoval": {
+      "bend": "runtime/core.bend:mapRemoval",
+      "status": "partial",
+      "restrictions": "Only reachable final tail-owner collection for keyed:false. Its changed destination window is empty after prefix matching; nonempty-window comparison, key callbacks and failed-probe reset remain unfinished for other modes."
+    },
+    "map.ts:commitWindow": {
+      "bend": "runtime/core.bend:mapWindow, mapWindowRows",
+      "status": "partial",
+      "restrictions": "keyed:false: empty retained suffix, live node/row vector resizing and changed-slot node/row/write order. Nonempty suffix shifts, index vectors and general keyed window commits remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

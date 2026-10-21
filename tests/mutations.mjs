@@ -5,6 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['mapArray loses the row reader','runtime/keyed-map.bend','R.Node.with_parentComputed(B.node(w, owner), R.World.context(w))','R.Node.with_parentComputed(B.node(w, owner), 0n)','tests/map-index.mjs','updateParent'],
+  ['mapArray row signals reject owned writes','runtime/core.bend','R.NodeOptions.with_ownedWrite(N.defaults(), True{})','N.defaults()','tests/map-index.mjs','mapRows'],
+  ['mapArray skips retained row updates','runtime/core.bend','W.setSignal(w, row, Arrays.at(w, items, index))','w','tests/map-index.mjs','mapPrefix'],
+  ['mapArray maps raw items instead of row accessors','runtime/core.bend','[R.AccessorReference{row}, R.Number{index}]','[Arrays.at(w, R.MapFrame.newItems(frame), index), R.Number{index}]','tests/map-index.mjs','mapRows'],
+  ['mapArray skips previous fallback disposal','runtime/core.bend','Nat.is_ne(old, 0n)','False{}','tests/map-index.mjs','mapInitialCommit'],
+  ['mapArray skips removed row disposal','runtime/core.bend','OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapRemoved{tail} <> rest','MapRemoved{tail} <> rest','tests/map-index.mjs','mapRemoved'],
+  ['mapArray abort leaves created owners live','runtime/core.bend','OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapAbort{tail, prior} <> rest','MapAbort{tail, prior} <> rest','tests/map-index.mjs','mapAbort'],
+  ['mapArray silently patches the pinned fallback guard','runtime/core.bend','B.truth(Arrays.at(w, R.MapState.mappings(state), 0n))','Nat.is_ne(Arrays.length(w, R.MapState.mappings(state)), 0n)','tests/map-index.mjs','mapEmptyBody'],
+
   ['repeat loses the internal owner reader','runtime/map.bend','R.Node.with_parentComputed(B.node(w, owner), R.World.context(w))','R.Node.with_parentComputed(B.node(w, owner), 0n)','tests/repeat.mjs','updateParent'],
   ['repeat recreates retained rows','runtime/core.bend','Maps.retained(frame, index)','False{}','tests/repeat.mjs','repeatRows'],
   ['repeat skips exited row disposal','runtime/core.bend','RepeatCommit{frame} <> rest','RepeatPublish{frame} <> rest','tests/repeat.mjs','repeatRows'],
