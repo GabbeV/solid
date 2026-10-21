@@ -1,4 +1,5 @@
 import {requireTeardownProgram,requireFunctionProgram} from './programs.mjs';
+import {requireActionProtocol} from './actions.mjs';
 import * as DefaultSolid from '../build/solid.mjs';
 import {HostErrors} from './errors.mjs';
 export class SolidRuntime {
@@ -68,6 +69,28 @@ export class SolidRuntime {
   evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.action){
+      requireActionProtocol(e.action);
+      const id=this.nextFuture++,self=this;
+      const promise=this.S.action(function(){
+        self.evaluate(e.action.factory??{lit:undefined},prev,values,locals);
+        let cursor=0,closed=false;
+        const step=(value,rejected)=>{
+          if(closed){if(rejected)throw value;return {done:true,value:undefined};}
+          const method=e.action.steps[cursor++];
+          if(!method){closed=true;if(rejected)throw value;return {done:true,value:undefined};}
+          try{
+            if(rejected&&!Object.hasOwn(method,'throw'))throw value;
+            const result=self.evaluate(rejected?method.throw:method.next,undefined,[value,rejected],locals);
+            if(result?.done)closed=true;
+            return result;
+          }catch(error){closed=true;throw error;}
+        };
+        return {next:value=>step(value,false),throw:error=>step(error,true)};
+      })();
+      promise.catch(()=>{});this.futureIdentities.set(promise,id);return promise;
+    }
+    if(e.iteratorResult)return {done:e.iteratorResult.done??false,value:this.evaluate(e.iteratorResult.value??{lit:undefined},prev,values,locals)};
     if(e.getContext){const {name,owner={lit:undefined}}=e.getContext;return this.S.getContext(this.contexts[name],this.evaluate(owner,prev,values,locals));}
     if(e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return this.S.setContext(this.contexts[name],this.evaluate(value,prev,values,locals),this.evaluate(owner,prev,values,locals));}
     if(e.owner)return this.S.getOwner();
@@ -340,6 +363,7 @@ export class SolidRuntime {
   }
   awaitRefresh(name,target){this.recordPort(name,this.S.refresh(this.accessors[target]??(()=>undefined)));}
   promise(name){return this.ports[name].promise;}
+  runAction(name,plan){const promise=this.evaluate({action:plan});this.recordPort(name,promise);return promise;}
   future(name,{immediate=false}={}) {
     const id=this.nextFuture++,record={settled:false,rejected:false,value:undefined,observers:[]};
     if(immediate){

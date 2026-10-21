@@ -4,8 +4,8 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 2546 differential histories, 139 rejected compiled mutations,
-and 62 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
+Current verification: 2621 differential histories, 152 rejected compiled mutations,
+and 64 composed closed Bend regressions, plus general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b0ad1df5 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
@@ -14,6 +14,17 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Typed action milestone
+
+[Action invocations](actions.md) now use the existing transaction/core driver for
+initial and resumed slices, held writes, question provenance, nested/overlapping
+actions, rejection and typed return adoption. Captured local signals continue
+across yields and root disposal. The milestone adds 67 public plus eight lexical
+histories, seventeen independent native-generator controls, five quantified local
+properties and two closed action park/land laws. First-class action-function
+identities, arbitrary protocols/internal awaits and active optimistic/lane/store
+engines remain unfinished. No source pin or semantic deviation changed.
 
 ## Custom comparator milestone
 
@@ -29,7 +40,7 @@ Arbitrary closure environments and active scope engines remain unfinished.
 nested synchronous drains, exact callback returns, ambient scope, native callback
 identity, finally-on-throw and drain-error precedence. The milestone adds 64
 public histories, eight native scheduling-IO controls, two closed execution laws
-and three quantified entry/finally properties. Public actions remain unfinished.
+and three quantified entry/finally properties. Typed production action invocations now execute; the full action API remains unfinished.
 User-submitted reaction PR [#4188](https://github.com/solidjs/solid/pull/4188) is
 open and tracked; its change is not applied to the active source pin.
 

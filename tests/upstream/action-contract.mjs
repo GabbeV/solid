@@ -1,5 +1,5 @@
-// Source-only public controls for the next engine dependency. These do not
-// assert or imply that Bend implements actions.
+// Source-only public controls for the action contract. Paired Bend histories
+// and kernel properties are separate tests.
 import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
 let count=0;
@@ -35,4 +35,4 @@ await scenario('nested bare-yield slice cannot flush the outer body',async({S,ge
  const done=outer();assert.equal(get(),0);assert.deepEqual(seen,[0]);
  S.flush();assert.equal(get(),4);assert.deepEqual(seen,[0,4]);assert.equal(await done,'inner');
 });
-console.log(`${count} source-only action controls preserve first/resumed-slice scheduling, production callback-without-drain behavior, held writes, rejection and nested depth; Bend actions remain unfinished.`);
+console.log(`${count} source-only action controls preserve first/resumed-slice scheduling, production callback-without-drain behavior, held writes, rejection and nested depth; paired Bend action evidence is checked separately.`);

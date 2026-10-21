@@ -1,4 +1,5 @@
 import Base
+import ./proof/action-laws.bend as ActionLaws
 import ./proof/memo-staging.bend as MemoStaging
 import ./proof/extension-laws.bend as ExtensionLaws
 import ./proof/cleanup-laws.bend as CleanupLaws
@@ -262,8 +263,8 @@ def Laws.nested_flush_callback_returns_before_outer_drain():
 def Laws.flush_drain_error_overrides_callback_error():
   {==}
 
-def Laws.flush_callback_entry_preserves_caller(w, rest, saved, body, prev):
-  FlushCallbacks.entry(w, rest, saved, body, prev)
+def Laws.flush_callback_entry_preserves_caller(w, rest, saved, body, prev, outside):
+  FlushCallbacks.entry(w, rest, saved, body, prev, outside)
 
 def Laws.flush_finally_restores_depth_and_operands(w, depth, rest, saved, fault):
   FlushCallbacks.restores(w, depth, rest, saved, fault)
@@ -334,3 +335,25 @@ def Laws.reactive_cleanup_uses_reverse_registration_order(w, prefix, callback, r
 
 def Laws.staged_scalar_memo_flush_completes(next, extra):
   MemoStaging.every_staged_input(next, extra)
+
+
+def Laws.action_depth_entry_exit_preserves_world(w):
+  ActionLaws.balanced(w)
+
+def Laws.action_flush_callback_runs_without_a_drain(w, depth, rest, stack, body, previous):
+  ActionLaws.guarded_callback(w, depth, rest, stack, body, previous)
+
+def Laws.action_plain_flush_is_a_noop(fuel, w, depth):
+  ActionLaws.guarded_flush(fuel, w, depth)
+
+def Laws.action_yield_callback_is_once_only(w, rest, stack, observer, action, rejected, value):
+  ActionLaws.duplicate_yield(w, rest, stack, observer, action, rejected, value)
+
+def Laws.action_ignores_a_throw_after_yield_settlement(w, rest, saved, error, observer, action):
+  ActionLaws.throw_after_settlement(w, rest, saved, error, observer, action)
+
+def Laws.action_holds_first_slice_write():
+  ActionLaws.holds()
+
+def Laws.action_resumed_slice_lands_reconciled_write():
+  ActionLaws.lands()

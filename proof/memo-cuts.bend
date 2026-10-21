@@ -68,12 +68,12 @@ def after_pass_live(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Val
 # Keep API alias and canonical-machine conversions abstract. Unfolding an
 # alias at a concrete graph would evaluate the entire run during conversion.
 def api_flush(+fuel: Nat, +w: R.World,
-  guard: {Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))) == False{} : Bool}) ->
+  guard: {Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))) == False{} : Bool}) ->
   {A.flush(fuel, w) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}:
   P.flush_eq(fuel, w, guard)
 
 def flush_from_shape(+fuel: Nat, +w: R.World, -start: C.Machine, -end: C.Machine,
-  guard: {Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))) == False{} : Bool},
+  guard: {Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))) == False{} : Bool},
   shape: {C.Machine{w, [C.Round{}], []} == start : C.Machine},
   finished: {C.run(fuel, start) == end : C.Machine}) ->
   {A.flush(fuel, w) == C.world(end) : R.World}:

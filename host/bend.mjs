@@ -1,5 +1,6 @@
 import {RootDisposers,SourceAccessors,SourceSetters,ProgramFunctions} from './functions.mjs';
 import {requireTeardownProgram,requireFunctionProgram} from './programs.mjs';
+import {requireActionProtocol} from './actions.mjs';
 const {default:R}=await import(process.env.BEND_EMIT_FILE ?? '../build/runtime.mjs');
 import {HostErrors,errorKind} from './errors.mjs';
 
@@ -100,6 +101,13 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if(e.action){
+    requireActionProtocol(e.action);
+    let methods=R.emptyActionMethods();
+    for(const step of [...e.action.steps].reverse())methods=R.actionMethod(expression(step.next,ids,programs,futures,encodeValue,contexts),Object.hasOwn(step,'throw'),expression(step.throw??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
+    return R.actionInvoke(expression(e.action.factory??{lit:undefined},ids,programs,futures,encodeValue,contexts),methods);
+  }
+  if(e.iteratorResult)return R.iteratorResult(e.iteratorResult.done??false,expression(e.iteratorResult.value??{lit:undefined},ids,programs,futures,encodeValue,contexts));
   if (e.getContext){const {name,owner={lit:undefined}}=e.getContext;return R.contextGet(contexts[name],expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.setContext){const {name,value={lit:undefined},owner={lit:undefined}}=e.setContext;return R.contextSet(contexts[name],expression(value,ids,programs,futures,encodeValue,contexts),expression(owner,ids,programs,futures,encodeValue,contexts));}
   if (e.owner) return R.currentOwner();
@@ -191,6 +199,7 @@ export class BendRuntime {
     return id;
   }
   encode(value){
+    for(const [id,port]of this.actionPorts??[])if(value===port.promise)return R.vAsync(id);
     if(value&&typeof value==='object'&&typeof value.reaction==='string'){
       const ref=this.reactionValues?.get(value.reaction);if(!ref)throw new TypeError('Unknown reaction: '+value.reaction);return ref;
     }
@@ -235,6 +244,7 @@ export class BendRuntime {
     this.world=R.createContext(this.world,encoded,description===undefined?R.noDescription():R.contextDescription(description));this.contexts[name]=id;this.check();return id;
   }
   observe(value){
+    for(const [id,port]of this.actionPorts??[])if(value===port.promise)return {async:id};
     const callback=this.callbacks.identity(value);
     if(callback!==undefined)return {callback:this.programNames.get(callback)};
     if(value instanceof BendNoOwnerError||value instanceof BendContextNotFoundError){
@@ -269,6 +279,11 @@ export class BendRuntime {
     const jobs=list(this.world.hostJobs);this.world=R.clearHostJobs(this.world);
     for(const job of jobs){
       const kind=R.hostJobKind(job);
+      if(kind===9){
+        const port=this.actionPorts.get(job.result);
+        (job.rejected?port.reject:port.resolve)(this.decode(job.value));
+        continue;
+      }
       if(kind===5){
         this.timers.set(job.awaiter,this.clock.setTimeout(()=>this.hostCallback(()=>{this.world=R.timeoutUntil(this.world,job.awaiter);}),job.delay));
         continue;
@@ -294,7 +309,8 @@ export class BendRuntime {
       }
       queueMicrotask(()=>{
         try {
-          if(kind===1)this.world=R.deliver(this.fuel,this.world,job.observer,job.rejected,job.value);
+          if(kind===10)this.world=R.adoptAction(this.fuel,this.world,job.action,job.value);
+          else if(kind===1)this.world=R.deliver(this.fuel,this.world,job.observer,job.rejected,job.value);
           else if(kind===2){this.world=R.startRefresh(this.fuel,this.world,job.awaiter);this.bindAwaiter(job.awaiter);}
           else if(kind===3)this.world=R.deliverWatch(this.world,job.awaiter,job.rejected,job.value);
           else this.world=R.flush(this.fuel,this.world);
@@ -305,6 +321,12 @@ export class BendRuntime {
   }
   hostCallback(callback){try{callback();this.check();}catch(error){this.asyncErrors.push(this.errorShape(error));}}
   check() {
+    this.actionPorts??=new Map();
+    for(const state of list(this.world.actions))if(!this.actionPorts.has(state.result)){
+      let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
+      promise.catch(()=>{}); // observe rejection through explicit user ports
+      this.actionPorts.set(state.result,{promise,resolve,reject});this.asyncRefs.set(state.result,promise);
+    }
     // Observe returned source closures; these labels do not create or arm nodes.
     for(const [index,state]of list(this.world.reactions).entries())if(!this.programNames.has(state.track)){
       const name='@reaction'+(index+1);this.programNames.set(state.track,name);this.programs[name]=state.track;this.programActions.set(name,[]);
@@ -402,6 +424,12 @@ export class BendRuntime {
     this.world=R.refreshValue(this.world,this.ids[target]??0);this.check();
   }
   promise(name){return this.ports[name].promise;}
+  runAction(name,plan){
+    const promise=this.evaluate({action:plan});
+    this.ports[name]={promise};
+    promise.then(value=>{this.portEvents.push(['resolve',name,this.observe(value)]);this.portSnapshots.push([name,this.screen()]);},error=>{this.portEvents.push(['reject',name,this.errorShape(error)]);this.portSnapshots.push([name,this.screen()]);});
+    return promise;
+  }
   future(name,{immediate=false}={}) {
     const id=R.nextAsyncId(this.world);this.futures[name]=id;
     this.world=R.createThenable(this.world,immediate);this.check();return id;

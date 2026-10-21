@@ -1584,16 +1584,24 @@
           "start": 37,
           "end": 47,
           "sha256": "da2369b0828b73190b956ae2d82999b393f6c278e89abe5ce46198a443d635b7",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:actionResume, ActionSliceEnd, ActionRestoreQuestion",
+            "status": "restricted",
+            "restrictions": "Save question, set action question, joinFuture, step, depth-zero public flush, then normal question restoration. No finally is added; native controls preserve interrupted question restoration after a later drain throw. Active lane/boundary/store scopes remain unfinished."
+          }
         },
         {
           "key": "core/action.ts:action",
           "start": 118,
           "end": 234,
           "sha256": "b952ec4cc144cf637b13e7b38f0bc8fdc243ea013c36bd4969752648a85f2985",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/action-state.bend:create, open, done, enter, exit, wait, settleWait; runtime/core.bend:ActionOpened, ActionExecutorEnd, actionStep/Methods/Return/Fault, actionRun, actionYield, actionSubscribe, actionDelivery, ActionYieldCatch, actionOutput; runtime/api.bend:actionInvoke, actionMethod, iteratorResult",
+            "status": "partial",
+            "restrictions": "Production typed invocations use the shared evaluator/transaction driver. Factory-before-transaction, open/acted/question order, initial scheduled tick, next/throw depth, result-Promise rejection, per-yield settled guard/catch and redirect-aware done are retained. 67 histories, eight lexical histories, seventeen native-generator controls, five quantified local properties and two concrete kernel executions. First-class action function identities, arbitrary generator/thenable getters/methods, full native Promise resolution/cycles, async-generator internal awaits and dev/observe/active lane/boundary/optimistic/store scopes remain unfinished. See tracking/actions.md."
+          }
         }
       ],
       "branches": [
@@ -17824,7 +17832,7 @@
           "mapping": {
             "bend": "runtime/transaction.bend:newTransaction",
             "status": "partial",
-            "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+            "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Typed production action invocations now use these same helpers. Lane/boundary/marks hooks and their public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
           }
         },
         {
@@ -18096,16 +18104,24 @@
           "start": 630,
           "end": 632,
           "sha256": "1d3a5fc1eb8439856354dd2d294ffc0ccec8437ca3d177bf06c9efe74808579b",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/action-state.bend:enter",
+            "status": "restricted",
+            "restrictions": "Source depth increment/decrement retained; well-formed balanced entry assumption for natural representation. General whole-World entry/exit law and native nested/depth/error controls. Dev/observe brackets remain separate unfinished branches."
+          }
         },
         {
           "key": "core/scheduler.ts:exitAction",
           "start": 633,
           "end": 635,
           "sha256": "607c68d9e45fc40cd2e3cac22c84c56d584304cf19a6553abee1d0e9f0ff002e",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/action-state.bend:exit",
+            "status": "restricted",
+            "restrictions": "Source depth increment/decrement retained; well-formed balanced entry assumption for natural representation. General whole-World entry/exit law and native nested/depth/error controls. Dev/observe brackets remain separate unfinished branches."
+          }
         },
         {
           "key": "core/scheduler.ts:setQuestion",
@@ -18148,7 +18164,7 @@
           "mapping": {
             "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs",
             "status": "partial",
-            "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) retained as host outbox IO. Public flush callbacks now maintain syncDepth at their actual source entry/finally sites; native scheduling controls cover suppression and restoration. ActionDepth scopes remain unfinished. Draining the outbox is a host harness choice."
+            "restrictions": "Halt/once, scheduled guard, syncDepth/running guard and queueMicrotask(flush) retained as host outbox IO. Public flush callbacks now maintain syncDepth at their actual source entry/finally sites; native scheduling controls cover suppression and restoration. Source has no actionDepth suppression; typed action slices use this unchanged scheduling path. Draining the outbox is a host harness choice."
           }
         },
         {
@@ -18378,9 +18394,9 @@
           "sha256": "346ee8d21c9f0955344ac34013b2df1bd24e5b2009398bc7a229de1204c15c52",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry",
             "status": "partial",
-            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. Production actionDepth guard invokes a callback without syncDepth entry/drain; plain flush is a no-op. Typed action invocations now execute; dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {
@@ -18390,9 +18406,9 @@
           "sha256": "25049013391b351e71e99667061f0dd20e9304d6b267c793870a4c94f489ec29",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry",
             "status": "partial",
-            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. Production actionDepth guard invokes a callback without syncDepth entry/drain; plain flush is a no-op. Typed action invocations now execute; dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {
@@ -18402,9 +18418,9 @@
           "sha256": "b01f72838d14f5079bfdcc941c9aed9f75b65155d5d4db46a24022799a17f803",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow",
+            "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry",
             "status": "partial",
-            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. ActionDepth/action bodies, dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
+            "restrictions": "Production plain/callback drains use the same Round/core machine. Nested callbacks increment/decrement syncDepth, retain return values/caller operands/ambient scope, drain on callback throw, and preserve later drain-error precedence. Original admitted native callback functions are invoked with no arguments; falsy optional arguments select the plain drain. 64 public histories and eight native scheduling-IO controls. Production actionDepth guard invokes a callback without syncDepth entry/drain; plain flush is a no-op. Typed action invocations now execute; dev diagnostics and arbitrary host closures remain unported; no active lane/boundary/store claims."
           }
         },
         {

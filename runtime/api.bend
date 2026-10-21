@@ -441,6 +441,10 @@ def hostJobKind(job: R.HostJob) -> U32:
       7
     case R.UnlistenAbort{awaiter, signal}:
       8
+    case R.ActionOutcome{result, rejected, value}:
+      9
+    case R.ActionAdopt{action, value}:
+      10
 
 def untilValue(fuel: Nat, w: R.World, expr: R.Expr) -> R.World:
   J.until(fuel, w, expr)
@@ -536,6 +540,25 @@ def flushValue(callee: R.Expr) -> R.Expr:
 
 def flushNow() -> R.Expr:
   R.FlushNow{}
+
+def actionInvoke(factory: R.Expr, methods: R.Expr) -> R.Expr:
+  R.ActionInvoke{factory, methods}
+
+def actionMethod(next: R.Expr, catches: Bool, thrown: R.Expr, tail: R.Expr) -> R.Expr:
+  R.ActionMethods{next, catches, thrown, tail}
+
+def emptyActionMethods() -> R.Expr:
+  R.ActionEnd{}
+
+def iteratorResult(done: Bool, value: R.Expr) -> R.Expr:
+  R.IteratorResult{done, value}
+
+def adoptAction(fuel: Nat, w: R.World, id: Nat, value: R.Value) -> R.World:
+  match value:
+    case R.AsyncValue{source}:
+      C.world(C.run(fuel, C.actionSubscribe(w, [], [], id, source, 2)))
+    case _:
+      R.World.with_fault(w, R.Unsupported{24n})
 
 # Custom _equals function identity, encoded using the existing program arena.
 def nodeComparator(options: R.NodeOptions, callback: Nat) -> R.NodeOptions:

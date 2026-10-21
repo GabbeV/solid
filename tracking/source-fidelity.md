@@ -37,8 +37,9 @@ explicitly and restored through normal/exceptional return points. See
 
 The callback overload follows source syncDepth entry, callback return, outer
 finally drain and inner finally decrement through the existing core driver.
-The active production profile excludes actionDepth/action bodies and dev guards;
-these remain unported rather than silently approximated. See
+The [typed action milestone](actions.md) now adds production actionDepth guards
+and invocation/resume semantics. Dev guards and the full arbitrary generator API
+remain unported. See
 [flush-callbacks.md](flush-callbacks.md) for source return points and proof scope.
 
 ## What line by line means here

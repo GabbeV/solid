@@ -51,9 +51,9 @@ def realizes(-s: C.Machine, -end: C.Machine, path: Path<s, end>,
       realizes(next, end, rest, extra, next, {==})
 
 def flush_eq(+fuel: Nat, +w: R.World,
-  guard: {Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))) == False{} : Bool}) ->
+  guard: {Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))) == False{} : Bool}) ->
   {C.flush(fuel, w) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}:
-  %Equal.sym(Bool, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))), False{}, guard) : {B.choose(~R.World, _, _ => w, _ => C.world(C.run(fuel, C.Machine{w, [C.Round{}], []}))) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}
+  %Equal.sym(Bool, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))), False{}, guard) : {B.choose(~R.World, _, _ => w, _ => C.world(C.run(fuel, C.Machine{w, [C.Round{}], []}))) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}
   {==}
 
 def fuel_transport(-a: Nat, -b: Nat, -m: C.Machine, e: {a == b : Nat}) ->

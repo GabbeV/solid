@@ -37,7 +37,7 @@ This integration branch preserves a newly found [cleanup collector regression](t
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 139 source-changing variants
+npm run mutations                # reject 152 source-changing variants
 npm run example                  # Number{14n}
 ```
 
@@ -173,3 +173,16 @@ default native reasons. Two closed queued-callback regressions cover the default
 path; option handling is differentially tested. Built-in Error/DOMException data
 and captured StatusError messages are covered by [the error contract](tracking/errors.md).
 Arbitrary host callbacks and active optimistic/truth scopes remain unfinished.
+
+
+## Typed action invocation milestone
+
+Production action invocations now run generator methods through the shared Bend
+core and the existing transaction engine. Initial scheduling, held writes across
+yields, nested/overlapping invocations, errors, captured local signals and typed
+return adoption have 75 paired histories and seventeen native-generator controls.
+Five quantified helper properties and two concrete action hold/land executions
+check independently. [The scope review](tracking/actions.md) records the source
+return points and remaining first-class function/protocol/active-engine gaps.
+The earlier transaction laws with explicit open counts retain their narrower
+historical scope; this milestone does not turn them into general action proofs.

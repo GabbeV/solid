@@ -63,7 +63,10 @@ callback/drain error precedence, retained returns and both capture binders.
 
 ## Remaining scope
 
-Action bodies/actionDepth and dev/observe diagnostics remain explicitly unported.
+The later [action milestone](actions.md) adds the production actionDepth guard.
+Dev/observe diagnostics remain explicitly unported. The quantified callback-entry
+law now explicitly assumes actionDepth is zero; positive-depth behavior has its
+own quantified laws.
 The no-active-action profile always reaches the source's ordinary branch. This
 milestone does not implement actions, lanes, boundaries, stores or arbitrary host
 JavaScript closures. Resource exhaustion remains an explicit failure; the proofs

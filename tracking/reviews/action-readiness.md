@@ -1,8 +1,9 @@
 # Action engine readiness review
 
 Reviewed against Solid b0ad1df5 (rc.16), core/action.ts, SHA256 5f0e684fd404cf4ea0b835323be6a989989df4f21916c15f909249ac4084b358.
-This is a source/dependency review, not an implemented action engine or a proof.
-The action source inventory remains open. No semantic deviation is introduced.
+This historical dependency review preceded the implementation. The current
+[typed action milestone](../actions.md) records its restricted execution/proof
+scope; the complete source units remain partial. No semantic deviation is introduced.
 
 ## Source operations to retain
 
@@ -29,13 +30,13 @@ have executable translations. Actions must use those operations, preserving
 source nesting and landing decisions. They must not emulate a transaction by
 waiting for all host Promises before publishing writes.
 
-World currently has no actionDepth field. Adding actions requires that state and
-source enterAction/exitAction, the schedule suppression guard, and the public
+At this review checkpoint World had no actionDepth field. Adding actions requires that state and
+source enterAction/exitAction and the public
 flush action guard before the ordinary callback-overload branch. In development
 that guard throws; in production it invokes a supplied callback directly and
 returns its value, without a drain or syncDepth increment. It does not suppress
 the callback. The existing callback-overload
-proofs intentionally cover action-free scopes. The new field also requires the
+proofs intentionally cover action-free scopes. The new fields also require the
 record generator, handwritten World patterns, both signal/memo witness generators
 and independent proofs to be reviewed; a passing default build alone is insufficient.
 
@@ -73,3 +74,7 @@ and a nested bare-yield slice that cannot drain its outer body. These controls
 caught and corrected an initial review assumption that production suppresses the
 flush callback; the source actually invokes it directly. They are future
 translation fixtures, not evidence that Bend actions are implemented.
+
+Review correction during implementation: scheduler.schedule has no actionDepth
+suppression. Its existing syncDepth/running guards remain unchanged. The depth
+guard belongs to public flush and inTransaction's resumed-slice drain decision.

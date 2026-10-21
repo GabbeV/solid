@@ -12,6 +12,8 @@ schemas={
 'Transaction': [('nodes','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, QueueEntry>'),('reruns','List<&2, Nat>'),('into','Nat'),('parent','Nat'),('lane','Bool'),('verdict','Nat'),('open','Nat'),('acted','Bool'),('links','Nat'),('shown','Bool'),('held','Bool'),('marks','OptionalIds')],
 'ReactionState': [('owner','Nat'),('arm','Nat'),('cleanup','Value'),('body','Expr'),('errorProgram','Nat'),('options','NodeOptions'),('scheduled','Bool'),('track','Nat')],
 'ComparatorBinding': [('node','Nat'),('callback','Nat')],
+'ActionState': [('transaction','Nat'),('question','Question'),('methods','Expr'),('result','Nat')],
+'ActionWait': [('observer','Nat'),('action','Nat'),('kind','U32'),('settled','Bool')],
 'ContextKey': [('defaultValue','Value'),('description','Slot')],
 'ContextEntry': [('key','Nat'),('value','Value')],
 'ContextRecord': [('entries','List<&2, ContextEntry>')],
@@ -22,7 +24,7 @@ schemas={
 'Node': [('kind','NodeKind'),('value','Value'),('pending','Slot'),('equals','Bool'),('config','U32'),('flags','U32'),('status','U32'),('time','Nat'),('notified','Stamp'),('deps','Nat'),('depsTail','Nat'),('depGen','Nat'),('subs','Nat'),('subsTail','Nat'),('height','Nat'),('nextHeap','Nat'),('prevHeap','Nat'),('parent','Nat'),('firstChild','Nat'),('nextSibling','Nat'),('prevSibling','Nat'),('expr','Expr'),('modified','Bool'),('prevValue','Value'),('target','Nat'),('loading','Bool'),('x','Nat'),('parentComputed','Nat'),('scope','Nat'),('childCount','Nat'),('disposal','Disposal'),('cleanup','Nat'),('effectProgram','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat')],
 'Link': [('dep','Nat'),('sub','Nat'),('nextDep','Nat'),('prevSub','Nat'),('nextSub','Nat'),('gen','Nat')],
 'TreeNode': [('parent','Nat'),('children','List<&2, Nat>'),('text','Value')],
-'World': [('nodes','List<&2, Node>'),('links','List<&2, Link>'),('buckets','List<&2, Nat>'),('minimum','Nat'),('maximum','Nat'),('marked','Bool'),('pendingNodes','List<&2, Nat>'),('trims','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, QueueEntry>'),('context','Nat'),('tracking','Bool'),('running','Bool'),('scheduled','Bool'),('clock','Nat'),('epoch','Nat'),('tree','List<&2, TreeNode>'),('events','List<&2, TraceEvent>'),('fault','Fault'),('unflushedStaged','Bool'),('promotedWrites','List<&2, Nat>'),('extensions','List<&2, NodeExtension>'),('cleanupPrograms','List<&2, CleanupProgram>'),('dormantNodes','List<&2, Nat>'),('errorSerial','Nat'),('halted','Bool'),('haltNotified','Bool'),('reports','List<&2, Report>'),('callbackEffect','Nat'),('txArena','List<&2, Transaction>'),('transactions','List<&2, Nat>'),('flushTransaction','Nat'),('passTx','Nat'),('passLane','Nat'),('judge','Nat'),('deferredZombies','List<&2, Nat>'),('question','Question'),('pendingSets','List<&2, List<&2, Nat>>'),('asyncObjects','List<&2, AsyncObject>'),('asyncObservers','List<&2, AsyncObserver>'),('hostJobs','List<&2, HostJob>'),('syncDepth','Nat'),('streamPlans','List<&2, StreamPlan>'),('iterators','List<&2, ExternalIterator>'),('streams','List<&2, StreamState>'),('iteratorEvents','List<&2, IteratorEvent>'),('awaiters','List<&2, Awaiter>'),('truthReadHook','Bool'),('truthConfirmedHook','Bool'),('questions','Question'),('abortInputs','List<&2, AbortInput>'),('contextKeys','List<&2, ContextKey>'),('contextRecords','List<&2, ContextRecord>'),('deferredReleases','Nat'),('releaseLists','List<&2, List<&2, Nat>>'),('stale','Bool'),('settledCallbacks','List<&2, Expr>'),('reactions','List<&2, ReactionState>'),('comparators','List<&2, ComparatorBinding>')]
+'World': [('nodes','List<&2, Node>'),('links','List<&2, Link>'),('buckets','List<&2, Nat>'),('minimum','Nat'),('maximum','Nat'),('marked','Bool'),('pendingNodes','List<&2, Nat>'),('trims','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, QueueEntry>'),('context','Nat'),('tracking','Bool'),('running','Bool'),('scheduled','Bool'),('clock','Nat'),('epoch','Nat'),('tree','List<&2, TreeNode>'),('events','List<&2, TraceEvent>'),('fault','Fault'),('unflushedStaged','Bool'),('promotedWrites','List<&2, Nat>'),('extensions','List<&2, NodeExtension>'),('cleanupPrograms','List<&2, CleanupProgram>'),('dormantNodes','List<&2, Nat>'),('errorSerial','Nat'),('halted','Bool'),('haltNotified','Bool'),('reports','List<&2, Report>'),('callbackEffect','Nat'),('txArena','List<&2, Transaction>'),('transactions','List<&2, Nat>'),('flushTransaction','Nat'),('passTx','Nat'),('passLane','Nat'),('judge','Nat'),('deferredZombies','List<&2, Nat>'),('question','Question'),('pendingSets','List<&2, List<&2, Nat>>'),('asyncObjects','List<&2, AsyncObject>'),('asyncObservers','List<&2, AsyncObserver>'),('hostJobs','List<&2, HostJob>'),('syncDepth','Nat'),('streamPlans','List<&2, StreamPlan>'),('iterators','List<&2, ExternalIterator>'),('streams','List<&2, StreamState>'),('iteratorEvents','List<&2, IteratorEvent>'),('awaiters','List<&2, Awaiter>'),('truthReadHook','Bool'),('truthConfirmedHook','Bool'),('questions','Question'),('abortInputs','List<&2, AbortInput>'),('contextKeys','List<&2, ContextKey>'),('contextRecords','List<&2, ContextRecord>'),('deferredReleases','Nat'),('releaseLists','List<&2, List<&2, Nat>>'),('stale','Bool'),('settledCallbacks','List<&2, Expr>'),('reactions','List<&2, ReactionState>'),('comparators','List<&2, ComparatorBinding>'),('actionDepth','Nat'),('actions','List<&2, ActionState>'),('actionWaits','List<&2, ActionWait>')]
 }
 header='''# Generated by tools/records.py; edit the schema, not the rebuilders.
 import Base
@@ -82,6 +84,8 @@ type HostJob is Data:
   CancelTimeout{awaiter: Nat}
   ListenAbort{awaiter: Nat, signal: Nat}
   UnlistenAbort{awaiter: Nat, signal: Nat}
+  ActionOutcome{result: Nat, rejected: Bool, value: Value}
+  ActionAdopt{action: Nat, value: Value}
 
 type Slot is Data:
   Empty{}
@@ -139,6 +143,10 @@ type Expr is Data:
   FlushCallback{body: Expr}
   FlushValue{callee: Expr}
   FlushNow{}
+  ActionInvoke{factory: Expr, methods: Expr}
+  ActionMethods{next: Expr, catches: Bool, thrown: Expr, tail: Expr}
+  ActionEnd{}
+  IteratorResult{done: Bool, value: Expr}
   WithOwner{owner: Expr, body: Expr}
   CurrentOwner{}
   CurrentObserver{}

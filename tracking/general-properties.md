@@ -1,7 +1,7 @@
 # General semantic properties
 
 These are quantified properties of the actual Bend runtime, separately from the
-62 concrete end-to-end regressions and separately from TS/Bend correspondence.
+64 concrete end-to-end regressions and separately from TS/Bend correspondence.
 No source operation or runtime representation changed to make these proofs pass.
 
 ## Publication at any existing slot
@@ -199,3 +199,23 @@ behavior for unbounded numbers or equivalence of the implementations. This
 conditional result is counted separately from the three complete public numeric
 signal properties and the 62 closed regressions. A compiled increment-dropping
 mutation is rejected by the quantified proof-property assertions.
+
+
+## Action depth and callback boundaries
+
+[action-laws.bend](../proof/action-laws.bend) adds five quantified local laws:
+entry followed by exit preserves the entire arbitrary World; a positive-depth
+flush callback runs directly with the exact caller stack and no finally/drain;
+plain flush is identity at positive depth for every fuel; duplicate callbacks of
+an already settled yield are exact identity; and a synchronous throw after yield
+settlement clears only the control fault and restores the saved operands. The
+entry/exit law assumes balanced entry; Nat represents nonnegative source depths.
+The previous flush callback entry law now requires its source action-free guard.
+
+Two separate closed executions construct a signal, invoke an action yielding an
+immediate external thenable, flush to its held frame, then deliver a reconciled
+value through the real action callback/transaction seam. They establish holding
+and landing for that program. These do not assert arbitrary generator termination,
+correctness of active optimistic/lane/store engines or general Promise semantics.
+[The action review](actions.md) separates protocol restrictions, finite/native
+controls, source correspondence and these proof domains.

@@ -31,6 +31,8 @@ import ./callable.bend as J
 import ./construct-state.bend as N
 import ./lexical.bend as Local
 import ./reaction-state.bend as Reaction
+import ./action-state.bend as Action
+import ./question.bend as Question
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
@@ -58,6 +60,13 @@ def passId(frame: PassFrame) -> Nat:
       id
 
 type Task is Data:
+  ActionOpened{action: Nat}
+  ActionExecutorEnd{action: Nat, saved: List<&2, R.Value>}
+  ActionStepReturn{action: Nat, saved: List<&2, R.Value>}
+  ActionSliceEnd{question: R.Question}
+  ActionRestoreQuestion{question: R.Question}
+  ActionYieldCatch{observer: Nat, saved: List<&2, R.Value>}
+  IteratorResultValue{done: Bool}
   Evaluate{expr: R.Expr, previous: R.Value}
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
@@ -427,15 +436,22 @@ def reactionFire(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +
     _ => Evaluate{R.Invoke{R.Literal{R.ReactionState.cleanup(state)}}, R.Undefined{}} <> Discard{} <> ending), stack}
 
 # scheduler.ts:flush callback arm. The callback keeps the caller's ambient
-# owner/tracking; only syncDepth changes. Actions/dev diagnostics remain outside
-# this production, action-free profile.
+# owner/tracking; only syncDepth changes. flushEntry handles the earlier action
+# guard; dev/observe diagnostics remain outside this production profile.
 def flushCallback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, body: R.Expr, prev: R.Value) -> Machine:
   Machine{R.World.with_syncDepth(w, 1n+R.World.syncDepth(w)), Evaluate{body, prev} <> FlushCallbackFinally{stack} <> rest, stack}
+
+# The production action guard precedes the callback overload. It invokes fn
+# directly, without syncDepth entry or a drain (development throws instead).
+def flushEntry(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +body: R.Expr, +prev: R.Value) -> Machine:
+  B.choose(~Machine, Nat.is_ne(R.World.actionDepth(w), 0n),
+    _ => Machine{w, Evaluate{body, prev} <> rest, stack},
+    _ => flushCallback(w, rest, stack, body, prev))
 
 # scheduler.ts:flush no-callback arm, including its running/halted no-op guards.
 # The Round tasks implement the actual while(scheduled) drain.
 def publicFlush(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
-  B.choose(~Machine, Bool.or(R.World.running(w), Bool.or(R.World.halted(w), Bool.not(R.World.scheduled(w)))),
+  B.choose(~Machine, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.running(w), Bool.or(R.World.halted(w), Bool.not(R.World.scheduled(w))))),
     _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
 
 # Source nested finally: drain even after callback throw; a drain throw overrides
@@ -451,6 +467,17 @@ def flushCallbackRestore(+w: R.World, rest: List<&2, Task>, saved: List<&2, R.Va
 
 def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr: R.Expr, +prev: R.Value) -> Machine:
   match expr:
+    case R.ActionMethods{next, catches, thrown, tail}:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
+    case R.ActionEnd{}:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
+    case R.ActionInvoke{factory, methods}:
+      +pair = Action.create(w, methods)
+      +w = B.first(R.World, Nat, pair)
+      +id = B.second(R.World, Nat, pair)
+      Machine{w, Evaluate{factory, prev} <> Discard{} <> ActionOpened{id} <> ActionExecutorEnd{id, stack} <> rest, stack}
+    case R.IteratorResult{done, value}:
+      Machine{w, Evaluate{value, prev} <> IteratorResultValue{done} <> rest, stack}
     case R.ReactionCreate{body, errorProgram, options, scheduled}:
       +pair = Reaction.create(w, body, errorProgram, options, scheduled)
       Machine{B.first(R.World, R.Value, pair), rest, B.second(R.World, R.Value, pair) <> stack}
@@ -483,7 +510,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
     case R.Select{condition, yes, no}:
       Machine{w, Evaluate{condition, prev} <> Branch{yes, no, prev} <> rest, stack}
     case R.FlushCallback{body}:
-      flushCallback(w, rest, stack, body, prev)
+      flushEntry(w, rest, stack, body, prev)
     case R.FlushValue{callee}:
       Machine{w, Evaluate{callee, prev} <> FlushArgument{} <> rest, stack}
     case R.FlushNow{}:
@@ -1555,7 +1582,7 @@ def promiseFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
       _ => consumeIterator(w, Discard{} <> ProtocolCatch{id, R.AsyncObserver.result(o), stack, False{}, True{}} <> rest, stack, id, R.AsyncObserver.result(o), source, True{}, R.Undefined{}),
       _ => asyncWrite(w, ProtocolCatch{id, R.AsyncObserver.result(o), stack, True{}, True{}} <> rest, stack, id, R.AsyncObserver.result(o), value, [])))
 
-def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+def flightFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
   B.choose(~Machine, Nat.is_eq(R.AsyncObserver.node(B.asyncObserver(w, observer)), 0n), _ => Machine{w, rest, stack},
     _ => B.choose(~Machine, Nat.is_ne(R.AsyncObserver.stream(B.asyncObserver(w, observer)), 0n),
       _ => stepFulfilledResult(w, rest, stack, observer, value), _ => promiseFulfill(w, rest, stack, observer, value)))
@@ -1565,11 +1592,13 @@ def promiseReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
   B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncRejected(w, observer, error), rest, stack},
     _ => handleError(w, SettleAuto{R.AsyncObserver.node(o)} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), error))
 
-def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
+def flightReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +error: R.Value) -> Machine:
   B.choose(~Machine, Nat.is_eq(R.AsyncObserver.node(B.asyncObserver(w, observer)), 0n), _ => Machine{w, rest, stack},
     _ => B.choose(~Machine, Nat.is_ne(R.AsyncObserver.stream(B.asyncObserver(w, observer)), 0n),
       _ => stepRejected(w, rest, stack, observer, error), _ => promiseReject(w, rest, stack, observer, error)))
 
+# Shared native thenable delivery requests. Action callbacks and reactive
+# flights retain separate consumers below; the host only delivers requests.
 def deliverObservers(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, observers: List<&2, Nat>, +immediate: Bool, +rejected: Bool, +value: R.Value) -> Machine:
   match observers:
     case Nil{}:
@@ -1579,6 +1608,159 @@ def deliverObservers(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
       B.choose(~Machine, immediate,
         _ => Machine{w, B.choose(~Task, rejected, _ => AsyncReject{id, value}, _ => AsyncFulfill{id, value}) <> again <> rest, stack},
         _ => Machine{F.enqueueDelivery(w, id, rejected, value), again <> rest, stack})
+
+# core/action.ts:step, with an admitted user generator state chain. Advancing
+# the protocol is user-code IO; no owner/tracking scope is invented here.
+def actionStepMethods(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +rejected: Bool, +state: R.ActionState, methods: R.Expr) -> Machine:
+  match methods:
+    case R.ActionEnd{}:
+      +w = Action.enter(w)
+      +w = B.choose(~R.World, rejected, _ => R.World.with_fault(w, R.CallbackThrown{value}), _ => w)
+      Machine{w, ActionStepReturn{id, stack} <> rest, R.StepResult{True{}, R.Undefined{}} <> stack}
+    case R.ActionMethods{next, catches, thrown, tail}:
+      +w = Action.enter(w)
+      +w = Action.store(w, id, R.ActionState.with_methods(state, tail))
+      +expr = B.choose(~R.Expr, rejected, _ => B.choose(~R.Expr, catches, _ => Z.bind(thrown, value, R.Boolean{True{}}), _ => R.Raise{value}),
+        _ => Z.bind(next, value, R.Boolean{False{}}))
+      Machine{w, Evaluate{expr, R.Undefined{}} <> ActionStepReturn{id, stack} <> rest, stack}
+
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
+
+def actionStep(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +rejected: Bool) -> Machine:
+  +state = Action.get(w, id)
+  actionStepMethods(w, rest, stack, id, value, rejected, state, R.ActionState.methods(state))
+
+def actionSettled(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +result: Nat, +rejected: Bool, +value: R.Value) -> Machine:
+  +object = B.asyncObject(w, result)
+  +w = B.store_asyncObject(w, result, R.AsyncObject.with_state(object, B.choose(~R.AsyncSettlement, rejected, _ => R.Rejected{value}, _ => R.Fulfilled{value})))
+  +w = R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionOutcome{result, rejected, value}]))
+  Machine{w, DeliverObservers{R.AsyncObject.observers(object), False{}, rejected, value} <> rest, stack}
+
+# Native Promise resolve IO: returned typed thenables are adopted in a later
+# resolution microtask; rejection reasons remain raw data.
+def actionOutputValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +rejected: Bool, value: R.Value) -> Machine:
+  match value:
+    case R.AsyncValue{+source}:
+      B.choose(~Machine, Bool.and(Bool.not(rejected), Nat.is_eq(R.AsyncObject.stream(B.asyncObject(w, source)), 0n)),
+        _ => Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), rest, stack},
+        _ => actionSettled(w, rest, stack, result, rejected, R.AsyncValue{source}))
+    case other:
+      actionSettled(w, rest, stack, result, rejected, other)
+
+def actionOutputState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +rejected: Bool, +value: R.Value, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      actionOutputValue(w, rest, stack, id, result, rejected, value)
+    case _:
+      Machine{w, rest, stack}
+
+def actionOutput(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +rejected: Bool, +value: R.Value) -> Machine:
+  +result = R.ActionState.result(Action.get(w, id))
+  actionOutputState(w, rest, stack, id, result, rejected, value, R.AsyncObject.state(B.asyncObject(w, result)))
+
+# core/action.ts:done closes the resolved transaction before resolve/reject.
+def actionDone(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, rejected: Bool, value: R.Value) -> Machine:
+  actionOutput(Action.done(w, id), rest, stack, id, rejected, value)
+
+# run's bare-yield arm and the once-only yielded-value callbacks share exactly
+# this inTransaction entry. Restoration is a normal return, not a finally.
+
+def actionResume(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, value: R.Value, rejected: Bool) -> Machine:
+  +previous = R.World.question(w)
+  +state = Action.get(w, id)
+  +w = Question.setQuestion(w, R.ActionState.question(state))
+  +w = X.joinFuture(w, R.ActionState.transaction(state))
+  actionStep(w, ActionSliceEnd{previous} <> rest, stack, id, value, rejected)
+
+def actionSubscribed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      Machine{w, rest, stack}
+    case R.Fulfilled{value}:
+      deliverObservers(w, rest, stack, [observer], immediate, False{}, value)
+    case R.Rejected{error}:
+      deliverObservers(w, rest, stack, [observer], immediate, True{}, error)
+
+def actionSubscribe(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, id: Nat, +result: Nat, +kind: U32) -> Machine:
+  +pair = Action.wait(w, id, result, kind)
+  +w = B.first(R.World, Nat, pair)
+  +observer = B.second(R.World, Nat, pair)
+  +object = B.asyncObject(w, result)
+  +ending = B.choose(~List<&2, Task>, U32.is_eq(kind, 0), _ => ActionYieldCatch{observer, stack} <> rest, _ => rest)
+  actionSubscribed(w, ending, stack, observer, R.AsyncObject.immediate(object), R.AsyncObject.state(object))
+
+def actionYield(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value) -> Machine:
+  match value:
+    case R.AsyncValue{+source}:
+      B.choose(~Machine, Nat.is_eq(R.AsyncObject.stream(B.asyncObject(w, source)), 0n),
+        _ => actionSubscribe(w, rest, stack, id, source, 0),
+        _ => actionResume(w, rest, stack, id, value, False{}))
+    case _:
+      actionResume(w, rest, stack, id, value, False{})
+
+def actionRun(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, result: R.Value) -> Machine:
+  match result:
+    case R.StepResult{+done, +value}:
+      B.choose(~Machine, done, _ => actionDone(w, rest, stack, id, False{}, value),
+        _ => actionYield(w, rest, stack, id, value))
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, stack}
+
+def actionStepResult(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +id: Nat, result: R.Value) -> Machine:
+  match result:
+    case R.AsyncValue{+source}:
+      actionSubscribe(w, rest, saved, id, source, 1)
+    case other:
+      actionRun(w, rest, saved, id, other)
+
+# A yielded-value callback owns a local settled cell. Iterator-result promises
+# use their separate completion arm; their rejection never re-enters throw().
+
+def actionStepValue(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +id: Nat, stack: List<&2, R.Value>) -> Machine:
+  match stack:
+    case result <> tail:
+      actionStepResult(w, rest, saved, id, result)
+    case _:
+      Machine{R.World.with_fault(w, R.Unsupported{24n}), rest, saved}
+
+def actionStepFault(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{error}:
+      actionDone(R.World.with_fault(w, R.Healthy{}), rest, saved, id, True{}, error)
+    case R.Healthy{}:
+      actionStepValue(w, rest, saved, id, stack)
+    case _:
+      Machine{w, rest, saved}
+
+def actionStepReturn(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +saved: List<&2, R.Value>) -> Machine:
+  +w = Action.exit(w)
+  actionStepFault(w, rest, stack, id, saved, R.World.fault(w))
+
+def actionDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +entry: R.ActionWait, +rejected: Bool, +value: R.Value) -> Machine:
+  +id = R.ActionWait.action(entry)
+  B.choose(~Machine, Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry)),
+    _ => Machine{w, rest, stack},
+    _ =>
+      +w = R.World.with_actionWaits(w, Action.settleWait(R.World.actionWaits(w), R.ActionWait.observer(entry)))
+      B.choose(~Machine, U32.is_eq(R.ActionWait.kind(entry), 0),
+        _ => actionResume(w, rest, stack, id, value, rejected),
+        _ => B.choose(~Machine, U32.is_eq(R.ActionWait.kind(entry), 1),
+          _ => B.choose(~Machine, rejected, _ => actionDone(w, rest, stack, id, True{}, value), _ => actionRun(w, rest, stack, id, value)),
+          _ => actionOutput(w, rest, stack, id, rejected, value))))
+
+def asyncActionDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +rejected: Bool, +value: R.Value, found: Maybe<&2, R.ActionWait>) -> Machine:
+  match found:
+    case Some{entry}:
+      actionDelivery(w, rest, stack, entry, rejected, value)
+    case None{}:
+      B.choose(~Machine, rejected, _ => flightReject(w, rest, stack, observer, value), _ => flightFulfill(w, rest, stack, observer, value))
+
+def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+  asyncActionDelivery(w, rest, stack, observer, False{}, value, Action.find(R.World.actionWaits(w), observer))
+
+def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+  asyncActionDelivery(w, rest, stack, observer, True{}, value, Action.find(R.World.actionWaits(w), observer))
 
 # effect.ts:runEffect's catch constructs a fresh wrapper and rethrows raw.
 def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
@@ -1953,6 +2135,30 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
   match tasks:
     case Nil{}:
       Machine{w, [], stack}
+    case ActionOpened{+id} <> rest:
+      +w = Action.open(w, id)
+      +w = X.joinFuture(w, R.ActionState.transaction(Action.get(w, id)))
+      +question = R.World.question(w)
+      +w = Question.setQuestion(w, R.ActionState.question(Action.get(w, id)))
+      actionStep(w, ActionRestoreQuestion{question} <> rest, stack, id, R.Undefined{}, False{})
+    case ActionExecutorEnd{+id, saved} <> rest:
+      Machine{w, rest, R.AsyncValue{R.ActionState.result(Action.get(w, id))} <> saved}
+    case ActionStepReturn{id, saved} <> rest:
+      actionStepReturn(w, rest, stack, id, saved)
+    case ActionSliceEnd{question} <> +rest:
+      +ending = {ActionRestoreQuestion{question} <> rest : List<&2, Task>}
+      B.choose(~Machine, Nat.is_eq(R.World.actionDepth(w), 0n),
+        _ => publicFlush(w, ending, stack), _ => Machine{w, ending, stack})
+    case ActionRestoreQuestion{question} <> rest:
+      Machine{Question.setQuestion(w, question), rest, stack}
+    case ActionYieldCatch{observer, saved} <> rest:
+      Machine{w, rest, stack}
+    case IteratorResultValue{done} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{w, rest, R.StepResult{done, value} <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
     case WatchFinish{awaiter, saved} <> rest:
       watchFinish(w, rest, stack, awaiter)
     case Evaluate{expr, prev} <> +rest:
@@ -2219,8 +2425,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case AsyncReject{observer, error} <> rest:
       asyncReject(w, rest, stack, observer, error)
     case AsyncFlush{} <> +rest:
-      B.choose(~Machine, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))),
-        _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
+      publicFlush(w, rest, stack)
     case AsyncWriteAfterSetter{id, then} <> rest:
       asyncWriteAfterValue(w, rest, stack, id, then)
     case AsyncWriteAfterTrim{+id} <> rest:
@@ -2292,7 +2497,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       match stack:
         case +callee <> +tail:
           B.choose(~Machine, B.truth(callee),
-            _ => flushCallback(w, rest, tail, R.Invoke{R.Literal{callee}}, R.Undefined{}),
+            _ => flushEntry(w, rest, tail, R.Invoke{R.Literal{callee}}, R.Undefined{}),
             _ => publicFlush(w, rest, R.Undefined{} <> tail))
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
@@ -2353,8 +2558,40 @@ def catchProtocol(+w: R.World, +rest: List<&2, Task>, saved: List<&2, R.Value>, 
     case other:
       Machine{w, rest, saved}
 
+# run's catch surrounds the .then call, including callbacks invoked before it
+# returns. A throw after the first callback is ignored; a throw before it is
+# delivered to the generator. Later callbacks execute outside this catch.
+def actionYieldCaught(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +error: R.Value, found: Maybe<&2, R.ActionWait>) -> Machine:
+  match found:
+    case Some{+entry}:
+      +w = R.World.with_fault(w, R.Healthy{})
+      B.choose(~Machine, R.ActionWait.settled(entry), _ => Machine{w, rest, saved},
+        _ => actionDelivery(w, rest, saved, entry, True{}, error))
+    case None{}:
+      Machine{w, rest, saved}
+
+def actionYieldThrow(+w: R.World, rest: List<&2, Task>, saved: List<&2, R.Value>, observer: Nat, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{error}:
+      actionYieldCaught(w, rest, saved, error, Action.find(R.World.actionWaits(w), observer))
+    case _:
+      Machine{w, rest, saved}
+
+def actionExecutorThrow(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +id: Nat, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{error}:
+      actionOutput(R.World.with_fault(w, R.Healthy{}), Evaluate{R.Literal{R.AsyncValue{R.ActionState.result(Action.get(w, id))}}, R.Undefined{}} <> rest, saved, id, True{}, error)
+    case _:
+      Machine{w, rest, saved}
+
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case ActionYieldCatch{observer, saved} <> rest:
+      actionYieldThrow(w, rest, saved, observer, R.World.fault(w))
+    case ActionStepReturn{id, saved} <> rest:
+      actionStepReturn(w, rest, stack, id, saved)
+    case ActionExecutorEnd{+id, +saved} <> +rest:
+      actionExecutorThrow(w, rest, saved, id, R.World.fault(w))
     case Nil{}:
       Machine{w, [], stack}
     case EqualityCatch{id, saved} <> rest:
@@ -2427,7 +2664,7 @@ def run(fuel: Nat, m: Machine) -> Machine:
       run(p, step(Machine{w, tasks, stack}))
 
 def flush(fuel: Nat, +w: R.World) -> R.World:
-  B.choose(~R.World, Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))), _ => w,
+  B.choose(~R.World, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))), _ => w,
     _ => world(run(fuel, Machine{w, [Round{}], []})))
 
 def eval(fuel: Nat, w: R.World, expr: R.Expr, prev: R.Value) -> Machine:

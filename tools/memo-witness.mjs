@@ -51,6 +51,7 @@ const steps=states.length-1;if(steps!==40||m.world.fault.$!=='Healthy')throw Err
 let out=`# SHARED_DATA\n# Canonical data from the actual emitted core.step. The equations in\n# memo-staging check it for arbitrary proposals; generation is not trusted.\nimport Base\nimport ../runtime/api.bend as A\nimport ../runtime/core.bend as C\nimport ../representation/base.bend as B\nimport ../representation/records.bend as R\nimport ../proof/paths.bend as P\nimport ./memo-driver.bend as Driver\nimport ../runtime/owner.bend as O\nimport ../runtime/pending.bend as Q\n\n`;
 out+=`def origin() -> R.World:\n  ${show(D.base(),'World')}\n\n`;
 for(let i=0;i<states.length;i++)out+=`def state_${i}(+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
+out+=`def finalWorld(+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\n`;
 out+=`# Isolate the actual publication helper to avoid re-expanding the entire
 # pass-finally prefix during kernel conversion. This equation is checked.
 def publication_13(+input: Nat) ->

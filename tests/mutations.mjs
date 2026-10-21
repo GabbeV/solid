@@ -5,6 +5,20 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["action omits its acted marker","runtime/action-state.bend","R.Transaction.with_acted(B.transaction(w, t), True{})","R.Transaction.with_acted(B.transaction(w, t), False{})","tests/actions-native.mjs","open"],
+  ["action depth entry is omitted", "runtime/action-state.bend", "R.World.with_actionDepth(w, 1n+R.World.actionDepth(w))", "w", "tests/proof-properties.mjs", "enter", "action-laws"],
+  ["action yield accepts a superseded callback", "runtime/core.bend", "Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry))", "False{}", "tests/actions-native.mjs", "actionDelivery"],
+  ["action propagates a throw after yield settlement", "runtime/core.bend", "_ => Machine{w, rest, saved},", "_ => Machine{R.World.with_fault(w, R.CallbackThrown{error}), rest, saved},", "tests/actions-native.mjs", "actionYieldCaught"],
+  ["action transaction is not held open", "runtime/action-state.bend", "R.Transaction.with_open(B.transaction(w, t), 1n)", "R.Transaction.with_open(B.transaction(w, t), 0n)", "tests/actions.mjs", "open"],
+  ["action closes the sentinel instead of the redirected transaction", "runtime/action-state.bend", "X.resolveTx(w, R.ActionState.transaction(get(w, id)))", "X.resolveTx(w, 0n)", "tests/actions.mjs", "done"],
+  ["action leaks depth on slice return", "runtime/action-state.bend", "R.World.with_actionDepth(w, Nat.sub(R.World.actionDepth(w), 1n))", "w", "tests/actions.mjs", "exit"],
+  ["action first slice drains unconditionally", "runtime/core.bend", "actionStep(w, ActionRestoreQuestion{question} <> rest, stack, id, R.Undefined{}, False{})", "actionStep(w, ActionRestoreQuestion{question} <> Round{} <> rest, stack, id, R.Undefined{}, False{})", "tests/actions.mjs", "dispatch"],
+  ["action resumed slice skips its drain", "runtime/core.bend", "Nat.is_eq(R.World.actionDepth(w), 0n)", "False{}", "tests/actions.mjs", "dispatch"],
+  ["action result rejection is thrown back into a completed generator", "runtime/core.bend", "_ => actionDone(w, rest, stack, id, True{}, value), _ => actionRun(w, rest, stack, id, value)", "_ => actionResume(w, rest, stack, id, value, True{}), _ => actionRun(w, rest, stack, id, value)", "tests/actions.mjs", "actionDelivery"],
+  ["action resumed flight loses question provenance", "runtime/core.bend", "Question.setQuestion(w, R.ActionState.question(state))", "w", "tests/actions.mjs", "actionResume"],
+  ["production action flush callback drains", "runtime/core.bend", "Nat.is_ne(R.World.actionDepth(w), 0n)", "False{}", "tests/proof-properties.mjs", "flushEntry", "action-laws"],
+  ["action drops the synchronous yield catch", "runtime/core.bend", "_ => ActionYieldCatch{observer, stack} <> rest", "_ => rest", "tests/actions-native.mjs", "actionSubscribe"],
+
   ["memo arithmetic drops the increment","runtime/core.bend","R.Number{Nat.add(a, b)}","R.Number{a}","tests/proof-properties.mjs","arithmetic","memo-staging"],
   ["existing extension reallocates","runtime/extension.bend","Nat.is_ne(R.Node.x(B.node(w, id)), 0n)","False{}","tests/proof-properties.mjs","ext","extension-laws"],
   ["reactive disposal leaves captured callbacks installed","runtime/owner.bend","R.Node.with_disposal(B.node(w, id), R.NoDisposal{})","B.node(w, id)","tests/proof-properties.mjs","runDisposal","cleanup-laws"],

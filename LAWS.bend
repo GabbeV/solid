@@ -1,4 +1,6 @@
 import Base
+import ./proof/action-laws.bend as ActionLaws
+import ./runtime/action-state.bend as Action
 import ./proof/memo-driver.bend as MemoDriver
 import ./proof/memo-states.bend as MemoStates
 import ./proof/memo-staging.bend as MemoStaging
@@ -394,6 +396,7 @@ law flush_callback_entry_preserves_caller:
   for +saved: List<&2, R.Value>
   for body: R.Expr
   for prev: R.Value
+  for outside: {Nat.is_ne(R.World.actionDepth(w), 0n) == False{} : Bool}
   {Core.evaluate(w, rest, saved, R.FlushCallback{body}, prev)
     == Core.Machine{R.World.with_syncDepth(w, 1n+R.World.syncDepth(w)), Core.Evaluate{body, prev} <> Core.FlushCallbackFinally{saved} <> rest, saved} : Core.Machine}
 
@@ -578,3 +581,50 @@ law staged_scalar_memo_flush_completes:
   for extra: Nat
   {MemoDriver.view(API.flush(Nat.add(40n, extra), Core.world(MemoStates.state_0(next))))
     == MemoDriver.expected(next) : MemoDriver.View}
+
+
+law action_depth_entry_exit_preserves_world:
+  for +w: R.World
+  {Action.exit(Action.enter(w)) == w : R.World}
+
+law action_flush_callback_runs_without_a_drain:
+  for +w: R.World
+  for +depth: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +body: R.Expr
+  for +previous: R.Value
+  {Core.flushEntry(R.World.with_actionDepth(w, 1n+depth), rest, stack, body, previous)
+    == Core.Machine{R.World.with_actionDepth(w, 1n+depth), Core.Evaluate{body, previous} <> rest, stack} : Core.Machine}
+
+law action_plain_flush_is_a_noop:
+  for +fuel: Nat
+  for +w: R.World
+  for +depth: Nat
+  {API.flush(fuel, R.World.with_actionDepth(w, 1n+depth)) == R.World.with_actionDepth(w, 1n+depth) : R.World}
+
+law action_yield_callback_is_once_only:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for observer: Nat
+  for action: Nat
+  for rejected: Bool
+  for value: R.Value
+  {Core.actionDelivery(w, rest, stack, R.ActionWait{observer, action, 0, True{}}, rejected, value) == Core.Machine{w, rest, stack} : Core.Machine}
+
+law action_ignores_a_throw_after_yield_settlement:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for error: R.Value
+  for observer: Nat
+  for action: Nat
+  {Core.actionYieldCaught(w, rest, saved, error, Some{R.ActionWait{observer, action, 0, True{}}})
+    == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, saved} : Core.Machine}
+
+law action_holds_first_slice_write:
+  {ActionLaws.view(ActionLaws.parked()) == ActionLaws.View{R.Number{0n}, True{}, 1n, 0n, True{}} : ActionLaws.View}
+
+law action_resumed_slice_lands_reconciled_write:
+  {ActionLaws.view(ActionLaws.landed()) == ActionLaws.View{R.Number{3n}, False{}, 0n, 0n, True{}} : ActionLaws.View}
