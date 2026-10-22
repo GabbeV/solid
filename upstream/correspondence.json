@@ -831,6 +831,56 @@
       "bend": "runtime/truth-state.bend:laneValueOf",
       "status": "partial",
       "restrictions": "Exact guess/staged/lane/committed selection with nullable Slot distinct from undefined/falsy payloads; truthRead/truthConfirmed/truth and active lane callers unfinished."
+    },
+    "core/verdict.ts:watchVerdict": {
+      "bend": "runtime/verdict-state.bend:watchVerdict",
+      "status": "partial",
+      "restrictions": "Optional UNANSWERED flag before ordered stagedReaders append. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:route": {
+      "bend": "runtime/verdict-state.bend:route",
+      "status": "partial",
+      "restrictions": "Raw passLane/joined/staged guard, actual cached verdictLane allocation, then LANE_READ. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:verdictRead": {
+      "bend": "runtime/verdict-state.bend:verdictRead",
+      "status": "partial",
+      "restrictions": "Actual route followed by plain staleReader or probing last-reader-only rerun deduplication. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:provisionalVerdict": {
+      "bend": "runtime/verdict-state.bend:provisionalVerdict",
+      "status": "partial",
+      "restrictions": "Latest joins future and routes once; probes distinguish existing flush transaction from unanswered seam watch. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:quietPending": {
+      "bend": "runtime/verdict-state.bend:quietPending, quietSources, reasks",
+      "status": "partial",
+      "restrictions": "Nullable extension, absent versus empty source Set, all-source reask walk and own reask preserved. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:pendingVerdict": {
+      "bend": "runtime/verdict-state.bend:pendingVerdict",
+      "status": "partial",
+      "restrictions": "Initial loading returns before probe updates; current tracking/hold/flush gates and txOf/join helpers retained. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:markVerdictReader": {
+      "bend": "runtime/verdict-state.bend:markVerdictReader",
+      "status": "partial",
+      "restrictions": "Root parentComputed forwarding, source config/flags stores; window attribution/dev hooks remain unfinished. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:observeFlight": {
+      "bend": "runtime/verdict-state.bend:observeFlight, observeAfterBirth",
+      "status": "partial",
+      "restrictions": "Published-input and born-held refusals before joinFuture/queue/stale verdict read; native private states require valid held membership. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:staged": {
+      "bend": "runtime/verdict-state.bend:staged",
+      "status": "partial",
+      "restrictions": "Raw staged error transported through the existing Fault channel, with original payload identity and no local catch. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/verdict.ts:heldLatest": {
+      "bend": "runtime/verdict-state.bend:heldLatest",
+      "status": "partial",
+      "restrictions": "Actual unflushedValue, source stamp selection, original staged/error fallback and late-linker order. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

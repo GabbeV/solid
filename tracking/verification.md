@@ -20,15 +20,15 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,840 status (+32 tracked-run and 48 settled-fire closures), 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
-  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls. The error cases include genuine foreign-realm Error prototype controls;
+  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls, 2,356 verdict-bookkeeping helper programs and 960 held-latest controls. The error cases include genuine foreign-realm Error prototype controls;
   those helper probes do not establish end-to-end cross-realm host support. Question evidence
   includes 4,096 counter steps, five large counter starts, 69 flight-provenance
   cases and 4,103 mathematical increment/equality vectors. Synthetic internal
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 240 isolated source-changing copies: 218 are rejected by
-  differential assertions and twenty-two by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 251 isolated source-changing copies: 224 are rejected by
+  differential assertions and twenty-seven by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -289,3 +289,11 @@ precedence. [lane-identity.md](lane-identity.md) distinguishes these from native
 helper controls, unfinished active engine crossings and public histories. Both
 existing record-generic properties and exact generated execution witnesses now
 retain the new laneState aggregate; the proof/compiler pins are unchanged.
+
+
+Six further quantified properties check verdict quiet-source boundaries, inactive
+mark witnesses, exact provisional seam watch, joined route refusal and raw staged
+error propagation. [verdict-bookkeeping.md](verdict-bookkeeping.md) records private
+constructor invariants, comparison scope and the unimplemented public window and
+lane engine crossings. World-generic properties and generated exact witnesses
+retain the new verdictState fields. Compiler/kernel/source pins are unchanged.

@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 240; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 251; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -210,3 +210,12 @@ identity/value/allocation properties and nine added mutations check this layer.
 Current total: 240 compiled mutations; public histories / closed regressions
 remain 3114 / 72. Lane read/write/stage/seam/correction/dissolution and public
 verdict/declarer engines remain unfinished; see [lane-identity.md](lane-identity.md).
+
+
+The verdict bookkeeping layer now follows quiet/loading, reader/root marking,
+conditional routing and provisional seam watch, ordered reruns, flight observation,
+raw staged throws and heldLatest. It has 2,356 native helper programs, 960 value/
+throw controls and six quantified properties. Eleven new variants bring the
+mutation total to 251; public histories / closed regressions stay 3114 / 72.
+Public windows and active lane engine crossings remain open. See
+[verdict-bookkeeping.md](verdict-bookkeeping.md).

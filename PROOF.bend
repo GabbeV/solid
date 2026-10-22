@@ -1,4 +1,5 @@
 import Base
+import ./proof/verdict-laws.bend as VerdictLaws
 import ./proof/lane-laws.bend as LaneLaws
 import ./proof/mark-laws.bend as MarkLaws
 import ./proof/array-laws.bend as ArrayLaws
@@ -606,3 +607,21 @@ def Laws.lane_derivation_staging_is_latest(w, node, suffix, value):
 
 def Laws.lane_guess_slot_precedes_staging(w, node, extension, nodes, extensions, pending, value):
   LaneLaws.guess(w, node, extension, nodes, extensions, pending, value)
+
+def Laws.quiet_pending_without_extension_is_false(w, node, nodes):
+  VerdictLaws.noExtension(w, node, nodes)
+
+def Laws.empty_pending_sources_are_quiet(w, node, extension, nodes, extensions):
+  VerdictLaws.emptyIsQuiet(w, node, extension, nodes, extensions)
+
+def Laws.mark_witness_outside_probe_preserves_world(w, state):
+  VerdictLaws.witnessInactive(w, state)
+
+def Laws.provisional_probe_waits_for_the_seam(w, node, nodes, unanswered):
+  VerdictLaws.provisionalWaits(w, node, nodes, unanswered)
+
+def Laws.joined_verdict_reader_does_not_open_lane(w, node, nodes, tx):
+  VerdictLaws.joinedStays(w, node, nodes, tx)
+
+def Laws.held_latest_preserves_raw_staged_error(w, node, nodes, error, reader):
+  VerdictLaws.stagedError(w, node, nodes, error, reader)

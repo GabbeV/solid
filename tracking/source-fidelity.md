@@ -18,6 +18,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Verdict bookkeeping
+
+[verdict-bookkeeping.md](verdict-bookkeeping.md) maps quiet/loading distinctions,
+conditional route/watch/reruns, root forwarding, actual joins/flight observation
+and raw staged/held-latest return points. Six quantified properties and native
+helpers check this restricted layer. Ambient storage is not public window/read
+support; the active downstream engine and comparator crossings remain open.
+
 ## Lane identity and routing
 
 [lane-identity.md](lane-identity.md) maps allocation/cache, raw ancestry, shared

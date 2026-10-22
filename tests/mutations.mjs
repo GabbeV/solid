@@ -5,6 +5,17 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['verdict quiet check reads a missing extension','runtime/verdict-state.bend','Nat.is_eq(R.Node.x(B.node(w, id)), 0n)','False{}','tests/proof-properties.mjs','quietPending','verdict-laws'],
+  ['verdict empty source set uses own reask','runtime/verdict-state.bend','reasks(items, w)','R.NodeExtension.reask(B.extension(w, id))','tests/proof-properties.mjs','quietSources','verdict-laws'],
+  ['verdict mark witness updates outside probe','runtime/verdict-state.bend','R.VerdictState.probing(R.World.verdictState(w))','True{}','tests/proof-properties.mjs','witnessMark','verdict-laws'],
+  ['verdict unanswered probe claims pending before seam','runtime/verdict-state.bend','_ => watchVerdict(w, reader, notFinal)','_ => found(w)','tests/proof-properties.mjs','provisionalVerdict','verdict-laws'],
+  ['verdict staged error is swallowed','runtime/verdict-state.bend','B.Bundle{R.World.with_fault(w, R.CallbackThrown{value}), R.Undefined{}}','B.Bundle{w, value}','tests/proof-properties.mjs','staged','verdict-laws'],
+  ['verdict route rescues a joined pass','runtime/verdict-state.bend','Bool.not(B.has(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ())))','True{}','tests/verdict-state-alignment.mjs','route'],
+  ['verdict reruns deduplicate beyond the last reader','runtime/verdict-state.bend','Nat.is_eq(last, reader)','B.contains(reruns, reader)','tests/verdict-state-alignment.mjs','verdictRead'],
+  ['verdict reader mark ignores root forwarding','runtime/verdict-state.bend','B.parentComputed(w, R.World.context(w))','R.World.context(w)','tests/verdict-state-alignment.mjs','markVerdictReader'],
+  ['verdict observes flight beneath published inputs','runtime/verdict-state.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED())','False{}','tests/verdict-state-alignment.mjs','observeFlight'],
+  ['verdict latest rewrite loses late-linker wake','runtime/verdict-state.bend','Read.markLateLinker(w, reader)','w','tests/verdict-state-alignment.mjs','heldLatest'],
+  ['verdict treats initial loading as pending','runtime/verdict-state.bend','B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())','False{}','tests/verdict-state-alignment.mjs','pendingVerdict'],
   ['lane allocation leaks into mainline transactions','runtime/lanes-state.bend','Tx.newTransaction(w, True{}, parent)','Tx.newTransaction(w, False{}, parent)','tests/proof-properties.mjs','newLane','lane-laws'],
   ['lane verdict cache always allocates','runtime/lanes-state.bend','Nat.is_ne(id, 0n)','False{}','tests/proof-properties.mjs','verdictLane','lane-laws'],
   ['lane shared groups are ignored','runtime/lanes-state.bend','Bool.and(Nat.is_ne(R.Transaction.links(B.transaction(w, a)), 0n), Nat.is_eq(R.Transaction.links(B.transaction(w, a)), R.Transaction.links(B.transaction(w, b))))','False{}','tests/proof-properties.mjs','sameLane','lane-laws'],

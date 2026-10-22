@@ -1,4 +1,6 @@
 import Base
+import ./runtime/verdict-state.bend as Verdict
+import ./proof/verdict-laws.bend as VerdictLaws
 import ./runtime/lanes-state.bend as Lanes
 import ./runtime/truth-state.bend as Truth
 import ./proof/lane-laws.bend as LaneLaws
@@ -1178,3 +1180,44 @@ law lane_guess_slot_precedes_staging:
   for +pending: R.Slot
   for +value: R.Value
   {Truth.laneValueOf(LaneLaws.guessWorld(w, node, extension, nodes, extensions, pending, value), 1n) == value : R.Value}
+
+law quiet_pending_without_extension_is_false:
+  for +w: R.World
+  for +node: R.Node
+  for +nodes: List<&2, R.Node>
+  {Verdict.quietPending(VerdictLaws.nodeScope(w, R.Node.with_x(node, 0n), nodes), 1n) == False{} : Bool}
+
+law empty_pending_sources_are_quiet:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  {Verdict.quietPending(VerdictLaws.emptySources(w, node, extension, nodes, extensions), 1n) == True{} : Bool}
+
+law mark_witness_outside_probe_preserves_world:
+  for +w: R.World
+  for +state: R.VerdictState
+  {Verdict.witnessMark(R.World.with_verdictState(w, R.VerdictState.with_probing(state, False{}))) == R.World.with_verdictState(w, R.VerdictState.with_probing(state, False{})) : R.World}
+
+law provisional_probe_waits_for_the_seam:
+  for +w: R.World
+  for +node: R.Node
+  for +nodes: List<&2, R.Node>
+  for +unanswered: Bool
+  {Verdict.provisionalVerdict(VerdictLaws.provisionalScope(w, node, nodes), 1n, unanswered) == VerdictLaws.waiting(w, node, nodes, unanswered) : R.World}
+
+law joined_verdict_reader_does_not_open_lane:
+  for +w: R.World
+  for +node: R.Node
+  for +nodes: List<&2, R.Node>
+  for +tx: Nat
+  {Verdict.route(VerdictLaws.joinedScope(w, node, nodes), 1n, tx) == R.World.with_passLane(VerdictLaws.nodeScope(w, R.Node.with_flags(node, U32.or(K.REACTIVE_JOINED(), K.REACTIVE_LANE_READ())), nodes), 0n) : R.World}
+
+law held_latest_preserves_raw_staged_error:
+  for +w: R.World
+  for +node: R.Node
+  for +nodes: List<&2, R.Node>
+  for +error: R.Value
+  for +reader: Nat
+  {Verdict.heldLatest(VerdictLaws.errorScope(w, node, nodes, error), 1n, reader) == B.Bundle{R.World.with_fault(VerdictLaws.errorScope(w, node, nodes, error), R.CallbackThrown{error}), R.Undefined{}} : B.Bundle<R.World, R.Value>}

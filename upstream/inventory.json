@@ -20014,48 +20014,72 @@
           "start": 73,
           "end": 76,
           "sha256": "0028f9ceaeba6ebc614033d0f1a8528f06febe9415c20373a7b26a8838381b38",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:watchVerdict",
+            "status": "partial",
+            "restrictions": "Optional UNANSWERED flag before ordered stagedReaders append. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:route",
           "start": 83,
           "end": 87,
           "sha256": "561eee4b97edf7be39e53bcc26c441d3966a06bbddac4ceac48a0a946473ff09",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:route",
+            "status": "partial",
+            "restrictions": "Raw passLane/joined/staged guard, actual cached verdictLane allocation, then LANE_READ. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:observeFlight",
           "start": 111,
           "end": 120,
           "sha256": "1e5f317069872857607f2c861a8f2522a4807e37630402ccac426337217ea999",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:observeFlight, observeAfterBirth",
+            "status": "partial",
+            "restrictions": "Published-input and born-held refusals before joinFuture/queue/stale verdict read; native private states require valid held membership. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:verdictRead",
           "start": 139,
           "end": 143,
           "sha256": "b37b77f9e454a5df5752080727beb87cdccbd40a604251c2f502bd8c0b6f345d",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:verdictRead",
+            "status": "partial",
+            "restrictions": "Actual route followed by plain staleReader or probing last-reader-only rerun deduplication. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:provisionalVerdict",
           "start": 164,
           "end": 181,
           "sha256": "16d137c117b124f39f464623286a8c0e4f8c1ccde7778bb5d262f2835572c2ad",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:provisionalVerdict",
+            "status": "partial",
+            "restrictions": "Latest joins future and routes once; probes distinguish existing flush transaction from unanswered seam watch. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:quietPending",
           "start": 186,
           "end": 194,
           "sha256": "9a5e4b88cb0d78277c42009697fc3b03acb2bf7805f9256e8cf6c49b48fb85bc",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:quietPending, quietSources, reasks",
+            "status": "partial",
+            "restrictions": "Nullable extension, absent versus empty source Set, all-source reask walk and own reask preserved. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:heldNotFinal",
@@ -20070,16 +20094,24 @@
           "start": 222,
           "end": 229,
           "sha256": "e6badeb132704f6637be81054b005da619182ab3c58f0290b9421deb3da96150",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:pendingVerdict",
+            "status": "partial",
+            "restrictions": "Initial loading returns before probe updates; current tracking/hold/flush gates and txOf/join helpers retained. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:markVerdictReader",
           "start": 236,
           "end": 246,
           "sha256": "0a18215ca8f7ad1b06e2b17332169af7c3f04d99c67471a770bc550473040582",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:markVerdictReader",
+            "status": "partial",
+            "restrictions": "Root parentComputed forwarding, source config/flags stores; window attribution/dev hooks remain unfinished. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:latest",
@@ -20102,16 +20134,24 @@
           "start": 325,
           "end": 328,
           "sha256": "48079b0ffa523c54f557f31b8e3807a294cc2aa2cb218f9315901ed0ad21e0ea",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:staged",
+            "status": "partial",
+            "restrictions": "Raw staged error transported through the existing Fault channel, with original payload identity and no local catch. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:heldLatest",
           "start": 332,
           "end": 337,
           "sha256": "bc0cc80080da256a673e57a9b2dd428c4955a8a3f28109d762e5fd0fcb8e05ba",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/verdict-state.bend:heldLatest",
+            "status": "partial",
+            "restrictions": "Actual unflushedValue, source stamp selection, original staged/error fallback and late-linker order. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+          }
         },
         {
           "key": "core/verdict.ts:verdictValue",

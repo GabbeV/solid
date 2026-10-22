@@ -497,3 +497,10 @@ preservation, unchanged cached verdict return, shared nonnull group identity,
 non-guess staging precedence and guess-slot precedence. These are actual helper
 boundaries with arbitrary surrounding records/World/payloads, not lane lifecycle
 or arbitrary-group-invariant theorems. See [lane-identity.md](lane-identity.md).
+
+
+Six quantified verdict helper properties cover missing/empty quiet sources,
+inactive mark witnesses, exact provisional seam waiting without premature pending,
+joined-reader lane refusal, and unwrapped staged-error propagation from heldLatest.
+They do not establish public window/read or lane lifecycle correctness; see
+[verdict-bookkeeping.md](verdict-bookkeeping.md).
