@@ -58,6 +58,10 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.Same{bindWith(left, args), bindWith(right, args)}
     case R.Select{condition, yes, no}:
       R.Select{bindWith(condition, args), bindWith(yes, args), bindWith(no, args)}
+    case R.Latest{body}:
+      R.Latest{bindWith(body, args)}
+    case R.IsPending{body}:
+      R.IsPending{bindWith(body, args)}
     case R.Untracked{body}:
       R.Untracked{bindWith(body, args)}
     case R.ActionCreate{factory, methods}:

@@ -1,5 +1,5 @@
-# core/verdict.ts bookkeeping. Public windows/read dispatch and lane seams are
-# not admitted yet; these source helpers preserve their ambient state/order.
+# core/verdict.ts bookkeeping shared by active windows, reads and lane seams.
+# Window/read continuations live in core.bend; helpers keep source state order.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -118,3 +118,15 @@ def heldLatest(+w: R.World, +id: Nat, +reader: Nat) -> B.Bundle<R.World, R.Value
 
 def witnessMark(+w: R.World) -> R.World:
   B.choose(~R.World, R.VerdictState.probing(R.World.verdictState(w)), _ => found(w), _ => w)
+
+# verdict.ts window finally stores only the globals captured by that window.
+def setDispatch(+w: R.World, dispatch: Bool) -> R.World:
+  R.World.with_verdictState(w, R.VerdictState.with_dispatch(R.World.verdictState(w), dispatch))
+
+def restoreLatest(+w: R.World, latest: Bool, dispatch: Bool) -> R.World:
+  +state = R.VerdictState.with_latestActive(R.World.verdictState(w), latest)
+  R.World.with_verdictState(w, R.VerdictState.with_dispatch(state, dispatch))
+
+def restoreProbe(+w: R.World, probing: Bool, found: Bool, dispatch: Bool) -> R.World:
+  +state = R.VerdictState.with_probeFound(R.VerdictState.with_probing(R.World.verdictState(w), probing), found)
+  R.World.with_verdictState(w, R.VerdictState.with_dispatch(state, dispatch))

@@ -170,6 +170,8 @@ type Expr is Data:
   Multiply{left: Expr, right: Expr}
   Same{left: Expr, right: Expr}
   Select{condition: Expr, yes: Expr, no: Expr}
+  Latest{body: Expr}
+  IsPending{body: Expr}
   Untracked{body: Expr}
   FlushCallback{body: Expr}
   FlushValue{callee: Expr}

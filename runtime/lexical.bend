@@ -59,6 +59,10 @@ def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
       R.Same{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Select{condition, yes, no}:
       R.Select{bindAs(condition, depth, signal, setter), bindAs(yes, depth, signal, setter), bindAs(no, depth, signal, setter)}
+    case R.Latest{body}:
+      R.Latest{bindAs(body, depth, signal, setter)}
+    case R.IsPending{body}:
+      R.IsPending{bindAs(body, depth, signal, setter)}
     case R.Untracked{body}:
       R.Untracked{bindAs(body, depth, signal, setter)}
     case R.ActionCreate{factory, methods}:

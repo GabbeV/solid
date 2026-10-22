@@ -1,4 +1,6 @@
 import Base
+import ./proof/verdict-windows.bend as WindowLaws
+import ./proof/verdict-program.bend as VerdictProgram
 import ./proof/optimistic-program.bend as OptimisticProgram
 import ./proof/lane-flush.bend as FlushLaws
 import ./proof/lane-pass.bend as PassLaws
@@ -842,3 +844,30 @@ def Laws.optimistic_free_data_complete_program(initial, next, last, extra):
 
 def Laws.optimistic_free_data_keeps_authoritative_value(initial, next, last, extra):
   OptimisticProgram.result(initial, next, last, extra)
+
+def Laws.verdict_window_latestReturn(w, rest, stack, saved, latest, dispatch):
+  WindowLaws.latestReturn(w, rest, stack, saved, latest, dispatch)
+
+def Laws.verdict_window_latestThrow(w, rest, stack, saved, latest, dispatch):
+  WindowLaws.latestThrow(w, rest, stack, saved, latest, dispatch)
+
+def Laws.verdict_window_probeReturn(w, rest, stack, saved, probing, found, dispatch):
+  WindowLaws.probeReturn(w, rest, stack, saved, probing, found, dispatch)
+
+def Laws.verdict_window_probeNumeric(w, rest, saved, probing, found, dispatch, cause):
+  WindowLaws.probeNumeric(w, rest, saved, probing, found, dispatch, cause)
+
+def Laws.verdict_window_probeLoadingOwned(w, rest, saved, probing, found, dispatch, identity, source):
+  WindowLaws.probeLoadingOwned(w, rest, saved, probing, found, dispatch, identity, source)
+
+def Laws.verdict_window_probeLoadingFound(w, rest, saved, probing, found, dispatch, identity, source):
+  WindowLaws.probeLoadingFound(w, rest, saved, probing, found, dispatch, identity, source)
+
+def Laws.verdict_window_probeLoadingOutside(w, rest, saved, probing, found, dispatch, identity, source):
+  WindowLaws.probeLoadingOutside(w, rest, saved, probing, found, dispatch, identity, source)
+
+def Laws.verdict_window_complete_program(initial, next, extra):
+  VerdictProgram.complete(initial, next, extra)
+
+def Laws.verdict_window_read_value(initial, next, extra):
+  VerdictProgram.result(initial, next, extra)

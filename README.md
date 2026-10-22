@@ -47,7 +47,9 @@ arbitrary recursive trees remain outside that theorem.
 The [optimistic constructor](tracking/optimistic.md) now has data/function
 input dispatch and its own bound setter, supported by the lane pass/flush
 engine. A complete free data program is proved for every natural payload triple
-and sufficient budget. Verdict windows and boundary/store paths remain next.
+and sufficient budget. The [verdict windows](tracking/verdict-windows.md) now execute full non-store
+read/catch/finally paths; a nested data program is proved for all natural payload
+pairs. Boundary/store/mark-scope paths remain next.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 

@@ -10484,11 +10484,11 @@
           "start": 1746,
           "end": 1762,
           "sha256": "0fa1e693d7e396905ccd4740345c4e1d363b36e52381ff7fa2dc521d7706c970",
-          "status": "partial",
+          "status": "restricted",
           "mapping": {
-            "bend": "runtime/core.bend:prepareSlow, raiseHeight",
-            "status": "partial",
-            "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. The read caller now carries owner CONFIG_VERDICT into a memo reader FLAGS exactly as source; 24 focused comparisons. Active verdict windows and lane/snapshot interactions remain unfinished."
+            "bend": "runtime/core.bend:pullComputed, raiseSourceHeight, VerdictRaiseHeight; plain RaiseHeight return additionally performs read F-6",
+            "status": "restricted",
+            "restrictions": "Source heap height gate, fresh-read alternative, update and shallow parent height order. The continuation choice fuses the plain read F-6 postlude only at its source site; verdict reads omit it and disable dispatch during the pull. No extra ordinary-path tasks or budget changes."
           }
         },
         {
@@ -10500,7 +10500,7 @@
           "mapping": {
             "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone",
             "status": "partial",
-            "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md."
+            "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md. Active verdict dispatch now occurs after prepareComputed and before ordinary fast/slow selection, invoking the complete non-store verdictValue body; read events follow successful value choice. See tracking/verdict-windows.md."
           }
         },
         {
@@ -20429,16 +20429,24 @@
           "start": 251,
           "end": 263,
           "sha256": "e3e063d81268a82fd9457daec954ee2bdca30889000d608b5abeb26c4e80e1b6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:latestWindow, LatestEnd, dispatch/unwind; runtime/verdict-state.bend:restoreLatest; runtime/api.bend:latest",
+            "status": "restricted",
+            "restrictions": "Full production mark/capture/entry/thunk/finally order, selective live state restoration on return and throw. Typed expression thunks and admitted callable bodies, not arbitrary JS protocols. Full non-store verdictValue runs underneath. Seven scoped window laws and complete data program support the crossing; boundary/store/spectating/snapshot/dev/observe paths excluded. See tracking/verdict-windows.md."
+          }
         },
         {
           "key": "core/verdict.ts:isPending",
           "start": 297,
           "end": 322,
           "sha256": "2ec266e61770d1def041d09537230e3d319a35d746e834406c70100289360d30",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:pendingWindow, ProbeEnd, probeThrown, probeAfterFault, dispatch/unwind; runtime/verdict-state.bend:restoreProbe; runtime/api.bend:isPending",
+            "status": "restricted",
+            "restrictions": "Full production mark/capture/entry, live found result, owned/unowned/already-found NotReady policy and selective finally restoration. Adapter refusals remain outside the user-throw grammar. Native loading/error/window/action histories and whole-World scoped laws; no arbitrary async graph theorem. See tracking/verdict-windows.md."
+          }
         },
         {
           "key": "core/verdict.ts:staged",
@@ -20469,8 +20477,12 @@
           "start": 359,
           "end": 488,
           "sha256": "7683a378fe2758655bf04a0f215bb73d7ddbfa88c987a99d7d6bc3b728da96b3",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:verdictValue, verdictAfterPull, verdictOverride, verdictGuessValue, VerdictGuessCompared, verdictPlain, verdictHeld, VerdictHeldFinal, verdictHeldValue, verdictStaging, verdictTerminal, verdictBundle, VerdictPulled, VerdictRaiseHeight",
+            "status": "restricted",
+            "restrictions": "Complete production non-store body: owned/tracked capture, link/pull outside dispatch, guarded mark hook, raw guess/derived slot and flight choices, held screen/latest/probe/imperative joins, born-held staging, provisional/late-linker paths, pending/loading links and raw errors. Callback continuation order and partial exception state retained. 5322 actual source reads plus 44 raw comparator controls. Folded callbacks, spectating, snapshot/boundary/store/dev/observe protocols excluded. See tracking/verdict-windows.md."
+          }
         }
       ],
       "branches": [

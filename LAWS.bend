@@ -1,4 +1,7 @@
 import Base
+import ./proof/verdict-windows.bend as WindowLaws
+import ./proof/verdict-program.bend as VerdictProgram
+import ./proof/verdict-driver.bend as VerdictDriver
 import ./proof/optimistic-program.bend as OptimisticProgram
 import ./proof/optimistic-driver.bend as OptimisticDriver
 import ./proof/lane-flush.bend as FlushLaws
@@ -1709,3 +1712,86 @@ law optimistic_free_data_keeps_authoritative_value:
   for +last: Nat
   for extra: Nat
   {Core.values(Core.run(Nat.add(56n, extra), OptimisticDriver.before(initial, next, last))) == [R.Number{initial}] : List<&2, R.Value>}
+
+law verdict_window_latestReturn:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +saved: List<&2, R.Value>
+  for +latest: Bool
+  for +dispatch: Bool
+  {Core.dispatch(w, Core.LatestEnd{latest, dispatch, saved} <> rest, stack) == Core.Machine{WindowLaws.expectedLatest(w, latest, dispatch), rest, stack} : Core.Machine}
+
+law verdict_window_latestThrow:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for +saved: List<&2, R.Value>
+  for +latest: Bool
+  for +dispatch: Bool
+  {Core.unwind(w, Core.LatestEnd{latest, dispatch, saved} <> rest, stack) == Core.Machine{WindowLaws.expectedLatest(w, latest, dispatch), rest, saved} : Core.Machine}
+
+law verdict_window_probeReturn:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for +saved: List<&2, R.Value>
+  for +probing: Bool
+  for +found: Bool
+  for +dispatch: Bool
+  {Core.dispatch(w, Core.ProbeEnd{probing, found, dispatch, saved} <> rest, stack) == Core.Machine{WindowLaws.expectedProbe(w, probing, found, dispatch), rest, R.Boolean{R.VerdictState.probeFound(R.World.verdictState(w))} <> saved} : Core.Machine}
+
+law verdict_window_probeNumeric:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for +probing: Bool
+  for +found: Bool
+  for +dispatch: Bool
+  for +cause: Nat
+  {Core.probeThrown(R.World.with_fault(w, R.CallbackThrown{R.Number{cause}}), rest, saved, probing, found, dispatch, R.CallbackThrown{R.Number{cause}}) == Core.Machine{R.World.with_fault(WindowLaws.expectedProbe(w, probing, found, dispatch), R.Healthy{}), rest, R.Boolean{R.VerdictState.probeFound(R.World.verdictState(w))} <> saved} : Core.Machine}
+
+law verdict_window_probeLoadingOwned:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for +probing: Bool
+  for +found: Bool
+  for +dispatch: Bool
+  for +identity: Nat
+  for +source: Nat
+  {Core.probeThrown(R.World.with_context(WindowLaws.loading(w, identity, source, False{}), 1n), rest, saved, probing, found, dispatch, R.CallbackThrown{R.NotReadyFailure{identity, source}}) == Core.Machine{WindowLaws.expectedProbe(R.World.with_context(WindowLaws.loading(w, identity, source, False{}), 1n), probing, found, dispatch), rest, saved} : Core.Machine}
+
+law verdict_window_probeLoadingFound:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for +probing: Bool
+  for +found: Bool
+  for +dispatch: Bool
+  for +identity: Nat
+  for +source: Nat
+  {Core.probeThrown(WindowLaws.loading(w, identity, source, True{}), rest, saved, probing, found, dispatch, R.CallbackThrown{R.NotReadyFailure{identity, source}}) == Core.Machine{R.World.with_fault(WindowLaws.expectedProbe(WindowLaws.loading(w, identity, source, True{}), probing, found, dispatch), R.Healthy{}), rest, R.Boolean{True{}} <> saved} : Core.Machine}
+
+law verdict_window_probeLoadingOutside:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +saved: List<&2, R.Value>
+  for +probing: Bool
+  for +found: Bool
+  for +dispatch: Bool
+  for +identity: Nat
+  for +source: Nat
+  {Core.probeThrown(R.World.with_context(w, 0n), rest, saved, probing, found, dispatch, R.CallbackThrown{R.NotReadyFailure{identity, source}}) == Core.Machine{R.World.with_fault(WindowLaws.expectedProbe(R.World.with_context(w, 0n), probing, found, dispatch), R.Healthy{}), rest, R.Boolean{R.VerdictState.probeFound(R.World.verdictState(w))} <> saved} : Core.Machine}
+
+law verdict_window_complete_program:
+  for +initial: Nat
+  for +next: Nat
+  for +extra: Nat
+  {Core.run(Nat.add(53n, extra), VerdictDriver.before(initial, next)) == VerdictProgram.state_53(initial, next) : Core.Machine}
+
+law verdict_window_read_value:
+  for +initial: Nat
+  for +next: Nat
+  for +extra: Nat
+  {Core.values(Core.run(Nat.add(53n, extra), VerdictDriver.before(initial, next))) == [R.Number{next}] : List<&2, R.Value>}

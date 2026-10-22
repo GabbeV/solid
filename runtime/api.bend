@@ -638,3 +638,9 @@ def optimisticScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.
 
 def optimisticComputeScope(compute: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
   R.OptimisticComputeScope{compute, options, body}
+
+def latest(body: R.Expr) -> R.Expr:
+  R.Latest{body}
+
+def isPending(body: R.Expr) -> R.Expr:
+  R.IsPending{body}

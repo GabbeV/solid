@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,233 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,337 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 394; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 418; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -313,3 +313,13 @@ over every natural initial/proposal triple and every budget >=56, with an exact
 Machine/World result and read corollary. 16 native/canonical controls and eleven
 new mutations support this addition. Default async override dispatch was a port
 omission, now repaired with no source workaround. Verdict windows are next.
+
+## Public verdict windows
+
+[The cold read/window path](verdict-windows.md) connects latest/isPending only
+after their lane dependencies. 104 new public histories, 5,322 full private
+reads and 44 raw comparator controls check source order and callback behavior.
+Seven whole-World finally/catch laws and one complete data program for every
+natural payload pair and budget >=53 add quantified guarantees. Existing
+program domains/budgets remain unchanged. Explicit boundary/store/mark-scope,
+snapshot and external source paths remain next. No semantic deviation is active.

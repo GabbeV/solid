@@ -202,6 +202,8 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.mul) return R.multiply(...e.mul.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
   if (e.same) return R.same(...e.same.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
   if (e.select) return R.select(...e.select.map(x=>expression(x,ids,programs,futures,encodeValue,contexts)));
+  if(e.latest)return R.latest(expression(e.latest,ids,programs,futures,encodeValue,contexts));
+  if(e.isPending)return R.isPending(expression(e.isPending,ids,programs,futures,encodeValue,contexts));
   if (e.untrack) return R.untrack(expression(e.untrack,ids,programs,futures,encodeValue,contexts));
   if (Object.hasOwn(e,'argument'))return R.argument(e.argument);
   if(e.invokeArgs){

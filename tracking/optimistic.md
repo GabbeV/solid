@@ -1,5 +1,8 @@
 # Public optimistic constructor and bound setter
 
+This records the optimistic checkpoint at 4043849; the later
+[verdict window crossing](verdict-windows.md) is now connected.
+
 Solid 5b1b7776 (rc.17). The admitted production expression grammar now executes
 createOptimistic's data and function overloads through the same core driver.
 The lane read/write/pass/flush dependencies are connected before this admission.

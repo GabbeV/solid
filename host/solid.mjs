@@ -270,6 +270,8 @@ export class SolidRuntime {
     if(Object.hasOwn(e,'flush'))return this.S.flush(()=>this.evaluate(e.flush,prev,values,locals));
     if(Object.hasOwn(e,'flushCall'))return this.S.flush(this.evaluate(e.flushCall,prev,values,locals));
     if(e.flushNow)return this.S.flush();
+    if(e.latest)return this.S.latest(()=>this.evaluate(e.latest,prev,values,locals));
+    if(e.isPending)return this.S.isPending(()=>this.evaluate(e.isPending,prev,values,locals));
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));
     if(Object.hasOwn(e,'argument'))return values[e.argument];
     if(e.invokeArgs){

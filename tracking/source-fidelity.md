@@ -17,6 +17,15 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Public verdict windows and reads
+
+[verdict-windows.md](verdict-windows.md) maps full source latest/isPending
+entry/catch/finally, root-aware marking, read dispatch, tracked pull posture,
+marks/override/held/staging/pending/error choices and raw callback returns.
+The plain read's F-6 carry is excluded from the verdict pull, while its ordinary
+path and proof budgets stay intact. Folded/store callbacks, spectating, boundary
+mounts and dev/observe hooks remain outside the production grammar.
+
 ## Public optimistic constructor crossing
 
 [optimistic.md](optimistic.md) maps data/function dispatch, computed setup,
