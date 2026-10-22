@@ -19,6 +19,8 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.ArrayAt{bindWith(array, depth, args), bindWith(index, depth, args)}
     case R.ArrayLength{array}:
       R.ArrayLength{bindWith(array, depth, args)}
+    case R.Flatten{array, skip, defer}:
+      R.Flatten{bindWith(array, depth, args), skip, defer}
     case R.RepeatCreate{+count, +mapper, from, fallback}:
       match from fallback:
         case R.NoInlineBody{} R.NoInlineBody{}:

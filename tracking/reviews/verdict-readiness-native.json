@@ -1,0 +1,32 @@
+{
+  "reviewedAt": "2026-10-22T00:01:01.445683+00:00",
+  "sourceCommit": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+  "sourceOnly": true,
+  "bendImplementationAdded": false,
+  "bendProofClaimAdded": false,
+  "testFilesPassed": 4,
+  "testsPassed": 36,
+  "command": [
+    "../../node_modules/.bin/vitest",
+    "run",
+    "tests/verdict-contract.test.ts",
+    "tests/verdict-read-order.test.ts",
+    "tests/latest-isPending-consistency.test.ts",
+    "tests/create-deferred.test.ts",
+    "--maxWorkers=2"
+  ],
+  "cwd": "/workspace/solid-falsy-fallback-pr/packages/signals",
+  "checkoutHead": "ce9572c008cf08436b72d3ef66e894f767a28699",
+  "selectedFilesVerifiedIdenticalToPin": {
+    "packages/signals/src/core/verdict.ts": "2d671d2051f77588a7e281b04e2e3883a96f285a1149e1db4b5e5279dc12ea86",
+    "packages/signals/src/core/lanes.ts": "3ed62fcbe5bf3bac5f4910b9f3bd13e3e3837785409d638bf3011c2e80b55285",
+    "packages/signals/src/affects-marks.ts": "4c641eb692b5f0062911ee351af8c2d27451e929ad9488c2c7603b6f5a4d90dc",
+    "packages/signals/src/deferred.ts": "5dfbd03c6627ea2db41f5abe98a9d682e645ef655f54e5e11f18a3da2f5d5a06",
+    "packages/signals/tests/verdict-contract.test.ts": "16a877f106147e5047ebf76840b939165980224dfe97b7ce0676ffd09ad18288",
+    "packages/signals/tests/verdict-read-order.test.ts": "80054c28541ba971d1afaf86a4bce31fd60bfd4295cce8ed893630256effb010",
+    "packages/signals/tests/latest-isPending-consistency.test.ts": "220997a5e0814b1a74902105ad278ea17eec398d3fdc72ce713d436c13ab8620",
+    "packages/signals/tests/create-deferred.test.ts": "35e3acaed2df183f222c15ffc6d18f967b7dbf05dc5e32fb8bfec939a3695399"
+  },
+  "logSha256": "dc2b8183ad39e5ced9e2471b098efcd5351735cf661db8b23e3c1814b7aa10cf",
+  "limits": "Native existing tests validate the source policy for a future implementation; active verdict/lane/mark/deferred engines remain unported. The separate checkout fallback PR does not alter any selected file."
+}

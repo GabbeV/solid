@@ -608,6 +608,9 @@ def arrayAt(array: R.Expr, index: R.Expr) -> R.Expr:
 def arrayLength(array: R.Expr) -> R.Expr:
   R.ArrayLength{array}
 
+def flatten(children: R.Expr, skip: Bool, defer: Bool) -> R.Expr:
+  R.Flatten{children, skip, defer}
+
 def repeatCreate(count: R.Expr, mapper: R.Expr, from: R.InlineBody, fallback: R.InlineBody) -> R.Expr:
   R.RepeatCreate{count, mapper, from, fallback}
 

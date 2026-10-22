@@ -1,6 +1,9 @@
 import Base
 import ./runtime/arrays.bend as Arrays
+import ./runtime/flatten.bend as Flatten
 import ./proof/array-laws.bend as ArrayLaws
+import ./proof/array-write.bend as ArrayWrite
+import ./proof/flatten-lifecycle.bend as FlattenLifecycle
 import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
@@ -1058,3 +1061,32 @@ law positional_map_lifecycle:
 
 law extracted_key_map_lifecycle:
   {MapLifecycle.lifecycle(2n) == MapLifecycle.expected() : MapLifecycle.View}
+
+
+law array_existing_slot_write_preserves_world:
+  for +w: R.World
+  for +arraysBefore: List<&2, R.ArrayData>
+  for +slotsBefore: List<&2, R.Slot>
+  for +old: R.Slot
+  for +slotsAfter: List<&2, R.Slot>
+  for +arraysAfter: List<&2, R.ArrayData>
+  for +value: R.Value
+  {Arrays.put(ArrayWrite.scope(w, arraysBefore, B.append(R.Slot, slotsBefore, old <> slotsAfter), arraysAfter), B.length(R.ArrayData, arraysBefore), B.length(R.Slot, slotsBefore), value) == ArrayWrite.scope(w, arraysBefore, B.append(R.Slot, slotsBefore, R.Present{value} <> slotsAfter), arraysAfter) : R.World}
+
+law flatten_deferred_wrapper_reads_committed_values:
+  {FlattenLifecycle.program() == FlattenLifecycle.expected() : FlattenLifecycle.View}
+
+law flatten_wrapper_allocates_function_only:
+  for +w: R.World
+  for +results: Nat
+  for +skip: Bool
+  {Flatten.wrapper(w, results, skip) == B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.FlattenChildren{results, skip}], False{}, 0n}])), R.ProgramReference{B.length(R.CleanupProgram, R.World.cleanupPrograms(w))}} : B.Bundle<R.World, R.Value>}
+
+
+law array_push_appends_exactly:
+  for +w: R.World
+  for +arraysBefore: List<&2, R.ArrayData>
+  for +slots: List<&2, R.Slot>
+  for +arraysAfter: List<&2, R.ArrayData>
+  for +value: R.Value
+  {Flatten.push(ArrayWrite.scope(w, arraysBefore, slots, arraysAfter), B.length(R.ArrayData, arraysBefore), value) == ArrayWrite.scope(w, arraysBefore, B.append(R.Slot, slots, [R.Present{value}]), arraysAfter) : R.World}

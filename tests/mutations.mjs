@@ -5,6 +5,16 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['flatten array pushes overwrite the first slot','runtime/flatten.bend','Arrays.length(w, results)','0n','tests/proof-properties.mjs','push','array-write'],
+  ['array indexed writes lose their supplied payload','runtime/arrays.bend','R.Present{value}','R.Present{R.Undefined{}}','tests/proof-properties.mjs','put','array-write'],
+  ['flatten invokes functions with formal parameters','runtime/flatten.bend','Nat.is_eq(Callable.functionLength(w, value), 0n)','True{}','tests/flatten.mjs','zeroArgument'],
+  ['flatten drops rendered zero','runtime/flatten.bend','case R.StringValue{s}:','case R.Number{n}:\n      Nat.is_eq(n, 0n)\n    case R.StringValue{s}:','tests/flatten.mjs','nonRendered'],
+  ['flatten loses a previous deferred sibling','runtime/core.bend','Bool.or(childNeeds, needs)','childNeeds','tests/flatten.mjs','flattenAdvance'],
+  ['flatten swallows ordinary callback errors','runtime/core.bend','P.isNotReady(cause)','True{}','tests/flatten.mjs','flattenCatch'],
+  ['flatten keeps the first pending exception','runtime/core.bend','R.Present{cause}','B.choose(~R.Slot, B.present(flattenPending(frame)), _ => flattenPending(frame), _ => R.Present{cause})','tests/flatten.mjs','flattenCatch'],
+  ['flatten resolving wrapper retains deferred mode','runtime/core.bend','skip, False{}}} <> FlattenReturn','skip, True{}}} <> FlattenReturn','tests/flatten.mjs','callbackAction'],
+  ['flatten nested fragments ignore skipNonRendered','runtime/core.bend','R.Empty{}, skip, defer}} <> rest','R.Empty{}, False{}, defer}} <> rest','tests/flatten.mjs','flattenChildResolved'],
+
   ['dense arrays silently allocate holes','runtime/arrays.bend','R.Present{value} <> slots(rest)','R.Empty{} <> slots(rest)','tests/proof-properties.mjs','slots','array-laws'],
   ['array allocation drops its supplied slots','runtime/arrays.bend','[R.ArrayData{items}]','[R.ArrayData{[]}]','tests/proof-properties.mjs','allocate','array-laws'],
 

@@ -36,6 +36,8 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.ArrayAt{bindWith(array, args), bindWith(index, args)}
     case R.ArrayLength{array}:
       R.ArrayLength{bindWith(array, args)}
+    case R.Flatten{array, skip, defer}:
+      R.Flatten{bindWith(array, args), skip, defer}
     case R.RepeatCreate{+count, +mapper, from, fallback}:
       match from fallback:
         case R.NoInlineBody{} R.NoInlineBody{}:

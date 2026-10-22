@@ -35,8 +35,12 @@ commit and exception cleanup with typed array identities; see
 [index-mode coverage](tracking/map-index.md). The [plain identity-keyed profile](tracking/map-keyed.md) now includes duplicate
 matching, pure removals and the source small-move optimization.
 [Extracted keys and reactive index accessors](tracking/map-modes.md) now execute
-through the same paths. Five quantified array-storage properties and three
+through the same paths. Seven quantified array-storage properties and three
 concrete map lifecycle executions are kernel-checked separately from parity tests.
+
+The [children resolver flatten](tracking/flatten.md) now unwraps typed accessor
+chains and nested arrays, retains deferred resolving wrappers and follows the
+source pending/error collection policy.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
@@ -54,7 +58,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 213 source-changing variants
+npm run mutations                # reject 222 source-changing variants
 npm run example                  # Number{14n}
 ```
 

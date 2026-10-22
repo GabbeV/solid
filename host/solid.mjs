@@ -69,6 +69,15 @@ export class SolidRuntime {
   evaluate(e,prev,values=[],locals=[]) {
     if(Object.hasOwn(e,'lit')) return this.value(e.lit);
     if(e.prev) return prev;
+    if(e.flatten){
+      const {children,skipNonRendered=false,doNotUnwrap=false}=e.flatten;
+      const result=this.S.flatten(this.evaluate(children,prev,values,locals),{skipNonRendered,doNotUnwrap});
+      if(typeof result==='function'&&!this.callbackIdentities.has(result)&&!this.accessorIdentities.has(result)&&!this.setterIdentities.has(result)&&!this.rootDisposers.has(result)){
+        const name='@flatten'+(this.flattenSerial=(this.flattenSerial??0)+1);
+        this.callbackFunctions.set(name,result);this.callbackIdentities.set(result,name);this.programActions.set(name,[]);this.programs[name]=(_helper,...args)=>result(...args);
+      }
+      return result;
+    }
     if(e.mapArray){
       const {list,map,fallback,keyed:inputKeyed}=e.mapArray;
       const mapper=this.evaluate(map,prev,values,locals),keyed=inputKeyed===undefined||typeof inputKeyed==='boolean'?inputKeyed:this.evaluate(inputKeyed,prev,values,locals),name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options={keyed};

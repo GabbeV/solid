@@ -20,6 +20,8 @@ def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
       R.ArrayAt{bind(array, depth, signal), bind(index, depth, signal)}
     case R.ArrayLength{array}:
       R.ArrayLength{bind(array, depth, signal)}
+    case R.Flatten{array, skip, defer}:
+      R.Flatten{bind(array, depth, signal), skip, defer}
     case R.RepeatCreate{+count, +mapper, from, fallback}:
       match from fallback:
         case R.NoInlineBody{} R.NoInlineBody{}:

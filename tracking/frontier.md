@@ -4,8 +4,8 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3048 differential histories, 213 rejected compiled mutations,
-and 71 composed closed Bend regressions, plus quantified array-storage and
+Current verification: 3114 differential histories, 222 rejected compiled mutations,
+and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
 
@@ -31,6 +31,27 @@ c11277e's d682022c pin. Merged #4176 and #4188 are ported in source order; origi
 repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
+
+## Next connected implementation target
+
+[The verdict/lane readiness review](reviews/verdict-readiness.md) maps the active
+read, lane, mark and deferred dependencies behind isPending/latest and the next
+public async affordances. Four existing native test files / 36 tests pass at the
+unchanged source pin; this is source-only validation, not added Bend coverage.
+The review changes no runtime or proof claim.
+
+## Children resolver and full-World array writes
+
+[flatten](flatten.md) now follows source accessor unwrapping, nested traversal,
+filtering, last-NotReady collection and deferred resolving closures. Sixty-six
+paired histories and seven compiled mutations cover the typed production paths.
+One concrete wrapper/setter/flush execution and one quantified function-only
+allocation law check independently. Two further general array properties now lift existing-slot writes and append
+operations to the actual array arena and exact surrounding World. Two proof
+mutations target lost payloads and overwritten prefixes. General recursive children/map
+histories remain open; direct map-payload-family normalization exhausted kernel
+fuel and is not credited as a proof. Source/runtime semantics and kernel limits
+were not changed to make that attempt pass.
 
 ## Extracted keys, index accessors and array proofs
 

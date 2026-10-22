@@ -20871,16 +20871,24 @@
           "start": 12,
           "end": 40,
           "sha256": "05cc523dce82bbeba1b2ca8fa58ec2d296df6609ee8dbeb4929ad2a17cbb36c2",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/flatten.bend:zeroArgument, nonRendered, wrapper; runtime/core.bend:flattenValue, flattenResolved, FlattenDone, FlattenReturn, callbackAction",
+            "status": "restricted",
+            "restrictions": "Typed production values/callables and stable arrays, both boolean options. Source top-level zero-formal-arity unwrap loop, original doNotUnwrap function return, skip filtering, fresh array and resolving-wrapper identities retained. Generated wrappers force doNotUnwrap=false. Arbitrary JS function/property/prototype protocols, external/cyclic array mutation and active scope engines unfinished. Five direct getter histories omit native-unobserved read events; see tracking/flatten.md."
+          }
         },
         {
           "key": "flatten.ts:flattenArray",
           "start": 42,
           "end": 80,
           "sha256": "63dff8d0bbc735b4641fd154c76476197bec5667317fc6b52ac7591b5b5f71d9",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:FlattenFrame, flattenLoop, flattenChild, flattenChildResolved, flattenAdvance, flattenCatch, flattenEnd, FlattenElementEnd; runtime/flatten.bend:push",
+            "status": "restricted",
+            "restrictions": "Source live length/slot traversal, partial result pushes, nested shared results, deferred original functions, OR-preserved needsUnwrap, per-element NotReady collection/last-error throw and immediate ordinary-error exit. Typed arrays/callables and option flags; arbitrary property protocols/cycles remain unfinished. No general recursive traversal/progress theorem."
+          }
         }
       ],
       "branches": [

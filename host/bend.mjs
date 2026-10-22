@@ -107,6 +107,7 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if (e.future) return R.literal(R.vAsync(futures[e.future]));
   if (e.read) return R.source(ids[e.read]);
   if (e.prev) return R.previous();
+  if(e.flatten)return R.flatten(expression(e.flatten.children,ids,programs,futures,encodeValue,contexts),e.flatten.skipNonRendered??false,e.flatten.doNotUnwrap??false);
   if(e.mapArray){
     const {list,map,fallback,keyed}=e.mapArray;
     const mode=keyed===undefined||typeof keyed==='boolean'?R.literal(encodeValue(keyed)):expression(keyed,ids,programs,futures,encodeValue,contexts);
@@ -365,6 +366,10 @@ export class BendRuntime {
     // Generated action callables share the function arena, not the reactive tree.
     for(const [id,program]of list(this.world.cleanupPrograms).entries())if(list(program.actions).some(action=>action.$==='ActionFunction')&&!this.programNames.has(id)){
       const name='@action'+(this.actionFunctionSerial=(this.actionFunctionSerial??0)+1);
+      this.programNames.set(id,name);this.programs[name]=id;this.programActions.set(name,[]);
+    }
+    for(const [id,program]of list(this.world.cleanupPrograms).entries())if(list(program.actions).some(action=>action.$==='FlattenChildren')&&!this.programNames.has(id)){
+      const name='@flatten'+(this.flattenSerial=(this.flattenSerial??0)+1);
       this.programNames.set(id,name);this.programs[name]=id;this.programActions.set(name,[]);
     }
     // Observe returned source closures; these labels do not create or arm nodes.

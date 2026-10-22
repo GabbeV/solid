@@ -433,3 +433,33 @@ items/indexes, the pre-flush committed list, retained row identity, all final ro
 and map disposals, exactly three cleanup events and restored ambient/fault state.
 These are concrete programs with fixed sufficient budgets and a projected final
 view, not arbitrary histories, a full-final-World equality or formal TS equivalence.
+
+## Full-World existing-slot array writes
+
+`proof/array-write.bend` adds the sixth general storage property. Given arbitrary
+array-arena prefixes/suffixes, arbitrary slot prefixes/suffixes, an old slot, a
+replacement Value and arbitrary surrounding World, actual Arrays.put changes
+exactly that existing slot to Present(value). Its result equals the full World
+with exactly the selected array updated; all other slots, arrays and fields are
+unchanged. The proof composes actual arena read/store lenses and an inductive
+exact slot-vector write lemma. The precondition identifies an existing array
+and in-bounds slot; out-of-bounds extension/property semantics are not claimed.
+
+## Children-flatten construction and closed program
+
+`proof/flatten-lifecycle.bend` quantifies actual resolving-wrapper construction
+over every World, captured result-array identity and skip flag: exactly one
+zero-arity function descriptor is appended, with no reactive-state changes.
+Its separate closed execution checks committed reads before flush, the new
+value after flush, output freshness, arity and ambient/fault state through the
+real wrapper, callback, setter and drain APIs. There is no arbitrary recursive
+children/history/termination theorem. Larger map-payload-family direct attempts
+exhausted original kernel fuel; those remain unproved, with decomposition open.
+
+
+The seventh storage property covers actual flatten.push: for arbitrary existing
+slot vectors, array-arena prefixes/suffixes, payloads and surrounding World, it
+appends exactly one Present(value) slot. Every earlier slot, other array and
+non-array field stays unchanged. An inductive append-at-length lemma composes
+with the same real arena lenses; an independent compiled mutation checks the
+claim detects overwriting slot zero instead of appending.

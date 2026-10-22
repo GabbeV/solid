@@ -149,6 +149,7 @@ type Expr is Data:
   ArrayLiteral{values: Expr}
   ArrayAt{array: Expr, index: Expr}
   ArrayLength{array: Expr}
+  Flatten{children: Expr, skip: Bool, defer: Bool}
   RepeatCreate{count: Expr, mapper: Expr, from: InlineBody, fallback: InlineBody}
   RepeatRead{id: Nat}
   MapArrayCreate{list: Expr, mapper: Expr, fallback: InlineBody, keyed: Expr}
@@ -227,6 +228,7 @@ type CleanupAction is Data:
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
+  FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}
   ReactionLifecycle{reaction: Nat}
   CallbackEvaluate{expr: Expr}

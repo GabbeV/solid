@@ -1,5 +1,7 @@
 import Base
 import ./proof/array-laws.bend as ArrayLaws
+import ./proof/array-write.bend as ArrayWrite
+import ./proof/flatten-lifecycle.bend as FlattenLifecycle
 import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
@@ -556,3 +558,17 @@ def Laws.positional_map_lifecycle():
 
 def Laws.extracted_key_map_lifecycle():
   MapLifecycle.extracted_complete()
+
+
+def Laws.array_existing_slot_write_preserves_world(w, arraysBefore, slotsBefore, old, slotsAfter, arraysAfter, value):
+  ArrayWrite.write(w, arraysBefore, slotsBefore, old, slotsAfter, arraysAfter, value)
+
+def Laws.flatten_deferred_wrapper_reads_committed_values():
+  FlattenLifecycle.complete()
+
+def Laws.flatten_wrapper_allocates_function_only(w, results, skip):
+  FlattenLifecycle.wrapper(w, results, skip)
+
+
+def Laws.array_push_appends_exactly(w, arraysBefore, slots, arraysAfter, value):
+  ArrayWrite.push(w, arraysBefore, slots, arraysAfter, value)

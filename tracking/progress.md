@@ -11,13 +11,14 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | --- | --- | --- |
 | Public flush callbacks | No callback overload | Inline/original admitted functions, nested drains, return values, ambient scope and finally/error precedence through the shared core |
 | Custom comparators | Strict/default and equals:false | Named callback programs at setter, memo publication, async landing and held-seam sites, including NotReady and ordinary errors |
-| General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties, plus five array-storage properties |
+| General local guarantees | Existing publication/read/signal and representation laws | 48 added quantified flush/comparator/staging/allocation/cleanup/action/transaction properties, plus seven array-storage properties and one flatten-wrapper allocation property |
 | Nontrivial graph drain | Closed graph examples | Complete scalar-memo constructor and arbitrary finite nonempty write/flush history for every natural initial/proposed value, constructor budget >= 14 and each drain budget >= 40; 14-step constructor and two-step setter bridges checked; complete two-memo/render constructor/setter/95-step drain and exact final World/application trace for every natural proposal and sufficient drain budget |
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
+| Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,048 histories, plus separate native scheduling and finite memo-boundary controls |
-| Closed semantic regressions | 56 | 71 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 213; resource/infrastructure failures are excluded from useful rejections |
+| Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
+| Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
+| Compiled mutation checks | 116 | 222; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -163,3 +164,19 @@ formal evidence. This brings the totals to 3,048 histories, 213 rejected compile
 variants and 71 closed positive regressions. No general mapArray theorem, source
 pin change, kernel modification or semantic deviation is introduced. See
 [the mode/arity operation review](map-modes.md).
+
+The children-resolver checkpoint adds actual flatten/flattenArray traversal,
+both options, original callable identities and resolving closures. It adds 66
+paired histories, seven finite mutation assertions, one concrete wrapper/read/
+setter/flush program and one quantified allocation boundary. Full-World array
+write/append theorems and two proof mutations extend the five prior storage properties.
+Totals are 3,114 histories, 222 rejected variants and 72 closed regressions.
+The broad and one-row map-payload-family direct proofs hit original kernel fuel
+limits; they remain unproved and require decomposition. No runtime workaround,
+source pin change or kernel limit change is credited. See [flatten.md](flatten.md).
+
+
+The next-engine dependency review identifies active verdict/lane routing, marks
+and deferred lagging as connected implementation work rather than entry-wrapper
+patches. Four existing native source-only test files / 36 tests pass without
+adding Bend counts. See [verdict readiness](reviews/verdict-readiness.md).

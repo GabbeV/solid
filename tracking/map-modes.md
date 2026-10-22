@@ -92,7 +92,7 @@ three cleanup calls and restored ambient/fault state. They project a View rather
 than asserting the whole final World. These are not a general mapArray theorem,
 proof of arbitrary histories, formal TS equivalence or compiler verification.
 
-Full checkpoint totals: 3,048 paired histories, 213 rejected compiled mutations
+Map-extension checkpoint totals: 3,048 paired histories, 213 rejected compiled mutations
 (201 finite differential, 12 quantified proof-property) and 71 positive closed
 regressions. The source/toolchain pins, kernel and proof budgets are unchanged.
 All translated modes preserve SOLID-EMPTY-FALLBACK-006 while unmerged #4211 stays

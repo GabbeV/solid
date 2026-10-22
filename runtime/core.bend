@@ -5,6 +5,7 @@ import Base
 import ./arrays.bend as Arrays
 import ./map.bend as Maps
 import ./keyed-map.bend as KeyedMap
+import ./flatten.bend as Flatten
 import ./small-move.bend as SmallMoves
 import ./equality.bend as EQ
 import ../representation/records.bend as R
@@ -71,7 +72,16 @@ type MapMatch is Data:
   PrefixMatch{id: Nat, items: Nat, newLen: Nat, index: Nat, limit: Nat}
   SuffixMatch{id: Nat, items: Nat, newLen: Nat, start: Nat, end: Nat, newEnd: Nat}
 
+type FlattenFrame is Data:
+  FlattenFrame{children: Nat, results: Nat, index: Nat, needs: Bool, notReady: R.Slot, skip: Bool, defer: Bool}
+
 type Task is Data:
+  FlattenValue{skip: Bool, defer: Bool}
+  FlattenChildValue{frame: FlattenFrame}
+  FlattenLoop{frame: FlattenFrame}
+  FlattenElementEnd{frame: FlattenFrame, saved: List<&2, R.Value>}
+  FlattenDone{results: Nat, skip: Bool}
+  FlattenReturn{results: Nat}
   MapMapper{list: R.Expr, fallback: R.InlineBody, keyed: R.Expr, previous: R.Value}
   MapInput{list: R.Expr, fallback: R.InlineBody, mapper: R.Value}
   MapCompareOld{matchFrame: MapMatch, key: R.Value, newItem: R.Value}
@@ -553,6 +563,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, ArrayItems{values, [], prev} <> rest, stack}
     case R.ArrayAt{array, index}:
       Machine{w, Evaluate{array, prev} <> Evaluate{index, prev} <> ArrayAt{} <> rest, stack}
+    case R.Flatten{children, skip, defer}:
+      Machine{w, Evaluate{children, prev} <> FlattenValue{skip, defer} <> rest, stack}
     case R.ArrayLength{array}:
       Machine{w, Evaluate{array, prev} <> ArrayLength{} <> rest, stack}
     case R.RepeatCreate{count, mapper, from, fallback}:
@@ -700,6 +712,7 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 # JavaScript dense array-literal evaluation: left to right, once, then allocate.
 # The linked syntax is shared with user call vectors; no scheduler runs here.
+# flatten.ts: function unwrapping precedes skipNonRendered and array traversal.
 def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, values: R.Expr, +reversed: List<&2, R.Value>, +previous: R.Value) -> Machine:
   match values:
     case R.CallArgumentsEnd{}:
@@ -712,6 +725,10 @@ def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, va
 
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.FlattenChildren{results, skip}:
+      +pair = Arrays.fresh(w, 0n)
+      +result = B.second(R.World, Nat, pair)
+      Machine{B.first(R.World, Nat, pair), FlattenLoop{FlattenFrame{results, result, 0n, False{}, R.Empty{}, skip, False{}}} <> FlattenReturn{result} <> rest, stack}
     case R.ActionFunction{factory, methods, previous}:
       Machine{w, Evaluate{R.ActionInvoke{ActionArgs.bind(factory, 0n, first, second), ActionArgs.bind(methods, 0n, first, second)}, previous} <> rest, stack}
     case R.ReactionTrack{reaction}:
@@ -959,6 +976,76 @@ def invokeManyArguments(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
       Machine{w, Evaluate{head, previous} <> InvokeManyValue{callee, tail, reversed, previous} <> rest, stack}
     case _:
       Machine{R.World.with_fault(w, R.Unsupported{60n}), rest, stack}
+
+def flattenResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, value: R.Value, +skip: Bool, +defer: Bool) -> Machine:
+  match value:
+    case R.ArrayReference{children}:
+      +pair = Arrays.fresh(w, 0n)
+      +result = B.second(R.World, Nat, pair)
+      Machine{B.first(R.World, Nat, pair), FlattenLoop{FlattenFrame{children, result, 0n, False{}, R.Empty{}, skip, defer}} <> FlattenDone{result, skip} <> rest, stack}
+    case other:
+      Machine{w, rest, other <> stack}
+
+def flattenPending(frame: FlattenFrame) -> R.Slot:
+  match frame:
+    case FlattenFrame{children, results, index, needs, notReady, skip, defer}:
+      notReady
+
+def flattenAdvance(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: FlattenFrame, +childNeeds: Bool, +notReady: R.Slot) -> Machine:
+  match frame:
+    case FlattenFrame{children, results, index, needs, oldNotReady, skip, defer}:
+      Machine{w, FlattenLoop{FlattenFrame{children, results, 1n+index, Bool.or(childNeeds, needs), notReady, skip, defer}} <> rest, stack}
+
+# Source length is read live before each element, and an element's catch retains
+# partial pushes. Nested fragment failure is caught again at its parent element.
+def flattenCatch(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>, +frame: FlattenFrame, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{+cause}:
+      B.choose(~Machine, P.isNotReady(cause),
+        _ => flattenAdvance(R.World.with_fault(w, R.Healthy{}), rest, saved, frame, False{}, R.Present{cause}),
+        _ => Machine{w, rest, saved})
+    case other:
+      Machine{w, rest, saved}
+
+def flattenEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +needs: Bool, notReady: R.Slot) -> Machine:
+  match notReady:
+    case R.Present{cause}:
+      Machine{R.World.with_fault(w, R.CallbackThrown{cause}), rest, stack}
+    case R.Empty{}:
+      Machine{w, rest, R.Boolean{needs} <> stack}
+
+def flattenChildResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +value: R.Value, +results: Nat, +skip: Bool, +defer: Bool) -> Machine:
+  match value:
+    case R.ArrayReference{children}:
+      Machine{w, FlattenLoop{FlattenFrame{children, results, 0n, False{}, R.Empty{}, skip, defer}} <> rest, stack}
+    case +other:
+      +w = B.choose(~R.World, Bool.and(skip, Flatten.nonRendered(other)), _ => w, _ => Flatten.push(w, results, other))
+      Machine{w, rest, R.Boolean{False{}} <> stack}
+
+def flattenChild(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: FlattenFrame, +value: R.Value) -> Machine:
+  match frame:
+    case FlattenFrame{+children, +results, +index, +needs, +notReady, +skip, +defer}:
+      B.choose(~Machine, Flatten.zeroArgument(w, value),
+        _ => B.choose(~Machine, defer,
+          _ => Machine{Flatten.push(w, results, value), rest, R.Boolean{True{}} <> stack},
+          _ => invokeMany(w, FlattenChildValue{FlattenFrame{children, results, index, needs, notReady, skip, defer}} <> rest, stack, value, [])),
+        _ => flattenChildResolved(w, rest, stack, value, results, skip, defer))
+
+def flattenLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: FlattenFrame) -> Machine:
+  match frame:
+    case FlattenFrame{+children, +results, +index, +needs, +notReady, +skip, +defer}:
+      B.choose(~Machine, Nat.is_lt(index, Arrays.length(w, children)),
+        _ => flattenChild(w, FlattenElementEnd{FlattenFrame{children, results, index, needs, notReady, skip, defer}, stack} <> rest, stack, FlattenFrame{children, results, index, needs, notReady, skip, defer}, Arrays.at(w, children, index)),
+        _ => flattenEnd(w, rest, stack, needs, notReady))
+
+def flattenValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +value: R.Value, +skip: Bool, +defer: Bool) -> Machine:
+  B.choose(~Machine, Flatten.zeroArgument(w, value),
+    _ => B.choose(~Machine, defer, _ => Machine{w, rest, value <> stack},
+      _ => invokeMany(w, FlattenValue{skip, defer} <> rest, stack, value, [])),
+    _ => B.choose(~Machine, Bool.and(skip, Flatten.nonRendered(value)),
+      _ => Machine{w, rest, R.Undefined{} <> stack},
+      _ => flattenResolved(w, rest, stack, value, skip, defer)))
+
 
 def contextGetAt(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, key: Nat, owner: Nat) -> Machine:
   +pair = Y.getContext(w, key, owner)
@@ -3061,6 +3148,42 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       watchFinish(w, rest, stack, awaiter)
     case Evaluate{expr, prev} <> +rest:
       evaluate(w, rest, stack, expr, prev)
+    case FlattenValue{skip, defer} <> rest:
+      match stack:
+        case value <> tail:
+          flattenValue(w, rest, tail, value, skip, defer)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FlattenChildValue{frame} <> rest:
+      match stack:
+        case value <> tail:
+          flattenChild(w, rest, tail, frame, value)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FlattenLoop{frame} <> rest:
+      flattenLoop(w, rest, stack, frame)
+    case FlattenElementEnd{+frame, +saved} <> +rest:
+      match stack:
+        case R.Boolean{needs} <> tail:
+          flattenAdvance(w, rest, saved, frame, needs, flattenPending(frame))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, saved}
+    case FlattenDone{+results, +skip} <> +rest:
+      match stack:
+        case R.Boolean{needs} <> tail:
+          B.choose(~Machine, needs,
+            _ =>
+              +pair = Flatten.wrapper(w, results, skip)
+              Machine{B.first(R.World, R.Value, pair), rest, B.second(R.World, R.Value, pair) <> tail},
+            _ => Machine{w, rest, R.ArrayReference{results} <> tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FlattenReturn{results} <> rest:
+      match stack:
+        case ignored <> tail:
+          Machine{w, rest, R.ArrayReference{results} <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case Callback{id, actions, first, second} <> rest:
       callback(w, rest, stack, id, first, second, actions)
     case CallArguments{+id} <> +rest:
@@ -3496,6 +3619,8 @@ def actionExecutorThrow(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.V
 
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case FlattenElementEnd{+frame, +saved} <> +rest:
+      flattenCatch(w, rest, saved, frame, R.World.fault(w))
     case MapMapped{+frame, index, saved} <> rest:
       Machine{R.World.with_fault(w, R.Healthy{}), MapAbort{R.MapFrame.created(frame), R.World.fault(w)} <> rest, saved}
     case RepeatMapped{+frame, index, saved} <> rest:

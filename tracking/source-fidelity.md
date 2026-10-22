@@ -50,6 +50,16 @@ Map index preparation retains SameValueZero and undefined/-1/index distinctions.
 All three typed keying modes execute without substituting position mapping.
 No semantic workaround or new general mapArray theorem is claimed.
 
+## Children resolver
+
+[flatten.md](flatten.md) maps the source top-level accessor loop, optional
+filtering, nested array traversal, per-element NotReady catch/last-error throw,
+needsUnwrap OR and resolving closure. Core tasks share the existing callback/read
+and exception driver; a function descriptor captures the actual results array.
+The native adapter calls actual S.flatten and labels original returned functions.
+Typed option and array/callable restrictions are explicit; no host traversal or
+replacement error policy is introduced.
+
 ## Extracted keys and mapper arity
 
 [The mode review](map-modes.md) maps function-length selection, actual item/index

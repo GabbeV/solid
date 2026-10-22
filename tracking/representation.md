@@ -320,3 +320,14 @@ min(len,newLen) bound across callbacks, while suffix initialization and live
 state reads occur at their source return points. MapRowBound/MapIndexBound are
 observation metadata for actual allocated core signals, excluded from public
 traces; adapters do not decide matching, ownership, publication or scheduling.
+
+## Children-flatten continuations
+
+FlattenFrame stores one source array loop's input/result identities, live cursor,
+needsUnwrap flag, last NotReady slot and typed option flags. Nested frames share
+the output array. FlattenElementEnd is the source per-element catch return point;
+normal completion ORs needsUnwrap, while pending completion keeps partial pushes
+and replaces the saved exception. FlattenChildren in the function arena captures
+results/skip for a zero-arity resolving wrapper; invoking it forces unwrap and
+allocates a fresh output. Host labels @flattenN identify returned native/Bend
+functions without implementing traversal or scheduling. See [flatten.md](flatten.md).

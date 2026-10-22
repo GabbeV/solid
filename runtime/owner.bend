@@ -432,6 +432,8 @@ def admittedAction(action: R.CleanupAction) -> Bool:
       False{}
     case R.ActionFunction{factory, methods, previous}:
       False{}
+    case R.FlattenChildren{results, skip}:
+      False{}
     case R.CallbackReturn{expr}:
       False{}
     case R.CallbackWrite{signal, expr}:
