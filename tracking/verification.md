@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 437 isolated source-changing copies: 369 are rejected by
-  differential assertions and sixty-eight by proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 449 isolated source-changing copies: 378 are rejected by
+  differential assertions and seventy-one by proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -362,3 +362,8 @@ all budgets >=51, exact final Machine/World and observable array corollary.
 Sixteen canonical/native controls check its prefixes and sufficient budgets;
 25 private scope comparisons remain separate from 41 public histories.
 The cumulative mutation partition is 369 finite plus 68 kernel assertions.
+
+[Deferred lag lookup](deferred-lag.md) adds seven scoped laws and a general
+arbitrary-fuel/graph World-frame theorem, plus 4,210 private comparisons. It adds
+no public histories or closed regressions. The current mutation partition is
+378 finite and 71 kernel assertions; compiler/resource failures are excluded.

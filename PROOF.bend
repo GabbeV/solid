@@ -1,4 +1,5 @@
 import Base
+import ./proof/deferred-lag.bend as DeferredLaws
 import ./proof/affects-scope.bend as AffectsLaws
 import ./proof/affects-program.bend as AffectsProgram
 import ./proof/verdict-windows.bend as WindowLaws
@@ -900,3 +901,27 @@ def Laws.affects_complete_program(initial, extra):
 
 def Laws.affects_pending_before_after(initial, extra):
   AffectsProgram.result(initial, extra)
+
+def Laws.deferred_lag_noWork(w, fuel, lagging, seen):
+  DeferredLaws.noWork(w, fuel, lagging, seen)
+
+def Laws.deferred_lag_noLagging(w, node):
+  DeferredLaws.noLagging(w, node)
+
+def Laws.deferred_lag_exhausted(w, lagging, task, rest, seen):
+  DeferredLaws.exhausted(w, lagging, task, rest, seen)
+
+def Laws.deferred_lag_direct(w, tail, rest, seen, fuel):
+  DeferredLaws.direct(w, tail, rest, seen, fuel)
+
+def Laws.deferred_lag_membershipBeforeSeen(w, tail, rest, seen, fuel):
+  DeferredLaws.membershipBeforeSeen(w, tail, rest, seen, fuel)
+
+def Laws.deferred_lag_nextAtTail(w, lagging, rest, seen, fuel):
+  DeferredLaws.nextAtTail(w, lagging, rest, seen, fuel)
+
+def Laws.deferred_lag_emptyDeps(w, lagging, rest, seen, fuel, tail):
+  DeferredLaws.emptyDeps(w, lagging, rest, seen, fuel, tail)
+
+def Laws.deferred_lag_worldFrame(fuel, w, lagging, work, seen):
+  DeferredLaws.worldFrame(fuel, w, lagging, work, seen)

@@ -1,4 +1,6 @@
 import Base
+import ./proof/deferred-lag.bend as DeferredLaws
+import ./runtime/deferred-state.bend as DeferredWalk
 import ./proof/affects-scope.bend as AffectsLaws
 import ./proof/affects-program.bend as AffectsProgram
 import ./proof/affects-driver.bend as AffectsDriver
@@ -1843,3 +1845,64 @@ law affects_pending_before_after:
   for initial: Nat
   for extra: Nat
   {R.World.arrays(Core.world(Core.run(Nat.add(51n, extra), AffectsDriver.before(initial)))) == AffectsProgram.outputs(initial) : List<&2, R.ArrayData>}
+
+law deferred_lag_noWork:
+  for w: R.World
+  for fuel: Nat
+  for lagging: List<&2, Nat>
+  for seen: List<&2, Nat>
+  {DeferredWalk.walk(fuel, w, lagging, [], seen) == B.Bundle{w, 0n} : B.Bundle<R.World, Nat>}
+
+law deferred_lag_noLagging:
+  for w: R.World
+  for node: Nat
+  {DeferredWalk.laggingOf(w, [], node) == B.Bundle{w, 0n} : B.Bundle<R.World, Nat>}
+
+law deferred_lag_exhausted:
+  for w: R.World
+  for lagging: List<&2, Nat>
+  for task: DeferredWalk.LagTask
+  for rest: List<&2, DeferredWalk.LagTask>
+  for seen: List<&2, Nat>
+  {DeferredWalk.walk(0n, w, lagging, task <> rest, seen) == B.Bundle{R.World.with_fault(w, R.Exhausted{}), 0n} : B.Bundle<R.World, Nat>}
+
+law deferred_lag_direct:
+  for w: R.World
+  for tail: List<&2, Nat>
+  for rest: List<&2, DeferredWalk.LagTask>
+  for seen: List<&2, Nat>
+  for fuel: Nat
+  {DeferredWalk.walk(1n+fuel, w, 1n <> tail, DeferredWalk.LagNode{1n} <> rest, seen) == B.Bundle{w, 1n} : B.Bundle<R.World, Nat>}
+
+law deferred_lag_membershipBeforeSeen:
+  for w: R.World
+  for tail: List<&2, Nat>
+  for rest: List<&2, DeferredWalk.LagTask>
+  for seen: List<&2, Nat>
+  for fuel: Nat
+  {DeferredWalk.walk(1n+fuel, w, 1n <> tail, DeferredWalk.LagNode{1n} <> rest, 1n <> seen) == B.Bundle{w, 1n} : B.Bundle<R.World, Nat>}
+
+law deferred_lag_nextAtTail:
+  for +w: R.World
+  for +lagging: List<&2, Nat>
+  for +rest: List<&2, DeferredWalk.LagTask>
+  for +seen: List<&2, Nat>
+  for +fuel: Nat
+  {DeferredWalk.walk(1n+fuel, w, lagging, DeferredWalk.LagNext{1n, 1n} <> rest, seen) == DeferredWalk.walk(fuel, w, lagging, rest, seen) : B.Bundle<R.World, Nat>}
+
+law deferred_lag_emptyDeps:
+  for +w: R.World
+  for +lagging: List<&2, Nat>
+  for +rest: List<&2, DeferredWalk.LagTask>
+  for +seen: List<&2, Nat>
+  for +fuel: Nat
+  for +tail: Nat
+  {DeferredWalk.walk(1n+fuel, w, lagging, DeferredWalk.LagDeps{0n, tail} <> rest, seen) == DeferredWalk.walk(fuel, w, lagging, rest, seen) : B.Bundle<R.World, Nat>}
+
+law deferred_lag_worldFrame:
+  for +fuel: Nat
+  for +w: R.World
+  for +lagging: List<&2, Nat>
+  for +work: List<&2, DeferredWalk.LagTask>
+  for +seen: List<&2, Nat>
+  {DeferredLaws.eraseFault(B.first(R.World, Nat, DeferredWalk.walk(fuel, w, lagging, work, seen))) == DeferredLaws.eraseFault(w) : R.World}

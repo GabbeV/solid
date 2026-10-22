@@ -1071,6 +1071,11 @@
       "bend": "runtime/affects-scope.bend:inFlight",
       "status": "partial",
       "restrictions": "STATUS_PENDING short-circuits store slot-flight hook. Store nodes explicitly refuse Unsupported86; no admitted constructor installs them. See tracking/affects-scope.md."
+    },
+    "deferred.ts:lagOf": {
+      "bend": "runtime/deferred-state.bend:lagOf, walk, laggingOf",
+      "status": "partial",
+      "restrictions": "Actual non-store first-identity dependency walk and module-empty wrapper. Membership before seen, current validated prefix and depth-first source order retained; explicit slot-family refusal. The installed GlobalQueue._lagging arrow is represented by laggingOf but not connected to a public lifecycle. 4210 private source comparisons, seven scoped laws and one arbitrary-fuel whole-World frame property. Constructor/ask/serve/land/stream/cleanup/watch lifetimes remain unported. See tracking/deferred-lag.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

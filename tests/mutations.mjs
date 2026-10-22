@@ -5,6 +5,19 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred lag ignores module-empty gate", "runtime/deferred-state.bend", "List.is_empty(&2, Nat, lagging)", "False{}", "tests/deferred-lag-alignment.mjs", "laggingOf"],
+  ["deferred lag drops direct membership", "runtime/deferred-state.bend", "B.contains(lagging, id)", "False{}", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag loses lagging identity", "runtime/deferred-state.bend", "B.Bundle{w, id}", "B.Bundle{w, 0n}", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag ignores seen cycles", "runtime/deferred-state.bend", "B.contains(seen, id)", "False{}", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag seen outranks direct membership", "runtime/deferred-state.bend", "B.contains(lagging, id)", "Bool.and(B.contains(lagging, id), Bool.not(B.contains(seen, id)))", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag ignores empty recompute prefix", "runtime/deferred-state.bend", "Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_RECOMPUTING_DEPS()), Nat.is_eq(R.Node.depsTail(B.node(w, id)), 0n))", "False{}", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag ignores validated tail cutoff", "runtime/deferred-state.bend", "Nat.is_eq(edge, tail)", "False{}", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag reverses dependency search", "runtime/deferred-state.bend", "LagNode{R.Link.dep(B.link(w, edge))} <> LagNext{edge, tail} <> rest", "LagNext{edge, tail} <> LagNode{R.Link.dep(B.link(w, edge))} <> rest", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag incorrectly stops at errors", "runtime/deferred-state.bend", "Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_RECOMPUTING_DEPS()), Nat.is_eq(R.Node.depsTail(B.node(w, id)), 0n))", "Bool.or(B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()), Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_RECOMPUTING_DEPS()), Nat.is_eq(R.Node.depsTail(B.node(w, id)), 0n)))", "tests/deferred-lag-alignment.mjs", "walk"],
+  ["deferred lag kernel empty work writes schedule", "runtime/deferred-state.bend", "case _ Nil{}:\n      B.Bundle{w, 0n}", "case _ Nil{}:\n      B.Bundle{R.World.with_scheduled(w, False{}), 0n}", "tests/proof-properties.mjs", "walk", "deferred-lag"],
+  ["deferred lag kernel exhaustion changes clock", "runtime/deferred-state.bend", "R.World.with_fault(w, R.Exhausted{})", "R.World.with_fault(R.World.with_clock(w, 1n+R.World.clock(w)), R.Exhausted{})", "tests/proof-properties.mjs", "walk", "deferred-lag"],
+  ["deferred lag kernel found flight writes context", "runtime/deferred-state.bend", "B.Bundle{w, id}", "B.Bundle{R.World.with_context(w, id), id}", "tests/proof-properties.mjs", "walk", "deferred-lag"],
+
   ["affects omits mark count", "runtime/affects-scope.bend", "+w = M.mark(w, node)", "+w = w", "tests/affects.mjs", "register"],
   ["affects drops ambient scope", "runtime/affects-scope.bend", "R.World.with_ambientMarks(w, B.append(Nat, R.World.ambientMarks(w), [node]))", "w", "tests/affects.mjs", "register"],
   ["affects records action marks ambiently", "runtime/affects-scope.bend", "Nat.is_eq(t, 0n)", "True{}", "tests/mark-scopes-alignment.mjs", "register"],

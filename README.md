@@ -44,10 +44,14 @@ source pending/error collection policy. A fixed nested-children program has an
 exact final-state proof for every natural payload pair and all budgets >=128;
 arbitrary recursive trees remain outside that theorem.
 
+The [deferred lag dependency](tracking/deferred-lag.md) now has a source-following
+walk and an arbitrary-fuel read-only World theorem; public createDeferred is
+still unfinished.
+
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,378 public histories, 437 useful mutation
+budget. Current evidence totals 3,378 public histories, 449 useful mutation
 rejections and 72 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -73,9 +77,10 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 437 source-changing variants
+npm run mutations                # reject 449 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
+npm run example:pending          # false, true, 41, false, 41; Healthy
 ```
 
 Node 22.12+, Python 3 (only to regenerate record helpers), curl, tar with zstd,
