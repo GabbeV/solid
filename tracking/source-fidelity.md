@@ -17,6 +17,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Public optimistic constructor crossing
+
+[optimistic.md](optimistic.md) maps data/function dispatch, computed setup,
+after-return AUTO_DISPOSE removal, ordinary accessors and distinct bound
+optimistic setters. Lexical bindings carry the actual callable identity; no
+node mode is invented. Default async landings now enter the lane-aware setter
+for overrides, repairing a port omission. Public verdict windows remain next.
+
 ## Actual flush lane crossings
 
 [lane-flush.md](lane-flush.md) maps correction heap rounds, captured joined

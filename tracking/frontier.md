@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3169 differential histories, 383 rejected compiled mutations,
+Current verification: 3233 differential histories, 394 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -16,12 +16,21 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
+## Public optimistic construction
+
+[The constructor/setter crossing](optimistic.md) adds 64 public histories and
+one complete quantified free data constructor/two-write/flush/read program,
+plus 16 native/canonical controls. The async default path now respects lane
+overrides; a public held-flight case exposed that port omission. Counts are
+3,233 public histories / 72 closed regressions, plus general program laws.
+Verdict windows and the excluded boundary/store/mark engines remain next.
+
 ## Flush lane crossings
 
 [The flush seam](lane-flush.md) now calls corrections, queued application,
 reveal and lane ending, preserving captured transaction and own/lane/landing
 queues. 538 native complete-settle programs and five scoped properties support
-this integration. Public optimistic constructors and verdict windows remain next;
+this integration. Public optimistic constructors are connected above; verdict windows remain next;
 public/closed counts stay 3,169 / 72. No active deviation exists.
 
 ## Lane passes and status propagation

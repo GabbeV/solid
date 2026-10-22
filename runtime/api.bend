@@ -631,3 +631,10 @@ def programArity(program: R.CleanupProgram, arity: Nat) -> R.CleanupProgram:
 
 def mapArrayInput(list: R.Expr, mapper: R.Expr, fallback: R.InlineBody, keyed: R.Expr) -> R.Expr:
   R.MapArrayCreate{list, mapper, fallback, keyed}
+
+# User ABI const-pair observation for signals.ts:createOptimistic.
+def optimisticScope(initial: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
+  R.OptimisticScope{initial, options, body}
+
+def optimisticComputeScope(compute: R.Expr, options: R.NodeOptions, body: R.Expr) -> R.Expr:
+  R.OptimisticComputeScope{compute, options, body}

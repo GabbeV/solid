@@ -143,6 +143,40 @@ export class SolidRuntime {
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
       return this.createTracked(name,e.trackedCreate,values,locals);
     }
+    if(e.optimisticComputeScope){
+      const {compute,options={},body={lit:undefined}}=e.optimisticComputeScope;
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const [get,set]=this.S.createOptimistic(next=>{
+        const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+        this.traceEvents.push(['compute',name]);return this.evaluate(compute,next,values,locals);
+      },opts);
+      this.registerComputedAccessor(get,name);this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
+      const binding={get,set,name};(this.localComputedSignals??=new Map()).set(name,binding);
+      return this.evaluate(body,prev,values,[binding,...locals]);
+    }
+    if(e.optimisticScope){
+      const {initial={lit:undefined},options={},body={lit:undefined}}=e.optimisticScope;
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const value=this.evaluate(initial,prev,values,locals);
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1);
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const [get,set]=this.S.createOptimistic(typeof value==='function'?this.initializerCallback(name,value):value,opts);
+      const binding={get,set,name};
+      if(typeof value==='function'){
+        this.registerComputedAccessor(get,name);
+        (this.localComputedSignals??=new Map()).set(name,binding);
+      }else{
+        const node=Object.getOwnPropertySymbols(get).map(key=>get[key]).find(value=>value&&typeof value==='object'&&'_pendingValue'in value);
+        this.localNotPending??=node._pendingValue;
+        this.accessorIdentities.set(get,name);(this.localSignals??=new Map()).set(name,binding);
+      }
+      this.setterIdentities.set(set,name);this.setterFunctions.set(name,set);
+      return this.evaluate(body,prev,values,[binding,...locals]);
+    }
     if(e.signalComputeScope){
       const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
       requireTeardownProgram(this.programActions,options.unobserved);

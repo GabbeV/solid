@@ -37,8 +37,12 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
         _ => R.ActionParameter{indexDepth, index})
     case R.LocalWrite{index, value, updater}:
       R.LocalWrite{index, bindWith(value, depth, args), updater}
+    case R.OptimisticComputeScope{compute, options, body}:
+      R.OptimisticComputeScope{bindWith(compute, depth, args), options, bindWith(body, depth, args)}
     case R.SignalComputeScope{compute, options, body}:
       R.SignalComputeScope{bindWith(compute, depth, args), options, bindWith(body, depth, args)}
+    case R.OptimisticScope{initial, options, body}:
+      R.OptimisticScope{bindWith(initial, depth, args), options, bindWith(body, depth, args)}
     case R.SignalScope{initial, options, body}:
       R.SignalScope{bindWith(initial, depth, args), options, bindWith(body, depth, args)}
     case R.WriteExpr{id, value, updater}:

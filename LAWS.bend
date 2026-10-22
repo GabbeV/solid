@@ -1,4 +1,6 @@
 import Base
+import ./proof/optimistic-program.bend as OptimisticProgram
+import ./proof/optimistic-driver.bend as OptimisticDriver
 import ./proof/lane-flush.bend as FlushLaws
 import ./proof/lane-pass.bend as PassLaws
 import ./runtime/error.bend as SignedZeroMessage
@@ -1693,3 +1695,17 @@ law lane_flush_ineligible_parked_zombie_is_skipped:
   for +tail: List<&2, Nat>
   for ineligible: {Bool.and(U32.is_eq(U32.and(R.Node.flags(B.node(w, id)), U32.or(K.REACTIVE_DISPOSED(), K.REACTIVE_ZOMBIE())), K.REACTIVE_ZOMBIE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT())) == False{} : Bool}
   {Core.parkVerdictZombies(w, rest, stack, tx, id <> tail) == Core.Machine{w, Core.ParkVerdictZombies{tx, tail} <> rest, stack} : Core.Machine}
+
+law optimistic_free_data_complete_program:
+  for +initial: Nat
+  for +next: Nat
+  for +last: Nat
+  for +extra: Nat
+  {Core.run(Nat.add(56n, extra), OptimisticDriver.before(initial, next, last)) == OptimisticProgram.state_56(initial, next, last) : Core.Machine}
+
+law optimistic_free_data_keeps_authoritative_value:
+  for +initial: Nat
+  for +next: Nat
+  for +last: Nat
+  for extra: Nat
+  {Core.values(Core.run(Nat.add(56n, extra), OptimisticDriver.before(initial, next, last))) == [R.Number{initial}] : List<&2, R.Value>}

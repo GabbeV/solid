@@ -6,120 +6,128 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./callable.bend as Callable
 
-def bind(expr: R.Expr, +depth: Nat, +signal: Nat) -> R.Expr:
+def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
   match expr:
     case R.MapArrayCreate{+list, +mapper, fallback, +keyed}:
       match fallback:
         case R.NoInlineBody{}:
-          R.MapArrayCreate{bind(list, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}, bind(keyed, depth, signal)}
+          R.MapArrayCreate{bindAs(list, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.NoInlineBody{}, bindAs(keyed, depth, signal, setter)}
         case R.SomeInlineBody{expr, returns}:
-          R.MapArrayCreate{bind(list, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(expr, depth, signal), returns}, bind(keyed, depth, signal)}
+          R.MapArrayCreate{bindAs(list, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.SomeInlineBody{bindAs(expr, depth, signal, setter), returns}, bindAs(keyed, depth, signal, setter)}
     case R.ArrayLiteral{values}:
-      R.ArrayLiteral{bind(values, depth, signal)}
+      R.ArrayLiteral{bindAs(values, depth, signal, setter)}
     case R.ArrayAt{array, index}:
-      R.ArrayAt{bind(array, depth, signal), bind(index, depth, signal)}
+      R.ArrayAt{bindAs(array, depth, signal, setter), bindAs(index, depth, signal, setter)}
     case R.ArrayLength{array}:
-      R.ArrayLength{bind(array, depth, signal)}
+      R.ArrayLength{bindAs(array, depth, signal, setter)}
     case R.Flatten{array, skip, defer}:
-      R.Flatten{bind(array, depth, signal), skip, defer}
+      R.Flatten{bindAs(array, depth, signal, setter), skip, defer}
     case R.RepeatCreate{+count, +mapper, from, fallback}:
       match from fallback:
         case R.NoInlineBody{} R.NoInlineBody{}:
-          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}, R.NoInlineBody{}}
+          R.RepeatCreate{bindAs(count, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.NoInlineBody{}, R.NoInlineBody{}}
         case R.SomeInlineBody{expr, returns} R.NoInlineBody{}:
-          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(expr, depth, signal), returns}, R.NoInlineBody{}}
+          R.RepeatCreate{bindAs(count, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.SomeInlineBody{bindAs(expr, depth, signal, setter), returns}, R.NoInlineBody{}}
         case R.NoInlineBody{} R.SomeInlineBody{expr, returns}:
-          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.NoInlineBody{}, R.SomeInlineBody{bind(expr, depth, signal), returns}}
+          R.RepeatCreate{bindAs(count, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.NoInlineBody{}, R.SomeInlineBody{bindAs(expr, depth, signal, setter), returns}}
         case R.SomeInlineBody{fromExpr, fromReturns} R.SomeInlineBody{fallbackExpr, fallbackReturns}:
-          R.RepeatCreate{bind(count, depth, signal), bind(mapper, depth, signal), R.SomeInlineBody{bind(fromExpr, depth, signal), fromReturns}, R.SomeInlineBody{bind(fallbackExpr, depth, signal), fallbackReturns}}
+          R.RepeatCreate{bindAs(count, depth, signal, setter), bindAs(mapper, depth, signal, setter), R.SomeInlineBody{bindAs(fromExpr, depth, signal, setter), fromReturns}, R.SomeInlineBody{bindAs(fallbackExpr, depth, signal, setter), fallbackReturns}}
     case R.LocalRead{+index}:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Read{signal}, _ => R.LocalRead{index})
     case R.LocalAccessor{+index}:
       B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.accessor(signal)}, _ => R.LocalAccessor{index})
     case R.LocalSetter{+index}:
-      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{Callable.setter(signal)}, _ => R.LocalSetter{index})
+      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.Literal{setter}, _ => R.LocalSetter{index})
     case R.LocalWrite{+index, value, +updater}:
-      +value = bind(value, depth, signal)
-      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.InvokeWith{R.Literal{Callable.setter(signal)}, value, updater}, _ => R.LocalWrite{index, value, updater})
+      +value = bindAs(value, depth, signal, setter)
+      B.choose(~R.Expr, Nat.is_eq(index, depth), _ => R.InvokeWith{R.Literal{setter}, value, updater}, _ => R.LocalWrite{index, value, updater})
+    case R.OptimisticComputeScope{compute, options, body}:
+      R.OptimisticComputeScope{bindAs(compute, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}
+    case R.OptimisticScope{initial, options, body}:
+      R.OptimisticScope{bindAs(initial, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}
     case R.SignalComputeScope{compute, options, body}:
-      R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, 1n+depth, signal)}
+      R.SignalComputeScope{bindAs(compute, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}
     case R.SignalScope{initial, options, body}:
-      R.SignalScope{bind(initial, depth, signal), options, bind(body, 1n+depth, signal)}
+      R.SignalScope{bindAs(initial, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}
     case R.WriteExpr{id, value, updater}:
-      R.WriteExpr{id, bind(value, depth, signal), updater}
+      R.WriteExpr{id, bindAs(value, depth, signal, setter), updater}
     case R.Add{left, right}:
-      R.Add{bind(left, depth, signal), bind(right, depth, signal)}
+      R.Add{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Multiply{left, right}:
-      R.Multiply{bind(left, depth, signal), bind(right, depth, signal)}
+      R.Multiply{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Same{left, right}:
-      R.Same{bind(left, depth, signal), bind(right, depth, signal)}
+      R.Same{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Select{condition, yes, no}:
-      R.Select{bind(condition, depth, signal), bind(yes, depth, signal), bind(no, depth, signal)}
+      R.Select{bindAs(condition, depth, signal, setter), bindAs(yes, depth, signal, setter), bindAs(no, depth, signal, setter)}
     case R.Untracked{body}:
-      R.Untracked{bind(body, depth, signal)}
+      R.Untracked{bindAs(body, depth, signal, setter)}
     case R.ActionCreate{factory, methods}:
-      R.ActionCreate{bind(factory, depth, signal), bind(methods, depth, signal)}
+      R.ActionCreate{bindAs(factory, depth, signal, setter), bindAs(methods, depth, signal, setter)}
     case R.ActionInvoke{factory, methods}:
-      R.ActionInvoke{bind(factory, depth, signal), bind(methods, depth, signal)}
+      R.ActionInvoke{bindAs(factory, depth, signal, setter), bindAs(methods, depth, signal, setter)}
     case R.ActionMethods{next, catches, thrown, tail}:
-      R.ActionMethods{bind(next, depth, signal), catches, bind(thrown, depth, signal), bind(tail, depth, signal)}
+      R.ActionMethods{bindAs(next, depth, signal, setter), catches, bindAs(thrown, depth, signal, setter), bindAs(tail, depth, signal, setter)}
     case R.IteratorResult{done, value}:
-      R.IteratorResult{done, bind(value, depth, signal)}
+      R.IteratorResult{done, bindAs(value, depth, signal, setter)}
     case R.FlushCallback{body}:
-      R.FlushCallback{bind(body, depth, signal)}
+      R.FlushCallback{bindAs(body, depth, signal, setter)}
     case R.FlushValue{callee}:
-      R.FlushValue{bind(callee, depth, signal)}
+      R.FlushValue{bindAs(callee, depth, signal, setter)}
     case R.WithOwner{owner, body}:
-      R.WithOwner{bind(owner, depth, signal), bind(body, depth, signal)}
+      R.WithOwner{bindAs(owner, depth, signal, setter), bindAs(body, depth, signal, setter)}
     case R.OwnerDisposed{owner}:
-      R.OwnerDisposed{bind(owner, depth, signal)}
+      R.OwnerDisposed{bindAs(owner, depth, signal, setter)}
     case R.DisposeRoot{owner, self}:
-      R.DisposeRoot{bind(owner, depth, signal), self}
+      R.DisposeRoot{bindAs(owner, depth, signal, setter), self}
     case R.CallWith{callback, left, right}:
-      R.CallWith{callback, bind(left, depth, signal), bind(right, depth, signal)}
+      R.CallWith{callback, bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.RootScope{body, transparent}:
-      R.RootScope{bind(body, depth, signal), transparent}
+      R.RootScope{bindAs(body, depth, signal, setter), transparent}
     case R.MemoAccessor{compute, options}:
-      R.MemoAccessor{bind(compute, depth, signal), options}
+      R.MemoAccessor{bindAs(compute, depth, signal, setter), options}
     case R.MemoRead{compute, options}:
-      R.MemoRead{bind(compute, depth, signal), options}
+      R.MemoRead{bindAs(compute, depth, signal, setter), options}
     case R.EffectCreate{+compute, spec}:
       match spec:
         case R.EffectSpec{+user, +target, +options, +scheduled, +deferred, +program, +cleanup, +error, body}:
           match body:
             case R.NoInlineBody{}:
-              R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
+              R.EffectCreate{bindAs(compute, depth, signal, setter), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.NoInlineBody{}}}
             case R.SomeInlineBody{expr, returnsCleanup}:
-              R.EffectCreate{bind(compute, depth, signal), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bind(expr, depth, signal), returnsCleanup}}}
+              R.EffectCreate{bindAs(compute, depth, signal, setter), R.EffectSpec{user, target, options, scheduled, deferred, program, cleanup, error, R.SomeInlineBody{bindAs(expr, depth, signal, setter), returnsCleanup}}}
     case R.ReactionCreate{body, errorProgram, options, scheduled}:
-      R.ReactionCreate{bind(body, depth, signal), errorProgram, options, scheduled}
+      R.ReactionCreate{bindAs(body, depth, signal, setter), errorProgram, options, scheduled}
     case R.ReactionArm{callee, tracking}:
-      R.ReactionArm{bind(callee, depth, signal), bind(tracking, depth, signal)}
+      R.ReactionArm{bindAs(callee, depth, signal, setter), bindAs(tracking, depth, signal, setter)}
     case R.ReactionFire{reaction, node}:
-      R.ReactionFire{reaction, bind(node, depth, signal)}
+      R.ReactionFire{reaction, bindAs(node, depth, signal, setter)}
     case R.OnSettled{body}:
-      R.OnSettled{bind(body, depth, signal)}
+      R.OnSettled{bindAs(body, depth, signal, setter)}
     case R.TrackedCreate{body}:
-      R.TrackedCreate{bind(body, depth, signal)}
+      R.TrackedCreate{bindAs(body, depth, signal, setter)}
     case R.ContextGet{key, owner}:
-      R.ContextGet{key, bind(owner, depth, signal)}
+      R.ContextGet{key, bindAs(owner, depth, signal, setter)}
     case R.ContextSet{key, value, owner}:
-      R.ContextSet{key, bind(value, depth, signal), bind(owner, depth, signal)}
+      R.ContextSet{key, bindAs(value, depth, signal, setter), bindAs(owner, depth, signal, setter)}
     case R.InvokeMany{callee, values}:
-      R.InvokeMany{bind(callee, depth, signal), bind(values, depth, signal)}
+      R.InvokeMany{bindAs(callee, depth, signal, setter), bindAs(values, depth, signal, setter)}
     case R.CallArgumentsItem{value, tail}:
-      R.CallArgumentsItem{bind(value, depth, signal), bind(tail, depth, signal)}
+      R.CallArgumentsItem{bindAs(value, depth, signal, setter), bindAs(tail, depth, signal, setter)}
     case R.InvokeArguments{callee, a, b}:
-      R.InvokeArguments{bind(callee, depth, signal), bind(a, depth, signal), bind(b, depth, signal)}
+      R.InvokeArguments{bindAs(callee, depth, signal, setter), bindAs(a, depth, signal, setter), bindAs(b, depth, signal, setter)}
     case R.InvokeWith{callee, value, updater}:
-      R.InvokeWith{bind(callee, depth, signal), bind(value, depth, signal), updater}
+      R.InvokeWith{bindAs(callee, depth, signal, setter), bindAs(value, depth, signal, setter), updater}
     case R.Invoke{callee}:
-      R.Invoke{bind(callee, depth, signal)}
+      R.Invoke{bindAs(callee, depth, signal, setter)}
     case R.OnCleanup{callee}:
-      R.OnCleanup{bind(callee, depth, signal)}
+      R.OnCleanup{bindAs(callee, depth, signal, setter)}
     case R.WatchExpr{awaiter, body}:
-      R.WatchExpr{awaiter, bind(body, depth, signal)}
+      R.WatchExpr{awaiter, bindAs(body, depth, signal, setter)}
     case R.Then{left, right}:
-      R.Then{bind(left, depth, signal), bind(right, depth, signal)}
+      R.Then{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case other:
       other
+
+# Public ordinary signal binding retains its constructor-selected setter.
+def bind(expr: R.Expr, depth: Nat, +signal: Nat) -> R.Expr:
+  bindAs(expr, depth, signal, Callable.setter(signal))

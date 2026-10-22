@@ -5,6 +5,18 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["optimistic async landing skips lane write", "runtime/core.bend", "Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))", "True{}", "tests/optimistic.mjs", "asyncWrite"],
+  ["optimistic bound call uses ordinary setter", "runtime/core.bend", "OptimisticArgument{signal} <> rest", "setterTask(w, signal) <> rest", "tests/optimistic.mjs", "callbackAction"],
+  ["optimistic bound call loses raw argument", "runtime/core.bend", "OptimisticArgument{signal} <> rest, first <> stack", "OptimisticArgument{signal} <> rest, R.Undefined{} <> stack", "tests/optimistic.mjs", "callbackAction"],
+  ["optimistic function constructor keeps lazy autodisposal", "runtime/core.bend", "_ => B.store_node(w, signal, R.Node.with_config(B.node(w, signal), B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())))", "_ => w", "tests/optimistic.mjs", "dispatch"],
+  ["optimistic const pair binds ordinary setter", "runtime/core.bend", "Local.bindAs(body, 0n, signal, R.ProgramReference{B.second(R.World, Nat, pair)})", "Local.bind(body, 0n, signal)", "tests/optimistic.mjs", "dispatch"],
+  ["optimistic updater captures committed rather than queued value", "runtime/core.bend", "+previous = Lanes.guessedValueOf(w, id)\n      Machine{w, Evaluate{expr, previous}", "+previous = R.Node.value(B.node(w, id))\n      Machine{w, Evaluate{expr, previous}", "tests/optimistic.mjs", "dispatch"],
+  ["optimistic function constructor invokes ordinary initializer entry", "runtime/core.bend", "optimisticCompute(w, rest, stack, compute, options, body, prev)", "signalCompute(w, rest, stack, compute, options, body, prev)", "tests/optimistic.mjs", "evaluate"],
+  ["optimistic callable initializer becomes literal data", "runtime/core.bend", "B.choose(~Machine, J.isFunction(value),", "B.choose(~Machine, False{},", "tests/optimistic.mjs", "dispatch"],
+  ["optimistic bound function has zero arity", "runtime/callable.bend", "[R.CleanupProgram{[R.OptimisticSetter{signal}], False{}, 1n}]", "[R.CleanupProgram{[R.OptimisticSetter{signal}], False{}, 0n}]", "tests/optimistic.mjs", "optimisticSetter"],
+  ["optimistic nested constructor loses shadowing", "runtime/lexical.bend", "R.OptimisticScope{bindAs(initial, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}", "R.OptimisticScope{bindAs(initial, depth, signal, setter), options, bindAs(body, depth, signal, setter)}", "tests/optimistic.mjs", "bindAs"],
+  ["optimistic kernel setter routes through ordinary signal", "runtime/core.bend", "OptimisticArgument{signal} <> rest", "setterTask(w, signal) <> rest", "tests/proof-properties.mjs", "callbackAction", "optimistic-program"],
+
   ["flush skips live corrections", "runtime/core.bend", "List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w)))", "True{}", "tests/lane-flush-alignment.mjs", "beginSettle"],
   ["flush drops correction heap round", "runtime/core.bend", "heapLoopMode(w, rest, tail, True{})", "settleJoined(w, rest, tail)", "tests/lane-flush-alignment.mjs", "dispatch"],
   ["flush recaptures joined after guess callbacks", "runtime/core.bend", "Bool.and(Nat.is_ne(joined, 0n), Bool.not(R.Transaction.lane(B.transaction(w, joined))))", "Bool.and(Nat.is_ne(R.World.flushTransaction(w), 0n), Bool.not(R.Transaction.lane(B.transaction(w, R.World.flushTransaction(w)))) )", "tests/lane-flush-alignment.mjs", "settleApplied"],
@@ -229,7 +241,7 @@ const mutations=[
   ['vector callback return loses higher parameters','runtime/core.bend','R.CallbackReturn{Z.bindMany(expr, args)}','R.CallbackReturn{Z.bind(expr, B.get(R.Value, args, 0n, R.Undefined{}), B.get(R.Value, args, 1n, R.Undefined{}))}','tests/argument-vectors.mjs','bindCallAction'],
   ['vector action methods lose parameter capture','runtime/core.bend','ActionArgs.bindMany(methods, 0n, args)','methods','tests/argument-vectors.mjs','bindCallAction'],
   ['vector action factory loses parameter capture','runtime/core.bend','ActionArgs.bindMany(factory, 0n, args)','factory','tests/argument-vectors-native.mjs','bindCallAction'],
-  ['vector arguments lose enclosing signal bindings','runtime/lexical.bend','R.CallArgumentsItem{bind(value, depth, signal), bind(tail, depth, signal)}','R.CallArgumentsItem{value, tail}','tests/argument-vectors.mjs','bind'],
+  ['vector arguments lose enclosing signal bindings','runtime/lexical.bend','R.CallArgumentsItem{bindAs(value, depth, signal, setter), bindAs(tail, depth, signal, setter)}','R.CallArgumentsItem{value, tail}','tests/argument-vectors.mjs','bindAs'],
   ['nested call vector loses enclosing parameters','runtime/callback.bend','R.CallArgumentsItem{bindWith(value, args), bindWith(tail, args)}','R.CallArgumentsItem{value, tail}','tests/argument-vectors.mjs','bindWith'],
   ['vector lookup discards its parameter','runtime/callback.bend','B.get(R.Value, values, index, R.Undefined{})','R.Undefined{}','tests/proof-properties.mjs','at','argument-vector-laws'],
 
@@ -243,7 +255,7 @@ const mutations=[
   ['action wrapper loses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','methods','tests/action-functions.mjs','callbackAction'],
   ['action wrapper reverses invocation arguments','runtime/core.bend','ActionArgs.bind(methods, 0n, first, second)','ActionArgs.bind(methods, 0n, second, first)','tests/action-functions.mjs','callbackAction'],
   ['nested action fails to shadow parameter capture','runtime/action-arguments.bend','R.ActionCreate{bindWith(factory, 1n+depth, args), bindWith(methods, 1n+depth, args)}','R.ActionCreate{bindWith(factory, depth, args), bindWith(methods, depth, args)}','tests/action-functions.mjs','bindWith'],
-  ['action wrapper loses captured local signals','runtime/lexical.bend','R.ActionCreate{bind(factory, depth, signal), bind(methods, depth, signal)}','R.ActionCreate{bind(factory, depth, signal), methods}','tests/action-functions.mjs','bind'],
+  ['action wrapper loses captured local signals','runtime/lexical.bend','R.ActionCreate{bindAs(factory, depth, signal, setter), bindAs(methods, depth, signal, setter)}','R.ActionCreate{bindAs(factory, depth, signal, setter), methods}','tests/action-functions.mjs','bindAs'],
   ['action wrapper factory loses enclosing callback argument','runtime/callback.bend','R.ActionCreate{bindWith(factory, args), methods}','R.ActionCreate{factory, methods}','tests/action-functions.mjs','bindWith'],
 
   ["memo constructor discards its compute expression","runtime/construct-state.bend","parent, 0n, 0n, 0n, expr, False{}","parent, 0n, 0n, 0n, R.Literal{R.Number{0n}}, False{}","tests/proof-properties.mjs","computed","memo-public-program"],
@@ -284,7 +296,7 @@ const mutations=[
   ["flush callback error replaces later drain error", "runtime/core.bend", "flushCallbackRestore(w, rest, saved, R.World.fault(w))", "flushCallbackRestore(w, rest, saved, prior)", "tests/flush-callbacks.mjs", "unwind"],
   ["flush callback drops its saved return", "runtime/core.bend", "+values = B.choose(~List<&2, R.Value>, healthy(prior), _ => stack, _ => saved)", "+values = saved", "tests/flush-callbacks.mjs", "flushCallbackFinally"],
   ["flush callback loses captured arguments", "runtime/callback.bend", "R.FlushCallback{bindWith(body, args)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
-  ["flush callback loses lexical signals", "runtime/lexical.bend", "R.FlushCallback{bind(body, depth, signal)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
+  ["flush callback loses lexical signals", "runtime/lexical.bend", "R.FlushCallback{bindAs(body, depth, signal, setter)}", "R.FlushCallback{body}", "tests/flush-callbacks.mjs"],
 
   ['publication keeps its stale committed value','runtime/scheduler.bend','R.Node.with_value(n, B.current(n))','n','tests/proof-properties.mjs','commitValue',"publication"],
   ['unowned fast read leaks a staged value','runtime/core.bend','_ => R.Node.value(n), _ => B.current(n)','_ => B.current(n), _ => B.current(n)','tests/proof-properties.mjs','readSignalFast',"read-policy"],
@@ -333,7 +345,7 @@ const mutations=[
   ['two-argument call reverses user parameters','runtime/core.bend','R.CallWith{callback, R.Literal{first}, R.Literal{second}}','R.CallWith{callback, R.Literal{second}, R.Literal{first}}','tests/callback-values.mjs'],
   ['callback value initializer selects a data signal','runtime/core.bend','callableSignal(w, rest, tail, R.ProgramReference{callback}, options, body, previous)','Machine{N.signal(w, R.ProgramReference{callback}, options), rest, tail}','tests/callback-values.mjs'],
   ['callable getter initializer selects a setter','runtime/core.bend','callableSignal(w, rest, tail, R.AccessorReference{signal}, options, body, previous)','callableSignal(w, rest, tail, R.SetterReference{signal}, options, body, previous)','tests/callable-initializers.mjs'],
-  ['initializer receives enclosing expression previous','runtime/core.bend','R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}','R.InvokeWith{R.Literal{value}, R.Literal{previous}, False{}}','tests/callable-initializers.mjs'],
+  ['initializer receives enclosing expression previous','runtime/core.bend','R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}','R.InvokeWith{R.Literal{value}, R.Literal{previous}, False{}}','tests/callable-initializers.mjs','callableSignal'],
   ['named setter bypasses memo policy','runtime/api.bend','C.Machine{w, [C.setterTask(w, id)], [value]}','C.Machine{w, [C.SetSignalArgument{id}], [value]}','tests/callable-initializers.mjs'],
   ['held teardown setter captures before raw callback','runtime/core.bend','OwnerTasks{[O.Enter{owner, True{}, False{}}, O.RootEnd{}]} <> SetMemoForward{id, True{}}','OwnerTasks{[O.Enter{owner, True{}, False{}}, O.RootEnd{}]} <> SetSignalResolved{id, B.current(B.node(w, id))} <> SetMemoAfter{id, True{}}','tests/callable-initializers.mjs','memoRawArgument'],
   ['held owner helper captures before raw callback','runtime/owner.bend','Enter{owner, True{}, False{}} <> RootEnd{} <> WriteForward{signal, R.Undefined{}}','Enter{owner, True{}, False{}} <> RootEnd{} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}}','tests/owner-core-alignment.mjs','writeHeldValue'],
@@ -343,8 +355,8 @@ const mutations=[
   ['setter cleanup receives a value instead of no arguments','runtime/core.bend','Machine{w, setterTask(w, id) <> Discard{} <> OwnerTasks{tail} <> rest, R.Undefined{} <> stack}','Machine{w, setterTask(w, id) <> Discard{} <> OwnerTasks{tail} <> rest, R.Number{99n} <> stack}','tests/setter-cleanup.mjs','ownerTasks'],
   ['setter cleanup loses its returned function identity','runtime/core.bend','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.SetterReference{signal} <> tail}','Machine{J.cleanupSetter(w, R.World.context(w), signal), rest, R.Undefined{} <> tail}','tests/setter-cleanup.mjs'],
   ['same setter cleanup receives distinct callback identities','runtime/callable.bend','+old = findSetter(R.World.cleanupPrograms(w), signal, 0n)','+old = {0n : Nat}','tests/setter-cleanup.mjs'],
-  ['writable initializer fails to shadow its body binding','runtime/lexical.bend','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalComputeScope{bind(compute, depth, signal), options, bind(body, depth, signal)}','tests/writable-signals.mjs'],
-  ['writable initializer retains auto-dispose','runtime/core.bend','B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())','R.Node.config(B.node(w, signal))','tests/writable-signals.mjs'],
+  ['writable initializer fails to shadow its body binding','runtime/lexical.bend','R.SignalComputeScope{bindAs(compute, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}','R.SignalComputeScope{bindAs(compute, depth, signal, setter), options, bindAs(body, depth, signal, setter)}','tests/writable-signals.mjs'],
+  ['writable initializer retains auto-dispose','runtime/core.bend','+w = B.store_node(w, signal, R.Node.with_config(B.node(w, signal), B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())))','+w = w','tests/writable-signals.mjs','dispatch'],
   ['held writable updater sees staging instead of its committed frame','runtime/core.bend','Evaluate{expr, R.Node.value(B.node(w, id))} <> SetMemoForward','Evaluate{expr, B.current(B.node(w, id))} <> SetMemoForward','tests/writable-signals.mjs'],
   ['held updater result is invoked a second time','runtime/core.bend','memoDelegate(w, rest, stack, signal, held, True{})','memoDelegate(w, rest, stack, signal, held, False{})','tests/writable-signals.mjs','dispatch'],
   ['memo write drops its manual proposal flag','runtime/memo-write.bend','B.set(R.Node.flags(B.node(w, id)), K.REACTIVE_MANUAL_WRITE())','R.Node.flags(B.node(w, id))','tests/writable-signals.mjs'],
@@ -361,8 +373,8 @@ const mutations=[
   ['raw accessor updater stored without invocation','runtime/core.bend','Machine{w, ReadNode{id} <> SetSignalResolved{signal, current} <> rest, tail}','Machine{w, SetSignalResolved{signal, current} <> rest, R.AccessorReference{id} <> tail}','tests/locals.mjs'],
 
   ['local reads bind the wrong signal','runtime/lexical.bend','_ => R.Read{signal}, _ => R.LocalRead{index}','_ => R.Read{1n}, _ => R.LocalRead{index}','tests/locals.mjs'],
-  ['inner signal scope fails to shadow','runtime/lexical.bend','R.SignalScope{bind(initial, depth, signal), options, bind(body, 1n+depth, signal)}','R.SignalScope{bind(initial, depth, signal), options, bind(body, depth, signal)}','tests/locals.mjs'],
-  ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bind(expr, depth, signal), returnsCleanup}','R.SomeInlineBody{expr, returnsCleanup}','tests/locals.mjs'],
+  ['inner signal scope fails to shadow','runtime/lexical.bend','R.SignalScope{bindAs(initial, depth, signal, setter), options, bindAs(body, 1n+depth, signal, setter)}','R.SignalScope{bindAs(initial, depth, signal, setter), options, bindAs(body, depth, signal, setter)}','tests/locals.mjs'],
+  ['inline body drops captured local','runtime/lexical.bend','R.SomeInlineBody{bindAs(expr, depth, signal, setter), returnsCleanup}','R.SomeInlineBody{expr, returnsCleanup}','tests/locals.mjs'],
   ['local updater sees committed instead of staged slot','runtime/core.bend','+current = B.current(B.node(w, signal))','+current = R.Node.value(B.node(w, signal))','tests/locals.mjs'],
   ['local updater result function is invoked again','runtime/core.bend','Evaluate{value, current} <> SetSignalResolved{signal, current} <> rest','Evaluate{value, current} <> SetSignalArgument{signal} <> rest','tests/locals.mjs'],
   ['nested effect loses owner','runtime/core.bend','R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair)','R.EffectSpec.options(spec), 0n, B.second(R.World, Nat, pair)','tests/nested.mjs'],
@@ -406,8 +418,22 @@ const mutations=[
   ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))','T.setText(w, R.Node.target(B.node(w, id)), R.Undefined{})'],
 ];
 const filter=process.env.BEND_MUTATION_FILTER;
-const selected=filter?mutations.filter(([name])=>name.includes(filter)):mutations;
+const from=process.env.BEND_MUTATION_FROM;
+const offset=from?mutations.findIndex(([name])=>name===from):0;
+if(offset<0)throw new Error('Unknown mutation start: '+from);
+const scope=mutations.slice(offset);
+const selected=filter?scope.filter(([name])=>name.includes(filter)):scope;
 if(selected.length===0)throw new Error('Mutation filter matched no variants');
+// Validate operation targets before paying for any compiled variant. A stale
+// anchor is infrastructure failure, never evidence of useful mutation rejection.
+const sources=new Map(await Promise.all([...new Set(selected.map(row=>row[1]))].map(async file=>[file,await fs.readFile(path.join(root,file),'utf8')])));
+for(const [name,file,before,after,test,anchor]of selected){
+ const source=sources.get(file),start=anchor?source.indexOf('def '+anchor+'('):0;
+ if(start<0)throw new Error('Stale mutation function '+name);
+ const next=anchor?source.indexOf('\ndef ',start+1):-1,end=next<0?source.length:next;
+ if(source.slice(start,end).split(before).length!==2)throw new Error('Mutation must select exactly one source operation: '+name);
+}
+if(process.env.BEND_MUTATION_VALIDATE_ONLY){console.log(`${selected.length} mutation operation targets are current; no semantic test was run.`);process.exit(0);}
 let caught=0;
 for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModule] of selected) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bend-signals-mutation-'));

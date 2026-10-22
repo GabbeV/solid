@@ -154,3 +154,19 @@ def encodeProgram(+w: R.World, +callback: Nat) -> B.Bundle<R.World, Nat>:
     _ =>
       +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
       B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupBoundProgram{callback}], False{}, 0n}])), next})
+
+# signals.ts:createOptimistic's optimisticWrite.bind(null,node). One canonical
+# function program is allocated when this constructor returns its const pair.
+def optimisticSetter(+w: R.World, signal: Nat) -> B.Bundle<R.World, Nat>:
+  +next = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
+  B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.OptimisticSetter{signal}], False{}, 1n}])), next}
+
+def optimisticTargetActions(actions: List<&2, R.CleanupAction>) -> Nat:
+  match actions:
+    case R.OptimisticSetter{signal} <> Nil{}:
+      signal
+    case _:
+      0n
+
+def optimisticTarget(w: R.World, callback: Nat) -> Nat:
+  optimisticTargetActions(R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n})))

@@ -1,4 +1,5 @@
 import Base
+import ./proof/optimistic-program.bend as OptimisticProgram
 import ./proof/lane-flush.bend as FlushLaws
 import ./proof/lane-pass.bend as PassLaws
 import ./proof/signed-zero.bend as SignedZero
@@ -835,3 +836,9 @@ def Laws.lane_flush_landing_follows_lane_end(w, rest, stack, frame, tx):
 
 def Laws.lane_flush_ineligible_parked_zombie_is_skipped(w, rest, stack, tx, id, tail, ineligible):
   FlushLaws.skipParkedZombie(w, rest, stack, tx, id, tail, ineligible)
+
+def Laws.optimistic_free_data_complete_program(initial, next, last, extra):
+  OptimisticProgram.complete(initial, next, last, extra)
+
+def Laws.optimistic_free_data_keeps_authoritative_value(initial, next, last, extra):
+  OptimisticProgram.result(initial, next, last, extra)

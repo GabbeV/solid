@@ -223,6 +223,10 @@ type Task is Data:
   SetMemoArgument{signal: Nat}
   SetMemoForward{signal: Nat, held: Bool}
   SetMemoAfter{signal: Nat, held: Bool}
+  OptimisticReady{signal: Nat, computed: Bool, body: R.Expr, previous: R.Value}
+  CreateOptimistic{options: R.NodeOptions, body: R.Expr, previous: R.Value}
+  OptimisticArgument{signal: Nat}
+  OptimisticUpdater{signal: Nat, expr: R.Expr}
   MemoSignalReady{signal: Nat, body: R.Expr, previous: R.Value}
   MemoAccessorReady{node: Nat}
   SetSignalResolved{signal: Nat, current: R.Value}
@@ -557,6 +561,16 @@ def signalCompute(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, 
     _ => Recompute{id, True{}} <> MemoSignalReady{id, body, prev} <> rest)
   Machine{w, tasks, stack}
 
+# signals.ts:createOptimistic function overload, sharing computed construction.
+def optimisticCompute(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, +options: R.NodeOptions, +body: R.Expr, +prev: R.Value) -> Machine:
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = B.event(w, R.Constructed{id})
+  +w = N.computed(w, compute, options, R.World.context(w))
+  tasks = B.choose(~List<&2, Task>, R.NodeOptions.lazy(options),
+    _ => OptimisticReady{id, True{}, body, prev} <> rest,
+    _ => Recompute{id, True{}} <> OptimisticReady{id, True{}, body, prev} <> rest)
+  Machine{w, tasks, stack}
+
 def callableSignal(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, value: R.Value, options: R.NodeOptions, body: R.Expr, +previous: R.Value) -> Machine:
   signalCompute(w, rest, stack, R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}, options, body, previous)
 
@@ -792,6 +806,10 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, rest, L.reference(L.getObserver(w)) <> stack}
     case R.OwnerDisposed{owner}:
       Machine{w, Evaluate{owner, prev} <> CheckDisposed{} <> rest, stack}
+    case R.OptimisticComputeScope{compute, options, body}:
+      optimisticCompute(w, rest, stack, compute, options, body, prev)
+    case R.OptimisticScope{initial, options, body}:
+      Machine{w, Evaluate{initial, prev} <> CreateOptimistic{options, body, prev} <> rest, stack}
     case R.SignalComputeScope{compute, options, body}:
       signalCompute(w, rest, stack, compute, options, body, prev)
     case R.SignalScope{initial, options, body}:
@@ -880,6 +898,8 @@ def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, va
 
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.OptimisticSetter{signal}:
+      Machine{w, OptimisticArgument{signal} <> rest, first <> stack}
     case R.FlattenChildren{results, skip}:
       +pair = Arrays.fresh(w, 0n)
       +result = B.second(R.World, Nat, pair)
@@ -1039,7 +1059,10 @@ def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>
 def invokeUpdater(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, callee: R.Value, +expr: R.Expr) -> Machine:
   match callee:
     case R.ProgramReference{callback}:
-      Machine{R.World.with_fault(w, R.Unsupported{22n}), rest, tail}
+      +id = J.optimisticTarget(w, callback)
+      B.choose(~Machine, Nat.is_ne(id, 0n),
+        _ => Machine{w, OptimisticUpdater{id, expr} <> rest, tail},
+        _ => Machine{R.World.with_fault(w, R.Unsupported{22n}), rest, tail})
     case R.SetterReference{+id}:
       B.choose(~Machine, memoNode(R.Node.kind(B.node(w, id))),
         _ => memoUpdater(w, rest, tail, id, expr),
@@ -2071,7 +2094,7 @@ def asyncWriteAfterValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.
 
 # The default facade and custom call share source before/after-write segments.
 def asyncWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +value: R.Value, +then: List<&2, Task>) -> Machine:
-  B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
+  B.choose(~Machine, Bool.and(Nat.is_eq(EQ.custom(w, id), 0n), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))),
     _ =>
       +pair = F.beginAsyncWrite(w, id, result, value)
       +w = B.first(R.World, Bool, pair)
@@ -3927,6 +3950,31 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
             _ => Machine{R.World.with_fault(w, R.Unsupported{6n}), rest, tail})
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case OptimisticArgument{id} <> +rest:
+      match stack:
+        case value <> tail:
+          optimisticWrite(w, rest, tail, id, value)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case OptimisticUpdater{+id, expr} <> rest:
+      +previous = Lanes.guessedValueOf(w, id)
+      Machine{w, Evaluate{expr, previous} <> OptimisticResolved{id, previous} <> rest, stack}
+    case CreateOptimistic{+options, +body, +previous} <> +rest:
+      match stack:
+        case +value <> +tail:
+          B.choose(~Machine, J.isFunction(value),
+            _ => optimisticCompute(w, rest, tail, R.InvokeWith{R.Literal{value}, R.Previous{}, False{}}, options, body, previous),
+            _ =>
+              +id = B.length(R.Node, R.World.nodes(w))
+              +w = B.event(w, R.Constructed{id})
+              Machine{N.signal(w, value, options), OptimisticReady{id, False{}, body, previous} <> rest, tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case OptimisticReady{+signal, computed, +body, +previous} <> rest:
+      +w = B.choose(~R.World, computed, _ => B.store_node(w, signal, R.Node.with_config(B.node(w, signal), B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE()))), _ => w)
+      +pair = J.optimisticSetter(w, signal)
+      +w = B.event(B.first(R.World, Nat, pair), R.SetterBound{signal})
+      Machine{w, Evaluate{Local.bindAs(body, 0n, signal, R.ProgramReference{B.second(R.World, Nat, pair)}), previous} <> rest, stack}
     case CreateSignal{+options, +body, +previous} <> +rest:
       match stack:
         case +value <> +tail:

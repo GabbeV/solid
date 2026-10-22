@@ -1,7 +1,7 @@
 # Solid 2 signals in Bend 2
 
 An executable **incremental translation of the non-store core** of
-`@solidjs/signals` 2.0.0-rc.16. This is **not yet the complete signals package**.
+`@solidjs/signals` 2.0.0-rc.17. This is **not yet the complete signals package**.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
@@ -43,6 +43,11 @@ chains and nested arrays, retains deferred resolving wrappers and follows the
 source pending/error collection policy. A fixed nested-children program has an
 exact final-state proof for every natural payload pair and all budgets >=128;
 arbitrary recursive trees remain outside that theorem.
+
+The [optimistic constructor](tracking/optimistic.md) now has data/function
+input dispatch and its own bound setter, supported by the lane pass/flush
+engine. A complete free data program is proved for every natural payload triple
+and sufficient budget. Verdict windows and boundary/store paths remain next.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 

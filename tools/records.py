@@ -184,6 +184,8 @@ type Expr is Data:
   CurrentOwner{}
   CurrentObserver{}
   OwnerDisposed{owner: Expr}
+  OptimisticScope{initial: Expr, options: NodeOptions, body: Expr}
+  OptimisticComputeScope{compute: Expr, options: NodeOptions, body: Expr}
   SignalScope{initial: Expr, options: NodeOptions, body: Expr}
   SignalComputeScope{compute: Expr, options: NodeOptions, body: Expr}
   LocalRead{depth: Nat}
@@ -233,6 +235,7 @@ type CleanupAction is Data:
   CleanupPriorEffect{}
   CleanupCloseIterator{stream: Nat}
   CleanupBoundRoot{owner: Nat}
+  OptimisticSetter{signal: Nat}
   CleanupBoundSetter{signal: Nat}
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}

@@ -145,6 +145,16 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if(e.flushNow)return R.flushNow();
   if(e.settled)return R.settled(expression(e.settled,ids,programs,futures,encodeValue,contexts));
   if(e.trackedCreate)return R.trackedCreate(expression(e.trackedCreate,ids,programs,futures,encodeValue,contexts));
+  if(e.optimisticComputeScope){
+    const {compute,options={},body={lit:undefined}}=e.optimisticComputeScope;
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
+    return R.optimisticComputeScope(expression(compute,ids,programs,futures,encodeValue,contexts),nodeOptions(options,programs,encodeValue),expression(body,ids,programs,futures,encodeValue,contexts));
+  }
+  if(e.optimisticScope){
+    const {initial={lit:undefined},options={},body={lit:undefined}}=e.optimisticScope;
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
+    return R.optimisticScope(expression(initial,ids,programs,futures,encodeValue,contexts),nodeOptions(options,programs,encodeValue),expression(body,ids,programs,futures,encodeValue,contexts));
+  }
   if(e.signalComputeScope){
     const {compute,options={},body={lit:undefined}}=e.signalComputeScope;
     if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,options.unobserved);
@@ -251,7 +261,7 @@ export class BendRuntime {
     if(value&&typeof value==='object'&&typeof value.setter==='string'){
       const id=this.ids[value.setter];
       if(!id||(this.nodes()[id].kind.$!=='Signal'&&!this.writableSetters.has(id)))throw new TypeError('Unknown signal setter: '+value.setter);
-      return R.vSetter(id);
+      return this.optimisticSetters?.has(id)?R.vProgram(this.optimisticSetters.get(id)):R.vSetter(id);
     }
     const accessor=this.accessors.identity(value);
     if(accessor!==undefined)return R.vAccessor(accessor);
@@ -284,7 +294,7 @@ export class BendRuntime {
     }
     for(const [id,port]of this.actionPorts??[])if(value===port.promise)return {async:id};
     const callback=this.callbacks.identity(value);
-    if(callback!==undefined)return {callback:this.programNames.get(callback)};
+    if(callback!==undefined){const node=[...(this.optimisticSetters??[])].find(([,id])=>id===callback)?.[0];return node===undefined?{callback:this.programNames.get(callback)}:{setter:this.reverse[node]};}
     if(value instanceof BendNoOwnerError||value instanceof BendContextNotFoundError){
       if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
       return {[value instanceof BendNoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};
@@ -377,6 +387,14 @@ export class BendRuntime {
     // Observe returned source closures; these labels do not create or arm nodes.
     for(const [index,state]of list(this.world.reactions).entries())if(!this.programNames.has(state.track)){
       const name='@reaction'+(index+1);this.programNames.set(state.track,name);this.programs[name]=state.track;this.programActions.set(name,[]);
+    }
+    this.optimisticSetters??=new Map();
+    for(const [id,program]of list(this.world.cleanupPrograms).entries()){
+      const [action,...tail]=list(program.actions);
+      if(action?.$==='OptimisticSetter'&&!tail.length){
+        this.optimisticSetters.set(action.signal,id);
+        if(!this.programNames.has(id))this.programNames.set(id,'@optimistic:'+action.signal);
+      }
     }
     // Observation labels come from the user ABI's actual allocation events.
     // Internal waiter nodes and ordinary top-level constructors are untouched.

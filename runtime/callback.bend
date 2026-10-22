@@ -78,8 +78,12 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.DisposeRoot{bindWith(owner, args), self}
     case R.CallWith{callback, left, right}:
       R.CallWith{callback, bindWith(left, args), bindWith(right, args)}
+    case R.OptimisticComputeScope{compute, options, body}:
+      R.OptimisticComputeScope{bindWith(compute, args), options, bindWith(body, args)}
     case R.SignalComputeScope{compute, options, body}:
       R.SignalComputeScope{bindWith(compute, args), options, bindWith(body, args)}
+    case R.OptimisticScope{initial, options, body}:
+      R.OptimisticScope{bindWith(initial, args), options, bindWith(body, args)}
     case R.SignalScope{initial, options, body}:
       R.SignalScope{bindWith(initial, args), options, bindWith(body, args)}
     case R.LocalWrite{depth, value, updater}:
