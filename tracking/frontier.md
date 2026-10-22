@@ -7,7 +7,7 @@ turning test counts into a package-completion percentage.
 Current verification: 3720 differential histories, 514 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at cdd95616 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at 1c0ff9f8 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -15,6 +15,14 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Latest source-only refresh
+
+[The 1c0ff9f8 review](reviews/solid-1c0ff9f8.md) copies four verbatim store/doc
+inputs after #4216. All non-store source and all Bend runtime operations are
+unchanged. Stores remain unported. The native package passes 337 files /5,521
+tests; latest-pin paired/kernel checks are recorded separately from the prior
+514-variant run against cdd95616. The deviation register stays empty.
 
 ## Upstream refresh
 

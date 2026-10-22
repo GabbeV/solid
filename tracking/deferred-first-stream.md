@@ -33,3 +33,12 @@ kernel property retain their domains and budgets. There is no new quantified
 async-history theorem. The full public count becomes 3,720, including 302
 deferred histories; the configured mutation count becomes 514 (437 finite,
 77 kernel). The semantic deviation register remains empty.
+
+
+Admission is determined by the loading-window state on each actual compute
+pass. An unowned memo may re-derive on an imperative read after a synchronous
+first value; that second pass enters the still-unported open-window wrapper.
+A source scope probe confirms its existing p.then TypeError for a bare producer,
+while Bend refuses Unsupported88. This is the documented scope boundary and the
+same registered upstream bug, not a successful in-profile comparison or a new
+workaround. These exploratory probes do not increase the 108-history count.

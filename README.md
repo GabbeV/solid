@@ -66,9 +66,10 @@ pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `cdd95616` (declares rc.17), matching `next` checked
-on 2026-10-22. [The integration review](tracking/reviews/solid-cdd95616.md)
-ports #4217's landed-frame re-derivation barrier and source size refactors.
+The reviewed Solid pin is now `1c0ff9f8` (declares rc.17), matching `next` checked
+on 2026-10-22. [The integration review](tracking/reviews/solid-1c0ff9f8.md)
+reviews the later store-only #4216 update; the preceding integration ports
+#4217's landed-frame re-derivation barrier and core size refactors.
 The `from` and `onSupersede` protocols remain explicit omissions. Three upstream
 bugs retain isolated repros and candidate patches in [the issue register](tracking/upstream-issues.json).
 No issue/PR has been filed and no workaround is installed. The complete pre-rebase

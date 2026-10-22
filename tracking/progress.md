@@ -3,7 +3,7 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is cdd95616 (declares rc.17). The latest integration ports merged fallback retention
+is 1c0ff9f8 (declares rc.17). The latest integration ports merged fallback retention
 and cleanup continuation, retaining the prior checkpoint at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -397,3 +397,11 @@ and first-load until/refresh. Refetch wrapping remains an explicit omission.
 The configured negative corpus is 514; the new ordinary-async-return variant
 compiles and is rejected, and the entire corpus is rerun in two disjoint shards.
 No old theorem domain/budget changed and no workaround is active.
+
+
+A final source-only refresh to 1c0ff9f8 integrates #4216's unported store update.
+All non-store sources and Bend runtime files remain identical to the verified
+stream checkpoint. Native validation passes 337 files /5,521 tests. The 514
+compiled negative receipt retains its cdd95616 reference pin; latest-pin full
+public/alignment/kernel checks are recorded separately. No store implementation
+or new theorem is claimed by this refresh.

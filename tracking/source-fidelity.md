@@ -1,6 +1,8 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid cdd95616 (declares rc.17), matching fetched next on 2026-10-22.
+Current pin: Solid 1c0ff9f8 (declares rc.17), matching fetched next on 2026-10-22.
+[The latest source-only refresh](reviews/solid-1c0ff9f8.md) changes only unported
+store code and documentation; non-store source and Bend runtime are unchanged.
 [The latest integration](reviews/solid-cdd95616.md) ports the landing release
 barrier and removes obsolete status forwarding in source order. It retains all
 previous theorem domains/budgets. The preceding refresh added from/onSupersede as

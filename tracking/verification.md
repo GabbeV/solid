@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid cdd95616857ef1d54f3e2ec88a87ba6ca40de765 (declares rc.17); Bend
+Pins: Solid 1c0ff9f82ceccf99f11cf1dc1e27eae5feb0c103 (declares rc.17); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -434,3 +434,12 @@ async theorem is introduced. The complete data/previous proof domains and step
 budgets stand. The configured negative corpus is 514 (437 finite, 77 kernel);
 its final stream receipt records the fresh compiled run, excluding resources
 and compiler errors from useful rejection.
+
+
+The final source-only 1c0ff9f8 refresh changes two unported store modules and two
+documents; all non-store source files and all Bend runtime/representation files
+are unchanged from 84ae521. Its native package passes 337 files /5,521 tests,
+with two expected failures and two skips, all JS tiers and source declarations.
+The complete 514-variant negative receipt intentionally retains cdd95616 as its
+native reference. Latest-pin paired/alignment/kernel revalidation is recorded
+separately in reviews/solid-1c0ff9f8-validation.json.

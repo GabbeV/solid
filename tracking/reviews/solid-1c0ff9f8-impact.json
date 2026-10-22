@@ -1,0 +1,839 @@
+{
+  "baseline": {
+    "repository": "https://github.com/solidjs/solid",
+    "commit": "cdd95616857ef1d54f3e2ec88a87ba6ca40de765",
+    "branch": "next",
+    "version": "2.0.0-rc.17"
+  },
+  "candidate": {
+    "path": "/workspace/solid-next-1c0ff9f8/packages/signals/src",
+    "kind": "local working-tree snapshot; commit and cleanliness not asserted"
+  },
+  "scope": "signals src/**/*.ts; separately review tests, documentation, build conditions and initialization reachability",
+  "evidence": "Correspondence and TS parity require review/revalidation. Existing Bend proofs remain about their pinned program, not this candidate.",
+  "deviationsToReview": [],
+  "changedFiles": [
+    {
+      "file": "store/reconcile.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "2b8a088a7846121cd851c6ff64bea30bacbdc99e9203bb4d18f313f283843bd9",
+      "afterSha256": "aea4411eceab2309ba8bbc769410845c0529d7055b29ef3b1643fee09844c28e",
+      "changedUnits": [
+        {
+          "key": "store/reconcile.ts:applyAdopt",
+          "change": "changed",
+          "before": [
+            {
+              "start": 94,
+              "end": 286
+            }
+          ],
+          "after": [
+            {
+              "start": 92,
+              "end": 273
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 54,
+            "after": 54,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/reconcile.ts:descend",
+          "change": "changed",
+          "before": [
+            {
+              "start": 293,
+              "end": 314
+            }
+          ],
+          "after": [
+            {
+              "start": 288,
+              "end": 325
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 8,
+            "after": 14,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/reconcile.ts:reconcileState",
+          "change": "changed",
+          "before": [
+            {
+              "start": 45,
+              "end": 89
+            }
+          ],
+          "after": [
+            {
+              "start": 45,
+              "end": 87
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 14,
+            "after": 14,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/store.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "a0d6202b7f11e1b3b84fb90d6e0c8f53b252b951d77704ff6cae142c8fa00ea2",
+      "afterSha256": "34f8f31cd6be0f020e9638830d5d3acf1b8865100b1701cc6ad218742a142f34",
+      "changedUnits": [
+        {
+          "key": "store/store.ts:adoptChild",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1648,
+              "end": 1676
+            }
+          ],
+          "after": [
+            {
+              "start": 1629,
+              "end": 1657
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 3,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:adoptPB",
+          "change": "changed",
+          "before": [
+            {
+              "start": 792,
+              "end": 827
+            }
+          ],
+          "after": [
+            {
+              "start": 790,
+              "end": 825
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 8,
+            "after": 8,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:changedBetween",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1703,
+              "end": 1731
+            }
+          ],
+          "after": [
+            {
+              "start": 1680,
+              "end": 1708
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 5,
+            "after": 5,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:containerEquals",
+          "change": "changed",
+          "before": [
+            {
+              "start": 301,
+              "end": 303
+            }
+          ],
+          "after": [
+            {
+              "start": 301,
+              "end": 303
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:deep",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2558,
+              "end": 2605
+            }
+          ],
+          "after": [
+            {
+              "start": 2524,
+              "end": 2571
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 12,
+            "after": 12,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:defineProperty",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2286,
+              "end": 2303
+            }
+          ],
+          "after": [
+            {
+              "start": 2254,
+              "end": 2270
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 8,
+            "after": 7,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:deleteProperty",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2305,
+              "end": 2331
+            }
+          ],
+          "after": [
+            {
+              "start": 2272,
+              "end": 2297
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 5,
+            "after": 5,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:draftServe",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1456,
+              "end": 1462
+            }
+          ],
+          "after": [
+            {
+              "start": 1443,
+              "end": 1449
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 2,
+            "after": 2,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:familyAhead",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1679,
+              "end": 1685
+            }
+          ],
+          "after": [
+            {
+              "start": 1660,
+              "end": 1662
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:flattenOverlay",
+          "change": "changed",
+          "before": [
+            {
+              "start": 767,
+              "end": 780
+            }
+          ],
+          "after": [
+            {
+              "start": 757,
+              "end": 760
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 4,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:foldTarget",
+          "change": "changed",
+          "before": [
+            {
+              "start": 968,
+              "end": 1043
+            }
+          ],
+          "after": [
+            {
+              "start": 965,
+              "end": 1030
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 19,
+            "after": 18,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:get",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1989,
+              "end": 2155
+            }
+          ],
+          "after": [
+            {
+              "start": 1966,
+              "end": 2132
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 43,
+            "after": 43,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:getHasNode",
+          "change": "changed",
+          "before": [
+            {
+              "start": 435,
+              "end": 448
+            }
+          ],
+          "after": [
+            {
+              "start": 430,
+              "end": 442
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 3,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:getNode",
+          "change": "changed",
+          "before": [
+            {
+              "start": 386,
+              "end": 433
+            }
+          ],
+          "after": [
+            {
+              "start": 386,
+              "end": 428
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 5,
+            "after": 5,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:has",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2157,
+              "end": 2185
+            }
+          ],
+          "after": [
+            {
+              "start": 2134,
+              "end": 2162
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 10,
+            "after": 10,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:materializePB",
+          "change": "changed",
+          "before": [
+            {
+              "start": 675,
+              "end": 691
+            }
+          ],
+          "after": [
+            {
+              "start": 669,
+              "end": 681
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 7,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:notifyWrites",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1141,
+              "end": 1284
+            }
+          ],
+          "after": [
+            {
+              "start": 1128,
+              "end": 1271
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 42,
+            "after": 42,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:optRead",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1912,
+              "end": 1914
+            }
+          ],
+          "after": [
+            {
+              "start": 1889,
+              "end": 1891
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:overlayOnto",
+          "change": "added",
+          "before": [],
+          "after": [
+            {
+              "start": 764,
+              "end": 778
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 4,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:overlayRebuilds",
+          "change": "changed",
+          "before": [
+            {
+              "start": 661,
+              "end": 672
+            }
+          ],
+          "after": [
+            {
+              "start": 655,
+              "end": 666
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 5,
+            "after": 5,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:privatizeCommitted",
+          "change": "changed",
+          "before": [
+            {
+              "start": 733,
+              "end": 748
+            }
+          ],
+          "after": [
+            {
+              "start": 723,
+              "end": 738
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 3,
+            "after": 4,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:readSource",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1500,
+              "end": 1607
+            }
+          ],
+          "after": [
+            {
+              "start": 1487,
+              "end": 1588
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 22,
+            "after": 22,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:releaseSlot",
+          "change": "changed",
+          "before": [
+            {
+              "start": 315,
+              "end": 335
+            }
+          ],
+          "after": [
+            {
+              "start": 315,
+              "end": 335
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 7,
+            "after": 7,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:reportReplacedContainers",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1061,
+              "end": 1109
+            }
+          ],
+          "after": [
+            {
+              "start": 1048,
+              "end": 1096
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 14,
+            "after": 14,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:scanAccessorsOnce",
+          "change": "changed",
+          "before": [
+            {
+              "start": 629,
+              "end": 644
+            }
+          ],
+          "after": [
+            {
+              "start": 623,
+              "end": 638
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 4,
+            "after": 4,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:set",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2232,
+              "end": 2284
+            }
+          ],
+          "after": [
+            {
+              "start": 2209,
+              "end": 2252
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 14,
+            "after": 12,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:storeHasFamily",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2506,
+              "end": 2509
+            }
+          ],
+          "after": [
+            {
+              "start": 2472,
+              "end": 2475
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:storeHasOptimisticFamily",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2512,
+              "end": 2515
+            }
+          ],
+          "after": [
+            {
+              "start": 2478,
+              "end": 2481
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:storeIsShallow",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2500,
+              "end": 2503
+            }
+          ],
+          "after": [
+            {
+              "start": 2466,
+              "end": 2469
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 0,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:visibleDescriptor",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2540,
+              "end": 2551
+            }
+          ],
+          "after": [
+            {
+              "start": 2506,
+              "end": 2517
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 3,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:visibleKeys",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2520,
+              "end": 2538
+            }
+          ],
+          "after": [
+            {
+              "start": 2486,
+              "end": 2504
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 6,
+            "after": 6,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:wrap",
+          "change": "changed",
+          "before": [
+            {
+              "start": 218,
+              "end": 237
+            }
+          ],
+          "after": [
+            {
+              "start": 218,
+              "end": 237
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 4,
+            "after": 4,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    }
+  ]
+}
