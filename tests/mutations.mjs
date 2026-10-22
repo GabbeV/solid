@@ -5,6 +5,18 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['lane leaked seam reveals anyway','runtime/core.bend','leaked, _ => B.Bundle{w, True{}}','False{}, _ => B.Bundle{w, True{}}','tests/lane-lifecycle-alignment.mjs','laneSeam'],
+  ['lane committed effect compares a scalar value','runtime/core.bend','B.choose(~Machine, effect, _ => Machine{w, rest, stack}','B.choose(~Machine, False{}, _ => Machine{w, rest, stack}','tests/lane-lifecycle-alignment.mjs','dissolveCommitted'],
+  ['lane end skips reverse member scan','runtime/core.bend','B.length(Nat, R.LaneState.live(R.World.laneState(w)))','0n','tests/proof-properties.mjs','endLanes','lane-lifecycle'],
+  ['lane confirmation drops its staged answer','runtime/core.bend','R.Present{value}','R.Empty{}','tests/lane-lifecycle-alignment.mjs','supersedeEnd'],
+  ['lane correction keeps a hidden held frame','runtime/core.bend','U32.or(K.CONFIG_STAGED(), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME()))','K.CONFIG_STAGED()','tests/lane-lifecycle-alignment.mjs','dispatch'],
+  ['lane correction drops shown queues','runtime/core.bend','Bool.or(Nat.is_eq(into, 0n), Bool.and(R.Transaction.shown(B.transaction(w, lane)), Bool.not(R.Transaction.held(B.transaction(w, lane)))))','Nat.is_eq(into, 0n)','tests/lane-lifecycle-alignment.mjs','dissolveNodes'],
+  ['lane dissolution leaves a stale live identity','runtime/core.bend','X.removeIdentity(R.LaneState.live(state), lane)','R.LaneState.live(state)','tests/lane-lifecycle-alignment.mjs','dissolveLane'],
+  ['lane reveal promotes staging over a guess','runtime/core.bend','Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))','True{}','tests/lane-lifecycle-alignment.mjs','laneSeamNodes'],
+  ['lane correction forgets to publish shown inputs','runtime/core.bend','K.CONFIG_INPUTS_PUBLISHED())))), rest, stack}','0)))), rest, stack}','tests/lane-lifecycle-alignment.mjs','dispatch'],
+  ['lane dissolution contains its raw comparator throw','runtime/core.bend','_ => rawEquals(w, DissolveCompared{id} <> rest','_ => isSame(w, DissolveCompared{id} <> rest','tests/lane-lifecycle-callbacks.mjs','dissolveCommitted'],
+  ['lane reveal drops parked cleanup','runtime/core.bend','_ => OwnerTasks{[O.Enter{id, False{}, True{}}]} <> ending','_ => ending','tests/lane-lifecycle-callbacks.mjs','laneSeamNodes'],
+  ['lane hidden correction drops parked cleanup','runtime/core.bend','_ => OwnerTasks{[O.Enter{id, False{}, True{}}]} <> ending','_ => ending','tests/lane-lifecycle-callbacks.mjs','dissolveDerivation'],
   ['raw lane comparator incorrectly contains errors','runtime/core.bend','R.Undefined{}} <> rest, stack})','R.Undefined{}} <> EqualityCatch{id, stack} <> rest, stack})','tests/lane-raw-comparators.mjs','rawEquals'],
   ['truth comparator inherits status catch','runtime/core.bend','_ => rawEquals(w, rest, stack, id,','_ => isSame(w, rest, stack, id,','tests/lane-raw-comparators.mjs','truthNode'],
   ['held finality comparator inherits status catch','runtime/core.bend','_ => rawEquals(w, HeldNotFinalCompared{} <> rest, stack, id,','_ => isSame(w, HeldNotFinalCompared{} <> rest, stack, id,','tests/lane-raw-comparators.mjs','heldNotFinal'],

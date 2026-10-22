@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,158 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 296; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 308; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -255,3 +255,9 @@ functions, 3,404 native helper/provenance/comparator controls and eight scoped
 quantified properties. This advances the active-engine dependency path while
 public-history and closed-regression counts stay unchanged. Raw comparisons
 retain source exception policy; no workaround is active. See lane-reads.md.
+
+The next overnight checkpoint adds four lifecycle source functions and their
+commit/cleanup/comparator return points, 3,578 native controls and five scoped
+properties. Confirmation, correction, reveal and nested teardown now execute
+internally. The remaining application/correction/public-hook work is explicit;
+this does not change public admission or claim complete lane correctness.

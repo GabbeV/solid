@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3158 differential histories, 296 rejected compiled mutations,
+Current verification: 3158 differential histories, 308 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -16,13 +16,22 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
+## Lane lifecycle dependencies
+
+[Lane lifecycle](lane-lifecycle.md) adds supersede, live dissolution, reveal and
+nested end paths through existing commit/owner continuations. 3,496 native
+helper programs, 82 callback controls and five quantified properties check
+this layer. The cumulative mutation count is 308. Lane correction judgment,
+application and public hook/window integration remain unfinished; public
+history/closed-law counts stay unchanged and no deviation is active.
+
 ## Lane reads and raw truth comparisons
 
 [Lane reads](lane-reads.md) adds source laneRead, stale/answered, recursive truth,
 truthRead/truthConfirmed and heldNotFinal. Raw comparator return/throw behavior
 stays separate from isSame containment. 2,618 native helper programs, 720 question/
 provenance controls, 66 comparator controls and eight quantified properties check
-this dependency. Fourteen new mutations bring the cumulative total to 296.
+this dependency. Fourteen new mutations brought the cumulative total to 296 at that checkpoint.
 Public hooks/windows and lane application/reveal/correction/dissolution remain
 unfinished; no public histories or semantic deviations were added.
 

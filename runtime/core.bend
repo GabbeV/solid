@@ -153,6 +153,17 @@ type Task is Data:
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
   EqualityCatch{id: Nat, saved: List<&2, R.Value>}
+  SupersedeAfter{id: Nat, lane: Nat, parent: Nat, value: R.Value}
+  DissolveLane{lane: Nat, into: Nat, except: Nat}
+  DissolveNodes{lane: Nat, into: Nat, except: Nat, index: Nat}
+  DissolveCommitted{id: Nat, effect: Bool, shown: R.Slot}
+  DissolveCompared{id: Nat}
+  DissolveShown{id: Nat, effect: Bool}
+  DissolveHidden{id: Nat}
+  LaneSeamNodes{lane: Nat, index: Nat}
+  LaneSeamCleared{id: Nat}
+  EndLanes{parent: Nat}
+  EndLanesLoop{parent: Nat, remaining: Nat}
   TruthNode{id: Nat}
   TruthDeps{edge: Nat}
   TruthAfterDep{edge: Nat}
@@ -3051,6 +3062,159 @@ def mapRemoved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +n
     case node <> tail:
       Machine{w, OwnerTasks{[O.Enter{node, True{}, False{}}]} <> MapRemoved{tail} <> rest, stack}
 
+# lanes.ts:supersede. The optional folded store echo hook is outside this
+# ordinary-node profile; authoritative confirmation uses the installed hook.
+def supersedeEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +parent: Nat, +value: R.Value) -> Machine:
+  +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
+  Machine{X.joinFuture(w, parent), rest, stack}
+
+
+def supersedeAfter(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lane: Nat, +parent: Nat, +value: R.Value) -> Machine:
+  +w = B.choose(~R.World, R.Transaction.shown(B.transaction(w, lane)),
+    _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}))), _ => w)
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS()))))
+  +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Empty{}))
+  +w = X.holdNode(w, id, parent)
+  +w = B.choose(~R.World, Nat.is_ne(R.Node.subs(B.node(w, id)), 0n), _ => S.insertSubs(w, id), _ => w)
+  supersedeEnd(w, rest, stack, id, parent, value)
+
+# lanes.ts:dissolveLane. Live l._nodes length and the next index survive every
+# commit/disposal/comparator return. shown is a Slot because NOT_PENDING differs
+# from a successful undefined answer. Source locals effect/guess/slot/latest are
+# captured before clearing the lane, not recomputed after a user callback.
+
+def supersede(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +changed: Bool) -> Machine:
+  +pair = X.txOf(w, id)
+  +w = B.first(R.World, Nat, pair)
+  +lane = B.second(R.World, Nat, pair)
+  +parent = R.Transaction.parent(B.transaction(w, lane))
+  +pair = X.resolveTx(w, B.choose(~Nat, Nat.is_eq(parent, 0n), _ => lane, _ => parent))
+  +w = B.first(R.World, Nat, pair)
+  +parent = B.second(R.World, Nat, pair)
+  B.choose(~Machine, changed,
+    _ => Machine{w, DissolveLane{lane, parent, id} <> SupersedeAfter{id, lane, parent, value} <> rest, stack},
+    _ =>
+      +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD())))
+      +w = B.choose(~R.World, R.World.truthConfirmedHook(w), _ => Truth.truthConfirmed(w, lane), _ => w)
+      supersedeEnd(w, rest, stack, id, parent, value))
+
+
+def dissolveLane(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +into: Nat, +except: Nat) -> Machine:
+  +state = R.World.laneState(w)
+  +w = R.World.with_laneState(w, R.LaneState.with_live(state, X.removeIdentity(R.LaneState.live(state), lane)))
+  +w = Lanes.unlink(w, lane)
+  +verdict = R.Transaction.verdict(B.transaction(w, lane))
+  +w = B.choose(~R.World, Nat.is_ne(verdict, 0n), _ => B.store_transaction(w, lane, R.Transaction.with_verdict(B.transaction(w, lane), 0n)), _ => w)
+  +ending = {DissolveNodes{lane, into, except, 0n} <> rest : List<&2, Task>}
+  todo = B.choose(~List<&2, Task>, Bool.and(Nat.is_ne(verdict, 0n), B.contains(R.LaneState.live(R.World.laneState(w)), verdict)), _ => DissolveLane{verdict, 0n, 0n} <> ending, _ => ending)
+  Machine{w, todo, stack}
+
+
+def dissolveCommitted(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +effect: Bool, +shown: R.Slot) -> Machine:
+  B.choose(~Machine, effect, _ => Machine{w, rest, stack},
+    _ =>
+      +n = B.node(w, id)
+      +dirty = Bool.or(B.has(R.Node.flags(n), U32.or(K.REACTIVE_IN_HEAP(), U32.or(K.REACTIVE_DIRTY(), K.REACTIVE_CHECK()))), B.has(R.Node.status(n), K.STATUS_PENDING()))
+      +w = B.choose(~R.World, dirty, _ => B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_INPUTS_PUBLISHED()))), _ => w)
+      B.choose(~Machine, B.present(shown),
+        _ => rawEquals(w, DissolveCompared{id} <> rest, stack, id, B.selected(shown, R.Undefined{}), R.Node.value(B.node(w, id))),
+        _ => Machine{w, rest, stack}))
+
+
+def dissolveDerivation(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lane: Nat, +effect: Bool, +shown: R.Slot) -> Machine:
+  +w = B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n))
+  +w = B.choose(~R.World, effect, _ => w,
+    _ =>
+      +w = B.choose(~R.World, Bool.and(B.present(shown), R.Transaction.shown(B.transaction(w, lane))), _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), shown)), _ => w)
+      B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()),
+        _ => H.enqueueSub(B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), id), _ => w))
+  B.choose(~Machine, R.Transaction.shown(B.transaction(w, lane)),
+    _ => Machine{w, CommitPending{id} <> DissolveShown{id, effect} <> rest, stack},
+    _ =>
+      +ending = {DissolveHidden{id} <> rest : List<&2, Task>}
+      todo = B.choose(~List<&2, Task>, Bool.or(Nat.is_ne(R.NodeExtension.pendingFirstChild(B.extension(w, id)), 0n), Bool.not(B.noDisposal(R.NodeExtension.pendingDisposal(B.extension(w, id))))), _ => OwnerTasks{[O.Enter{id, False{}, True{}}]} <> ending, _ => ending)
+      Machine{w, todo, stack})
+
+# lanes.ts:laneSeam; blocked retains the shared lane-aware judgment engine.
+
+def dissolveNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +into: Nat, +except: Nat, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, lane)))),
+    _ =>
+      +w = B.choose(~R.World, Bool.or(Nat.is_eq(into, 0n), Bool.and(R.Transaction.shown(B.transaction(w, lane)), Bool.not(R.Transaction.held(B.transaction(w, lane))))),
+        _ => S.releaseQueues(w, lane),
+        _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(R.Transaction.with_renderQueue(B.transaction(w, lane), []), [])))
+      Machine{w, rest, stack},
+    _ =>
+      +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, lane)), index, 0n)
+      +ending = {DissolveNodes{lane, into, except, 1n+index} <> rest : List<&2, Task>}
+      B.choose(~Machine, Bool.or(Nat.is_eq(id, except), Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), lane)), _ => Machine{w, ending, stack},
+        _ =>
+          +effect = B.effect(R.Node.kind(B.node(w, id)))
+          +guess = B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())
+          +slot = R.NodeExtension.lane(B.extension(w, id))
+          +shown = B.choose(~R.Slot, Bool.and(R.Transaction.shown(B.transaction(w, lane)), Bool.not(effect)), _ => slot, _ => R.Present{R.Node.value(B.node(w, id))})
+          +latest = Truth.laneValueOf(w, id)
+          +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Empty{}))
+          +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS()))))
+          B.choose(~Machine, Nat.is_eq(into, 0n),
+            _ =>
+              +w = B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n))
+              +w = B.choose(~R.World, Bool.and(Bool.not(effect), Bool.not(guess)), _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{latest})), _ => w)
+              Machine{w, CommitPending{id} <> DissolveCommitted{id, effect, shown} <> ending, stack},
+            _ => B.choose(~Machine, guess,
+              _ =>
+                +w = B.choose(~R.World, B.present(R.Node.pending(B.node(w, id))), _ => w, _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{R.Node.value(B.node(w, id))})))
+                +w = B.choose(~R.World, R.Transaction.shown(B.transaction(w, lane)), _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), B.selected(slot, R.NotPendingToken{}))), _ => w)
+                Machine{S.insertSubs(X.holdNode(w, id, into), id), ending, stack},
+              _ => dissolveDerivation(w, ending, stack, id, lane, effect, shown)))))
+
+
+def laneSeam(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +leaked: Bool) -> Machine:
+  +pair = B.choose(~B.Bundle<R.World, Bool>, leaked, _ => B.Bundle{w, True{}}, _ => X.blocked(w, lane))
+  +w = B.first(R.World, Bool, pair)
+  B.choose(~Machine, B.second(R.World, Bool, pair),
+    _ => Machine{B.store_transaction(w, lane, R.Transaction.with_held(B.transaction(w, lane), True{})), rest, stack},
+    _ =>
+      +w = B.store_transaction(w, lane, R.Transaction.with_shown(R.Transaction.with_held(B.transaction(w, lane), False{}), True{}))
+      Machine{S.reruns(w, lane), LaneSeamNodes{lane, 0n} <> rest, stack})
+
+
+def laneSeamNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, lane)))), _ => Machine{S.releaseQueues(w, lane), rest, stack},
+    _ =>
+      +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, lane)), index, 0n)
+      +w = B.choose(~R.World, B.has(R.Node.flags(B.node(w, id)), Lanes.LEFT_SHOWN()),
+        _ => S.insertSubs(B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), Lanes.LEFT_SHOWN()))), id), _ => w)
+      +ending = {LaneSeamNodes{lane, 1n+index} <> rest : List<&2, Task>}
+      B.choose(~Machine, Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), lane), _ => Machine{w, ending, stack},
+        _ =>
+          +w = B.choose(~R.World, Bool.and(Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())), Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), B.present(R.Node.pending(B.node(w, id))))),
+            _ =>
+              +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Node.pending(B.node(w, id))))
+              B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{})), _ => w)
+          +ending = {LaneSeamCleared{id} <> ending : List<&2, Task>}
+          todo = B.choose(~List<&2, Task>, Bool.or(Nat.is_ne(R.NodeExtension.pendingFirstChild(B.extension(w, id)), 0n), Bool.not(B.noDisposal(R.NodeExtension.pendingDisposal(B.extension(w, id))))), _ => OwnerTasks{[O.Enter{id, False{}, True{}}]} <> ending, _ => ending)
+          Machine{w, todo, stack}))
+
+# lanes.ts:endLanes scans the current live array backwards, nested lanes first.
+
+def endLanes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat) -> Machine:
+  Machine{w, EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack}
+
+
+def endLanesLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +remaining: Nat) -> Machine:
+  match remaining:
+    case 0n:
+      Machine{w, rest, stack}
+    case 1n+ +index:
+      +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
+      +pair = X.resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+      +w = B.first(R.World, Nat, pair)
+      +ending = {EndLanesLoop{parent, index} <> rest : List<&2, Task>}
+      B.choose(~Machine, Nat.is_eq(B.second(R.World, Nat, pair), parent),
+        _ => Machine{w, EndLanes{lane} <> DissolveLane{lane, 0n, 0n} <> ending, stack},
+        _ => Machine{w, ending, stack})
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case MapInput{list, fallback, mapper} <> rest:
@@ -3328,6 +3492,32 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       # Failed constructors never bind/return that setter function.
       +w = B.event(w, R.SetterBound{signal})
       Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case SupersedeAfter{id, lane, parent, value} <> rest:
+      supersedeAfter(w, rest, stack, id, lane, parent, value)
+    case DissolveLane{lane, into, except} <> rest:
+      dissolveLane(w, rest, stack, lane, into, except)
+    case DissolveNodes{lane, into, except, index} <> rest:
+      dissolveNodes(w, rest, stack, lane, into, except, index)
+    case DissolveCommitted{id, effect, shown} <> rest:
+      dissolveCommitted(w, rest, stack, id, effect, shown)
+    case DissolveCompared{+id} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{B.choose(~R.World, B.truth(value), _ => w, _ => S.insertSubs(w, id)), rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case DissolveShown{+id, effect} <> rest:
+      Machine{B.choose(~R.World, effect, _ => w, _ => B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED())))), rest, stack}
+    case DissolveHidden{+id} <> rest:
+      Machine{B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_STAGED(), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME()))))), rest, stack}
+    case LaneSeamNodes{lane, index} <> rest:
+      laneSeamNodes(w, rest, stack, lane, index)
+    case LaneSeamCleared{+id} <> rest:
+      Machine{B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_STAGED()))), rest, stack}
+    case EndLanes{parent} <> rest:
+      endLanes(w, rest, stack, parent)
+    case EndLanesLoop{parent, remaining} <> rest:
+      endLanesLoop(w, rest, stack, parent, remaining)
     case TruthNode{id} <> rest:
       truthNode(w, rest, stack, id)
     case TruthDeps{+edge} <> +rest:

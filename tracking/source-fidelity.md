@@ -17,6 +17,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane lifecycle callback returns
+
+[lane-lifecycle.md](lane-lifecycle.md) maps supersede, dissolveLane, laneSeam and
+nested endLanes with live member scans, captured screen values, raw comparisons,
+actual commit/disposal continuations and source queue retention. Native helpers,
+callback controls and five scoped properties support it. Public engine wiring,
+store hooks, application and correction judgment remain unfinished.
+
 ## Lane reads and authoritative truth
 
 [lane-reads.md](lane-reads.md) maps source branch order, exact provenance,

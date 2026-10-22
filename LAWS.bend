@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
 import ./proof/lane-read-laws.bend as LaneReadLaws
 import ./proof/cleanup-policy.bend as CleanupPolicy
@@ -1413,3 +1414,41 @@ law pending_lane_read_keeps_fallthrough_token:
   for +id: Nat
   for +lane: Nat
   {Core.laneReadEnter(w, rest, stack, reader, id, lane, False{}, K.STATUS_PENDING()) == Core.Machine{Lanes.enterLane(w, lane, reader), rest, R.NotPendingToken{} <> stack} : Core.Machine}
+
+law lane_leaked_seam_holds_without_reveal:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +lane: Nat
+  {Core.laneSeam(w, rest, stack, lane, True{}) == Core.Machine{B.store_transaction(w, lane, R.Transaction.with_held(B.transaction(w, lane), True{})), rest, stack} : Core.Machine}
+
+law lane_committed_effect_skips_value_comparison:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +shown: R.Slot
+  {Core.dissolveCommitted(w, rest, stack, id, True{}, shown) == Core.Machine{w, rest, stack} : Core.Machine}
+
+law lane_end_starts_live_reverse_scan:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +parent: Nat
+  {Core.endLanes(w, rest, stack, parent) == Core.Machine{w, Core.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack} : Core.Machine}
+
+law lane_confirmation_stages_before_join:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +parent: Nat
+  for +value: R.Value
+  {Core.supersedeEnd(w, rest, stack, id, parent, value) == Core.Machine{LaneJudgment.joinFuture(B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), parent), rest, stack} : Core.Machine}
+
+law lane_hidden_correction_clears_frame_flags:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  {Core.dispatch(w, Core.DissolveHidden{id} <> rest, stack) == Core.Machine{B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_STAGED(), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME()))))), rest, stack} : Core.Machine}

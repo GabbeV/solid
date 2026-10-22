@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
 import ./proof/lane-read-laws.bend as LaneReadLaws
 import ./proof/cleanup-policy.bend as CleanupPolicy
@@ -712,3 +713,18 @@ def Laws.plain_truth_preserves_world_and_operands(w, rest, stack, id, g, p, o):
 
 def Laws.pending_lane_read_keeps_fallthrough_token(w, rest, stack, reader, id, lane):
   LaneReadLaws.pendingLanePass(w, rest, stack, reader, id, lane)
+
+def Laws.lane_leaked_seam_holds_without_reveal(w, rest, stack, lane):
+  LaneLifecycle.leakedSeam(w, rest, stack, lane)
+
+def Laws.lane_committed_effect_skips_value_comparison(w, rest, stack, id, shown):
+  LaneLifecycle.effectCommit(w, rest, stack, id, shown)
+
+def Laws.lane_end_starts_live_reverse_scan(w, rest, stack, parent):
+  LaneLifecycle.reverseEndEntry(w, rest, stack, parent)
+
+def Laws.lane_confirmation_stages_before_join(w, rest, stack, id, parent, value):
+  LaneLifecycle.confirmationEnd(w, rest, stack, id, parent, value)
+
+def Laws.lane_hidden_correction_clears_frame_flags(w, rest, stack, id):
+  LaneLifecycle.hiddenCorrection(w, rest, stack, id)

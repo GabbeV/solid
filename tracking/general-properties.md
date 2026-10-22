@@ -542,3 +542,12 @@ and pending lane-entry token with exact entered World/caller continuation.
 These eight quantified helper laws do not establish numerical-order semantics,
 arbitrary recursive truth progress or public lane lifecycle correctness. Native
 controls and exclusions are separate in [lane-reads.md](lane-reads.md).
+
+## Lane lifecycle boundaries
+
+[lane-lifecycle.bend](../proof/lane-lifecycle.bend) proves leaked-seam held-only
+mutation, effect-commit comparison refusal, live reverse-scan entry,
+confirmation stage-before-join and hidden correction flag clearing. These five
+quantified actual helper boundaries preserve World/caller fields and arbitrary
+payloads. Complete lane lifecycle, arbitrary callback mutation and progress
+remain open. See [lane-lifecycle.md](lane-lifecycle.md).

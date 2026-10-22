@@ -16071,16 +16071,24 @@
           "start": 388,
           "end": 420,
           "sha256": "d03763938c50ba1bc5e0f92c8755ba5b1cf49e8025dde839894cb3859f836bd6",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:supersede, supersedeAfter, supersedeEnd",
+            "status": "restricted",
+            "restrictions": "txOf/parent resolution, changed dissolution then live shown-slot copy, hold/notification, stage-before-join; installed truth confirmation retained. Store echo and observe hooks excluded. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+          }
         },
         {
           "key": "core/lanes.ts:dissolveLane",
           "start": 432,
           "end": 537,
           "sha256": "f006c74e403f18125d6aeecf1d9506f0a67593486f4528269e2d025689513ece",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:dissolveLane, dissolveNodes, dissolveDerivation, dissolveCommitted, DissolveCompared, DissolveShown, DissolveHidden",
+            "status": "restricted",
+            "restrictions": "Live removal/group unlink/nested verdict, captured shown/latest locals, actual commit/owner callback returns and raw comparison; source queue policy. Store covered hook excluded; finite shared machine fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+          }
         },
         {
           "key": "core/lanes.ts:laneRead",
@@ -16127,16 +16135,24 @@
           "start": 671,
           "end": 700,
           "sha256": "7163f3466073ea10bf5a3bc7d03f4d13a5fbebbb019a45f3239e247341716e85",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:laneSeam, laneSeamNodes, LaneSeamCleared",
+            "status": "restricted",
+            "restrictions": "Leaked/blocked short circuit, reruns, LEFT_SHOWN before member guard, nonguess staging, parked-frame disposal, live member continuation and queues. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+          }
         },
         {
           "key": "core/lanes.ts:endLanes",
           "start": 704,
           "end": 711,
           "sha256": "e5980bc65f5fb9b83d9ba7adea643f73eb913fd90cb77d02168e6dc69e7f2923",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:endLanes, endLanesLoop",
+            "status": "restricted",
+            "restrictions": "Live reverse scan, parent resolution, recursive nested teardown then dissolution. Well-formed acyclic lane parenting; finite shared fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+          }
         },
         {
           "key": "core/lanes.ts:lanesBlocked",
