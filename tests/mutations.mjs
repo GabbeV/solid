@@ -5,6 +5,26 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["affects omits mark count", "runtime/affects-scope.bend", "+w = M.mark(w, node)", "+w = w", "tests/affects.mjs", "register"],
+  ["affects drops ambient scope", "runtime/affects-scope.bend", "R.World.with_ambientMarks(w, B.append(Nat, R.World.ambientMarks(w), [node]))", "w", "tests/affects.mjs", "register"],
+  ["affects records action marks ambiently", "runtime/affects-scope.bend", "Nat.is_eq(t, 0n)", "True{}", "tests/mark-scopes-alignment.mjs", "register"],
+  ["affects omits declaration repoll", "runtime/affects-scope.bend", "M.repoll(w, node)", "w", "tests/affects.mjs", "register"],
+  ["affects omits schedule", "runtime/affects-scope.bend", "B.schedule(register(w, node))", "register(w, node)", "tests/affects.mjs", "affects"],
+  ["affects drops duplicate marks", "runtime/affects-scope.bend", "R.SomeIds{B.append(Nat, items, [node])}", "R.SomeIds{[node]}", "tests/affects.mjs", "push"],
+  ["affects omits release decrement", "runtime/affects-scope.bend", "+pair = M.unmark(w, node)", "+pair = M.unmark(M.mark(w, node), node)", "tests/affects.mjs", "releaseLoop"],
+  ["affects skips transaction release", "runtime/affects-scope.bend", "+w = release(w, nodes)", "+w = w", "tests/affects.mjs", "releaseTransactionValue"],
+  ["affects releases pending ambient marks", "runtime/affects-scope.bend", "B.has(R.Node.status(B.node(w, node)), K.STATUS_PENDING())", "False{}", "tests/affects.mjs", "inFlight"],
+  ["affects retains finished ambient marks", "runtime/affects-scope.bend", "+w = R.World.with_ambientMarks(w, take(kept, R.World.ambientMarks(w)))", "+w = w", "tests/affects.mjs", "ambientLoop"],
+  ["affects drops pending ambient marks", "runtime/affects-scope.bend", "1n+index, 1n+kept, done", "1n+index, kept, done", "tests/affects.mjs", "ambientLoop"],
+  ["affects omits parked transfer", "runtime/affects-scope.bend", "push(R.Transaction.marks(B.transaction(w, t)), node)", "R.Transaction.marks(B.transaction(w, t))", "tests/affects.mjs", "parkAmbient"],
+  ["affects ignores parked scope", "runtime/affects-scope.bend", "Nat.is_ne(parked, 0n)", "False{}", "tests/affects.mjs", "releaseAmbient"],
+  ["affects landing skips scope release", "runtime/core.bend", "MarkScope.releaseTransaction(w, t)", "w", "tests/affects.mjs", "landPrepared"],
+  ["affects settle skips ambient release", "runtime/core.bend", "MarkScope.releaseAmbient(w, live)", "w", "tests/affects.mjs", "completeSettle"],
+  ["affects key receives target declaration", "runtime/core.bend", "MarkScope.affects(w, target)", "MarkScope.affects(w, key)", "tests/affects.mjs", "dispatch"],
+  ["affects kernel empty release clears schedule", "runtime/affects-scope.bend", "releaseLoop(1n+B.length(Nat, nodes), w, nodes, 0n)", "releaseLoop(1n+B.length(Nat, nodes), R.World.with_scheduled(w, False{}), nodes, 0n)", "tests/proof-properties.mjs", "release", "affects-scope"],
+  ["affects kernel absent release changes scope", "runtime/affects-scope.bend", "case R.NoIds{}:\n      w", "case R.NoIds{}:\n      R.World.with_scheduled(w, False{})", "tests/proof-properties.mjs", "releaseTransactionValue", "affects-scope"],
+  ["affects kernel complete declaration returns a value", "runtime/core.bend", "Machine{MarkScope.affects(w, target), rest, R.Undefined{} <> tail}", "Machine{MarkScope.affects(w, target), rest, R.Number{0n} <> tail}", "tests/proof-properties.mjs", "dispatch", "affects-program"],
+
   ["window read ignores the active dispatcher", "runtime/core.bend", "R.VerdictState.dispatch(R.World.verdictState(w))", "False{}", "tests/verdict-windows.mjs", "readPrepared"],
   ["window latest skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 2)", "+w = w", "tests/verdict-windows.mjs", "latestWindow"],
   ["window probe skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 1)", "+w = w", "tests/verdict-windows.mjs", "pendingWindow"],

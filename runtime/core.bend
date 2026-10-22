@@ -6,6 +6,7 @@ import ./truth-state.bend as Truth
 import ./lanes-state.bend as Lanes
 import ./verdict-state.bend as Verdict
 import ./affects-marks.bend as Marks
+import ./affects-scope.bend as MarkScope
 import ./arrays.bend as Arrays
 import ./map.bend as Maps
 import ./keyed-map.bend as KeyedMap
@@ -245,6 +246,8 @@ type Task is Data:
   ContextGet{key: Nat}
   ContextSet{key: Nat}
   ReadNode{id: Nat}
+  AffectsTarget{key: R.Expr, previous: R.Value}
+  AffectsApply{target: R.Value}
   LatestEnd{latest: Bool, dispatch: Bool, saved: List<&2, R.Value>}
   ProbeEnd{probing: Bool, found: Bool, dispatch: Bool, saved: List<&2, R.Value>}
   VerdictRaiseHeight{source: Nat, reader: Nat}
@@ -815,6 +818,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{callee, prev} <> FlushArgument{} <> rest, stack}
     case R.FlushNow{}:
       publicFlush(w, rest, R.Undefined{} <> stack)
+    case R.Affects{target, key}:
+      Machine{w, Evaluate{target, prev} <> AffectsTarget{key, prev} <> rest, stack}
     case R.Latest{body}:
       latestWindow(w, rest, stack, body, prev)
     case R.IsPending{body}:
@@ -2839,8 +2844,7 @@ def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -
 
 def landPrepared(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
   +w = S.reruns(w, t)
-  +w = B.choose(~R.World, B.ok(w),
-    _ => B.choose(~R.World, X.noMarks(R.Transaction.marks(B.transaction(w, t))), _ => w, _ => R.World.with_fault(w, R.Unsupported{10n})), _ => w)
+  +w = B.choose(~R.World, B.ok(w), _ => MarkScope.releaseTransaction(w, t), _ => w)
   Machine{w, LandNodes{frame, t, 0n} <> rest, stack}
 
 # Reverse scan restarts after each landing, since its commits can remove a
@@ -2893,6 +2897,7 @@ def completeSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, 
       +w = B.first(R.World, Nat, pair)
       +live = B.second(R.World, Nat, pair)
       +parked = Nat.is_ne(live, 0n)
+      +w = MarkScope.releaseAmbient(w, live)
       +w = B.choose(~R.World, parked,
         _ =>
           +w = B.store_transaction(w, live, R.Transaction.with_renderQueue(B.transaction(w, live), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)))
@@ -4459,6 +4464,18 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       contextSet(w, rest, stack, key)
     case ReadNode{id} <> +rest:
       readNode(w, rest, stack, id)
+    case AffectsTarget{key, previous} <> +rest:
+      match stack:
+        case target <> tail:
+          Machine{w, Evaluate{key, previous} <> AffectsApply{target} <> rest, tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case AffectsApply{target} <> +rest:
+      match stack:
+        case key <> tail:
+          Machine{MarkScope.affects(w, target), rest, R.Undefined{} <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case LatestEnd{latest, dispatch, saved} <> rest:
       Machine{Verdict.restoreLatest(w, latest, dispatch), rest, stack}
     case ProbeEnd{probing, found, dispatch, saved} <> rest:

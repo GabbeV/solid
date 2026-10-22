@@ -1,5 +1,5 @@
 {
-  "profile": "Public expression/program callbacks and explicit root; production; typed flights and settlement, source-bound optimistic constructors and verdict read windows. Boundary/mark-scope/store/folded/snapshot/external-source protocols remain excluded.",
+  "profile": "Public expression/program callbacks and explicit root; production; typed flights and settlement, source-bound optimistic constructors, verdict read windows and non-store affects scopes. Boundary/store/folded/snapshot/external-source protocols remain excluded.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
@@ -155,7 +155,7 @@
     "core/scheduler.ts:GlobalQueue.settle": {
       "bend": "runtime/core.bend:beginSettle, settleJoined, settleApplied, afterParkIntake, parkVerdictZombies, finishSettleIntake, afterLaneSeams, landTransactions, landPrepared, landNodes, landEnd, orderedRuns, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, reruns, releaseQueues",
       "status": "partial",
-      "restrictions": "Source correction heap round, captured joined reset before application, fixed pending intake park and live commit/trim, parked verdict zombie snapshot, staged-reader seam, own/lane/landing queue capture, endLanes before landing, reverse live landing restart and deferred survivors. 538 actual-source full-settle programs supplement 2304 mainline seam and 48 deferred-zombie cases, including comparator writes and guarded cleanup scheduling/throws. Five scoped return/queue properties, not a lifecycle theorem. Public optimistic constructors/verdict windows, boundaries, store/folded and ambient mark release remain excluded. See tracking/lane-flush.md."
+      "restrictions": "Source correction heap round, captured joined reset before application, fixed pending intake park and live commit/trim, parked verdict zombie snapshot, staged-reader seam, own/lane/landing queue capture, endLanes before landing, reverse live landing restart and deferred survivors. 538 actual-source full-settle programs supplement 2304 mainline seam and 48 deferred-zombie cases, including comparator writes and guarded cleanup scheduling/throws. Five scoped return/queue properties, not a lifecycle theorem. Public optimistic constructors/verdict windows, boundaries, store/folded and ambient mark release remain excluded. See tracking/lane-flush.md. Non-store ambient release now runs at completeSettle after captured live transaction selection and before queue stashing. Installed affects.ts arrow maps to releaseAmbient/parkAmbient/ambientLoop; pending own flights retain marks. Optimistic and verdict public APIs are now connected; boundary/store paths remain excluded."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry",
@@ -508,9 +508,9 @@
       "restrictions": "Live rerun list, disposed/error guard, frame-read/verdict gate, child effect invalidation, enqueue and clear in source order."
     },
     "core/scheduler.ts:land": {
-      "bend": "runtime/core.bend:LandTransactions, landTransactions, landNodes, landEnd",
+      "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction",
       "status": "partial",
-      "restrictions": "Remove live transaction before reruns/commits, iterate live membership, clear stamps before commit, clear landing cleanup rejoin, release held queues. Marks/lane completion hooks unfinished."
+      "restrictions": "Remove live transaction before reruns; release its non-store mark scope after reruns and before live membership commits; clear stamps before commit, clear landing cleanup rejoin and release held queues. Store release hooks remain excluded."
     },
     "core/scheduler.ts:releaseQueues": {
       "bend": "runtime/scheduler.bend:releaseQueues",
@@ -765,7 +765,7 @@
     "affects-marks.ts:mark": {
       "bend": "runtime/affects-marks.bend:mark",
       "status": "partial",
-      "restrictions": "Counts and extension allocation; public declarers and verdict dispatch are not connected yet."
+      "restrictions": "Counts and extension allocation, connected to public non-store affects declarations and verdict dispatch. Store family traversal remains excluded."
     },
     "affects-marks.ts:unmark": {
       "bend": "runtime/affects-marks.bend:unmark",
@@ -1051,6 +1051,26 @@
       "bend": "runtime/core.bend:verdictValue, verdictAfterPull, verdictOverride, verdictGuessValue, VerdictGuessCompared, verdictPlain, verdictHeld, VerdictHeldFinal, verdictHeldValue, verdictStaging, verdictTerminal, verdictBundle, VerdictPulled, VerdictRaiseHeight",
       "status": "restricted",
       "restrictions": "Complete production non-store body: owned/tracked capture, link/pull outside dispatch, guarded mark hook, raw guess/derived slot and flight choices, held screen/latest/probe/imperative joins, born-held staging, provisional/late-linker paths, pending/loading links and raw errors. Callback continuation order and partial exception state retained. 5322 actual source reads plus 44 raw comparator controls. Folded callbacks, spectating, snapshot/boundary/store/dev/observe protocols excluded. See tracking/verdict-windows.md."
+    },
+    "affects.ts:affects": {
+      "bend": "runtime/core.bend:evaluate(Affects), AffectsTarget, AffectsApply; runtime/affects-scope.bend:affects",
+      "status": "partial",
+      "restrictions": "Production non-store accessor metadata, invalid-target no-op, target/key evaluation before declaration and schedule. Store target/key protocols and dev diagnostics excluded. See tracking/affects-scope.md."
+    },
+    "affects.ts:register": {
+      "bend": "runtime/affects-scope.bend:register, push",
+      "status": "partial",
+      "restrictions": "mark, captured flush transaction, ambient append or redirect resolution and transaction append, then repoll. Duplicates retained; marks do not hold/list nodes. See tracking/affects-scope.md."
+    },
+    "affects.ts:release": {
+      "bend": "runtime/affects-scope.bend:release, releaseLoop, releaseTransactionValue, releaseTransaction",
+      "status": "partial",
+      "restrictions": "Indexed non-store unmark and last-mark repoll, then scope clear. Transaction scope stays present/empty, not null. Store releaseMarkScope remains excluded. See tracking/affects-scope.md."
+    },
+    "affects.ts:inFlight": {
+      "bend": "runtime/affects-scope.bend:inFlight",
+      "status": "partial",
+      "restrictions": "STATUS_PENDING short-circuits store slot-flight hook. Store nodes explicitly refuse Unsupported86; no admitted constructor installs them. See tracking/affects-scope.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

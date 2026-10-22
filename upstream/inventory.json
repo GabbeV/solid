@@ -41,7 +41,7 @@
           "mapping": {
             "bend": "runtime/affects-marks.bend:mark",
             "status": "partial",
-            "restrictions": "Counts and extension allocation; public declarers and verdict dispatch are not connected yet."
+            "restrictions": "Counts and extension allocation, connected to public non-store affects declarations and verdict dispatch. Store family traversal remains excluded."
           }
         },
         {
@@ -233,40 +233,60 @@
           "start": 42,
           "end": 50,
           "sha256": "78bb760a4ee6fe74fe93b35a22c2654c95e86cbdda7e3c8ac1573259873cbcd3",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-scope.bend:release, releaseLoop, releaseTransactionValue, releaseTransaction",
+            "status": "partial",
+            "restrictions": "Indexed non-store unmark and last-mark repoll, then scope clear. Transaction scope stays present/empty, not null. Store releaseMarkScope remains excluded. See tracking/affects-scope.md."
+          }
         },
         {
           "key": "affects.ts:register",
           "start": 54,
           "end": 63,
           "sha256": "9198774dd24f70ada2a0f12206e37026dc00748ca6954f5c78b2e17ef7cf74d8",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-scope.bend:register, push",
+            "status": "partial",
+            "restrictions": "mark, captured flush transaction, ambient append or redirect resolution and transaction append, then repoll. Duplicates retained; marks do not hold/list nodes. See tracking/affects-scope.md."
+          }
         },
         {
           "key": "affects.ts:affects",
           "start": 89,
           "end": 89,
           "sha256": "a40b59f345500f9ee7b31051e06444f06366ea1f8eb6b5ca5ee87321a2057ce8",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:evaluate(Affects), AffectsTarget, AffectsApply; runtime/affects-scope.bend:affects",
+            "status": "partial",
+            "restrictions": "Production non-store accessor metadata, invalid-target no-op, target/key evaluation before declaration and schedule. Store target/key protocols and dev diagnostics excluded. See tracking/affects-scope.md."
+          }
         },
         {
           "key": "affects.ts:affects",
           "start": 90,
           "end": 90,
           "sha256": "1f6b99340006778839f7e2f9ad6a74a8aee680aaa0271cf0814c4c3204f77c67",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:evaluate(Affects), AffectsTarget, AffectsApply; runtime/affects-scope.bend:affects",
+            "status": "partial",
+            "restrictions": "Production non-store accessor metadata, invalid-target no-op, target/key evaluation before declaration and schedule. Store target/key protocols and dev diagnostics excluded. See tracking/affects-scope.md."
+          }
         },
         {
           "key": "affects.ts:affects",
           "start": 91,
           "end": 123,
           "sha256": "1915ce8fa7909a77442b782b59ba1996e3d4a76b4bbc26abcc28be560684edff",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:evaluate(Affects), AffectsTarget, AffectsApply; runtime/affects-scope.bend:affects",
+            "status": "partial",
+            "restrictions": "Production non-store accessor metadata, invalid-target no-op, target/key evaluation before declaration and schedule. Store target/key protocols and dev diagnostics excluded. See tracking/affects-scope.md."
+          }
         },
         {
           "key": "affects.ts:invalid",
@@ -281,8 +301,12 @@
           "start": 155,
           "end": 160,
           "sha256": "a37ee096bd43e958b4c8b31c41837919e6b9dd391793d5d40d7fc6fd35179e66",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-scope.bend:inFlight",
+            "status": "partial",
+            "restrictions": "STATUS_PENDING short-circuits store slot-flight hook. Store nodes explicitly refuse Unsupported86; no admitted constructor installs them. See tracking/affects-scope.md."
+          }
         }
       ],
       "branches": [
@@ -18698,7 +18722,7 @@
           "mapping": {
             "bend": "runtime/core.bend:beginSettle, settleJoined, settleApplied, afterParkIntake, parkVerdictZombies, finishSettleIntake, afterLaneSeams, landTransactions, landPrepared, landNodes, landEnd, orderedRuns, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, reruns, releaseQueues",
             "status": "partial",
-            "restrictions": "Source correction heap round, captured joined reset before application, fixed pending intake park and live commit/trim, parked verdict zombie snapshot, staged-reader seam, own/lane/landing queue capture, endLanes before landing, reverse live landing restart and deferred survivors. 538 actual-source full-settle programs supplement 2304 mainline seam and 48 deferred-zombie cases, including comparator writes and guarded cleanup scheduling/throws. Five scoped return/queue properties, not a lifecycle theorem. Public optimistic constructors/verdict windows, boundaries, store/folded and ambient mark release remain excluded. See tracking/lane-flush.md."
+            "restrictions": "Source correction heap round, captured joined reset before application, fixed pending intake park and live commit/trim, parked verdict zombie snapshot, staged-reader seam, own/lane/landing queue capture, endLanes before landing, reverse live landing restart and deferred survivors. 538 actual-source full-settle programs supplement 2304 mainline seam and 48 deferred-zombie cases, including comparator writes and guarded cleanup scheduling/throws. Five scoped return/queue properties, not a lifecycle theorem. Public optimistic constructors/verdict windows, boundaries, store/folded and ambient mark release remain excluded. See tracking/lane-flush.md. Non-store ambient release now runs at completeSettle after captured live transaction selection and before queue stashing. Installed affects.ts arrow maps to releaseAmbient/parkAmbient/ambientLoop; pending own flights retain marks. Optimistic and verdict public APIs are now connected; boundary/store paths remain excluded."
           }
         },
         {
@@ -18752,9 +18776,9 @@
           "sha256": "eff46c1fcba81482324711b1401c37eddeaf39823c7641fb70a631dc87192888",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:LandTransactions, landTransactions, landNodes, landEnd",
+            "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction",
             "status": "partial",
-            "restrictions": "Remove live transaction before reruns/commits, iterate live membership, clear stamps before commit, clear landing cleanup rejoin, release held queues. Marks/lane completion hooks unfinished."
+            "restrictions": "Remove live transaction before reruns; release its non-store mark scope after reruns and before live membership commits; clear stamps before commit, clear landing cleanup rejoin and release held queues. Store release hooks remain excluded."
           }
         },
         {

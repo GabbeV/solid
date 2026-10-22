@@ -51,6 +51,8 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.Add{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Multiply{left, right}:
       R.Multiply{bindWith(left, depth, args), bindWith(right, depth, args)}
+    case R.Affects{left, right}:
+      R.Affects{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Same{left, right}:
       R.Same{bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.Select{condition, yes, no}:

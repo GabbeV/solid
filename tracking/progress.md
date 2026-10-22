@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,337 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,378 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 418; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 437; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -323,3 +323,9 @@ Seven whole-World finally/catch laws and one complete data program for every
 natural payload pair and budget >=53 add quantified guarantees. Existing
 program domains/budgets remain unchanged. Explicit boundary/store/mark-scope,
 snapshot and external source paths remain next. No semantic deviation is active.
+
+The overnight mark crossing adds the public non-store affects API, 41 histories,
+seven scoped laws and a complete all-natural pending-before/after-flush program.
+The current totals are 3,378 public histories and 437 useful mutation rejections;
+closed composed regressions remain 72. These counts measure growth of checked
+behavior, not a package percentage. See [affects-scope.md](affects-scope.md).

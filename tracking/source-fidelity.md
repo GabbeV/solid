@@ -17,6 +17,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Public non-store affects crossing
+
+[affects-scope.md](affects-scope.md) maps registration, production argument
+behavior, redirect-aware scope append, transaction landing release and the
+installed ambient hook. Mark counts, duplicates, null/empty distinction,
+repolls and own-flight retention follow source order. Store release/slot/family
+hooks remain explicit exclusions rather than false-valued substitutions.
+
 ## Public verdict windows and reads
 
 [verdict-windows.md](verdict-windows.md) maps full source latest/isPending

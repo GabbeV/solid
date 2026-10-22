@@ -331,3 +331,11 @@ and replaces the saved exception. FlattenChildren in the function arena captures
 results/skip for a zero-arity resolving wrapper; invoking it forces unwrap and
 allocates a fresh output. Host labels @flattenN identify returned native/Bend
 functions without implementing traversal or scheduling. See [flatten.md](flatten.md).
+
+The non-store affects crossing appends `World.ambientMarks` as the explicit
+module-global ambient list. Transaction.marks remains OptionalIds: NoIds is null,
+SomeIds[] is a present emptied list. Source merges append into separate recipient
+arrays, so these persistent values preserve the reachable non-store semantics;
+no shared mark-list arena is needed. The generated World schema is now 70 fields.
+All existing canonical machines carry the additional empty field; their program
+budgets and quantified payload domains are unchanged.

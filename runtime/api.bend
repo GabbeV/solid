@@ -644,3 +644,6 @@ def latest(body: R.Expr) -> R.Expr:
 
 def isPending(body: R.Expr) -> R.Expr:
   R.IsPending{body}
+
+def affects(target: R.Expr, key: R.Expr) -> R.Expr:
+  R.Affects{target, key}

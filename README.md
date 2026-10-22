@@ -44,6 +44,12 @@ source pending/error collection policy. A fixed nested-children program has an
 exact final-state proof for every natural payload pair and all budgets >=128;
 arbitrary recursive trees remain outside that theorem.
 
+The [non-store affects API](tracking/affects-scope.md) now retains declarations
+through action/ambient/own-flight windows and releases them at source seams.
+Its complete data program is proved for every natural payload and sufficient
+budget. Current evidence totals 3,378 public histories, 437 useful mutation
+rejections and 72 composed closed regressions, plus quantified properties.
+
 The [optimistic constructor](tracking/optimistic.md) now has data/function
 input dispatch and its own bound setter, supported by the lane pass/flush
 engine. A complete free data program is proved for every natural payload triple
@@ -67,7 +73,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 365 source-changing variants
+npm run mutations                # reject 437 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 ```
@@ -204,7 +210,8 @@ including natural-millisecond timeouts and abort signals with represented or
 default native reasons. Two closed queued-callback regressions cover the default
 path; option handling is differentially tested. Built-in Error/DOMException data
 and captured StatusError messages are covered by [the error contract](tracking/errors.md).
-Arbitrary host callbacks and active optimistic/truth scopes remain unfinished.
+Arbitrary host callbacks and store/folded or boundary protocols remain unfinished.
+The production non-store optimistic/verdict/affects paths execute as described above.
 
 
 ## Typed action invocation milestone

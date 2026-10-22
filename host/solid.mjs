@@ -270,6 +270,7 @@ export class SolidRuntime {
     if(Object.hasOwn(e,'flush'))return this.S.flush(()=>this.evaluate(e.flush,prev,values,locals));
     if(Object.hasOwn(e,'flushCall'))return this.S.flush(this.evaluate(e.flushCall,prev,values,locals));
     if(e.flushNow)return this.S.flush();
+    if(e.affects){const target=this.evaluate(e.affects.target??e.affects,prev,values,locals),key=this.evaluate(e.affects.key??{lit:undefined},prev,values,locals);return this.S.affects(target,key);}
     if(e.latest)return this.S.latest(()=>this.evaluate(e.latest,prev,values,locals));
     if(e.isPending)return this.S.isPending(()=>this.evaluate(e.isPending,prev,values,locals));
     if(e.untrack) return this.S.untrack(()=>this.evaluate(e.untrack,prev,values,locals));

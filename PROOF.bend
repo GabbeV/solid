@@ -1,4 +1,6 @@
 import Base
+import ./proof/affects-scope.bend as AffectsLaws
+import ./proof/affects-program.bend as AffectsProgram
 import ./proof/verdict-windows.bend as WindowLaws
 import ./proof/verdict-program.bend as VerdictProgram
 import ./proof/optimistic-program.bend as OptimisticProgram
@@ -871,3 +873,30 @@ def Laws.verdict_window_complete_program(initial, next, extra):
 
 def Laws.verdict_window_read_value(initial, next, extra):
   VerdictProgram.result(initial, next, extra)
+
+def Laws.affects_scope_invalidNumber(w, value):
+  AffectsLaws.invalidNumber(w, value)
+
+def Laws.affects_scope_pushNone(node):
+  AffectsLaws.pushNone(node)
+
+def Laws.affects_scope_pushSome(items, node):
+  AffectsLaws.pushSome(items, node)
+
+def Laws.affects_scope_releaseEmpty(w):
+  AffectsLaws.releaseEmpty(w)
+
+def Laws.affects_scope_releaseAbsent(w, t):
+  AffectsLaws.releaseAbsent(w, t)
+
+def Laws.affects_scope_pendingShortCircuit(w, node, pending):
+  AffectsLaws.pendingShortCircuit(w, node, pending)
+
+def Laws.affects_scope_ambientEmpty(w, parked):
+  AffectsLaws.ambientEmpty(w, parked)
+
+def Laws.affects_complete_program(initial, extra):
+  AffectsProgram.complete(initial, extra)
+
+def Laws.affects_pending_before_after(initial, extra):
+  AffectsProgram.result(initial, extra)

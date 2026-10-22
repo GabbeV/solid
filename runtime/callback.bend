@@ -54,6 +54,8 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.Add{bindWith(left, args), bindWith(right, args)}
     case R.Multiply{left, right}:
       R.Multiply{bindWith(left, args), bindWith(right, args)}
+    case R.Affects{left, right}:
+      R.Affects{bindWith(left, args), bindWith(right, args)}
     case R.Same{left, right}:
       R.Same{bindWith(left, args), bindWith(right, args)}
     case R.Select{condition, yes, no}:

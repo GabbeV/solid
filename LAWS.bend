@@ -1,4 +1,8 @@
 import Base
+import ./proof/affects-scope.bend as AffectsLaws
+import ./proof/affects-program.bend as AffectsProgram
+import ./proof/affects-driver.bend as AffectsDriver
+import ./runtime/affects-scope.bend as AffectScope
 import ./proof/verdict-windows.bend as WindowLaws
 import ./proof/verdict-program.bend as VerdictProgram
 import ./proof/verdict-driver.bend as VerdictDriver
@@ -1795,3 +1799,47 @@ law verdict_window_read_value:
   for +next: Nat
   for +extra: Nat
   {Core.values(Core.run(Nat.add(53n, extra), VerdictDriver.before(initial, next))) == [R.Number{next}] : List<&2, R.Value>}
+
+law affects_scope_invalidNumber:
+  for +w: R.World
+  for value: Nat
+  {AffectScope.affects(w, R.Number{value}) == w : R.World}
+
+law affects_scope_pushNone:
+  for +node: Nat
+  {AffectScope.push(R.NoIds{}, node) == R.SomeIds{[node]} : R.OptionalIds}
+
+law affects_scope_pushSome:
+  for +items: List<&2, Nat>
+  for +node: Nat
+  {AffectScope.push(R.SomeIds{items}, node) == R.SomeIds{B.append(Nat, items, [node])} : R.OptionalIds}
+
+law affects_scope_releaseEmpty:
+  for +w: R.World
+  {AffectScope.release(w, []) == w : R.World}
+
+law affects_scope_releaseAbsent:
+  for +w: R.World
+  for t: Nat
+  {AffectScope.releaseTransactionValue(w, t, R.NoIds{}) == w : R.World}
+
+law affects_scope_pendingShortCircuit:
+  for +w: R.World
+  for +node: Nat
+  for pending: {B.has(R.Node.status(B.node(w, node)), K.STATUS_PENDING()) == True{} : Bool}
+  {AffectScope.inFlight(w, node) == B.Bundle{w, True{}} : B.Bundle<R.World, Bool>}
+
+law affects_scope_ambientEmpty:
+  for +w: R.World
+  for +parked: Nat
+  {AffectScope.releaseAmbient(R.World.with_ambientMarks(w, []), parked) == R.World.with_ambientMarks(w, []) : R.World}
+
+law affects_complete_program:
+  for initial: Nat
+  for extra: Nat
+  {Core.run(Nat.add(51n, extra), AffectsDriver.before(initial)) == AffectsProgram.state_51(initial) : Core.Machine}
+
+law affects_pending_before_after:
+  for initial: Nat
+  for extra: Nat
+  {R.World.arrays(Core.world(Core.run(Nat.add(51n, extra), AffectsDriver.before(initial)))) == AffectsProgram.outputs(initial) : List<&2, R.ArrayData>}

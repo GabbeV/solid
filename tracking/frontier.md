@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3337 differential histories, 418 rejected compiled mutations,
+Current verification: 3378 differential histories, 437 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -16,14 +16,22 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
+## Public non-store marks
+
+[affects scopes](affects-scope.md) now connect declarations, redirect-aware scope
+recording, landing release and ambient parked/own-flight compaction. 41 public
+histories and 25 private scope controls supplement seven scoped laws and a
+complete all-natural 51-step mark/probe/flush/read program. Stores, boundaries,
+snapshots and createDeferred remain unfinished; no deviation is active.
+
 ## Public verdict windows
 
 [latest/isPending](verdict-windows.md) now execute their complete non-store read
 path, nested catch/finally restoration and active lane crossings. 104 public
-histories bring the total to 3,337; 5,322 private read programs and 44 raw
+histories bring the total to 3,378; 5,322 private read programs and 44 raw
 comparator controls support the source mapping. Seven scoped whole-World laws
 and one complete nested-window data program for all natural payload pairs and
-budgets >=53 supplement the existing guarantees. Boundary/store/mark-scope,
+budgets >=53 supplement the existing guarantees. Boundary/store,
 snapshot and external-source paths remain unfinished; no deviation is active.
 
 ## Public optimistic construction
@@ -174,8 +182,8 @@ public verdict/optimistic APIs are not admitted by these helper results.
 current dependency prefixes and depth-first verdict-reader repolling. 2,682
 actual-source helper comparisons and four quantified whole-World properties
 support this restricted dependency. Eight more compiled mutations target it.
-Public isPending/latest/affects/createDeferred remain unfinished until the active
-verdict/lane/deferred engine is connected. Public-history and closed-regression
+Public latest/isPending and non-store affects are connected in the later
+checkpoints above; createDeferred and store/boundary hooks remain unfinished. Public-history and closed-regression
 counts stay unchanged; no semantic deviation is active.
 
 ## Next connected implementation target

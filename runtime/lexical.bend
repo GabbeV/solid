@@ -55,6 +55,8 @@ def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
       R.Add{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Multiply{left, right}:
       R.Multiply{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
+    case R.Affects{left, right}:
+      R.Affects{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Same{left, right}:
       R.Same{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.Select{condition, yes, no}:
