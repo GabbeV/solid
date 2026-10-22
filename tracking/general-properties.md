@@ -551,3 +551,12 @@ confirmation stage-before-join and hidden correction flag clearing. These five
 quantified actual helper boundaries preserve World/caller fields and arbitrary
 payloads. Complete lane lifecycle, arbitrary callback mutation and progress
 remain open. See [lane-lifecycle.md](lane-lifecycle.md).
+
+## Lane answer and core dispatch boundaries
+
+[lane-answers.bend](../proof/lane-answers.bend) adds six quantified boundaries:
+errored outcome preserves World, correction snapshot entry, empty scan judgment,
+override setter dispatch before mainline work, true token fall-through and
+successful undefined early read. The complete memo/chain setter callers now
+explicitly discharge the nonoverride condition on their default setter lemma;
+their public program domains and budgets remain unchanged. See lane-answers.md.

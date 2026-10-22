@@ -153,6 +153,14 @@ type Task is Data:
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
   EqualityCatch{id: Nat, saved: List<&2, R.Value>}
+  LaneWrite{id: Nat, value: R.Value}
+  LaneWriteCompared{id: Nat, lane: Nat, value: R.Value, guess: Bool}
+  LaneWriteDone{value: R.Value}
+  LaneOutcomeCompared{id: Nat, value: R.Value}
+  LaneOutcomeDone{}
+  LaneCorrections{live: List<&2, Nat>, judged: Bool}
+  LaneCorrectionNodes{lane: Nat, index: Nat}
+  LaneCorrectionCompared{id: Nat, truth: R.Value}
   SupersedeAfter{id: Nat, lane: Nat, parent: Nat, value: R.Value}
   DissolveLane{lane: Nat, into: Nat, except: Nat}
   DissolveNodes{lane: Nat, into: Nat, except: Nat, index: Nat}
@@ -164,6 +172,7 @@ type Task is Data:
   LaneSeamCleared{id: Nat}
   EndLanes{parent: Nat}
   EndLanesLoop{parent: Nat, remaining: Nat}
+  LaneReadDone{id: Nat, reader: Nat, forced: Bool}
   TruthNode{id: Nat}
   TruthDeps{edge: Nat}
   TruthAfterDep{edge: Nat}
@@ -494,7 +503,7 @@ def equalityCatch(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>,
 
 # core.ts:setSignal following updater execution. The entry value is never
 # reloaded after a user callback. Default/disabled equality keeps its fast path.
-def setResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value) -> Machine:
+def setPlainResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value) -> Machine:
   B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
     _ => Machine{W.setResolved(w, id, current, value), rest, value <> stack},
     _ =>
@@ -502,6 +511,11 @@ def setResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
       B.choose(~Machine, W.skipCompare(w, id),
         _ => Machine{W.stageResolved(w, id, value), rest, value <> stack},
         _ => isSame(w, SetSignalCompared{id, value} <> rest, stack, id, current, value)))
+
+def setResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value) -> Machine:
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()),
+    _ => Machine{w, LaneWrite{id, value} <> rest, stack},
+    _ => setPlainResolved(w, rest, stack, id, current, value))
 
 # core.ts:setSignal's updater call, with the source currentValue captured
 # before evaluating the admitted function body. Every user updater entry shares
@@ -1277,12 +1291,13 @@ def readAnswer(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
         _ => Machine{w, Serve{id} <> AfterServe{id} <> rest, stack})))
 
 # core/core.ts:read, after pull: held-entry, then pending/error/value selection.
-def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  +reader = B.parentComputed(w, R.World.context(w))
-  +pair = X.enterRead(w, reader, id, True{})
-  +w = B.first(R.World, Bool, pair)
-  +forced = B.second(R.World, Bool, pair)
+def readPendingStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +forced: Bool) -> Machine:
   +n = B.node(w, id)
+  +foreign = Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Bool.not(forced), Bool.and(Bool.not(B.has(R.Node.config(n), K.CONFIG_OVERRIDE())), Bool.not(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED())))))
+  +forced = Bool.or(forced, Bool.and(foreign, Bool.and(Nat.is_ne(R.World.passLane(w), 0n), Bool.not(B.has(R.Node.status(B.node(w, reader)), K.STATUS_UNINITIALIZED())))))
+  +pair = B.choose(~B.Bundle<R.World, Bool>, Bool.and(foreign, Bool.and(Bool.not(forced), Bool.and(Nat.is_ne(reader, 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())))), _ => Verdict.observeFlight(w, reader, id), _ => B.Bundle{w, False{}})
+  +w = B.first(R.World, Bool, pair)
+  +forced = Bool.or(forced, B.second(R.World, Bool, pair))
   +throws = Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Bool.not(forced),
     B.choose(~Bool, Nat.is_ne(reader, 0n),
       _ => Bool.or(Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED())),
@@ -1293,6 +1308,29 @@ def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
         _ => G.link(w, id, reader), _ => w)
       Machine{R.World.with_fault(w, R.CallbackThrown{R.NodeExtension.error(B.extension(w, id))}), rest, stack},
     _ => readAnswer(w, rest, stack, id, reader, forced))
+
+def readLaneValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +forced: Bool, value: R.Value) -> Machine:
+  match value:
+    case R.NotPendingToken{}:
+      readPendingStatus(w, rest, stack, id, reader, forced)
+    case other:
+      served(w, rest, stack, reader, id, other)
+
+def readLaneDone(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +forced: Bool) -> Machine:
+  match stack:
+    case value <> tail:
+      readLaneValue(w, rest, tail, id, reader, forced, value)
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+def readStatus(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +reader = B.parentComputed(w, R.World.context(w))
+  +pair = X.enterRead(w, reader, id, True{})
+  +w = B.first(R.World, Bool, pair)
+  +forced = B.second(R.World, Bool, pair)
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()),
+    _ => laneRead(w, LaneReadDone{id, reader, forced} <> rest, stack, reader, id),
+    _ => readPendingStatus(w, rest, stack, id, reader, forced))
 
 # core/core.ts:read's plain-signal fast block, under the admitted no-snapshot,
 # no-verdict profile. Its source ternary intentionally stays separate from serve.
@@ -1305,6 +1343,9 @@ def readSignalFast(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, 
   +n = B.node(w, id)
   +committed = Bool.or(B.second(R.World, Bool, pair), Bool.or(Nat.is_eq(reader, 0n), Bool.or(Bool.not(B.present(R.Node.pending(n))),
     B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN()))))
+  +pair = B.choose(~B.Bundle<R.World, Bool>, Bool.and(Bool.not(committed), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())), _ => X.stagedScreen(w, reader), _ => B.Bundle{w, False{}})
+  +w = B.first(R.World, Bool, pair)
+  +committed = Bool.or(committed, B.second(R.World, Bool, pair))
   +value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))
   +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, 0n))
   served(w, rest, stack, reader, id, value)
@@ -1322,6 +1363,9 @@ def serveSelected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
     _ =>
       +n = B.node(w, id)
       +committed = V.readerSeesCommitted(w, id, reader)
+      +pair = B.choose(~B.Bundle<R.World, Bool>, Bool.and(Bool.not(committed), Bool.and(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT()), Bool.not(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED())))), _ => X.stagedScreen(w, reader), _ => B.Bundle{w, False{}})
+      +w = B.first(R.World, Bool, pair)
+      +committed = Bool.or(committed, B.second(R.World, Bool, pair))
       +w = B.choose(~R.World, committed, _ => w, _ => stagedRead(w, reader, id))
       B.choose(~Machine, Bool.and(Bool.not(committed), B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())),
         _ => Machine{R.World.with_fault(w, R.CallbackThrown{B.current(n)}), rest, stack},
@@ -3215,6 +3259,77 @@ def endLanesLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
         _ => Machine{w, EndLanes{lane} <> DissolveLane{lane, 0n, 0n} <> ending, stack},
         _ => Machine{w, ending, stack})
 
+# lanes.ts:laneWrite and laneOutcome. Folded store rebase remains excluded.
+def laneWriteChanged(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lane: Nat, +value: R.Value) -> Machine:
+  +w = B.choose(~R.World, R.Transaction.shown(B.transaction(w, lane)), _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), _ => B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Present{value})))
+  +w = B.choose(~R.World, B.computed(R.Node.kind(B.node(w, id))), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
+  +w = S.insertSubs(w, id)
+  +w = Lanes.laneDirty(w, id, lane)
+  Machine{B.schedule(w), rest, value <> stack}
+
+def laneWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value) -> Machine:
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()),
+    _ => B.choose(~Machine, Lanes.stale(w, id, R.World.question(w)),
+      _ =>
+        +w = B.store_node(w, id, R.Node.with_pending(R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD())), R.Present{value}))
+        Machine{B.schedule(w), rest, value <> stack},
+      _ => rawEquals(w, LaneWriteCompared{id, 0n, value, True{}} <> rest, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), value)),
+    _ =>
+      +pair = X.txOf(w, id)
+      +w = B.first(R.World, Nat, pair)
+      +lane = B.second(R.World, Nat, pair)
+      rawEquals(w, LaneWriteCompared{id, lane, value, False{}} <> rest, stack, id, Truth.laneValueOf(w, id), value))
+
+def laneOutcome(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, errored: Bool) -> Machine:
+  B.choose(~Machine, errored, _ => Machine{w, rest, R.Boolean{True{}} <> stack},
+    _ =>
+      +pair = Lanes.answered(w, id)
+      +w = B.first(R.World, R.Question, pair)
+      B.choose(~Machine, Lanes.stale(w, id, B.second(R.World, R.Question, pair)),
+        _ =>
+          +w = B.store_node(w, id, R.Node.with_pending(R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD())), R.Present{value}))
+          Machine{w, rest, R.Boolean{True{}} <> stack},
+        _ => rawEquals(w, LaneOutcomeCompared{id, value} <> rest, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), value)))
+
+# lanes.ts:laneCorrections takes exactly the source lanes.slice snapshot.
+# Its member loop remains live and stops once a correction removes the lane.
+def laneCorrections(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  Machine{w, LaneCorrections{R.LaneState.live(R.World.laneState(w)), False{}} <> rest, stack}
+
+def laneCorrectionsLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, live: List<&2, Nat>, +judged: Bool) -> Machine:
+  match live:
+    case Nil{}:
+      Machine{w, rest, R.Boolean{judged} <> stack}
+    case +lane <> +tail:
+      +ending = {LaneCorrections{tail, judged} <> rest : List<&2, Task>}
+      B.choose(~Machine, Bool.not(B.contains(R.LaneState.live(R.World.laneState(w)), lane)), _ => Machine{w, ending, stack},
+        _ =>
+          +pair = X.resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+          +w = B.first(R.World, Nat, pair)
+          +parent = B.second(R.World, Nat, pair)
+          +p = B.transaction(w, parent)
+          B.choose(~Machine, Bool.or(Bool.not(R.Transaction.acted(p)), Bool.or(Nat.is_ne(R.Transaction.open(p), 0n), R.Transaction.lane(p))), _ => Machine{w, ending, stack},
+            _ =>
+              +pair = X.ownFlights(w, parent)
+              +w = B.first(R.World, Bool, pair)
+              B.choose(~Machine, B.second(R.World, Bool, pair), _ => Machine{w, ending, stack},
+                _ =>
+                  +pair = X.guessFlights(w, lane)
+                  +w = B.first(R.World, Bool, pair)
+                  B.choose(~Machine, B.second(R.World, Bool, pair), _ => Machine{w, ending, stack},
+                    _ => Machine{w, LaneCorrectionNodes{lane, 0n} <> LaneCorrections{tail, True{}} <> rest, stack}))))
+
+def laneCorrectionNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +index: Nat) -> Machine:
+  B.choose(~Machine, Bool.or(Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, lane)))), Bool.not(B.contains(R.LaneState.live(R.World.laneState(w)), lane))), _ => Machine{w, rest, stack},
+    _ =>
+      +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, lane)), index, 0n)
+      +ending = {LaneCorrectionNodes{lane, 1n+index} <> rest : List<&2, Task>}
+      B.choose(~Machine, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), lane)),
+        _ =>
+          +truth = B.selected(R.Node.pending(B.node(w, id)), R.Node.value(B.node(w, id)))
+          rawEquals(w, LaneCorrectionCompared{id, truth} <> ending, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), truth),
+        _ => Machine{w, ending, stack}))
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case MapInput{list, fallback, mapper} <> rest:
@@ -3492,6 +3607,36 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       # Failed constructors never bind/return that setter function.
       +w = B.event(w, R.SetterBound{signal})
       Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case LaneWrite{id, value} <> rest:
+      laneWrite(w, rest, stack, id, value)
+    case LaneWriteCompared{+id, +lane, +value, guess} <> +rest:
+      match stack:
+        case verdict <> +tail:
+          B.choose(~Machine, guess,
+            _ => supersede(w, LaneWriteDone{value} <> rest, tail, id, value, Bool.not(B.truth(verdict))),
+            _ => B.choose(~Machine, B.truth(verdict), _ => Machine{w, rest, value <> tail}, _ => laneWriteChanged(w, rest, tail, id, lane, value)))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case LaneWriteDone{value} <> rest:
+      Machine{B.schedule(w), rest, value <> stack}
+    case LaneOutcomeCompared{+id, +value} <> +rest:
+      match stack:
+        case verdict <> tail:
+          supersede(w, LaneOutcomeDone{} <> rest, tail, id, value, Bool.not(B.truth(verdict)))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case LaneOutcomeDone{} <> rest:
+      Machine{w, rest, R.Boolean{True{}} <> stack}
+    case LaneCorrections{live, judged} <> rest:
+      laneCorrectionsLoop(w, rest, stack, live, judged)
+    case LaneCorrectionNodes{lane, index} <> rest:
+      laneCorrectionNodes(w, rest, stack, lane, index)
+    case LaneCorrectionCompared{+id, +truth} <> +rest:
+      match stack:
+        case verdict <> tail:
+          supersede(w, rest, tail, id, truth, Bool.not(B.truth(verdict)))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case SupersedeAfter{id, lane, parent, value} <> rest:
       supersedeAfter(w, rest, stack, id, lane, parent, value)
     case DissolveLane{lane, into, except} <> rest:
@@ -3710,6 +3855,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       readNode(w, rest, stack, id)
     case ReadPrepared{id} <> +rest:
       readPrepared(w, rest, stack, id)
+    case LaneReadDone{id, reader, forced} <> rest:
+      readLaneDone(w, rest, stack, id, reader, forced)
     case ReadStatus{id} <> rest:
       readStatus(w, rest, stack, id)
     case Serve{id} <> +rest:

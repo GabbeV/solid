@@ -5,6 +5,20 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['lane answer uses counter instead of ambient question','runtime/core.bend','Lanes.stale(w, id, R.World.question(w))','Lanes.stale(w, id, R.World.questions(w))','tests/lane-answers-alignment.mjs','laneWrite'],
+  ['lane answer compares committed instead of latest','runtime/core.bend','Truth.laneValueOf(w, id), value','R.Node.value(B.node(w, id)), value','tests/lane-answers-alignment.mjs','laneWrite'],
+  ['lane answer outcome accepts an errored pass','runtime/core.bend','errored, _ => Machine{w, rest, R.Boolean{True{}} <> stack}','False{}, _ => Machine{w, rest, R.Boolean{True{}} <> stack}','tests/lane-answers-alignment.mjs','laneOutcome'],
+  ['lane answer outcome ignores source provenance','runtime/core.bend','Lanes.stale(w, id, B.second(R.World, R.Question, pair))','False{}','tests/lane-answers-alignment.mjs','laneOutcome'],
+  ['lane answer corrections ignore running action bodies','runtime/core.bend','Nat.is_ne(R.Transaction.open(p), 0n)','False{}','tests/lane-answers-alignment.mjs','laneCorrectionsLoop'],
+  ['lane answer corrections ignore own refetch','runtime/core.bend','X.guessFlights(w, lane)','{B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}','tests/lane-answers-alignment.mjs','laneCorrectionsLoop'],
+  ['lane answer corrections lose the captured snapshot','runtime/core.bend','R.LaneState.live(R.World.laneState(w))','[]','tests/lane-answers-alignment.mjs','laneCorrections'],
+  ['lane answer write inherits isSame error catch','runtime/core.bend','_ => rawEquals(w, LaneWriteCompared','_ => isSame(w, LaneWriteCompared','tests/lane-answers-callbacks.mjs','laneWrite'],
+  ['lane answer outcome inherits isSame error catch','runtime/core.bend','_ => rawEquals(w, LaneOutcomeCompared','_ => isSame(w, LaneOutcomeCompared','tests/lane-answers-callbacks.mjs','laneOutcome'],
+  ['lane answer correction inherits isSame error catch','runtime/core.bend','rawEquals(w, LaneCorrectionCompared','isSame(w, LaneCorrectionCompared','tests/lane-answers-callbacks.mjs','laneCorrectionNodes'],
+  ['lane answer setter skips override dispatch','runtime/core.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE())','False{}','tests/lane-core-io.mjs','setResolved'],
+  ['lane answer core read skips override dispatch','runtime/core.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE())','False{}','tests/lane-core-io.mjs','readStatus'],
+  ['lane answer ordinary held read ignores lane seat','runtime/transaction.bend','+lane = Nat.is_ne(R.World.passLane(w), 0n)','+lane = {False{} : Bool}','tests/lane-core-read-alignment.mjs','frameRead'],
+  ['lane answer staged verdict reader sees proposal','runtime/transaction.bend','B.Bundle{staleReader(w, reader, t), True{}}','B.Bundle{w, False{}}','tests/lane-core-read-alignment.mjs','stagedScreen'],
   ['lane leaked seam reveals anyway','runtime/core.bend','leaked, _ => B.Bundle{w, True{}}','False{}, _ => B.Bundle{w, True{}}','tests/lane-lifecycle-alignment.mjs','laneSeam'],
   ['lane committed effect compares a scalar value','runtime/core.bend','B.choose(~Machine, effect, _ => Machine{w, rest, stack}','B.choose(~Machine, False{}, _ => Machine{w, rest, stack}','tests/lane-lifecycle-alignment.mjs','dissolveCommitted'],
   ['lane end skips reverse member scan','runtime/core.bend','B.length(Nat, R.LaneState.live(R.World.laneState(w)))','0n','tests/proof-properties.mjs','endLanes','lane-lifecycle'],

@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
 import ./proof/lane-read-laws.bend as LaneReadLaws
@@ -728,3 +729,21 @@ def Laws.lane_confirmation_stages_before_join(w, rest, stack, id, parent, value)
 
 def Laws.lane_hidden_correction_clears_frame_flags(w, rest, stack, id):
   LaneLifecycle.hiddenCorrection(w, rest, stack, id)
+
+def Laws.lane_answer_errored_outcome_leaves_world(w, rest, stack, id, value):
+  LaneAnswers.erroredOutcome(w, rest, stack, id, value)
+
+def Laws.lane_answer_correction_captures_current_lane_snapshot(w, rest, stack):
+  LaneAnswers.snapshotEntry(w, rest, stack)
+
+def Laws.lane_answer_empty_correction_scan_returns_judgment(w, rest, stack, judged):
+  LaneAnswers.emptyCorrections(w, rest, stack, judged)
+
+def Laws.lane_answer_setter_routes_override_before_mainline_join(w, rest, stack, id, current, value, known):
+  LaneAnswers.writeDispatch(w, rest, stack, id, current, value, known)
+
+def Laws.lane_answer_read_lane_token_uses_real_pending_tail(w, rest, stack, id, reader, forced):
+  LaneAnswers.fallthrough(w, rest, stack, id, reader, forced)
+
+def Laws.lane_answer_read_lane_undefined_is_a_success(w, rest, stack, id, reader, forced):
+  LaneAnswers.undefinedRead(w, rest, stack, id, reader, forced)

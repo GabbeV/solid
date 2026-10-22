@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3158 differential histories, 308 rejected compiled mutations,
+Current verification: 3158 differential histories, 322 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -15,6 +15,16 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Lane answers and actual core read/write hooks
+
+[Lane answers](lane-answers.md) adds provenance-aware laneWrite/laneOutcome,
+body-end laneCorrections and actual core setter/read crossings. frameRead and
+stagedScreen now include the lane/verdict branches. 6,846 separate native
+helper/core/callback controls and six scoped properties check this layer.
+Fourteen new mutations bring the total to 322. Public optimistic/verdict
+construction, lane application/seams and recompute seating remain unfinished;
+public-history and closed-regression counts are unchanged.
 
 ## Lane lifecycle dependencies
 

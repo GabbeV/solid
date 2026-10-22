@@ -141,21 +141,31 @@ def isRender(kind: R.NodeKind) -> Bool:
     case _:
       False{}
 
-# core/core.ts:frameRead, no installed lane/verdict/boundary engines.
+# core/core.ts:frameRead; the full-index source installs verdict/lane hooks.
+# Folded stores and mounted freshHook remain separate unfinished crossings.
 def frameRead(+w: R.World, +reader: Nat, +id: Nat) -> B.Bundle<R.World, Bool>:
-  B.choose(~B.Bundle<R.World, Bool>, Bool.or(Bool.not(isRender(R.Node.kind(B.node(w, reader)))),
-      B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED())),
-    _ => B.Bundle{w, False{}},
+  +verdict = B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())
+  +lane = Nat.is_ne(R.World.passLane(w), 0n)
+  +cold = Bool.and(Bool.or(Bool.not(lane), Bool.and(B.has(R.Node.status(B.node(w, reader)), K.STATUS_UNINITIALIZED()), B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))), Bool.and(Bool.not(verdict), Bool.or(Bool.not(isRender(R.Node.kind(B.node(w, reader)))), B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED()))))
+  B.choose(~B.Bundle<R.World, Bool>, cold, _ => B.Bundle{w, False{}},
     _ =>
       +pair = txOf(w, id)
       +w = B.first(R.World, Nat, pair)
       +t = B.second(R.World, Nat, pair)
-      B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(t, R.World.flushTransaction(w)), _ => B.Bundle{w, False{}},
+      B.choose(~B.Bundle<R.World, Bool>, Bool.and(Nat.is_eq(t, R.World.flushTransaction(w)), Bool.and(Bool.not(lane), Bool.not(verdict))), _ => B.Bundle{w, False{}},
         _ =>
           +pair = bornInto(w, reader, t)
           +w = B.first(R.World, Bool, pair)
           B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, False{}},
             _ => B.Bundle{staleReader(w, reader, t), True{}})))
+
+def stagedScreen(+w: R.World, +reader: Nat) -> B.Bundle<R.World, Bool>:
+  +t = R.World.flushTransaction(w)
+  B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(t, 0n), _ => B.Bundle{w, False{}},
+    _ =>
+      +pair = bornInto(w, reader, t)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, False{}}, _ => B.Bundle{staleReader(w, reader, t), True{}}))
 
 # core/core.ts:joinPass (freshHook is not installed in the admitted profile).
 def joinPass(+w: R.World, +reader: Nat, +id: Nat) -> R.World:

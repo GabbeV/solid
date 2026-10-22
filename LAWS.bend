@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
 import ./proof/lane-read-laws.bend as LaneReadLaws
@@ -1452,3 +1453,52 @@ law lane_hidden_correction_clears_frame_flags:
   for +stack: List<&2, R.Value>
   for +id: Nat
   {Core.dispatch(w, Core.DissolveHidden{id} <> rest, stack) == Core.Machine{B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_STAGED(), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME()))))), rest, stack} : Core.Machine}
+
+law lane_answer_errored_outcome_leaves_world:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +value: R.Value
+  {Core.laneOutcome(w, rest, stack, id, value, True{}) == Core.Machine{w, rest, R.Boolean{True{}} <> stack} : Core.Machine}
+
+law lane_answer_correction_captures_current_lane_snapshot:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {Core.laneCorrections(w, rest, stack) == Core.Machine{w, Core.LaneCorrections{R.LaneState.live(R.World.laneState(w)), False{}} <> rest, stack} : Core.Machine}
+
+law lane_answer_empty_correction_scan_returns_judgment:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +judged: Bool
+  {Core.laneCorrectionsLoop(w, rest, stack, [], judged) == Core.Machine{w, rest, R.Boolean{judged} <> stack} : Core.Machine}
+
+law lane_answer_setter_routes_override_before_mainline_join:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +current: R.Value
+  for +value: R.Value
+  for known: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == True{} : Bool}
+  {Core.setResolved(w, rest, stack, id, current, value) == Core.Machine{w, Core.LaneWrite{id, value} <> rest, stack} : Core.Machine}
+
+law lane_answer_read_lane_token_uses_real_pending_tail:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +reader: Nat
+  for +forced: Bool
+  {Core.readLaneValue(w, rest, stack, id, reader, forced, R.NotPendingToken{}) == Core.readPendingStatus(w, rest, stack, id, reader, forced) : Core.Machine}
+
+law lane_answer_read_lane_undefined_is_a_success:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +reader: Nat
+  for +forced: Bool
+  {Core.readLaneValue(w, rest, stack, id, reader, forced, R.Undefined{}) == Core.Machine{B.event(w, R.ReadValue{reader, id, R.Undefined{}}), rest, R.Undefined{} <> stack} : Core.Machine}

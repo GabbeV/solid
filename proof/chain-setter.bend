@@ -65,7 +65,7 @@ def step_1(+input: Nat) -> {C.step(middle(input)) == end(input) : C.Machine}:
   Equal.trans(C.Machine, C.step(middle(input)), C.setResolved(M.origin(), [], [], 2n, R.Number{0n}, R.Number{input}), end(input),
     Cuts.step_head(M.origin(), C.SetSignalResolved{2n, R.Number{0n}}, [], [R.Number{input}], {==}),
     Equal.trans(C.Machine, C.setResolved(M.origin(), [], [], 2n, R.Number{0n}, R.Number{input}), C.Machine{W.setResolved(M.origin(), 2n, R.Number{0n}, R.Number{input}), [], [R.Number{input}]}, end(input),
-      Cuts.core_default(M.origin(), [], [], 2n, R.Number{0n}, R.Number{input}, {==}),
+      Cuts.core_default(M.origin(), [], [], 2n, R.Number{0n}, R.Number{input}, {==}, {==}),
       Equal.cong(R.World, C.Machine, w => C.Machine{w, [], [R.Number{input}]}, W.setResolved(M.origin(), 2n, R.Number{0n}, R.Number{input}), C.world(M.state_0(input)), resolved(input))))
 
 def path(+input: Nat) -> P.Path<start(input), end(input)>:

@@ -103,9 +103,9 @@
       "restrictions": "Height-gated mark/pull, CONFIG_FRESH_READ fallback and post-pull height raise retained. The read caller now carries owner CONFIG_VERDICT into a memo reader FLAGS exactly as source; 24 focused comparisons. Active verdict windows and lane/snapshot interactions remain unfinished."
     },
     "core/core.ts:read": {
-      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe",
+      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone",
       "status": "partial",
-      "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished."
+      "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
@@ -113,9 +113,9 @@
       "restrictions": "Source unflushed/stash selection and late-linker order, committed ternary, stagedRead-before-staged-error throw, and born-staged plain/frame NotReady(null) retained. Snapshot/spectating/verdict hooks and actual promise callers unfinished."
     },
     "core/core.ts:setSignal": {
-      "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater; runtime/core.bend:signalUpdater",
+      "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater; runtime/core.bend:signalUpdater; runtime/core.bend:setPlainResolved, LaneWrite",
       "status": "partial",
-      "restrictions": "Entry currentValue captured before updater invocation and retained through equality, including reentrant writes/throws. Shared source remainder preserves held join, staging, promotion, computed time and notify-epoch skip. Bound disposer/accessor/data-signal-setter raw arguments execute once; updater-returned functions remain data. Eleven reentrant and forty escaped-setter histories, two closed regressions and one binder law. Internal resolved-value entry is retained. Arbitrary functions/closure environments and active lane/snapshot/write hooks unfinished; owner teardown cannot yet suspend for accessor/setter calls. Selected first-class accessor/setter/root initializer functions now use the same computed constructor and clear-auto-dispose return point. Named writable setter calls and admitted owner raw-disposer writes preserve setMemo policy; arbitrary functions and read-capable teardown remain unfinished. First-class named callback values now execute through the existing core argument/call continuations. Their separate bound identity is canonical in owner/effect slots for the imperative teardown subset; general closure values and read-capable teardown remain unfinished. Reviewed writeHook now receives el; active write hooks remain unadmitted. Default equality delegates to equality.isSame, with disabled comparator retained. Reviewed #4168: !disposalDepth changes only the __DEV__ owned-scope write guard; production setter operations are unchanged. Dev cleanup-depth/guard handling remains unported. Custom comparator return points and restrictions are reviewed in tracking/comparators.md."
+      "restrictions": "Entry currentValue captured before updater invocation and retained through equality, including reentrant writes/throws. Shared source remainder preserves held join, staging, promotion, computed time and notify-epoch skip. Bound disposer/accessor/data-signal-setter raw arguments execute once; updater-returned functions remain data. Eleven reentrant and forty escaped-setter histories, two closed regressions and one binder law. Internal resolved-value entry is retained. Arbitrary functions/closure environments and active lane/snapshot/write hooks unfinished; owner teardown cannot yet suspend for accessor/setter calls. Selected first-class accessor/setter/root initializer functions now use the same computed constructor and clear-auto-dispose return point. Named writable setter calls and admitted owner raw-disposer writes preserve setMemo policy; arbitrary functions and read-capable teardown remain unfinished. First-class named callback values now execute through the existing core argument/call continuations. Their separate bound identity is canonical in owner/effect slots for the imperative teardown subset; general closure values and read-capable teardown remain unfinished. Reviewed writeHook now receives el; active write hooks remain unadmitted. Default equality delegates to equality.isSame, with disabled comparator retained. Reviewed #4168: !disposalDepth changes only the __DEV__ owned-scope write guard; production setter operations are unchanged. Dev cleanup-depth/guard handling remains unported. Custom comparator return points and restrictions are reviewed in tracking/comparators.md. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md."
     },
     "core/core.ts:untrack": {
       "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind",
@@ -480,7 +480,7 @@
     "core/core.ts:frameRead": {
       "bend": "runtime/transaction.bend:frameRead, enterRead",
       "status": "partial",
-      "restrictions": "Render frame reads, bornInto exclusion, own-flush exclusion and stale rerun capture. Verdict/lane/boundary paths outside the admitted context family."
+      "restrictions": "Render frame reads, bornInto exclusion, own-flush exclusion and stale rerun capture. Verdict/lane/boundary paths outside the admitted context family. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md."
     },
     "core/core.ts:bornInto": {
       "bend": "runtime/transaction.bend:bornInto",
@@ -976,6 +976,26 @@
       "bend": "runtime/core.bend:endLanes, endLanesLoop",
       "status": "restricted",
       "restrictions": "Live reverse scan, parent resolution, recursive nested teardown then dissolution. Well-formed acyclic lane parenting; finite shared fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+    },
+    "core/lanes.ts:laneWrite": {
+      "bend": "runtime/core.bend:laneWrite, laneWriteChanged, LaneWriteCompared, LaneWriteDone",
+      "status": "restricted",
+      "restrictions": "Ambient question/stale held answer, raw comparator, supersede and derivation notification/time/schedule order. Folded store rebase excluded. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+    },
+    "core/lanes.ts:laneOutcome": {
+      "bend": "runtime/core.bend:laneOutcome, LaneOutcomeCompared, LaneOutcomeDone",
+      "status": "restricted",
+      "restrictions": "Errored return, answered/stale stage without scheduling and actual raw comparison/supersede. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+    },
+    "core/lanes.ts:laneCorrections": {
+      "bend": "runtime/core.bend:laneCorrections, laneCorrectionsLoop, laneCorrectionNodes, LaneCorrectionCompared",
+      "status": "restricted",
+      "restrictions": "Source lane snapshot, resolved parent action/open/flight guards, live members and actual supersede returns. Store covered hook and observe attribution excluded. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+    },
+    "core/core.ts:stagedScreen": {
+      "bend": "runtime/transaction.bend:stagedScreen",
+      "status": "restricted",
+      "restrictions": "Exact flush-null/born-into short circuit and stale reader mutation; used by real core fast/slow read branches. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

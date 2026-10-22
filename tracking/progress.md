@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,158 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 308; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 322; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -261,3 +261,10 @@ commit/cleanup/comparator return points, 3,578 native controls and five scoped
 properties. Confirmation, correction, reveal and nested teardown now execute
 internally. The remaining application/correction/public-hook work is explicit;
 this does not change public admission or claim complete lane correctness.
+
+The next overnight layer connects real core getter/setter branches to the lane
+helpers and adds incoming-answer/body-end correction logic. 6,846 native branch/
+callback controls and six scoped properties support it. The existing general
+memo and chain programs still cover the same domains, with the inactive-lane
+setter condition stated explicitly. Public optimistic/verdict construction and
+flush/seating are still the remaining admission boundary.

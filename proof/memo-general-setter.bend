@@ -43,7 +43,7 @@ def step_1(+initial: Nat, +input: Nat) -> {C.step(middle(initial, input)) == end
   Equal.trans(C.Machine, C.step(middle(initial, input)), C.setResolved(M.finished(initial), [], [], 2n, R.Number{initial}, R.Number{input}), end(initial, input),
     Cuts.step_head(M.finished(initial), C.SetSignalResolved{2n, R.Number{initial}}, [], [R.Number{input}], {==}),
     Equal.trans(C.Machine, C.setResolved(M.finished(initial), [], [], 2n, R.Number{initial}, R.Number{input}), C.Machine{W.setResolved(M.finished(initial), 2n, R.Number{initial}, R.Number{input}), [], [R.Number{input}]}, end(initial, input),
-      Cuts.core_default(M.finished(initial), [], [], 2n, R.Number{initial}, R.Number{input}, {==}),
+      Cuts.core_default(M.finished(initial), [], [], 2n, R.Number{initial}, R.Number{input}, {==}, {==}),
       Equal.cong(R.World, C.Machine, w => C.Machine{w, [], [R.Number{input}]}, W.setResolved(M.finished(initial), 2n, R.Number{initial}, R.Number{input}), D.scheduled(initial, input), resolved(initial, input))))
 
 def path(+initial: Nat, +input: Nat) -> P.Path<start(initial, input), end(initial, input)>:

@@ -17,6 +17,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane answers and core dispatch
+
+[lane-answers.md](lane-answers.md) maps incoming question provenance, raw write/
+outcome/correction comparisons, source snapshot versus live scans, real setter/
+read crossings and lane/verdict stale-frame reads. Six scoped properties and
+native controls support these branches. Public constructors/windows, seating
+and application/seams remain unfinished; no semantic workaround is active.
+
 ## Lane lifecycle callback returns
 
 [lane-lifecycle.md](lane-lifecycle.md) maps supersede, dissolveLane, laneSeam and

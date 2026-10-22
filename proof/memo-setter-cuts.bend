@@ -100,10 +100,18 @@ def coreChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, 
         _ => C.Machine{W.stageResolved(w, id, value), rest, value <> stack},
         _ => C.isSame(w, C.SetSignalCompared{id, value} <> rest, stack, id, current, value)))
 
+def coreLaneChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value, lane: Bool) -> C.Machine:
+  B.choose(~C.Machine, lane,
+    _ => C.Machine{w, C.LaneWrite{id, value} <> rest, stack},
+    _ => C.setPlainResolved(w, rest, stack, id, current, value))
+
 def core_default(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value,
-  defaultEq: {Nat.is_eq(EQ.custom(w, id), 0n) == True{} : Bool}) ->
+  defaultEq: {Nat.is_eq(EQ.custom(w, id), 0n) == True{} : Bool},
+  noLane: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}) ->
   {C.setResolved(w, rest, stack, id, current, value) == C.Machine{W.setResolved(w, id, current, value), rest, value <> stack} : C.Machine}:
-  Equal.cong(Bool, C.Machine, gate => coreChoice(w, rest, stack, id, current, value, gate), Nat.is_eq(EQ.custom(w, id), 0n), True{}, defaultEq)
+  Equal.trans(C.Machine, C.setResolved(w, rest, stack, id, current, value), C.setPlainResolved(w, rest, stack, id, current, value), C.Machine{W.setResolved(w, id, current, value), rest, value <> stack},
+    Equal.cong(Bool, C.Machine, gate => coreLaneChoice(w, rest, stack, id, current, value, gate), B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()), False{}, noLane),
+    Equal.cong(Bool, C.Machine, gate => coreChoice(w, rest, stack, id, current, value, gate), Nat.is_eq(EQ.custom(w, id), 0n), True{}, defaultEq))
 
 def step_head(+w: R.World, +head: C.Task, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, head <> rest, stack}) == C.dispatch(w, head <> rest, stack) : C.Machine}:

@@ -40,7 +40,7 @@ def step_1(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEve
   Equal.trans(C.Machine, C.step(middle(tick, previous, input, events, jobs)), C.setResolved(M.origin(tick, previous, events, jobs), [], [], 2n, R.Number{previous}, R.Number{input}), end(tick, previous, input, events, jobs),
     Cuts.step_head(M.origin(tick, previous, events, jobs), C.SetSignalResolved{2n, R.Number{previous}}, [], [R.Number{input}], {==}),
     Equal.trans(C.Machine, C.setResolved(M.origin(tick, previous, events, jobs), [], [], 2n, R.Number{previous}, R.Number{input}), C.Machine{W.setResolved(M.origin(tick, previous, events, jobs), 2n, R.Number{previous}, R.Number{input}), [], [R.Number{input}]}, end(tick, previous, input, events, jobs),
-      Cuts.core_default(M.origin(tick, previous, events, jobs), [], [], 2n, R.Number{previous}, R.Number{input}, {==}),
+      Cuts.core_default(M.origin(tick, previous, events, jobs), [], [], 2n, R.Number{previous}, R.Number{input}, {==}, {==}),
       Equal.cong(R.World, C.Machine, w => C.Machine{w, [], [R.Number{input}]}, W.setResolved(M.origin(tick, previous, events, jobs), 2n, R.Number{previous}, R.Number{input}), D.scheduled(tick, previous, input, events, jobs), resolved(tick, previous, input, events, jobs))))
 
 def path(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> P.Path<start(tick, previous, input, events, jobs), end(tick, previous, input, events, jobs)>:
