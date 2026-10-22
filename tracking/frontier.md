@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3736 differential histories, 519 rejected compiled mutations,
+Current verification: 3736 differential histories, 521 rejected compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 3cbfaf1a (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -15,6 +15,18 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Deferred data payload generalization
+
+[The ordinary-payload proof](deferred-payload-proof.md) extends the complete
+owned constructor/event-write/flush/read program to arbitrary admitted ordinary
+values: undefined, null, booleans, naturals, negative zero, NaN, strings and opaque
+reference identities. Initial and proposed values may have different types.
+The exact final Machine and payload are proved at every budget >=103; the numeric
+specialization is checked and all old roots remain. Runtime/source/toolchain are
+unchanged. There are 196 separate mixed/native controls and two kernel negative
+variants that the old numeric theorem accepts. Async histories, callables and
+arbitrary graphs/functions remain outside this new theorem.
 
 ## Published async errors retire the previous frame
 

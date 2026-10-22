@@ -570,3 +570,16 @@ null seam entry, capped live-prefix entry and zero reveal. All preserve their
 stated World/caller frames; full application/lifecycle progress remains open.
 The source fields extend LaneState without changing existing program domains;
 regenerated witnesses must pass the independent kernel before they are trusted.
+
+
+## Complete ordinary-payload deferred data program
+
+[deferred-payload-program.bend](../proof/deferred-payload-program.bend) generalizes
+the existing 103-step public data lifecycle to every admitted ordinary initial
+and proposed payload: undefined, null, booleans, naturals, negative zero, NaN,
+arbitrary strings and opaque reference identities. Mixed types are included.
+The exact final Machine and returned payload hold at every budget >=103. A
+checked numeric-specialization bridge retains the old theorem as the same
+program. Six shape case splits occur only in proofs; runtime/source are unchanged.
+This does not prove arbitrary graphs/functions or callable/async payloads. See
+[the domain and controls](deferred-payload-proof.md) for the exact scope.

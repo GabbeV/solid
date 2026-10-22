@@ -1,15 +1,22 @@
 // Canonical witness data, not a scheduler or expected-value engine. The
-// independent kernel checks each actual core.step for all numeric inputs.
+// independent kernel checks each actual core.step for all numeric inputs or,
+// in --payload mode, all admitted ordinary scalar/opaque-reference inputs.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
+const payload=process.argv.includes('--payload');
+// The extra proof cases discharge source value-shape dispatch at CreateSignal,
+// DeferredResult and Finish, and the setter's function-overload dispatch. These
+// do not insert runtime tasks or change any source operation or step budget.
+const initialCases=new Set([4,15,16]),nextCases=new Set([33,51,52]);
+const parameterType=payload?'Payload.Ordinary':'Nat',driver=payload?'deferred-payload-driver':'deferred-driver';
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-deferred-witness-'));
 try{
 const emitted=path.join(dir,'driver.mjs');
-const built=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','proof/deferred-driver.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+const built=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','proof/'+driver+'.bend','-o',emitted],{cwd:root,encoding:'utf8'});
 if(built.status!==0)throw Error(built.stderr);
 const {default:D}=await import(pathToFileURL(emitted));
 const constructors=new Map();
@@ -23,19 +30,20 @@ for(const [file,ns]of[['representation/records.bend','R'],['runtime/core.bend','
 }
 const shared=new Map(),declarations=[];
 function qualified(type,ns){if(['Nat','Bool','U32','String'].includes(type))return type;if(type.startsWith('List<'))return 'List<&2, '+qualified(split(type.slice(5,-1))[1],ns)+'>';return type.includes('.')?type:ns+'.'+type;}
-function intern(body,type){const key=type+'#'+body;if(shared.has(key))return shared.get(key);const name='data_'+shared.size,variables=['initial','next'].filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;}
+function intern(body,type){const key=type+'#'+body;if(shared.has(key))return shared.get(key);const name='data_'+shared.size,variables=['initial','next'].filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);declarations.push(`def ${name}(${variables.map(v=>'+'+v+': '+parameterType).join(', ')}) -> ${type}:\n  ${body}\n`);return call;}
 function show(value,type,ns='R'){
  const plain=type.replace(/^\w+\./,'');
  if(plain==='Nat')return value+'n';if(plain==='U32')return String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
- if(family==='R.Value'&&value.$==='Number'&&value.n===11)return intern('R.Number{initial}','R.Value');
- if(family==='R.Value'&&value.$==='Number'&&value.n===17)return intern('R.Number{next}','R.Value');
+ if(family==='R.Value'&&value.$==='Number'&&value.n===11)return intern(payload?'Payload.value(initial)':'R.Number{initial}','R.Value');
+ if(family==='R.Value'&&value.$==='Number'&&value.n===17)return intern(payload?'Payload.value(next)':'R.Number{next}','R.Value');
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+family+' '+JSON.stringify(value));
  return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+family+'.'+value.$+'.'+name);return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
 }
 
-let m=D.before(11,17),states=[m];
+const sampleInitial=payload?{$:'DataNatural',value:11}:11,sampleNext=payload?{$:'DataNatural',value:17}:17;
+let m=D.before(sampleInitial,sampleNext),states=[m];
 for(let i=0;i<128&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
 if('head'in m.tasks||m.world.fault.$!=='Healthy')throw Error('Deferred witness did not finish');
 const steps=states.length-1;if(steps!==103)throw Error('Review changed deferred execution length '+steps);
@@ -52,7 +60,7 @@ import ../runtime/write.bend as W
 import ../runtime/heap.bend as H
 import ../runtime/owner.bend as O
 import ../runtime/pending.bend as Q
-import ./deferred-driver.bend as Driver
+import ./${driver}.bend as Driver${payload?'\nimport ./ordinary-payload.bend as Payload':''}
 
 `;
 for(let i=0;i<states.length;i++)out+=`def state_${i}(+initial: Nat, +next: Nat) -> C.Machine:
@@ -60,7 +68,7 @@ for(let i=0;i<states.length;i++)out+=`def state_${i}(+initial: Nat, +next: Nat) 
 
 `;
 const setterIndex=states.findIndex(m=>m.tasks.head?.$==='SetSignalResolved');if(setterIndex!==34)throw Error('Review changed deferred setter index '+setterIndex);
-const slotted=D.stageSlot(states[setterIndex].world,17),stamped=D.stageStamp(slotted),flagged=D.stageFlags(stamped),inserted=D.stageInsert(slotted),scheduled=D.stageSchedule(inserted);
+const slotted=D.stageSlot(states[setterIndex].world,sampleNext),stamped=D.stageStamp(slotted),flagged=D.stageFlags(stamped),inserted=D.stageInsert(slotted),scheduled=D.stageSchedule(inserted);
 if(JSON.stringify(scheduled)!==JSON.stringify(states[setterIndex+1].world))throw Error('Setter cuts do not reach the actual next World');
 out+=`def cutOrigin(+initial: Nat, +next: Nat) -> R.World:
   ${show(states[setterIndex].world,'R.World')}
@@ -84,9 +92,15 @@ def cutRest(+initial: Nat, +next: Nat) -> List<&2, C.Task>:
   ${show(states[setterIndex+1].tasks,'List<&2, C.Task>')}
 
 `;
-out+=fs.readFileSync(path.join(root,'proof/deferred-setter-equations.txt'),'utf8').trimEnd()+'\n\n';
+let equations=fs.readFileSync(path.join(root,'proof/deferred-setter-equations.txt'),'utf8').trimEnd();
+if(payload)equations=equations.replaceAll('initial: Nat','initial: Payload.Ordinary').replaceAll('next: Nat','next: Payload.Ordinary').replaceAll('R.Number{initial}','Payload.value(initial)').replaceAll('R.Number{next}','Payload.value(next)');
+out+=equations+'\n\n';
 for(let i=0;i<steps;i++){
- const body=i===setterIndex?'setterStep(initial, next)':'{==}';
+ let body=i===setterIndex?'setterStep(initial, next)':'{==}';
+ if(payload&&(initialCases.has(i)||nextCases.has(i))){
+  const variable=initialCases.has(i)?'initial':'next';
+  body='match '+variable+':\n'+['DataUndefined{}','DataNull{}','DataBoolean{value}','DataNatural{value}','DataNegativeZero{}','DataNaN{}','DataString{value}','DataReference{identity}'].map(pattern=>'    case Payload.'+pattern+': {==}').join('\n');
+ }
  out+=`def step_${i}(+initial: Nat, +next: Nat) -> {C.step(state_${i}(initial, next)) == state_${i+1}(initial, next) : C.Machine}:
   ${body}
 
@@ -113,7 +127,14 @@ def result(+initial: Nat, +next: Nat, extra: Nat) -> {C.values(C.run(Nat.add(${s
   stackOf(C.run(Nat.add(${steps}n, extra), Driver.before(initial, next)), C.world(state_${steps}(initial, next)), [R.Number{next}], complete(initial, next, extra))
 `;
 const dataIndex=out.indexOf('def state_0(');out=out.slice(0,dataIndex)+declarations.join('\n')+'\n'+out.slice(dataIndex);
-const dest=path.join(root,'proof/deferred-program.bend');
+if(payload)out=out.replaceAll('initial: Nat','initial: Payload.Ordinary').replaceAll('next: Nat','next: Payload.Ordinary').replaceAll('R.Number{initial}','Payload.value(initial)').replaceAll('R.Number{next}','Payload.value(next)');
+if(payload)out+=`
+def specializesNumeric(+initial: Nat, +next: Nat) ->
+  {Driver.before(Payload.DataNatural{initial}, Payload.DataNatural{next}) == NumericDriver.before(initial, next) : C.Machine}:
+  {==}
+`;
+if(payload)out=out.replace('import ./ordinary-payload.bend as Payload', 'import ./ordinary-payload.bend as Payload\nimport ./deferred-driver.bend as NumericDriver');
+const dest=path.join(root,'proof/'+(payload?'deferred-payload-program':'deferred-program')+'.bend');
 if(process.argv.includes('--check')){if(fs.readFileSync(dest,'utf8')!==out)throw Error('Deferred witness is stale');}else fs.writeFileSync(dest,out);
 console.log(`${steps} actual constructor/setter/flush/read steps have a canonical proof path.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -3,6 +3,9 @@ import ./examples/async-cleanup.bend as CleanupExample
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
+import ./proof/deferred-payload-program.bend as DeferredPayloadProgram
+import ./proof/deferred-payload-driver.bend as DeferredPayloadDriver
+import ./proof/ordinary-payload.bend as Payload
 import ./proof/deferred-driver.bend as DeferredDriver
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./runtime/deferred-lifecycle.bend as DeferredLife
@@ -1987,6 +1990,25 @@ law deferred_data_result:
   for next: Nat
   for extra: Nat
   {Core.values(Core.run(Nat.add(103n, extra), DeferredDriver.before(initial, next))) == [R.Number{next}] : List<&2, R.Value>}
+
+# The same public data lifecycle for arbitrary ordinary represented payloads.
+# Each side may select a different constructor; contents and identities are free.
+law deferred_payload_complete:
+  for initial: Payload.Ordinary
+  for next: Payload.Ordinary
+  for extra: Nat
+  {Core.run(Nat.add(103n, extra), DeferredPayloadDriver.before(initial, next)) == DeferredPayloadProgram.state_103(initial, next) : Core.Machine}
+
+law deferred_payload_result:
+  for initial: Payload.Ordinary
+  for next: Payload.Ordinary
+  for extra: Nat
+  {Core.values(Core.run(Nat.add(103n, extra), DeferredPayloadDriver.before(initial, next))) == [Payload.value(next)] : List<&2, R.Value>}
+
+law deferred_payload_numeric_specialization:
+  for initial: Nat
+  for next: Nat
+  {DeferredPayloadDriver.before(Payload.DataNatural{initial}, Payload.DataNatural{next}) == DeferredDriver.before(initial, next) : Core.Machine}
 
 law landing_release_callback:
   for w: R.World

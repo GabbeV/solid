@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred payload kernel drops empty strings", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.StringValue{\"\"}), _ => R.Undefined{}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
+  ["deferred payload kernel aliases object references", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.Reference{7n}), _ => R.Reference{19n}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
   ["async cleanup program omits rejection retirement", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/proof-properties.mjs", "handleErrorNotify", "async-cleanup-program"],
   ["async retirement omits parked cleanup", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/pin-3cbfaf1a.mjs", "handleErrorNotify"],
   ["async retirement kernel disposes staged errors", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "Bool.not(pending)", "tests/proof-properties.mjs", "handleErrorNotify", "async-error-retirement"],
@@ -589,6 +591,7 @@ for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModu
     if(compile.status!==0)throw new Error('Mutation did not compile: '+name+'\n'+compile.stderr.slice(-3000));
     const run=spawnSync(process.execPath,[test],{cwd:root,env:{...process.env,BEND_EMIT_FILE:emit,...(proofModule?{BEND_PROOF_MODULE:proofModule}:{})},encoding:'utf8',maxBuffer:1024*1024});
     if(run.status===0)throw new Error('Test oracle accepted mutation: '+name);
+    if(run.stderr.includes('PROBE_PRECONDITION_FAILED'))throw new Error('Mutation probe precondition failed: '+name+'\n'+run.stderr.slice(-3000));
     if(!proofModule && /SOME PROOFS FAIL|kernel terminated|out of memory|CompileError|ParseError/.test(run.stdout+run.stderr))throw new Error('Mutation probe failed to compile or exhausted resources: '+name+'\n'+run.stderr.slice(-1500));
     if(!run.stderr.includes('AssertionError'))throw new Error('Mutation failed for an unrelated reason: '+name+'\n'+run.stderr.slice(-3000));
     caught++;console.log('Rejected mutation: '+name);

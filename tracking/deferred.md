@@ -100,3 +100,15 @@ typed external thenable facade. It prints [10,false], [10,true], [21,false] and
 Healthy before refetch, while refreshing and after the landing. This example's
 external settlement callbacks are synchronous; native Promise microtask IO stays
 in the host adapter. It uses the actual runtime, not a proof fixture.
+
+
+## Ordinary-payload theorem extension
+
+The original numeric program remains registered. Its complete 103-step lifecycle
+now also has a [generalized ordinary-payload proof](deferred-payload-proof.md)
+covering arbitrary represented booleans, strings and opaque reference identities,
+as well as naturals, null, undefined, negative zero and NaN. Initial/proposed
+types may differ. Every budget >=103 reaches the exact canonical final Machine
+and proposed value. No runtime code or sufficient budget changed. Native/mixed
+controls and payload-specific proof mutants are recorded separately; arbitrary
+async histories/callable values/graph shapes remain outside this theorem.

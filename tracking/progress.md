@@ -21,7 +21,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,736 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 519; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 521; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -421,3 +421,23 @@ continuation laws and a complete concrete public-API cleanup program add to the
 formal guarantees. Counts are 73 closed regressions and 519 compiled negative
 variants (438 finite, 81 kernel). See reviews/solid-3cbfaf1a.md for the precise
 new proof scope and retained unfinished work.
+
+
+## Ordinary data without numeric restriction
+
+The complete public deferred constructor/event-write/flush/read theorem now
+quantifies over all admitted ordinary represented initial/proposal pairs,
+including mixed types and arbitrary string contents/object identities. The exact
+final Machine and proposed value hold at every budget >=103. A checked numeric
+specialization connects it to the old program, which remains proved unchanged.
+This broadens a complete-program guarantee without implementing a new runtime
+primitive or changing source behavior. See [deferred-payload-proof.md](deferred-payload-proof.md).
+
+196 mixed finite/native controls compare all 103 canonical prefixes and final
+Machines at three budgets. Two new compiled kernel variants affect strings or
+object references, preserve the original all-natural theorem, and fail the
+broader theorem. These are separate from the 3,736 public histories; the concrete
+closed-regression count stays 73. The mutation corpus is 521 (438 finite,83
+kernel), backed by the prior complete 519 receipt on identical runtime/source and
+two new variant receipts. Arbitrary computation functions/graphs, callable and
+async payloads remain distinct proof work.

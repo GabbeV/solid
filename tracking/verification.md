@@ -27,9 +27,11 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles and rejects all 519 isolated source-changing copies:
-  438 finite differential/structural variants and 81 kernel proof-property
-  variants. The first-load stream receipt records both complete disjoint shards. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations configures 521 isolated source-changing copies:
+  438 finite differential/structural variants and 83 kernel proof-property
+  variants. The prior complete 519-variant receipt is supplemented by two new
+  payload-specific kernel variants on unchanged runtime/source; no fresh full
+  521-variant sweep is claimed. The first-load stream receipt records both complete disjoint shards. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -458,3 +460,16 @@ handleError remainder. This is a scoped continuation theorem, not a theorem
 about arbitrary async graphs. Old complete-program domains and budgets stand.
 
 One complete concrete public-API program additionally proves shown/pending/rejected cleanup counts 0/0/1 and Healthy through examples/async-cleanup.bend. Its own independently compiled omitted-retirement mutation is rejected.
+
+
+The ordinary-payload deferred data theorem extends the exact complete-program
+claim to all admitted initial/proposal pairs, including mixed types, arbitrary
+booleans/naturals/strings/opaque reference identities, undefined/null, NaN and
+negative zero. All 103 actual transitions, exact final Machine, result value and
+numeric-specialization bridge pass the independent kernel. Existing roots and
+budgets are retained; runtime/host/source/toolchain are unchanged. The 196
+mixed/native prefix controls are finite support, separate from the theorem and
+public corpus. Two compiled variants preserve the old numeric theorem and fail
+the new ordinary-payload theorem. See deferred-payload-validation.json for the
+new receipts and reviews/solid-3cbfaf1a-validation.json for the preceding complete
+519-variant sweep. No new bug, workaround or semantic deviation is introduced.

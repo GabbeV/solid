@@ -3,6 +3,7 @@ import ./proof/async-cleanup-program.bend as CleanupProgram
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
+import ./proof/deferred-payload-program.bend as DeferredPayloadProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./proof/deferred-lag.bend as DeferredLaws
 import ./proof/affects-scope.bend as AffectsLaws
@@ -960,6 +961,15 @@ def Laws.deferred_data_complete(initial, next, extra):
 
 def Laws.deferred_data_result(initial, next, extra):
   DeferredProgram.result(initial, next, extra)
+
+def Laws.deferred_payload_complete(initial, next, extra):
+  DeferredPayloadProgram.complete(initial, next, extra)
+
+def Laws.deferred_payload_result(initial, next, extra):
+  DeferredPayloadProgram.result(initial, next, extra)
+
+def Laws.deferred_payload_numeric_specialization(initial, next):
+  DeferredPayloadProgram.specializesNumeric(initial, next)
 
 def Laws.landing_release_callback(w, transaction, rest, stack, ready):
   LandingRelease.callback(w, transaction, rest, stack, ready)

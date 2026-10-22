@@ -51,14 +51,16 @@ arbitrary recursive trees remain outside that theorem.
 The [deferred lag dependency](tracking/deferred-lag.md) now has a source-following
 walk and an arbitrary-fuel read-only World theorem. The [public deferred
 data/thenable profile](tracking/deferred.md) now connects construction, flight
-lifetimes and truth readers, with a complete all-natural data update proof.
+lifetimes and truth readers, with a [complete ordinary-payload data update proof](tracking/deferred-payload-proof.md)
+for undefined, null, arbitrary booleans/naturals/strings/opaque reference
+identities, NaN and signed zero, including mixed types.
 Its [first-load streams](tracking/deferred-first-stream.md) now use the ordinary
 iterator engine. Stream refetch wrapping/from/store/boundary profiles remain unfinished.
 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,736 public histories, 519 useful mutation
+budget. Current evidence totals 3,736 public histories, 521 useful mutation
 rejections and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -80,7 +82,7 @@ PRs #4231–#4233 are still unmerged, with no candidate patch installed.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 519 source-changing variants
+npm run mutations                # reject 521 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
+  "baselineCheckpoint": "312ca9e984d069975e2499064a13a680d9a46c4e",
+  "date": "2026-10-23 Europe/Stockholm",
+  "runtimeSourceHostRepresentationToolchainChanged": false,
+  "activeDeviationIds": [],
+  "domain": [
+    "undefined",
+    "null",
+    "arbitrary boolean",
+    "arbitrary natural",
+    "negative zero",
+    "NaN",
+    "arbitrary represented string",
+    "opaque reference with arbitrary natural identity"
+  ],
+  "program": "Owned createSignal/createDeferred, outside-owner event-style write, flush, accessor read; equals:false; fixed graph and event sequence.",
+  "theorems": [
+    "Exact final Machine for every admitted initial/proposed pair and every budget 103+extra, extra:Nat",
+    "Exact returned payload for the same domain and budgets",
+    "Natural-payload initial Machine is definitionally equal to the original numeric driver"
+  ],
+  "kernelRoots": [
+    "deferred_payload_complete",
+    "deferred_payload_result",
+    "deferred_payload_numeric_specialization"
+  ],
+  "rootVerdict": "Final combined-root result and sealed dependency hashes are recorded by tracking/checked.json.",
+  "deterministicRegeneration": [
+    "node tools/deferred-witness.mjs --check",
+    "node tools/deferred-witness.mjs --payload --check"
+  ],
+  "finiteControls": {
+    "programs": 196,
+    "representatives": 14,
+    "actualStepsPerProgram": 103,
+    "finalBudgets": [
+      103,
+      104,
+      128
+    ],
+    "nativeIdentityComparison": "Object.is",
+    "publicHistoryCountIncrement": 0
+  },
+  "negativeVariants": {
+    "newCompiledAndRejected": 2,
+    "numericTheoremPassesFirst": true,
+    "cases": [
+      "deferred payload kernel drops empty strings",
+      "deferred payload kernel aliases object references"
+    ],
+    "preExistingReceipt": "tracking/reviews/solid-3cbfaf1a-validation.json",
+    "previousCompleteRejected": 519,
+    "configuredTotal": 521,
+    "finite": 438,
+    "kernel": 83,
+    "freshCompleteSweep": false,
+    "infrastructureAndResourceFailuresCredited": false
+  },
+  "publicHistories": 3736,
+  "closedConcreteRegressions": 73,
+  "exclusions": [
+    "arbitrary JavaScript values",
+    "negative or fractional numeric payloads, bigint and symbol representation",
+    "callable and async protocol values",
+    "arena-dependent array/internal handles and sentinels",
+    "arbitrary graph shapes, derivation functions or event histories",
+    "default equals comparator policy",
+    "disposal and overlapping async lifecycles"
+  ],
+  "logs": {
+    "standaloneKernel": {
+      "result": "pass",
+      "output": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "mixedNativeControls": {
+      "result": "pass",
+      "output": "196 ordinary-payload deferred programs compare all 103 prefixes, exact final Machines at three budgets and native values/identities, including mixed types, aliasing, undefined, NaN and signed zero.",
+      "sha256": "75a3d0494b15bf7b635054777234b0f40ecfd9b1951bea69e11bffc0b8401226"
+    },
+    "baselineDiscrimination": {
+      "result": "pass",
+      "output": "Quantified cleanup collection/drop/rethrow/root/halt boundaries, active-lane blocker boundaries, verdict bookkeeping, lane identity/value boundaries, marks, children payloads, array representation, argument vectors, action boundaries, publication, extension allocation, cleanup capture/order, read policy and complete/conditional memo-program properties pass the independent kernel.",
+      "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+    },
+    "newNegativeVariants": {
+      "result": "pass",
+      "output": "Rejected mutation: deferred payload kernel drops empty strings\nRejected mutation: deferred payload kernel aliases object references\n2 source-changing variants rejected by differential or kernel assertions.",
+      "sha256": "758f73b8845220ee728e3202cbd3a474f18c2013a96f3dd1be00b8c03f8ee37f"
+    }
+  },
+  "discardedCombinedCheck": "The first combined-root kernel accepted all proofs, but its dependency seal correctly rejected a concurrent change to the new negative-test precondition guard. It did not replace tracking/checked.json and receives no completed-check credit. The final check runs with unchanged inputs."
+}
