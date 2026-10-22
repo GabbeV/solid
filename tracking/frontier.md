@@ -16,7 +16,16 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
-## Latest next update
+## New next preflight, pin unchanged
+
+The [rc.17 preflight](reviews/solid-5b1b7776-preflight.md) reviews six new
+commits through 5b1b7776. #4211 has merged and #4213 deliberately changes cleanup
+policy: finish teardown, then rethrow its first error. Thirty-nine selected
+native tests pass at that candidate. Cleanup collection/rethrow timing,
+fallback guards and shared folded-store hooks require integration before repin.
+This is source-only review; all Bend claims below still concern rc.16.
+
+## Latest integrated next update
 
 [The a2a5b6f8 review](reviews/solid-a2a5b6f8.md) advances to the fetched next tip.
 Only a documentation changeset and compiled CSR size metadata changed; all 76

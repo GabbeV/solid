@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-22T02:38:22.493209+00:00",
+  "reviewOnly": true,
+  "activePinUnchanged": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+  "candidateCommit": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+  "candidateTrackedWorktreeClean": true,
+  "sourcePatched": false,
+  "bendRuntimeChanged": false,
+  "sourceOnlyTests": {
+    "filesPassed": 4,
+    "testsPassed": 39,
+    "cwd": "/workspace/solid-next-5b1b7776/packages/signals",
+    "command": [
+      "../../node_modules/.bin/vitest",
+      "run",
+      "tests/cleanup-throw-continues.test.ts",
+      "tests/deferred-release-cleanup-throw.test.ts",
+      "tests/empty-fallback-value.test.ts",
+      "tests/optimistic-keyed-fold.test.ts",
+      "--maxWorkers=2"
+    ],
+    "testHashes": {
+      "packages/signals/tests/cleanup-throw-continues.test.ts": "0efb015471b9d5f2bf2bce30f0ee860cb38e3ed2141c6362b1eb86d8b3b9c443",
+      "packages/signals/tests/deferred-release-cleanup-throw.test.ts": "a3d521d83f8fee944eeb06f7f8aae79703ed084f49c5b8c1660d5176f9497c6d",
+      "packages/signals/tests/empty-fallback-value.test.ts": "db5722b58365f05015857bcf1cebb75c8c98c12d3d8009ec2373574a36c3852e",
+      "packages/signals/tests/optimistic-keyed-fold.test.ts": "07c92fea2c206b9727ccc6b0c29559456dc969a7d8cdc72a1376fdfdd60e9c36"
+    },
+    "logSha256": "58faf47a7dd495b6fce1100e4e5bfc868c198072ba7b13ad0d2f50c28b780497"
+  },
+  "failedSetup": {
+    "reason": "Initial root invocation omitted package configuration; __DEV__ undefined, zero tests collected",
+    "logSha256": "1f184e14ca5b5b2ec4c0565352ec19cab97696f2a772a6e56b9f3fa02cac893c"
+  },
+  "limitations": "No rc.17 Bend parity, repin, complete suite or browser claim. Native test assertions are not kernel proofs."
+}

@@ -300,7 +300,7 @@
     "tools/bootstrap.mjs": "cd9beca6216d62bb087db91c0841097a5a405146c64cfba482a311540c94f73e",
     "tools/build.mjs": "9b1dabbcfc2af42f61b9f2a3badcec39c9d2ac067a5785b4b0e57273b7a09824",
     "tools/chain-witness.mjs": "29831a09cd8ea4d3884144699bdd29ace6d14c3376b49977ab05a0b0250a8caa",
-    "tools/check.mjs": "6cebd5b62b14573d7569c2b7dfd4078185c44f0d9ed48520bcd8ab1467985aab",
+    "tools/check.mjs": "f61fcbbae447badfe184aa3bb404b31560a20570e28fa261260e36f91df56fbb",
     "tools/constants.mjs": "c4bbb57fd74ffdab48d4829d9df7e4e873c9a5f33b76a5570a3bba950f209988",
     "tools/deviations.mjs": "4fcbedbf843edd81b10e16e3439f4bcc20642b278efa9a14058db199929a0f79",
     "tools/inventory.mjs": "1e217191febda9097eb5df0af7e94d4ba54704cb3e6385f1bde23ea0ff95ec74",
@@ -341,7 +341,7 @@
     "tracking/affects-marks.md": "fa8b12a1db8cc36a4edb9d50f0a84d47d69388c28c90e75aaf9a8ce4cbf8519c",
     "tracking/flatten.md": "ad452a19cda79370b133f7e15694ed323bf4a6f06df72149acf3be7172813a53",
     "README.md": "6ddfcbb0e58a9e330768df1043541eb80a5e86693e12f53167d3154ec4c2bb06",
-    "tracking/frontier.md": "95aac79cd6ff2dbfc5d533e775d95892ee05a93ad9f864ec9f107890a1c7aa9b",
+    "tracking/frontier.md": "dd4ef0be2ec46dee0a382b21b65d1370412f946472758ff2fb29250f307e4127",
     "tracking/progress.md": "d3e5562feba36f55a1b7981586d5f3fcc3883a3e3f1a9f6f88eef5e4629dd215",
     "tracking/actions.md": "f12fa2260d7687a8218b73658713d5eba01bb86c29eba967f1ab8e32b84f5f41",
     "tracking/reviews/action-readiness.md": "8cd5eeef2259e65bf5c2b7779081681290c5ba0fc57bdddf681e57693a523349",
@@ -394,6 +394,9 @@
     "tracking/reviews/solid-b0ad1df5.md": "2771d2500c1a77467552824d4d45ff95dd3998f4c476200516a9e59c225b72fe",
     "tracking/reviews/solid-b0ad1df5-impact.json": "4650347588e4f0258364232cd4f8783ba2fc2a70d006d8548b3b32dde77ce61e",
     "tracking/reviews/solid-b0ad1df5-validation.json": "465b5a197ca0cf638fdfcad2c8a74222ce53f0e30ae00ed6cb8b52d0fe2bf4a5",
+    "tracking/reviews/solid-5b1b7776-preflight.md": "95dfdee5c50c93f94608e4d7389a5a4047bd029f4f2b9a2bc310bc4651e32d16",
+    "tracking/reviews/solid-5b1b7776-preflight-impact.json": "42ebbc1b51ccbfba071547b59c85d1f44a2aac6f72486fe4eb1a838bab486c65",
+    "tracking/reviews/solid-5b1b7776-preflight-validation.json": "bb979294201c415af25b5d0f91c74ff842f9cdbc0447149649d6c308120dc263",
     "tracking/reviews/solid-a2a5b6f8.md": "980e9576e121591ec6af5f1339b43f38112283236a89825f381ce764de16aa75",
     "tracking/reviews/solid-a2a5b6f8-impact.json": "78b1d522f8aadbaa830c10c4061f2dc3f2051c845dbaa4056c5a86728107cc89",
     "tracking/reviews/solid-a2a5b6f8-validation.json": "a09820186175e347846c0d2a54eda4ab359859b412bd3d8be1ac6687e15cac10",
@@ -478,7 +481,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 128.422202867,
+    "seconds": 123.420085804,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {
