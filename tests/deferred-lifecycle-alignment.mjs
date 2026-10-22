@@ -36,5 +36,5 @@ try{
   const actual=B.serveFixture(n._config,n._pendingValue===K.NOT_PENDING?{$:'Empty'}:{$:'Present',value:enc(n._pendingValue)},enc(S.probeServedValue));assert.ok(Object.is(dec(actual),wanted),JSON.stringify({config,pending,returned,immediate}));serveCount++;
  }
  console.log(`${serveCount} actual serve/handleAsync return controls retain held pending slots (including undefined/zero) before the post-handle value.`);
- console.log(`${count} actual deferred closure/window controls preserve flight identity, replacement/quiet reasks, marks, first-held-input landing, disposal, sticky answer windows and original source throws. Constructor/async registration remains unported.`);
+ console.log(`${count} actual deferred closure/window controls preserve flight identity, replacement/quiet reasks, marks, first-held-input landing, disposal, sticky answer windows and original source throws. Public data/thenable construction and async registration are checked separately.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

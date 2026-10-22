@@ -1,4 +1,5 @@
 import Base
+import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./proof/deferred-lag.bend as DeferredLaws
@@ -957,3 +958,6 @@ def Laws.deferred_data_complete(initial, next, extra):
 
 def Laws.deferred_data_result(initial, next, extra):
   DeferredProgram.result(initial, next, extra)
+
+def Laws.landing_release_callback(w, transaction, rest, stack, ready):
+  LandingRelease.callback(w, transaction, rest, stack, ready)

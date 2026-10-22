@@ -22,5 +22,5 @@ try{
   if(op===1)check({edges:shapes[0],lagging:[],target,op,slot:target});
   if(op===0)check({edges:shapes[0],lagging:[target===1?2:1],target,seen:[target],op,slot:target});
  }
- S.probeLagging.clear();console.log(`${count} actual deferred lagOf/installed-hook controls preserve first reachable lag identity, membership-before-seen, dependency-prefix cutoffs, cycles, errors and the complete surrounding World. Constructor/lifetimes remain unported.`);
+ S.probeLagging.clear();console.log(`${count} actual deferred lagOf/installed-hook controls preserve first reachable lag identity, membership-before-seen, dependency-prefix cutoffs, cycles, errors and the complete surrounding World. Public data/thenable lifetimes are checked separately.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

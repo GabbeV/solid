@@ -101,6 +101,7 @@ type Snapshot is Data:
 type QueueEntry is Data:
   NodeRun{node: Nat}
   SettledFire{callback: Nat}
+  ReleaseQueues{transaction: Nat}
 
 type NodeKind is Data:
   Invalid{}

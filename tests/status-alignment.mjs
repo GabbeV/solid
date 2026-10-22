@@ -7,7 +7,14 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-status-probe-'));
 try{
-  const emitted=path.join(dir,'status.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','tests/probes/status.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+  let probe='tests/probes/status.bend';
+  if(process.env.BEND_EMIT_FILE){
+    const changed=path.dirname(process.env.BEND_EMIT_FILE);
+    for(const name of ['runtime','representation','observation'])fs.cpSync(path.join(changed,name),path.join(dir,name),{recursive:true});
+    fs.mkdirSync(path.join(dir,'tests/probes'),{recursive:true});
+    probe=path.join(dir,'tests/probes/status.bend');fs.copyFileSync(path.join(root,'tests/probes/status.bend'),probe);
+  }
+  const emitted=path.join(dir,'status.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',probe,'-o',emitted],{cwd:root,encoding:'utf8'});
   assert.equal(compile.status,0,compile.stderr);const {default:B}=await import(pathToFileURL(emitted));
   const source=path.join(root,'upstream/solid/packages/signals/src');
   const bundle=await build({stdin:{contents:`
@@ -40,15 +47,15 @@ try{
     Object.assign(S.ext(n),{_error:value,_blocked:true,_pendingSources:sources?new Set([n]):undefined});let exception;
     const decode=e=>{if(e instanceof S.StatusError){if(!errors.has(e))errors.set(e,errors.size+1);return {identity:errors.get(e),source:id(e.source),cause:decode(e.cause)};}return e;};
     console.error=(...args)=>reports.push([0,args[1]]);
-    try{op>=2?S.notifyStatus(n,op===4?K.STATUS_PENDING:K.STATUS_ERROR,value,op>=3):S.clearStatus(n,op===1);}catch(e){exception=e;}finally{console.error=consoleError;}
+    try{op>=2?S.notifyStatus(n,op===4?K.STATUS_PENDING:K.STATUS_ERROR,value):S.clearStatus(n,op===1);}catch(e){exception=e;}finally{console.error=consoleError;}
     return {nodes:nodes.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,modified:n._modified??false,error:decode(n._x?._error),blocked:n._x?._blocked,sources:!!n._x?._pendingSources,
       x:!!n._x,next:id(n._nextHeap),prev:id(n._prevHeap)})),pending:S.probePending.map(id),user:S.globalQueue._queues[1].map(()=>2),render:S.globalQueue._queues[0].map(()=>2),
       buckets:Array.from({length:Math.max(1,S.dirtyQueue._heap.length)},(_,i)=>id(S.dirtyQueue._heap[i])),min:S.dirtyQueue._min,max:S.dirtyQueue._max,marked:S.dirtyQueue._marked,scheduled:S.probeScheduled,
       halted:S.probeHalted,haltNotified:S.probeHaltNotified,exception:decode(exception),reports:reports.map(([kind,cause])=>[kind,decode(cause)])};
   }
   let count=0;
-  for(const op of [0,1,2,3,4])for(const kind of [0,1,2,3])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
+  for(const op of [0,1,2,4])for(const kind of [0,1,2,3])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
     assert.deepEqual(actual(B.run(op,kind,status,config,code,sources)),reference(op,kind,status,config,code,sources),JSON.stringify({op,kind,status,config,code,sources}));count++;
   }
-  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, blocked forwards and halt partial states. Tracked effects retain their distinct pending/error notifier branches.`);
+  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, node-owned forwarding and halt partial states. Tracked effects retain their distinct pending/error notifier branches.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

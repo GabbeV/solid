@@ -75,3 +75,22 @@ error/obsolete-flight defect (SOLID-DEFERRED-SYNC-ERROR-009). Four public baseli
 cases retain its until/refresh behavior. The three reported source defects have
 isolated repros and candidate patches; none is installed and no issue/PR has
 been filed. The semantic deviation register remains empty.
+
+
+## Multiple deferred values
+
+A further 32 public histories exercise two independently refreshing deferred
+values, mixed eager/lazy construction, both promise styles and landing orders,
+combined truth readers, and disposal before/after either request settles. Their
+complete native state/traces/ports match. Three compiled variants separately
+erase the shared lagging Set, route every done callback to cell one, or overwrite
+the first sibling binding; all are rejected. This extends the deferred corpus to
+194 histories and the project total to 3,612. It supplies finite concurrency
+coverage, not a theorem for arbitrary overlapping async histories.
+
+
+examples/deferred.bend is an executable consumer of the public constructor and
+typed external thenable facade. It prints [10,false], [10,true], [21,false] and
+Healthy before refetch, while refreshing and after the landing. This example's
+external settlement callbacks are synchronous; native Promise microtask IO stays
+in the host adapter. It uses the actual runtime, not a proof fixture.

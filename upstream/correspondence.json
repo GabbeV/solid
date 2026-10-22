@@ -295,12 +295,12 @@
     "core/async.ts:notifyStatus": {
       "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
       "status": "partial",
-      "restrictions": "Error/pending/clear stores, wrapper identity, source-set registration, shown-error stash, blocked forwarding, guess boundary and effect interception execute. Pending frame joins require mainline posture. Propagation now calls active laneStage; boundary/store/mark callbacks and public optimistic/verdict windows remain unfinished."
+      "restrictions": "cdd95616 removed unused blockStatus/forwarding. Error/pending/clear stores, wrapper/source-set identity, shown-error stash, guess boundary and effect interception follow source order. Active laneStage and public non-store windows are connected; boundary/store family hooks remain unfinished."
     },
     "core/async.ts:propagateStatus": {
       "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom",
       "status": "partial",
-      "restrictions": "Live links, current generation/rederive/verdict dispatch, identity/repeated-source gates and recursive status ordering retained. Nonblocked active-lane propagation stages each subscriber with the current source object (the link dependency), preserving held/recomputing frame refusal; mainline propagation alone queues and joins held derivations. Repeated pending joins also require no active lane. freshHook/boundaries, store family leaves and public active windows remain unfinished. See tracking/lane-passes.md."
+      "restrictions": "cdd95616 removed downstreamBlockStatus. Live links, generation/rederive/verdict dispatch, source identity/repeated-source gates and recursive order retained. Active-lane propagation stages the current link dependency; mainline alone queues and joins held derivations. freshHook/boundaries and store family leaves remain unfinished."
     },
     "core/async.ts:settleErroredDependents": {
       "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd",
@@ -308,9 +308,9 @@
       "restrictions": "Visited Set as unique IDs, same-error enqueue and one final schedule. Invoked by actual unchanged-value recovery; pending counterpart unfinished."
     },
     "core/effect.ts:notifyEffectStatus": {
-      "bend": "runtime/status.bend:notifyEffectStatus, notifyEffectStatusOf",
+      "bend": "runtime/status.bend:notifyEffectStatus, escalate",
       "status": "partial",
-      "restrictions": "Actual/passed status, blocked pending suppression, user error queue, render halt/rethrow and root pending absorption retained. A pending render observer joins the frame only with null passLane; active lane work holds its lane instead. Boundary catch hooks remain unfinished."
+      "restrictions": "cdd95616 reads status/error from the node, queues the current user error arm or escalates an unhandled render error. Mainline pending renders join only with null passLane. Obsolete explicit blocked-forward parameters are removed. Active boundaries and dev diagnostics remain unfinished."
     },
     "core/error.ts:unwrapStatusError": {
       "bend": "runtime/error.bend:unwrapStatusError; runtime/status.bend:unwrapStatusError; runtime/watch-state.bend:unwrap",
@@ -505,12 +505,12 @@
     "core/scheduler.ts:reruns": {
       "bend": "runtime/scheduler.bend:reruns, rerunsLoop, rerunOne, clearChildRuns",
       "status": "partial",
-      "restrictions": "Live rerun list, disposed/error guard, frame-read/verdict gate, child effect invalidation, enqueue and clear in source order."
+      "restrictions": "cdd95616 live list, disposed/error guard, frame-read/verdict gate, first truthy effect-type return, child invalidation, enqueue and list clear in source order. Returns World plus captured local; lane seam callers discard it as upstream does."
     },
     "core/scheduler.ts:land": {
-      "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction",
+      "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction; runtime/core.bend:ReleaseTransactionQueues, user_task",
       "status": "partial",
-      "restrictions": "Remove live transaction before reruns; release its non-store mark scope after reruns and before live membership commits; clear stamps before commit, clear landing cleanup rejoin and release held queues. Store release hooks remain excluded."
+      "restrictions": "cdd95616 removes live transaction before reruns, captures its first effect type, releases non-store marks, commits live members, clears cleanup rejoin, then releases queues immediately or pushes one release callback last into user phase queue index 1. The actual callback calls releaseQueues for its captured transaction; node commits are not postponed. Eight public barrier/control histories and a healthy-World callback-step property supplement full validation. Store hooks remain excluded."
     },
     "core/scheduler.ts:releaseQueues": {
       "bend": "runtime/scheduler.bend:releaseQueues",
@@ -528,7 +528,7 @@
       "restrictions": "Detach each nonempty queue and execute ordered node-bound runners; preserves throws and phase ordering."
     },
     "core/async.ts:handleAsync": {
-      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks",
+      "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks; runtime/flight.bend:liveValue",
       "status": "partial",
       "restrictions": "Typed ordinary thenables and iterator descriptors: immediate/deferred callbacks, bare and thenable next results, LIVE initial drain, post-gap/deferred writes, empty/rejected completion, identity/dirty guards, loading, held staging, close/return swallowing, supersession and one-level promise-to-iterable flattening. External object/iterator descriptors and hostJobs encode only host IO. 68 promise and 255 iterator histories, 4096 helper states; node fields and next/return order compared. Immediate empty live-flatten now initializes the sync slot to undefined per merged #4144. Arbitrary getters/factory/then callbacks, malformed results, custom setter/onError, active scopes and nonproduction hooks unfinished. Question provenance uses exact binary natural IDs, with 69 numeric source comparisons; statement order remains unchanged. Reviewed #4144/#4158/#4157: live flatten initializes its stream sync slot to undefined; owner-target cleanup registration shares owner.cleanup; ProtocolCatch models later-pull and deferred-fulfillment catches; asyncWrite no longer has a duplicate comparator catch. Arbitrary protocol getters/factory/then calls and hostile error formatting remain unfinished. Current owner/core closure: asyncWrite trim/settlement and flight/error autodisposal use source return points and shared mutation helpers. Equal/changed results, ignored stale callbacks, iterator optional continuation, callback exceptions and ignored cleanup returns are distinguished. No custom setter/onError, arbitrary protocol callback or active-engine support is inferred. Custom comparator return points and restrictions are reviewed in tracking/comparators.md. Active overrides now bypass the no-custom-comparator World-only facade and use setResolved/laneWrite, matching source setSignal. A public held optimistic flight rejects the old bypass (extra effect pass and timestamp/generation mismatch)."
     },
@@ -1081,6 +1081,11 @@
       "bend": "runtime/core.bend:deferredConstruct, deferredCreate, deferredBody, deferredResult, deferredObserveState, deferredAfterThen; runtime/deferred-runtime.bend; runtime/deferred-lifecycle.bend; runtime/api.bend:createDeferred",
       "status": "partial",
       "restrictions": "Public data and typed thenable profile: actual closure allocation/options/owner/end/window/catch, done-before-engine subscriptions, serve return and authoritative watcher gate. 162 public histories; exact complete owned data constructor/event-write/flush/read theorem for all natural initial/proposal pairs and budgets >=103. Direct streams/promise-to-stream wrapper flattening explicitly refuse Unsupported88; from/store/boundary/snapshot/arbitrary protocol objects remain unfinished. Known synchronous-error old-flight baseline is preserved. No active deviation. See tracking/deferred.md."
+    },
+    "core/effect.ts:escalate": {
+      "bend": "runtime/status.bend:escalate; runtime/core.bend:effectCatch, errorArmCatch",
+      "status": "partial",
+      "restrictions": "Shared production root boundary-or-halt tail: halt with cause and rethrow thrown, preserving wrapped-versus-raw payloads. Three source call sites use this helper, with effect ID captured before ambient restoration for the error arm. Active boundaries and diagnostic subjects remain unfinished. See tracking/reviews/solid-cdd95616.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

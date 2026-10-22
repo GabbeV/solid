@@ -4,10 +4,10 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3572 differential histories, 502 rejected compiled mutations,
+Current verification: 3612 differential histories, 513 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at aece1d44 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at cdd95616 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -18,10 +18,14 @@ TS/Bend equivalence proof is not required; no silent semantic repairs are allowe
 
 ## Upstream refresh
 
-[The aece1d44 audit](reviews/solid-aece1d44.md) refreshes next without changing
-existing runtime operations. New from/onSupersede paths stay explicitly unported.
-The added 32 public crossings and six binding mutants bring current totals to
-3,410 / 455; no semantic deviation is active.
+[The cdd95616 integration](reviews/solid-cdd95616.md) ports #4217's landed-frame
+re-derivation barrier and associated status/effect/async size refactors. Ten
+verbatim inputs change; all 77 recorded Solid files match Git. Eight public
+barrier/control histories and 32 multiple-deferred histories bring the public
+total to 3,612. The queued callback
+also has an arbitrary-healthy-World exact-step property. Existing theorem domains
+and budgets stand. from/onSupersede, deferred streams, stores and boundaries
+remain explicit unfinished work; the deviation register is empty.
 
 ## Public deferred data and thenables
 

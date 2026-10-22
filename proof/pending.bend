@@ -19,7 +19,7 @@ def initial(+otherPath: Bool) -> R.World:
   +w = G.link(G.link(G.link(G.link(w, 2n, 3n), 2n, 4n), 3n, 5n), 4n, 5n)
   +w = B.choose(~R.World, otherPath, _ => G.link(w, 6n, 4n), _ => w)
   +w = R.World.with_errorSerial(w, 1n)
-  +w = A.notifyStatusWith(w, 2n, 1, R.NotReadyFailure{1n, 6n}, False{})
+  +w = A.notifyStatusWith(w, 2n, 1, R.NotReadyFailure{1n, 6n})
   +w = B.store_extension(w, 3n, R.NodeExtension.with_blocked(B.extension(w, 3n), R.Present{R.Boolean{True{}}}))
   +w = B.store_extension(w, 4n, R.NodeExtension.with_blocked(B.extension(w, 4n), R.Present{R.Boolean{True{}}}))
   B.store_extension(w, 5n, R.NodeExtension.with_blocked(B.extension(w, 5n), R.Present{R.Boolean{True{}}}))

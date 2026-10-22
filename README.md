@@ -53,7 +53,7 @@ Its stream/from/store/boundary profiles remain unfinished.
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,572 public histories, 502 useful mutation
+budget. Current evidence totals 3,612 public histories, 513 useful mutation
 rejections and 72 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -65,13 +65,13 @@ pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `aece1d44` (declares rc.17), matching `next` checked
-on 2026-10-22. [The integration review](tracking/reviews/solid-aece1d44.md)
-audits the new `from` and `onSupersede` paths as explicit omissions; existing
-runtime operations are unchanged. Three upstream bugs have isolated repros and
-candidate patches in [the issue register](tracking/upstream-issues.json).
-No issue/PR has been filed and no workaround is installed. The complete previous
-translation checkpoint is `a3d30b4`.
+The reviewed Solid pin is now `cdd95616` (declares rc.17), matching `next` checked
+on 2026-10-22. [The integration review](tracking/reviews/solid-cdd95616.md)
+ports #4217's landed-frame re-derivation barrier and source size refactors.
+The `from` and `onSupersede` protocols remain explicit omissions. Three upstream
+bugs retain isolated repros and candidate patches in [the issue register](tracking/upstream-issues.json).
+No issue/PR has been filed and no workaround is installed. The complete pre-rebase
+translation checkpoint is `289f8cc`.
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
@@ -82,7 +82,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 502 source-changing variants
+npm run mutations                # reject 513 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy
@@ -266,3 +266,8 @@ without entering it. The same teardown driver supports children-only clear and
 reuse via the owner method's boolean self flag. Twenty-five paired histories,
 four quantified frame/entry laws and one complete lifecycle execution check this
 production subset; hydration IDs and owner reflection remain unfinished.
+
+
+`npm run example:deferred` runs a Bend consumer that keeps 10 visible while a
+typed external request refreshes, then publishes 21 and clears isPending.
+[Deferred coverage](tracking/deferred.md) states the callback protocol and limits.

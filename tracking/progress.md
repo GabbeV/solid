@@ -3,7 +3,7 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is aece1d44 (declares rc.17). The latest integration ports merged fallback retention
+is cdd95616 (declares rc.17). The latest integration ports merged fallback retention
 and cleanup continuation, retaining the prior checkpoint at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,572 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,612 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 502; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 513; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -369,3 +369,22 @@ mistakenly counted; its variant is now correctly typed and semantically rejected
 and the runner refuses such compiler/resource failures. The eight lifecycle
 boundary laws and eight lagging laws retain their original domains. The three
 new upstream bug records are unfiled; no semantic workaround is active.
+
+
+The cdd95616 integration ports the next upstream landing barrier and related
+core refactors without another World field or an alternate scheduler. It adds
+eight public before/after/control histories, bringing the total to 3,580, and a
+queued release callback theorem for arbitrary healthy Worlds and continuations.
+All old domains and budgets, including the 103-step deferred family, remain.
+The negative corpus is now 510 configured variants (433 finite, 77 kernel);
+completion of the fresh full run is recorded in the integration validation.
+The unmodified new Solid suite passes 336 files / 5,502 tests with two expected
+failures and two skips. All three reported upstream bugs still reproduce.
+
+
+Thirty-two multiple-deferred histories add mixed lazy/eager construction,
+independent requests, both landing orders, separate and combined truth waiters,
+and disposal before/after settlement. Three new compiled variants specifically
+break shared Set storage, cell isolation and callback routing; all are rejected.
+These bring the current public corpus to 3,612 and configured negative corpus to
+513 (436 finite, 77 kernel), without changing the runtime or theorem domains.

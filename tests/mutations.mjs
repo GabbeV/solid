@@ -5,6 +5,19 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred multiple resets the shared lagging set", "runtime/deferred-runtime.bend", "R.DeferredArena.lagging(R.World.deferredArena(w))", "[]", "tests/deferred-multiple.mjs", "state"],
+  ["deferred multiple routes all done callbacks to first cell", "runtime/deferred-runtime.bend", "R.DeferredWait{observer, id, flight}", "R.DeferredWait{observer, 1n, flight}", "tests/deferred-multiple.mjs", "registerWait"],
+  ["deferred multiple overwrites the first sibling cell", "runtime/deferred-runtime.bend", "R.DeferredArena.cells(arena), id, R.DeferredBinding.with_cell", "R.DeferredArena.cells(arena), 1n, R.DeferredBinding.with_cell", "tests/deferred-multiple.mjs", "store"],
+
+  ["cdd kernel queued release loses transaction queues", "runtime/core.bend", "Machine{S.releaseQueues(w, transaction), rest, stack}", "Machine{w, rest, stack}", "tests/proof-properties.mjs", "dispatch", "landing-release"],
+  ["cdd landing bypasses rederivation barrier", "runtime/core.bend", "Nat.is_ne(rerunFrame, 0n)", "False{}", "tests/pin-cdd95616.mjs", "landEnd"],
+  ["cdd ordinary landing always defers", "runtime/core.bend", "Nat.is_ne(rerunFrame, 0n)", "True{}", "tests/pin-cdd95616.mjs", "landEnd"],
+  ["cdd reruns loses effect frame", "runtime/scheduler.bend", "effectType(R.Node.kind(n))", "0n", "tests/pin-cdd95616.mjs", "rerunOne"],
+  ["cdd callback releases wrong transaction", "runtime/core.bend", "ReleaseTransactionQueues{transaction}", "ReleaseTransactionQueues{0n}", "tests/pin-cdd95616.mjs", "user_task"],
+  ["cdd shared notifier ignores node status", "runtime/status.bend", "+status = R.Node.status(n)", "+status: U32 = 0", "tests/status-alignment.mjs", "notifyEffectStatus"],
+  ["cdd escalation swaps report and throw payload", "runtime/status.bend", "R.World.with_fault(haltReactivity(w, cause), R.CallbackThrown{thrown})", "R.World.with_fault(haltReactivity(w, thrown), R.CallbackThrown{cause})", "tests/status-alignment.mjs", "escalate"],
+  ["cdd shared pending tail ignores loading", "runtime/flight.bend", "R.Node.loading(B.node(w, id))", "False{}", "tests/deferred.mjs", "liveValue"],
+
   ["deferred kernel loses owned constructor parent", "runtime/core.bend", "N.computed(w, R.DeferredCompute{cell, compute}, options, R.World.context(w))", "N.computed(w, R.DeferredCompute{cell, compute}, options, 0n)", "tests/proof-properties.mjs", "deferredCreate", "deferred-program"],
   ["deferred kernel corrupts closure node", "runtime/core.bend", "Deferred.setNode(w, cell, node)", "Deferred.setNode(w, cell, 0n)", "tests/proof-properties.mjs", "deferredBody", "deferred-program"],
 
@@ -139,7 +152,7 @@ const mutations=[
   ["flush leaks staged readers", "runtime/core.bend", "R.LaneState.with_stagedReaders(state, [])", "state", "tests/lane-flush-alignment.mjs", "afterLaneSeams"],
   ["flush skips lane seam reveals", "runtime/core.bend", "laneSeams(w, AfterLaneSeams{t, renders, users} <> rest, stack, B.choose(~R.OptionalIds, Nat.is_ne(t, 0n), _ => R.SomeIds{R.LaneState.stagedReaders(R.World.laneState(w))}, _ => R.NoIds{}))", "afterLaneSeams(w, rest, stack, t, renders, users)", "tests/lane-flush-alignment.mjs", "finishSettleIntake"],
   ["flush skips lane ending before landing", "runtime/core.bend", "Machine{w, EndLanes{t} <> LandAfterLanes{frame, t} <> rest, stack}", "landPrepared(w, rest, stack, frame, t)", "tests/lane-flush-alignment.mjs", "landTransactions"],
-  ["flush skips landing node walk", "runtime/core.bend", "Machine{w, LandNodes{frame, t, 0n} <> rest, stack}", "Machine{w, LandEnd{frame, t} <> rest, stack}", "tests/lane-flush-alignment.mjs", "landPrepared"],
+  ["flush skips landing node walk", "runtime/core.bend", "Machine{w, LandNodes{frame, t, 0n, rerunFrame} <> rest, stack}", "Machine{w, LandEnd{frame, t, rerunFrame} <> rest, stack}", "tests/lane-flush-alignment.mjs", "landPrepared"],
   ["flush forgets captured lane render queue", "runtime/core.bend", "orderedRuns(~Nat, parked, renders, laneRenders, R.World.renderQueue(w))", "orderedRuns(~Nat, parked, renders, [], R.World.renderQueue(w))", "tests/lane-flush-alignment.mjs", "completeSettle"],
   ["flush forgets captured lane user queue", "runtime/core.bend", "orderedRuns(~R.QueueEntry, parked, users, laneUsers, R.World.userQueue(w))", "orderedRuns(~R.QueueEntry, parked, users, [], R.World.userQueue(w))", "tests/lane-flush-alignment.mjs", "completeSettle"],
   ["flush drops original render intake", "runtime/core.bend", "+renders = R.World.renderQueue(w)", "+renders = {[] : List<&2, Nat>}", "tests/lane-flush-alignment.mjs", "finishSettleIntake"],
@@ -153,7 +166,7 @@ const mutations=[
 
   ["pass status propagation skips lane staging", "runtime/status.bend", "B.first(R.World, Bool, Lanes.laneStage(w, id, R.World.passLane(w), True{}, Lanes.StagePendingFrom{R.Link.dep(B.link(w, edge))}))", "W.queuePendingNode(w, id)", "tests/lane-pass-alignment.mjs", "dispatch"],
   ["pass status propagation collapses its source object to true", "runtime/status.bend", "Lanes.StagePendingFrom{R.Link.dep(B.link(w, edge))}", "Lanes.StageFailed{}", "tests/lane-pass-alignment.mjs", "dispatch"],
-  ["pass pending lane observer joins the mainline frame", "runtime/status.bend", "Nat.is_eq(R.World.passLane(w), 0n)", "True{}", "tests/lane-pass-alignment.mjs", "notifyEffectStatusOf"],
+  ["pass pending lane observer joins the mainline frame", "runtime/status.bend", "Nat.is_eq(R.World.passLane(w), 0n)", "True{}", "tests/lane-pass-alignment.mjs", "notifyEffectStatus"],
   ["pass seat treats a written guess as a derived override", "runtime/core.bend", "U32.is_eq(U32.and(R.Node.config(n), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS())), K.CONFIG_OVERRIDE())", "B.has(R.Node.config(n), K.CONFIG_OVERRIDE())", "tests/lane-pass-alignment.mjs", "seatPass"],
   ["pass seat loses its own dirty lane", "runtime/core.bend", "_ => tx, _ => B.choose(~Nat, inherit", "_ => 0n, _ => B.choose(~Nat, inherit", "tests/lane-pass-alignment.mjs", "seatPass"],
   ["pass seat inherits a verdict lane", "runtime/core.bend", "Nat.is_ne(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, previous)))), previous)", "True{}", "tests/lane-pass-alignment.mjs", "seatPass"],
@@ -398,7 +411,7 @@ const mutations=[
   ["computed loses custom comparator","runtime/construct-state.bend","EQ.register(append(w, n), id, R.NodeOptions.comparator(options))","append(w, n)","tests/comparators.mjs","computed"],
   ["custom comparator swaps old and new","runtime/core.bend","R.CallWith{callback, R.Literal{a}, R.Literal{b}}","R.CallWith{callback, R.Literal{b}, R.Literal{a}}","tests/comparator-alignment.mjs","isSame"],
   ["pending comparator suppresses change","runtime/core.bend","Machine{w, rest, R.Undefined{} <> saved}","Machine{w, rest, R.Boolean{True{}} <> saved}","tests/comparators.mjs","equalityCatch"],
-  ["comparator error skips status routing","runtime/core.bend","A.notifyStatusWith(w, id, K.STATUS_ERROR(), error, False{})","w","tests/comparators.mjs","equalityCatch"],
+  ["comparator error skips status routing","runtime/core.bend","A.notifyStatusWith(w, id, K.STATUS_ERROR(), error)","w","tests/comparators.mjs","equalityCatch"],
   ["async landing bypasses custom comparator","runtime/core.bend","Nat.is_eq(EQ.custom(w, id), 0n)","True{}","tests/comparators.mjs","asyncWrite"],
   ["held seam compares before parked child guard","runtime/scheduler.bend","Bool.not(O.parked(w, id))","True{}","tests/comparators.mjs","parkCanCompare"],
   ["initial memo calls comparator before skip gate","runtime/core.bend","Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), wasUninitialized), B.truth(R.NodeExtension.shownError(B.extension(w, id))))","False{}","tests/comparators.mjs","publishState"],
@@ -526,7 +539,7 @@ const mutations=[
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
   ['iterator return omitted','runtime/iterator-state.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs'],
   ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
-  ['unresolved promise commits','runtime/flight.bend','Bool.not(R.AsyncObserver.resolved(o))','False{}','tests/async.mjs'],
+  ['unresolved promise commits','runtime/flight.bend','R.AsyncObserver.resolved(o)','True{}','tests/async.mjs'],
   ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
   ['leaked staging','runtime/core.bend','          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))','          value = B.current(n)'],
   ['untrack subscribes','runtime/core.bend','Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev}','Machine{R.World.with_tracking(w, True{}), Evaluate{body, prev}'],

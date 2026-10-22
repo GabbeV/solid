@@ -1,8 +1,10 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid aece1d44 (declares rc.17), matching fetched next on 2026-10-22.
-[The latest refresh](reviews/solid-aece1d44.md) audits the new from/onSupersede
-protocols as explicit omissions; existing runtime operations are unchanged.
+Current pin: Solid cdd95616 (declares rc.17), matching fetched next on 2026-10-22.
+[The latest integration](reviews/solid-cdd95616.md) ports the landing release
+barrier and removes obsolete status forwarding in source order. It retains all
+previous theorem domains/budgets. The preceding refresh added from/onSupersede as
+explicit omissions; neither is silently approximated.
 [The runtime integration](reviews/solid-5b1b7776.md) ports merged #4211 fallback
 retention and #4213 cleanup continuation/rethrow timing. Thirteen of 76 vendored
 inputs changed, copied verbatim; the complete prior port remains at bb82345.

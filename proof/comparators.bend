@@ -39,11 +39,11 @@ def classified(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, 
   +w = R.World.with_fault(w, R.Healthy{})
   B.choose(~C.Machine, notReady,
     _ => C.Machine{w, rest, R.Undefined{} <> saved},
-    _ => C.Machine{Status.notifyStatusWith(w, id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved})
+    _ => C.Machine{Status.notifyStatusWith(w, id, K.STATUS_ERROR(), error), rest, R.Boolean{True{}} <> saved})
 
 def ordinary_error(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, +id: Nat, +error: R.Value, known: {P.isNotReady(error) == False{} : Bool}) ->
   {C.equalityCatch(w, rest, saved, id, R.CallbackThrown{error})
-    == C.Machine{Status.notifyStatusWith(R.World.with_fault(w, R.Healthy{}), id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved} : C.Machine}:
+    == C.Machine{Status.notifyStatusWith(R.World.with_fault(w, R.Healthy{}), id, K.STATUS_ERROR(), error), rest, R.Boolean{True{}} <> saved} : C.Machine}:
   Equal.cong(Bool, C.Machine, pending => classified(w, rest, saved, id, error, pending), P.isNotReady(error), False{}, known)
 
 # Registry metadata must not manufacture a source _x allocation or mutate any

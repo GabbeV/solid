@@ -1,4 +1,5 @@
 import Base
+import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-driver.bend as DeferredDriver
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
@@ -542,7 +543,7 @@ law comparator_error_routes_status:
   for +error: R.Value
   for known: {PendingState.isNotReady(error) == False{} : Bool}
   {Core.equalityCatch(w, rest, saved, id, R.CallbackThrown{error})
-    == Core.Machine{Status.notifyStatusWith(R.World.with_fault(w, R.Healthy{}), id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved} : Core.Machine}
+    == Core.Machine{Status.notifyStatusWith(R.World.with_fault(w, R.Healthy{}), id, K.STATUS_ERROR(), error), rest, R.Boolean{True{}} <> saved} : Core.Machine}
 
 law comparator_registration_preserves_graph:
   for +w: R.World
@@ -1984,3 +1985,11 @@ law deferred_data_result:
   for next: Nat
   for extra: Nat
   {Core.values(Core.run(Nat.add(103n, extra), DeferredDriver.before(initial, next))) == [R.Number{next}] : List<&2, R.Value>}
+
+law landing_release_callback:
+  for w: R.World
+  for transaction: Nat
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for ready: {B.ok(w) == True{} : Bool}
+  {Core.step(Core.Machine{w, Core.ReleaseTransactionQueues{transaction} <> rest, stack}) == Core.Machine{Scheduler.releaseQueues(w, transaction), rest, stack} : Core.Machine}

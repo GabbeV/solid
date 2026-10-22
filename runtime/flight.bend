@@ -93,7 +93,7 @@ def handleErrorStarted(+id: Nat, +error: R.Value, pair: B.Bundle<R.World, ErrorP
           +w = B.first(R.World, Bool, pair)
           +staged = B.second(R.World, Bool, pair)
           +w = B.choose(~R.World, Bool.and(B.ok(w), Bool.or(pending, Bool.not(staged))),
-            _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error, False{}), _ => w)
+            _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error), _ => w)
           +w = B.choose(~R.World, Bool.and(B.ok(w), pending), _ => Q.settlePendingSource(w, id, id), _ => w)
           +w = B.choose(~R.World, B.ok(w), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
           B.choose(~R.World, Bool.and(B.ok(w), Bool.not(pending)), _ => Q.releaseSettledDependents(w, id), _ => w)
@@ -138,19 +138,21 @@ def settleAutodispose(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
   release = shouldSettleAutodispose(w, id)
   B.choose(~B.Bundle<R.World, Bool>, release, _ => B.Bundle{O.unobserved(w, id), True{}}, _ => B.Bundle{w, False{}})
 
-# handleAsync after .then has returned. Core routes the iterable-flatten
-# branch before this ordinary thenable verdict helper.
+# handleAsync's shared liveLanded tail now serves both promise and iterator
+# registration. A pending promise has no iterator work before this segment.
+def liveValue(+w: R.World, +id: Nat, landed: Bool, value: R.Value) -> B.Bundle<R.World, R.Value>:
+  B.choose(~B.Bundle<R.World, R.Value>, landed,
+    _ => B.Bundle{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), value},
+    _ => B.choose(~B.Bundle<R.World, R.Value>, R.Node.loading(B.node(w, id)),
+      _ => B.Bundle{w, R.Node.value(B.node(w, id))},
+      _ =>
+        +pair = P.notReadyError(w, R.World.context(w))
+        B.Bundle{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), R.Undefined{}}))
+
 def thenValue(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
   +o = B.asyncObserver(w, observer)
-  +id = R.AsyncObserver.node(o)
   +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
-  B.choose(~B.Bundle<R.World, R.Value>, Bool.not(R.AsyncObserver.resolved(o)),
-      _ => B.choose(~B.Bundle<R.World, R.Value>, R.Node.loading(B.node(w, id)),
-        _ => B.Bundle{w, R.Node.value(B.node(w, id))},
-        _ =>
-          +pair = P.notReadyError(w, R.World.context(w))
-          B.Bundle{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), R.Undefined{}}),
-      _ => B.Bundle{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), R.AsyncObserver.syncValue(o)})
+  liveValue(w, R.AsyncObserver.node(o), R.AsyncObserver.resolved(o), R.AsyncObserver.syncValue(o))
 
 def thenResult(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
   +o = B.asyncObserver(w, observer)

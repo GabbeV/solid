@@ -47,7 +47,7 @@ def initial(+op: U32, +status: U32, flags: U32, +extra: Bool, +additional: Bool,
 def apply(+w: R.World, op: U32, +additional: Bool, +block: Bool) -> R.World:
   match op:
     case 0:
-      A.notifyStatusWith(w, 2n, K.STATUS_PENDING(), R.NotReadyFailure{1n, 6n}, block)
+      A.notifyStatusWith(w, 2n, K.STATUS_PENDING(), R.NotReadyFailure{1n, 6n})
     case 1:
       Q.settlePendingSource(w, 2n, 2n)
     case 2:
@@ -60,11 +60,11 @@ def apply(+w: R.World, op: U32, +additional: Bool, +block: Bool) -> R.World:
       w = B.first(R.World, Bool, P.addPendingSource(w, 5n, 5n))
       Q.landStatus(w, 5n, additional)
     case 7:
-      A.notifyStatusWith(w, 2n, K.STATUS_ERROR(), R.NotReadyFailure{1n, 6n}, block)
+      A.notifyStatusWith(w, 2n, K.STATUS_ERROR(), R.NotReadyFailure{1n, 6n})
     case 8:
-      A.notifyStatusWith(R.World.with_errorSerial(w, 3n), 2n, K.STATUS_PENDING(), R.NotReadyFailure{3n, 0n}, block)
+      A.notifyStatusWith(R.World.with_errorSerial(w, 3n), 2n, K.STATUS_PENDING(), R.NotReadyFailure{3n, 0n})
     case 9:
-      A.notifyStatusWith(B.store_node(w, 3n, R.Node.with_depGen(B.node(w, 3n), 1n)), 2n, K.STATUS_PENDING(), R.NotReadyFailure{1n, 6n}, block)
+      A.notifyStatusWith(B.store_node(w, 3n, R.Node.with_depGen(B.node(w, 3n), 1n)), 2n, K.STATUS_PENDING(), R.NotReadyFailure{1n, 6n})
     case _:
       w = B.first(R.World, Bool, P.addPendingSource(w, 5n, 6n))
       w = B.first(R.World, Bool, P.addPendingSource(w, 5n, 6n))

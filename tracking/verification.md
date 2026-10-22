@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid aece1d448b648d6e946d098f565445d30124b8c2 (declares rc.17); Bend
+Pins: Solid cdd95616857ef1d54f3e2ec88a87ba6ca40de765 (declares rc.17); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred histories: 3572 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred, 32 multiple-deferred and eight cdd95616 landing-barrier histories: 3612 total, plus explicit host object-identity and native timeout
   checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, 64 finite children-flatten exact-machine/World/native controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -17,7 +17,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   checkpoints do not settle or wait for unresolved external promises.
 - alignment runs read-only upstream-impact checks and actual pinned helpers / source
   closures: 10,752 constructor, 4,608 commit, 768 read (+24 held stash, +24 verdict
-  carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,840 status (+32 tracked-run and 48 settled-fire closures), 2,880 pending (+9 Set alias),
+  carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,072 status (+32 tracked-run and 48 settled-fire closures), 2,304 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
   comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls, 2,356 verdict-bookkeeping helper programs and 960 held-latest controls, and 1,190 lane-blocking programs / 29,700 judgments, plus 1,328 laneStage helper programs, 2,618 lane/truth/finality helper programs, 720 question/provenance controls and 66 raw-comparator controls, plus 3,496 lane lifecycle programs, 22 post-commit comparator and 60 cleanup callback controls, plus 1,704 lane-answer/correction programs, 66 raw comparator controls, 5,048 core-read programs and 28 core getter/setter controls with private metadata, plus 1,425 queued-guess and 1,824 seam programs and 58 comparator/updater controls, plus 5,354 recompute/entry and 1,728 nearest-owner/heap programs, plus 538 complete lane-settle programs. The error cases include genuine foreign-realm Error prototype controls;
@@ -27,8 +27,9 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 502 isolated source-changing copies: 426 are rejected by
-  finite differential/structural assertions and 76 by kernel proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles and rejects all 513 isolated source-changing copies:
+  436 finite differential/structural variants and 77 kernel proof-property
+  variants. The integration validation records the complete fresh runs. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -401,3 +402,25 @@ candidate patches, source builds/full suites and size checks. The admitted
 synchronous-error/obsolete-flight defect remains at baseline. The two from/stream
 bugs remain outside the constructor profile. No candidate is installed; no
 issue/PR was filed and the deviation register is empty.
+
+
+The cdd95616 integration retains every preceding quantified domain and step
+budget. Eight new public histories compare the landed-frame barrier and passing
+controls, including explicit before/after application-screen assertions. A new
+kernel property proves the actual queued release callback step for arbitrary
+healthy Worlds, transaction IDs, remaining tasks and value stacks. Obsolete
+blockStatus forwarding cases are retired with the source parameter; the private
+status/pending controls now number 3,072/2,304, with independent cleanup throws
+retained. The unmodified native package builds all three tiers, generates source
+declarations, and passes 336 files / 5,502 tests (two expected failures, two skips).
+The preliminary native suite overlapped a build and is excluded; only the clean
+post-build run is credited. All three upstream defects still reproduce. See
+reviews/solid-cdd95616-validation.json for complete receipts and final run status.
+
+
+Thirty-two concurrent deferred-value histories compare the single shared lagging
+Set's observable behavior, independent cell/observer identities, mixed laziness,
+both landing orders, combined until readers and disposal. Three compiled variants
+that conflate cells or erase sibling membership are rejected. The current public
+corpus is 3,612; the configured mutation corpus is 513 (436 finite, 77 kernel).
+These cases are differential evidence, not arbitrary-concurrency theorems.

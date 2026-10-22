@@ -25,7 +25,7 @@ def recover(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()),
     _ =>
       +w = B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id))))
-      A.notifyStatusWith(w, id, 0, R.Undefined{}, False{}), _ => w)
+      A.notifyStatusWith(w, id, 0, R.Undefined{}), _ => w)
 
 # Source runs this only after setSignal returns successfully. The original held
 # local decides the branch even if the invoked updater changed other state.

@@ -316,6 +316,7 @@ type Task is Data:
   ReactionAssignCleanup{reaction: Nat, node: Nat}
   ReactionArmValue{tracking: R.Expr}
   FireSettled{callback: Nat}
+  ReleaseTransactionQueues{transaction: Nat}
   RunTracked{id: Nat}
   TrackedAfterCleanup{id: Nat, body: R.Expr}
   ApplyEffect{id: Nat}
@@ -343,8 +344,8 @@ type Task is Data:
   LandAfterLanes{frame: SeamFrame, transaction: Nat}
   AfterSettle{}
   LandTransactions{frame: SeamFrame, remaining: Nat}
-  LandNodes{frame: SeamFrame, transaction: Nat, index: Nat}
-  LandEnd{frame: SeamFrame, transaction: Nat}
+  LandNodes{frame: SeamFrame, transaction: Nat, index: Nat, rerunFrame: Nat}
+  LandEnd{frame: SeamFrame, transaction: Nat, rerunFrame: Nat}
   CompleteSettle{frame: SeamFrame}
   ZombieLoop{nodes: List<&2, Nat>}
   RenderQueue{}
@@ -546,7 +547,7 @@ def equalityCatch(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.Value>,
       +w = R.World.with_fault(w, R.Healthy{})
       B.choose(~Machine, P.isNotReady(error),
         _ => Machine{w, rest, R.Undefined{} <> saved},
-        _ => Machine{A.notifyStatusWith(w, id, K.STATUS_ERROR(), error, False{}), rest, R.Boolean{True{}} <> saved})
+        _ => Machine{A.notifyStatusWith(w, id, K.STATUS_ERROR(), error), rest, R.Boolean{True{}} <> saved})
     case other:
       Machine{w, rest, saved}
 
@@ -2158,7 +2159,7 @@ def catchNotify(+w: R.World, rest: List<&2, Task>, +frame: PassFrame, cause: R.V
         _ =>
           +w = E.ext(w, id)
           B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{True{}}})), _ => w)
-      A.notifyStatusWith(w, id, B.choose(~U32, notReady, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), cause, False{}), _ => w)
+      A.notifyStatusWith(w, id, B.choose(~U32, notReady, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), cause), _ => w)
   Machine{w, CatchSelfRetire{frame, notReady, stagedErr} <> CatchFinally{frame, stagedErr} <> rest, passStack(frame)}
 
 def catchStatus(+w: R.World, +rest: List<&2, Task>, +frame: PassFrame, fault: R.Fault) -> Machine:
@@ -2208,15 +2209,12 @@ def iterable(+w: R.World, value: R.Value) -> Nat:
 # no synchronous answer returns the seed or throws NotReady inside the pass.
 def afterIterator(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
   match stack:
-    case R.StreamVerdict{+stream, landed, +value} <> +tail:
-      +id = R.StreamState.node(B.stream(w, stream))
-      B.choose(~Machine, landed,
-        _ => finishReady(B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), rest, value <> tail, frame, True{}),
-        _ => B.choose(~Machine, R.Node.loading(B.node(w, id)),
-          _ => finishReady(w, rest, R.Node.value(B.node(w, id)) <> tail, frame, True{}),
-          _ =>
-            +pair = P.notReadyError(w, R.World.context(w))
-            catchPass(R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, frame)))
+    case R.StreamVerdict{+stream, landed, value} <> +tail:
+      +pair = F.liveValue(w, R.StreamState.node(B.stream(w, stream)), landed, value)
+      +w = B.first(R.World, R.Value, pair)
+      B.choose(~Machine, B.ok(w),
+        _ => finishReady(w, rest, B.second(R.World, R.Value, pair) <> tail, frame, True{}),
+        _ => catchPass(w, rest, frame))
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -2227,7 +2225,7 @@ def finishHandleError(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
 
 def handleErrorNotify(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, error: R.Value, +pending: Bool, staged: Bool) -> Machine:
   +w = B.choose(~R.World, Bool.or(pending, Bool.not(staged)),
-    _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error, False{}), _ => w)
+    _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error), _ => w)
   Machine{w, B.choose(~List<&2, Task>, pending,
     _ => ErrorSettleSource{id} <> rest,
     _ => ErrorAfterPending{id, pending} <> rest), stack}
@@ -2621,15 +2619,15 @@ def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
       +w = E.ext(B.first(R.World, R.Value, pair), id)
       +w = B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), B.second(R.World, R.Value, pair)))
       +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_ERROR())))
-      R.World.with_fault(A.haltReactivity(w, cause), R.CallbackThrown{cause})
+      A.escalate(w, id, cause, cause)
     case other:
       w
 
 # Error-arm throws escalate without replacing the compute's status error.
-def errorArmCatch(+w: R.World, fault: R.Fault) -> R.World:
+def errorArmCatch(+w: R.World, id: Nat, fault: R.Fault) -> R.World:
   match fault:
-    case R.CallbackThrown{cause}:
-      A.haltReactivity(w, cause)
+    case R.CallbackThrown{+cause}:
+      A.escalate(w, id, cause, cause)
     case other:
       w
 
@@ -2735,6 +2733,8 @@ def user_task(+w: R.World, entry: R.QueueEntry) -> Task:
       B.choose(~Task, B.tracked(R.Node.kind(B.node(w, id))), _ => RunTracked{id}, _ => RunEffect{id})
     case R.SettledFire{callback}:
       FireSettled{callback}
+    case R.ReleaseQueues{transaction}:
+      ReleaseTransactionQueues{transaction}
 
 def user_tasks(+w: R.World, entries: List<&2, R.QueueEntry>) -> List<&2, Task>:
   match entries:
@@ -2959,9 +2959,11 @@ def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -
     _ => laneCorrections(w, SettleCorrectionsDone{} <> rest, stack))
 
 def landPrepared(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
-  +w = S.reruns(w, t)
+  +pair = S.reruns(w, t)
+  +w = B.first(R.World, Nat, pair)
+  +rerunFrame = B.second(R.World, Nat, pair)
   +w = B.choose(~R.World, B.ok(w), _ => MarkScope.releaseTransaction(w, t), _ => w)
-  Machine{w, LandNodes{frame, t, 0n} <> rest, stack}
+  Machine{w, LandNodes{frame, t, 0n, rerunFrame} <> rest, stack}
 
 # Reverse scan restarts after each landing, since its commits can remove a
 # zombie another transaction was blocked on, or a cleanup can register a join.
@@ -2981,9 +2983,9 @@ def landTransactions(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
             _ => landPrepared(w, rest, stack, frame, t),
             _ => Machine{w, EndLanes{t} <> LandAfterLanes{frame, t} <> rest, stack}))
 
-def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: SeamFrame, +t: Nat, +index: Nat) -> Machine:
+def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: SeamFrame, +t: Nat, +index: Nat, +rerunFrame: Nat) -> Machine:
   B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, t)))),
-    _ => Machine{w, LandEnd{frame, t} <> rest, stack},
+    _ => Machine{w, LandEnd{frame, t, rerunFrame} <> rest, stack},
     _ =>
       +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, t)), index, 0n)
       +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), 0n),
@@ -2992,14 +2994,16 @@ def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +fr
           B.Bundle{B.first(R.World, Nat, pair), Nat.is_eq(B.second(R.World, Nat, pair), t)},
         _ => B.Bundle{w, False{}})
       +w = B.first(R.World, Bool, pair)
-      +ending = {LandNodes{frame, t, 1n+index} <> rest : List<&2, Task>}
+      +ending = {LandNodes{frame, t, 1n+index, rerunFrame} <> rest : List<&2, Task>}
       B.choose(~Machine, B.second(R.World, Bool, pair),
         _ => Machine{B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n)), CommitPending{id} <> ending, stack},
         _ => Machine{w, ending, stack}))
 
-def landEnd(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
+def landEnd(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat, +rerunFrame: Nat) -> Machine:
   +w = B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), t), _ => R.World.with_flushTransaction(w, 0n), _ => w)
-  +w = S.releaseQueues(w, t)
+  +w = B.choose(~R.World, Nat.is_ne(rerunFrame, 0n),
+    _ => R.World.with_userQueue(w, B.append(R.QueueEntry, R.World.userQueue(w), [R.ReleaseQueues{t}])),
+    _ => S.releaseQueues(w, t))
   Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
 
 def orderedRuns(~A: Data, +parked: Bool, +own: List<&2, A>, +lanes: List<&2, A>, +landing: List<&2, A>) -> List<&2, A>:
@@ -3754,7 +3758,7 @@ def laneSeam(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lan
     _ => Machine{B.store_transaction(w, lane, R.Transaction.with_held(B.transaction(w, lane), True{})), rest, stack},
     _ =>
       +w = B.store_transaction(w, lane, R.Transaction.with_shown(R.Transaction.with_held(B.transaction(w, lane), False{}), True{}))
-      Machine{S.reruns(w, lane), LaneSeamNodes{lane, 0n} <> rest, stack})
+      Machine{B.first(R.World, Nat, S.reruns(w, lane)), LaneSeamNodes{lane, 0n} <> rest, stack})
 
 
 def laneSeamNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +lane: Nat, +index: Nat) -> Machine:
@@ -4774,6 +4778,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{Reaction.store(w, reaction, R.ReactionState.with_cleanup(Reaction.get(w, reaction), value)), OwnerTasks{[O.Dispose{node}]} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, stack}
+    case ReleaseTransactionQueues{transaction} <> rest:
+      Machine{S.releaseQueues(w, transaction), rest, stack}
     case FireSettled{callback} <> rest:
       fireSettled(w, rest, stack, callback)
     case RunTracked{id} <> rest:
@@ -4789,7 +4795,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case EffectFinally{id, clean, saved} <> rest:
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:
-      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
+      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.callbackEffect(w), R.World.fault(w)), rest, saved}
     case FlushArgument{} <> +rest:
       match stack:
         case +callee <> +tail:
@@ -4844,10 +4850,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       afterSettle(w, rest, stack)
     case LandTransactions{frame, remaining} <> rest:
       landTransactions(w, rest, stack, frame, remaining)
-    case LandNodes{frame, t, index} <> rest:
-      landNodes(w, rest, stack, frame, t, index)
-    case LandEnd{frame, t} <> rest:
-      landEnd(w, rest, stack, frame, t)
+    case LandNodes{frame, t, index, rerunFrame} <> rest:
+      landNodes(w, rest, stack, frame, t, index, rerunFrame)
+    case LandEnd{frame, t, rerunFrame} <> rest:
+      landEnd(w, rest, stack, frame, t, rerunFrame)
     case CompleteSettle{frame} <> rest:
       completeSettle(w, rest, stack, frame)
     case ZombieLoop{nodes} <> rest:
@@ -4969,7 +4975,7 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
     case EffectFinally{id, clean, saved} <> rest:
       effectFinally(w, rest, id, clean, saved)
     case ErrorArmFinally{parameter, saved} <> rest:
-      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.fault(w)), rest, saved}
+      Machine{errorArmCatch(R.World.with_callbackEffect(w, parameter), R.World.callbackEffect(w), R.World.fault(w)), rest, saved}
     case PassReleases{frame, index, value, joined, stagedErr, missed, prior} <> rest:
       Machine{w, rest, passStack(frame)}
     case TrimFinallyRestore{prior, saved} <> rest:

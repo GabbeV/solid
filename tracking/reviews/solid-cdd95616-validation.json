@@ -1,0 +1,645 @@
+{
+  "sourceCommit": "cdd95616857ef1d54f3e2ec88a87ba6ca40de765",
+  "previousCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "sourceInputs": [
+    {
+      "path": "LICENSE",
+      "sha256": "59a76ed2f4a3ebe8d20a58869ef9c09420f796aa179420c8fb916f5557defc9b",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/LICENSE",
+      "sha256": "b81b37ef444c01ca730f2ee2bea2472a3e22278499b30e47a1b8d75d4e8e586e",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/BITWISE_OPERATIONS.md",
+      "sha256": "3169530bb573192be154d6058d347ebc7a066dc5466716f243fc4bfcf899815b",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/DESIGN-CONSOLIDATION.md",
+      "sha256": "29c5022a902a13b11a43e6c33733be5846867fbd49989ef9377e1add42cf457f",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/INTERNALS-ASYNC-STATE.md",
+      "sha256": "fbc132c12ff18d67a5883a8e71ef39b5569491383005ba3e12d2dae902259755",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/INTERNALS-STORE-STATE.md",
+      "sha256": "c748a34fc3b5d93a78c072c7df80c506be7012db04813b8462ba431a65296954",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/NODE-SHAPE.md",
+      "sha256": "1bebbf2e3d5933fce36055fb5294b8d8f56832f7db56990711633e480c3e5bf5",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/OPEN-QUESTIONS.md",
+      "sha256": "69df7c04ea41d057b3aa20bec2487a2274452847dd44816168a9e47f730b3c7e",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/docs/QUEUE_EXECUTION_CONTROL.md",
+      "sha256": "4b910b285d4232be76734ed42ad1a2d79509b968e7ca43e8fe14ecddedc3cd51",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/QUEUE_NOTIFICATION_SYSTEM.md",
+      "sha256": "1084f50eb3b453f04a1379f49de512e611bf63f983d98e3ddbc26a7f41e980c6",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/RULES-DERIVED.md",
+      "sha256": "a98445828bc5481e4bbbab4738bae2286c016462d8bbacf1b220ef0ecd2594d1",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/docs/RULES-FUNDAMENTALS.md",
+      "sha256": "07e763b8d24f29e607b8e2dd1d97c70880a8755f75ff0d06013d5c0e5f03e922",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/RULES-INDEX.md",
+      "sha256": "453211989bccd926d6031ff9c1e17e8d8b56d2e5f6e3c828d256dc6cb04f3598",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/docs/SCENARIOS.md",
+      "sha256": "30a4ded337020531dad82bad595cf59a664dcfc64cbc62df1c1695fdfa7f7780",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/SPEC-ASYNC-SEMANTICS.md",
+      "sha256": "88dc6f9b35279b2d8ba4acd2eecb1d3b0c51272bc934958a43185bf4da29e24a",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/docs/create-deferred.md",
+      "sha256": "944338328615d1646418861b6ab09ece8f0f422eec4821c969b11f4b3785b2d4",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/FINDINGS.md",
+      "sha256": "f74eb49c7848cee971359071bd38e63ee21702cd687b0657bbf7d8c73c6d4d88",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/README.md",
+      "sha256": "543e5235817c351e164683ae388ca8e218bebdf09dbe50f5baab84933e43e409",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/core-store.md",
+      "sha256": "d396751fa1266227b2617706725c40f57b1706ec7c06df754cedb1e4d3c253f4",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/optimistic-lanes.md",
+      "sha256": "9530f0499c4f89be590358433004b2fca84c8adaa12355ea7cd7895d07b93ed9",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/optimistic-store.md",
+      "sha256": "599e2124616b22f9f63183c940ffdded812b6ffc6a87132c3fac8edf143e7631",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/projections.md",
+      "sha256": "4d38d2854493f73adeec6ff9b044fa055101e1cba83bccdbf8e6ba133074d181",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/rules-mining/reconcile-snapshot.md",
+      "sha256": "74fd2eac8fb5af5686939775e3c43964cade69b4859b6ef62252890394a48fb0",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/docs/write-coalescing.md",
+      "sha256": "7fba4b2578586754e2a141cb46fd57c70e5f296c0670bc14433ade988aabcabe",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/package.json",
+      "sha256": "a4b18bdda0a8ff3231b3b33726eeb698cc839ecc7a091d28644f3439ae6b8787",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/affects-marks.ts",
+      "sha256": "4c641eb692b5f0062911ee351af8c2d27451e929ad9488c2c7603b6f5a4d90dc",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/affects.ts",
+      "sha256": "6f23a5f6327fcf92c03ab6868357c915b93f61389b2be2a2faafe856c05138f1",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/attribution.prod.ts",
+      "sha256": "3f7ab4a323d9434d58ec70647d12a7b6aed0cd5e2cdaca75f471839168e77953",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/attribution.ts",
+      "sha256": "d345df77eb12b257107d34d6eb9080040809a908f0f3cf9487f8489d418444fb",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/boundaries.ts",
+      "sha256": "a7c0244f18c60b920d56d46e2115f72be37a4ec3df1be6ac88476763dcefd8b9",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/carved.ts",
+      "sha256": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/action.ts",
+      "sha256": "5f0e684fd404cf4ea0b835323be6a989989df4f21916c15f909249ac4084b358",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/async.ts",
+      "sha256": "3aa5c116a4a9ad3d5d26ab428b545568ce816e4ffacfb2daece54a16d92af28f",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/attribution-costs.ts",
+      "sha256": "159ff2709ebab27a4b80d2097456941a71ad844f37f8ea64ca7271d4a481bfc4",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/attribution-feedback.ts",
+      "sha256": "3a219c6ffb68b48e54a432cc1ea664a76474f780385e85536e26456aad60c632",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/attribution-hooks.ts",
+      "sha256": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/attribution-queries.ts",
+      "sha256": "d6b65b2e39bb08f8281ef580e8616fdb134d0cf5bc78fb08cbe75ddcec61e119",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/attribution.ts",
+      "sha256": "a219aa1cc6566b0be0ffe0196d3e6cbf6effeed2d4a0acc478b15c26783a776f",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/constants.ts",
+      "sha256": "c680291fb01f82f06d57faf19608790ad7bd0dc05a3d4cdf06985d67d615e80a",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/context.ts",
+      "sha256": "c8e48ff3653fced14c8cd06a86e25b9b46bab609cd74794d27a32c3042a24e0c",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/core.ts",
+      "sha256": "0259306a684245935e33f1219598215e72a9be29cd4432d372cfa96d73816b4d",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/dev.ts",
+      "sha256": "141e1d66a356fb61fc05360bbeb2ebd5642b37b9b291fa336ce1f26c0d4bee9c",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/effect.ts",
+      "sha256": "4ff6a1fe25c9ad60016c07955169a86f7390fe02c86bba2137ba6dbb553aa393",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/error-hooks.ts",
+      "sha256": "5b58b7db8056352e1995061bd37e85b67ae89cae4dadbfe4a0832daf6ed816e0",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/error.ts",
+      "sha256": "b79034a005efe675dfee0063460c424a1b78512bf1353f8dd449cb05bfdf74ef",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/external.ts",
+      "sha256": "24d9a61a10b3eab799a81aff082f98a3409f3c6806a40bfb72da83ae3f242e8d",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/graph.ts",
+      "sha256": "ca760222bfbe604fceae4c29f6b6d4e380b7b359403a0b6acc4c7445a431f4a7",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/heap.ts",
+      "sha256": "dacc166e4dfc1af304393f1b1e0c941e26aded8047bf45ed9340e8b1855e465c",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/identities.ts",
+      "sha256": "d2b562cec393712e7d82e8c70e83981091ae2b0ab76425ac57fcef19ccd6b2db",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/index.ts",
+      "sha256": "d0bfe3b40e6c28db013fc829b1ebf1a5e3c3d906c347c66df560f30e85fbe8d4",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/invariants.ts",
+      "sha256": "f3538ec163bc6a367049892c9b80063e048f6ba8bafa500819ac237bb9d6547d",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/lanes.ts",
+      "sha256": "fbc6c5251cded8dc14cd69b8127324e422d769cded2c7538c0273aae0da75e0c",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/owner.ts",
+      "sha256": "ff2f186bf3db182a4134057ff3672b86e7af260a4526621531a01696425ddd76",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/scheduler.ts",
+      "sha256": "a3de97aaad5290d0cba95279c7c10e38fee01a74b302e2343d37fd2f66d99c60",
+      "changed": true
+    },
+    {
+      "path": "packages/signals/src/core/truth.ts",
+      "sha256": "bf56301573b8d496f7f2bc2f4a247ff2e4dffad7d4784aefb6781551ede9c9ec",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/types.ts",
+      "sha256": "d072279ac92717efc2a218c908ce012b31cc623f5122c0f8753997a63776ccdb",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/core/verdict.ts",
+      "sha256": "818b54b1a0584614ddb1a2dbaf6d1cb9dc7ff7fb46c8314b5aca81aced8b07ca",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/deferred.ts",
+      "sha256": "5dfbd03c6627ea2db41f5abe98a9d682e645ef655f54e5e11f18a3da2f5d5a06",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/flatten.ts",
+      "sha256": "8e3ab164928d5b74cdbbed8664ebf0c1977e6e9927f03fc6fa7836a7c7cdf4fa",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/from.ts",
+      "sha256": "5875e1a6616ec9e7b4aafdbf8403720701bac6bf9f49175b26ec9a847922ecde",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/globals.d.ts",
+      "sha256": "3d0d464f13e75a701639fd5def66d48bee656805a5ecfd2e57a8fefa0bfcf005",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/index.ts",
+      "sha256": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/map.ts",
+      "sha256": "2ae37eba9c0fba7d7820dd7953eb5155f768bc03ce4a4d32116abe88b159199b",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/reveal.ts",
+      "sha256": "d4c0e7dfabf3b0f52aca91169863e2bfade6a57738d294330e02a05bba3d0129",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/signals.ts",
+      "sha256": "d3d7dabbfa45dcd47b7ea3ccc12168c83a1cf646d519a6880013b8428b23a4f1",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/affects.ts",
+      "sha256": "3adca4d18279788835eee80fb357cd40cbb0e2ae0d124922ce5b4b6605f4eda5",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/edges.ts",
+      "sha256": "9cb1068d792e4fcb6233e1a47bc76d2dc46823691a94e21b9e6ea85bae3aae42",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/hooks.ts",
+      "sha256": "8db334561528a83f4b60b7ccd90cca863a3dd1665d01cfa39ff6c1dbe1e4dd1f",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/index.ts",
+      "sha256": "d2975ee69265792ef8f5509a3115044023f91d290295d8ef989d5e305dc68aab",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/optimistic.ts",
+      "sha256": "f91f034f7470a87118f5bdc9fc8aecd3c962698a63e1776421989f232848a918",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/projection.ts",
+      "sha256": "7ff8040f4769e1454a626b996502128494d26badcf147305399bae7bc8bb1f0f",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/reconcile.ts",
+      "sha256": "2b8a088a7846121cd851c6ff64bea30bacbdc99e9203bb4d18f313f283843bd9",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/store.ts",
+      "sha256": "a0d6202b7f11e1b3b84fb90d6e0c8f53b252b951d77704ff6cae142c8fa00ea2",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/storePath.ts",
+      "sha256": "5b7587a755c09aa4d32dc8515a942497fa249f6cf151c065d2fd5e74451b2666",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/target.ts",
+      "sha256": "d651342f9a184c0fc5cbfdd41a18f8cf2748e9b17b329a4038b8756eedeec9d3",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/types.ts",
+      "sha256": "00d50fa1a2393887a5d18e96b223ae4cbbc8b9b7706cca0784055c0872319e51",
+      "changed": false
+    },
+    {
+      "path": "packages/signals/src/store/utils.ts",
+      "sha256": "48c7061b90a64ce5cef4faae298de47207d3db5ed56e01701a26d10160ff6095",
+      "changed": false
+    }
+  ],
+  "nativeSourceRepros": [
+    {
+      "name": "deferred-buffered-from",
+      "status": "baseline-bug-and-controls-reconfirmed",
+      "result": {
+        "expectFixed": false,
+        "cases": [
+          {
+            "deferred": false,
+            "seeded": false,
+            "initial": 0,
+            "value": 1
+          },
+          {
+            "deferred": false,
+            "seeded": true,
+            "initial": 0,
+            "value": 1
+          },
+          {
+            "deferred": true,
+            "seeded": false,
+            "initial": 0,
+            "error": "p.then is not a function"
+          },
+          {
+            "deferred": true,
+            "seeded": true,
+            "initial": 0,
+            "error": "p.then is not a function"
+          }
+        ]
+      }
+    },
+    {
+      "name": "from-sync-unsubscribe",
+      "status": "baseline-bug-and-controls-reconfirmed",
+      "result": {
+        "expectFixed": false,
+        "cases": [
+          {
+            "synchronous": false,
+            "failed": false,
+            "object": false,
+            "result": "value 7",
+            "closed": 1
+          },
+          {
+            "synchronous": false,
+            "failed": false,
+            "object": true,
+            "result": "value 7",
+            "closed": 1
+          },
+          {
+            "synchronous": false,
+            "failed": true,
+            "object": false,
+            "result": "original source error",
+            "closed": 1
+          },
+          {
+            "synchronous": false,
+            "failed": true,
+            "object": true,
+            "result": "original source error",
+            "closed": 1
+          },
+          {
+            "synchronous": true,
+            "failed": false,
+            "object": false,
+            "error": "unsubscribe failed"
+          },
+          {
+            "synchronous": true,
+            "failed": false,
+            "object": true,
+            "error": "unsubscribe failed"
+          },
+          {
+            "synchronous": true,
+            "failed": true,
+            "object": false,
+            "error": "unsubscribe failed"
+          },
+          {
+            "synchronous": true,
+            "failed": true,
+            "object": true,
+            "error": "unsubscribe failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "deferred-superseded-error",
+      "status": "baseline-bug-and-controls-reconfirmed",
+      "result": {
+        "expectFixed": false,
+        "cases": [
+          {
+            "waiter": "until",
+            "seeded": false,
+            "priorFlight": false,
+            "beforeObsoleteSettles": [
+              {
+                "error": true
+              }
+            ],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "until",
+            "seeded": false,
+            "priorFlight": true,
+            "beforeObsoleteSettles": [],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "until",
+            "seeded": true,
+            "priorFlight": false,
+            "beforeObsoleteSettles": [
+              {
+                "error": true
+              }
+            ],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "until",
+            "seeded": true,
+            "priorFlight": true,
+            "beforeObsoleteSettles": [],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "refresh",
+            "seeded": false,
+            "priorFlight": false,
+            "beforeObsoleteSettles": [
+              {
+                "error": true
+              }
+            ],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "refresh",
+            "seeded": false,
+            "priorFlight": true,
+            "beforeObsoleteSettles": [],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "refresh",
+            "seeded": true,
+            "priorFlight": false,
+            "beforeObsoleteSettles": [
+              {
+                "error": true
+              }
+            ],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          },
+          {
+            "waiter": "refresh",
+            "seeded": true,
+            "priorFlight": true,
+            "beforeObsoleteSettles": [],
+            "afterObsoleteSettles": [
+              {
+                "error": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "nativeSignals": {
+    "buildJS": "pass: prod/dev/observe",
+    "declarations": "pass: tsc -p tsconfig.build.json",
+    "fullSuite": {
+      "filesPassed": 336,
+      "testsPassed": 5502,
+      "expectedFailures": 2,
+      "skipped": 2
+    },
+    "scope": "Unmodified source checkout. Rollup emits existing test-tree type warnings; source declaration build succeeds. Repository examples/native compiler binding are not claimed."
+  },
+  "bendValidation": {
+    "publicSuite": "pass: npm test on integrated main, 3612 public histories including eight landed-frame controls and 32 concurrent deferred histories",
+    "privateAlignment": "pass: full npm run test:alignment on integrated main, with 3072 status /2304 pending controls after removing obsolete forwarding parameters",
+    "kernel": "all existing root proofs pass; new arbitrary-healthy-World queued callback property also passes its module",
+    "mutationCorpus": {
+      "configured": 513,
+      "compiledRejected": 513,
+      "finite": 436,
+      "kernel": 77,
+      "status": "pass: every configured variant compiled and failed a semantic assertion; no compiler/resource failures credited",
+      "runs": [
+        {
+          "log": "cdd-existing502-mutations.log",
+          "sha256": "eddecdf777309c7867ce3f9120f31514898ab42900cb1df058a0d72b6fe57c06",
+          "rejected": 502
+        },
+        {
+          "log": "cdd-new8-mutations-final.log",
+          "sha256": "4153469d76790557c12a6caa94b583d0076372335bfa78318cb8dcc2a45d65d8",
+          "rejected": 8
+        },
+        {
+          "log": "cdd-multiple3-mutations.log",
+          "sha256": "469f459753b51288143c805928e33cae0bdee700a909e3bafd77e037736cc167",
+          "rejected": 3
+        }
+      ]
+    }
+  },
+  "activeDeviationIds": [],
+  "candidatePatchApplicability": {
+    "commit": "cdd95616857ef1d54f3e2ec88a87ba6ca40de765",
+    "status": "all three git apply --check operations pass; no candidate applied"
+  }
+}

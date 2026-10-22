@@ -1,4 +1,4 @@
-// Source-only repro; the Bend public grammar does not admit createDeferred yet.
+// Source-only deferred stream repro; the Bend data/thenable profile excludes it.
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
