@@ -4,10 +4,10 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3720 differential histories, 515 rejected compiled mutations,
-and 72 composed closed Bend regressions, plus quantified array-storage and
+Current verification: 3736 differential histories, 519 rejected compiled mutations,
+and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at 1c0ff9f8 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at 3cbfaf1a (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -15,6 +15,18 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Published async errors retire the previous frame
+
+[The 3cbfaf1a integration](reviews/solid-3cbfaf1a.md) ports merged #4228 through
+existing owner/core continuations. Sixteen new public timing histories and three
+arbitrary-World continuation laws cover actual error publication, staged errors
+and pending transfers. A complete concrete public-API lifecycle also proves
+cleanup counts 0/0/1 and a Healthy final fault. All old theorem domains/budgets
+remain unchanged. Three new branch negative controls and one complete-program
+proof negative control join the existing corpus. PRs #4231–#4233 are reported and
+unmerged; their candidate patches remain separate. Stream refetch wrapping,
+from/onSupersede, store/boundary/snapshot scopes stay unfinished.
 
 ## Latest source-only refresh
 

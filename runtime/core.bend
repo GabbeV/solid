@@ -2224,11 +2224,17 @@ def finishHandleError(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
     _ => pendingResume(rest, stack, Q.beginReleaseSettledDependents(w, id)))
 
 def handleErrorNotify(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, error: R.Value, +pending: Bool, staged: Bool) -> Machine:
-  +w = B.choose(~R.World, Bool.or(pending, Bool.not(staged)),
+  +publishes = Bool.or(pending, Bool.not(staged))
+  +w = B.choose(~R.World, publishes,
     _ => A.notifyStatusWith(w, id, B.choose(~U32, pending, _ => K.STATUS_PENDING(), _ => K.STATUS_ERROR()), error), _ => w)
-  Machine{w, B.choose(~List<&2, Task>, pending,
+  +ending = B.choose(~List<&2, Task>, pending,
     _ => ErrorSettleSource{id} <> rest,
-    _ => ErrorAfterPending{id, pending} <> rest), stack}
+    _ => ErrorAfterPending{id, pending} <> rest)
+  # async.ts:handleError retires the parked frame after publishing an actual
+  # error (#4228). Stage-only errors and NotReady transfers retain it.
+  Machine{w, B.choose(~List<&2, Task>, Bool.and(publishes, Bool.not(pending)),
+    _ => OwnerTasks{[O.Enter{id, False{}, True{}}]} <> ending,
+    _ => ending), stack}
 
 # async.ts:handleError retains its result-identity/loading guard, then pauses
 # at stageError's and settlement's actual deferred release call boundaries.

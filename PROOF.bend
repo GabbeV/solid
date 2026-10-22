@@ -1,4 +1,6 @@
 import Base
+import ./proof/async-cleanup-program.bend as CleanupProgram
+import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
@@ -964,3 +966,15 @@ def Laws.landing_release_callback(w, transaction, rest, stack, ready):
 
 def Laws.landing_release_world_frame(w, transaction):
   LandingRelease.frame(w, transaction)
+
+def Laws.async_error_retires_parked_frame_after_notify(w, rest, stack, id, error):
+  ErrorRetirement.published(w, rest, stack, id, error)
+
+def Laws.async_staged_error_preserves_parked_frame(w, rest, stack, id, error):
+  ErrorRetirement.staged(w, rest, stack, id, error)
+
+def Laws.async_pending_transfer_preserves_parked_frame(w, rest, stack, id, error, staged):
+  ErrorRetirement.pending(w, rest, stack, id, error, staged)
+
+def Laws.async_rejected_replacement_releases_displayed_frame():
+  CleanupProgram.replacement_error_releases_displayed_frame()

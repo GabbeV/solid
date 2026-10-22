@@ -77,3 +77,11 @@ and the baseline-verification assertion fail, prompting review.
 
 No report has been filed. Observed results and version checks are in
 `verification.log`.
+
+## Generic deferred iterator refetch (#4232)
+
+Run `node deferred-sync-iterator.mjs /path/to/source-built/signals.js`.
+The bare-result deferred case throws `p.then is not a function`. The ordinary
+memo and async-generator controls return 1. This reduction does not use from.
+The default entry is the parent project's pinned production bundle. Pass
+`--expect-fixed` only when selecting a separately built candidate/fixed version.

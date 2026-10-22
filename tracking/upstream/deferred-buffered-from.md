@@ -47,3 +47,15 @@ this composition. See [the validation record](deferred-buffered-from-validation.
 for exact size rows and browser evidence. [Open the saved playground](https://s.olid.uk/id/VfGd9n1GQDKvvXQNGb2MWw), using mizulu/solid2@aece1d44.
 The paired control passed before saving; the original failure was verified again
 after reopening the saved share. Released rc.17 itself does not yet export from.
+
+## Publication update, 2026-10-22
+
+The user filed https://github.com/solidjs/solid/pull/4232. It is open and
+unmerged against next@3cbfaf1a. The candidate remains separate from the
+translation; earlier unfiled statements and candidate measurements are historical.
+
+The current generic reductions are repros/solid-signals/deferred-sync-iterator.mjs
+and repros/playground/deferred-sync-iterator.tsx. Both use a generator under
+Symbol.asyncIterator and no from adapter. Native next@3cbfaf1a shows the failure
+only for a deferred refetch's bare result; ordinary memo and promised-step
+controls pass. The original from reproductions remain historical evidence.

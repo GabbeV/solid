@@ -1,0 +1,15 @@
+{
+  "url": "https://s.olid.uk/id/edhnUsFGTpqWi7c0re45nQ",
+  "sourceRoundTrip": true,
+  "solidVersion": "mizulu/solid2@aece1d44",
+  "before": [],
+  "baseline": [
+    "Old request finished.",
+    "Current error received: request failed"
+  ],
+  "control": [
+    "Current error received: request failed"
+  ],
+  "errors": [],
+  "reopened": true
+}

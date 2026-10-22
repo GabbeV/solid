@@ -1,4 +1,6 @@
 import Base
+import ./examples/async-cleanup.bend as CleanupExample
+import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-driver.bend as DeferredDriver
@@ -1998,3 +2000,31 @@ law landing_release_world_frame:
   for w: R.World
   for transaction: Nat
   {LandingRelease.eraseQueueState(Scheduler.releaseQueues(w, transaction)) == LandingRelease.eraseQueueState(w) : R.World}
+
+law async_error_retires_parked_frame_after_notify:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for id: Nat
+  for error: R.Value
+  {Core.handleErrorNotify(w, rest, stack, id, error, False{}, False{}) == Core.Machine{Status.notifyStatusWith(w, id, K.STATUS_ERROR(), error), Core.OwnerTasks{[DisposalOwner.Enter{id, False{}, True{}}]} <> Core.ErrorAfterPending{id, False{}} <> rest, stack} : Core.Machine}
+
+law async_staged_error_preserves_parked_frame:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for id: Nat
+  for error: R.Value
+  {Core.handleErrorNotify(w, rest, stack, id, error, False{}, True{}) == Core.Machine{w, Core.ErrorAfterPending{id, False{}} <> rest, stack} : Core.Machine}
+
+law async_pending_transfer_preserves_parked_frame:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for id: Nat
+  for error: R.Value
+  for staged: Bool
+  {Core.handleErrorNotify(w, rest, stack, id, error, True{}, staged) == Core.Machine{Status.notifyStatusWith(w, id, K.STATUS_PENDING(), error), Core.ErrorSettleSource{id} <> rest, stack} : Core.Machine}
+
+law async_rejected_replacement_releases_displayed_frame:
+  {CleanupExample.main() == CleanupExample.CleanupTiming{0n, 0n, 1n, R.Healthy{}} : CleanupExample.CleanupTiming}

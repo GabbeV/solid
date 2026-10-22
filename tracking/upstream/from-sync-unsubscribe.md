@@ -45,3 +45,9 @@ explicitly describes swallowing throwing unsubscribes after iterator closure;
 [#4182](https://github.com/solidjs/solid/issues/4182), the helper request by devagrawal09.
 Targeted issue/PR searches found no duplicate or landed repair. This report does not
 claim that the older cleanup-routing issues establish this subscription policy.
+
+## Publication update, 2026-10-22
+
+The user filed https://github.com/solidjs/solid/pull/4233. It is open and
+unmerged against next@3cbfaf1a. The candidate remains separate from the
+translation; earlier unfiled statements and candidate measurements are historical.

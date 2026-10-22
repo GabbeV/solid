@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "1c0ff9f82ceccf99f11cf1dc1e27eae5feb0c103",
+    "commit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
     "branch": "next",
     "version": "2.0.0-rc.17"
   },
@@ -156,7 +156,7 @@
     "upstream/solid/packages/signals/src/boundaries.ts": "a7c0244f18c60b920d56d46e2115f72be37a4ec3df1be6ac88476763dcefd8b9",
     "upstream/solid/packages/signals/src/carved.ts": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1",
     "upstream/solid/packages/signals/src/core/action.ts": "5f0e684fd404cf4ea0b835323be6a989989df4f21916c15f909249ac4084b358",
-    "upstream/solid/packages/signals/src/core/async.ts": "3aa5c116a4a9ad3d5d26ab428b545568ce816e4ffacfb2daece54a16d92af28f",
+    "upstream/solid/packages/signals/src/core/async.ts": "5a4557a1e98011582de35015cd156b7374c52f94a97123d262194c0ed0908363",
     "upstream/solid/packages/signals/src/core/attribution-costs.ts": "159ff2709ebab27a4b80d2097456941a71ad844f37f8ea64ca7271d4a481bfc4",
     "upstream/solid/packages/signals/src/core/attribution-feedback.ts": "3a219c6ffb68b48e54a432cc1ea664a76474f780385e85536e26456aad60c632",
     "upstream/solid/packages/signals/src/core/attribution-hooks.ts": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939",

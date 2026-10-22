@@ -168,3 +168,28 @@ to `return 1` prevents that remount. The saved source and behavior were checked
 after loading the share. Real For/Repeat JSX also reproduces with unchanged
 source-built next@0222d684 in production, development and observe builds.
 No report or PR has been filed. See the tracked source-only report.
+
+## Deferred synchronous error while an obsolete request is pending
+
+[Open the playground](https://s.olid.uk/id/edhnUsFGTpqWi7c0re45nQ).
+Source: [deferred-error-step.tsx](deferred-error-step.tsx).
+Click **Run** once. A request starts, then the computation changes to a
+synchronous error. Expected: `until(result)` rejects promptly with that error.
+Actual: it waits for the obsolete two-second request to finish first. The callback
+stays synchronous so the failure is a synchronous throw. The console and short
+delays expose the sequence without explicit flushes or separate step buttons.
+[Saved-share verification](deferred-error-step-hosted.json) records the baseline
+and no-old-request control on mizulu/solid2@aece1d44. Filed as #4231; still
+reproduced separately on source-built next@3cbfaf1a when the PR was prepared.
+
+## Deferred refetch with a bare iterator result
+
+[Open the playground](https://s.olid.uk/id/kq_5yBGMTzSh2Udc6VEwXw).
+Source: [deferred-sync-iterator.tsx](deferred-sync-iterator.tsx).
+Click **Run** once. Expected console: initial 0, updated 1. Actual: the updated
+read throws `p.then is not a function`. Adding `async` to the generator method
+is a passing control. This exposes the generic deferred iterator wrapper
+without from. [Saved-share verification](deferred-sync-iterator-hosted.json)
+records both cases on mizulu/solid2@aece1d44. Filed as #4232, separately from
+#4233's from unsubscribe error containment. The published PRs also retain
+unchanged source-built next@3cbfaf1a verification across all three build tiers.

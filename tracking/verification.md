@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid 1c0ff9f82ceccf99f11cf1dc1e27eae5feb0c103 (declares rc.17); Bend
+Pins: Solid 3cbfaf1a014e6b45901836b77cbac8bbf17597d4 (declares rc.17); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred, 32 multiple-deferred, 108 first-load stream and eight cdd95616 landing-barrier histories: 3720 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred, 32 multiple-deferred, 108 first-load stream and eight cdd95616 landing-barrier histories and 16 async replacement cleanup histories: 3736 total, plus explicit host object-identity and native timeout
   checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, 64 finite children-flatten exact-machine/World/native controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -27,15 +27,15 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles and rejects all 515 isolated source-changing copies:
-  437 finite differential/structural variants and 78 kernel proof-property
+- mutations compiles and rejects all 519 isolated source-changing copies:
+  438 finite differential/structural variants and 81 kernel proof-property
   variants. The first-load stream receipt records both complete disjoint shards. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
   change during the run, and seals source/output hashes only after success.
 
-The roots now contain seventy-two closed composed regressions: nine earlier
+The roots now contain seventy-three closed composed regressions: nine earlier
 chain/cleanup/error/pending/transaction cases, five ordinary-flight loading /
 landing/supersession/diamond cases, two default-until cases, one callback read/return/application-write case, one captured-root disposal case, one bound-init-disposer case, two context-record snapshot/isolation cases, one bound-cleanup identity/drain case, one nested-memo replacement/retirement case, two nested-effect first-application/disposal cases, one captured-local accumulator/lifetime case, one escaped-accessor lifetime/tracking case, one escaped-setter lifetime case, one reentrant-setter entry-value case, one computed-accessor disposal/freezing case, one writable-memo manual-previous case, one setter-cleanup identity/clear case, one getter-cleanup identity/lazy-pull/caller-stack case, two tracked-effect phase/write and rerun/disposal-cleanup cases, two owned/unowned settled callback cases, two nested-flush/error-precedence cases, four custom-comparator cases, two positive reaction lifecycle/seeded replacement cases, one dynamic returned-cleanup replacement/disposal case, one callable-initializer tracking/freezing case, one first-class callback argument/initialization/cleanup case, one direct owner/core cleanup-read fixture, one trim-error precedence case, one commit-before-cleanup-error case, three public async cleanup cases (flight autodisposal, equal-value trim and pending-dependent release), positive staged-error recovery and held-function-result cases, three action hold/resume/reusable-wrapper executions, two nine-argument callback/action executions, one direct-owner clear/reuse/final-dispose execution, three mapArray lifecycle
 executions (plain, positional and extracted key, each with declared arity two),
@@ -450,3 +450,11 @@ txArena. A compiled clock-corruption mutation is independently rejected by this
 law. This supplements the complete 514-variant receipt with one kernel variant
 (515 total: 437 finite, 78 kernel); no runtime change or async-graph correctness
 claim is introduced.
+
+The 3cbfaf1a refresh adds three arbitrary-World continuation properties for
+published-error retirement, staged-error preservation and pending transfer.
+The first schedules the existing owner walk after notification, before the
+handleError remainder. This is a scoped continuation theorem, not a theorem
+about arbitrary async graphs. Old complete-program domains and budgets stand.
+
+One complete concrete public-API program additionally proves shown/pending/rejected cleanup counts 0/0/1 and Healthy through examples/async-cleanup.bend. Its own independently compiled omitted-retirement mutation is rejected.

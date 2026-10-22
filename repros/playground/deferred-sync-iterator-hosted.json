@@ -1,0 +1,15 @@
+{
+  "url": "https://s.olid.uk/id/kq_5yBGMTzSh2Udc6VEwXw",
+  "sourceRoundTrip": true,
+  "solidVersion": "mizulu/solid2@aece1d44",
+  "baseline": [
+    "Initial value: 0",
+    "Read failed: p.then is not a function"
+  ],
+  "control": [
+    "Initial value: 0",
+    "Updated value: 1"
+  ],
+  "errors": [],
+  "reopened": true
+}

@@ -47,3 +47,9 @@ standard scenarios remain unchanged. No caps changed and no timing claim is made
 The candidate is local only in /workspace/solid-deferred-throw-candidate.
 See [the validation record](deferred-superseded-error-validation.json) for the full
 size rows, repro paths and exact evidence boundary.
+
+## Publication update, 2026-10-22
+
+The user filed https://github.com/solidjs/solid/pull/4231. It is open and
+unmerged against next@3cbfaf1a. The candidate remains separate from the
+translation; earlier unfiled statements and candidate measurements are historical.

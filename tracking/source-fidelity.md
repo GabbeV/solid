@@ -1,9 +1,14 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid 1c0ff9f8 (declares rc.17), matching fetched next on 2026-10-22.
-[The latest source-only refresh](reviews/solid-1c0ff9f8.md) changes only unported
+Current pin: Solid 3cbfaf1a (declares rc.17), matching fetched next on 2026-10-22.
+[The latest integration](reviews/solid-3cbfaf1a.md) ports #4228's parked-frame
+retirement after a published async error, with 16 paired cleanup timing histories
+and three arbitrary-World continuation laws. Earlier theorem domains/budgets
+remain unchanged. PRs #4231–#4233 are reported and unmerged; their candidate
+patches remain separate, and no semantic workaround is active.
+[The preceding source-only refresh](reviews/solid-1c0ff9f8.md) changes only unported
 store code and documentation; non-store source and Bend runtime are unchanged.
-[The latest integration](reviews/solid-cdd95616.md) ports the landing release
+[The landing-barrier integration](reviews/solid-cdd95616.md) ports the landing release
 barrier and removes obsolete status forwarding in source order. It retains all
 previous theorem domains/budgets. The preceding refresh added from/onSupersede as
 explicit omissions; neither is silently approximated.

@@ -3,6 +3,10 @@
 An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.17. This is **not yet the complete signals package**.
 
+The source is pinned to next@3cbfaf1a. [The latest integration](tracking/reviews/solid-3cbfaf1a.md)
+ports async-error cleanup timing, with 16 paired histories and three quantified
+continuation laws. Full-package and arbitrary-async-graph guarantees remain open.
+
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
 [the source-fidelity audit](tracking/source-fidelity.md). Proof convenience does
@@ -54,8 +58,8 @@ iterator engine. Stream refetch wrapping/from/store/boundary profiles remain unf
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,720 public histories, 515 useful mutation
-rejections and 72 composed closed regressions, plus quantified properties.
+budget. Current evidence totals 3,736 public histories, 519 useful mutation
+rejections and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
 input dispatch and its own bound setter, supported by the lane pass/flush
@@ -66,25 +70,17 @@ pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `1c0ff9f8` (declares rc.17), matching `next` checked
-on 2026-10-22. [The integration review](tracking/reviews/solid-1c0ff9f8.md)
-reviews the later store-only #4216 update; the preceding integration ports
-#4217's landed-frame re-derivation barrier and core size refactors.
-The `from` and `onSupersede` protocols remain explicit omissions. Three upstream
-bugs retain isolated repros and candidate patches in [the issue register](tracking/upstream-issues.json).
-No issue/PR has been filed and no workaround is installed. The complete pre-rebase
-translation checkpoint is `289f8cc`.
-The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
-[the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
-The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
-The merged cleanup-collector (#4176) and reaction-arm (#4188) fixes now pass their
-original repros and positive Bend regressions. Their former counterexamples remain
-in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`.
+The reviewed Solid pin is now `3cbfaf1a` (declares rc.17), matching `next`
+checked on 2026-10-22. [The integration review](tracking/reviews/solid-3cbfaf1a.md)
+ports #4228's cleanup of the previous displayed frame after a replacement
+publishes an async error. All 77 recorded Solid inputs match Git. All previous
+theorem domains and sufficient budgets remain unchanged. The three reported
+PRs #4231–#4233 are still unmerged, with no candidate patch installed.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 515 source-changing variants
+npm run mutations                # reject 519 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy
@@ -273,3 +269,8 @@ production subset; hydration IDs and owner reflection remain unfinished.
 `npm run example:deferred` runs a Bend consumer that keeps 10 visible while a
 typed external request refreshes, then publishes 21 and clears isPending.
 [Deferred coverage](tracking/deferred.md) states the callback protocol and limits.
+
+`npm run example:cleanup` executes the merged async-error cleanup timing in
+Bend directly. It prints cleanup counts 0 while shown, 0 while the replacement
+is pending, and 1 when that replacement rejects, followed by Healthy. See
+[async-cleanup.bend](examples/async-cleanup.bend).

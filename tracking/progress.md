@@ -3,8 +3,10 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is 1c0ff9f8 (declares rc.17). The latest integration ports merged fallback retention
-and cleanup continuation, retaining the prior checkpoint at bb82345. Active
+is 3cbfaf1a (declares rc.17). The latest integration ports merged async-error
+parked-frame retirement (#4228), with 16 cleanup timing histories and three
+quantified continuation properties. The earlier fallback/cleanup checkpoint
+remains at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
 
@@ -17,9 +19,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,720 histories, plus separate native scheduling and finite memo-boundary controls |
-| Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 515; resource/infrastructure failures are excluded from useful rejections |
+| Public comparison corpus | 2,348 histories | 3,736 histories, plus separate native scheduling and finite memo-boundary controls |
+| Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
+| Compiled mutation checks | 116 | 519; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -412,3 +414,10 @@ txArena. A compiled clock-corruption mutation is independently rejected by this
 law. This supplements the complete 514-variant receipt with one kernel variant
 (515 total: 437 finite, 78 kernel); no runtime change or async-graph correctness
 claim is introduced.
+
+The 3cbfaf1a runtime refresh integrates #4228's published-error frame retirement.
+Sixteen new paired histories bring the public corpus to 3,736; three quantified
+continuation laws and a complete concrete public-API cleanup program add to the
+formal guarantees. Counts are 73 closed regressions and 519 compiled negative
+variants (438 finite, 81 kernel). See reviews/solid-3cbfaf1a.md for the precise
+new proof scope and retained unfinished work.

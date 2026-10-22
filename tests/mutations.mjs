@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["async cleanup program omits rejection retirement", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/proof-properties.mjs", "handleErrorNotify", "async-cleanup-program"],
+  ["async retirement omits parked cleanup", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/pin-3cbfaf1a.mjs", "handleErrorNotify"],
+  ["async retirement kernel disposes staged errors", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "Bool.not(pending)", "tests/proof-properties.mjs", "handleErrorNotify", "async-error-retirement"],
+  ["async retirement kernel disposes pending transfers", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "publishes", "tests/proof-properties.mjs", "handleErrorNotify", "async-error-retirement"],
   ["cdd kernel queued release changes clock", "runtime/scheduler.bend", "+w = R.World.with_renderQueue", "+w = R.World.with_clock(w, Nat.add(1n, R.World.clock(w)))\n  +w = R.World.with_renderQueue", "tests/proof-properties.mjs", "releaseQueues", "landing-release"],
   ["deferred first-stream discards the raw async return", "runtime/core.bend", "rest, R.AsyncValue{result} <> tail}", "rest, R.Undefined{} <> tail}", "tests/deferred-first-stream.mjs", "deferredResult"],
 
