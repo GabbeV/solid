@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3158 differential histories, 322 rejected compiled mutations,
+Current verification: 3158 differential histories, 337 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -15,6 +15,16 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Queued guesses and seam prefix
+
+[Queued guesses](lane-guesses.md) adds writer composition, reverse lookup,
+question allocation, live application and the pre-guess reveal prefix. 3,307
+native helper/callback programs and nine quantified properties check this layer,
+including newest lookup over any finite prior queue. The cumulative mutation
+count is 337. Core seating/publication/flush and public constructors/windows
+remain the next crossings; public-history and closed-regression counts stay
+unchanged, and no semantic deviation is active.
 
 ## Lane answers and actual core read/write hooks
 

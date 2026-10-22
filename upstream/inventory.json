@@ -428,7 +428,72 @@
       "sha256": "3f7ab4a323d9434d58ec70647d12a7b6aed0cd5e2cdaca75f471839168e77953",
       "lines": 81,
       "status": "open",
-      "units": [],
+      "units": [
+        {
+          "key": "attribution.prod.ts:noop",
+          "start": 14,
+          "end": 14,
+          "sha256": "ece1496ef06c73a4c7f1a37ebe931289c72dc7b940cae955d0b1c434bfea145f",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:costs",
+          "start": 26,
+          "end": 26,
+          "sha256": "a99339010944c9bc7b1dde61045e87877ecdd21bf23e8ab32068d3aaae7a368e",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:feedback",
+          "start": 27,
+          "end": 33,
+          "sha256": "2f4a41f0dd9b37ea858030d942d432acb13452f5bc5e739acb7c83ff651798c3",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:why",
+          "start": 34,
+          "end": 34,
+          "sha256": "8ba875ea792652fb971b53d52c84dd8aa891a86cc05388be7210178baacfcc8f",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:subscriptions",
+          "start": 35,
+          "end": 35,
+          "sha256": "f88c06aa61e1c5f19a2fee18af9db649fa2f4e36ef039f10d414982515daf5a2",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:formatRerun",
+          "start": 36,
+          "end": 36,
+          "sha256": "0230368628ced6004c819a36169fcd7fea271f1b4d04fbd24fc9c4946b75d91b",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:formatOrigin",
+          "start": 37,
+          "end": 37,
+          "sha256": "c33cff52d773a7a401992d6c8ff6d1e943121b4f7e06616cad782bc59cb6ba02",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "attribution.prod.ts:graphSize",
+          "start": 39,
+          "end": 45,
+          "sha256": "aff952dadf2936945ef5ec6833d59be0f11a1109a863f7a5b478cebd2ad9d701",
+          "status": "open",
+          "mapping": null
+        }
+      ],
       "branches": []
     },
     {
@@ -450,6 +515,22 @@
           "start": 152,
           "end": 154,
           "sha256": "a20b53672c60b5d0de0139cd75534ee46df334704298968139a620a057bcfbc1",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "boundaries.ts:boundaryOf",
+          "start": 160,
+          "end": 161,
+          "sha256": "e9ce7cea555db54e39b689ed404d6c77d36a7e632a51f205fff7152c844e2235",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "boundaries.ts:isCollecting",
+          "start": 165,
+          "end": 166,
+          "sha256": "a9bbdfbfbf7b6ac78969f36e931d82c6afe46b28acf8abbc06888443bf4f4bce",
           "status": "open",
           "mapping": null
         },
@@ -522,6 +603,14 @@
           "start": 294,
           "end": 306,
           "sha256": "9da69c90eb8c3ecd88331b838dd0ac14acb4d8877388397046fd2acf6f4438ce",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "boundaries.ts:unsettled",
+          "start": 314,
+          "end": 315,
+          "sha256": "98ac401a6b202106a73efa2a5971d7262d2e5e9bc6ce1551bce6d2c2ed32f6c1",
           "status": "open",
           "mapping": null
         },
@@ -860,7 +949,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "unsettled",
           "start": 315,
           "end": 315,
           "kind": "ConditionalExpression",
@@ -1595,7 +1684,16 @@
       "sha256": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1",
       "lines": 20,
       "status": "open",
-      "units": [],
+      "units": [
+        {
+          "key": "carved.ts:carved",
+          "start": 9,
+          "end": 11,
+          "sha256": "b20a55fa815e37927be5975ed34e69181baa2e7d0d25dfe205fbfc2b821de1f7",
+          "status": "open",
+          "mapping": null
+        }
+      ],
       "branches": []
     },
     {
@@ -15082,6 +15180,14 @@
           }
         },
         {
+          "key": "core/graph.ts:deferReleases",
+          "start": 97,
+          "end": 97,
+          "sha256": "65f127fb5ac68b5b085843d7ae6b70e53b24f3e6bcd23ef9ee5e47aac6de6b63",
+          "status": "open",
+          "mapping": null
+        },
+        {
           "key": "core/graph.ts:unobserved",
           "start": 99,
           "end": 103,
@@ -15947,35 +16053,47 @@
           "start": 125,
           "end": 129,
           "sha256": "7f4ed54cc05046fe0688ec473fea01d61e7269ad3731a4220517c4bdc98480b2",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:guessedValueOf",
+            "status": "restricted",
+            "restrictions": "Pending guess, override lane value and committed precedence; shared truth helper. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+          }
         },
         {
           "key": "core/lanes.ts:pendingGuessOf",
           "start": 131,
           "end": 135,
           "sha256": "b90750b4aa60679aa8f63e3215ddb94677cc049eed427ccaac879324123f2ae9",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:pendingGuessOf, pendingGuessLoop",
+            "status": "restricted",
+            "restrictions": "Source reverse live triple lookup with raw slot presence; list-backed indexed representation. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+          }
         },
         {
           "key": "core/lanes.ts:optimisticWrite",
           "start": 136,
           "end": 148,
           "sha256": "6b794bc8bc3291148dc5322026cef7013756f9d854c07fa8e738814def881424",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:optimisticWrite, optimisticResolved, OptimisticResolved, OptimisticCompared; runtime/lanes-state.bend:pushGuess",
+            "status": "restricted",
+            "restrictions": "Captured writer previous value, one updater invocation, raw comparison, live GUESS reask gate, question allocation and scheduling. Typed callable protocol, not arbitrary JavaScript closures. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+          }
         },
         {
           "key": "core/lanes.ts:inFlight",
           "start": 161,
           "end": 166,
           "sha256": "78534410dd6a884a95122960250e4af18435afc0f73f647b7dd55f140bfeb3ce",
-          "status": "partial",
+          "status": "restricted",
           "mapping": {
-            "bend": "runtime/transaction.bend:laneInFlight",
-            "status": "partial",
-            "restrictions": "Pending status short circuit retained; a required store slot resolver explicitly refuses (88). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+            "bend": "runtime/transaction.bend:laneInFlight; runtime/lanes-state.bend:inFlight",
+            "status": "restricted",
+            "restrictions": "One shared pending/store resolver body; unknown slot resolver explicitly refuses. Ordinary node branch matches source. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
           }
         },
         {
@@ -15983,8 +16101,12 @@
           "start": 168,
           "end": 222,
           "sha256": "d90c54cfb9308b4a21420c1d5b45d7f9a3e629c2091995d8ee1cf293b78ef5c9",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:applyGuesses, applyGuessNew, applyGuessFree, applyGuessBorn, applyGuessOverride, applyGuessEnd, ApplyGuessCompared",
+            "status": "restricted",
+            "restrictions": "Live guesses, captured raw values and mutable parent/shared lane, actual holder merges, fresh question fetch and notification order. Typed triples preserve private source array order. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+          }
         },
         {
           "key": "core/lanes.ts:enterLane",
@@ -16232,6 +16354,30 @@
             "bend": "runtime/lanes-state.bend:answered, answeredLoop",
             "status": "restricted",
             "restrictions": "Live link traversal, newer-question and current-clock gates. Finite explicit arena budget; no arbitrary graph progress theorem. See tracking/lane-reads.md."
+          }
+        },
+        {
+          "key": "core/lanes.ts:applyGuessesAt",
+          "start": 815,
+          "end": 818,
+          "sha256": "378275b7b92e84d7736972ed113d64fe663b8b0331758818f4e189fd4601873f",
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:applyGuessesAt",
+            "status": "restricted",
+            "restrictions": "Records old lane prefix before application, including the empty queue arm. Flush hook installation remains unfinished. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+          }
+        },
+        {
+          "key": "core/lanes.ts:laneSeams",
+          "start": 819,
+          "end": 856,
+          "sha256": "52f87df0253fc876ed8f950ee53b2813f77dd3a6371f92db4e1a7ad31b49395d",
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop",
+            "status": "restricted",
+            "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
           }
         }
       ],
@@ -17290,7 +17436,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "applyGuessesAt",
           "start": 817,
           "end": 817,
           "kind": "IfStatement",
@@ -17299,7 +17445,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 826,
           "end": 853,
           "kind": "IfStatement",
@@ -17308,7 +17454,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 827,
           "end": 853,
           "kind": "ForStatement",
@@ -17317,7 +17463,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 835,
           "end": 843,
           "kind": "IfStatement",
@@ -17326,7 +17472,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 839,
           "end": 841,
           "kind": "ConditionalExpression",
@@ -17335,7 +17481,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 850,
           "end": 850,
           "kind": "IfStatement",
@@ -17344,7 +17490,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 852,
           "end": 852,
           "kind": "IfStatement",
@@ -17353,7 +17499,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "laneSeams",
           "start": 854,
           "end": 855,
           "kind": "ForStatement",
@@ -22552,6 +22698,46 @@
       "status": "open",
       "units": [
         {
+          "key": "reveal.ts:FALSE_ACCESSOR",
+          "start": 33,
+          "end": 33,
+          "sha256": "5317681e0e857593abb58d033a146125bf392a14cd4d4de0a367eba9deed921c",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "reveal.ts:SEQUENTIAL_ACCESSOR",
+          "start": 34,
+          "end": 34,
+          "sha256": "803426b5cd066308353be32877a7a7dd38f3d6e2edbee75ffd271172752bb899",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "reveal.ts:isController",
+          "start": 36,
+          "end": 36,
+          "sha256": "d3f0ab2676f901c9319e30a5013db7e34eea0661545412cba4b9f847034078ee",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "reveal.ts:slotReady",
+          "start": 38,
+          "end": 38,
+          "sha256": "2b203dc6dfda15194482b760b95b9d3ef806b443d337f57db8e11663151a6633",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "reveal.ts:slotMinReady",
+          "start": 39,
+          "end": 40,
+          "sha256": "964d5c6011809575caf6cae36af96ec7bf7e561b7362b4c8c1cc83baf2bb05f5",
+          "status": "open",
+          "mapping": null
+        },
+        {
           "key": "reveal.ts:setSlotState",
           "start": 46,
           "end": 67,
@@ -22634,7 +22820,7 @@
       ],
       "branches": [
         {
-          "unit": "module",
+          "unit": "slotReady",
           "start": 38,
           "end": 38,
           "kind": "ConditionalExpression",
@@ -22643,7 +22829,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "slotMinReady",
           "start": 40,
           "end": 40,
           "kind": "ConditionalExpression",
@@ -24120,6 +24306,14 @@
           "start": 579,
           "end": 582,
           "sha256": "2cd6be24af4dac670526b2dfee1d2dbca0ade18d29468f14c66940d995e7d967",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/optimistic.ts:shown",
+          "start": 587,
+          "end": 587,
+          "sha256": "41fac9b0d01f07c4509c194b536d1c9e706a7d296cef617de242558f4463d91b",
           "status": "excluded-store",
           "mapping": null
         },
@@ -26960,6 +27154,14 @@
           "mapping": null
         },
         {
+          "key": "store/store.ts:slotNodeEquals",
+          "start": 265,
+          "end": 267,
+          "sha256": "515c26ce573ec60ce7b3bf95fe418d3be5b13635bdd47f0c27e41bdd6e09bf94",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
           "key": "store/store.ts:sameKey",
           "start": 271,
           "end": 273,
@@ -26984,6 +27186,14 @@
           "mapping": null
         },
         {
+          "key": "store/store.ts:containerEquals",
+          "start": 301,
+          "end": 303,
+          "sha256": "c4b5ed614bf890a41fcdb3134cfb712730ae673258e3eeb5188fe6b397fc2962",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
           "key": "store/store.ts:sameLogicalSlot",
           "start": 305,
           "end": 309,
@@ -27004,6 +27214,14 @@
           "start": 338,
           "end": 342,
           "sha256": "98abeae528ce2df485ea6f22e7d0986b8f277a54febebb3a9a30616de7ba7e96",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/store.ts:slotKept",
+          "start": 352,
+          "end": 355,
+          "sha256": "07fca9fbd688739d3db629164983a7980b320502fe942b203185858abb5b1a62",
           "status": "excluded-store",
           "mapping": null
         },
@@ -27052,6 +27270,14 @@
           "start": 501,
           "end": 504,
           "sha256": "fff0df924da8a045876c1d23ac5abf2375b3d15da380c057f5f8d51d51c1f9e7",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/store.ts:storePark",
+          "start": 506,
+          "end": 511,
+          "sha256": "adf54291a952579effdaa4b95a8a472c89810a1111d53b3be01a8f6a9dfdbf5b",
           "status": "excluded-store",
           "mapping": null
         },
@@ -27148,6 +27374,14 @@
           "start": 629,
           "end": 644,
           "sha256": "75bffc061c35c162e6d422cbf0bed2489895bb1ffba84c29f030157ed3f10fc7",
+          "status": "excluded-store",
+          "mapping": null
+        },
+        {
+          "key": "store/store.ts:plainProto",
+          "start": 654,
+          "end": 657,
+          "sha256": "4b83d0fc8ac886d366547c53adeca1b39bbbbec70b806fa931e733f7e0bb2b89",
           "status": "excluded-store",
           "mapping": null
         },
@@ -28092,7 +28326,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "storePark",
           "start": 507,
           "end": 510,
           "kind": "ForStatement",
@@ -28101,7 +28335,7 @@
           "sharedStoreHint": false
         },
         {
-          "unit": "module",
+          "unit": "storePark",
           "start": 509,
           "end": 509,
           "kind": "IfStatement",

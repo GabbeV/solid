@@ -12,7 +12,8 @@ export function scanSource(file, source, map={}) {
   const record={file,sha256:sha(source),lines:source.split('\n').length-1,status:excluded?'excluded-store':'open',units,branches};
   function walk(n,scope='module') {
     let inner=scope;
-    if(ts.isFunctionDeclaration(n) || ts.isMethodDeclaration(n) || ts.isConstructorDeclaration(n) || ts.isGetAccessor(n) || ts.isSetAccessor(n)) {
+    const namedClosure=ts.isVariableDeclaration(n)&&ts.isIdentifier(n.name)&&n.initializer&&(ts.isArrowFunction(n.initializer)||ts.isFunctionExpression(n.initializer))&&ts.isVariableDeclarationList(n.parent)&&ts.isVariableStatement(n.parent.parent)&&ts.isSourceFile(n.parent.parent.parent);
+    if(ts.isFunctionDeclaration(n) || ts.isMethodDeclaration(n) || ts.isConstructorDeclaration(n) || ts.isGetAccessor(n) || ts.isSetAccessor(n) || namedClosure) {
       let name=ts.isConstructorDeclaration(n)?'constructor':n.name?.getText(ast)??'<anonymous>';
       if(ts.isClassDeclaration(n.parent))name=(n.parent.name?.text??'<class>')+'.'+name;
       inner=name;const key=file+':'+name;

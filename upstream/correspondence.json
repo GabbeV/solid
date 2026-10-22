@@ -883,9 +883,9 @@
       "restrictions": "Actual unflushedValue, source stamp selection, original staged/error fallback and late-linker order. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
     },
     "core/lanes.ts:inFlight": {
-      "bend": "runtime/transaction.bend:laneInFlight",
-      "status": "partial",
-      "restrictions": "Pending status short circuit retained; a required store slot resolver explicitly refuses (88). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+      "bend": "runtime/transaction.bend:laneInFlight; runtime/lanes-state.bend:inFlight",
+      "status": "restricted",
+      "restrictions": "One shared pending/store resolver body; unknown slot resolver explicitly refuses. Ordinary node branch matches source. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:guessFlights": {
       "bend": "runtime/transaction.bend:guessFlights, guessFlightLoop",
@@ -996,6 +996,36 @@
       "bend": "runtime/transaction.bend:stagedScreen",
       "status": "restricted",
       "restrictions": "Exact flush-null/born-into short circuit and stale reader mutation; used by real core fast/slow read branches. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+    },
+    "core/lanes.ts:pendingGuessOf": {
+      "bend": "runtime/lanes-state.bend:pendingGuessOf, pendingGuessLoop",
+      "status": "restricted",
+      "restrictions": "Source reverse live triple lookup with raw slot presence; list-backed indexed representation. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+    },
+    "core/lanes.ts:guessedValueOf": {
+      "bend": "runtime/lanes-state.bend:guessedValueOf",
+      "status": "restricted",
+      "restrictions": "Pending guess, override lane value and committed precedence; shared truth helper. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+    },
+    "core/lanes.ts:optimisticWrite": {
+      "bend": "runtime/core.bend:optimisticWrite, optimisticResolved, OptimisticResolved, OptimisticCompared; runtime/lanes-state.bend:pushGuess",
+      "status": "restricted",
+      "restrictions": "Captured writer previous value, one updater invocation, raw comparison, live GUESS reask gate, question allocation and scheduling. Typed callable protocol, not arbitrary JavaScript closures. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+    },
+    "core/lanes.ts:applyGuesses": {
+      "bend": "runtime/core.bend:applyGuesses, applyGuessNew, applyGuessFree, applyGuessBorn, applyGuessOverride, applyGuessEnd, ApplyGuessCompared",
+      "status": "restricted",
+      "restrictions": "Live guesses, captured raw values and mutable parent/shared lane, actual holder merges, fresh question fetch and notification order. Typed triples preserve private source array order. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+    },
+    "core/lanes.ts:applyGuessesAt": {
+      "bend": "runtime/core.bend:applyGuessesAt",
+      "status": "restricted",
+      "restrictions": "Records old lane prefix before application, including the empty queue arm. Flush hook installation remains unfinished. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+    },
+    "core/lanes.ts:laneSeams": {
+      "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop",
+      "status": "restricted",
+      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

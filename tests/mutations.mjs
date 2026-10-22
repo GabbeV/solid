@@ -5,6 +5,21 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['queued guess skips the updater function call','runtime/core.bend','J.isFunction(value)','False{}','tests/lane-guesses-callbacks.mjs','optimisticWrite'],
+  ['queued guess lookup forgets the newest suffix','runtime/lanes-state.bend','pendingGuessLoop(w, id, B.length(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))))','R.Empty{}','tests/proof-properties.mjs','pendingGuessOf','lane-guesses'],
+  ['queued guess writer reads covered truth','runtime/lanes-state.bend','_ => T.laneValueOf(w, id)','_ => R.Node.value(B.node(w, id))','tests/lane-guesses-alignment.mjs','guessedValueOf'],
+  ['queued guess omits unstamped question allocation','runtime/lanes-state.bend','_ => Question.nextQuestion(w)','_ => B.Bundle{w, R.World.question(w)}','tests/lane-guesses-alignment.mjs','pushGuess'],
+  ['queued guess updater compares against committed value','runtime/core.bend','Lanes.guessedValueOf(w, id)','R.Node.value(B.node(w, id))','tests/lane-guesses-alignment.mjs','optimisticWrite'],
+  ['queued guess equal reask is suppressed','runtime/core.bend','Bool.and(B.truth(verdict), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())))','B.truth(verdict)','tests/lane-guesses-alignment.mjs','dispatch'],
+  ['queued guess application drops its question stamp','runtime/core.bend','R.Guess.question(guess)','R.QuestionZero{}','tests/lane-guesses-alignment.mjs','applyGuessEnd'],
+  ['queued guess confirmation notifies ordinary readers','runtime/core.bend','B.choose(~R.World, changed,','B.choose(~R.World, True{},','tests/lane-guesses-alignment.mjs','applyGuessEnd'],
+  ['queued guess held parent follows wrong frame','runtime/core.bend','Lanes.newLane(w, holder)','Lanes.newLane(w, parent)','tests/lane-guesses-alignment.mjs','applyGuessNew'],
+  ['queued guess loses the newly opened own-flight parent','runtime/core.bend','ApplyGuesses{parent, lane, 1n+index}','ApplyGuesses{0n, lane, 1n+index}','tests/lane-guesses-alignment.mjs','applyGuessEnd'],
+  ['queued guess keeps a superseded derivation staging','runtime/core.bend','R.Node.with_pending(B.node(w, id), R.Empty{})','B.node(w, id)','tests/lane-guesses-alignment.mjs','applyGuessOverride'],
+  ['queued guess judges transaction count instead of lane prefix','runtime/core.bend','B.length(Nat, R.LaneState.live(R.World.laneState(w)))','B.length(R.Transaction, R.World.txArena(w))','tests/lane-guesses-alignment.mjs','applyGuessesAt'],
+  ['queued guess seam revives disposed leaked readers','runtime/core.bend','B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_DISPOSED())','False{}','tests/lane-seams-alignment.mjs','laneLeakLoop'],
+  ['queued guess seam repolls an answered verdict reader','runtime/core.bend','Bool.not(B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_PROBE_UNANSWERED()))','False{}','tests/lane-seams-alignment.mjs','laneLeakLoop'],
+  ['queued guess seam skips its reveal prefix','runtime/core.bend','Nat.min(R.LaneState.judged(R.World.laneState(w)), B.length(Nat, R.LaneState.live(R.World.laneState(w))))','0n','tests/proof-properties.mjs','laneLeakLoop','lane-guesses'],
   ['lane answer uses counter instead of ambient question','runtime/core.bend','Lanes.stale(w, id, R.World.question(w))','Lanes.stale(w, id, R.World.questions(w))','tests/lane-answers-alignment.mjs','laneWrite'],
   ['lane answer compares committed instead of latest','runtime/core.bend','Truth.laneValueOf(w, id), value','R.Node.value(B.node(w, id)), value','tests/lane-answers-alignment.mjs','laneWrite'],
   ['lane answer outcome accepts an errored pass','runtime/core.bend','errored, _ => Machine{w, rest, R.Boolean{True{}} <> stack}','False{}, _ => Machine{w, rest, R.Boolean{True{}} <> stack}','tests/lane-answers-alignment.mjs','laneOutcome'],

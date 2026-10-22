@@ -1,6 +1,7 @@
 # core/lanes.ts identities and routing. Seams/staging/corrections are separate
 # unfinished engine crossings, not approximated by these helpers.
 import Base
+import ./truth-state.bend as T
 import ./question.bend as Question
 import ./extension.bend as E
 import ./write.bend as W
@@ -224,3 +225,31 @@ def answeredLoop(fuel: Nat, +w: R.World, +edge: Nat, +q: R.Question) -> B.Bundle
 
 def answered(+w: R.World, id: Nat) -> B.Bundle<R.World, R.Question>:
   answeredLoop(1n+B.length(R.Link, R.World.links(w)), w, R.Node.deps(B.node(w, id)), R.QuestionZero{})
+
+# lanes.ts pendingGuesses: typed triples retain the source live array/order.
+def pendingGuessLoop(+w: R.World, +id: Nat, remaining: Nat) -> R.Slot:
+  match remaining:
+    case 0n:
+      R.Empty{}
+    case 1n+ +index:
+      +guess = B.get(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)), index, R.Guess{0n, R.Undefined{}, R.QuestionZero{}})
+      B.choose(~R.Slot, Nat.is_eq(R.Guess.node(guess), id), _ => R.Present{R.Guess.value(guess)}, _ => pendingGuessLoop(w, id, index))
+
+def pendingGuessOf(+w: R.World, +id: Nat) -> R.Slot:
+  pendingGuessLoop(w, id, B.length(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))))
+
+def guessedValueOf(+w: R.World, +id: Nat) -> R.Value:
+  +guess = pendingGuessOf(w, id)
+  B.choose(~R.Value, B.present(guess), _ => B.selected(guess, R.Undefined{}),
+    _ => B.choose(~R.Value, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()), _ => T.laneValueOf(w, id), _ => R.Node.value(B.node(w, id))))
+
+# Ordinary node branch; optional store slot-flight resolver is excluded.
+def inFlight(w: R.World, id: Nat) -> B.Bundle<R.World, Bool>:
+  Tx.laneInFlight(w, id)
+
+def pushGuess(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
+  +pair = B.choose(~B.Bundle<R.World, R.Question>, Question.isZero(R.World.question(w)), _ => Question.nextQuestion(w), _ => B.Bundle{w, R.World.question(w)})
+  +w = B.first(R.World, R.Question, pair)
+  +state = R.World.laneState(w)
+  +w = R.World.with_laneState(w, R.LaneState.with_pendingGuesses(state, B.append(R.Guess, R.LaneState.pendingGuesses(state), [R.Guess{id, value, B.second(R.World, R.Question, pair)}])))
+  B.schedule(w)

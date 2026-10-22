@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-guesses.bend as GuessLaws
 import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
@@ -1502,3 +1503,67 @@ law lane_answer_read_lane_undefined_is_a_success:
   for +reader: Nat
   for +forced: Bool
   {Core.readLaneValue(w, rest, stack, id, reader, forced, R.Undefined{}) == Core.Machine{B.event(w, R.ReadValue{reader, id, R.Undefined{}}), rest, R.Undefined{} <> stack} : Core.Machine}
+
+law lane_guess_newest_queued_value_wins:
+  for +w: R.World
+  for +prefix: List<&2, R.Guess>
+  for +id: Nat
+  for +value: R.Value
+  for +q: R.Question
+  {Lanes.pendingGuessOf(GuessLaws.scope(w, B.append(R.Guess, prefix, [R.Guess{id, value, q}])), id) == R.Present{value} : R.Slot}
+
+law lane_guess_empty_queue_has_no_guess:
+  for +w: R.World
+  for +id: Nat
+  {Lanes.pendingGuessOf(GuessLaws.scope(w, []), id) == R.Empty{} : R.Slot}
+
+law lane_guess_empty_application_records_preexisting_prefix:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +parent: Nat
+  {Core.applyGuessesAt(GuessLaws.scope(w, []), rest, stack, parent) == Core.Machine{R.World.with_laneState(GuessLaws.scope(w, []), R.LaneState.with_judged(R.World.laneState(GuessLaws.scope(w, [])), B.length(Nat, R.LaneState.live(R.World.laneState(GuessLaws.scope(w, [])))))), rest, stack} : Core.Machine}
+
+law lane_guess_equal_plain_write_does_not_queue:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for known: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()) == False{} : Bool}
+  {Core.dispatch(w, Core.OptimisticCompared{id, value} <> rest, R.Boolean{True{}} <> stack) == Core.Machine{w, rest, value <> stack} : Core.Machine}
+
+law lane_guess_equal_guess_write_renews_question:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for known: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()) == True{} : Bool}
+  {Core.dispatch(w, Core.OptimisticCompared{id, value} <> rest, R.Boolean{True{}} <> stack) == Core.Machine{Lanes.pushGuess(w, id, value), rest, value <> stack} : Core.Machine}
+
+law lane_guess_unstamped_write_allocates_exact_question:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  {Lanes.pushGuess(R.World.with_question(w, R.QuestionZero{}), id, value) == B.schedule(GuessLaws.pushed(R.World.with_questions(R.World.with_question(w, R.QuestionZero{}), Q.increment(R.World.questions(w))), id, value, Q.increment(R.World.questions(w)))) : R.World}
+
+law lane_guess_null_leaks_still_reveal_prefix:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {Core.laneSeams(w, rest, stack, R.NoIds{}) == Core.Machine{w, Core.LaneLeakLoop{[], 0n, []} <> rest, stack} : Core.Machine}
+
+law lane_guess_reveals_are_capped_to_current_prefix:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +leaked: List<&2, Nat>
+  {Core.laneLeakLoop(w, rest, stack, [], 0n, leaked) == Core.Machine{w, Core.LaneRevealLoop{leaked, Nat.min(R.LaneState.judged(R.World.laneState(w)), B.length(Nat, R.LaneState.live(R.World.laneState(w))))} <> rest, stack} : Core.Machine}
+
+law lane_guess_zero_reveals_preserve_world:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +leaked: List<&2, Nat>
+  {Core.laneRevealLoop(w, rest, stack, leaked, 0n) == Core.Machine{w, rest, stack} : Core.Machine}

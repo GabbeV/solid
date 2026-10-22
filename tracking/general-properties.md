@@ -560,3 +560,13 @@ override setter dispatch before mainline work, true token fall-through and
 successful undefined early read. The complete memo/chain setter callers now
 explicitly discharge the nonoverride condition on their default setter lemma;
 their public program domains and budgets remain unchanged. See lane-answers.md.
+
+## Queued guesses and capped reveal
+
+[lane-guesses.bend](../proof/lane-guesses.bend) adds nine properties: newest
+queued value for any finite prefix, empty lookup, empty prefix capture,
+equal-plain suppression, equal-guess reask, exact unstamped question allocation,
+null seam entry, capped live-prefix entry and zero reveal. All preserve their
+stated World/caller frames; full application/lifecycle progress remains open.
+The source fields extend LaneState without changing existing program domains;
+regenerated witnesses must pass the independent kernel before they are trusted.

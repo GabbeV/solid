@@ -153,6 +153,12 @@ type Task is Data:
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
   EqualityCatch{id: Nat, saved: List<&2, R.Value>}
+  LaneLeakLoop{readers: List<&2, Nat>, index: Nat, leaked: List<&2, Nat>}
+  LaneRevealLoop{leaked: List<&2, Nat>, remaining: Nat}
+  OptimisticResolved{id: Nat, previous: R.Value}
+  OptimisticCompared{id: Nat, value: R.Value}
+  ApplyGuesses{parent: Nat, lane: Nat, index: Nat}
+  ApplyGuessCompared{parent: Nat, lane: Nat, index: Nat, id: Nat, value: R.Value}
   LaneWrite{id: Nat, value: R.Value}
   LaneWriteCompared{id: Nat, lane: Nat, value: R.Value, guess: Bool}
   LaneWriteDone{value: R.Value}
@@ -3330,6 +3336,129 @@ def laneCorrectionNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
           rawEquals(w, LaneCorrectionCompared{id, truth} <> ending, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), truth),
         _ => Machine{w, ending, stack}))
 
+# lanes.ts:optimisticWrite, preserving updater before raw comparison and
+# GUESS re-ask classification after the comparator's user callback returns.
+def optimisticResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +previous: R.Value, +value: R.Value) -> Machine:
+  rawEquals(w, OptimisticCompared{id, value} <> rest, stack, id, previous, value)
+
+def optimisticWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value) -> Machine:
+  +previous = Lanes.guessedValueOf(w, id)
+  B.choose(~Machine, J.isFunction(value),
+    _ => Machine{w, Evaluate{R.InvokeWith{R.Literal{value}, R.Literal{previous}, False{}}, R.Undefined{}} <> OptimisticResolved{id, previous} <> rest, stack},
+    _ => optimisticResolved(w, rest, stack, id, previous, value))
+
+# lanes.ts:applyGuesses. parent and lane are the source mutable locals. The
+# per-node question is reread from the live triple array after user comparison.
+def applyGuessEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat, +id: Nat, +holder: Nat, +changed: Bool) -> Machine:
+  +w = B.choose(~R.World, Bool.and(Nat.is_ne(parent, 0n), Nat.is_ne(holder, 0n)), _ => X.merge(w, parent, holder), _ => w)
+  +guess = B.get(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)), index, R.Guess{0n, R.Undefined{}, R.QuestionZero{}})
+  +w = E.ext(w, id)
+  +w = B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), R.Guess.question(guess)))
+  +w = B.choose(~R.World, changed,
+    _ =>
+      +w = S.insertSubs(w, id)
+      +pair = X.txOf(w, id)
+      Lanes.laneDirty(B.first(R.World, Nat, pair), id, B.second(R.World, Nat, pair)), _ => w)
+  Machine{w, ApplyGuesses{parent, lane, 1n+index} <> rest, stack}
+
+def applyGuessOverride(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat, +id: Nat, +value: R.Value, +changed: Bool) -> Machine:
+  +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), _ => w,
+    _ => B.store_node(w, id, R.Node.with_config(R.Node.with_pending(B.node(w, id), R.Empty{}), B.set(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))))
+  +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Present{value}))
+  +pair = X.txOf(w, id)
+  +w = B.first(R.World, Nat, pair)
+  +holder = R.Transaction.parent(B.transaction(w, B.second(R.World, Nat, pair)))
+  applyGuessEnd(w, rest, stack, parent, lane, index, id, holder, changed)
+
+def applyGuessBorn(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat, +id: Nat, +value: R.Value, +l: Nat, +holder: Nat) -> Machine:
+  +w = E.ext(w, id)
+  +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Present{value}))
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS()))))
+  applyGuessEnd(X.list(w, id, l), rest, stack, parent, lane, index, id, holder, True{})
+
+def applyGuessFree(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat, +id: Nat, +value: R.Value) -> Machine:
+  +flight = B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(parent, 0n), _ => Lanes.inFlight(w, id), _ => B.Bundle{w, False{}})
+  +w = B.first(R.World, Bool, flight)
+  +pair = B.choose(~B.Bundle<R.World, Nat>, B.second(R.World, Bool, flight), _ => X.newTransaction(w, False{}, 0n), _ => B.Bundle{w, parent})
+  +w = B.first(R.World, Nat, pair)
+  +parent = B.second(R.World, Nat, pair)
+  B.choose(~Machine, Nat.is_eq(parent, 0n), _ => Machine{w, ApplyGuesses{parent, lane, 1n+index} <> rest, stack},
+    _ =>
+      +pair = B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(lane, 0n), _ => B.Bundle{w, lane}, _ => Lanes.newLane(w, parent))
+      +w = B.first(R.World, Nat, pair)
+      +lane = B.second(R.World, Nat, pair)
+      applyGuessBorn(w, rest, stack, parent, lane, index, id, value, lane, 0n))
+
+def applyGuessNew(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat, +id: Nat, +value: R.Value) -> Machine:
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+    _ =>
+      +pair = X.txOf(w, id)
+      +w = B.first(R.World, Nat, pair)
+      +holder = B.second(R.World, Nat, pair)
+      +pair = Lanes.newLane(w, holder)
+      applyGuessBorn(B.first(R.World, Nat, pair), rest, stack, parent, lane, index, id, value, B.second(R.World, Nat, pair), holder),
+    _ => applyGuessFree(w, rest, stack, parent, lane, index, id, value))
+
+def applyGuesses(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +lane: Nat, +index: Nat) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)))),
+    _ => Machine{R.World.with_laneState(w, R.LaneState.with_pendingGuesses(R.World.laneState(w), [])), rest, stack},
+    _ =>
+      +guess = B.get(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)), index, R.Guess{0n, R.Undefined{}, R.QuestionZero{}})
+      +id = R.Guess.node(guess)
+      +value = R.Guess.value(guess)
+      B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()),
+        _ => rawEquals(w, ApplyGuessCompared{parent, lane, index, id, value} <> rest, stack, id, Truth.laneValueOf(w, id), value),
+        _ => applyGuessNew(w, rest, stack, parent, lane, index, id, value)))
+
+def applyGuessesAt(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat) -> Machine:
+  +w = R.World.with_laneState(w, R.LaneState.with_judged(R.World.laneState(w), B.length(Nat, R.LaneState.live(R.World.laneState(w)))))
+  B.choose(~Machine, List.is_empty(&2, R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))), _ => Machine{w, rest, stack}, _ => Machine{w, ApplyGuesses{parent, 0n, 0n} <> rest, stack})
+
+# lanes.ts:laneSeams. The source captures leaks but walks the current live lane
+# array backwards, bounded by the prefix recorded before applying new guesses.
+def laneRevealLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +leaked: List<&2, Nat>, remaining: Nat) -> Machine:
+  match remaining:
+    case 0n:
+      Machine{w, rest, stack}
+    case 1n+ +index:
+      +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
+      laneSeam(w, LaneRevealLoop{leaked, index} <> rest, stack, lane, B.contains(leaked, lane))
+
+def laneLeakAdmit(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +readers: List<&2, Nat>, +index: Nat, +leaked: List<&2, Nat>, +reader: Nat, +lane: Nat) -> Machine:
+  +isLane = Bool.and(Nat.is_ne(lane, 0n), R.Transaction.lane(B.transaction(w, lane)))
+  +w = B.choose(~R.World, Bool.and(isLane, B.effect(R.Node.kind(B.node(w, reader)))),
+    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_DIRTY()))), _ => w)
+  +w = H.enqueueSub(w, reader)
+  +leaked = B.choose(~List<&2, Nat>, Bool.and(isLane, Bool.not(B.contains(leaked, lane))), _ => B.append(Nat, leaked, [lane]), _ => leaked)
+  Machine{w, LaneLeakLoop{readers, 1n+index, leaked} <> rest, stack}
+
+def laneLeakLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +readers: List<&2, Nat>, +index: Nat, +leaked: List<&2, Nat>) -> Machine:
+  B.choose(~Machine, Nat.is_ge(index, B.length(Nat, readers)),
+    _ => Machine{w, LaneRevealLoop{leaked, Nat.min(R.LaneState.judged(R.World.laneState(w)), B.length(Nat, R.LaneState.live(R.World.laneState(w))))} <> rest, stack},
+    _ =>
+      +reader = B.get(Nat, readers, index, 0n)
+      +ending = {LaneLeakLoop{readers, 1n+index, leaked} <> rest : List<&2, Task>}
+      B.choose(~Machine, B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_DISPOSED()), _ => Machine{w, ending, stack},
+        _ =>
+          +lane = R.NodeExtension.transaction(B.extension(w, reader))
+          +parent = R.Transaction.parent(B.transaction(w, lane))
+          +verdict = Bool.and(Nat.is_ne(lane, 0n), Bool.and(Nat.is_ne(parent, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, parent)), lane)))
+          B.choose(~Machine, verdict,
+            _ => B.choose(~Machine, B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT()),
+              _ => B.choose(~Machine, Bool.not(B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_PROBE_UNANSWERED())), _ => Machine{w, ending, stack}, _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane)),
+              _ =>
+                +pair = X.blocked(w, parent)
+                +w = B.first(R.World, Bool, pair)
+                B.choose(~Machine, Bool.not(B.second(R.World, Bool, pair)), _ => Machine{w, ending, stack}, _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))),
+            _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))))
+
+def laneSeams(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, leaks: R.OptionalIds) -> Machine:
+  match leaks:
+    case R.NoIds{}:
+      Machine{w, LaneLeakLoop{[], 0n, []} <> rest, stack}
+    case R.SomeIds{readers}:
+      Machine{w, LaneLeakLoop{readers, 0n, []} <> rest, stack}
+
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
     case MapInput{list, fallback, mapper} <> rest:
@@ -3607,6 +3736,30 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       # Failed constructors never bind/return that setter function.
       +w = B.event(w, R.SetterBound{signal})
       Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case LaneLeakLoop{readers, index, leaked} <> rest:
+      laneLeakLoop(w, rest, stack, readers, index, leaked)
+    case LaneRevealLoop{leaked, remaining} <> rest:
+      laneRevealLoop(w, rest, stack, leaked, remaining)
+    case OptimisticResolved{+id, +previous} <> +rest:
+      match stack:
+        case value <> tail:
+          optimisticResolved(w, rest, tail, id, previous, value)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case OptimisticCompared{+id, +value} <> rest:
+      match stack:
+        case verdict <> tail:
+          Machine{B.choose(~R.World, Bool.and(B.truth(verdict), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))), _ => w, _ => Lanes.pushGuess(w, id, value)), rest, value <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case ApplyGuesses{parent, lane, index} <> rest:
+      applyGuesses(w, rest, stack, parent, lane, index)
+    case ApplyGuessCompared{+parent, +lane, +index, +id, +value} <> +rest:
+      match stack:
+        case verdict <> tail:
+          applyGuessOverride(w, rest, tail, parent, lane, index, id, value, Bool.not(B.truth(verdict)))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case LaneWrite{id, value} <> rest:
       laneWrite(w, rest, stack, id, value)
     case LaneWriteCompared{+id, +lane, +value, guess} <> +rest:

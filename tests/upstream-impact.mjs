@@ -22,12 +22,19 @@ try {
   const formatting='original instanceof Error ? original.message : original';
   assert.ok(errorSource.includes(formatting));
   fs.writeFileSync(errorFile,errorSource.replace(formatting,'String(original)'));
+  const laneFile=path.join(candidate,'src/core/lanes.ts'),laneSource=fs.readFileSync(laneFile,'utf8');
+  assert.ok(laneSource.includes('judged = lanes.length;'));
+  fs.writeFileSync(laneFile,laneSource.replace('judged = lanes.length;','judged = 0;'));
   const report=compare(candidate);
-  assert.equal(report.changedFiles.length,5);
+  assert.equal(report.changedFiles.length,6);
   const scheduler=report.changedFiles.find(f=>f.file==='core/scheduler.ts');
   assert.equal(scheduler.changedUnits.length,1);
   assert.equal(scheduler.changedUnits[0].key,'core/scheduler.ts:bumpNotifyEpoch');
   assert.equal(scheduler.changedUnits[0].bend,'representation/base.bend:bump');
+  const lanes=report.changedFiles.find(f=>f.file==='core/lanes.ts');
+  assert.equal(lanes.changedUnits.length,1);
+  assert.equal(lanes.changedUnits[0].key,'core/lanes.ts:applyGuessesAt');
+  assert.match(lanes.changedUnits[0].bend,/applyGuessesAt/);
   const error=report.changedFiles.find(f=>f.file==='core/error.ts');
   assert.equal(error.changedUnits.length,1);
   assert.equal(error.changedUnits[0].key,'core/error.ts:StatusError.constructor');
@@ -42,4 +49,4 @@ try {
   assert.equal(cli.status,0,cli.stderr);assert.deepEqual(JSON.parse(cli.stdout),report);
 } finally {fs.rmSync(candidate,{recursive:true,force:true});}
 assert.throws(()=>compare(path.join(root,'tests')),/Expected a Solid checkout/);
-console.log('Upstream impact reporting passed changed-function/constructor, file-level, added-unit, shared-store, CLI, and read-only checks.');
+console.log('Upstream impact reporting passed changed-function/constructor/named-closure, file-level, added-unit, shared-store, CLI, and read-only checks.');

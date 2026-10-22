@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-guesses.bend as GuessLaws
 import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
 import ./proof/question-order.bend as QuestionOrder
@@ -747,3 +748,30 @@ def Laws.lane_answer_read_lane_token_uses_real_pending_tail(w, rest, stack, id, 
 
 def Laws.lane_answer_read_lane_undefined_is_a_success(w, rest, stack, id, reader, forced):
   LaneAnswers.undefinedRead(w, rest, stack, id, reader, forced)
+
+def Laws.lane_guess_newest_queued_value_wins(w, prefix, id, value, q):
+  GuessLaws.newestWins(w, prefix, id, value, q)
+
+def Laws.lane_guess_empty_queue_has_no_guess(w, id):
+  GuessLaws.emptyLookup(w, id)
+
+def Laws.lane_guess_empty_application_records_preexisting_prefix(w, rest, stack, parent):
+  GuessLaws.judgedEmpty(w, rest, stack, parent)
+
+def Laws.lane_guess_equal_plain_write_does_not_queue(w, rest, stack, id, value, known):
+  GuessLaws.equalOrdinary(w, rest, stack, id, value, known)
+
+def Laws.lane_guess_equal_guess_write_renews_question(w, rest, stack, id, value, known):
+  GuessLaws.equalGuessReasks(w, rest, stack, id, value, known)
+
+def Laws.lane_guess_unstamped_write_allocates_exact_question(w, id, value):
+  GuessLaws.unstampedPush(w, id, value)
+
+def Laws.lane_guess_null_leaks_still_reveal_prefix(w, rest, stack):
+  GuessLaws.nullSeams(w, rest, stack)
+
+def Laws.lane_guess_reveals_are_capped_to_current_prefix(w, rest, stack, leaked):
+  GuessLaws.emptyLeaks(w, rest, stack, leaked)
+
+def Laws.lane_guess_zero_reveals_preserve_world(w, rest, stack, leaked):
+  GuessLaws.zeroReveal(w, rest, stack, leaked)

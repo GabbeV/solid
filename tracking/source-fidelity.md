@@ -17,6 +17,15 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Queued guesses and reveal prefix
+
+[lane-guesses.md](lane-guesses.md) maps reverse writer lookup, one-time updater,
+raw comparison/reask, exact question push, live triple application, holder merges
+and captured reveal prefix. Nine scoped properties and native helpers support
+it. Store-flight decisions use the existing shared body. The new mount union is
+representation data only until seating is implemented; public constructors and
+core flush/publication crossings remain unfinished.
+
 ## Lane answers and core dispatch
 
 [lane-answers.md](lane-answers.md) maps incoming question provenance, raw write/

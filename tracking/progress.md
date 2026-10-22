@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,158 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 322; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 337; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -268,3 +268,9 @@ callback controls and six scoped properties support it. The existing general
 memo and chain programs still cover the same domains, with the inactive-lane
 setter condition stated explicitly. Public optimistic/verdict construction and
 flush/seating are still the remaining admission boundary.
+
+Queued guesses and seam ordering now execute internally: 3,307 native helper/
+callback programs and nine scoped properties supplement prior layers. The
+newest-value theorem covers any finite prior guess queue. Typed queue/prefix/
+mount representation extends the existing World frames. Public optimistic and
+verdict admission still waits on core seating/publication/flush integration.
