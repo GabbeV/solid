@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,720 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 514; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 515; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -405,3 +405,10 @@ stream checkpoint. Native validation passes 337 files /5,521 tests. The 514
 compiled negative receipt retains its cdd95616 reference pin; latest-pin full
 public/alignment/kernel checks are recorded separately. No store implementation
 or new theorem is claimed by this refresh.
+
+A final quantified frame law proves that `releaseQueues`, for arbitrary Worlds
+and transaction IDs, preserves every field except renderQueue, userQueue and
+txArena. A compiled clock-corruption mutation is independently rejected by this
+law. This supplements the complete 514-variant receipt with one kernel variant
+(515 total: 437 finite, 78 kernel); no runtime change or async-graph correctness
+claim is introduced.

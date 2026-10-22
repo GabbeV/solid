@@ -961,3 +961,6 @@ def Laws.deferred_data_result(initial, next, extra):
 
 def Laws.landing_release_callback(w, transaction, rest, stack, ready):
   LandingRelease.callback(w, transaction, rest, stack, ready)
+
+def Laws.landing_release_world_frame(w, transaction):
+  LandingRelease.frame(w, transaction)

@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "1c0ff9f82ceccf99f11cf1dc1e27eae5feb0c103",
+  "runtimeChange": "none",
+  "property": "For all Worlds and transaction IDs, releaseQueues preserves every field except renderQueue, userQueue and txArena.",
+  "mutation": "cdd kernel queued release changes clock",
+  "result": "Compiled source variant rejected by independent kernel property assertion; preliminary unannotated Nat operator compile failure excluded.",
+  "logSha256": "28fa4fb19a50a47812b5e50065d89ecd7001619c5102246059fb761e749ae4a7",
+  "negativeCorpus": {
+    "total": 515,
+    "finite": 437,
+    "kernel": 78,
+    "provenance": "Previous complete 514-variant receipt plus this one kernel supplement; no rerun of unchanged finite variants."
+  }
+}

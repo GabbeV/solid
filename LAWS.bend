@@ -1993,3 +1993,8 @@ law landing_release_callback:
   for stack: List<&2, R.Value>
   for ready: {B.ok(w) == True{} : Bool}
   {Core.step(Core.Machine{w, Core.ReleaseTransactionQueues{transaction} <> rest, stack}) == Core.Machine{Scheduler.releaseQueues(w, transaction), rest, stack} : Core.Machine}
+
+law landing_release_world_frame:
+  for w: R.World
+  for transaction: Nat
+  {LandingRelease.eraseQueueState(Scheduler.releaseQueues(w, transaction)) == LandingRelease.eraseQueueState(w) : R.World}

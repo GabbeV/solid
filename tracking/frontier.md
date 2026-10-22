@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3720 differential histories, 514 rejected compiled mutations,
+Current verification: 3720 differential histories, 515 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 1c0ff9f8 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).

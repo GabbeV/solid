@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles and rejects all 514 isolated source-changing copies:
-  437 finite differential/structural variants and 77 kernel proof-property
+- mutations compiles and rejects all 515 isolated source-changing copies:
+  437 finite differential/structural variants and 78 kernel proof-property
   variants. The first-load stream receipt records both complete disjoint shards. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
@@ -443,3 +443,10 @@ with two expected failures and two skips, all JS tiers and source declarations.
 The complete 514-variant negative receipt intentionally retains cdd95616 as its
 native reference. Latest-pin paired/alignment/kernel revalidation is recorded
 separately in reviews/solid-1c0ff9f8-validation.json.
+
+A final quantified frame law proves that `releaseQueues`, for arbitrary Worlds
+and transaction IDs, preserves every field except renderQueue, userQueue and
+txArena. A compiled clock-corruption mutation is independently rejected by this
+law. This supplements the complete 514-variant receipt with one kernel variant
+(515 total: 437 finite, 78 kernel); no runtime change or async-graph correctness
+claim is introduced.

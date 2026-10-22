@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["cdd kernel queued release changes clock", "runtime/scheduler.bend", "+w = R.World.with_renderQueue", "+w = R.World.with_clock(w, Nat.add(1n, R.World.clock(w)))\n  +w = R.World.with_renderQueue", "tests/proof-properties.mjs", "releaseQueues", "landing-release"],
   ["deferred first-stream discards the raw async return", "runtime/core.bend", "rest, R.AsyncValue{result} <> tail}", "rest, R.Undefined{} <> tail}", "tests/deferred-first-stream.mjs", "deferredResult"],
 
   ["deferred multiple resets the shared lagging set", "runtime/deferred-runtime.bend", "R.DeferredArena.lagging(R.World.deferredArena(w))", "[]", "tests/deferred-multiple.mjs", "state"],
