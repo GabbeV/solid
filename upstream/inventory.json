@@ -21138,7 +21138,7 @@
           "mapping": {
             "bend": "runtime/deferred-state.bend:lagOf, walk, laggingOf",
             "status": "partial",
-            "restrictions": "Actual non-store first-identity dependency walk and module-empty wrapper. Membership before seen, current validated prefix and depth-first source order retained; explicit slot-family refusal. The installed GlobalQueue._lagging arrow is represented by laggingOf but not connected to a public lifecycle. 4210 private source comparisons, seven scoped laws and one arbitrary-fuel whole-World frame property. Constructor/ask/serve/land/stream/cleanup/watch lifetimes remain unported. See tracking/deferred-lag.md."
+            "restrictions": "Actual non-store first-identity dependency walk and module-empty wrapper; the shared arena Set is now connected to authoritative watch answers. Membership before seen, validated prefix and depth-first source order retained; slot-family branch explicitly refuses. 4210 private controls and eight scoped/kernel frame properties. See tracking/deferred-lag.md and tracking/deferred.md."
           }
         },
         {
@@ -21146,8 +21146,12 @@
           "start": 93,
           "end": 191,
           "sha256": "ff5fd05fe4501a8d0821d15d59d16918369064d13587b669e030d737110c4b0a",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:deferredConstruct, deferredCreate, deferredBody, deferredResult, deferredObserveState, deferredAfterThen; runtime/deferred-runtime.bend; runtime/deferred-lifecycle.bend; runtime/api.bend:createDeferred",
+            "status": "partial",
+            "restrictions": "Public data and typed thenable profile: actual closure allocation/options/owner/end/window/catch, done-before-engine subscriptions, serve return and authoritative watcher gate. 162 public histories; exact complete owned data constructor/event-write/flush/read theorem for all natural initial/proposal pairs and budgets >=103. Direct streams/promise-to-stream wrapper flattening explicitly refuse Unsupported88; from/store/boundary/snapshot/arbitrary protocol objects remain unfinished. Known synchronous-error old-flight baseline is preserved. No active deviation. See tracking/deferred.md."
+          }
         }
       ],
       "branches": [

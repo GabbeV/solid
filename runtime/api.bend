@@ -197,6 +197,12 @@ def localWrite(depth: Nat, value: R.Expr, updater: Bool) -> R.Expr:
   R.LocalWrite{depth, value, updater}
 
 # User ABI for the source expression createMemo(compute, options)().
+def deferredAccessor(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
+  R.DeferredAccessor{compute, options}
+
+def deferredRead(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
+  R.DeferredRead{compute, options}
+
 def memoAccessor(compute: R.Expr, options: R.NodeOptions) -> R.Expr:
   R.MemoAccessor{compute, options}
 
@@ -647,3 +653,14 @@ def isPending(body: R.Expr) -> R.Expr:
 
 def affects(target: R.Expr, key: R.Expr) -> R.Expr:
   R.Affects{target, key}
+
+# Source createDeferred constructor, data/thenable profile. Streams refuse 88.
+def createDeferred(fuel: Nat, +w: R.World, compute: R.Expr, +options: R.NodeOptions, +parent: Nat) -> R.World:
+  +context = R.World.context(w)
+  +tracking = R.World.tracking(w)
+  +w = R.World.with_tracking(R.World.with_context(w, parent), False{})
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = C.deferredConstruct(w, compute, options, parent)
+  +w = B.choose(~R.World, R.NodeOptions.lazy(options), _ => w, _ => C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}], []})))
+  +w = B.choose(~R.World, B.ok(w), _ => B.event(w, R.AccessorBound{id}), _ => w)
+  R.World.with_tracking(R.World.with_context(w, context), tracking)

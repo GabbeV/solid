@@ -1,6 +1,7 @@
 # core/owner.ts production teardown. Tasks preserve recursive return points;
 # the next sibling is read AFTER the child's disposal, never pre-collected.
 import Base
+import ./deferred-runtime.bend as Deferred
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./graph-state.bend as G
@@ -230,6 +231,8 @@ def action(+w: R.World, +rest: List<&2, Task>, callback: Nat, value: R.CleanupAc
       +cb = R.Node.cleanup(B.node(w, id))
       +w = B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n))
       Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(cb, 0n), _ => Invoke{cb} <> rest, _ => rest)}
+    case R.DeferredEnd{cell}:
+      Machine{Deferred.end(w, cell), rest}
     case R.CleanupCloseIterator{stream}:
       Machine{I.close(w, stream), rest}
     case R.CleanupBoundRoot{owner}:

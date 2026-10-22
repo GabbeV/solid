@@ -1,5 +1,11 @@
 # Deferred flight lifecycle dependencies
 
+Update: the [public data/thenable constructor](deferred.md) now consumes these
+helpers, sharing one arena Set and installing cleanup/observer/watch crossings.
+The dependency-only descriptions below record the earlier milestone; direct
+streams/from/store/boundary profiles remain unfinished.
+
+
 runtime/deferred-lifecycle.bend follows createDeferred's ask, land and end
 closures, its post-cleanup loading-window segment, source-error catch and
 post-handleAsync served-value selection. This is a dependency checkpoint:

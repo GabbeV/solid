@@ -2,6 +2,7 @@
 # Defunctionalized expressions are reusable callbacks. The same machine drives
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
+import ./deferred-runtime.bend as Deferred
 import ./truth-state.bend as Truth
 import ./lanes-state.bend as Lanes
 import ./verdict-state.bend as Verdict
@@ -79,6 +80,19 @@ type FlattenFrame is Data:
   FlattenFrame{children: Nat, results: Nat, index: Nat, needs: Bool, notReady: R.Slot, skip: Bool, defer: Bool}
 
 type Task is Data:
+  DeferredCreate{cell: Nat, compute: R.Expr, options: R.NodeOptions, read: Bool}
+  DeferredConfigure{cell: Nat, compute: R.Expr, previous: R.Value}
+  DeferredCleanup{cell: Nat, compute: R.Expr, previous: R.Value}
+  DeferredOpen{cell: Nat, compute: R.Expr, previous: R.Value}
+  DeferredResult{cell: Nat, open: Bool, saved: List<&2, R.Value>}
+  DeferredObserve{cell: Nat, result: Nat}
+  DeferredRegisterFlight{cell: Nat, node: Nat, result: Nat}
+  DeferredRegisterQuestion{cell: Nat, node: Nat, result: Nat}
+  DeferredRegisterSources{cell: Nat, node: Nat, result: Nat}
+  DeferredRegisterObserver{cell: Nat, node: Nat, result: Nat}
+  DeferredSubscribeThen{cell: Nat, result: Nat, observer: Nat}
+  DeferredAfterThen{cell: Nat, observer: Nat}
+  DeferredRejected{error: R.Value}
   FlattenValue{skip: Bool, defer: Bool}
   FlattenChildValue{frame: FlattenFrame}
   FlattenLoop{frame: FlattenFrame}
@@ -631,6 +645,77 @@ def memoExpression(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>,
     _ => Recompute{id, True{}} <> ending)
   Machine{w, tasks, stack}
 
+# deferred.ts constructor: create the closure cells/end function before the
+# ordinary computed/accessor, retaining eager/lazy initialization in one driver.
+def deferredConstruct(+w: R.World, compute: R.Expr, options: R.NodeOptions, parent: Nat) -> R.World:
+  +pair = Deferred.allocate(w)
+  +w = B.first(R.World, Nat, pair)
+  N.computed(w, R.DeferredCompute{B.second(R.World, Nat, pair), compute}, options, parent)
+
+def deferredExpression(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, compute: R.Expr, options: R.NodeOptions, read: Bool) -> Machine:
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = B.event(w, R.Constructed{id})
+  +pair = Deferred.allocate(w)
+  Machine{B.first(R.World, Nat, pair), DeferredCreate{B.second(R.World, Nat, pair), compute, options, read} <> rest, stack}
+
+def deferredCreate(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, cell: Nat, compute: R.Expr, +options: R.NodeOptions, read: Bool) -> Machine:
+  +id = B.length(R.Node, R.World.nodes(w))
+  +w = N.computed(w, R.DeferredCompute{cell, compute}, options, R.World.context(w))
+  +ending = B.choose(~List<&2, Task>, read, _ => ReadNode{id} <> rest, _ => Evaluate{R.Literal{J.accessor(id)}, R.Undefined{}} <> rest)
+  +ending = {MemoAccessorReady{id} <> ending : List<&2, Task>}
+  Machine{w, B.choose(~List<&2, Task>, R.NodeOptions.lazy(options), _ => ending, _ => Recompute{id, True{}} <> ending), stack}
+
+# getOwner, CONFIG_REDERIVE and cleanup(end) precede the sticky loading window.
+def deferredBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +cell: Nat, compute: R.Expr, previous: R.Value) -> Machine:
+  +node = R.World.context(w)
+  Machine{Deferred.setNode(w, cell, node), DeferredConfigure{cell, compute, previous} <> rest, stack}
+
+# A successful fn return is outside the wrapper's try/catch from here onward.
+# Direct streams are an explicit unported branch, never silently treated as a
+# promise. The admitted constructor profile currently covers data/thenables.
+def deferredResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +open: Bool) -> Machine:
+  match stack:
+    case R.AsyncValue{+result} <> +tail:
+      B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
+        _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, tail},
+        _ => B.choose(~Machine, open,
+          _ => Machine{Deferred.ask(w, cell, R.AsyncValue{result}), DeferredObserve{cell, result} <> rest, tail},
+          _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, R.AsyncValue{result} <> tail}))
+    case +value <> tail:
+      Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, value <> tail}
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# r.then(done,done) is registered BEFORE serve invokes handleAsync. It does not
+# alter the engine's _inFlight slot; that belongs to the later registration.
+def deferredObserveState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +result: Nat, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      +again = {DeferredRegisterFlight{cell, R.DeferredCell.node(Deferred.cell(w, cell)), result} <> rest : List<&2, Task>}
+      Machine{w, again, stack}
+    case R.Fulfilled{+value}:
+      +again = {DeferredRegisterFlight{cell, R.DeferredCell.node(Deferred.cell(w, cell)), result} <> rest : List<&2, Task>}
+      B.choose(~Machine, immediate, _ => Machine{Deferred.land(w, cell, R.AsyncValue{result}, True{}), again, stack}, _ => Machine{F.enqueueDelivery(w, observer, False{}, value), again, stack})
+    case R.Rejected{+error}:
+      +again = {DeferredRegisterFlight{cell, R.DeferredCell.node(Deferred.cell(w, cell)), result} <> rest : List<&2, Task>}
+      B.choose(~Machine, immediate, _ => Machine{Deferred.land(w, cell, R.AsyncValue{result}, True{}), again, stack}, _ => Machine{F.enqueueDelivery(w, observer, True{}, error), again, stack})
+
+# handleAsync's own then subscription, using its existing registration/value
+# helpers. This continuation returns into the wrapper and then the original
+# Finish frame; it does not bypass recompute's selfRegistered/clear checks.
+
+def deferredSubscribeState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
+  match state:
+    case R.Unresolved{}:
+      +again = {DeferredAfterThen{cell, observer} <> rest : List<&2, Task>}
+      Machine{w, again, stack}
+    case R.Fulfilled{+value}:
+      +again = {DeferredAfterThen{cell, observer} <> rest : List<&2, Task>}
+      B.choose(~Machine, immediate, _ => Machine{w, AsyncFulfill{observer, value} <> again, stack}, _ => Machine{F.enqueueDelivery(w, observer, False{}, value), again, stack})
+    case R.Rejected{+error}:
+      +again = {DeferredAfterThen{cell, observer} <> rest : List<&2, Task>}
+      B.choose(~Machine, immediate, _ => Machine{w, AsyncReject{observer, error} <> again, stack}, _ => Machine{F.enqueueDelivery(w, observer, True{}, error), again, stack})
+
 def memoNode(kind: R.NodeKind) -> Bool:
   match kind:
     case R.Memo{}:
@@ -865,6 +950,12 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       +w = N.createEffectNode(w, compute, kind, R.EffectSpec.target(spec), R.EffectSpec.options(spec), R.World.context(w), B.second(R.World, Nat, pair), R.EffectSpec.returnedCleanup(spec))
       +w = B.store_node(w, id, R.Node.with_errorProgram(B.node(w, id), R.EffectSpec.errorProgram(spec)))
       Machine{w, Recompute{id, True{}} <> InitialEffect{id, R.EffectSpec.scheduled(spec), R.EffectSpec.deferred(spec)} <> Evaluate{R.Literal{R.Undefined{}}, R.Undefined{}} <> rest, stack}
+    case R.DeferredAccessor{compute, options}:
+      deferredExpression(w, rest, stack, compute, options, False{})
+    case R.DeferredRead{compute, options}:
+      deferredExpression(w, rest, stack, compute, options, True{})
+    case R.DeferredCompute{cell, compute}:
+      deferredBody(w, rest, stack, cell, compute, prev)
     case R.MemoAccessor{compute, options}:
       memoExpression(w, rest, stack, compute, options, False{})
     case R.MemoRead{compute, options}:
@@ -2179,6 +2270,19 @@ def afterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +fr
           _ => finishReady(w, rest, B.second(R.World, R.Value, pair) <> stack, frame, True{}),
           _ => catchPass(w, rest, frame))))
 
+def deferredAfterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +observer: Nat) -> Machine:
+  +o = B.asyncObserver(w, observer)
+  B.choose(~Machine, R.AsyncObserver.rejected(o),
+    _ =>
+      +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
+      handleError(w, DeferredRejected{R.AsyncObserver.syncError(o)} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), R.AsyncObserver.syncError(o)),
+    _ => B.choose(~Machine, Bool.and(R.AsyncObserver.resolved(o), Nat.is_ne(iterable(w, R.AsyncObserver.syncValue(o)), 0n)),
+      _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, stack},
+      _ =>
+        +pair = F.thenValue(w, observer)
+        +w = B.first(R.World, R.Value, pair)
+        B.choose(~Machine, B.ok(w), _ => Machine{w, rest, Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> stack}, _ => Machine{w, rest, stack})))
+
 # One next(). Bare IteratorResult is assimilated by the source's immediate
 # then adapter; the same observer locals therefore serve all next shapes.
 def subscribeStepState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +immediate: Bool, state: R.AsyncSettlement) -> Machine:
@@ -2491,11 +2595,23 @@ def asyncActionDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
     case None{}:
       B.choose(~Machine, rejected, _ => flightReject(w, rest, stack, observer, value), _ => flightFulfill(w, rest, stack, observer, value))
 
-def asyncFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+def asyncFulfillOrdinary(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
   asyncActionDelivery(w, rest, stack, observer, False{}, value, Action.find(R.World.actionWaits(w), observer))
 
-def asyncReject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
+def asyncRejectOrdinary(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value) -> Machine:
   asyncActionDelivery(w, rest, stack, observer, True{}, value, Action.find(R.World.actionWaits(w), observer))
+
+def deferredDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +rejected: Bool, +value: R.Value, found: Maybe<&2, R.DeferredWait>) -> Machine:
+  match found:
+    case Some{wait}: Machine{Deferred.deliver(w, wait), rest, stack}
+    case None{}:
+      B.choose(~Machine, rejected, _ => asyncRejectOrdinary(w, rest, stack, observer, value), _ => asyncFulfillOrdinary(w, rest, stack, observer, value))
+
+def asyncFulfill(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +observer: Nat, value: R.Value) -> Machine:
+  deferredDelivery(w, rest, stack, observer, False{}, value, Deferred.wait(w, observer))
+
+def asyncReject(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +observer: Nat, value: R.Value) -> Machine:
+  deferredDelivery(w, rest, stack, observer, True{}, value, Deferred.wait(w, observer))
 
 # effect.ts:runEffect's catch constructs a fresh wrapper and rethrows raw.
 def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
@@ -4052,6 +4168,45 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{w, rest, R.Number{Arrays.length(w, id)} <> tail}
         case _:
           Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, []}
+    # Source field/call boundaries remain in one run and callback scope.
+    # No host job is delivered between these constructor/wrapper segments.
+    case DeferredCreate{cell, compute, options, read} <> rest:
+      deferredCreate(w, rest, stack, cell, compute, options, read)
+    case DeferredConfigure{+cell, compute, previous} <> rest:
+      +node = R.DeferredCell.node(Deferred.cell(w, cell))
+      +w = B.store_node(w, node, R.Node.with_config(B.node(w, node), B.set(R.Node.config(B.node(w, node)), K.CONFIG_REDERIVE())))
+      Machine{w, DeferredCleanup{cell, compute, previous} <> rest, stack}
+    case DeferredCleanup{+cell, compute, previous} <> rest:
+      +node = R.DeferredCell.node(Deferred.cell(w, cell))
+      Machine{O.cleanup(w, node, R.DeferredBinding.cleanup(Deferred.binding(w, cell))), DeferredOpen{cell, compute, previous} <> rest, stack}
+    case DeferredOpen{+cell, compute, previous} <> +rest:
+      +w = Deferred.openWindow(w, cell)
+      Machine{w, Evaluate{compute, previous} <> DeferredResult{cell, R.DeferredCell.answered(Deferred.cell(w, cell)), stack} <> rest, stack}
+    case DeferredResult{cell, open, saved} <> rest:
+      deferredResult(w, rest, stack, cell, open)
+    case DeferredObserve{+cell, +result} <> rest:
+      +pair = F.newObserver(w, 0n, result)
+      +w = B.first(R.World, Nat, pair)
+      +observer = B.second(R.World, Nat, pair)
+      +w = Deferred.registerWait(w, observer, cell, R.AsyncValue{result})
+      +w = F.addObserver(w, result, observer)
+      deferredObserveState(w, rest, stack, cell, result, observer, R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
+    case DeferredRegisterFlight{cell, +node, +result} <> rest:
+      Machine{F.recordFlight(w, node, result), DeferredRegisterQuestion{cell, node, result} <> rest, stack}
+    case DeferredRegisterQuestion{cell, +node, result} <> rest:
+      Machine{F.recordQuestion(w, node), DeferredRegisterSources{cell, node, result} <> rest, stack}
+    case DeferredRegisterSources{cell, +node, result} <> rest:
+      Machine{P.clearPendingSources(w, node), DeferredRegisterObserver{cell, node, result} <> rest, stack}
+    case DeferredRegisterObserver{cell, node, +result} <> rest:
+      +pair = F.newObserver(w, node, result)
+      Machine{B.first(R.World, Nat, pair), DeferredSubscribeThen{cell, result, B.second(R.World, Nat, pair)} <> rest, stack}
+    case DeferredSubscribeThen{cell, +result, +observer} <> rest:
+      +w = F.addObserver(w, result, observer)
+      deferredSubscribeState(w, rest, stack, cell, observer, R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
+    case DeferredAfterThen{cell, observer} <> rest:
+      deferredAfterThen(w, rest, stack, cell, observer)
+    case DeferredRejected{error} <> rest:
+      Machine{R.World.with_fault(w, R.CallbackThrown{error}), rest, stack}
     case Nil{}:
       Machine{w, [], stack}
     case ActionOpened{+id} <> rest:
@@ -4746,8 +4901,17 @@ def actionExecutorThrow(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.V
     case _:
       Machine{w, rest, saved}
 
+def deferredUnwind(w: R.World, rest: List<&2, Task>, cell: Nat, open: Bool, saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{cause}:
+      Machine{Deferred.sourceFailed(w, cell, open, cause), rest, saved}
+    case _:
+      Machine{w, rest, saved}
+
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case DeferredResult{cell, open, saved} <> rest:
+      deferredUnwind(w, rest, cell, open, saved, R.World.fault(w))
     case LatestEnd{latest, dispatch, saved} <> rest:
       Machine{Verdict.restoreLatest(w, latest, dispatch), rest, saved}
     case ProbeEnd{probing, found, dispatch, saved} <> rest:

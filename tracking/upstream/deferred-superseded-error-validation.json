@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "date": "2026-10-22T14:57:42.670911+00:00",
+  "classification": "confirmed-upstream-bug",
+  "publishedIssueOrPR": null,
+  "activeDeviationId": null,
+  "sourceOnlyCandidate": true,
+  "baselinePolicy": "Preserve the pinned catch behavior; no repair is installed in the translation.",
+  "focused": {
+    "before": {
+      "failed": 4,
+      "passedControls": 4
+    },
+    "after": {
+      "passed": 8
+    },
+    "waiters": [
+      "until",
+      "refresh"
+    ],
+    "errorIdentity": "exact original error delivered; source baseline waits until the obsolete promise settles"
+  },
+  "candidateValidation": {
+    "testFilesPassed": 337,
+    "testsPassed": 5509,
+    "expectedFailures": 3,
+    "skipped": 2,
+    "build": "production/development/observe and source declarations pass",
+    "patchApplyCheck": "passes against unchanged aece1d44",
+    "formatAndReleaseInvariants": "pass"
+  },
+  "browser": {
+    "baseline": "repros/playground/deferred-superseded-error-baseline-browser.json",
+    "candidate": "repros/playground/deferred-superseded-error-candidate-browser.json",
+    "casesPerVersion": 6,
+    "tiers": [
+      "production",
+      "development",
+      "observe"
+    ],
+    "realJSX": true
+  },
+  "standalone": {
+    "file": "repros/solid-signals/deferred-superseded-error.mjs",
+    "baselineAndCandidateModes": "Both passed their explicit assertions; --expect-fixed selects the candidate expectation."
+  },
+  "hosted": {
+    "url": "https://s.olid.uk/id/l7LoIOhpS_mHSJwY8p2j8w",
+    "reopened": true,
+    "controlPassed": true,
+    "record": "repros/playground/deferred-superseded-error-hosted.json"
+  },
+  "size": {
+    "rolldown": "1.2.11",
+    "base": [
+      {
+        "name": "signals: createDeferred",
+        "min": 19385,
+        "br": 7278
+      },
+      {
+        "name": "signals: from",
+        "min": 16214,
+        "br": 6045
+      },
+      {
+        "name": "signals: createDeferred + from",
+        "min": 21281,
+        "br": 7837
+      },
+      {
+        "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+        "min": 20137,
+        "br": 7418
+      },
+      {
+        "name": "signals: + createStore",
+        "min": 45330,
+        "br": 15030
+      },
+      {
+        "name": "signals: + isPending/latest",
+        "min": 28735,
+        "br": 10281
+      },
+      {
+        "name": "signals: + until/refresh (truth readers, no optimism)",
+        "min": 21946,
+        "br": 8036
+      }
+    ],
+    "candidate": [
+      {
+        "name": "signals: createDeferred",
+        "min": 19389,
+        "br": 7282
+      },
+      {
+        "name": "signals: from",
+        "min": 16214,
+        "br": 6045
+      },
+      {
+        "name": "signals: createDeferred + from",
+        "min": 21285,
+        "br": 7832
+      },
+      {
+        "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+        "min": 20137,
+        "br": 7418
+      },
+      {
+        "name": "signals: + createStore",
+        "min": 45330,
+        "br": 15030
+      },
+      {
+        "name": "signals: + isPending/latest",
+        "min": 28735,
+        "br": 10281
+      },
+      {
+        "name": "signals: + until/refresh (truth readers, no optimism)",
+        "min": 21946,
+        "br": 8036
+      }
+    ],
+    "standardScenarios": "All four unchanged",
+    "focusedDelta": "createDeferred: +4 minified/+4 Brotli; createDeferred+from: +4 minified/-5 Brotli."
+  },
+  "performance": "No timing claim; candidate adds a null-guarded land call only on source-error paths.",
+  "related": [
+    "https://github.com/solidjs/solid/pull/4067",
+    "https://github.com/solidjs/solid/pull/4085"
+  ],
+  "differentReport": "#4145 is held error-to-value recovery and is fixed in the pin; this case retains a superseded deferred flight after a new synchronous error.",
+  "searches": "Targeted issue/PR searches for createDeferred/error/until and lagging/error found no duplicate or landed repair; not an exhaustive guarantee."
+}

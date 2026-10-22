@@ -108,6 +108,10 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.OnSettled{bindWith(body, args)}
     case R.TrackedCreate{body}:
       R.TrackedCreate{bindWith(body, args)}
+    case R.DeferredAccessor{compute, options}:
+      R.DeferredAccessor{bindWith(compute, args), options}
+    case R.DeferredRead{compute, options}:
+      R.DeferredRead{bindWith(compute, args), options}
     case R.MemoAccessor{compute, options}:
       R.MemoAccessor{bindWith(compute, args), options}
     case R.MemoRead{compute, options}:

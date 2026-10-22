@@ -1,4 +1,5 @@
 import Base
+import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./proof/deferred-lag.bend as DeferredLaws
 import ./proof/affects-scope.bend as AffectsLaws
@@ -950,3 +951,9 @@ def Laws.deferred_life_closedFailure(w, state, error):
 
 def Laws.deferred_life_answeredSticky(w, node, flight, marked, lagging):
   DeferredLifeLaws.answeredSticky(w, node, flight, marked, lagging)
+
+def Laws.deferred_data_complete(initial, next, extra):
+  DeferredProgram.complete(initial, next, extra)
+
+def Laws.deferred_data_result(initial, next, extra):
+  DeferredProgram.result(initial, next, extra)

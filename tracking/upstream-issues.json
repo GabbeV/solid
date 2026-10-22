@@ -257,7 +257,7 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed.",
+      "bendScope": "The data/thenable createDeferred profile is admitted; affected from/stream paths remain unported. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/VfGd9n1GQDKvvXQNGb2MWw",
       "playgroundHostedVerification": "repros/playground/deferred-buffered-from-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44"
@@ -279,10 +279,29 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed.",
+      "bendScope": "The data/thenable createDeferred profile is admitted; affected from/stream paths remain unported. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
       "playgroundHostedVerification": "repros/playground/from-sync-unsubscribe-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44"
+    },
+    {
+      "id": "SOLID-DEFERRED-SYNC-ERROR-009",
+      "classification": "confirmed-upstream-bug",
+      "status": "confirmed-unfiled",
+      "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+      "sourceUnit": "deferred.ts:createDeferred source-function catch",
+      "record": "tracking/upstream/deferred-superseded-error.md",
+      "standaloneReproducer": "repros/solid-signals/deferred-superseded-error.mjs",
+      "playgroundReproducer": "repros/playground/deferred-superseded-error.tsx",
+      "playgroundUrl": "https://s.olid.uk/id/l7LoIOhpS_mHSJwY8p2j8w",
+      "playgroundHostedVerification": "repros/playground/deferred-superseded-error-hosted.json",
+      "candidateFixPatch": "tracking/upstream/deferred-superseded-error.patch",
+      "validationRecord": "tracking/upstream/deferred-superseded-error-validation.json",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "bendScope": "The admitted data/thenable constructor preserves this baseline defect in four paired until/refresh histories. No candidate change is installed."
     }
   ]
 }

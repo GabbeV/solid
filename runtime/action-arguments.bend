@@ -85,6 +85,10 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.CallWith{callback, bindWith(left, depth, args), bindWith(right, depth, args)}
     case R.RootScope{body, transparent}:
       R.RootScope{bindWith(body, depth, args), transparent}
+    case R.DeferredAccessor{compute, options}:
+      R.DeferredAccessor{bindWith(compute, depth, args), options}
+    case R.DeferredRead{compute, options}:
+      R.DeferredRead{bindWith(compute, depth, args), options}
     case R.MemoAccessor{compute, options}:
       R.MemoAccessor{bindWith(compute, depth, args), options}
     case R.MemoRead{compute, options}:

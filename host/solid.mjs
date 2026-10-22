@@ -242,6 +242,20 @@ export class SolidRuntime {
       const bundle=options.error?{effect:apply,error:(error,cleanup)=>this.programs[options.error](cleanup,error)}:apply;
       return (options.user===false?this.S.createRenderEffect:this.S.createEffect)(this.callback(name,e.effectCreate,values,locals),bundle,{...options,unobserved:this.programs[options.unobserved]});
     }
+    if(e.deferredRead||e.deferredAccessor){
+      const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
+      requireTeardownProgram(this.programActions,options.unobserved);
+      const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+      if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+      const get=this.S.createDeferred(next=>{
+        const node=this.S.getOwner();this.sourceNames.set(node,name);this.notPending??=node._pendingValue;
+        this.traceEvents.push(['compute',name]);return this.evaluate(e.deferredRead??e.deferredAccessor,next,values,locals);
+      },opts);
+      this.registerComputedAccessor(get,name);
+      if(e.deferredAccessor)return get;
+      const value=get(),owner=this.S.getOwner(),reader=owner?._root?owner._parentComputed:owner;
+      this.traceEvents.push(['read',this.sourceNames.get(reader)??this.namedOwners.get(reader)??null,name,value]);return value;
+    }
     if(e.memoRead||e.memoAccessor){
       const name='#nested'+(this.nestedSerial=(this.nestedSerial??0)+1),options=e.options??{};
       requireTeardownProgram(this.programActions,options.unobserved);
@@ -551,6 +565,17 @@ export class SolidRuntime {
     const saved=this.current; this.current=name; this.traceEvents.push(['compute',name]);
     try { return this.evaluate(expr,prev,values,locals); } finally {this.current=saved;}
   }; }
+  deferred(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
+    const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};
+    if(Object.hasOwn(options,'loadingValue'))opts.loadingValue=this.value(options.loadingValue);
+    const parent=this.ownerFor(Object.hasOwn(options,'owner')?options.owner:'root');
+    this.accessors[name]=this.S.runWithOwner(parent,()=>this.S.createDeferred(this.callback(name,expr),opts));
+    this.registerComputedAccessor(this.accessors[name],name);
+    // Read-only construction observation: a lazy body has not called getOwner
+    // yet. In this grammar it cannot construct children before its first pass.
+    if(options.lazy&&parent)this.namedOwners.set(parent._firstChild,name);
+  }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);
     const opts={...options,equals:this.comparator(options.equals),_noSnapshot:options.noSnapshot,unobserved:this.programs[options.unobserved]};

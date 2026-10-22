@@ -1,0 +1,72 @@
+# Algebraic source-setter cuts reuse the checked general setter lemmas. These
+# do not replace its implementation or change the program's input/budget domain.
+def slotPrefix(+initial: Nat, +next: Nat) -> {SetterCuts.noSlot(cutOrigin(initial, next), 3n, R.Number{next}) == cutSlot(initial, next) : R.World}:
+  {==}
+
+def stamp(+initial: Nat, +next: Nat) -> {B.store_node(cutSlot(initial, next), 3n, R.Node.with_notified(B.node(cutSlot(initial, next), 3n), R.Stamped{R.World.epoch(cutSlot(initial, next))})) == cutStamped(initial, next) : R.World}:
+  {==}
+
+def notifyAt(+w: R.World) -> R.World:
+  W.insert_subs(B.budget(w), w, R.Node.subs(B.node(w, 3n)))
+
+def oneEdge(+initial: Nat, +next: Nat) -> {notifyAt(cutStamped(initial, next)) == H.enqueueSub(cutStamped(initial, next), 4n) : R.World}:
+  {==}
+
+def heapMinimum(+initial: Nat, +next: Nat) -> {R.World.with_minimum(cutStamped(initial, next), Nat.min(R.World.minimum(cutStamped(initial, next)), R.Node.height(B.node(cutStamped(initial, next), 4n)))) == cutStamped(initial, next) : R.World}:
+  {==}
+
+def heapFlags(+initial: Nat, +next: Nat) -> {B.store_node(cutStamped(initial, next), 4n, R.Node.with_flags(B.node(cutStamped(initial, next), 4n), 8)) == cutFlagged(initial, next) : R.World}:
+  {==}
+
+def heapSelected(+initial: Nat, +next: Nat) -> {HeapCuts.insertAt(cutStamped(initial, next), 4n, 0) == H.actualInsertIntoHeap(cutFlagged(initial, next), 4n) : R.World}:
+  {==}
+
+def heapTail(+initial: Nat, +next: Nat) -> {HeapCuts.actualTail(cutFlagged(initial, next), 4n, 0n) == cutInserted(initial, next) : R.World}:
+  {==}
+
+def heapActual(+initial: Nat, +next: Nat) -> {H.actualInsertIntoHeap(cutFlagged(initial, next), 4n) == cutInserted(initial, next) : R.World}:
+  Equal.trans(R.World, H.actualInsertIntoHeap(cutFlagged(initial, next), 4n), HeapCuts.actualTail(cutFlagged(initial, next), 4n, 0n), cutInserted(initial, next),
+    HeapCuts.actualCut(cutFlagged(initial, next), 4n, cutFlagged(initial, next), 0n, {==}, {==}), heapTail(initial, next))
+
+def heapInsert(+initial: Nat, +next: Nat) -> {H.enqueueSub(cutStamped(initial, next), 4n) == cutInserted(initial, next) : R.World}:
+  Equal.trans(R.World, H.enqueueSub(cutStamped(initial, next), 4n), H.insertIntoHeap(cutStamped(initial, next), 4n), cutInserted(initial, next),
+    HeapCuts.enqueueAt(cutStamped(initial, next), 4n, cutStamped(initial, next), heapMinimum(initial, next)),
+    Equal.trans(R.World, H.insertIntoHeap(cutStamped(initial, next), 4n), HeapCuts.insertAt(cutStamped(initial, next), 4n, 0), cutInserted(initial, next),
+      HeapCuts.insertFlags(cutStamped(initial, next), 4n, 0, {==}),
+      Equal.trans(R.World, HeapCuts.insertAt(cutStamped(initial, next), 4n, 0), H.actualInsertIntoHeap(cutFlagged(initial, next), 4n), cutInserted(initial, next), heapSelected(initial, next), heapActual(initial, next))))
+
+def notify(+initial: Nat, +next: Nat) -> {W.insertSubs(cutSlot(initial, next), 3n) == cutInserted(initial, next) : R.World}:
+  Equal.trans(R.World, W.insertSubs(cutSlot(initial, next), 3n), notifyAt(cutStamped(initial, next)), cutInserted(initial, next),
+    Equal.cong(R.World, R.World, w => notifyAt(w), B.store_node(cutSlot(initial, next), 3n, R.Node.with_notified(B.node(cutSlot(initial, next), 3n), R.Stamped{R.World.epoch(cutSlot(initial, next))})), cutStamped(initial, next), stamp(initial, next)),
+    Equal.trans(R.World, notifyAt(cutStamped(initial, next)), H.enqueueSub(cutStamped(initial, next), 4n), cutInserted(initial, next), oneEdge(initial, next), heapInsert(initial, next)))
+
+def schedule(+initial: Nat, +next: Nat) -> {B.schedule(cutInserted(initial, next)) == cutScheduled(initial, next) : R.World}:
+  {==}
+
+def staging(+initial: Nat, +next: Nat) -> {W.stageResolved(cutOrigin(initial, next), 3n, R.Number{next}) == cutScheduled(initial, next) : R.World}:
+  Equal.trans(R.World, W.stageResolved(cutOrigin(initial, next), 3n, R.Number{next}), B.schedule(W.insertSubs(cutSlot(initial, next), 3n)), cutScheduled(initial, next),
+    SetterCuts.staged_to_slot(cutOrigin(initial, next), 3n, R.Number{next}, cutSlot(initial, next), {==}, slotPrefix(initial, next), {==}, {==}),
+    Equal.trans(R.World, B.schedule(W.insertSubs(cutSlot(initial, next), 3n)), B.schedule(cutInserted(initial, next)), cutScheduled(initial, next),
+      Equal.cong(R.World, R.World, w => B.schedule(w), W.insertSubs(cutSlot(initial, next), 3n), cutInserted(initial, next), notify(initial, next)), schedule(initial, next)))
+
+def resolved(+initial: Nat, +next: Nat) -> {W.setResolved(cutOrigin(initial, next), 3n, R.Number{initial}, R.Number{next}) == cutScheduled(initial, next) : R.World}:
+  Equal.trans(R.World, W.setResolved(cutOrigin(initial, next), 3n, R.Number{initial}, R.Number{next}), W.stageResolved(cutOrigin(initial, next), 3n, R.Number{next}), cutScheduled(initial, next),
+    SetterCuts.entry(cutOrigin(initial, next), 3n, R.Number{initial}, R.Number{next}, {==}, {==}, {==}, {==}), staging(initial, next))
+
+def genericSetter(+w: R.World, +rest: List<&2, C.Task>, +current: R.Value, +value: R.Value,
+  ready: {B.ok(w) == True{} : Bool},
+  defaultEq: {Nat.is_eq(DeferredEQ.custom(w, 3n), 0n) == True{} : Bool},
+  noLane: {B.has(R.Node.config(B.node(w, 3n)), DeferredK.CONFIG_OVERRIDE()) == False{} : Bool}) ->
+  {C.step(C.Machine{w, C.SetSignalResolved{3n, current} <> rest, [value]}) == C.Machine{W.setResolved(w, 3n, current, value), rest, [value]} : C.Machine}:
+  Equal.trans(C.Machine, C.step(C.Machine{w, C.SetSignalResolved{3n, current} <> rest, [value]}), C.setResolved(w, rest, [], 3n, current, value), C.Machine{W.setResolved(w, 3n, current, value), rest, [value]},
+    SetterCuts.step_head(w, C.SetSignalResolved{3n, current}, rest, [value], ready), SetterCuts.core_default(w, rest, [], 3n, current, value, defaultEq, noLane))
+
+def setterShape(+initial: Nat, +next: Nat) -> {state_34(initial, next) == C.Machine{cutOrigin(initial, next), C.SetSignalResolved{3n, R.Number{initial}} <> cutRest(initial, next), [R.Number{next}]} : C.Machine}:
+  {==}
+
+def setterStep(+initial: Nat, +next: Nat) -> {C.step(state_34(initial, next)) == state_35(initial, next) : C.Machine}:
+  Equal.trans(C.Machine, C.step(state_34(initial, next)), C.step(C.Machine{cutOrigin(initial, next), C.SetSignalResolved{3n, R.Number{initial}} <> cutRest(initial, next), [R.Number{next}]}), state_35(initial, next),
+    Equal.cong(C.Machine, C.Machine, m => C.step(m), state_34(initial, next), C.Machine{cutOrigin(initial, next), C.SetSignalResolved{3n, R.Number{initial}} <> cutRest(initial, next), [R.Number{next}]}, setterShape(initial, next)),
+    Equal.trans(C.Machine, C.step(C.Machine{cutOrigin(initial, next), C.SetSignalResolved{3n, R.Number{initial}} <> cutRest(initial, next), [R.Number{next}]}), C.Machine{W.setResolved(cutOrigin(initial, next), 3n, R.Number{initial}, R.Number{next}), cutRest(initial, next), [R.Number{next}]}, state_35(initial, next),
+      genericSetter(cutOrigin(initial, next), cutRest(initial, next), R.Number{initial}, R.Number{next}, {==}, {==}, {==}),
+      Equal.cong(R.World, C.Machine, w => C.Machine{w, cutRest(initial, next), [R.Number{next}]}, W.setResolved(cutOrigin(initial, next), 3n, R.Number{initial}, R.Number{next}), cutScheduled(initial, next), resolved(initial, next))))

@@ -1,5 +1,7 @@
 # signals.ts:watch and public promise delivery state, independent of constructors.
 import Base
+import ./deferred-runtime.bend as Deferred
+import ./pending-state.bend as Pending
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./constants.bend as K
@@ -42,8 +44,8 @@ def postAnswer(+w: R.World, +id: Nat, +failed: Bool, +value: R.Value) -> R.World
     _ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.WatchDelivery{id, failed, value}])), _ => w)
 
 # watch's post-expression frame rule precedes both success and error jobs.
-# Active lagging/truth lane hooks remain an explicit unfinished scope.
-def queueAnswer(+w: R.World, +id: Nat, +failed: Bool, +value: R.Value) -> R.World:
+# The deferred lagging/truth gate below runs before this frame rule.
+def queueAnswerFrame(+w: R.World, +id: Nat, +failed: Bool, +value: R.Value) -> R.World:
   +node = R.World.context(w)
   +joined = B.choose(~Nat, Nat.is_ne(R.World.flushTransaction(w), 0n), _ => R.World.flushTransaction(w), _ => R.World.passTx(w))
   B.choose(~R.World, Bool.and(B.has(R.Node.flags(B.node(w, node)), K.REACTIVE_JOINED()), Nat.is_ne(joined, 0n)),
@@ -56,6 +58,20 @@ def queueAnswer(+w: R.World, +id: Nat, +failed: Bool, +value: R.Value) -> R.Worl
             +pair = X.resolveTx(w, joined)
             X.staleReader(B.first(R.World, Nat, pair), node, B.second(R.World, Nat, pair))), _ => w),
     _ => postAnswer(w, id, failed, value))
+
+# signals.ts:watch waits a deferred flight before either error or success
+# delivery. Even a failed source expression must pass this truth-reader gate.
+def queueAnswer(+w: R.World, id: Nat, failed: Bool, value: R.Value) -> R.World:
+  +node = R.World.context(w)
+  +pair = B.choose(~B.Bundle<R.World, Nat>, B.has(R.Node.config(B.node(w, node)), K.CONFIG_AUTHORITATIVE()), _ => Deferred.lagging(w, node), _ => B.Bundle{w, 0n})
+  +w = B.first(R.World, Nat, pair)
+  +lag = B.second(R.World, Nat, pair)
+  B.choose(~R.World, B.ok(w),
+    _ => B.choose(~R.World, Nat.is_ne(lag, 0n),
+      _ =>
+        +pair = Pending.notReadyError(w, lag)
+        R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}),
+      _ => queueAnswerFrame(w, id, failed, value)), _ => w)
 
 # Native Promise resolve/reject is synchronous IO, BEFORE callback disposal.
 # Its user's .then runs later in the host queue; duplicate delivery is ignored.

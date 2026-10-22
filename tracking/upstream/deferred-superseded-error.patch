@@ -1,0 +1,83 @@
+diff --git a/packages/signals/src/deferred.ts b/packages/signals/src/deferred.ts
+index f20cacb3..56196884 100644
+--- a/packages/signals/src/deferred.ts
++++ b/packages/signals/src/deferred.ts
+@@ -155,6 +155,7 @@ export function createDeferred<T>(
+         // The wrapping form: an unready source parks the node in the window,
+         // and the wait is its flight until the source's settle re-runs it.
+         if (open && e instanceof NotReadyError) ask(e);
++        else land(flight);
+         throw e;
+       }
+       if (open && typeof r === "object" && r !== null) {
+diff --git a/packages/signals/tests/deferred-sync-error-flight.test.ts b/packages/signals/tests/deferred-sync-error-flight.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/signals/tests/deferred-sync-error-flight.test.ts
+@@ -0,0 +1,56 @@
++import { describe, expect, test } from "vitest";
++import { createDeferred, createRoot, createSignal, flush, refresh, until } from "../src/index.js";
++
++async function settle() {
++  for (let i = 0; i < 8; i++) await Promise.resolve();
++  flush();
++  for (let i = 0; i < 8; i++) await Promise.resolve();
++}
++
++describe("deferred synchronous errors after a superseded flight", () => {
++  for (const waiter of ["until", "refresh"] as const) {
++    for (const seeded of [false, true]) {
++      for (const previousFlight of [false, true]) {
++        test(`${waiter}, seed ${seeded}, previous flight ${previousFlight}`, async () => {
++          const error = new Error("current request failed");
++          const outcomes: unknown[] = [];
++          let finish: ((value: number) => void) | undefined;
++          const [mode, setMode] = createSignal(0);
++          const { value, dispose } = createRoot(dispose => ({
++            dispose,
++            value: createDeferred(
++              () => {
++                const current = mode();
++                if (current === 2) throw error;
++                if (current === 1) return new Promise<number>(resolve => (finish = resolve));
++                return 7;
++              },
++              seeded ? { loadingValue: 0 } : undefined
++            )
++          }));
++          try {
++            flush();
++            if (previousFlight) {
++              setMode(1);
++              flush();
++            }
++            setMode(2);
++            flush();
++            const result = waiter === "until" ? until(value) : refresh(value);
++            result.then(
++              value => outcomes.push(value),
++              reason => outcomes.push(reason)
++            );
++            await settle();
++            expect(outcomes).toEqual([error]);
++          } finally {
++            finish?.(21);
++            await settle();
++            dispose();
++            flush();
++          }
++        });
++      }
++    }
++  }
++});
+diff --git a/.changeset/deferred-sync-error-flight.md b/.changeset/deferred-sync-error-flight.md
+new file mode 100644
+--- /dev/null
++++ b/.changeset/deferred-sync-error-flight.md
+@@ -0,0 +1,5 @@
++---
++"@solidjs/signals": patch
++---
++
++End a superseded deferred flight when a later computation throws synchronously, so truth readers can deliver the current error.

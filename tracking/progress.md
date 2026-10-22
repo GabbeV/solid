@@ -3,7 +3,7 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is 5b1b7776 (rc.17). The latest integration ports merged fallback retention
+is aece1d44 (declares rc.17). The latest integration ports merged fallback retention
 and cleanup continuation, retaining the prior checkpoint at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,410 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,572 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 480; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 502; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -356,3 +356,16 @@ assertions, three kernel assertions), bringing the distinct useful total to 480
 (406 finite, 74 kernel). The earlier 455-variant full run and the corrected
 25-variant run cover this checkpoint's unchanged prior runtime plus new helpers.
 A new complete run is also scheduled; it is not credited until completion.
+
+
+The public deferred checkpoint adds 162 data/thenable histories (3,572 total),
+shared closure/Set storage, ordered done/engine callbacks, cleanup and truth
+reader gating. It adds an exact complete owned constructor/event-write/flush/read
+program theorem for all natural initial/proposal pairs and all budgets >=103,
+plus 32 finite/native prefix controls. Old theorem domains and budgets stand.
+Twenty finite and two kernel mutation variants extend the corrected corpus to
+502 (426 finite, 76 kernel). One previous private probe compile failure had been
+mistakenly counted; its variant is now correctly typed and semantically rejected,
+and the runner refuses such compiler/resource failures. The eight lifecycle
+boundary laws and eight lagging laws retain their original domains. The three
+new upstream bug records are unfiled; no semantic workaround is active.

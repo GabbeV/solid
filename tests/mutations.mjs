@@ -5,6 +5,30 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred kernel loses owned constructor parent", "runtime/core.bend", "N.computed(w, R.DeferredCompute{cell, compute}, options, R.World.context(w))", "N.computed(w, R.DeferredCompute{cell, compute}, options, 0n)", "tests/proof-properties.mjs", "deferredCreate", "deferred-program"],
+  ["deferred kernel corrupts closure node", "runtime/core.bend", "Deferred.setNode(w, cell, node)", "Deferred.setNode(w, cell, 0n)", "tests/proof-properties.mjs", "deferredBody", "deferred-program"],
+
+  ["deferred public loses owner capture", "runtime/core.bend", "Deferred.setNode(w, cell, node)", "w", "tests/deferred.mjs", "deferredBody"],
+  ["deferred public eager becomes lazy", "runtime/core.bend", "R.NodeOptions.lazy(options)", "True{}", "tests/deferred.mjs", "deferredCreate"],
+  ["deferred public lazy becomes eager", "runtime/core.bend", "R.NodeOptions.lazy(options)", "False{}", "tests/deferred.mjs", "deferredCreate"],
+  ["deferred public skips initial construction", "runtime/core.bend", "Recompute{id, True{}} <> ending", "ending", "tests/deferred.mjs", "deferredCreate"],
+  ["deferred public data does not land", "runtime/core.bend", "Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, value <> tail}", "Machine{w, rest, value <> tail}", "tests/deferred.mjs", "deferredResult"],
+  ["deferred public closed window asks", "runtime/core.bend", "B.choose(~Machine, open,", "B.choose(~Machine, True{},", "tests/deferred.mjs", "deferredResult"],
+  ["deferred public open window does not ask", "runtime/core.bend", "Deferred.ask(w, cell, R.AsyncValue{result})", "w", "tests/deferred.mjs", "deferredResult"],
+  ["deferred public does not deliver done", "runtime/core.bend", "Machine{Deferred.deliver(w, wait), rest, stack}", "Machine{w, rest, stack}", "tests/deferred.mjs", "deferredDelivery"],
+  ["deferred public does not save waiter identity", "runtime/deferred-runtime.bend", "R.DeferredWait{observer, id, flight}", "R.DeferredWait{0n, id, flight}", "tests/deferred.mjs", "registerWait"],
+  ["deferred public done reads wrong closure", "runtime/deferred-runtime.bend", "land(w, id, flight, True{})", "land(w, 0n, flight, True{})", "tests/deferred.mjs", "deliver"],
+  ["deferred public forgets shared lag set", "runtime/deferred-runtime.bend", "R.DeferredState.lagging(value)", "[]", "tests/deferred.mjs", "store"],
+  ["deferred public forgets updated cells", "runtime/deferred-runtime.bend", "R.DeferredArena.with_cells(arena, cells)", "arena", "tests/deferred.mjs", "store"],
+  ["deferred public until bypasses lag gate", "runtime/watch-state.bend", "Deferred.lagging(w, node)", "B.Bundle{w, 0n}", "tests/deferred.mjs", "queueAnswer"],
+  ["deferred public lexical accessor loses capture", "runtime/lexical.bend", "R.DeferredAccessor{bindAs(compute, depth, signal, setter), options}", "R.DeferredAccessor{compute, options}", "tests/deferred.mjs", "bindAs"],
+  ["deferred public lexical read loses capture", "runtime/lexical.bend", "R.DeferredRead{bindAs(compute, depth, signal, setter), options}", "R.DeferredRead{compute, options}", "tests/deferred.mjs", "bindAs"],
+  ["deferred public callback accessor loses capture", "runtime/callback.bend", "R.DeferredAccessor{bindWith(compute, args), options}", "R.DeferredAccessor{compute, options}", "tests/deferred.mjs", "bindWith"],
+  ["deferred public callback read loses capture", "runtime/callback.bend", "R.DeferredRead{bindWith(compute, args), options}", "R.DeferredRead{compute, options}", "tests/deferred.mjs", "bindWith"],
+  ["deferred public action accessor loses capture", "runtime/action-arguments.bend", "R.DeferredAccessor{bindWith(compute, depth, args), options}", "R.DeferredAccessor{compute, options}", "tests/deferred.mjs", "bindWith"],
+  ["deferred public action read loses capture", "runtime/action-arguments.bend", "R.DeferredRead{bindWith(compute, depth, args), options}", "R.DeferredRead{compute, options}", "tests/deferred.mjs", "bindWith"],
+  ["deferred public cleanup is ignored", "runtime/owner.bend", "Machine{Deferred.end(w, cell), rest}", "Machine{w, rest}", "tests/deferred.mjs", "action"],
+
   ["deferred life ask loses replacement flight", "runtime/deferred-lifecycle.bend", "R.DeferredCell.with_flight(cell, flight)", "cell", "tests/deferred-lifecycle-alignment.mjs", "ask"],
   ["deferred life ask drops set insertion", "runtime/deferred-lifecycle.bend", "B.contains(lagging, node)", "True{}", "tests/deferred-lifecycle-alignment.mjs", "ask"],
   ["deferred life ask duplicates set member", "runtime/deferred-lifecycle.bend", "B.contains(lagging, node)", "False{}", "tests/deferred-lifecycle-alignment.mjs", "ask"],
@@ -17,7 +41,7 @@ const mutations=[
   ["deferred life landing retains lag membership", "runtime/deferred-lifecycle.bend", "P.remove(R.DeferredState.lagging(state), node)", "R.DeferredState.lagging(state)", "tests/deferred-lifecycle-alignment.mjs", "land"],
   ["deferred life landing ignores held inputs", "runtime/deferred-lifecycle.bend", "B.choose(~R.World, held,", "B.choose(~R.World, False{},", "tests/deferred-lifecycle-alignment.mjs", "land"],
   ["deferred life held landing skips first held dependency", "runtime/deferred-lifecycle.bend", "T.holdNode(w, node, B.second(R.World, Nat, pair))", "landHeld(p, w, node, R.Link.nextDep(B.link(w, edge)))", "tests/deferred-lifecycle-alignment.mjs", "landHeld"],
-  ["deferred life held landing uses wrong transaction", "runtime/deferred-lifecycle.bend", "T.txOf(w, dep)", "B.Bundle{w, 1n}", "tests/deferred-lifecycle-alignment.mjs", "landHeld"],
+  ["deferred life held landing uses wrong transaction", "runtime/deferred-lifecycle.bend", "T.txOf(w, dep)", "{B.Bundle{w, 1n} : B.Bundle<R.World, Nat>}", "tests/deferred-lifecycle-alignment.mjs", "landHeld"],
   ["deferred life cleanup ends flight on rerun", "runtime/deferred-lifecycle.bend", "B.has(R.Node.flags(B.node(w, R.DeferredCell.node(cell))), K.REACTIVE_DISPOSED())", "True{}", "tests/deferred-lifecycle-alignment.mjs", "end"],
   ["deferred life loading seed opens answer window", "runtime/deferred-lifecycle.bend", "Bool.not(R.Node.loading(n))", "True{}", "tests/deferred-lifecycle-alignment.mjs", "openWindow"],
   ["deferred life answered state is not sticky", "runtime/deferred-lifecycle.bend", "R.DeferredCell.answered(cell)", "False{}", "tests/deferred-lifecycle-alignment.mjs", "openWindow"],
@@ -474,7 +498,7 @@ const mutations=[
   ['initial effect ignores staged first value','runtime/core.bend','Bool.or(deferred, Bool.or(B.present(R.Node.pending(B.node(w, id))),','Bool.or(deferred, Bool.or(False{},','tests/nested.mjs'],
   ['nested memo loses owner','runtime/core.bend','N.computed(w, compute, options, R.World.context(w))','N.computed(w, compute, options, 0n)','tests/nested.mjs','memoExpression'],
   ['nested memo loses captured arguments','runtime/callback.bend','R.MemoRead{bindWith(compute, args), options}','R.MemoRead{compute, options}','tests/nested.mjs'],
-  ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ending)','_ => ending)','tests/nested.mjs'],
+  ['nested eager initial pass omitted','runtime/core.bend','_ => Recompute{id, True{}} <> ending)','_ => ending)','tests/nested.mjs','memoExpression'],
   ['onCleanup loses return identity','runtime/core.bend','rest, R.RootDisposerReference{root} <> tail}','rest, R.Undefined{} <> tail}','tests/cleanup-values.mjs'],
   ['same bound cleanup receives fresh callable IDs','runtime/callable.bend','+old = find(R.World.cleanupPrograms(w), root, 0n)','+old = {0n : Nat}','tests/cleanup-values.mjs'],
   ['bound cleanup disposes ambient receiver','runtime/owner.bend','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{owner, True{}, False{}} <> RootEnd{} <> rest}','case R.CleanupBoundRoot{owner}:\n      Machine{w, Enter{R.World.context(w), True{}, False{}} <> RootEnd{} <> rest}','tests/cleanup-values.mjs'],
@@ -542,6 +566,7 @@ for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModu
     if(compile.status!==0)throw new Error('Mutation did not compile: '+name+'\n'+compile.stderr.slice(-3000));
     const run=spawnSync(process.execPath,[test],{cwd:root,env:{...process.env,BEND_EMIT_FILE:emit,...(proofModule?{BEND_PROOF_MODULE:proofModule}:{})},encoding:'utf8',maxBuffer:1024*1024});
     if(run.status===0)throw new Error('Test oracle accepted mutation: '+name);
+    if(!proofModule && /SOME PROOFS FAIL|kernel terminated|out of memory|CompileError|ParseError/.test(run.stdout+run.stderr))throw new Error('Mutation probe failed to compile or exhausted resources: '+name+'\n'+run.stderr.slice(-1500));
     if(!run.stderr.includes('AssertionError'))throw new Error('Mutation failed for an unrelated reason: '+name+'\n'+run.stderr.slice(-3000));
     caught++;console.log('Rejected mutation: '+name);
   } finally {await fs.rm(dir,{recursive:true,force:true});}

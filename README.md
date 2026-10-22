@@ -45,13 +45,15 @@ exact final-state proof for every natural payload pair and all budgets >=128;
 arbitrary recursive trees remain outside that theorem.
 
 The [deferred lag dependency](tracking/deferred-lag.md) now has a source-following
-walk and an arbitrary-fuel read-only World theorem; public createDeferred is
-still unfinished.
+walk and an arbitrary-fuel read-only World theorem. The [public deferred
+data/thenable profile](tracking/deferred.md) now connects construction, flight
+lifetimes and truth readers, with a complete all-natural data update proof.
+Its stream/from/store/boundary profiles remain unfinished.
 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,410 public histories, 480 useful mutation
+budget. Current evidence totals 3,572 public histories, 502 useful mutation
 rejections and 72 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -59,14 +61,14 @@ input dispatch and its own bound setter, supported by the lane pass/flush
 engine. A complete free data program is proved for every natural payload triple
 and sufficient budget. The [verdict windows](tracking/verdict-windows.md) now execute full non-store
 read/catch/finally paths; a nested data program is proved for all natural payload
-pairs. Boundary/store, snapshots and deferred/external-source lifetimes remain next.
+pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes remain next.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
 The reviewed Solid pin is now `aece1d44` (declares rc.17), matching `next` checked
 on 2026-10-22. [The integration review](tracking/reviews/solid-aece1d44.md)
 audits the new `from` and `onSupersede` paths as explicit omissions; existing
-runtime operations are unchanged. Two source-only bugs have isolated repros and
+runtime operations are unchanged. Three upstream bugs have isolated repros and
 candidate patches in [the issue register](tracking/upstream-issues.json).
 No issue/PR has been filed and no workaround is installed. The complete previous
 translation checkpoint is `a3d30b4`.
@@ -80,7 +82,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 480 source-changing variants
+npm run mutations                # reject 502 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

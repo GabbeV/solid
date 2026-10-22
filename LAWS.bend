@@ -1,4 +1,6 @@
 import Base
+import ./proof/deferred-program.bend as DeferredProgram
+import ./proof/deferred-driver.bend as DeferredDriver
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./runtime/deferred-lifecycle.bend as DeferredLife
 import ./runtime/pending-state.bend as DeferredPending
@@ -1968,3 +1970,17 @@ law deferred_life_answeredSticky:
   for marked: Bool
   for lagging: List<&2, Nat>
   {R.DeferredCell.answered(R.DeferredState.cell(B.second(R.World, R.DeferredState, DeferredLife.openWindow(w, R.DeferredState{R.DeferredCell{node, flight, marked, True{}}, lagging})))) == True{} : Bool}
+
+# Owned data constructor, outside-owner event write, flush and accessor read.
+# All natural initial/proposal pairs; no claim for arbitrary graphs or flights.
+law deferred_data_complete:
+  for initial: Nat
+  for next: Nat
+  for extra: Nat
+  {Core.run(Nat.add(103n, extra), DeferredDriver.before(initial, next)) == DeferredProgram.state_103(initial, next) : Core.Machine}
+
+law deferred_data_result:
+  for initial: Nat
+  for next: Nat
+  for extra: Nat
+  {Core.values(Core.run(Nat.add(103n, extra), DeferredDriver.before(initial, next))) == [R.Number{next}] : List<&2, R.Value>}

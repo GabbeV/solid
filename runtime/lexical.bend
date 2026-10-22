@@ -89,6 +89,10 @@ def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
       R.CallWith{callback, bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}
     case R.RootScope{body, transparent}:
       R.RootScope{bindAs(body, depth, signal, setter), transparent}
+    case R.DeferredAccessor{compute, options}:
+      R.DeferredAccessor{bindAs(compute, depth, signal, setter), options}
+    case R.DeferredRead{compute, options}:
+      R.DeferredRead{bindAs(compute, depth, signal, setter), options}
     case R.MemoAccessor{compute, options}:
       R.MemoAccessor{bindAs(compute, depth, signal, setter), options}
     case R.MemoRead{compute, options}:

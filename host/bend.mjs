@@ -185,6 +185,14 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
     }
     return R.nestedEffect(expression(e.effectCreate,ids,programs,futures,encodeValue,contexts),options.user??true,options.target??3,nodeOptions(options,programs,encodeValue),options.schedule??false,options.defer??false,programs[options.program]??0,programs[options.cleanup]??0,programs[options.error]??0);
   }
+  if (e.deferredAccessor){
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,e.options?.unobserved);
+    return R.deferredAccessor(expression(e.deferredAccessor,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
+  }
+  if (e.deferredRead){
+    if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,e.options?.unobserved);
+    return R.deferredRead(expression(e.deferredRead,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
+  }
   if (e.memoAccessor){
     if(programs.teardownActions)requireTeardownProgram(programs.teardownActions,e.options?.unobserved);
     return R.memoAccessor(expression(e.memoAccessor,ids,programs,futures,encodeValue,contexts),nodeOptions(e.options,programs,encodeValue));
@@ -534,6 +542,11 @@ export class BendRuntime {
     requireTeardownProgram(this.programActions,options.unobserved);
     const encoded=this.encode(value);
     this.world=[tags.disposer,tags.accessor,tags.setter,tags.callback].includes(encoded.$)?R.createSignalInput(this.fuel,this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))):R.createSignalWithOptions(this.world,encoded,nodeOptions(options,this.programs,v=>this.encode(v))); this.check(); return id;
+  }
+  deferred(name,expr,options={}) {
+    requireTeardownProgram(this.programActions,options.unobserved);
+    const id=R.nextId(this.world); this.ids[name]=id; this.reverse[id]=name;
+    this.world=R.createDeferred(this.fuel,this.world,expression(expr,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),nodeOptions(options,this.programs,v=>this.encode(v)),this.ownerId(Object.hasOwn(options,'owner')?options.owner:'root')); this.check(); return id;
   }
   memo(name,expr,options={}) {
     requireTeardownProgram(this.programActions,options.unobserved);

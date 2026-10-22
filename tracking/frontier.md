@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3410 differential histories, 480 rejected compiled mutations,
+Current verification: 3572 differential histories, 502 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at aece1d44 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -23,20 +23,31 @@ existing runtime operations. New from/onSupersede paths stay explicitly unported
 The added 32 public crossings and six binding mutants bring current totals to
 3,410 / 455; no semantic deviation is active.
 
+## Public deferred data and thenables
+
+[The constructor crossing](deferred.md) connects the shared closure arena,
+cleanup/window, ordered done/engine observers and authoritative watch gate.
+162 new histories bring the total to 3,572. A complete owned data constructor,
+event write, flush and accessor read is proved for all natural payload pairs and
+budgets >=103, with exact final Machine and a value corollary; 32 finite/native
+controls check all prefixes. Direct streams/from/store/boundary/snapshot paths
+remain unfinished. Three upstream defects have saved repros/candidate patches;
+no workaround or upstream publication is active.
+
 ## Deferred lifecycle dependencies
 
 [Flight bookkeeping](deferred-lifecycle.md) now follows the actual ask/land/end
 closures, sticky loading windows, error catch and post-async value selection.
 1,664 source closure/window controls plus 120 actual serve/handleAsync controls
-and eight quantified boundary properties support the translation. Public
-construction and callback/watch integration remain open; no deviation is active.
+and eight quantified boundary properties support the translation. Public data/thenable construction and callback/watch integration are now
+connected; the stream profile remains open. No deviation is active.
 
 ## Deferred dependency
 
 [The lagging-node walk](deferred-lag.md) now preserves exact first-match identity,
 current dependency prefixes and source cycle handling. 4,210 private controls
 and eight quantified properties, including an arbitrary-fuel whole-World frame,
-check this dependency. The public constructor and its lifetimes remain unported.
+check this dependency. The public data/thenable constructor now consumes this walk; see deferred.md.
 
 ## Public non-store marks
 
@@ -44,7 +55,7 @@ check this dependency. The public constructor and its lifetimes remain unported.
 recording, landing release and ambient parked/own-flight compaction. 41 public
 histories and 25 private scope controls supplement seven scoped laws and a
 complete all-natural 51-step mark/probe/flush/read program. Stores, boundaries,
-snapshots and createDeferred remain unfinished; no deviation is active.
+snapshots and deferred streams remain unfinished; no deviation is active.
 
 ## Public verdict windows
 

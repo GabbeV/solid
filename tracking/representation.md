@@ -339,3 +339,11 @@ arrays, so these persistent values preserve the reachable non-store semantics;
 no shared mark-list arena is needed. The generated World schema is now 70 fields.
 All existing canonical machines carry the additional empty field; their program
 budgets and quantified payload domains are unchanged.
+
+
+Public deferred construction adds World.deferredArena, the 71st field. It stores
+DeferredBinding cells (the original four closure locals plus end-function ID),
+one shared lagging Set view and done-observer lookup records. It is separate
+from ordinary engine AsyncObserver state. Whole-World laws preserve it where
+their source operation does not touch deferred state; no earlier theorem domain
+or step budget was weakened. See deferred.md.

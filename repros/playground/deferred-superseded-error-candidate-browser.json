@@ -1,0 +1,55 @@
+{
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "patched": true,
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "case-production-with-obsolete",
+      "profile": "production",
+      "control": false,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-production-without-obsolete",
+      "profile": "production",
+      "control": true,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-development-with-obsolete",
+      "profile": "development",
+      "control": false,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-development-without-obsolete",
+      "profile": "development",
+      "control": true,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-observe-with-obsolete",
+      "profile": "observe",
+      "control": false,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-observe-without-obsolete",
+      "profile": "observe",
+      "control": true,
+      "result": "Failed: request failed",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

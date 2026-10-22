@@ -1,7 +1,7 @@
 # deferred.ts:createDeferred closure cells and lifecycle segments. State carries
 # the module Set's current membership view along with one closure's captured
-# locals. A future arena caller must thread that one shared Set across cells.
-# These helpers do not install the constructor, cleanup or async callbacks.
+# locals. The deferred-runtime arena threads that shared Set across cells.
+# These helpers are called by public construction, cleanup and async callbacks.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B

@@ -231,278 +231,296 @@ def data_73() -> R.LaneState:
 def data_74() -> R.VerdictState:
   R.VerdictState{False{}, False{}, False{}, False{}}
 
-def data_75() -> R.World:
-  R.World{data_18(), data_20(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 0n, data_25(), data_26(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
+def data_75() -> R.Value:
+  R.Null{}
 
-def data_76() -> C.Task:
+def data_76() -> R.DeferredCell:
+  R.DeferredCell{0n, data_75(), False{}, False{}}
+
+def data_77() -> R.DeferredBinding:
+  R.DeferredBinding{data_76(), 0n}
+
+def data_78() -> List<&2, R.DeferredBinding>:
+  [data_77()]
+
+def data_79() -> List<&2, R.DeferredWait>:
+  []
+
+def data_80() -> R.DeferredArena:
+  R.DeferredArena{data_78(), data_22(), data_79()}
+
+def data_81() -> R.World:
+  R.World{data_18(), data_20(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 0n, data_25(), data_26(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
+
+def data_82() -> C.Task:
   C.Recompute{3n, True{}}
 
-def data_77() -> List<&2, C.Task>:
-  [data_76()]
-
-def data_78() -> List<&2, R.Value>:
-  []
-
-def data_79() -> C.Machine:
-  C.Machine{data_75(), data_77(), data_78()}
-
-def data_80() -> R.Node:
-  R.Node{data_12(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_81() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_11(), data_80()]
-
-def data_82() -> R.TraceEvent:
-  R.Invoked{3n}
-
-def data_83() -> List<&2, R.TraceEvent>:
+def data_83() -> List<&2, C.Task>:
   [data_82()]
 
-def data_84() -> R.World:
-  R.World{data_81(), data_20(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 3n, True{}, False{}, False{}, 0n, 1n, data_25(), data_83(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
+def data_84() -> List<&2, R.Value>:
+  []
 
-def data_85() -> C.Task:
-  C.Evaluate{data_16(), data_1()}
+def data_85() -> C.Machine:
+  C.Machine{data_81(), data_83(), data_84()}
 
-def data_86() -> C.LanePass:
-  C.LanePass{0n, data_72(), data_72()}
+def data_86() -> R.Node:
+  R.Node{data_12(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_87() -> C.PassFrame:
-  C.PassFrame{3n, True{}, 1n, False{}, 0n, False{}, data_1(), True{}, data_1(), 0n, False{}, 0n, data_78(), 0n, False{}, data_86()}
+def data_87() -> List<&2, R.Node>:
+  [data_6(), data_8(), data_11(), data_86()]
 
-def data_88() -> C.Task:
-  C.Finish{data_87()}
+def data_88() -> R.TraceEvent:
+  R.Invoked{3n}
 
-def data_89() -> List<&2, C.Task>:
-  [data_85(), data_88()]
-
-def data_90() -> C.Machine:
-  C.Machine{data_84(), data_89(), data_78()}
-
-def data_91() -> C.Task:
-  C.Evaluate{data_13(), data_1()}
-
-def data_92() -> C.Task:
-  C.Evaluate{data_15(), data_1()}
-
-def data_93() -> C.Task:
-  C.Binary{0}
-
-def data_94() -> List<&2, C.Task>:
-  [data_91(), data_92(), data_93(), data_88()]
-
-def data_95() -> C.Machine:
-  C.Machine{data_84(), data_94(), data_78()}
-
-def data_96() -> C.Task:
-  C.ReadNode{2n}
-
-def data_97() -> List<&2, C.Task>:
-  [data_96(), data_92(), data_93(), data_88()]
-
-def data_98() -> C.Machine:
-  C.Machine{data_84(), data_97(), data_78()}
-
-def data_99() -> C.Task:
-  C.ReadPrepared{2n}
-
-def data_100() -> List<&2, C.Task>:
-  [data_99(), data_92(), data_93(), data_88()]
-
-def data_101() -> C.Machine:
-  C.Machine{data_84(), data_100(), data_78()}
-
-def data_102() -> R.Node:
-  R.Node{data_9(), data_10(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_103() -> R.Node:
-  R.Node{data_12(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_104() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_102(), data_103()]
-
-def data_105() -> R.Link:
-  R.Link{2n, 3n, 0n, 0n, 0n, 1n}
-
-def data_106() -> List<&2, R.Link>:
-  [data_19(), data_105()]
-
-def data_107() -> R.TraceEvent:
-  R.ReadValue{3n, 2n, data_10()}
-
-def data_108() -> List<&2, R.TraceEvent>:
-  [data_82(), data_107()]
-
-def data_109() -> R.World:
-  R.World{data_104(), data_106(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 3n, True{}, False{}, False{}, 0n, 2n, data_25(), data_108(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
-
-def data_110() -> List<&2, C.Task>:
-  [data_92(), data_93(), data_88()]
-
-def data_111() -> List<&2, R.Value>:
-  [data_10()]
-
-def data_112() -> C.Machine:
-  C.Machine{data_109(), data_110(), data_111()}
-
-def data_113() -> List<&2, C.Task>:
-  [data_93(), data_88()]
-
-def data_114() -> List<&2, R.Value>:
-  [data_14(), data_10()]
-
-def data_115() -> C.Machine:
-  C.Machine{data_109(), data_113(), data_114()}
-
-def data_116() -> List<&2, C.Task>:
+def data_89() -> List<&2, R.TraceEvent>:
   [data_88()]
 
+def data_90() -> R.World:
+  R.World{data_87(), data_20(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 3n, True{}, False{}, False{}, 0n, 1n, data_25(), data_89(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
+
+def data_91() -> C.Task:
+  C.Evaluate{data_16(), data_1()}
+
+def data_92() -> C.LanePass:
+  C.LanePass{0n, data_72(), data_72()}
+
+def data_93() -> C.PassFrame:
+  C.PassFrame{3n, True{}, 1n, False{}, 0n, False{}, data_1(), True{}, data_1(), 0n, False{}, 0n, data_84(), 0n, False{}, data_92()}
+
+def data_94() -> C.Task:
+  C.Finish{data_93()}
+
+def data_95() -> List<&2, C.Task>:
+  [data_91(), data_94()]
+
+def data_96() -> C.Machine:
+  C.Machine{data_90(), data_95(), data_84()}
+
+def data_97() -> C.Task:
+  C.Evaluate{data_13(), data_1()}
+
+def data_98() -> C.Task:
+  C.Evaluate{data_15(), data_1()}
+
+def data_99() -> C.Task:
+  C.Binary{0}
+
+def data_100() -> List<&2, C.Task>:
+  [data_97(), data_98(), data_99(), data_94()]
+
+def data_101() -> C.Machine:
+  C.Machine{data_90(), data_100(), data_84()}
+
+def data_102() -> C.Task:
+  C.ReadNode{2n}
+
+def data_103() -> List<&2, C.Task>:
+  [data_102(), data_98(), data_99(), data_94()]
+
+def data_104() -> C.Machine:
+  C.Machine{data_90(), data_103(), data_84()}
+
+def data_105() -> C.Task:
+  C.ReadPrepared{2n}
+
+def data_106() -> List<&2, C.Task>:
+  [data_105(), data_98(), data_99(), data_94()]
+
+def data_107() -> C.Machine:
+  C.Machine{data_90(), data_106(), data_84()}
+
+def data_108() -> R.Node:
+  R.Node{data_9(), data_10(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_109() -> R.Node:
+  R.Node{data_12(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_110() -> List<&2, R.Node>:
+  [data_6(), data_8(), data_108(), data_109()]
+
+def data_111() -> R.Link:
+  R.Link{2n, 3n, 0n, 0n, 0n, 1n}
+
+def data_112() -> List<&2, R.Link>:
+  [data_19(), data_111()]
+
+def data_113() -> R.TraceEvent:
+  R.ReadValue{3n, 2n, data_10()}
+
+def data_114() -> List<&2, R.TraceEvent>:
+  [data_88(), data_113()]
+
+def data_115() -> R.World:
+  R.World{data_110(), data_112(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 3n, True{}, False{}, False{}, 0n, 2n, data_25(), data_114(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
+
+def data_116() -> List<&2, C.Task>:
+  [data_98(), data_99(), data_94()]
+
 def data_117() -> List<&2, R.Value>:
-  [data_14()]
+  [data_10()]
 
 def data_118() -> C.Machine:
-  C.Machine{data_109(), data_116(), data_117()}
+  C.Machine{data_115(), data_116(), data_117()}
 
-def data_119() -> R.Node:
-  R.Node{data_12(), data_1(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+def data_119() -> List<&2, C.Task>:
+  [data_99(), data_94()]
 
-def data_120() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_102(), data_119()]
+def data_120() -> List<&2, R.Value>:
+  [data_14(), data_10()]
 
-def data_121() -> R.World:
-  R.World{data_120(), data_106(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 2n, data_25(), data_108(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
+def data_121() -> C.Machine:
+  C.Machine{data_115(), data_119(), data_120()}
 
-def data_122() -> C.Task:
-  C.PassReleases{data_87(), 0n, data_14(), False{}, False{}, False{}, data_27()}
+def data_122() -> List<&2, C.Task>:
+  [data_94()]
 
-def data_123() -> List<&2, C.Task>:
-  [data_122()]
+def data_123() -> List<&2, R.Value>:
+  [data_14()]
 
 def data_124() -> C.Machine:
-  C.Machine{data_121(), data_123(), data_78()}
+  C.Machine{data_115(), data_122(), data_123()}
 
 def data_125() -> R.Node:
-  R.Node{data_12(), data_14(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_12(), data_1(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_126() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_102(), data_125()]
+  [data_6(), data_8(), data_108(), data_125()]
 
 def data_127() -> R.World:
-  R.World{data_126(), data_106(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 2n, data_25(), data_108(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
+  R.World{data_126(), data_112(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 2n, data_25(), data_114(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
 
 def data_128() -> C.Task:
+  C.PassReleases{data_93(), 0n, data_14(), False{}, False{}, False{}, data_27()}
+
+def data_129() -> List<&2, C.Task>:
+  [data_128()]
+
+def data_130() -> C.Machine:
+  C.Machine{data_127(), data_129(), data_84()}
+
+def data_131() -> R.Node:
+  R.Node{data_12(), data_14(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_16(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_132() -> List<&2, R.Node>:
+  [data_6(), data_8(), data_108(), data_131()]
+
+def data_133() -> R.World:
+  R.World{data_132(), data_112(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 1n, False{}, False{}, False{}, 0n, 2n, data_25(), data_114(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
+
+def data_134() -> C.Task:
   C.PublishSettleSelf{3n, False{}}
 
-def data_129() -> C.Task:
+def data_135() -> C.Task:
   C.FinishPublication{3n, True{}, False{}, False{}, 0n, 0n}
 
-def data_130() -> List<&2, C.Task>:
-  [data_128(), data_129()]
+def data_136() -> List<&2, C.Task>:
+  [data_134(), data_135()]
 
-def data_131() -> C.Machine:
-  C.Machine{data_127(), data_130(), data_78()}
-
-def data_132() -> List<&2, C.Task>:
-  [data_129()]
-
-def data_133() -> C.Machine:
-  C.Machine{data_127(), data_132(), data_78()}
-
-def data_134() -> O.Task:
-  O.TrimDeps{3n}
-
-def data_135() -> List<&2, O.Task>:
-  [data_134()]
-
-def data_136() -> C.Task:
-  C.OwnerTasks{data_135()}
-
-def data_137() -> C.Task:
-  C.QueuePublication{3n, True{}, False{}, 0n, 0n}
+def data_137() -> C.Machine:
+  C.Machine{data_133(), data_136(), data_84()}
 
 def data_138() -> List<&2, C.Task>:
-  [data_136(), data_137()]
+  [data_135()]
 
 def data_139() -> C.Machine:
-  C.Machine{data_127(), data_138(), data_78()}
+  C.Machine{data_133(), data_138(), data_84()}
 
-def data_140() -> List<&2, O.Task>:
-  []
+def data_140() -> O.Task:
+  O.TrimDeps{3n}
 
-def data_141() -> C.Task:
-  C.OwnerTasks{data_140()}
+def data_141() -> List<&2, O.Task>:
+  [data_140()]
 
-def data_142() -> List<&2, C.Task>:
-  [data_141(), data_137()]
+def data_142() -> C.Task:
+  C.OwnerTasks{data_141()}
 
-def data_143() -> C.Machine:
-  C.Machine{data_127(), data_142(), data_78()}
+def data_143() -> C.Task:
+  C.QueuePublication{3n, True{}, False{}, 0n, 0n}
 
 def data_144() -> List<&2, C.Task>:
-  [data_137()]
+  [data_142(), data_143()]
 
 def data_145() -> C.Machine:
-  C.Machine{data_127(), data_144(), data_78()}
+  C.Machine{data_133(), data_144(), data_84()}
 
-def data_146() -> List<&2, C.Task>:
+def data_146() -> List<&2, O.Task>:
   []
 
-def data_147() -> C.Machine:
-  C.Machine{data_127(), data_146(), data_78()}
+def data_147() -> C.Task:
+  C.OwnerTasks{data_146()}
 
-def data_148() -> R.TraceEvent:
+def data_148() -> List<&2, C.Task>:
+  [data_147(), data_143()]
+
+def data_149() -> C.Machine:
+  C.Machine{data_133(), data_148(), data_84()}
+
+def data_150() -> List<&2, C.Task>:
+  [data_143()]
+
+def data_151() -> C.Machine:
+  C.Machine{data_133(), data_150(), data_84()}
+
+def data_152() -> List<&2, C.Task>:
+  []
+
+def data_153() -> C.Machine:
+  C.Machine{data_133(), data_152(), data_84()}
+
+def data_154() -> R.TraceEvent:
   R.AccessorBound{3n}
 
-def data_149() -> List<&2, R.TraceEvent>:
-  [data_82(), data_107(), data_148()]
+def data_155() -> List<&2, R.TraceEvent>:
+  [data_88(), data_113(), data_154()]
 
-def data_150() -> R.World:
-  R.World{data_126(), data_106(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 0n, False{}, False{}, False{}, 0n, 2n, data_25(), data_149(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22()}
+def data_156() -> R.World:
+  R.World{data_132(), data_112(), data_21(), 0n, 0n, False{}, data_22(), data_22(), data_22(), data_23(), 0n, False{}, False{}, False{}, 0n, 2n, data_25(), data_155(), data_27(), False{}, data_22(), data_31(), data_34(), data_22(), 0n, False{}, False{}, data_35(), 0n, data_38(), data_22(), 0n, 0n, 0n, 0n, data_22(), data_29(), data_39(), data_42(), data_44(), data_45(), 0n, data_48(), data_50(), data_52(), data_53(), data_55(), False{}, False{}, data_29(), data_57(), data_59(), data_62(), 0n, data_39(), False{}, data_63(), data_64(), data_65(), 0n, data_66(), data_67(), data_68(), data_69(), data_70(), 0n, data_73(), data_74(), data_2(), data_22(), data_80()}
 
 def state_0() -> C.Machine:
-  data_79()
+  data_85()
 
 def state_1() -> C.Machine:
-  data_90()
+  data_96()
 
 def state_2() -> C.Machine:
-  data_95()
-
-def state_3() -> C.Machine:
-  data_98()
-
-def state_4() -> C.Machine:
   data_101()
 
+def state_3() -> C.Machine:
+  data_104()
+
+def state_4() -> C.Machine:
+  data_107()
+
 def state_5() -> C.Machine:
-  data_112()
-
-def state_6() -> C.Machine:
-  data_115()
-
-def state_7() -> C.Machine:
   data_118()
 
-def state_8() -> C.Machine:
+def state_6() -> C.Machine:
+  data_121()
+
+def state_7() -> C.Machine:
   data_124()
 
+def state_8() -> C.Machine:
+  data_130()
+
 def state_9() -> C.Machine:
-  data_131()
+  data_137()
 
 def state_10() -> C.Machine:
-  data_133()
-
-def state_11() -> C.Machine:
   data_139()
 
-def state_12() -> C.Machine:
-  data_143()
-
-def state_13() -> C.Machine:
+def state_11() -> C.Machine:
   data_145()
 
+def state_12() -> C.Machine:
+  data_149()
+
+def state_13() -> C.Machine:
+  data_151()
+
 def state_14() -> C.Machine:
-  data_147()
+  data_153()
 
 def finished() -> R.World:
-  data_150()
+  data_156()

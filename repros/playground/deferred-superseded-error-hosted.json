@@ -1,0 +1,13 @@
+{
+  "name": "deferred-superseded-error",
+  "url": "https://s.olid.uk/id/l7LoIOhpS_mHSJwY8p2j8w",
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "solidVersion": "mizulu/solid2@aece1d44",
+  "browser": "154.0.8037.57",
+  "control": "Skip Start request: the current error rejects promptly.",
+  "baseline": "Start, Fail, Read: Waiting. Finishing the obsolete request finally delivers the current error.",
+  "controlPassed": true,
+  "reopened": true,
+  "errors": [],
+  "createdAt": "2026-10-22T14:40:49.550Z"
+}

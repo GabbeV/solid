@@ -1,5 +1,11 @@
 # Deferred lag dependency walk
 
+Update: the [public data/thenable constructor](deferred.md) now consumes these
+helpers, sharing one arena Set and installing cleanup/observer/watch crossings.
+The dependency-only descriptions below record the earlier milestone; direct
+streams/from/store/boundary profiles remain unfinished.
+
+
 This is an internal dependency checkpoint, not public createDeferred support.
 The constructor's loading window, ask/serve/land callbacks, flight marks,
 stream-first-yield lifetime, disposal and watcher integration are still unfinished.
