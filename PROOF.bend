@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-blockers.bend as LaneBlockers
 import ./proof/verdict-laws.bend as VerdictLaws
 import ./proof/lane-laws.bend as LaneLaws
 import ./proof/mark-laws.bend as MarkLaws
@@ -625,3 +626,15 @@ def Laws.joined_verdict_reader_does_not_open_lane(w, node, nodes, tx):
 
 def Laws.held_latest_preserves_raw_staged_error(w, node, nodes, error, reader):
   VerdictLaws.stagedError(w, node, nodes, error, reader)
+
+def Laws.open_transaction_blocks_and_restores_judge(w, tx, rest, count):
+  LaneBlockers.openRestoresJudge(w, tx, rest, count)
+
+def Laws.empty_mainline_transaction_is_unblocked(w, tx, rest):
+  LaneBlockers.emptyUnblocked(w, tx, rest)
+
+def Laws.linked_peer_open_count_blocks(w, a, b, rest, count):
+  LaneBlockers.peerOpenBlocks(w, a, b, rest, count)
+
+def Laws.lane_guess_own_flight_is_observed(w, node, extension, tx, nodes, extensions, rest):
+  LaneBlockers.ownGuessFlight(w, node, extension, tx, nodes, extensions, rest)

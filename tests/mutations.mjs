@@ -5,6 +5,18 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['lane blocker ignores open transaction count','runtime/transaction.bend','Nat.is_ne(R.Transaction.open(B.transaction(w, tx)), 0n)','False{}','tests/proof-properties.mjs','blockStep','lane-blockers'],
+  ['lane blocker restoration clears the ambient judge','runtime/transaction.bend','R.World.with_judge(w, previous)','R.World.with_judge(w, 0n)','tests/proof-properties.mjs','blockStep','lane-blockers'],
+  ['lane blocker ignores linked peer open count','runtime/transaction.bend','Nat.is_ne(R.Transaction.open(B.transaction(w, peer)), 0n)','False{}','tests/proof-properties.mjs','blockStep','lane-blockers'],
+  ['lane blocker empty child scan blocks','runtime/transaction.bend','Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}}','Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, True{}}','tests/proof-properties.mjs','blockStep','lane-blockers'],
+  ['lane blocker includes itself in its link group','runtime/transaction.bend','Nat.is_eq(peer, lane)','False{}','tests/blockers-alignment.mjs','blockStep'],
+  ['lane blocker peer waits on foreign source','runtime/transaction.bend','ownFlights(w, peer)','blockedBy(w, R.Transaction.nodes(B.transaction(w, peer)), peer, False{})','tests/blockers-alignment.mjs','blockStep'],
+  ['lane blocker skips linked peer children','runtime/transaction.bend','NestedMembers{peer, 0n} <> ContinueLinked{lane, group, index} <> rest','ContinueLinked{lane, group, index} <> rest','tests/blockers-alignment.mjs','blockStep'],
+  ['lane blocker skips nested guess refetch','runtime/transaction.bend','guessFlights(w, lane)','{B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}','tests/blockers-alignment.mjs','blockStep'],
+  ['lane blocker skips every matching child','runtime/transaction.bend','Nat.is_ne(B.second(R.World, Nat, pair), tx)','True{}','tests/blockers-alignment.mjs','blockStep'],
+  ['lane blocker accepts stale guess membership','runtime/transaction.bend','Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), lane)','True{}','tests/blockers-alignment.mjs','guessFlightLoop'],
+  ['lane blocker settled guess still flies','runtime/transaction.bend','B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())','True{}','tests/blockers-alignment.mjs','laneInFlight'],
+  ['lane blocker treats derivation as guess','runtime/transaction.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())','True{}','tests/blockers-alignment.mjs','guessFlightLoop'],
   ['verdict quiet check reads a missing extension','runtime/verdict-state.bend','Nat.is_eq(R.Node.x(B.node(w, id)), 0n)','False{}','tests/proof-properties.mjs','quietPending','verdict-laws'],
   ['verdict empty source set uses own reask','runtime/verdict-state.bend','reasks(items, w)','R.NodeExtension.reask(B.extension(w, id))','tests/proof-properties.mjs','quietSources','verdict-laws'],
   ['verdict mark witness updates outside probe','runtime/verdict-state.bend','R.VerdictState.probing(R.World.verdictState(w))','True{}','tests/proof-properties.mjs','witnessMark','verdict-laws'],

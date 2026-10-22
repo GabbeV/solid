@@ -1,5 +1,6 @@
 # core/scheduler.ts transaction identity, membership, joins and blocker helpers.
-# Lanes are represented in the record; their installed hooks remain unfinished.
+# Lane identity/block judgments execute here to break the source module cycle;
+# lane read/stage/write/seam and boundary hooks remain unfinished.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -285,15 +286,132 @@ def blockedList(fuel: Nat, +w: R.World, nodes: List<&2, Nat>, +owner: Nat, +own:
 def blockedBy(+w: R.World, +nodes: List<&2, Nat>, owner: Nat, own: Bool) -> B.Bundle<R.World, Bool>:
   blockedList(Nat.add(B.budget(w), B.length(Nat, nodes)), w, nodes, owner, own)
 
-def blocked(+w: R.World, +t: Nat) -> B.Bundle<R.World, Bool>:
-  +prev = R.World.judge(w)
-  +w = B.choose(~R.World, Nat.is_eq(prev, 0n), _ => R.World.with_judge(w, t), _ => w)
-  +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(R.Transaction.open(B.transaction(w, t)), 0n), _ => B.Bundle{w, True{}},
-    _ => blockedBy(w, R.Transaction.nodes(B.transaction(w, t)), t, False{}))
-  B.Bundle{R.World.with_judge(B.first(R.World, Bool, pair), prev), B.second(R.World, Bool, pair)}
-
 def ownFlights(+w: R.World, +t: Nat) -> B.Bundle<R.World, Bool>:
   blockedBy(w, R.Transaction.nodes(B.transaction(w, t)), t, True{})
+
+# core/lanes.ts:inFlight / guessFlights. Store flight resolvers are outside
+# the typed non-store profile, so a needed slot hook refuses explicitly.
+def laneInFlight(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()), _ => B.Bundle{w, True{}},
+    _ => B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, id)), K.CONFIG_SLOT_NODE()),
+      _ => B.Bundle{R.World.with_fault(w, R.Unsupported{88n}), False{}}, _ => B.Bundle{w, False{}}))
+
+def guessFlightLoop(fuel: Nat, +w: R.World, +lane: Nat, +index: Nat) -> B.Bundle<R.World, Bool>:
+  match fuel:
+    case 0n:
+      B.Bundle{B.choose(~R.World, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, lane)))), _ => w, _ => R.World.with_fault(w, R.Exhausted{})), False{}}
+    case 1n+ +p:
+      B.choose(~B.Bundle<R.World, Bool>, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, lane)))), _ => B.Bundle{w, False{}},
+        _ =>
+          +id = B.get(Nat, R.Transaction.nodes(B.transaction(w, lane)), index, 0n)
+          B.choose(~B.Bundle<R.World, Bool>, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), lane)),
+            _ =>
+              +pair = laneInFlight(w, id)
+              +w = B.first(R.World, Bool, pair)
+              B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, True{}},
+                _ => guessFlightLoop(p, w, lane, 1n+index)),
+            _ => guessFlightLoop(p, w, lane, 1n+index)))
+
+def guessFlights(+w: R.World, +lane: Nat) -> B.Bundle<R.World, Bool>:
+  guessFlightLoop(1n+B.length(Nat, R.Transaction.nodes(B.transaction(w, lane))), w, lane, 0n)
+
+# scheduler.ts:blocked and lanes.ts:lanesBlocked/linkBlocked/nestedBlocked
+# mutually recurse in TS. Explicit call/return tasks keep one judgment and its
+# saved judge. Groups retain their captured array identity and live bounds.
+type BlockTask is Data:
+  JudgeTx{tx: Nat}
+  RestoreJudge{previous: Nat}
+  JudgeLanes{tx: Nat}
+  LinkedMembers{lane: Nat, group: Nat, index: Nat}
+  AfterLinked{tx: Nat}
+  ContinueLinked{lane: Nat, group: Nat, index: Nat}
+  NestedMembers{tx: Nat, index: Nat}
+  ContinueNested{tx: Nat, index: Nat, lane: Nat}
+
+type BlockFrame is Data:
+  BlockFrame{world: R.World, tasks: List<&2, BlockTask>, result: Bool}
+
+def blockGroup(+w: R.World, group: Nat) -> List<&2, Nat>:
+  B.get(List<&2, Nat>, R.LaneState.groups(R.World.laneState(w)), group, [])
+
+def blockStep(+w: R.World, work: List<&2, BlockTask>, +result: Bool) -> BlockFrame:
+  match work:
+    case Nil{}:
+      BlockFrame{w, [], result}
+    case JudgeTx{+tx} <> +rest:
+      +previous = R.World.judge(w)
+      +w = B.choose(~R.World, Nat.is_eq(previous, 0n), _ => R.World.with_judge(w, tx), _ => w)
+      +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(R.Transaction.open(B.transaction(w, tx)), 0n), _ => B.Bundle{w, True{}},
+        _ => blockedBy(w, R.Transaction.nodes(B.transaction(w, tx)), tx, False{}))
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~BlockFrame, B.second(R.World, Bool, pair),
+        _ => BlockFrame{w, RestoreJudge{previous} <> rest, True{}},
+        _ => BlockFrame{w, JudgeLanes{tx} <> RestoreJudge{previous} <> rest, False{}})
+    case RestoreJudge{previous} <> rest:
+      BlockFrame{R.World.with_judge(w, previous), rest, result}
+    case JudgeLanes{+tx} <> +rest:
+      B.choose(~BlockFrame, R.Transaction.lane(B.transaction(w, tx)),
+        _ => BlockFrame{w, LinkedMembers{tx, R.Transaction.links(B.transaction(w, tx)), 0n} <> AfterLinked{tx} <> rest, False{}},
+        _ => BlockFrame{w, NestedMembers{tx, 0n} <> rest, False{}})
+    case AfterLinked{tx} <> +rest:
+      B.choose(~BlockFrame, result, _ => BlockFrame{w, rest, True{}}, _ => BlockFrame{w, NestedMembers{tx, 0n} <> rest, False{}})
+    case LinkedMembers{+lane, +group, +index} <> +rest:
+      B.choose(~BlockFrame, Bool.or(Nat.is_eq(group, 0n), Nat.is_ge(index, B.length(Nat, blockGroup(w, group)))), _ => BlockFrame{w, rest, False{}},
+        _ =>
+          +peer = B.get(Nat, blockGroup(w, group), index, 0n)
+          B.choose(~BlockFrame, Nat.is_eq(peer, lane),
+            _ => BlockFrame{w, LinkedMembers{lane, group, 1n+index} <> rest, False{}},
+            _ => B.choose(~BlockFrame, Nat.is_ne(R.Transaction.open(B.transaction(w, peer)), 0n), _ => BlockFrame{w, rest, True{}},
+              _ =>
+                +pair = ownFlights(w, peer)
+                +w = B.first(R.World, Bool, pair)
+                B.choose(~BlockFrame, B.second(R.World, Bool, pair), _ => BlockFrame{w, rest, True{}},
+                  _ => BlockFrame{w, NestedMembers{peer, 0n} <> ContinueLinked{lane, group, index} <> rest, False{}}))))
+    case ContinueLinked{lane, group, index} <> +rest:
+      B.choose(~BlockFrame, result, _ => BlockFrame{w, rest, True{}}, _ => BlockFrame{w, LinkedMembers{lane, group, 1n+index} <> rest, False{}})
+    case NestedMembers{+tx, +index} <> +rest:
+      B.choose(~BlockFrame, Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}},
+        _ =>
+          +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
+          +pair = resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+          +w = B.first(R.World, Nat, pair)
+          B.choose(~BlockFrame, Nat.is_ne(B.second(R.World, Nat, pair), tx),
+            _ => BlockFrame{w, NestedMembers{tx, 1n+index} <> rest, False{}},
+            _ => BlockFrame{w, JudgeTx{lane} <> ContinueNested{tx, index, lane} <> rest, False{}}))
+    case ContinueNested{tx, index, lane} <> +rest:
+      B.choose(~BlockFrame, result, _ => BlockFrame{w, rest, True{}},
+        _ =>
+          +pair = guessFlights(w, lane)
+          +w = B.first(R.World, Bool, pair)
+          B.choose(~BlockFrame, B.second(R.World, Bool, pair), _ => BlockFrame{w, rest, True{}},
+            _ => BlockFrame{w, NestedMembers{tx, 1n+index} <> rest, False{}}))
+
+def blockRun(fuel: Nat, frame: BlockFrame) -> B.Bundle<R.World, Bool>:
+  match fuel frame:
+    case _ BlockFrame{w, Nil{}, result}:
+      B.Bundle{w, result}
+    case 0n BlockFrame{w, tasks, result}:
+      B.Bundle{R.World.with_fault(w, R.Exhausted{}), False{}}
+    case 1n+p BlockFrame{+w, tasks, +result}:
+      B.choose(~B.Bundle<R.World, Bool>, B.ok(w), _ => blockRun(p, blockStep(w, tasks, result)), _ => B.Bundle{w, result})
+
+# Explicit execution bound, not a general graph progress theorem. Exhaustion
+# is a fault. The constant prefix also gives early exits a symbolic budget.
+def blockBudget(+w: R.World) -> Nat:
+  +transactions = B.length(R.Transaction, R.World.txArena(w))
+  16n+Nat.mul(1n+Nat.mul(transactions, transactions), Nat.add(B.budget(w), Nat.mul(4n, 1n+B.length(Nat, R.LaneState.live(R.World.laneState(w))))))
+
+def blocked(+w: R.World, tx: Nat) -> B.Bundle<R.World, Bool>:
+  blockRun(blockBudget(w), BlockFrame{w, [JudgeTx{tx}], False{}})
+
+def lanesBlocked(+w: R.World, tx: Nat) -> B.Bundle<R.World, Bool>:
+  blockRun(blockBudget(w), BlockFrame{w, [JudgeLanes{tx}], False{}})
+
+def linkBlocked(+w: R.World, +lane: Nat) -> B.Bundle<R.World, Bool>:
+  blockRun(blockBudget(w), BlockFrame{w, [LinkedMembers{lane, R.Transaction.links(B.transaction(w, lane)), 0n}], False{}})
+
+def nestedBlocked(+w: R.World, tx: Nat) -> B.Bundle<R.World, Bool>:
+  blockRun(blockBudget(w), BlockFrame{w, [NestedMembers{tx, 0n}], False{}})
 
 # Frame walk is source DFS; read nextSibling after returning from each child.
 type Task is Data:

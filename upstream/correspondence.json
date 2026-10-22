@@ -443,9 +443,9 @@
       "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
     },
     "core/scheduler.ts:blocked": {
-      "bend": "runtime/transaction.bend:blocked",
+      "bend": "runtime/transaction.bend:blocked, blockRun, blockStep / JudgeTx, RestoreJudge",
       "status": "partial",
-      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+      "restrictions": "Actual saved-judge/open/blockedBy/lane-hook sequence now executes with active nested/group judgments through one call-return driver. Store slot-flight and active boundary hidden hooks remain unfinished; explicit finite execution bound, faults are not successful verdicts."
     },
     "core/scheduler.ts:blockersOf": {
       "bend": "runtime/transaction.bend:blockersOf",
@@ -881,6 +881,31 @@
       "bend": "runtime/verdict-state.bend:heldLatest",
       "status": "partial",
       "restrictions": "Actual unflushedValue, source stamp selection, original staged/error fallback and late-linker order. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+    },
+    "core/lanes.ts:inFlight": {
+      "bend": "runtime/transaction.bend:laneInFlight",
+      "status": "partial",
+      "restrictions": "Pending status short circuit retained; a required store slot resolver explicitly refuses (88). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+    },
+    "core/lanes.ts:guessFlights": {
+      "bend": "runtime/transaction.bend:guessFlights, guessFlightLoop",
+      "status": "partial",
+      "restrictions": "Live node-list walk, GUESS and exact current membership before flight test; ignores stale listed nodes. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+    },
+    "core/lanes.ts:lanesBlocked": {
+      "bend": "runtime/transaction.bend:lanesBlocked, blockStep / JudgeLanes, AfterLinked",
+      "status": "partial",
+      "restrictions": "A lane group first, then nested lanes, in the existing saved-judge scope. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+    },
+    "core/lanes.ts:linkBlocked": {
+      "bend": "runtime/transaction.bend:linkBlocked, blockStep / LinkedMembers, ContinueLinked",
+      "status": "partial",
+      "restrictions": "Captured shared group/live index, self exclusion, peer open/ownFlights/nested order. Does not substitute blocked(peer) or guessFlights(peer). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+    },
+    "core/lanes.ts:nestedBlocked": {
+      "bend": "runtime/transaction.bend:nestedBlocked, blockStep / NestedMembers, ContinueNested",
+      "status": "partial",
+      "restrictions": "Live lane scan, actual resolved parent identity, recursive full blocked then own guessFlights. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

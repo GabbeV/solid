@@ -18,6 +18,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane-aware blocker integration
+
+[lane-blockers.md](lane-blockers.md) maps the scheduler/lanes mutual calls and
+saved judge return points in one driver. The source own-flight versus guess/
+foreign-source distinction, live parent/group scans and stale membership checks
+now execute. Store slot-flight and hidden-boundary hooks remain unfinished.
+Four quantified healthy-World boundaries and native matrices support this layer.
+
 ## Verdict bookkeeping
 
 [verdict-bookkeeping.md](verdict-bookkeeping.md) maps quiet/loading distinctions,

@@ -15950,8 +15950,12 @@
           "start": 161,
           "end": 166,
           "sha256": "78534410dd6a884a95122960250e4af18435afc0f73f647b7dd55f140bfeb3ce",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/transaction.bend:laneInFlight",
+            "status": "partial",
+            "restrictions": "Pending status short circuit retained; a required store slot resolver explicitly refuses (88). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:applyGuesses",
@@ -16002,8 +16006,12 @@
           "start": 275,
           "end": 283,
           "sha256": "a3eb25a6c845298552a062d643f0f4bbe4b3eebbf72243ba84897d9f89574192",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/transaction.bend:linkBlocked, blockStep / LinkedMembers, ContinueLinked",
+            "status": "partial",
+            "restrictions": "Captured shared group/live index, self exclusion, peer open/ownFlights/nested order. Does not substitute blocked(peer) or guessFlights(peer). Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:unlink",
@@ -16074,8 +16082,12 @@
           "start": 616,
           "end": 622,
           "sha256": "25f4c128d471d9e6194df6d20d973bb1d8a5ae5f6b1005724438f83b655250a0",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/transaction.bend:guessFlights, guessFlightLoop",
+            "status": "partial",
+            "restrictions": "Live node-list walk, GUESS and exact current membership before flight test; ignores stale listed nodes. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:laneCorrections",
@@ -16106,16 +16118,24 @@
           "start": 709,
           "end": 711,
           "sha256": "b53a6ecef5ed6d7e544a311fd31b259bd44a04db17eb3cce9a8b0e7041d442d4",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/transaction.bend:lanesBlocked, blockStep / JudgeLanes, AfterLinked",
+            "status": "partial",
+            "restrictions": "A lane group first, then nested lanes, in the existing saved-judge scope. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:nestedBlocked",
           "start": 713,
           "end": 720,
           "sha256": "d41e7506cc10ea03c4f10dadac3b648d71b203360c8348b3717cd05b031a3b43",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/transaction.bend:nestedBlocked, blockStep / NestedMembers, ContinueNested",
+            "status": "partial",
+            "restrictions": "Live lane scan, actual resolved parent identity, recursive full blocked then own guessFlights. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:laneWrite",
@@ -18093,9 +18113,9 @@
           "sha256": "d5d06993114957c2f18b74dd57f7185d4c2eacfad9c5c9d38f2247ce0f704345",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/transaction.bend:blocked",
+            "bend": "runtime/transaction.bend:blocked, blockRun, blockStep / JudgeTx, RestoreJudge",
             "status": "partial",
-            "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+            "restrictions": "Actual saved-judge/open/blockedBy/lane-hook sequence now executes with active nested/group judgments through one call-return driver. Store slot-flight and active boundary hidden hooks remain unfinished; explicit finite execution bound, faults are not successful verdicts."
           }
         },
         {

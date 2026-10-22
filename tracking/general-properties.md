@@ -504,3 +504,12 @@ inactive mark witnesses, exact provisional seam waiting without premature pendin
 joined-reader lane refusal, and unwrapped staged-error propagation from heldLatest.
 They do not establish public window/read or lane lifecycle correctness; see
 [verdict-bookkeeping.md](verdict-bookkeeping.md).
+
+
+Four quantified active-lane judgment properties now check positive open-count
+blocking and exact judge/World restoration, empty mainline unblocking, linked
+peer open-count blocking and owned pending-guess flight recognition. An any-budget
+empty-list lemma and checked driver head/return equations support the empty case;
+the source algorithm, runtime budget and independent kernel are unchanged by that
+proof decomposition. General graph/lane lifecycle progress remains open; see
+[lane-blockers.md](lane-blockers.md).

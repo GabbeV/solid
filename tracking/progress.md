@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 251; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 263; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -219,3 +219,11 @@ throw controls and six quantified properties. Eleven new variants bring the
 mutation total to 251; public histories / closed regressions stay 3114 / 72.
 Public windows and active lane engine crossings remain open. See
 [verdict-bookkeeping.md](verdict-bookkeeping.md).
+
+
+The shared transaction blocker now includes actual lane group/nested/guess-flight
+judgments with saved judge call/return state. 1,190 native helper programs /
+29,700 judgments, four quantified properties and twelve new mutations support
+this integration. Current mutations: 263; public histories / closed regressions
+remain 3114 / 72. Stage/read/write/reveal/correction/dissolution and public window
+crossings remain unfinished. See [lane-blockers.md](lane-blockers.md).

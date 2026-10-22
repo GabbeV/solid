@@ -1,4 +1,6 @@
 import Base
+import ./runtime/transaction.bend as LaneJudgment
+import ./proof/lane-blockers.bend as LaneBlockers
 import ./runtime/verdict-state.bend as Verdict
 import ./proof/verdict-laws.bend as VerdictLaws
 import ./runtime/lanes-state.bend as Lanes
@@ -1221,3 +1223,34 @@ law held_latest_preserves_raw_staged_error:
   for +error: R.Value
   for +reader: Nat
   {Verdict.heldLatest(VerdictLaws.errorScope(w, node, nodes, error), 1n, reader) == B.Bundle{R.World.with_fault(VerdictLaws.errorScope(w, node, nodes, error), R.CallbackThrown{error}), R.Undefined{}} : B.Bundle<R.World, R.Value>}
+
+law open_transaction_blocks_and_restores_judge:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +count: Nat
+  {LaneJudgment.blocked(LaneBlockers.openScope(w, tx, rest, count), 1n) == B.Bundle{LaneBlockers.openScope(w, tx, rest, count), True{}} : B.Bundle<R.World, Bool>}
+
+law empty_mainline_transaction_is_unblocked:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  {LaneJudgment.blocked(LaneBlockers.emptyScope(w, tx, rest), 1n) == B.Bundle{LaneBlockers.emptyScope(w, tx, rest), False{}} : B.Bundle<R.World, Bool>}
+
+law linked_peer_open_count_blocks:
+  for +w: R.World
+  for +a: R.Transaction
+  for +b: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +count: Nat
+  {LaneJudgment.linkBlocked(LaneBlockers.groupScope(w, a, b, rest, count), 1n) == B.Bundle{LaneBlockers.groupScope(w, a, b, rest, count), True{}} : B.Bundle<R.World, Bool>}
+
+law lane_guess_own_flight_is_observed:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +tx: R.Transaction
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +rest: List<&2, R.Transaction>
+  {LaneJudgment.guessFlights(LaneBlockers.guessScope(w, node, extension, tx, nodes, extensions, rest), 1n) == B.Bundle{LaneBlockers.guessScope(w, node, extension, tx, nodes, extensions, rest), True{}} : B.Bundle<R.World, Bool>}

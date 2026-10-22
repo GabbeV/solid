@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 251 rejected compiled mutations,
+Current verification: 3114 differential histories, 263 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -43,6 +43,15 @@ across four sufficient budgets. One new proof mutation rejects reversed child
 order. Public-history and closed-regression counts stay unchanged. The executable
 [examples/list.bend](../examples/list.bend) also demonstrates real mapArray
 reorder/growth followed by children flattening and root disposal.
+
+## Lane-aware blocker integration
+
+[Lane blockers](lane-blockers.md) now extend the shared transaction judgment:
+linked peer open/own-flight/child holds, nested parent resolution, guess refetch
+lifetime and saved judge restoration use one continuation driver. 1,190 native
+helper programs / 29,700 judgments and four quantified properties check it.
+Twelve added variants bring mutations to 263. Lane stage/read/write/seam/
+correction/dissolution and public verdict windows remain the next active gaps.
 
 ## Verdict bookkeeping dependency
 
