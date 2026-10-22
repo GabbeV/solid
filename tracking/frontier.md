@@ -4,10 +4,10 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 275 rejected compiled mutations,
+Current verification: 3158 differential histories, 282 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -16,22 +16,15 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
-## New next preflight, pin unchanged
-
-The [rc.17 preflight](reviews/solid-5b1b7776-preflight.md) reviews six new
-commits through 5b1b7776. #4211 has merged and #4213 deliberately changes cleanup
-policy: finish teardown, then rethrow its first error. Thirty-nine selected
-native tests pass at that candidate. Cleanup collection/rethrow timing,
-fallback guards and shared folded-store hooks require integration before repin.
-This is source-only review; all Bend claims below still concern rc.16.
-
 ## Latest integrated next update
 
-[The a2a5b6f8 review](reviews/solid-a2a5b6f8.md) advances to the fetched next tip.
-Only a documentation changeset and compiled CSR size metadata changed; all 76
-vendored Solid files match byte for byte. The tentative runtime fix described
-and reverted in the squash message is absent from the final tree. Existing
-collector restoration, source repros and the empty deviation register stay as-is.
+[The rc.17 review](reviews/solid-5b1b7776.md) integrates six new commits through
+5b1b7776, matching fetched next. #4211's falsy fallback retention and #4213's
+cleanup continuation policy are ported. Forty-four new public histories and seven
+new quantified cleanup helper properties check the changes. The old pin and
+finally-specific behavior remain at bb82345 / baseline/solid-a2a5b6f8.
+Folded optimistic-store/shared active read hooks are reviewed and stay unfinished
+with those excluded engines. No active semantic deviation exists.
 
 ## Previous runtime-bearing next update
 

@@ -103,11 +103,11 @@ def trimScenario() -> TrimView:
     R.World.context(done), R.World.tracking(done), R.World.running(done)}
 
 def expectedTrim() -> TrimView:
-  TrimView{R.CallbackThrown{R.Number{9n}}, R.StatusFailure{1n, 5n, R.Number{7n}, "7"}, 2, R.Number{0n}, False{}, True{},
-    [R.RuntimeReport{0, R.Present{R.Number{7n}}}], 0n, False{}, False{}}
+  TrimView{R.CallbackThrown{R.Number{7n}}, R.StatusFailure{1n, 5n, R.Number{7n}, "7"}, 2, R.Number{0n}, False{}, True{},
+    [R.RuntimeReport{0, R.Present{R.Number{7n}}}, R.RuntimeReport{1, R.Empty{}}], 0n, False{}, False{}}
 
 # A commit publishes its value before retiring the parked frame. A teardown
-# error leaves its list detached and later writes pending in the live intake.
+# error is collected; later writes finish before it rethrows at flush end.
 type CommitView is Data:
   CommitView{fault: R.Fault, value: R.Value, pending: R.Slot,
     disposal: R.Disposal, marker: R.Value, proposal: R.Slot,
@@ -127,5 +127,5 @@ def commitScenario() -> CommitView:
     R.World.running(done), R.World.context(done), R.World.tracking(done), R.World.halted(done)}
 
 def expectedCommit() -> CommitView:
-  CommitView{R.CallbackThrown{R.Number{9n}}, R.Number{1n}, R.Empty{}, R.NoDisposal{}, R.Number{0n}, R.Present{R.Number{8n}},
-    [2n, 4n, 3n], True{}, R.Number{0n}, False{}, 0n, False{}, False{}}
+  CommitView{R.CallbackThrown{R.Number{9n}}, R.Number{1n}, R.Empty{}, R.NoDisposal{}, R.Number{8n}, R.Empty{},
+    [], False{}, R.Number{1n}, False{}, 0n, False{}, False{}}

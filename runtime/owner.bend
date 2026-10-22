@@ -10,6 +10,7 @@ import ./extension.bend as E
 import ./write.bend as W
 import ./memo-write.bend as MW
 import ./iterator-state.bend as I
+import ./cleanup-state.bend as Cleanup
 
 def linkChild(+w: R.World, +parent: Nat, +id: Nat) -> R.World:
   +head = R.Node.firstChild(B.node(w, parent))
@@ -44,6 +45,9 @@ type Task is Data:
   DisposalLoop{callbacks: List<&2, Nat>, count: Nat}
   EffectCleanup{id: Nat, self: Bool}
   Invoke{callback: Nat}
+  RunCleanup{callback: Nat}
+  CleanupFinally{}
+  RootEnd{}
   Action{callback: Nat, action: R.CleanupAction}
   WriteValue{signal: Nat, current: R.Value, value: R.Value}
   WriteForward{signal: Nat, value: R.Value}
@@ -125,7 +129,7 @@ def disposalTasks(disposal: R.Disposal) -> List<&2, Task>:
     case R.NoDisposal{}:
       []
     case R.OneDisposal{callback}:
-      [Invoke{callback}]
+      [RunCleanup{callback}]
     case R.ManyDisposals{+callbacks}:
       [DisposalLoop{callbacks, B.length(Nat, callbacks)}]
 
@@ -140,7 +144,7 @@ def runDisposal(+w: R.World, rest: List<&2, Task>, +id: Nat, self: Bool, +zombie
 def effectCleanup(+w: R.World, +rest: List<&2, Task>, +id: Nat, self: Bool) -> Machine:
   +callback = R.Node.cleanup(B.node(w, id))
   B.choose(~Machine, Bool.and(self, Nat.is_ne(callback, 0n)),
-    _ => Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n)), Invoke{callback} <> rest}, _ => Machine{w, rest})
+    _ => Machine{B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n)), RunCleanup{callback} <> rest}, _ => Machine{w, rest})
 
 def actions(+callback: Nat, xs: List<&2, R.CleanupAction>) -> List<&2, Task>:
   match xs:
@@ -154,7 +158,7 @@ def actions(+callback: Nat, xs: List<&2, R.CleanupAction>) -> List<&2, Task>:
 def writeDataValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{w, Enter{owner, True{}, False{}} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}} <> rest}
+      Machine{w, Enter{owner, True{}, False{}} <> RootEnd{} <> WriteValue{signal, B.current(B.node(w, signal)), R.Undefined{}} <> rest}
     case R.AccessorReference{source}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case R.ProgramReference{callback}:
@@ -171,7 +175,7 @@ def writeDataValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Va
 def writeHeldValue(+w: R.World, +rest: List<&2, Task>, +signal: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{w, Enter{owner, True{}, False{}} <> WriteForward{signal, R.Undefined{}} <> rest}
+      Machine{w, Enter{owner, True{}, False{}} <> RootEnd{} <> WriteForward{signal, R.Undefined{}} <> rest}
     case R.AccessorReference{source}:
       Machine{R.World.with_fault(w, R.Unsupported{9n}), rest}
     case R.ProgramReference{callback}:
@@ -207,7 +211,7 @@ def clearSetterKind(+w: R.World, +signal: Nat, kind: R.NodeKind) -> R.World:
 def clearSetter(+w: R.World, +signal: Nat) -> R.World:
   clearSetterKind(w, signal, R.Node.kind(B.node(w, signal)))
 
-def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAction) -> Machine:
+def action(+w: R.World, +rest: List<&2, Task>, callback: Nat, value: R.CleanupAction) -> Machine:
   match value:
     case R.CleanupEmit{code}:
       Machine{B.event(w, R.CleanupObserved{callback, code}), rest}
@@ -222,17 +226,20 @@ def action(+w: R.World, rest: List<&2, Task>, callback: Nat, value: R.CleanupAct
     case R.CleanupDisposeCurrent{}:
       Machine{w, Dispose{R.World.context(w)} <> rest}
     case R.CleanupPriorEffect{}:
-      Machine{w, EffectCleanup{R.World.callbackEffect(w), True{}} <> rest}
+      +id = R.World.callbackEffect(w)
+      +cb = R.Node.cleanup(B.node(w, id))
+      +w = B.store_node(w, id, R.Node.with_cleanup(B.node(w, id), 0n))
+      Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(cb, 0n), _ => Invoke{cb} <> rest, _ => rest)}
     case R.CleanupCloseIterator{stream}:
       Machine{I.close(w, stream), rest}
     case R.CleanupBoundRoot{owner}:
-      Machine{w, Enter{owner, True{}, False{}} <> rest}
+      Machine{w, Enter{owner, True{}, False{}} <> RootEnd{} <> rest}
     case R.CleanupBoundProgram{callback}:
       Machine{w, Invoke{callback} <> rest}
     case R.CleanupBoundSetter{signal}:
       Machine{clearSetter(w, signal), rest}
     case R.CleanupThrow{cause}:
-      Machine{R.World.with_fault(w, R.CallbackThrown{cause}), []}
+      Machine{R.World.with_fault(w, R.CallbackThrown{cause}), rest}
     # Expression-bearing callbacks currently run on core's read continuation
     # machine. Teardown reads need an owner/core suspension boundary first.
     case _:
@@ -244,7 +251,7 @@ def disposeStart(+w: R.World, +rest: List<&2, Task>, +id: Nat) -> Machine:
       _ =>
         +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())))
         Machine{w, Unobserved{id} <> rest},
-      _ => Machine{w, Enter{id, True{}, False{}} <> rest}),
+      _ => Machine{w, Enter{id, True{}, False{}} <> RootEnd{} <> rest}),
     _ => Machine{R.World.with_fault(w, R.BadId{}), []})
 
 # graph.ts:unlinkSubs after its captured pointer reads and stores.
@@ -258,7 +265,7 @@ def unlinkOnce(+w: R.World, +rest: List<&2, Task>, +edge: Nat) -> Machine:
       _ => Machine{R.World.with_fault(w, R.Unsupported{8n}), []},
       _ =>
         +callback = R.NodeExtension.unobserved(B.extension(w, id))
-        +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n), _ => [Invoke{callback}], _ => [])
+        +todo = B.choose(~List<&2, Task>, Nat.is_ne(callback, 0n), _ => [RunCleanup{callback}], _ => [])
         Machine{w, B.append(Task, todo, AfterUnobservedHook{id} <> rest)}),
     _ => Machine{w, rest})
 
@@ -283,9 +290,15 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
     case DisposalLoop{callbacks, 0n} <> rest:
       Machine{w, rest}
     case DisposalLoop{+callbacks, 1n+ +p} <> rest:
-      Machine{w, Invoke{B.get(Nat, callbacks, p, 0n)} <> DisposalLoop{callbacks, p} <> rest}
+      Machine{w, RunCleanup{B.get(Nat, callbacks, p, 0n)} <> DisposalLoop{callbacks, p} <> rest}
     case EffectCleanup{id, self} <> rest:
       effectCleanup(w, rest, id, self)
+    case RunCleanup{callback} <> rest:
+      Machine{w, Invoke{callback} <> CleanupFinally{} <> rest}
+    case CleanupFinally{} <> rest:
+      Machine{w, rest}
+    case RootEnd{} <> rest:
+      Machine{Cleanup.disposeRootSelfEnd(w), rest}
     case Invoke{+callback} <> rest:
       B.choose(~Machine, Bool.and(Nat.is_ne(callback, 0n), Nat.is_lt(callback, B.length(R.CleanupProgram, R.World.cleanupPrograms(w)))),
         _ => Machine{w, B.append(Task, actions(callback, R.CleanupProgram.actions(B.get(R.CleanupProgram, R.World.cleanupPrograms(w), callback, R.CleanupProgram{[], False{}, 0n}))), rest)},
@@ -350,14 +363,25 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
     case ClearDormant{} <> rest:
       Machine{R.World.with_dormantNodes(w, []), rest}
 
+# runCleanup's catch skips only the remainder of this callback, then resumes
+# the captured teardown. Raw Invoke remains unguarded for non-cleanup callers.
+def unwind(+w: R.World, tasks: List<&2, Task>) -> Machine:
+  match tasks:
+    case Nil{}:
+      Machine{w, []}
+    case CleanupFinally{} <> rest:
+      Machine{Cleanup.runCleanupCatch(w, R.World.fault(w)), rest}
+    case task <> rest:
+      Machine{w, rest}
+
 def run(fuel: Nat, m: Machine) -> R.World:
   match fuel m:
     case _ Machine{w, Nil{}}:
       w
     case 0n Machine{w, tasks}:
       R.World.with_fault(w, R.Exhausted{})
-    case 1n+p Machine{+w, +tasks}:
-      B.choose(~R.World, B.ok(w), _ => run(p, dispatch(w, tasks)), _ => w)
+    case 1n+ +p Machine{+w, +tasks}:
+      B.choose(~R.World, B.ok(w), _ => run(p, dispatch(w, tasks)), _ => run(p, unwind(w, tasks)))
 
 # Explicit resource bound; cyclic callbacks can still exhaust it.
 def budget(+w: R.World) -> Nat:

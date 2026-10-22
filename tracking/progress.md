@@ -3,9 +3,10 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is a2a5b6f8. The latest metadata-only commit preserves all 76 vendored Solid
-files byte for byte. Nine earlier upstream commits were reviewed, including merged #4176
-and #4188, after preserving the complete d682022c checkpoint at c11277e. The semantic deviation register remains empty.
+is 5b1b7776 (rc.17). The latest integration ports merged fallback retention
+and cleanup continuation, retaining the prior checkpoint at bb82345. Active
+store/folded-lane read paths remain explicit omissions. The deviation register
+remains empty.
 
 | Area | Starting checkpoint | Current checked work |
 | --- | --- | --- |
@@ -238,3 +239,13 @@ Cumulative mutations: 275. Public histories / closed regressions stay 3114 / 72;
 active core stage invocation, public windows and remaining lane lifecycle/read/
 write crossings stay open. See [lane-stage.md](lane-stage.md) and
 [lane-group-laws.md](lane-group-laws.md).
+
+## rc.17 integration
+
+Six upstream commits reviewed; 13 changed vendored inputs copied verbatim.
+Cleanup now finishes teardown/drain before first-error rethrow, and successful
+falsy fallbacks retain their owner. Thirty-six cleanup-policy and eight rejected-flight public histories bring the
+total to 3158; seven new scoped quantified helper properties and the updated
+callback-catch continuation law supplement the existing 72 closed regressions.
+This integrates source changes into implemented paths; public verdict/lane
+lifecycle, stores and boundary gaps remain open. See the rc.17 review.

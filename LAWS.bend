@@ -1,4 +1,6 @@
 import Base
+import ./proof/cleanup-policy.bend as CleanupPolicy
+import ./runtime/cleanup-state.bend as Cleanup
 import ./proof/lane-group-laws.bend as GroupLaws
 import ./proof/lane-stage.bend as StageLaws
 import ./runtime/transaction.bend as LaneJudgment
@@ -274,7 +276,7 @@ law callback_values_bind_initialize_and_cleanup:
 law direct_owner_cleanup_reads_resume_core:
   {OwnerCore.scenario() == OwnerCore.expected() : OwnerCore.View}
 
-law trim_error_overrides_application_error:
+law trim_error_collection_preserves_application_error:
   {OwnerCore.trimScenario() == OwnerCore.expectedTrim() : OwnerCore.TrimView}
 
 law commit_publishes_before_parked_cleanup_error:
@@ -617,7 +619,7 @@ law reactive_cleanup_uses_reverse_registration_order:
   for +callback: Nat
   for +rest: List<&2, DisposalOwner.Task>
   {DisposalOwner.dispatch(w, DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), 1n+B.length(Nat, prefix)} <> rest)
-    == DisposalOwner.Machine{w, DisposalOwner.Invoke{callback} <> DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : DisposalOwner.Machine}
+    == DisposalOwner.Machine{w, DisposalOwner.RunCleanup{callback} <> DisposalOwner.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : DisposalOwner.Machine}
 
 
 # Conditional on this exact staged graph family, not the public setter bridge.
@@ -921,22 +923,20 @@ law owner_dispose_method_forwards_self_flag:
   for +id: Nat
   for +self: Bool
   for root: {B.root(R.Node.kind(B.node(w, id))) == True{} : Bool}
-  {Core.disposeRootValue(w, rest, stack, R.OwnerReference{id}, self) == Core.Machine{w, Core.OwnerTasks{[DisposalOwner.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> stack} : Core.Machine}
+  {Core.disposeRootValue(w, rest, stack, R.OwnerReference{id}, self) == Core.Machine{w, Core.OwnerTasks{[DisposalOwner.Enter{id, self, False{}}, DisposalOwner.RootEnd{}]} <> rest, R.Undefined{} <> stack} : Core.Machine}
 
 law direct_owner_can_clear_reuse_and_dispose:
   {DirectOwners.lifecycle() == DirectOwners.View{True{}, True{}, True{}, True{}, 0n, [R.CleanupObserved{2n, 2n}, R.CleanupObserved{1n, 1n}, R.CleanupObserved{2n, 2n}], 0n, False{}, False{}, R.Healthy{}} : DirectOwners.View}
 
-# Upstream #4176: the exceptional finally changes only the collector field.
-# Arbitrary World/fault, captured collector, continuation and value stack.
-law throwing_teardown_finally_restores_previous_collector:
+# Upstream #4213 replaces the exceptional collector finally with per-callback
+# error collection. The callback operand stack is discarded; teardown resumes.
+law cleanup_catch_resumes_teardown:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  for id: Nat
-  for +previous: Nat
-  for released: Nat
-  {Core.unwind(w, Core.RestoreDeferredReleases{id, previous, released} <> rest, stack)
-    == Core.Machine{R.World.with_deferredReleases(w, previous), rest, stack} : Core.Machine}
+  for +saved: List<&2, R.Value>
+  {Core.unwind(w, Core.CleanupFinally{saved} <> rest, stack)
+    == Core.Machine{Cleanup.runCleanupCatch(w, R.World.fault(w)), rest, saved} : Core.Machine}
 
 # Upstream #4188 returns the captured node independently of later arm changes.
 law reaction_returns_captured_node:
@@ -1323,3 +1323,38 @@ law lane_stage_frame_pending_stays_out_of_lane:
   for +nodes: List<&2, R.Node>
   for +lane: Nat
   {Lanes.laneStage(StageLaws.frameScope(w, node, source, nodes), 1n, lane, False{}, Lanes.StagePendingFrom{2n}) == B.Bundle{StageLaws.queued(StageLaws.frameScope(w, node, source, nodes)), False{}} : B.Bundle<R.World, Bool>}
+
+law cleanup_policy_first_error_is_collected:
+  for +w: R.World
+  for +cause: R.Value
+  {Cleanup.collect(R.World.with_cleanupError(w, R.Empty{}), cause) == B.schedule(R.World.with_cleanupError(w, R.Present{cause})) : R.World}
+
+law cleanup_policy_later_error_keeps_first:
+  for +w: R.World
+  for +first: R.Value
+  for +later: R.Value
+  {Cleanup.collect(R.World.with_cleanupError(w, R.Present{first}), later) == B.schedule(R.World.with_cleanupError(w, R.Present{first})) : R.World}
+
+law cleanup_policy_rethrow_clears_box_and_keeps_payload:
+  for +w: R.World
+  for +cause: R.Value
+  {Cleanup.rethrowCleanupError(R.World.with_cleanupError(w, R.Present{cause}), False{}) == R.World.with_fault(R.World.with_cleanupError(w, R.Empty{}), R.CallbackThrown{cause}) : R.World}
+
+law cleanup_policy_drop_preserves_fault_and_world:
+  for +w: R.World
+  for +cause: R.Value
+  {Cleanup.rethrowCleanupError(R.World.with_cleanupError(w, R.Present{cause}), True{}) == R.World.with_cleanupError(w, R.Empty{}) : R.World}
+
+law cleanup_policy_root_inside_flush_defers:
+  for +w: R.World
+  {Cleanup.disposeRootSelfEnd(R.World.with_running(w, True{})) == R.World.with_running(w, True{}) : R.World}
+
+law cleanup_policy_already_halted_keeps_collector:
+  for +w: R.World
+  for +cause: R.Value
+  {Status.haltReactivity(R.World.with_halted(w, True{}), cause) == R.World.with_halted(w, True{}) : R.World}
+
+law cleanup_policy_first_halt_drops_collector:
+  for +w: R.World
+  for +cause: R.Value
+  {Status.haltReactivity(R.World.with_halted(w, False{}), cause) == B.report(R.World.with_cleanupError(R.World.with_halted(w, True{}), R.Empty{}), 0, B.choose(~R.Slot, B.equal(cause, R.Undefined{}), _ => R.Empty{}, _ => R.Present{cause})) : R.World}

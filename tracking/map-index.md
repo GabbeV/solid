@@ -1,5 +1,11 @@
 # mapArray by index
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 Solid `a2a5b6f8` (rc.16), production `mapArray(list, map, { keyed: false })`,
 now executes through Bend's existing core. Rows stay at their positions; each
 mapper receives a stable item accessor and a numeric index. Reading that accessor
@@ -20,9 +26,9 @@ array protocols/closure environments remain outside the existing typed profile.
 | Set `_owner._parentComputed`, tracked list, `|| []`, length | `keyed-map.updateParent`, `core.mapRead/mapListValue/mapBegin`; falsy list allocates fresh empty array |
 | Top-level `$TRACK` read | Inert for admitted plain arrays; store/proxy arrays/getters are unported, not simulated |
 | Internal `runWithOwner` | Existing owner entry, saved RestoreContext and MapReturn through normal/exceptional unwind |
-| Empty transition and fallback attempt | `keyed-map.clear`, `core.mapEmptyBody/mapFallbackCreate/mapFallbackBody`; source disposal/store/callback order and pinned truthy guard |
+| Empty transition and fallback attempt | `keyed-map.clear`, `core.mapEmptyBody/mapFallbackCreate/mapFallbackBody`; source disposal/store/callback order and merged length-based guard |
 | Create-all staged arrays and mapper | MapFrame, `core.mapRows/mapInvokeRow/mapMapped`; create/store owner first, allocate raw core `signal(item, { ownedWrite:true })`, then call map(accessor, index) |
-| Create-all mapper catch and fallback commit | `core.mapAbort/mapInitialCommit`, then `keyed-map.publishInitial`; cleanup throws override and interrupt exactly as in source |
+| Create-all mapper catch and fallback commit | `core.mapAbort/mapInitialCommit`, then `keyed-map.publishInitial`; guarded cleanup errors are collected while source mapper/commit control flow continues |
 | Common prefix | `core.mapPrefix`; strict identity or `compare(undefined,...)` matches, then actual setSignal on the live row signal |
 | Common suffix and stable-length return | `core.mapSuffix`; prefix always exhausts one side in this profile, so the suffix is empty; equal lengths save an items slice and retain mappings identity |
 | Growing changed tail: backwards key-map preparation | `keyed-map.prepareIndices/indexGet/indexSet`, distinct missing/-1/index representations and SameValueZero key equality, before new-row creation |
@@ -62,14 +68,14 @@ observation limit.
 `tests/map-index.mjs` adds 57 paired finite histories covering values, item
 accessor identity, equal-length result retention, growth/shrink/empty transitions,
 raw signal state/configuration, owner trees, mapper errors, pending retries,
-cleanup-error partial commits and abort-error precedence. Callback/local/action
+completed cleanup-error commits and mapper-abort/error precedence. Callback/local/action
 captures include variable arity and nested action parameter scopes. Scalar
 results deliberately remain the initial mapper result; reactive nested memos or
 returned accessors observe subsequent item values through the row signal.
 
 Eight compiled mutations target lost parentComputed, missing ownedWrite, skipped
 prefix updates, raw item arguments, omitted fallback/removal/abort cleanup and
-silently applying the unmerged fallback fix. They are assertion-oracle checks,
+regressing merged fallback retention. They are assertion-oracle checks,
 not proofs or fuzzing. The independent kernel rechecks existing 68 closed
 regressions and all quantified properties after adding World.maps; concrete
 witnesses have an empty maps arena and generic World laws preserve any arena.

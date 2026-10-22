@@ -21,7 +21,7 @@ try {
       b.onLoad({filter:/[/\\]core[/\\]core\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {parkChildren as probeParkChildren};'}));
       b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
         export {pendingNodes as probePending, heldTrims as probeTrims, scheduled as probeScheduled};
-        export function probeReset(){clock=0;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=0;dirtyQueue._max=0;dirtyQueue._marked=false;}
+        export function probeReset(){rethrowCleanupError(true);clock=0;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=0;dirtyQueue._max=0;dirtyQueue._marked=false;}
       `}));
     }
   }]});
@@ -43,7 +43,7 @@ try {
     S.setContextInternal(a);const child=S.createOwner(),memo=S.computed(()=>17,{lazy:true});S.setContextInternal(null);
     const nodes=[null,r,x,a,child,memo],id=n=>n?nodes.indexOf(n):0;
     for(let cb=1;cb<=5;cb++)callbacks.push(function callback(){
-      assert.equal(this,cb===4||cb===5?undefined:callbacks[cb]);events.push(['cleanup',cb,100+cb]);
+      assert.equal(this,undefined);events.push(['cleanup',cb,100+cb]);
       if(cb===3&&mode===11)S.setSignal(x,7);
       if((cb===3&&[4,5,9].includes(mode))||(cb===5&&mode===6))throw 99;
     });

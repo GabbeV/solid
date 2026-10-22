@@ -1,5 +1,11 @@
 # Direct owner creation and children-only disposal
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 Source: Solid d682022c, production `core/owner.ts:createOwner` and
 `disposeRootSelf`. The existing production owner literal/linking implementation
 now has a direct user-call entry: `{createOwner: {transparent}}` returns the fresh

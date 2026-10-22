@@ -185,7 +185,8 @@ for(const user of [false,true])for(const appError of [false,true])for(const hook
     if(op==='set'&&args[0]==='choose')dropping=true;
     if(op==='flush'&&dropping){
       dropping=false;
-      if(hook==='throw')assert.deepEqual(wanted,['throw',9],'native trim throw overrides the application error');
+      if(appError)assert.deepEqual(wanted,['throw',7],'application fault escapes; trim failure is collected');
+      else if(hook==='throw')assert.deepEqual(wanted,['throw',9],'trim failure rethrows after a completed drain');
       else if(hook==='pending'){assert.equal(wanted[0],'throw');assert.equal(wanted[1].source,'reader');assert.ok(wanted[1].notReady);}
       else assert.deepEqual(wanted,appError?['throw',7]:['return',undefined],'native body fault remains when trim succeeds');
     }
@@ -235,8 +236,8 @@ await scenario('commit callback proposal retains its new manual-write flag',[
 ],(op,args,actual,wanted,b,s)=>{
   if(op==='set'&&args[0]==='choose')changedManual=true;
   if(op==='flush'&&changedManual){changedManual=false;const target=[...s.sourceNames].find(([,name])=>name==='target')[0];
-    assert.deepEqual(wanted,['throw',9]);assert.equal(target._value,0);assert.equal(target._pendingValue,9);
-    assert.ok(target._flags&1024,'native callback proposal sets REACTIVE_MANUAL_WRITE after the commit prefix cleared it');
+    assert.deepEqual(wanted,['throw',9]);assert.equal(target._value,9);
+    assert.equal(target._flags&1024,0,'the completed drain commits and clears the manual-write proposal');
   }
 });
 for(const route of ['resolve','until','abort','timeout'])for(const immediate of [false,true])for(const cleanup of ['read','throw','pending']){

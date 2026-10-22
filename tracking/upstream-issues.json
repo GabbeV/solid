@@ -144,10 +144,10 @@
       "playgroundVerification": "repros/playground/cleanup-throw-hosted.json",
       "fixUrl": "https://github.com/solidjs/solid/pull/4176",
       "lastRevalidation": {
-        "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
-        "date": "2026-10-21",
-        "record": "tracking/reviews/solid-0222d684-validation.json",
-        "result": "upstream-fix-still-passes"
+        "sourceCommit": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+        "date": "2026-10-22",
+        "record": "tracking/reviews/solid-5b1b7776-validation.json",
+        "result": "original repro positive under new cleanup-continuation policy"
       },
       "fixMergedCommit": "b2d9ed021caf6dc56e885812526ad8fd0f52cf24",
       "historicalBaseline": {
@@ -157,7 +157,13 @@
       },
       "currentProof": "LAWS.bend:throwing_teardown_restores_release_collector",
       "validatedSourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
-      "validationRecord": "tracking/reviews/solid-0222d684-validation.json"
+      "validationRecord": "tracking/reviews/solid-0222d684-validation.json",
+      "policySupersession": {
+        "pullRequest": "https://github.com/solidjs/solid/pull/4213",
+        "commit": "db8241ce",
+        "integratedAt": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+        "effect": "Per-callback cleanup collection supersedes the finally implementation; the original unrelated-release regression remains positive and teardown/drain completes before first-error rethrow."
+      }
     },
     {
       "id": "SOLID-REACTION-PENDING-001",
@@ -207,24 +213,32 @@
     {
       "id": "SOLID-EMPTY-FALLBACK-006",
       "classification": "reproduced-upstream-bug",
-      "status": "fix-pr-submitted",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "0222d684365f08a29dfc1d613e664659f06948c8",
       "sourceUnit": "map.ts:updateKeyedMap/updateRepeat empty fallback guards",
       "record": "tracking/upstream/empty-fallback.md",
       "reproducer": "tests/upstream/empty-fallback.mjs",
       "playgroundReproducer": "repros/playground/empty-fallback.tsx",
       "playgroundVerification": "repros/playground/empty-fallback-verification.json",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4211",
-      "bendScope": "Repeat and all three typed mapArray keying modes, with or without reactive index accessors, preserve the pinned bug in paired comparisons. No general list-helper theorem or semantic workaround; the three closed map lifecycle laws cover nonempty mapping rather than this bug.",
+      "bendScope": "Repeat and all three typed mapArray keying modes port the two upstream length guards. Existing paired retention histories now assert no falsy remount; native controls pass. No general list-helper theorem is claimed.",
       "relatedIssueUrl": "https://github.com/solidjs/solid/issues/2903",
       "playgroundUrl": "https://s.olid.uk/id/bC1rrXxASu6tFv0nkDPdcg",
       "playgroundPackageVersion": "2.0.0-rc.16",
       "playgroundHostedVerification": "repros/playground/empty-fallback-hosted.json",
       "candidateFixCommit": "ce9572c008cf08436b72d3ef66e894f767a28699",
-      "candidateFixBase": "a2a5b6f8f54addab694a1040721a86208349b8ea"
+      "candidateFixBase": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+      "fixMergedCommit": "3373ae19",
+      "validatedSourceCommit": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+      "validationRecord": "tracking/reviews/solid-5b1b7776-validation.json",
+      "historicalBaseline": {
+        "sourceCommit": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+        "bendCommit": "bb82345ff350bcceaa534a1345c018b3d2281f43",
+        "branch": "baseline/solid-a2a5b6f8"
+      }
     }
   ]
 }

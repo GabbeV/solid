@@ -1,5 +1,11 @@
 # Typed arrays and repeat
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 At Solid `a2a5b6f8` (rc.16), `repeat` / `updateRepeat` now execute through the
 same Bend core used by signals, memos, effects and teardown. This implements the
 production helper underlying `<Repeat>` within the typed callback/natural-number
@@ -20,7 +26,7 @@ and [extracted-key/index-accessor](map-modes.md) paths; repeat does not substitu
 | Capture bounds and allocate staged arrays | RepeatFrame captures newLen/from/to/prevTo/keepStart/keepEnd, fresh array ID and hole-filled owner slots |
 | Copy retained overlap | `core.repeatCopy` copies node then mapping at each global index; original row owners and result values survive |
 | Create missing rows | `core.repeatRows` stores each fresh owner before calling the original mapper with the global numeric index, through existing callable/argument machinery |
-| Mapper catch | `RepeatMapped` exceptional edge restores the caller stack, then `repeatAbort` disposes only newly created owners in source index order and rethrows; a cleanup throw overrides that error and interrupts the walk |
+| Mapper catch | `RepeatMapped` exceptional edge restores the caller stack, then `repeatAbort` disposes only newly created owners in source index order and rethrows; guarded cleanup failures are collected and the original mapper error is rethrown |
 | Commit after mapper catch | `repeatCommit/repeatLeaving` disposes prior fallback or exiting rows; this is outside the mapper catch, so commit errors do not trigger temporary-row abort cleanup |
 | Publish successful stage | `map.publish` stores mappings, nodes, offset, len in source order; `RepeatReturn` returns the live mappings array |
 
@@ -93,13 +99,11 @@ patterns and reconstruction preserve arbitrary new arenas. There is no new
 closed repeat execution or general repeat theorem in this checkpoint. No kernel,
 axiom, proof budget or source pin was changed to admit this implementation.
 
-## Pinned fallback behavior
+## Integrated fallback retention
 
-The source still tests `!this._mappings[0]`. A successful falsy fallback therefore
-recreates on another empty-input update, including repeated cleanup and mounts.
-This Bend port preserves that behavior, including a present undefined slot.
-`SOLID-EMPTY-FALLBACK-006` and submitted PR
-[#4211](https://github.com/solidjs/solid/pull/4211) track the upstream fix.
-A mutation deliberately applying `.length` is rejected against this pin. When
-the fix lands, review and port its actual diff, change the baseline expectations
-and retire that preserved-bug mutation rather than silently changing parity now.
+At rc.17 the source tests `!this._mappings.length`. A completed fallback owns
+an output entry even for undefined, null, false, zero or an empty string. Empty
+to empty updates retain it; interrupted attempts still retry. The Bend guard and
+paired histories follow merged #4211. SOLID-EMPTY-FALLBACK-006 is integrated;
+the mutation now reintroduces the old truthiness guard. The old behavior remains
+in the bb82345 checkpoint for comparison.

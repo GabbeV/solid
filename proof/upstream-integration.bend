@@ -119,8 +119,8 @@ def emptyFlatten() -> EmptyView:
 def expectedEmpty() -> EmptyView:
   EmptyView{R.Undefined{}, 0, False{}, True{}, R.Healthy{}}
 
-# Upstream #4176 restores the collector after a pre-body teardown throw,
-# preserving the escaped error and allowing a later unrelated lazy release.
+# Original #4176 regression stays positive at rc.17: cleanup is collected,
+# collector restoration/drain finishes, and a later unrelated lazy release works.
 type LeakView is Data:
   LeakView{escaped: R.Value, lazyDead: Bool, cleanups: Nat, collectorActive: Bool,
     queued: List<&2, Nat>, context: Nat, tracking: Bool, running: Bool, fault: R.Fault}

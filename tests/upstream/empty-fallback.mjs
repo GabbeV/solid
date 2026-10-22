@@ -1,8 +1,7 @@
-// Source-only candidate: successful falsy fallbacks are mistaken for aborted
-// fallback creation. Array/list helpers are not yet represented in Bend.
+// Native controls for merged #4211; public Bend retention histories are separate.
 import assert from 'node:assert/strict';
 const reference=process.env.SOLID_REFERENCE??new URL('../../build/solid.mjs',import.meta.url).href;
-const fixed=process.argv.includes('--expect-fixed'),rows=[];
+const fixed=!process.argv.includes('--expect-broken'),rows=[];
 for(const helper of ['mapArray','repeat'])for(const [label,value]of [['zero',0],['false',false],['null',null],['undefined',undefined],['empty-string',''],['one',1],['text','empty']]){
  const S=await import(reference+'?empty-fallback='+helper+'-'+label);
  let reload,read,created=0,cleaned=0;

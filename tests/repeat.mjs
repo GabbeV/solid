@@ -69,8 +69,8 @@ for(const fallback of [undefined,null,false,0,'',1,'empty',{array:[]}]){
   for(const r of rs)r.program('empty',[['eval',{onCleanup:fn('clean')}],['return',fallback?.array?fallback:lit(fallback)]]);
   const getters=make(repeat(seq(read('version'),read('count')),fn('row'),{fallback:{call:'empty'}}));const initial=get(getters);
   for(let n=1;n<=3;n++){step('set','version',n);step('flush');const next=get(getters);for(const i of [0,1])assert.strictEqual(next[i],initial[i],'empty mapping array identity is retained');}
-  const expected=fallback?.array||fallback?0:3;
-  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,expected,'pinned falsy-fallback lifecycle is preserved');
+  const expected=0;
+  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,expected,'merged falsy-fallback retention is preserved');
   step('set','count',2);step('flush');get(getters);step('set','count',0);step('flush');get(getters);step('dispose');
  });
 }
@@ -144,4 +144,4 @@ for(const stage of ['row','fallback','from','count']){
   step('dispose');
  });
 }
-console.log(`${count} repeat histories match pinned TS count/offset windows, values/array identity, owner trees, retained rows, cleanup order, staged abort/retry, pending/error recovery and the pinned falsy fallback behavior.`);
+console.log(`${count} repeat histories match pinned TS count/offset windows, values/array identity, owner trees, retained rows, cleanup order, staged abort/retry, pending/error recovery and the successful falsy fallback retention.`);

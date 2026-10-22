@@ -46,10 +46,10 @@ arbitrary recursive trees remain outside that theorem.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `a2a5b6f8` (rc.16), matching `next` when fetched
-on 2026-10-21. [Current metadata-only pin review](tracking/reviews/solid-a2a5b6f8.md):
-all 76 vendored Solid files are unchanged from the preceding runtime review at
-[0222d684](tracking/reviews/solid-0222d684.md).
+The reviewed Solid pin is now `5b1b7776` (rc.17), matching `next` when fetched
+on 2026-10-22. [Current integration review](tracking/reviews/solid-5b1b7776.md)
+ports cleanup continuation and falsy fallback retention; shared optimistic-store
+hooks remain reviewed omissions. The complete prior port is at `bb82345`.
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
@@ -60,7 +60,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 275 source-changing variants
+npm run mutations                # reject 282 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 ```

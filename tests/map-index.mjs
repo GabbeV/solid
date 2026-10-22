@@ -87,7 +87,7 @@ for(const fallback of [undefined,null,false,0,'',1,'empty',{array:[]}]){
   for(const r of rs)r.program('empty',[['eval',{onCleanup:fn('clean')}],['return',fallback?.array?fallback:lit(fallback)]]);
   const getters=make(mapped(seq(read('version'),read('items')),fn('row'),{fallback:{call:'empty'}}));const initial=get(getters);
   for(let n=1;n<=3;n++){step('set','version',n);step('flush');const next=get(getters);for(const i of [0,1])assert.strictEqual(next[i],initial[i]);}
-  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,fallback?.array||fallback?0:3,'pinned falsy fallback remount preserved');
+  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,0,'successful falsy fallback stays mounted');
   for(const r of rs)r.set('items',r.evaluate(arr([1,2])));step('flush');get(getters);
   for(const r of rs)r.set('items',r.evaluate(arr([])));step('flush');get(getters);step('dispose');
  });
@@ -152,4 +152,4 @@ for(const many of [false,true])for(const nested of [false,true]){
   await setImmediate();compare();const values=get(getters);for(const [i,r]of rs.entries())assert.deepEqual(values[i].map(getter=>rInvoke(r,getter)),[4,5]);compare();step('dispose');
  });
 }
-console.log(`${count} index-mode mapArray histories match native Solid values/row accessors, retained identity, row-signal state, owner trees, cleanup order, staged abort, pending retry, partial throws and pinned falsy fallback behavior.`);
+console.log(`${count} index-mode mapArray histories match native Solid values/row accessors, retained identity, row-signal state, owner trees, cleanup order, staged abort, pending retry, partial throws and successful falsy fallback retention.`);

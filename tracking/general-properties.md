@@ -1,7 +1,7 @@
 # General semantic properties
 
 These are quantified properties of the actual Bend runtime, separately from the
-64 concrete end-to-end regressions and separately from TS/Bend correspondence.
+72 concrete end-to-end regressions and separately from TS/Bend correspondence.
 No source operation or runtime representation changed to make these proofs pass.
 
 ## Publication at any existing slot
@@ -157,11 +157,11 @@ A detached list is not replayed, and the loop selects the last registered callba
 before the preceding prefix. World/node fields, callback IDs, arrays, caller tasks
 and the self flag are quantified; unrelated World fields remain unchanged.
 
-These are reactive onCleanup list properties, not an error-policy ruling or a
-claim that teardown continues after a throw. They do not say an effect-returned
+These are reactive onCleanup list properties, separate from the rc.17 cleanup error policy: these three laws alone do not
+prove continuation after a throw. They do not say an effect-returned
 cleanup cannot still run, that reentrant registration is discarded, or that a
-zombie-frame disposal uses the normal field. The module-global collector leak
-remains preserved at its source prelude. Existing public teardown/reentry/error
+zombie-frame disposal uses the normal field. At rc.17 the separate cleanup-policy laws below cover error collection; the
+original collector-leak regression is positive. Existing public teardown/reentry/error
 histories remain the behavioral evidence for interactions outside these helpers.
 
 All seven properties use proof-only loaded locals checked against actual source
@@ -521,3 +521,13 @@ finite peer prefix. Four laneStage World properties check cold exit, memo entry,
 failed effect entry and pending frame refusal. They do not prove a public lane
 lifecycle or global group invariants. See [lane-group-laws.md](lane-group-laws.md)
 and [lane-stage.md](lane-stage.md).
+
+## rc.17 cleanup collection
+
+[cleanup-policy.bend](../proof/cleanup-policy.bend) adds seven whole-World
+properties over arbitrary raw payloads: first capture, retaining the first error,
+clear/raw rethrow, clear/drop, in-flush root deferral, already-halted preservation
+and first-halt drop. These actual helper laws supplement the existing LIFO-list
+laws and the quantified Core cleanup-catch continuation. They are scoped helper
+properties; complete arbitrary owner-tree progress remains unproved. See
+[cleanup-policy.md](cleanup-policy.md) and the rc.17 integration review.

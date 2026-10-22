@@ -18,6 +18,7 @@ import ./scheduler.bend as S
 import ./constants.bend as K
 import ./read-state.bend as V
 import ./owner.bend as O
+import ./cleanup-state.bend as Cleanup
 import ./status.bend as A
 import ./extension.bend as E
 import ./pending-state.bend as P
@@ -263,6 +264,7 @@ type Task is Data:
   FlushArgument{}
   FlushCallbackFinally{saved: List<&2, R.Value>}
   FlushCallbackRestore{prior: R.Fault, saved: List<&2, R.Value>}
+  CleanupFinally{saved: List<&2, R.Value>}
   Round{}
   HeapLoop{}
   Seam{}
@@ -531,8 +533,8 @@ def flushEntry(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +b
 # scheduler.ts:flush no-callback arm, including its running/halted no-op guards.
 # The Round tasks implement the actual while(scheduled) drain.
 def publicFlush(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
-  B.choose(~Machine, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.running(w), Bool.or(R.World.halted(w), Bool.not(R.World.scheduled(w))))),
-    _ => Machine{w, rest, stack}, _ => Machine{w, Round{} <> rest, stack})
+  B.choose(~Machine, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.running(w), R.World.halted(w))),
+    _ => Machine{w, rest, stack}, _ => B.choose(~Machine, R.World.scheduled(w), _ => Machine{w, Round{} <> rest, stack}, _ => Machine{Cleanup.rethrowCleanupError(w, False{}), rest, stack}))
 
 # Source nested finally: drain even after callback throw; a drain throw overrides
 # that error. Save the return stack across the drain and decrement after either
@@ -765,7 +767,7 @@ def callback(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id:
 def resolveSignalArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +signal: Nat, +current: R.Value, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> SetSignalResolved{signal, current} <> rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}, O.RootEnd{}]} <> SetSignalResolved{signal, current} <> rest, R.Undefined{} <> tail}
     case R.ProgramReference{callback}:
       Machine{w, Evaluate{R.CallWith{callback, R.Literal{current}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetSignalResolved{signal, current} <> rest, tail}
     case R.AccessorReference{id}:
@@ -816,7 +818,7 @@ def disposeRootValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value
   match value:
     case R.OwnerReference{+id}:
       B.choose(~Machine, B.root(R.Node.kind(B.node(w, id))),
-        _ => Machine{w, OwnerTasks{[O.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> tail},
+        _ => Machine{w, OwnerTasks{[O.Enter{id, self, False{}}, O.RootEnd{}]} <> rest, R.Undefined{} <> tail},
         _ => Machine{R.World.with_fault(w, R.TypeError{}), rest, tail})
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, tail}
@@ -832,7 +834,7 @@ def disposeRoot(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +s
 def invokeValue(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{id}:
-      Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}]} <> rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{id, True{}, False{}}, O.RootEnd{}]} <> rest, R.Undefined{} <> tail}
     # signals.ts:accessor is read.bind(null,node); invocation enters the
     # ordinary read return points, with the caller stack/context intact.
     case R.ProgramReference{callback}:
@@ -867,7 +869,7 @@ def invokeApplied(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, 
 def memoRawArgument(+w: R.World, +rest: List<&2, Task>, +tail: List<&2, R.Value>, +id: Nat, value: R.Value) -> Machine:
   match value:
     case R.RootDisposerReference{owner}:
-      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}]} <> SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
+      Machine{w, OwnerTasks{[O.Enter{owner, True{}, False{}}, O.RootEnd{}]} <> SetMemoForward{id, True{}} <> rest, R.Undefined{} <> tail}
     case R.ProgramReference{callback}:
       Machine{w, Evaluate{R.CallWith{callback, R.Literal{R.Node.value(B.node(w, id))}, R.Literal{R.Undefined{}}}, R.Undefined{}} <> SetMemoForward{id, True{}} <> rest, tail}
     case R.AccessorReference{node}:
@@ -2372,6 +2374,8 @@ def ownerTasks(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, ta
   match tasks:
     case Nil{}:
       Machine{w, rest, stack}
+    case O.RunCleanup{callback} <> tail:
+      Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail} <> rest, stack}
     case O.Invoke{callback} <> tail:
       Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Discard{} <> OwnerTasks{tail} <> rest, stack}
     case O.WriteValue{+id, current, value} <> tail:
@@ -2439,8 +2443,7 @@ def repeatCount(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
     case _:
       Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}
 
-# Empty fallback guard is the pinned source's truthiness test (SOLID-EMPTY-
-# FALLBACK-006 / proposed #4211), including its successful-falsy remount bug.
+# map.ts: completed fallback is an array entry, even for falsy payloads (#4211).
 def repeatEmptyBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, fallback: R.InlineBody) -> Machine:
   match fallback:
     case R.NoInlineBody{}:
@@ -2448,7 +2451,7 @@ def repeatEmptyBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
     case R.SomeInlineBody{expr, returns}:
       +state = Maps.get(w, id)
       +old = B.get(Nat, R.RepeatState.nodes(state), 0n, 0n)
-      B.choose(~Machine, B.truth(Arrays.at(w, R.RepeatState.mappings(state), 0n)), _ => Machine{w, rest, stack},
+      B.choose(~Machine, Nat.is_ne(Arrays.length(w, R.RepeatState.mappings(state)), 0n), _ => Machine{w, rest, stack},
         _ => Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(old, 0n), _ => OwnerTasks{[O.Enter{old, True{}, False{}}]} <> RepeatFallbackCreate{id} <> rest, _ => RepeatFallbackCreate{id} <> rest), stack})
 
 def repeatFallbackBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +owner: Nat, body: R.InlineBody) -> Machine:
@@ -2575,7 +2578,7 @@ def mapEmptyBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
     case R.SomeInlineBody{expr, returns}:
       +state = KeyedMap.get(w, id)
       +old = B.get(Nat, R.MapState.nodes(state), 0n, 0n)
-      B.choose(~Machine, B.truth(Arrays.at(w, R.MapState.mappings(state), 0n)), _ => Machine{w, rest, stack},
+      B.choose(~Machine, Nat.is_ne(Arrays.length(w, R.MapState.mappings(state)), 0n), _ => Machine{w, rest, stack},
         _ => Machine{w, B.choose(~List<&2, Task>, Nat.is_ne(old, 0n), _ => OwnerTasks{[O.Enter{old, True{}, False{}}]} <> MapFallbackCreate{id} <> rest, _ => MapFallbackCreate{id} <> rest), stack})
 
 def mapFallbackBody(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +owner: Nat, +body: R.InlineBody) -> Machine:
@@ -3535,6 +3538,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       flushCallbackFinally(w, rest, stack, saved)
     case FlushCallbackRestore{prior, saved} <> rest:
       flushCallbackRestore(w, rest, saved, prior)
+    case CleanupFinally{saved} <> rest:
+      Machine{w, rest, saved}
     case Round{} <> +rest:
       round(w, rest, stack)
     case HeapLoop{} <> +rest:
@@ -3577,7 +3582,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}
     case RoundEnd{} <> +rest:
       todo = B.choose(~List<&2, Task>, R.World.scheduled(w), _ => Round{} <> rest, _ => rest)
-      Machine{w, todo, stack}
+      Machine{B.choose(~R.World, R.World.scheduled(w), _ => w, _ => Cleanup.rethrowCleanupError(w, False{})), todo, stack}
 
 # Source exceptions skip ordinary continuations and execute enclosing finally
 # frames. Cleanup throws before the compute try do not become node status here.
@@ -3636,10 +3641,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       watchCause(w, rest, saved, awaiter, R.World.fault(w))
     case ProtocolCatch{id, result, saved, successAuto, errorAuto} <> rest:
       catchProtocol(w, rest, saved, id, result, errorAuto, R.World.fault(w))
-    # core.ts recompute's finally: restore even when pre-body teardown throws.
-    # Do not resume the interrupted teardown or drain its captured candidates.
-    case RestoreDeferredReleases{id, previous, released} <> rest:
-      Machine{R.World.with_deferredReleases(w, previous), rest, stack}
+    case CleanupFinally{saved} <> rest:
+      Machine{Cleanup.runCleanupCatch(w, R.World.fault(w)), rest, saved}
     case RestoreTracking{tracking} <> rest:
       Machine{R.World.with_tracking(w, tracking), rest, stack}
     case RestoreStale{stale} <> rest:
@@ -3704,8 +3707,8 @@ def run(fuel: Nat, m: Machine) -> Machine:
       run(p, step(Machine{w, tasks, stack}))
 
 def flush(fuel: Nat, +w: R.World) -> R.World:
-  B.choose(~R.World, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))), _ => w,
-    _ => world(run(fuel, Machine{w, [Round{}], []})))
+  B.choose(~R.World, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), R.World.running(w))), _ => w,
+    _ => B.choose(~R.World, R.World.scheduled(w), _ => world(run(fuel, Machine{w, [Round{}], []})), _ => Cleanup.rethrowCleanupError(w, False{})))
 
 def eval(fuel: Nat, w: R.World, expr: R.Expr, prev: R.Value) -> Machine:
   run(fuel, Machine{w, [Evaluate{expr, prev}], []})

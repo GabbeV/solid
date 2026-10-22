@@ -105,7 +105,27 @@ for(const immediate of [false,true])for(const recovery of ['same','different','e
     ...(recovery==='error'?[['set','fail',true]]:[['set','pending',false],...(recovery==='different'?[['set','fallback',2]]:[])]),
     ['flush'],['read','marker'],['resolve','p',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
   ],(op,args,actual,expected)=>{
-    if(op==='read'&&args[0]==='marker')assert.deepEqual(expected,['return',recovery==='error'&&cleanup==='throw'?0:7],'native catch throw can leave the cleanup write staged');
+    if(op==='read'&&args[0]==='marker')assert.deepEqual(expected,['return',7],'cleanup write is committed before the collected error escapes');
   });
+}
+// A real rejected flight (not a synchronous retry throw) must release lazy
+// readers that lost their last observer while pending. Keep this separate from
+// cleanup-fault recovery: rc.17 now contains those faults before this path.
+for(const immediate of [false,true])for(const cleanup of ['read','throw'])for(const depth of [1,2]){
+ const children=[['memo','child',seq(onCleanup('clean'),read('source')),{lazy:true}]];
+ if(depth===2)children.push(['memo','leaf',read('child'),{lazy:true}]);
+ await scenario('rejected flight releases stranded lazy readers '+JSON.stringify({immediate,cleanup,depth}),[
+  ['signal','marker',0],['signal','other',7],['future','p',{immediate}],
+  ['memo','reader',read('other'),{owner:null,lazy:true}],
+  ['program','clean',[['setExpr','marker',read('reader')],...(cleanup==='throw'?[['throwExpr',lit(9)]]:[])]],
+  ['memo','source',future('p')],...children,['root','observer',lit(0)],
+  ['effect','view',read(depth===2?'leaf':'child'),{owner:'observer'}],['flush'],['disposeOwner','observer'],
+  ['reject','p',8],['tick'],['read','marker'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
+ ],(op,args,actual,expected,b)=>{
+  if(op==='read'&&args[0]==='marker'){
+   assert.deepEqual(expected,['return',7],'rejected flight releases and runs the lazy cleanup');
+   assert.ok(b.nodes()[b.ids.child].flags&64,'the stranded child is disposed');
+  }
+ });
 }
 console.log(`${count} public teardown-expression histories match actual pinned Solid reads, async release, error/catch/finally ordering and ignored returns.`);

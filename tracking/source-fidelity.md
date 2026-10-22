@@ -1,13 +1,12 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid a2a5b6f8 (rc.16). [The metadata-only update](reviews/solid-a2a5b6f8.md)
-compares all 76 vendored inputs byte for byte: no source/runtime change.
-[The preceding runtime review](reviews/solid-0222d684.md)
-records nine commits after d682022c, including merged fixes #4176 and #4188.
-The complete earlier checkpoint is c11277e on baseline/solid-d682022c and in the
-feature branch history. Both formerly preserved bugs now have passing positive
-regressions. No active semantic deviation exists; active verdict/lane/store and
-dev/observe engines stay unfinished.
+Current pin: Solid 5b1b7776 (rc.17), matching fetched next on 2026-10-22.
+[The runtime integration](reviews/solid-5b1b7776.md) ports merged #4211 fallback
+retention and #4213 cleanup continuation/rethrow timing. Thirteen of 76 vendored
+inputs changed, copied verbatim; the complete prior port remains at bb82345.
+Seven new helper properties and thirty-six paired public histories check this policy.
+Shared optimistic-fold hooks are reviewed but remain unfinished with active
+lane read/write and store scopes. No active semantic deviation exists.
 
 
 The user has explicitly set the engineering target: a translation close enough to

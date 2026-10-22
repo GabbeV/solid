@@ -1,5 +1,11 @@
 # mapArray extracted keys and reactive indexes
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 Source: Solid next `a2a5b6f8` (rc.16), production `src/map.ts`.
 This extends [positional mapping](map-index.md) and [plain keyed matching](map-keyed.md)
 through the same core machine. It does not replace their algorithms. All three

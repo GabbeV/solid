@@ -90,10 +90,10 @@ law last_registered_cleanup_is_first:
   for +callback: Nat
   for +rest: List<&2, O.Task>
   {O.dispatch(w, O.DisposalLoop{B.append(Nat, prefix, [callback]), 1n+B.length(Nat, prefix)} <> rest)
-    == O.Machine{w, O.Invoke{callback} <> O.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : O.Machine}
+    == O.Machine{w, O.RunCleanup{callback} <> O.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest} : O.Machine}
 
 def last_registered_cleanup_is_first(w, prefix, callback, rest):
   Equal.cong(Nat, O.Machine,
-    saved => O.Machine{w, O.Invoke{saved} <> O.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest},
+    saved => O.Machine{w, O.RunCleanup{saved} <> O.DisposalLoop{B.append(Nat, prefix, [callback]), B.length(Nat, prefix)} <> rest},
     B.get(Nat, B.append(Nat, prefix, [callback]), B.length(Nat, prefix), 0n), callback,
     Lens.getPrefix(Nat, prefix, callback, [], 0n))

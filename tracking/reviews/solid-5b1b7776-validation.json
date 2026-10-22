@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22T03:23:31.552479+00:00",
+  "previousSource": "a2a5b6f8f54addab694a1040721a86208349b8ea",
+  "sourceCommit": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+  "sourceVersion": "2.0.0-rc.17",
+  "previousBendCheckpoint": "bb82345ff350bcceaa534a1345c018b3d2281f43",
+  "vendoredFilesCompared": 76,
+  "changedVendoredFiles": [
+    {
+      "file": "upstream/solid/packages/signals/docs/RULES-DERIVED.md",
+      "beforeSha256": "5dd769665c282cf96339a11d892539e25a8c651848561bf48e1811aad721e705",
+      "afterSha256": "2fa643752d146fbd23971e52d419ec5dd1d3fe01d73b4210d613e3d196841b76"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/RULES-INDEX.md",
+      "beforeSha256": "bd83eec7e6321b17deae509b624c7c87fd4f94eef5a8480c0ff262fce0a285c0",
+      "afterSha256": "3d15b4558870ca05309e24a18057e4bb1386251e2ab9fe5160250b1782348d8f"
+    },
+    {
+      "file": "upstream/solid/packages/signals/package.json",
+      "beforeSha256": "aa7ef90e705e56bf53664f936f4f4c420e848555b80c870de4402164d69808a0",
+      "afterSha256": "a4b18bdda0a8ff3231b3b33726eeb698cc839ecc7a091d28644f3439ae6b8787"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/core.ts",
+      "beforeSha256": "11f03840af7f6771973ecb7a4bbb41d63a53c516be7196218bca2bd3443b95bd",
+      "afterSha256": "69d3ded396b1ea42d5b8b3b4fdee4d276efb875d0824191284a3264ca58b7b94"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/dev.ts",
+      "beforeSha256": "3226dffdaee7a6eb6e9d5dab5cc85575de6cd15a6300ed6f6e60f56f621cd544",
+      "afterSha256": "141e1d66a356fb61fc05360bbeb2ebd5642b37b9b291fa336ce1f26c0d4bee9c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/graph.ts",
+      "beforeSha256": "c7726dd5163af48022ee934d6f09e20db6859eb3db6b749581eba93d11d8019e",
+      "afterSha256": "4791770eb2d839bf7202ba78ca595e3db88ad75653a8729c5afec8a8df00728d"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/lanes.ts",
+      "beforeSha256": "3ed62fcbe5bf3bac5f4910b9f3bd13e3e3837785409d638bf3011c2e80b55285",
+      "afterSha256": "fbc6c5251cded8dc14cd69b8127324e422d769cded2c7538c0273aae0da75e0c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/owner.ts",
+      "beforeSha256": "286d2a67a7db5e71f56066951b014462f51c791f4dbcca7ec2e08f6e1b1c1f4c",
+      "afterSha256": "ff2f186bf3db182a4134057ff3672b86e7af260a4526621531a01696425ddd76"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/scheduler.ts",
+      "beforeSha256": "73baa6acdf667a218fa805739e7d976e2fb74256c572165dc150a5e53babc4eb",
+      "afterSha256": "2eda5b549df59bbd0e601ba4de0702667a9c85c2acb64ebf424dc04bb56365fa"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/verdict.ts",
+      "beforeSha256": "2d671d2051f77588a7e281b04e2e3883a96f285a1149e1db4b5e5279dc12ea86",
+      "afterSha256": "818b54b1a0584614ddb1a2dbaf6d1cb9dc7ff7fb46c8314b5aca81aced8b07ca"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/map.ts",
+      "beforeSha256": "d25e8fea497a489d9c93d2d0838d974d20b1d5ac279fea0565ce8bc19be42def",
+      "afterSha256": "2ae37eba9c0fba7d7820dd7953eb5155f768bc03ce4a4d32116abe88b159199b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/optimistic.ts",
+      "beforeSha256": "9b0cba1fb985cdb492478738556241b961efaf513a5fa3ba6cf705c860c392ac",
+      "afterSha256": "f91f034f7470a87118f5bdc9fc8aecd3c962698a63e1776421989f232848a918"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/store.ts",
+      "beforeSha256": "25d2f8fac5f9f197ff4d92427ff00e527b0ae4729ace4f7e8622a261dc8e3ee2",
+      "afterSha256": "a0d6202b7f11e1b3b84fb90d6e0c8f53b252b951d77704ff6cae142c8fa00ea2"
+    }
+  ],
+  "allVendoredBytesMatchImmutableCandidate": true,
+  "candidateTrackedWorktreeClean": true,
+  "sourcePatched": false,
+  "activeSemanticDeviations": [],
+  "integrated": [
+    "#4213 per-callback cleanup collection, source scheduling, root/flush rethrow and halt drop; successful collector restore replaces exceptional finally",
+    "#4211 two length-based fallback guards, retaining successful falsy results"
+  ],
+  "reviewedUnported": [
+    "#4210 optional folded transaction callback and shared lane read/write/rebase points, joinPassAt, keyed optimistic store and sink-slot bookkeeping",
+    "active public verdict/lane lifecycle, stores, boundaries, dev/observe"
+  ],
+  "nativePackage": {
+    "buildJs": "pass, all three tiers",
+    "declarations": "pass",
+    "fullSuite": {
+      "filesPassed": 335,
+      "testsPassed": 5476,
+      "expectedFailures": 3,
+      "skips": 2
+    },
+    "initialSetupFailure": "Unbuilt checkout lacked dist artifacts: 35 artifact checks failed. Standard package build resolved them; full suite rerun passes."
+  },
+  "bendValidation": {
+    "publicPairedHistories": 3158,
+    "newPolicyHistories": 36,
+    "newRejectedFlightHistories": 8,
+    "closedRegressions": 72,
+    "newQuantifiedHelperProperties": 7,
+    "replacedLaw": "exceptional collector finally -> per-callback cleanup-catch continuation",
+    "fullPublicSuite": "pass",
+    "fullHelperAlignmentSuite": "pass",
+    "combinedIndependentRoot": "pass; final hash seal is tracking/checked.json",
+    "mutationDefinitions": 282,
+    "mutationEvidence": "Final full sweep result and immutable log hash are recorded in tracking/checks.log after completion. Definitions alone are not rejections."
+  },
+  "oracleChanges": {
+    "strengthened": "Direct rejected-flight release controls catch the stranded-reader omission previously masked by cleanup-fault containment",
+    "retiredUnreachable": [
+      "failed commit clears a callback proposal flag",
+      "trim throw is replaced with the earlier application fault"
+    ],
+    "replacements": [
+      "collected cleanup interrupts the commit continuation",
+      "collected trim error replaces the earlier application fault"
+    ],
+    "discardedCompileFailure": "Initial thrown-undefined mutation used a linear binder twice; corrected the mutation using pattern matching, no runtime change. Not counted as a semantic rejection."
+  },
+  "discardedProofTrial": "Polymorphic flush Boolean decomposition exceeded the pinned kernel template scope. Actual World-specific algebra checks; runtime, toolchain and proof budgets unchanged.",
+  "logs": {
+    "rc17-native-build.log": "9e7f04fd9cb721be547b0aefabdf1a620f12999ae7d7cb8b37068b95e009cbdc",
+    "rc17-native-full-built.log": "f02fd665d4c743500091fd3c10f014313a92bd8dd60b023853f99083d0399c7d",
+    "rc17-test-complete.log": "41c3168b76eb4e4bc6aef15271d3c5df2cfc464861e1430aa7353e4da232d5ae",
+    "rc17-alignment-final.log": "d1586e8175400d3c03347640e257f2f72e26b25367f2498f57262f2a57907296",
+    "rc17-cleanup-policy-reentrant.log": "0e552be87a1aca4f8b82ddc3c5c67f63e38c2052f288cfa9bcdaa9546399965f",
+    "rc17-teardown-flight2.log": "7457dc4434f1c4436bb1965cdb0bf3f696dec3bb27c7c618ba8d575568126319",
+    "rc17-cleanup-properties3.log": "25dae05b4249e6b2589de8047efee97780ba23f40a8a507a229bb655d9cabe74",
+    "rc17-proof12.log": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+    "rc17-flight-error-mutation.log": "16d12a4b16beba08c8dc07622dc21e391163051ed45ecfc374c0f830a3e3da9c",
+    "rc17-collected-mutations.log": "ca779024f8f64ed8c6eb25ec128add61139d0ded849e198b0cfc1cc60c757dec",
+    "rc17-regenerate-witnesses.log": "4ed42d7e10c6cbf60de2e7f1021472fca4f89db51133ee01349ee605b54c506c"
+  },
+  "browserValidationClaimed": false,
+  "limits": "Native package tests, paired histories, finite helper controls, local quantified properties and source inventory are distinct evidence; no complete package or formal TS equivalence claim.",
+  "generatedWitnesses": {
+    "regeneratedFromActualRuntime": true,
+    "transitionCountsUnchanged": {
+      "signal": 19,
+      "scalarMemo": 40,
+      "twoMemoRender": 95
+    },
+    "reason": "The final check rejected manually extended canonical World terms because generator output reuses the existing Empty data alias; regeneration restores exact generator text. No runtime/proof-budget change. Final root independently rechecks these equations."
+  }
+}

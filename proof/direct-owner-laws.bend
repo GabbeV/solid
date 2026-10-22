@@ -33,7 +33,7 @@ def link_shape(+w: R.World, +parent: Nat, +id: Nat) ->
 def selected_link_ambient(+w: R.World, +parent: Nat, +id: Nat, +head: Nat, nonempty: Bool) ->
   {ambient(link_selected(w, parent, id, head, nonempty)) == ambient(w) : Ambient}:
   match w:
-    case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState}:
+    case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError}:
       match nonempty:
         case True{}:
           {==}
@@ -66,7 +66,7 @@ def owner_shape(+w: R.World, +parent: Nat, transparent: Bool) ->
 def allocated_ambient(+w: R.World, +parent: Nat, transparent: Bool) ->
   {ambient(allocated(w, parent, transparent)) == ambient(w) : Ambient}:
   match w:
-    case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState}:
+    case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError}:
       {==}
 
 def selected_owner_ambient(+w: R.World, +parent: Nat, +transparent: Bool, attached: Bool) ->
@@ -89,12 +89,12 @@ def entry(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +tran
 
 def dispose_selected(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +self: Bool, valid: Bool) -> C.Machine:
   B.choose(~C.Machine, valid,
-    _ => C.Machine{w, C.OwnerTasks{[O.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> stack},
+    _ => C.Machine{w, C.OwnerTasks{[O.Enter{id, self, False{}}, O.RootEnd{}]} <> rest, R.Undefined{} <> stack},
     _ => C.Machine{R.World.with_fault(w, R.TypeError{}), rest, stack})
 
 def disposal(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +self: Bool,
   root: {B.root(R.Node.kind(B.node(w, id))) == True{} : Bool}) ->
-  {C.disposeRootValue(w, rest, stack, R.OwnerReference{id}, self) == C.Machine{w, C.OwnerTasks{[O.Enter{id, self, False{}}]} <> rest, R.Undefined{} <> stack} : C.Machine}:
+  {C.disposeRootValue(w, rest, stack, R.OwnerReference{id}, self) == C.Machine{w, C.OwnerTasks{[O.Enter{id, self, False{}}, O.RootEnd{}]} <> rest, R.Undefined{} <> stack} : C.Machine}:
   Equal.cong(Bool, C.Machine, valid => dispose_selected(w, rest, stack, id, self, valid), B.root(R.Node.kind(B.node(w, id))), True{}, root)
 
 # Actual public entry/lifecycle execution: detached owner, attached child,

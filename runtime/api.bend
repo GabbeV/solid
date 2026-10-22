@@ -234,7 +234,7 @@ def createRoot(fuel: Nat, +w: R.World, expr: R.Expr, +parent: Nat, transparent: 
 # Bookkeeping allowance for the additional core callback/owner steps; this
 # remains an explicit implicit resource bound, not a source engine decision.
 def invokeRootDisposer(+w: R.World, owner: Nat) -> R.World:
-  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Enter{owner, True{}, False{}}])
+  C.ownerWorld(Nat.mul(8n, O.budget(w)), w, [O.Enter{owner, True{}, False{}}, O.RootEnd{}])
 
 def vRootDisposer(owner: Nat) -> R.Value:
   R.RootDisposerReference{owner}

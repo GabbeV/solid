@@ -6,6 +6,7 @@ import ../representation/base.bend as B
 import ../runtime/core.bend as C
 import ../runtime/api.bend as A
 import ./chain.bend as Chain
+import ../runtime/cleanup-state.bend as Cleanup
 
 type Path<-start: C.Machine, -end: C.Machine> is Data:
   PathEnd{world: R.World, stack: List<&2, R.Value>, atStart: {start == C.Machine{world, [], stack} : C.Machine}, atEnd: {end == C.Machine{world, [], stack} : C.Machine}}
@@ -50,11 +51,35 @@ def realizes(-s: C.Machine, -end: C.Machine, path: Path<s, end>,
         Equal.cong(C.Machine, C.Machine, m => C.step(m), start, s, connected), transition)) : {C.run(Nat.add(length(next, end, rest), extra), _) == end : C.Machine}
       realizes(next, end, rest, extra, next, {==})
 
+# Algebraic decomposition of the old drain premise under the new source's
+# post-loop cleanup rethrow. No runtime branch is changed to recover a proof.
+def flushForm(a: Bool, h: Bool, r: Bool, s: Bool, +now: R.World, +drain: R.World, +later: R.World) ->
+  {B.choose(~R.World, Bool.or(a, Bool.or(h, r)), _ => now, _ => B.choose(~R.World, s, _ => drain, _ => later))
+    == B.choose(~R.World, Bool.or(a, Bool.or(h, Bool.or(r, Bool.not(s)))),
+      _ => B.choose(~R.World, Bool.or(a, Bool.or(h, r)), _ => now, _ => later), _ => drain) : R.World}:
+  match a h r s:
+    case True{} _ _ _:
+      {==}
+    case False{} True{} _ _:
+      {==}
+    case False{} False{} True{} _:
+      {==}
+    case False{} False{} False{} True{}:
+      {==}
+    case False{} False{} False{} False{}:
+      {==}
+
 def flush_eq(+fuel: Nat, +w: R.World,
-  guard: {Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))) == False{} : Bool}) ->
+  +guard: {Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))) == False{} : Bool}) ->
   {C.flush(fuel, w) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}:
-  %Equal.sym(Bool, Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w))))), False{}, guard) : {B.choose(~R.World, _, _ => w, _ => C.world(C.run(fuel, C.Machine{w, [C.Round{}], []}))) == C.world(C.run(fuel, C.Machine{w, [C.Round{}], []})) : R.World}
-  {==}
+  +blocked = Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), R.World.running(w)))
+  +old = Bool.or(Nat.is_ne(R.World.actionDepth(w), 0n), Bool.or(R.World.halted(w), Bool.or(R.World.running(w), Bool.not(R.World.scheduled(w)))))
+  +drained = C.world(C.run(fuel, C.Machine{w, [C.Round{}], []}))
+  # The fallback is the actual post-loop state helper, not another drain.
+  +fallback = B.choose(~R.World, blocked, _ => w, _ => Cleanup.rethrowCleanupError(w, False{}))
+  Equal.trans(R.World, C.flush(fuel, w), B.choose(~R.World, old, _ => fallback, _ => drained), drained,
+    flushForm(Nat.is_ne(R.World.actionDepth(w), 0n), R.World.halted(w), R.World.running(w), R.World.scheduled(w), w, drained, Cleanup.rethrowCleanupError(w, False{})),
+    Equal.cong(Bool, R.World, flag => B.choose(~R.World, flag, _ => fallback, _ => drained), old, False{}, guard))
 
 def fuel_transport(-a: Nat, -b: Nat, -m: C.Machine, e: {a == b : Nat}) ->
   {C.run(a, m) == C.run(b, m) : C.Machine}:

@@ -46,7 +46,7 @@ def park(+w: R.World) -> R.World:
   B.store_node(w, 6n, R.Node.with_flags(B.node(w, 6n), B.set(R.Node.flags(B.node(w, 6n)), K.REACTIVE_ZOMBIE())))
 
 def fixture(+mode: U32) -> R.World:
-  +w = R.World.with_cleanupPrograms(initial(), callbacks(mode))
+  +w = R.World.with_running(R.World.with_cleanupPrograms(initial(), callbacks(mode)), True{})
   +w = B.choose(~R.World, Bool.and(U32.is_ge(mode, 3), U32.is_le(mode, 6)), _ => O.cleanup(w, 3n, 8n), _ => w)
   +w = B.choose(~R.World, U32.is_eq(mode, 7), _ => B.store_node(w, 3n, R.Node.with_cleanup(B.node(w, 3n), 8n)), _ => w)
   +w = B.choose(~R.World, U32.is_eq(mode, 8), _ => B.store_node(w, 4n, R.Node.with_flags(B.node(w, 4n), K.REACTIVE_DISPOSED())), _ => w)
@@ -67,4 +67,4 @@ def fixture(+mode: U32) -> R.World:
       _ => O.dispose(w, B.choose(~Nat, individual, _ => 3n, _ => 1n)))))
   +w = B.choose(~R.World, U32.is_eq(mode, 6), _ => O.dispose(w, 3n), _ => w)
   +w = B.choose(~R.World, U32.is_eq(mode, 0), _ => O.dispose(w, 1n), _ => w)
-  B.choose(~R.World, U32.is_eq(mode, 9), _ => C.flush(256n, w), _ => w)
+  B.choose(~R.World, U32.is_eq(mode, 9), _ => C.flush(256n, R.World.with_running(w, False{})), _ => w)

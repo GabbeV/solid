@@ -10,6 +10,7 @@ import ./heap.bend as H
 import ./pending-state.bend as P
 import ./transaction.bend as X
 import ./error.bend as V
+import ./cleanup-state.bend as Cleanup
 
 def unwrapStatusError(error: R.Value) -> R.Value:
   V.unwrapStatusError(error)
@@ -29,7 +30,7 @@ def wrapped(+w: R.World, source: Nat, error: R.Value) -> B.Bundle<R.World, R.Val
 
 def haltReactivity(+w: R.World, +cause: R.Value) -> R.World:
   B.choose(~R.World, R.World.halted(w), _ => w,
-    _ => B.report(R.World.with_halted(w, True{}), 0, B.choose(~R.Slot, B.equal(cause, R.Undefined{}), _ => R.Empty{}, _ => R.Present{cause})))
+    _ => B.report(Cleanup.rethrowCleanupError(R.World.with_halted(w, True{}), True{}), 0, B.choose(~R.Slot, B.equal(cause, R.Undefined{}), _ => R.Empty{}, _ => R.Present{cause})))
 
 # effect.ts:notifyEffectStatus, including explicit blocked-forward arguments.
 # A pending render observer enters joinFuture in the shared mainline transaction path.

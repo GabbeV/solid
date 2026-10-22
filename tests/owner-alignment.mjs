@@ -22,7 +22,7 @@ try {
   `,resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{
     name:'owner-scheduler-state',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
       export {scheduled as probeScheduled};
-      export function probeReset(){scheduled=false;globalQueue._running=true;dirtyQueue._heap=[];dirtyQueue._min=0;dirtyQueue._max=0;dirtyQueue._marked=false;}
+      export function probeReset(){rethrowCleanupError(true);scheduled=false;globalQueue._running=true;dirtyQueue._heap=[];dirtyQueue._min=0;dirtyQueue._max=0;dirtyQueue._marked=false;}
     `}));}
   }]});
   const referenceFile=path.join(dir,'solid.mjs');fs.writeFileSync(referenceFile,bundle.outputFiles[0].text);
@@ -45,7 +45,7 @@ try {
     const id=n=>n?nodes.indexOf(n):0;
     function dispose(n){if(n._root)n.dispose();else S.dispose(n);}
     for(let cb=1;cb<=8;cb++)callbacks.push(function callback(){
-      assert.equal(this,cb===4||(cb===8&&mode===7)?undefined:callbacks[cb],'disposal uses callable receiver; effect cleanup is a plain call');events.push([cb,cb===8?208:100+cb]);
+      assert.equal(this,undefined,'runCleanup invokes every guarded callback as a plain call');events.push([cb,cb===8?208:100+cb]);
       if(cb===5&&mode===15)dispose(a);
       if(cb!==8)return;
       if(mode===3||mode===7)throw 99;

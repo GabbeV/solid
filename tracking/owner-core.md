@@ -1,5 +1,11 @@
 # Owner/core continuation bridge
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 Current: the migration is complete for the admitted expression-program grammar.
 The sections below retain staged implementation history; the final section and
 [operation review](reviews/teardown-closure.md) describe current public admission.

@@ -88,7 +88,7 @@ for(const fallback of [undefined,null,false,0,'',1,'empty',{array:[]}]){
   for(const r of rs)r.program('empty',[['eval',{onCleanup:fn('clean')}],['return',fallback?.array?fallback:lit(fallback)]]);
   const getters=make(mapped(seq(read('version'),read('items')),fn('row'),{fallback:{call:'empty'}}));const before=get(getters);
   for(let n=1;n<=3;n++){step('set','version',n);step('flush');const after=get(getters);for(const i of [0,1])assert.strictEqual(after[i],before[i]);}
-  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,fallback?.array||fallback?0:3);
+  for(const r of rs)assert.equal(r.trace().filter(e=>e[0]==='cleanup').length,0);
   for(const shape of [[1,2,3],[],[2,1]]){for(const r of rs)r.set('items',r.evaluate(arr(shape)));step('flush');get(getters);}step('dispose');
  });
 }

@@ -1,5 +1,11 @@
 # Plain identity-keyed mapArray
 
+Current rc.17 policy is documented in [the integration review](reviews/solid-5b1b7776.md):
+cleanup errors are collected while teardown continues, then rethrown at the
+public root/flush boundary. Map/repeat fallback retry uses output length and
+retains successful falsy values. Older pin-specific implementation notes below
+are superseded at those operations; other profile restrictions remain.
+
 At Solid `a2a5b6f8` (rc.16), default/`keyed:true` mapArray now executes the plain
 identity-keyed mode without index accessors. This extends the separate
 [keyed:false profile](map-index.md); it does not substitute one for the other.
@@ -28,7 +34,7 @@ exception continuations retain their distinct source commit/store order.
 | Backwards key-map and duplicate-chain construction | `keyed-map.prepareIndices/indexGet/indexSet/nextIndex`; MapIndex distinguishes undefined, -1 and a real position; Map keys use SameValueZero |
 | Walk old changed window | `mapOld/mapOldPosition`: stage retained mapping/owner at first remaining duplicate position, consume that chain, otherwise append removed owner |
 | Create absent new rows | `mapRows/mapInvokeRow/mapMapped`: create and record owner before calling the original mapper with the raw item and no index argument; retained stage slots skip construction |
-| Mapper catch | `mapAbort` disposes the created ledger only; cleanup exceptions override and interrupt; no exiting old row disposes before mapper success |
+| Mapper catch | `mapAbort` disposes the created ledger only; guarded cleanup exceptions are collected while the mapper error is retained; no exiting old row disposes before mapper success |
 | Final mapped prefix/suffix | `mapCommitPrefix/mapCommitSuffix` copy from the original mappings into the fresh result before live vector changes |
 | In-place bookkeeping | `mapWindow/mapWindowGrowShift/mapWindowShrinkShift/mapWindowRows`: grow before descending suffix copies, or ascending copies before shrink, then land changed window nodes |
 | Publication/removal | `publishWindow` stores mappings, len, items slice, then `mapRemoved` disposes removed owners in order; errors preserve the source partial publication |
@@ -93,5 +99,5 @@ duplicate safeguards, matched-owner disposal and silently bypassing the fast
 path. They are assertion oracles, not formal proofs. The full comparison and
 alignment suites and original kernel claims are rechecked on this runtime.
 No new general mapArray theorem, source pin, proof budget or semantic workaround
-is introduced. Both mapArray profiles retain the pinned falsy-fallback remount
-bug while submitted #4211 remains outside the baseline.
+is introduced. At rc.17 every mapArray profile integrates #4211 and retains successful falsy
+fallbacks; the prior truthiness behavior is retained in the bb82345 checkpoint.

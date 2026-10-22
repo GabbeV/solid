@@ -1,5 +1,10 @@
 # Successful falsy empty fallbacks are recreated
 
+Merged #4211 is integrated at 5b1b7776 (rc.17). The two length guards now
+retain successful falsy fallback owners in every admitted map/repeat mode.
+Existing paired histories and native controls pass; the preserved prior behavior
+remains at bb82345. The original report/repro evidence below is historical.
+
 Originally reproduced in native Solid at unchanged next
 0222d684365f08a29dfc1d613e664659f06948c8 (rc.16), 2026-10-21.
 The user submitted fix PR [#4211](https://github.com/solidjs/solid/pull/4211).

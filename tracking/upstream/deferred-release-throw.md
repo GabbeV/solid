@@ -1,5 +1,12 @@
 # SOLID-DEFERRED-RELEASE-THROW-004
 
+At rc.17, merged #4213 supersedes the finally implementation with per-callback
+cleanup collection: teardown and drain complete before first-error rethrow. The
+original unrelated-release regression remains positive. The previous finally
+law is replaced by a callback-catch continuation law; see
+[the integration review](../reviews/solid-5b1b7776.md). The source investigation
+and candidate measurements below describe their historical pins.
+
 Current status (2026-10-21): the user-submitted fix merged upstream and is now
 integrated at 0222d684. Original repros pass; the earlier bug and negative Bend law
 remain in checkpoint c11277e. See [the integration review](../reviews/solid-0222d684.md).

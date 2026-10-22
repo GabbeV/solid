@@ -1,4 +1,5 @@
 import Base
+import ./proof/cleanup-policy.bend as CleanupPolicy
 import ./proof/lane-group-laws.bend as GroupLaws
 import ./proof/lane-stage.bend as StageLaws
 import ./proof/lane-blockers.bend as LaneBlockers
@@ -195,7 +196,7 @@ def Laws.callback_values_bind_initialize_and_cleanup():
 def Laws.direct_owner_cleanup_reads_resume_core():
   {==}
 
-def Laws.trim_error_overrides_application_error():
+def Laws.trim_error_collection_preserves_application_error():
   {==}
 
 def Laws.commit_publishes_before_parked_cleanup_error():
@@ -506,7 +507,7 @@ def Laws.owner_dispose_method_forwards_self_flag(w, rest, stack, id, self, root)
 def Laws.direct_owner_can_clear_reuse_and_dispose():
   DirectOwners.lifecycle_complete()
 
-def Laws.throwing_teardown_finally_restores_previous_collector(w, rest, stack, id, previous, released):
+def Laws.cleanup_catch_resumes_teardown(w, rest, stack, saved):
   {==}
 
 def Laws.reaction_returns_captured_node(w, rest, stack, node):
@@ -664,3 +665,24 @@ def Laws.lane_stage_failed_effect_marks_and_lists(w, node, extension, tx, nodes,
 
 def Laws.lane_stage_frame_pending_stays_out_of_lane(w, node, source, nodes, lane):
   StageLaws.pendingEffectStays(w, node, source, nodes, lane)
+
+def Laws.cleanup_policy_first_error_is_collected(w, cause):
+  CleanupPolicy.first_error_is_collected(w, cause)
+
+def Laws.cleanup_policy_later_error_keeps_first(w, first, later):
+  CleanupPolicy.later_error_keeps_first(w, first, later)
+
+def Laws.cleanup_policy_rethrow_clears_box_and_keeps_payload(w, cause):
+  CleanupPolicy.rethrow_clears_box_and_keeps_payload(w, cause)
+
+def Laws.cleanup_policy_drop_preserves_fault_and_world(w, cause):
+  CleanupPolicy.drop_preserves_fault_and_world(w, cause)
+
+def Laws.cleanup_policy_root_inside_flush_defers(w):
+  CleanupPolicy.root_inside_flush_defers(w)
+
+def Laws.cleanup_policy_already_halted_keeps_collector(w, cause):
+  CleanupPolicy.already_halted_keeps_collector(w, cause)
+
+def Laws.cleanup_policy_first_halt_drops_collector(w, cause):
+  CleanupPolicy.first_halt_drops_collector(w, cause)
