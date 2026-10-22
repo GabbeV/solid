@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22T13:53:14.482318+00:00",
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "classification": "confirmed-upstream-bug",
+  "sourceOnly": true,
+  "publishedIssueOrPR": null,
+  "activeDeviationId": null,
+  "BendImpact": "from and public createDeferred remain unported. No active-runtime workaround or new public/Bend proof claim.",
+  "nativeBaseline": {
+    "files": 336,
+    "passed": 5501,
+    "expectedFailures": 3,
+    "skipped": 2
+  },
+  "candidate": {
+    "files": 337,
+    "passed": 5509,
+    "expectedFailures": 3,
+    "skipped": 2,
+    "focusedBefore": {
+      "failed": 4,
+      "passedControls": 4
+    },
+    "focusedAfter": {
+      "passed": 8
+    },
+    "build": "production, development, observe and source declarations pass",
+    "formatAndReleaseInvariants": "pass",
+    "patchApplyCheck": "passes against unchanged source aece1d448b648d6e946d098f565445d30124b8c2"
+  },
+  "browser": {
+    "baseline": "repros/playground/deferred-buffered-from-baseline-browser.json",
+    "candidate": "repros/playground/deferred-buffered-from-candidate-browser.json",
+    "casesPerVersion": 6,
+    "tiers": [
+      "production",
+      "development",
+      "observe"
+    ],
+    "realJSX": true
+  },
+  "standalone": {
+    "source": "repros/solid-signals/deferred-buffered-from.mjs",
+    "baselineMode": "asserts defect plus passing controls",
+    "candidateMode": "--expect-fixed asserts intended behavior plus controls"
+  },
+  "size": {
+    "rolldown": "1.2.11",
+    "base": [
+      {
+        "name": "signals: createDeferred",
+        "min": 19385,
+        "br": 7278
+      },
+      {
+        "name": "signals: from",
+        "min": 16214,
+        "br": 6045
+      },
+      {
+        "name": "signals: createDeferred + from",
+        "min": 21281,
+        "br": 7837
+      },
+      {
+        "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+        "min": 20137,
+        "br": 7418
+      },
+      {
+        "name": "signals: + createStore",
+        "min": 45330,
+        "br": 15030
+      },
+      {
+        "name": "signals: + isPending/latest",
+        "min": 28735,
+        "br": 10281
+      },
+      {
+        "name": "signals: + until/refresh (truth readers, no optimism)",
+        "min": 21946,
+        "br": 8036
+      }
+    ],
+    "candidate": [
+      {
+        "name": "signals: createDeferred",
+        "min": 19395,
+        "br": 7287
+      },
+      {
+        "name": "signals: from",
+        "min": 16214,
+        "br": 6045
+      },
+      {
+        "name": "signals: createDeferred + from",
+        "min": 21290,
+        "br": 7838
+      },
+      {
+        "name": "signals: core floor (createSignal/Memo/Effect/Root/flush)",
+        "min": 20137,
+        "br": 7418
+      },
+      {
+        "name": "signals: + createStore",
+        "min": 45330,
+        "br": 15030
+      },
+      {
+        "name": "signals: + isPending/latest",
+        "min": 28735,
+        "br": 10281
+      },
+      {
+        "name": "signals: + until/refresh (truth readers, no optimism)",
+        "min": 21946,
+        "br": 8036
+      }
+    ],
+    "standardScenarios": "All four unchanged; focused import deltas are recorded, no caps changed."
+  },
+  "performance": "No timings claimed. The deferred predicate runs only on the first pull; the other candidate covers immediate closed-subscription teardown.",
+  "hostedPlayground": "Not yet saved: published rc.17 lacks from; source-bundle custom import-map support is being investigated. Local JSX verification is complete.",
+  "related": [
+    "https://github.com/solidjs/solid/pull/4218",
+    "https://github.com/solidjs/solid/issues/4182"
+  ],
+  "relatedNote": "#4182 is the helper request by devagrawal09, not an issue filed by GabbeV. #4218 merged the feature. Targeted issue/PR searches found no duplicate; not an exhaustive guarantee."
+}

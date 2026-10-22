@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "patched": false,
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "case-production-synchronous",
+      "profile": "production",
+      "control": false,
+      "result": "",
+      "errors": [
+        "unsubscribe failed",
+        "unsubscribe failed"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "case-production-asynchronous",
+      "profile": "production",
+      "control": true,
+      "result": "Value: 7",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-development-synchronous",
+      "profile": "development",
+      "control": false,
+      "result": "",
+      "errors": [
+        "unsubscribe failed",
+        "unsubscribe failed"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+      ]
+    },
+    {
+      "name": "case-development-asynchronous",
+      "profile": "development",
+      "control": true,
+      "result": "Value: 7",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-observe-synchronous",
+      "profile": "observe",
+      "control": false,
+      "result": "",
+      "errors": [
+        "unsubscribe failed",
+        "unsubscribe failed"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "case-observe-asynchronous",
+      "profile": "observe",
+      "control": true,
+      "result": "Value: 7",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

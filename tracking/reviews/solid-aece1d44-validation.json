@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22T10:30:46.731168+00:00",
+  "previousSource": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "sourceVersion": "2.0.0-rc.17",
+  "previousBendCheckpoint": "a3d30b47be0addc87bf8b351533b5383f31ee40c",
+  "vendoredFilesCompared": 77,
+  "changedVendoredFiles": [
+    {
+      "file": "upstream/solid/packages/signals/src/core/async.ts",
+      "beforeSha256": "67d3bf4c9a264b4ced96f7b70a10e7cc628707cf73009dd25275873d012d30a1",
+      "afterSha256": "0cc99ba14cffd58b4ff218017761ca093fd85e3e1c45f417ccfafb18422674b8"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/index.ts",
+      "beforeSha256": "a8652e3c27c12535f1d1b37a768a2080055c476688f23fe3bcfa2b07cb012b74",
+      "afterSha256": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/from.ts",
+      "beforeSha256": null,
+      "afterSha256": "5875e1a6616ec9e7b4aafdbf8403720701bac6bf9f49175b26ec9a847922ecde"
+    }
+  ],
+  "upstreamCommit": "feat(signals): from(), callback subscriptions/Observables/AsyncIterables (#4218)",
+  "sourceAudit": {
+    "core/async.ts:onSupersede": "New internal function, only new from.bindToOwner calls it. Its computed/recomputing guard, fresh-extension undefined sentinel and finally-chain teardown are unported and unreachable through the admitted grammar. Existing async function statements are unchanged.",
+    "core/async.ts:consumeIterator": "Only explanatory comments changed; teardown-slot assignment remains replacement, not chaining.",
+    "from.ts": "New side-effect-free module, exported by index. All new source protocols remain unported; no host expression or callback can invoke from. No module hook is installed by this import.",
+    "index.ts": "New export retained in full reference bundle; all prior reachable initialization preserved."
+  },
+  "nativeValidation": {
+    "build": "npm run build:clean, npm run build:js, npm run types in packages/signals; all three JS tiers and declarations pass",
+    "testCommand": "node_modules/.bin/vitest run --maxWorkers=2",
+    "testFilesPassed": 336,
+    "testsPassed": 5501,
+    "expectedFailures": 3,
+    "skipped": 2,
+    "nativeLog": "/workspace/scratch/overnight-aece-native-tests2.log",
+    "initialAttempt": "pnpm filter runner refused a symlinked task-state directory; direct npm scripts and vitest used the same installed dependencies successfully."
+  },
+  "BendIntegration": {
+    "publicHistories": 3410,
+    "usefulMutationRejections": 455,
+    "finiteMutationAssertions": 384,
+    "kernelMutationAssertions": 71,
+    "closedRegressions": 72,
+    "build": "passed",
+    "publicComparisonSuite": "passed",
+    "privateAlignmentSuite": "passed",
+    "mutationSuite": "455 unique source-changing variants rejected; final summary confirms completion",
+    "independentKernel": "Recorded in tracking/checked.json after the final seal",
+    "runtimeChanges": "none in this refresh"
+  },
+  "activeSemanticDeviations": [],
+  "sourceOnlyBugs": [
+    "deferred-buffered-from",
+    "from-sync-unsubscribe"
+  ]
+}

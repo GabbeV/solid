@@ -239,6 +239,44 @@
         "bendCommit": "bb82345ff350bcceaa534a1345c018b3d2281f43",
         "branch": "baseline/solid-a2a5b6f8"
       }
+    },
+    {
+      "id": "SOLID-DEFERRED-BUFFERED-FROM-007",
+      "classification": "confirmed-upstream-bug",
+      "status": "confirmed-unfiled",
+      "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+      "sourceUnit": "deferred.ts",
+      "record": "tracking/upstream/deferred-buffered-from.md",
+      "standaloneReproducer": "repros/solid-signals/deferred-buffered-from.mjs",
+      "playgroundReproducer": "repros/playground/deferred-buffered-from.tsx",
+      "playgroundVerification": "repros/playground/deferred-buffered-from-baseline-browser.json",
+      "candidateFixPatch": "tracking/upstream/deferred-buffered-from.patch",
+      "validationRecord": "tracking/upstream/deferred-buffered-from-validation.json",
+      "sourceOnly": true,
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed."
+    },
+    {
+      "id": "SOLID-FROM-SYNC-UNSUBSCRIBE-008",
+      "classification": "confirmed-upstream-bug",
+      "status": "confirmed-unfiled",
+      "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+      "sourceUnit": "from.ts",
+      "record": "tracking/upstream/from-sync-unsubscribe.md",
+      "standaloneReproducer": "repros/solid-signals/from-sync-unsubscribe.mjs",
+      "playgroundReproducer": "repros/playground/from-sync-unsubscribe.tsx",
+      "playgroundVerification": "repros/playground/from-sync-unsubscribe-baseline-browser.json",
+      "candidateFixPatch": "tracking/upstream/from-sync-unsubscribe.patch",
+      "validationRecord": "tracking/upstream/from-sync-unsubscribe-validation.json",
+      "sourceOnly": true,
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed."
     }
   ]
 }

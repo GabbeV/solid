@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "patched": false,
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "case-production-deferred",
+      "profile": "production",
+      "control": false,
+      "afterClick": "Value: 0",
+      "errors": [
+        "p.then is not a function",
+        "p.then is not a function"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "case-production-memo",
+      "profile": "production",
+      "control": true,
+      "afterClick": "Value: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-development-deferred",
+      "profile": "development",
+      "control": false,
+      "afterClick": "Value: 0",
+      "errors": [
+        "p.then is not a function",
+        "p.then is not a function"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+      ]
+    },
+    {
+      "name": "case-development-memo",
+      "profile": "development",
+      "control": true,
+      "afterClick": "Value: 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "case-observe-deferred",
+      "profile": "observe",
+      "control": false,
+      "afterClick": "Value: 0",
+      "errors": [
+        "p.then is not a function",
+        "p.then is not a function"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "case-observe-memo",
+      "profile": "observe",
+      "control": true,
+      "afterClick": "Value: 1",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

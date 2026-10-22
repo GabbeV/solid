@@ -1,6 +1,8 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid 5b1b7776 (rc.17), matching fetched next on 2026-10-22.
+Current pin: Solid aece1d44 (declares rc.17), matching fetched next on 2026-10-22.
+[The latest refresh](reviews/solid-aece1d44.md) audits the new from/onSupersede
+protocols as explicit omissions; existing runtime operations are unchanged.
 [The runtime integration](reviews/solid-5b1b7776.md) ports merged #4211 fallback
 retention and #4213 cleanup continuation/rethrow timing. Thirteen of 76 vendored
 inputs changed, copied verbatim; the complete prior port remains at bb82345.

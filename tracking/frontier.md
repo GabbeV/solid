@@ -4,10 +4,10 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3378 differential histories, 449 rejected compiled mutations,
+Current verification: 3410 differential histories, 455 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at aece1d44 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -15,6 +15,13 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Upstream refresh
+
+[The aece1d44 audit](reviews/solid-aece1d44.md) refreshes next without changing
+existing runtime operations. New from/onSupersede paths stay explicitly unported.
+The added 32 public crossings and six binding mutants bring current totals to
+3,410 / 455; no semantic deviation is active.
 
 ## Deferred dependency
 
@@ -35,7 +42,7 @@ snapshots and createDeferred remain unfinished; no deviation is active.
 
 [latest/isPending](verdict-windows.md) now execute their complete non-store read
 path, nested catch/finally restoration and active lane crossings. 104 public
-histories bring the total to 3,378; 5,322 private read programs and 44 raw
+histories bring the total to 3,410; 5,322 private read programs and 44 raw
 comparator controls support the source mapping. Seven scoped whole-World laws
 and one complete nested-window data program for all natural payload pairs and
 budgets >=53 supplement the existing guarantees. Boundary/store,

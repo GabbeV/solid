@@ -51,7 +51,7 @@ still unfinished.
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,378 public histories, 449 useful mutation
+budget. Current evidence totals 3,410 public histories, 455 useful mutation
 rejections and 72 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -59,14 +59,17 @@ input dispatch and its own bound setter, supported by the lane pass/flush
 engine. A complete free data program is proved for every natural payload triple
 and sufficient budget. The [verdict windows](tracking/verdict-windows.md) now execute full non-store
 read/catch/finally paths; a nested data program is proved for all natural payload
-pairs. Boundary/store/mark-scope paths remain next.
+pairs. Boundary/store, snapshots and deferred/external-source lifetimes remain next.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `5b1b7776` (rc.17), matching `next` when fetched
-on 2026-10-22. [Current integration review](tracking/reviews/solid-5b1b7776.md)
-ports cleanup continuation and falsy fallback retention; shared optimistic-store
-hooks remain reviewed omissions. The complete prior port is at `bb82345`.
+The reviewed Solid pin is now `aece1d44` (declares rc.17), matching `next` checked
+on 2026-10-22. [The integration review](tracking/reviews/solid-aece1d44.md)
+audits the new `from` and `onSupersede` paths as explicit omissions; existing
+runtime operations are unchanged. Two source-only bugs have isolated repros and
+candidate patches in [the issue register](tracking/upstream-issues.json).
+No issue/PR has been filed and no workaround is installed. The complete previous
+translation checkpoint is `a3d30b4`.
 The preceding pin remains on `baseline/solid-71153bf0` at `075455c`;
 [the earlier integration review](tracking/reviews/solid-71153bf0.md) records the original three fixes.
 The old pinned runtime and counterexample laws remain on `baseline/solid-d2ad8b28`.
@@ -77,7 +80,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 449 source-changing variants
+npm run mutations                # reject 455 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

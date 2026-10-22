@@ -1,0 +1,62 @@
+diff --git a/packages/signals/src/from.ts b/packages/signals/src/from.ts
+index e5c28c5f..e78a0435 100644
+--- a/packages/signals/src/from.ts
++++ b/packages/signals/src/from.ts
+@@ -230,7 +230,9 @@ export function from<T>(source: FromSource<T>): AsyncIterable<T> {
+       if (closed) {
+         const c = unsubscribe;
+         unsubscribe = null;
+-        c();
++        try {
++          c();
++        } catch {}
+       }
+ 
+       // Idempotent: return(), supersede and disposal may all reach it.
+diff --git a/packages/signals/tests/from-sync-unsubscribe.test.ts b/packages/signals/tests/from-sync-unsubscribe.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/signals/tests/from-sync-unsubscribe.test.ts
+@@ -0,0 +1,32 @@
++import { describe, expect, it } from "vitest";
++import { from } from "../src/index.js";
++
++describe("from() synchronous completion unsubscribe", () => {
++  for (const synchronous of [false, true]) {
++    for (const failed of [false, true]) {
++      for (const object of [false, true]) {
++        it(`contains teardown throws (sync=${synchronous}, failed=${failed}, object=${object})`, async () => {
++          const sourceError = new Error("source failed");
++          let finish!: () => void;
++          let closed = 0;
++          const iterator = from<number>((next, error, complete) => {
++            if (!failed) next(7);
++            finish = () => (failed ? error(sourceError) : complete());
++            if (synchronous) finish();
++            const unsubscribe = () => {
++              closed++;
++              throw new Error("unsubscribe failed");
++            };
++            return object ? { unsubscribe } : unsubscribe;
++          })[Symbol.asyncIterator]();
++          if (!synchronous) finish();
++          if (failed) await expect(iterator.next()).rejects.toBe(sourceError);
++          else expect(await iterator.next()).toEqual({ value: 7, done: false });
++          expect(await iterator.next()).toEqual({ value: undefined, done: true });
++          await iterator.return?.();
++          expect(closed).toBe(1);
++        });
++      }
++    }
++  }
++});
+diff --git a/.changeset/from-sync-unsubscribe.md b/.changeset/from-sync-unsubscribe.md
+new file mode 100644
+--- /dev/null
++++ b/.changeset/from-sync-unsubscribe.md
+@@ -0,0 +1,5 @@
++---
++"@solidjs/signals": patch
++---
++
++Contain unsubscribe throws when a `from()` subscription completes or errors synchronously, preserving its buffered value or original error.

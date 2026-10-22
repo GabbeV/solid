@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "5b1b777648a89b6e207e8bb78514d5c03420e08b",
+    "commit": "aece1d448b648d6e946d098f565445d30124b8c2",
     "branch": "next",
     "version": "2.0.0-rc.17"
   },
@@ -156,7 +156,7 @@
     "upstream/solid/packages/signals/src/boundaries.ts": "a7c0244f18c60b920d56d46e2115f72be37a4ec3df1be6ac88476763dcefd8b9",
     "upstream/solid/packages/signals/src/carved.ts": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1",
     "upstream/solid/packages/signals/src/core/action.ts": "5f0e684fd404cf4ea0b835323be6a989989df4f21916c15f909249ac4084b358",
-    "upstream/solid/packages/signals/src/core/async.ts": "67d3bf4c9a264b4ced96f7b70a10e7cc628707cf73009dd25275873d012d30a1",
+    "upstream/solid/packages/signals/src/core/async.ts": "0cc99ba14cffd58b4ff218017761ca093fd85e3e1c45f417ccfafb18422674b8",
     "upstream/solid/packages/signals/src/core/attribution-costs.ts": "159ff2709ebab27a4b80d2097456941a71ad844f37f8ea64ca7271d4a481bfc4",
     "upstream/solid/packages/signals/src/core/attribution-feedback.ts": "3a219c6ffb68b48e54a432cc1ea664a76474f780385e85536e26456aad60c632",
     "upstream/solid/packages/signals/src/core/attribution-hooks.ts": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939",
@@ -183,8 +183,9 @@
     "upstream/solid/packages/signals/src/core/verdict.ts": "818b54b1a0584614ddb1a2dbaf6d1cb9dc7ff7fb46c8314b5aca81aced8b07ca",
     "upstream/solid/packages/signals/src/deferred.ts": "5dfbd03c6627ea2db41f5abe98a9d682e645ef655f54e5e11f18a3da2f5d5a06",
     "upstream/solid/packages/signals/src/flatten.ts": "8e3ab164928d5b74cdbbed8664ebf0c1977e6e9927f03fc6fa7836a7c7cdf4fa",
+    "upstream/solid/packages/signals/src/from.ts": "5875e1a6616ec9e7b4aafdbf8403720701bac6bf9f49175b26ec9a847922ecde",
     "upstream/solid/packages/signals/src/globals.d.ts": "3d0d464f13e75a701639fd5def66d48bee656805a5ecfd2e57a8fefa0bfcf005",
-    "upstream/solid/packages/signals/src/index.ts": "a8652e3c27c12535f1d1b37a768a2080055c476688f23fe3bcfa2b07cb012b74",
+    "upstream/solid/packages/signals/src/index.ts": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1",
     "upstream/solid/packages/signals/src/map.ts": "2ae37eba9c0fba7d7820dd7953eb5155f768bc03ce4a4d32116abe88b159199b",
     "upstream/solid/packages/signals/src/reveal.ts": "d4c0e7dfabf3b0f52aca91169863e2bfade6a57738d294330e02a05bba3d0129",
     "upstream/solid/packages/signals/src/signals.ts": "d3d7dabbfa45dcd47b7ea3ccc12168c83a1cf646d519a6880013b8428b23a4f1",

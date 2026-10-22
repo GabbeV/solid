@@ -107,4 +107,41 @@ for(const reverse of[false,true])for(const duplicate of[false,true]){
  const names=reverse?['result','x']:['x','result'];
  await scenario('ambient compaction retains live flight '+JSON.stringify({reverse,duplicate}),[['signal','x',7],['future','first'],['future','second'],['program','fetch',[['return',{select:[arg(0),{future:'second'},{future:'first'}]}]]],['signal','result',{callback:'fetch'}],['resolve','first',1],['tick'],['flush'],...names.flatMap(n=>Array.from({length:duplicate?2:1},()=>['evaluate',mark(n)])),['refresh','result'],['flush'],['evaluate',pending(read('x'))],['evaluate',pending(read('result'))],['resolve','second',2],['tick'],['flush'],['evaluate',pending(read('result'))],['dispose']]);
 }
+
+for(const target of['x','result'])for(const initialError of[false,true]){
+ await scenario('mark direct/inherited error '+JSON.stringify({target,initialError}),[['signal','x',initialError],['memo','result',{select:[read('x'),{raise:9},lit(1)]}],['memo','busy',pending(read('result'))],['effect','view',read('busy')],['flush'],['evaluate',mark(target)],['evaluate',pending(read('result'))],['flush'],['set','x',!initialError],['flush'],['evaluate',mark(target)],['evaluate',pending(read('result'))],['flush'],['dispose']]);
+}
+for(const seeded of[false,true])for(const rejected of[false,true])for(const target of['x','result']){
+ await scenario('mark during first loading '+JSON.stringify({seeded,rejected,target}),[['signal','x',1],['future','request'],['memo','result',seq(read('x'),{future:'request'}),seeded?{loadingValue:0}:{}],['memo','busy',pending(read('result'))],['effect','view',read('busy')],['flush'],['evaluate',mark(target)],['evaluate',pending(read('result'))],['flush'],[rejected?'reject':'resolve','request',9],['tick'],['flush'],['evaluate',pending(read('result'))],['dispose']]);
+}
+for(const inline of[false,true]){
+ const declaration=inline?mark('x'):{call:'declare'};
+ await scenario('declaration in computation '+inline,[['signal','x',1],['program','declare',[['return',mark('x')]]],['memo','result',seq(read('x'),declaration,read('x'))],['memo','busy',pending(read('result'))],['effect','view',read('busy')],['effect','data',read('result'),{target:3}],['flush'],['set','x',2],['flush'],['read','busy'],['dispose']]);
+}
+for(const fail of[false,true])for(const detached of[false,true]){
+ const clean=seq(mark('x'),...(fail?[{raise:9}]:[]),lit(undefined));
+ await scenario('cleanup declares a pending mark '+JSON.stringify({fail,detached}),[...setup,['program','declare',[['return',clean]]],['root','child',seq({onCleanup:lit({callback:'declare'})},lit(1)),{owner:detached?null:'root'}],['flush'],['disposeOwner','child'],['evaluate',pending(read('x'))],['flush'],['evaluate',pending(read('x'))],['dispose']]);
+}
+for(const depth of[0,1])for(const rejected of[false,true]){
+ const target={localAccessor:depth},body={action:{steps:[method(result({future:'gate'})),{next:seq(affect(target),result(lit(1),true)),throw:seq(affect(target),result(lit(2),true))}]}};
+ const expr={signalScope:{initial:lit(5),body:depth?{signalScope:{initial:lit(7),body}}:body}};
+ await scenario('captured declaration in action resume '+JSON.stringify({depth,rejected}),[['future','gate'],['root','scope',expr],['flush'],[rejected?'reject':'resolve','gate',1],['tick'],['flush'],['dispose']]);
+}
+
+for(const index of[0,1])for(const rejected of[false,true]){
+ const target={actionArgument:index},plan={steps:[method(seq(affect(target),result({future:'gate'}))),{next:seq(affect(target),result(lit(1),true)),throw:seq(affect(target),result(lit(2),true))}]};
+ await scenario('action argument declaration '+JSON.stringify({index,rejected}),[...setup,['future','gate'],['evaluate',{invokeArgs:{callee:{actionCreate:plan},args:[...(index?[lit(0)]:[]),lit({accessor:'x'})]}}],['flush'],[rejected?'reject':'resolve','gate',1],['tick'],['flush'],['dispose']]);
+}
+for(const depth of[0,1]){
+ const body={affects:{target:lit({accessor:'x'}),key:{localWrite:{depth,value:lit(3)}}}};
+ await scenario('local capture in optional key '+depth,[...setup,['root','scope',{signalScope:{initial:lit(0),body:depth?{signalScope:{initial:lit(1),body}}:body}}],['flush'],['dispose']]);
+}
+for(const keyTarget of['x','side']){
+ await scenario('callback argument in optional key '+keyTarget,[...setup,['signal','side',0],['program','declare',[['return',{affects:{target:arg(0),key:{invokeWith:{callee:arg(1),value:lit(3)}}}}]]],['evaluate',{call:'declare',args:[lit({accessor:'x'}),lit({setter:keyTarget})]}],['flush'],['dispose']]);
+}
+
+for(const keyTarget of['x','side']){
+ const key={invokeWith:{callee:{actionArgument:1},value:lit(3)}},plan={steps:[method(seq({affects:{target:{actionArgument:0},key}},result({future:'gate'}))),method(result(lit(1),true))]};
+ await scenario('action argument in optional key '+keyTarget,[...setup,['signal','side',0],['future','gate'],['evaluate',{invokeArgs:{callee:{actionCreate:plan},args:[lit({accessor:'x'}),lit({setter:keyTarget})]}}],['flush'],['resolve','gate',1],['tick'],['flush'],['dispose']]);
+}
 console.log(`${count} public non-store affects histories compare declaration counts, pending readers, ambient/transaction release, quiet reloads, merges and argument order with pinned Solid.`);

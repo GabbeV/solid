@@ -1909,14 +1909,14 @@
     },
     {
       "file": "core/async.ts",
-      "sha256": "67d3bf4c9a264b4ced96f7b70a10e7cc628707cf73009dd25275873d012d30a1",
-      "lines": 995,
+      "sha256": "0cc99ba14cffd58b4ff218017761ca093fd85e3e1c45f417ccfafb18422674b8",
+      "lines": 1032,
       "status": "open",
       "units": [
         {
           "key": "core/async.ts:addPendingSource",
-          "start": 51,
-          "end": 55,
+          "start": 52,
+          "end": 56,
           "sha256": "1eee4265329dd118f2745ac58c0777f655b76b1327f86a45c79bbb6285b24528",
           "status": "partial",
           "mapping": {
@@ -1927,8 +1927,8 @@
         },
         {
           "key": "core/async.ts:removePendingSource",
-          "start": 57,
-          "end": 62,
+          "start": 58,
+          "end": 63,
           "sha256": "c9b96fcc8ae5686d2dc924a945fd22d870bf7262de54327b06c590c30be8321d",
           "status": "partial",
           "mapping": {
@@ -1939,8 +1939,8 @@
         },
         {
           "key": "core/async.ts:clearPendingSources",
-          "start": 64,
-          "end": 68,
+          "start": 65,
+          "end": 69,
           "sha256": "6b90551b5fe93a6ba73979cbd93b135654808c0d94a71c22a2c8d396a0e3b76c",
           "status": "partial",
           "mapping": {
@@ -1951,8 +1951,8 @@
         },
         {
           "key": "core/async.ts:retryReaches",
-          "start": 75,
-          "end": 81,
+          "start": 76,
+          "end": 82,
           "sha256": "72d12912058e5645d4e2540e447ac1224600f7f5d9af982ba458a9e76ecaa9bb",
           "status": "partial",
           "mapping": {
@@ -1963,8 +1963,8 @@
         },
         {
           "key": "core/async.ts:parkLoadingWindow",
-          "start": 90,
-          "end": 98,
+          "start": 91,
+          "end": 99,
           "sha256": "fa6368ffd7f0ec9c2a80b606baeccf45fa5c48454ee749202914469585c81538",
           "status": "partial",
           "mapping": {
@@ -1975,8 +1975,8 @@
         },
         {
           "key": "core/async.ts:setPendingError",
-          "start": 100,
-          "end": 113,
+          "start": 101,
+          "end": 114,
           "sha256": "34e07c1962abafa2029d4bf97038522a2189ec7aab6f284a323fd629fac9e9b6",
           "status": "partial",
           "mapping": {
@@ -1987,16 +1987,16 @@
         },
         {
           "key": "core/async.ts:forEachDependent",
-          "start": 115,
-          "end": 120,
+          "start": 116,
+          "end": 121,
           "sha256": "405028590b9c96cffd18e0eec2b572c69798d8334d66b67a6b15713e60429ac1",
           "status": "open",
           "mapping": null
         },
         {
           "key": "core/async.ts:releaseIfSettledUnobserved",
-          "start": 133,
-          "end": 140,
+          "start": 134,
+          "end": 141,
           "sha256": "1edb3b90362e7b330a29970665783ea487cbc7ac98a6f585d6e76cb0da07cc54",
           "status": "partial",
           "mapping": {
@@ -2007,8 +2007,8 @@
         },
         {
           "key": "core/async.ts:releaseSettledDependents",
-          "start": 146,
-          "end": 157,
+          "start": 147,
+          "end": 158,
           "sha256": "84c1638c5a6cf2749657d56e66daecd8b9b740116ade6b8d5e0243117d67312e",
           "status": "partial",
           "mapping": {
@@ -2019,8 +2019,8 @@
         },
         {
           "key": "core/async.ts:stageError",
-          "start": 182,
-          "end": 212,
+          "start": 183,
+          "end": 213,
           "sha256": "9562c99175609a85a75b2f58f6d4786bb6fc33b4e878db31bc327562b20ebe06",
           "status": "partial",
           "mapping": {
@@ -2031,8 +2031,8 @@
         },
         {
           "key": "core/async.ts:settleErroredDependents",
-          "start": 214,
-          "end": 228,
+          "start": 215,
+          "end": 229,
           "sha256": "7daa539fbf39a9e94f20b6c44a5d963cc86e216dd6eceb1576001c740ccd683c",
           "status": "partial",
           "mapping": {
@@ -2043,8 +2043,8 @@
         },
         {
           "key": "core/async.ts:settlePendingSource",
-          "start": 234,
-          "end": 351,
+          "start": 235,
+          "end": 352,
           "sha256": "492546e75d760657cfb9ecc263e4509f344191b7643de5c074cafa1a867a06a3",
           "status": "partial",
           "mapping": {
@@ -2055,16 +2055,16 @@
         },
         {
           "key": "core/async.ts:isThenable",
-          "start": 354,
-          "end": 360,
+          "start": 355,
+          "end": 361,
           "sha256": "fa8b103bf1cc542763db6475e7bdfc95a635d1df4c7e2cf75c37e695550315f4",
           "status": "open",
           "mapping": null
         },
         {
           "key": "core/async.ts:releaseFlightTeardown",
-          "start": 363,
-          "end": 369,
+          "start": 364,
+          "end": 370,
           "sha256": "307494ed44e1318bf8840e59310ae5699ee665381368b922e40e4ee2115e4497",
           "status": "partial",
           "mapping": {
@@ -2074,10 +2074,18 @@
           }
         },
         {
+          "key": "core/async.ts:onSupersede",
+          "start": 381,
+          "end": 402,
+          "sha256": "75bb6498d8cc5b1ed88a62de53b25f78418144fd672df2dfe97273b4bb56ddf5",
+          "status": "open",
+          "mapping": null
+        },
+        {
           "key": "core/async.ts:handleAsync",
-          "start": 371,
-          "end": 798,
-          "sha256": "7779c2934a3ba36471072569a63006f70dbfabf5c803b72c1c314d1fc1210a5f",
+          "start": 404,
+          "end": 835,
+          "sha256": "32427ad27226c8332748f28fae01d04e863e69259c5c10fab24b525a9628c0ba",
           "status": "partial",
           "mapping": {
             "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks",
@@ -2087,8 +2095,8 @@
         },
         {
           "key": "core/async.ts:clearStatus",
-          "start": 800,
-          "end": 807,
+          "start": 837,
+          "end": 844,
           "sha256": "fd024095e28e4dbe597749e5d9548922daab650f74c170cd94721799765ec1a4",
           "status": "partial",
           "mapping": {
@@ -2099,8 +2107,8 @@
         },
         {
           "key": "core/async.ts:landStatus",
-          "start": 834,
-          "end": 842,
+          "start": 871,
+          "end": 879,
           "sha256": "92dd5d60d2e89d7a5e5da9ade481c8b192b131c5cb26cbe57eb5d6a925526975",
           "status": "partial",
           "mapping": {
@@ -2111,8 +2119,8 @@
         },
         {
           "key": "core/async.ts:notifyStatus",
-          "start": 844,
-          "end": 905,
+          "start": 881,
+          "end": 942,
           "sha256": "db12cde6c8110ab6fee53ceebd6dcd5721d9d79a5e5e2f00825be3a30b381cca",
           "status": "partial",
           "mapping": {
@@ -2123,8 +2131,8 @@
         },
         {
           "key": "core/async.ts:propagateStatus",
-          "start": 912,
-          "end": 995,
+          "start": 949,
+          "end": 1032,
           "sha256": "eced4100d1edd7ec37578ff3801b00d9fccb7b8a3a173545389b608c00e86bce",
           "status": "partial",
           "mapping": {
@@ -2137,19 +2145,10 @@
       "branches": [
         {
           "unit": "addPendingSource",
-          "start": 52,
-          "end": 52,
+          "start": 53,
+          "end": 53,
           "kind": "IfStatement",
           "guard": "el._x?._pendingSources?.has(source)",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "removePendingSource",
-          "start": 59,
-          "end": 59,
-          "kind": "IfStatement",
-          "guard": "!sources?.delete(source)",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
@@ -2158,14 +2157,23 @@
           "start": 60,
           "end": 60,
           "kind": "IfStatement",
+          "guard": "!sources?.delete(source)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "removePendingSource",
+          "start": 61,
+          "end": 61,
+          "kind": "IfStatement",
           "guard": "!sources.size",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "clearPendingSources",
-          "start": 67,
-          "end": 67,
+          "start": 68,
+          "end": 68,
           "kind": "IfStatement",
           "guard": "el._x !== null",
           "status": "open-branch-review",
@@ -2173,8 +2181,8 @@
         },
         {
           "unit": "retryReaches",
-          "start": 76,
-          "end": 79,
+          "start": 77,
+          "end": 80,
           "kind": "ForStatement",
           "guard": "d",
           "status": "open-branch-review",
@@ -2182,8 +2190,8 @@
         },
         {
           "unit": "retryReaches",
-          "start": 78,
-          "end": 78,
+          "start": 79,
+          "end": 79,
           "kind": "IfStatement",
           "guard": "dep === source || dep._x?._pendingSources?.has(source)",
           "status": "open-branch-review",
@@ -2191,8 +2199,8 @@
         },
         {
           "unit": "parkLoadingWindow",
-          "start": 92,
-          "end": 92,
+          "start": 93,
+          "end": 93,
           "kind": "IfStatement",
           "guard": "e.source",
           "status": "open-branch-review",
@@ -2200,8 +2208,8 @@
         },
         {
           "unit": "parkLoadingWindow",
-          "start": 97,
-          "end": 97,
+          "start": 98,
+          "end": 98,
           "kind": "IfStatement",
           "guard": "!(el._statusFlags & STATUS_ERROR)",
           "status": "open-branch-review",
@@ -2209,8 +2217,8 @@
         },
         {
           "unit": "setPendingError",
-          "start": 101,
-          "end": 104,
+          "start": 102,
+          "end": 105,
           "kind": "IfStatement",
           "guard": "!source",
           "status": "open-branch-review",
@@ -2218,8 +2226,8 @@
         },
         {
           "unit": "setPendingError",
-          "start": 102,
-          "end": 102,
+          "start": 103,
+          "end": 103,
           "kind": "IfStatement",
           "guard": "el._x !== null",
           "status": "open-branch-review",
@@ -2227,8 +2235,8 @@
         },
         {
           "unit": "setPendingError",
-          "start": 105,
-          "end": 108,
+          "start": 106,
+          "end": 109,
           "kind": "IfStatement",
           "guard": "error instanceof NotReadyError && error.source === source",
           "status": "open-branch-review",
@@ -2236,8 +2244,8 @@
         },
         {
           "unit": "setPendingError",
-          "start": 110,
-          "end": 112,
+          "start": 111,
+          "end": 113,
           "kind": "IfStatement",
           "guard": "!(current instanceof NotReadyError) || current.source !== source",
           "status": "open-branch-review",
@@ -2245,8 +2253,8 @@
         },
         {
           "unit": "forEachDependent",
-          "start": 119,
-          "end": 119,
+          "start": 120,
+          "end": 120,
           "kind": "ForStatement",
           "guard": "s !== null",
           "status": "open-branch-review",
@@ -2254,8 +2262,8 @@
         },
         {
           "unit": "releaseSettledDependents",
-          "start": 150,
-          "end": 150,
+          "start": 151,
+          "end": 151,
           "kind": "IfStatement",
           "guard": "visited.has(node)",
           "status": "open-branch-review",
@@ -2263,8 +2271,8 @@
         },
         {
           "unit": "releaseSettledDependents",
-          "start": 152,
-          "end": 152,
+          "start": 153,
+          "end": 153,
           "kind": "IfStatement",
           "guard": "!node._subs && node._config & CONFIG_AUTO_DISPOSE",
           "status": "open-branch-review",
@@ -2272,8 +2280,8 @@
         },
         {
           "unit": "releaseSettledDependents",
-          "start": 156,
-          "end": 156,
+          "start": 157,
+          "end": 157,
           "kind": "IfStatement",
           "guard": "candidates",
           "status": "open-branch-review",
@@ -2281,8 +2289,8 @@
         },
         {
           "unit": "releaseSettledDependents",
-          "start": 156,
-          "end": 156,
+          "start": 157,
+          "end": 157,
           "kind": "ForOfStatement",
           "guard": "candidates",
           "status": "open-branch-review",
@@ -2290,8 +2298,8 @@
         },
         {
           "unit": "stageError",
-          "start": 191,
-          "end": 198,
+          "start": 192,
+          "end": 199,
           "kind": "IfStatement",
           "guard": "!(\n      el._config & CONFIG_HELD ||\n      (inPass && el._flags & REACTIVE_STAGED_READ && globalQueue._running && !(el as any).fam)\n    ) ||\n    passLane",
           "status": "open-branch-review",
@@ -2299,8 +2307,8 @@
         },
         {
           "unit": "stageError",
-          "start": 202,
-          "end": 202,
+          "start": 203,
+          "end": 203,
           "kind": "IfStatement",
           "guard": "el._x",
           "status": "open-branch-review",
@@ -2308,8 +2316,8 @@
         },
         {
           "unit": "stageError",
-          "start": 203,
-          "end": 204,
+          "start": 204,
+          "end": 205,
           "kind": "IfStatement",
           "guard": "!((el._statusFlags &= STATUS_ERROR | STATUS_UNINITIALIZED) & STATUS_ERROR)",
           "status": "open-branch-review",
@@ -2317,8 +2325,8 @@
         },
         {
           "unit": "stageError",
-          "start": 205,
-          "end": 205,
+          "start": 206,
+          "end": 206,
           "kind": "ConditionalExpression",
           "guard": "error instanceof StatusError",
           "status": "open-branch-review",
@@ -2326,8 +2334,8 @@
         },
         {
           "unit": "settleErroredDependents",
-          "start": 218,
-          "end": 218,
+          "start": 219,
+          "end": 219,
           "kind": "IfStatement",
           "guard": "visited.has(node)",
           "status": "open-branch-review",
@@ -2335,8 +2343,8 @@
         },
         {
           "unit": "settleErroredDependents",
-          "start": 220,
-          "end": 223,
+          "start": 221,
+          "end": 224,
           "kind": "IfStatement",
           "guard": "node._x?._error === error",
           "status": "open-branch-review",
@@ -2344,8 +2352,8 @@
         },
         {
           "unit": "settleErroredDependents",
-          "start": 227,
-          "end": 227,
+          "start": 228,
+          "end": 228,
           "kind": "IfStatement",
           "guard": "scheduled",
           "status": "open-branch-review",
@@ -2353,8 +2361,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 251,
-          "end": 287,
+          "start": 252,
+          "end": 288,
           "kind": "IfStatement",
           "guard": "__DEV__",
           "status": "open-branch-review",
@@ -2362,8 +2370,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 253,
-          "end": 286,
+          "start": 254,
+          "end": 287,
           "kind": "IfStatement",
           "guard": "el._statusFlags & STATUS_UNINITIALIZED &&\n      el._pendingValue === NOT_PENDING &&\n      !el._x?._error &&\n      !(\n        (el._config & (CONFIG_OVERRIDE | CONFIG_GUESS)) === CONFIG_OVERRIDE &&\n        el._x!._lane !== NOT_PENDING\n      ) &&\n      // A replacement source makes this a cleanup-only ",
           "status": "open-branch-review",
@@ -2371,8 +2379,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 296,
-          "end": 311,
+          "start": 297,
+          "end": 312,
           "kind": "IfStatement",
           "guard": "visited.has(node) ||\n      // A conditional dropped this source, but another dependency can still\n      // carry it. Only retire pending state inherited through the recovered\n      // branch. Deliberately NOT marked visited on this early return: the\n      // carrying dependency may itself be a later",
           "status": "open-branch-review",
@@ -2380,8 +2388,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 321,
-          "end": 340,
+          "start": 322,
+          "end": 341,
           "kind": "IfStatement",
           "guard": "remaining",
           "status": "open-branch-review",
@@ -2389,8 +2397,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 322,
-          "end": 322,
+          "start": 323,
+          "end": 323,
           "kind": "IfStatement",
           "guard": "!errored",
           "status": "open-branch-review",
@@ -2398,8 +2406,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 325,
-          "end": 325,
+          "start": 326,
+          "end": 326,
           "kind": "IfStatement",
           "guard": "!errored",
           "status": "open-branch-review",
@@ -2407,8 +2415,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 330,
-          "end": 330,
+          "start": 331,
+          "end": 331,
           "kind": "IfStatement",
           "guard": "node._config & CONFIG_HELD",
           "status": "open-branch-review",
@@ -2416,8 +2424,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 331,
-          "end": 334,
+          "start": 332,
+          "end": 335,
           "kind": "IfStatement",
           "guard": "node._x?._blocked",
           "status": "open-branch-review",
@@ -2425,8 +2433,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 335,
-          "end": 335,
+          "start": 336,
+          "end": 336,
           "kind": "IfStatement",
           "guard": "node._x !== null",
           "status": "open-branch-review",
@@ -2434,8 +2442,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 339,
-          "end": 339,
+          "start": 340,
+          "end": 340,
           "kind": "IfStatement",
           "guard": "!node._subs && node._config & CONFIG_AUTO_DISPOSE",
           "status": "open-branch-review",
@@ -2443,8 +2451,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 348,
-          "end": 348,
+          "start": 349,
+          "end": 349,
           "kind": "IfStatement",
           "guard": "released",
           "status": "open-branch-review",
@@ -2452,8 +2460,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 348,
-          "end": 348,
+          "start": 349,
+          "end": 349,
           "kind": "ForOfStatement",
           "guard": "released",
           "status": "open-branch-review",
@@ -2461,8 +2469,8 @@
         },
         {
           "unit": "settlePendingSource",
-          "start": 350,
-          "end": 350,
+          "start": 351,
+          "end": 351,
           "kind": "IfStatement",
           "guard": "scheduled",
           "status": "open-branch-review",
@@ -2470,17 +2478,44 @@
         },
         {
           "unit": "releaseFlightTeardown",
-          "start": 365,
-          "end": 368,
+          "start": 366,
+          "end": 369,
           "kind": "IfStatement",
           "guard": "teardown != null",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
-          "unit": "handleAsync",
+          "unit": "onSupersede",
           "start": 383,
-          "end": 388,
+          "end": 383,
+          "kind": "IfStatement",
+          "guard": "el === null || el._fn === undefined || !(el._flags & REACTIVE_RECOMPUTING_DEPS)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "onSupersede",
+          "start": 390,
+          "end": 390,
+          "kind": "IfStatement",
+          "guard": "fresh",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "onSupersede",
+          "start": 393,
+          "end": 401,
+          "kind": "ConditionalExpression",
+          "guard": "prev === null",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 416,
+          "end": 421,
           "kind": "IfStatement",
           "guard": "typeof result === \"object\" && result !== null",
           "status": "open-branch-review",
@@ -2488,8 +2523,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 390,
-          "end": 395,
+          "start": 423,
+          "end": 428,
           "kind": "IfStatement",
           "guard": "!thenable && !iterator",
           "status": "open-branch-review",
@@ -2497,8 +2532,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 391,
-          "end": 391,
+          "start": 424,
+          "end": 424,
           "kind": "IfStatement",
           "guard": "el._x !== null",
           "status": "open-branch-review",
@@ -2506,8 +2541,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 403,
-          "end": 418,
+          "start": 436,
+          "end": 451,
           "kind": "IfStatement",
           "guard": "__DEV__ && el._config & CONFIG_SYNC",
           "status": "open-branch-review",
@@ -2515,8 +2550,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 406,
-          "end": 406,
+          "start": 439,
+          "end": 439,
           "kind": "ConditionalExpression",
           "guard": "thenable",
           "status": "open-branch-review",
@@ -2524,8 +2559,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 441,
-          "end": 441,
+          "start": 474,
+          "end": 474,
           "kind": "IfStatement",
           "guard": "__OBSERVE__ && attrHooks !== null",
           "status": "open-branch-review",
@@ -2533,8 +2568,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 445,
-          "end": 445,
+          "start": 478,
+          "end": 478,
           "kind": "IfStatement",
           "guard": "el._x?._inFlight !== result",
           "status": "open-branch-review",
@@ -2542,8 +2577,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 456,
-          "end": 464,
+          "start": 489,
+          "end": 497,
           "kind": "IfStatement",
           "guard": "__DEV__ && stillPending && !retryReaches(el, (error as NotReadyError).source)",
           "status": "open-branch-review",
@@ -2551,73 +2586,10 @@
         },
         {
           "unit": "handleAsync",
-          "start": 465,
-          "end": 474,
+          "start": 498,
+          "end": 507,
           "kind": "IfStatement",
           "guard": "stillPending && el._loading",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 470,
-          "end": 470,
-          "kind": "IfStatement",
-          "guard": "el._x !== null",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 478,
-          "end": 479,
-          "kind": "IfStatement",
-          "guard": "stillPending || setter || !stageError(el, error)",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 479,
-          "end": 479,
-          "kind": "ConditionalExpression",
-          "guard": "stillPending",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 483,
-          "end": 483,
-          "kind": "IfStatement",
-          "guard": "stillPending",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 488,
-          "end": 488,
-          "kind": "IfStatement",
-          "guard": "!stillPending",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 493,
-          "end": 493,
-          "kind": "IfStatement",
-          "guard": "el._x?._inFlight !== result",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 497,
-          "end": 497,
-          "kind": "IfStatement",
-          "guard": "el._flags & REACTIVE_DIRTY",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
@@ -2626,43 +2598,61 @@
           "start": 503,
           "end": 503,
           "kind": "IfStatement",
-          "guard": "__OBSERVE__ && attrHooks !== null",
+          "guard": "el._x !== null",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "handleAsync",
-          "start": 504,
-          "end": 537,
+          "start": 511,
+          "end": 512,
           "kind": "IfStatement",
-          "guard": "setter",
+          "guard": "stillPending || setter || !stageError(el, error)",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "handleAsync",
-          "start": 513,
-          "end": 513,
-          "kind": "IfStatement",
-          "guard": "!(el._config & CONFIG_HELD)",
+          "start": 512,
+          "end": 512,
+          "kind": "ConditionalExpression",
+          "guard": "stillPending",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "handleAsync",
-          "start": 514,
-          "end": 514,
+          "start": 516,
+          "end": 516,
           "kind": "IfStatement",
-          "guard": "wasUninitialized",
+          "guard": "stillPending",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "handleAsync",
-          "start": 524,
-          "end": 524,
+          "start": 521,
+          "end": 521,
           "kind": "IfStatement",
-          "guard": "__OBSERVE__ && attrHooks !== null",
+          "guard": "!stillPending",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 526,
+          "end": 526,
+          "kind": "IfStatement",
+          "guard": "el._x?._inFlight !== result",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 530,
+          "end": 530,
+          "kind": "IfStatement",
+          "guard": "el._flags & REACTIVE_DIRTY",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
@@ -2677,8 +2667,53 @@
         },
         {
           "unit": "handleAsync",
-          "start": 543,
-          "end": 549,
+          "start": 537,
+          "end": 570,
+          "kind": "IfStatement",
+          "guard": "setter",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 546,
+          "end": 546,
+          "kind": "IfStatement",
+          "guard": "!(el._config & CONFIG_HELD)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 547,
+          "end": 547,
+          "kind": "IfStatement",
+          "guard": "wasUninitialized",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 557,
+          "end": 557,
+          "kind": "IfStatement",
+          "guard": "__OBSERVE__ && attrHooks !== null",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 569,
+          "end": 569,
+          "kind": "IfStatement",
+          "guard": "__OBSERVE__ && attrHooks !== null",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 576,
+          "end": 582,
           "kind": "IfStatement",
           "guard": "el._pendingValue === NOT_PENDING",
           "status": "open-branch-review",
@@ -2686,8 +2721,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 564,
-          "end": 567,
+          "start": 597,
+          "end": 600,
           "kind": "IfStatement",
           "guard": "el._config & CONFIG_AUTO_DISPOSE && !el._subs && !(el._statusFlags & STATUS_PENDING)",
           "status": "open-branch-review",
@@ -2695,8 +2730,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 588,
-          "end": 588,
+          "start": 621,
+          "end": 621,
           "kind": "IfStatement",
           "guard": "completed",
           "status": "open-branch-review",
@@ -2704,8 +2739,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 592,
-          "end": 592,
+          "start": 625,
+          "end": 625,
           "kind": "IfStatement",
           "guard": "isThenable(returned)",
           "status": "open-branch-review",
@@ -2713,8 +2748,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 609,
-          "end": 609,
+          "start": 646,
+          "end": 646,
           "kind": "IfStatement",
           "guard": "!settleAutodispose()",
           "status": "open-branch-review",
@@ -2722,8 +2757,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 627,
-          "end": 629,
+          "start": 664,
+          "end": 666,
           "kind": "ConditionalExpression",
           "guard": "isThenable(step)",
           "status": "open-branch-review",
@@ -2731,8 +2766,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 639,
-          "end": 658,
+          "start": 676,
+          "end": 695,
           "kind": "IfStatement",
           "guard": "isSync && initialRead",
           "status": "open-branch-review",
@@ -2740,8 +2775,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 642,
-          "end": 642,
+          "start": 679,
+          "end": 679,
           "kind": "IfStatement",
           "guard": "r.done",
           "status": "open-branch-review",
@@ -2749,8 +2784,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 643,
-          "end": 658,
+          "start": 680,
+          "end": 695,
           "kind": "IfStatement",
           "guard": "el._x?._inFlight !== result",
           "status": "open-branch-review",
@@ -2758,8 +2793,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 645,
-          "end": 658,
+          "start": 682,
+          "end": 695,
           "kind": "IfStatement",
           "guard": "!r.done",
           "status": "open-branch-review",
@@ -2767,8 +2802,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 650,
-          "end": 656,
+          "start": 687,
+          "end": 693,
           "kind": "IfStatement",
           "guard": "hadValue",
           "status": "open-branch-review",
@@ -2776,8 +2811,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 661,
-          "end": 668,
+          "start": 698,
+          "end": 705,
           "kind": "IfStatement",
           "guard": "isSync && initialRead",
           "status": "open-branch-review",
@@ -2785,8 +2820,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 664,
-          "end": 668,
+          "start": 701,
+          "end": 705,
           "kind": "IfStatement",
           "guard": "el._x?._inFlight === result",
           "status": "open-branch-review",
@@ -2794,46 +2829,10 @@
         },
         {
           "unit": "handleAsync",
-          "start": 672,
-          "end": 678,
+          "start": 709,
+          "end": 715,
           "kind": "IfStatement",
           "guard": "rejected",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 676,
-          "end": 676,
-          "kind": "IfStatement",
-          "guard": "initialRead",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 679,
-          "end": 683,
-          "kind": "IfStatement",
-          "guard": "resolved && !syncResult!.done",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 705,
-          "end": 709,
-          "kind": "IfStatement",
-          "guard": "typeof value === \"object\" && value !== null",
-          "status": "open-branch-review",
-          "sharedStoreHint": false
-        },
-        {
-          "unit": "handleAsync",
-          "start": 710,
-          "end": 710,
-          "kind": "IfStatement",
-          "guard": "!innerIterator",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
@@ -2842,14 +2841,50 @@
           "start": 713,
           "end": 713,
           "kind": "IfStatement",
+          "guard": "initialRead",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 716,
+          "end": 720,
+          "kind": "IfStatement",
+          "guard": "resolved && !syncResult!.done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 742,
+          "end": 746,
+          "kind": "IfStatement",
+          "guard": "typeof value === \"object\" && value !== null",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 747,
+          "end": 747,
+          "kind": "IfStatement",
+          "guard": "!innerIterator",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "handleAsync",
+          "start": 750,
+          "end": 750,
+          "kind": "IfStatement",
           "guard": "!owner",
           "status": "open-branch-review",
           "sharedStoreHint": false
         },
         {
           "unit": "handleAsync",
-          "start": 717,
-          "end": 782,
+          "start": 754,
+          "end": 819,
           "kind": "IfStatement",
           "guard": "thenable",
           "status": "open-branch-review",
@@ -2857,8 +2892,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 722,
-          "end": 722,
+          "start": 759,
+          "end": 759,
           "kind": "ConditionalExpression",
           "guard": "__DEV__",
           "status": "open-branch-review",
@@ -2866,8 +2901,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 724,
-          "end": 749,
+          "start": 761,
+          "end": 786,
           "kind": "IfStatement",
           "guard": "isSync",
           "status": "open-branch-review",
@@ -2875,8 +2910,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 738,
-          "end": 743,
+          "start": 775,
+          "end": 780,
           "kind": "IfStatement",
           "guard": "el._x?._inFlight === result &&\n              !(el._flags & REACTIVE_DISPOSED) &&\n              flattenIfIterable(v, el)",
           "status": "open-branch-review",
@@ -2884,8 +2919,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 752,
-          "end": 758,
+          "start": 789,
+          "end": 795,
           "kind": "IfStatement",
           "guard": "isSync",
           "status": "open-branch-review",
@@ -2893,8 +2928,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 762,
-          "end": 778,
+          "start": 799,
+          "end": 815,
           "kind": "IfStatement",
           "guard": "rejected",
           "status": "open-branch-review",
@@ -2902,8 +2937,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 768,
-          "end": 778,
+          "start": 805,
+          "end": 815,
           "kind": "IfStatement",
           "guard": "!resolved",
           "status": "open-branch-review",
@@ -2911,8 +2946,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 773,
-          "end": 773,
+          "start": 810,
+          "end": 810,
           "kind": "IfStatement",
           "guard": "el._loading",
           "status": "open-branch-review",
@@ -2920,8 +2955,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 775,
-          "end": 778,
+          "start": 812,
+          "end": 815,
           "kind": "IfStatement",
           "guard": "!flattenIfIterable(syncValue!)",
           "status": "open-branch-review",
@@ -2929,8 +2964,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 784,
-          "end": 784,
+          "start": 821,
+          "end": 821,
           "kind": "IfStatement",
           "guard": "iterator",
           "status": "open-branch-review",
@@ -2938,8 +2973,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 786,
-          "end": 795,
+          "start": 823,
+          "end": 832,
           "kind": "IfStatement",
           "guard": "liveLanded !== null",
           "status": "open-branch-review",
@@ -2947,8 +2982,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 787,
-          "end": 791,
+          "start": 824,
+          "end": 828,
           "kind": "IfStatement",
           "guard": "!liveLanded",
           "status": "open-branch-review",
@@ -2956,8 +2991,8 @@
         },
         {
           "unit": "handleAsync",
-          "start": 789,
-          "end": 789,
+          "start": 826,
+          "end": 826,
           "kind": "IfStatement",
           "guard": "el._loading",
           "status": "open-branch-review",
@@ -2965,8 +3000,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 801,
-          "end": 801,
+          "start": 838,
+          "end": 838,
           "kind": "IfStatement",
           "guard": "el._x?._pendingSources",
           "status": "open-branch-review",
@@ -2974,8 +3009,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 802,
-          "end": 802,
+          "start": 839,
+          "end": 839,
           "kind": "IfStatement",
           "guard": "el._x?._blocked",
           "status": "open-branch-review",
@@ -2983,8 +3018,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 802,
-          "end": 802,
+          "start": 839,
+          "end": 839,
           "kind": "IfStatement",
           "guard": "el._x !== null",
           "status": "open-branch-review",
@@ -2992,8 +3027,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 803,
-          "end": 803,
+          "start": 840,
+          "end": 840,
           "kind": "ConditionalExpression",
           "guard": "clearUninitialized",
           "status": "open-branch-review",
@@ -3001,8 +3036,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 804,
-          "end": 804,
+          "start": 841,
+          "end": 841,
           "kind": "IfStatement",
           "guard": "el._x?._error",
           "status": "open-branch-review",
@@ -3010,8 +3045,8 @@
         },
         {
           "unit": "clearStatus",
-          "start": 806,
-          "end": 806,
+          "start": 843,
+          "end": 843,
           "kind": "IfStatement",
           "guard": "notify",
           "status": "open-branch-review",
@@ -3019,8 +3054,8 @@
         },
         {
           "unit": "landStatus",
-          "start": 837,
-          "end": 841,
+          "start": 874,
+          "end": 878,
           "kind": "IfStatement",
           "guard": "sources && (sources.delete(el), sources.size)",
           "status": "open-branch-review",
@@ -3028,8 +3063,8 @@
         },
         {
           "unit": "landStatus",
-          "start": 839,
-          "end": 839,
+          "start": 876,
+          "end": 876,
           "kind": "IfStatement",
           "guard": "clearUninitialized",
           "status": "open-branch-review",
@@ -3037,8 +3072,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 851,
-          "end": 856,
+          "start": 888,
+          "end": 893,
           "kind": "IfStatement",
           "guard": "status === STATUS_ERROR &&\n    !(error instanceof StatusError) &&\n    !(error instanceof NotReadyError)",
           "status": "open-branch-review",
@@ -3046,8 +3081,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 859,
-          "end": 859,
+          "start": 896,
+          "end": 896,
           "kind": "ConditionalExpression",
           "guard": "status === STATUS_PENDING && error instanceof NotReadyError",
           "status": "open-branch-review",
@@ -3055,8 +3090,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 862,
-          "end": 877,
+          "start": 899,
+          "end": 914,
           "kind": "IfStatement",
           "guard": "!blockStatus",
           "status": "open-branch-review",
@@ -3064,8 +3099,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 863,
-          "end": 876,
+          "start": 900,
+          "end": 913,
           "kind": "IfStatement",
           "guard": "status === STATUS_PENDING && pendingSource",
           "status": "open-branch-review",
@@ -3073,8 +3108,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 865,
-          "end": 865,
+          "start": 902,
+          "end": 902,
           "kind": "IfStatement",
           "guard": "el._statusFlags & STATUS_ERROR",
           "status": "open-branch-review",
@@ -3082,8 +3117,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 874,
-          "end": 874,
+          "start": 911,
+          "end": 911,
           "kind": "ConditionalExpression",
           "guard": "status !== STATUS_ERROR",
           "status": "open-branch-review",
@@ -3091,8 +3126,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 887,
-          "end": 890,
+          "start": 924,
+          "end": 927,
           "kind": "IfStatement",
           "guard": "status === STATUS_PENDING && el._config & CONFIG_GUESS",
           "status": "open-branch-review",
@@ -3100,8 +3135,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 888,
-          "end": 888,
+          "start": 925,
+          "end": 925,
           "kind": "IfStatement",
           "guard": "passLane === null",
           "status": "open-branch-review",
@@ -3109,8 +3144,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 893,
-          "end": 903,
+          "start": 930,
+          "end": 940,
           "kind": "IfStatement",
           "guard": "elNotify",
           "status": "open-branch-review",
@@ -3118,8 +3153,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 894,
-          "end": 896,
+          "start": 931,
+          "end": 933,
           "kind": "IfStatement",
           "guard": "blockStatus && status === STATUS_PENDING",
           "status": "open-branch-review",
@@ -3127,8 +3162,8 @@
         },
         {
           "unit": "notifyStatus",
-          "start": 897,
-          "end": 901,
+          "start": 934,
+          "end": 938,
           "kind": "IfStatement",
           "guard": "downstreamBlockStatus",
           "status": "open-branch-review",
@@ -3136,8 +3171,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 919,
-          "end": 919,
+          "start": 956,
+          "end": 956,
           "kind": "ConditionalExpression",
           "guard": "status === STATUS_PENDING && error instanceof NotReadyError",
           "status": "open-branch-review",
@@ -3145,8 +3180,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 941,
-          "end": 948,
+          "start": 978,
+          "end": 985,
           "kind": "IfStatement",
           "guard": "sub._config & (CONFIG_REDERIVE | CONFIG_VERDICT) ||\n      (status === STATUS_PENDING && link._gen !== sub._depGen)",
           "status": "open-branch-review",
@@ -3154,8 +3189,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 956,
-          "end": 965,
+          "start": 993,
+          "end": 1002,
           "kind": "IfStatement",
           "guard": "status === STATUS_PENDING && pendingSource && sub._x?._pendingSources?.has(pendingSource)",
           "status": "open-branch-review",
@@ -3163,8 +3198,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 957,
-          "end": 963,
+          "start": 994,
+          "end": 1000,
           "kind": "IfStatement",
           "guard": "passLane === null &&\n        (sub._config & (CONFIG_HELD | CONFIG_OVERRIDE)) === CONFIG_HELD &&\n        globalQueue._running &&\n        !freshHook?.(sub, pendingSource._time === clock)",
           "status": "open-branch-review",
@@ -3172,8 +3207,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 966,
-          "end": 993,
+          "start": 1003,
+          "end": 1030,
           "kind": "IfStatement",
           "guard": "(status === STATUS_PENDING && pendingSource) ||\n      (status !== STATUS_PENDING && (sub._x?._error !== error || sub._x?._pendingSources))",
           "status": "open-branch-review",
@@ -3181,8 +3216,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 974,
-          "end": 991,
+          "start": 1011,
+          "end": 1028,
           "kind": "IfStatement",
           "guard": "!downstreamBlockStatus",
           "status": "open-branch-review",
@@ -3190,8 +3225,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 976,
-          "end": 990,
+          "start": 1013,
+          "end": 1027,
           "kind": "IfStatement",
           "guard": "laneStageHook && passLane !== null",
           "status": "open-branch-review",
@@ -3199,8 +3234,8 @@
         },
         {
           "unit": "propagateStatus",
-          "start": 984,
-          "end": 989,
+          "start": 1021,
+          "end": 1026,
           "kind": "IfStatement",
           "guard": "status === STATUS_PENDING &&\n            (sub._config & (CONFIG_HELD | CONFIG_OVERRIDE)) === CONFIG_HELD &&\n            !(sub as any)._type",
           "status": "open-branch-review",
@@ -21459,6 +21494,347 @@
       ]
     },
     {
+      "file": "from.ts",
+      "sha256": "5875e1a6616ec9e7b4aafdbf8403720701bac6bf9f49175b26ec9a847922ecde",
+      "lines": 275,
+      "status": "open",
+      "units": [
+        {
+          "key": "from.ts:toSubscribe",
+          "start": 41,
+          "end": 52,
+          "sha256": "17d39e0a7205af5762de09358787c2a5607b7e109d27e850fdbb6a30043579ff",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:bindToOwner",
+          "start": 66,
+          "end": 71,
+          "sha256": "89171d830252ee6b38c4e6160420bce3d2bed7daef43e36f40f8376075325a1e",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:wrapIterable",
+          "start": 81,
+          "end": 119,
+          "sha256": "8c4da27d1f10854b672e2f732355d7b04686b040b12b706b63d616733876fde3",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:[Symbol.asyncIterator]",
+          "start": 83,
+          "end": 117,
+          "sha256": "dd8fcb82375fd5cb4536ef4bce01ec1829a3c0dea3ad17dc6567908a0f02e41e",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:next",
+          "start": 100,
+          "end": 112,
+          "sha256": "d84e8257485e3e726951d251dc06f0390f335d7f09b82171566d9d7545dc743a",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:return",
+          "start": 113,
+          "end": 115,
+          "sha256": "81bd69df81a76a94e423031a7c493cbb99dfe0bce17d85285789b2313e0ae950",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:toCleanup",
+          "start": 121,
+          "end": 126,
+          "sha256": "49ca5ca7751ebd3aa8bb7192509abfd8d4e69e77f127769a285a76709fd89d35",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:from",
+          "start": 155,
+          "end": 275,
+          "sha256": "db35b767be1963e7764c68b0ad43e7c323147d931999017859e68987ffaf5392",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:[Symbol.asyncIterator]",
+          "start": 163,
+          "end": 273,
+          "sha256": "912d722fad97baf30daedc0c6868f21f442df5163320be0f13542129decbdaa9",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:next",
+          "start": 251,
+          "end": 268,
+          "sha256": "915b903d71314f71437ba6b9502907fdd202a3a194fd206622200ba145a22e59",
+          "status": "open",
+          "mapping": null
+        },
+        {
+          "key": "from.ts:return",
+          "start": 269,
+          "end": 271,
+          "sha256": "81bd69df81a76a94e423031a7c493cbb99dfe0bce17d85285789b2313e0ae950",
+          "status": "open",
+          "mapping": null
+        }
+      ],
+      "branches": [
+        {
+          "unit": "toSubscribe",
+          "start": 42,
+          "end": 42,
+          "kind": "IfStatement",
+          "guard": "typeof source === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "toSubscribe",
+          "start": 48,
+          "end": 48,
+          "kind": "ConditionalExpression",
+          "guard": "typeof interop === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "toSubscribe",
+          "start": 49,
+          "end": 50,
+          "kind": "IfStatement",
+          "guard": "obs && typeof obs.subscribe === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "bindToOwner",
+          "start": 68,
+          "end": 68,
+          "kind": "IfStatement",
+          "guard": "!owner",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "bindToOwner",
+          "start": 70,
+          "end": 70,
+          "kind": "IfStatement",
+          "guard": "!(owner._config & CONFIG_CHILDREN_FORBIDDEN)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 88,
+          "end": 88,
+          "kind": "IfStatement",
+          "guard": "closed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 90,
+          "end": 90,
+          "kind": "ForOfStatement",
+          "guard": "pending",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 94,
+          "end": 94,
+          "kind": "IfStatement",
+          "guard": "isThenable(returned)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "next",
+          "start": 101,
+          "end": 101,
+          "kind": "IfStatement",
+          "guard": "closed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "next",
+          "start": 104,
+          "end": 104,
+          "kind": "IfStatement",
+          "guard": "!isThenable(step)",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "toCleanup",
+          "start": 122,
+          "end": 126,
+          "kind": "ConditionalExpression",
+          "guard": "typeof t === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "toCleanup",
+          "start": 124,
+          "end": 126,
+          "kind": "ConditionalExpression",
+          "guard": "t && typeof t.unsubscribe === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "from",
+          "start": 157,
+          "end": 161,
+          "kind": "IfStatement",
+          "guard": "!subscribe",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "from",
+          "start": 158,
+          "end": 159,
+          "kind": "IfStatement",
+          "guard": "source && typeof (source as any)[Symbol.asyncIterator] === \"function\"",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 177,
+          "end": 177,
+          "kind": "IfStatement",
+          "guard": "closed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 190,
+          "end": 190,
+          "kind": "IfStatement",
+          "guard": "!waiting",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 192,
+          "end": 203,
+          "kind": "IfStatement",
+          "guard": "has",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 196,
+          "end": 203,
+          "kind": "IfStatement",
+          "guard": "failed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 200,
+          "end": 203,
+          "kind": "IfStatement",
+          "guard": "done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 208,
+          "end": 208,
+          "kind": "IfStatement",
+          "guard": "done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 214,
+          "end": 214,
+          "kind": "IfStatement",
+          "guard": "done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 222,
+          "end": 222,
+          "kind": "IfStatement",
+          "guard": "done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 230,
+          "end": 234,
+          "kind": "IfStatement",
+          "guard": "closed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "[Symbol.asyncIterator]",
+          "start": 240,
+          "end": 244,
+          "kind": "IfStatement",
+          "guard": "waiting",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "next",
+          "start": 256,
+          "end": 259,
+          "kind": "IfStatement",
+          "guard": "has",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "next",
+          "start": 260,
+          "end": 263,
+          "kind": "IfStatement",
+          "guard": "failed",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        },
+        {
+          "unit": "next",
+          "start": 264,
+          "end": 264,
+          "kind": "IfStatement",
+          "guard": "done",
+          "status": "open-branch-review",
+          "sharedStoreHint": false
+        }
+      ]
+    },
+    {
       "file": "globals.d.ts",
       "sha256": "3d0d464f13e75a701639fd5def66d48bee656805a5ecfd2e57a8fefa0bfcf005",
       "lines": 18,
@@ -21468,8 +21844,8 @@
     },
     {
       "file": "index.ts",
-      "sha256": "a8652e3c27c12535f1d1b37a768a2080055c476688f23fe3bcfa2b07cb012b74",
-      "lines": 126,
+      "sha256": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1",
+      "lines": 127,
       "status": "open",
       "units": [],
       "branches": [

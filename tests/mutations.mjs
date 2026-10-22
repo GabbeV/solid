@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["affects lexical loses target binding", "runtime/lexical.bend", "R.Affects{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}", "R.Affects{left, bindAs(right, depth, signal, setter)}", "tests/affects.mjs", "bindAs"],
+  ["affects lexical loses key binding", "runtime/lexical.bend", "R.Affects{bindAs(left, depth, signal, setter), bindAs(right, depth, signal, setter)}", "R.Affects{bindAs(left, depth, signal, setter), right}", "tests/affects.mjs", "bindAs"],
+  ["affects callback loses target binding", "runtime/callback.bend", "R.Affects{bindWith(left, args), bindWith(right, args)}", "R.Affects{left, bindWith(right, args)}", "tests/affects.mjs", "bindWith"],
+  ["affects callback loses key binding", "runtime/callback.bend", "R.Affects{bindWith(left, args), bindWith(right, args)}", "R.Affects{bindWith(left, args), right}", "tests/affects.mjs", "bindWith"],
+  ["affects action loses target binding", "runtime/action-arguments.bend", "R.Affects{bindWith(left, depth, args), bindWith(right, depth, args)}", "R.Affects{left, bindWith(right, depth, args)}", "tests/affects.mjs", "bindWith"],
+  ["affects action loses key binding", "runtime/action-arguments.bend", "R.Affects{bindWith(left, depth, args), bindWith(right, depth, args)}", "R.Affects{bindWith(left, depth, args), right}", "tests/affects.mjs", "bindWith"],
+
   ["deferred lag ignores module-empty gate", "runtime/deferred-state.bend", "List.is_empty(&2, Nat, lagging)", "False{}", "tests/deferred-lag-alignment.mjs", "laggingOf"],
   ["deferred lag drops direct membership", "runtime/deferred-state.bend", "B.contains(lagging, id)", "False{}", "tests/deferred-lag-alignment.mjs", "walk"],
   ["deferred lag loses lagging identity", "runtime/deferred-state.bend", "B.Bundle{w, id}", "B.Bundle{w, 0n}", "tests/deferred-lag-alignment.mjs", "walk"],

@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,378 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,410 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 449; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 455; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -321,16 +321,25 @@ after their lane dependencies. 104 new public histories, 5,322 full private
 reads and 44 raw comparator controls check source order and callback behavior.
 Seven whole-World finally/catch laws and one complete data program for every
 natural payload pair and budget >=53 add quantified guarantees. Existing
-program domains/budgets remain unchanged. Explicit boundary/store/mark-scope,
+program domains/budgets remain unchanged. Explicit boundary/store,
 snapshot and external source paths remain next. No semantic deviation is active.
 
 The overnight mark crossing adds the public non-store affects API, 41 histories,
 seven scoped laws and a complete all-natural pending-before/after-flush program.
-The current totals are 3,378 public histories and 449 useful mutation rejections;
+The current totals are 3,410 public histories and 455 useful mutation rejections;
 closed composed regressions remain 72. These counts measure growth of checked
 behavior, not a package percentage. See [affects-scope.md](affects-scope.md).
 
 The deferred dependency checkpoint adds the actual non-store lagging identity
 walk, eight quantified properties and 4,210 private comparisons. The general
 frame theorem covers arbitrary fuel/work/typed Worlds. Public histories stay
-3,378 and composed closed regressions stay 72; public createDeferred remains open.
+3,378 at that checkpoint and composed closed regressions stay 72; public createDeferred remains open.
+
+The aece1d44 refresh follows the new from() feature without silently enabling its
+unported protocols. Thirty-two more affects crossings and six binding mutations
+bring totals to 3,410 public histories /455 useful rejections. All 455 compiled
+variants are rejected by assertions (384 finite, 71 kernel). The native refresh
+passes 336 files /5,501 tests. Two source-only from integration defects are
+confirmed with reduced JSX and Node repros, passing controls and isolated
+candidate patches; see the issue register. No issue/PR has been filed and no
+semantic workaround is active.

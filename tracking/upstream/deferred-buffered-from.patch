@@ -1,0 +1,145 @@
+diff --git a/packages/signals/src/deferred.ts b/packages/signals/src/deferred.ts
+index f20cacb3..9eafbd3c 100644
+--- a/packages/signals/src/deferred.ts
++++ b/packages/signals/src/deferred.ts
+@@ -175,7 +175,11 @@ export function createDeferred<T>(
+             // promise, as for a plain flight: verdict and value in one flush.
+             next: v => {
+               const p = it.next(v);
+-              if (first) ((first = false), p.then(done, done));
++              if (first) {
++                first = false;
++                if (isThenable(p)) p.then(done, done);
++                else done();
++              }
+               return p;
+             },
+             return: v => it.return?.(v) ?? Promise.resolve({ done: true, value: v })
+diff --git a/packages/signals/tests/deferred-from-buffered.test.ts b/packages/signals/tests/deferred-from-buffered.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/signals/tests/deferred-from-buffered.test.ts
+@@ -0,0 +1,113 @@
++import { afterEach, describe, expect, it } from "vitest";
++import {
++  createDeferred,
++  createMemo,
++  createRoot,
++  createSignal,
++  flush,
++  from,
++  resetErrorHalt
++} from "../src/index.js";
++
++afterEach(() => {
++  resetErrorHalt();
++  flush();
++});
++
++describe("buffered from() values in createDeferred", () => {
++  for (const seeded of [false, true]) {
++    for (const complete of [false, true]) {
++      it(`keeps first and later buffered values (seeded=${seeded}, complete=${complete})`, () => {
++        let dispose!: () => void;
++        let setVersion!: (value: number) => unknown;
++        let value!: () => number;
++        createRoot(d => {
++          dispose = d;
++          const [version, set] = createSignal(0);
++          setVersion = set;
++          value = createDeferred(
++            () => {
++              const current = version();
++              return from<number>((next, _error, done) => {
++                next(current);
++                if (complete) done();
++              });
++            },
++            seeded ? { loadingValue: -1 } : undefined
++          );
++        });
++        try {
++          flush();
++          expect(value()).toBe(0);
++          setVersion(1);
++          flush();
++          expect(value()).toBe(1);
++          setVersion(2);
++          flush();
++          expect(value()).toBe(2);
++        } finally {
++          dispose();
++        }
++      });
++    }
++
++    it(`ordinary memo control (seeded=${seeded})`, () => {
++      let dispose!: () => void;
++      let setVersion!: (value: number) => unknown;
++      let value!: () => number;
++      createRoot(d => {
++        dispose = d;
++        const [version, set] = createSignal(0);
++        setVersion = set;
++        value = createMemo(
++          () => {
++            const current = version();
++            return from<number>(next => next(current));
++          },
++          seeded ? { loadingValue: -1 } : undefined
++        );
++      });
++      try {
++        flush();
++        expect(value()).toBe(0);
++        setVersion(1);
++        flush();
++        expect(value()).toBe(1);
++      } finally {
++        dispose();
++      }
++    });
++
++    it(`promise iterator control (seeded=${seeded})`, async () => {
++      let dispose!: () => void;
++      let setVersion!: (value: number) => unknown;
++      let value!: () => number;
++      createRoot(d => {
++        dispose = d;
++        const [version, set] = createSignal(0);
++        setVersion = set;
++        value = createDeferred(
++          () => {
++            const current = version();
++            return (async function* () {
++              yield current;
++            })();
++          },
++          seeded ? { loadingValue: -1 } : undefined
++        );
++      });
++      try {
++        for (let i = 0; i < 4; i++) await Promise.resolve();
++        flush();
++        expect(value()).toBe(0);
++        setVersion(1);
++        flush();
++        for (let i = 0; i < 4; i++) await Promise.resolve();
++        flush();
++        expect(value()).toBe(1);
++      } finally {
++        dispose();
++      }
++    });
++  }
++});
+diff --git a/.changeset/deferred-buffered-from.md b/.changeset/deferred-buffered-from.md
+new file mode 100644
+--- /dev/null
++++ b/.changeset/deferred-buffered-from.md
+@@ -0,0 +1,5 @@
++---
++"@solidjs/signals": patch
++---
++
++Handle buffered first iterator results when an answered deferred memo consumes a synchronous source such as `from()`.
