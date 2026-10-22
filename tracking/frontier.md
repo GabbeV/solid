@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3612 differential histories, 513 rejected compiled mutations,
+Current verification: 3720 differential histories, 514 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at cdd95616 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -26,6 +26,15 @@ total to 3,612. The queued callback
 also has an arbitrary-healthy-World exact-step property. Existing theorem domains
 and budgets stand. from/onSupersede, deferred streams, stores and boundaries
 remain explicit unfinished work; the deviation register is empty.
+
+## First-load deferred streams
+
+[The closed-window branch](deferred-first-stream.md) now returns typed streams
+through the original iterator engine; 108 histories cover drain/gap/end/error,
+loading, cancellation and first-load until/refresh. The deferred corpus is 302
+histories, and the whole project is 3,720. Stream refetch wrapping remains
+Unsupported88; from/onSupersede and store/boundary/snapshot scopes remain open.
+The 103-step data proof and all prior theorem domains/budgets stand.
 
 ## Public deferred data and thenables
 

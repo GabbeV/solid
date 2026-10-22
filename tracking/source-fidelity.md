@@ -28,7 +28,8 @@ windows, the original-exception catch and post-handleAsync selection. Explicit
 closure state and shared Set membership are threaded without replacing those
 source decisions. The [public data/thenable profile](deferred.md) now connects
 construction, registration, cleanup and the authoritative watch hook in source
-order. Direct streams/from/store/boundary/snapshot branches remain unfinished;
+order. First-load streams now follow the ordinary engine; open-window stream wrapping,
+from/store/boundary/snapshot branches remain unfinished;
 no active workaround is installed.
 
 ## Public non-store affects crossing

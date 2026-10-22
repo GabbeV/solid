@@ -654,7 +654,8 @@ def isPending(body: R.Expr) -> R.Expr:
 def affects(target: R.Expr, key: R.Expr) -> R.Expr:
   R.Affects{target, key}
 
-# Source createDeferred constructor, data/thenable profile. Streams refuse 88.
+# Source createDeferred: data/thenables and first-load streams. Refetch streams
+# still refuse Unsupported88 until the first-yield wrapper is translated.
 def createDeferred(fuel: Nat, +w: R.World, compute: R.Expr, +options: R.NodeOptions, +parent: Nat) -> R.World:
   +context = R.World.context(w)
   +tracking = R.World.tracking(w)

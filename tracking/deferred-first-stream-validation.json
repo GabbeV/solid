@@ -1,0 +1,36 @@
+{
+  "sourceCommit": "cdd95616857ef1d54f3e2ec88a87ba6ca40de765",
+  "change": "Closed-window deferred streams use original ordinary Finish/iterator machinery; open-window wrapping remains Unsupported88",
+  "publicCases": 108,
+  "projectPublicHistories": 3720,
+  "theoremChange": "No preceding domain or sufficient budget changed; no new arbitrary async-history theorem",
+  "mutationCorpus": {
+    "configured": 514,
+    "compiledRejected": 514,
+    "finite": 437,
+    "kernel": 77,
+    "status": "pass: all variants compile and fail semantic assertions; resource/compiler failures excluded",
+    "nativeReferenceCommit": "cdd95616857ef1d54f3e2ec88a87ba6ca40de765",
+    "runs": [
+      {
+        "log": "first-stream-mutations-a257.log",
+        "from": 0,
+        "count": 257,
+        "sha256": "fc050c1daaf7760f1448d1e59ba0632fc4cc8d16f4bb62469ff44b7861a9c6ca"
+      },
+      {
+        "log": "first-stream-mutations-b257.log",
+        "from": 257,
+        "count": 257,
+        "sha256": "6a776820b1ddf89d9ef0111c62921b4f198a2fb2bc9773cd507115255549c676"
+      }
+    ]
+  },
+  "activeDeviationIds": [],
+  "publicSuite": {
+    "status": "pass: complete npm test",
+    "histories": 3720,
+    "newStreamHistories": 108
+  },
+  "privateAlignment": "pass: complete npm run test:alignment"
+}

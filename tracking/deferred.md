@@ -1,5 +1,11 @@
 # Public deferred data and thenable profile
 
+Update: [first-load streams](deferred-first-stream.md) are now admitted through
+the original ordinary iterator engine. Stream wrapping after a real committed
+answer remains Unsupported88. The data/thenable milestone description below is
+retained; the total deferred corpus is now 302 histories.
+
+
 The public createDeferred constructor now executes in the same core as memos,
 optimistic writes, verdict windows and affects. This is a restricted production
 profile, not a complete deferred.ts port. Direct streams, promise-to-stream

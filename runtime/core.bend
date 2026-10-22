@@ -672,16 +672,16 @@ def deferredBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +c
   Machine{Deferred.setNode(w, cell, node), DeferredConfigure{cell, compute, previous} <> rest, stack}
 
 # A successful fn return is outside the wrapper's try/catch from here onward.
-# Direct streams are an explicit unported branch, never silently treated as a
-# promise. The admitted constructor profile currently covers data/thenables.
+# Closed-window streams use the original ordinary Finish/iterator path.
+# Refetch stream wrapping remains an explicit Unsupported88 branch.
 def deferredResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +open: Bool) -> Machine:
   match stack:
     case R.AsyncValue{+result} <> +tail:
-      B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
-        _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, tail},
-        _ => B.choose(~Machine, open,
-          _ => Machine{Deferred.ask(w, cell, R.AsyncValue{result}), DeferredObserve{cell, result} <> rest, tail},
-          _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, R.AsyncValue{result} <> tail}))
+      B.choose(~Machine, open,
+        _ => B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
+          _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, tail},
+          _ => Machine{Deferred.ask(w, cell, R.AsyncValue{result}), DeferredObserve{cell, result} <> rest, tail}),
+        _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, R.AsyncValue{result} <> tail})
     case +value <> tail:
       Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, value <> tail}
     case _:

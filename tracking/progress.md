@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,612 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,720 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 513; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 514; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -388,3 +388,12 @@ and disposal before/after settlement. Three new compiled variants specifically
 break shared Set storage, cell isolation and callback routing; all are rejected.
 These bring the current public corpus to 3,612 and configured negative corpus to
 513 (436 finite, 77 kernel), without changing the runtime or theorem domains.
+
+
+The first-load deferred stream branch follows the source's closed-window return
+through original Finish/handleAsync/iterator machinery. It adds 108 real public
+histories (3,720 total), including truthy/falsey loading seeds, pending queries
+and first-load until/refresh. Refetch wrapping remains an explicit omission.
+The configured negative corpus is 514; the new ordinary-async-return variant
+compiles and is rejected, and the entire corpus is rerun in two disjoint shards.
+No old theorem domain/budget changed and no workaround is active.

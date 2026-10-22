@@ -257,7 +257,7 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The data/thenable createDeferred profile is admitted; affected from/stream paths remain unported. No workaround is installed.",
+      "bendScope": "Data/thenables and first-load deferred streams are admitted. The affected from/open-window stream wrapper paths remain unported. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/VfGd9n1GQDKvvXQNGb2MWw",
       "playgroundHostedVerification": "repros/playground/deferred-buffered-from-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44"
@@ -279,7 +279,7 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The data/thenable createDeferred profile is admitted; affected from/stream paths remain unported. No workaround is installed.",
+      "bendScope": "Data/thenables and first-load deferred streams are admitted. The affected from/open-window stream wrapper paths remain unported. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
       "playgroundHostedVerification": "repros/playground/from-sync-unsubscribe-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44"

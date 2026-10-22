@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred first-stream discards the raw async return", "runtime/core.bend", "rest, R.AsyncValue{result} <> tail}", "rest, R.Undefined{} <> tail}", "tests/deferred-first-stream.mjs", "deferredResult"],
+
   ["deferred multiple resets the shared lagging set", "runtime/deferred-runtime.bend", "R.DeferredArena.lagging(R.World.deferredArena(w))", "[]", "tests/deferred-multiple.mjs", "state"],
   ["deferred multiple routes all done callbacks to first cell", "runtime/deferred-runtime.bend", "R.DeferredWait{observer, id, flight}", "R.DeferredWait{observer, 1n, flight}", "tests/deferred-multiple.mjs", "registerWait"],
   ["deferred multiple overwrites the first sibling cell", "runtime/deferred-runtime.bend", "R.DeferredArena.cells(arena), id, R.DeferredBinding.with_cell", "R.DeferredArena.cells(arena), 1n, R.DeferredBinding.with_cell", "tests/deferred-multiple.mjs", "store"],
@@ -550,7 +552,10 @@ const from=process.env.BEND_MUTATION_FROM;
 const offset=from?mutations.findIndex(([name])=>name===from):0;
 if(offset<0)throw new Error('Unknown mutation start: '+from);
 const scope=mutations.slice(offset);
-const selected=filter?scope.filter(([name])=>name.includes(filter)):scope;
+const countText=process.env.BEND_MUTATION_COUNT;
+if(countText&&(!/^[1-9][0-9]*$/.test(countText)||!Number.isSafeInteger(Number(countText))))throw new Error('Mutation count must be a positive safe integer');
+const limited=countText?scope.slice(0,Number(countText)):scope;
+const selected=filter?limited.filter(([name])=>name.includes(filter)):limited;
 if(selected.length===0)throw new Error('Mutation filter matched no variants');
 // Validate operation targets before paying for any compiled variant. A stale
 // anchor is infrastructure failure, never evidence of useful mutation rejection.
