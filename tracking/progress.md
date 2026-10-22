@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 263; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 275; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -227,3 +227,14 @@ judgments with saved judge call/return state. 1,190 native helper programs /
 this integration. Current mutations: 263; public histories / closed regressions
 remain 3114 / 72. Stage/read/write/reveal/correction/dissolution and public window
 crossings remain unfinished. See [lane-blockers.md](lane-blockers.md).
+
+
+LaneStage now executes computation/effect entry/exit, interrupted pass distinctions,
+shown-parent judgment and pending effect frame refusal: 1,328 native helper
+programs and four quantified properties. Four additional general group link/unlink
+properties cover exact World preservation, first/absent-member behavior, cached
+identity and fresh single-member self allocation, with 71 separate controls.
+Cumulative mutations: 275. Public histories / closed regressions stay 3114 / 72;
+active core stage invocation, public windows and remaining lane lifecycle/read/
+write crossings stay open. See [lane-stage.md](lane-stage.md) and
+[lane-group-laws.md](lane-group-laws.md).

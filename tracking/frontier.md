@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 263 rejected compiled mutations,
+Current verification: 3114 differential histories, 275 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -43,6 +43,17 @@ across four sufficient budgets. One new proof mutation rejects reversed child
 order. Public-history and closed-regression counts stay unchanged. The executable
 [examples/list.bend](../examples/list.bend) also demonstrates real mapArray
 reorder/growth followed by children flattening and root disposal.
+
+## Lane staging and general group mutation frames
+
+[Lane staging](lane-stage.md) now preserves computation/effect entry/exit,
+three interruption forms, shown-parent judgments and pending-effect frame refusal.
+1,328 native helper programs and four quantified World properties check it.
+[Group mutation laws](lane-group-laws.md) add four general whole-World link/unlink
+properties and 71 separate canonical/native controls. Twelve new variants bring
+the cumulative total to 275. These remain internal engine dependencies: core
+hook invocation, public verdict windows, lane read/write/reveal/correction/
+dissolution and boundary mounting are still unfinished.
 
 ## Lane-aware blocker integration
 

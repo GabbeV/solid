@@ -18,6 +18,15 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane staging and group mutation frames
+
+[lane-stage.md](lane-stage.md) maps actual false/true/source interruption forms,
+entry/leave statement order, captured shown-parent judgment and frame-pending
+leaf refusal. [lane-group-laws.md](lane-group-laws.md) proves whole-World link/
+unlink frames, including first-match, absent-member and self-link order.
+Native/helper evidence stays separate from public engine/TS-equivalence claims.
+Core invocation and remaining lane lifecycle/read/write crossings remain open.
+
 ## Lane-aware blocker integration
 
 [lane-blockers.md](lane-blockers.md) maps the scheduler/lanes mutual calls and

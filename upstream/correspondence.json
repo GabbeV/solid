@@ -1,5 +1,5 @@
 {
-  "profile": "Owned expression/program callbacks; production; explicit root; typed promise-like objects and explicit host settlement; no active boundary/lane/mark/store scopes in Bend. Public resolve/refresh watchers for admitted payloads/accessor targets; active truth/lagging scopes unfinished.",
+  "profile": "Public expression/program callbacks and explicit root; production; typed flights and settlement. Public histories exclude active boundary/lane/mark/store scopes. Restricted internal marks, lane identity/routing/judgment/staging and verdict bookkeeping now execute and have separate helper evidence; public windows/read/reveal/correction remain unfinished.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
@@ -906,6 +906,11 @@
       "bend": "runtime/transaction.bend:nestedBlocked, blockStep / NestedMembers, ContinueNested",
       "status": "partial",
       "restrictions": "Live lane scan, actual resolved parent identity, recursive full blocked then own guessFlights. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
+    },
+    "core/lanes.ts:laneStage": {
+      "bend": "runtime/lanes-state.bend:laneStage, leaveStage, leaveStageEnd, clearStageConfig, computationStage, effectStage, framePending, hasStageLane; StageError retains false/true/source forms",
+      "status": "partial",
+      "restrictions": "Production typed computation/effect staging now preserves early exit/LEFT_SHOWN parent judgment, current lane clearing, override/frame-staging order, guess confirmation and pending effect frame refusal through actual blocked/queue/list/ext helpers. Active core stage invocation and lane read/write/seam/correction/dissolution still unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

@@ -513,3 +513,11 @@ empty-list lemma and checked driver head/return equations support the empty case
 the source algorithm, runtime budget and independent kernel are unchanged by that
 proof decomposition. General graph/lane lifecycle progress remains open; see
 [lane-blockers.md](lane-blockers.md).
+
+
+Four general group mutation frame properties now check exact first/absent unlink,
+shared-group no-op and single-member fresh self-link; list induction handles any
+finite peer prefix. Four laneStage World properties check cold exit, memo entry,
+failed effect entry and pending frame refusal. They do not prove a public lane
+lifecycle or global group invariants. See [lane-group-laws.md](lane-group-laws.md)
+and [lane-stage.md](lane-stage.md).

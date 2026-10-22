@@ -1,6 +1,8 @@
 # core/lanes.ts identities and routing. Seams/staging/corrections are separate
 # unfinished engine crossings, not approximated by these helpers.
 import Base
+import ./extension.bend as E
+import ./write.bend as W
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./constants.bend as K
@@ -125,3 +127,79 @@ def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat) -> R.World:
 
 def laneDirty(+w: R.World, +id: Nat, lane: Nat) -> R.World:
   dirtyLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane)
+
+# lanes.ts:laneStage. Source errored is false, true, or the pending source
+# object; the third case is intentionally not collapsed into true.
+type StageError is Data:
+  StageAnswered{}
+  StageFailed{}
+  StagePendingFrom{source: Nat}
+
+def LEFT_SHOWN() -> U32:
+  1048576
+
+def stageErrored(error: StageError) -> Bool:
+  match error:
+    case StageAnswered{}:
+      False{}
+    case _:
+      True{}
+
+def clearStageConfig(+w: R.World, +id: Nat) -> R.World:
+  B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())))))
+
+def leaveStageEnd(+w: R.World, +id: Nat, +tx: Nat) -> B.Bundle<R.World, Bool>:
+  +w = B.choose(~R.World, Bool.and(Nat.is_ne(tx, 0n), R.Transaction.lane(B.transaction(w, tx))),
+    _ => B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), 0n)), _ => w)
+  +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Empty{}))
+  B.Bundle{clearStageConfig(w, id), False{}}
+
+def leaveStage(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(R.Node.x(B.node(w, id)), 0n), _ => B.Bundle{clearStageConfig(w, id), False{}},
+    _ =>
+      +tx = R.NodeExtension.transaction(B.extension(w, id))
+      +w = B.choose(~R.World, Bool.and(Nat.is_ne(tx, 0n), R.Transaction.shown(B.transaction(w, tx))),
+        _ =>
+          +pair = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, tx)))
+          +pair = Tx.blocked(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair))
+          +w = B.first(R.World, Bool, pair)
+          B.choose(~R.World, B.second(R.World, Bool, pair), _ => w,
+            _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN())))), _ => w)
+      leaveStageEnd(w, id, tx))
+
+def hasStageLane(+w: R.World, +id: Nat) -> Bool:
+  B.choose(~Bool, Nat.is_eq(R.Node.x(B.node(w, id)), 0n), _ => False{},
+    _ =>
+      +tx = R.NodeExtension.transaction(B.extension(w, id))
+      B.choose(~Bool, Nat.is_eq(tx, 0n), _ => False{}, _ => R.Transaction.lane(B.transaction(w, tx))))
+
+def framePending(+w: R.World, +id: Nat, error: StageError) -> Bool:
+  match error:
+    case StagePendingFrom{source}:
+      Bool.and(Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())),
+        Bool.and(Bool.or(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_RECOMPUTING_DEPS())), Bool.not(hasStageLane(w, id))))
+    case _:
+      False{}
+
+def effectStage(+w: R.World, +id: Nat, +lane: Nat, +error: StageError) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, stageErrored(error),
+    _ => B.choose(~B.Bundle<R.World, Bool>, framePending(w, id, error), _ => B.Bundle{W.queuePendingNode(w, id), False{}},
+      _ =>
+        +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY())))
+        B.Bundle{Tx.list(w, id, lane), True{}}),
+    _ => B.Bundle{Tx.list(w, id, lane), True{}})
+
+def computationStage(+w: R.World, +id: Nat, lane: Nat, error: StageError) -> B.Bundle<R.World, Bool>:
+  +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()), _ => w,
+    _ =>
+      +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{}))
+      +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())), K.CONFIG_OVERRIDE())))
+      E.ext(w, id))
+  +w = B.choose(~R.World, stageErrored(error), _ => w,
+    _ => B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))))
+  B.Bundle{Tx.list(w, id, lane), True{}}
+
+def laneStage(+w: R.World, +id: Nat, +lane: Nat, create: Bool, +error: StageError) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, Bool.or(create, Bool.or(stageErrored(error), Bool.or(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_READ()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())))),
+    _ => B.choose(~B.Bundle<R.World, Bool>, B.effect(R.Node.kind(B.node(w, id))), _ => effectStage(w, id, lane, error), _ => computationStage(w, id, lane, error)),
+    _ => leaveStage(w, id))

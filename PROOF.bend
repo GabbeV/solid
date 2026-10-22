@@ -1,4 +1,6 @@
 import Base
+import ./proof/lane-group-laws.bend as GroupLaws
+import ./proof/lane-stage.bend as StageLaws
 import ./proof/lane-blockers.bend as LaneBlockers
 import ./proof/verdict-laws.bend as VerdictLaws
 import ./proof/lane-laws.bend as LaneLaws
@@ -638,3 +640,27 @@ def Laws.linked_peer_open_count_blocks(w, a, b, rest, count):
 
 def Laws.lane_guess_own_flight_is_observed(w, node, extension, tx, nodes, extensions, rest):
   LaneBlockers.ownGuessFlight(w, node, extension, tx, nodes, extensions, rest)
+
+def Laws.lane_unlink_removes_first_and_preserves_world(w, tx, rest, groupRest, prefix, suffix):
+  GroupLaws.unlinkPresent(w, tx, rest, groupRest, prefix, suffix)
+
+def Laws.lane_unlink_absent_member_clears_only_pointer(w, tx, rest, groupRest, prefix):
+  GroupLaws.unlinkAbsent(w, tx, rest, groupRest, prefix)
+
+def Laws.lane_link_existing_group_is_exactly_unchanged(w, a, b, rest, group):
+  GroupLaws.alreadyLinked(w, a, b, rest, group)
+
+def Laws.lane_self_link_allocates_one_group_and_one_member(w, tx, rest, groups):
+  GroupLaws.selfLink(w, tx, rest, groups)
+
+def Laws.lane_stage_cold_unread_pass_preserves_world(w, node, nodes, lane):
+  StageLaws.coldLeave(w, node, nodes, lane)
+
+def Laws.lane_stage_memo_entry_clears_staging_and_lists(w, node, extension, tx, nodes, extensions, txs):
+  StageLaws.memoEnters(w, node, extension, tx, nodes, extensions, txs)
+
+def Laws.lane_stage_failed_effect_marks_and_lists(w, node, extension, tx, nodes, extensions, txs):
+  StageLaws.failedEffectEnters(w, node, extension, tx, nodes, extensions, txs)
+
+def Laws.lane_stage_frame_pending_stays_out_of_lane(w, node, source, nodes, lane):
+  StageLaws.pendingEffectStays(w, node, source, nodes, lane)

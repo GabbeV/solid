@@ -5,6 +5,18 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['lane group unlink keeps a stale pointer','runtime/lanes-state.bend','B.store_transaction(w, lane, R.Transaction.with_links(B.transaction(w, lane), 0n))','w','tests/proof-properties.mjs','unlink','lane-group-laws'],
+  ['lane group unlink removes two occurrences','runtime/lanes-state.bend','P.remove(groups(w, g), lane)','P.remove(P.remove(groups(w, g), lane), lane)','tests/proof-properties.mjs','unlink','lane-group-laws'],
+  ['lane group link does not return its shared identity','runtime/lanes-state.bend','Nat.is_eq(gb, ga)','False{}','tests/proof-properties.mjs','linkLanes','lane-group-laws'],
+  ['lane group self link reads b before initialization','runtime/lanes-state.bend','+w = B.first(R.World, Nat, pair)\n  +ga = B.second(R.World, Nat, pair)\n  +gb = R.Transaction.links(B.transaction(w, b))','+gb = R.Transaction.links(B.transaction(w, b))\n  +w = B.first(R.World, Nat, pair)\n  +ga = B.second(R.World, Nat, pair)','tests/proof-properties.mjs','linkLanes','lane-group-laws'],
+  ['lane stage memo retains superseded frame staging','runtime/lanes-state.bend','R.Node.with_pending(B.node(w, id), R.Empty{})','B.node(w, id)','tests/proof-properties.mjs','computationStage','lane-stage'],
+  ['lane stage leave allocates a cold extension','runtime/lanes-state.bend','B.Bundle{clearStageConfig(w, id), False{}}','B.Bundle{clearStageConfig(E.ext(w, id), id), False{}}','tests/proof-properties.mjs','leaveStage','lane-stage'],
+  ['lane stage steals pending frame leaf','runtime/lanes-state.bend','B.Bundle{W.queuePendingNode(w, id), False{}}','B.Bundle{Tx.list(w, id, lane), True{}}','tests/proof-properties.mjs','effectStage','lane-stage'],
+  ['lane stage treats true error as pending source','runtime/lanes-state.bend','case _:\n      False{}','case _:\n      True{}','tests/proof-properties.mjs','framePending','lane-stage'],
+  ['lane stage keeps a confirmed guess marker','runtime/lanes-state.bend','B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())','R.Node.config(B.node(w, id))','tests/lane-stage-alignment.mjs','computationStage'],
+  ['lane stage always wakes a shown exit','runtime/lanes-state.bend','B.second(R.World, Bool, pair)','False{}','tests/lane-stage-alignment.mjs','leaveStage'],
+  ['lane stage queues first loading in the old frame','runtime/lanes-state.bend','Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED()))','True{}','tests/lane-stage-alignment.mjs','framePending'],
+  ['lane stage ignores an interrupted pass','runtime/lanes-state.bend','stageErrored(error)','False{}','tests/lane-stage-alignment.mjs','laneStage'],
   ['lane blocker ignores open transaction count','runtime/transaction.bend','Nat.is_ne(R.Transaction.open(B.transaction(w, tx)), 0n)','False{}','tests/proof-properties.mjs','blockStep','lane-blockers'],
   ['lane blocker restoration clears the ambient judge','runtime/transaction.bend','R.World.with_judge(w, previous)','R.World.with_judge(w, 0n)','tests/proof-properties.mjs','blockStep','lane-blockers'],
   ['lane blocker ignores linked peer open count','runtime/transaction.bend','Nat.is_ne(R.Transaction.open(B.transaction(w, peer)), 0n)','False{}','tests/proof-properties.mjs','blockStep','lane-blockers'],

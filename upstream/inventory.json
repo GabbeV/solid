@@ -16042,8 +16042,12 @@
           "start": 318,
           "end": 375,
           "sha256": "da7be568409718f03e62c2e6f36d6fda7ea3cb9a904d94fa069f128b5245c6ae",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:laneStage, leaveStage, leaveStageEnd, clearStageConfig, computationStage, effectStage, framePending, hasStageLane; StageError retains false/true/source forms",
+            "status": "partial",
+            "restrictions": "Production typed computation/effect staging now preserves early exit/LEFT_SHOWN parent judgment, current lane clearing, override/frame-staging order, guess confirmation and pending effect frame refusal through actual blocked/queue/list/ext helpers. Active core stage invocation and lane read/write/seam/correction/dissolution still unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:supersede",

@@ -1,4 +1,6 @@
 import Base
+import ./proof/lane-group-laws.bend as GroupLaws
+import ./proof/lane-stage.bend as StageLaws
 import ./runtime/transaction.bend as LaneJudgment
 import ./proof/lane-blockers.bend as LaneBlockers
 import ./runtime/verdict-state.bend as Verdict
@@ -1254,3 +1256,70 @@ law lane_guess_own_flight_is_observed:
   for +extensions: List<&2, R.NodeExtension>
   for +rest: List<&2, R.Transaction>
   {LaneJudgment.guessFlights(LaneBlockers.guessScope(w, node, extension, tx, nodes, extensions, rest), 1n) == B.Bundle{LaneBlockers.guessScope(w, node, extension, tx, nodes, extensions, rest), True{}} : B.Bundle<R.World, Bool>}
+
+law lane_unlink_removes_first_and_preserves_world:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +groupRest: List<&2, List<&2, Nat>>
+  for +prefix: List<&2, Nat>
+  for +suffix: List<&2, Nat>
+  {Lanes.unlink(GroupLaws.frame(w, tx, rest, groupRest, 1n, GroupLaws.before(prefix, suffix)), 1n) == GroupLaws.frame(w, tx, rest, groupRest, 0n, GroupLaws.after(prefix, suffix)) : R.World}
+
+law lane_unlink_absent_member_clears_only_pointer:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +groupRest: List<&2, List<&2, Nat>>
+  for +prefix: List<&2, Nat>
+  {Lanes.unlink(GroupLaws.frame(w, tx, rest, groupRest, 1n, GroupLaws.peers(prefix)), 1n) == GroupLaws.frame(w, tx, rest, groupRest, 0n, GroupLaws.peers(prefix)) : R.World}
+
+law lane_link_existing_group_is_exactly_unchanged:
+  for +w: R.World
+  for +a: R.Transaction
+  for +b: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +group: Nat
+  {Lanes.linkLanes(GroupLaws.linkedFrame(w, a, b, rest, group), 1n, 2n) == GroupLaws.linkedFrame(w, a, b, rest, group) : R.World}
+
+law lane_self_link_allocates_one_group_and_one_member:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +rest: List<&2, R.Transaction>
+  for +groups: List<&2, List<&2, Nat>>
+  {Lanes.linkLanes(GroupLaws.selfFrame(w, tx, rest, groups), 1n, 1n) == GroupLaws.selfAllocated(w, tx, rest, groups) : R.World}
+
+law lane_stage_cold_unread_pass_preserves_world:
+  for +w: R.World
+  for +node: R.Node
+  for +nodes: List<&2, R.Node>
+  for +lane: Nat
+  {Lanes.laneStage(StageLaws.coldScope(w, node, nodes), 1n, lane, False{}, Lanes.StageAnswered{}) == B.Bundle{StageLaws.coldScope(w, node, nodes), False{}} : B.Bundle<R.World, Bool>}
+
+law lane_stage_memo_entry_clears_staging_and_lists:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +tx: R.Transaction
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +txs: List<&2, R.Transaction>
+  {Lanes.laneStage(StageLaws.member(w, node, extension, tx, nodes, extensions, txs, R.Memo{}), 1n, 1n, True{}, Lanes.StageAnswered{}) == B.Bundle{StageLaws.entered(w, node, extension, tx, nodes, extensions, txs, False{}), True{}} : B.Bundle<R.World, Bool>}
+
+law lane_stage_failed_effect_marks_and_lists:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +tx: R.Transaction
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +txs: List<&2, R.Transaction>
+  {Lanes.laneStage(StageLaws.member(w, node, extension, tx, nodes, extensions, txs, R.Render{}), 1n, 1n, False{}, Lanes.StageFailed{}) == B.Bundle{StageLaws.entered(w, node, extension, tx, nodes, extensions, txs, True{}), True{}} : B.Bundle<R.World, Bool>}
+
+law lane_stage_frame_pending_stays_out_of_lane:
+  for +w: R.World
+  for +node: R.Node
+  for +source: R.Node
+  for +nodes: List<&2, R.Node>
+  for +lane: Nat
+  {Lanes.laneStage(StageLaws.frameScope(w, node, source, nodes), 1n, lane, False{}, Lanes.StagePendingFrom{2n}) == B.Bundle{StageLaws.queued(StageLaws.frameScope(w, node, source, nodes)), False{}} : B.Bundle<R.World, Bool>}
