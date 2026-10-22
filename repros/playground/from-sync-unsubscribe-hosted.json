@@ -1,0 +1,76 @@
+{
+  "name": "from-sync-unsubscribe",
+  "url": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
+  "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
+  "compilerVersion": "mizulu/solid2@aece1d44",
+  "runtime": "esm.sh PR build mizulu/solid2@aece1d44; the published rc.17 runtime does not yet export from().",
+  "solidVersion": "mizulu/solid2@aece1d44",
+  "browser": "154.0.8037.57",
+  "control": "passed before restoring and saving",
+  "reopened": true,
+  "errors": [
+    {
+      "phase": "baseline",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "baseline",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "restore",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "restore",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "reopened",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "reopened",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "reopened",
+      "message": "unsubscribe failed"
+    },
+    {
+      "phase": "reopened",
+      "message": "unsubscribe failed"
+    }
+  ],
+  "reports": [
+    {
+      "phase": "initial",
+      "message": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "phase": "initial",
+      "message": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "phase": "baseline",
+      "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+    },
+    {
+      "phase": "restore",
+      "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+    },
+    {
+      "phase": "reopened",
+      "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+    },
+    {
+      "phase": "reopened",
+      "message": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "phase": "reopened",
+      "message": "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › computed"
+    }
+  ],
+  "createdAt": "2026-10-22T13:59:12.842Z"
+}

@@ -1,4 +1,7 @@
 import Base
+import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
+import ./runtime/deferred-lifecycle.bend as DeferredLife
+import ./runtime/pending-state.bend as DeferredPending
 import ./proof/deferred-lag.bend as DeferredLaws
 import ./runtime/deferred-state.bend as DeferredWalk
 import ./proof/affects-scope.bend as AffectsLaws
@@ -1906,3 +1909,62 @@ law deferred_lag_worldFrame:
   for +work: List<&2, DeferredWalk.LagTask>
   for +seen: List<&2, Nat>
   {DeferredLaws.eraseFault(B.first(R.World, Nat, DeferredWalk.walk(fuel, w, lagging, work, seen))) == DeferredLaws.eraseFault(w) : R.World}
+
+law deferred_life_nullLand:
+  for w: R.World
+  for state: R.DeferredState
+  for held: Bool
+  {DeferredLife.land(w, state, R.Null{}, held) == B.Bundle{w, state} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_staleLand:
+  for w: R.World
+  for node: Nat
+  for marked: Bool
+  for answered: Bool
+  for lagging: List<&2, Nat>
+  for held: Bool
+  {DeferredLife.land(w, R.DeferredState{R.DeferredCell{node, R.Reference{1n}, marked, answered}, lagging}, R.Reference{2n}, held) == B.Bundle{w, R.DeferredState{R.DeferredCell{node, R.Reference{1n}, marked, answered}, lagging}} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_unmarkedLand:
+  for w: R.World
+  for node: Nat
+  for answered: Bool
+  for lagging: List<&2, Nat>
+  {DeferredLife.land(w, R.DeferredState{R.DeferredCell{node, R.Reference{1n}, False{}, answered}, lagging}, R.Reference{1n}, False{}) == B.Bundle{w, R.DeferredState{R.DeferredCell{node, R.Null{}, False{}, answered}, DeferredPending.remove(lagging, node)}} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_markedAsk:
+  for w: R.World
+  for node: Nat
+  for prior: R.Value
+  for flight: R.Value
+  for answered: Bool
+  for lagging: List<&2, Nat>
+  {DeferredLife.ask(w, R.DeferredState{R.DeferredCell{node, prior, True{}, answered}, lagging}, flight) == B.Bundle{w, R.DeferredState{R.DeferredCell{node, flight, True{}, answered}, B.choose(~List<&2, Nat>, B.contains(lagging, node), _ => lagging, _ => B.append(Nat, lagging, [node]))}} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_idleEnd:
+  for +w: R.World
+  for +node: Nat
+  for marked: Bool
+  for answered: Bool
+  for lagging: List<&2, Nat>
+  {DeferredLife.end(w, R.DeferredState{R.DeferredCell{node, R.Null{}, marked, answered}, lagging}) == B.Bundle{w, R.DeferredState{R.DeferredCell{node, R.Null{}, marked, answered}, lagging}} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_emptyHeld:
+  for +fuel: Nat
+  for w: R.World
+  for node: Nat
+  {DeferredLife.landHeld(fuel, w, node, 0n) == w : R.World}
+
+law deferred_life_closedFailure:
+  for w: R.World
+  for state: R.DeferredState
+  for error: R.Value
+  {DeferredLife.sourceFailed(w, state, False{}, error) == B.Bundle{R.World.with_fault(w, R.CallbackThrown{error}), state} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_answeredSticky:
+  for w: R.World
+  for node: Nat
+  for flight: R.Value
+  for marked: Bool
+  for lagging: List<&2, Nat>
+  {R.DeferredCell.answered(R.DeferredState.cell(B.second(R.World, R.DeferredState, DeferredLife.openWindow(w, R.DeferredState{R.DeferredCell{node, flight, marked, True{}}, lagging})))) == True{} : Bool}

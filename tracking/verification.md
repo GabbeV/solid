@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid 5b1b777648a89b6e207e8bb78514d5c03420e08b (rc.17); Bend
+Pins: Solid aece1d448b648d6e946d098f565445d30124b8c2 (declares rc.17); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -27,7 +27,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 455 isolated source-changing copies: 384 are rejected by
+- mutations compiles 480 isolated source-changing copies: 406 are rejected by
   differential assertions and seventy-one by proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
@@ -372,3 +372,14 @@ The aece1d44 refresh adds 32 mark/error/loading/compute/cleanup/action-binding
 histories (73 affects, 3,410 total) and six capture mutants (455 total, partition
 384 finite and 71 kernel). Runtime operations and existing theorem domains are
 unchanged. The new from/onSupersede source remains explicitly unported.
+
+
+The deferred lifecycle dependency preserves the public total (3,410) and closed
+regressions (72), adds eight quantified closure/window/catch properties and
+1,784 private comparisons (1,664 closure/window, 120 actual serve/handleAsync).
+All 25 new mutants are rejected after strengthening the original-error cause
+assertion; the original accepted mutation is excluded. Combined with the earlier
+455-variant full pass on unchanged preceding runtime definitions, the total is
+480 (406 finite, 74 kernel). A fresh complete run is additional pending work.
+Public createDeferred remains unfinished. The full public/alignment suites and
+composed root kernel pass; see tracking/checked.json for the final input seal.

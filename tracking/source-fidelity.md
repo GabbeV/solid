@@ -19,6 +19,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Deferred lifecycle dependencies
+
+[deferred-lifecycle.md](deferred-lifecycle.md) maps ask/land/end, sticky loading
+windows, the original-exception catch and post-handleAsync selection. Explicit
+closure state and shared Set membership are threaded without replacing those
+source decisions. Registration, public construction, streams and watch hook
+integration remain unfinished; no active workaround is installed.
+
 ## Public non-store affects crossing
 
 [affects-scope.md](affects-scope.md) maps registration, production argument

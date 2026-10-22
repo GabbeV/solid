@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,410 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 455; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 480; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -343,3 +343,16 @@ passes 336 files /5,501 tests. Two source-only from integration defects are
 confirmed with reduced JSX and Node repros, passing controls and isolated
 candidate patches; see the issue register. No issue/PR has been filed and no
 semantic workaround is active.
+
+
+The deferred lifecycle dependency adds the original closure-local flight/mark
+bookkeeping, first-held-input landing, disposal guard, loading window and source
+catch. Eight quantified properties and 1,784 private comparisons check these
+segments. Public createDeferred is still unfinished; the public/closed counts
+remain 3,410 /72. No active semantic deviation is introduced.
+
+The lifecycle checkpoint rejects 25 additional compiled mutations (22 finite
+assertions, three kernel assertions), bringing the distinct useful total to 480
+(406 finite, 74 kernel). The earlier 455-variant full run and the corrected
+25-variant run cover this checkpoint's unchanged prior runtime plus new helpers.
+A new complete run is also scheduled; it is not credited until completion.

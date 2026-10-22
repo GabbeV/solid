@@ -2,6 +2,8 @@
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 schemas={
+'DeferredCell': [('node','Nat'),('flight','Value'),('marked','Bool'),('answered','Bool')],
+'DeferredState': [('cell','DeferredCell'),('lagging','List<&2, Nat>')],
 'ArrayData': [('slots','List<&2, Slot>')],
 'RepeatFrame': [('repeat','Nat'),('newLen','Nat'),('from','Nat'),('to','Nat'),('prevTo','Nat'),('keepStart','Nat'),('keepEnd','Nat'),('mappings','Nat'),('nodes','List<&2, Nat>')],
 'SmallScan': [('srcPos','List<&2, Nat>'),('dstPos','List<&2, Nat>'),('runs','List<&2, Nat>'),('budget','Nat'),('i','Nat'),('j','Nat'),('inRun','Bool')],

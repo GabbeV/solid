@@ -44,5 +44,6 @@ original helper request by devagrawal09, not a report filed by GabbeV. Targeted
 issue/PR searches found no duplicate or landed repair as of this review.
 The native baseline full suite passes, demonstrating that its existing tests miss
 this composition. See [the validation record](deferred-buffered-from-validation.json)
-for exact size rows and browser evidence. Hosted sharing is still being investigated:
-released rc.17 does not export from, so a link must retain the source-built runtime.
+for exact size rows and browser evidence. [Open the saved playground](https://s.olid.uk/id/VfGd9n1GQDKvvXQNGb2MWw), using mizulu/solid2@aece1d44.
+The paired control passed before saving; the original failure was verified again
+after reopening the saved share. Released rc.17 itself does not yet export from.

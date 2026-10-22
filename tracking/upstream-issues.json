@@ -257,7 +257,10 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed."
+      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed.",
+      "playgroundUrl": "https://s.olid.uk/id/VfGd9n1GQDKvvXQNGb2MWw",
+      "playgroundHostedVerification": "repros/playground/deferred-buffered-from-hosted.json",
+      "playgroundPackageVersion": "mizulu/solid2@aece1d44"
     },
     {
       "id": "SOLID-FROM-SYNC-UNSUBSCRIBE-008",
@@ -276,7 +279,10 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": null,
-      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed."
+      "bendScope": "The affected from/createDeferred APIs are not admitted. No workaround is installed.",
+      "playgroundUrl": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
+      "playgroundHostedVerification": "repros/playground/from-sync-unsubscribe-hosted.json",
+      "playgroundPackageVersion": "mizulu/solid2@aece1d44"
     }
   ]
 }

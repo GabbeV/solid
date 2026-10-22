@@ -237,6 +237,72 @@ type TraceEvent is Data:
   Disposed{id: Nat}
   CleanupObserved{callback: Nat, code: Nat}
 
+type DeferredCell is Data:
+  DeferredCell{node: Nat, flight: Value, marked: Bool, answered: Bool}
+
+def DeferredCell.node(r: DeferredCell) -> Nat:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      node
+
+def DeferredCell.with_node(r: DeferredCell, v: Nat) -> DeferredCell:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      DeferredCell{v, flight, marked, answered}
+
+def DeferredCell.flight(r: DeferredCell) -> Value:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      flight
+
+def DeferredCell.with_flight(r: DeferredCell, v: Value) -> DeferredCell:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      DeferredCell{node, v, marked, answered}
+
+def DeferredCell.marked(r: DeferredCell) -> Bool:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      marked
+
+def DeferredCell.with_marked(r: DeferredCell, v: Bool) -> DeferredCell:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      DeferredCell{node, flight, v, answered}
+
+def DeferredCell.answered(r: DeferredCell) -> Bool:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      answered
+
+def DeferredCell.with_answered(r: DeferredCell, v: Bool) -> DeferredCell:
+  match r:
+    case DeferredCell{node, flight, marked, answered}:
+      DeferredCell{node, flight, marked, v}
+
+type DeferredState is Data:
+  DeferredState{cell: DeferredCell, lagging: List<&2, Nat>}
+
+def DeferredState.cell(r: DeferredState) -> DeferredCell:
+  match r:
+    case DeferredState{cell, lagging}:
+      cell
+
+def DeferredState.with_cell(r: DeferredState, v: DeferredCell) -> DeferredState:
+  match r:
+    case DeferredState{cell, lagging}:
+      DeferredState{v, lagging}
+
+def DeferredState.lagging(r: DeferredState) -> List<&2, Nat>:
+  match r:
+    case DeferredState{cell, lagging}:
+      lagging
+
+def DeferredState.with_lagging(r: DeferredState, v: List<&2, Nat>) -> DeferredState:
+  match r:
+    case DeferredState{cell, lagging}:
+      DeferredState{cell, v}
+
 type ArrayData is Data:
   ArrayData{slots: List<&2, Slot>}
 

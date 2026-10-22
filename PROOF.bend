@@ -1,4 +1,5 @@
 import Base
+import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
 import ./proof/deferred-lag.bend as DeferredLaws
 import ./proof/affects-scope.bend as AffectsLaws
 import ./proof/affects-program.bend as AffectsProgram
@@ -925,3 +926,27 @@ def Laws.deferred_lag_emptyDeps(w, lagging, rest, seen, fuel, tail):
 
 def Laws.deferred_lag_worldFrame(fuel, w, lagging, work, seen):
   DeferredLaws.worldFrame(fuel, w, lagging, work, seen)
+
+def Laws.deferred_life_nullLand(w, state, held):
+  DeferredLifeLaws.nullLand(w, state, held)
+
+def Laws.deferred_life_staleLand(w, node, marked, answered, lagging, held):
+  DeferredLifeLaws.staleLand(w, node, marked, answered, lagging, held)
+
+def Laws.deferred_life_unmarkedLand(w, node, answered, lagging):
+  DeferredLifeLaws.unmarkedLand(w, node, answered, lagging)
+
+def Laws.deferred_life_markedAsk(w, node, prior, flight, answered, lagging):
+  DeferredLifeLaws.markedAsk(w, node, prior, flight, answered, lagging)
+
+def Laws.deferred_life_idleEnd(w, node, marked, answered, lagging):
+  DeferredLifeLaws.idleEnd(w, node, marked, answered, lagging)
+
+def Laws.deferred_life_emptyHeld(fuel, w, node):
+  DeferredLifeLaws.emptyHeld(fuel, w, node)
+
+def Laws.deferred_life_closedFailure(w, state, error):
+  DeferredLifeLaws.closedFailure(w, state, error)
+
+def Laws.deferred_life_answeredSticky(w, node, flight, marked, lagging):
+  DeferredLifeLaws.answeredSticky(w, node, flight, marked, lagging)

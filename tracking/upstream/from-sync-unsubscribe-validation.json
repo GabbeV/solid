@@ -124,7 +124,13 @@
     "standardScenarios": "All four unchanged; focused import deltas are recorded, no caps changed."
   },
   "performance": "No timings claimed. The deferred predicate runs only on the first pull; the other candidate covers immediate closed-subscription teardown.",
-  "hostedPlayground": "Not yet saved: published rc.17 lacks from; source-bundle custom import-map support is being investigated. Local JSX verification is complete.",
+  "hostedPlayground": {
+    "url": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
+    "verification": "repros/playground/from-sync-unsubscribe-hosted.json",
+    "sourceBuild": "mizulu/solid2@aece1d44",
+    "controlPassed": true,
+    "savedShareReopened": true
+  },
   "related": [
     "https://github.com/solidjs/solid/pull/4218",
     "https://github.com/solidjs/solid/issues/4182"

@@ -36,8 +36,9 @@ asserts the defect/controls by default and supports --expect-fixed for the candi
 Rolldown 1.2.11 adds 12 minified /2 Brotli bytes to from and the combined import;
 all four standard scenarios remain unchanged and no caps changed. No timing claim
 is made. [The validation record](from-sync-unsubscribe-validation.json) retains all
-size rows and browser evidence. Hosted sharing is still being investigated because
-the released rc.17 runtime lacks from.
+size rows and browser evidence. [Open the saved playground](https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g), using mizulu/solid2@aece1d44.
+The paired control passed before saving, and the original failure was verified
+after reopening the saved share. Released rc.17 does not export from.
 
 Related: [#4218](https://github.com/solidjs/solid/pull/4218), whose review-fix summary
 explicitly describes swallowing throwing unsubscribes after iterator closure;
