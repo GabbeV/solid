@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 231 rejected compiled mutations,
+Current verification: 3114 differential histories, 240 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -43,6 +43,17 @@ across four sufficient budgets. One new proof mutation rejects reversed child
 order. Public-history and closed-regression counts stay unchanged. The executable
 [examples/list.bend](../examples/list.bend) also demonstrates real mapArray
 reorder/growth followed by children flattening and root disposal.
+
+## Lane identity and routing dependency
+
+[Lane identity](lane-identity.md) now retains actual transaction allocation,
+cached verdict lanes, shared group mutation/aliasing, ancestry, pass entry,
+staged-reader intake and lane-dirty flags. One stagedRead body serves both core
+reads and lane routing; separate truth/display helpers retain slot precedence.
+1,367 native helper programs, 392 value controls and five quantified properties
+support this restricted layer. Nine new mutations bring the total to 240.
+Read/write/stage hooks, blockers and reveal/correction/dissolution remain open;
+public verdict/optimistic APIs are not admitted by these helper results.
 
 ## Mark-engine dependency
 

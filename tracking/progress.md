@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 231; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 240; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -200,3 +200,13 @@ and four quantified whole-World properties check this module. Eight added
 compiled mutations bring the current total to 231. Public isPending/latest and
 mark declarers are not connected yet, so public-history and composed closed
 regression totals stay 3114 / 72. See [affects-marks.md](affects-marks.md).
+
+
+The following lane dependency milestone adds allocation/cached verdict lanes,
+shared mutable group identities, raw parent ancestry, enterLane routing and
+staged-reader/lane-dirty bookkeeping. Core and lane routing now share one actual
+stagedRead body. 1,367 native helper programs, 392 value controls, five quantified
+identity/value/allocation properties and nine added mutations check this layer.
+Current total: 240 compiled mutations; public histories / closed regressions
+remain 3114 / 72. Lane read/write/stage/seam/correction/dissolution and public
+verdict/declarer engines remain unfinished; see [lane-identity.md](lane-identity.md).

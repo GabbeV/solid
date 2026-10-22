@@ -10412,9 +10412,9 @@
           "sha256": "7e7943780cee7596275cd1babdd4c6299a6f2c82961e924a2e1084588536981e",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
+            "bend": "runtime/read-state.bend:stagedRead; runtime/core.bend:stagedRead forwards; runtime/lanes-state.bend:enterLane invokes the same helper",
             "status": "partial",
-            "restrictions": "Source REACTIVE_STAGED_READ flag and uninitialized guard are retained in the synchronous profile. Lane stagedReaders collection and callers in other unported paths remain unfinished."
+            "restrictions": "Source uninitialized guard, pass flag and installed lane hook collector now execute through one shared body. Full package initialization profile installs the source hook; public lane/verdict scopes and seam consumption remain unfinished."
           }
         },
         {
@@ -15902,16 +15902,24 @@
           "start": 102,
           "end": 106,
           "sha256": "70711a088b3f99c7bc39f84a08087ed8cde5f9e58bbfc0e1d6d7adc30d78c173",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:newLane",
+            "status": "partial",
+            "restrictions": "Actual lane transaction allocation and live-lane append; lane seams are unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:display",
           "start": 110,
           "end": 113,
           "sha256": "290103855a8e11f4c2f3f2e215302b25e108d56f4d2d2b4280db1d9c1985b56b",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:display",
+            "status": "partial",
+            "restrictions": "Shown raw transaction and nullable lane payload selection; called only by internal helper probes until active lane reads/seams are connected."
+          }
         },
         {
           "key": "core/lanes.ts:guessedValueOf",
@@ -15958,24 +15966,36 @@
           "start": 232,
           "end": 251,
           "sha256": "035775f216894b2043469314d1422bd56f7caf5f9bfc8eef63cf443eedfc5592",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:enterLane",
+            "status": "partial",
+            "restrictions": "LANE_READ before captured passLane, same/ancestor/descendant/unrelated routing; joined plus staged intake retained. No active core read/seam hook installed yet."
+          }
         },
         {
           "key": "core/lanes.ts:under",
           "start": 253,
           "end": 256,
           "sha256": "63c418431900ed1c60f2485d2082c0dcc28fecf680250cff01c7520b7d771d04",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:under, underLoop",
+            "status": "partial",
+            "restrictions": "Raw parent identity; stops at a non-lane parent. Explicit finite budget; structurally valid parent chains."
+          }
         },
         {
           "key": "core/lanes.ts:linkLanes",
           "start": 258,
           "end": 270,
           "sha256": "76a2585f302180be9b7905a3e2d566ce7a34b89929c19f213929a3c1e02257eb",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:linkLanes, groupLoop",
+            "status": "partial",
+            "restrictions": "Shared mutable array identity in a stable group arena; source push/member-repoint order and retired aliases retained."
+          }
         },
         {
           "key": "core/lanes.ts:linkBlocked",
@@ -15990,16 +16010,24 @@
           "start": 284,
           "end": 290,
           "sha256": "647772252dfea7e48d52c9810a12f0d18810c6fb5709e2569c8a8b038abc5114",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:unlink",
+            "status": "partial",
+            "restrictions": "Source indexOf/remove-first semantics and shared-array mutation before clearing only this member pointer."
+          }
         },
         {
           "key": "core/lanes.ts:verdictLane",
           "start": 299,
           "end": 301,
           "sha256": "613be1815fa7536984b75fe8eea8784670541d0a53a3ce020aaf6ef34fd6b062",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:verdictLane",
+            "status": "partial",
+            "restrictions": "Cached raw transaction identity; allocates once per parent. Public verdict dispatch remains unfinished."
+          }
         },
         {
           "key": "core/lanes.ts:laneStage",
@@ -18507,16 +18535,24 @@
           "start": 1261,
           "end": 1266,
           "sha256": "9a053f6c8a253df00cc82f7a81a15c563f1e277a10b504c77ac39e171f41e710",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:laneDirty",
+            "status": "partial",
+            "restrictions": "Actual subscriber walk, same-group membership and non-lane effect fallback, without enqueuing. Active lane callers remain unfinished."
+          }
         },
         {
           "key": "core/scheduler.ts:sameLane",
           "start": 1268,
           "end": 1270,
           "sha256": "43224409466cc676e1ab871aa08b79885714b3f56d0d07e7d474ef544ffc72b8",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:sameLane",
+            "status": "partial",
+            "restrictions": "Raw transaction or nonnull shared group identity; does not resolve redirects. Active lane callers remain unfinished."
+          }
         },
         {
           "key": "core/scheduler.ts:commitPendingNode",
@@ -19807,8 +19843,12 @@
           "start": 15,
           "end": 19,
           "sha256": "51876be07247938a3c2d43cd7d8df26309fc175801f9db1fd26853517de71351",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/truth-state.bend:laneValueOf",
+            "status": "partial",
+            "restrictions": "Exact guess/staged/lane/committed selection with nullable Slot distinct from undefined/falsy payloads; truthRead/truthConfirmed/truth and active lane callers unfinished."
+          }
         },
         {
           "key": "core/truth.ts:truthRead",

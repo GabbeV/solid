@@ -193,9 +193,9 @@
       "restrictions": "Production target flag update -> insertIntoHeap -> schedule, including REASK classification; separate from public deferred refresh watcher now in signals.bend. Production typed thenable/iterator reask paths execute. Dev/observe and active lane/truth scopes remain unfinished. Reviewed #4168: dev guard now exempts disposalDepth; production branches are unchanged."
     },
     "core/core.ts:stagedRead": {
-      "bend": "runtime/core.bend:stagedRead; serve invokes it on staged selection",
+      "bend": "runtime/read-state.bend:stagedRead; runtime/core.bend:stagedRead forwards; runtime/lanes-state.bend:enterLane invokes the same helper",
       "status": "partial",
-      "restrictions": "Source REACTIVE_STAGED_READ flag and uninitialized guard are retained in the synchronous profile. Lane stagedReaders collection and callers in other unported paths remain unfinished."
+      "restrictions": "Source uninitialized guard, pass flag and installed lane hook collector now execute through one shared body. Full package initialization profile installs the source hook; public lane/verdict scopes and seam consumption remain unfinished."
     },
     "core/core.ts:markUnflushedStaged": {
       "bend": "runtime/read-state.bend:markUnflushedStaged",
@@ -781,6 +781,56 @@
       "bend": "runtime/affects-marks.bend:repoll, repollWith, repollWork",
       "status": "partial",
       "restrictions": "Actual enqueueSub and source-order depth-first subscriber walk; shared seen set and effect cutoff. Derived-store family metadata/hops remain outside the admitted grammar."
+    },
+    "core/lanes.ts:newLane": {
+      "bend": "runtime/lanes-state.bend:newLane",
+      "status": "partial",
+      "restrictions": "Actual lane transaction allocation and live-lane append; lane seams are unfinished."
+    },
+    "core/lanes.ts:verdictLane": {
+      "bend": "runtime/lanes-state.bend:verdictLane",
+      "status": "partial",
+      "restrictions": "Cached raw transaction identity; allocates once per parent. Public verdict dispatch remains unfinished."
+    },
+    "core/lanes.ts:display": {
+      "bend": "runtime/lanes-state.bend:display",
+      "status": "partial",
+      "restrictions": "Shown raw transaction and nullable lane payload selection; called only by internal helper probes until active lane reads/seams are connected."
+    },
+    "core/lanes.ts:under": {
+      "bend": "runtime/lanes-state.bend:under, underLoop",
+      "status": "partial",
+      "restrictions": "Raw parent identity; stops at a non-lane parent. Explicit finite budget; structurally valid parent chains."
+    },
+    "core/lanes.ts:linkLanes": {
+      "bend": "runtime/lanes-state.bend:linkLanes, groupLoop",
+      "status": "partial",
+      "restrictions": "Shared mutable array identity in a stable group arena; source push/member-repoint order and retired aliases retained."
+    },
+    "core/lanes.ts:unlink": {
+      "bend": "runtime/lanes-state.bend:unlink",
+      "status": "partial",
+      "restrictions": "Source indexOf/remove-first semantics and shared-array mutation before clearing only this member pointer."
+    },
+    "core/lanes.ts:enterLane": {
+      "bend": "runtime/lanes-state.bend:enterLane",
+      "status": "partial",
+      "restrictions": "LANE_READ before captured passLane, same/ancestor/descendant/unrelated routing; joined plus staged intake retained. No active core read/seam hook installed yet."
+    },
+    "core/scheduler.ts:sameLane": {
+      "bend": "runtime/lanes-state.bend:sameLane",
+      "status": "partial",
+      "restrictions": "Raw transaction or nonnull shared group identity; does not resolve redirects. Active lane callers remain unfinished."
+    },
+    "core/scheduler.ts:laneDirty": {
+      "bend": "runtime/lanes-state.bend:laneDirty",
+      "status": "partial",
+      "restrictions": "Actual subscriber walk, same-group membership and non-lane effect fallback, without enqueuing. Active lane callers remain unfinished."
+    },
+    "core/truth.ts:laneValueOf": {
+      "bend": "runtime/truth-state.bend:laneValueOf",
+      "status": "partial",
+      "restrictions": "Exact guess/staged/lane/committed selection with nullable Slot distinct from undefined/falsy payloads; truthRead/truthConfirmed/truth and active lane callers unfinished."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

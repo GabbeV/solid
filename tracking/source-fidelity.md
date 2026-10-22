@@ -18,6 +18,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane identity and routing
+
+[lane-identity.md](lane-identity.md) maps allocation/cache, raw ancestry, shared
+mutable group identity and source mutation order, pass entry and value selection.
+Core/lane staged reads now call one body with the source collector return point.
+Native helpers and five scoped quantified properties support these operations;
+active read/seam/correction/dissolution/declarer crossings remain unfinished.
+
 ## Not-final marks
 
 [affects-marks.md](affects-marks.md) maps source count/coverage/repoll operations,

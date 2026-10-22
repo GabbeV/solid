@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-laws.bend as LaneLaws
 import ./proof/mark-laws.bend as MarkLaws
 import ./proof/array-laws.bend as ArrayLaws
 import ./proof/array-write.bend as ArrayWrite
@@ -590,3 +591,18 @@ def Laws.nonlast_mark_does_not_repoll(w, node, extension, nodes, extensions, cou
 
 def Laws.inactive_mark_gate_preserves_world(w, id):
   MarkLaws.inactive(w, id)
+
+def Laws.new_lane_allocation_preserves_mainline(w, parent):
+  LaneLaws.new_contract(w, parent)
+
+def Laws.cached_verdict_lane_does_not_allocate(w, tx, suffix, cached):
+  LaneLaws.cached(w, tx, suffix, cached)
+
+def Laws.shared_nonnull_lane_group_is_one_lane(w, a, b, suffix, group):
+  LaneLaws.shared(w, a, b, suffix, group)
+
+def Laws.lane_derivation_staging_is_latest(w, node, suffix, value):
+  LaneLaws.staged(w, node, suffix, value)
+
+def Laws.lane_guess_slot_precedes_staging(w, node, extension, nodes, extensions, pending, value):
+  LaneLaws.guess(w, node, extension, nodes, extensions, pending, value)

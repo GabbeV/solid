@@ -5,6 +5,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['lane allocation leaks into mainline transactions','runtime/lanes-state.bend','Tx.newTransaction(w, True{}, parent)','Tx.newTransaction(w, False{}, parent)','tests/proof-properties.mjs','newLane','lane-laws'],
+  ['lane verdict cache always allocates','runtime/lanes-state.bend','Nat.is_ne(id, 0n)','False{}','tests/proof-properties.mjs','verdictLane','lane-laws'],
+  ['lane shared groups are ignored','runtime/lanes-state.bend','Bool.and(Nat.is_ne(R.Transaction.links(B.transaction(w, a)), 0n), Nat.is_eq(R.Transaction.links(B.transaction(w, a)), R.Transaction.links(B.transaction(w, b))))','False{}','tests/proof-properties.mjs','sameLane','lane-laws'],
+  ['lane guesses serve staged truth instead of their guess','runtime/truth-state.bend','Bool.not(B.has(R.Node.config(n), K.CONFIG_GUESS()))','True{}','tests/proof-properties.mjs','laneValueOf','lane-laws'],
+  ['lane merging leaves members pointing to retired group','runtime/lanes-state.bend','B.store_transaction(w, member, R.Transaction.with_links(B.transaction(w, member), ga))','w','tests/lanes-state-alignment.mjs','groupLoop'],
+  ['lane unlink does not mutate the shared group','runtime/lanes-state.bend','storeGroup(w, g, P.remove(groups(w, g), lane))','w','tests/lanes-state-alignment.mjs','unlink'],
+  ['lane first read loses joined staged-reader intake','runtime/lanes-state.bend','Bool.and(B.has(flags, K.REACTIVE_JOINED()), B.has(flags, K.REACTIVE_STAGED_READ()))','False{}','tests/lanes-state-alignment.mjs','enterLane'],
+  ['lane dirty skips unowned render readers','runtime/lanes-state.bend','B.effect(R.Node.kind(B.node(w, reader)))','False{}','tests/lanes-state-alignment.mjs','dirtyLoop'],
+  ['lane staged read includes never-initialized source','runtime/read-state.bend','B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())','False{}','tests/lanes-state-alignment.mjs','stagedRead'],
   ['mark global count fails to increment','runtime/affects-marks.bend','1n+R.World.activeMarks(w)','R.World.activeMarks(w)','tests/proof-properties.mjs','mark','mark-laws'],
   ['mark node count fails to increment','runtime/affects-marks.bend','1n+R.NodeExtension.marks(B.extension(w, id))','R.NodeExtension.marks(B.extension(w, id))','tests/proof-properties.mjs','mark','mark-laws'],
   ['mark nonlast removal reports last','runtime/affects-marks.bend','B.Bundle{w, False{}}','B.Bundle{w, True{}}','tests/proof-properties.mjs','unmark','mark-laws'],

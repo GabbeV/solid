@@ -59,3 +59,15 @@ def resyncUnflushedCompanions(+w: R.World) -> R.World:
     _ =>
       +w = clearPromoted(R.World.promotedWrites(w), w)
       R.World.with_promotedWrites(w, []))
+
+# core/core.ts:stagedRead, shared with lane routing to keep one implementation.
+# The full package profile installs laneSeamsHook. Public scopes remain inactive
+# until the rest of that engine is ported; passLane zero skips the collector.
+def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
+  B.choose(~R.World, B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED()), _ => w,
+    _ =>
+      +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ())))
+      B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => w,
+        _ =>
+          +state = R.World.laneState(w)
+          R.World.with_laneState(w, R.LaneState.with_stagedReaders(state, B.append(Nat, R.LaneState.stagedReaders(state), [reader])))))

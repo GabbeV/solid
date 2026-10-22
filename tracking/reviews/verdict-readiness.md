@@ -73,3 +73,29 @@ baseline. Selected native verdict/deferred tests are recorded in checks.log as
 source-only validation; they add no Bend history, mutation or proof counts.
 No verdict/lane implementation, kernel modification, source repin or semantic
 deviation is introduced by this review.
+
+## Progress after the readiness review
+
+The mark dependency and lane identities/grouping/routing now execute; see
+[marks](../affects-marks.md) and [lane identity](../lane-identity.md). Those
+restricted helper results do not close the public engine crossings above.
+
+Next return points, following the identity layer:
+
+- Verdict `watchVerdict`, `route`, `verdictRead`, provisional/pending judgment,
+  quiet-source checks and observeFlight use the actual new lane identities and
+  existing join/hold/stale-reader helpers. Their ambient globals and source
+  statement order must remain explicit.
+- Active lane blockers must extend the transaction judgment, preserving its
+  saved `judge` and own-flight distinction. Calling the old no-lane blocker on
+  an active parent would omit nested/group holds.
+- `laneStage`, `laneRead`, truth and correction comparisons call raw `_equals`
+  at source sites. Do not substitute core `isSame`'s error-catching policy:
+  custom comparators need their own continuation/exception return points.
+- `dissolveLane` and `laneSeam` call commit/owner disposal on live member arrays.
+  Resume after the original callback, retaining captured identities and re-reading
+  live bounds; do not snapshot these walks. The explicit slice in laneCorrections
+  and reverse index in endLanes remain different source controls.
+- Only after those paths and core seating/publication hooks exist should the
+  latest/isPending entry/finally and read dispatch admit public active scopes.
+  A passing entry-only callback fixture would not make the missing engine inert.

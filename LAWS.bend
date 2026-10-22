@@ -1,4 +1,7 @@
 import Base
+import ./runtime/lanes-state.bend as Lanes
+import ./runtime/truth-state.bend as Truth
+import ./proof/lane-laws.bend as LaneLaws
 import ./runtime/affects-marks.bend as Marks
 import ./proof/mark-laws.bend as MarkLaws
 import ./runtime/arrays.bend as Arrays
@@ -1138,3 +1141,40 @@ law inactive_mark_gate_preserves_world:
   for +w: R.World
   for +id: Nat
   {Marks.covered(R.World.with_activeMarks(w, 0n), id) == B.Bundle{R.World.with_activeMarks(w, 0n), False{}} : B.Bundle<R.World, Bool>}
+
+law new_lane_allocation_preserves_mainline:
+  for +w: R.World
+  for +parent: Nat
+  {Lanes.newLane(w, parent) == LaneLaws.allocation(w, parent) : B.Bundle<R.World, Nat>}
+
+law cached_verdict_lane_does_not_allocate:
+  for +w: R.World
+  for +tx: R.Transaction
+  for +suffix: List<&2, R.Transaction>
+  for +cached: Nat
+  {Lanes.verdictLane(LaneLaws.cachedWorld(w, tx, suffix, cached), 1n) == B.Bundle{LaneLaws.cachedWorld(w, tx, suffix, cached), 1n+cached} : B.Bundle<R.World, Nat>}
+
+law shared_nonnull_lane_group_is_one_lane:
+  for +w: R.World
+  for +a: R.Transaction
+  for +b: R.Transaction
+  for +suffix: List<&2, R.Transaction>
+  for +group: Nat
+  {Lanes.sameLane(LaneLaws.linkedWorld(w, a, b, suffix, group), 1n, 2n) == True{} : Bool}
+
+law lane_derivation_staging_is_latest:
+  for +w: R.World
+  for +node: R.Node
+  for +suffix: List<&2, R.Node>
+  for +value: R.Value
+  {Truth.laneValueOf(LaneLaws.stagedWorld(w, node, suffix, value), 1n) == value : R.Value}
+
+law lane_guess_slot_precedes_staging:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +pending: R.Slot
+  for +value: R.Value
+  {Truth.laneValueOf(LaneLaws.guessWorld(w, node, extension, nodes, extensions, pending, value), 1n) == value : R.Value}

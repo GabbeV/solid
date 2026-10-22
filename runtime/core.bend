@@ -1092,13 +1092,10 @@ def contextSet(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +ke
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
-# Solid core/core.ts:stagedRead. The lane stagedReaders hook is unfinished;
-# the pass flag remains source state even in the synchronous profile. A source
-# ID of zero represents the optional el argument being absent (plain fast read).
-def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
-  B.choose(~R.World, Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())),
-    _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ()))),
-    _ => w)
+# core/core.ts:stagedRead. Shared source helper retains the uninitialized
+# guard, pass flag and lane staged-reader collection in one implementation.
+def stagedRead(w: R.World, reader: Nat, source: Nat) -> R.World:
+  V.stagedRead(w, reader, source)
 
 # core/core.ts:prepareComputed, with refresh=false at the read call site.
 def prepareDisposed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:

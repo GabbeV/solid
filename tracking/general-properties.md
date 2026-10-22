@@ -490,3 +490,10 @@ removal without repoll, direct-mark short circuit and inactive-global gating.
 They preserve the whole surrounding World and quantify other node/extension
 fields and arenas. A general graph traversal/progress theorem remains open;
 see [affects-marks.md](affects-marks.md).
+
+
+Five quantified lane properties establish exact fresh allocation/mainline
+preservation, unchanged cached verdict return, shared nonnull group identity,
+non-guess staging precedence and guess-slot precedence. These are actual helper
+boundaries with arbitrary surrounding records/World/payloads, not lane lifecycle
+or arbitrary-group-invariant theorems. See [lane-identity.md](lane-identity.md).

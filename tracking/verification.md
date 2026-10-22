@@ -20,15 +20,15 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,840 status (+32 tracked-run and 48 settled-fire closures), 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
-  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons. The error cases include genuine foreign-realm Error prototype controls;
+  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls. The error cases include genuine foreign-realm Error prototype controls;
   those helper probes do not establish end-to-end cross-realm host support. Question evidence
   includes 4,096 counter steps, five large counter starts, 69 flight-provenance
   cases and 4,103 mathematical increment/equality vectors. Synthetic internal
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 231 isolated source-changing copies: 213 are rejected by
-  differential assertions and eighteen by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 240 isolated source-changing copies: 218 are rejected by
+  differential assertions and twenty-two by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -281,3 +281,11 @@ helper matrix and explicit store/public wiring limits are in
 [affects-marks.md](affects-marks.md). Existing World properties were extended to
 retain the new activeMarks field; generated concrete witness states use its
 actual initial zero. Neither public-history nor closed-regression totals change.
+
+
+Five additional quantified lane properties check allocation/mainline preservation,
+unchanged cached verdict return, shared group identity and staged/guess value
+precedence. [lane-identity.md](lane-identity.md) distinguishes these from native
+helper controls, unfinished active engine crossings and public histories. Both
+existing record-generic properties and exact generated execution witnesses now
+retain the new laneState aggregate; the proof/compiler pins are unchanged.
