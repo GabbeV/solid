@@ -1,4 +1,6 @@
 import Base
+import ./proof/question-order.bend as QuestionOrder
+import ./proof/lane-read-laws.bend as LaneReadLaws
 import ./proof/cleanup-policy.bend as CleanupPolicy
 import ./runtime/cleanup-state.bend as Cleanup
 import ./proof/lane-group-laws.bend as GroupLaws
@@ -1358,3 +1360,56 @@ law cleanup_policy_first_halt_drops_collector:
   for +w: R.World
   for +cause: R.Value
   {Status.haltReactivity(R.World.with_halted(w, False{}), cause) == B.report(R.World.with_cleanupError(R.World.with_halted(w, True{}), R.Empty{}), 0, B.choose(~R.Slot, B.equal(cause, R.Undefined{}), _ => R.Empty{}, _ => R.Present{cause})) : R.World}
+
+# Exact ordering/algebra of question provenance, beyond finite native vectors.
+law question_order_reflexive:
+  for +q: R.Question
+  {Q.compare(q, q) == Q.Same{} : Q.Order}
+
+law question_order_swapped:
+  for +a: R.Question
+  for +b: R.Question
+  {QuestionOrder.inverse(Q.compare(a, b)) == Q.compare(b, a) : Q.Order}
+
+law question_order_equality_coherent:
+  for +a: R.Question
+  for +b: R.Question
+  {QuestionOrder.same(Q.compare(a, b)) == Q.equal(a, b) : Bool}
+
+law question_order_irreflexive:
+  for +q: R.Question
+  {Q.less(q, q) == False{} : Bool}
+
+law unstamped_answer_is_not_stale:
+  for +w: R.World
+  for +id: Nat
+  {Lanes.stale(w, id, R.QuestionZero{}) == False{} : Bool}
+
+law raw_lane_comparator_has_no_status_catch:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +a: R.Value
+  for +b: R.Value
+  for known: {Nat.is_eq(Equality.custom(w, id), 0n) == False{} : Bool}
+  {Core.rawEquals(w, rest, stack, id, a, b) == Core.Machine{w, Core.Evaluate{R.CallWith{Equality.custom(w, id), R.Literal{a}, R.Literal{b}}, R.Undefined{}} <> rest, stack} : Core.Machine}
+
+law plain_truth_preserves_world_and_operands:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for g: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()) == False{} : Bool}
+  for p: {B.present(R.Node.pending(B.node(w, id))) == False{} : Bool}
+  for o: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {Core.truthNode(w, rest, stack, id) == Core.Machine{w, rest, R.Number{1n} <> stack} : Core.Machine}
+
+law pending_lane_read_keeps_fallthrough_token:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +reader: Nat
+  for +id: Nat
+  for +lane: Nat
+  {Core.laneReadEnter(w, rest, stack, reader, id, lane, False{}, K.STATUS_PENDING()) == Core.Machine{Lanes.enterLane(w, lane, reader), rest, R.NotPendingToken{} <> stack} : Core.Machine}

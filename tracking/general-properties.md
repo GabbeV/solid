@@ -531,3 +531,14 @@ and first-halt drop. These actual helper laws supplement the existing LIFO-list
 laws and the quantified Core cleanup-catch continuation. They are scoped helper
 properties; complete arbitrary owner-tree progress remains unproved. See
 [cleanup-policy.md](cleanup-policy.md) and the rc.17 integration review.
+
+## Lane read and question boundaries
+
+[question-order.bend](../proof/question-order.bend) proves reflexivity, swapped
+inverse, equality coherence, less irreflexivity and zero-question staleness.
+[lane-read-laws.bend](../proof/lane-read-laws.bend) proves the actual raw custom
+comparator call frame without a catch, plain truth answer under source guards,
+and pending lane-entry token with exact entered World/caller continuation.
+These eight quantified helper laws do not establish numerical-order semantics,
+arbitrary recursive truth progress or public lane lifecycle correctness. Native
+controls and exclusions are separate in [lane-reads.md](lane-reads.md).

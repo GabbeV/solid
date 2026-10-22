@@ -16087,8 +16087,12 @@
           "start": 554,
           "end": 613,
           "sha256": "e5b14fa90f0a407971f63dcdbf77dd961d6e67846154f92dd8927a48fb77d115",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadRenderEnd, laneReadEnter",
+            "status": "restricted",
+            "restrictions": "Exact admitted node/reader branches and source mutation order; optional folded-store callback and slot-node families excluded. Internal helper only: public active core hook installation remains unfinished. See tracking/lane-reads.md."
+          }
         },
         {
           "key": "core/lanes.ts:covered",
@@ -16179,16 +16183,24 @@
           "start": 794,
           "end": 796,
           "sha256": "abf04fe7bef22c79feae824be84db3245c498aea878ac9ddabe6e1474dc16f2b",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",
+            "status": "restricted",
+            "restrictions": "Exact question representation and nonzero gate; numeric-order interpretation supported by finite native controls, algebraic coherence separately proved. See tracking/lane-reads.md."
+          }
         },
         {
           "key": "core/lanes.ts:answered",
           "start": 801,
           "end": 808,
           "sha256": "6ef37a169f502e4c7a43bbf1ec55d39ddcda0824ff5e89285fb553d55fcacb5d",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/lanes-state.bend:answered, answeredLoop",
+            "status": "restricted",
+            "restrictions": "Live link traversal, newer-question and current-clock gates. Finite explicit arena budget; no arbitrary graph progress theorem. See tracking/lane-reads.md."
+          }
         }
       ],
       "branches": [
@@ -19956,24 +19968,36 @@
           "start": 26,
           "end": 30,
           "sha256": "0ac89b805b8d256667d65bce13441a716efd2d569e96fcd88085bc4c4acb9273",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:truthRead, truthReadResult",
+            "status": "restricted",
+            "restrictions": "Actual truth result, lane value/guess fallback and NotReadyError(null), with raw comparator behavior. Internal helper only. See tracking/lane-reads.md."
+          }
         },
         {
           "key": "core/truth.ts:truthConfirmed",
           "start": 33,
           "end": 37,
           "sha256": "fffd66e348bde47f37a5d1871a5a6a16d0bfc1497bdbef256f8ce0f2b05eb9e1",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/truth-state.bend:truthConfirmed, confirmedNodes, confirmedSubs",
+            "status": "restricted",
+            "restrictions": "Live lane members/subscribers, authoritative-only enqueue; finite arena traversal budgets. See tracking/lane-reads.md."
+          }
         },
         {
           "key": "core/truth.ts:truth",
           "start": 41,
           "end": 48,
           "sha256": "3b9d5aaac5419983b329e538a3b085b35a4fcd68b155d6907c7d7bcf228fd354",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:truthNode, TruthDeps, TruthAfterDep, rawEquals",
+            "status": "restricted",
+            "restrictions": "Depth-first live links, raw comparator returns/throws and actual truthiness. Shared callback driver; finite budget exhaustion explicit. Store families/public active hooks excluded. See tracking/lane-reads.md."
+          }
         }
       ],
       "branches": [
@@ -20187,8 +20211,12 @@
           "start": 208,
           "end": 219,
           "sha256": "ae50c4d9008beaf6bab69abbe77b8308b032a81a0898f68ff379953d5852154e",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:heldNotFinal, HeldNotFinalCompared",
+            "status": "restricted",
+            "restrictions": "Quiet/latest/reask/uninitialized/error gates and raw comparator continuation. Public verdict windows still unfinished. See tracking/lane-reads.md."
+          }
         },
         {
           "key": "core/verdict.ts:pendingVerdict",

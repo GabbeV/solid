@@ -1,5 +1,5 @@
 {
-  "profile": "Public expression/program callbacks and explicit root; production; typed flights and settlement. Public histories exclude active boundary/lane/mark/store scopes. Restricted internal marks, lane identity/routing/judgment/staging and verdict bookkeeping now execute and have separate helper evidence; public windows/read/reveal/correction remain unfinished.",
+  "profile": "Public expression/program callbacks and explicit root; production; typed flights and settlement. Public histories exclude active boundary/lane/mark/store scopes. Restricted internal marks, lane identity/routing/judgment/staging/read and verdict bookkeeping now execute and have separate helper evidence; public windows/read/reveal/correction remain unfinished.",
   "statusMeaning": "Mapped functions remain restricted ports until all listed exclusions and branch obligations are closed. No source-line percentage is a proof-coverage percentage.",
   "mappings": {
     "core/graph.ts:link": {
@@ -921,6 +921,41 @@
       "bend": "runtime/cleanup-state.bend:rethrowCleanupError, rethrowSlot; representation/records.bend:World.cleanupError",
       "status": "restricted",
       "restrictions": "Optional one-element error box is Empty/Present(Value); clear before raw rethrow or drop. Called after the complete flush loop, after public root teardown outside a running flush, and at first fatal halt. Dev loop guard/observe diagnostics remain outside the production profile."
+    },
+    "core/lanes.ts:laneRead": {
+      "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadRenderEnd, laneReadEnter",
+      "status": "restricted",
+      "restrictions": "Exact admitted node/reader branches and source mutation order; optional folded-store callback and slot-node families excluded. Internal helper only: public active core hook installation remains unfinished. See tracking/lane-reads.md."
+    },
+    "core/lanes.ts:stale": {
+      "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",
+      "status": "restricted",
+      "restrictions": "Exact question representation and nonzero gate; numeric-order interpretation supported by finite native controls, algebraic coherence separately proved. See tracking/lane-reads.md."
+    },
+    "core/lanes.ts:answered": {
+      "bend": "runtime/lanes-state.bend:answered, answeredLoop",
+      "status": "restricted",
+      "restrictions": "Live link traversal, newer-question and current-clock gates. Finite explicit arena budget; no arbitrary graph progress theorem. See tracking/lane-reads.md."
+    },
+    "core/truth.ts:truth": {
+      "bend": "runtime/core.bend:truthNode, TruthDeps, TruthAfterDep, rawEquals",
+      "status": "restricted",
+      "restrictions": "Depth-first live links, raw comparator returns/throws and actual truthiness. Shared callback driver; finite budget exhaustion explicit. Store families/public active hooks excluded. See tracking/lane-reads.md."
+    },
+    "core/truth.ts:truthRead": {
+      "bend": "runtime/core.bend:truthRead, truthReadResult",
+      "status": "restricted",
+      "restrictions": "Actual truth result, lane value/guess fallback and NotReadyError(null), with raw comparator behavior. Internal helper only. See tracking/lane-reads.md."
+    },
+    "core/truth.ts:truthConfirmed": {
+      "bend": "runtime/truth-state.bend:truthConfirmed, confirmedNodes, confirmedSubs",
+      "status": "restricted",
+      "restrictions": "Live lane members/subscribers, authoritative-only enqueue; finite arena traversal budgets. See tracking/lane-reads.md."
+    },
+    "core/verdict.ts:heldNotFinal": {
+      "bend": "runtime/core.bend:heldNotFinal, HeldNotFinalCompared",
+      "status": "restricted",
+      "restrictions": "Quiet/latest/reask/uninitialized/error gates and raw comparator continuation. Public verdict windows still unfinished. See tracking/lane-reads.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

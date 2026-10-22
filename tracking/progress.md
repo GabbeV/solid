@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,158 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 275; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 296; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -249,3 +249,9 @@ total to 3158; seven new scoped quantified helper properties and the updated
 callback-catch continuation law supplement the existing 72 closed regressions.
 This integrates source changes into implemented paths; public verdict/lane
 lifecycle, stores and boundary gaps remain open. See the rc.17 review.
+
+The overnight continuation adds seven internal lane/truth/finality source
+functions, 3,404 native helper/provenance/comparator controls and eight scoped
+quantified properties. This advances the active-engine dependency path while
+public-history and closed-regression counts stay unchanged. Raw comparisons
+retain source exception policy; no workaround is active. See lane-reads.md.

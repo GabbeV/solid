@@ -1,6 +1,7 @@
 # core/lanes.ts identities and routing. Seams/staging/corrections are separate
 # unfinished engine crossings, not approximated by these helpers.
 import Base
+import ./question.bend as Question
 import ./extension.bend as E
 import ./write.bend as W
 import ../representation/records.bend as R
@@ -203,3 +204,23 @@ def laneStage(+w: R.World, +id: Nat, +lane: Nat, create: Bool, +error: StageErro
   B.choose(~B.Bundle<R.World, Bool>, Bool.or(create, Bool.or(stageErrored(error), Bool.or(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_READ()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())))),
     _ => B.choose(~B.Bundle<R.World, Bool>, B.effect(R.Node.kind(B.node(w, id))), _ => effectStage(w, id, lane, error), _ => computationStage(w, id, lane, error)),
     _ => leaveStage(w, id))
+
+# lanes.ts provenance helpers; stamped answers compare exact question numbers.
+def stale(+w: R.World, id: Nat, +question: R.Question) -> Bool:
+  Bool.and(Bool.not(Question.isZero(question)), Question.less(question, R.NodeExtension.q(B.extension(w, id))))
+
+def answeredLoop(fuel: Nat, +w: R.World, +edge: Nat, +q: R.Question) -> B.Bundle<R.World, R.Question>:
+  match fuel:
+    case 0n:
+      B.choose(~B.Bundle<R.World, R.Question>, Nat.is_eq(edge, 0n), _ => B.Bundle{w, q}, _ => B.Bundle{R.World.with_fault(w, R.Exhausted{}), q})
+    case 1n+p:
+      B.choose(~B.Bundle<R.World, R.Question>, Nat.is_eq(edge, 0n), _ => B.Bundle{w, q},
+        _ =>
+          +dep = R.Link.dep(B.link(w, edge))
+          +x = R.Node.x(B.node(w, dep))
+          +newer = Bool.and(Nat.is_ne(x, 0n), Bool.and(Question.less(q, R.NodeExtension.q(B.extension(w, dep))), Nat.is_eq(R.Node.time(B.node(w, dep)), R.World.clock(w))))
+          +next = B.choose(~R.Question, newer, _ => R.NodeExtension.q(B.extension(w, dep)), _ => q)
+          answeredLoop(p, w, R.Link.nextDep(B.link(w, edge)), next))
+
+def answered(+w: R.World, id: Nat) -> B.Bundle<R.World, R.Question>:
+  answeredLoop(1n+B.length(R.Link, R.World.links(w)), w, R.Node.deps(B.node(w, id)), R.QuestionZero{})

@@ -17,6 +17,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Lane reads and authoritative truth
+
+[lane-reads.md](lane-reads.md) maps source branch order, exact provenance,
+recursive live dependency reads, raw comparator return/throw continuations and
+held finality. Seven functions now execute internally, backed by native controls
+and eight scoped properties. Core hook installation, folded-store callbacks and
+public windows/lifecycle remain unfinished; no semantic workaround was added.
+
 ## Lane staging and group mutation frames
 
 [lane-stage.md](lane-stage.md) maps actual false/true/source interruption forms,

@@ -1,4 +1,6 @@
 import Base
+import ./proof/question-order.bend as QuestionOrder
+import ./proof/lane-read-laws.bend as LaneReadLaws
 import ./proof/cleanup-policy.bend as CleanupPolicy
 import ./proof/lane-group-laws.bend as GroupLaws
 import ./proof/lane-stage.bend as StageLaws
@@ -686,3 +688,27 @@ def Laws.cleanup_policy_already_halted_keeps_collector(w, cause):
 
 def Laws.cleanup_policy_first_halt_drops_collector(w, cause):
   CleanupPolicy.first_halt_drops_collector(w, cause)
+
+def Laws.question_order_reflexive(q):
+  QuestionOrder.reflexive(q)
+
+def Laws.question_order_swapped(a, b):
+  QuestionOrder.swapped(a, b)
+
+def Laws.question_order_equality_coherent(a, b):
+  QuestionOrder.equality(a, b)
+
+def Laws.question_order_irreflexive(q):
+  QuestionOrder.irreflexive(q)
+
+def Laws.unstamped_answer_is_not_stale(w, id):
+  QuestionOrder.unstamped(w, id)
+
+def Laws.raw_lane_comparator_has_no_status_catch(w, rest, stack, id, a, b, known):
+  LaneReadLaws.rawCustom(w, rest, stack, id, a, b, known)
+
+def Laws.plain_truth_preserves_world_and_operands(w, rest, stack, id, g, p, o):
+  LaneReadLaws.plainTruth(w, rest, stack, id, g, p, o)
+
+def Laws.pending_lane_read_keeps_fallthrough_token(w, rest, stack, reader, id, lane):
+  LaneReadLaws.pendingLanePass(w, rest, stack, reader, id, lane)

@@ -58,3 +58,51 @@ def setQuestion(w: R.World, value: R.Question) -> R.World:
 def nextQuestion(+w: R.World) -> B.Bundle<R.World, R.Question>:
   +value = increment(R.World.questions(w))
   B.Bundle{R.World.with_questions(w, value), value}
+
+# Source numeric order, without converting an exact question into unary Nat.
+# Bijective low bits: Odd(a)<Even(b) iff a<=b; Even(a)<Odd(b) iff a<b.
+type Order is Data:
+  Less{}
+  Same{}
+  More{}
+
+def oddEven(order: Order) -> Order:
+  match order:
+    case Same{}:
+      Less{}
+    case other:
+      other
+
+def evenOdd(order: Order) -> Order:
+  match order:
+    case Same{}:
+      More{}
+    case other:
+      other
+
+def compare(left: R.Question, right: R.Question) -> Order:
+  match left right:
+    case R.QuestionZero{} R.QuestionZero{}:
+      Same{}
+    case R.QuestionZero{} _:
+      Less{}
+    case _ R.QuestionZero{}:
+      More{}
+    case R.QuestionOdd{a} R.QuestionOdd{b}:
+      compare(a, b)
+    case R.QuestionEven{a} R.QuestionEven{b}:
+      compare(a, b)
+    case R.QuestionOdd{a} R.QuestionEven{b}:
+      oddEven(compare(a, b))
+    case R.QuestionEven{a} R.QuestionOdd{b}:
+      evenOdd(compare(a, b))
+
+def isLess(order: Order) -> Bool:
+  match order:
+    case Less{}:
+      True{}
+    case _:
+      False{}
+
+def less(left: R.Question, right: R.Question) -> Bool:
+  isLess(compare(left, right))

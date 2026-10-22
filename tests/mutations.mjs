@@ -5,6 +5,21 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['raw lane comparator incorrectly contains errors','runtime/core.bend','R.Undefined{}} <> rest, stack})','R.Undefined{}} <> EqualityCatch{id, stack} <> rest, stack})','tests/lane-raw-comparators.mjs','rawEquals'],
+  ['truth comparator inherits status catch','runtime/core.bend','_ => rawEquals(w, rest, stack, id,','_ => isSame(w, rest, stack, id,','tests/lane-raw-comparators.mjs','truthNode'],
+  ['held finality comparator inherits status catch','runtime/core.bend','_ => rawEquals(w, HeldNotFinalCompared{} <> rest, stack, id,','_ => isSame(w, HeldNotFinalCompared{} <> rest, stack, id,','tests/lane-raw-comparators.mjs','heldNotFinal'],
+  ['truth serves unconfirmed staging as final','runtime/core.bend','_ => Machine{w, rest, R.Undefined{} <> stack}','_ => Machine{w, rest, R.Number{1n} <> stack}','tests/lane-read-alignment.mjs','truthNode'],
+  ['lane read serves outdated errored derivation','runtime/core.bend','Bool.and(Bool.not(guess), B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()))','False{}','tests/lane-read-alignment.mjs','laneRead'],
+  ['untracked lane read leaks unrevealed staging','runtime/core.bend','Machine{w, rest, Lanes.display(w, id) <> stack}','Machine{w, rest, Truth.laneValueOf(w, id) <> stack}','tests/lane-read-alignment.mjs','laneReadReader'],
+  ['lane loading loses fallthrough token','runtime/core.bend','_ => Machine{w, rest, R.NotPendingToken{} <> stack}','_ => Machine{w, rest, R.Undefined{} <> stack}','tests/lane-read-alignment.mjs','laneReadRender'],
+  ['lane stale render readers are appended twice','runtime/core.bend','B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_SCREEN_READ())','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],
+  ['unrevealed initial lane value stops suspending','runtime/core.bend','Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED())))','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],
+  ['held lane reads enter before reveal','runtime/core.bend','Bool.or(R.Transaction.held(B.transaction(w, lane)), Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING())))','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],
+  ['question odd-even tie uses wrong order','runtime/question.bend','case Same{}:\n      Less{}','case Same{}:\n      More{}','tests/proof-properties.mjs','oddEven','question-order'],
+  ['unstamped answers become stale','runtime/lanes-state.bend','Bool.and(Bool.not(Question.isZero(question)), Question.less(question, R.NodeExtension.q(B.extension(w, id))))','Question.less(question, R.NodeExtension.q(B.extension(w, id)))','tests/proof-properties.mjs','stale','question-order'],
+  ['answered uses a previous-clock source question','runtime/lanes-state.bend','Nat.is_eq(R.Node.time(B.node(w, dep)), R.World.clock(w))','True{}','tests/lane-read-alignment.mjs','answeredLoop'],
+  ['truth confirmation wakes ordinary readers','runtime/truth-state.bend','B.has(R.Node.config(B.node(w, reader)), K.CONFIG_AUTHORITATIVE())','True{}','tests/lane-read-alignment.mjs','confirmedSubs'],
+
   ['cleanup collection replaces first error','runtime/cleanup-state.bend','case R.Present{old}:\n      B.schedule(w)','case R.Present{old}:\n      B.schedule(R.World.with_cleanupError(w, R.Present{cause}))','tests/proof-properties.mjs','collectSlot','cleanup-policy'],
   ['cleanup collection drops thrown undefined','runtime/cleanup-state.bend','collectSlot(w, cause, R.World.cleanupError(w))','match cause:\n    case R.Undefined{}:\n      w\n    case other:\n      collectSlot(w, other, R.World.cleanupError(w))','tests/cleanup-policy.mjs','collect'],
   ['cleanup rethrow substitutes undefined','runtime/cleanup-state.bend','R.CallbackThrown{cause}','R.CallbackThrown{R.Undefined{}}','tests/proof-properties.mjs','rethrowSlot','cleanup-policy'],

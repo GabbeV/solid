@@ -2,6 +2,9 @@
 # Defunctionalized expressions are reusable callbacks. The same machine drives
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
+import ./truth-state.bend as Truth
+import ./lanes-state.bend as Lanes
+import ./verdict-state.bend as Verdict
 import ./arrays.bend as Arrays
 import ./map.bend as Maps
 import ./keyed-map.bend as KeyedMap
@@ -150,6 +153,11 @@ type Task is Data:
   Callback{callback: Nat, actions: List<&2, R.CleanupAction>, first: R.Value, second: R.Value}
   CallArguments{callback: Nat}
   EqualityCatch{id: Nat, saved: List<&2, R.Value>}
+  TruthNode{id: Nat}
+  TruthDeps{edge: Nat}
+  TruthAfterDep{edge: Nat}
+  TruthReadResult{id: Nat}
+  HeldNotFinalCompared{}
   SetSignalCompared{id: Nat, value: R.Value}
   PublishCompared{id: Nat, value: R.Value, create: Bool, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool}
   Invoke{}
@@ -359,6 +367,106 @@ def isSame(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: N
   B.choose(~Machine, Nat.is_eq(callback, 0n),
     _ => Machine{w, rest, R.Boolean{EQ.isSame(w, id, a, b)} <> stack},
     _ => Machine{w, Evaluate{R.CallWith{callback, R.Literal{a}, R.Literal{b}}, R.Undefined{}} <> EqualityCatch{id, stack} <> rest, stack})
+
+# truth.ts / lanes.ts / verdict.ts call _equals directly. These calls have
+# no isSame catch: raw verdicts and raw throws return to the actual caller.
+def rawEquals(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +a: R.Value, +b: R.Value) -> Machine:
+  +callback = EQ.custom(w, id)
+  B.choose(~Machine, Nat.is_eq(callback, 0n),
+    _ => Machine{w, rest, R.Boolean{EQ.isSame(w, id, a, b)} <> stack},
+    _ => Machine{w, Evaluate{R.CallWith{callback, R.Literal{a}, R.Literal{b}}, R.Undefined{}} <> rest, stack})
+
+# truth.ts:truth. The dependency cursor advances after recursive comparison,
+# retaining the source's live edge object across arbitrary comparator callbacks.
+def truthNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +n = B.node(w, id)
+  B.choose(~Machine, B.has(R.Node.config(n), K.CONFIG_GUESS()),
+    _ => B.choose(~Machine, Bool.and(B.present(R.Node.pending(n)), R.Node.equals(n)),
+      _ => rawEquals(w, rest, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), B.selected(R.Node.pending(n), R.NotPendingToken{})),
+      _ => Machine{w, rest, R.Boolean{False{}} <> stack}),
+    _ => B.choose(~Machine, B.present(R.Node.pending(n)), _ => Machine{w, rest, R.Undefined{} <> stack},
+      _ => B.choose(~Machine, B.has(R.Node.config(n), K.CONFIG_OVERRIDE()),
+        _ => Machine{w, TruthDeps{R.Node.deps(n)} <> rest, stack}, _ => Machine{w, rest, R.Number{1n} <> stack})))
+
+def truthRead(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  Machine{w, TruthNode{id} <> TruthReadResult{id} <> rest, stack}
+
+def truthReadResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  match stack:
+    case value <> +tail:
+      B.choose(~Machine, B.truth(value), _ => Machine{w, rest, Truth.laneValueOf(w, id) <> tail},
+        _ => B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()),
+          _ => Machine{w, rest, B.selected(R.Node.pending(B.node(w, id)), R.Node.value(B.node(w, id))) <> tail},
+          _ =>
+            +pair = P.notReadyError(w, 0n)
+            Machine{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, tail}))
+    case _:
+      Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+
+# verdict.ts:heldNotFinal, including the raw _equals call at its source site.
+def heldNotFinal(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  +n = B.node(w, id)
+  B.choose(~Machine, Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.not(Verdict.quietPending(w, id))),
+    _ => Machine{w, rest, R.Boolean{True{}} <> stack},
+    _ => B.choose(~Machine, Bool.and(B.present(R.Node.pending(n)), Bool.and(Bool.not(R.VerdictState.latestActive(R.World.verdictState(w))), Bool.and(Bool.not(R.NodeExtension.reask(B.extension(w, id))), Bool.not(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()))))),
+      _ => B.choose(~Machine, Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(R.Node.equals(n))),
+        _ => Machine{w, rest, R.Boolean{True{}} <> stack},
+        _ => rawEquals(w, HeldNotFinalCompared{} <> rest, stack, id, R.Node.value(n), B.selected(R.Node.pending(n), R.NotPendingToken{}))),
+      _ => Machine{w, rest, R.Boolean{False{}} <> stack}))
+
+# lanes.ts:laneRead, no folded store scope is represented by this internal
+# profile. The optional folded callback remains an explicit store frontier.
+def laneReadEnter(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  +w = Lanes.enterLane(w, lane, reader)
+  +value = B.choose(~R.Value, Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING())), _ => R.NotPendingToken{}, _ => Truth.laneValueOf(w, id))
+  Machine{w, rest, value <> stack}
+
+def laneReadRenderEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  B.choose(~Machine, Bool.or(R.Transaction.held(B.transaction(w, lane)), Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING()))),
+    _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED()))),
+      _ =>
+        +pair = P.notReadyError(w, 0n)
+        Machine{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, stack},
+      _ =>
+        +w = B.choose(~R.World, B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_SCREEN_READ()), _ => w,
+          _ =>
+            +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_FRAME_READ(), K.REACTIVE_SCREEN_READ()))))
+            B.store_transaction(w, lane, R.Transaction.with_reruns(B.transaction(w, lane), B.append(Nat, R.Transaction.reruns(B.transaction(w, lane)), [reader]))))
+        Machine{w, rest, Lanes.display(w, id) <> stack}),
+    _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))
+
+def laneReadRender(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(B.has(status, K.STATUS_PENDING()), Bool.not(B.present(R.NodeExtension.lane(B.extension(w, id)))))),
+    _ => Machine{w, rest, R.NotPendingToken{} <> stack},
+    _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(B.present(R.Node.pending(B.node(w, id))), Bool.and(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_HELD()), Nat.is_ne(R.World.flushTransaction(w), 0n)))),
+      _ =>
+        +pair = X.resolveTx(w, R.World.flushTransaction(w))
+        +w = B.first(R.World, Nat, pair)
+        +flush = B.second(R.World, Nat, pair)
+        +pair = X.txOf(w, reader)
+        +w = B.first(R.World, Nat, pair)
+        B.choose(~Machine, Nat.is_eq(flush, B.second(R.World, Nat, pair)),
+          _ => Machine{w, rest, B.selected(R.Node.pending(B.node(w, id)), R.NotPendingToken{}) <> stack},
+          _ => laneReadRenderEnd(w, rest, stack, reader, id, lane, guess, status)),
+      _ => laneReadRenderEnd(w, rest, stack, reader, id, lane, guess, status)))
+
+def laneReadReader(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  B.choose(~Machine, Nat.is_eq(reader, 0n), _ => Machine{w, rest, Truth.laneValueOf(w, id) <> stack},
+    _ => B.choose(~Machine, Bool.or(Bool.not(R.World.tracking(w)), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())),
+      _ => B.choose(~Machine, Bool.or(Nat.is_eq(R.World.passLane(w), 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())),
+        _ => Machine{w, rest, Lanes.display(w, id) <> stack}, _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status)),
+      _ => B.choose(~Machine, Bool.and(X.isRender(R.Node.kind(B.node(w, reader))), Bool.or(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(Lanes.sameLane(w, R.World.passLane(w), lane)))),
+        _ => laneReadRender(w, rest, stack, reader, id, lane, guess, status), _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))))
+
+def laneRead(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat) -> Machine:
+  +guess = B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())
+  +pair = X.txOf(w, id)
+  +w = B.first(R.World, Nat, pair)
+  +lane = B.second(R.World, Nat, pair)
+  B.choose(~Machine, Bool.and(Nat.is_ne(reader, 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_AUTHORITATIVE())),
+    _ => B.choose(~Machine, R.World.truthReadHook(w), _ => truthRead(w, rest, stack, id), _ => Machine{R.World.with_fault(w, R.Unsupported{89n}), rest, stack}),
+    _ => B.choose(~Machine, Bool.and(Bool.not(guess), B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())), _ => Machine{w, rest, R.NotPendingToken{} <> stack},
+      _ => laneReadReader(w, rest, stack, reader, id, lane, guess, R.Node.status(B.node(w, id)))))
 
 # The isSame catch contains ordinary throws in node status, answering true;
 # NotReady is ignored and answers undefined (falsy/change). A notifier throw
@@ -3220,6 +3328,24 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       # Failed constructors never bind/return that setter function.
       +w = B.event(w, R.SetterBound{signal})
       Machine{w, Evaluate{Local.bind(body, 0n, signal), previous} <> rest, stack}
+    case TruthNode{id} <> rest:
+      truthNode(w, rest, stack, id)
+    case TruthDeps{+edge} <> +rest:
+      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest, R.Number{1n} <> stack}, _ => Machine{w, TruthNode{R.Link.dep(B.link(w, edge))} <> TruthAfterDep{edge} <> rest, stack})
+    case TruthAfterDep{+edge} <> +rest:
+      match stack:
+        case value <> +tail:
+          B.choose(~Machine, B.truth(value), _ => Machine{w, TruthDeps{R.Link.nextDep(B.link(w, edge))} <> rest, tail}, _ => Machine{w, rest, R.Undefined{} <> tail})
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case TruthReadResult{id} <> rest:
+      truthReadResult(w, rest, stack, id)
+    case HeldNotFinalCompared{} <> rest:
+      match stack:
+        case value <> tail:
+          Machine{w, rest, R.Boolean{Bool.not(B.truth(value))} <> tail}
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case EqualityCatch{id, saved} <> rest:
       Machine{w, rest, stack}
     case SetSignalCompared{+id, +value} <> rest:
