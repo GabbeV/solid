@@ -111,3 +111,36 @@ describe("buffered from() values in createDeferred", () => {
     });
   }
 });
+
+it("keeps deferred answers when synchronous completion returns a throwing unsubscribe", () => {
+  let closed = 0;
+  const { value, setVersion, dispose } = createRoot(dispose => {
+    const [version, setVersion] = createSignal(0);
+    const value = createDeferred(() => {
+      const current = version();
+      return from<number>((next, _error, complete) => {
+        next(current);
+        complete();
+        return () => {
+          closed++;
+          throw new Error("unsubscribe failed");
+        };
+      });
+    });
+    return { value, setVersion, dispose };
+  });
+  try {
+    flush();
+    expect(value()).toBe(0);
+    setVersion(1);
+    flush();
+    expect(value()).toBe(1);
+    setVersion(2);
+    flush();
+    expect(value()).toBe(2);
+    expect(closed).toBe(3);
+  } finally {
+    dispose();
+  }
+  expect(closed).toBe(3);
+});
