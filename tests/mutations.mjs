@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['flatten array scan reverses children','runtime/core.bend','Arrays.at(w, children, index)','Arrays.at(w, children, Nat.sub(Arrays.length(w, children), 1n+index))','tests/proof-properties.mjs','flattenLoop','flatten-natural'],
   ['flatten array pushes overwrite the first slot','runtime/flatten.bend','Arrays.length(w, results)','0n','tests/proof-properties.mjs','push','array-write'],
   ['array indexed writes lose their supplied payload','runtime/arrays.bend','R.Present{value}','R.Present{R.Undefined{}}','tests/proof-properties.mjs','put','array-write'],
   ['flatten invokes functions with formal parameters','runtime/flatten.bend','Nat.is_eq(Callable.functionLength(w, value), 0n)','True{}','tests/flatten.mjs','zeroArgument'],
@@ -241,8 +242,11 @@ const mutations=[
   ['untrack subscribes','runtime/core.bend','Machine{R.World.with_tracking(w, False{}), Evaluate{body, prev}','Machine{R.World.with_tracking(w, True{}), Evaluate{body, prev}'],
   ['wrong render result','runtime/core.bend','T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))','T.setText(w, R.Node.target(B.node(w, id)), R.Undefined{})'],
 ];
+const filter=process.env.BEND_MUTATION_FILTER;
+const selected=filter?mutations.filter(([name])=>name.includes(filter)):mutations;
+if(selected.length===0)throw new Error('Mutation filter matched no variants');
 let caught=0;
-for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModule] of mutations) {
+for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModule] of selected) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bend-signals-mutation-'));
   try {
     for(const d of ['runtime','representation','observation'])await fs.cp(path.join(root,d),path.join(dir,d),{recursive:true});

@@ -712,7 +712,6 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
 # data; return exits only this invocation. Reads use the ordinary ReadNode continuation.
 # JavaScript dense array-literal evaluation: left to right, once, then allocate.
 # The linked syntax is shared with user call vectors; no scheduler runs here.
-# flatten.ts: function unwrapping precedes skipNonRendered and array traversal.
 def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, values: R.Expr, +reversed: List<&2, R.Value>, +previous: R.Value) -> Machine:
   match values:
     case R.CallArgumentsEnd{}:
@@ -977,6 +976,7 @@ def invokeManyArguments(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
     case _:
       Machine{R.World.with_fault(w, R.Unsupported{60n}), rest, stack}
 
+# flatten.ts return points: unwrap before filtering or array traversal.
 def flattenResolved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, value: R.Value, +skip: Bool, +defer: Bool) -> Machine:
   match value:
     case R.ArrayReference{children}:

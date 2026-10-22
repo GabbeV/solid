@@ -463,3 +463,23 @@ appends exactly one Present(value) slot. Every earlier slot, other array and
 non-array field stays unchanged. An inductive append-at-length lemma composes
 with the same real arena lenses; an independent compiled mutation checks the
 claim detects overwriting slot zero instead of appending.
+
+
+## Complete natural-payload children program
+
+`proof/flatten-natural.bend` proves the actual public expression program for
+[first,[second,false]], skipNonRendered=true and doNotUnwrap=false. Both payloads
+are arbitrary naturals, including zero; every resource budget >=128 produces the
+same exact machine: an empty task stack, result ArrayReference(2), and the whole
+initial World with precisely three arrays. The first two preserve the input
+nested fragments; the fresh third contains Present(first), Present(second).
+All non-array fields remain exactly their actual createWorld values.
+
+The base endpoint and every composed step use real Core.step. A structurally
+constructed execution Path and checked path-length lemma use the existing
+Path.realizes theorem for arbitrary extra fuel. This is a proof iterator over
+the actual machine, not a second children resolver. No generated endpoint,
+axiom, kernel change or additional source algorithm is used. Sixty-four finite
+canonical/public/native comparisons with four sufficient budgets are separate
+correspondence evidence. The fixed tree has no accessor/async callbacks; those
+and arbitrary tree shapes/history/progress remain outside this family.

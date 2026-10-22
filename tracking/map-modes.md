@@ -70,7 +70,7 @@ observation limit.
 ## Evidence and proof boundary
 
 `tests/map-indices.mjs`: 27 paired histories cover arities 0/1/2/9, bound function
-length, actual argument counts, positional controls, stable getter identity,
+length, passed argument values, positional controls, stable getter identity,
 nested memo updates, staged/pending changes, cleanup errors, broad changed
 windows and once-only option/mapper expression evaluation.
 

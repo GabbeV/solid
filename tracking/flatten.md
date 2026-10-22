@@ -73,8 +73,18 @@ payload family, exhausted the original kernel fuel in direct normalization.
 Neither is credited as proved or diagnosed as an upstream Solid bug. Their next
 step is proof decomposition, not changing runtime behavior or kernel limits.
 
-Checkpoint totals: 3,114 public paired histories, 222 rejected compiled variants
-(208 finite differential and 14 proof-property), and 72 closed positive
+Checkpoint totals: 3,114 public paired histories, 223 rejected compiled variants
+(208 finite differential and 15 proof-property), and 72 closed positive
 regressions, alongside the quantified families. Source/toolchain/kernel pins and
 the empty semantic deviation register are unchanged. The list fallback bug and
 its unmerged #4211 fix remain separate from this children resolver.
+
+
+The subsequent `proof/flatten-natural.bend` family removes fixed payloads and
+fixed fuel for one small tree: [first,[second,false]], with arbitrary natural
+payloads and any budget >=128. It proves the full exact machine/World, not only
+a projected View. Real Core.step paths and existing composition lemmas provide
+the sufficient-budget result. Sixty-four independent finite canonical/public/
+native controls and a reversed-child-order proof mutation accompany it; these
+controls do not add to public-history totals. Arbitrary tree shapes and accessor/
+async histories remain open. See [general-properties.md](general-properties.md).

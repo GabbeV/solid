@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 222 rejected compiled mutations,
+Current verification: 3114 differential histories, 223 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -31,6 +31,18 @@ c11277e's d682022c pin. Merged #4176 and #4188 are ported in source order; origi
 repros now pass, and both negative closed laws become positive regressions.
 The verdict-mounted pending fix #4207 is native source-only evidence because
 active lane/mount scopes are not admitted. No active semantic deviation exists.
+
+## Quantified children payload program
+
+The fixed nested tree [first,[second,false]] now has an exact complete-machine/
+World theorem for every natural first/second payload and all budgets >=128.
+The proof follows the real Core.step path and existing generic path composition;
+no alternate traversal, runtime change or kernel change is used. Sixty-four
+separate canonical/public/native controls compare complete states and values
+across four sufficient budgets. One new proof mutation rejects reversed child
+order. Public-history and closed-regression counts stay unchanged. The executable
+[examples/list.bend](../examples/list.bend) also demonstrates real mapArray
+reorder/growth followed by children flattening and root disposal.
 
 ## Next connected implementation target
 

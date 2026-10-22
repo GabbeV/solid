@@ -40,7 +40,9 @@ concrete map lifecycle executions are kernel-checked separately from parity test
 
 The [children resolver flatten](tracking/flatten.md) now unwraps typed accessor
 chains and nested arrays, retains deferred resolving wrappers and follows the
-source pending/error collection policy.
+source pending/error collection policy. A fixed nested-children program has an
+exact final-state proof for every natural payload pair and all budgets >=128;
+arbitrary recursive trees remain outside that theorem.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
@@ -58,8 +60,9 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 222 source-changing variants
+npm run mutations                # reject 223 source-changing variants
 npm run example                  # Number{14n}
+npm run example:list             # children 20, 10, 30; Healthy
 ```
 
 Node 22.12+, Python 3 (only to regenerate record helpers), curl, tar with zstd,
@@ -70,6 +73,7 @@ To build and test without kernel tooling, use
 That does not establish a proof claim.
 
 Start with [examples/counter.bend](examples/counter.bend),
+[the executable list example](examples/list.bend),
 [runtime/api.bend](runtime/api.bend), and [host/bend.mjs](host/bend.mjs).
 The host uses a small reusable expression grammar: literals, actual reads,
 previous values, addition/multiplication on naturals, strict equality, branches,

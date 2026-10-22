@@ -2,6 +2,7 @@ import Base
 import ./proof/array-laws.bend as ArrayLaws
 import ./proof/array-write.bend as ArrayWrite
 import ./proof/flatten-lifecycle.bend as FlattenLifecycle
+import ./proof/flatten-natural.bend as NaturalFlatten
 import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
@@ -572,3 +573,7 @@ def Laws.flatten_wrapper_allocates_function_only(w, results, skip):
 
 def Laws.array_push_appends_exactly(w, arraysBefore, slots, arraysAfter, value):
   ArrayWrite.push(w, arraysBefore, slots, arraysAfter, value)
+
+
+def Laws.natural_children_complete_program(first, second, extra):
+  NaturalFlatten.sufficient(first, second, extra)

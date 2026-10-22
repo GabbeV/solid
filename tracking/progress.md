@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 222; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 223; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -180,3 +180,14 @@ The next-engine dependency review identifies active verdict/lane routing, marks
 and deferred lagging as connected implementation work rather than entry-wrapper
 patches. Four existing native source-only test files / 36 tests pass without
 adding Bend counts. See [verdict readiness](reviews/verdict-readiness.md).
+
+
+A further complete children program now quantifies both natural payloads of the
+fixed tree [first,[second,false]] and every budget >=128. It proves the exact
+final machine and World, including all array arenas, with the real expression
+API and Core.step path. Sixty-four finite public/canonical/native controls and
+one proof mutation support it separately. The runtime behavior, 3,114 paired
+histories and 72 closed regressions are unchanged; there are now 223 rejected
+compiled variants. A standalone executable Bend list example exercises mapping,
+reorder/growth, flattening and root disposal. This family does not quantify tree
+shape, arbitrary accessor chains or histories.

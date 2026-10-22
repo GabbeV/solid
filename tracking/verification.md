@@ -9,7 +9,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
   99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 74 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories: 3114 total, plus explicit host object-identity and native timeout
-  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
+  checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, 64 finite children-flatten exact-machine/World/native controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
   retain 18 empty-flatten, eight staged-error-recovery and twelve held-function-value cases. The original arbitrary replacement-function cases remain source-only; an admitted bound-function counterpart now also has Bend parity and a positive merged-fix law. No expected
@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 222 isolated source-changing copies: 208 are rejected by
-  differential assertions and fourteen by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 223 isolated source-changing copies: 208 are rejected by
+  differential assertions and fifteen by quantified proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -261,3 +261,15 @@ actual existing-slot writes and append, with two compiled proof mutations. A lar
 map-reorder family and a one-row payload family exhausted unchanged kernel fuel
 under direct normalization; neither contributes to proven-property counts.
 See [flatten.md](flatten.md).
+
+
+The complete natural-payload children theorem covers every pair of naturals in
+one fixed nested tree and all budgets >=128. It checks the exact final machine,
+complete World and three array contents, preserving every unrelated field.
+A 128-step path iterates the actual Core.step; the existing generic Path.realizes
+lemma extends it to all larger budgets. Sixty-four finite public/canonical/native
+controls use four sufficient budgets, separately from the quantified proof.
+A reversed-child-order compiled variant is rejected by that property. The final
+mutation evidence extends the preceding full 222-variant run with this selected
+new variant; emitted runtime/reference hashes are unchanged. Arbitrary trees,
+accessor chains, histories and TS equivalence remain outside the theorem.

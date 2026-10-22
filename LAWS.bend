@@ -4,6 +4,7 @@ import ./runtime/flatten.bend as Flatten
 import ./proof/array-laws.bend as ArrayLaws
 import ./proof/array-write.bend as ArrayWrite
 import ./proof/flatten-lifecycle.bend as FlattenLifecycle
+import ./proof/flatten-natural.bend as NaturalFlatten
 import ./proof/map-lifecycle.bend as MapLifecycle
 import ./proof/memo-batches.bend as MemoBatches
 import ./proof/memo-coalescing.bend as MemoCoalescing
@@ -1090,3 +1091,10 @@ law array_push_appends_exactly:
   for +arraysAfter: List<&2, R.ArrayData>
   for +value: R.Value
   {Flatten.push(ArrayWrite.scope(w, arraysBefore, slots, arraysAfter), B.length(R.ArrayData, arraysBefore), value) == ArrayWrite.scope(w, arraysBefore, B.append(R.Slot, slots, [R.Present{value}]), arraysAfter) : R.World}
+
+
+law natural_children_complete_program:
+  for +first: Nat
+  for +second: Nat
+  for +extra: Nat
+  {NaturalFlatten.programWithBudget(first, second, extra) == NaturalFlatten.expected(first, second) : Core.Machine}
