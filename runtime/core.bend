@@ -48,28 +48,25 @@ import ./question.bend as Question
 type SeamFrame is Data:
   SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>}
 
-# Locals captured by recompute's try/catch/finally return point.
-# b0ad1df5/#4171 adds prevMount/mount and laneRoot save/restore in Source.
-# Active lanes are outside this profile: prevLane and inherited mount stay
-# falsy, so joined still tests REACTIVE_JOINED alone at both finally entries.
-# 0222d684/#4207 further requires prevLane || isEffect || !STATUS_PENDING
-# before a mount includes STAGED_READ. With mount false the mask is unchanged;
-# active verdict-mounted pending derivations remain outside this profile.
-# Full-index TS installs lane hooks; their presence does not create a lane.
+# Locals captured by recompute's source try/catch/finally, including #4171's
+# laneRoot/mount posture and #4207's pending nested-derivation guard.
+type LanePass is Data:
+  LanePass{previousLane: Nat, previousMount: R.LaneMount, mount: R.LaneMount}
+
 type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
     reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
     outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat,
-    saved: List<&2, R.Value>, released: Nat, stale: Bool}
+    saved: List<&2, R.Value>, released: Nat, stale: Bool, lanePass: LanePass}
 
 def passStack(frame: PassFrame) -> List<&2, R.Value>:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       saved
 
 def passId(frame: PassFrame) -> Nat:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       id
 
 type MapMatch is Data:
@@ -162,6 +159,7 @@ type Task is Data:
   LaneWrite{id: Nat, value: R.Value}
   LaneWriteCompared{id: Nat, lane: Nat, value: R.Value, guess: Bool}
   LaneWriteDone{value: R.Value}
+  LaneOutcomeStart{id: Nat, value: R.Value, errored: Bool}
   LaneOutcomeCompared{id: Nat, value: R.Value}
   LaneOutcomeDone{}
   LaneCorrections{live: List<&2, Nat>, judged: Bool}
@@ -185,7 +183,8 @@ type Task is Data:
   TruthReadResult{id: Nat}
   HeldNotFinalCompared{}
   SetSignalCompared{id: Nat, value: R.Value}
-  PublishCompared{id: Nat, value: R.Value, create: Bool, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool}
+  PublishCompared{id: Nat, value: R.Value, create: Bool, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, stagedErr: Bool, lane: Nat}
+  PublishOutcome{id: Nat, value: R.Value, create: Bool, oldHeight: Nat, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, changed: Bool}
   Invoke{}
   InvokeArgument{value: R.Expr, updater: Bool, previous: R.Value}
   InvokeApplied{callee: R.Value}
@@ -201,14 +200,15 @@ type Task is Data:
   CatchSelfRetire{frame: PassFrame, notReady: Bool, stagedErr: Bool}
   CatchRetireSources{frame: PassFrame, retire: Bool}
   CatchFinally{frame: PassFrame, stagedErr: Bool}
-  RecomputeAfterFlight{id: Nat}
-  RecomputePrepared{id: Nat, create: Bool, released: Nat}
-  RestoreDeferredReleases{id: Nat, previous: Nat, released: Nat}
-  RecomputeAfterTeardown{id: Nat, released: Nat}
+  RecomputeAfterFlight{id: Nat, lanePass: LanePass}
+  RecomputePrepared{id: Nat, create: Bool, released: Nat, lanePass: LanePass}
+  RestoreDeferredReleases{id: Nat, previous: Nat, released: Nat, lanePass: LanePass}
+  RecomputeAfterTeardown{id: Nat, released: Nat, lanePass: LanePass}
   PassReleases{frame: PassFrame, index: Nat, value: R.Value, joined: Bool, stagedErr: Bool, missed: Bool, prior: R.Fault}
-  FinishPublication{id: Nat, create: Bool, joined: Bool, missed: Bool}
-  QueuePublication{id: Nat, create: Bool, missed: Bool}
-  AfterDeadPass{id: Nat}
+  PassLaneStage{id: Nat, create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, joined: Bool, errored: Bool, missed: Bool, previousLane: Nat, seated: Nat}
+  FinishPublication{id: Nat, create: Bool, joined: Bool, missed: Bool, lane: Nat, previousLane: Nat}
+  QueuePublication{id: Nat, create: Bool, missed: Bool, lane: Nat, previousLane: Nat}
+  AfterDeadPass{id: Nat, previousLane: Nat}
   TrimFinallyRestore{prior: R.Fault, saved: List<&2, R.Value>}
   RoundAfterSweep{}
   CommitPending{id: Nat}
@@ -1434,7 +1434,60 @@ def afterCheck(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
   todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))), _ => [Recompute{id, False{}}], _ => [])
   Machine{w, B.append(Task, todo, ClearFlags{id} <> rest), stack}
 
-def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, released: Nat) -> Machine:
+# core.ts:recompute's source lane/mount locals. laneRoot distinguishes unset,
+# false and a transaction pointer; it is restored in the body finally.
+def previousLane(frame: LanePass) -> Nat:
+  match frame:
+    case LanePass{lane, mount, current}:
+      lane
+
+def previousMount(frame: LanePass) -> R.LaneMount:
+  match frame:
+    case LanePass{lane, mount, current}:
+      mount
+
+def passMount(frame: LanePass) -> R.LaneMount:
+  match frame:
+    case LanePass{lane, mount, current}:
+      current
+
+def hasMount(mount: R.LaneMount) -> Bool:
+  match mount:
+    case R.MountLane{lane}:
+      True{}
+    case _:
+      False{}
+
+def seatPass(+w: R.World, +id: Nat, +create: Bool) -> B.Bundle<R.World, LanePass>:
+  +previous = R.World.passLane(w)
+  +oldMount = R.LaneState.root(R.World.laneState(w))
+  +mount = B.choose(~R.LaneMount, create,
+    _ => B.choose(~R.LaneMount, Nat.is_ne(previous, 0n), _ => R.MountLane{previous}, _ => oldMount), _ => R.MountFalse{})
+  +w = R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), mount))
+  +n = B.node(w, id)
+  +tx = R.NodeExtension.transaction(B.extension(w, id))
+  +own = Bool.and(Bool.or(B.has(R.Node.flags(n), K.REACTIVE_LANE_DIRTY()), U32.is_eq(U32.and(R.Node.config(n), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS())), K.CONFIG_OVERRIDE())), R.Transaction.lane(B.transaction(w, tx)))
+  +inherit = Bool.and(create, Bool.and(Nat.is_ne(previous, 0n), Bool.and(Nat.is_ne(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, previous)))), previous), B.has(R.Node.flags(B.node(w, B.parentComputed(w, R.World.context(w)))), K.REACTIVE_RECOMPUTING_DEPS()))))
+  +lane = B.choose(~Nat, own, _ => tx, _ => B.choose(~Nat, inherit, _ => previous, _ => 0n))
+  B.Bundle{R.World.with_passLane(w, lane), LanePass{previous, oldMount, mount}}
+
+def joinedPass(+w: R.World, +id: Nat, +frame: LanePass) -> Bool:
+  +staged = Bool.and(hasMount(passMount(frame)), Bool.or(Nat.is_ne(previousLane(frame), 0n), Bool.or(B.effect(R.Node.kind(B.node(w, id))), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))))
+  +mask = B.choose(~U32, staged, _ => U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ()), _ => K.REACTIVE_JOINED())
+  B.has(R.Node.flags(B.node(w, id)), mask)
+
+def restoreMount(+w: R.World, frame: LanePass) -> R.World:
+  R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), previousMount(frame)))
+
+# core.ts's previous/compare slot: pending takes precedence even on a guess.
+def passValue(+w: R.World, +id: Nat) -> R.Value:
+  +n = B.node(w, id)
+  B.choose(~R.Value, B.present(R.Node.pending(n)),
+    _ => B.selected(R.Node.pending(n), R.Undefined{}),
+    _ => B.choose(~R.Value, Bool.and(B.has(R.Node.config(n), K.CONFIG_OVERRIDE()), B.present(R.NodeExtension.lane(B.extension(w, id)))),
+      _ => B.selected(R.NodeExtension.lane(B.extension(w, id)), R.Undefined{}), _ => R.Node.value(n)))
+
+def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, released: Nat, +lanePass: LanePass) -> Machine:
   +n = B.node(w, id)
   reask = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_REASK()),
     Bool.not(Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Bool.not(R.NodeExtension.reask(B.extension(w, id)))))))
@@ -1445,17 +1498,17 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   +n = R.Node.with_flags(n, B.set(K.REACTIVE_RECOMPUTING_DEPS(), U32.and(R.Node.flags(n), B.set(K.REACTIVE_ZOMBIE(), K.REACTIVE_REASK()))))
   +n = R.Node.with_time(n, R.World.clock(w))
   +w = B.store_node(w, id, n)
-  frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, B.current(n), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
+  frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, passValue(w, id), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}),
     B.choose(~Nat, B.has(R.Node.status(n), K.STATUS_PENDING()), _ => R.NodeExtension.pendingSources(B.extension(w, id)), _ => 0n),
-    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released, R.World.stale(w)} : PassFrame}
-  next = {Evaluate{R.Node.expr(n), B.current(n)} <> Finish{frame} <> rest : List<&2, Task>}
+    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released, R.World.stale(w), lanePass} : PassFrame}
+  next = {Evaluate{R.Node.expr(n), passValue(w, id)} <> Finish{frame} <> rest : List<&2, Task>}
   +w = R.World.with_stale(w, Bool.or(R.World.stale(w), Bool.and(B.effect(R.Node.kind(n)), Bool.not(S.is_user(R.Node.kind(n))))))
   w = R.World.with_tracking(B.choose(~R.World, B.tracked(R.Node.kind(n)), _ => w, _ => B.event(w, R.Invoked{id})), True{})
   Machine{w, next, stack}
 
 # core.ts:recompute before its body try: callbacks here unwind the caller.
-def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lanePass: LanePass) -> Machine:
   +n = B.node(w, id)
   +w = B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_PENDING()),
     _ => B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_VERDICT()))), _ => w)
@@ -1464,36 +1517,39 @@ def recomputeAfterFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.
     _ =>
       +previous = R.World.deferredReleases(w)
       +pair = GS.beginReleases(w)
-      Machine{B.first(R.World, Nat, pair), OwnerTasks{[O.Enter{id, False{}, False{}}]} <> RestoreDeferredReleases{id, previous, B.second(R.World, Nat, pair)} <> rest, stack},
+      Machine{B.first(R.World, Nat, pair), OwnerTasks{[O.Enter{id, False{}, False{}}]} <> RestoreDeferredReleases{id, previous, B.second(R.World, Nat, pair), lanePass} <> rest, stack},
     _ =>
       w = B.choose(~R.World, Bool.or(Nat.is_ne(R.Node.firstChild(B.node(w, id)), 0n), Bool.not(B.noDisposal(R.Node.disposal(B.node(w, id))))),
         _ => O.parkChildren(w, id), _ => w)
-      Machine{w, RecomputeAfterTeardown{id, 0n} <> rest, stack})
+      Machine{w, RecomputeAfterTeardown{id, 0n, lanePass} <> rest, stack})
 
 # core.ts:recompute after frame teardown and deferred-array restoration.
-def recomputeAfterTeardown(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, released: Nat) -> Machine:
+def recomputeAfterTeardown(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, released: Nat, +lanePass: LanePass) -> Machine:
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR()),
     _ =>
       +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{}))
       B.store_node(w, id, R.Node.with_config(B.node(w, id), U32.xor(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR()))), _ => w)
-  Machine{w, RecomputePrepared{id, False{}, released} <> rest, stack}
+  Machine{w, RecomputePrepared{id, False{}, released, lanePass} <> rest, stack}
 
-def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lanePass: LanePass) -> Machine:
   +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
   +callback = R.NodeExtension.flightTeardown(B.extension(w, id))
   B.choose(~Machine, Nat.is_ne(callback, 0n),
     _ => Machine{B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), 0n)),
-      OwnerTasks{[O.Invoke{callback}]} <> RecomputeAfterFlight{id} <> rest, stack},
-    _ => Machine{w, RecomputeAfterFlight{id} <> rest, stack})
+      OwnerTasks{[O.Invoke{callback}]} <> RecomputeAfterFlight{id, lanePass} <> rest, stack},
+    _ => Machine{w, RecomputeAfterFlight{id, lanePass} <> rest, stack})
 
 def recompute(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool) -> Machine:
   +w = B.bump(w)
-  B.choose(~Machine, create, _ => recomputePrepared(w, rest, stack, id, create, 0n),
+  +seat = seatPass(w, id, create)
+  +w = B.first(R.World, LanePass, seat)
+  +lanePass = B.second(R.World, LanePass, seat)
+  B.choose(~Machine, create, _ => recomputePrepared(w, rest, stack, id, create, 0n, lanePass),
     _ =>
       +w = H.deleteFromHeap(w, id)
       B.choose(~Machine, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-        _ => recomputeFlight(w, rest, stack, id),
-        _ => recomputeAfterFlight(w, rest, stack, id)))
+        _ => recomputeFlight(w, rest, stack, id, lanePass),
+        _ => recomputeAfterFlight(w, rest, stack, id, lanePass)))
 
 # The pending-source walk's captured visited/released locals survive owner
 # callbacks. Its traversal completes before releases; callbacks may alter the
@@ -1531,10 +1587,7 @@ def retireSources(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
 def retireOutgoing(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, id: Nat, set: Nat, onlyDropped: Bool) -> Machine:
   Machine{w, RetireSources{id, set, 0n, onlyDropped} <> rest, stack}
 
-# No lane engine is installed: only joined/creator-pass posture makes a new
-# value belong to flushTransaction/passTx (core.ts's born-held value arm).
-# #4171 folds the former prevLane && STAGED_READ arm into mount-aware joined;
-# both arms are absent with this profile's inactive lanes, not globally.
+# core.ts's mainline born-held branch, after a lane has been excluded.
 def bornHeld(+w: R.World, joined: Bool) -> Bool:
   Bool.and(Bool.or(Nat.is_ne(R.World.flushTransaction(w), 0n), Nat.is_ne(R.World.passTx(w), 0n)),
     Bool.or(joined, B.has(R.Node.flags(B.node(w, B.parentComputed(w, R.World.context(w)))), K.REACTIVE_JOINED())))
@@ -1542,54 +1595,90 @@ def bornHeld(+w: R.World, joined: Bool) -> Bool:
 def publicationTx(+w: R.World) -> Nat:
   B.choose(~Nat, Nat.is_ne(R.World.flushTransaction(w), 0n), _ => R.World.flushTransaction(w), _ => R.World.passTx(w))
 
+# core.ts effect-run decision, before the guess-outcome hook. The lane is the
+# captured local, not an ambient lane possibly changed by an equality callback.
+def markPublishedEffectAs(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +changed: Bool, +lane: Nat, isEffect: Bool) -> R.World:
+  +n = B.node(w, id)
+  +screenSame = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_SCREEN_READ()), Bool.and(Bool.not(R.Node.modified(n)), B.objectIs(R.Node.prevValue(n), value)))
+  B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.and(Bool.not(screenSame), Bool.not(B.present(R.Node.pending(n)))))),
+    _ =>
+      +w = B.store_node(w, id, R.Node.with_modified(n, Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))))
+      B.choose(~R.World, Bool.or(Bool.not(create), Nat.is_ne(lane, 0n)), _ => W.enqueueIn(w, id, lane), _ => w), _ => w)
+
+def markPublishedEffect(+w: R.World, +id: Nat, value: R.Value, create: Bool, changed: Bool, lane: Nat) -> R.World:
+  markPublishedEffectAs(w, id, value, create, changed, lane, B.effect(R.Node.kind(B.node(w, id))))
+
+# core.ts publication stores/notification, after any guess outcome returned false.
+def publishStoresAs(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, joined: Bool, +changed: Bool, +lane: Nat, +isEffect: Bool, +subs: Nat) -> B.Bundle<R.World, Bool>:
+  +n = B.node(w, id)
+  +w = B.choose(~R.World, changed,
+    _ =>
+      +w = B.choose(~R.World, Nat.is_ne(lane, 0n),
+        _ => B.choose(~R.World, Bool.and(isEffect, Bool.not(B.present(R.Node.pending(n)))),
+          _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
+          _ => B.choose(~R.World, Bool.or(isEffect, R.Transaction.shown(B.transaction(w, lane))),
+            _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})),
+            _ => B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.Present{value})))),
+        _ =>
+          +direct = B.choose(~Bool, create, _ => Bool.not(bornHeld(w, joined)), _ => Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id))))))
+          B.choose(~R.World, direct,
+            _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
+            _ =>
+              +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
+              B.choose(~R.World, create,
+                _ =>
+                  +w = X.holdNode(w, id, publicationTx(w))
+                  B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w)))
+      B.choose(~R.World, Nat.is_ne(subs, 0n),
+        _ =>
+          +w = S.insertSubs(w, id)
+          B.choose(~R.World, Nat.is_ne(lane, 0n), _ => Lanes.laneDirty(w, id, lane), _ => w), _ => w),
+    _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
+      _ => H.height_subs(B.budget(w), w, subs), _ => w))
+  B.Bundle{w, changed}
+
+def publishStores(+w: R.World, +id: Nat, value: R.Value, create: Bool, oldHeight: Nat, joined: Bool, changed: Bool, lane: Nat) -> B.Bundle<R.World, Bool>:
+  +n = B.node(w, id)
+  publishStoresAs(w, id, value, create, oldHeight, joined, changed, lane, B.effect(R.Node.kind(n)), R.Node.subs(n))
+
+# Explicit mainline leaf used by the scalar publication helper/proof profile.
 def publishValueChanged(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, joined: Bool, +changed: Bool) -> B.Bundle<R.World, Bool>:
   +n = B.node(w, id)
   +isEffect = B.effect(R.Node.kind(n))
-  +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(n))))),
-    _ =>
-      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
-      B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
-  +w = B.choose(~R.World, changed,
-    _ =>
-      +direct = B.choose(~Bool, create, _ => Bool.not(bornHeld(w, joined)), _ => Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id))))))
-      +w = B.choose(~R.World, direct,
-        _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
-        _ =>
-          +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
-          B.choose(~R.World, create,
-            _ =>
-              +w = X.holdNode(w, id, publicationTx(w))
-              B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w))
-      B.choose(~R.World, Nat.is_ne(R.Node.subs(n), 0n), _ => S.insertSubs(w, id), _ => w),
-    _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
-      _ => H.height_subs(B.budget(w), w, R.Node.subs(n)), _ => w))
-  B.Bundle{w, changed}
+  publishStoresAs(markPublishedEffectAs(w, id, value, create, changed, 0n, isEffect), id, value, create, oldHeight, joined, changed, 0n, isEffect, R.Node.subs(n))
+
+# core.ts default equality profile of the source valueChanged expression.
+def publicationChanged(+w: R.World, +id: Nat, +value: R.Value, wasUninitialized: Bool) -> Bool:
+  +n = B.node(w, id)
+  Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(n))), wasUninitialized),
+    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(EQ.isSame(w, id, passValue(w, id), value))))
 
 def publishValue(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, wasUninitialized: Bool, +joined: Bool) -> B.Bundle<R.World, Bool>:
-  +n = B.node(w, id)
-  +isEffect = B.effect(R.Node.kind(n))
-  +changed = Bool.or(Bool.and(Bool.not(isEffect), wasUninitialized),
-    Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(EQ.isSame(w, id, B.current(n), value))))
-  publishValueChanged(w, id, value, create, oldHeight, joined, changed)
+  publishValueChanged(w, id, value, create, oldHeight, joined, publicationChanged(w, id, value, wasUninitialized))
 
 # recompute's queue decision is after its successful dependency trim callback.
-def queuePublication(+w: R.World, +id: Nat, create: Bool) -> R.World:
+def queuePublicationIn(+w: R.World, +id: Nat, create: Bool, +lane: Nat) -> R.World:
   B.choose(~R.World, B.ok(w),
     _ =>
       +n = B.node(w, id)
       queued = Bool.or(B.present(R.Node.pending(n)), Bool.or(O.parked(w, id),
         Bool.and(B.has(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED())), Bool.or(Bool.not(create), B.has(R.Node.status(n), K.STATUS_PENDING())))))
-      B.choose(~R.World, queued, _ => S.queuePendingNode(B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_STAGED()))), id), _ => w),
+      B.choose(~R.World, queued, _ =>
+        +w = B.store_node(w, id, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_STAGED())))
+        B.choose(~R.World, Nat.is_eq(lane, 0n), _ => S.queuePendingNode(w, id), _ => w), _ => w),
     _ => w)
 
-def finishPublication(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, joined: Bool, +missed: Bool) -> Machine:
-  +w = B.choose(~R.World, Bool.and(create, Bool.and(joined, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))),
+def queuePublication(+w: R.World, +id: Nat, create: Bool) -> R.World:
+  queuePublicationIn(w, id, create, 0n)
+
+def finishPublication(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, joined: Bool, +missed: Bool, +lane: Nat, previousLane: Nat) -> Machine:
+  +w = B.choose(~R.World, Bool.and(Nat.is_eq(lane, 0n), Bool.and(create, Bool.and(joined, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))),
     _ =>
       +t = publicationTx(w)
       B.choose(~R.World, Bool.and(Nat.is_ne(t, 0n), Bool.not(R.Transaction.lane(B.transaction(w, t)))), _ => X.holdNode(w, id, t), _ => w), _ => w)
   +n = B.node(w, id)
-  +ending = {QueuePublication{id, create, missed} <> rest : List<&2, Task>}
-  B.choose(~Machine, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(R.Node.modified(n)))),
+  +ending = {QueuePublication{id, create, missed, lane, previousLane} <> rest : List<&2, Task>}
+  B.choose(~Machine, Bool.and(Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), Bool.and(Bool.not(B.present(R.Node.pending(n))), Bool.not(Bool.and(B.effect(R.Node.kind(n)), R.Node.modified(n))))),
     _ => B.choose(~Machine, Bool.or(create, B.tracked(R.Node.kind(n))),
       _ => Machine{w, OwnerTasks{[O.TrimDeps{id}]} <> ending, stack},
       _ => Machine{R.World.with_trims(w, B.append(Nat, R.World.trims(w), [id])), ending, stack}),
@@ -1608,25 +1697,28 @@ def publicationCompleted(+rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: 
 
 # Equality can read/write/throw before any publication stores. Preserve the
 # recompute's captured value/height/outgoing locals across that callback.
-def publishCompared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, value: R.Value, create: Bool, oldHeight: Nat, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, joined: Bool, changed: Bool) -> Machine:
-  # Source's errored local was captured before the comparator; do not re-test
-  # the live error here. A caught comparator answers same, then height/self
-  # settlement still follows the original successful-body branch.
-  publicationCompleted(rest, stack, id, outgoing, outgoingSources, wasPendingSource, publishValueChanged(w, id, value, create, oldHeight, joined, changed))
+def publicationOutcome(+w: R.World, +id: Nat, create: Bool, +lane: Nat) -> Bool:
+  Bool.and(Bool.not(create), Bool.and(Nat.is_eq(lane, 0n), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())))
 
-def publishState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, +wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, +stagedErr: Bool) -> Machine:
-  +errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
+def publishCompared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, +changed: Bool, +lane: Nat) -> Machine:
+  +n = B.node(w, id)
+  +isEffect = B.effect(R.Node.kind(n))
+  +subs = R.Node.subs(n)
+  +w = markPublishedEffectAs(w, id, value, create, changed, lane, isEffect)
+  B.choose(~Machine, publicationOutcome(w, id, create, lane),
+    _ => Machine{w, LaneOutcomeStart{id, value, False{}} <> PublishOutcome{id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, changed} <> rest, stack},
+    _ => publicationCompleted(rest, stack, id, outgoing, outgoingSources, wasPendingSource, publishStoresAs(w, id, value, create, oldHeight, joined, changed, lane, isEffect, subs)))
+
+def publishState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, +wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, +errored: Bool, +lane: Nat) -> Machine:
   B.choose(~Machine, errored, _ => Machine{w, rest, stack},
     _ => B.choose(~Machine, Nat.is_eq(EQ.custom(w, id), 0n),
-      _ => publicationCompleted(rest, stack, id, outgoing, outgoingSources, wasPendingSource, publishValue(w, id, value, create, oldHeight, wasUninitialized, joined)),
+      _ => publishCompared(w, rest, stack, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, publicationChanged(w, id, value, wasUninitialized), lane),
       _ => B.choose(~Machine, Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), wasUninitialized), B.truth(R.NodeExtension.shownError(B.extension(w, id)))),
-        _ => publishCompared(w, rest, stack, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, True{}),
-        _ => isSame(w, PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr} <> rest, stack, id, B.current(B.node(w, id)), value))))
+        _ => publishCompared(w, rest, stack, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, True{}, lane),
+        _ => isSame(w, PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, errored, lane} <> rest, stack, id, passValue(w, id), value))))
 
 # recompute's finally is shared by normal return and exceptional unwind.
-def passFinally(+w: R.World, +id: Nat, create: Bool, context: Nat, tracking: Bool, reask: Bool, stale: Bool) -> R.World:
-  +w = R.World.with_tracking(w, tracking)
-  +w = R.World.with_stale(w, stale)
+def passFinallyBody(+w: R.World, +id: Nat, create: Bool, context: Nat) -> R.World:
   +n = B.node(w, id)
   +config = B.set(B.clear(R.Node.config(n), K.CONFIG_VERDICT()), U32.and(R.Node.flags(n), K.REACTIVE_PROBED()))
   +w = B.store_node(w, id, R.Node.with_config(n, config))
@@ -1641,30 +1733,50 @@ def passFinallyTail(+w: R.World, +id: Nat, reask: Bool) -> R.World:
   B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
     _ => B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), Bool.and(reask, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))), _ => w)
 
-def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, value: R.Value, oldHeight: Nat, wasUninitialized: Bool, outgoing: R.Value, outgoingSources: Nat, wasPendingSource: Bool, +joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
+# core.ts after its body finally, before equality: capture a separate local
+# publication lane. A refusal leaves the ambient passLane untouched.
+def stagePassAt(+w: R.World, +id: Nat, +create: Bool, +errored: Bool, +seated: Nat) -> B.Bundle<R.World, Nat>:
+  +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(seated, 0n),
+    _ => Lanes.laneStage(w, id, seated, create, B.choose(~Lanes.StageError, errored, _ => Lanes.StageFailed{}, _ => Lanes.StageAnswered{})), _ => B.Bundle{w, False{}})
+  +w = B.first(R.World, Bool, pair)
+  +lane = B.choose(~Nat, B.second(R.World, Bool, pair), _ => seated, _ => 0n)
+  B.Bundle{B.choose(~R.World, Nat.is_ne(lane, 0n), _ => R.World.with_passLane(w, lane), _ => w), lane}
+
+def stagePass(+w: R.World, id: Nat, create: Bool, errored: Bool) -> B.Bundle<R.World, Nat>:
+  stagePassAt(w, id, create, errored, R.World.passLane(w))
+
+def afterPass(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, +value: R.Value, +oldHeight: Nat, +wasUninitialized: Bool, +outgoing: R.Value, +outgoingSources: Nat, +wasPendingSource: Bool, +joined: Bool, +stagedErr: Bool, +missed: Bool, +previousLane: Nat) -> Machine:
   B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()),
     _ =>
-      Machine{w, OwnerTasks{[O.ClearDeps{id}]} <> AfterDeadPass{id} <> rest, stack},
+      Machine{w, OwnerTasks{[O.ClearDeps{id}]} <> AfterDeadPass{id, previousLane} <> rest, stack},
     _ =>
-      publishState(w, FinishPublication{id, create, joined, missed} <> rest, stack, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr))
+      +errored = Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), stagedErr)
+      +seated = R.World.passLane(w)
+      B.choose(~Machine, Nat.is_eq(seated, 0n),
+        _ => publishState(w, FinishPublication{id, create, joined, missed, 0n, previousLane} <> rest, stack, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, errored, 0n),
+        _ => Machine{w, PassLaneStage{id, create, value, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, errored, missed, previousLane, seated} <> rest, stack}))
 
 # Source finally executes its deferred releases even when unwinding a body
 # failure. A release failure replaces that failure and skips the remaining tail.
 def startPassFinally(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, value: R.Value, joined: Bool, stagedErr: Bool, missed: Bool) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
-      +w = passFinally(w, id, create, context, tracking, reask, stale)
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
+      +w = R.World.with_tracking(w, tracking)
+      +w = restoreMount(w, lanePass)
+      +w = R.World.with_stale(w, stale)
+      +joined = joinedPass(w, id, lanePass)
+      +w = passFinallyBody(w, id, create, context)
       Machine{R.World.with_fault(w, R.Healthy{}), PassReleases{frame, 0n, value, joined, stagedErr, missed, R.World.fault(w)} <> rest, stack}
 
 def passReleases(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +index: Nat, +value: R.Value, +joined: Bool, +stagedErr: Bool, +missed: Bool, +prior: R.Fault) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +nodes = B.get(List<&2, Nat>, R.World.releaseLists(w), released, [])
       B.choose(~Machine, Nat.is_ge(index, B.length(Nat, nodes)),
         _ =>
           +w = R.World.with_fault(passFinallyTail(w, id, reask), prior)
           B.choose(~Machine, B.ok(w),
-            _ => afterPass(w, rest, stack, id, create, value, height, uninitialized, outgoing, sources, pendingSource, joined, stagedErr, missed),
+            _ => afterPass(w, rest, stack, id, create, value, height, uninitialized, outgoing, sources, pendingSource, joined, stagedErr, missed, previousLane(lanePass)),
             _ => Machine{w, rest, stack}),
         _ =>
           +node = B.get(Nat, nodes, index, 0n)
@@ -1673,7 +1785,7 @@ def passReleases(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 def finishReady(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame, +keepFlight: Bool) -> Machine:
   match stack frame:
-    case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +w = B.choose(~R.World, Bool.and(Bool.not(keepFlight), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
       +w = B.choose(~R.World, keepFlight, _ => w, _ => B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})))
@@ -1739,7 +1851,7 @@ def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: PassFrame) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved, released, stale}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, +flight, saved, released, stale, lanePass}:
       finishResult(w, rest, stack, frame, id, flight)
 
 # Body throw -> source catch -> finally -> publication tail, with the caller's
@@ -1751,7 +1863,7 @@ def finish(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +frame: P
 # stageError's assignment is complete only after its release walk returns.
 def finishCatch(+w: R.World, rest: List<&2, Task>, +frame: PassFrame, stagedErr: Bool) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +joined = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED())
       +missed = B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_MISSED_WAKE())
       startPassFinally(w, rest, saved, frame, previous, joined, stagedErr, missed)
@@ -1791,7 +1903,7 @@ def catchPass(+w: R.World, rest: List<&2, Task>, frame: PassFrame) -> Machine:
 
 def catchSelfRetire(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +notReady: Bool, stagedErr: Bool) -> Machine:
   match frame:
-    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +ending = {CatchRetireSources{frame, Bool.or(notReady, stagedErr)} <> rest : List<&2, Task>}
       B.choose(~Machine, Bool.and(notReady, Bool.and(pendingSource, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n))),
         _ => pendingResume(ending, stack, Q.beginSettlement(w, id, id)),
@@ -1799,7 +1911,7 @@ def catchSelfRetire(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def catchRetireSources(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, frame: PassFrame, +retire: Bool) -> Machine:
   match frame:
-    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale}:
+    case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       B.choose(~Machine, retire, _ => retireOutgoing(w, rest, stack, id, sources, True{}), _ => Machine{w, rest, stack})
 
 # handleAsync's post-.then verdict, still inside recompute's try/catch.
@@ -2338,6 +2450,21 @@ def runTracked(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
     _ => Machine{B.store_node(w, id, R.Node.with_modified(B.node(w, id), False{})), Recompute{id, False{}} <> rest, stack},
     _ => Machine{w, rest, stack})
 
+# core.ts:laneFrameMember, nearest non-zombie owner. Fuel refuses malformed
+# owner cycles; the admitted owner arena is finite and acyclic.
+def laneFrameMemberLoop(fuel: Nat, +w: R.World, +owner: Nat) -> B.Bundle<R.World, Bool>:
+  match fuel:
+    case 0n:
+      B.Bundle{R.World.with_fault(w, R.Exhausted{}), False{}}
+    case 1n+p:
+      +n = B.node(w, owner)
+      B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()),
+        _ => laneFrameMemberLoop(p, w, R.Node.parent(n)),
+        _ => B.Bundle{w, Bool.or(U32.is_eq(U32.and(R.Node.config(n), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS())), K.CONFIG_OVERRIDE()), Bool.and(B.effect(R.Node.kind(n)), R.Transaction.lane(B.transaction(w, R.NodeExtension.transaction(B.extension(w, owner))))))})
+
+def laneFrameMember(+w: R.World, id: Nat) -> B.Bundle<R.World, Bool>:
+  laneFrameMemberLoop(1n+B.length(R.Node, R.World.nodes(w)), w, R.Node.parent(B.node(w, id)))
+
 # core.ts:GlobalQueue._update. Tracked effects visit the heap before the seam
 # and enqueue their _run in the user phase; their body executes only afterward.
 def visitHeap(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
@@ -2348,7 +2475,17 @@ def visitHeap(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
       Machine{S.enqueue(w, id), HeapLoop{} <> rest, stack},
     _ => B.choose(~Machine, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY()))),
       _ => Machine{S.deferZombie(w, id), HeapLoop{} <> rest, stack},
-      _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}))
+      _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()),
+        _ =>
+          +pair = laneFrameMember(w, id)
+          +w = B.first(R.World, Bool, pair)
+          B.choose(~Machine, B.second(R.World, Bool, pair),
+            _ =>
+              +w = H.deleteFromHeap(w, id)
+              +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), U32.or(K.REACTIVE_DIRTY(), U32.or(K.REACTIVE_CHECK(), K.REACTIVE_LANE_DIRTY())))))
+              Machine{w, HeapLoop{} <> rest, stack},
+            _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}),
+        _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack})))
 
 def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   B.choose(~Machine, Nat.is_gt(R.World.minimum(w), R.World.maximum(w)),
@@ -3782,6 +3919,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case LaneWriteDone{value} <> rest:
       Machine{B.schedule(w), rest, value <> stack}
+    case LaneOutcomeStart{id, value, errored} <> rest:
+      laneOutcome(w, rest, stack, id, value, errored)
     case LaneOutcomeCompared{+id, +value} <> +rest:
       match stack:
         case verdict <> tail:
@@ -3852,10 +3991,17 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{B.choose(~R.World, B.truth(equal), _ => w, _ => W.stageResolved(w, id, value)), rest, value <> tail}
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
-    case PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr} <> rest:
+    case PublishCompared{id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, stagedErr, lane} <> rest:
       match stack:
         case equal <> tail:
-          publishCompared(w, rest, tail, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, Bool.not(B.truth(equal)))
+          publishCompared(w, rest, tail, id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, Bool.not(B.truth(equal)), lane)
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case PublishOutcome{+id, value, create, oldHeight, outgoing, outgoingSources, wasPendingSource, joined, +changed} <> rest:
+      match stack:
+        case handled <> tail:
+          +pair = B.choose(~B.Bundle<R.World, Bool>, B.truth(handled), _ => B.Bundle{w, changed}, _ => publishStores(w, id, value, create, oldHeight, joined, changed, 0n))
+          publicationCompleted(rest, tail, id, outgoing, outgoingSources, wasPendingSource, pair)
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case SetMemoArgument{+signal} <> +rest:
@@ -3897,16 +4043,22 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       trimIntake(w, rest, stack, index)
     case FinishSettleIntake{t} <> rest:
       finishSettleIntake(w, rest, stack, t)
-    case FinishPublication{id, create, joined, missed} <> rest:
-      finishPublication(w, rest, stack, id, create, joined, missed)
-    case QueuePublication{+id, create, missed} <> rest:
-      +w = queuePublication(w, id, create)
+    case PassLaneStage{+id, +create, value, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, +joined, +errored, missed, previousLane, seated} <> rest:
+      +pair = stagePassAt(w, id, create, errored, seated)
+      +next = B.first(R.World, Nat, pair)
+      +lane = B.second(R.World, Nat, pair)
+      publishState(next, FinishPublication{id, create, joined, missed, lane, previousLane} <> rest, stack, id, value, create, oldHeight, wasUninitialized, outgoing, outgoingSources, wasPendingSource, joined, errored, lane)
+    case FinishPublication{id, create, joined, missed, lane, previousLane} <> rest:
+      finishPublication(w, rest, stack, id, create, joined, missed, lane, previousLane)
+    case QueuePublication{+id, create, missed, lane, previousLane} <> rest:
+      +w = queuePublicationIn(w, id, create, lane)
+      +w = R.World.with_passLane(w, previousLane)
       w = B.choose(~R.World, Bool.and(B.ok(w), missed), _ => B.schedule(H.enqueueSub(w, id)), _ => w)
       Machine{w, rest, stack}
-    case AfterDeadPass{+id} <> rest:
+    case AfterDeadPass{+id, previousLane} <> rest:
       w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
         _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
-      Machine{w, rest, stack}
+      Machine{R.World.with_passLane(w, previousLane), rest, stack}
     case TrimFinallyRestore{prior, saved} <> rest:
       Machine{R.World.with_fault(w, prior), rest, saved}
     case RoundAfterSweep{} <> rest:
@@ -3932,14 +4084,14 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       catchRetireSources(w, rest, stack, frame, retire)
     case CatchFinally{frame, stagedErr} <> rest:
       finishCatch(w, rest, frame, stagedErr)
-    case RecomputeAfterFlight{id} <> rest:
-      recomputeAfterFlight(w, rest, stack, id)
-    case RestoreDeferredReleases{id, previous, released} <> rest:
-      Machine{R.World.with_deferredReleases(w, previous), RecomputeAfterTeardown{id, released} <> rest, stack}
-    case RecomputeAfterTeardown{id, released} <> rest:
-      recomputeAfterTeardown(w, rest, stack, id, released)
-    case RecomputePrepared{id, create, released} <> rest:
-      recomputePrepared(w, rest, stack, id, create, released)
+    case RecomputeAfterFlight{id, lanePass} <> rest:
+      recomputeAfterFlight(w, rest, stack, id, lanePass)
+    case RestoreDeferredReleases{id, previous, released, lanePass} <> rest:
+      Machine{R.World.with_deferredReleases(w, previous), RecomputeAfterTeardown{id, released, lanePass} <> rest, stack}
+    case RecomputeAfterTeardown{id, released, lanePass} <> rest:
+      recomputeAfterTeardown(w, rest, stack, id, released, lanePass)
+    case RecomputePrepared{id, create, released, lanePass} <> rest:
+      recomputePrepared(w, rest, stack, id, create, released, lanePass)
     case PassReleases{frame, index, value, joined, stagedErr, missed, prior} <> rest:
       passReleases(w, rest, stack, frame, index, value, joined, stagedErr, missed, prior)
     case InvokeManyCallee{args, previous} <> rest:

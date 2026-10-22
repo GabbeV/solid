@@ -6,7 +6,7 @@ retention and #4213 cleanup continuation/rethrow timing. Thirteen of 76 vendored
 inputs changed, copied verbatim; the complete prior port remains at bb82345.
 Seven new helper properties and thirty-six paired public histories check this policy.
 Shared optimistic-fold hooks are reviewed but remain unfinished with active
-lane read/write and store scopes. No active semantic deviation exists.
+store scopes and remaining active windows/flush crossings. No active semantic deviation exists.
 
 
 The user has explicitly set the engineering target: a translation close enough to
@@ -16,6 +16,16 @@ needed to continue progress, provided they are strictly tracked, explained and
 retired or reconciled when the upstream fix lands. A passing proof/example is not
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
+
+## Actual lane recomputation crossings
+
+[lane-passes.md](lane-passes.md) maps source seating/mounts, pending/override
+previous slots, body finally, captured publication lane, stage hook, raw guess
+outcome, Object.is effect suppression, queue routing, status propagation and
+parked-frame cancellation. The source-object propagation call was an omission,
+now translated, with no workaround. Public windows/constructors and flush
+crossings remain unfinished. Complete existing program proof domains/budgets
+remain intact; the helper effect theorem states its stale/clean guards.
 
 ## Queued guesses and reveal prefix
 

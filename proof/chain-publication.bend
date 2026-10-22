@@ -4,7 +4,9 @@ import ../representation/base.bend as B
 import ../representation/records.bend as R
 import ../runtime/core.bend as C
 import ../runtime/scheduler.bend as S
+import ../runtime/write.bend as W
 import ../runtime/equality.bend as EQ
+import ../runtime/constants.bend as K
 import ../proof/publication-stage.bend as Stage
 import ./chain-states.bend as M
 
@@ -34,10 +36,10 @@ def flags(+effect: Bool, +shown: Bool) ->
 def selected(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, same: Bool) -> B.Bundle<R.World, Bool>:
   C.publishValueChanged(w, id, value, False{}, height, False{}, Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{}), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(same))))
 
-def changed(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, no: {EQ.isSame(w, id, B.current(B.node(w, id)), value) == False{} : Bool}) ->
+def changed(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, no: {EQ.isSame(w, id, C.passValue(w, id), value) == False{} : Bool}) ->
   {C.publishValue(w, id, value, False{}, height, False{}, False{}) == C.publishValueChanged(w, id, value, False{}, height, False{}, True{}) : B.Bundle<R.World, Bool>}:
   Equal.trans(B.Bundle<R.World, Bool>, C.publishValue(w, id, value, False{}, height, False{}, False{}), selected(w, id, value, height, False{}), C.publishValueChanged(w, id, value, False{}, height, False{}, True{}),
-    Equal.cong(Bool, B.Bundle<R.World, Bool>, same => selected(w, id, value, height, same), EQ.isSame(w, id, B.current(B.node(w, id)), value), False{}, no),
+    Equal.cong(Bool, B.Bundle<R.World, Bool>, same => selected(w, id, value, height, same), EQ.isSame(w, id, C.passValue(w, id), value), False{}, no),
     Equal.cong(Bool, B.Bundle<R.World, Bool>, flag => C.publishValueChanged(w, id, value, False{}, height, False{}, flag), Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{}), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(False{}))), True{}, flags(B.effect(R.Node.kind(B.node(w, id))), B.truth(R.NodeExtension.shownError(B.extension(w, id))))))
 
 def notified(+w: R.World, +id: Nat, +value: R.Value, +slotted: R.World, +subs: Nat,
@@ -60,7 +62,7 @@ def memo_complete(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, +slotted
   notify: {S.insertSubs(slotted, id) == end : R.World}) ->
   {C.publishValue(w, id, value, False{}, height, False{}, False{}) == B.Bundle{end, True{}} : B.Bundle<R.World, Bool>}:
   Equal.trans(B.Bundle<R.World, Bool>, C.publishValue(w, id, value, False{}, height, False{}, False{}), C.publishValueChanged(w, id, value, False{}, height, False{}, True{}), B.Bundle{end, True{}},
-    changed(w, id, value, height, disabled(w, id, B.current(B.node(w, id)), value, off)),
+    changed(w, id, value, height, disabled(w, id, C.passValue(w, id), value, off)),
     Equal.trans(B.Bundle<R.World, Bool>, C.publishValueChanged(w, id, value, False{}, height, False{}, True{}), Stage.stagedAndNotify(w, id, value, R.Node.subs(B.node(w, id))), B.Bundle{end, True{}},
       Stage.memo_change(w, id, value, height, False{}, nonEffect),
       Equal.trans(B.Bundle<R.World, Bool>, Stage.stagedAndNotify(w, id, value, R.Node.subs(B.node(w, id))), B.Bundle{S.insertSubs(slotted, id), True{}}, B.Bundle{end, True{}},
@@ -95,8 +97,15 @@ def complete_33(+input: Nat) -> {C.publishValue(C.world(M.state_33(input)), 4n, 
 
 # The effect branch marks and queues before it writes its value. Its captured
 # subscriber pointer is still the pre-store one, as in publishValueChanged.
+def mainlineEnqueue(w: R.World, id: Nat) -> R.World:
+  W.enqueueIn(w, id, 0n)
+
+def screenSame(+w: R.World, +id: Nat, value: R.Value) -> Bool:
+  +n = B.node(w, id)
+  Bool.and(B.has(R.Node.flags(n), K.REACTIVE_SCREEN_READ()), Bool.and(Bool.not(R.Node.modified(n)), B.objectIs(R.Node.prevValue(n), value)))
+
 def effect_prepare(+w: R.World, +id: Nat) -> R.World:
-  S.enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id)
+  mainlineEnqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id)
 
 def effect_output(+w: R.World, +id: Nat, +value: R.Value, pending: Bool) -> B.Bundle<R.World, Bool>:
   B.Bundle{B.choose(~R.World, Bool.not(pending),
@@ -107,34 +116,47 @@ def effect_loaded(+w: R.World, +id: Nat, +value: R.Value, pending: Bool) -> B.Bu
   +mid = B.choose(~R.World, Bool.not(pending), _ => effect_prepare(w, id), _ => w)
   effect_output(mid, id, value, B.present(R.Node.pending(B.node(mid, id))))
 
-def effect_loaded_eq(+w: R.World, +id: Nat, +value: R.Value, height: Nat) ->
+def effect_gate(+w: R.World, +id: Nat, +value: R.Value, screen: Bool, clean: Bool) -> B.Bundle<R.World, Bool>:
+  +mid = B.choose(~R.World, Bool.and(Bool.not(screen), Bool.not(B.present(R.Node.pending(B.node(w, id))))),
+    _ => mainlineEnqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), clean)), id), _ => w)
+  effect_output(mid, id, value, B.present(R.Node.pending(B.node(mid, id))))
+
+def effect_loaded_eq(+w: R.World, +id: Nat, +value: R.Value, height: Nat,
+  fresh: {screenSame(w, id, value) == False{} : Bool},
+  clean: {Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))) == True{} : Bool}) ->
   {Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, 0n) == effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))) : B.Bundle<R.World, Bool>}:
-  {==}
+  Equal.trans(B.Bundle<R.World, Bool>, effect_gate(w, id, value, screenSame(w, id, value), Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))), effect_gate(w, id, value, False{}, Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))), effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))),
+    Equal.cong(Bool, B.Bundle<R.World, Bool>, flag => effect_gate(w, id, value, flag, Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id))))), screenSame(w, id, value), False{}, fresh),
+    Equal.cong(Bool, B.Bundle<R.World, Bool>, flag => effect_gate(w, id, value, False{}, flag), Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))), True{}, clean))
 
 def effect_selected(+w: R.World, +id: Nat, +value: R.Value, +height: Nat,
   effect: {B.effect(R.Node.kind(B.node(w, id))) == True{} : Bool},
-  subs: {R.Node.subs(B.node(w, id)) == 0n : Nat}) ->
+  subs: {R.Node.subs(B.node(w, id)) == 0n : Nat},
+  fresh: {screenSame(w, id, value) == False{} : Bool},
+  clean: {Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))) == True{} : Bool}) ->
   {C.publishValueChanged(w, id, value, False{}, height, False{}, True{}) == effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))) : B.Bundle<R.World, Bool>}:
   Equal.trans(B.Bundle<R.World, Bool>, C.publishValueChanged(w, id, value, False{}, height, False{}, True{}), Stage.loaded(w, id, value, False{}, height, False{}, True{}, B.effect(R.Node.kind(B.node(w, id))), R.Node.subs(B.node(w, id))), effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))),
     Stage.loadedEq(w, id, value, False{}, height, False{}, True{}),
     Equal.trans(B.Bundle<R.World, Bool>, Stage.loaded(w, id, value, False{}, height, False{}, True{}, B.effect(R.Node.kind(B.node(w, id))), R.Node.subs(B.node(w, id))), Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, R.Node.subs(B.node(w, id))), effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))),
       Equal.cong(Bool, B.Bundle<R.World, Bool>, e => Stage.loaded(w, id, value, False{}, height, False{}, True{}, e, R.Node.subs(B.node(w, id))), B.effect(R.Node.kind(B.node(w, id))), True{}, effect),
       Equal.trans(B.Bundle<R.World, Bool>, Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, R.Node.subs(B.node(w, id))), Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, 0n), effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))),
-        Equal.cong(Nat, B.Bundle<R.World, Bool>, s => Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, s), R.Node.subs(B.node(w, id)), 0n, subs), effect_loaded_eq(w, id, value, height))))
+        Equal.cong(Nat, B.Bundle<R.World, Bool>, s => Stage.loaded(w, id, value, False{}, height, False{}, True{}, True{}, s), R.Node.subs(B.node(w, id)), 0n, subs), effect_loaded_eq(w, id, value, height, fresh, clean))))
 
 def effect_complete(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, +queued: R.World, +end: R.World,
   off: {R.Node.equals(B.node(w, id)) == False{} : Bool},
   effect: {B.effect(R.Node.kind(B.node(w, id))) == True{} : Bool},
   subs: {R.Node.subs(B.node(w, id)) == 0n : Nat},
+  fresh: {screenSame(w, id, value) == False{} : Bool},
+  clean: {Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))) == True{} : Bool},
   firstEmpty: {B.present(R.Node.pending(B.node(w, id))) == False{} : Bool},
   prepared: {effect_prepare(w, id) == queued : R.World},
   stillEmpty: {B.present(R.Node.pending(B.node(queued, id))) == False{} : Bool},
   stored: {B.store_node(queued, id, R.Node.with_value(B.node(queued, id), value)) == end : R.World}) ->
   {C.publishValue(w, id, value, False{}, height, False{}, False{}) == B.Bundle{end, True{}} : B.Bundle<R.World, Bool>}:
   Equal.trans(B.Bundle<R.World, Bool>, C.publishValue(w, id, value, False{}, height, False{}, False{}), C.publishValueChanged(w, id, value, False{}, height, False{}, True{}), B.Bundle{end, True{}},
-    changed(w, id, value, height, disabled(w, id, B.current(B.node(w, id)), value, off)),
+    changed(w, id, value, height, disabled(w, id, C.passValue(w, id), value, off)),
     Equal.trans(B.Bundle<R.World, Bool>, C.publishValueChanged(w, id, value, False{}, height, False{}, True{}), effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))), B.Bundle{end, True{}},
-      effect_selected(w, id, value, height, effect, subs),
+      effect_selected(w, id, value, height, effect, subs, fresh, clean),
       Equal.trans(B.Bundle<R.World, Bool>, effect_loaded(w, id, value, B.present(R.Node.pending(B.node(w, id)))), effect_loaded(w, id, value, False{}), B.Bundle{end, True{}},
         Equal.cong(Bool, B.Bundle<R.World, Bool>, pending => effect_loaded(w, id, value, pending), B.present(R.Node.pending(B.node(w, id))), False{}, firstEmpty),
         Equal.trans(B.Bundle<R.World, Bool>, effect_loaded(w, id, value, False{}), effect_output(queued, id, value, B.present(R.Node.pending(B.node(queued, id)))), B.Bundle{end, True{}},
@@ -145,10 +167,10 @@ def effect_complete(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, +queue
 
 def prepare_end(+w: R.World, +id: Nat, +marked: R.World, +end: R.World,
   a: {B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})) == marked : R.World},
-  b: {S.enqueue(marked, id) == end : R.World}) ->
+  b: {mainlineEnqueue(marked, id) == end : R.World}) ->
   {effect_prepare(w, id) == end : R.World}:
-  Equal.trans(R.World, effect_prepare(w, id), S.enqueue(marked, id), end,
-    Equal.cong(R.World, R.World, world => S.enqueue(world, id), B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), marked, a), b)
+  Equal.trans(R.World, effect_prepare(w, id), mainlineEnqueue(marked, id), end,
+    Equal.cong(R.World, R.World, world => mainlineEnqueue(world, id), B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), marked, a), b)
 
 def store_end(+w: R.World, +id: Nat, +value: R.Value, +middle: R.World, +end: R.World,
   a: {B.store_node(w, id, R.Node.with_value(B.node(w, id), value)) == middle : R.World}, b: {middle == end : R.World}) ->
@@ -158,7 +180,7 @@ def store_end(+w: R.World, +id: Nat, +value: R.Value, +middle: R.World, +end: R.
 def mark_55(+input: Nat) -> {B.store_node(C.world(M.state_55(input)), 5n, R.Node.with_modified(B.node(C.world(M.state_55(input)), 5n), True{})) == M.modified_55(input) : R.World}:
   {==}
 
-def queue_55(+input: Nat) -> {S.enqueue(M.modified_55(input), 5n) == M.queued_55(input) : R.World}:
+def queue_55(+input: Nat) -> {mainlineEnqueue(M.modified_55(input), 5n) == M.queued_55(input) : R.World}:
   {==}
 
 def value_55(+input: Nat) -> {B.store_node(M.queued_55(input), 5n, R.Node.with_value(B.node(M.queued_55(input), 5n), R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)})) == M.value_55(input) : R.World}:
@@ -168,6 +190,6 @@ def final_55(+input: Nat) -> {M.value_55(input) == C.world(M.state_56(input)) : 
   {==}
 
 def complete_55(+input: Nat) -> {C.publishValue(C.world(M.state_55(input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, False{}, 2n, False{}, False{}) == B.Bundle{C.world(M.state_56(input)), True{}} : B.Bundle<R.World, Bool>}:
-  effect_complete(C.world(M.state_55(input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, 2n, M.queued_55(input), C.world(M.state_56(input)), {==}, {==}, {==}, {==},
+  effect_complete(C.world(M.state_55(input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, 2n, M.queued_55(input), C.world(M.state_56(input)), {==}, {==}, {==}, {==}, {==}, {==},
     prepare_end(C.world(M.state_55(input)), 5n, M.modified_55(input), M.queued_55(input), mark_55(input), queue_55(input)), {==},
     store_end(M.queued_55(input), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, M.value_55(input), C.world(M.state_56(input)), value_55(input), final_55(input)))

@@ -19,7 +19,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,169 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 344; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 365; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -281,5 +281,16 @@ The codec formerly collapsed -0 to positive zero. A distinct payload now follows
 strict equality, falseyness, String conversion and admitted arithmetic. Eleven
 public histories and 52 primitive controls compare pinned Solid; eight kernel
 facts include five quantified natural-counterpart laws. Seven added mutations
-bring the total to 344. This is a port repair with no active deviation; general
+brought the total to 344 at that checkpoint. This is a port repair with no active deviation; general
 JavaScript numeric coercion and nonnatural repeat offsets remain excluded.
+
+## Lane passes
+
+[The pass crossing](lane-passes.md) connects actual recompute seating, mounts,
+staging/publication/queues and status propagation, plus parked-frame heap
+cancellation. 7,082 native controls and six scoped properties check it. The
+source-object propagation hook was a port omission found by graph/error
+controls, now translated with no workaround. Complete scalar/history/chain
+claims retain their domains/budgets; the generic effect leaf now explicitly
+requires the source stale/clean guards. Public constructors/windows and flush
+are next.

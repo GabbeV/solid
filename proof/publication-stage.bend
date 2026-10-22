@@ -10,25 +10,7 @@ import ../runtime/constants.bend as K
 
 # Proof-only loaded form; these two values were read before any stores.
 def loaded(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, joined: Bool, +changed: Bool, +isEffect: Bool, +subs: Nat) -> B.Bundle<R.World, Bool>:
-  +w = B.choose(~R.World, Bool.and(isEffect, Bool.and(changed, Bool.not(B.present(R.Node.pending(B.node(w, id)))))),
-    _ =>
-      +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
-      B.choose(~R.World, create, _ => w, _ => S.enqueue(w, id)), _ => w)
-  +w = B.choose(~R.World, changed,
-    _ =>
-      +direct = B.choose(~Bool, create, _ => Bool.not(C.bornHeld(w, joined)), _ => Bool.and(isEffect, Bool.not(B.present(R.Node.pending(B.node(w, id))))))
-      +w = B.choose(~R.World, direct,
-        _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), value)),
-        _ =>
-          +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
-          B.choose(~R.World, create,
-            _ =>
-              +w = X.holdNode(w, id, C.publicationTx(w))
-              B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))), _ => w))
-      B.choose(~R.World, Nat.is_ne(subs, 0n), _ => S.insertSubs(w, id), _ => w),
-    _ => B.choose(~R.World, Nat.is_ne(R.Node.height(B.node(w, id)), oldHeight),
-      _ => H.height_subs(B.budget(w), w, subs), _ => w))
-  B.Bundle{w, changed}
+  C.publishStoresAs(C.markPublishedEffectAs(w, id, value, create, changed, 0n, isEffect), id, value, create, oldHeight, joined, changed, 0n, isEffect, subs)
 
 def loadedEq(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +oldHeight: Nat, +joined: Bool, +changed: Bool) ->
   {C.publishValueChanged(w, id, value, create, oldHeight, joined, changed)

@@ -61,7 +61,7 @@ def publish_13(+input: Nat) -> {C.publishValue(C.world(M.state_13(input)), 3n, R
   Publish.complete_13(input)
 
 def step_13(+input: Nat) -> {C.step(M.state_13(input)) == M.state_14(input) : C.Machine}:
-  Complete.complete(M.state_13(input), C.world(M.state_13(input)), remainder(M.state_13(input)), 3n, 0n, R.Number{1n}, R.Number{Nat.add(input, 1n)}, C.world(M.state_14(input)), M.state_14(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_13(input), {==})
+  Complete.complete(M.state_13(input), C.world(M.state_13(input)), remainder(M.state_13(input)), 3n, 0n, R.Number{1n}, R.Number{Nat.add(input, 1n)}, C.world(M.state_14(input)), M.state_14(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_13(input), {==})
 
 def step_14(+input: Nat) -> {C.step(M.state_14(input)) == M.state_15(input) : C.Machine}:
   {==}
@@ -124,7 +124,7 @@ def publish_33(+input: Nat) -> {C.publishValue(C.world(M.state_33(input)), 4n, R
   Publish.complete_33(input)
 
 def step_33(+input: Nat) -> {C.step(M.state_33(input)) == M.state_34(input) : C.Machine}:
-  Complete.complete(M.state_33(input), C.world(M.state_33(input)), remainder(M.state_33(input)), 4n, 1n, R.Number{2n}, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, C.world(M.state_34(input)), M.state_34(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_33(input), {==})
+  Complete.complete(M.state_33(input), C.world(M.state_33(input)), remainder(M.state_33(input)), 4n, 1n, R.Number{2n}, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, C.world(M.state_34(input)), M.state_34(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_33(input), {==})
 
 def step_34(+input: Nat) -> {C.step(M.state_34(input)) == M.state_35(input) : C.Machine}:
   {==}
@@ -193,7 +193,7 @@ def publish_55(+input: Nat) -> {C.publishValue(C.world(M.state_55(input)), 5n, R
   Publish.complete_55(input)
 
 def step_55(+input: Nat) -> {C.step(M.state_55(input)) == M.state_56(input) : C.Machine}:
-  Complete.complete(M.state_55(input), C.world(M.state_55(input)), remainder(M.state_55(input)), 5n, 2n, R.Number{2n}, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, C.world(M.state_56(input)), M.state_56(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_55(input), {==})
+  Complete.complete(M.state_55(input), C.world(M.state_55(input)), remainder(M.state_55(input)), 5n, 2n, R.Number{2n}, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, C.world(M.state_56(input)), M.state_56(input), {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, Publish.complete_55(input), {==})
 
 def step_56(+input: Nat) -> {C.step(M.state_56(input)) == M.state_57(input) : C.Machine}:
   {==}

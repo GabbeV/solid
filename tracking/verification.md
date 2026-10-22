@@ -20,15 +20,15 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   carry), 16 owner (+136 direct owner/core), 12 lifecycle, 144 graph, 3,840 status (+32 tracked-run and 48 settled-fire closures), 2,880 pending (+9 Set alias),
   2,160 transaction, 4,096 blocker, 2,304 seam (+48 deferred zombie), 4,096 held plus 4,096 actual setMemo,
   4,096 flight, 6,144 watch, 8,192 until-body and 50 actual error-constructor/unwrap
-  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls, 2,356 verdict-bookkeeping helper programs and 960 held-latest controls, and 1,190 lane-blocking programs / 29,700 judgments, plus 1,328 laneStage helper programs, 2,618 lane/truth/finality helper programs, 720 question/provenance controls and 66 raw-comparator controls, plus 3,496 lane lifecycle programs, 22 post-commit comparator and 60 cleanup callback controls, plus 1,704 lane-answer/correction programs, 66 raw comparator controls, 5,048 core-read programs and 28 core getter/setter controls with private metadata, plus 1,425 queued-guess and 1,824 seam programs and 58 comparator/updater controls. The error cases include genuine foreign-realm Error prototype controls;
+  comparisons, plus 46 actual custom/default isSame and 2,682 actual affects-marks comparisons, plus 1,367 actual lane-identity/routing helper programs and 392 lane-value controls, 2,356 verdict-bookkeeping helper programs and 960 held-latest controls, and 1,190 lane-blocking programs / 29,700 judgments, plus 1,328 laneStage helper programs, 2,618 lane/truth/finality helper programs, 720 question/provenance controls and 66 raw-comparator controls, plus 3,496 lane lifecycle programs, 22 post-commit comparator and 60 cleanup callback controls, plus 1,704 lane-answer/correction programs, 66 raw comparator controls, 5,048 core-read programs and 28 core getter/setter controls with private metadata, plus 1,425 queued-guess and 1,824 seam programs and 58 comparator/updater controls, plus 5,354 recompute/entry and 1,728 nearest-owner/heap programs. The error cases include genuine foreign-realm Error prototype controls;
   those helper probes do not establish end-to-end cross-realm host support. Question evidence
   includes 4,096 counter steps, five large counter starts, 69 flight-provenance
   cases and 4,103 mathematical increment/equality vectors. Synthetic internal
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations compiles 344 isolated source-changing copies: 291 are rejected by
-  differential assertions and fifty-three by proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations compiles 365 isolated source-changing copies: 311 are rejected by
+  differential assertions and fifty-four by proof-property assertions. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -327,3 +327,10 @@ per-callback catch continuation; the original collector regression stays positiv
 [Signed-zero evidence](number-values.md) adds 52 primitive controls and eight
 scalar kernel facts (five quantified, three closed helpers). These are separate
 from the 72 composed regressions; the codec repair adds no upstream workaround.
+
+[Lane passes](lane-passes.md) adds six quantified source return boundaries.
+Canonical actual-runtime witnesses reflect captured mount/task fields. Complete
+scalar/history/chain domains and budgets are unchanged; the generic mainline
+effect leaf explicitly assumes the source stale-suppression and clean guards.
+Resource failures during proof refactoring and a negative variant are excluded
+from positive proof and mutation evidence.

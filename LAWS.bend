@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-pass.bend as PassLaws
 import ./runtime/error.bend as SignedZeroMessage
 import ./proof/signed-zero.bend as SignedZero
 import ./proof/lane-guesses.bend as GuessLaws
@@ -807,6 +808,8 @@ law effect_publication_marks_and_queues_before_store:
   for off: {R.Node.equals(B.node(w, id)) == False{} : Bool}
   for effect: {B.effect(R.Node.kind(B.node(w, id))) == True{} : Bool}
   for subs: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for fresh: {ChainPublication.screenSame(w, id, value) == False{} : Bool}
+  for clean: {Bool.not(B.truth(R.NodeExtension.error(B.extension(w, id)))) == True{} : Bool}
   for empty: {B.present(R.Node.pending(B.node(w, id))) == False{} : Bool}
   for stillEmpty: {B.present(R.Node.pending(B.node(ChainPublication.effect_prepare(w, id), id))) == False{} : Bool}
   {Core.publishValue(w, id, value, False{}, height, False{}, False{}) == B.Bundle{B.store_node(ChainPublication.effect_prepare(w, id), id, R.Node.with_value(B.node(ChainPublication.effect_prepare(w, id), id), value)), True{}} : B.Bundle<R.World, Bool>}
@@ -1598,3 +1601,56 @@ law scalar_signed_zero_multiplication:
 
 law scalar_signed_zero_message:
   {SignedZeroMessage.stringify(R.NegativeZero{}) == "0" : String}
+
+law lane_pass_pending_slot_precedes_lane:
+  for +w: R.World
+  for +id: Nat
+  for present: {B.present(R.Node.pending(B.node(w, id))) == True{} : Bool}
+  {Core.passValue(w, id) == B.selected(R.Node.pending(B.node(w, id)), R.Undefined{}) : R.Value}
+
+law lane_pass_non_effect_never_queues_run:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +create: Bool
+  for +changed: Bool
+  for +lane: Nat
+  {Core.markPublishedEffectAs(w, id, value, create, changed, lane, False{}) == w : R.World}
+
+law lane_pass_unchanged_never_queues_run:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +create: Bool
+  for +effect: Bool
+  for +lane: Nat
+  {Core.markPublishedEffectAs(w, id, value, create, False{}, lane, effect) == w : R.World}
+
+law lane_pass_without_mount_joins_only_held_reads:
+  for +w: R.World
+  for +id: Nat
+  for +previous: Nat
+  for +old: R.LaneMount
+  {Core.joinedPass(w, id, Core.LanePass{previous, old, R.MountFalse{}}) == B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED()) : Bool}
+
+law lane_pass_restores_captured_mount:
+  for +w: R.World
+  for +previous: Nat
+  for +old: R.LaneMount
+  for +mount: R.LaneMount
+  {Core.restoreMount(w, Core.LanePass{previous, old, mount}) == R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), old)) : R.World}
+
+law lane_pass_accepted_truth_skips_ordinary_store:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for +create: Bool
+  for +height: Nat
+  for +outgoing: R.Value
+  for +sources: Nat
+  for +wasSource: Bool
+  for +joined: Bool
+  for +changed: Bool
+  {Core.dispatch(w, Core.PublishOutcome{id, value, create, height, outgoing, sources, wasSource, joined, changed} <> rest, R.Boolean{True{}} <> stack) == Core.publicationCompleted(rest, stack, id, outgoing, sources, wasSource, B.Bundle{w, changed}) : Core.Machine}

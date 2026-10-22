@@ -2094,7 +2094,7 @@
           "mapping": {
             "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
             "status": "partial",
-            "restrictions": "Error/pending/clear stores, wrapper identity, pending-set registration, shown-error stash, blocked forwarding and effect interception retained. Pending render/guess and held-subscriber transaction joins now execute. Flights, active lanes, boundaries and marks remain unfinished."
+            "restrictions": "Error/pending/clear stores, wrapper identity, source-set registration, shown-error stash, blocked forwarding, guess boundary and effect interception execute. Pending frame joins require mainline posture. Propagation now calls active laneStage; boundary/store/mark callbacks and public optimistic/verdict windows remain unfinished."
           }
         },
         {
@@ -2104,9 +2104,9 @@
           "sha256": "eced4100d1edd7ec37578ff3801b00d9fccb7b8a3a173545389b608c00e86bce",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/status.bend:Propagate, PropagateNext",
+            "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom",
             "status": "partial",
-            "restrictions": "Live subscriber iteration, time, stale-gen/rederive/verdict routing, repeated-source and identity deduplication, pending intake, held transaction joins and recursive notification retained. Active lane/boundary profiles remain unfinished."
+            "restrictions": "Live links, current generation/rederive/verdict dispatch, identity/repeated-source gates and recursive status ordering retained. Nonblocked active-lane propagation stages each subscriber with the current source object (the link dependency), preserving held/recomputing frame refusal; mainline propagation alone queues and joins held derivations. Repeated pending joins also require no active lane. freshHook/boundaries, store family leaves and public active windows remain unfinished. See tracking/lane-passes.md."
           }
         }
       ],
@@ -10044,8 +10044,12 @@
           "start": 185,
           "end": 192,
           "sha256": "a73906fa6231c36b6ad7f50beeb725039341c277672c34023850e9d9ea7f2911",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeap",
+            "status": "restricted",
+            "restrictions": "Nearest non-zombie owner walk with explicit finite owner-arena fuel. Derived override excludes a written guess; effect owners use raw transaction lane. GlobalQueue._update keeps tracked-run and ordinary-zombie deferral precedence, then cancels lane-frame dirty/check/lane-dirty flags and heap membership. Malformed owner cycles refuse, without a cycle repair. Private branch/heap controls are not public constructor admission."
+          }
         },
         {
           "key": "core/core.ts:assertNotInEffectCallback",
@@ -10118,9 +10122,9 @@
           "sha256": "371411786002aaec99a2496346371f06b4ba9d8b4565d500603f7bdd4aeb3bab",
           "status": "partial",
           "mapping": {
-            "bend": "runtime/core.bend:PassFrame, recomputeFlight, recomputeAfterFlight, RecomputePrepared, recomputePrepared, catchStatus, catchPass, passFinally, finish, afterPass, publishValue, retireOutgoing, finishResult, finishShape, subscribe, afterThen, publishState, queuePublication, AfterDeadPass, FinishPublication, QueuePublication; runtime/core.bend:RestoreDeferredReleases, RecomputeAfterTeardown, startPassFinally, PassReleases, passFinallyTail; runtime/graph-state.bend:beginReleases, deferRelease; runtime/core.bend:RetireSources, PublishSettleSelf, catchNotify, CatchStageSettle, CatchStageFinish, CatchSelfRetire, CatchRetireSources, CatchFinally, finishCatch, PendingTasks",
+            "bend": "runtime/core.bend:LanePass, PassFrame, seatPass, passValue, recomputeFlight, recomputeAfterFlight, recomputeAfterTeardown, recomputePrepared, catchStatus, catchPass, startPassFinally, passFinallyBody, passFinallyTail, joinedPass, restoreMount, PassReleases, afterPass, PassLaneStage, stagePassAt, stagePass, publishState, publicationChanged, publishCompared, markPublishedEffectAs, publishStoresAs, PublishOutcome, publicationCompleted, retireOutgoing, FinishPublication, QueuePublication, queuePublicationIn, AfterDeadPass; existing flight/iterator/owner/pending continuations remain shared",
             "status": "partial",
-            "restrictions": "Held reentry, source pending/loading/error catches, captured live outgoing-source Set, replacement/self retirement, born-held publication, dead-pass freeze and finally restoration execute. Typed thenable registration/settlement now executes with sync opt-out/self-registration guards; typed iterator consumption/flattening now executes; arbitrary getter/projection, lane/snapshot/boundary and arbitrary-construction paths unfinished. Expression-bearing compute callback programs use the same read machine; Nested createMemo(compute, options)(), createEffect and createRenderEffect expressions execute in the same machine; Nested data signals and captured inline effect bodies execute; escaped accessors and expression/selected-bound-function initializer signals now execute; typed teardown expressions now use the shared driver. Direct pre-body owner/flight callbacks now suspend on core OwnerTasks, preserving the before-try failure and subsequent frame-capture order. Publication/finally trim and async/pending callers remain restricted. Publication-tail trim and disposed-pass dependency clear now suspend on OwnerTasks before their queue/flight-pointer remainder. Async/pending helpers remain restricted. Reviewed 71153bf0 delta: staged-error clear is after frame teardown and before the body try. RestoreDeferredReleases, RecomputeAfterTeardown, PassReleases, startPassFinally/passFinallyTail retain the deferred lazy release array identity and finally ordering. Historically, #4176 restored the previous collector in an exceptional finally at 0222d684. The rc.17 rule below supersedes that implementation. Paired histories and a positive closed regression cover SOLID-DEFERRED-RELEASE-THROW-004. Lane-frame hook branch stays unfinished/inactive. Current owner/core closure: outgoing-source retirement retains the live captured Set cursor; pending walks suspend through owner callbacks. Catch-stage assignment completes only after settlement returns; throws within catch still execute pass finally. Publication settlement remains outside the body catch. See tracking/reviews/teardown-closure.md for current public expression-program coverage and remaining exclusions. Reviewed b0ad1df5/#4171: Source adds laneRoot and prevMount/mount, restores the inherited root in finally, widens joined to STAGED_READ for mounts, and uses mount for freshHook. With no active lane scopes prevLane/mount remain falsy even when the full-index reference installs lane hooks; the existing REACTIVE_JOINED checks, born-held value predicate and pending hold therefore remain unchanged. Active mount inheritance and freshHook/boundary routing stay unported, not silently approximated. Tracked-effect delta: prelude disposes its old frame immediately, unlike ordinary frame parking; its successful dependency trim runs immediately rather than heldTrim. PassFrame now captures source prevStale, render/tracked passes enter stale scope, and passFinally restores it at the source finally site. Custom comparator return points and restrictions are reviewed in tracking/comparators.md. Reviewed 0222d684/#4207: mount staged-read joining additionally requires prevLane || isEffect || !STATUS_PENDING. mount is falsy in the admitted inactive-lane profile, so the same REACTIVE_JOINED-only mask remains correct. Active verdict-mounted pending derivations remain unported; native upstream tests cover the source fix separately. rc.17 supersedes #4176: collector restoration is a successful return point, not an exceptional finally; guarded user cleanup errors cannot escape it. Original regression remains positive with the drain completed before rethrow. New folded-lane read helpers remain unported."
+            "restrictions": "Source head lane selection precedes pre-body teardown; LanePass retains previous lane/root and current mount across callbacks. The previous/function argument and equality slot prefer pending, then override lane slot, then committed value. Body finally restores tracking/root/stale before mount-aware joined capture (#4171/#4207), flag/config wipe, context, deferred releases and reask. Stage refusal captures null publication lane while ambient lane remains installed. Equality isSame and raw guess outcomes keep separate catch policies; effect Object.is suppression, explicit captured-lane queueing, hidden/shown/private stores, subscriber laneDirty, born-held mainline behavior, error/pending retirement and trim/queue order execute through the one core machine. Publication tail restores previous lane before missed-wake scheduling. Dead passes clear dependencies/flight before restoring it. Active laneStage has an explicit call continuation; inactive paths retain constructor/drain budgets. Six scoped kernel properties and 5354 actual-source entry/full-pass programs plus 1728 nearest-owner/heap controls check this dependency; public optimistic/verdict constructors, flush wiring, freshHook/boundaries, folded/store/snapshot paths and arbitrary host protocols remain unfinished. rc.17 cleanup collection/rethrow policy remains unchanged. See tracking/lane-passes.md and the prior teardown and pin reviews for callback/flight restrictions."
           }
         },
         {
@@ -14357,7 +14361,7 @@
           "mapping": {
             "bend": "runtime/api.bend:createEffectWithHandlers, nestedEffect; runtime/core.bend:evaluate(EffectCreate), InitialEffect",
             "status": "partial",
-            "restrictions": "Separate source literal/setup, initial recompute and source defer/pending-slot/user/schedule gate; nested construction uses the same machine and inherits caller context/tracking. Named and captured inline application programs with static or runtime-selected bound root/setter cleanup. Born-staged nested creation tested; active lane/hold hooks and general cleanup closures remain unfinished."
+            "restrictions": "Source constructor/setup, initial recompute and defer/pending-slot/raw lane-transaction/user/schedule gate. Active recompute now seats and queues first lane runs; the existing constructor gate suppresses a synchronous lane run. Named/inline application bodies and bound cleanup profiles remain as reviewed. Public optimistic/verdict construction, boundary/held run hooks and arbitrary cleanup closures remain unfinished."
           }
         },
         {
@@ -14369,7 +14373,7 @@
           "mapping": {
             "bend": "runtime/status.bend:notifyEffectStatus, notifyEffectStatusOf",
             "status": "partial",
-            "restrictions": "Source actual/passed status arms, pending blocked suppression, user-error enqueue guard, render halt/throw and root-clear behavior. Pending render transaction entry and boundary hooks unfinished."
+            "restrictions": "Actual/passed status, blocked pending suppression, user error queue, render halt/rethrow and root pending absorption retained. A pending render observer joins the frame only with null passLane; active lane work holds its lane instead. Boundary catch hooks remain unfinished."
           }
         },
         {
@@ -15514,7 +15518,7 @@
           "mapping": {
             "bend": "runtime/core.bend:heapLoop; runtime/core.bend:visitHeap",
             "status": "restricted",
-            "restrictions": "Dirty/check/height routing and zombie deferral retained for the admitted graph. Source GlobalQueue._update tracked branch deletes from heap, marks modified and queues its existing runner in EFFECT_USER before any zombie branch. The tracked body runs after the commit seam; active lane member handling remains unfinished."
+            "restrictions": "Source dirty/check/height routing and zombie deferral use the shared core. GlobalQueue._update visits tracked effects first, then defers ordinary zombies, cancels obsolete lane-frame work through laneFrameMember and otherwise recomputes. Active lane recompute seating/publication executes; flush lane seams/corrections and public constructor/window admission remain unfinished."
           }
         },
         {

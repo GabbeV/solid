@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-pass.bend as PassLaws
 import ./proof/signed-zero.bend as SignedZero
 import ./proof/lane-guesses.bend as GuessLaws
 import ./proof/lane-answers.bend as LaneAnswers
@@ -447,8 +448,8 @@ def Laws.scalar_memo_public_program_all_initial_values(initial, input, construct
 def Laws.changed_memo_publication_stages_then_notifies(w, id, value, height, off, nonEffect, subs):
   ChainPublication.memo_complete(w, id, value, height, StagePublication.staged(w, id, value), PublicationScheduler.insertSubs(StagePublication.staged(w, id, value), id), off, nonEffect, subs, {==}, {==})
 
-def Laws.effect_publication_marks_and_queues_before_store(w, id, value, height, off, effect, subs, empty, stillEmpty):
-  ChainPublication.effect_complete(w, id, value, height, ChainPublication.effect_prepare(w, id), B.store_node(ChainPublication.effect_prepare(w, id), id, R.Node.with_value(B.node(ChainPublication.effect_prepare(w, id), id), value)), off, effect, subs, empty, {==}, stillEmpty, {==})
+def Laws.effect_publication_marks_and_queues_before_store(w, id, value, height, off, effect, subs, fresh, clean, empty, stillEmpty):
+  ChainPublication.effect_complete(w, id, value, height, ChainPublication.effect_prepare(w, id), B.store_node(ChainPublication.effect_prepare(w, id), id, R.Node.with_value(B.node(ChainPublication.effect_prepare(w, id), id), value)), off, effect, subs, fresh, clean, empty, {==}, stillEmpty, {==})
 
 def Laws.staged_two_memo_render_graph_completes(input, extra):
   ChainStaging.completed(input, extra)
@@ -800,3 +801,21 @@ def Laws.scalar_signed_zero_multiplication(n):
 
 def Laws.scalar_signed_zero_message():
   SignedZero.zeroMessage()
+
+def Laws.lane_pass_pending_slot_precedes_lane(w, id, present):
+  PassLaws.pendingFirst(w, id, present)
+
+def Laws.lane_pass_non_effect_never_queues_run(w, id, value, create, changed, lane):
+  PassLaws.nonEffectNoRun(w, id, value, create, changed, lane)
+
+def Laws.lane_pass_unchanged_never_queues_run(w, id, value, create, effect, lane):
+  PassLaws.unchangedNoRun(w, id, value, create, effect, lane)
+
+def Laws.lane_pass_without_mount_joins_only_held_reads(w, id, previous, old):
+  PassLaws.noMountJoin(w, id, previous, old)
+
+def Laws.lane_pass_restores_captured_mount(w, previous, old, mount):
+  PassLaws.restoreCapturedMount(w, previous, old, mount)
+
+def Laws.lane_pass_accepted_truth_skips_ordinary_store(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed):
+  PassLaws.handledOutcome(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed)
