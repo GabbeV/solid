@@ -294,3 +294,12 @@ controls, now translated with no workaround. Complete scalar/history/chain
 claims retain their domains/budgets; the generic effect leaf now explicitly
 requires the source stale/clean guards. Public constructors/windows and flush
 are next.
+
+## Flush lane integration
+
+[The actual settle path](lane-flush.md) now connects corrections, application,
+reveals and lane teardown before landing. Captured transaction and three queue
+layers survive callbacks. 538 native full-settle programs, five quantified return
+properties and eighteen new mutations check the crossing. Complete existing
+program proof domains and budgets remain unchanged. Public optimistic creation
+and verdict windows are next; no source bug or semantic workaround was found.

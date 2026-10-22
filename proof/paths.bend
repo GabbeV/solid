@@ -110,3 +110,13 @@ def observe_transport(-a: R.World, -b: R.World, e: {a == b : R.World}) ->
   {Chain.view(a) == Chain.view(b) : Chain.View}:
   %e : {Chain.view(a) == Chain.view(_) : Chain.View}
   {==}
+
+# Retiming is checked on abstract machines/path before any concrete caller.
+# Separate Nat length conversion prevents conversion from unrolling Core.run.
+def retimed(+start: C.Machine, -end: C.Machine, +path: Path<start, end>, +extra: Nat, +fuel: Nat,
+  lengthEq: {Nat.add(length(start, end, path), extra) == fuel : Nat}) ->
+  {C.run(fuel, start) == end : C.Machine}:
+  Equal.trans(C.Machine, C.run(fuel, start), C.run(Nat.add(length(start, end, path), extra), start), end,
+    fuel_transport(fuel, Nat.add(length(start, end, path), extra), start,
+      Equal.sym(Nat, Nat.add(length(start, end, path), extra), fuel, lengthEq)),
+    realizes(start, end, path, extra, start, {==}))

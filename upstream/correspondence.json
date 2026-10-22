@@ -58,9 +58,9 @@
       "restrictions": "Ordered intrusive bucket walks with resource bounds."
     },
     "core/heap.ts:runHeap": {
-      "bend": "runtime/core.bend:heapLoop; runtime/core.bend:visitHeap",
+      "bend": "runtime/core.bend:heapLoop, heapLoopMode, visitHeap, visitHeapInto",
       "status": "restricted",
-      "restrictions": "Source dirty/check/height routing and zombie deferral use the shared core. GlobalQueue._update visits tracked effects first, then defers ordinary zombies, cancels obsolete lane-frame work through laneFrameMember and otherwise recomputes. Active lane recompute seating/publication executes; flush lane seams/corrections and public constructor/window admission remain unfinished."
+      "restrictions": "Source dirty/check/height routing and zombie deferral use the shared core. GlobalQueue._update visits tracked effects first, then defers ordinary zombies, cancels obsolete lane-frame work through laneFrameMember and otherwise recomputes. Active lane recompute seating/publication executes; the correction round returns to the captured-join seam through the same visitor. Public constructor/window admission remains unfinished."
     },
     "core/heap.ts:adjustHeight": {
       "bend": "runtime/heap.bend:adjustHeight",
@@ -153,9 +153,9 @@
       "restrictions": "Source running/resync/pass posture/dormant sweep/heap/transaction settle/clock/phase ordering; finally clears running/passTx on normal and exceptional paths. Microtask host delivery and async flights remain unfinished."
     },
     "core/scheduler.ts:GlobalQueue.settle": {
-      "bend": "runtime/core.bend:beginSettle, landTransactions, landNodes, landEnd, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, parkPendingNode, settle, reruns, releaseQueues; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake",
+      "bend": "runtime/core.bend:beginSettle, settleJoined, settleApplied, afterParkIntake, parkVerdictZombies, finishSettleIntake, afterLaneSeams, landTransactions, landPrepared, landNodes, landEnd, orderedRuns, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, reruns, releaseQueues",
       "status": "partial",
-      "restrictions": "Source joined transaction capture/reset, fixed pending intake park, net-zero and uninitialized carve-outs, recursive frame hold, commit/trim branch, reverse live landing restart, own/held queue order and deferred zombie survivors. 2304 seam +48 deferred cases compare full pinned TS state, including cleanup writes/throws. Lanes, boundaries, marks and active store hooks remain unfinished. Active live commit/held-trim intake now resumes source callbacks before reading the next live bound. Held trims clear once and only when nonempty. Reviewed comparator moved last after parked frame predicates; strict/disabled comparator subset uses shared equality.isSame. Named custom callbacks, NotReady and ordinary error routing now execute through ParkIntake/ParkCompared after those guards. Custom comparator return points and restrictions are reviewed in tracking/comparators.md."
+      "restrictions": "Source correction heap round, captured joined reset before application, fixed pending intake park and live commit/trim, parked verdict zombie snapshot, staged-reader seam, own/lane/landing queue capture, endLanes before landing, reverse live landing restart and deferred survivors. 538 actual-source full-settle programs supplement 2304 mainline seam and 48 deferred-zombie cases, including comparator writes and guarded cleanup scheduling/throws. Five scoped return/queue properties, not a lifecycle theorem. Public optimistic constructors/verdict windows, boundaries, store/folded and ambient mark release remain excluded. See tracking/lane-flush.md."
     },
     "core/scheduler.ts:flush": {
       "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry",
@@ -980,55 +980,55 @@
     "core/lanes.ts:laneWrite": {
       "bend": "runtime/core.bend:laneWrite, laneWriteChanged, LaneWriteCompared, LaneWriteDone",
       "status": "restricted",
-      "restrictions": "Ambient question/stale held answer, raw comparator, supersede and derivation notification/time/schedule order. Folded store rebase excluded. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Ambient question/stale held answer, raw comparator, supersede and derivation notification/time/schedule order. Folded store rebase excluded. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
     },
     "core/lanes.ts:laneOutcome": {
       "bend": "runtime/core.bend:laneOutcome, LaneOutcomeCompared, LaneOutcomeDone",
       "status": "restricted",
-      "restrictions": "Errored return, answered/stale stage without scheduling and actual raw comparison/supersede. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Errored return, answered/stale stage without scheduling and actual raw comparison/supersede. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
     },
     "core/lanes.ts:laneCorrections": {
       "bend": "runtime/core.bend:laneCorrections, laneCorrectionsLoop, laneCorrectionNodes, LaneCorrectionCompared",
       "status": "restricted",
-      "restrictions": "Source lane snapshot, resolved parent action/open/flight guards, live members and actual supersede returns. Store covered hook and observe attribution excluded. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Source lane snapshot, resolved parent action/open/flight guards, live members and actual supersede returns. Store covered hook and observe attribution excluded. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
     },
     "core/core.ts:stagedScreen": {
       "bend": "runtime/transaction.bend:stagedScreen",
       "status": "restricted",
-      "restrictions": "Exact flush-null/born-into short circuit and stale reader mutation; used by real core fast/slow read branches. Public optimistic/verdict constructors and full lane flush/seating remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Exact flush-null/born-into short circuit and stale reader mutation; used by real core fast/slow read branches. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
     },
     "core/lanes.ts:pendingGuessOf": {
       "bend": "runtime/lanes-state.bend:pendingGuessOf, pendingGuessLoop",
       "status": "restricted",
-      "restrictions": "Source reverse live triple lookup with raw slot presence; list-backed indexed representation. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Source reverse live triple lookup with raw slot presence; list-backed indexed representation. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:guessedValueOf": {
       "bend": "runtime/lanes-state.bend:guessedValueOf",
       "status": "restricted",
-      "restrictions": "Pending guess, override lane value and committed precedence; shared truth helper. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Pending guess, override lane value and committed precedence; shared truth helper. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:optimisticWrite": {
       "bend": "runtime/core.bend:optimisticWrite, optimisticResolved, OptimisticResolved, OptimisticCompared; runtime/lanes-state.bend:pushGuess",
       "status": "restricted",
-      "restrictions": "Captured writer previous value, one updater invocation, raw comparison, live GUESS reask gate, question allocation and scheduling. Typed callable protocol, not arbitrary JavaScript closures. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Captured writer previous value, one updater invocation, raw comparison, live GUESS reask gate, question allocation and scheduling. Typed callable protocol, not arbitrary JavaScript closures. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:applyGuesses": {
       "bend": "runtime/core.bend:applyGuesses, applyGuessNew, applyGuessFree, applyGuessBorn, applyGuessOverride, applyGuessEnd, ApplyGuessCompared",
       "status": "restricted",
-      "restrictions": "Live guesses, captured raw values and mutable parent/shared lane, actual holder merges, fresh question fetch and notification order. Typed triples preserve private source array order. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Live guesses, captured raw values and mutable parent/shared lane, actual holder merges, fresh question fetch and notification order. Typed triples preserve private source array order. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:applyGuessesAt": {
       "bend": "runtime/core.bend:applyGuessesAt",
       "status": "restricted",
-      "restrictions": "Records old lane prefix before application, including the empty queue arm. Flush hook installation remains unfinished. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Records old lane prefix before application, including the empty queue arm. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:laneSeams": {
       "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop",
       "status": "restricted",
-      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/core.ts:laneFrameMember": {
-      "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeap",
+      "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeapInto",
       "status": "restricted",
       "restrictions": "Nearest non-zombie owner walk with explicit finite owner-arena fuel. Derived override excludes a written guess; effect owners use raw transaction lane. GlobalQueue._update keeps tracked-run and ordinary-zombie deferral precedence, then cancels lane-frame dirty/check/lane-dirty flags and heap membership. Malformed owner cycles refuse, without a cycle repair. Private branch/heap controls are not public constructor admission."
     }

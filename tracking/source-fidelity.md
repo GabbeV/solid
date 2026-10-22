@@ -17,14 +17,22 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Actual flush lane crossings
+
+[lane-flush.md](lane-flush.md) maps correction heap rounds, captured joined
+state across application callbacks, parked verdict zombies, separate own/lane/
+landing queues and end-before-land. Private full-settle comparisons and five
+scoped properties support this boundary; public windows/constructors and the
+excluded boundary/store/ambient-mark engines remain unfinished.
+
 ## Actual lane recomputation crossings
 
 [lane-passes.md](lane-passes.md) maps source seating/mounts, pending/override
 previous slots, body finally, captured publication lane, stage hook, raw guess
 outcome, Object.is effect suppression, queue routing, status propagation and
 parked-frame cancellation. The source-object propagation call was an omission,
-now translated, with no workaround. Public windows/constructors and flush
-crossings remain unfinished. Complete existing program proof domains/budgets
+now translated, with no workaround. Public windows/constructors remain unfinished;
+the flush integration is documented above. Complete existing program proof domains/budgets
 remain intact; the helper effect theorem states its stale/clean guards.
 
 ## Queued guesses and reveal prefix

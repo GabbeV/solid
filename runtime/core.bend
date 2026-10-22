@@ -46,7 +46,7 @@ import ./question.bend as Question
 
 # GlobalQueue.settle's detached own queues and captured joined transaction.
 type SeamFrame is Data:
-  SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>}
+  SeamFrame{transaction: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>, laneRenders: List<&2, Nat>, laneUsers: List<&2, R.QueueEntry>}
 
 # Locals captured by recompute's source try/catch/finally, including #4171's
 # laneRoot/mount posture and #4207's pending nested-derivation guard.
@@ -306,6 +306,13 @@ type Task is Data:
   ParkCompared{node: Nat, transaction: Nat, index: Nat, count: Nat}
   AfterPark{transaction: Nat}
   Settle{}
+  SettleCorrectionsDone{}
+  HeapCorrections{}
+  SettleJoined{}
+  SettleApplied{joined: Nat}
+  ParkVerdictZombies{transaction: Nat, nodes: List<&2, Nat>}
+  AfterLaneSeams{transaction: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>}
+  LandAfterLanes{frame: SeamFrame, transaction: Nat}
   AfterSettle{}
   LandTransactions{frame: SeamFrame, remaining: Nat}
   LandNodes{frame: SeamFrame, transaction: Nat, index: Nat}
@@ -2467,14 +2474,14 @@ def laneFrameMember(+w: R.World, id: Nat) -> B.Bundle<R.World, Bool>:
 
 # core.ts:GlobalQueue._update. Tracked effects visit the heap before the seam
 # and enqueue their _run in the user phase; their body executes only afterward.
-def visitHeap(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+def visitHeapInto(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +next: Task) -> Machine:
   B.choose(~Machine, B.tracked(R.Node.kind(B.node(w, id))),
     _ =>
       +w = H.deleteFromHeap(w, id)
       +w = B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{}))
-      Machine{S.enqueue(w, id), HeapLoop{} <> rest, stack},
+      Machine{S.enqueue(w, id), next <> rest, stack},
     _ => B.choose(~Machine, Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LANE_DIRTY()))),
-      _ => Machine{S.deferZombie(w, id), HeapLoop{} <> rest, stack},
+      _ => Machine{S.deferZombie(w, id), next <> rest, stack},
       _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()),
         _ =>
           +pair = laneFrameMember(w, id)
@@ -2483,20 +2490,26 @@ def visitHeap(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
             _ =>
               +w = H.deleteFromHeap(w, id)
               +w = B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), U32.or(K.REACTIVE_DIRTY(), U32.or(K.REACTIVE_CHECK(), K.REACTIVE_LANE_DIRTY())))))
-              Machine{w, HeapLoop{} <> rest, stack},
-            _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack}),
-        _ => Machine{w, Recompute{id, False{}} <> HeapLoop{} <> rest, stack})))
+              Machine{w, next <> rest, stack},
+            _ => Machine{w, Recompute{id, False{}} <> next <> rest, stack}),
+        _ => Machine{w, Recompute{id, False{}} <> next <> rest, stack})))
 
-def heapLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+def visitHeap(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, id: Nat) -> Machine:
+  visitHeapInto(w, rest, stack, id, HeapLoop{})
+
+def heapLoopMode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +corrections: Bool) -> Machine:
   B.choose(~Machine, Nat.is_gt(R.World.minimum(w), R.World.maximum(w)),
-    _ => Machine{R.World.with_maximum(w, 0n), Seam{} <> rest, stack},
+    _ => Machine{R.World.with_maximum(w, 0n), B.choose(~Task, corrections, _ => SettleJoined{}, _ => Seam{}) <> rest, stack},
     _ =>
       +id = B.bucket(w, R.World.minimum(w))
       B.choose(~Machine, Nat.is_eq(id, 0n),
-        _ => Machine{R.World.with_minimum(w, 1n+R.World.minimum(w)), HeapLoop{} <> rest, stack},
+        _ => Machine{R.World.with_minimum(w, 1n+R.World.minimum(w)), B.choose(~Task, corrections, _ => HeapCorrections{}, _ => HeapLoop{}) <> rest, stack},
         _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), 8),
-          _ => visitHeap(w, rest, stack, id),
-          _ => Machine{H.adjustHeight(w, id), HeapLoop{} <> rest, stack})))
+          _ => visitHeapInto(w, rest, stack, id, B.choose(~Task, corrections, _ => HeapCorrections{}, _ => HeapLoop{})),
+          _ => Machine{H.adjustHeight(w, id), B.choose(~Task, corrections, _ => HeapCorrections{}, _ => HeapLoop{}) <> rest, stack})))
+
+def heapLoop(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  heapLoopMode(w, rest, stack, False{})
 
 def round(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   +w = R.World.with_running(w, True{})
@@ -2546,11 +2559,60 @@ def trimIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +i
         _ => OwnerTasks{[O.TrimDeps{id}]} <> ending, _ => ending)
       Machine{w, todo, stack})
 
-def finishSettleIntake(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +t: Nat) -> Machine:
-  +w = S.clearTrims(w)
-  frame = {SeamFrame{t, R.World.renderQueue(w), R.World.userQueue(w)} : SeamFrame}
+def laneCorrections(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
+  Machine{w, LaneCorrections{R.LaneState.live(R.World.laneState(w)), False{}} <> rest, stack}
+
+def applyGuessesAt(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat) -> Machine:
+  +w = R.World.with_laneState(w, R.LaneState.with_judged(R.World.laneState(w), B.length(Nat, R.LaneState.live(R.World.laneState(w)))))
+  B.choose(~Machine, List.is_empty(&2, R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))), _ => Machine{w, rest, stack}, _ => Machine{w, ApplyGuesses{parent, 0n, 0n} <> rest, stack})
+
+# lanes.ts:laneSeams. The source captures leaks but walks the current live lane
+# array backwards, bounded by the prefix recorded before applying new guesses.
+def laneSeams(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, leaks: R.OptionalIds) -> Machine:
+  match leaks:
+    case R.NoIds{}:
+      Machine{w, LaneLeakLoop{[], 0n, []} <> rest, stack}
+    case R.SomeIds{readers}:
+      Machine{w, LaneLeakLoop{readers, 0n, []} <> rest, stack}
+
+# After the lane hook, capture its runs separately, clear its intake, then
+# install fresh landing queues. Source own -> lanes -> landings remain distinct.
+def afterLaneSeams(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +t: Nat, renders: List<&2, Nat>, users: List<&2, R.QueueEntry>) -> Machine:
+  +state = R.World.laneState(w)
+  +w = B.choose(~R.World, List.is_empty(&2, Nat, R.LaneState.stagedReaders(state)), _ => w,
+    _ => R.World.with_laneState(w, R.LaneState.with_stagedReaders(state, [])))
+  +frame = {SeamFrame{t, renders, users, R.World.renderQueue(w), R.World.userQueue(w)} : SeamFrame}
   +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
   Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
+
+def finishSettleIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t: Nat) -> Machine:
+  +w = S.clearTrims(w)
+  +renders = R.World.renderQueue(w)
+  +users = R.World.userQueue(w)
+  +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
+  # Fused empty hook: no callbacks/reveals or retained reader array exist.
+  B.choose(~Machine, Bool.and(List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w))), List.is_empty(&2, Nat, R.LaneState.stagedReaders(R.World.laneState(w)))),
+    _ => afterLaneSeams(w, rest, stack, t, renders, users),
+    _ => laneSeams(w, AfterLaneSeams{t, renders, users} <> rest, stack, B.choose(~R.OptionalIds, Nat.is_ne(t, 0n), _ => R.SomeIds{R.LaneState.stagedReaders(R.World.laneState(w))}, _ => R.NoIds{})))
+
+# The park takes this captured zombie array before lane reveals. Newly deferred
+# zombies during its reruns remain in World for the final survivor pass.
+def afterParkIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t: Nat) -> Machine:
+  +zombies = S.sortHeights(w, R.World.deferredZombies(w))
+  +w = R.World.with_deferredZombies(w, [])
+  B.choose(~Machine, List.is_empty(&2, Nat, zombies),
+    _ => finishSettleIntake(w, rest, stack, t),
+    _ => Machine{w, ParkVerdictZombies{t, zombies} <> rest, stack})
+
+def parkVerdictZombies(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t: Nat, nodes: List<&2, Nat>) -> Machine:
+  match nodes:
+    case Nil{}:
+      finishSettleIntake(w, rest, stack, t)
+    case +id <> +tail:
+      +eligible = Bool.and(U32.is_eq(U32.and(R.Node.flags(B.node(w, id)), U32.or(K.REACTIVE_DISPOSED(), K.REACTIVE_ZOMBIE())), K.REACTIVE_ZOMBIE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()))
+      Machine{w, B.choose(~List<&2, Task>, eligible,
+        _ => Recompute{id, False{}} <> ParkVerdictZombies{t, tail} <> rest,
+        _ => ParkVerdictZombies{t, tail} <> rest), stack}
 
 def parkIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t: Nat, +index: Nat, +count: Nat) -> Machine:
   B.choose(~Machine, Nat.is_ge(index, count), _ => Machine{w, rest, stack},
@@ -2566,9 +2628,7 @@ def parkIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +t
               _ => isSame(w, ParkCompared{id, t, index, count} <> rest, stack, id, R.Node.value(B.node(w, id)), B.current(B.node(w, id))),
               _ => Machine{S.parkChanged(w, id, t, eligible), ending, stack}))))
 
-def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
-  +joined = R.World.flushTransaction(w)
-  +w = R.World.with_flushTransaction(w, 0n)
+def settleApplied(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +joined: Nat) -> Machine:
   +pair = B.choose(~B.Bundle<R.World, Nat>, Bool.and(Nat.is_ne(joined, 0n), Bool.not(R.Transaction.lane(B.transaction(w, joined)))),
     _ => X.resolveTx(w, joined), _ => B.Bundle{w, 0n})
   +w = B.first(R.World, Nat, pair)
@@ -2578,10 +2638,31 @@ def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -
       B.choose(~Machine, List.is_empty(&2, R.ComparatorBinding, R.World.comparators(w)),
         _ =>
           +w = S.parkPendingNodes(w, t)
-          w = B.choose(~R.World, B.ok(w), _ => R.World.with_deferredZombies(w, []), _ => w)
-          Machine{w, FinishSettleIntake{t} <> rest, stack},
+          B.choose(~Machine, B.ok(w), _ => afterParkIntake(w, rest, stack, t), _ => Machine{w, rest, stack}),
         _ => Machine{w, ParkIntake{t, 0n, B.length(Nat, R.World.pendingNodes(w))} <> AfterPark{t} <> rest, stack}),
     _ => Machine{w, CommitIntake{0n} <> TrimIntake{0n} <> FinishSettleIntake{t} <> rest, stack})
+
+# Empty hook continuations fuse into the ordinary return point. They call the
+# same applyGuessesAt body once and retain the established plain-path budgets.
+def settleJoined(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+  +joined = R.World.flushTransaction(w)
+  +w = R.World.with_flushTransaction(w, 0n)
+  B.choose(~Machine, List.is_empty(&2, R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))),
+    _ =>
+      +m = applyGuessesAt(w, [], [], joined)
+      settleApplied(world(m), rest, stack, joined),
+    _ => applyGuessesAt(w, SettleApplied{joined} <> rest, stack, joined))
+
+def beginSettle(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+  B.choose(~Machine, List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w))),
+    _ => settleJoined(w, rest, stack),
+    _ => laneCorrections(w, SettleCorrectionsDone{} <> rest, stack))
+
+def landPrepared(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame, +t: Nat) -> Machine:
+  +w = S.reruns(w, t)
+  +w = B.choose(~R.World, B.ok(w),
+    _ => B.choose(~R.World, X.noMarks(R.Transaction.marks(B.transaction(w, t))), _ => w, _ => R.World.with_fault(w, R.Unsupported{10n})), _ => w)
+  Machine{w, LandNodes{frame, t, 0n} <> rest, stack}
 
 # Reverse scan restarts after each landing, since its commits can remove a
 # zombie another transaction was blocked on, or a cleanup can register a join.
@@ -2597,11 +2678,9 @@ def landTransactions(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
         _ => Machine{w, LandTransactions{frame, index} <> rest, stack},
         _ =>
           +w = R.World.with_transactions(w, X.removeIdentity(R.World.transactions(w), t))
-          +w = S.reruns(w, t)
-          # A non-null mark array requires the installed affects release hook.
-          +w = B.choose(~R.World, B.ok(w),
-            _ => B.choose(~R.World, X.noMarks(R.Transaction.marks(B.transaction(w, t))), _ => w, _ => R.World.with_fault(w, R.Unsupported{10n})), _ => w)
-          Machine{w, LandNodes{frame, t, 0n} <> rest, stack})
+          B.choose(~Machine, List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w))),
+            _ => landPrepared(w, rest, stack, frame, t),
+            _ => Machine{w, EndLanes{t} <> LandAfterLanes{frame, t} <> rest, stack}))
 
 def landNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: SeamFrame, +t: Nat, +index: Nat) -> Machine:
   B.choose(~Machine, Nat.is_ge(index, B.length(Nat, R.Transaction.nodes(B.transaction(w, t)))),
@@ -2624,19 +2703,23 @@ def landEnd(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: 
   +w = S.releaseQueues(w, t)
   Machine{w, LandTransactions{frame, B.length(Nat, R.World.transactions(w))} <> rest, stack}
 
+def orderedRuns(~A: Data, +parked: Bool, +own: List<&2, A>, +lanes: List<&2, A>, +landing: List<&2, A>) -> List<&2, A>:
+  B.choose(~List<&2, A>, Bool.or(parked, Bool.or(Bool.not(List.is_empty(&2, A, lanes)), Bool.not(List.is_empty(&2, A, landing)))),
+    _ => B.append(A, lanes, B.choose(~List<&2, A>, parked, _ => landing, _ => B.append(A, own, landing))), _ => own)
+
 def completeSettle(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame: SeamFrame) -> Machine:
   match frame:
-    case SeamFrame{+t, +renders, +users}:
+    case SeamFrame{+t, +renders, +users, laneRenders, laneUsers}:
       +pair = B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(t, 0n), _ => X.liveTx(w, t), _ => B.Bundle{w, 0n})
       +w = B.first(R.World, Nat, pair)
       +live = B.second(R.World, Nat, pair)
-      +w = B.choose(~R.World, Nat.is_ne(live, 0n),
+      +parked = Nat.is_ne(live, 0n)
+      +w = B.choose(~R.World, parked,
         _ =>
           +w = B.store_transaction(w, live, R.Transaction.with_renderQueue(B.transaction(w, live), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)))
-          B.store_transaction(w, live, R.Transaction.with_userQueue(B.transaction(w, live), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, live)), users))),
-        _ =>
-          +w = R.World.with_renderQueue(w, B.append(Nat, renders, R.World.renderQueue(w)))
-          R.World.with_userQueue(w, B.append(R.QueueEntry, users, R.World.userQueue(w))))
+          B.store_transaction(w, live, R.Transaction.with_userQueue(B.transaction(w, live), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, live)), users))), _ => w)
+      +w = R.World.with_renderQueue(w, orderedRuns(~Nat, parked, renders, laneRenders, R.World.renderQueue(w)))
+      +w = R.World.with_userQueue(w, orderedRuns(~R.QueueEntry, parked, users, laneUsers, R.World.userQueue(w)))
       zombies = S.sortHeights(w, R.World.deferredZombies(w))
       Machine{R.World.with_deferredZombies(w, []), ZombieLoop{zombies} <> rest, stack}
 
@@ -3444,8 +3527,6 @@ def laneOutcome(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +
 
 # lanes.ts:laneCorrections takes exactly the source lanes.slice snapshot.
 # Its member loop remains live and stops once a correction removes the lane.
-def laneCorrections(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
-  Machine{w, LaneCorrections{R.LaneState.live(R.World.laneState(w)), False{}} <> rest, stack}
 
 def laneCorrectionsLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, live: List<&2, Nat>, +judged: Bool) -> Machine:
   match live:
@@ -3555,12 +3636,7 @@ def applyGuesses(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
         _ => rawEquals(w, ApplyGuessCompared{parent, lane, index, id, value} <> rest, stack, id, Truth.laneValueOf(w, id), value),
         _ => applyGuessNew(w, rest, stack, parent, lane, index, id, value)))
 
-def applyGuessesAt(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat) -> Machine:
-  +w = R.World.with_laneState(w, R.LaneState.with_judged(R.World.laneState(w), B.length(Nat, R.LaneState.live(R.World.laneState(w)))))
-  B.choose(~Machine, List.is_empty(&2, R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))), _ => Machine{w, rest, stack}, _ => Machine{w, ApplyGuesses{parent, 0n, 0n} <> rest, stack})
 
-# lanes.ts:laneSeams. The source captures leaks but walks the current live lane
-# array backwards, bounded by the prefix recorded before applying new guesses.
 def laneRevealLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +leaked: List<&2, Nat>, remaining: Nat) -> Machine:
   match remaining:
     case 0n:
@@ -3597,12 +3673,6 @@ def laneLeakLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
                 B.choose(~Machine, Bool.not(B.second(R.World, Bool, pair)), _ => Machine{w, ending, stack}, _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))),
             _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))))
 
-def laneSeams(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, leaks: R.OptionalIds) -> Machine:
-  match leaks:
-    case R.NoIds{}:
-      Machine{w, LaneLeakLoop{[], 0n, []} <> rest, stack}
-    case R.SomeIds{readers}:
-      Machine{w, LaneLeakLoop{readers, 0n, []} <> rest, stack}
 
 def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
   match tasks:
@@ -4333,9 +4403,27 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case AfterPark{t} <> rest:
-      Machine{R.World.with_deferredZombies(R.World.with_pendingNodes(w, []), []), FinishSettleIntake{t} <> rest, stack}
+      afterParkIntake(R.World.with_pendingNodes(w, []), rest, stack, t)
     case Settle{} <> rest:
       beginSettle(w, rest, stack)
+    case SettleCorrectionsDone{} <> +rest:
+      match stack:
+        case changed <> +tail:
+          B.choose(~Machine, B.truth(changed), _ => heapLoopMode(w, rest, tail, True{}), _ => settleJoined(w, rest, tail))
+        case _:
+          Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case HeapCorrections{} <> rest:
+      heapLoopMode(w, rest, stack, True{})
+    case SettleJoined{} <> rest:
+      settleJoined(w, rest, stack)
+    case SettleApplied{joined} <> rest:
+      settleApplied(w, rest, stack, joined)
+    case ParkVerdictZombies{t, nodes} <> rest:
+      parkVerdictZombies(w, rest, stack, t, nodes)
+    case AfterLaneSeams{t, renders, users} <> rest:
+      afterLaneSeams(w, rest, stack, t, renders, users)
+    case LandAfterLanes{frame, t} <> rest:
+      landPrepared(w, rest, stack, frame, t)
     case AfterSettle{} <> rest:
       afterSettle(w, rest, stack)
     case LandTransactions{frame, remaining} <> rest:

@@ -688,7 +688,7 @@ def data_225(+tick: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: Li
   C.Machine{data_221(tick, input, events, jobs), data_224(), data_89()}
 
 def data_226() -> C.SeamFrame:
-  C.SeamFrame{0n, data_25(), data_26()}
+  C.SeamFrame{0n, data_25(), data_26(), data_25(), data_26()}
 
 def data_227() -> C.Task:
   C.LandTransactions{data_226(), 0n}

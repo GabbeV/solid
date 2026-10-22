@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-flush.bend as FlushLaws
 import ./proof/lane-pass.bend as PassLaws
 import ./proof/signed-zero.bend as SignedZero
 import ./proof/lane-guesses.bend as GuessLaws
@@ -819,3 +820,18 @@ def Laws.lane_pass_restores_captured_mount(w, previous, old, mount):
 
 def Laws.lane_pass_accepted_truth_skips_ordinary_store(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed):
   PassLaws.handledOutcome(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed)
+
+def Laws.lane_flush_render_queue_order(parked, own, lanes, landing):
+  FlushLaws.renderOrder(parked, own, lanes, landing)
+
+def Laws.lane_flush_user_queue_order(parked, own, lanes, landing):
+  FlushLaws.userOrder(parked, own, lanes, landing)
+
+def Laws.lane_flush_captured_null_join_stays_mainline(w, rest, stack):
+  FlushLaws.capturedNoJoin(w, rest, stack)
+
+def Laws.lane_flush_landing_follows_lane_end(w, rest, stack, frame, tx):
+  FlushLaws.landingEntry(w, rest, stack, frame, tx)
+
+def Laws.lane_flush_ineligible_parked_zombie_is_skipped(w, rest, stack, tx, id, tail, ineligible):
+  FlushLaws.skipParkedZombie(w, rest, stack, tx, id, tail, ineligible)

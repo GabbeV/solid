@@ -1,4 +1,5 @@
 import Base
+import ./proof/lane-flush.bend as FlushLaws
 import ./proof/lane-pass.bend as PassLaws
 import ./runtime/error.bend as SignedZeroMessage
 import ./proof/signed-zero.bend as SignedZero
@@ -1654,3 +1655,41 @@ law lane_pass_accepted_truth_skips_ordinary_store:
   for +joined: Bool
   for +changed: Bool
   {Core.dispatch(w, Core.PublishOutcome{id, value, create, height, outgoing, sources, wasSource, joined, changed} <> rest, R.Boolean{True{}} <> stack) == Core.publicationCompleted(rest, stack, id, outgoing, sources, wasSource, B.Bundle{w, changed}) : Core.Machine}
+
+law lane_flush_render_queue_order:
+  for +parked: Bool
+  for +own: List<&2, Nat>
+  for +lanes: List<&2, Nat>
+  for +landing: List<&2, Nat>
+  {Core.orderedRuns(~Nat, parked, own, lanes, landing) == FlushLaws.expected(~Nat, parked, own, lanes, landing) : List<&2, Nat>}
+
+law lane_flush_user_queue_order:
+  for +parked: Bool
+  for +own: List<&2, R.QueueEntry>
+  for +lanes: List<&2, R.QueueEntry>
+  for +landing: List<&2, R.QueueEntry>
+  {Core.orderedRuns(~R.QueueEntry, parked, own, lanes, landing) == FlushLaws.expected(~R.QueueEntry, parked, own, lanes, landing) : List<&2, R.QueueEntry>}
+
+law lane_flush_captured_null_join_stays_mainline:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {Core.settleApplied(w, rest, stack, 0n) == Core.Machine{w, Core.CommitIntake{0n} <> Core.TrimIntake{0n} <> Core.FinishSettleIntake{0n} <> rest, stack} : Core.Machine}
+
+law lane_flush_landing_follows_lane_end:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +frame: Core.SeamFrame
+  for +tx: Nat
+  {Core.dispatch(w, Core.LandAfterLanes{frame, tx} <> rest, stack) == Core.landPrepared(w, rest, stack, frame, tx) : Core.Machine}
+
+law lane_flush_ineligible_parked_zombie_is_skipped:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +tx: Nat
+  for +id: Nat
+  for +tail: List<&2, Nat>
+  for ineligible: {Bool.and(U32.is_eq(U32.and(R.Node.flags(B.node(w, id)), U32.or(K.REACTIVE_DISPOSED(), K.REACTIVE_ZOMBIE())), K.REACTIVE_ZOMBIE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT())) == False{} : Bool}
+  {Core.parkVerdictZombies(w, rest, stack, tx, id <> tail) == Core.Machine{w, Core.ParkVerdictZombies{tx, tail} <> rest, stack} : Core.Machine}

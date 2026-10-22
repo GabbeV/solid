@@ -707,7 +707,7 @@ def data_231(+initial: Nat, +input: Nat) -> C.Machine:
   C.Machine{data_227(initial, input), data_230(), data_94()}
 
 def data_232() -> C.SeamFrame:
-  C.SeamFrame{0n, data_24(), data_25()}
+  C.SeamFrame{0n, data_24(), data_25(), data_24(), data_25()}
 
 def data_233() -> C.Task:
   C.LandTransactions{data_232(), 0n}
