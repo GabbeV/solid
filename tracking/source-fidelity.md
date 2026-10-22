@@ -18,6 +18,14 @@ retired or reconciled when the upstream fix lands. A passing proof/example is no
 evidence of correspondence. Preserve source evidence and investigate conflicts;
 do not silently present a workaround as the faithful source implementation.
 
+## Not-final marks
+
+[affects-marks.md](affects-marks.md) maps source count/coverage/repoll operations,
+error precedence, validated-prefix cutoff and source-order heap enqueue points.
+The restricted internal module has native helper comparisons and four quantified
+World properties. Public verdict/declarer wiring and store family hops remain
+unfinished; no active scope is claimed from a helper implementation alone.
+
 ## Current continuation closure
 
 The remaining owner/core async/error/pending crossings have been migrated at

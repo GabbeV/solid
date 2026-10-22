@@ -1,4 +1,6 @@
 import Base
+import ./runtime/affects-marks.bend as Marks
+import ./proof/mark-laws.bend as MarkLaws
 import ./runtime/arrays.bend as Arrays
 import ./runtime/flatten.bend as Flatten
 import ./proof/array-laws.bend as ArrayLaws
@@ -1098,3 +1100,41 @@ law natural_children_complete_program:
   for +second: Nat
   for +extra: Nat
   {NaturalFlatten.programWithBudget(first, second, extra) == NaturalFlatten.expected(first, second) : Core.Machine}
+
+law direct_live_mark_short_circuits_probe:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +count: Nat
+  for +active: Nat
+  for +fuel: Nat
+  for +seen: List<&2, Nat>
+  for +rest: List<&2, Marks.ProbeTask>
+  {Marks.probe(1n+fuel, MarkLaws.scope(w, node, extension, nodes, extensions, 1n+count, active), Marks.ProbeNode{1n} <> rest, seen) == B.Bundle{MarkLaws.scope(w, node, extension, nodes, extensions, 1n+count, active), True{}} : B.Bundle<R.World, Bool>}
+
+law mark_increments_only_its_two_counts:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +count: Nat
+  for +active: Nat
+  {Marks.mark(MarkLaws.scope(w, node, extension, nodes, extensions, count, active), 1n) == MarkLaws.scope(w, node, extension, nodes, extensions, 1n+count, 1n+active) : R.World}
+
+law nonlast_mark_does_not_repoll:
+  for +w: R.World
+  for +node: R.Node
+  for +extension: R.NodeExtension
+  for +nodes: List<&2, R.Node>
+  for +extensions: List<&2, R.NodeExtension>
+  for +count: Nat
+  for +active: Nat
+  {Marks.unmark(MarkLaws.scope(w, node, extension, nodes, extensions, 2n+count, 2n+active), 1n) == B.Bundle{MarkLaws.scope(w, node, extension, nodes, extensions, 1n+count, 1n+active), False{}} : B.Bundle<R.World, Bool>}
+
+law inactive_mark_gate_preserves_world:
+  for +w: R.World
+  for +id: Nat
+  {Marks.covered(R.World.with_activeMarks(w, 0n), id) == B.Bundle{R.World.with_activeMarks(w, 0n), False{}} : B.Bundle<R.World, Bool>}

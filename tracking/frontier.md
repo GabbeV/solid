@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3114 differential histories, 223 rejected compiled mutations,
+Current verification: 3114 differential histories, 231 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at a2a5b6f8 (rc.16) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -43,6 +43,16 @@ across four sufficient budgets. One new proof mutation rejects reversed child
 order. Public-history and closed-regression counts stay unchanged. The executable
 [examples/list.bend](../examples/list.bend) also demonstrates real mapArray
 reorder/growth followed by children flattening and root disposal.
+
+## Mark-engine dependency
+
+[The mark module](affects-marks.md) now follows counts, direct/inherited coverage,
+current dependency prefixes and depth-first verdict-reader repolling. 2,682
+actual-source helper comparisons and four quantified whole-World properties
+support this restricted dependency. Eight more compiled mutations target it.
+Public isPending/latest/affects/createDeferred remain unfinished until the active
+verdict/lane/deferred engine is connected. Public-history and closed-regression
+counts stay unchanged; no semantic deviation is active.
 
 ## Next connected implementation target
 

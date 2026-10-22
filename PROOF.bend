@@ -1,4 +1,5 @@
 import Base
+import ./proof/mark-laws.bend as MarkLaws
 import ./proof/array-laws.bend as ArrayLaws
 import ./proof/array-write.bend as ArrayWrite
 import ./proof/flatten-lifecycle.bend as FlattenLifecycle
@@ -577,3 +578,15 @@ def Laws.array_push_appends_exactly(w, arraysBefore, slots, arraysAfter, value):
 
 def Laws.natural_children_complete_program(first, second, extra):
   NaturalFlatten.sufficient(first, second, extra)
+
+def Laws.direct_live_mark_short_circuits_probe(w, node, extension, nodes, extensions, count, active, fuel, seen, rest):
+  MarkLaws.direct(w, node, extension, nodes, extensions, count, active, fuel, seen, rest)
+
+def Laws.mark_increments_only_its_two_counts(w, node, extension, nodes, extensions, count, active):
+  MarkLaws.increment(w, node, extension, nodes, extensions, count, active)
+
+def Laws.nonlast_mark_does_not_repoll(w, node, extension, nodes, extensions, count, active):
+  MarkLaws.nonlast(w, node, extension, nodes, extensions, count, active)
+
+def Laws.inactive_mark_gate_preserves_world(w, id):
+  MarkLaws.inactive(w, id)

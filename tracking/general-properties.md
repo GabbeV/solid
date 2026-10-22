@@ -483,3 +483,10 @@ axiom, kernel change or additional source algorithm is used. Sixty-four finite
 canonical/public/native comparisons with four sufficient budgets are separate
 correspondence evidence. The fixed tree has no accessor/async callbacks; those
 and arbitrary tree shapes/history/progress remain outside this family.
+
+
+Four quantified mark-engine properties now check exact count changes, non-last
+removal without repoll, direct-mark short circuit and inactive-global gating.
+They preserve the whole surrounding World and quantify other node/extension
+fields and arenas. A general graph traversal/progress theorem remains open;
+see [affects-marks.md](affects-marks.md).

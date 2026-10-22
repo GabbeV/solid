@@ -5,6 +5,14 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['mark global count fails to increment','runtime/affects-marks.bend','1n+R.World.activeMarks(w)','R.World.activeMarks(w)','tests/proof-properties.mjs','mark','mark-laws'],
+  ['mark node count fails to increment','runtime/affects-marks.bend','1n+R.NodeExtension.marks(B.extension(w, id))','R.NodeExtension.marks(B.extension(w, id))','tests/proof-properties.mjs','mark','mark-laws'],
+  ['mark nonlast removal reports last','runtime/affects-marks.bend','B.Bundle{w, False{}}','B.Bundle{w, True{}}','tests/proof-properties.mjs','unmark','mark-laws'],
+  ['mark probe crosses an empty validated prefix','runtime/affects-marks.bend','Bool.and(B.has(R.Node.flags(n), K.REACTIVE_RECOMPUTING_DEPS()), Nat.is_eq(R.Node.depsTail(n), 0n))','False{}','tests/marks-alignment.mjs','probe'],
+  ['mark probe crosses its validated dependency tail','runtime/affects-marks.bend','Nat.is_eq(edge, tail)','False{}','tests/marks-alignment.mjs','probe'],
+  ['mark probe lets errors suppress direct marks','runtime/affects-marks.bend','Bool.and(Nat.is_ne(R.Node.x(n), 0n), Nat.is_ne(R.NodeExtension.marks(B.extension(w, id)), 0n))','Bool.and(Bool.not(B.has(R.Node.status(n), K.STATUS_ERROR())), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Nat.is_ne(R.NodeExtension.marks(B.extension(w, id)), 0n)))','tests/marks-alignment.mjs','probe'],
+  ['mark repoll descends through effects','runtime/affects-marks.bend','B.effect(R.Node.kind(B.node(w, id)))','False{}','tests/marks-alignment.mjs','repollWork'],
+  ['mark repoll reverses sibling insertion order','runtime/affects-marks.bend','RepollSubs{R.Node.subs(B.node(w, id))} <> RepollNext{edge} <> rest','RepollNext{edge} <> RepollSubs{R.Node.subs(B.node(w, id))} <> rest','tests/marks-alignment.mjs','repollWork'],
   ['flatten array scan reverses children','runtime/core.bend','Arrays.at(w, children, index)','Arrays.at(w, children, Nat.sub(Arrays.length(w, children), 1n+index))','tests/proof-properties.mjs','flattenLoop','flatten-natural'],
   ['flatten array pushes overwrite the first slot','runtime/flatten.bend','Arrays.length(w, results)','0n','tests/proof-properties.mjs','push','array-write'],
   ['array indexed writes lose their supplied payload','runtime/arrays.bend','R.Present{value}','R.Present{R.Undefined{}}','tests/proof-properties.mjs','put','array-write'],

@@ -13,32 +13,48 @@
           "start": 38,
           "end": 57,
           "sha256": "7e9779300627b41955363b10d7370f0467a02285fa1a7b58df5de32381562b80",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-marks.bend:repoll, repollWith, repollWork",
+            "status": "partial",
+            "restrictions": "Actual enqueueSub and source-order depth-first subscriber walk; shared seen set and effect cutoff. Derived-store family metadata/hops remain outside the admitted grammar."
+          }
         },
         {
           "key": "affects-marks.ts:marked",
           "start": 66,
           "end": 82,
           "sha256": "198755ac1bc4c51e96c64a2f112ecb264a88e9a472820bd7bba58ea621d34b68",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-marks.bend:marked, probe",
+            "status": "partial",
+            "restrictions": "Actual current-dependency walk with shared seen identity, error precedence, validated prefix and direct-mark fast path. Store slot family hops remain unfinished and refuse; finite explicit walk budgets."
+          }
         },
         {
           "key": "affects-marks.ts:mark",
           "start": 85,
           "end": 88,
           "sha256": "06a140ecb98e77a5028aaaac0c1af67b2c35736cb18dc9873996cd9308afe257",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-marks.bend:mark",
+            "status": "partial",
+            "restrictions": "Counts and extension allocation; public declarers and verdict dispatch are not connected yet."
+          }
         },
         {
           "key": "affects-marks.ts:unmark",
           "start": 92,
           "end": 97,
           "sha256": "23b5ebd28eba4befb3b914d9cdc2c37ef7c037b1a30ee44fc330c6f2cb84aa29",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/affects-marks.bend:unmark",
+            "status": "partial",
+            "restrictions": "Balanced private mark counts; last-mark repoll retains source order. Invalid count underflow is explicitly refused."
+          }
         }
       ],
       "branches": [

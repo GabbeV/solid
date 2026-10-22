@@ -18,7 +18,7 @@ and #4188, after preserving the complete d682022c checkpoint at c11277e. The sem
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 3,114 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 223; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 231; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -191,3 +191,12 @@ histories and 72 closed regressions are unchanged; there are now 223 rejected
 compiled variants. A standalone executable Bend list example exercises mapping,
 reorder/growth, flattening and root disposal. This family does not quantify tree
 shape, arbitrary accessor chains or histories.
+
+
+The next dependency milestone adds the source mark engine: direct/inherited
+not-final coverage and current-dependency traversal, exact mark counts, and
+source-ordered verdict/truth-reader repolling. 2,682 native helper comparisons
+and four quantified whole-World properties check this module. Eight added
+compiled mutations bring the current total to 231. Public isPending/latest and
+mark declarers are not connected yet, so public-history and composed closed
+regression totals stay 3114 / 72. See [affects-marks.md](affects-marks.md).

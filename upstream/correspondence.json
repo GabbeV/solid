@@ -761,6 +761,26 @@
       "bend": "runtime/core.bend:FlattenFrame, flattenLoop, flattenChild, flattenChildResolved, flattenAdvance, flattenCatch, flattenEnd, FlattenElementEnd; runtime/flatten.bend:push",
       "status": "restricted",
       "restrictions": "Source live length/slot traversal, partial result pushes, nested shared results, deferred original functions, OR-preserved needsUnwrap, per-element NotReady collection/last-error throw and immediate ordinary-error exit. Typed arrays/callables and option flags; arbitrary property protocols/cycles remain unfinished. No general recursive traversal/progress theorem."
+    },
+    "affects-marks.ts:mark": {
+      "bend": "runtime/affects-marks.bend:mark",
+      "status": "partial",
+      "restrictions": "Counts and extension allocation; public declarers and verdict dispatch are not connected yet."
+    },
+    "affects-marks.ts:unmark": {
+      "bend": "runtime/affects-marks.bend:unmark",
+      "status": "partial",
+      "restrictions": "Balanced private mark counts; last-mark repoll retains source order. Invalid count underflow is explicitly refused."
+    },
+    "affects-marks.ts:marked": {
+      "bend": "runtime/affects-marks.bend:marked, probe",
+      "status": "partial",
+      "restrictions": "Actual current-dependency walk with shared seen identity, error precedence, validated prefix and direct-mark fast path. Store slot family hops remain unfinished and refuse; finite explicit walk budgets."
+    },
+    "affects-marks.ts:repoll": {
+      "bend": "runtime/affects-marks.bend:repoll, repollWith, repollWork",
+      "status": "partial",
+      "restrictions": "Actual enqueueSub and source-order depth-first subscriber walk; shared seen set and effect cutoff. Derived-store family metadata/hops remain outside the admitted grammar."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."
