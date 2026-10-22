@@ -419,7 +419,7 @@
     "tracking/deferred.md": "e443bde79ae86ca04dcf5db9a6def47057b05cb1175b0bedd6c94ce1989e679a",
     "tracking/deferred-first-stream.md": "a00788dddd56e1d5094efed540c8cd3ce62ce56428199194d1c87ef3e04bc503",
     "tracking/deferred-first-stream-validation.json": "cac91a0ba8ce4dfb7c34330b13adfff71a4b97824599be028447960d8429e1e4",
-    "tracking/reviews/deferred-stream-readiness.md": "862d7a429cd3f4ff5dfcf1a7f46cef32c32cab0502858ea2f054e97bfc52139a",
+    "tracking/reviews/deferred-stream-readiness.md": "c8d192d4968113ab9a7983b54872f23dd0c06195ed7d0ef0a0b0db4f2030a4de",
     "tracking/session-2026-10-22.md": "98866ae7b2adef56e95270970225bdb89933a5ac4b87a238374426e5eae77059",
     "tracking/upstream/deferred-superseded-error.md": "e85feea1e0d4a44677fdd79995f80b32b2e8621c862ce39275f29bd4f56db7aa",
     "tracking/upstream/deferred-superseded-error.patch": "6dbeaec80cfb0311f674a380206a2f7dee5c5def4097c7faa6450246243766e5",
@@ -618,7 +618,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 91.164658199,
+    "seconds": 90.59463054000001,
     "kernelSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335"
   },
   "host": {

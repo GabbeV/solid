@@ -33,8 +33,11 @@ is a legal producer shape, so admitting this baseline branch must preserve an
 ordinary computation error and its message/identity, not an interpreter-stop
 fault or a silent isThenable repair. The isolated candidate patch is not active.
 
-s always has a return method. It forwards to it.return with the original
-receiver when present; otherwise it returns Promise.resolve({done:true,value:v}).
+s always has a return method. It calls it.return with the original receiver
+when present, then applies the source nullish fallback: an absent method or a
+method returning null/undefined produces Promise.resolve({done:true,value:v}).
+A present method returning a non-nullish value preserves that exact result;
+method presence alone cannot select the fallback.
 That default fulfilled native-promise path is observable callback/protocol IO
 and must be represented explicitly, including the engine's rejection-swallow
 registration. The existing ordinary close machinery supplies the cleanup and
