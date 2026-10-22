@@ -343,6 +343,12 @@ def truth(v: R.Value) -> Bool:
 
 def arithmetic(op: U32, left: R.Value, right: R.Value) -> R.Value:
   match left right:
+    case R.NegativeZero{} R.NegativeZero{}:
+      B.choose(~R.Value, U32.is_eq(op, 0), _ => R.NegativeZero{}, _ => R.Number{0n})
+    case R.NegativeZero{} R.Number{n}:
+      B.choose(~R.Value, U32.is_eq(op, 0), _ => R.Number{n}, _ => R.NegativeZero{})
+    case R.Number{n} R.NegativeZero{}:
+      B.choose(~R.Value, U32.is_eq(op, 0), _ => R.Number{n}, _ => R.NegativeZero{})
     case R.Number{+a} R.Number{+b}:
       B.choose(~R.Value, U32.is_eq(op, 0), _ => R.Number{Nat.add(a, b)}, _ => R.Number{Nat.mul(a, b)})
     case _ _:
@@ -350,6 +356,8 @@ def arithmetic(op: U32, left: R.Value, right: R.Value) -> R.Value:
 
 def numeric(v: R.Value) -> Bool:
   match v:
+    case R.NegativeZero{}:
+      True{}
     case R.Number{n}:
       True{}
     case _:
@@ -3624,6 +3632,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
     case ArrayAt{} <> rest:
       match stack:
+        case R.NegativeZero{} <> R.ArrayReference{id} <> tail:
+          Machine{w, rest, Arrays.at(w, id, 0n) <> tail}
         case R.Number{index} <> R.ArrayReference{id} <> tail:
           Machine{w, rest, Arrays.at(w, id, index) <> tail}
         case _:

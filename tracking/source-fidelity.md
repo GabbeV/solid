@@ -405,3 +405,7 @@ active write/publication/async/seam sites. The side registry decomposes function
 identity without changing `_x` allocation. Default-only World facades refuse a
 required custom call rather than approximate it. See [comparators.md](comparators.md)
 for exact return points, source observations, evidence and remaining closure limits.
+
+The [signed-zero repair](number-values.md) fixes a host codec loss: -0 is now a
+distinct admitted payload with source strict equality, falseyness, String and
+arithmetic behavior. It is a port repair, not a semantic workaround.

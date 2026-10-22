@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3158 differential histories, 337 rejected compiled mutations,
+Current verification: 3169 differential histories, 344 rejected compiled mutations,
 and 72 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 5b1b7776 (rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -16,13 +16,20 @@ necessary temporary deviation under [deviations.md](deviations.md). The user per
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
 
+## Signed-zero payload repair
+
+[The representation repair](number-values.md) retains negative zero through storage,
+callbacks, async/error payloads and admitted arithmetic. Eleven public histories,
+52 primitive controls and eight scalar kernel facts (five quantified) check it.
+This fixes our codec, with no upstream workaround or source change.
+
 ## Queued guesses and seam prefix
 
 [Queued guesses](lane-guesses.md) adds writer composition, reverse lookup,
 question allocation, live application and the pre-guess reveal prefix. 3,307
 native helper/callback programs and nine quantified properties check this layer,
 including newest lookup over any finite prior queue. The cumulative mutation
-count is 337. Core seating/publication/flush and public constructors/windows
+count is 344. Core seating/publication/flush and public constructors/windows
 remain the next crossings; public-history and closed-regression counts stay
 unchanged, and no semantic deviation is active.
 

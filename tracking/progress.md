@@ -17,9 +17,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,158 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,169 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 72 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 337; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 344; resource/infrastructure failures are excluded from useful rejections |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -274,3 +274,12 @@ callback programs and nine scoped properties supplement prior layers. The
 newest-value theorem covers any finite prior guess queue. Typed queue/prefix/
 mount representation extends the existing World frames. Public optimistic and
 verdict admission still waits on core seating/publication/flush integration.
+
+## Signed-zero payloads
+
+The codec formerly collapsed -0 to positive zero. A distinct payload now follows
+strict equality, falseyness, String conversion and admitted arithmetic. Eleven
+public histories and 52 primitive controls compare pinned Solid; eight kernel
+facts include five quantified natural-counterpart laws. Seven added mutations
+bring the total to 344. This is a port repair with no active deviation; general
+JavaScript numeric coercion and nonnatural repeat offsets remain excluded.

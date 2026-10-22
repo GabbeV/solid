@@ -1,4 +1,5 @@
 import Base
+import ./proof/signed-zero.bend as SignedZero
 import ./proof/lane-guesses.bend as GuessLaws
 import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
@@ -775,3 +776,27 @@ def Laws.lane_guess_reveals_are_capped_to_current_prefix(w, rest, stack, leaked)
 
 def Laws.lane_guess_zero_reveals_preserve_world(w, rest, stack, leaked):
   GuessLaws.zeroReveal(w, rest, stack, leaked)
+
+def Laws.scalar_strict_signed_zero(n):
+  SignedZero.strictZero(n)
+
+def Laws.scalar_strict_reverse_signed_zero(n):
+  SignedZero.reverseStrictZero(n)
+
+def Laws.scalar_negative_zero_is_falsey():
+  SignedZero.falseyZero()
+
+def Laws.scalar_object_is_distinguishes_sign(n):
+  SignedZero.objectZero(n)
+
+def Laws.scalar_object_is_identifies_nan():
+  SignedZero.objectNaN()
+
+def Laws.scalar_signed_zero_addition(n):
+  SignedZero.addition(n)
+
+def Laws.scalar_signed_zero_multiplication(n):
+  SignedZero.multiplication(n)
+
+def Laws.scalar_signed_zero_message():
+  SignedZero.zeroMessage()

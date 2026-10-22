@@ -67,6 +67,12 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       True{}
     case R.Boolean{x} R.Boolean{y}:
       Bool.xor(Bool.xor(x, y), True{})
+    case R.NegativeZero{} R.NegativeZero{}:
+      True{}
+    case R.NegativeZero{} R.Number{y}:
+      Nat.is_eq(0n, y)
+    case R.Number{x} R.NegativeZero{}:
+      Nat.is_eq(x, 0n)
     case R.Number{x} R.Number{y}:
       Nat.is_eq(x, y)
     case R.AsyncValue{x} R.AsyncValue{y}:
@@ -99,6 +105,18 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       String.eq(x, y)
     case _ _:
       False{}
+
+# Object.is differs from strict equality for NaN and the two signed zeros.
+def objectIs(a: R.Value, b: R.Value) -> Bool:
+  match a b:
+    case R.NotANumber{} R.NotANumber{}:
+      True{}
+    case R.NegativeZero{} R.Number{n}:
+      False{}
+    case R.Number{n} R.NegativeZero{}:
+      False{}
+    case left right:
+      equal(left, right)
 
 def truth(v: R.Value) -> Bool:
   match v:

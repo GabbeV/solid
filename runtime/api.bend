@@ -260,6 +260,9 @@ def vText(s: String) -> R.Value:
 def vBoolean(b: Bool) -> R.Value:
   R.Boolean{b}
 
+def vNegativeZero() -> R.Value:
+  R.NegativeZero{}
+
 def vNaN() -> R.Value:
   R.NotANumber{}
 

@@ -50,6 +50,7 @@ type Value is Data:
   Null{}
   Boolean{b: Bool}
   Number{n: Nat}
+  NegativeZero{}
   Reference{id: Nat}
   ArrayReference{id: Nat}
   OwnerReference{id: Nat}

@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ['signed zero codec normalizes the payload','runtime/api.bend','R.NegativeZero{}','R.Number{0n}','tests/negative-zero.mjs','vNegativeZero'],
+  ['signed zero strict equality rejects positive zero','representation/base.bend','case R.NegativeZero{} R.Number{y}:\n      Nat.is_eq(0n, y)','case R.NegativeZero{} R.Number{y}:\n      False{}','tests/negative-zero.mjs','equal'],
+  ['signed zero arithmetic rejects its numeric tag','runtime/core.bend','case R.NegativeZero{}:\n      True{}','case R.NegativeZero{}:\n      False{}','tests/negative-zero.mjs','numeric'],
+  ['signed zero multiplication drops its sign','runtime/core.bend','case R.NegativeZero{} R.Number{n}:\n      B.choose(~R.Value, U32.is_eq(op, 0), _ => R.Number{n}, _ => R.NegativeZero{})','case R.NegativeZero{} R.Number{n}:\n      B.choose(~R.Value, U32.is_eq(op, 0), _ => R.Number{n}, _ => R.Number{0n})','tests/proof-properties.mjs','arithmetic','signed-zero'],
+  ['signed zero message prints a sign','runtime/error.bend','case R.NegativeZero{}:\n      "0"','case R.NegativeZero{}:\n      "-0"','tests/proof-properties.mjs','stringify','signed-zero'],
+  ['signed zero Object.is collapses the two zeros','representation/base.bend','case R.NegativeZero{} R.Number{n}:\n      False{}','case R.NegativeZero{} R.Number{n}:\n      Nat.is_eq(0n, n)','tests/proof-properties.mjs','objectIs','signed-zero'],
+  ['signed zero Object.is loses NaN identity','representation/base.bend','case R.NotANumber{} R.NotANumber{}:\n      True{}','case R.NotANumber{} R.NotANumber{}:\n      False{}','tests/proof-properties.mjs','objectIs','signed-zero'],
   ['queued guess skips the updater function call','runtime/core.bend','J.isFunction(value)','False{}','tests/lane-guesses-callbacks.mjs','optimisticWrite'],
   ['queued guess lookup forgets the newest suffix','runtime/lanes-state.bend','pendingGuessLoop(w, id, B.length(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))))','R.Empty{}','tests/proof-properties.mjs','pendingGuessOf','lane-guesses'],
   ['queued guess writer reads covered truth','runtime/lanes-state.bend','_ => T.laneValueOf(w, id)','_ => R.Node.value(B.node(w, id))','tests/lane-guesses-alignment.mjs','guessedValueOf'],

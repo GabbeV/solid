@@ -20,6 +20,8 @@ def stringify(value: R.Value) -> String:
       "null"
     case R.Boolean{b}:
       B.choose(~String, b, _ => "true", _ => "false")
+    case R.NegativeZero{}:
+      "0"
     case R.Number{n}:
       Nat.show(n)
     case R.NotANumber{}:

@@ -1,4 +1,6 @@
 import Base
+import ./runtime/error.bend as SignedZeroMessage
+import ./proof/signed-zero.bend as SignedZero
 import ./proof/lane-guesses.bend as GuessLaws
 import ./proof/lane-answers.bend as LaneAnswers
 import ./proof/lane-lifecycle.bend as LaneLifecycle
@@ -1567,3 +1569,32 @@ law lane_guess_zero_reveals_preserve_world:
   for +stack: List<&2, R.Value>
   for +leaked: List<&2, Nat>
   {Core.laneRevealLoop(w, rest, stack, leaked, 0n) == Core.Machine{w, rest, stack} : Core.Machine}
+
+law scalar_strict_signed_zero:
+  for +n: Nat
+  {B.equal(R.NegativeZero{}, R.Number{n}) == Nat.is_eq(0n, n) : Bool}
+
+law scalar_strict_reverse_signed_zero:
+  for +n: Nat
+  {B.equal(R.Number{n}, R.NegativeZero{}) == Nat.is_eq(n, 0n) : Bool}
+
+law scalar_negative_zero_is_falsey:
+  {B.truth(R.NegativeZero{}) == False{} : Bool}
+
+law scalar_object_is_distinguishes_sign:
+  for +n: Nat
+  {B.objectIs(R.NegativeZero{}, R.Number{n}) == False{} : Bool}
+
+law scalar_object_is_identifies_nan:
+  {B.objectIs(R.NotANumber{}, R.NotANumber{}) == True{} : Bool}
+
+law scalar_signed_zero_addition:
+  for +n: Nat
+  {Core.arithmetic(0, R.NegativeZero{}, R.Number{n}) == R.Number{n} : R.Value}
+
+law scalar_signed_zero_multiplication:
+  for +n: Nat
+  {Core.arithmetic(1, R.NegativeZero{}, R.Number{n}) == R.NegativeZero{} : R.Value}
+
+law scalar_signed_zero_message:
+  {SignedZeroMessage.stringify(R.NegativeZero{}) == "0" : String}

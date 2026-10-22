@@ -60,7 +60,7 @@ in the c11277e checkpoint. Work is regularly pushed on `feat/solid-signals-bend`
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 337 source-changing variants
+npm run mutations                # reject 344 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 ```

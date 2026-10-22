@@ -14,7 +14,7 @@ export function list(xs) {
   return out;
 }
 const tags = {
-  array:R.vArray(0).$, undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$,
+  array:R.vArray(0).$, undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$, negativeZero:R.vNegativeZero().$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,
   text:R.vText('').$, async:R.vAsync(0).$, healthy:R.createWorld().fault.$,
   contextFailure:R.vContextFailure(0,0).$, timeout:R.vTimeout(0).$, disposer:R.vRootDisposer(0).$, accessor:R.vAccessor(0).$, setter:R.vSetter(0).$, callback:R.vProgram(0).$,
@@ -52,6 +52,7 @@ export function decode(v,errors=new Map(),refs=new Map(),asyncRefs=new Map(),ext
     case tags.undefined: return undefined;
     case tags.null: return null;
     case tags.number: return v.n;
+    case tags.negativeZero: return -0;
     case tags.bool: return v.b;
     case tags.contextFailure:
       if(!errors.has(v.identity))errors.set(v.identity,v.kind===0?new BendNoOwnerError(v.identity):new BendContextNotFoundError(v.identity));
@@ -88,8 +89,9 @@ export function encode(v) {
   if (typeof v === 'string') return R.vText(v);
   if (typeof v === 'number') {
     if (Number.isNaN(v)) return R.vNaN();
+    if (Object.is(v,-0)) return R.vNegativeZero();
     if (!Number.isSafeInteger(v) || v < 0 || v > 2 ** 48 - 1) throw new RangeError('Payload arithmetic supports naturals through 2^48-1');
-    return R.vNumber(v === 0 ? 0 : v); // strict equality identifies +/-0
+    return R.vNumber(v);
   }
   if (typeof v === 'object' && Number.isSafeInteger(v.async) && v.async > 0) return R.vAsync(v.async);
   if (typeof v === 'object' && Number.isSafeInteger(v.rootDisposer) && v.rootDisposer > 0)return R.vRootDisposer(v.rootDisposer);
