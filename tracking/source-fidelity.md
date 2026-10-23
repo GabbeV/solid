@@ -63,8 +63,9 @@ fixtures may expose native module state in memory; they are not public API histo
 The [action/join constructor extension](transaction-joins.md) changes no runtime,
 host, vendored source or adapter semantics. Real action prefixes establish their
 capture/debt, and selected allocated-root joins establish transfer and pair
-resolver room. A two-action family now removes those premises through its first
-completion after arbitrary finite pair lookup/rejoin histories. General forest,
+resolver room. A two-action family now removes those premises through both
+completions in either order, with arbitrary finite pair lookup/rejoin histories
+before/between/after them; see [the completion extension](action-completion.md). General forest,
 once-only delivery and publication invariants remain open.
 
 ## Upstream review and discrepancies

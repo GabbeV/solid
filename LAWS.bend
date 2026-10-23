@@ -1,3 +1,6 @@
+import ./proof/transaction-count-pair.bend as CountedPair
+import ./proof/action-pair-completion.bend as PairCompletion
+import ./proof/action-wait-settlement.bend as WaitSettlement
 import ./proof/action-blocker-finish.bend as ActionBlockerFinish
 import ./proof/transaction-positive.bend as PositiveBlocker
 import ./proof/action-blocker.bend as ActionBlocker
@@ -2817,3 +2820,75 @@ law first_action_completion_after_history_still_blocks:
   for events: List<&2, JoinedHistory.JoinEvent>
   for healthy: {B.ok(w) == True{} : Bool}
   {Transactions.blocked(Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), JoinedPair.targetId(before, [], reverse)) == B.Bundle{Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), True{}} : B.Bundle<R.World, Bool>}
+
+
+# Representative updates preserve the actual pair shape, routes and schedule.
+law counted_pair_update_preserves_world:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for reverse: Bool
+  for old: Nat
+  for next: Nat
+  {B.schedule(B.store_transaction(CountedPair.state(w, before, reverse, old), JoinedPair.targetId(before, [], reverse), R.Transaction.with_open(B.transaction(CountedPair.state(w, before, reverse, old), JoinedPair.targetId(before, [], reverse)), next))) == CountedPair.state(B.schedule(w), before, reverse, next) : R.World}
+
+law counted_pair_original_source_resolves:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for reverse: Bool
+  for count: Nat
+  {Transactions.resolveTx(CountedPair.state(w, before, reverse, count), JoinedPair.sourceId(before, [], reverse)) == B.Bundle{CountedPair.state(w, before, reverse, count), JoinedPair.targetId(before, [], reverse)} : B.Bundle<R.World, Nat>}
+
+# The certificate contains a complete World equality, rather than a supplied
+# transition premise. Real constructors fill it for both completion orders.
+law constructed_pair_both_completion_histories:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for second: Bool
+  for initial: List<&2, JoinedHistory.JoinEvent>
+  for middle: List<&2, JoinedHistory.JoinEvent>
+  for final: List<&2, JoinedHistory.JoinEvent>
+  PairCompletion.Completion<ActionPair.second(w, before, cells, first, other), before, reverse, PairCompletion.selectedId(cells, second), PairCompletion.selectedId(cells, Bool.not(second)), initial, middle, final>
+
+law completed_pair_certificate_has_zero_debt:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for reverse: Bool
+  for firstId: Nat
+  for otherId: Nat
+  for initial: List<&2, JoinedHistory.JoinEvent>
+  for middle: List<&2, JoinedHistory.JoinEvent>
+  for final: List<&2, JoinedHistory.JoinEvent>
+  for certificate: PairCompletion.Completion<w, before, reverse, firstId, otherId, initial, middle, final>
+  {R.Transaction.open(B.transaction(PairCompletion.run(Transactions.merge(w, JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), JoinedPair.targetId(before, [], reverse))) == 0n : Nat}
+
+law action_wait_marking_reaches_lookup:
+  for waits: List<&2, R.ActionWait>
+  for id: Nat
+  {Action.find(Action.settleWait(waits, id), id) == WaitSettlement.mark(Action.find(waits, id)) : Maybe<&2, R.ActionWait>}
+
+law settled_action_wait_stays_settled:
+  for events: List<&2, WaitSettlement.WaitEdit>
+  for waits: List<&2, R.ActionWait>
+  for id: Nat
+  for action: Nat
+  for settled: Bool
+  for found: {Action.find(waits, id) == Some{R.ActionWait{id, action, 0, settled}} : Maybe<&2, R.ActionWait>}
+  {Action.find(WaitSettlement.run(events, Action.settleWait(waits, id)), id) == Some{R.ActionWait{id, action, 0, True{}}} : Maybe<&2, R.ActionWait>}
+
+law settled_action_wait_history_rejects_duplicate:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for events: List<&2, WaitSettlement.WaitEdit>
+  for waits: List<&2, R.ActionWait>
+  for id: Nat
+  for action: Nat
+  for settled: Bool
+  for rejected: Bool
+  for value: R.Value
+  for found: {Action.find(waits, id) == Some{R.ActionWait{id, action, 0, settled}} : Maybe<&2, R.ActionWait>}
+  {Core.asyncActionDelivery(R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack, id, rejected, value, Action.find(WaitSettlement.run(events, Action.settleWait(waits, id)), id)) == Core.Machine{R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack} : Core.Machine}

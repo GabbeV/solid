@@ -587,3 +587,25 @@ judgments and the broad 1,190-program blocker alignment passes. Two more kernel
 negatives bring configuration to 583 (469 finite /114 kernel), without a new
 full-sweep claim. The second completion, zero-debt eligibility and rendered
 publication remain open. No runtime/source/host change or new Solid bug occurred.
+
+
+## Both joined completions and settled-yield preservation (2026-10-23)
+
+The [completion extension](action-completion.md) adds seven active roots. Two
+actual action allocation/opening prefixes and either join direction now support
+both completion orders, with arbitrary finite original-ID lookups and same-group
+rejoins before, between and afterward. The checked constructed certificate holds
+the full World equality; its generic corollary gives zero representative action
+debt while preserving the retired source's stale count and both scheduling effects.
+The independently checked wait-list invariant preserves a settled yielded-value
+callback through arbitrary finite append/settlement histories and connects this
+to the actual duplicate guard, retaining World/continuation/stack exactly.
+
+The full once-only action/flight protocol, intervening writes/settlements/disposal,
+global forest/live-list validity and rendered publication remain open. Existing
+public/native/private controls pass. Four new kernel negatives bring configured
+variants to 587 (469 finite /118 kernel), without a new full-sweep claim. A separate
+guard-bypass mutation hit the RSS limit and is not credited. An indexed certificate
+avoids repeated constructor unfolding that exhausted kernel fuel; its result field
+and construction are checked without changing runtime or kernel limits.
+No runtime/representation/host/source changes, new Solid bug or deviation occurred.

@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["second completion retains its last obligation", "runtime/action-state.bend", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)", "B.choose(~Nat, Nat.is_eq(R.Transaction.open(B.transaction(w, t)), 1n), _ => 1n, _ => Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n))", "tests/proof-properties.mjs", "done", "action-pair-completion"],
+  ["second completion loses the retired route", "runtime/action-state.bend", "B.schedule(B.store_transaction(w, t,", "B.schedule(B.store_transaction(B.store_transaction(w, R.ActionState.transaction(get(w, id)), R.Transaction.with_into(B.transaction(w, R.ActionState.transaction(get(w, id))), 0n)), t,", "tests/proof-properties.mjs", "done", "action-pair-completion"],
+  ["settled wait invariant reopens matching cells", "runtime/action-state.bend", "R.ActionWait.with_settled(entry, True{})", "R.ActionWait.with_settled(entry, False{})", "tests/proof-properties.mjs", "settleWait", "action-wait-settlement"],
+  ["settled wait invariant corrupts duplicate World", "runtime/core.bend", "_ => Machine{w, rest, stack},", "_ => Machine{R.World.with_context(w, 0n), rest, stack},", "tests/proof-properties.mjs", "actionDelivery", "action-wait-settlement"],
+
   ["positive blocker ignores action debt", "runtime/transaction.bend", "Nat.is_ne(R.Transaction.open(B.transaction(w, tx)), 0n)", "False{}", "tests/proof-properties.mjs", "blockStep", "transaction-positive"],
   ["positive blocker omits judge restoration", "runtime/transaction.bend", "BlockFrame{R.World.with_judge(w, previous), rest, result}", "BlockFrame{w, rest, result}", "tests/proof-properties.mjs", "blockStep", "transaction-positive"],
 

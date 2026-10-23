@@ -1,3 +1,6 @@
+import ./proof/transaction-count-pair.bend as CountedPair
+import ./proof/action-pair-completion.bend as PairCompletion
+import ./proof/action-wait-settlement.bend as WaitSettlement
 import ./proof/action-blocker-finish.bend as ActionBlockerFinish
 import ./proof/transaction-positive.bend as PositiveBlocker
 import ./proof/action-blocker.bend as ActionBlocker
@@ -1335,3 +1338,25 @@ def Laws.first_action_completion_still_blocks(w, before, cells, first, other, re
 
 def Laws.first_action_completion_after_history_still_blocks(w, before, cells, first, other, reverse, finishSecond, events, healthy):
   ActionBlockerFinish.afterHistory(w, before, cells, first, other, reverse, finishSecond, events, healthy)
+
+
+def Laws.counted_pair_update_preserves_world(w, before, reverse, old, next):
+  CountedPair.update(w, before, reverse, old, next)
+
+def Laws.counted_pair_original_source_resolves(w, before, reverse, count):
+  CountedPair.sourceResolves(w, before, reverse, count)
+
+def Laws.constructed_pair_both_completion_histories(w, before, cells, first, other, reverse, second, initial, middle, final):
+  PairCompletion.constructed(w, before, cells, first, other, reverse, second, initial, middle, final)
+
+def Laws.completed_pair_certificate_has_zero_debt(w, before, reverse, firstId, otherId, initial, middle, final, certificate):
+  PairCompletion.zeroCertified(w, before, reverse, firstId, otherId, initial, middle, final, certificate)
+
+def Laws.action_wait_marking_reaches_lookup(waits, id):
+  WaitSettlement.findMarked(waits, id)
+
+def Laws.settled_action_wait_stays_settled(events, waits, id, action, settled, found):
+  WaitSettlement.markedHistory(events, waits, id, action, settled, found)
+
+def Laws.settled_action_wait_history_rejects_duplicate(w, rest, stack, events, waits, id, action, settled, rejected, value, found):
+  WaitSettlement.duplicateHistory(w, rest, stack, events, waits, id, action, settled, rejected, value, found)

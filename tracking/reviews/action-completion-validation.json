@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "79165015c2d8440a710ae9cdc4bfb4e6f37ba198",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "cc3ee74099f5a3113748703d969460a867e7695c",
+  "signalsSourceDrift": false,
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 7,
+  "publicHistories": 4486,
+  "closedRegressions": 73,
+  "publicNativeHistoriesRechecked": 48,
+  "publicObservedPrefixes": 408,
+  "privateJoinFixtures": 288,
+  "privateRejoins": 1152,
+  "privateResolverQueries": 576,
+  "openingControls": 32,
+  "positiveBlockerControls": 320,
+  "additionalNativeGeneratorProtocols": 21,
+  "additionalActionHistories": 67,
+  "configuredMutations": 587,
+  "finiteMutations": 469,
+  "kernelMutations": 118,
+  "newFocusedKernelRejections": 4,
+  "freshComplete587Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "Two actual action allocation/opening prefixes and either distinct join direction construct an indexed certificate containing the full World equation for both actual done prefixes in either order, with arbitrary finite pair lookup/rejoin histories before/between/after. Its checked generic corollary gives zero current-representative action debt. Count writes preserve the allocated pair, old routes, stale source record, live list and action cells; source scheduling effects remain exact. Actual settleWait marking reaches find, and arbitrary finite append/settlement histories cannot reopen the first settled yielded-value wait; actual duplicate delivery retains current World/continuation/stack for either outcome.",
+  "assumptions": [
+    "Successful factory/opening prefixes; arbitrary body expressions are unexecuted data, not arbitrary-generator termination.",
+    "Each selected action completion occurs once by admission to the pair programme.",
+    "Wait marking/duplicate theorem explicitly requires an existing initial yielded-wait lookup; no global observer-freshness premise is hidden."
+  ],
+  "remaining": [
+    "Full once-only action/flight/result protocol and observer identity reachability",
+    "Intervening writes, flight settlements, disposal and arbitrary distinct-component joins",
+    "Global forest/live-list validity and structural global resolver bound",
+    "Zero-action node/lane blockers, actual flush/rendered publication and external fairness"
+  ],
+  "resourceAccounting": {
+    "directExpandedConstructedEquality": "Exceeded kernel fuel; replaced by checked indexed full-World certificate, without weakening semantic result or changing limits.",
+    "directExpandedZeroConvenience": "Exceeded kernel fuel; generic zeroCertified and actual constructed certificate are checked.",
+    "firstMarksConvenience": "Exceeded kernel fuel while expanding resume; removed, not claimed.",
+    "guardBypassNegative": "Proof process RSS limit; not credited. Replaced by independently rejected duplicate-World corruption mutation."
+  },
+  "composedSeal": "tracking/checked.json is the authoritative completed full-input/kernel record for this checkpoint.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPRState": "open, unmerged",
+  "previousBugPreservedAtPin": true,
+  "moduleSha256": {
+    "proof/transaction-count-pair.bend": "6a01d0356e8bf9789ee409ca312869ae21850b24444ee127fc8661f2e8df49c8",
+    "proof/action-pair-completion.bend": "f5892cf360e4913468cf815233e1c3f2ea9430483e37881f447737478b319d76",
+    "proof/action-wait-settlement.bend": "10db9a1be58d1dbf62deae1e52aff09ae1572e55a25db8a62cdd8a9092ec8a0d"
+  },
+  "logs": {
+    "transaction-count-pair-second.log": {
+      "path": "/workspace/scratch/transaction-count-pair-second.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-pair-completion-certified.log": {
+      "path": "/workspace/scratch/action-pair-completion-certified.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-wait-settlement-certified.log": {
+      "path": "/workspace/scratch/action-wait-settlement-certified.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-second-composed-first.log": {
+      "path": "/workspace/scratch/action-second-composed-first.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-second-public.log": {
+      "path": "/workspace/scratch/action-second-public.log",
+      "sha256": "60111707deeb4d935ae2d77f36c415aa5de3de470623299519a43d2ec3680b95"
+    },
+    "action-second-private.log": {
+      "path": "/workspace/scratch/action-second-private.log",
+      "sha256": "4a23930b76bcf220c0e609b031b84438532a0557f6087ef33d2506f2785a178c"
+    },
+    "action-second-native-protocol.log": {
+      "path": "/workspace/scratch/action-second-native-protocol.log",
+      "sha256": "e2e0607a983ea90ac553ebcaa19706d94783af0f8c0a3affcefd59f384329fbc"
+    },
+    "action-second-action-controls.log": {
+      "path": "/workspace/scratch/action-second-action-controls.log",
+      "sha256": "e75b26628221ff45d647e05bf7eb5165b3805bc7ffecc34bf1448e793d9ee91f"
+    },
+    "action-second-negatives.log": {
+      "path": "/workspace/scratch/action-second-negatives.log",
+      "sha256": "f624c362fd0f3015b9e5e7313c8a861f2f130e74f8e5f4b5f93dcf32db35cce1"
+    },
+    "action-second-duplicate-negative.log": {
+      "path": "/workspace/scratch/action-second-duplicate-negative.log",
+      "sha256": "cef17bf45a57a74ea588c141d02dc915d5284bc7658623ffa51a97b62700f3ca"
+    }
+  }
+}

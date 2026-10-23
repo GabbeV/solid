@@ -18,8 +18,8 @@ The runtime and checker were not changed for the current invariant work.
 | Promise and wrapped cancellation | Six arbitrary-World/list preservation roots, masking only Promise objects, host jobs and stream plans | Frame safety, not async progress; [from-promise-frame.md](from-promise-frame.md) |
 | Redirect resolution and rejoin histories | Arbitrary certified finite path and sufficient budget; fresh-root construction; same-component lookup/rejoin histories of arbitrary finite length, exact World and queried representatives | Actual field certificates and explicit public-budget room; no general arena validity/forest-size theorem yet |
 | Action construction and distinct joins | Actual allocation/opening, nonzero captured group, one obligation, exact World; distinct selected allocated roots at arbitrary positions, ordered work/count transfer and derived pair traversal room | Successful factory-return prefix; ordinary roots/represented vectors; global forest/live-list validity remains open |
-| Constructed two-action histories | Actual two action allocation/opening prefixes and either join direction; two obligations, arbitrary finite pair queries/rejoins, then either first completion through its captured ID leaving one obligation with exact source scheduling | At most one completion, terminating body slice; no second/duplicate completion, arbitrary writes/settlements, or renderer publication theorem |
-| Constructed action blocker | Actual positive-count judgment returns true with exact World/judge preservation; two constructed actions before/after either first completion, with arbitrary finite pair lookups/rejoins | Healthy initial World; current constructor/callback domain; no second completion, zero-debt eligibility or rendered publication theorem |
+| Constructed two-action histories | Actual two action allocation/opening prefixes and either join direction; two obligations, arbitrary finite pair queries/rejoins, both completion orders with arbitrary finite pair queries/rejoins before/between/after; constructed full-World certificate and zero-debt corollary | Each action completes once by admission, terminating body slice; no arbitrary writes/settlements or renderer publication theorem |
+| Constructed action blocker | Actual positive-count judgment returns true with exact World/judge preservation; two constructed actions before/after either first completion, with arbitrary finite pair lookups/rejoins | Healthy initial World; current constructor/callback domain; no zero-debt eligibility or rendered publication theorem |
 | Lanes, latest/pending and optimistic values | Quantified source-helper, question, answer, read, group and frame properties; representative exact programmes | Not general held-guess correction or arbitrary async consistency |
 | Closed regressions | 73 integrated concrete reactive/error/cleanup/async executions | Integration evidence, not a theorem over arbitrary histories |
 
@@ -174,3 +174,9 @@ Current evidence and new targeted negatives are recorded in
 upstream bug or semantic deviation is asserted by these proofs. The longer
 late-push `from` candidate remains explicitly unverified after a kernel resource
 failure; its finite tests do not fill the missing proof.
+
+The [both-completion extension](action-completion.md) supplies a checked constructed
+full-World certificate and a zero-live-action-debt corollary. Actual wait marking,
+lookup and duplicate guards also preserve a settled yielded-value wait through
+arbitrary finite append/settlement histories. That local invariant does not yet
+prove the complete once-only action/result/flight protocol.
