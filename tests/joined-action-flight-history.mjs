@@ -29,8 +29,8 @@ const bundle=await build({stdin:{contents:"export * from './index.ts';export {re
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0;
-for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const family of ['text','nullable','references'])for(const independent of [false,true]){
+let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0;
+for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const {family,rejectAction} of [{family:'text',rejectAction:-1},{family:'nullable',rejectAction:-1},{family:'references',rejectAction:-1},{family:'text',rejectAction:0},{family:'text',rejectAction:1}])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
  const raw=family==='text'?['initial','first proposal','second proposal','first result','second result']:family==='nullable'?[undefined,false,true,false,true]:references;
@@ -39,7 +39,7 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
  const gates=[Promise.withResolvers(),Promise.withResolvers()],flight=Promise.withResolvers();
  const created=reverseCreate?[1,0]:[0,1];
  let get,set,free,setFree,dispose;const native=[],ported=[];
- const name=JSON.stringify({direct,reverseCreate,events,family,independent});
+ const name=JSON.stringify({direct,reverseCreate,events,family,independent,rejectAction});
  try{
   S.createRoot(d=>{
    dispose=d;[get,set]=S.createSignal(raw[0]);[free,setFree]=S.createSignal(10);
@@ -61,7 +61,7 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
   const action=S.action(function* (index){set(raw[index+1]);yield gates[index].promise;return raw[index+3];});
   let root;
   for(const index of created){
-   native[index]=action(index);
+   native[index]=action(index);native[index].catch(()=>{});
    ported[index]=b.runAction(index?'two':'one',{steps:[{next:seq(write(values[index+1]),result({future:index?'b':'a'}))},{next:result(lit(values[index+3]),true)}]});
    root??=S.live[0];compare();
   }
@@ -78,9 +78,12 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
    if(event==='flight'){flight.resolve(raw[4]);b.resolve('flight',values[4]);flightDone=true;}
    else{
     const index=event==='a'?0:1;
-    gates[index].resolve();b.resolve(index?'b':'a',undefined);
-    const [nativeValue,bendValue]=await Promise.all([native[index],ported[index]]);
-    assert.deepEqual(encode(nativeValue),values[index+3]);assert.deepEqual(bendValue,values[index+3]);completed++;
+    if(index===rejectAction){gates[index].reject(17);b.reject(index?'b':'a',17);}else{gates[index].resolve();b.resolve(index?'b':'a',undefined);}
+    const outcome=async promise=>{try{return ['value',await promise];}catch(error){return ['error',error];}};
+    const [nativeOutcome,bendOutcome]=await Promise.all([outcome(native[index]),outcome(ported[index])]);
+    const observedNative=[nativeOutcome[0],encode(nativeOutcome[1])];
+    assert.deepEqual(bendOutcome,observedNative,name+' action result/error');
+    assert.deepEqual(observedNative,index===rejectAction?['error',17]:['value',values[index+3]]);completed++;
    }
    await setImmediate();compare();
    assert.equal(root._open,2-completed,name+' source debt');
@@ -123,7 +126,7 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
   }
   assert.equal(S.blocked(root),false,name+' completed actions and flight are eligible');
   assert.deepEqual(seen,[initial,values[4]],name+' one joined rendered publication');assert.deepEqual(b.read('x'),values[created[1]+1]);
-  histories++;
+  histories++;if(rejectAction>=0)rejectedActionHistories++;
  }catch(error){console.error('FAILED joined action history '+name,error);throw error;}
  finally{
   flight.resolve(raw[4]);b.attempt('resolve','flight',values[4]);for(const [index,gate] of gates.entries()){gate.resolve();b.attempt('resolve',index?'b':'a',undefined);}await Promise.allSettled([...native,...ported]);
@@ -132,4 +135,4 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
 }
 assert.ok(acceptedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover actual accepted arrivals');
 assert.ok(trimmedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover queued owner trim');
-console.log(JSON.stringify({publicHistories:histories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, opaque/text/nullable payloads and independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

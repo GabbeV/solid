@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["live occurrence kernel ignores a present source", "runtime/transaction.bend", "B.contains(xs, id)", "False{}", "tests/proof-properties.mjs", "removeIdentity", "live-membership"],
+  ["live occurrence control clears groups during completion", "runtime/action-state.bend", "B.schedule(B.store_transaction(w, t,", "B.schedule(B.store_transaction(R.World.with_transactions(w, []), t,", "tests/joined-action-flight-history.mjs", "done"],
+
   ["async prefix kernel drops its queued flush", "runtime/core.bend", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> AsyncFlush{} <> B.append(Task, then, rest)", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> B.append(Task, then, rest)", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
   ["async prefix kernel clears caller stack on staged result", "runtime/core.bend", "_ => Machine{w, ending, stack})", "_ => Machine{w, ending, []})", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
 

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "fac720a77cc76b8b041a07b5df926042df296b3c",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "latestNext": "b4d8e6bb0b838170ddc38dad512958d0b3683244",
+  "upstreamPr4248": "open/unmerged",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 7,
+  "publicHistories": 4726,
+  "closedRegressions": 73,
+  "presentSourceNativeBendControls": 14,
+  "absentSourceControls": 2,
+  "configuredMutations": 604,
+  "finiteMutations": 476,
+  "kernelMutations": 128,
+  "newFocusedFiniteRejections": 1,
+  "newFocusedKernelRejections": 1,
+  "freshComplete604Sweep": false,
+  "claim": "Actual two-action join constructs representative occurrence; finite pair histories and either first completion retain it; constructed result derives scan index/lookup and contains exact held-scan certificate. Certified rendered completion/check histories retain the whole live list, carry initial membership forward and derive exact held scan on actual final audit World without final lookup/count/blocker premises.",
+  "assumptions": [
+    "Initial World health for held scan; actual constructed pair family, not arbitrary join graph.",
+    "Private absent-source fixtures are source-behavior controls, not reachable valid histories.",
+    "Rendered history scan starts with a checked history certificate and initial occurrence; no final pending/status/count/lookup premise is assumed."
+  ],
+  "remaining": [
+    "General membership/forest validity across writes and disposal",
+    "Full once-only action/flight delivery and queued publication tail"
+  ],
+  "excludedExperiment": "Convenience full scan equation projection exhausted pinned kernel fuel. It is excluded; constructor, nested scan certificate and position getter check without changing limits.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "moduleSha256": {
+    "proof/live-membership.bend": "c276d8e01c7ef19c89c64c6c547d0969ac2714126a75bda351e99b0f508bbcbd",
+    "proof/action-live-selection.bend": "e798b369d06b46f3b365ac6ddd73472d2a49ac6a1bf72700748bb14575e1e7e9",
+    "proof/constructed-landing-selection.bend": "181a295fb11eae66d08eacf616e8967e94c3573ebadf56727cba174664a96bb5",
+    "proof/completion-live-history.bend": "89a2ded474f981c5ab3feea0128691ef7c5386278fa7f4d84f9dcae50075aa94",
+    "proof/completion-history-landing.bend": "cec0fc32006712f29ac7d752142cc2c6caeff8b0b7befd7bab7ab0dce168762d"
+  },
+  "logs": {
+    "live-membership.log": {
+      "path": "/workspace/scratch/live-membership.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-live-selection-first.log": {
+      "path": "/workspace/scratch/action-live-selection-first.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-live-selection-completion.log": {
+      "path": "/workspace/scratch/action-live-selection-completion.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "constructed-landing-selection-certified.log": {
+      "path": "/workspace/scratch/constructed-landing-selection-certified.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "constructed-landing-selection-active.log": {
+      "path": "/workspace/scratch/constructed-landing-selection-active.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "live-selection-controls.log": {
+      "path": "/workspace/scratch/live-selection-controls.log",
+      "sha256": "deab85db0f7c1b6be075f9a5b0ce5ba75ac94986c6ffb368f93b0cac54cfed18"
+    },
+    "live-selection-negatives.log": {
+      "path": "/workspace/scratch/live-selection-negatives.log",
+      "sha256": "8b1c9107287453882cee310c75b5f63074753e5e74011441eb5e8448f44751e0"
+    },
+    "live-selection-mutation-targets.log": {
+      "path": "/workspace/scratch/live-selection-mutation-targets.log",
+      "sha256": "df6c1058db41563dffb13293b6af2ec348ca87b0b045c965978c651038d35d89"
+    },
+    "completion-live-history.log": {
+      "path": "/workspace/scratch/completion-live-history.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "completion-history-landing.log": {
+      "path": "/workspace/scratch/completion-history-landing.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "session-2026-10-23-public-tests.log": {
+      "path": "/workspace/scratch/session-2026-10-23-public-tests.log",
+      "sha256": "49510dc6f1e1cceb74598b747cd63bfc66cfb058daa04f1a5d685fd852ade965"
+    },
+    "completion-history-landing-active.log": {
+      "path": "/workspace/scratch/completion-history-landing-active.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "live-selection-retained-flight-controls.log": {
+      "path": "/workspace/scratch/live-selection-retained-flight-controls.log",
+      "sha256": "bd525e0ab3d39fef6abff491648b081f2445dc1788048457d33eb6be9242792c"
+    },
+    "live-selection-retained-negatives.log": {
+      "path": "/workspace/scratch/live-selection-retained-negatives.log",
+      "sha256": "8b1c9107287453882cee310c75b5f63074753e5e74011441eb5e8448f44751e0"
+    }
+  },
+  "composedSeal": "tracking/checked.json is the completed final full-input/kernel record.",
+  "fullPublicTestCommand": "npm test (passes)",
+  "continuationNewRoots": 35,
+  "retainedEarlierRoots": true,
+  "retainedActionFlightHistories": 240,
+  "newActionRejectionHistories": 96,
+  "actionFlightObservedPrefixes": 2280,
+  "zeroDebtGraphAndScanControls": 80,
+  "forkedFulfillmentPrefixCalls": 160,
+  "queuedOwnerTrimCases": 40,
+  "testLimits": "Successful payload families retained; new action rejection controls use text values and scalar error 17. These finite controls do not add rejection transitions to the quantified history theorem."
+}

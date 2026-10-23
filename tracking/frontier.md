@@ -17,12 +17,12 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | --- | --- | --- | --- |
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace frame through actual staging/default setter and finite helper-write histories; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; conditional positive-debt landing-scan retention; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 
-4,630 public differential histories and 73 closed regressions remain supporting
+4,726 public differential histories and 73 closed regressions remain supporting
 evidence. Configured mutation totals and completed frozen sweeps are distinct in
 [verification.md](verification.md). These counts are not a completion percentage.
 The [fidelity ledger](source-fidelity.md) and [proof catalogue](general-properties.md)
@@ -81,7 +81,8 @@ through arbitrary finite append/settlement histories. The
 after both completions for this empty-owned-node prefix, with explicit initial
 health/no-live-lane conditions and complete post-completion World preservation.
 The [landing scan contract](action-landing-scan.md) now retains the actual World
-after either first completion; selected live-list lookup remains explicit. The
+after either first completion; the constructed pair now derives its live-list
+lookup and scan position rather than requiring that premise. The
 [nonempty rendered snapshot contracts](rendered-blockers.md) now establish actual
 blockage and scan retention from pending/render/membership/posture facts at zero
 action debt. Their construction and preservation through writes and settlements is
@@ -148,3 +149,21 @@ and intended observations must remain distinct from checked source behavior.
 
 Latest next checked: `b4d8e6bb` (canvas example only). A fetched source snapshot
 has zero signals source drift from the pin; #4248 remains open and unmerged.
+
+
+The [constructed live-selection proof](live-selection.md) now derives the
+representative occurrence and scan position from actual two-action opening/join,
+any finite pair lookup/rejoin history and either first completion. Its returned
+certificate contains the exact held scan equation. This removes the supplied
+lookup premise for that family; global membership/forest validity, intervening
+writes/disposal and the queued publication tail remain open. Certified rendered
+completion/check histories also preserve the whole live list, carry an initial
+occurrence forward and derive the final held scan on the actual audit World; no
+final count/lookup/blocker premise is supplied.
+
+The next concrete composition is execution of the fulfillment tail, beginning
+with `OwnerTasks/TrimDeps`, `AsyncWriteAfterTrim` and pending settlement traversal,
+then the actual scheduled flush. Carry callback/error policy and live root
+resolution explicitly: settlement may join held nodes, so unchanged live lists
+cannot be assumed across that traversal. The held-count versus still-pending
+flight cases must be related before claiming the final coordinated reveal.

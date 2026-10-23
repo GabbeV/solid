@@ -141,3 +141,17 @@ The complete machine/task equality retains the source tail; no trim, release or
 flush is replaced by an atomic publication assumption. Stale result identity is
 checked independently of group identity. Runtime/host/source/toolchain/limits
 remain unchanged, with no active deviation or new Solid bug.
+
+
+## Constructed live selection (2026-10-23)
+
+[Live membership](live-selection.md) follows actual action allocation/opening,
+transaction join/removal and completion. Present-source membership is derived
+before using source removal; absent-source private controls retain its actual
+last-entry behavior. No runtime/source rewrite or semantic workaround is used.
+A convenience proof projection exceeded pinned kernel fuel and is excluded;
+the constructive scan certificate is independently checked at unchanged limits.
+
+Certified rendered completion/check audits retain the live list and derive the
+actual final held scan from initial membership and the checked history. Source
+cleanup/flush tasks remain queued rather than assumed executed.

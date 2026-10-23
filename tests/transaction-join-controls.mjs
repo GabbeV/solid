@@ -26,7 +26,7 @@ try{
  const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
  const bendShape=t=>{const {$:tag,...fields}=t;return {...fields,nodes:list(t.nodes),renderQueue:list(t.renderQueue),userQueue:list(t.userQueue),reruns:list(t.reruns),marks:t.marks.$==='NoIds'?null:list(t.marks.items)};};
  const vectors=(seed,size)=>Array.from({length:size},(_,i)=>({id:seed+i}));
- let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0,heldScanControls=0,eligibleScanControls=0;
+ let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0,heldScanControls=0,eligibleScanControls=0,liveRetentionControls=0,absentSourceControls=0;
  for(const prefix of [0,1,4])for(const gap of [0,1,3])for(const suffix of [0,2])for(const reverse of [false,true])for(const markState of [0,1,2,3])for(const emptyPresentMarks of [false,true]){
   S.live.length=0;let world=API.createWorld();const tx=[null];
   const left=1+prefix,right=left+1+gap,total=right+suffix;
@@ -115,5 +115,29 @@ try{
 
   openingControls++;
  }
- console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,emptyBlockerControls,heldScanControls,eligibleScanControls,publicHistories:false}));
+ // Presence is essential: source splice(indexOf(-1),1) drops the last
+ // entry when the source is absent. Duplicates here are private fixtures,
+ // not a claim that such global live lists are reachable through public APIs.
+ for(const reverse of [false,true])for(const absent of [false,true]){
+  const source=reverse?2:1,target=reverse?1:2;
+  const vectors=absent?[[3,target]]:[[source,target],[target,source],[source,target,source],[target,source,source],[source,source,target],[3,source,3,target,source],[target,3,source,3,target]];
+  for(const live of vectors){
+   S.live.length=0;let world=API.createWorld();const native=[null];
+   for(let i=1;i<=3;i++){native.push(S.newTransaction(false));world=T.newTransaction(world,false,0).left;}
+   const arena=list(world.txArena);for(const id of [source,target]){native[id]._open=1;arena[id]={...arena[id],open:1};}
+   world={...world,txArena:asList(arena),transactions:asList(live)};
+   S.live.splice(0,S.live.length,...live.map(id=>native[id]));
+   S.merge(native[source],native[target]);const joined=T.merge(world,source,target);
+   assert.deepEqual(list(joined.transactions),S.live.map(group=>native.indexOf(group)),'actual splice/remove live identities');
+   if(absent){assert.equal(list(joined.transactions).includes(target),false,'absent-source control does not justify retention');absentSourceControls++;continue;}
+   const index=list(joined.transactions).indexOf(target);assert.ok(index>=0,'present distinct source removal retains the representative');
+   const frame={$:'SeamFrame',transaction:target,renders:asList([]),users:asList([]),laneRenders:asList([]),laneUsers:asList([])};
+   const rest=asList([{$:'Discard'}]),stack=asList([{$:'Number',n:135}]),before=structuredClone(joined);
+   const scan=C.landTransactions(joined,rest,stack,frame,1+index);
+   assert.deepEqual(joined,before);assert.deepEqual(scan.world,before);
+   assert.deepEqual(list(scan.tasks),[{$:'LandTransactions',frame,remaining:index},...list(rest)]);assert.deepEqual(list(scan.values),list(stack));
+   assert.equal(S.blocked(native[target]),true);liveRetentionControls++;
+  }
+ }
+ console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,emptyBlockerControls,heldScanControls,eligibleScanControls,liveRetentionControls,absentSourceControls,publicHistories:false}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

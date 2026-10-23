@@ -1,3 +1,8 @@
+import ./proof/completion-live-history.bend as CompletionMembership
+import ./proof/completion-history-landing.bend as HistoryLanding
+import ./proof/live-membership.bend as LiveMembership
+import ./proof/action-live-selection.bend as ActionMembership
+import ./proof/constructed-landing-selection.bend as ConstructedScan
 import ./proof/flight-committed-frame.bend as FlightStorage
 import ./proof/async-write-prefix.bend as AsyncPrefix
 import ./runtime/flight.bend as RuntimeFlight
@@ -1512,3 +1517,31 @@ def Laws.ordinary_async_prefix_preserves_caller_stack(w, rest, values, id, resul
 
 def Laws.async_prefix_queues_exact_followup_order(w, rest, stack, id, then):
   AsyncPrefix.afterExact(w, rest, stack, id, then)
+
+
+def Laws.present_source_removal_retains_distinct_target(xs, removed, kept, removedLocation, keptLocation, different):
+  LiveMembership.retained(xs, removed, kept, removedLocation, keptLocation, different)
+
+
+def Laws.constructed_joined_representative_is_live(w, before, cells, first, other, reverse):
+  ActionMembership.joined(w, before, cells, first, other, reverse)
+
+
+def Laws.completion_prefix_preserves_live_list(w, id):
+  ActionMembership.doneLive(w, id)
+
+
+def Laws.constructed_first_completion_derives_scan_selection(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, healthy):
+  ConstructedScan.constructed(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, healthy)
+
+
+def Laws.rendered_completion_history_preserves_live_list(w, root, programme, certificate):
+  CompletionMembership.observed(w, root, programme, certificate)
+
+
+def Laws.rendered_completion_history_retains_live_occurrence(w, root, programme, certificate, location):
+  CompletionMembership.retained(w, root, programme, certificate, location)
+
+
+def Laws.rendered_completion_history_derives_held_scan(w, predecessor, programme, certificate, location, rest, stack, frame):
+  HistoryLanding.after(w, predecessor, programme, certificate, location, rest, stack, frame)

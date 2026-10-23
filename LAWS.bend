@@ -1,3 +1,8 @@
+import ./proof/completion-live-history.bend as CompletionMembership
+import ./proof/completion-history-landing.bend as HistoryLanding
+import ./proof/live-membership.bend as LiveMembership
+import ./proof/action-live-selection.bend as ActionMembership
+import ./proof/constructed-landing-selection.bend as ConstructedScan
 import ./proof/flight-committed-frame.bend as FlightStorage
 import ./proof/async-write-prefix.bend as AsyncPrefix
 import ./runtime/flight.bend as RuntimeFlight
@@ -3294,3 +3299,74 @@ law async_prefix_queues_exact_followup_order:
   {Core.asyncWriteAfterValue(w, rest, stack, id, then) == B.choose(~Core.Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
     _ => Core.Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), Core.OwnerTasks{[RuntimeOwner.TrimDeps{id}]} <> AsyncPrefix.ending(id, then, rest), stack},
     _ => Core.Machine{w, AsyncPrefix.ending(id, then, rest), stack}) : Core.Machine}
+
+
+law present_source_removal_retains_distinct_target:
+  for +xs: List<&2, Nat>
+  for +removed: Nat
+  for +kept: Nat
+  for removedLocation: LiveMembership.Located<xs, removed>
+  for keptLocation: LiveMembership.Located<xs, kept>
+  for different: {Nat.is_eq(kept, removed) == False{} : Bool}
+  LiveMembership.Located<Transactions.removeIdentity(xs, removed), kept>
+
+
+law constructed_joined_representative_is_live:
+  for +w: R.World
+  for +before: List<&2, R.Transaction>
+  for +cells: List<&2, R.ActionState>
+  for +first: R.Expr
+  for +other: R.Expr
+  for +reverse: Bool
+  LiveMembership.Located<R.World.transactions(ActionPair.joined(w, before, cells, first, other, reverse)), JoinedPair.targetId(before, [], reverse)>
+
+
+law completion_prefix_preserves_live_list:
+  for +w: R.World
+  for +id: Nat
+  {R.World.transactions(Action.done(w, id)) == R.World.transactions(w) : List<&2, Nat>}
+
+
+law constructed_first_completion_derives_scan_selection:
+  for +w: R.World
+  for +before: List<&2, R.Transaction>
+  for +cells: List<&2, R.ActionState>
+  for +first: R.Expr
+  for +other: R.Expr
+  for +reverse: Bool
+  for +finishSecond: Bool
+  for +events: List<&2, JoinedHistory.JoinEvent>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +frame: Core.SeamFrame
+  for healthy: {B.ok(w) == True{} : Bool}
+  ConstructedScan.Selected<Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), JoinedPair.targetId(before, [], reverse), rest, stack, frame>
+
+
+law rendered_completion_history_preserves_live_list:
+  for +w: R.World
+  for +root: Nat
+  for +programme: RenderedHistory.Programme<w, root>
+  for certificate: RenderedHistory.Certified<w, root, programme>
+  {R.World.transactions(RenderedHistory.world(RenderedHistory.run(w, root, programme, w))) == R.World.transactions(w) : List<&2, Nat>}
+
+
+law rendered_completion_history_retains_live_occurrence:
+  for +w: R.World
+  for +root: Nat
+  for +programme: RenderedHistory.Programme<w, root>
+  for certificate: RenderedHistory.Certified<w, root, programme>
+  for location: LiveMembership.Located<R.World.transactions(w), root>
+  LiveMembership.Located<R.World.transactions(RenderedHistory.world(RenderedHistory.run(w, root, programme, w))), root>
+
+
+law rendered_completion_history_derives_held_scan:
+  for +w: R.World
+  for +predecessor: Nat
+  for +programme: RenderedHistory.Programme<w, 1n+predecessor>
+  for +certificate: RenderedHistory.Certified<w, 1n+predecessor, programme>
+  for location: LiveMembership.Located<R.World.transactions(w), 1n+predecessor>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +frame: Core.SeamFrame
+  ConstructedScan.Selected<RenderedHistory.world(RenderedHistory.run(w, 1n+predecessor, programme, w)), 1n+predecessor, rest, stack, frame>

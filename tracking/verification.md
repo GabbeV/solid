@@ -12,15 +12,22 @@ and Lean pin are unchanged. No semantic deviation is active.
 
 | Evidence | Current scope |
 | --- | --- |
-| Public differential corpus | 4,630 histories; restricted admitted callback/value/IO grammar |
+| Public differential corpus | 4,726 histories; restricted admitted callback/value/IO grammar |
 | Closed composed regressions | 73 fixed end-to-end Bend executions; separate from quantified proofs |
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 602 = 475 finite + 127 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 604 = 476 finite + 128 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 602 sweep claimed |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 604 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
+
+The [live-selection receipt](reviews/live-selection-validation.json) adds seven
+roots: actual action opening/join establishes a live occurrence, either first
+completion retains it, and certified rendered completion/check histories preserve
+the live list and derive their actual final held scan from initial membership.
+Fourteen paired native/Bend present-source and two absent-source private controls
+pass. Both new negative variants are rejected. The full public test command passes.
 
 The [fulfillment-prefix receipt](reviews/async-write-prefix-validation.json) adds
 seven roots for actual status/fulfillment committed frames, stale-result exact
@@ -170,3 +177,25 @@ before preparing a report. The existing deferred protocol-error defect remains
 preserved; this invariant checkpoint adds no new upstream bug or workaround.
 Reports/PRs are user-controlled. Feature-branch checkpoint synchronization is
 already authorized and remains separate from upstream publication.
+
+
+## Derived live selection (2026-10-23)
+
+Seven new roots construct occurrence and exact held-scan certificates through
+actual two-action opening/join, arbitrary finite pair lookup/rejoin history and
+either first completion. Fourteen native/Bend present-source controls and two
+absent-source controls pass. Two focused negatives are rejected (one finite,
+one kernel): 604 configured variants, 476 finite /128 kernel; no fresh full
+sweep. [Receipt and proof limitations](live-selection.md) distinguish the checked
+constructor from an excluded convenience projection that exhausted kernel fuel.
+No new Solid bug, runtime change or active deviation.
+
+Certified rendered completion/check histories now preserve the whole live list,
+carry an initial occurrence forward and derive the final held scan on the actual
+audit World. No final lookup/count/blocker premise is supplied. The full public
+test command passes.
+
+The retained rendered-action suite includes 96 additional rejection histories;
+240 native-generator/Bend histories and 2,280 observed prefixes now cover that
+slice. The public corpus is 4,726. The quantified history still admits only its
+explicit completion/check transitions; rejection controls are finite evidence.

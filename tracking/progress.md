@@ -727,3 +727,34 @@ calls, including 24 queued owner trims, check independent pre-observations and
 nonempty stacks on public-history snapshots. Two kernel tail/stack negatives are
 rejected: 602 configured variants (475 finite /127 kernel), no fresh full sweep.
 No new Solid bug or semantic workaround was introduced.
+
+
+## Live scan position derived from construction (2026-10-23)
+
+Seven roots now derive the representative's actual live-list occurrence and scan
+position through actual action opening/join, any finite pair lookup/rejoin history
+and either first completion. Callers no longer supply that lookup for this family.
+The checked result carries the exact held scan machine certificate. General live
+membership/forest validity and queued publication remain open. Fourteen paired
+native/Bend controls, two absent-source source-behavior controls and two focused
+negative variants pass; configuration 604 (476 finite /128 kernel), no new full
+sweep. Runtime/source/limits unchanged; no new Solid bug or workaround.
+
+Across this approximately two-hour continuation, six checked milestones extend
+pending rendered graph histories, actual list construction, committed staging
+and fulfillment-prefix frames, then derived live scan selection. The public
+comparison corpus is 4,630 histories; 73 closed regressions remain retained.
+
+Certified rendered completion/check histories now preserve the whole live list,
+carry an initial occurrence forward and derive the final held scan on the actual
+audit World. No final lookup/count/blocker premise is supplied. The full public
+test command passes.
+
+The continuation adds 35 active proof roots and removes none of the earlier
+roots. This is supporting accounting, not a package-completion percentage.
+
+Ninety-six additional actual-native-generator/Bend action-rejection histories
+pass and are retained: all settlement orders, either rejecting action and both
+creation orders, with direct/memo-backed render and independent work. The selected
+suite now has 240 histories /2,280 prefixes; public corpus 4,726. Rejection remains
+outside the quantified completion/check theorem. No new source bug was found.
