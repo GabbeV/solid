@@ -4,8 +4,15 @@ An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.18. This is **not yet the complete signals package**.
 
 The source is pinned to next@225014bf. [The latest source review](tracking/reviews/solid-225014bf.md)
-ports merged deferred error handling. [Stream refetch](tracking/deferred-stream-refetch.md)
+records the rc.18 refresh after integrating merged deferred fixes. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
+
+The objective is increasingly general properties of reactive behavior and useful
+upstream counterexamples. The [current milestone](tracking/frontier.md) targets
+branching held-action histories. Its first [invariant proofs](tracking/general-properties.md)
+cover arbitrary certified redirect paths and finite lookup/rejoin histories,
+with conditional completion through older transaction identities. The full
+action/flight ledger and rendered visibility theorem remain open.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see

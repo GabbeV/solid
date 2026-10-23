@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["redirect terminal resolution corrupts ambient context", "runtime/transaction.bend", "_ => B.Bundle{w, id}", "_ => B.Bundle{R.World.with_context(w, 0n), id}", "tests/proof-properties.mjs", "resolveLoop", "transaction-resolution"],
+  ["redirect traversal returns the stale identity", "runtime/transaction.bend", "_ => resolveLoop(p, w, into)", "_ => B.Bundle{w, id}", "tests/proof-properties.mjs", "resolveLoop", "transaction-resolution"],
+  ["same component rejoin bypasses root identity guard", "runtime/transaction.bend", "Bool.or(Nat.is_eq(t, f),", "Bool.or(False{},", "tests/proof-properties.mjs", "mergeResolved", "transaction-rejoin-history"],
+  ["action completion decrements original redirected transaction", "runtime/action-state.bend", "+t = B.second(R.World, Nat, pair)", "+t = R.ActionState.transaction(get(w, id))", "tests/proof-properties.mjs", "done", "action-resolution"],
+
   ["from Promise frame loses ambient context on empty deliveries", "runtime/promise-input.bend", "case Nil{}: w", "case Nil{}: R.World.with_context(w, 0n)", "tests/proof-properties.mjs", "deliveries", "from-promise-frame"],
   ["from cancellation frame changes tracking", "runtime/from-wrap.bend", "+w = store(w, plan, R.FromWrapped.with_closed(s, True{}))", "+w = R.World.with_tracking(store(w, plan, R.FromWrapped.with_closed(s, True{})), False{})", "tests/proof-properties.mjs", "finish", "from-promise-frame"],
 

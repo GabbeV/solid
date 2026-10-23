@@ -1,3 +1,6 @@
+import ./proof/transaction-resolution.bend as RedirectPaths
+import ./proof/action-resolution.bend as ActionRouting
+import ./proof/transaction-rejoin-history.bend as RejoinHistories
 import ./proof/from-promise-frame.bend as FromPromiseFrame
 import ./proof/from-value-driver.bend as FromValueDriver
 import ./proof/from-value-program.bend as FromValueProgram
@@ -2533,3 +2536,57 @@ law from_callback_delivery_frame:
   for rejected: Bool
   for value: R.Value
   {FromPromiseFrame.erase(WrappedFrom.deliver(w, plan, output, rejected, value)) == FromPromiseFrame.erase(w) : R.World}
+
+law redirect_path_resolves:
+  for w: R.World
+  for path: RedirectPaths.Route<w>
+  for extra: Nat
+  {Transactions.resolveLoop(Nat.add(RedirectPaths.depth(w, path), 1n+extra), w, RedirectPaths.origin(w, path)) == B.Bundle{w, RedirectPaths.terminal(w, path)} : B.Bundle<R.World, Nat>}
+
+law redirect_public_resolves:
+  for w: R.World
+  for path: RedirectPaths.Route<w>
+  for extra: Nat
+  for room: {1n+B.length(R.Transaction, R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w, path), 1n+extra) : Nat}
+  {Transactions.resolveTx(w, RedirectPaths.origin(w, path)) == B.Bundle{w, RedirectPaths.terminal(w, path)} : B.Bundle<R.World, Nat>}
+
+law new_transaction_root:
+  for w: R.World
+  for lane: Bool
+  for parent: Nat
+  {R.Transaction.into(B.transaction(B.first(R.World, Nat, Transactions.newTransaction(w, lane, parent)), B.second(R.World, Nat, Transactions.newTransaction(w, lane, parent)))) == 0n : Nat}
+
+law same_representative_merge:
+  for w: R.World
+  for source: Nat
+  for target: Nat
+  for root: Nat
+  for first: {Transactions.resolveTx(w, source) == B.Bundle{w, root} : B.Bundle<R.World, Nat>}
+  for second: {Transactions.resolveTx(w, target) == B.Bundle{w, root} : B.Bundle<R.World, Nat>}
+  {Transactions.merge(w, source, target) == w : R.World}
+
+law action_completion_representative:
+  for w: R.World
+  for id: Nat
+  for root: Nat
+  for remaining: Nat
+  for resolution: {Transactions.resolveTx(w, R.ActionState.transaction(Action.get(w, id))) == B.Bundle{w, root} : B.Bundle<R.World, Nat>}
+  for open: {R.Transaction.open(B.transaction(w, root)) == 1n+remaining : Nat}
+  {Action.done(w, id) == B.schedule(B.store_transaction(w, root, R.Transaction.with_open(B.transaction(w, root), remaining))) : R.World}
+
+law action_completion_route:
+  for w: R.World
+  for id: Nat
+  for path: RedirectPaths.Route<w>
+  for extra: Nat
+  for remaining: Nat
+  for captured: {R.ActionState.transaction(Action.get(w, id)) == RedirectPaths.origin(w, path) : Nat}
+  for room: {1n+B.length(R.Transaction, R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w, path), 1n+extra) : Nat}
+  for open: {R.Transaction.open(B.transaction(w, RedirectPaths.terminal(w, path))) == 1n+remaining : Nat}
+  {Action.done(w, id) == B.schedule(B.store_transaction(w, RedirectPaths.terminal(w, path), R.Transaction.with_open(B.transaction(w, RedirectPaths.terminal(w, path)), remaining))) : R.World}
+
+law transaction_rejoin_histories:
+  for w: R.World
+  for root: Nat
+  for events: List<&2, RejoinHistories.RejoinEvent<w, root>>
+  {RejoinHistories.run(w, root, events, w) == RejoinHistories.Audit{w, RejoinHistories.expected(w, root, events)} : RejoinHistories.Audit}

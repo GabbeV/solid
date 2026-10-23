@@ -1,3 +1,6 @@
+import ./proof/transaction-resolution.bend as RedirectPaths
+import ./proof/action-resolution.bend as ActionRouting
+import ./proof/transaction-rejoin-history.bend as RejoinHistories
 import ./proof/from-promise-frame.bend as FromPromiseFrame
 import ./proof/from-value-driver.bend as FromValueDriver
 import ./proof/from-value-program.bend as FromValueProgram
@@ -1231,3 +1234,24 @@ def Laws.from_finish_frame(w, plan):
 
 def Laws.from_callback_delivery_frame(w, plan, output, rejected, value):
   FromPromiseFrame.deliver(w, plan, output, rejected, value)
+
+def Laws.redirect_path_resolves(w, path, extra):
+  RedirectPaths.resolves(w, path, extra)
+
+def Laws.redirect_public_resolves(w, path, extra, room):
+  RedirectPaths.public(w, path, extra, room)
+
+def Laws.new_transaction_root(w, lane, parent):
+  RedirectPaths.freshInto(w, lane, parent)
+
+def Laws.same_representative_merge(w, source, target, root, first, second):
+  RedirectPaths.common(w, source, target, root, first, second)
+
+def Laws.action_completion_representative(w, id, root, remaining, resolution, open):
+  ActionRouting.decreases(w, id, root, remaining, resolution, open)
+
+def Laws.action_completion_route(w, id, path, extra, remaining, captured, room, open):
+  ActionRouting.fromRoute(w, id, path, extra, remaining, captured, room, open)
+
+def Laws.transaction_rejoin_histories(w, root, events):
+  RejoinHistories.preserves(w, root, events)

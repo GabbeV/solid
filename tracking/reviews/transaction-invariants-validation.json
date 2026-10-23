@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "baselineCheckpoint": "65e7402d5c42375b2a689ba5af829bc151b94b4d",
+  "runtimeHostSourceUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 7,
+  "publicHistories": 4438,
+  "closedRegressions": 73,
+  "configuredMutations": 572,
+  "finiteMutations": 469,
+  "kernelMutations": 103,
+  "freshComplete572Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "controls": {
+    "privateFixtures": 28,
+    "resolverQueries": 2268,
+    "rejoins": 252,
+    "positiveBendCompletionPrefixes": 84,
+    "cyclicExhaustionControls": 1,
+    "publicHistories": false
+  },
+  "claim": "Certified arbitrary finite redirect paths; fresh transaction zero-redirect construction; same-representative merges and arbitrary finite lookup/rejoin histories preserve exact World and all queried representatives. Conditional action completion decrements the current representative from 1+remaining to remaining and invokes actual scheduling.",
+  "remaining": [
+    "Allocated-ID and global redirect-forest reachability",
+    "Arena-size traversal bound from acyclicity",
+    "Distinct-component merge/obligation preservation",
+    "Once-only callback completion and external delivery",
+    "Full action/flight ledger and rendered publication invariant"
+  ],
+  "newUpstreamBugOrWorkaround": false,
+  "logs": {
+    "redirectKernel": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-resolution-third.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "verdict": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update\n"
+    },
+    "completionKernel": {
+      "passed": true,
+      "path": "/workspace/scratch/action-resolution.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "verdict": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update\n"
+    },
+    "historyKernel": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-rejoin-history.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "verdict": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update\n"
+    },
+    "privateControls": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-resolution-controls.log",
+      "sha256": "060fec2c7ea476cb446b7cb137afbe7fcbfe7a3dab802b61e99c327383afe867",
+      "verdict": "{\"fixtures\":28,\"queries\":2268,\"rejoins\":252,\"positiveCompletionPrefixes\":84,\"cyclicExhaustionControls\":1,\"kind\":\"private helpers; not public histories or a proof\"}\n"
+    },
+    "focusedNegatives": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-invariant-negative.log",
+      "sha256": "ed9cda179fdb559a942a844bdd326774f6568de45880da0c4d905fe8cee38452",
+      "verdict": "Rejected mutation: redirect terminal resolution corrupts ambient context\nRejected mutation: redirect traversal returns the stale identity\nRejected mutation: same component rejoin bypasses root identity guard\nRejected mutation: action completion decrements original redirected transaction\n4 source-changing variants rejected by differential or kernel assertions.\n"
+    },
+    "nativeActions": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-invariant-native-actions.log",
+      "sha256": "e2e0607a983ea90ac553ebcaa19706d94783af0f8c0a3affcefd59f384329fbc",
+      "verdict": "21 native-generator controls validate the action method ABI, held writes, rejection, nested slices, production flush callbacks, native return adoption duplicate yield callbacks and reused wrappers with independent invocation arguments.\n"
+    },
+    "reusableActionFunctions": {
+      "passed": true,
+      "path": "/workspace/scratch/transaction-invariant-action-functions.log",
+      "sha256": "cbf44c58e2619ec49d278bdd61af226b15cf6968d3cd537eb9a19c0cf11ff4de",
+      "verdict": "45 reusable action-function histories preserve actual wrapper identity, fresh invocation Promises, two call arguments, nested parameter capture, overlapping suspensions, factory/resume errors and cleanup invocation.\n"
+    }
+  },
+  "existingPublicNativeActionControls": 21,
+  "existingReusableActionFunctionHistories": 45
+}

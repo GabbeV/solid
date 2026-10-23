@@ -1,5 +1,38 @@
 # Solid signals translation contract
 
+## Objective and working priorities
+
+Establish increasingly general semantic properties of Solid's reactive system
+and use counterexamples to discover upstream bugs. The source-followable Bend
+translation is the foundation; formal TS/Bend equivalence is outside scope.
+
+- Prefer reusable operation contracts, reachable-state invariants, observation
+  functions and induction over branching permitted event histories. Keep
+  representative exact executions as integration proofs; do not make growing
+  generated state witnesses the default route to async consistency.
+- Choose implementation work that enables the selected theorem or repairs a
+  material fidelity gap. Current scope, milestone and dependencies belong in
+  tracking/frontier.md; theorem domains/assumptions belong in the existing proof
+  documents. Keep current coverage separate from chronological progress records.
+- Define observations by reader/posture and source publication rules. Distinguish
+  scheduling-group identity, result/flight identity and question provenance;
+  intended visibility guarantees are not automatically properties of the source.
+- Construction must establish invariant premises and admitted transitions must
+  preserve them. Record continuation/stack/ambient obligations at intermediate
+  source boundaries; do not assume a stable invariant at every machine task.
+- State safety, internal completion and eventual reveal separately. Derive bounds
+  from structural facts where possible; identify callback termination, valid
+  identities, once-only settlement, host delivery and fairness assumptions.
+- Use adversarial event orders and differential exploration alongside proofs.
+  Classify failures as translation, adapter, protocol, specification or upstream
+  before making a bug claim. Preserve baseline behavior and reduce significant
+  cases against real Solid.
+- Report new generality, assumptions, remaining obstacle and bugs/specification
+  questions. Test counts and exact witness step counts are supporting evidence,
+  not an overall completion measure. Refactor witness layouts/bounds when
+  justified while retaining meaningful theorem domains and guarantees.
+
+
 The user explicitly requires a translation close enough to line by line to
 follow future Solid commits. This takes precedence over proof convenience and
 prior approaches described in the uploaded restart guide.

@@ -517,3 +517,36 @@ The [Promise/cancellation preservation checkpoint](from-promise-frame.md) adds
 six quantified roots without runtime changes. The longer late-push complete
 programme remains an explicitly unverified archived experiment, blocked by the
 pinned independent kernel reduction limit; its finite native controls pass.
+
+
+## Reusable invariants and branching histories (2026-10-23)
+
+After 65e7402, the project priorities were updated to emphasize general reactive
+properties and upstream counterexamples. The accumulated frontier/fidelity/proof/
+verification text is preserved under reviews/*-through-65e7402.md; those four
+current documents now distinguish implementation, tests, local laws, broader
+proofs and missing scope without chronological claims overriding one another.
+
+The selected substantial milestone is a fixed rendered graph with two held
+actions, branching joins/settlements and an ordinary-content visibility invariant.
+It is not yet complete. Its first dependency checkpoint adds seven quantified
+roots without runtime/host/source changes: certified arbitrary finite redirect
+resolution and fresh-root construction, identity-preserving merges of aliases,
+completion through a resolved representative with a positive open count, and
+arbitrary finite lookup/rejoin histories inside an established component. The
+history runner carries the actual World and proves all lookup representatives
+and the complete unchanged World, rather than assuming transition equations.
+
+28 private native-helper fixtures check 2,268 resolver queries and 252 rejoins;
+84 actual Bend completion prefixes check the representative update and other
+fields; a cyclic fixture faults. These are not new public histories or a proof
+of reachable actions. Four compiled kernel negatives are rejected; 572 variants
+are configured (469 finite, 103 kernel), with no fresh complete 572 sweep claimed.
+The prior 564 sweep remains tied to its frozen checkpoint. Public/closed totals
+stay 4,438 / 73. The source pin and empty deviation register are unchanged.
+
+The remaining obstacle is constructing/preserving the action/flight accounting
+and valid redirect forest through distinct-component joins and completion, then
+connecting it to actual publication/render observations. The intended reader-
+indexed model, environment/once-only/resource assumptions and source draft-rule
+limits are in general-properties.md. No new source bug or workaround was found.
