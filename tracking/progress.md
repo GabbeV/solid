@@ -642,3 +642,20 @@ brings configuration to 589 (469 finite /120 kernel), without a fresh full sweep
 A fresh fetch/impact review of next@b4d8e6bb reports no signals drift; only the
 canvas example changed. No runtime/host/source/kernel/deviation change or new
 Solid bug occurred, and #4248 remains separate and open.
+
+
+## Nonempty rendered snapshots at zero action debt (2026-10-23)
+
+The [nonempty blocker contracts](rendered-blockers.md) add five active roots.
+A pending on-screen owned render node keeps the actual zero-action group blocked;
+the public budget is derived from the arbitrary inactive prefix, the complete
+World/judge is restored, and the real landing scan retains its World/stack/frame.
+Terminal membership is proved through actual lookup/compression, and subscriber
+generation/validity contracts prepare the memo path. Construction of this graph
+from callback bodies and preservation through completion/settlement remain open.
+
+One hundred forty-four independently authored native-generator/Bend action-flight histories
+cover all six completion/flight orders, both creation orders, opaque/text/nullable
+values and independent publication (1,368 prefixes). No runtime/host/source/kernel
+change or new Solid bug; two focused kernel negatives and one finite negative extend configuration to
+592 (470 finite /122 kernel), with no fresh complete sweep.

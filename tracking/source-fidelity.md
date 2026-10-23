@@ -93,3 +93,13 @@ The [landing scan extension](action-landing-scan.md) checks the source retention
 branch without a runtime delta. Its live-list lookup premise stays explicit.
 Current next@b4d8e6bb has zero signals source drift in the fetched source-impact
 comparison; new commits only add the canvas example.
+
+## Nonempty rendered blocker extension (2026-10-23)
+
+The [snapshot contracts](rendered-blockers.md) and 144 native-generator histories
+add proof/control evidence only. Runtime, host, representation, pinned sources
+and toolchain are unchanged. Proof-side guard/list/return decompositions are
+checked against actual eligible/blockedOne/blockedSubs/blockStep operations.
+Terminal membership is tied to the actual extension store. These are explicit
+snapshot contracts, not a replacement scheduler or assumed public publication
+rule. No new Solid bug or semantic workaround was introduced.

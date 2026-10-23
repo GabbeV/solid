@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["rendered graph kernel ignores owned flights at zero debt", "runtime/transaction.bend", "_ => blockedBy(w, R.Transaction.nodes(B.transaction(w, tx)), tx, False{}))", "_ => B.Bundle{w, False{}})", "tests/proof-properties.mjs", "blockStep", "transaction-rendered"],
+  ["rendered flight control ignores pending render nodes", "runtime/transaction.bend", "_ => onScreen(w, id, B.choose(~Nat, Nat.is_eq(R.World.judge(w), 0n), _ => owner, _ => R.World.judge(w))),", "_ => B.Bundle{w, False{}},", "tests/joined-action-flight-history.mjs", "blockedOne"],
+  ["terminal membership kernel clears the capture", "runtime/transaction.bend", "R.NodeExtension.with_transaction(B.extension(w, id), tx)", "R.NodeExtension.with_transaction(B.extension(w, id), 0n)", "tests/proof-properties.mjs", "txOf", "transaction-membership"],
+
   ["landing scan removes a still blocked group", "runtime/core.bend", "_ => Machine{w, LandTransactions{frame, index} <> rest, stack}", "_ => Machine{R.World.with_transactions(w, X.removeIdentity(R.World.transactions(w), t)), LandTransactions{frame, index} <> rest, stack}", "tests/proof-properties.mjs", "landTransactions", "action-landing-scan"],
   ["empty ordinary group invents a nested blocker", "runtime/transaction.bend", "Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}}", "Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, True{}}", "tests/proof-properties.mjs", "blockStep", "transaction-empty"],
   ["second completion retains its last obligation", "runtime/action-state.bend", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)", "B.choose(~Nat, Nat.is_eq(R.Transaction.open(B.transaction(w, t)), 1n), _ => 1n, _ => Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n))", "tests/proof-properties.mjs", "done", "action-pair-completion"],

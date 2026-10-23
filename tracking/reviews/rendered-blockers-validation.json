@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "085bc0470c80682e91a32ec83be6965dbb226a0a",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "b4d8e6bb0b838170ddc38dad512958d0b3683244",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 5,
+  "publicHistories": 4630,
+  "newNativeGeneratorHistories": 144,
+  "newObservedPrefixes": 1368,
+  "closedRegressions": 73,
+  "configuredMutations": 592,
+  "finiteMutations": 470,
+  "kernelMutations": 122,
+  "newFocusedKernelRejections": 2,
+  "newFocusedFiniteRejections": 1,
+  "freshComplete592Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "Snapshot facts for an owned pending on-screen render with current terminal membership and arbitrary inactive prefix supply actual zero-action blocked true preserving the complete World/judge within existing public budgets; actual landing scan retains World/stack/frame. Local subscriber generation/validity contracts and actual terminal txOf identity are checked. Initial graph construction and history preservation are not claimed.",
+  "assumptions": [
+    "Healthy current World, nonzero group, explicit owned-node layout and source pending/disposed/guess/render/zombie facts.",
+    "Captured node transaction already names the terminal group; primitive snapshot facts rather than final blocked/eligible/txOf results.",
+    "Selected live-list lookup explicit for the landing scan; global reachable forest/membership theorem still open."
+  ],
+  "remaining": [
+    "Construct graph facts from actual callback-body writes",
+    "Preserve facts through action completions, flight delivery, supersession and disposal",
+    "Complete public flush/render observation and eventual reveal",
+    "Global forest/live-list and full once-only protocol; host delivery/fairness"
+  ],
+  "resourceAccounting": {
+    "renderNodeKernelMutation": "A targeted blockedOne mutation exceeded process-group RSS when checked through the large rendered module; excluded from rejection evidence. It is tested with a finite direct-render control instead; limits unchanged.",
+    "redundantMemoControl": "The initial memo-only native controls accepted disabling direct render blockage because the memo subscriber path also blocks. The controls now include direct and memo-backed renders; the refined finite mutation is rejected. No acceptance was counted as rejection."
+  },
+  "newSolidBugOrSemanticWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPRState": "open, unmerged",
+  "moduleSha256": {
+    "proof/transaction-membership.bend": "c1300dee4acf7f0f25633b75e00f3fbb25eab495a0c18cac122040ab6fbe40a5",
+    "proof/transaction-rendered.bend": "c02da7f1e3ea68f51da07eb34c7094e99edf7ca8c062ebbf06540ac8f762a2ce",
+    "proof/rendered-landing.bend": "a12a84d77c7c11a0ee4084abae27ac721dc4a7e93fbff05e4d3a7b099ac8b4c8"
+  },
+  "logs": {
+    "rendered-graph-composed.log": {
+      "path": "/workspace/scratch/rendered-graph-composed.log",
+      "sha256": "2c3cfc14bfb6df01ef1722682a9e02cdd248cad9ecfd373a11eee98159353ed8"
+    },
+    "rendered-graph-public.log": {
+      "path": "/workspace/scratch/rendered-graph-public.log",
+      "sha256": "ce1b418bb5807e748b9f552bb1aaa0866d4a3b88e50fe22b581e8f59b14bc7fe"
+    },
+    "rendered-graph-zero-debt-negative.log": {
+      "path": "/workspace/scratch/rendered-graph-zero-debt-negative.log",
+      "sha256": "72644604cad3d4b6fa6833489d0e9de52e7070e231ca806122dbe2469d8d81e5"
+    },
+    "rendered-graph-negatives-refined.log": {
+      "path": "/workspace/scratch/rendered-graph-negatives-refined.log",
+      "sha256": "15a5aa6a025ae4f84b0f00b38678a426f37f345121dd3898096d7b7b712c173a"
+    },
+    "rendered-graph-mutation-targets.log": {
+      "path": "/workspace/scratch/rendered-graph-mutation-targets.log",
+      "sha256": "683b7f2055276100e3fc89674c6594f5bd680c3ba815d4f8bd9f4fa0aef45ce0"
+    },
+    "rendered-graph-negatives.log": {
+      "path": "/workspace/scratch/rendered-graph-negatives.log",
+      "sha256": "b48a9450aba125a2e5da9d56ea26394afc2c38439642c5eec4699c2c277c78d8"
+    },
+    "rendered-graph-negatives-retry.log": {
+      "path": "/workspace/scratch/rendered-graph-negatives-retry.log",
+      "sha256": "05ef634287927b409a3e9f0e1fcda8b32a6f47122c500c32d4b39ba1a9ec942e"
+    }
+  },
+  "composedSeal": "tracking/checked.json records the completed final full-input/kernel check for this checkpoint; earlier exploratory composed log predates documentation/receipt edits."
+}

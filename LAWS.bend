@@ -1,3 +1,6 @@
+import ./proof/transaction-membership.bend as TerminalMembership
+import ./proof/transaction-rendered.bend as RenderedGraph
+import ./proof/rendered-landing.bend as RenderedLanding
 import ./proof/action-landing-scan.bend as LandingScan
 import ./proof/transaction-empty.bend as EmptyBlocker
 import ./proof/action-pair-eligibility.bend as PairEligibility
@@ -2954,3 +2957,70 @@ law first_action_completion_is_retained_by_landing_scan:
   for healthy: {B.ok(w) == True{} : Bool}
   for lookup: {B.get(Nat, R.World.transactions(Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond))), index, 0n) == JoinedPair.targetId(before, [], reverse) : Nat}
   LandingScan.Retained<Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), rest, stack, frame, index>
+
+
+law terminal_node_membership_preserves_world:
+  for +w: R.World
+  for +id: Nat
+  for +owner: Nat
+  for +captured: {R.NodeExtension.transaction(B.extension(w, id)) == owner : Nat}
+  for stopped: {R.Transaction.into(B.transaction(w, owner)) == 0n : Nat}
+  {Transactions.txOf(w, id) == B.Bundle{w, owner} : B.Bundle<R.World, Nat>}
+
+
+law zero_action_rendered_group_still_blocks:
+  for +w: R.World
+  for +predecessor: Nat
+  for +prefix: RenderedGraph.Skips<PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor>
+  for +id: Nat
+  for +tail: List<&2, Nat>
+  for healthy: {B.ok(w) == True{} : Bool}
+  for zero: {R.Transaction.open(B.transaction(w, 1n+predecessor)) == 0n : Nat}
+  for nodes: {R.Transaction.nodes(B.transaction(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor)) == B.append(Nat, RenderedGraph.ids(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor, prefix), id <> tail) : List<&2, Nat>}
+  for active: {RenderedGraph.guard(PositiveBlocker.enter(w, 1n+predecessor), id) == False{} : Bool}
+  for +capture: {R.NodeExtension.transaction(B.extension(PositiveBlocker.enter(w, 1n+predecessor), id)) == 1n+predecessor : Nat}
+  for stopped: {R.Transaction.into(B.transaction(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor)) == 0n : Nat}
+  for rendered: {Transactions.isRender(R.Node.kind(B.node(PositiveBlocker.enter(w, 1n+predecessor), id))) == True{} : Bool}
+  for live: {B.has(R.Node.flags(B.node(PositiveBlocker.enter(w, 1n+predecessor), id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}
+  {Transactions.blocked(w, 1n+predecessor) == B.Bundle{w, True{}} : B.Bundle<R.World, Bool>}
+
+
+law live_pending_subscriber_blocks:
+  for +w: R.World
+  for +edge: Nat
+  for +owner: Nat
+  for +extra: Nat
+  for valid: {RenderedGraph.validReader(w, 1n+edge) == True{} : Bool}
+  for live: {B.has(R.Node.flags(B.node(w, R.Link.sub(B.link(w, 1n+edge)))), K.REACTIVE_ZOMBIE()) == False{} : Bool}
+  {Transactions.blockedSubs(1n+extra, w, 1n+edge, owner) == B.Bundle{w, True{}} : B.Bundle<R.World, Bool>}
+
+
+law current_generation_pending_reader_is_valid:
+  for +w: R.World
+  for +edge: Nat
+  for reads: {RenderedGraph.reader(w, edge) == True{} : Bool}
+  for generation: {R.Link.gen(B.link(w, edge)) == R.Node.depGen(B.node(w, R.Link.sub(B.link(w, edge)))) : Nat}
+  for alive: {B.has(R.Node.flags(B.node(w, R.Link.sub(B.link(w, edge)))), K.REACTIVE_DISPOSED()) == False{} : Bool}
+  {RenderedGraph.validReader(w, edge) == True{} : Bool}
+
+
+law rendered_flight_is_retained_by_landing_scan:
+  for +w: R.World
+  for +predecessor: Nat
+  for +prefix: RenderedGraph.Skips<PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor>
+  for +id: Nat
+  for +tail: List<&2, Nat>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +frame: Core.SeamFrame
+  for +index: Nat
+  for lookup: {B.get(Nat, R.World.transactions(w), index, 0n) == 1n+predecessor : Nat}
+  for healthy: {B.ok(w) == True{} : Bool}
+  for zero: {R.Transaction.open(B.transaction(w, 1n+predecessor)) == 0n : Nat}
+  for nodes: {R.Transaction.nodes(B.transaction(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor)) == B.append(Nat, RenderedGraph.ids(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor, prefix), id <> tail) : List<&2, Nat>}
+  for active: {RenderedGraph.guard(PositiveBlocker.enter(w, 1n+predecessor), id) == False{} : Bool}
+  for capture: {R.NodeExtension.transaction(B.extension(PositiveBlocker.enter(w, 1n+predecessor), id)) == 1n+predecessor : Nat}
+  for stopped: {R.Transaction.into(B.transaction(PositiveBlocker.enter(w, 1n+predecessor), 1n+predecessor)) == 0n : Nat}
+  for rendered: {Transactions.isRender(R.Node.kind(B.node(PositiveBlocker.enter(w, 1n+predecessor), id))) == True{} : Bool}
+  for live: {B.has(R.Node.flags(B.node(PositiveBlocker.enter(w, 1n+predecessor), id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}
+  {Core.landTransactions(w, rest, stack, frame, 1n+index) == Core.Machine{w, Core.LandTransactions{frame, index} <> rest, stack} : Core.Machine}

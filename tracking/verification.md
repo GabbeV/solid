@@ -12,15 +12,22 @@ and Lean pin are unchanged. No semantic deviation is active.
 
 | Evidence | Current scope |
 | --- | --- |
-| Public differential corpus | 4,486 histories; restricted admitted callback/value/IO grammar |
+| Public differential corpus | 4,630 histories; restricted admitted callback/value/IO grammar |
 | Closed composed regressions | 73 fixed end-to-end Bend executions; separate from quantified proofs |
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 589 = 469 finite + 120 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 592 = 470 finite + 122 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 589 sweep claimed |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 592 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
+
+The [nonempty rendered blocker receipt](reviews/rendered-blockers-validation.json)
+adds five roots covering terminal membership identity, zero-action graph blockage,
+subscriber/generation validity and actual retained scan. One hundred forty-four additional
+native-generator rendered-flight histories /1,368 prefixes pass all six event
+orders. Two focused kernel negatives and one finite control negative are recorded separately from full sweeps.
+These snapshot contracts do not establish their callback-body reachability.
 
 The [landing scan receipt](reviews/action-landing-scan-validation.json) adds two
 roots for retaining held groups, 288 direct held-scan calls, 48 finite empty

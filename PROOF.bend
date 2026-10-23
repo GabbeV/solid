@@ -1,3 +1,6 @@
+import ./proof/transaction-membership.bend as TerminalMembership
+import ./proof/transaction-rendered.bend as RenderedGraph
+import ./proof/rendered-landing.bend as RenderedLanding
 import ./proof/action-landing-scan.bend as LandingScan
 import ./proof/transaction-empty.bend as EmptyBlocker
 import ./proof/action-pair-eligibility.bend as PairEligibility
@@ -1377,3 +1380,23 @@ def Laws.landing_scan_retains_positive_group(w, rest, stack, frame, index, prede
 
 def Laws.first_action_completion_is_retained_by_landing_scan(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, index, healthy, lookup):
   LandingScan.afterOne(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, index, healthy, lookup)
+
+
+def Laws.terminal_node_membership_preserves_world(w, id, owner, captured, stopped):
+  TerminalMembership.terminal(w, id, owner, captured, stopped)
+
+
+def Laws.zero_action_rendered_group_still_blocks(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live):
+  RenderedGraph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live)
+
+
+def Laws.live_pending_subscriber_blocks(w, edge, owner, extra, valid, live):
+  RenderedGraph.subscriber(w, edge, owner, extra, valid, live)
+
+
+def Laws.current_generation_pending_reader_is_valid(w, edge, reads, generation, alive):
+  RenderedGraph.currentReader(w, edge, reads, generation, alive)
+
+
+def Laws.rendered_flight_is_retained_by_landing_scan(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live):
+  RenderedLanding.retained(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live)
