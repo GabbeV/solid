@@ -25,11 +25,11 @@ try{
 const T=privateModules.transaction,C=privateModules.core;
 const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
-const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
+const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0;
+let histories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0;
 for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const family of ['text','nullable','references'])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
@@ -96,6 +96,28 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
     assert.deepEqual(scan.world,before,name+' blocked graph scan retains World');
     assert.deepEqual(list(scan.tasks),[{$:'LandTransactions',frame,remaining:index},...list(rest)]);
     assert.deepEqual(list(scan.values),list(stack));renderedScanControls++;
+    // Fork a callback-free fulfillment prefix; do not install or drain it in
+    // the real history. The public native/control event sequence stays intact.
+    const asyncId=b.ids[direct?'view':'derived'],node=list(before.nodes)[asyncId],extension=list(before.extensions)[node.x];
+    assert.equal(extension.inFlight.$,'FlightActive');assert.equal(extension.inFlight.result,b.futures.flight);
+    const then=asList([{$:'AsyncFlush'}]),valueStack=asList([{$:'StringValue',s:'outer callback'},{$:'Number',n:17}]);
+    for(const reply of [values[4],initial]){
+    const committed=world=>({values:list(world.nodes).map(n=>n.value),tree:world.tree,events:world.events});
+    const original=structuredClone(before),originalView=structuredClone(committed(before));
+    const prefix=C.asyncWrite(before,rest,valueStack,asyncId,b.futures.flight,b.encode(reply),then);
+    assert.deepEqual(before,original,name+' forked fulfillment leaves its input snapshot intact');
+    assert.deepEqual(committed(prefix.world),originalView,name+' fulfillment prefix retains committed storage/tree/trace');
+    assert.deepEqual(list(prefix.values),list(valueStack),name+' fulfillment prefix retains caller stack');
+    assert.equal(prefix.world.fault.$,'Healthy');
+    if((node.flags&S.REACTIVE_DIRTY)===0){
+     const ending=[{$:'AsyncWriteAfterTrim',id:asyncId},{$:'AsyncWriteSchedule'},{$:'AsyncFlush'},...list(then),...list(rest)];
+     const tasks=list(prefix.tasks);
+     assert.deepEqual(tasks.slice(-ending.length),ending,name+' fulfillment prefix retains trim/schedule/flush/then/caller task order');
+     if(tasks.length>ending.length){assert.equal(tasks[0].$,'OwnerTasks');assert.deepEqual(list(tasks[0].tasks),[{$:'TrimDeps',id:asyncId}]);trimmedAsyncPrefixControls++;}
+     acceptedAsyncPrefixControls++;
+    }else assert.deepEqual(list(prefix.tasks),list(rest),name+' dirty arrival is ignored');
+    asyncPrefixControls++;
+    }
    }
    if(completed<2||!flightDone){assert.equal(S.blocked(root),true);assert.deepEqual(seen,[initial],name+' action or rendered flight still blocks publication');}
   }
@@ -108,4 +130,6 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
   dispose?.();b.dispose();S.flush();b.flush();await setImmediate();
  }
 }
-console.log(JSON.stringify({publicHistories:histories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, opaque/text/nullable payloads and independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+assert.ok(acceptedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover actual accepted arrivals');
+assert.ok(trimmedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover queued owner trim');
+console.log(JSON.stringify({publicHistories:histories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, opaque/text/nullable payloads and independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

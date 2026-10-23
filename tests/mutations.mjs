@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["async prefix kernel drops its queued flush", "runtime/core.bend", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> AsyncFlush{} <> B.append(Task, then, rest)", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> B.append(Task, then, rest)", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
+  ["async prefix kernel clears caller stack on staged result", "runtime/core.bend", "_ => Machine{w, ending, stack})", "_ => Machine{w, ending, []})", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
+
   ["staging frame kernel erases committed value during pending store", "representation/records.bend", "      Node{kind, value, v, equals, config, flags,", "      Node{kind, Undefined{}, v, equals, config, flags,", "tests/proof-properties.mjs", "Node.with_pending", "committed-storage-frame"],
   ["heap frame kernel erases committed value during flag store", "representation/records.bend", "      Node{kind, value, pending, equals, config, v,", "      Node{kind, Undefined{}, pending, equals, config, v,", "tests/proof-properties.mjs", "Node.with_flags", "committed-storage-frame"],
   ["staging flight control commits proposal before landing", "runtime/write.bend", "B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))", "B.store_node(w, id, R.Node.with_value(B.node(w, id), value))", "tests/joined-action-flight-history.mjs", "stageResolved"],

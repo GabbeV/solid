@@ -709,3 +709,21 @@ Existing 203 differential graph/write scenarios and 68 Promise histories pass.
 Two kernel record-store negatives and one finite premature-publication negative
 are rejected: configuration 600 (475 finite /125 kernel), no new complete sweep.
 No new Solid bug or semantic workaround was introduced.
+
+
+## Fulfillment reaches an exact queued continuation (2026-10-23)
+
+The [fulfillment-prefix contracts](async-write-prefix.md) add seven roots. Actual
+status/source bookkeeping and the default core arrival retain all committed
+values, tree, event trace and caller stack, while stale result identity gives an
+exact World no-op. The returned machine retains optional owner trim, settlement,
+schedule, flush, captured continuation and caller work in source order. Execution
+of that tail and coordinated final publication remain open. A proof-only generic
+projection was specialized for the pinned kernel without narrowing payload/World
+domains or changing runtime/limits.
+
+The retained 144 native-generator histories pass. Ninety-six forked actual prefix
+calls, including 24 queued owner trims, check independent pre-observations and
+nonempty stacks on public-history snapshots. Two kernel tail/stack negatives are
+rejected: 602 configured variants (475 finite /127 kernel), no fresh full sweep.
+No new Solid bug or semantic workaround was introduced.

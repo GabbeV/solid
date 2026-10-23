@@ -295,3 +295,74 @@ def storeExtension(+w: R.World, +id: Nat, +next: R.NodeExtension) ->
 def storeTransaction(+w: R.World, +id: Nat, +next: R.Transaction) ->
   {observe(B.store_transaction(w, id, next)) == observe(w) : View}:
   worldTxArena(w, List.set(&2, R.Transaction, R.World.txArena(w), id, next))
+
+
+def worldCleanupError(+w: R.World, next: R.Slot) ->
+  {observe(R.World.with_cleanupError(w, next)) == observe(w) : View}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}
+
+
+def worldHalted(+w: R.World, next: Bool) ->
+  {observe(R.World.with_halted(w, next)) == observe(w) : View}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}
+
+
+def worldReports(+w: R.World, next: List<&2, R.Report>) ->
+  {observe(R.World.with_reports(w, next)) == observe(w) : View}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}
+
+
+def worldErrorSerial(+w: R.World, next: Nat) ->
+  {observe(R.World.with_errorSerial(w, next)) == observe(w) : View}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}
+
+
+def worldPendingSets(+w: R.World, next: List<&2, List<&2, Nat>>) ->
+  {observe(R.World.with_pendingSets(w, next)) == observe(w) : View}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}
+
+
+def valueModified(+node: R.Node, next: Bool) ->
+  {R.Node.value(R.Node.with_modified(node, next)) == R.Node.value(node) : R.Value}:
+  match node:
+    case R.Node{+n_kind, +n_value, +n_pending, +n_equals, +n_config, +n_flags, +n_status, +n_time, +n_notified, +n_deps, +n_depsTail, +n_depGen, +n_subs, +n_subsTail, +n_height, +n_nextHeap, +n_prevHeap, +n_parent, +n_firstChild, +n_nextSibling, +n_prevSibling, +n_expr, +n_modified, +n_prevValue, +n_target, +n_loading, +n_x, +n_parentComputed, +n_scope, +n_childCount, +n_disposal, +n_cleanup, +n_effectProgram, +n_returnedCleanup, +n_errorProgram}:
+      {==}
+
+
+def modified(+w: R.World, +id: Nat, +next: Bool) ->
+  {observe(B.store_node(w, id, R.Node.with_modified(B.node(w, id), next))) == observe(w) : View}:
+  store(w, id, R.Node.with_modified(B.node(w, id), next), valueModified(B.node(w, id), next))
+
+
+def valueLoading(+node: R.Node, next: Bool) ->
+  {R.Node.value(R.Node.with_loading(node, next)) == R.Node.value(node) : R.Value}:
+  match node:
+    case R.Node{+n_kind, +n_value, +n_pending, +n_equals, +n_config, +n_flags, +n_status, +n_time, +n_notified, +n_deps, +n_depsTail, +n_depGen, +n_subs, +n_subsTail, +n_height, +n_nextHeap, +n_prevHeap, +n_parent, +n_firstChild, +n_nextSibling, +n_prevSibling, +n_expr, +n_modified, +n_prevValue, +n_target, +n_loading, +n_x, +n_parentComputed, +n_scope, +n_childCount, +n_disposal, +n_cleanup, +n_effectProgram, +n_returnedCleanup, +n_errorProgram}:
+      {==}
+
+
+def loading(+w: R.World, +id: Nat, +next: Bool) ->
+  {observe(B.store_node(w, id, R.Node.with_loading(B.node(w, id), next))) == observe(w) : View}:
+  store(w, id, R.Node.with_loading(B.node(w, id), next), valueLoading(B.node(w, id), next))
+
+def firstBoolChoice( +condition: Bool, +origin: R.World, +left: B.Bundle<R.World, Bool>, +right: B.Bundle<R.World, Bool>,
+  leftFrame: {observe(B.first(R.World, Bool, left)) == observe(origin) : View},
+  rightFrame: {observe(B.first(R.World, Bool, right)) == observe(origin) : View}) ->
+  {observe(B.first(R.World, Bool, B.choose(~B.Bundle<R.World, Bool>, condition, _ => left, _ => right))) == observe(origin) : View}:
+  match condition:
+    case True{}: leftFrame
+    case False{}: rightFrame
+
+def storePendingSet(+w: R.World, +set: Nat, +items: List<&2, Nat>) ->
+  {observe(B.store_pendingSet(w, set, items)) == observe(w) : View}:
+  worldPendingSets(w, List.set(&2, List<&2, Nat>, R.World.pendingSets(w), set, items))

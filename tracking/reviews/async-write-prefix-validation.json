@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "8f26b5eb6b628913eb5f7d98cb1cf024dab7380a",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 7,
+  "publicHistories": 4630,
+  "closedRegressions": 73,
+  "retainedNativeGeneratorHistories": 144,
+  "retainedObservedPrefixes": 1368,
+  "forkedActualPrefixCalls": 96,
+  "acceptedPrefixCalls": 96,
+  "queuedOwnerTrimCases": 24,
+  "configuredMutations": 602,
+  "finiteMutations": 475,
+  "kernelMutations": 127,
+  "newFocusedKernelRejections": 2,
+  "freshComplete602Sweep": false,
+  "claim": "Actual status/fulfillment prefix retains all committed node values/tree/trace; stale result exact no-op; active default core prefix retains stack and exact queued trim/settlement/schedule/flush/then/caller task order.",
+  "assumptions": [
+    "Active core bridge: zero custom comparator and no override.",
+    "Helper projection frames include faulted/malformed storage without asserting validity or success.",
+    "Queued owner/dependent release and host flush tasks are not executed by the prefix contract."
+  ],
+  "remaining": [
+    "Execution of queued trim/release/flush and coordinated final reveal",
+    "Global pending/membership/authority and full once-only protocol",
+    "Custom comparator/updater callbacks and lane writes",
+    "Validity and host delivery/fairness"
+  ],
+  "proofOrganization": "Pinned kernel rejects generic runtime-dependent Bundle template; Bool-result projection is specialized, without changing World/payload domains, runtime or limits.",
+  "testLimits": "Forked Bend prefix calls use independently copied pre-observations and preserve input snapshots; they do not replace native/public history events or establish native private-prefix equivalence.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "moduleSha256": {
+    "proof/committed-storage-frame.bend": "b18a890272b26d915bb85fc39811ce4a29f7928bca2adaaf165e17d50f528b47",
+    "proof/pending-source-committed-frame.bend": "2a47f6336ca59317388ee9f0afa921d282c2bcf0289a78a6732011d9494c32be",
+    "proof/status-committed-frame.bend": "37ef4c4863304c440493b862c38be9611ab750b0503ac05ba08efb4d4ee05e46",
+    "proof/flight-committed-frame.bend": "e4b41662d07a00c45372e1bfe2b2f3b1babc9affffd5d6e9c88385ea03667515",
+    "proof/async-write-prefix.bend": "ae943c7493cde3024d7d03d6b93c7e8bdde095a8087646e884312bc1d7bbcc25"
+  },
+  "logs": {
+    "pending-source-committed-frame.log": {
+      "path": "/workspace/scratch/pending-source-committed-frame.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "status-committed-frame.log": {
+      "path": "/workspace/scratch/status-committed-frame.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "flight-committed-frame.log": {
+      "path": "/workspace/scratch/flight-committed-frame.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "async-write-prefix-final.log": {
+      "path": "/workspace/scratch/async-write-prefix-final.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "async-prefix-public-controls.log": {
+      "path": "/workspace/scratch/async-prefix-public-controls.log",
+      "sha256": "026bdeecb756296c426ee6db1fbec71ed982e0dee932b985b5f18ac43f0f91de"
+    },
+    "async-prefix-negatives.log": {
+      "path": "/workspace/scratch/async-prefix-negatives.log",
+      "sha256": "1d4495fa6252fcb155211ebe01273e2cb73ade5beb1005f503b2a0915e563ce2"
+    },
+    "async-prefix-mutation-targets.log": {
+      "path": "/workspace/scratch/async-prefix-mutation-targets.log",
+      "sha256": "f729742bb88724d34ce7252ed89c17d24c86911a9ca015d15fa4b70f0c716c65"
+    }
+  },
+  "composedSeal": "tracking/checked.json is the completed final full-input/kernel record."
+}

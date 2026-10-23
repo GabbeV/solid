@@ -132,3 +132,12 @@ is not substituted for source reader/posture behavior. Custom comparator and
 lane/override core branches are excluded from the active bridge. Finite source
 controls and independent kernel checks remain separate. No runtime/host/source/
 representation/toolchain/limit/deviation change or new Solid bug.
+
+## Actual fulfillment prefix (2026-10-23)
+
+[Fulfillment frames and continuations](async-write-prefix.md) run through actual
+pending/status/write operations and the active core default/no-override branch.
+The complete machine/task equality retains the source tail; no trim, release or
+flush is replaced by an atomic publication assumption. Stale result identity is
+checked independently of group identity. Runtime/host/source/toolchain/limits
+remain unchanged, with no active deviation or new Solid bug.

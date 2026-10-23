@@ -1,3 +1,8 @@
+import ./proof/flight-committed-frame.bend as FlightStorage
+import ./proof/async-write-prefix.bend as AsyncPrefix
+import ./runtime/flight.bend as RuntimeFlight
+import ./runtime/pending.bend as RuntimePending
+import ./runtime/owner.bend as RuntimeOwner
 import ./proof/committed-storage-frame.bend as CommittedStorage
 import ./proof/heap-committed-frame.bend as HeapStorage
 import ./proof/staging-committed-frame.bend as StagedStorage
@@ -3216,3 +3221,76 @@ law staging_write_history_preserves_committed_observation:
   for +writes: List<&2, StagingHistory.Write>
   for +w: R.World
   {CommittedStorage.observe(StagingHistory.run(writes, w)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law flight_status_landing_preserves_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +clearUninitialized: Bool
+  {CommittedStorage.observe(RuntimePending.landStatus(w, id, clearUninitialized)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law flight_write_prefix_preserves_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +result: Nat
+  for +value: R.Value
+  {CommittedStorage.observe(B.first(R.World, Bool, RuntimeFlight.beginAsyncWrite(w, id, result, value))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law stale_flight_prefix_is_exact_identity:
+  for +w: R.World
+  for +id: Nat
+  for +result: Nat
+  for obsolete: {Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result) == True{} : Bool}
+  {RuntimeFlight.prepareAsyncWrite(w, id, result) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
+
+
+law ordinary_async_prefix_keeps_source_branch:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +result: Nat
+  for +value: R.Value
+  for +then: List<&2, Core.Task>
+  for custom: {Equality.custom(w, id) == 0n : Nat}
+  for override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {Core.asyncWrite(w, rest, stack, id, result, value, then) == AsyncPrefix.fast(w, rest, stack, id, result, value, then) : Core.Machine}
+
+
+law ordinary_async_prefix_preserves_committed_observation:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +result: Nat
+  for +value: R.Value
+  for +then: List<&2, Core.Task>
+  for custom: {Equality.custom(w, id) == 0n : Nat}
+  for override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {CommittedStorage.observe(Core.world(Core.asyncWrite(w, rest, stack, id, result, value, then))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law ordinary_async_prefix_preserves_caller_stack:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +values: List<&2, R.Value>
+  for +id: Nat
+  for +result: Nat
+  for +value: R.Value
+  for +then: List<&2, Core.Task>
+  for custom: {Equality.custom(w, id) == 0n : Nat}
+  for override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {Core.values(Core.asyncWrite(w, rest, values, id, result, value, then)) == values : List<&2, R.Value>}
+
+
+law async_prefix_queues_exact_followup_order:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +then: List<&2, Core.Task>
+  {Core.asyncWriteAfterValue(w, rest, stack, id, then) == B.choose(~Core.Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
+    _ => Core.Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), Core.OwnerTasks{[RuntimeOwner.TrimDeps{id}]} <> AsyncPrefix.ending(id, then, rest), stack},
+    _ => Core.Machine{w, AsyncPrefix.ending(id, then, rest), stack}) : Core.Machine}

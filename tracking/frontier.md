@@ -99,7 +99,11 @@ callback/parking construction remain explicit. The complementary
 notifications, held/default setters and arbitrary finite helper-write histories
 for all represented payloads/storage shapes, with an active ordinary core setter
 and stack-return bridge. The full pending/membership invariant through writes,
-flight delivery and queued flush/publication remain open.
+the complete delivery and queued flush/publication remain open. The
+[actual fulfillment prefix](async-write-prefix.md) now preserves committed
+content and caller stack, rejects stale results by exact identity and returns the
+source trim/settlement/schedule/flush/continuation order. Execution of that queued
+tail and coordinated final reveal remain open.
 
 ## Next proof obligations, in order
 

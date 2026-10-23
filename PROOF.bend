@@ -1,3 +1,8 @@
+import ./proof/flight-committed-frame.bend as FlightStorage
+import ./proof/async-write-prefix.bend as AsyncPrefix
+import ./runtime/flight.bend as RuntimeFlight
+import ./runtime/pending.bend as RuntimePending
+import ./runtime/owner.bend as RuntimeOwner
 import ./proof/committed-storage-frame.bend as CommittedStorage
 import ./proof/heap-committed-frame.bend as HeapStorage
 import ./proof/staging-committed-frame.bend as StagedStorage
@@ -1479,3 +1484,31 @@ def Laws.ordinary_core_setter_returns_resolved_argument(w, rest, stack, id, curr
 
 def Laws.staging_write_history_preserves_committed_observation(writes, w):
   StagingHistory.preserves(writes, w)
+
+
+def Laws.flight_status_landing_preserves_committed_observation(w, id, clearUninitialized):
+  FlightStorage.landed(w, id, clearUninitialized)
+
+
+def Laws.flight_write_prefix_preserves_committed_observation(w, id, result, value):
+  FlightStorage.write(w, id, result, value)
+
+
+def Laws.stale_flight_prefix_is_exact_identity(w, id, result, obsolete):
+  FlightStorage.stale(w, id, result, obsolete)
+
+
+def Laws.ordinary_async_prefix_keeps_source_branch(w, rest, stack, id, result, value, then, custom, override):
+  AsyncPrefix.exact(w, rest, stack, id, result, value, then, custom, override)
+
+
+def Laws.ordinary_async_prefix_preserves_committed_observation(w, rest, stack, id, result, value, then, custom, override):
+  AsyncPrefix.observed(w, rest, stack, id, result, value, then, custom, override)
+
+
+def Laws.ordinary_async_prefix_preserves_caller_stack(w, rest, values, id, result, value, then, custom, override):
+  AsyncPrefix.stack(w, rest, values, id, result, value, then, custom, override)
+
+
+def Laws.async_prefix_queues_exact_followup_order(w, rest, stack, id, then):
+  AsyncPrefix.afterExact(w, rest, stack, id, then)
