@@ -2024,6 +2024,33 @@ const traps: ProxyHandler<StoreTarget> = {
       }
     }
     const src = readSource(target, key);
+    // A chained optimistic view may reach a guessed leaf through an unchanged
+    // object slot. Follow the slot's node without first suspending on the
+    // source family's pending derivation; the child read still decides whether
+    // it sees an optimistic override or the pending source's own fields.
+    if (
+      optHooks !== null &&
+      target.ch &&
+      optRead(target) &&
+      verdict === null &&
+      target.fam!.overlaid?.size
+    ) {
+      const inner: StoreTarget = (src as any)[$TARGET];
+      const fw = inner?.fam?.node;
+      if (fw?._statusFlags === STATUS_PENDING && !inner.ch) {
+        const frame = committed(inner);
+        if (
+          hasOwn.call(frame, key) &&
+          !isOwnAccessor(frame, key) &&
+          isWrappable(frame[key as any])
+        ) {
+          const slot = getNode(inner, key, 0);
+          const value = nodeValue(slot, undefined, inner);
+          if (isEqual(value, slot._value) || sameLogicalSlot(inner, value, slot._value))
+            return serveDataKey(target, key, wrap(value, inner, key as any), src, node0);
+        }
+      }
+    }
     // Overlay delete (#3044): a prototype overlay cannot shadow a delete, so
     // deleted keys are tracked aside and read as absent in the pending view.
     if (src === target.pb && target.del?.has(key)) {
