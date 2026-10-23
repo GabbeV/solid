@@ -69,7 +69,7 @@ for(const immediate of[false,true])for(const obsoleteFirst of[false,true]){
 }
 for(const method of['awaitUntil','awaitRefresh'])for(const priorFlight of[false,true]){
  const value=select({same:[read('mode'),lit(2)]},{raise:99},select(read('mode'),future('p'),lit(7)));
- await scenario(`preserved synchronous-error old-flight baseline ${method}/${priorFlight}`,[['future','p'],['signal','mode',0],['deferred','d',value],...(priorFlight?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],[method,'truth',...(method==='awaitRefresh'?['d']:[normal])],['tick'],...(priorFlight?[['resolve','p',21],['tick']]:[]),['read','d'],['dispose']],(op,args,b)=>{if(op==='tick'&&priorFlight&&b.portEvents.length===0)assert.equal(list(b.world.deferredArena.lagging).length,1,'the pinned source bug still waits for the obsolete flight');});
+ await scenario(`superseded synchronous-error answer ${method}/${priorFlight}`,[['future','p'],['signal','mode',0],['deferred','d',value],...(priorFlight?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],[method,'truth',...(method==='awaitRefresh'?['d']:[normal])],['tick'],...(priorFlight?[['resolve','p',21],['tick']]:[]),['read','d'],['dispose']],(op,args,b)=>{if(op==='tick'){assert.equal(list(b.world.deferredArena.lagging).length,0,'a synchronous error ends the obsolete deferred flight');assert.equal(b.portEvents.length,1,'the current error settles truth without the old promise');}});
 }
 for(const accessor of[false,true])for(const lazy of[false,true]){
  const value=accessor?{invoke:{deferredAccessor:lit(7),options:{lazy}}}:{deferredRead:lit(7),options:{lazy}};

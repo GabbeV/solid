@@ -5,6 +5,7 @@ import ./proof/landing-release.bend as LandingRelease
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-payload-program.bend as DeferredPayloadProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
+import ./proof/deferred-error-catch.bend as DeferredCatch
 import ./proof/deferred-lag.bend as DeferredLaws
 import ./proof/affects-scope.bend as AffectsLaws
 import ./proof/affects-program.bend as AffectsProgram
@@ -950,8 +951,17 @@ def Laws.deferred_life_idleEnd(w, node, marked, answered, lagging):
 def Laws.deferred_life_emptyHeld(fuel, w, node):
   DeferredLifeLaws.emptyHeld(fuel, w, node)
 
+def Laws.deferred_caught_fault(w, cell, open, error, rest, saved):
+  DeferredCatch.caught(w, cell, open, error, rest, saved)
+
 def Laws.deferred_life_closedFailure(w, state, error):
   DeferredLifeLaws.closedFailure(w, state, error)
+
+def Laws.deferred_life_plainUnmarkedFailure(w, node, flight, error, answered, lagging):
+  DeferredLifeLaws.plainUnmarkedFailure(w, node, flight, error, answered, lagging)
+
+def Laws.deferred_life_unreadyFailure(w, state, identity, source):
+  DeferredLifeLaws.unreadyFailure(w, state, identity, source)
 
 def Laws.deferred_life_answeredSticky(w, node, flight, marked, lagging):
   DeferredLifeLaws.answeredSticky(w, node, flight, marked, lagging)

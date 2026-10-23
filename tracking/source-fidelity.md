@@ -1,23 +1,15 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid 3cbfaf1a (declares rc.17), matching fetched next on 2026-10-22.
-[The latest integration](reviews/solid-3cbfaf1a.md) ports #4228's parked-frame
-retirement after a published async error, with 16 paired cleanup timing histories
-and three arbitrary-World continuation laws. Earlier theorem domains/budgets
-remain unchanged. PRs #4231–#4233 are reported and unmerged; their candidate
-patches remain separate, and no semantic workaround is active.
-[The preceding source-only refresh](reviews/solid-1c0ff9f8.md) changes only unported
-store code and documentation; non-store source and Bend runtime are unchanged.
-[The landing-barrier integration](reviews/solid-cdd95616.md) ports the landing release
-barrier and removes obsolete status forwarding in source order. It retains all
-previous theorem domains/budgets. The preceding refresh added from/onSupersede as
-explicit omissions; neither is silently approximated.
-[The runtime integration](reviews/solid-5b1b7776.md) ports merged #4211 fallback
-retention and #4213 cleanup continuation/rethrow timing. Thirteen of 76 vendored
-inputs changed, copied verbatim; the complete prior port remains at bb82345.
-Seven new helper properties and thirty-six paired public histories check this policy.
-Shared optimistic-fold hooks are reviewed but remain unfinished with active
-store scopes and remaining active windows/flush crossings. No active semantic deviation exists.
+Current pin: Solid b9b6f333 (declares rc.17), matching fetched next on 2026-10-23.
+[The latest integration](reviews/solid-b9b6f333.md) copies merged #4231–#4233
+verbatim, ports synchronous-error flight retirement in the admitted deferred
+catch, and repairs the translated caught-fault posture before its helper runs.
+The affected open-window stream/from paths remain unfinished at this checkpoint;
+all three source repros pass unchanged native builds in all tiers. The old
+closedFailure theorem now states the new branch's result over its old domain;
+complete-program domains and sufficient budgets remain unchanged. No candidate
+patch or semantic workaround is active. The preceding reviewed pin and ordinary
+payload proofs remain at 6ed4732 on baseline/solid-3cbfaf1a.
 
 
 The user has explicitly set the engineering target: a translation close enough to

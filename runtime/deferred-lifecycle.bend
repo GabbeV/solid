@@ -85,10 +85,11 @@ def openWindow(+w: R.World, +state: R.DeferredState) -> B.Bundle<R.World, R.Defe
       B.store_node(w, node, R.Node.with_config(n, B.set(R.Node.config(n), K.CONFIG_LAGS()))), _ => w)
   B.Bundle{w, R.DeferredState.with_cell(state, cell)}
 
-# This source catch registers an unready-source flight only inside the open
-# window; the original exception always reaches recompute's error handler.
+# This source catch asks only for an open-window NotReady error. All other
+# throws end the previous flight first (#4231), including a closed window. The
+# original exception always reaches recompute's error handler.
 def sourceFailed(+w: R.World, +state: R.DeferredState, open: Bool, +error: R.Value) -> B.Bundle<R.World, R.DeferredState>:
-  +pair = B.choose(~B.Bundle<R.World, R.DeferredState>, Bool.and(open, P.isNotReady(error)), _ => ask(w, state, error), _ => B.Bundle{w, state})
+  +pair = B.choose(~B.Bundle<R.World, R.DeferredState>, Bool.and(open, P.isNotReady(error)), _ => ask(w, state, error), _ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{}))
   B.Bundle{R.World.with_fault(B.first(R.World, R.DeferredState, pair), R.CallbackThrown{error}), B.second(R.World, R.DeferredState, pair)}
 
 # `serve`'s selection AFTER actual handleAsync has returned. The future driver

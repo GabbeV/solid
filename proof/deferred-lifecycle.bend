@@ -31,7 +31,31 @@ def emptyHeld(+fuel: Nat, w: R.World, node: Nat) -> {D.landHeld(fuel, w, node, 0
     case 0n: {==}
     case 1n+p: {==}
 
-def closedFailure(w: R.World, state: R.DeferredState, error: R.Value) -> {D.sourceFailed(w, state, False{}, error) == B.Bundle{R.World.with_fault(w, R.CallbackThrown{error}), state} : B.Bundle<R.World, R.DeferredState>}:
+# Proof-only post-catch packaging, retaining the original thrown value.
+def failed(+pair: B.Bundle<R.World, R.DeferredState>, error: R.Value) -> B.Bundle<R.World, R.DeferredState>:
+  B.Bundle{R.World.with_fault(B.first(R.World, R.DeferredState, pair), R.CallbackThrown{error}), B.second(R.World, R.DeferredState, pair)}
+
+# #4231 changes the old state-preserving conclusion to ending any old flight.
+# The arbitrary World/state/error domain is retained.
+def closedFailure(w: R.World, state: R.DeferredState, error: R.Value) -> {D.sourceFailed(w, state, False{}, error) == failed(D.land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{}), error) : B.Bundle<R.World, R.DeferredState>}:
+  {==}
+
+def cmpSelf(+n: Nat) -> {Nat.cmp(n, n) == EQ{} : Cmp}:
+  match n:
+    case 0n: {==}
+    case 1n+p: cmpSelf(p)
+
+def unmarkedCase(+w: R.World, +node: Nat, flight: Nat, error: Nat, +answered: Bool, +lagging: List<&2, Nat>, order: Cmp) -> B.Bundle<R.World, R.DeferredState>:
+  failed(B.choose(~B.Bundle<R.World, R.DeferredState>, Bool.not(Cmp.is_eq(order)),
+    _ => B.Bundle{w, R.DeferredState{R.DeferredCell{node, R.Reference{flight}, False{}, answered}, lagging}},
+    _ => B.Bundle{w, R.DeferredState{R.DeferredCell{node, R.Null{}, False{}, answered}, P.remove(lagging, node)}}), R.Reference{error})
+
+def plainUnmarkedFailure(w: R.World, node: Nat, +flight: Nat, error: Nat, answered: Bool, lagging: List<&2, Nat>) ->
+  {D.sourceFailed(w, R.DeferredState{R.DeferredCell{node, R.Reference{flight}, False{}, answered}, lagging}, True{}, R.Reference{error}) == B.Bundle{R.World.with_fault(w, R.CallbackThrown{R.Reference{error}}), R.DeferredState{R.DeferredCell{node, R.Null{}, False{}, answered}, P.remove(lagging, node)}} : B.Bundle<R.World, R.DeferredState>}:
+  Equal.cong(Cmp, B.Bundle<R.World, R.DeferredState>, order => unmarkedCase(w, node, flight, error, answered, lagging, order), Nat.cmp(flight, flight), EQ{}, cmpSelf(flight))
+
+def unreadyFailure(w: R.World, state: R.DeferredState, identity: Nat, source: Nat) ->
+  {D.sourceFailed(w, state, True{}, R.NotReadyFailure{identity, source}) == failed(D.ask(w, state, R.NotReadyFailure{identity, source}), R.NotReadyFailure{identity, source}) : B.Bundle<R.World, R.DeferredState>}:
   {==}
 
 def answeredSticky(w: R.World, node: Nat, flight: R.Value, marked: Bool, lagging: List<&2, Nat>) -> {R.DeferredCell.answered(R.DeferredState.cell(B.second(R.World, R.DeferredState, D.openWindow(w, R.DeferredState{R.DeferredCell{node, flight, marked, True{}}, lagging})))) == True{} : Bool}:

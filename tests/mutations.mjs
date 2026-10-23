@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred sync-error omits ending superseded flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/pin-b9b6f333.mjs", "sourceFailed"],
+  ["deferred sync-error kernel preserves obsolete flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/proof-properties.mjs", "sourceFailed", "deferred-lifecycle"],
+  ["deferred catch kernel leaves active caught fault", "runtime/core.bend", "Deferred.sourceFailed(R.World.with_fault(w, R.Healthy{}), cell, open, cause)", "Deferred.sourceFailed(w, cell, open, cause)", "tests/proof-properties.mjs", "deferredUnwind", "deferred-error-probe"],
   ["deferred payload kernel drops empty strings", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.StringValue{\"\"}), _ => R.Undefined{}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
   ["deferred payload kernel aliases object references", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.Reference{7n}), _ => R.Reference{19n}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
   ["async cleanup program omits rejection retirement", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/proof-properties.mjs", "handleErrorNotify", "async-cleanup-program"],

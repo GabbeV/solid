@@ -4,10 +4,10 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3736 differential histories, 521 rejected compiled mutations,
+Current verification: 3768 differential histories, 524 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at 3cbfaf1a (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at b9b6f333 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -15,6 +15,18 @@ substitutions. Repair these before expanding affected paths, or register a
 necessary temporary deviation under [deviations.md](deviations.md). The user permits
 tracked deviations to unblock progress while an issue/fix is investigated. A formal
 TS/Bend equivalence proof is not required; no silent semantic repairs are allowed.
+
+## Merged deferred/source fixes
+
+[The b9b6f333 integration](reviews/solid-b9b6f333.md) ports #4231's synchronous
+error flight retirement, with 32 additional public histories and three
+quantified boundaries. Its core catch clears the active translated fault before
+landing and rethrows the original error. The former closedFailure conclusion
+changes with source behavior; all complete-program domains/budgets stand.
+#4232/#4233 are merged and all three native-tier repros pass; their stream/from
+Bend paths remain unfinished. No deviation is active. The prior 521-variant
+receipt is historical; this checkpoint adds focused checks to 524 configured
+variants before the planned fixed-checkout complete sweep.
 
 ## Deferred data payload generalization
 

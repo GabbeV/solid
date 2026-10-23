@@ -155,6 +155,7 @@ export function createDeferred<T>(
         // The wrapping form: an unready source parks the node in the window,
         // and the wait is its flight until the source's settle re-runs it.
         if (open && e instanceof NotReadyError) ask(e);
+        else land(flight);
         throw e;
       }
       if (open && typeof r === "object" && r !== null) {
@@ -175,7 +176,11 @@ export function createDeferred<T>(
             // promise, as for a plain flight: verdict and value in one flush.
             next: v => {
               const p = it.next(v);
-              if (first) ((first = false), p.then(done, done));
+              if (first) {
+                first = false;
+                if (isThenable(p)) p.then(done, done);
+                else done();
+              }
               return p;
             },
             return: v => it.return?.(v) ?? Promise.resolve({ done: true, value: v })

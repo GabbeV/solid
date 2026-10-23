@@ -1,0 +1,1107 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "previousSourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
+  "previousBendCheckpoint": "6ed4732acd72df822521a0fa4e6a783cb19be722",
+  "date": "2026-10-23",
+  "version": "2.0.0-rc.17",
+  "verifiedGitInputs": [
+    {
+      "file": "upstream/solid/LICENSE",
+      "sha256": "59a76ed2f4a3ebe8d20a58869ef9c09420f796aa179420c8fb916f5557defc9b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/LICENSE",
+      "sha256": "b81b37ef444c01ca730f2ee2bea2472a3e22278499b30e47a1b8d75d4e8e586e"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/BITWISE_OPERATIONS.md",
+      "sha256": "3169530bb573192be154d6058d347ebc7a066dc5466716f243fc4bfcf899815b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/DESIGN-CONSOLIDATION.md",
+      "sha256": "29c5022a902a13b11a43e6c33733be5846867fbd49989ef9377e1add42cf457f"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/INTERNALS-ASYNC-STATE.md",
+      "sha256": "fbc132c12ff18d67a5883a8e71ef39b5569491383005ba3e12d2dae902259755"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/INTERNALS-STORE-STATE.md",
+      "sha256": "0c52798bc722244de73b421b89b767f89c75f318a986ce3affe88c254b801d9b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/NODE-SHAPE.md",
+      "sha256": "1bebbf2e3d5933fce36055fb5294b8d8f56832f7db56990711633e480c3e5bf5"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/OPEN-QUESTIONS.md",
+      "sha256": "69df7c04ea41d057b3aa20bec2487a2274452847dd44816168a9e47f730b3c7e"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/QUEUE_EXECUTION_CONTROL.md",
+      "sha256": "4b910b285d4232be76734ed42ad1a2d79509b968e7ca43e8fe14ecddedc3cd51"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/QUEUE_NOTIFICATION_SYSTEM.md",
+      "sha256": "1084f50eb3b453f04a1379f49de512e611bf63f983d98e3ddbc26a7f41e980c6"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/RULES-DERIVED.md",
+      "sha256": "a98445828bc5481e4bbbab4738bae2286c016462d8bbacf1b220ef0ecd2594d1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/RULES-FUNDAMENTALS.md",
+      "sha256": "07e763b8d24f29e607b8e2dd1d97c70880a8755f75ff0d06013d5c0e5f03e922"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/RULES-INDEX.md",
+      "sha256": "f7d5e0ea2c5367553954413d17267b61b40b91828b05eca930e074ef39317f6b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/SCENARIOS.md",
+      "sha256": "30a4ded337020531dad82bad595cf59a664dcfc64cbc62df1c1695fdfa7f7780"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/SPEC-ASYNC-SEMANTICS.md",
+      "sha256": "88dc6f9b35279b2d8ba4acd2eecb1d3b0c51272bc934958a43185bf4da29e24a"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/create-deferred.md",
+      "sha256": "944338328615d1646418861b6ab09ece8f0f422eec4821c969b11f4b3785b2d4"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/FINDINGS.md",
+      "sha256": "f74eb49c7848cee971359071bd38e63ee21702cd687b0657bbf7d8c73c6d4d88"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/README.md",
+      "sha256": "543e5235817c351e164683ae388ca8e218bebdf09dbe50f5baab84933e43e409"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/core-store.md",
+      "sha256": "d396751fa1266227b2617706725c40f57b1706ec7c06df754cedb1e4d3c253f4"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/optimistic-lanes.md",
+      "sha256": "9530f0499c4f89be590358433004b2fca84c8adaa12355ea7cd7895d07b93ed9"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/optimistic-store.md",
+      "sha256": "599e2124616b22f9f63183c940ffdded812b6ffc6a87132c3fac8edf143e7631"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/projections.md",
+      "sha256": "4d38d2854493f73adeec6ff9b044fa055101e1cba83bccdbf8e6ba133074d181"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/rules-mining/reconcile-snapshot.md",
+      "sha256": "74fd2eac8fb5af5686939775e3c43964cade69b4859b6ef62252890394a48fb0"
+    },
+    {
+      "file": "upstream/solid/packages/signals/docs/write-coalescing.md",
+      "sha256": "7fba4b2578586754e2a141cb46fd57c70e5f296c0670bc14433ade988aabcabe"
+    },
+    {
+      "file": "upstream/solid/packages/signals/package.json",
+      "sha256": "a4b18bdda0a8ff3231b3b33726eeb698cc839ecc7a091d28644f3439ae6b8787"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/affects-marks.ts",
+      "sha256": "4c641eb692b5f0062911ee351af8c2d27451e929ad9488c2c7603b6f5a4d90dc"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/affects.ts",
+      "sha256": "6f23a5f6327fcf92c03ab6868357c915b93f61389b2be2a2faafe856c05138f1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/attribution.prod.ts",
+      "sha256": "3f7ab4a323d9434d58ec70647d12a7b6aed0cd5e2cdaca75f471839168e77953"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/attribution.ts",
+      "sha256": "d345df77eb12b257107d34d6eb9080040809a908f0f3cf9487f8489d418444fb"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/boundaries.ts",
+      "sha256": "a7c0244f18c60b920d56d46e2115f72be37a4ec3df1be6ac88476763dcefd8b9"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/carved.ts",
+      "sha256": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/action.ts",
+      "sha256": "5f0e684fd404cf4ea0b835323be6a989989df4f21916c15f909249ac4084b358"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/async.ts",
+      "sha256": "5a4557a1e98011582de35015cd156b7374c52f94a97123d262194c0ed0908363"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/attribution-costs.ts",
+      "sha256": "159ff2709ebab27a4b80d2097456941a71ad844f37f8ea64ca7271d4a481bfc4"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/attribution-feedback.ts",
+      "sha256": "3a219c6ffb68b48e54a432cc1ea664a76474f780385e85536e26456aad60c632"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/attribution-hooks.ts",
+      "sha256": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/attribution-queries.ts",
+      "sha256": "d6b65b2e39bb08f8281ef580e8616fdb134d0cf5bc78fb08cbe75ddcec61e119"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/attribution.ts",
+      "sha256": "a219aa1cc6566b0be0ffe0196d3e6cbf6effeed2d4a0acc478b15c26783a776f"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/constants.ts",
+      "sha256": "c680291fb01f82f06d57faf19608790ad7bd0dc05a3d4cdf06985d67d615e80a"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/context.ts",
+      "sha256": "c8e48ff3653fced14c8cd06a86e25b9b46bab609cd74794d27a32c3042a24e0c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/core.ts",
+      "sha256": "0259306a684245935e33f1219598215e72a9be29cd4432d372cfa96d73816b4d"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/dev.ts",
+      "sha256": "141e1d66a356fb61fc05360bbeb2ebd5642b37b9b291fa336ce1f26c0d4bee9c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/effect.ts",
+      "sha256": "4ff6a1fe25c9ad60016c07955169a86f7390fe02c86bba2137ba6dbb553aa393"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/error-hooks.ts",
+      "sha256": "5b58b7db8056352e1995061bd37e85b67ae89cae4dadbfe4a0832daf6ed816e0"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/error.ts",
+      "sha256": "b79034a005efe675dfee0063460c424a1b78512bf1353f8dd449cb05bfdf74ef"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/external.ts",
+      "sha256": "24d9a61a10b3eab799a81aff082f98a3409f3c6806a40bfb72da83ae3f242e8d"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/graph.ts",
+      "sha256": "ca760222bfbe604fceae4c29f6b6d4e380b7b359403a0b6acc4c7445a431f4a7"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/heap.ts",
+      "sha256": "dacc166e4dfc1af304393f1b1e0c941e26aded8047bf45ed9340e8b1855e465c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/identities.ts",
+      "sha256": "d2b562cec393712e7d82e8c70e83981091ae2b0ab76425ac57fcef19ccd6b2db"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/index.ts",
+      "sha256": "d0bfe3b40e6c28db013fc829b1ebf1a5e3c3d906c347c66df560f30e85fbe8d4"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/invariants.ts",
+      "sha256": "f3538ec163bc6a367049892c9b80063e048f6ba8bafa500819ac237bb9d6547d"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/lanes.ts",
+      "sha256": "fbc6c5251cded8dc14cd69b8127324e422d769cded2c7538c0273aae0da75e0c"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/owner.ts",
+      "sha256": "ff2f186bf3db182a4134057ff3672b86e7af260a4526621531a01696425ddd76"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/scheduler.ts",
+      "sha256": "a3de97aaad5290d0cba95279c7c10e38fee01a74b302e2343d37fd2f66d99c60"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/truth.ts",
+      "sha256": "bf56301573b8d496f7f2bc2f4a247ff2e4dffad7d4784aefb6781551ede9c9ec"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/types.ts",
+      "sha256": "d072279ac92717efc2a218c908ce012b31cc623f5122c0f8753997a63776ccdb"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/core/verdict.ts",
+      "sha256": "818b54b1a0584614ddb1a2dbaf6d1cb9dc7ff7fb46c8314b5aca81aced8b07ca"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/deferred.ts",
+      "sha256": "eacea8937da5861689059660cc341e1e391a0924b0f989ff44a7877ea89a24aa"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/flatten.ts",
+      "sha256": "8e3ab164928d5b74cdbbed8664ebf0c1977e6e9927f03fc6fa7836a7c7cdf4fa"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/from.ts",
+      "sha256": "27cfb1ef666f641367427f94d4435b56e7f867dbe786e057120d004db96bfd71"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/globals.d.ts",
+      "sha256": "3d0d464f13e75a701639fd5def66d48bee656805a5ecfd2e57a8fefa0bfcf005"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/index.ts",
+      "sha256": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/map.ts",
+      "sha256": "2ae37eba9c0fba7d7820dd7953eb5155f768bc03ce4a4d32116abe88b159199b"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/reveal.ts",
+      "sha256": "d4c0e7dfabf3b0f52aca91169863e2bfade6a57738d294330e02a05bba3d0129"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/signals.ts",
+      "sha256": "d3d7dabbfa45dcd47b7ea3ccc12168c83a1cf646d519a6880013b8428b23a4f1"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/affects.ts",
+      "sha256": "3adca4d18279788835eee80fb357cd40cbb0e2ae0d124922ce5b4b6605f4eda5"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/edges.ts",
+      "sha256": "9cb1068d792e4fcb6233e1a47bc76d2dc46823691a94e21b9e6ea85bae3aae42"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/hooks.ts",
+      "sha256": "8db334561528a83f4b60b7ccd90cca863a3dd1665d01cfa39ff6c1dbe1e4dd1f"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/index.ts",
+      "sha256": "d2975ee69265792ef8f5509a3115044023f91d290295d8ef989d5e305dc68aab"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/optimistic.ts",
+      "sha256": "f91f034f7470a87118f5bdc9fc8aecd3c962698a63e1776421989f232848a918"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/projection.ts",
+      "sha256": "7ff8040f4769e1454a626b996502128494d26badcf147305399bae7bc8bb1f0f"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/reconcile.ts",
+      "sha256": "aea4411eceab2309ba8bbc769410845c0529d7055b29ef3b1643fee09844c28e"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/store.ts",
+      "sha256": "34f8f31cd6be0f020e9638830d5d3acf1b8865100b1701cc6ad218742a142f34"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/storePath.ts",
+      "sha256": "5b7587a755c09aa4d32dc8515a942497fa249f6cf151c065d2fd5e74451b2666"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/target.ts",
+      "sha256": "d651342f9a184c0fc5cbfdd41a18f8cf2748e9b17b329a4038b8756eedeec9d3"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/types.ts",
+      "sha256": "00d50fa1a2393887a5d18e96b223ae4cbbc8b9b7706cca0784055c0872319e51"
+    },
+    {
+      "file": "upstream/solid/packages/signals/src/store/utils.ts",
+      "sha256": "48c7061b90a64ce5cef4faae298de47207d3db5ed56e01701a26d10160ff6095"
+    }
+  ],
+  "changedRecordedInputs": [
+    "packages/signals/src/deferred.ts",
+    "packages/signals/src/from.ts"
+  ],
+  "scope": "Port merged #4231 in admitted data/thenable catch; verify #4232/#4233 source fixes, leaving their Bend profiles explicit omissions.",
+  "sourceFixes": {
+    "4231": "c7f2d360ee1510b4bf262f3218f21b89a54f9cb5",
+    "4232": "0e668d82e0aec02e9e6cf8309c6ea4d84e4de054",
+    "4233": "b9b6f3339a971b9ea06740151b029987a84ee13e"
+  },
+  "activeDeviationIds": [],
+  "publicHistories": 3768,
+  "newPublicHistories": 32,
+  "existingFormerBugHistoriesUpdated": 4,
+  "closedComposedRegressions": 73,
+  "native": {
+    "testFilesPassed": 341,
+    "testsPassed": 5547,
+    "expectedFailures": 2,
+    "skipped": 2,
+    "sourceClean": true,
+    "repros": [
+      {
+        "tier": "dev.js",
+        "name": "deferred-superseded-error",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tier": "dev.js",
+        "name": "deferred-sync-iterator",
+        "result": "pass",
+        "cases": 4,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "deferred": false,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": false,
+              "promised": true,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": true,
+              "value": 1
+            }
+          ]
+        }
+      },
+      {
+        "tier": "dev.js",
+        "name": "from-sync-unsubscribe",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            }
+          ]
+        }
+      },
+      {
+        "tier": "prod/index.js",
+        "name": "deferred-superseded-error",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tier": "prod/index.js",
+        "name": "deferred-sync-iterator",
+        "result": "pass",
+        "cases": 4,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "deferred": false,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": false,
+              "promised": true,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": true,
+              "value": 1
+            }
+          ]
+        }
+      },
+      {
+        "tier": "prod/index.js",
+        "name": "from-sync-unsubscribe",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            }
+          ]
+        }
+      },
+      {
+        "tier": "observe/index.js",
+        "name": "deferred-superseded-error",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "until",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": false,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": false,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            },
+            {
+              "waiter": "refresh",
+              "seeded": true,
+              "priorFlight": true,
+              "beforeObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ],
+              "afterObsoleteSettles": [
+                {
+                  "error": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tier": "observe/index.js",
+        "name": "deferred-sync-iterator",
+        "result": "pass",
+        "cases": 4,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "deferred": false,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": false,
+              "promised": true,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": false,
+              "value": 1
+            },
+            {
+              "deferred": true,
+              "promised": true,
+              "value": 1
+            }
+          ]
+        }
+      },
+      {
+        "tier": "observe/index.js",
+        "name": "from-sync-unsubscribe",
+        "result": "pass",
+        "cases": 8,
+        "output": {
+          "expectFixed": true,
+          "cases": [
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": false,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": false,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": false,
+              "object": true,
+              "result": "value 7",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": false,
+              "result": "original source error",
+              "closed": 1
+            },
+            {
+              "synchronous": true,
+              "failed": true,
+              "object": true,
+              "result": "original source error",
+              "closed": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "proofs": {
+    "rootRecord": "tracking/checked.json records the final independent-kernel verdict and all dependency hashes.",
+    "newQuantified": [
+      "deferred_life_plainUnmarkedFailure",
+      "deferred_life_unreadyFailure",
+      "deferred_caught_fault"
+    ],
+    "sourceChangedConclusion": "deferred_life_closedFailure retains its all-World/state/error domain but now concludes exact landing followed by original-error rethrow. Its obsolete old-source conclusion remains on baseline/solid-3cbfaf1a.",
+    "allCompleteProgramDomainsAndBudgetsRetained": true,
+    "scopedBooleanControl": "proof/deferred-error-probe.bend; not counted as a composed public program regression."
+  },
+  "negativeVariants": {
+    "configured": 524,
+    "finite": 439,
+    "kernel": 85,
+    "affectedCurrentPinCompiledAndRejected": 71,
+    "newVariantsIncluded": 3,
+    "freshCompleteSweep": false,
+    "historicalCompleteCorpus": 521,
+    "historicalReceipt": "tracking/deferred-payload-validation.json and tracking/reviews/solid-3cbfaf1a-validation.json",
+    "discarded": [
+      "A generic symbolic-World rejection exceeded the diagnostic output limit and earns no credit.",
+      "An initial wrongly typed diagnostic fixture and its apparent negative result earn no credit. Corrected baseline fixture passes; final 71-variant run uses that fixture."
+    ],
+    "resourceOrCompilerFailuresCredited": false
+  },
+  "logs": {
+    "public": {
+      "sha256": "97d608b0aa4752d035627cded9c05a70f681b4c713fe6dda244f612a585570a2",
+      "tail": "and default abort; native identity assertions pass.\nHost reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens.\n8 fixed-initial constructor/setter, 8 general-initial constructor and 64 general constructor/setter/drain controls match canonical arenas and pinned Solid values; the quantified properties are independently kernel-checked.\n512 finite two-update scalar-memo controls match actual public constructors/setters/flushes, canonical final Worlds and native Solid values.\n49 finite public scalar-memo programs / 1260 prefixes match complete canonical Worlds and pinned native values; 36 separate steady-pass prefix/counter controls pass. Induction is checked separately by the kernel.\n35 finite batched scalar-memo programs / 182 completed prefixes and 791 writes match pinned native committed reads, one computation per batch, exact canonical Worlds and scheduling-job counts. Induction is checked separately by the kernel.\n64 finite children-flatten controls match the real public expression, exact canonical machine/World with four sufficient budgets and pinned native values. The arbitrary-natural-payload proof is checked independently by the kernel.\n8 finite two-memo/render controls match actual constructors/setters, complete canonical Worlds, native traces and exactly one final render application per update; the quantified public program and setter bridge are independently kernel-checked.\nProof process success, rejection and infrastructure/resource stops remain distinct.\n4 source-only action controls preserve first/resumed-slice scheduling, production callback-without-drain behavior, held writes, rejection and nested depth; paired Bend action evidence is checked separately.",
+      "result": "pass"
+    },
+    "alignment": {
+      "sha256": "0ea7c37969b72f172ded51494cba4cdee8517742e63db166d95d9dbd8027b8e7",
+      "tail": "n, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Public promise/transaction execution is checked separately.\n2160 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.\n2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state.\n4096 setMemo comparisons match actual TS raw/updater calls, committed-versus-staged previous values, manual writes, held rederivation flags, heaps and schedules.\n4096 held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication.\n4096 flight-state comparisons match TS registration, immediate verdicts, identity/dirty guards, loading parks, rejection/status order, autodisposal and held callback publication.\n6144 watch-body comparisons match actual TS closure calls: own/foreign transaction delivery gates, redirects, rerun deduplication, status unwrapping and NotReady rethrows.\n4096 source question-counter steps, 5 large counter boundaries and 69 flight provenance cases match TS; exact binary increment/equality also pass 4103 integer vectors, including the mainline identity and large mathematical IDs.\n8192 actual until-closure comparisons match own/foreign delivery gates, truthy in-pass confirmation, open/running guards, redirects/merges, errors and NotReady.\n46 direct native isSame comparisons preserve raw verdicts, callback arguments/identity, status-error routing and NotReady behavior.",
+      "result": "pass"
+    },
+    "newPublic": {
+      "sha256": "2367d9a2df795f4c5426ede8c3ada9031ae8206ff5af7c59ddd89b2713790f6a",
+      "tail": "32 merged deferred synchronous-error histories cover seeds, current error identity, immediate/native obsolete flights, until/refresh, stale success/rejection, application error handling and later recovery.",
+      "result": "pass"
+    },
+    "nativeBuild": {
+      "sha256": "0cc840bb30d33d5719219609ba97001026b58f90539b1a96f1833ccf4132b000",
+      "tail": "ber[]'.\n  Overload 3 of 3, '(fn: (draft: number[]) => void | number[] | Promise<void | number[]> | AsyncIterable<void | number[]>, seed: number[], options?: ProjectionOptions | undefined): ProjectionStoreReturn<...>', gave the following error.\n    Type 'number[] | Promise<unknown>' is not assignable to type 'void | number[] | Promise<void | number[]> | AsyncIterable<void | number[]>'.\n      Type 'Promise<unknown>' is not assignable to type 'void | number[] | Promise<void | number[]> | AsyncIterable<void | number[]>'.\n        Type 'Promise<unknown>' is not assignable to type 'Promise<void | number[]>'.\n          Type 'unknown' is not assignable to type 'void | number[]'.\n/workspace/solid-next-b9b6f333/packages/signals/tests/store/derived-presence-async-3726.test.ts:287:23\n\n\u001b[7m287\u001b[0m       const [store] = createStore<number[]>(() => source() ?? new Promise(() => {}), []);\n\u001b[7m   \u001b[0m \u001b[91m                      ~~~~~~~~~~~\u001b[0m\n\n  \u001b[96msrc/store/index.ts\u001b[0m:\u001b[93m99\u001b[0m:\u001b[93m7\u001b[0m\n    \u001b[7m99\u001b[0m   fn: (draft: T) => void | T | Promise<void | T> | AsyncIterable<void | T>,\n    \u001b[7m  \u001b[0m \u001b[96m      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    The expected type comes from the return type of this signature.\n\n(!) Circular dependencies\nsrc/core/core.ts -> src/core/async.ts -> src/core/core.ts\nsrc/core/core.ts -> src/core/async.ts -> src/core/invariants.ts -> src/core/dev.ts -> src/core/core.ts\nsrc/core/core.ts -> src/core/async.ts -> src/core/graph.ts -> src/core/heap.ts -> src/core/core.ts\n...and 8 more\ncreated dist/observe in 8.8s\nmangled _-props across 43 files in dist/prod\nmangled _-props across 47 files in dist/observe\ncheck-pure: 1 annotation(s) present in dist/prod (src has 2)\ncheck-pure: 1 annotation(s) present in dist/observe (src has 2)",
+      "result": "pass"
+    },
+    "nativeTypes": {
+      "sha256": "7f6e046453c37618caf64f8aa2cae8960d0a71b98a39f6b28e3c71d45a1f4bea",
+      "tail": "> @solidjs/signals@2.0.0-rc.17 types\n> tsc -p tsconfig.build.json",
+      "result": "pass"
+    },
+    "nativeSuite": {
+      "sha256": "f9d338e68612d2f3102c80d244354d72a5013eb5d3389028013966e717cea7c4",
+      "tail": "RUN  v4.1.6 /workspace/solid-next-b9b6f333/packages/signals\n\n\n Test Files  341 passed (341)\n      Tests  5547 passed | 2 expected fail | 2 skipped (5551)\n   Start at  00:52:02\n   Duration  43.73s (transform 4.23s, setup 0ms, import 21.09s, tests 31.51s, environment 523ms)",
+      "result": "pass"
+    },
+    "affectedNegativeVariants": {
+      "sha256": "6d913cab7a33300cdbcc15ec88ba2af2644fa98dea3c1b405e11db92e8328d31",
+      "tail": "ng uses wrong transaction\nRejected mutation: deferred life cleanup ends flight on rerun\nRejected mutation: deferred life loading seed opens answer window\nRejected mutation: deferred life answered state is not sticky\nRejected mutation: deferred life answer window does not set loading\nRejected mutation: deferred life answer window lacks lags flag\nRejected mutation: deferred life unready catch loses parked flight\nRejected mutation: deferred life catch replaces original exception\nRejected mutation: deferred life serve uses pending outside hold\nRejected mutation: deferred life serve ignores a pending landing\nRejected mutation: deferred life kernel null landing changes clock\nRejected mutation: deferred life kernel marked ask changes context\nRejected mutation: deferred life kernel idle cleanup changes context\nRejected mutation: deferred lag ignores module-empty gate\nRejected mutation: deferred lag drops direct membership\nRejected mutation: deferred lag loses lagging identity\nRejected mutation: deferred lag ignores seen cycles\nRejected mutation: deferred lag seen outranks direct membership\nRejected mutation: deferred lag ignores empty recompute prefix\nRejected mutation: deferred lag ignores validated tail cutoff\nRejected mutation: deferred lag reverses dependency search\nRejected mutation: deferred lag incorrectly stops at errors\nRejected mutation: deferred lag kernel empty work writes schedule\nRejected mutation: deferred lag kernel exhaustion changes clock\nRejected mutation: deferred lag kernel found flight writes context\nRejected mutation: flush keeps captured deferred zombies\nRejected mutation: flatten loses a previous deferred sibling\nRejected mutation: flatten resolving wrapper retains deferred mode\n71 source-changing variants rejected by differential or kernel assertions.",
+      "result": "pass"
+    },
+    "lifecycleKernel": {
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "tail": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update",
+      "result": "pass"
+    },
+    "catchProbeKernel": {
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "tail": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update",
+      "result": "pass"
+    },
+    "beforePort": {
+      "sha256": "dc48788a045e35fb0195825b10851550a6f2e3ede8c0ca8c2551639ac54d5882",
+      "tail": "FAILED: preserved synchronous-error old-flight baseline awaitUntil/true\nnode:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: preserved synchronous-error old-flight baseline awaitUntil/true marks on d\n\n1 !== 0\n\n    at scenario (file:///workspace/solid-signals-bend/tests/deferred.mjs:34:269)\n    at async file:///workspace/solid-signals-bend/tests/deferred.mjs:72:2 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: 1,\n  expected: 0,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v24.19.0",
+      "result": "expected failure"
+    }
+  }
+}

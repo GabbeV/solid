@@ -62,3 +62,16 @@ All 25 new variants now fail assertions after correction: 22 finite and three
 kernel. Total distinct useful rejections are 480 (406 finite /74 kernel), alongside
 the full earlier 455-variant pass on unchanged prior runtime definitions. The
 public and alignment suites pass, and all composed properties pass the root kernel.
+
+
+## b9b6f333 merged catch behavior
+
+The source catch now calls land(flight) unless its full open-and-NotReady guard
+holds (#4231). sourceFailed follows that exact else and rethrows the original
+value. Core.deferredUnwind clears the active translated fault while the catch
+executes; otherwise guarded mark release would be skipped. The old closedFailure
+state-preservation conclusion is retired with the source change and replaced by
+exact post-land rethrow over the same domain. Two further properties prove
+unmarked ordinary-error retirement and the open-NotReady ask, and a general core
+continuation property checks the caught-fault boundary. All complete-program
+domains and budgets stand. See reviews/solid-b9b6f333.md.

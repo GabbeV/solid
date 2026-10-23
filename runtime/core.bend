@@ -4916,7 +4916,7 @@ def actionExecutorThrow(+w: R.World, +rest: List<&2, Task>, +saved: List<&2, R.V
 def deferredUnwind(w: R.World, rest: List<&2, Task>, cell: Nat, open: Bool, saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
   match fault:
     case R.CallbackThrown{cause}:
-      Machine{Deferred.sourceFailed(w, cell, open, cause), rest, saved}
+      Machine{Deferred.sourceFailed(R.World.with_fault(w, R.Healthy{}), cell, open, cause), rest, saved}
     case _:
       Machine{w, rest, saved}
 

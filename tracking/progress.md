@@ -3,9 +3,10 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is 3cbfaf1a (declares rc.17). The latest integration ports merged async-error
-parked-frame retirement (#4228), with 16 cleanup timing histories and three
-quantified continuation properties. The earlier fallback/cleanup checkpoint
+is b9b6f333 (declares rc.17). The latest integration ports merged synchronous-error
+flight retirement (#4231), with 32 added histories and three quantified
+boundaries; merged #4232/#4233 are validated in native tiers and remain outside
+the current Bend profile. The earlier fallback/cleanup checkpoint
 remains at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -19,9 +20,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,736 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,768 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 521; resource/infrastructure failures are excluded from useful rejections |
+| Compiled mutation checks | 116 | 524 configured; 521 previous plus three new controls, with focused current-pin revalidation |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -441,3 +442,22 @@ closed-regression count stays 73. The mutation corpus is 521 (438 finite,83
 kernel), backed by the prior complete 519 receipt on identical runtime/source and
 two new variant receipts. Arbitrary computation functions/graphs, callable and
 async payloads remain distinct proof work.
+
+
+## Merged synchronous-error flight retirement
+
+The pin advances to b9b6f333, integrating #4231 in the admitted deferred catch.
+The old held flight/mark is ended before the original synchronous error is
+re-thrown, and the core clears the translated active fault while executing the
+catch. Four prior baseline histories now assert the fixed answer; 32 new paired
+histories bring the public corpus to 3,768. Three quantified boundaries and a
+small catch projection pass the kernel. The old closedFailure conclusion changes
+with upstream behavior over its original domain; all complete-program domains
+and budgets, including ordinary payloads, stand.
+
+#4232 and #4233 are also merged, copied verbatim and validated in all native tiers
+(60 source repro cases), with the native suite at 341 files /5,547 passing tests.
+Their affected Bend stream/from profiles remain unfinished. The configured
+negative corpus is 524, with the preceding full 521 receipt kept historical and
+new/current affected variants recorded separately. The deviation register stays
+empty. See reviews/solid-b9b6f333.md.

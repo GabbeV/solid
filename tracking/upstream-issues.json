@@ -243,7 +243,7 @@
     {
       "id": "SOLID-DEFERRED-BUFFERED-FROM-007",
       "classification": "confirmed-upstream-bug",
-      "status": "reported",
+      "status": "upstream-fix-verified-unported",
       "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
       "sourceUnit": "deferred.ts:createDeferred first wrapped iterator pull (generic, not specific to from)",
       "record": "tracking/upstream/deferred-buffered-from.md",
@@ -257,23 +257,26 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4232",
-      "bendScope": "Data/thenables and first-load deferred streams are admitted. The affected from/open-window stream wrapper paths remain unported. No workaround is installed.",
+      "bendScope": "Merged fix is present in the verbatim reference and passes all three native tiers. Open-window deferred stream wrapping / from remain explicit unfinished Bend operations at this checkpoint. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/kq_5yBGMTzSh2Udc6VEwXw",
       "playgroundHostedVerification": "repros/playground/deferred-sync-iterator-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44",
       "lastRevalidation": {
-        "sourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
-        "date": "2026-10-22",
-        "result": "Still open and unmerged; candidate remains separate from translation."
+        "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+        "date": "2026-10-23",
+        "result": "Merged fix passes unchanged source-built production/development/observe repros. Affected Bend paths remain explicitly unported at this checkpoint."
       },
       "historicalFromPlaygroundReproducer": "repros/playground/deferred-buffered-from.tsx",
       "historicalFromPlaygroundVerification": "repros/playground/deferred-buffered-from-baseline-browser.json",
-      "historicalFromStandaloneReproducer": "repros/solid-signals/deferred-buffered-from.mjs"
+      "historicalFromStandaloneReproducer": "repros/solid-signals/deferred-buffered-from.mjs",
+      "fixMergedCommit": "0e668d82e0aec02e9e6cf8309c6ea4d84e4de054",
+      "validatedSourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+      "latestValidationRecord": "tracking/reviews/solid-b9b6f333-validation.json"
     },
     {
       "id": "SOLID-FROM-SYNC-UNSUBSCRIBE-008",
       "classification": "confirmed-upstream-bug",
-      "status": "reported",
+      "status": "upstream-fix-verified-unported",
       "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
       "sourceUnit": "from.ts",
       "record": "tracking/upstream/from-sync-unsubscribe.md",
@@ -287,20 +290,23 @@
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4233",
-      "bendScope": "Data/thenables and first-load deferred streams are admitted. The affected from/open-window stream wrapper paths remain unported. No workaround is installed.",
+      "bendScope": "Merged fix is present in the verbatim reference and passes all three native tiers. Open-window deferred stream wrapping / from remain explicit unfinished Bend operations at this checkpoint. No workaround is installed.",
       "playgroundUrl": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
       "playgroundHostedVerification": "repros/playground/from-sync-unsubscribe-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44",
       "lastRevalidation": {
-        "sourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
-        "date": "2026-10-22",
-        "result": "Still open and unmerged; candidate remains separate from translation."
-      }
+        "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+        "date": "2026-10-23",
+        "result": "Merged fix passes unchanged source-built production/development/observe repros. Affected Bend paths remain explicitly unported at this checkpoint."
+      },
+      "fixMergedCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+      "validatedSourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+      "latestValidationRecord": "tracking/reviews/solid-b9b6f333-validation.json"
     },
     {
       "id": "SOLID-DEFERRED-SYNC-ERROR-009",
       "classification": "confirmed-upstream-bug",
-      "status": "reported",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
       "sourceUnit": "deferred.ts:createDeferred source-function catch",
       "record": "tracking/upstream/deferred-superseded-error.md",
@@ -310,17 +316,25 @@
       "playgroundHostedVerification": "repros/playground/deferred-error-step-hosted.json",
       "candidateFixPatch": "tracking/upstream/deferred-superseded-error.patch",
       "validationRecord": "tracking/upstream/deferred-superseded-error-validation.json",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4231",
-      "bendScope": "The admitted data/thenable constructor preserves this baseline defect in four paired until/refresh histories. No candidate change is installed.",
+      "bendScope": "The admitted data/thenable catch ends old flights for every non-open-NotReady throw, then rethrows the original error. Four previous baseline histories now assert the fix; 32 new public histories cover delivery, error identity and recovery. No workaround is installed.",
       "lastRevalidation": {
-        "sourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
-        "date": "2026-10-22",
-        "result": "Still open and unmerged; candidate remains separate from translation."
+        "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+        "date": "2026-10-23",
+        "result": "Merged fix passes unchanged source-built production/development/observe repros; integrated into the admitted Bend data/thenable catch."
       },
-      "historicalPlaygroundReproducer": "repros/playground/deferred-superseded-error.tsx"
+      "historicalPlaygroundReproducer": "repros/playground/deferred-superseded-error.tsx",
+      "fixMergedCommit": "c7f2d360ee1510b4bf262f3218f21b89a54f9cb5",
+      "validatedSourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+      "latestValidationRecord": "tracking/reviews/solid-b9b6f333-validation.json",
+      "historicalBaseline": {
+        "sourceCommit": "3cbfaf1a014e6b45901836b77cbac8bbf17597d4",
+        "bendCommit": "6ed4732acd72df822521a0fa4e6a783cb19be722",
+        "branch": "baseline/solid-3cbfaf1a"
+      }
     }
   ]
 }

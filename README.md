@@ -60,8 +60,8 @@ iterator engine. Stream refetch wrapping/from/store/boundary profiles remain unf
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,736 public histories, 521 useful mutation
-rejections and 73 composed closed regressions, plus quantified properties.
+budget. Current evidence totals 3,768 public histories, 524 configured mutation
+controls and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
 input dispatch and its own bound setter, supported by the lane pass/flush
@@ -72,17 +72,18 @@ pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `3cbfaf1a` (declares rc.17), matching `next`
-checked on 2026-10-22. [The integration review](tracking/reviews/solid-3cbfaf1a.md)
-ports #4228's cleanup of the previous displayed frame after a replacement
-publishes an async error. All 77 recorded Solid inputs match Git. All previous
-theorem domains and sufficient budgets remain unchanged. The three reported
-PRs #4231–#4233 are still unmerged, with no candidate patch installed.
+The reviewed Solid pin is now `b9b6f333` (declares rc.17), matching `next`
+checked on 2026-10-23. [The integration review](tracking/reviews/solid-b9b6f333.md)
+ports #4231's synchronous-error deferred flight retirement and validates the
+merged #4232/#4233 fixes in native builds. All 77 recorded Solid inputs match Git.
+The latter stream/from paths remain unfinished in Bend. The source-changed catch
+boundary theorem has a new conclusion over its original domain; complete-program
+domains and sufficient budgets are unchanged. No semantic workaround is active.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 521 source-changing variants
+npm run mutations                # reject 524 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

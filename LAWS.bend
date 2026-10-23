@@ -8,6 +8,8 @@ import ./proof/deferred-payload-driver.bend as DeferredPayloadDriver
 import ./proof/ordinary-payload.bend as Payload
 import ./proof/deferred-driver.bend as DeferredDriver
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
+import ./proof/deferred-error-catch.bend as DeferredCatch
+import ./runtime/deferred-runtime.bend as DeferredArena
 import ./runtime/deferred-lifecycle.bend as DeferredLife
 import ./runtime/pending-state.bend as DeferredPending
 import ./proof/deferred-lag.bend as DeferredLaws
@@ -1963,11 +1965,36 @@ law deferred_life_emptyHeld:
   for node: Nat
   {DeferredLife.landHeld(fuel, w, node, 0n) == w : R.World}
 
+law deferred_caught_fault:
+  for w: R.World
+  for cell: Nat
+  for open: Bool
+  for error: R.Value
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  {Core.deferredUnwind(w, rest, cell, open, saved, R.CallbackThrown{error}) == Core.Machine{DeferredArena.sourceFailed(R.World.with_fault(w, R.Healthy{}), cell, open, error), rest, saved} : Core.Machine}
+
 law deferred_life_closedFailure:
   for w: R.World
   for state: R.DeferredState
   for error: R.Value
-  {DeferredLife.sourceFailed(w, state, False{}, error) == B.Bundle{R.World.with_fault(w, R.CallbackThrown{error}), state} : B.Bundle<R.World, R.DeferredState>}
+  {DeferredLife.sourceFailed(w, state, False{}, error) == DeferredLifeLaws.failed(DeferredLife.land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{}), error) : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_plainUnmarkedFailure:
+  for w: R.World
+  for node: Nat
+  for flight: Nat
+  for error: Nat
+  for answered: Bool
+  for lagging: List<&2, Nat>
+  {DeferredLife.sourceFailed(w, R.DeferredState{R.DeferredCell{node, R.Reference{flight}, False{}, answered}, lagging}, True{}, R.Reference{error}) == B.Bundle{R.World.with_fault(w, R.CallbackThrown{R.Reference{error}}), R.DeferredState{R.DeferredCell{node, R.Null{}, False{}, answered}, DeferredPending.remove(lagging, node)}} : B.Bundle<R.World, R.DeferredState>}
+
+law deferred_life_unreadyFailure:
+  for w: R.World
+  for state: R.DeferredState
+  for identity: Nat
+  for source: Nat
+  {DeferredLife.sourceFailed(w, state, True{}, R.NotReadyFailure{identity, source}) == DeferredLifeLaws.failed(DeferredLife.ask(w, state, R.NotReadyFailure{identity, source}), R.NotReadyFailure{identity, source}) : B.Bundle<R.World, R.DeferredState>}
 
 law deferred_life_answeredSticky:
   for w: R.World
