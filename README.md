@@ -5,7 +5,7 @@ An executable **incremental translation of the non-store core** of
 
 The source is pinned to next@225014bf. [The latest source review](tracking/reviews/solid-225014bf.md)
 ports merged deferred error handling. [Stream refetch](tracking/deferred-stream-refetch.md)
-now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. Observable/wrapped iterable inputs, full-package and arbitrary-async-graph guarantees remain open.
+now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see

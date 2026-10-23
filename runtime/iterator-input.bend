@@ -2,6 +2,7 @@
 # including protocol throws; no reactive publication decision is made here.
 import Base
 import ./from-state.bend as From
+import ./from-wrap.bend as Wrapped
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 
@@ -34,7 +35,8 @@ def nextExternal(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, R
 
 def next(+w: R.World, +id: Nat, +argument: R.Slot) -> B.Bundle<R.World, R.NextInput>:
   B.choose(~B.Bundle<R.World, R.NextInput>, From.isSubscription(w, id),
-    _ => From.next(w, R.ExternalIterator.plan(B.iterator(w, id))), _ => nextExternal(w, id, argument))
+    _ => From.next(w, R.ExternalIterator.plan(B.iterator(w, id))), _ => B.choose(~B.Bundle<R.World, R.NextInput>, Wrapped.isWrapped(w, id),
+      _ => B.Bundle{R.World.with_fault(w, R.Unsupported{97n}), R.ThrowNext{R.Undefined{}}}, _ => nextExternal(w, id, argument)))
 
 def returnedExternal(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, Returned>:
   +it = B.iterator(w, id)
@@ -51,5 +53,5 @@ def returnedExternal(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.Worl
 
 # Callback-bearing return methods must re-enter Core, not a World-only facade.
 def returned(+w: R.World, +id: Nat, +argument: R.Slot) -> B.Bundle<R.World, Returned>:
-  B.choose(~B.Bundle<R.World, Returned>, From.isSubscription(w, id),
+  B.choose(~B.Bundle<R.World, Returned>, Bool.or(From.isSubscription(w, id), Wrapped.isWrapped(w, id)),
     _ => B.Bundle{R.World.with_fault(w, R.Unsupported{95n}), MissingReturn{}}, _ => returnedExternal(w, id, argument))

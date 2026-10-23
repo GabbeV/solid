@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 4234 differential histories, 551 configured compiled mutations,
+Current verification: 4438 differential histories, 564 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 225014bf (declares rc.18) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -910,3 +910,12 @@ wrapped-iterable inputs remain unfinished. Twelve new compiled negative controls
 bring configuration to 551 (459 finite, 92 kernel). The frozen complete 539
 receipt belongs to the preceding 4379eb6 source checkpoint. Bug010 is preserved;
 no new upstream bug, patch, report or semantic deviation is introduced.
+
+The [wrapped iterable checkpoint](from-iterables.md) follows the direct
+subscription work: 204 new public histories (4,438 total), 384 separate actual
+concurrent-pull/native method controls, and fifteen quantified roots (complete
+ordinary-payload 84-step owned read/dispose/cancel programme and corollary, plus
+thirteen local guard/closure laws). Observable/interop and object unsubscribe
+remain unfinished. Thirteen new compiled negative controls configure 564
+variants (469 finite, 95 kernel). All earlier programme domains/budgets stand.
+No new bug, patch, upstream report or semantic deviation is added.

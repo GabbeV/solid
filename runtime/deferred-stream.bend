@@ -77,12 +77,13 @@ def firstInput(+w: R.World, +id: Nat, input: R.NextInput) -> B.Bundle<R.World, R
       +w = store(w, id, R.DeferredIterator.with_first(wrapper(w, id), False{}))
       B.Bundle{observe(w, id, result), R.PromiseNext{result}}
 
-def next(+w: R.World, +id: Nat) -> B.Bundle<R.World, R.NextInput>:
-  +pair = Input.next(w, R.DeferredIterator.inner(wrapper(w, id)), R.Present{R.Undefined{}})
-  +w = B.first(R.World, R.NextInput, pair)
-  +input = B.second(R.World, R.NextInput, pair)
+def afterNext(+w: R.World, +id: Nat, +input: R.NextInput) -> B.Bundle<R.World, R.NextInput>:
   B.choose(~B.Bundle<R.World, R.NextInput>, R.DeferredIterator.first(wrapper(w, id)),
     _ => firstInput(w, id, input), _ => B.Bundle{w, input})
+
+def next(+w: R.World, +id: Nat) -> B.Bundle<R.World, R.NextInput>:
+  +pair = Input.next(w, R.DeferredIterator.inner(wrapper(w, id)), R.Present{R.Undefined{}})
+  afterNext(B.first(R.World, R.NextInput, pair), id, B.second(R.World, R.NextInput, pair))
 
 # The wrapper always has return(). Missing inner return falls back to the
 # source's Promise.resolve(DONE); existing return errors pass to close's catch.

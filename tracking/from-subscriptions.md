@@ -2,8 +2,8 @@
 
 At Solid next@225014bf (rc.18), `from(fn)` now executes through the same Bend
 callback, owner, iterator, flight and scheduler engines as the other primitives.
-This closes the callback-subscription branch; it does not complete `from`'s
-Observable or wrapped-AsyncIterable branches.
+This closes the callback-subscription branch. The subsequent [wrapped input
+checkpoint](from-iterables.md) adds typed AsyncIterable inputs; Observable objects remain open.
 
 ## Source correspondence
 
@@ -74,8 +74,7 @@ properties. Configuration is 551 (459 finite, 92 kernel). The frozen complete
 
 ## Explicit omissions and source defects
 
-Observable/interop objects, object `.unsubscribe()` teardown, wrapped input
-AsyncIterables, arbitrary protocol getters/methods, manual async-generator user
+Observable/interop objects, object `.unsubscribe()` teardown, arbitrary protocol getters/methods, manual async-generator user
 bodies and nonproduction diagnostics remain unfinished. Non-callable input is
 an explicit Unsupported boundary, not a fabricated source TypeError. Typed
 opaque data has no observable properties. No public `onSupersede` API is invented.

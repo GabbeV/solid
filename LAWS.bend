@@ -1,3 +1,8 @@
+import ./runtime/from-wrap.bend as WrappedFrom
+import ./proof/from-wrap-laws.bend as FromWrapLaws
+import ./proof/from-iterable-driver.bend as FromIterableDriver
+import ./proof/from-iterable-program.bend as FromIterableProgram
+import ./proof/from-iterable-outcome.bend as FromIterableOutcome
 import ./runtime/from-state.bend as FromState
 import ./runtime/promise-input.bend as NativePromise
 import ./proof/from-laws.bend as FromLaws
@@ -2354,3 +2359,100 @@ law from_program_value_cleanup:
   for input: Payload.Ordinary
   for extra: Nat
   {FromOutcome.outcome(Core.run(Nat.add(120n, extra), FromDriver.before(input))) == FromOutcome.Outcome{R.Present{Payload.value(input)}, 1n, R.Healthy{}} : FromOutcome.Outcome}
+
+law from_wrap_bare:
+  for w: R.World
+  for plan: Nat
+  for done: Bool
+  for value: R.Value
+  {WrappedFrom.wrapInput(w, plan, R.BareNext{done, value}) == B.Bundle{w, R.BareNext{done, value}} : B.Bundle<R.World, R.NextInput>}
+
+law from_wrap_thrown:
+  for w: R.World
+  for plan: Nat
+  for error: R.Value
+  {WrappedFrom.wrapInput(w, plan, R.ThrowNext{error}) == B.Bundle{w, R.ThrowNext{error}} : B.Bundle<R.World, R.NextInput>}
+
+law from_wrap_unresolved:
+  for w: R.World
+  for plan: Nat
+  for output: Nat
+  for observer: Nat
+  for immediate: Bool
+  {WrappedFrom.observerState(w, plan, output, observer, immediate, R.Unresolved{}) == w : R.World}
+
+law from_wrap_canceled_delivery:
+  for w: R.World
+  for plan: Nat
+  for output: Nat
+  for rejected: Bool
+  for value: R.Value
+  for known: {WrappedFrom.has(R.FromWrapped.pending(WrappedFrom.get(w, plan)), output) == False{} : Bool}
+  {WrappedFrom.deliver(w, plan, output, rejected, value) == w : R.World}
+
+law from_wrap_no_pending:
+  for w: R.World
+  {WrappedFrom.resolvePending([], w) == w : R.World}
+
+law from_wrap_no_waits:
+  for observer: Nat
+  {WrappedFrom.findWait([], observer) == 0n : Nat}
+
+law from_wrap_no_plans:
+  for observer: Nat
+  for id: Nat
+  {WrappedFrom.findPlans([], observer, id) == B.Bundle{0n, 0n} : B.Bundle<Nat, Nat>}
+
+law from_wrap_remove_empty:
+  for id: Nat
+  {WrappedFrom.remove([], id) == [] : List<&2, Nat>}
+
+law from_wrap_return_throw:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  for cause: R.Value
+  {Core.fromWrapFinishFinally(w, rest, saved, R.CallbackThrown{cause}) == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, R.StepResult{True{}, R.Undefined{}} <> saved} : Core.Machine}
+
+law from_wrap_return_type_error:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  {Core.fromWrapFinishFinally(w, rest, saved, R.TypeError{}) == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, R.StepResult{True{}, R.Undefined{}} <> saved} : Core.Machine}
+
+law from_wrap_preserve_exhaustion:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  {Core.fromWrapFinishFinally(w, rest, saved, R.Exhausted{}) == Core.Machine{w, rest, saved} : Core.Machine}
+
+law from_wrap_already_closed:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for id: Nat
+  for tail: List<&2, R.CleanupAction>
+  for first: R.Value
+  for second: R.Value
+  for plan: Nat
+  for known: {R.FromWrapped.closed(WrappedFrom.get(w, plan)) == True{} : Bool}
+  {Core.callbackAction(w, rest, stack, id, tail, first, second, R.FromWrappedFinish{plan}) == Core.Machine{w, rest, R.StepResult{True{}, R.Undefined{}} <> stack} : Core.Machine}
+
+law from_iterable_program_complete:
+  for input: Payload.Ordinary
+  for extra: Nat
+  {Core.run(Nat.add(84n, extra), FromIterableDriver.before(input)) == FromIterableProgram.state_84(input) : Core.Machine}
+
+law from_iterable_program_cancels_pull:
+  for input: Payload.Ordinary
+  for extra: Nat
+  {FromIterableOutcome.outcome(Core.run(Nat.add(84n, extra), FromIterableDriver.before(input))) == FromIterableOutcome.Outcome{R.Present{Payload.value(input)}, 1n, True{}, [], R.Unresolved{}, R.Fulfilled{R.StepResult{True{}, R.Undefined{}}}, R.Healthy{}} : FromIterableOutcome.Outcome}
+
+law from_wrap_cached_iterator:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for source: Nat
+  for ordinary: {FromState.factory(w, source) == False{} : Bool}
+  for cached: {Nat.is_ne(DeferredStreamRuntime.planWrapper(w, source), 0n) == True{} : Bool}
+  {Core.fromOpenState(w, rest, stack, R.FromIterable{source}) == Core.Machine{w, Core.FromWrapOpened{} <> rest, R.IteratorReference{DeferredStreamRuntime.iterator(w, source)} <> stack} : Core.Machine}

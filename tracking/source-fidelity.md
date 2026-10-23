@@ -4,7 +4,7 @@ Current pin: Solid 225014bf (declares rc.18), matching fetched next on 2026-10-2
 [The latest integration](reviews/solid-b9b6f333.md) copies merged #4231–#4233
 verbatim, ports synchronous-error flight retirement in the admitted deferred
 catch, and repairs the translated caught-fault posture before its helper runs.
-The open-window stream and direct from(fn) subscription paths are now translated; Observable/wrapped-iterable branches remain unfinished;
+The open-window stream and direct from(fn) subscription paths are now translated; Observable/interop branches remain unfinished;
 all three source repros pass unchanged native builds in all tiers. The old
 closedFailure theorem now states the new branch's result over its old domain;
 complete-program domains and sufficient budgets remain unchanged. No candidate
@@ -28,7 +28,7 @@ closure state and shared Set membership are threaded without replacing those
 source decisions. The [public data/thenable profile](deferred.md) now connects
 construction, registration, cleanup and the authoritative watch hook in source
 order. First-load and open-window streams now follow the ordinary engine and source wrapper;
-Observable/wrapped-from/store/boundary/snapshot branches remain unfinished;
+Observable/interop/store/boundary/snapshot branches remain unfinished;
 no active workaround is installed.
 
 ## Public non-store affects crossing
@@ -505,3 +505,12 @@ wrapped-iterable inputs remain unfinished. Twelve new compiled negative controls
 bring configuration to 551 (459 finite, 92 kernel). The frozen complete 539
 receipt belongs to the preceding 4379eb6 source checkpoint. Bug010 is preserved;
 no new upstream bug, patch, report or semantic deviation is introduced.
+
+The [wrapped iterable checkpoint](from-iterables.md) follows the direct
+subscription work: 204 new public histories (4,438 total), 384 separate actual
+concurrent-pull/native method controls, and fifteen quantified roots (complete
+ordinary-payload 84-step owned read/dispose/cancel programme and corollary, plus
+thirteen local guard/closure laws). Observable/interop and object unsubscribe
+remain unfinished. Thirteen new compiled negative controls configure 564
+variants (469 finite, 95 kernel). All earlier programme domains/budgets stand.
+No new bug, patch, upstream report or semantic deviation is added.

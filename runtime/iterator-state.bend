@@ -2,6 +2,7 @@
 # Leaf module: owner cleanup can close a stream without importing core/flight.
 import Base
 import ./iterator-input.bend as Input
+import ./iterator-methods.bend as Methods
 import ./deferred-stream.bend as DeferredStream
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -31,10 +32,7 @@ def newStream(+w: R.World, +node: Nat, +result: Nat, +source: Nat, +deferred: Bo
     _ => streamForIterator(w, node, result, B.second(R.World, Nat, pair), deferred, initialValue), _ => B.Bundle{w, 0n})
 
 def next(+w: R.World, stream: Nat) -> B.Bundle<R.World, R.NextInput>:
-  +id = R.StreamState.iterator(B.stream(w, stream))
-  +wrapper = R.StreamPlan.wrapper(B.streamPlan(w, R.ExternalIterator.plan(B.iterator(w, id))))
-  B.choose(~B.Bundle<R.World, R.NextInput>, Nat.is_ne(wrapper, 0n),
-    _ => DeferredStream.next(w, wrapper), _ => Input.next(w, id, R.Empty{}))
+  Methods.next(w, R.StreamState.iterator(B.stream(w, stream)), R.Empty{})
 
 # A returned thenable has only a rejection-swallow callback. Native-style
 # completion is external IO; a node-zero observer is explicitly a no-op.

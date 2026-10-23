@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "activeDeviationIds": [],
+  "publicHistoryCount": 4438,
+  "closedRegressionCount": 73,
+  "newPublicHistories": 204,
+  "privateMethodControls": 384,
+  "finiteCompleteProgramControls": {
+    "count": 14,
+    "prefixesEach": 84,
+    "budgets": [
+      84,
+      85,
+      140
+    ]
+  },
+  "kernel": {
+    "newRoots": 15,
+    "localLaws": 13,
+    "completeProgramme": "fixed owned from(AsyncIterable) constructor/read/pending-pull/dispose/flush for every admitted ordinary payload and budget >=84",
+    "result": "exact final Machine; payload preserved; one inner return; closed and empty pending; wrapper pull fulfilled DONE; inner Promise unresolved; Healthy",
+    "allPriorDomainsBudgetsRetained": true,
+    "rootReceipt": "tracking/checked.json"
+  },
+  "negative": {
+    "configured": 564,
+    "finite": 469,
+    "kernel": 95,
+    "newFocused": 13,
+    "completePriorReceipt": "tracking/reviews/solid-225014bf-complete-negative.json",
+    "freshComplete564Sweep": false,
+    "compileResourceFailuresCredited": false
+  },
+  "preservedSourceBugIds": [
+    "SOLID-DEFERRED-PROTOCOL-ERROR-010"
+  ],
+  "newBugOrWorkaround": false,
+  "limitations": [
+    "Observable/interop objects",
+    "object unsubscribe",
+    "arbitrary protocol getters/mutable methods and then calls that throw or inspect callback results",
+    "manual async-generator bodies",
+    "arbitrary async progress/graph families",
+    "nonproduction hooks"
+  ],
+  "draftFailuresCredited": false,
+  "publicSuite": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-all-tests.log",
+    "sha256": "8b0d59b582033ec73720a0abe43727fe7fcde39df059214499f889c951e92856",
+    "scope": "Full suite; subsequent cache-only iterator opening guard preserves all ordinary/from producer paths. Current guard is checked by a quantified opening theorem and compiled kernel-negative control."
+  },
+  "alignment": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-all-alignment.log",
+    "sha256": "1b0d2cff0d4ac51cebfe5dd34a93dafeb5bbe7b4cb57a056318755668e04d622"
+  },
+  "iterableHistories": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-tests.log",
+    "sha256": "762d7eccbeaa90fe997999e50782c004321a22872e3deed6cccf11300e5facc7"
+  },
+  "privateMethods": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-private.log",
+    "sha256": "3342735cfe5c082ed5830189b701b1faa7704bf38de578325b695714c96c21d2"
+  },
+  "finiteProgramme": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-proof-controls.log",
+    "sha256": "edc93b84ad0a9c5cc9da07fccf22521d704b92e462d9d3ed49253b8ca2f50840"
+  },
+  "localKernel": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-laws.log",
+    "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+  },
+  "negativeFocused": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-wrap-negative-final.log",
+    "sha256": "41574ed67313c2a76082667cfe9faa872f12340dbd0b52da694a1c00acdbf9b3"
+  }
+}

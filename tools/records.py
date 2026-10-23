@@ -20,6 +20,8 @@ schemas={
 'AsyncObserver': [('node','Nat'),('result','Nat'),('isSync','Bool'),('resolved','Bool'),('rejected','Bool'),('syncValue','Value'),('syncError','Value'),('stream','Nat')],
 'Awaiter': [('expr','Expr'),('refresh','Bool'),('target','Nat'),('own','Nat'),('root','Nat'),('node','Nat'),('state','AsyncSettlement'),('until','Bool'),('confirmation','Nat'),('timer','Bool'),('onAbort','Bool'),('signal','Nat')],
 'AbortInput': [('aborted','Bool'),('reason','Value')],
+'FromWait': [('observer','Nat'),('output','Nat')],
+'FromWrapped': [('inner','Nat'),('closed','Bool'),('pending','List<&2, Nat>'),('waits','List<&2, FromWait>'),('finish','Nat')],
 'FromSubscription': [('latest','Value'),('has','Bool'),('done','Bool'),('failed','Bool'),('failure','Value'),('waiting','Nat'),('unsubscribe','Value'),('closed','Bool'),('finish','Nat')],
 'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat'),('wrapper','Nat'),('factoryError','Slot'),('fromState','FromState')],
 'ExternalIterator': [('plan','Nat'),('cursor','Nat'),('returns','Nat')],
@@ -94,6 +96,7 @@ type FromState is Data:
   FromFunction{callee: Value}
   FromSubscriptionState{state: FromSubscription}
   FromIterable{source: Nat}
+  FromWrappedState{state: FromWrapped}
 
 type NextInput is Data:
   BareNext{done: Bool, value: Value}
@@ -273,6 +276,7 @@ type CleanupAction is Data:
   FromError{plan: Nat}
   FromComplete{plan: Nat}
   FromFinish{plan: Nat}
+  FromWrappedFinish{plan: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}

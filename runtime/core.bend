@@ -5,6 +5,8 @@ import Base
 import ./deferred-runtime.bend as Deferred
 import ./deferred-stream.bend as DeferredStream
 import ./from-state.bend as From
+import ./from-wrap.bend as WrappedFrom
+import ./iterator-methods.bend as IteratorMethods
 import ./promise-input.bend as NativePromise
 import ./supersede.bend as Supersede
 import ./iterator-input.bend as IteratorInput
@@ -101,6 +103,8 @@ type Task is Data:
   DeferredStreamCall{cell: Nat, source: Nat}
   FromInput{}
   FromOpen{source: Nat}
+  FromWrapOpened{}
+  FromWrapFinishFinally{saved: List<&2, R.Value>}
   FromSubscribed{iterator: Nat}
   FromBindOwner{iterator: Nat}
   FromConsumeAcquired{node: Nat, result: Nat, deferred: Bool, initialValue: R.Value}
@@ -1061,12 +1065,23 @@ def fromCleanupValue(+w: R.World, +value: R.Value) -> B.Bundle<R.World, R.Value>
       +callback = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
       B.Bundle{R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[], False{}, 0n}])), R.ProgramReference{callback}})
 
+# The two source branches capture the same finish identity through binding.
+def fromFinish(+w: R.World, +plan: Nat) -> Nat:
+  B.choose(~Nat, WrappedFrom.wrappedState(R.StreamPlan.fromState(B.streamPlan(w, plan))),
+    _ => R.FromWrapped.finish(WrappedFrom.get(w, plan)), _ => R.FromSubscription.finish(From.subscription(w, plan)))
+
+def fromSetFinish(+w: R.World, +plan: Nat, +callback: Nat) -> R.World:
+  B.choose(~R.World, WrappedFrom.wrappedState(R.StreamPlan.fromState(B.streamPlan(w, plan))),
+    _ => WrappedFrom.store(w, plan, R.FromWrapped.with_finish(WrappedFrom.get(w, plan), callback)),
+    _ => From.store(w, plan, R.FromSubscription.with_finish(From.subscription(w, plan), callback)))
+
 # bindToOwner happens after the subscription and any late assigned teardown.
 def fromBind(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +iterator: Nat) -> Machine:
   +plan = R.ExternalIterator.plan(B.iterator(w, iterator))
   +callback = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.FromFinish{plan}], False{}, 0n}]))
-  +w = From.store(w, plan, R.FromSubscription.with_finish(From.subscription(w, plan), callback))
+  +action = B.choose(~R.CleanupAction, WrappedFrom.wrappedState(R.StreamPlan.fromState(B.streamPlan(w, plan))), _ => R.FromWrappedFinish{plan}, _ => R.FromFinish{plan})
+  +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[action], False{}, 0n}]))
+  +w = fromSetFinish(w, plan, callback)
   +w = Supersede.register(w, callback)
   +owner = R.World.context(w)
   +w = B.choose(~R.World, Bool.and(Nat.is_ne(owner, 0n), Bool.not(B.has(R.Node.config(B.node(w, owner)), K.CONFIG_CHILDREN_FORBIDDEN()))),
@@ -1093,13 +1108,29 @@ def fromOpened(rest: List<&2, Task>, stack: List<&2, R.Value>, opened: From.Open
     case From.Opened{world, iterator, subscribe, next, error, complete}:
       Machine{world, Evaluate{R.InvokeMany{R.Literal{subscribe}, R.CallArgumentsItem{R.Literal{R.ProgramReference{next}}, R.CallArgumentsItem{R.Literal{R.ProgramReference{error}}, R.CallArgumentsItem{R.Literal{R.ProgramReference{complete}}, R.CallArgumentsEnd{}}}}}, R.Undefined{}} <> FromSubscribed{iterator} <> rest, stack}
 
-def fromOpenState(w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, state: R.FromState) -> Machine:
+def fromOpenState(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, state: R.FromState) -> Machine:
   match state:
     case R.FromFunction{callee}: fromOpened(rest, stack, From.open(w, callee))
+    case R.FromIterable{+source}:
+      B.choose(~Machine, From.factory(w, source),
+        _ => Machine{w, FromOpen{source} <> FromWrapOpened{} <> rest, stack},
+        _ =>
+          +pair = B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(DeferredStream.planWrapper(w, source), 0n),
+            _ => B.Bundle{w, DeferredStream.iterator(w, source)}, _ => IteratorInput.open(w, source))
+          Machine{B.first(R.World, Nat, pair), FromWrapOpened{} <> rest, R.IteratorReference{B.second(R.World, Nat, pair)} <> stack})
     case _: Machine{R.World.with_fault(w, R.Unsupported{95n}), rest, stack}
 
 def fromOpen(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, source: Nat) -> Machine:
   fromOpenState(w, rest, stack, From.origin(w, source))
+
+# handleAsync's post-.then verdict, still inside recompute's try/catch.
+def iterable(+w: R.World, value: R.Value) -> Nat:
+  match value:
+    case R.AsyncValue{+id}:
+      B.choose(~Nat, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, id)), 0n), _ => id, _ => 0n)
+    case _:
+      0n
+
 
 def fromInput(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match stack:
@@ -1108,15 +1139,22 @@ def fromInput(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>) -> M
         _ =>
           +pair = From.create(w, R.FromFunction{callee})
           Machine{B.first(R.World, Nat, pair), rest, R.AsyncValue{B.second(R.World, Nat, pair)} <> tail},
-        _ => Machine{R.World.with_fault(w, R.Unsupported{96n}), rest, tail})
+        _ => B.choose(~Machine, Nat.is_ne(iterable(w, callee), 0n),
+          _ =>
+            +pair = From.create(w, R.FromIterable{iterable(w, callee)})
+            Machine{B.first(R.World, Nat, pair), rest, R.AsyncValue{B.second(R.World, Nat, pair)} <> tail},
+          _ => Machine{R.World.with_fault(w, R.Unsupported{96n}), rest, tail}))
     case _: Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
-# Initial from profile: a returned subscription, optionally inside the
-# createDeferred wrapper. Iterable-to-iterable from wrapping is separate work.
-def fromIterator(+w: R.World, +iterator: Nat) -> Bool:
-  +wrapper = R.StreamPlan.wrapper(B.streamPlan(w, R.ExternalIterator.plan(B.iterator(w, iterator))))
-  B.choose(~Bool, From.isSubscription(w, iterator), _ => True{},
-    _ => B.choose(~Bool, Nat.is_eq(wrapper, 0n), _ => False{},
-      _ => From.isSubscription(w, R.DeferredIterator.inner(DeferredStream.wrapper(w, wrapper)))))
+# Protocol-bearing closures must return through Core, including nesting.
+def fromIterator(w: R.World, iterator: Nat) -> Bool:
+  IteratorMethods.needsCore(w, iterator)
+
+# wrapIterable's return catch is local; resource/unsupported faults stay visible.
+def fromWrapFinishFinally(w: R.World, rest: List<&2, Task>, +saved: List<&2, R.Value>, fault: R.Fault) -> Machine:
+  match fault:
+    case R.CallbackThrown{cause}: Machine{R.World.with_fault(w, R.Healthy{}), rest, R.StepResult{True{}, R.Undefined{}} <> saved}
+    case R.TypeError{}: Machine{R.World.with_fault(w, R.Healthy{}), rest, R.StepResult{True{}, R.Undefined{}} <> saved}
+    case _: Machine{w, rest, saved}
 
 # Iterator.return method calls are user/protocol calls. Core supplies the
 # existing catch boundary, including source from's nested close catch.
@@ -1130,8 +1168,8 @@ def iteratorReturned(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>,
 def iteratorReturn(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +iterator: Nat, +argument: R.Slot) -> Machine:
   +plan = R.ExternalIterator.plan(B.iterator(w, iterator))
   +wrapper = R.StreamPlan.wrapper(B.streamPlan(w, plan))
-  B.choose(~Machine, From.isSubscription(w, iterator),
-    _ => Machine{w, Evaluate{R.CallProgram{R.FromSubscription.finish(From.subscription(w, plan))}, R.Undefined{}} <> FromReturnPromise{} <> rest, stack},
+  B.choose(~Machine, Bool.or(From.isSubscription(w, iterator), WrappedFrom.isWrapped(w, iterator)),
+    _ => Machine{w, Evaluate{R.CallProgram{fromFinish(w, plan)}, R.Undefined{}} <> FromReturnPromise{} <> rest, stack},
     _ => B.choose(~Machine, Nat.is_ne(wrapper, 0n),
       _ => Machine{w, IteratorReturn{R.DeferredIterator.inner(DeferredStream.wrapper(w, wrapper)), R.Present{R.Undefined{}}} <> DeferredReturnResult{} <> rest, stack},
       _ =>
@@ -1169,6 +1207,10 @@ def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
         _ => fromClose(From.completed(w, plan), Callback{id, tail, first, second} <> rest, stack, plan))
     case R.FromFinish{+plan}:
       fromClose(w, FromFinished{plan} <> rest, stack, plan)
+    case R.FromWrappedFinish{+plan}:
+      B.choose(~Machine, R.FromWrapped.closed(WrappedFrom.get(w, plan)),
+        _ => Machine{w, rest, R.StepResult{True{}, R.Undefined{}} <> stack},
+        _ => Machine{WrappedFrom.finish(w, plan), IteratorReturn{R.FromWrapped.inner(WrappedFrom.get(w, plan)), R.Empty{}} <> FromWrapFinishFinally{stack} <> rest, stack})
     case R.SupersedeChain{before, after}:
       Machine{w, Evaluate{R.CallProgram{before}, R.Undefined{}} <> SupersedeFinally{after, stack} <> Callback{id, tail, first, second} <> rest, stack}
     case R.OptimisticSetter{signal}:
@@ -2387,13 +2429,6 @@ def catchRetireSources(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Va
     case PassFrame{id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       B.choose(~Machine, retire, _ => retireOutgoing(w, rest, stack, id, sources, True{}), _ => Machine{w, rest, stack})
 
-# handleAsync's post-.then verdict, still inside recompute's try/catch.
-def iterable(+w: R.World, value: R.Value) -> Nat:
-  match value:
-    case R.AsyncValue{+id}:
-      B.choose(~Nat, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, id)), 0n), _ => id, _ => 0n)
-    case _:
-      0n
 
 # The shared LIVE tail: a first yield or empty completion is a real answer;
 # no synchronous answer returns the seed or throws NotReady inside the pass.
@@ -2815,11 +2850,19 @@ def deferredDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
     case None{}:
       B.choose(~Machine, rejected, _ => asyncRejectOrdinary(w, rest, stack, observer, value), _ => asyncFulfillOrdinary(w, rest, stack, observer, value))
 
+def fromWrapDelivery(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +observer: Nat, +rejected: Bool, +value: R.Value) -> Machine:
+  +found = WrappedFrom.find(w, observer)
+  +plan = B.first(Nat, Nat, found)
+  +output = B.second(Nat, Nat, found)
+  B.choose(~Machine, Nat.is_ne(output, 0n),
+    _ => Machine{WrappedFrom.deliver(w, plan, output, rejected, value), rest, stack},
+    _ => deferredDelivery(w, rest, stack, observer, rejected, value, Deferred.wait(w, observer)))
+
 def asyncFulfill(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +observer: Nat, value: R.Value) -> Machine:
-  deferredDelivery(w, rest, stack, observer, False{}, value, Deferred.wait(w, observer))
+  fromWrapDelivery(w, rest, stack, observer, False{}, value)
 
 def asyncReject(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +observer: Nat, value: R.Value) -> Machine:
-  deferredDelivery(w, rest, stack, observer, True{}, value, Deferred.wait(w, observer))
+  fromWrapDelivery(w, rest, stack, observer, True{}, value)
 
 # effect.ts:runEffect's catch constructs a fresh wrapper and rethrows raw.
 def effectCatch(+w: R.World, +id: Nat, fault: R.Fault) -> R.World:
@@ -4431,6 +4474,16 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       fromInput(w, rest, stack)
     case FromOpen{source} <> rest:
       fromOpen(w, rest, stack, source)
+    case FromWrapOpened{} <> rest:
+      match stack:
+        case R.IteratorReference{inner} <> tail:
+          +pair = WrappedFrom.allocate(w, inner)
+          fromBind(B.first(R.World, Nat, pair), rest, tail, B.second(R.World, Nat, pair))
+        case _: Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case FromWrapFinishFinally{saved} <> rest:
+      match stack:
+        case value <> tail: Machine{ignoredReturn(w, value), rest, R.StepResult{True{}, R.Undefined{}} <> saved}
+        case _: Machine{R.World.with_fault(w, R.TypeError{}), rest, saved}
     case FromSubscribed{iterator} <> rest:
       fromSubscribed(w, rest, stack, iterator)
     case FromBindOwner{iterator} <> rest:
@@ -5179,6 +5232,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
       fromCleanupCatch(w, rest, saved, R.World.fault(w))
     case CloseReturnFinally{saved} <> rest:
       fromCleanupCatch(w, rest, saved, R.World.fault(w))
+    case FromWrapFinishFinally{saved} <> rest:
+      fromWrapFinishFinally(w, rest, saved, R.World.fault(w))
     case SupersedeFinally{callback, saved} <> rest:
       supersedeFinally(w, rest, callback, saved)
     case SupersedeRestore{prior, saved} <> rest:

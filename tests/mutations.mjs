@@ -5,6 +5,20 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["from wrap kernel reopens cached deferred iterator", "runtime/core.bend", "_ => B.Bundle{w, DeferredStream.iterator(w, source)}", "_ => IteratorInput.open(w, source)", "tests/proof-properties.mjs", "fromOpenState", "from-wrap-laws"],
+  ["from wrap loses bare value", "runtime/from-wrap.bend", "case other: B.Bundle{w, other}", "case other: B.Bundle{w, R.BareNext{True{}, R.Undefined{}}}", "tests/from-iterables.mjs", "wrapInput"],
+  ["from wrap fails to register pending resolver", "runtime/from-wrap.bend", "B.append(Nat, R.FromWrapped.pending(s), [output])", "R.FromWrapped.pending(s)", "tests/from-iterables.mjs", "wrapInput"],
+  ["from wrap cancellation does not resolve pending pulls", "runtime/from-wrap.bend", "P.settle(w, head, False{}, R.StepResult{True{}, R.Undefined{}})", "w", "tests/from-wrap-alignment.mjs", "resolvePending"],
+  ["from wrap repeats inner return", "runtime/core.bend", "R.FromWrapped.closed(WrappedFrom.get(w, plan)),", "False{},", "tests/from-wrap-alignment.mjs", "callbackAction"],
+  ["from wrap forwards argument to inner return", "runtime/core.bend", "IteratorReturn{R.FromWrapped.inner(WrappedFrom.get(w, plan)), R.Empty{}}", "IteratorReturn{R.FromWrapped.inner(WrappedFrom.get(w, plan)), R.Present{R.Undefined{}}}", "tests/from-wrap-alignment.mjs", "callbackAction"],
+  ["from wrap Promise output becomes synchronous", "runtime/from-wrap.bend", "+observer = B.length(R.AsyncObserver, R.World.asyncObservers(w))", "+w = B.store_asyncObject(w, output, R.AsyncObject.with_immediate(B.asyncObject(w, output), True{}))\n      +observer = B.length(R.AsyncObserver, R.World.asyncObservers(w))", "tests/from-iterables.mjs", "wrapInput"],
+  ["from wrap one completion erases other pending pulls", "runtime/from-wrap.bend", "remove(R.FromWrapped.pending(s), output)", "[]", "tests/from-wrap-alignment.mjs", "deliver"],
+  ["from wrap forgets step then callback", "runtime/from-wrap.bend", "B.append(Nat, R.AsyncObject.observers(object), [observer])", "R.AsyncObject.observers(object)", "tests/from-iterables.mjs", "wrapInput"],
+  ["from wrap treats rejected step as fulfillment", "runtime/from-wrap.bend", "deliver(w, plan, output, True{}, error)", "deliver(w, plan, output, False{}, error)", "tests/from-iterables.mjs", "observerState"],
+  ["from wrap binds subscription finish instead", "runtime/core.bend", "_ => R.FromWrappedFinish{plan}, _ => R.FromFinish{plan}", "_ => R.FromFinish{plan}, _ => R.FromFinish{plan}", "tests/from-wrap-alignment.mjs", "fromBind"],
+  ["from wrap kernel delivers a canceled callback", "runtime/from-wrap.bend", "has(R.FromWrapped.pending(s), output),", "True{},", "tests/proof-properties.mjs", "deliver", "from-wrap-laws"],
+  ["from wrap programme kernel keeps pending set after finish", "runtime/from-wrap.bend", "R.FromWrapped.with_pending(get(w, plan), [])", "get(w, plan)", "tests/proof-properties.mjs", "finish", "from-iterable-outcome"],
+
   ["from emission loses latest payload", "runtime/from-state.bend", "R.FromSubscription.with_latest(s, value)", "R.FromSubscription.with_latest(s, R.Undefined{})", "tests/from-subscriptions.mjs", "emitted"],
   ["from done guard erases buffered last emission", "runtime/from-state.bend", "R.FromSubscription.has(s),", "Bool.and(R.FromSubscription.has(s), Bool.not(R.FromSubscription.done(s))),", "tests/from-subscriptions.mjs", "next"],
   ["from waiting emission resolves as done", "runtime/from-state.bend", "R.StepResult{False{}, R.FromSubscription.latest(s)}", "R.StepResult{True{}, R.FromSubscription.latest(s)}", "tests/from-subscriptions.mjs", "settle"],

@@ -48,6 +48,7 @@ type FromState is Data:
   FromFunction{callee: Value}
   FromSubscriptionState{state: FromSubscription}
   FromIterable{source: Nat}
+  FromWrappedState{state: FromWrapped}
 
 type NextInput is Data:
   BareNext{done: Bool, value: Value}
@@ -227,6 +228,7 @@ type CleanupAction is Data:
   FromError{plan: Nat}
   FromComplete{plan: Nat}
   FromFinish{plan: Nat}
+  FromWrappedFinish{plan: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}
@@ -1364,6 +1366,82 @@ def AbortInput.with_reason(r: AbortInput, v: Value) -> AbortInput:
   match r:
     case AbortInput{aborted, reason}:
       AbortInput{aborted, v}
+
+type FromWait is Data:
+  FromWait{observer: Nat, output: Nat}
+
+def FromWait.observer(r: FromWait) -> Nat:
+  match r:
+    case FromWait{observer, output}:
+      observer
+
+def FromWait.with_observer(r: FromWait, v: Nat) -> FromWait:
+  match r:
+    case FromWait{observer, output}:
+      FromWait{v, output}
+
+def FromWait.output(r: FromWait) -> Nat:
+  match r:
+    case FromWait{observer, output}:
+      output
+
+def FromWait.with_output(r: FromWait, v: Nat) -> FromWait:
+  match r:
+    case FromWait{observer, output}:
+      FromWait{observer, v}
+
+type FromWrapped is Data:
+  FromWrapped{inner: Nat, closed: Bool, pending: List<&2, Nat>, waits: List<&2, FromWait>, finish: Nat}
+
+def FromWrapped.inner(r: FromWrapped) -> Nat:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      inner
+
+def FromWrapped.with_inner(r: FromWrapped, v: Nat) -> FromWrapped:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      FromWrapped{v, closed, pending, waits, finish}
+
+def FromWrapped.closed(r: FromWrapped) -> Bool:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      closed
+
+def FromWrapped.with_closed(r: FromWrapped, v: Bool) -> FromWrapped:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      FromWrapped{inner, v, pending, waits, finish}
+
+def FromWrapped.pending(r: FromWrapped) -> List<&2, Nat>:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      pending
+
+def FromWrapped.with_pending(r: FromWrapped, v: List<&2, Nat>) -> FromWrapped:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      FromWrapped{inner, closed, v, waits, finish}
+
+def FromWrapped.waits(r: FromWrapped) -> List<&2, FromWait>:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      waits
+
+def FromWrapped.with_waits(r: FromWrapped, v: List<&2, FromWait>) -> FromWrapped:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      FromWrapped{inner, closed, pending, v, finish}
+
+def FromWrapped.finish(r: FromWrapped) -> Nat:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      finish
+
+def FromWrapped.with_finish(r: FromWrapped, v: Nat) -> FromWrapped:
+  match r:
+    case FromWrapped{inner, closed, pending, waits, finish}:
+      FromWrapped{inner, closed, pending, waits, v}
 
 type FromSubscription is Data:
   FromSubscription{latest: Value, has: Bool, done: Bool, failed: Bool, failure: Value, waiting: Nat, unsubscribe: Value, closed: Bool, finish: Nat}

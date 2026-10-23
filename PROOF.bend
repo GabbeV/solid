@@ -1,3 +1,7 @@
+import ./proof/from-wrap-laws.bend as FromWrapLaws
+import ./proof/from-iterable-driver.bend as FromIterableDriver
+import ./proof/from-iterable-program.bend as FromIterableProgram
+import ./proof/from-iterable-outcome.bend as FromIterableOutcome
 import ./proof/from-laws.bend as FromLaws
 import ./proof/from-driver.bend as FromDriver
 import ./proof/from-program.bend as FromProgram
@@ -1138,3 +1142,48 @@ def Laws.from_program_complete(input, extra):
 
 def Laws.from_program_value_cleanup(input, extra):
   FromOutcome.result(input, extra)
+
+def Laws.from_wrap_bare(w, plan, done, value):
+  FromWrapLaws.bare(w, plan, done, value)
+
+def Laws.from_wrap_thrown(w, plan, error):
+  FromWrapLaws.thrown(w, plan, error)
+
+def Laws.from_wrap_unresolved(w, plan, output, observer, immediate):
+  FromWrapLaws.unresolved(w, plan, output, observer, immediate)
+
+def Laws.from_wrap_canceled_delivery(w, plan, output, rejected, value, known):
+  FromWrapLaws.canceledDelivery(w, plan, output, rejected, value, known)
+
+def Laws.from_wrap_no_pending(w):
+  FromWrapLaws.noPending(w)
+
+def Laws.from_wrap_no_waits(observer):
+  FromWrapLaws.noWaits(observer)
+
+def Laws.from_wrap_no_plans(observer, id):
+  FromWrapLaws.noPlans(observer, id)
+
+def Laws.from_wrap_remove_empty(id):
+  FromWrapLaws.removeEmpty(id)
+
+def Laws.from_wrap_return_throw(w, rest, saved, cause):
+  FromWrapLaws.returnThrow(w, rest, saved, cause)
+
+def Laws.from_wrap_return_type_error(w, rest, saved):
+  FromWrapLaws.returnTypeError(w, rest, saved)
+
+def Laws.from_wrap_preserve_exhaustion(w, rest, saved):
+  FromWrapLaws.preserveExhaustion(w, rest, saved)
+
+def Laws.from_wrap_already_closed(w, rest, stack, id, tail, first, second, plan, known):
+  FromWrapLaws.alreadyClosed(w, rest, stack, id, tail, first, second, plan, known)
+
+def Laws.from_iterable_program_complete(input, extra):
+  FromIterableProgram.complete(input, extra)
+
+def Laws.from_iterable_program_cancels_pull(input, extra):
+  FromIterableOutcome.result(input, extra)
+
+def Laws.from_wrap_cached_iterator(w, rest, stack, source, ordinary, cached):
+  FromWrapLaws.cachedIterator(w, rest, stack, source, ordinary, cached)
