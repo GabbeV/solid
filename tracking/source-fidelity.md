@@ -103,3 +103,13 @@ checked against actual eligible/blockedOne/blockedSubs/blockStep operations.
 Terminal membership is tied to the actual extension store. These are explicit
 snapshot contracts, not a replacement scheduler or assumed public publication
 rule. No new Solid bug or semantic workaround was introduced.
+
+## Rendered completion-prefix history extension (2026-10-23)
+
+[Completion frames and histories](rendered-completion-history.md) use actual
+`action.done`, decrement/schedule and `blocked` operations. The audit driver
+threads the actual World and proves which read-only checks may be erased; it is
+not a second reactive implementation. Runtime/host/source/toolchain remain
+unchanged. The initial snapshot and per-prefix resolution/positive-count
+preconditions are explicit; full user bodies and result/flight protocol are not
+claimed. No new upstream bug or semantic workaround.

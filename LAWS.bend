@@ -1,3 +1,9 @@
+import ./proof/completion-graph-frame.bend as CompletionGraphFrame
+import ./proof/pending-rendered-snapshot.bend as PendingRendered
+import ./proof/completion-pending-preservation.bend as CompletionPending
+import ./proof/rendered-completion-history.bend as RenderedHistory
+import ./proof/action-owned-completion.bend as OwnedCompletion
+import ./proof/transaction-arena.bend as AllocatedTransactions
 import ./proof/transaction-membership.bend as TerminalMembership
 import ./proof/transaction-rendered.bend as RenderedGraph
 import ./proof/rendered-landing.bend as RenderedLanding
@@ -3024,3 +3030,62 @@ law rendered_flight_is_retained_by_landing_scan:
   for rendered: {Transactions.isRender(R.Node.kind(B.node(PositiveBlocker.enter(w, 1n+predecessor), id))) == True{} : Bool}
   for live: {B.has(R.Node.flags(B.node(PositiveBlocker.enter(w, 1n+predecessor), id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}
   {Core.landTransactions(w, rest, stack, frame, 1n+index) == Core.Machine{w, Core.LandTransactions{frame, index} <> rest, stack} : Core.Machine}
+
+
+law completion_prefix_preserves_graph:
+  for +w: R.World
+  for +id: Nat
+  for +root: Nat
+  for +remaining: Nat
+  for resolution: {Transactions.resolveTx(w, R.ActionState.transaction(Action.get(w, id))) == B.Bundle{w, root} : B.Bundle<R.World, Nat>}
+  for positive: {R.Transaction.open(B.transaction(w, root)) == 1n+remaining : Nat}
+  {CompletionGraphFrame.graph(Action.done(w, id)) == CompletionGraphFrame.graph(w) : CompletionGraphFrame.GraphFrame}
+
+
+law allocated_completion_retains_owned_work:
+  for +w: R.World
+  for +before: List<&2, R.Transaction>
+  for +record: R.Transaction
+  for +after: List<&2, R.Transaction>
+  for +id: Nat
+  for +remaining: Nat
+  for captured: {R.ActionState.transaction(Action.get(AllocatedTransactions.scope(w, before, record, after), id)) == B.length(R.Transaction, before) : Nat}
+  for stopped: {R.Transaction.into(record) == 0n : Nat}
+  for positive: {R.Transaction.open(record) == 1n+remaining : Nat}
+  {Action.done(AllocatedTransactions.scope(w, before, record, after), id) == OwnedCompletion.expected(w, before, record, after, remaining) : R.World}
+
+
+law completion_preserves_pending_rendered_snapshot:
+  for +w: R.World
+  for +id: Nat
+  for +root: Nat
+  for +remaining: Nat
+  for snapshot: PendingRendered.Pending<w, root>
+  for +resolution: {Transactions.resolveTx(w, R.ActionState.transaction(Action.get(w, id))) == B.Bundle{w, root} : B.Bundle<R.World, Nat>}
+  for +positive: {R.Transaction.open(B.transaction(w, root)) == 1n+remaining : Nat}
+  PendingRendered.Pending<Action.done(w, id), root>
+
+
+law pending_rendered_completion_history:
+  for +w: R.World
+  for +predecessor: Nat
+  for +programme: RenderedHistory.Programme<w, 1n+predecessor>
+  for snapshot: PendingRendered.Pending<w, 1n+predecessor>
+  for healthy: {B.ok(w) == True{} : Bool}
+  RenderedHistory.Certified<w, 1n+predecessor, programme>
+
+
+law rendered_completion_history_preserves_graph:
+  for +w: R.World
+  for +root: Nat
+  for +programme: RenderedHistory.Programme<w, root>
+  for certificate: RenderedHistory.Certified<w, root, programme>
+  {CompletionGraphFrame.graph(RenderedHistory.world(RenderedHistory.run(w, root, programme, w))) == CompletionGraphFrame.graph(w) : CompletionGraphFrame.GraphFrame}
+
+
+law rendered_completion_history_checks_hold:
+  for +w: R.World
+  for +root: Nat
+  for +programme: RenderedHistory.Programme<w, root>
+  for certificate: RenderedHistory.Certified<w, root, programme>
+  {RenderedHistory.all(RenderedHistory.answers(RenderedHistory.run(w, root, programme, w))) == True{} : Bool}

@@ -1,3 +1,9 @@
+import ./proof/completion-graph-frame.bend as CompletionGraphFrame
+import ./proof/pending-rendered-snapshot.bend as PendingRendered
+import ./proof/completion-pending-preservation.bend as CompletionPending
+import ./proof/rendered-completion-history.bend as RenderedHistory
+import ./proof/action-owned-completion.bend as OwnedCompletion
+import ./proof/transaction-arena.bend as AllocatedTransactions
 import ./proof/transaction-membership.bend as TerminalMembership
 import ./proof/transaction-rendered.bend as RenderedGraph
 import ./proof/rendered-landing.bend as RenderedLanding
@@ -1400,3 +1406,27 @@ def Laws.current_generation_pending_reader_is_valid(w, edge, reads, generation, 
 
 def Laws.rendered_flight_is_retained_by_landing_scan(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live):
   RenderedLanding.retained(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live)
+
+
+def Laws.completion_prefix_preserves_graph(w, id, root, remaining, resolution, positive):
+  CompletionGraphFrame.completion(w, id, root, remaining, resolution, positive)
+
+
+def Laws.allocated_completion_retains_owned_work(w, before, record, after, id, remaining, captured, stopped, positive):
+  OwnedCompletion.allocated(w, before, record, after, id, remaining, captured, stopped, positive)
+
+
+def Laws.completion_preserves_pending_rendered_snapshot(w, id, root, remaining, snapshot, resolution, positive):
+  CompletionPending.completed(w, id, root, remaining, snapshot, resolution, positive)
+
+
+def Laws.pending_rendered_completion_history(w, predecessor, programme, snapshot, healthy):
+  RenderedHistory.certify(w, predecessor, programme, snapshot, healthy)
+
+
+def Laws.rendered_completion_history_preserves_graph(w, root, programme, certificate):
+  RenderedHistory.graphResult(w, root, programme, certificate)
+
+
+def Laws.rendered_completion_history_checks_hold(w, root, programme, certificate):
+  RenderedHistory.checksResult(w, root, programme, certificate)

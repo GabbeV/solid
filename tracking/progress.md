@@ -659,3 +659,20 @@ cover all six completion/flight orders, both creation orders, opaque/text/nullab
 values and independent publication (1,368 prefixes). No runtime/host/source/kernel
 change or new Solid bug; two focused kernel negatives and one finite negative extend configuration to
 592 (470 finite /122 kernel), with no fresh complete sweep.
+
+
+## Nonempty rendered snapshot preservation over histories (2026-10-23)
+
+The [new completion-prefix history](rendered-completion-history.md) proves any
+finite branching sequence of source completion prefixes and blocker checks from
+an explicit pending rendered snapshot. Real decrement/schedule steps preserve
+owned work, node/link/extension storage and committed trace; every actual blocker
+check returns true. The indexed certificate retains exact audit/World equality
+and final snapshot/health. Initial callback-body construction, flight settlement,
+full once-only action/result protocol and final publication remain open.
+
+Six new roots, 48 actual Bend zero-debt blocker checks and 48 retained scan checks
+on public-history snapshots are added. The 144 native rendered-flight histories
+are retained. One kernel trace-frame negative and one finite owned-work negative
+are rejected; configuration is 594 (471 finite /123 kernel), no fresh full sweep.
+Runtime, host, pin, toolchain and limits remain unchanged; no new Solid bug.

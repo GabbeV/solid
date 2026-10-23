@@ -5,12 +5,31 @@ import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
 import {build} from 'esbuild';
 import {BendRuntime,list} from '../host/bend.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+// Invoke the same translated source helpers on actual public-history snapshots.
+// These additional calls are finite Bend boundary checks, not native scan proofs.
+const rootDir=fileURLToPath(new URL('../',import.meta.url)),privateDir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-rendered-flight-'));
+const privateModules={};
+try{
+ const activeSource=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):rootDir;
+ for(const name of ['transaction','core']){
+  const output=path.join(privateDir,name+'.mjs');
+  const result=spawnSync(path.join(rootDir,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(activeSource,'runtime',name+'.bend'),'-o',output],{cwd:rootDir,encoding:'utf8',maxBuffer:1024*1024});
+  assert.equal(result.status,0,result.stderr);privateModules[name]=(await import(pathToFileURL(output))).default;
+ }
+}finally{fs.rmSync(privateDir,{recursive:true,force:true});}
+const T=privateModules.transaction,C=privateModules.core;
+const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
 const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,prefixes=0;
+let histories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0;
 for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const family of ['text','nullable','references'])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
@@ -66,6 +85,18 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
    await setImmediate();compare();
    assert.equal(root._open,2-completed,name+' source debt');
    assert.equal(list(b.world.txArena)[representative].open,2-completed,name+' Bend debt');
+   if(completed===2&&!flightDone){
+    const before=b.world,pair=T.blocked(before,representative);
+    assert.equal(pair.right,true,name+' actual Bend graph blocker at zero action debt');
+    assert.deepEqual(pair.left,before,name+' complete World/judge retained');zeroDebtGraphControls++;
+    const index=list(before.transactions).indexOf(representative);assert.ok(index>=0);
+    const frame={$:'SeamFrame',transaction:representative,renders:asList([37]),users:asList([{$:'NodeRun',node:41}]),laneRenders:asList([]),laneUsers:asList([])};
+    const rest=asList([{$:'Discard'}]),stack=asList([{$:'StringValue',s:'caller value'}]);
+    const scan=C.landTransactions(before,rest,stack,frame,1+index);
+    assert.deepEqual(scan.world,before,name+' blocked graph scan retains World');
+    assert.deepEqual(list(scan.tasks),[{$:'LandTransactions',frame,remaining:index},...list(rest)]);
+    assert.deepEqual(list(scan.values),list(stack));renderedScanControls++;
+   }
    if(completed<2||!flightDone){assert.equal(S.blocked(root),true);assert.deepEqual(seen,[initial],name+' action or rendered flight still blocks publication');}
   }
   assert.equal(S.blocked(root),false,name+' completed actions and flight are eligible');
@@ -77,4 +108,4 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
   dispose?.();b.dispose();S.flush();b.flush();await setImmediate();
  }
 }
-console.log(JSON.stringify({publicHistories:histories,observedPrefixes:prefixes,nativeGeneratorControls:histories,scope:'two joined held actions and a rendered flight, all completion/flight orders, opaque/text/nullable payloads and independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+console.log(JSON.stringify({publicHistories:histories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, opaque/text/nullable payloads and independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

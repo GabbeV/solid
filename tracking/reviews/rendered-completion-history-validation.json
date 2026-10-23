@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "fb61a5bf75ae363c4b57c86c56bce9f5d0133e46",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 6,
+  "publicHistories": 4630,
+  "closedRegressions": 73,
+  "retainedNativeGeneratorHistories": 144,
+  "retainedObservedPrefixes": 1368,
+  "additionalActualZeroDebtBlockerCalls": 48,
+  "additionalActualRenderedScanCalls": 48,
+  "configuredMutations": 594,
+  "finiteMutations": 471,
+  "kernelMutations": 123,
+  "newFocusedKernelRejections": 1,
+  "newFocusedFiniteRejections": 1,
+  "freshComplete594Sweep": false,
+  "claim": "Actual completion-prefix and blocker-check histories of any finite branching length preserve an explicit pending rendered snapshot, graph/committed trace and health, with exact audit equality and every actual check answer true. Allocated arbitrary owned work is retained by completion.",
+  "assumptions": [
+    "Initial primitive pending-render/owned-prefix/terminal-membership snapshot and healthy runtime.",
+    "Each admitted completion supplies actual captured-ID resolution without fault to the selected group and positive current count in that precise World.",
+    "No hidden callback body, Promise-result settlement, flight delivery, write or disposal inside a completion-prefix event."
+  ],
+  "remaining": [
+    "Construct initial graph snapshot through actual callback writes/status/ownership propagation",
+    "Flight delivery, supersession/rejection/disposal and final publication",
+    "Full once-only action/result/flight protocol and global forest/live membership",
+    "External delivery/fairness"
+  ],
+  "proofInductionMeasure": "Programme structural height, derived internally; no runtime bound or kernel limit change.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "moduleSha256": {
+    "proof/completion-graph-frame.bend": "1de2af9fa6d46aee789ba128948c6cd1eb763f1d74e5f1e8275c2a404acb4061",
+    "proof/pending-rendered-snapshot.bend": "dbe7c7eb2dd17b95c87bf7c57f1615b86f705c6428502e3e78d7224d22b9feb9",
+    "proof/completion-pending-preservation.bend": "3672f8893d8f61442d7ae61411c8c7142dc4e27e76cab0d2a452c2a900a93f8e",
+    "proof/rendered-completion-history.bend": "d5d9ba82c5ba8d8ca0758c073135849e8c4ed136047af954ce047c923e37f677",
+    "proof/action-owned-completion.bend": "08f691ea268a8a50349b5f85fe43872e75f95821e8dbd83e7df4c381874ee49c"
+  },
+  "logs": {
+    "rendered-completion-history-active.log": {
+      "path": "/workspace/scratch/rendered-completion-history-active.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "completion-pending-preservation-active.log": {
+      "path": "/workspace/scratch/completion-pending-preservation-active.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "rendered-history-public-boundaries.log": {
+      "path": "/workspace/scratch/rendered-history-public-boundaries.log",
+      "sha256": "64cb6e9a68d005c91a83f3f2ac24ccf472ba85d32a6987daa4c0f04d37514459"
+    },
+    "rendered-history-negatives.log": {
+      "path": "/workspace/scratch/rendered-history-negatives.log",
+      "sha256": "eb189fbbc82d3f8491d3e2fc000380ddbc397365120c3fad9fbc07ca803e0f63"
+    },
+    "rendered-history-mutation-targets.log": {
+      "path": "/workspace/scratch/rendered-history-mutation-targets.log",
+      "sha256": "a2fe9b07a650e550d6577280edadbfbdcd589df78a508fac55d2e3d65b513f83"
+    }
+  },
+  "composedSeal": "tracking/checked.json is the completed full-input/kernel record for this checkpoint."
+}

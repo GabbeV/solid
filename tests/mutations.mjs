@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["completion frame kernel erases committed trace", "representation/base.bend", "  choose(~R.World, R.World.halted(w),", "  +w = R.World.with_events(w, [])\n  choose(~R.World, R.World.halted(w),", "tests/proof-properties.mjs", "schedule", "completion-graph-frame"],
+  ["completion flight control discards owned graph nodes", "runtime/action-state.bend", "R.Transaction.with_open(B.transaction(w, t), Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n))", "R.Transaction.with_nodes(R.Transaction.with_open(B.transaction(w, t), Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)), [])", "tests/joined-action-flight-history.mjs", "done"],
+
   ["rendered graph kernel ignores owned flights at zero debt", "runtime/transaction.bend", "_ => blockedBy(w, R.Transaction.nodes(B.transaction(w, tx)), tx, False{}))", "_ => B.Bundle{w, False{}})", "tests/proof-properties.mjs", "blockStep", "transaction-rendered"],
   ["rendered flight control ignores pending render nodes", "runtime/transaction.bend", "_ => onScreen(w, id, B.choose(~Nat, Nat.is_eq(R.World.judge(w), 0n), _ => owner, _ => R.World.judge(w))),", "_ => B.Bundle{w, False{}},", "tests/joined-action-flight-history.mjs", "blockedOne"],
   ["terminal membership kernel clears the capture", "runtime/transaction.bend", "R.NodeExtension.with_transaction(B.extension(w, id), tx)", "R.NodeExtension.with_transaction(B.extension(w, id), 0n)", "tests/proof-properties.mjs", "txOf", "transaction-membership"],
