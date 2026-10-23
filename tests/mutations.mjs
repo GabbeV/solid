@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["fresh list control omits captured membership", "runtime/transaction.bend", "+w = B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), t))", "+w = w", "tests/transaction-list-controls.mjs", "list"],
+  ["fresh list control omits owned-list insertion", "runtime/transaction.bend", "B.store_transaction(w, t, R.Transaction.with_nodes(B.transaction(w, t), B.append(Nat, R.Transaction.nodes(B.transaction(w, t)), [id]))))", "w)", "tests/transaction-list-controls.mjs", "list"],
+  ["repeated list control appends the node again", "runtime/transaction.bend", "Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), t)", "False{}", "tests/transaction-list-controls.mjs", "list"],
+
   ["completion frame kernel erases committed trace", "representation/base.bend", "  choose(~R.World, R.World.halted(w),", "  +w = R.World.with_events(w, [])\n  choose(~R.World, R.World.halted(w),", "tests/proof-properties.mjs", "schedule", "completion-graph-frame"],
   ["completion flight control discards owned graph nodes", "runtime/action-state.bend", "R.Transaction.with_open(B.transaction(w, t), Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n))", "R.Transaction.with_nodes(R.Transaction.with_open(B.transaction(w, t), Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)), [])", "tests/joined-action-flight-history.mjs", "done"],
 

@@ -676,3 +676,19 @@ on public-history snapshots are added. The 144 native rendered-flight histories
 are retained. One kernel trace-frame negative and one finite owned-work negative
 are rejected; configuration is 594 (471 finite /123 kernel), no fresh full sweep.
 Runtime, host, pin, toolchain and limits remain unchanged; no new Solid bug.
+
+
+## Real list construction supplies rendered ownership (2026-10-23)
+
+The [list entry contracts](rendered-list-construction.md) now construct the
+pending history's captured membership and owned-node layout through the actual
+source operation at physically allocated nonzero group/extension slots. A fresh
+node is appended after an arbitrary inactive prefix, preserving the arbitrary
+group record, and the history starts from this real resulting World. Four roots
+include the exact same-capture no-op. Initial pending-status/render/posture facts
+and the complete callback/parking/flight-delivery/publication path remain open.
+
+Fifty-four paired native/Bend private fixtures and 162 exact re-listings pass;
+pending status is installed explicitly in the fixtures. Three finite mutations
+are rejected; configuration 597 (474 finite /123 kernel), no new complete sweep.
+No runtime, host, representation, pin, toolchain or semantic deviation changed.

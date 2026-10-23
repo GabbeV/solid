@@ -113,3 +113,12 @@ not a second reactive implementation. Runtime/host/source/toolchain remain
 unchanged. The initial snapshot and per-prefix resolution/positive-count
 preconditions are explicit; full user bodies and result/flight protocol are not
 claimed. No new upstream bug or semantic workaround.
+
+## Actual owned-list entry (2026-10-23)
+
+[Rendered list construction](rendered-list-construction.md) proves the existing
+`Transaction.list` fresh capture/append and same-capture no-op, using actual
+allocated storage lenses. It supplies membership/layout to the checked pending
+rendered history; initial status/parking construction remains explicit. The 54
+native private fixtures retain untouched source helper bodies. No runtime/host/
+representation/source/toolchain/limit/deviation change or new upstream bug.

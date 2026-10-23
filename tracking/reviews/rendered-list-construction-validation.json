@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "45e4e8eed76343ab9bb69a872b1dc3de8da7adfb",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 4,
+  "publicHistories": 4630,
+  "closedRegressions": 73,
+  "newPrivateConstructionFixtures": 54,
+  "newExactRelistings": 162,
+  "configuredMutations": 597,
+  "finiteMutations": 474,
+  "kernelMutations": 123,
+  "newFocusedFiniteRejections": 3,
+  "freshComplete597Sweep": false,
+  "claim": "Actual fresh list at allocated nonzero extension/group slots establishes pending rendered membership/layout and enters the completion/check history; exact same-capture no-op.",
+  "assumptions": [
+    "Existing valid extension and terminal ordinary group slots supplied by physical storage splits with reserved sentinel heads.",
+    "Fresh extension captured group zero; pending/render/non-guess/non-disposed/non-zombie node posture supplied at the source list boundary.",
+    "Prior group nodes form an arbitrary guard-excluded prefix.",
+    "History retains prior per-completion current resolution/positive-count premises."
+  ],
+  "remaining": [
+    "Actual callback/async registration/status propagation/parking entry",
+    "Full once-only action/result/flight protocol",
+    "Flight delivery and final publication/fairness",
+    "Global forest/live-list reachability"
+  ],
+  "testLimits": "The paired private fixtures construct real render nodes/extensions/groups and invoke actual list, but explicitly install pending status; they are not added to public-history counts.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "moduleSha256": {
+    "proof/allocated-slots.bend": "9200b5c752d67ca63d091b7f55fd4f2ae148a1fe88450231e6ba44fe471f6f23",
+    "proof/transaction-list-construction.bend": "649daa3d27f3254e0a8bf788b16190b4884d34352dc0f6432870be86128cd28f"
+  },
+  "logs": {
+    "transaction-list-construction-active.log": {
+      "path": "/workspace/scratch/transaction-list-construction-active.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "transaction-list-controls.log": {
+      "path": "/workspace/scratch/transaction-list-controls.log",
+      "sha256": "72714ff37e54639937ce9dd29074501a47c800cbbb4313a7eb1ff57d87f4009a"
+    },
+    "transaction-list-negatives.log": {
+      "path": "/workspace/scratch/transaction-list-negatives.log",
+      "sha256": "ee17d0db838eb0f68736d96787ce282478f7dc768a1ee49f497606d0994b1e8b"
+    },
+    "transaction-list-mutation-targets.log": {
+      "path": "/workspace/scratch/transaction-list-mutation-targets.log",
+      "sha256": "0b759d48974827d41843be44bed73d9856b38d6987fb322bca6fc30e75a4b2e4"
+    }
+  },
+  "composedSeal": "tracking/checked.json records the completed final full-input/kernel check."
+}

@@ -1,3 +1,4 @@
+import ./proof/transaction-list-construction.bend as ListConstruction
 import ./proof/completion-graph-frame.bend as CompletionGraphFrame
 import ./proof/pending-rendered-snapshot.bend as PendingRendered
 import ./proof/completion-pending-preservation.bend as CompletionPending
@@ -1430,3 +1431,19 @@ def Laws.rendered_completion_history_preserves_graph(w, root, programme, certifi
 
 def Laws.rendered_completion_history_checks_hold(w, root, programme, certificate):
   RenderedHistory.checksResult(w, root, programme, certificate)
+
+
+def Laws.fresh_list_captures_and_appends(w, id, predecessor, slot, allocated, unowned):
+  ListConstruction.fresh(w, id, predecessor, slot, allocated, unowned)
+
+
+def Laws.fresh_list_constructs_pending_rendered_snapshot(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live):
+  ListConstruction.pending(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live)
+
+
+def Laws.fresh_list_enters_pending_rendered_history(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, healthy, programme):
+  ListConstruction.beginHistory(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, healthy, programme)
+
+
+def Laws.same_capture_list_is_exact_identity(w, id, tx, slot, allocated, capture):
+  ListConstruction.repeated(w, id, tx, slot, allocated, capture)

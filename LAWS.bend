@@ -1,3 +1,4 @@
+import ./proof/transaction-list-construction.bend as ListConstruction
 import ./proof/completion-graph-frame.bend as CompletionGraphFrame
 import ./proof/pending-rendered-snapshot.bend as PendingRendered
 import ./proof/completion-pending-preservation.bend as CompletionPending
@@ -3089,3 +3090,69 @@ law rendered_completion_history_checks_hold:
   for +programme: RenderedHistory.Programme<w, root>
   for certificate: RenderedHistory.Certified<w, root, programme>
   {RenderedHistory.all(RenderedHistory.answers(RenderedHistory.run(w, root, programme, w))) == True{} : Bool}
+
+
+law fresh_list_captures_and_appends:
+  for +w: R.World
+  for +id: Nat
+  for +predecessor: Nat
+  for +slot: Nat
+  for allocated: {R.Node.x(B.node(w, id)) == 1n+slot : Nat}
+  for unowned: {R.NodeExtension.transaction(B.extension(w, id)) == 0n : Nat}
+  {Transactions.list(w, id, 1n+predecessor) == ListConstruction.raw(w, id, 1n+predecessor) : R.World}
+
+
+law fresh_list_constructs_pending_rendered_snapshot:
+  for +w: R.World
+  for +id: Nat
+  for +before: List<&2, R.Transaction>
+  for +record: R.Transaction
+  for +after: List<&2, R.Transaction>
+  for +extBefore: List<&2, R.NodeExtension>
+  for +extRecord: R.NodeExtension
+  for +extAfter: List<&2, R.NodeExtension>
+  for +prefix: RenderedGraph.Skips<w, 1n+B.length(R.Transaction, before)>
+  for storage: {R.World.txArena(w) == B.blank_transaction() <> B.append(R.Transaction, before, record <> after) : List<&2, R.Transaction>}
+  for +index: {R.Node.x(B.node(w, id)) == 1n+B.length(R.NodeExtension, extBefore) : Nat}
+  for +extStorage: {R.World.extensions(w) == B.blank_extension() <> B.append(R.NodeExtension, extBefore, extRecord <> extAfter) : List<&2, R.NodeExtension>}
+  for unowned: {R.NodeExtension.transaction(extRecord) == 0n : Nat}
+  for owns: {R.Transaction.nodes(record) == RenderedGraph.ids(w, 1n+B.length(R.Transaction, before), prefix) : List<&2, Nat>}
+  for active: {RenderedGraph.guard(w, id) == False{} : Bool}
+  for stopped: {R.Transaction.into(record) == 0n : Nat}
+  for rendered: {Transactions.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool}
+  for live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}
+  PendingRendered.Pending<Transactions.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before)>
+
+
+law fresh_list_enters_pending_rendered_history:
+  for +w: R.World
+  for +id: Nat
+  for +before: List<&2, R.Transaction>
+  for +record: R.Transaction
+  for +after: List<&2, R.Transaction>
+  for +extBefore: List<&2, R.NodeExtension>
+  for +extRecord: R.NodeExtension
+  for +extAfter: List<&2, R.NodeExtension>
+  for +prefix: RenderedGraph.Skips<w, 1n+B.length(R.Transaction, before)>
+  for storage: {R.World.txArena(w) == B.blank_transaction() <> B.append(R.Transaction, before, record <> after) : List<&2, R.Transaction>}
+  for +index: {R.Node.x(B.node(w, id)) == 1n+B.length(R.NodeExtension, extBefore) : Nat}
+  for +extStorage: {R.World.extensions(w) == B.blank_extension() <> B.append(R.NodeExtension, extBefore, extRecord <> extAfter) : List<&2, R.NodeExtension>}
+  for +unowned: {R.NodeExtension.transaction(extRecord) == 0n : Nat}
+  for owns: {R.Transaction.nodes(record) == RenderedGraph.ids(w, 1n+B.length(R.Transaction, before), prefix) : List<&2, Nat>}
+  for active: {RenderedGraph.guard(w, id) == False{} : Bool}
+  for stopped: {R.Transaction.into(record) == 0n : Nat}
+  for rendered: {Transactions.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool}
+  for live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +programme: RenderedHistory.Programme<Transactions.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before)>
+  RenderedHistory.Certified<Transactions.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before), programme>
+
+
+law same_capture_list_is_exact_identity:
+  for +w: R.World
+  for +id: Nat
+  for +tx: Nat
+  for +slot: Nat
+  for allocated: {R.Node.x(B.node(w, id)) == 1n+slot : Nat}
+  for capture: {R.NodeExtension.transaction(B.extension(w, id)) == tx : Nat}
+  {Transactions.list(w, id, tx) == w : R.World}

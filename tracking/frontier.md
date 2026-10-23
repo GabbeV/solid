@@ -90,7 +90,11 @@ still open; they do not assume the final blocker or membership judgment. The
 nonempty snapshot through actual positive-count completion prefixes and repeated
 blocker checks of arbitrary finite length. The graph/trace remains fixed and all
 actual check answers are true; initial callback-body construction, flight delivery
-and full once-only result protocol remain open.
+and full once-only result protocol remain open. The
+[list-construction entry](rendered-list-construction.md) now supplies initial
+membership/owned layout through the actual list operation on allocated slots,
+and composes directly with the history. Earlier pending-status/posture and
+callback/parking construction remain explicit.
 
 ## Next proof obligations, in order
 
