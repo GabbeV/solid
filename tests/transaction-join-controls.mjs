@@ -13,11 +13,11 @@ try{
  const source=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):root;
  for(const folder of ['runtime','representation','observation'])fs.cpSync(path.join(source,folder),path.join(dir,folder),{recursive:true});
  const modules={};
- for(const name of ['transaction','action-state','api']){
+ for(const name of ['transaction','action-state','api','core']){
   const output=path.join(dir,name+'.mjs');const result=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(dir,'runtime',name+'.bend'),'-o',output],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});
   assert.equal(result.status,0,result.stderr);modules[name]=(await import(pathToFileURL(output))).default;
  }
- const T=modules.transaction,A=modules['action-state'],API=modules.api;
+ const T=modules.transaction,A=modules['action-state'],API=modules.api,C=modules.core;
  const list=xs=>{const out=[];while('head'in xs){out.push(xs.head);xs=xs.tail;}return out;};
  const bundle=await build({stdin:{contents:"export * from './index.ts';export {newTransaction,merge,resolveTx,blocked,judge} from './core/scheduler.ts';export {transactions as live} from './core/scheduler.ts';",resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'membership-observation',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions,judge};'}));}}]});
  const nativeFile=path.join(dir,'native.mjs');fs.writeFileSync(nativeFile,bundle.outputFiles[0].text);const S=await import(pathToFileURL(nativeFile));
@@ -26,7 +26,7 @@ try{
  const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
  const bendShape=t=>{const {$:tag,...fields}=t;return {...fields,nodes:list(t.nodes),renderQueue:list(t.renderQueue),userQueue:list(t.userQueue),reruns:list(t.reruns),marks:t.marks.$==='NoIds'?null:list(t.marks.items)};};
  const vectors=(seed,size)=>Array.from({length:size},(_,i)=>({id:seed+i}));
- let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0;
+ let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0,heldScanControls=0,eligibleScanControls=0;
  for(const prefix of [0,1,4])for(const gap of [0,1,3])for(const suffix of [0,2])for(const reverse of [false,true])for(const markState of [0,1,2,3])for(const emptyPresentMarks of [false,true]){
   S.live.length=0;let world=API.createWorld();const tx=[null];
   const left=1+prefix,right=left+1+gap,total=right+suffix;
@@ -59,6 +59,13 @@ try{
   assert.equal(blocked.right,true);assert.equal(S.blocked(tx[target]),true);
   assert.deepEqual(blocked.left,world,'positive action count preserves complete World/judge');
   assert.equal(S.judge,savedJudge,'native positive count restores the previous judge');positiveBlockerControls++;
+  const index=list(world.transactions).indexOf(target),frame={$:'SeamFrame',transaction:target,renders:asList([91]),users:asList([{$:'ReleaseQueues',transaction:target}]),laneRenders:asList([92]),laneUsers:asList([])};
+  const rest=asList([{$:'Discard'}]),stack=asList([{$:'Number',n:41}]);
+  const scan=C.landTransactions(world,rest,stack,frame,1+index);
+  assert.deepEqual(scan.world,world,'blocked scan cannot retire or publish a held group');
+  assert.deepEqual(list(scan.tasks),[{$:'LandTransactions',frame,remaining:index},...list(rest)]);
+  assert.deepEqual(list(scan.values),list(stack),'blocked scan preserves caller stack');heldScanControls++;
+
 
   for(const [a,b]of [[source,target],[target,source],[source,source],[target,target]]){
    const before=world;world=T.merge(world,a,b);S.merge(tx[a],tx[b]);assert.deepEqual(world,before,'rejoin transfers nothing twice');compare();rejoins++;
@@ -79,6 +86,14 @@ try{
   assert.equal(answer.right,false,'empty zero-action ordinary group is eligible');
   assert.deepEqual(answer.left,world,'empty eligibility preserves complete World/judge');
   assert.equal(S.blocked(native[target]),false);assert.equal(S.judge,previous);
+  const index=list(world.transactions).indexOf(target),frame={$:'SeamFrame',transaction:target,renders:asList([]),users:asList([]),laneRenders:asList([]),laneUsers:asList([])};
+  const rest=asList([{$:'Discard'}]),stack=asList([{$:'Number',n:41}]);
+  const scan=C.landTransactions(world,rest,stack,frame,1+index);
+  assert.deepEqual({...scan.world,transactions:world.transactions},world,'empty landing entry only retires the selected group');
+  assert.deepEqual(list(scan.world.transactions),list(world.transactions).filter(id=>id!==target));
+  assert.deepEqual(list(scan.tasks),[{$:'LandNodes',frame,transaction:target,index:0,rerunFrame:0},...list(rest)]);
+  assert.deepEqual(list(scan.values),list(stack));eligibleScanControls++;
+
   emptyBlockerControls++;
  }
  // Actual action opening: each existing action cell receives a fresh nonzero
@@ -100,5 +115,5 @@ try{
 
   openingControls++;
  }
- console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,emptyBlockerControls,publicHistories:false}));
+ console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,emptyBlockerControls,heldScanControls,eligibleScanControls,publicHistories:false}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -624,3 +624,21 @@ histories pass. One additional kernel negative brings configured variants to
 588 (469 finite /119 kernel); no full-sweep claim. The nonempty owned-node/flight
 and lane branches and actual rendered publication remain open. No runtime,
 source, host, toolchain or deviation changed, and no new Solid bug was found.
+
+
+## Held groups reach the actual landing scan (2026-10-23)
+
+The [landing scan contracts](action-landing-scan.md) add two roots. A selected
+healthy positive-debt group is retained by the actual scan with complete World,
+caller stack, frame and next scan position preserved. The constructed group after
+either first completion supplies that positive blocker after arbitrary finite
+pair lookups/rejoins; its selected live-list lookup is still explicit. Global
+live-list/forest preservation and the full renderer theorem remain open.
+
+Private controls add 288 actual held-scan checks and 48 actual empty landing-entry
+checks. A direct general empty-preparation theorem exceeded kernel fuel and is
+not credited; those 48 outcomes remain finite evidence. One more kernel negative
+brings configuration to 589 (469 finite /120 kernel), without a fresh full sweep.
+A fresh fetch/impact review of next@b4d8e6bb reports no signals drift; only the
+canvas example changed. No runtime/host/source/kernel/deviation change or new
+Solid bug occurred, and #4248 remains separate and open.

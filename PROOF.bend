@@ -1,3 +1,4 @@
+import ./proof/action-landing-scan.bend as LandingScan
 import ./proof/transaction-empty.bend as EmptyBlocker
 import ./proof/action-pair-eligibility.bend as PairEligibility
 import ./proof/transaction-count-pair.bend as CountedPair
@@ -1369,3 +1370,10 @@ def Laws.empty_ordinary_transaction_is_eligible(w, tx, healthy, zero, empty, ord
 
 def Laws.constructed_completed_pair_is_eligible(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes):
   PairEligibility.constructed(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes)
+
+
+def Laws.landing_scan_retains_positive_group(w, rest, stack, frame, index, predecessor, remaining, lookup, healthy, open):
+  LandingScan.positive(w, rest, stack, frame, index, 1n+predecessor, remaining, lookup, healthy, open)
+
+def Laws.first_action_completion_is_retained_by_landing_scan(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, index, healthy, lookup):
+  LandingScan.afterOne(w, before, cells, first, other, reverse, finishSecond, events, rest, stack, frame, index, healthy, lookup)

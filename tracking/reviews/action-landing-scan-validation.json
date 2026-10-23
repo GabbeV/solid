@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "f56f9387043bbd538ab5489a59368d11e2597155",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "b4d8e6bb0b838170ddc38dad512958d0b3683244",
+  "signalsSourceDrift": false,
+  "nextChanges": "Canvas example and its lockfile entries only; fetched signals snapshot impact reports zero changed files.",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 2,
+  "publicHistories": 4486,
+  "closedRegressions": 73,
+  "directHeldLandingScanControls": 288,
+  "directEmptyLandingEntryControls": 48,
+  "retainedPrivatePositiveBlockerControls": 320,
+  "retainedPairedPrivateEmptyBlockerControls": 48,
+  "configuredMutations": 589,
+  "finiteMutations": 469,
+  "kernelMutations": 120,
+  "newFocusedKernelRejections": 1,
+  "freshComplete589Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "Actual landTransactions retains complete current World, caller stack and seam frame and continues with the next scan position when its selected nonzero live-list group has positive action debt. The constructed two-action group after either first completion supplies the blocker result after arbitrary finite pair lookup/rejoin histories. Selected live-list lookup remains an explicit premise; no complete public flush/rendered-publication claim.",
+  "assumptions": [
+    "Healthy selected World; selected live-list lookup names the structurally nonzero group (1 + predecessor in the general active root; actual allocation supplies it in the constructed corollary).",
+    "Constructed corollary retains successful factory/opening prefix and terminating admitted slices; body expressions are unexecuted data.",
+    "A general reachable live-list/forest invariant is not supplied by this result."
+  ],
+  "remaining": [
+    "General empty-group landing/preparation contract (direct attempt exceeded kernel fuel)",
+    "Live-list lookup premise from global reachable membership invariant",
+    "Nonempty owned-node/flight and lane blockers, full flush/rendered publication",
+    "Full once-only callback/action/flight/result protocol",
+    "Intervening writes, settlement, disposal and arbitrary component joins",
+    "External delivery/fairness"
+  ],
+  "resourceAccounting": {
+    "directEmptyLandingPreparation": "Independent kernel out of fuel in eligible; not active, not credited. The 48 corresponding actual helper outcomes are finite controls only.",
+    "runtimeOrKernelLimitChanges": false
+  },
+  "composedSeal": "tracking/checked.json is the authoritative completed full-input/kernel record for this checkpoint.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPRState": "open, unmerged",
+  "moduleSha256": {
+    "proof/action-landing-scan.bend": "40e5333580bf7e58a97a9f36cba2a03f98e1ee5a8b716b9584bf5f93fa3d3c6b"
+  },
+  "logs": {
+    "action-landing-scan-certified.log": {
+      "path": "/workspace/scratch/action-landing-scan-certified.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    },
+    "action-landing-scan-controls.log": {
+      "path": "/workspace/scratch/action-landing-scan-controls.log",
+      "sha256": "d3a652c64468b2d229c10b698b6b63c026de85396f1771d222bae8336c9f9a7b"
+    },
+    "action-landing-scan-negative.log": {
+      "path": "/workspace/scratch/action-landing-scan-negative.log",
+      "sha256": "7d793275a4938369dbf9a450362ef170d17aed66f367abf2954b9a8ad64e468d"
+    },
+    "action-landing-scan-both-branches.log": {
+      "path": "/workspace/scratch/action-landing-scan-both-branches.log",
+      "sha256": "1a8d59a7dc2ad769a01a1a3b49fe75d49e439d43fc4b65628b79ef552a49fd7f"
+    },
+    "action-scan-current-next-impact.json": {
+      "path": "/workspace/scratch/action-scan-current-next-impact.json",
+      "sha256": "8c93ed0163def28b17a81f50dadf48224d572b9e06a83ee33508e62ede00ac23"
+    }
+  },
+  "identityReview": "The final active general root excludes the zero lookup fallback explicitly; this changes no runtime and adds no count/capture/result assumption."
+}

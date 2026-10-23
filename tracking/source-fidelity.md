@@ -88,3 +88,8 @@ operations remain unfinished rather than becoming a false-valued substitute.
 retain the original substitution audit, repair evidence, source maps and historical
 counterexamples. Their dated coverage statements are superseded by this page and
 the linked area reviews. Current milestone priorities are in [frontier.md](frontier.md).
+
+The [landing scan extension](action-landing-scan.md) checks the source retention
+branch without a runtime delta. Its live-list lookup premise stays explicit.
+Current next@b4d8e6bb has zero signals source drift in the fetched source-impact
+comparison; new commits only add the canvas example.

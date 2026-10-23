@@ -1,3 +1,4 @@
+import ./proof/action-landing-scan.bend as LandingScan
 import ./proof/transaction-empty.bend as EmptyBlocker
 import ./proof/action-pair-eligibility.bend as PairEligibility
 import ./proof/transaction-count-pair.bend as CountedPair
@@ -2922,3 +2923,34 @@ law constructed_completed_pair_is_eligible:
   for healthy: {B.ok(w) == True{} : Bool}
   for noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}
   PairEligibility.Eligibility<ActionPair.second(w, before, cells, first, other), before, reverse, PairCompletion.selectedId(cells, second), PairCompletion.selectedId(cells, Bool.not(second)), initial, middle, final>
+
+
+law landing_scan_retains_positive_group:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for frame: Core.SeamFrame
+  for index: Nat
+  for predecessor: Nat
+  for remaining: Nat
+  for lookup: {B.get(Nat, R.World.transactions(w), index, 0n) == 1n+predecessor : Nat}
+  for healthy: {B.ok(w) == True{} : Bool}
+  for open: {R.Transaction.open(B.transaction(w, 1n+predecessor)) == 1n+remaining : Nat}
+  {Core.landTransactions(w, rest, stack, frame, 1n+index) == Core.Machine{w, Core.LandTransactions{frame, index} <> rest, stack} : Core.Machine}
+
+law first_action_completion_is_retained_by_landing_scan:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for finishSecond: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for frame: Core.SeamFrame
+  for index: Nat
+  for healthy: {B.ok(w) == True{} : Bool}
+  for lookup: {B.get(Nat, R.World.transactions(Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond))), index, 0n) == JoinedPair.targetId(before, [], reverse) : Nat}
+  LandingScan.Retained<Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), rest, stack, frame, index>
