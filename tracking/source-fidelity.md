@@ -477,3 +477,13 @@ domain/budget is retained. The preceding 524-variant complete sweep applies to
 9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
 A newly confirmed protocol-error bug010 remains faithfully preserved; from/
 onSupersede and store/boundary/snapshot scopes remain unfinished.
+
+
+The subsequent [internal supersession checkpoint](supersede.md) preserves exact
+undefined/null/active flight slots and adds the source onSupersede hook through
+the existing callback machine. It adds 3,456 private helper controls and fifteen
+quantified roots, with five compiled negative checks (539 configured: 450 finite,
+89 kernel). Public histories/closed regressions remain 3,952/73. All earlier
+complete-program domains and budgets are retained. The complete preceding
+534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
+still unfinished and no deviation is active.

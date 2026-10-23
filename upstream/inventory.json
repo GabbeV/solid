@@ -2078,8 +2078,12 @@
           "start": 382,
           "end": 403,
           "sha256": "75bb6498d8cc5b1ed88a62de53b25f78418144fd672df2dfe97273b4bb56ddf5",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/supersede.bend:eligible, registerEligible, register, chain; runtime/core.bend:callbackAction SupersedeChain, supersedeFinally, SupersedeRestore/unwind; representation/base.bend:flight, sameFlight; runtime/api.bend:registerSupersede",
+            "status": "partial",
+            "restrictions": "Production internal helper over typed callback programme identities. Exact owner/fn/recomputing guard, fresh extension undefined restoration, existing-flight preservation, prev-null direct assignment and captured try/finally chaining. Three distinct flight-slot constructors prevent absent/null aliasing in recompute selfRegistered. 3456 actual private-helper controls and 15 quantified slot/guard/continuation laws. No public onSupersede export is invented; from wiring remains unfinished. Arbitrary JS callables, protocol getters, store/boundary/snapshot and nonproduction hooks stay excluded."
+          }
         },
         {
           "key": "core/async.ts:handleAsync",

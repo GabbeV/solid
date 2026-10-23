@@ -33,7 +33,7 @@ try {
     const xs=list(w.extensions);
     return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,
       first:n.firstChild,next:n.nextSibling,prev:n.prevSibling,deps:n.deps!==0,subs:n.subs!==0,disposal:disposal(n.disposal),cleanup:n.cleanup,
-      childCount:n.childCount,x:n.x?{flight:xs[n.x].inFlight,child:xs[n.x].pendingFirstChild,disposal:disposal(xs[n.x].pendingDisposal)}:null})),
+      childCount:n.childCount,x:n.x?{flight:(xs[n.x].inFlight.result??0),child:xs[n.x].pendingFirstChild,disposal:disposal(xs[n.x].pendingDisposal)}:null})),
       events:list(w.events).filter(e=>'callback' in e).map(e=>[e.callback,e.code]),scheduled:w.scheduled,error:w.fault.cause?.n};
   }
   function reference(mode){

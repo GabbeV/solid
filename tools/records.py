@@ -34,7 +34,7 @@ schemas={
 'CleanupProgram': [('actions','List<&2, CleanupAction>'),('returnsCleanup','Bool'),('arity','Nat')],
 'EffectSpec': [('user','Bool'),('target','Nat'),('options','NodeOptions'),('scheduled','Bool'),('deferred','Bool'),('program','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat'),('body','InlineBody')],
 'NodeOptions': [('equals','Bool'),('transparent','Bool'),('ownedWrite','Bool'),('lazy','Bool'),('sync','Bool'),('noSnapshot','Bool'),('extraConfig','U32'),('loading','Slot'),('unobserved','Nat'),('comparator','Nat')],
-'NodeExtension': [('inFlight','Nat'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
+'NodeExtension': [('inFlight','Flight'),('flightTeardown','Nat'),('error','Value'),('blocked','Slot'),('pendingSources','Nat'),('unobserved','Nat'),('snapshotValue','Snapshot'),('pendingFirstChild','Nat'),('pendingDisposal','Disposal'),('transaction','Nat'),('reask','Bool'),('flushed','Slot'),('flushedAt','Stamp'),('q','Question'),('lane','Slot'),('marks','Nat'),('shownError','Value')],
 'Node': [('kind','NodeKind'),('value','Value'),('pending','Slot'),('equals','Bool'),('config','U32'),('flags','U32'),('status','U32'),('time','Nat'),('notified','Stamp'),('deps','Nat'),('depsTail','Nat'),('depGen','Nat'),('subs','Nat'),('subsTail','Nat'),('height','Nat'),('nextHeap','Nat'),('prevHeap','Nat'),('parent','Nat'),('firstChild','Nat'),('nextSibling','Nat'),('prevSibling','Nat'),('expr','Expr'),('modified','Bool'),('prevValue','Value'),('target','Nat'),('loading','Bool'),('x','Nat'),('parentComputed','Nat'),('scope','Nat'),('childCount','Nat'),('disposal','Disposal'),('cleanup','Nat'),('effectProgram','Nat'),('returnedCleanup','Nat'),('errorProgram','Nat')],
 'Link': [('dep','Nat'),('sub','Nat'),('nextDep','Nat'),('prevSub','Nat'),('nextSub','Nat'),('gen','Nat')],
 'TreeNode': [('parent','Nat'),('children','List<&2, Nat>'),('text','Value')],
@@ -150,6 +150,11 @@ type QueueEntry is Data:
   SettledFire{callback: Nat}
   ReleaseQueues{transaction: Nat}
 
+type Flight is Data:
+  FlightUndefined{}
+  FlightEmpty{}
+  FlightActive{result: Nat}
+
 type NodeKind is Data:
   Invalid{}
   Signal{}
@@ -255,6 +260,7 @@ type CleanupAction is Data:
   CleanupBoundSetter{signal: Nat}
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
+  SupersedeChain{before: Nat, after: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}

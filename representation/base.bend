@@ -235,7 +235,7 @@ def blank_tree() -> R.TreeNode:
   R.TreeNode{0n, [], R.Undefined{}}
 
 def blank_extension() -> R.NodeExtension:
-  R.NodeExtension{0n, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
+  R.NodeExtension{R.FlightEmpty{}, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
     R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Undefined{}}
 
@@ -444,3 +444,29 @@ def awaiter(w: R.World, id: Nat) -> R.Awaiter:
 
 def store_awaiter(+w: R.World, id: Nat, value: R.Awaiter) -> R.World:
   R.World.with_awaiters(w, List.set(&2, R.Awaiter, R.World.awaiters(w), id, value))
+
+# Exact source `_x?._inFlight`: undefined, null and an active result are
+# different even though only the active result is truthy.
+def flightId(flight: R.Flight) -> Nat:
+  match flight:
+    case R.FlightActive{result}: result
+    case _: 0n
+
+def sameFlight(left: R.Flight, right: R.Flight) -> Bool:
+  match left:
+    case R.FlightUndefined{}:
+      match right:
+        case R.FlightUndefined{}: True{}
+        case _: False{}
+    case R.FlightEmpty{}:
+      match right:
+        case R.FlightEmpty{}: True{}
+        case _: False{}
+    case R.FlightActive{result}:
+      match right:
+        case R.FlightActive{other}: Nat.is_eq(result, other)
+        case _: False{}
+
+def flight(+w: R.World, +id: Nat) -> R.Flight:
+  choose(~R.Flight, Nat.is_eq(R.Node.x(node(w, id)), 0n),
+    _ => R.FlightUndefined{}, _ => R.NodeExtension.inFlight(extension(w, id)))

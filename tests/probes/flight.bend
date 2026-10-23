@@ -65,6 +65,6 @@ def fixture(mode: U32, +action: U32, status: U32, flags: U32, config: U32, loadi
     _ =>
       +w = R.World.with_fault(w, R.Healthy{})
       +w = B.choose(~R.World, U32.is_eq(action, 3), _ => B.store_node(w, 3n, R.Node.with_flags(B.node(w, 3n), B.set(R.Node.flags(B.node(w, 3n)), K.REACTIVE_DIRTY()))), _ => w)
-      +w = B.choose(~R.World, U32.is_eq(action, 4), _ => B.store_extension(w, 3n, R.NodeExtension.with_inFlight(B.extension(w, 3n), 2n)), _ => w)
+      +w = B.choose(~R.World, U32.is_eq(action, 4), _ => B.store_extension(w, 3n, R.NodeExtension.with_inFlight(B.extension(w, 3n), R.FlightActive{2n})), _ => w)
       +w = B.choose(~R.World, U32.is_eq(action, 5), _ => O.dispose(w, 1n), _ => w)
       FlightProbe{C.deliver(2048n, w, 1n, U32.is_eq(action, 2), payload(value)), returned})

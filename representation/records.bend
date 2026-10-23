@@ -105,6 +105,11 @@ type QueueEntry is Data:
   SettledFire{callback: Nat}
   ReleaseQueues{transaction: Nat}
 
+type Flight is Data:
+  FlightUndefined{}
+  FlightEmpty{}
+  FlightActive{result: Nat}
+
 type NodeKind is Data:
   Invalid{}
   Signal{}
@@ -210,6 +215,7 @@ type CleanupAction is Data:
   CleanupBoundSetter{signal: Nat}
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
+  SupersedeChain{before: Nat, after: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}
@@ -2151,14 +2157,14 @@ def NodeOptions.with_comparator(r: NodeOptions, v: Nat) -> NodeOptions:
       NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, extraConfig, loading, unobserved, v}
 
 type NodeExtension is Data:
-  NodeExtension{inFlight: Nat, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value}
+  NodeExtension{inFlight: Flight, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value}
 
-def NodeExtension.inFlight(r: NodeExtension) -> Nat:
+def NodeExtension.inFlight(r: NodeExtension) -> Flight:
   match r:
     case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
       inFlight
 
-def NodeExtension.with_inFlight(r: NodeExtension, v: Nat) -> NodeExtension:
+def NodeExtension.with_inFlight(r: NodeExtension, v: Flight) -> NodeExtension:
   match r:
     case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
       NodeExtension{v, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}

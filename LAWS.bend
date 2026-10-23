@@ -1,3 +1,4 @@
+import ./runtime/supersede.bend as Supersede
 import Base
 import ./examples/async-cleanup.bend as CleanupExample
 import ./proof/async-error-retirement.bend as ErrorRetirement
@@ -2151,3 +2152,98 @@ law async_pending_transfer_preserves_parked_frame:
 
 law async_rejected_replacement_releases_displayed_frame:
   {CleanupExample.main() == CleanupExample.CleanupTiming{0n, 0n, 1n, R.Healthy{}} : CleanupExample.CleanupTiming}
+
+law supersede_reflexive:
+  for slot: R.Flight
+  {B.sameFlight(slot, slot) == True{} : Bool}
+
+law supersede_undefined_not_null:
+  {B.sameFlight(R.FlightUndefined{}, R.FlightEmpty{}) == False{} : Bool}
+
+law supersede_null_not_undefined:
+  {B.sameFlight(R.FlightEmpty{}, R.FlightUndefined{}) == False{} : Bool}
+
+law supersede_active_identity:
+  for result: Nat
+  {B.flightId(R.FlightActive{result}) == result : Nat}
+
+law supersede_absent:
+  for w: R.World
+  for id: Nat
+  for known: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  {B.flight(w, id) == R.FlightUndefined{} : R.Flight}
+
+law supersede_ineligible:
+  for w: R.World
+  for callback: Nat
+  for known: {Supersede.eligible(w) == False{} : Bool}
+  {Supersede.register(w, callback) == w : R.World}
+
+law supersede_unowned:
+  for w: R.World
+  for callback: Nat
+  for known: {R.World.context(w) == 0n : Nat}
+  {Supersede.register(w, callback) == w : R.World}
+
+law supersede_chain_world:
+  for w: R.World
+  for before: Nat
+  for after: Nat
+  {B.first(R.World, Nat, Supersede.chain(w, before, after)) == R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.SupersedeChain{before, after}], False{}, 0n}])) : R.World}
+
+law supersede_chain_identity:
+  for w: R.World
+  for before: Nat
+  for after: Nat
+  {B.second(R.World, Nat, Supersede.chain(w, before, after)) == B.length(R.CleanupProgram, R.World.cleanupPrograms(w)) : Nat}
+
+law supersede_finally_entry:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for callback: Nat
+  for saved: List<&2, R.Value>
+  {Core.supersedeFinally(w, rest, callback, saved) == Core.Machine{R.World.with_fault(w, R.Healthy{}), Core.Evaluate{R.CallProgram{callback}, R.Undefined{}} <> Core.SupersedeRestore{R.World.fault(w), saved} <> rest, saved} : Core.Machine}
+
+law supersede_finally_return:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for callback: Nat
+  for saved: List<&2, R.Value>
+  {Core.dispatch(w, Core.SupersedeFinally{callback, saved} <> rest, stack) == Core.supersedeFinally(w, rest, callback, saved) : Core.Machine}
+
+law supersede_finally_throw:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for callback: Nat
+  for saved: List<&2, R.Value>
+  {Core.unwind(w, Core.SupersedeFinally{callback, saved} <> rest, stack) == Core.supersedeFinally(w, rest, callback, saved) : Core.Machine}
+
+law supersede_restore_success:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for prior: R.Fault
+  for saved: List<&2, R.Value>
+  {Core.dispatch(w, Core.SupersedeRestore{prior, saved} <> rest, stack) == Core.Machine{R.World.with_fault(w, prior), rest, saved} : Core.Machine}
+
+law supersede_override_failure:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for prior: R.Fault
+  for saved: List<&2, R.Value>
+  {Core.unwind(w, Core.SupersedeRestore{prior, saved} <> rest, stack) == Core.Machine{w, rest, saved} : Core.Machine}
+
+law supersede_chain_continuation:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for id: Nat
+  for tail: List<&2, R.CleanupAction>
+  for first: R.Value
+  for second: R.Value
+  for before: Nat
+  for after: Nat
+  {Core.callbackAction(w, rest, stack, id, tail, first, second, R.SupersedeChain{before, after}) == Core.Machine{w, Core.Evaluate{R.CallProgram{before}, R.Undefined{}} <> Core.SupersedeFinally{after, stack} <> Core.Callback{id, tail, first, second} <> rest, stack} : Core.Machine}

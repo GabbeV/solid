@@ -38,7 +38,7 @@ def fixture(+mode: U32) -> R.World:
   +w = B.choose(~R.World, Bool.or(U32.is_eq(mode, 6), U32.is_eq(mode, 7)),
     _ =>
       +w = E.ext(w, 3n)
-      B.store_extension(w, 3n, R.NodeExtension.with_flightTeardown(R.NodeExtension.with_inFlight(B.extension(w, 3n), 1n), 5n)), _ => w)
+      B.store_extension(w, 3n, R.NodeExtension.with_flightTeardown(R.NodeExtension.with_inFlight(B.extension(w, 3n), R.FlightActive{1n}), 5n)), _ => w)
   B.choose(~R.World, Bool.and(U32.is_ge(mode, 8), U32.is_le(mode, 10)),
     _ =>
       +w = O.parkChildren(w, 3n)

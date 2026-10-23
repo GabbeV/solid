@@ -24,7 +24,7 @@ type View is Data:
 
 def view(+w: R.World) -> View:
   View{R.Node.value(B.node(w, 2n)), R.Node.pending(B.node(w, 2n)), R.Node.loading(B.node(w, 2n)), R.Node.status(B.node(w, 2n)),
-    R.NodeExtension.inFlight(B.extension(w, 2n)), A.displayed(w, 2n), R.World.renderQueue(w), R.World.userQueue(w), R.World.pendingNodes(w),
+    B.flightId(R.NodeExtension.inFlight(B.extension(w, 2n))), A.displayed(w, 2n), R.World.renderQueue(w), R.World.userQueue(w), R.World.pendingNodes(w),
     R.World.running(w), R.World.scheduled(w), R.World.context(w), R.World.tracking(w), R.World.fault(w)}
 
 def expectedWait() -> View:
@@ -52,7 +52,7 @@ def newestCallback() -> R.World:
 
 def replacementView(+w: R.World) -> View:
   View{R.Node.value(B.node(w, 3n)), R.Node.pending(B.node(w, 3n)), R.Node.loading(B.node(w, 3n)), R.Node.status(B.node(w, 3n)),
-    R.NodeExtension.inFlight(B.extension(w, 3n)), A.displayed(w, 2n), R.World.renderQueue(w), R.World.userQueue(w), R.World.pendingNodes(w),
+    B.flightId(R.NodeExtension.inFlight(B.extension(w, 3n))), A.displayed(w, 2n), R.World.renderQueue(w), R.World.userQueue(w), R.World.pendingNodes(w),
     R.World.running(w), R.World.scheduled(w), R.World.context(w), R.World.tracking(w), R.World.fault(w)}
 
 def expectedStale() -> View:

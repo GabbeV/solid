@@ -347,3 +347,13 @@ one shared lagging Set view and done-observer lookup records. It is separate
 from ordinary engine AsyncObserver state. Whole-World laws preserve it where
 their source operation does not touch deferred state; no earlier theorem domain
 or step budget was weakened. See deferred.md.
+
+
+The subsequent [internal supersession checkpoint](supersede.md) preserves exact
+undefined/null/active flight slots and adds the source onSupersede hook through
+the existing callback machine. It adds 3,456 private helper controls and fifteen
+quantified roots, with five compiled negative checks (539 configured: 450 finite,
+89 kernel). Public histories/closed regressions remain 3,952/73. All earlier
+complete-program domains and budgets are retained. The complete preceding
+534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
+still unfinished and no deviation is active.

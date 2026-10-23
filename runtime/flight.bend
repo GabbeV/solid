@@ -26,7 +26,7 @@ def newObserver(+w: R.World, +node: Nat, +result: Nat) -> B.Bundle<R.World, Nat>
 # Before .then(): result identity, question provenance and fresh own-flight set.
 def recordFlight(+w: R.World, +id: Nat, result: Nat) -> R.World:
   +w = E.ext(w, id)
-  B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), result))
+  B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightActive{result}))
 
 def recordQuestion(+w: R.World, +id: Nat) -> R.World:
   B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), B.choose(~R.Question, J.isZero(R.World.question(w)), _ => J.mainline(), _ => R.World.question(w))))
@@ -71,12 +71,12 @@ def pendingPosture(posture: ErrorPosture) -> Bool:
       False{}
 
 def beginHandleError(+w: R.World, +id: Nat, result: Nat, +error: R.Value) -> B.Bundle<R.World, ErrorPosture>:
-  B.choose(~B.Bundle<R.World, ErrorPosture>, Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), _ => B.Bundle{w, ErrorDone{}},
+  B.choose(~B.Bundle<R.World, ErrorPosture>, Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), _ => B.Bundle{w, ErrorDone{}},
     _ =>
       +pending = P.isNotReady(error)
       B.choose(~B.Bundle<R.World, ErrorPosture>, Bool.and(pending, R.Node.loading(B.node(w, id))),
         _ =>
-          +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
+          +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{}))
           +w = P.parkLoadingWindow(w, id, error)
           B.Bundle{B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), ErrorDone{}},
         _ => B.Bundle{w, B.choose(~ErrorPosture, pending, _ => ErrorPending{}, _ => ErrorActual{})}))
@@ -105,7 +105,7 @@ def handleError(w: R.World, +id: Nat, result: Nat, +error: R.Value) -> R.World:
 # the return points after trim and pending-source release; the direct helper
 # below composes the same segments for restricted World-only probes.
 def prepareAsyncWrite(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Bool>:
-  B.choose(~B.Bundle<R.World, Bool>, Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())),
+  B.choose(~B.Bundle<R.World, Bool>, Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())),
     _ => B.Bundle{w, False{}},
     _ =>
       +w = Q.landStatus(w, id, False{})

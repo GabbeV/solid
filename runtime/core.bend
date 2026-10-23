@@ -60,7 +60,7 @@ type LanePass is Data:
 type PassFrame is Data:
   PassFrame{id: Nat, create: Bool, context: Nat, tracking: Bool, oldHeight: Nat,
     reask: Bool, previous: R.Value, wasUninitialized: Bool, outgoing: R.Value,
-    outgoingSources: Nat, wasPendingSource: Bool, oldFlight: Nat,
+    outgoingSources: Nat, wasPendingSource: Bool, oldFlight: R.Flight,
     saved: List<&2, R.Value>, released: Nat, stale: Bool, lanePass: LanePass}
 
 def passStack(frame: PassFrame) -> List<&2, R.Value>:
@@ -331,6 +331,8 @@ type Task is Data:
   FlushCallbackFinally{saved: List<&2, R.Value>}
   FlushCallbackRestore{prior: R.Fault, saved: List<&2, R.Value>}
   CleanupFinally{saved: List<&2, R.Value>}
+  SupersedeFinally{callback: Nat, saved: List<&2, R.Value>}
+  SupersedeRestore{prior: R.Fault, saved: List<&2, R.Value>}
   Round{}
   HeapLoop{}
   Seam{}
@@ -1019,8 +1021,15 @@ def arrayItems(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, va
     case _:
       Machine{R.World.with_fault(w, R.Unsupported{80n}), rest, stack}
 
+# onSupersede's captured prev()/fn() closure; callbacks run through Core.
+def supersedeFinally(+w: R.World, rest: List<&2, Task>, callback: Nat, +saved: List<&2, R.Value>) -> Machine:
+  +prior = R.World.fault(w)
+  Machine{R.World.with_fault(w, R.Healthy{}), Evaluate{R.CallProgram{callback}, R.Undefined{}} <> SupersedeRestore{prior, saved} <> rest, saved}
+
 def callbackAction(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +tail: List<&2, R.CleanupAction>, +first: R.Value, +second: R.Value, value: R.CleanupAction) -> Machine:
   match value:
+    case R.SupersedeChain{before, after}:
+      Machine{w, Evaluate{R.CallProgram{before}, R.Undefined{}} <> SupersedeFinally{after, stack} <> Callback{id, tail, first, second} <> rest, stack}
     case R.OptimisticSetter{signal}:
       Machine{w, OptimisticArgument{signal} <> rest, first <> stack}
     case R.FlattenChildren{results, skip}:
@@ -1717,7 +1726,7 @@ def checkDeps(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id
       Machine{w, B.append(Task, todo, CheckNext{id, edge} <> rest), stack})
 
 def afterCheck(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n)))), _ => [Recompute{id, False{}}], _ => [])
+  todo = B.choose(~List<&2, Task>, Bool.or(B.has(R.Node.flags(B.node(w, id)), 2), Bool.and(B.truth(R.NodeExtension.error(B.extension(w, id))), Bool.and(Nat.is_lt(R.Node.time(B.node(w, id)), R.World.clock(w)), Nat.is_eq(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), 0n)))), _ => [Recompute{id, False{}}], _ => [])
   Machine{w, B.append(Task, todo, ClearFlags{id} <> rest), stack}
 
 # core.ts:recompute's source lane/mount locals. laneRoot distinguishes unset,
@@ -1787,7 +1796,7 @@ def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Valu
   frame = {PassFrame{id, create, context, R.World.tracking(w), R.Node.height(n), reask, passValue(w, id), B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()),
     B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_ERROR()), _ => R.NodeExtension.error(B.extension(w, id)), _ => R.Undefined{}),
     B.choose(~Nat, B.has(R.Node.status(n), K.STATUS_PENDING()), _ => R.NodeExtension.pendingSources(B.extension(w, id)), _ => 0n),
-    P.hasSource(w, id, id), R.NodeExtension.inFlight(B.extension(w, id)), stack, released, R.World.stale(w), lanePass} : PassFrame}
+    P.hasSource(w, id, id), B.flight(w, id), stack, released, R.World.stale(w), lanePass} : PassFrame}
   next = {Evaluate{R.Node.expr(n), passValue(w, id)} <> Finish{frame} <> rest : List<&2, Task>}
   +w = R.World.with_stale(w, Bool.or(R.World.stale(w), Bool.and(B.effect(R.Node.kind(n)), Bool.not(S.is_user(R.Node.kind(n))))))
   w = R.World.with_tracking(B.choose(~R.World, B.tracked(R.Node.kind(n)), _ => w, _ => B.event(w, R.Invoked{id})), True{})
@@ -1818,7 +1827,7 @@ def recomputeAfterTeardown(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R
   Machine{w, RecomputePrepared{id, False{}, released, lanePass} <> rest, stack}
 
 def recomputeFlight(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lanePass: LanePass) -> Machine:
-  +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n))
+  +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{}))
   +callback = R.NodeExtension.flightTeardown(B.extension(w, id))
   B.choose(~Machine, Nat.is_ne(callback, 0n),
     _ => Machine{B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), 0n)),
@@ -2073,7 +2082,7 @@ def finishReady(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +f
   match stack frame:
     case value <> +tail PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +w = B.choose(~R.World, Bool.and(Bool.not(keepFlight), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
-        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{})), _ => w)
       +w = B.choose(~R.World, keepFlight, _ => w, _ => B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})))
       +w = B.choose(~R.World, Bool.or(U32.is_ne(R.Node.status(B.node(w, id)), 0), Nat.is_ne(R.Node.x(B.node(w, id)), 0n)),
         _ => A.clearStatus(w, id, create), _ => w)
@@ -2144,8 +2153,8 @@ def finishShape(w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, fra
     case _:
       finishReady(w, rest, stack, frame, False{})
 
-def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +id: Nat, oldFlight: Nat) -> Machine:
-  +selfRegistered = Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), oldFlight)
+def finishResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +id: Nat, oldFlight: R.Flight) -> Machine:
+  +selfRegistered = Bool.not(B.sameFlight(B.flight(w, id), oldFlight))
   B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_SYNC()),
     _ => finishReady(w, rest, stack, frame, False{}),
     _ => B.choose(~Machine, selfRegistered, _ => finishReady(w, rest, stack, frame, True{}),
@@ -2207,7 +2216,7 @@ def catchSelfRetire(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
   match frame:
     case PassFrame{+id, create, context, tracking, height, reask, previous, uninitialized, outgoing, sources, pendingSource, flight, saved, released, stale, lanePass}:
       +ending = {CatchRetireSources{frame, Bool.or(notReady, stagedErr)} <> rest : List<&2, Task>}
-      B.choose(~Machine, Bool.and(notReady, Bool.and(pendingSource, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), 0n))),
+      B.choose(~Machine, Bool.and(notReady, Bool.and(pendingSource, Nat.is_eq(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), 0n))),
         _ => pendingResume(ending, stack, Q.beginSettlement(w, id, id)),
         _ => Machine{w, ending, stack})
 
@@ -2429,7 +2438,7 @@ def stepFulfilledResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
           +w = F.syncFulfilled(w, observer, R.StepResult{done, value})
           +w = B.choose(~R.World, done, _ => B.store_stream(w, stream, R.StreamState.with_completed(B.stream(w, stream), True{})), _ => w)
           Machine{w, rest, stack},
-        _ => B.choose(~Machine, Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), R.StreamState.result(s)), _ => Machine{w, rest, stack},
+        _ => B.choose(~Machine, Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), R.StreamState.result(s)), _ => Machine{w, rest, stack},
           _ => B.choose(~Machine, done, _ => stepDone(w, rest, stack, stream),
             _ =>
               +w = B.store_stream(w, stream, R.StreamState.with_hadValue(s, True{}))
@@ -2443,7 +2452,7 @@ def stepRejected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
   +s = B.stream(w, stream)
   +id = R.StreamState.node(s)
   B.choose(~Machine, Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s)), _ => Machine{F.syncRejected(w, observer, error), rest, stack},
-    _ => B.choose(~Machine, Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), R.StreamState.result(s)),
+    _ => B.choose(~Machine, Nat.is_eq(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), R.StreamState.result(s)),
       _ =>
         +w = B.store_stream(w, stream, R.StreamState.with_completed(s, True{}))
         handleError(w, SettleAuto{id} <> rest, stack, id, R.StreamState.result(s), error),
@@ -2454,7 +2463,7 @@ def promiseFulfill(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
   +id = R.AsyncObserver.node(o)
   +source = iterable(w, value)
   B.choose(~Machine, R.AsyncObserver.isSync(o), _ => Machine{F.syncFulfilled(w, observer, value), rest, stack},
-    _ => B.choose(~Machine, Bool.and(Nat.is_ne(source, 0n), Bool.and(Nat.is_eq(R.NodeExtension.inFlight(B.extension(w, id)), R.AsyncObserver.result(o)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))),
+    _ => B.choose(~Machine, Bool.and(Nat.is_ne(source, 0n), Bool.and(Nat.is_eq(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), R.AsyncObserver.result(o)), Bool.not(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())))),
       _ => consumeIterator(w, Discard{} <> ProtocolCatch{id, R.AsyncObserver.result(o), stack, False{}, True{}} <> rest, stack, id, R.AsyncObserver.result(o), source, True{}, R.Undefined{}),
       _ => asyncWrite(w, ProtocolCatch{id, R.AsyncObserver.result(o), stack, True{}, True{}} <> rest, stack, id, R.AsyncObserver.result(o), value, [])))
 
@@ -3748,7 +3757,7 @@ def dissolveDerivation(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Va
     _ =>
       +w = B.choose(~R.World, Bool.and(B.present(shown), R.Transaction.shown(B.transaction(w, lane))), _ => B.store_node(w, id, R.Node.with_pending(B.node(w, id), shown)), _ => w)
       B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()),
-        _ => H.enqueueSub(B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), id), _ => w))
+        _ => H.enqueueSub(B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{})), id), _ => w))
   B.choose(~Machine, R.Transaction.shown(B.transaction(w, lane)),
     _ => Machine{w, CommitPending{id} <> DissolveShown{id, effect} <> rest, stack},
     _ =>
@@ -4555,7 +4564,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{w, rest, stack}
     case AfterDeadPass{+id, previousLane} <> rest:
       w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{})), _ => w)
       Machine{R.World.with_passLane(w, previousLane), rest, stack}
     case TrimFinallyRestore{prior, saved} <> rest:
       Machine{R.World.with_fault(w, prior), rest, saved}
@@ -4853,6 +4862,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       flushCallbackRestore(w, rest, saved, prior)
     case CleanupFinally{saved} <> rest:
       Machine{w, rest, saved}
+    case SupersedeFinally{callback, saved} <> rest:
+      supersedeFinally(w, rest, callback, saved)
+    case SupersedeRestore{prior, saved} <> rest:
+      Machine{R.World.with_fault(w, prior), rest, saved}
     case Round{} <> +rest:
       round(w, rest, stack)
     case HeapLoop{} <> +rest:
@@ -4959,6 +4972,10 @@ def deferredUnwind(w: R.World, rest: List<&2, Task>, cell: Nat, open: Bool, save
 
 def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Machine:
   match tasks:
+    case SupersedeFinally{callback, saved} <> rest:
+      supersedeFinally(w, rest, callback, saved)
+    case SupersedeRestore{prior, saved} <> rest:
+      Machine{w, rest, saved}
     case DeferredResult{cell, open, saved} <> rest:
       deferredUnwind(w, rest, cell, open, saved, R.World.fault(w))
     case LatestEnd{latest, dispatch, saved} <> rest:

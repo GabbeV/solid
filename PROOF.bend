@@ -1,3 +1,4 @@
+import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
 import ./proof/async-cleanup-program.bend as CleanupProgram
 import ./proof/async-error-retirement.bend as ErrorRetirement
@@ -1040,3 +1041,48 @@ def Laws.async_pending_transfer_preserves_parked_frame(w, rest, stack, id, error
 
 def Laws.async_rejected_replacement_releases_displayed_frame():
   CleanupProgram.replacement_error_releases_displayed_frame()
+
+def Laws.supersede_reflexive(slot):
+  SupersedeLaws.reflexive(slot)
+
+def Laws.supersede_undefined_not_null():
+  SupersedeLaws.undefinedNotNull()
+
+def Laws.supersede_null_not_undefined():
+  SupersedeLaws.nullNotUndefined()
+
+def Laws.supersede_active_identity(result):
+  SupersedeLaws.activeIdentity(result)
+
+def Laws.supersede_absent(w, id, known):
+  SupersedeLaws.absent(w, id, known)
+
+def Laws.supersede_ineligible(w, callback, known):
+  SupersedeLaws.ineligible(w, callback, known)
+
+def Laws.supersede_unowned(w, callback, known):
+  SupersedeLaws.unowned(w, callback, known)
+
+def Laws.supersede_chain_world(w, before, after):
+  SupersedeLaws.chainWorld(w, before, after)
+
+def Laws.supersede_chain_identity(w, before, after):
+  SupersedeLaws.chainIdentity(w, before, after)
+
+def Laws.supersede_finally_entry(w, rest, callback, saved):
+  SupersedeLaws.finallyEntry(w, rest, callback, saved)
+
+def Laws.supersede_finally_return(w, rest, stack, callback, saved):
+  SupersedeLaws.finallyReturn(w, rest, stack, callback, saved)
+
+def Laws.supersede_finally_throw(w, rest, stack, callback, saved):
+  SupersedeLaws.finallyThrow(w, rest, stack, callback, saved)
+
+def Laws.supersede_restore_success(w, rest, stack, prior, saved):
+  SupersedeLaws.restoreSuccess(w, rest, stack, prior, saved)
+
+def Laws.supersede_override_failure(w, rest, stack, prior, saved):
+  SupersedeLaws.overrideFailure(w, rest, stack, prior, saved)
+
+def Laws.supersede_chain_continuation(w, rest, stack, id, tail, first, second, before, after):
+  SupersedeLaws.chainContinuation(w, rest, stack, id, tail, first, second, before, after)

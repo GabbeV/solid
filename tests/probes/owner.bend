@@ -55,7 +55,7 @@ def fixture(+mode: U32) -> R.World:
   +w = B.choose(~R.World, U32.is_eq(mode, 12),
     _ =>
       +w = E.ext(w, 3n)
-      +w = B.store_extension(w, 3n, R.NodeExtension.with_transaction(R.NodeExtension.with_inFlight(B.extension(w, 3n), 1n), 1n))
+      +w = B.store_extension(w, 3n, R.NodeExtension.with_transaction(R.NodeExtension.with_inFlight(B.extension(w, 3n), R.FlightActive{1n}), 1n))
       B.store_node(w, 3n, R.Node.with_status(B.node(w, 3n), K.STATUS_PENDING())), _ => w)
   +w = B.choose(~R.World, U32.is_eq(mode, 13), _ => B.store_node(w, 3n, R.Node.with_flags(B.node(w, 3n), B.set(R.Node.flags(B.node(w, 3n)), K.REACTIVE_FRAME_READ()))), _ => w)
   +w = B.choose(~R.World, U32.is_eq(mode, 14), _ => B.store_node(w, 3n, R.Node.with_flags(B.node(w, 3n), B.set(R.Node.flags(B.node(w, 3n)), K.REACTIVE_ZOMBIE()))), _ => w)

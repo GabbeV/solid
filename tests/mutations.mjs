@@ -5,6 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["supersede chain loses undefined callback return", "runtime/core.bend", "<> SupersedeFinally{after, stack} <> Callback{id, tail, first, second} <> rest", "<> SupersedeFinally{after, stack} <> rest", "tests/supersede-alignment.mjs", "callbackAction"],
+  ["supersede fresh extension becomes null", "runtime/supersede.bend", "R.NodeExtension.with_inFlight(x, R.FlightUndefined{})", "R.NodeExtension.with_inFlight(x, R.FlightEmpty{})", "tests/supersede-alignment.mjs", "registerEligible"],
+  ["supersede chained callbacks run in reverse", "runtime/core.bend", "Evaluate{R.CallProgram{before}, R.Undefined{}} <> SupersedeFinally{after, stack}", "Evaluate{R.CallProgram{after}, R.Undefined{}} <> SupersedeFinally{before, stack}", "tests/supersede-alignment.mjs", "callbackAction"],
+  ["supersede finally discards earlier error", "runtime/core.bend", "case SupersedeRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, prior), rest, saved}", "case SupersedeRestore{prior, saved} <> rest:\n      Machine{w, rest, saved}", "tests/supersede-alignment.mjs", "dispatch"],
+  ["supersede kernel merges undefined and null", "representation/base.bend", "case R.FlightUndefined{}: True{}\n        case _: False{}", "case R.FlightUndefined{}: True{}\n        case _: True{}", "tests/proof-properties.mjs", "sameFlight", "supersede-laws"],
+
   ["deferred refetch captures raw iterator instead of wrapper", "runtime/deferred-stream.bend", "R.DeferredIterator.iterator(wrapper(w, planWrapper(w, source)))", "R.DeferredIterator.inner(wrapper(w, planWrapper(w, source)))", "tests/deferred-refetch-stream.mjs", "iterator"],
   ["deferred refetch omits bare first landing", "runtime/deferred-stream.bend", "B.Bundle{D.land(w, R.DeferredIterator.cell(s), R.IteratorReference{R.DeferredIterator.iterator(s)}, True{}), R.BareNext{done, value}}", "B.Bundle{w, R.BareNext{done, value}}", "tests/deferred-refetch-stream.mjs", "firstInput"],
   ["deferred refetch program kernel omits first landing", "runtime/deferred-stream.bend", "B.Bundle{D.land(w, R.DeferredIterator.cell(s), R.IteratorReference{R.DeferredIterator.iterator(s)}, True{}), R.BareNext{done, value}}", "B.Bundle{w, R.BareNext{done, value}}", "tests/proof-properties.mjs", "firstInput", "deferred-stream-program"],
@@ -486,8 +492,8 @@ const mutations=[
   ['collected cleanup interrupts the commit continuation','runtime/core.bend','Cleanup.runCleanupCatch(w, R.World.fault(w))','Cleanup.rethrowCleanupError(Cleanup.runCleanupCatch(w, R.World.fault(w)), False{})','tests/owner-core-alignment.mjs','unwind'],
   ['unchanged-pass trim callbacks are skipped','runtime/core.bend','OwnerTasks{[O.TrimDeps{id}]} <> ending','ending','tests/owner-core-alignment.mjs','trimIntake'],
   ['pending intake stops after its first member','runtime/core.bend','CommitIntake{1n+index} <> rest','rest','tests/owner-core-alignment.mjs','commitIntake'],
-  ['collected trim error replaces the earlier application fault','runtime/core.bend','Machine{R.World.with_fault(w, prior), rest, saved}','Machine{Cleanup.rethrowCleanupError(R.World.with_fault(w, prior), False{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
-  ['successful finally trim drops the original application fault','runtime/core.bend','Machine{R.World.with_fault(w, prior), rest, saved}','Machine{R.World.with_fault(w, R.Healthy{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
+  ['collected trim error replaces the earlier application fault','runtime/core.bend','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, prior), rest, saved}','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{Cleanup.rethrowCleanupError(R.World.with_fault(w, prior), False{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
+  ['successful finally trim drops the original application fault','runtime/core.bend','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, prior), rest, saved}','case TrimFinallyRestore{prior, saved} <> rest:\n      Machine{R.World.with_fault(w, R.Healthy{}), rest, saved}','tests/owner-core-alignment.mjs','dispatch'],
   ['dormant owner sweep is skipped','runtime/core.bend','OwnerTasks{[O.SweepDormant{0n}]} <> ending','OwnerTasks{[]} <> ending','tests/owner-core-alignment.mjs','round'],
   ['owner cleanup loses caller tracking','runtime/core.bend','Machine{w, Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail} <> rest, stack}','Machine{R.World.with_tracking(w, False{}), Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail} <> rest, stack}','tests/owner-core-alignment.mjs','ownerTasks'],
   ['owner cleanup return corrupts caller operand stack','runtime/core.bend','Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail}','Evaluate{R.CallProgram{callback}, R.Undefined{}} <> OwnerTasks{tail}','tests/owner-core-alignment.mjs','ownerTasks'],
@@ -561,7 +567,7 @@ const mutations=[
   ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
   ['iterator return omitted','runtime/iterator-input.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs','returned'],
-  ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
+  ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
   ['unresolved promise commits','runtime/flight.bend','R.AsyncObserver.resolved(o)','True{}','tests/async.mjs'],
   ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
   ['leaked staging','runtime/core.bend','          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))','          value = B.current(n)'],

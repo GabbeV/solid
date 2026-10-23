@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "activeDeviationIds": [],
+  "internalHelper": "core/async.ts:onSupersede",
+  "flightSlots": [
+    "undefined",
+    "null",
+    "active identity"
+  ],
+  "publicHistoryCount": 3952,
+  "closedRegressionCount": 73,
+  "privateHelperControls": {
+    "count": 3456,
+    "compares": "Actual unchanged private Solid helper, context/flags/freshness/flight/chain identity/call order/errors/returned undefined",
+    "log": {
+      "path": "/workspace/scratch/night-supersede-alignment.log",
+      "sha256": "e6319c74e73caa386493a5e5809cf802aad8aceba37379d7804ebe3bc7aa1fd7"
+    }
+  },
+  "kernel": {
+    "newRoots": 15,
+    "rootReceipt": "tracking/checked.json",
+    "scopedOnly": true,
+    "allPreviousProgramDomainsBudgetsRetained": true,
+    "localReceipt": {
+      "path": "/workspace/scratch/night-supersede-final-kernel.log",
+      "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+    }
+  },
+  "negative": {
+    "newCompiledAndRejected": 5,
+    "configuredTotal": 539,
+    "finite": 450,
+    "kernel": 89,
+    "log": {
+      "path": "/workspace/scratch/night-supersede-negative-final.log",
+      "sha256": "e7f03e59d9ed8b7db81643b87824870f9279eef734e58076b9dcdedfdd77f458"
+    },
+    "completePriorStreamCheckpoint": "tracking/reviews/deferred-stream-complete-negative.json",
+    "freshComplete539Sweep": false,
+    "compilationResourceFailuresCredited": false
+  },
+  "publicSuite": {
+    "passed": true,
+    "log": {
+      "path": "/workspace/scratch/night-supersede-full.log",
+      "sha256": "3cccb54cda23e14ddb07e9ab5902de2a57e56ca6ea8cee169254976eaf42683e"
+    },
+    "scope": "Full slot-representation public suite. Subsequent change fixes only the new private chain callback return and is checked by helper controls/kernel/mutations; current public grammar does not call onSupersede yet."
+  },
+  "alignment": {
+    "passed": true,
+    "log": "/workspace/scratch/night-supersede-all-alignment-final.log",
+    "sha256": "39853554d2aec99cb2d97d8d057664b99a343a9f92cc24d80a6e3ed30d2e47af",
+    "includes3456CurrentHookControls": true
+  },
+  "draftFailuresCredited": false,
+  "limitations": [
+    "from not wired yet",
+    "arbitrary JS callables/protocol bodies",
+    "stores/boundaries/snapshots",
+    "nonproduction hooks"
+  ]
+}

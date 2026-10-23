@@ -29,7 +29,7 @@ try {
   const stamp=s=>Object.hasOwn(s,'value')?s.value:-1;
   function extension(x,bend) {
     if(!x)return null;
-    if(bend)return {inFlight:x.inFlight,flightTeardown:x.flightTeardown,error:value(x.error),blocked:value(x.blocked.value),
+    if(bend)return {inFlight:x.inFlight.result??0,flightTeardown:x.flightTeardown,error:value(x.error),blocked:value(x.blocked.value),
       sources:x.pendingSources!==0,unobserved:x.unobserved,snapshot:Object.hasOwn(x.snapshotValue,'value'),
       pendingFirstChild:x.pendingFirstChild,pendingDisposal:Object.hasOwn(x.pendingDisposal,'callback'),transaction:x.transaction,
       reask:x.reask,flushed:Object.hasOwn(x.flushed,'value'),flushedAt:stamp(x.flushedAt),q:decodeQuestion(x.q),lane:Object.hasOwn(x.lane,'value'),marks:x.marks,shownError:value(x.shownError)};

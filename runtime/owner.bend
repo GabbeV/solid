@@ -90,7 +90,7 @@ def afterPark(+w: R.World, rest: List<&2, Task>, +id: Nat, +self: Bool, +zombie:
   +w = B.choose(~R.World, Bool.and(self, B.computed(R.Node.kind(B.node(w, id)))),
     _ =>
       +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), 0n)), _ => w)
+        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{})), _ => w)
       B.choose(~R.World, Bool.or(Bool.and(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()),
         Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), 0n)), B.has(flags, K.REACTIVE_FRAME_READ())), _ => B.schedule(w), _ => w),
     _ => w)

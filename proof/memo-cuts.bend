@@ -11,7 +11,7 @@ import ../representation/records.bend as R
 
 # This fixed frame is the source scalar memo's completed first update.
 def frame() -> C.PassFrame:
-  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, R.Number{1n}, False{}, R.Undefined{}, 0n, False{}, 0n, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}}}
+  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, R.Number{1n}, False{}, R.Undefined{}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}}}
 
 def step_release(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, C.PassReleases{frame(), 0n, value, False{}, False{}, False{}, R.Healthy{}} <> rest, stack})

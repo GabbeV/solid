@@ -32,7 +32,7 @@ try {
   function actual(w){const xs=list(w.extensions);return {
     nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,value:value(n.value),pending:Object.hasOwn(n.pending,'value'),pendingValue:value(n.pending.value??{}),
       first:n.firstChild,next:n.nextSibling,prev:n.prevSibling,gen:n.depGen,time:n.time,loading:n.loading,disposal:disposal(n.disposal),cleanup:n.cleanup,
-      x:n.x?{flight:xs[n.x].inFlight,teardown:xs[n.x].flightTeardown,child:xs[n.x].pendingFirstChild,disposal:disposal(xs[n.x].pendingDisposal),reask:xs[n.x].reask}:null})),
+      x:n.x?{flight:(xs[n.x].inFlight.result??0),teardown:xs[n.x].flightTeardown,child:xs[n.x].pendingFirstChild,disposal:disposal(xs[n.x].pendingDisposal),reask:xs[n.x].reask}:null})),
     events:list(w.events).map(e=>'callback' in e?['cleanup',e.callback,e.code]:'reader' in e?['read',e.reader,e.source,value(e.value)]:['compute',e.id]),
     context:w.context,tracking:w.tracking,clock:w.clock,running:w.running,scheduled:w.scheduled,unflushed:w.unflushedStaged,pending:list(w.pendingNodes),trims:list(w.trims),
     min:w.minimum,max:w.maximum,error:w.fault.cause?.n};}

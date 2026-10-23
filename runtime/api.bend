@@ -8,6 +8,7 @@ import ./owner.bend as O
 import ./construct.bend as N
 import ./flight.bend as F
 import ./iterator-state.bend as I
+import ./supersede.bend as Supersede
 import ./signals.bend as J
 import ./ambient.bend as L
 import ./callback.bend as Z
@@ -668,3 +669,8 @@ def createDeferred(fuel: Nat, +w: R.World, compute: R.Expr, +options: R.NodeOpti
   +w = B.choose(~R.World, R.NodeOptions.lazy(options), _ => w, _ => C.world(C.run(fuel, C.Machine{w, [C.Recompute{id, True{}}], []})))
   +w = B.choose(~R.World, B.ok(w), _ => B.event(w, R.AccessorBound{id}), _ => w)
   R.World.with_tracking(R.World.with_context(w, context), tracking)
+
+# Internal async.ts helper boundary, also used by from's iterator factory.
+# This is not an additional public signals export.
+def registerSupersede(w: R.World, callback: Nat) -> R.World:
+  Supersede.register(w, callback)

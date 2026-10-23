@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3952 differential histories, 534 configured compiled mutations,
+Current verification: 3952 differential histories, 539 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b9b6f333 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -882,3 +882,13 @@ domain/budget is retained. The preceding 524-variant complete sweep applies to
 9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
 A newly confirmed protocol-error bug010 remains faithfully preserved; from/
 onSupersede and store/boundary/snapshot scopes remain unfinished.
+
+
+The subsequent [internal supersession checkpoint](supersede.md) preserves exact
+undefined/null/active flight slots and adds the source onSupersede hook through
+the existing callback machine. It adds 3,456 private helper controls and fifteen
+quantified roots, with five compiled negative checks (539 configured: 450 finite,
+89 kernel). Public histories/closed regressions remain 3,952/73. All earlier
+complete-program domains and budgets are retained. The complete preceding
+534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
+still unfinished and no deviation is active.
