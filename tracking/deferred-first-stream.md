@@ -42,3 +42,14 @@ A source scope probe confirms its existing p.then TypeError for a bare producer,
 while Bend refuses Unsupported88. This is the documented scope boundary and the
 same registered upstream bug, not a successful in-profile comparison or a new
 workaround. These exploratory probes do not increase the 108-history count.
+
+
+The subsequent [stream-refetch checkpoint](deferred-stream-refetch.md) supersedes
+older Unsupported88/open-window exclusions above. It adds the actual source
+wrapper, 184 public histories (3,952 total), 13 kernel roots including a complete
+ordinary-payload fixed one-yield programme for every budget >=118, and ten
+compiled negative controls (534 configured). Every prior complete-program
+domain/budget is retained. The preceding 524-variant complete sweep applies to
+9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
+A newly confirmed protocol-error bug010 remains faithfully preserved; from/
+onSupersede and store/boundary/snapshot scopes remain unfinished.

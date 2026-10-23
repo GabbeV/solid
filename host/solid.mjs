@@ -497,16 +497,16 @@ export class SolidRuntime {
   promise(name){return this.ports[name].promise;}
   runAction(name,plan){const promise=this.evaluate({action:plan});this.recordPort(name,promise);return promise;}
   future(name,{immediate=false}={}) {
-    const id=this.nextFuture++,record={settled:false,rejected:false,value:undefined,observers:[]};
+    const id=this.nextFuture++,record={settled:false,rejected:false,value:undefined,observers:[],thenCalls:0};
     if(immediate){
-      record.object={then:(yes,no)=>{if(record.settled)(record.rejected?no:yes)?.(record.value);else record.observers.push([yes,no]);}};
+      record.object={then:(yes,no)=>{record.thenCalls++;if(record.settled)(record.rejected?no:yes)?.(record.value);else record.observers.push([yes,no]);}};
       record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;record.rejected=rejected;record.value=value;for(const [yes,no] of record.observers)(rejected?no:yes)?.(value);};
     }else{
       let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});
       // Native promise microtasks invoke the actual source callbacks. Observe
       // callback exceptions as host outcomes instead of unhandled rejections.
       const observed=fn=>value=>{try{return this.withJobs(()=>fn(value));}catch(e){this.asyncErrors.push(this.errorShape(e));}};
-      record.object={then:(yes,no)=>promise.then(typeof yes==='function'?observed(yes):yes,typeof no==='function'?observed(no):no)};
+      record.object={then:(yes,no)=>{record.thenCalls++;return promise.then(typeof yes==='function'?observed(yes):yes,typeof no==='function'?observed(no):no);}};
       promise.catch(()=>{}); // unobserved external rejection is outside engine IO
       record.deliver=(rejected,value)=>{if(record.settled)return;record.settled=true;(rejected?reject:resolve)(value);};
     }
@@ -515,16 +515,23 @@ export class SolidRuntime {
   stream(name,steps=[],options={}) {
     const id=this.nextFuture++,self=this;
     const object={ [Symbol.asyncIterator]() {
+      if(Object.hasOwn(options,'factoryThrows')){
+        const error=self.value(options.factoryThrows);
+        self.iteratorEvents.push(['factory-throw',name,self.errorShape(error)]);
+        throw error;
+      }
       const iterator=self.nextIterator++;let cursor=0;
       self.iteratorEvents.push(['start',name,iterator]);
-      const it={next(){
+      const it={next(...args){
+        (self.iteratorMethodEvents??=[]).push(['next',iterator,args.map(value=>self.observe(value))]);
         self.iteratorEvents.push(['next',iterator,cursor]);
         const step=steps[cursor++]??{done:true};
         if(Object.hasOwn(step,'throw'))throw self.value(step.throw);
         if(step.future)return self.futures[step.future].object;
         return {done:step.done??false,value:self.value(step.value)};
       }};
-      if(options.hasReturn??true)it.return=()=>{
+      if(options.hasReturn??true)it.return=(...args)=>{
+        (self.iteratorMethodEvents??=[]).push(['return',iterator,args.map(value=>self.observe(value))]);
         self.iteratorEvents.push(['return',iterator]);
         if(Object.hasOwn(options,'returnThrows'))throw self.value(options.returnThrows);
         return self.futures[options.returnFuture]?.object;
@@ -535,6 +542,8 @@ export class SolidRuntime {
   }
   resolveStep(name,value,done=false){this.futures[name].deliver(false,{done,value:this.value(value)});}
   resolveStream(name,stream){this.futures[name].deliver(false,this.futures[stream].object);}
+  thenIO(){return Object.entries(this.futures).filter(([,record])=>typeof record.thenCalls==='number').map(([name,record])=>[name,record.thenCalls]);}
+  iteratorMethods(){return this.iteratorMethodEvents??[];}
   iteratorIO(){return this.iteratorEvents;}
   resolve(name,value){this.futures[name].deliver(false,this.value(value));}
   reject(name,error){this.futures[name].deliver(true,this.value(error));}

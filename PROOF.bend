@@ -2,6 +2,9 @@ import Base
 import ./proof/async-cleanup-program.bend as CleanupProgram
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
+import ./proof/deferred-stream-program.bend as DeferredStreamProgram
+import ./proof/deferred-stream-laws.bend as DeferredStreamLaws
+
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-payload-program.bend as DeferredPayloadProgram
 import ./proof/deferred-lifecycle.bend as DeferredLifeLaws
@@ -971,6 +974,45 @@ def Laws.deferred_data_complete(initial, next, extra):
 
 def Laws.deferred_data_result(initial, next, extra):
   DeferredProgram.result(initial, next, extra)
+
+def Laws.deferred_stream_complete(initial, next, extra):
+  DeferredStreamProgram.complete(initial, next, extra)
+
+def Laws.deferred_stream_result(initial, next, extra):
+  DeferredStreamProgram.result(initial, next, extra)
+
+def Laws.deferred_stream_first_throw(w, id, error):
+  DeferredStreamLaws.firstThrow(w, id, error)
+
+def Laws.deferred_stream_unresolved(w, id, observer, immediate):
+  DeferredStreamLaws.unresolved(w, id, observer, immediate)
+
+def Laws.deferred_stream_missing_return(w):
+  DeferredStreamLaws.missing(w)
+
+def Laws.deferred_stream_undefined_return(w):
+  DeferredStreamLaws.undefinedReturn(w)
+
+def Laws.deferred_stream_null_return(w):
+  DeferredStreamLaws.nullReturn(w)
+
+def Laws.deferred_stream_nonnull_return(w, value, plain):
+  DeferredStreamLaws.nonnullReturn(w, value, plain)
+
+def Laws.deferred_stream_promise_return(w, result):
+  DeferredStreamLaws.promiseReturn(w, result)
+
+def Laws.deferred_stream_throw_return(w, error):
+  DeferredStreamLaws.throwReturn(w, error)
+
+def Laws.deferred_stream_done_world(w):
+  DeferredStreamLaws.doneWorld(w)
+
+def Laws.deferred_stream_done_value(w):
+  DeferredStreamLaws.doneValue(w)
+
+def Laws.deferred_stream_serve_unwind(w, cell, rest, stack):
+  DeferredStreamLaws.serveUnwind(w, cell, rest, stack)
 
 def Laws.deferred_payload_complete(initial, next, extra):
   DeferredPayloadProgram.complete(initial, next, extra)

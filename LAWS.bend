@@ -2,6 +2,12 @@ import Base
 import ./examples/async-cleanup.bend as CleanupExample
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
+import ./proof/deferred-stream-program.bend as DeferredStreamProgram
+import ./proof/deferred-stream-driver.bend as DeferredStreamDriver
+import ./proof/deferred-stream-laws.bend as DeferredStreamLaws
+import ./runtime/deferred-stream.bend as DeferredStreamRuntime
+import ./runtime/iterator-input.bend as IteratorInput
+
 import ./proof/deferred-program.bend as DeferredProgram
 import ./proof/deferred-payload-program.bend as DeferredPayloadProgram
 import ./proof/deferred-payload-driver.bend as DeferredPayloadDriver
@@ -2020,6 +2026,74 @@ law deferred_data_result:
 
 # The same public data lifecycle for arbitrary ordinary represented payloads.
 # Each side may select a different constructor; contents and identities are free.
+law deferred_stream_complete:
+  for initial: Payload.Ordinary
+  for next: Payload.Ordinary
+  for extra: Nat
+  {Core.run(Nat.add(118n, extra), DeferredStreamDriver.before(initial, next)) == DeferredStreamProgram.state_118(initial, next) : Core.Machine}
+
+law deferred_stream_result:
+  for initial: Payload.Ordinary
+  for next: Payload.Ordinary
+  for extra: Nat
+  {Core.values(Core.run(Nat.add(118n, extra), DeferredStreamDriver.before(initial, next))) == [Payload.value(next)] : List<&2, R.Value>}
+
+law deferred_stream_first_throw:
+  for w: R.World
+  for id: Nat
+  for error: R.Value
+  {DeferredStreamRuntime.firstInput(w, id, R.ThrowNext{error}) == B.Bundle{w, R.ThrowNext{error}} : B.Bundle<R.World, R.NextInput>}
+
+law deferred_stream_unresolved:
+  for w: R.World
+  for id: Nat
+  for observer: Nat
+  for immediate: Bool
+  {DeferredStreamRuntime.observeState(w, id, observer, immediate, R.Unresolved{}) == w : R.World}
+
+law deferred_stream_missing_return:
+  for w: R.World
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.MissingReturn{}) == DeferredStreamRuntime.resolvedDone(w) : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_undefined_return:
+  for w: R.World
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.RawReturn{R.Undefined{}}) == DeferredStreamRuntime.resolvedDone(w) : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_null_return:
+  for w: R.World
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.RawReturn{R.Null{}}) == DeferredStreamRuntime.resolvedDone(w) : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_nonnull_return:
+  for w: R.World
+  for value: R.Value
+  for plain: {B.nullish(value) == False{} : Bool}
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.RawReturn{value}) == B.Bundle{w, IteratorInput.RawReturn{value}} : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_promise_return:
+  for w: R.World
+  for result: Nat
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.PromiseReturn{result}) == B.Bundle{w, IteratorInput.PromiseReturn{result}} : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_throw_return:
+  for w: R.World
+  for error: R.Value
+  {DeferredStreamRuntime.returnInput(w, IteratorInput.ThrowReturn{error}) == B.Bundle{w, IteratorInput.ThrowReturn{error}} : B.Bundle<R.World, IteratorInput.Returned>}
+
+law deferred_stream_done_world:
+  for w: R.World
+  {B.first(R.World, IteratorInput.Returned, DeferredStreamRuntime.resolvedDone(w)) == R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{False{}, R.Fulfilled{R.StepResult{True{}, R.Undefined{}}}, [], 0n}])) : R.World}
+
+law deferred_stream_done_value:
+  for w: R.World
+  {B.second(R.World, IteratorInput.Returned, DeferredStreamRuntime.resolvedDone(w)) == IteratorInput.PromiseReturn{B.length(R.AsyncObject, R.World.asyncObjects(w))} : IteratorInput.Returned}
+
+law deferred_stream_serve_unwind:
+  for w: R.World
+  for cell: Nat
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  {Core.unwind(w, Core.DeferredAfterIterator{cell} <> rest, stack) == Core.Machine{w, rest, stack} : Core.Machine}
+
 law deferred_payload_complete:
   for initial: Payload.Ordinary
   for next: Payload.Ordinary

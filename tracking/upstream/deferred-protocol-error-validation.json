@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "sourceUnmodified": true,
+  "activeDeviationIds": [],
+  "status": "confirmed-baseline-preserved",
+  "standalone": {
+    "cases": 120,
+    "tiers": [
+      "dev.js",
+      "prod/index.js",
+      "observe/index.js"
+    ],
+    "log": {
+      "path": "/workspace/scratch/night-protocol-error-all-tiers.json",
+      "sha256": "13358250928bb307838f9ba3cb522ef77833cd086ebb5f666a5463b06982487c"
+    }
+  },
+  "browser": {
+    "cases": 6,
+    "browser": "Chromium 154.0.8037.57",
+    "receipt": "repros/playground/deferred-protocol-error-browser.json",
+    "repro": "repros/playground/deferred-protocol-error.tsx",
+    "control": "Only next becomes async; same component, automatic scheduling, no flush."
+  },
+  "search": {
+    "checkedNext": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+    "matchingOpenIssueOrPullFound": false,
+    "relatedPulls": [
+      4231,
+      4232,
+      4112
+    ],
+    "unrelatedOpenDeferredPulls": [
+      4128,
+      4220
+    ]
+  },
+  "filed": false,
+  "patchInstalled": false,
+  "publicTranslationEvidence": "tests/deferred-refetch-stream.mjs; preserved first-next/factory-error cases and passing controls"
+}

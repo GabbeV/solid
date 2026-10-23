@@ -5,6 +5,17 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred refetch captures raw iterator instead of wrapper", "runtime/deferred-stream.bend", "R.DeferredIterator.iterator(wrapper(w, planWrapper(w, source)))", "R.DeferredIterator.inner(wrapper(w, planWrapper(w, source)))", "tests/deferred-refetch-stream.mjs", "iterator"],
+  ["deferred refetch omits bare first landing", "runtime/deferred-stream.bend", "B.Bundle{D.land(w, R.DeferredIterator.cell(s), R.IteratorReference{R.DeferredIterator.iterator(s)}, True{}), R.BareNext{done, value}}", "B.Bundle{w, R.BareNext{done, value}}", "tests/deferred-refetch-stream.mjs", "firstInput"],
+  ["deferred refetch program kernel omits first landing", "runtime/deferred-stream.bend", "B.Bundle{D.land(w, R.DeferredIterator.cell(s), R.IteratorReference{R.DeferredIterator.iterator(s)}, True{}), R.BareNext{done, value}}", "B.Bundle{w, R.BareNext{done, value}}", "tests/proof-properties.mjs", "firstInput", "deferred-stream-program"],
+  ["deferred refetch promised done lands wrong identity", "runtime/deferred-stream.bend", "R.DeferredIterator.iterator(wrapper(w, id))", "R.DeferredIterator.inner(wrapper(w, id))", "tests/deferred-refetch-stream.mjs", "observe"],
+  ["deferred refetch omits promised first observer", "runtime/deferred-stream.bend", "B.Bundle{observe(w, id, result), R.PromiseNext{result}}", "B.Bundle{w, R.PromiseNext{result}}", "tests/deferred-refetch-stream.mjs", "firstInput"],
+  ["deferred refetch bare yield retains first flag", "runtime/deferred-stream.bend", "+w = store(w, id, R.DeferredIterator.with_first(s, False{}))", "+w = w", "tests/deferred-refetch-stream.mjs", "firstInput"],
+  ["deferred refetch kernel loses nullish return fallback", "runtime/deferred-stream.bend", "_ => resolvedDone(w), _ => B.Bundle{w, Input.RawReturn{value}}", "_ => B.Bundle{w, Input.RawReturn{value}}, _ => B.Bundle{w, Input.RawReturn{value}}", "tests/proof-properties.mjs", "returnInput", "deferred-stream-laws"],
+  ["deferred refetch kernel mutates first before throwing", "runtime/deferred-stream.bend", "case R.ThrowNext{error}: B.Bundle{w, R.ThrowNext{error}}", "case R.ThrowNext{error}: B.Bundle{store(w, id, R.DeferredIterator.with_first(wrapper(w, id), False{})), R.ThrowNext{error}}", "tests/proof-properties.mjs", "firstInput", "deferred-stream-laws"],
+  ["deferred refetch failed factory still asks", "runtime/core.bend", "B.choose(~Machine, B.ok(w),", "B.choose(~Machine, True{},", "tests/deferred-refetch-stream.mjs", "deferredStream"],
+  ["deferred refetch serve loses held pending value", "runtime/core.bend", "Deferred.served(w, cell, B.second(R.World, R.Value, pair))", "B.second(R.World, R.Value, pair)", "tests/deferred-refetch-stream.mjs", "deferredAfterIterator"],
+
   ["deferred sync-error omits ending superseded flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/pin-b9b6f333.mjs", "sourceFailed"],
   ["deferred sync-error kernel preserves obsolete flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/proof-properties.mjs", "sourceFailed", "deferred-lifecycle"],
   ["deferred catch kernel leaves active caught fault", "runtime/core.bend", "Deferred.sourceFailed(R.World.with_fault(w, R.Healthy{}), cell, open, cause)", "Deferred.sourceFailed(w, cell, open, cause)", "tests/proof-properties.mjs", "deferredUnwind", "deferred-error-probe"],
@@ -549,7 +560,7 @@ const mutations=[
   ['refresh waiter runs eagerly','runtime/signals.bend','_ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.WatchStart{id}]))','_ => makeWatch(256n, w, id)','tests/waiters.mjs'],
   ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
-  ['iterator return omitted','runtime/iterator-state.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs'],
+  ['iterator return omitted','runtime/iterator-input.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs','returned'],
   ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(R.NodeExtension.inFlight(B.extension(w, id)), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
   ['unresolved promise commits','runtime/flight.bend','R.AsyncObserver.resolved(o)','True{}','tests/async.mjs'],
   ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],

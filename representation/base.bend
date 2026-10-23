@@ -77,6 +77,8 @@ def equal(a: R.Value, b: R.Value) -> Bool:
       Nat.is_eq(x, y)
     case R.AsyncValue{x} R.AsyncValue{y}:
       Nat.is_eq(x, y)
+    case R.IteratorReference{x} R.IteratorReference{y}:
+      Nat.is_eq(x, y)
     case R.ArrayReference{x} R.ArrayReference{y}:
       Nat.is_eq(x, y)
     case R.Reference{x} R.Reference{y}:
@@ -151,6 +153,8 @@ def truth(v: R.Value) -> Bool:
     case R.NotPendingToken{}:
       True{}
     case R.AsyncValue{identity}:
+      True{}
+    case R.IteratorReference{iterator}:
       True{}
     case R.StepResult{done, value}:
       True{}
@@ -277,7 +281,7 @@ def blank_asyncObserver() -> R.AsyncObserver:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}}, R.VerdictState{False{}, False{}, False{}, False{}}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], []}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}}, R.VerdictState{False{}, False{}, False{}, False{}}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], [], [R.DeferredIterator{0n, 0n, 0n, False{}}]}}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -418,7 +422,7 @@ def store_asyncObserver(+w: R.World, id: Nat, observer: R.AsyncObserver) -> R.Wo
   R.World.with_asyncObservers(w, List.set(&2, R.AsyncObserver, R.World.asyncObservers(w), id, observer))
 
 def streamPlan(w: R.World, id: Nat) -> R.StreamPlan:
-  get(R.StreamPlan, R.World.streamPlans(w), id, R.StreamPlan{[], False{}, R.Empty{}, 0n})
+  get(R.StreamPlan, R.World.streamPlans(w), id, R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}})
 
 def iterator(w: R.World, id: Nat) -> R.ExternalIterator:
   get(R.ExternalIterator, R.World.iterators(w), id, R.ExternalIterator{0n, 0n, 0n})

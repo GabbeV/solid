@@ -1,31 +1,40 @@
 # handleAsync's iterator closure state and typed external method protocol.
 # Leaf module: owner cleanup can close a stream without importing core/flight.
 import Base
+import ./iterator-input.bend as Input
+import ./deferred-stream.bend as DeferredStream
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 
-def newIterable(+w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, returnError: R.Slot, returnResult: Nat) -> R.World:
+def newIterableProtocol(+w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, returnError: R.Slot, returnResult: Nat, factoryError: R.Slot) -> R.World:
   +plan = B.length(R.StreamPlan, R.World.streamPlans(w))
-  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{steps, hasReturn, returnError, returnResult}]))
+  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{steps, hasReturn, returnError, returnResult, 0n, factoryError}]))
   R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{False{}, R.Unresolved{}, [], plan}]))
+
+def newIterable(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, returnError: R.Slot, returnResult: Nat) -> R.World:
+  newIterableProtocol(w, steps, hasReturn, returnError, returnResult, R.Empty{})
 
 # source[Symbol.asyncIterator]() creates this external iterator. Its supplied
 # next descriptors are host inputs. Every consumption gets its own cursor.
-def newStream(+w: R.World, +node: Nat, result: Nat, +source: Nat, deferred: Bool, initialValue: R.Value) -> B.Bundle<R.World, Nat>:
-  +iterator = B.length(R.ExternalIterator, R.World.iterators(w))
+def streamForIterator(+w: R.World, node: Nat, result: Nat, iterator: Nat, deferred: Bool, initialValue: R.Value) -> B.Bundle<R.World, Nat>:
   +stream = B.length(R.StreamState, R.World.streams(w))
   +close = B.length(R.CleanupProgram, R.World.cleanupPrograms(w))
-  +w = R.World.with_iterators(w, B.append(R.ExternalIterator, R.World.iterators(w), [R.ExternalIterator{R.AsyncObject.stream(B.asyncObject(w, source)), 0n, 0n}]))
   +w = R.World.with_streams(w, B.append(R.StreamState, R.World.streams(w), [R.StreamState{node, result, iterator, False{}, False{}, Bool.not(deferred), initialValue, close}]))
   +w = R.World.with_cleanupPrograms(w, B.append(R.CleanupProgram, R.World.cleanupPrograms(w), [R.CleanupProgram{[R.CleanupCloseIterator{stream}], False{}, 0n}]))
-  B.Bundle{B.iteratorEvent(w, R.IteratorStarted{source, iterator}), stream}
+  B.Bundle{w, stream}
+
+def newStream(+w: R.World, +node: Nat, +result: Nat, +source: Nat, +deferred: Bool, +initialValue: R.Value) -> B.Bundle<R.World, Nat>:
+  +pair = B.choose(~B.Bundle<R.World, Nat>, Nat.is_ne(DeferredStream.planWrapper(w, source), 0n),
+    _ => B.Bundle{w, DeferredStream.iterator(w, source)}, _ => Input.open(w, source))
+  +w = B.first(R.World, Nat, pair)
+  B.choose(~B.Bundle<R.World, Nat>, B.ok(w),
+    _ => streamForIterator(w, node, result, B.second(R.World, Nat, pair), deferred, initialValue), _ => B.Bundle{w, 0n})
 
 def next(+w: R.World, stream: Nat) -> B.Bundle<R.World, R.NextInput>:
   +id = R.StreamState.iterator(B.stream(w, stream))
-  +it = B.iterator(w, id)
-  +index = R.ExternalIterator.cursor(it)
-  +w = B.store_iterator(w, id, R.ExternalIterator.with_cursor(it, 1n+index))
-  B.Bundle{B.iteratorEvent(w, R.IteratorNext{id, index}), B.get(R.NextInput, R.StreamPlan.steps(B.streamPlan(w, R.ExternalIterator.plan(it))), index, R.BareNext{True{}, R.Undefined{}})}
+  +wrapper = R.StreamPlan.wrapper(B.streamPlan(w, R.ExternalIterator.plan(B.iterator(w, id))))
+  B.choose(~B.Bundle<R.World, R.NextInput>, Nat.is_ne(wrapper, 0n),
+    _ => DeferredStream.next(w, wrapper), _ => Input.next(w, id, R.Empty{}))
 
 # A returned thenable has only a rejection-swallow callback. Native-style
 # completion is external IO; a node-zero observer is explicitly a no-op.
@@ -48,20 +57,21 @@ def ignoreThen(+w: R.World, +result: Nat) -> R.World:
 
 # close marks completed before calling return; return/then throws and rejected
 # returns are swallowed. The external descriptor has no arbitrary user callback.
+def closeResult(w: R.World, returned: Input.Returned) -> R.World:
+  match returned:
+    case Input.PromiseReturn{result}: ignoreThen(w, result)
+    case _: w
+
 def close(+w: R.World, +stream: Nat) -> R.World:
   +state = B.stream(w, stream)
   B.choose(~R.World, R.StreamState.completed(state), _ => w,
     _ =>
       +w = B.store_stream(w, stream, R.StreamState.with_completed(state, True{}))
       +id = R.StreamState.iterator(state)
-      +it = B.iterator(w, id)
-      +plan = B.streamPlan(w, R.ExternalIterator.plan(it))
-      B.choose(~R.World, R.StreamPlan.hasReturn(plan),
-        _ =>
-          +w = B.store_iterator(w, id, R.ExternalIterator.with_returns(it, 1n+R.ExternalIterator.returns(it)))
-          +w = B.iteratorEvent(w, R.IteratorReturned{id})
-          B.choose(~R.World, Bool.or(B.present(R.StreamPlan.returnError(plan)), Nat.is_eq(R.StreamPlan.returnResult(plan), 0n)), _ => w,
-            _ => ignoreThen(w, R.StreamPlan.returnResult(plan))), _ => w))
+      +wrapper = R.StreamPlan.wrapper(B.streamPlan(w, R.ExternalIterator.plan(B.iterator(w, id))))
+      +pair = B.choose(~B.Bundle<R.World, Input.Returned>, Nat.is_ne(wrapper, 0n),
+        _ => DeferredStream.returned(w, wrapper), _ => Input.returned(w, id, R.Empty{}))
+      closeResult(B.first(R.World, Input.Returned, pair), B.second(R.World, Input.Returned, pair)))
 
 def newStepObserver(+w: R.World, +stream: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObserver, R.World.asyncObservers(w))

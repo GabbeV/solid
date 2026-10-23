@@ -1,0 +1,93 @@
+{
+  "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "sourceTreeClean": true,
+  "browser": "154.0.8037.57",
+  "reproducer": "deferred-protocol-error.tsx",
+  "control": "Only next() becomes async; no flush, extra button or source patch.",
+  "rows": [
+    {
+      "tier": "prod",
+      "control": false,
+      "logs": [
+        [
+          "Pending:",
+          true
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "tier": "prod",
+      "control": true,
+      "logs": [
+        [
+          "Pending:",
+          false
+        ],
+        [
+          "Error:",
+          "stream failed"
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "tier": "dev",
+      "control": false,
+      "logs": [
+        [
+          "Pending:",
+          true
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "tier": "dev",
+      "control": true,
+      "logs": [
+        [
+          "Pending:",
+          false
+        ],
+        [
+          "Error:",
+          "stream failed"
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "tier": "observe",
+      "control": false,
+      "logs": [
+        [
+          "Pending:",
+          true
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    },
+    {
+      "tier": "observe",
+      "control": true,
+      "logs": [
+        [
+          "Pending:",
+          false
+        ],
+        [
+          "Error:",
+          "stream failed"
+        ]
+      ],
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

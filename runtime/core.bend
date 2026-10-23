@@ -3,6 +3,7 @@
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
 import ./deferred-runtime.bend as Deferred
+import ./deferred-stream.bend as DeferredStream
 import ./truth-state.bend as Truth
 import ./lanes-state.bend as Lanes
 import ./verdict-state.bend as Verdict
@@ -92,6 +93,8 @@ type Task is Data:
   DeferredRegisterObserver{cell: Nat, node: Nat, result: Nat}
   DeferredSubscribeThen{cell: Nat, result: Nat, observer: Nat}
   DeferredAfterThen{cell: Nat, observer: Nat}
+  DeferredAfterIterator{cell: Nat}
+  DeferredStreamCall{cell: Nat, source: Nat}
   DeferredRejected{error: R.Value}
   FlattenValue{skip: Bool, defer: Bool}
   FlattenChildValue{frame: FlattenFrame}
@@ -673,13 +676,13 @@ def deferredBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +c
 
 # A successful fn return is outside the wrapper's try/catch from here onward.
 # Closed-window streams use the original ordinary Finish/iterator path.
-# Refetch stream wrapping remains an explicit Unsupported88 branch.
+# An answered stream is wrapped before the original engine consumes it.
 def deferredResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +open: Bool) -> Machine:
   match stack:
     case R.AsyncValue{+result} <> +tail:
       B.choose(~Machine, open,
         _ => B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
-          _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, tail},
+          _ => Machine{w, DeferredStreamCall{cell, result} <> rest, tail},
           _ => Machine{Deferred.ask(w, cell, R.AsyncValue{result}), DeferredObserve{cell, result} <> rest, tail}),
         _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, R.AsyncValue{result} <> tail})
     case +value <> tail:
@@ -2103,15 +2106,31 @@ def subscribe(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, frame:
 
 # handleAsync:consumeIterator. The close callback belongs to the ambient
 # owner for LIVE consumption, and directly to el for deferred flattening.
-def consumeIterator(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, result: Nat, source: Nat, +deferred: Bool, initialValue: R.Value) -> Machine:
+def consumeIterator(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, result: Nat, source: Nat, +deferred: Bool, initialValue: R.Value) -> Machine:
   +pair = I.newStream(w, id, result, source, deferred, initialValue)
   +w = B.first(R.World, Nat, pair)
-  +stream = B.second(R.World, Nat, pair)
-  +close = R.StreamState.close(B.stream(w, stream))
-  +w = O.cleanup(w, B.choose(~Nat, deferred, _ => id, _ => R.World.context(w)), close)
-  +w = E.ext(w, id)
-  +w = B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), close))
-  Machine{w, IterateStream{stream} <> AfterConsume{stream} <> rest, stack}
+  B.choose(~Machine, B.ok(w),
+    _ =>
+      +stream = B.second(R.World, Nat, pair)
+      +close = R.StreamState.close(B.stream(w, stream))
+      +w = O.cleanup(w, B.choose(~Nat, deferred, _ => id, _ => R.World.context(w)), close)
+      +w = E.ext(w, id)
+      +w = B.store_extension(w, id, R.NodeExtension.with_flightTeardown(B.extension(w, id), close))
+      Machine{w, IterateStream{stream} <> AfterConsume{stream} <> rest, stack},
+    _ => Machine{w, rest, stack})
+
+# deferred.ts open-window stream: capture the source iterator, ask(s), then
+# serve the distinct iterable through the existing handleAsync engine.
+def deferredStream(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, source: Nat) -> Machine:
+  +pair = DeferredStream.wrap(w, cell, source)
+  +w = B.first(R.World, Nat, pair)
+  B.choose(~Machine, B.ok(w),
+    _ =>
+      +result = B.second(R.World, Nat, pair)
+      +node = R.DeferredCell.node(Deferred.cell(w, cell))
+      +w = Deferred.ask(w, cell, DeferredStream.flight(w, result))
+      consumeIterator(F.startFlight(w, node, result), DeferredAfterIterator{cell} <> rest, stack, node, result, result, False{}, R.Undefined{}),
+    _ => Machine{w, rest, stack})
 
 def finishAsyncObject(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +frame: PassFrame, +id: Nat, +result: Nat) -> Machine:
   B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
@@ -2281,11 +2300,25 @@ def deferredAfterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
       +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
       handleError(w, DeferredRejected{R.AsyncObserver.syncError(o)} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), R.AsyncObserver.syncError(o)),
     _ => B.choose(~Machine, Bool.and(R.AsyncObserver.resolved(o), Nat.is_ne(iterable(w, R.AsyncObserver.syncValue(o)), 0n)),
-      _ => Machine{R.World.with_fault(w, R.Unsupported{88n}), rest, stack},
+      _ =>
+        +w = B.store_asyncObserver(w, observer, R.AsyncObserver.with_isSync(o, False{}))
+        consumeIterator(w, DeferredAfterIterator{cell} <> rest, stack, R.AsyncObserver.node(o), R.AsyncObserver.result(o), iterable(w, R.AsyncObserver.syncValue(o)), False{}, R.Undefined{}),
       _ =>
         +pair = F.thenValue(w, observer)
         +w = B.first(R.World, R.Value, pair)
         B.choose(~Machine, B.ok(w), _ => Machine{w, rest, Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> stack}, _ => Machine{w, rest, stack})))
+
+# handleAsync's live iterator result returns to serve, then to the original
+# Finish frame that detects this body already registered its own flight.
+def deferredAfterIterator(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.Value>, +cell: Nat) -> Machine:
+  match stack:
+    case R.StreamVerdict{+stream, landed, value} <> +tail:
+      +pair = F.liveValue(w, R.StreamState.node(B.stream(w, stream)), landed, value)
+      +w = B.first(R.World, R.Value, pair)
+      B.choose(~Machine, B.ok(w),
+        _ => Machine{w, rest, Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> tail},
+        _ => Machine{w, rest, tail})
+    case _: Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
 # One next(). Bare IteratorResult is assimilated by the source's immediate
 # then adapter; the same observer locals therefore serve all next shapes.
@@ -4215,6 +4248,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       deferredSubscribeState(w, rest, stack, cell, observer, R.AsyncObject.immediate(B.asyncObject(w, result)), R.AsyncObject.state(B.asyncObject(w, result)))
     case DeferredAfterThen{cell, observer} <> rest:
       deferredAfterThen(w, rest, stack, cell, observer)
+    case DeferredAfterIterator{cell} <> rest:
+      deferredAfterIterator(w, rest, stack, cell)
+    case DeferredStreamCall{cell, source} <> rest:
+      deferredStream(w, rest, stack, cell, source)
     case DeferredRejected{error} <> rest:
       Machine{R.World.with_fault(w, R.CallbackThrown{error}), rest, stack}
     case Nil{}:

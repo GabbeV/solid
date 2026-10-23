@@ -526,13 +526,40 @@ export class BendRuntime {
       else inputs=R.bareNext(step.done??false,this.encode(step.value),inputs);
     }
     const id=R.nextAsyncId(this.world);this.futures[name]=id;
-    this.world=R.createStream(this.world,inputs,options.hasReturn??true,Object.hasOwn(options,'returnThrows'),this.encode(options.returnThrows),this.futures[options.returnFuture]??0);this.check();return id;
+    this.world=Object.hasOwn(options,'factoryThrows')
+      ?R.createStreamWithFactory(this.world,inputs,options.hasReturn??true,Object.hasOwn(options,'returnThrows'),this.encode(options.returnThrows),this.futures[options.returnFuture]??0,true,this.encode(options.factoryThrows))
+      :R.createStream(this.world,inputs,options.hasReturn??true,Object.hasOwn(options,'returnThrows'),this.encode(options.returnThrows),this.futures[options.returnFuture]??0);
+    this.check();return id;
   }
   resolveStep(name,value,done=false){this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,R.vStepResult(done,this.encode(value)));this.check();}
   resolveStream(name,stream){this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,R.vAsync(this.futures[stream]));this.check();}
+  thenIO(){
+    const objects=list(this.world.asyncObjects);
+    return Object.entries(this.futures).filter(([,id])=>!objects[id].stream).map(([name,id])=>[name,list(objects[id].observers).length]);
+  }
+  iteratorMethods(){
+    const external=new Map(),calls=[];
+    for(const event of list(this.world.iteratorEvents)){
+      if('object'in event&&'iterator'in event){if(!external.has(event.iterator))external.set(event.iterator,external.size+1);}
+      if('argument'in event){
+        if(!external.has(event.iterator))throw new Error('Iterator method precedes its external factory call');
+        calls.push(['index'in event?'next':'return',external.get(event.iterator),'value'in event.argument?[this.observe(this.decode(event.argument.value))]:[]]);
+      }
+    }
+    return calls;
+  }
   iteratorIO(){
     const names=new Map(Object.entries(this.futures).map(([name,id])=>[id,name]));
-    return list(this.world.iteratorEvents).map(e=>'object'in e?['start',names.get(e.object),e.iterator]:'index'in e?['next',e.iterator,e.index]:['return',e.iterator]);
+    // Internal deferred wrappers share the typed arena but are not producer
+    // objects. Normalize external identities by first observed factory call,
+    // retaining every event and all subsequent identity/alias relationships.
+    const external=new Map();
+    return list(this.world.iteratorEvents).map(e=>{
+      if('error'in e)return ['factory-throw',names.get(e.object),this.errorShape(this.decode(e.error))];
+      if('object'in e){if(!external.has(e.iterator))external.set(e.iterator,external.size+1);return ['start',names.get(e.object),external.get(e.iterator)];}
+      if(!external.has(e.iterator))throw new Error('Iterator event precedes its external factory call');
+      return 'index'in e?['next',external.get(e.iterator),e.index]:['return',external.get(e.iterator)];
+    });
   }
   resolve(name,value) {this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],false,this.encode(value));this.check();}
   reject(name,error) {this.world=R.resolveThenable(this.fuel,this.world,this.futures[name],true,this.encode(error));this.check();}

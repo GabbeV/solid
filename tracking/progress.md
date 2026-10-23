@@ -5,8 +5,8 @@ concrete additions and checked guarantees, not a percentage of the whole package
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
 is b9b6f333 (declares rc.17). The latest integration ports merged synchronous-error
 flight retirement (#4231), with 32 added histories and three quantified
-boundaries; merged #4232/#4233 are validated in native tiers and remain outside
-the current Bend profile. The earlier fallback/cleanup checkpoint
+boundaries; merged #4232 is now integrated in the typed stream wrapper; #4233 is validated
+in native tiers while from remains outside the current Bend profile. The earlier fallback/cleanup checkpoint
 remains at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -20,9 +20,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,768 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 3,952 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 524 configured; 521 previous plus three new controls, with focused current-pin revalidation |
+| Compiled mutation checks | 116 | 534 configured (446 finite, 88 kernel); complete preceding 524 sweep plus ten new focused controls |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -461,3 +461,14 @@ Their affected Bend stream/from profiles remain unfinished. The configured
 negative corpus is 524, with the preceding full 521 receipt kept historical and
 new/current affected variants recorded separately. The deviation register stays
 empty. See reviews/solid-b9b6f333.md.
+
+
+The subsequent [stream-refetch checkpoint](deferred-stream-refetch.md) supersedes
+older Unsupported88/open-window exclusions above. It adds the actual source
+wrapper, 184 public histories (3,952 total), 13 kernel roots including a complete
+ordinary-payload fixed one-yield programme for every budget >=118, and ten
+compiled negative controls (534 configured). Every prior complete-program
+domain/budget is retained. The preceding 524-variant complete sweep applies to
+9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
+A newly confirmed protocol-error bug010 remains faithfully preserved; from/
+onSupersede and store/boundary/snapshot scopes remain unfinished.

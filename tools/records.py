@@ -4,7 +4,8 @@ root=Path(__file__).resolve().parents[1]
 schemas={
 'DeferredBinding': [('cell','DeferredCell'),('cleanup','Nat')],
 'DeferredWait': [('observer','Nat'),('cell','Nat'),('flight','Value')],
-'DeferredArena': [('cells','List<&2, DeferredBinding>'),('lagging','List<&2, Nat>'),('waits','List<&2, DeferredWait>')],
+'DeferredIterator': [('cell','Nat'),('inner','Nat'),('iterator','Nat'),('first','Bool')],
+'DeferredArena': [('cells','List<&2, DeferredBinding>'),('lagging','List<&2, Nat>'),('waits','List<&2, DeferredWait>'),('iterators','List<&2, DeferredIterator>')],
 'DeferredCell': [('node','Nat'),('flight','Value'),('marked','Bool'),('answered','Bool')],
 'DeferredState': [('cell','DeferredCell'),('lagging','List<&2, Nat>')],
 'ArrayData': [('slots','List<&2, Slot>')],
@@ -19,7 +20,7 @@ schemas={
 'AsyncObserver': [('node','Nat'),('result','Nat'),('isSync','Bool'),('resolved','Bool'),('rejected','Bool'),('syncValue','Value'),('syncError','Value'),('stream','Nat')],
 'Awaiter': [('expr','Expr'),('refresh','Bool'),('target','Nat'),('own','Nat'),('root','Nat'),('node','Nat'),('state','AsyncSettlement'),('until','Bool'),('confirmation','Nat'),('timer','Bool'),('onAbort','Bool'),('signal','Nat')],
 'AbortInput': [('aborted','Bool'),('reason','Value')],
-'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat')],
+'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat'),('wrapper','Nat'),('factoryError','Slot')],
 'ExternalIterator': [('plan','Nat'),('cursor','Nat'),('returns','Nat')],
 'StreamState': [('node','Nat'),('result','Nat'),('iterator','Nat'),('hadValue','Bool'),('completed','Bool'),('initialRead','Bool'),('syncValue','Value'),('close','Nat')],
 'Transaction': [('nodes','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, QueueEntry>'),('reruns','List<&2, Nat>'),('into','Nat'),('parent','Nat'),('lane','Bool'),('verdict','Nat'),('open','Nat'),('acted','Bool'),('links','Nat'),('shown','Bool'),('held','Bool'),('marks','OptionalIds')],
@@ -70,6 +71,7 @@ type Value is Data:
   NotReadyFailure{identity: Nat, source: Nat}
   NotPendingToken{}
   AsyncValue{identity: Nat}
+  IteratorReference{iterator: Nat}
   StepResult{done: Bool, value: Value}
   StreamVerdict{stream: Nat, landed: Bool, value: Value}
   TimeoutFailure{identity: Nat}
@@ -93,8 +95,9 @@ type NextInput is Data:
 
 type IteratorEvent is Data:
   IteratorStarted{object: Nat, iterator: Nat}
-  IteratorNext{iterator: Nat, index: Nat}
-  IteratorReturned{iterator: Nat}
+  IteratorFactoryFailed{object: Nat, error: Value}
+  IteratorNext{iterator: Nat, index: Nat, argument: Slot}
+  IteratorReturned{iterator: Nat, argument: Slot}
 
 type AsyncSettlement is Data:
   Unresolved{}

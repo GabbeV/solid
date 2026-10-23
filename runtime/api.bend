@@ -417,6 +417,9 @@ def throwNext(error: R.Value, tail: List<&2, R.NextInput>) -> List<&2, R.NextInp
 def createStream(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, throws: Bool, error: R.Value, returned: Nat) -> R.World:
   I.newIterable(w, steps, hasReturn, B.choose(~R.Slot, throws, _ => R.Present{error}, _ => R.Empty{}), returned)
 
+def createStreamWithFactory(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, throws: Bool, error: R.Value, returned: Nat, factoryThrows: Bool, factoryError: R.Value) -> R.World:
+  I.newIterableProtocol(w, steps, hasReturn, B.choose(~R.Slot, throws, _ => R.Present{error}, _ => R.Empty{}), returned, B.choose(~R.Slot, factoryThrows, _ => R.Present{factoryError}, _ => R.Empty{}))
+
 def vStepResult(done: Bool, value: R.Value) -> R.Value:
   R.StepResult{done, value}
 

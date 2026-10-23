@@ -3,9 +3,9 @@
 An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.17. This is **not yet the complete signals package**.
 
-The source is pinned to next@3cbfaf1a. [The latest integration](tracking/reviews/solid-3cbfaf1a.md)
-ports async-error cleanup timing, with 16 paired histories and three quantified
-continuation laws. Full-package and arbitrary-async-graph guarantees remain open.
+The source is pinned to next@b9b6f333. [The latest integration](tracking/reviews/solid-b9b6f333.md)
+ports merged deferred error handling. [Stream refetch](tracking/deferred-stream-refetch.md)
+now runs through the existing iterator engine and has an ordinary-payload complete-program proof. Full-package and arbitrary-async-graph guarantees remain open.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
@@ -60,7 +60,7 @@ iterator engine. Stream refetch wrapping/from/store/boundary profiles remain unf
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,768 public histories, 524 configured mutation
+budget. Current evidence totals 3,952 public histories, 534 configured mutation
 controls and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -68,7 +68,7 @@ input dispatch and its own bound setter, supported by the lane pass/flush
 engine. A complete free data program is proved for every natural payload triple
 and sufficient budget. The [verdict windows](tracking/verdict-windows.md) now execute full non-store
 read/catch/finally paths; a nested data program is proved for all natural payload
-pairs. Boundary/store, snapshots, deferred streams and external-source lifetimes remain next.
+pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished.
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
@@ -76,14 +76,14 @@ The reviewed Solid pin is now `b9b6f333` (declares rc.17), matching `next`
 checked on 2026-10-23. [The integration review](tracking/reviews/solid-b9b6f333.md)
 ports #4231's synchronous-error deferred flight retirement and validates the
 merged #4232/#4233 fixes in native builds. All 77 recorded Solid inputs match Git.
-The latter stream/from paths remain unfinished in Bend. The source-changed catch
+The stream wrapper is now implemented; from remains unfinished in Bend. The source-changed catch
 boundary theorem has a new conclusion over its original domain; complete-program
 domains and sufficient budgets are unchanged. No semantic workaround is active.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 524 source-changing variants
+npm run mutations                # reject 534 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

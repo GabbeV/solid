@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "activeDeviationIds": [],
+  "runtimeSourceWrapperImplemented": true,
+  "publicHistories": {
+    "new": 184,
+    "total": 3952,
+    "fullPrefixStateAndIteratorArgumentVectors": true,
+    "log": {
+      "path": "/workspace/scratch/night-stream-method-tests.log",
+      "sha256": "e3e0ce79c3811fa592716704aa0aaa1039126ca4433af2275694c26a6d89fcc4"
+    }
+  },
+  "proof": {
+    "domain": "All admitted ordinary initial/yielded pairs; fixed owned graph and one-yield producer shape; every budget 118+extra, extra:Nat",
+    "exactFinalMachine": true,
+    "exactReturnedValue": true,
+    "newRoots": 13,
+    "helperRoots": 11,
+    "rootReceipt": "tracking/checked.json",
+    "preExistingProgramDomainsBudgetsRetained": true
+  },
+  "finiteProofControls": {
+    "programs": 196,
+    "prefixesPerProgram": 118,
+    "finalBudgets": [
+      118,
+      119,
+      160
+    ],
+    "representatives": 14,
+    "log": {
+      "path": "/workspace/scratch/night-stream-method-proof-controls.log",
+      "sha256": "9ffab73a24111d0a39b211d7caed14018d70ab70dcc8e4c13693be452a355557"
+    }
+  },
+  "negative": {
+    "newCompiledAndRejected": 10,
+    "configuredTotal": 534,
+    "finite": 446,
+    "kernel": 88,
+    "completePreviousCheckpointReceipt": "tracking/reviews/solid-b9b6f333-complete-negative.json",
+    "currentCompleteSweep": false,
+    "log": {
+      "path": "/workspace/scratch/night-stream-method-negative.log",
+      "sha256": "87bad0b8d4e69d2dfcd2414aea3725abb548ec42c6829fa61881e381c63ee8a9"
+    },
+    "compilationResourceFailuresCredited": false
+  },
+  "preservedUpstreamBug": "SOLID-DEFERRED-PROTOCOL-ERROR-010",
+  "limitations": [
+    "from/onSupersede",
+    "arbitrary JS protocol getters/method bodies",
+    "arbitrary producer/graph histories",
+    "store/boundary/snapshot",
+    "nonproduction hooks"
+  ],
+  "checks": {
+    "build": {
+      "passed": true,
+      "log": "/workspace/scratch/night-stream-method-build.log",
+      "sha256": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125"
+    },
+    "public": {
+      "passed": true,
+      "log": "/workspace/scratch/night-stream-method-full.log",
+      "sha256": "3cccb54cda23e14ddb07e9ab5902de2a57e56ca6ea8cee169254976eaf42683e"
+    },
+    "alignment": {
+      "passed": true,
+      "log": "/workspace/scratch/night-stream-method-alignment.log",
+      "sha256": "0ea7c37969b72f172ded51494cba4cdee8517742e63db166d95d9dbd8027b8e7"
+    }
+  }
+}

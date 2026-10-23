@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3768 differential histories, 524 configured compiled mutations,
+Current verification: 3952 differential histories, 534 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at b9b6f333 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -871,3 +871,14 @@ That historical review found the collector-leak regression after a throwing
 pre-body cleanup. At the current 0222d684 pin, merged #4176 fixes it and its law
 is positive. The old negative remains at c11277e. See
 [SOLID-DEFERRED-RELEASE-THROW-004](upstream/deferred-release-throw.md).
+
+
+The subsequent [stream-refetch checkpoint](deferred-stream-refetch.md) supersedes
+older Unsupported88/open-window exclusions above. It adds the actual source
+wrapper, 184 public histories (3,952 total), 13 kernel roots including a complete
+ordinary-payload fixed one-yield programme for every budget >=118, and ten
+compiled negative controls (534 configured). Every prior complete-program
+domain/budget is retained. The preceding 524-variant complete sweep applies to
+9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
+A newly confirmed protocol-error bug010 remains faithfully preserved; from/
+onSupersede and store/boundary/snapshot scopes remain unfinished.

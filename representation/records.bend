@@ -26,6 +26,7 @@ type Value is Data:
   NotReadyFailure{identity: Nat, source: Nat}
   NotPendingToken{}
   AsyncValue{identity: Nat}
+  IteratorReference{iterator: Nat}
   StepResult{done: Bool, value: Value}
   StreamVerdict{stream: Nat, landed: Bool, value: Value}
   TimeoutFailure{identity: Nat}
@@ -49,8 +50,9 @@ type NextInput is Data:
 
 type IteratorEvent is Data:
   IteratorStarted{object: Nat, iterator: Nat}
-  IteratorNext{iterator: Nat, index: Nat}
-  IteratorReturned{iterator: Nat}
+  IteratorFactoryFailed{object: Nat, error: Value}
+  IteratorNext{iterator: Nat, index: Nat, argument: Slot}
+  IteratorReturned{iterator: Nat, argument: Slot}
 
 type AsyncSettlement is Data:
   Unresolved{}
@@ -298,38 +300,91 @@ def DeferredWait.with_flight(r: DeferredWait, v: Value) -> DeferredWait:
     case DeferredWait{observer, cell, flight}:
       DeferredWait{observer, cell, v}
 
+type DeferredIterator is Data:
+  DeferredIterator{cell: Nat, inner: Nat, iterator: Nat, first: Bool}
+
+def DeferredIterator.cell(r: DeferredIterator) -> Nat:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      cell
+
+def DeferredIterator.with_cell(r: DeferredIterator, v: Nat) -> DeferredIterator:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      DeferredIterator{v, inner, iterator, first}
+
+def DeferredIterator.inner(r: DeferredIterator) -> Nat:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      inner
+
+def DeferredIterator.with_inner(r: DeferredIterator, v: Nat) -> DeferredIterator:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      DeferredIterator{cell, v, iterator, first}
+
+def DeferredIterator.iterator(r: DeferredIterator) -> Nat:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      iterator
+
+def DeferredIterator.with_iterator(r: DeferredIterator, v: Nat) -> DeferredIterator:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      DeferredIterator{cell, inner, v, first}
+
+def DeferredIterator.first(r: DeferredIterator) -> Bool:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      first
+
+def DeferredIterator.with_first(r: DeferredIterator, v: Bool) -> DeferredIterator:
+  match r:
+    case DeferredIterator{cell, inner, iterator, first}:
+      DeferredIterator{cell, inner, iterator, v}
+
 type DeferredArena is Data:
-  DeferredArena{cells: List<&2, DeferredBinding>, lagging: List<&2, Nat>, waits: List<&2, DeferredWait>}
+  DeferredArena{cells: List<&2, DeferredBinding>, lagging: List<&2, Nat>, waits: List<&2, DeferredWait>, iterators: List<&2, DeferredIterator>}
 
 def DeferredArena.cells(r: DeferredArena) -> List<&2, DeferredBinding>:
   match r:
-    case DeferredArena{cells, lagging, waits}:
+    case DeferredArena{cells, lagging, waits, iterators}:
       cells
 
 def DeferredArena.with_cells(r: DeferredArena, v: List<&2, DeferredBinding>) -> DeferredArena:
   match r:
-    case DeferredArena{cells, lagging, waits}:
-      DeferredArena{v, lagging, waits}
+    case DeferredArena{cells, lagging, waits, iterators}:
+      DeferredArena{v, lagging, waits, iterators}
 
 def DeferredArena.lagging(r: DeferredArena) -> List<&2, Nat>:
   match r:
-    case DeferredArena{cells, lagging, waits}:
+    case DeferredArena{cells, lagging, waits, iterators}:
       lagging
 
 def DeferredArena.with_lagging(r: DeferredArena, v: List<&2, Nat>) -> DeferredArena:
   match r:
-    case DeferredArena{cells, lagging, waits}:
-      DeferredArena{cells, v, waits}
+    case DeferredArena{cells, lagging, waits, iterators}:
+      DeferredArena{cells, v, waits, iterators}
 
 def DeferredArena.waits(r: DeferredArena) -> List<&2, DeferredWait>:
   match r:
-    case DeferredArena{cells, lagging, waits}:
+    case DeferredArena{cells, lagging, waits, iterators}:
       waits
 
 def DeferredArena.with_waits(r: DeferredArena, v: List<&2, DeferredWait>) -> DeferredArena:
   match r:
-    case DeferredArena{cells, lagging, waits}:
-      DeferredArena{cells, lagging, v}
+    case DeferredArena{cells, lagging, waits, iterators}:
+      DeferredArena{cells, lagging, v, iterators}
+
+def DeferredArena.iterators(r: DeferredArena) -> List<&2, DeferredIterator>:
+  match r:
+    case DeferredArena{cells, lagging, waits, iterators}:
+      iterators
+
+def DeferredArena.with_iterators(r: DeferredArena, v: List<&2, DeferredIterator>) -> DeferredArena:
+  match r:
+    case DeferredArena{cells, lagging, waits, iterators}:
+      DeferredArena{cells, lagging, waits, v}
 
 type DeferredCell is Data:
   DeferredCell{node: Nat, flight: Value, marked: Bool, answered: Bool}
@@ -1294,47 +1349,67 @@ def AbortInput.with_reason(r: AbortInput, v: Value) -> AbortInput:
       AbortInput{aborted, v}
 
 type StreamPlan is Data:
-  StreamPlan{steps: List<&2, NextInput>, hasReturn: Bool, returnError: Slot, returnResult: Nat}
+  StreamPlan{steps: List<&2, NextInput>, hasReturn: Bool, returnError: Slot, returnResult: Nat, wrapper: Nat, factoryError: Slot}
 
 def StreamPlan.steps(r: StreamPlan) -> List<&2, NextInput>:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
       steps
 
 def StreamPlan.with_steps(r: StreamPlan, v: List<&2, NextInput>) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
-      StreamPlan{v, hasReturn, returnError, returnResult}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{v, hasReturn, returnError, returnResult, wrapper, factoryError}
 
 def StreamPlan.hasReturn(r: StreamPlan) -> Bool:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
       hasReturn
 
 def StreamPlan.with_hasReturn(r: StreamPlan, v: Bool) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
-      StreamPlan{steps, v, returnError, returnResult}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{steps, v, returnError, returnResult, wrapper, factoryError}
 
 def StreamPlan.returnError(r: StreamPlan) -> Slot:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
       returnError
 
 def StreamPlan.with_returnError(r: StreamPlan, v: Slot) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
-      StreamPlan{steps, hasReturn, v, returnResult}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{steps, hasReturn, v, returnResult, wrapper, factoryError}
 
 def StreamPlan.returnResult(r: StreamPlan) -> Nat:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
       returnResult
 
 def StreamPlan.with_returnResult(r: StreamPlan, v: Nat) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult}:
-      StreamPlan{steps, hasReturn, returnError, v}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{steps, hasReturn, returnError, v, wrapper, factoryError}
+
+def StreamPlan.wrapper(r: StreamPlan) -> Nat:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      wrapper
+
+def StreamPlan.with_wrapper(r: StreamPlan, v: Nat) -> StreamPlan:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{steps, hasReturn, returnError, returnResult, v, factoryError}
+
+def StreamPlan.factoryError(r: StreamPlan) -> Slot:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      factoryError
+
+def StreamPlan.with_factoryError(r: StreamPlan, v: Slot) -> StreamPlan:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+      StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, v}
 
 type ExternalIterator is Data:
   ExternalIterator{plan: Nat, cursor: Nat, returns: Nat}

@@ -4,7 +4,7 @@ Current pin: Solid b9b6f333 (declares rc.17), matching fetched next on 2026-10-2
 [The latest integration](reviews/solid-b9b6f333.md) copies merged #4231–#4233
 verbatim, ports synchronous-error flight retirement in the admitted deferred
 catch, and repairs the translated caught-fault posture before its helper runs.
-The affected open-window stream/from paths remain unfinished at this checkpoint;
+The open-window stream path is now translated; from remains unfinished;
 all three source repros pass unchanged native builds in all tiers. The old
 closedFailure theorem now states the new branch's result over its old domain;
 complete-program domains and sufficient budgets remain unchanged. No candidate
@@ -27,7 +27,7 @@ windows, the original-exception catch and post-handleAsync selection. Explicit
 closure state and shared Set membership are threaded without replacing those
 source decisions. The [public data/thenable profile](deferred.md) now connects
 construction, registration, cleanup and the authoritative watch hook in source
-order. First-load streams now follow the ordinary engine; open-window stream wrapping,
+order. First-load and open-window streams now follow the ordinary engine and source wrapper;
 from/store/boundary/snapshot branches remain unfinished;
 no active workaround is installed.
 
@@ -466,3 +466,14 @@ for exact return points, source observations, evidence and remaining closure lim
 The [signed-zero repair](number-values.md) fixes a host codec loss: -0 is now a
 distinct admitted payload with source strict equality, falseyness, String and
 arithmetic behavior. It is a port repair, not a semantic workaround.
+
+
+The subsequent [stream-refetch checkpoint](deferred-stream-refetch.md) supersedes
+older Unsupported88/open-window exclusions above. It adds the actual source
+wrapper, 184 public histories (3,952 total), 13 kernel roots including a complete
+ordinary-payload fixed one-yield programme for every budget >=118, and ten
+compiled negative controls (534 configured). Every prior complete-program
+domain/budget is retained. The preceding 524-variant complete sweep applies to
+9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
+A newly confirmed protocol-error bug010 remains faithfully preserved; from/
+onSupersede and store/boundary/snapshot scopes remain unfinished.

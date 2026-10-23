@@ -243,7 +243,7 @@
     {
       "id": "SOLID-DEFERRED-BUFFERED-FROM-007",
       "classification": "confirmed-upstream-bug",
-      "status": "upstream-fix-verified-unported",
+      "status": "upstream-fix-integrated",
       "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
       "sourceUnit": "deferred.ts:createDeferred first wrapped iterator pull (generic, not specific to from)",
       "record": "tracking/upstream/deferred-buffered-from.md",
@@ -252,12 +252,12 @@
       "playgroundVerification": "repros/playground/deferred-sync-iterator-hosted.json",
       "candidateFixPatch": "tracking/upstream/deferred-buffered-from.patch",
       "validationRecord": "tracking/upstream/deferred-buffered-from-validation.json",
-      "sourceOnly": true,
-      "preservesBaseline": true,
+      "sourceOnly": false,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4232",
-      "bendScope": "Merged fix is present in the verbatim reference and passes all three native tiers. Open-window deferred stream wrapping / from remain explicit unfinished Bend operations at this checkpoint. No workaround is installed.",
+      "bendScope": "Typed open-window stream wrapper now implements the merged bare-first-step landing branch, with 184 refetch histories and complete ordinary-payload one-yield programme proofs. from itself remains unfinished.",
       "playgroundUrl": "https://s.olid.uk/id/kq_5yBGMTzSh2Udc6VEwXw",
       "playgroundHostedVerification": "repros/playground/deferred-sync-iterator-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44",
@@ -271,7 +271,7 @@
       "historicalFromStandaloneReproducer": "repros/solid-signals/deferred-buffered-from.mjs",
       "fixMergedCommit": "0e668d82e0aec02e9e6cf8309c6ea4d84e4de054",
       "validatedSourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
-      "latestValidationRecord": "tracking/reviews/solid-b9b6f333-validation.json"
+      "latestValidationRecord": "tracking/deferred-stream-refetch-validation.json"
     },
     {
       "id": "SOLID-FROM-SYNC-UNSUBSCRIBE-008",
@@ -335,6 +335,23 @@
         "bendCommit": "6ed4732acd72df822521a0fa4e6a783cb19be722",
         "branch": "baseline/solid-3cbfaf1a"
       }
+    },
+    {
+      "id": "SOLID-DEFERRED-PROTOCOL-ERROR-010",
+      "classification": "confirmed-upstream-bug",
+      "status": "baseline-preserved",
+      "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+      "sourceUnit": "deferred.ts:createDeferred wrapped iterator acquisition/first next",
+      "record": "tracking/upstream/deferred-protocol-error.md",
+      "standaloneReproducer": "repros/solid-signals/deferred-protocol-error.mjs",
+      "playgroundReproducer": "repros/playground/deferred-protocol-error.tsx",
+      "playgroundVerification": "repros/playground/deferred-protocol-error-browser.json",
+      "validationRecord": "tracking/upstream/deferred-protocol-error-validation.json",
+      "reproducer": "tests/deferred-refetch-stream.mjs",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null
     }
   ]
 }
