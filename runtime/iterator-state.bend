@@ -8,7 +8,7 @@ import ../representation/base.bend as B
 
 def newIterableProtocol(+w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, returnError: R.Slot, returnResult: Nat, factoryError: R.Slot) -> R.World:
   +plan = B.length(R.StreamPlan, R.World.streamPlans(w))
-  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{steps, hasReturn, returnError, returnResult, 0n, factoryError}]))
+  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{steps, hasReturn, returnError, returnResult, 0n, factoryError, R.FromNone{}}]))
   R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{False{}, R.Unresolved{}, [], plan}]))
 
 def newIterable(w: R.World, steps: List<&2, R.NextInput>, hasReturn: Bool, returnError: R.Slot, returnResult: Nat) -> R.World:

@@ -674,3 +674,7 @@ def createDeferred(fuel: Nat, +w: R.World, compute: R.Expr, +options: R.NodeOpti
 # This is not an additional public signals export.
 def registerSupersede(w: R.World, callback: Nat) -> R.World:
   Supersede.register(w, callback)
+
+# Public from constructor; the callback source is a first-class typed callable.
+def fromInput(callee: R.Expr) -> R.Expr:
+  R.FromInput{callee}

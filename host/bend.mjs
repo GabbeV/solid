@@ -222,6 +222,7 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   }
   if(e.invokeWith){const {callee,value={lit:undefined},updater=false}=e.invokeWith;return R.invokeWith(expression(callee,ids,programs,futures,encodeValue,contexts),expression(value,ids,programs,futures,encodeValue,contexts),updater);}
   if (e.invoke)return R.invoke(expression(e.invoke,ids,programs,futures,encodeValue,contexts));
+  if (Object.hasOwn(e,'from'))return R.fromInput(expression(e.from,ids,programs,futures,encodeValue,contexts));
   if (e.onCleanup)return R.onCleanup(expression(e.onCleanup,ids,programs,futures,encodeValue,contexts));
   if (e.call){
     if(e.args){
@@ -305,7 +306,14 @@ export class BendRuntime {
     }
     for(const [id,port]of this.actionPorts??[])if(value===port.promise)return {async:id};
     const callback=this.callbacks.identity(value);
-    if(callback!==undefined){const node=[...(this.optimisticSetters??[])].find(([,id])=>id===callback)?.[0];return node===undefined?{callback:this.programNames.get(callback)}:{setter:this.reverse[node]};}
+    if(callback!==undefined){
+      const node=[...(this.optimisticSetters??[])].find(([,id])=>id===callback)?.[0];
+      if(node!==undefined)return {setter:this.reverse[node]};
+      const name=this.programNames.get(callback);if(name!==undefined)return {callback:name};
+      this.opaqueFunctions??=new WeakMap();
+      if(!this.opaqueFunctions.has(value))this.opaqueFunctions.set(value,this.opaqueFunctionSerial=(this.opaqueFunctionSerial??0)+1);
+      return {opaqueFunction:this.opaqueFunctions.get(value)};
+    }
     if(value instanceof BendNoOwnerError||value instanceof BendContextNotFoundError){
       if(!this.encountered.has(value))this.encountered.set(value,this.encountered.size+1);
       return {[value instanceof BendNoOwnerError?'noOwnerError':'contextNotFoundError']:this.encountered.get(value)};

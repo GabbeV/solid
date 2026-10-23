@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 3952 differential histories, 539 configured compiled mutations,
+Current verification: 4234 differential histories, 551 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 225014bf (declares rc.18) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -900,3 +900,13 @@ the production runtime and every existing theorem domain/budget. Development
 event diagnostic windows remain outside Bend. All three merged fixes and the
 new protocol-error bug/control are revalidated on unchanged source-built tiers.
 The current source receipt is reviews/solid-225014bf-validation.json.
+
+The [direct subscription checkpoint](from-subscriptions.md) adds 282 public
+histories (4,234 total), 288 separate native factory controls and 16 quantified
+roots: a complete ordinary-payload 120-step constructor/read/dispose/flush
+programme and value/once-only-cleanup corollary, plus fourteen local laws.
+Merged #4233 is integrated in the direct subscription branch; Observable and
+wrapped-iterable inputs remain unfinished. Twelve new compiled negative controls
+bring configuration to 551 (459 finite, 92 kernel). The frozen complete 539
+receipt belongs to the preceding 4379eb6 source checkpoint. Bug010 is preserved;
+no new upstream bug, patch, report or semantic deviation is introduced.

@@ -43,6 +43,12 @@ type LaneMount is Data:
   MountFalse{}
   MountLane{lane: Nat}
 
+type FromState is Data:
+  FromNone{}
+  FromFunction{callee: Value}
+  FromSubscriptionState{state: FromSubscription}
+  FromIterable{source: Nat}
+
 type NextInput is Data:
   BareNext{done: Bool, value: Value}
   PromiseNext{result: Nat}
@@ -194,6 +200,7 @@ type Expr is Data:
   CallArgumentsEnd{}
   CallArgumentsItem{value: Expr, tail: Expr}
   OnCleanup{callee: Expr}
+  FromInput{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}
 
@@ -216,6 +223,10 @@ type CleanupAction is Data:
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
   SupersedeChain{before: Nat, after: Nat}
+  FromNext{plan: Nat}
+  FromError{plan: Nat}
+  FromComplete{plan: Nat}
+  FromFinish{plan: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}
@@ -1354,68 +1365,171 @@ def AbortInput.with_reason(r: AbortInput, v: Value) -> AbortInput:
     case AbortInput{aborted, reason}:
       AbortInput{aborted, v}
 
+type FromSubscription is Data:
+  FromSubscription{latest: Value, has: Bool, done: Bool, failed: Bool, failure: Value, waiting: Nat, unsubscribe: Value, closed: Bool, finish: Nat}
+
+def FromSubscription.latest(r: FromSubscription) -> Value:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      latest
+
+def FromSubscription.with_latest(r: FromSubscription, v: Value) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{v, has, done, failed, failure, waiting, unsubscribe, closed, finish}
+
+def FromSubscription.has(r: FromSubscription) -> Bool:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      has
+
+def FromSubscription.with_has(r: FromSubscription, v: Bool) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, v, done, failed, failure, waiting, unsubscribe, closed, finish}
+
+def FromSubscription.done(r: FromSubscription) -> Bool:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      done
+
+def FromSubscription.with_done(r: FromSubscription, v: Bool) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, v, failed, failure, waiting, unsubscribe, closed, finish}
+
+def FromSubscription.failed(r: FromSubscription) -> Bool:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      failed
+
+def FromSubscription.with_failed(r: FromSubscription, v: Bool) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, v, failure, waiting, unsubscribe, closed, finish}
+
+def FromSubscription.failure(r: FromSubscription) -> Value:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      failure
+
+def FromSubscription.with_failure(r: FromSubscription, v: Value) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, failed, v, waiting, unsubscribe, closed, finish}
+
+def FromSubscription.waiting(r: FromSubscription) -> Nat:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      waiting
+
+def FromSubscription.with_waiting(r: FromSubscription, v: Nat) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, failed, failure, v, unsubscribe, closed, finish}
+
+def FromSubscription.unsubscribe(r: FromSubscription) -> Value:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      unsubscribe
+
+def FromSubscription.with_unsubscribe(r: FromSubscription, v: Value) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, failed, failure, waiting, v, closed, finish}
+
+def FromSubscription.closed(r: FromSubscription) -> Bool:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      closed
+
+def FromSubscription.with_closed(r: FromSubscription, v: Bool) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, v, finish}
+
+def FromSubscription.finish(r: FromSubscription) -> Nat:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      finish
+
+def FromSubscription.with_finish(r: FromSubscription, v: Nat) -> FromSubscription:
+  match r:
+    case FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, finish}:
+      FromSubscription{latest, has, done, failed, failure, waiting, unsubscribe, closed, v}
+
 type StreamPlan is Data:
-  StreamPlan{steps: List<&2, NextInput>, hasReturn: Bool, returnError: Slot, returnResult: Nat, wrapper: Nat, factoryError: Slot}
+  StreamPlan{steps: List<&2, NextInput>, hasReturn: Bool, returnError: Slot, returnResult: Nat, wrapper: Nat, factoryError: Slot, fromState: FromState}
 
 def StreamPlan.steps(r: StreamPlan) -> List<&2, NextInput>:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       steps
 
 def StreamPlan.with_steps(r: StreamPlan, v: List<&2, NextInput>) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{v, hasReturn, returnError, returnResult, wrapper, factoryError}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{v, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}
 
 def StreamPlan.hasReturn(r: StreamPlan) -> Bool:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       hasReturn
 
 def StreamPlan.with_hasReturn(r: StreamPlan, v: Bool) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{steps, v, returnError, returnResult, wrapper, factoryError}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, v, returnError, returnResult, wrapper, factoryError, fromState}
 
 def StreamPlan.returnError(r: StreamPlan) -> Slot:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       returnError
 
 def StreamPlan.with_returnError(r: StreamPlan, v: Slot) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{steps, hasReturn, v, returnResult, wrapper, factoryError}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, hasReturn, v, returnResult, wrapper, factoryError, fromState}
 
 def StreamPlan.returnResult(r: StreamPlan) -> Nat:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       returnResult
 
 def StreamPlan.with_returnResult(r: StreamPlan, v: Nat) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{steps, hasReturn, returnError, v, wrapper, factoryError}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, hasReturn, returnError, v, wrapper, factoryError, fromState}
 
 def StreamPlan.wrapper(r: StreamPlan) -> Nat:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       wrapper
 
 def StreamPlan.with_wrapper(r: StreamPlan, v: Nat) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{steps, hasReturn, returnError, returnResult, v, factoryError}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, hasReturn, returnError, returnResult, v, factoryError, fromState}
 
 def StreamPlan.factoryError(r: StreamPlan) -> Slot:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
       factoryError
 
 def StreamPlan.with_factoryError(r: StreamPlan, v: Slot) -> StreamPlan:
   match r:
-    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError}:
-      StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, v}
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, v, fromState}
+
+def StreamPlan.fromState(r: StreamPlan) -> FromState:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      fromState
+
+def StreamPlan.with_fromState(r: StreamPlan, v: FromState) -> StreamPlan:
+  match r:
+    case StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, fromState}:
+      StreamPlan{steps, hasReturn, returnError, returnResult, wrapper, factoryError, v}
 
 type ExternalIterator is Data:
   ExternalIterator{plan: Nat, cursor: Nat, returns: Nat}

@@ -20,7 +20,8 @@ schemas={
 'AsyncObserver': [('node','Nat'),('result','Nat'),('isSync','Bool'),('resolved','Bool'),('rejected','Bool'),('syncValue','Value'),('syncError','Value'),('stream','Nat')],
 'Awaiter': [('expr','Expr'),('refresh','Bool'),('target','Nat'),('own','Nat'),('root','Nat'),('node','Nat'),('state','AsyncSettlement'),('until','Bool'),('confirmation','Nat'),('timer','Bool'),('onAbort','Bool'),('signal','Nat')],
 'AbortInput': [('aborted','Bool'),('reason','Value')],
-'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat'),('wrapper','Nat'),('factoryError','Slot')],
+'FromSubscription': [('latest','Value'),('has','Bool'),('done','Bool'),('failed','Bool'),('failure','Value'),('waiting','Nat'),('unsubscribe','Value'),('closed','Bool'),('finish','Nat')],
+'StreamPlan': [('steps','List<&2, NextInput>'),('hasReturn','Bool'),('returnError','Slot'),('returnResult','Nat'),('wrapper','Nat'),('factoryError','Slot'),('fromState','FromState')],
 'ExternalIterator': [('plan','Nat'),('cursor','Nat'),('returns','Nat')],
 'StreamState': [('node','Nat'),('result','Nat'),('iterator','Nat'),('hadValue','Bool'),('completed','Bool'),('initialRead','Bool'),('syncValue','Value'),('close','Nat')],
 'Transaction': [('nodes','List<&2, Nat>'),('renderQueue','List<&2, Nat>'),('userQueue','List<&2, QueueEntry>'),('reruns','List<&2, Nat>'),('into','Nat'),('parent','Nat'),('lane','Bool'),('verdict','Nat'),('open','Nat'),('acted','Bool'),('links','Nat'),('shown','Bool'),('held','Bool'),('marks','OptionalIds')],
@@ -87,6 +88,12 @@ type LaneMount is Data:
   MountUnset{}
   MountFalse{}
   MountLane{lane: Nat}
+
+type FromState is Data:
+  FromNone{}
+  FromFunction{callee: Value}
+  FromSubscriptionState{state: FromSubscription}
+  FromIterable{source: Nat}
 
 type NextInput is Data:
   BareNext{done: Bool, value: Value}
@@ -239,6 +246,7 @@ type Expr is Data:
   CallArgumentsEnd{}
   CallArgumentsItem{value: Expr, tail: Expr}
   OnCleanup{callee: Expr}
+  FromInput{callee: Expr}
   WatchExpr{awaiter: Nat, expr: Expr}
   Then{first: Expr, second: Expr}
 
@@ -261,6 +269,10 @@ type CleanupAction is Data:
   CleanupBoundAccessor{signal: Nat}
   CleanupBoundProgram{callback: Nat}
   SupersedeChain{before: Nat, after: Nat}
+  FromNext{plan: Nat}
+  FromError{plan: Nat}
+  FromComplete{plan: Nat}
+  FromFinish{plan: Nat}
   ActionFunction{factory: Expr, methods: Expr, previous: Value}
   FlattenChildren{results: Nat, skip: Bool}
   ReactionTrack{reaction: Nat}

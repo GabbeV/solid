@@ -2082,7 +2082,7 @@
           "mapping": {
             "bend": "runtime/supersede.bend:eligible, registerEligible, register, chain; runtime/core.bend:callbackAction SupersedeChain, supersedeFinally, SupersedeRestore/unwind; representation/base.bend:flight, sameFlight; runtime/api.bend:registerSupersede",
             "status": "partial",
-            "restrictions": "Production internal helper over typed callback programme identities. Exact owner/fn/recomputing guard, fresh extension undefined restoration, existing-flight preservation, prev-null direct assignment and captured try/finally chaining. Three distinct flight-slot constructors prevent absent/null aliasing in recompute selfRegistered. 3456 actual private-helper controls and 15 quantified slot/guard/continuation laws. No public onSupersede export is invented; from wiring remains unfinished. Arbitrary JS callables, protocol getters, store/boundary/snapshot and nonproduction hooks stay excluded."
+            "restrictions": "Production internal helper over typed callback programme identities. Exact owner/fn/recomputing guard, fresh extension undefined restoration, existing-flight preservation, prev-null direct assignment and captured try/finally chaining. Three distinct flight-slot constructors prevent absent/null aliasing in recompute selfRegistered. 3456 actual private-helper controls and 15 quantified slot/guard/continuation laws. No public onSupersede export is invented; direct from subscription wiring now executes; wrapped-iterable wiring remains unfinished. Arbitrary JS callables, protocol getters, store/boundary/snapshot and nonproduction hooks stay excluded."
           }
         },
         {
@@ -21110,7 +21110,7 @@
           "mapping": {
             "bend": "runtime/core.bend:deferredConstruct, deferredCreate, deferredBody, deferredResult, deferredObserveState, deferredAfterThen; runtime/deferred-runtime.bend; runtime/deferred-lifecycle.bend; runtime/api.bend:createDeferred; runtime/deferred-stream.bend; runtime/iterator-input.bend; runtime/core.bend:deferredStream, deferredAfterIterator",
             "status": "partial",
-            "restrictions": "Public data/typed-thenable and typed stream profiles, including open-window refetch and synchronously flattened promise-to-stream results. Source wrapper captures inner iterator, s, first and done identities; existing iterator engine consumes it. 518 deferred histories (162 data/thenable, 32 multiple-value, 108 first-load stream, 32 merged sync-error, 184 refetch). Exact owned ordinary data programme >=103 and fixed one-yield stream refetch programme >=118, both with arbitrary ordinary initial/proposal pairs. Merged #4231/#4232 are integrated. Protocol-error bug010 is preserved. from/onSupersede, store/boundary/snapshot, arbitrary protocol getters/method bodies and nonproduction hooks remain unfinished. No active deviation. See tracking/deferred-stream-refetch.md."
+            "restrictions": "Public data/typed-thenable and typed stream profiles, including open-window refetch and synchronously flattened promise-to-stream results. Source wrapper captures inner iterator, s, first and done identities; existing iterator engine consumes it. 518 deferred histories (162 data/thenable, 32 multiple-value, 108 first-load stream, 32 merged sync-error, 184 refetch). Exact owned ordinary data programme >=103 and fixed one-yield stream refetch programme >=118, both with arbitrary ordinary initial/proposal pairs. Merged #4231/#4232 are integrated. Protocol-error bug010 is preserved. Observable/wrapped-from, store/boundary/snapshot, arbitrary protocol getters/method bodies and nonproduction hooks remain unfinished. No active deviation. See tracking/deferred-stream-refetch.md."
           }
         }
       ],
@@ -21477,16 +21477,24 @@
           "start": 41,
           "end": 52,
           "sha256": "17d39e0a7205af5762de09358787c2a5607b7e109d27e850fdbb6a30043579ff",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:fromInput; runtime/from-state.bend:callable",
+            "status": "partial",
+            "restrictions": "Original admitted typed function identity retained. Observable/interop/property lookup arms remain unported; noncallable source reports Unsupported, not a source TypeError. See tracking/from-subscriptions.md."
+          }
         },
         {
           "key": "from.ts:bindToOwner",
           "start": 66,
           "end": 71,
           "sha256": "89171d830252ee6b38c4e6160420bce3d2bed7daef43e36f40f8376075325a1e",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/core.bend:fromBind; runtime/supersede.bend:register; runtime/owner.bend:cleanup",
+            "status": "restricted",
+            "restrictions": "Same finish callback identity for supersede/disposal; no owner is ineligible; child-forbidden skips cleanup. 288 native factory controls inspect before consumer overwrite. Arbitrary JS functions/nonproduction hooks excluded."
+          }
         },
         {
           "key": "from.ts:wrapIterable",
@@ -21525,16 +21533,24 @@
           "start": 121,
           "end": 126,
           "sha256": "49ca5ca7751ebd3aa8bb7192509abfd8d4e69e77f127769a285a76709fd89d35",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/core.bend:fromCleanupValue",
+            "status": "partial",
+            "restrictions": "Original typed callable is returned; admitted noncallable property-free data gets a fresh no-op programme. Object unsubscribe and receiver/property semantics remain unported."
+          }
         },
         {
           "key": "from.ts:from",
           "start": 155,
           "end": 277,
           "sha256": "a1866a849675fa08420000ed231a322a050ef4475513984135672aab7becdf6e",
-          "status": "open",
-          "mapping": null
+          "status": "partial",
+          "mapping": {
+            "bend": "runtime/from-state.bend; runtime/promise-input.bend; runtime/core.bend:fromInput, fromOpen, fromSubscribed, fromBind, fromClose, fromCleanupCatch, iteratorReturn, FromFinished; runtime/api.bend:fromInput",
+            "status": "partial",
+            "restrictions": "Direct function subscription branch only: real callback programmes, per-open closure state, native waiting Promises, coalescing, done/error/close/finish and merged #4233 late teardown with local error suppression. Ordinary/deferred consumer wiring through existing engine. 282 paired histories, 288 separate factory controls; complete fixed ordinary-payload owned constructor/read/dispose/flush programme >=120 and 14 local laws. Observable/interop, object unsubscribe, wrapped AsyncIterable and arbitrary getters/async generators remain open. Bug010 preserved; no active deviation."
+          }
         },
         {
           "key": "from.ts:[Symbol.asyncIterator]",

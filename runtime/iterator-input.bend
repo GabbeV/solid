@@ -1,6 +1,7 @@
 # Typed external iterator method boundary. Descriptors are producer inputs,
 # including protocol throws; no reactive publication decision is made here.
 import Base
+import ./from-state.bend as From
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 
@@ -10,7 +11,7 @@ type Returned is Data:
   PromiseReturn{result: Nat}
   ThrowReturn{error: R.Value}
 
-def open(+w: R.World, +source: Nat) -> B.Bundle<R.World, Nat>:
+def openExternal(+w: R.World, +source: Nat) -> B.Bundle<R.World, Nat>:
   +failed = R.StreamPlan.factoryError(B.streamPlan(w, R.AsyncObject.stream(B.asyncObject(w, source))))
   B.choose(~B.Bundle<R.World, Nat>, B.present(failed),
     _ =>
@@ -21,13 +22,21 @@ def open(+w: R.World, +source: Nat) -> B.Bundle<R.World, Nat>:
       +w = R.World.with_iterators(w, B.append(R.ExternalIterator, R.World.iterators(w), [R.ExternalIterator{R.AsyncObject.stream(B.asyncObject(w, source)), 0n, 0n}]))
       B.Bundle{B.iteratorEvent(w, R.IteratorStarted{source, id}), id})
 
-def next(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, R.NextInput>:
+def open(+w: R.World, +source: Nat) -> B.Bundle<R.World, Nat>:
+  B.choose(~B.Bundle<R.World, Nat>, From.factory(w, source),
+    _ => B.Bundle{R.World.with_fault(w, R.Unsupported{95n}), 0n}, _ => openExternal(w, source))
+
+def nextExternal(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, R.NextInput>:
   +it = B.iterator(w, id)
   +index = R.ExternalIterator.cursor(it)
   +w = B.store_iterator(w, id, R.ExternalIterator.with_cursor(it, 1n+index))
   B.Bundle{B.iteratorEvent(w, R.IteratorNext{id, index, argument}), B.get(R.NextInput, R.StreamPlan.steps(B.streamPlan(w, R.ExternalIterator.plan(it))), index, R.BareNext{True{}, R.Undefined{}})}
 
-def returned(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, Returned>:
+def next(+w: R.World, +id: Nat, +argument: R.Slot) -> B.Bundle<R.World, R.NextInput>:
+  B.choose(~B.Bundle<R.World, R.NextInput>, From.isSubscription(w, id),
+    _ => From.next(w, R.ExternalIterator.plan(B.iterator(w, id))), _ => nextExternal(w, id, argument))
+
+def returnedExternal(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, Returned>:
   +it = B.iterator(w, id)
   +plan = B.streamPlan(w, R.ExternalIterator.plan(it))
   B.choose(~B.Bundle<R.World, Returned>, R.StreamPlan.hasReturn(plan),
@@ -39,3 +48,8 @@ def returned(+w: R.World, +id: Nat, argument: R.Slot) -> B.Bundle<R.World, Retur
         _ => B.choose(~B.Bundle<R.World, Returned>, Nat.is_eq(R.StreamPlan.returnResult(plan), 0n),
           _ => B.Bundle{w, RawReturn{R.Undefined{}}}, _ => B.Bundle{w, PromiseReturn{R.StreamPlan.returnResult(plan)}})),
     _ => B.Bundle{w, MissingReturn{}})
+
+# Callback-bearing return methods must re-enter Core, not a World-only facade.
+def returned(+w: R.World, +id: Nat, +argument: R.Slot) -> B.Bundle<R.World, Returned>:
+  B.choose(~B.Bundle<R.World, Returned>, From.isSubscription(w, id),
+    _ => B.Bundle{R.World.with_fault(w, R.Unsupported{95n}), MissingReturn{}}, _ => returnedExternal(w, id, argument))

@@ -4,7 +4,7 @@ Current pin: Solid 225014bf (declares rc.18), matching fetched next on 2026-10-2
 [The latest integration](reviews/solid-b9b6f333.md) copies merged #4231–#4233
 verbatim, ports synchronous-error flight retirement in the admitted deferred
 catch, and repairs the translated caught-fault posture before its helper runs.
-The open-window stream path is now translated; from remains unfinished;
+The open-window stream and direct from(fn) subscription paths are now translated; Observable/wrapped-iterable branches remain unfinished;
 all three source repros pass unchanged native builds in all tiers. The old
 closedFailure theorem now states the new branch's result over its old domain;
 complete-program domains and sufficient budgets remain unchanged. No candidate
@@ -28,7 +28,7 @@ closure state and shared Set membership are threaded without replacing those
 source decisions. The [public data/thenable profile](deferred.md) now connects
 construction, registration, cleanup and the authoritative watch hook in source
 order. First-load and open-window streams now follow the ordinary engine and source wrapper;
-from/store/boundary/snapshot branches remain unfinished;
+Observable/wrapped-from/store/boundary/snapshot branches remain unfinished;
 no active workaround is installed.
 
 ## Public non-store affects crossing
@@ -495,3 +495,13 @@ the production runtime and every existing theorem domain/budget. Development
 event diagnostic windows remain outside Bend. All three merged fixes and the
 new protocol-error bug/control are revalidated on unchanged source-built tiers.
 The current source receipt is reviews/solid-225014bf-validation.json.
+
+The [direct subscription checkpoint](from-subscriptions.md) adds 282 public
+histories (4,234 total), 288 separate native factory controls and 16 quantified
+roots: a complete ordinary-payload 120-step constructor/read/dispose/flush
+programme and value/once-only-cleanup corollary, plus fourteen local laws.
+Merged #4233 is integrated in the direct subscription branch; Observable and
+wrapped-iterable inputs remain unfinished. Twelve new compiled negative controls
+bring configuration to 551 (459 finite, 92 kernel). The frozen complete 539
+receipt belongs to the preceding 4379eb6 source checkpoint. Bug010 is preserved;
+no new upstream bug, patch, report or semantic deviation is introduced.

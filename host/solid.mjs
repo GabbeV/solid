@@ -37,7 +37,7 @@ export class SolidRuntime {
     }
     if(v&&typeof v==='object'&&typeof v.callback==='string')return this.callbackValue(v.callback);
     if(v instanceof this.S.NoOwnerError||v instanceof this.S.ContextNotFoundError)return v;
-    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v)&&!this.callbackIdentities.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
+    if(typeof v==='function'&&!this.rootDisposers.has(v)&&!this.accessorIdentities.has(v)&&!this.setterIdentities.has(v)&&!this.callbackIdentities.has(v)&&!this.argumentFunctions?.has(v))throw new TypeError('Use an opaque {ref: id} token for arbitrary host objects');
     const described=this.hostErrors.describe(v);
     if(described&&typeof described==='object'&&Object.hasOwn(described,'error'))return this.hostErrors.materialize(described);
     if(v&&typeof v==='object'&&typeof v.setter==='string'){
@@ -314,6 +314,7 @@ export class SolidRuntime {
       if(this.accessorIdentities.has(callee))this.observeAccessorRead(callee,value);
       return value;
     }
+    if(Object.hasOwn(e,'from'))return this.S.from(this.evaluate(e.from,prev,values,locals));
     if(e.onCleanup){
       const callee=this.evaluate(e.onCleanup,prev,values,locals);
       if(this.S.getOwner()&&this.callbackIdentities.has(callee))requireTeardownProgram(this.programActions,this.callbackIdentities.get(callee));
@@ -412,6 +413,11 @@ export class SolidRuntime {
       return {anonymousOwner:this.anonymousOwners.get(value)};
     }
     if(this.futureIdentities.has(value))return {async:this.futureIdentities.get(value)};
+    if(typeof value==='function'){
+      this.opaqueFunctions??=new WeakMap();
+      if(!this.opaqueFunctions.has(value))this.opaqueFunctions.set(value,this.opaqueFunctionSerial=(this.opaqueFunctionSerial??0)+1);
+      return {opaqueFunction:this.opaqueFunctions.get(value)};
+    }
     return this.hostErrors.observe(value);
   }
   sourceLabel(node){
@@ -449,6 +455,7 @@ export class SolidRuntime {
     this.programActions.set(name,actions);
     const self=this,id=this.nextProgram++;
     this.programs[name]=function callback(previousCleanup,...values) {
+      self.argumentFunctions??=new WeakSet();for(const value of values)if(typeof value==='function')self.argumentFunctions.add(value);
       for(const [op,...args] of actions) {
         if(op==='emit')self.traceEvents.push(['cleanup',id,args[0]]);
         else if(op==='set')self.writeValue(self.setters[args[0]],self.value(args[1]));

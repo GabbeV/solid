@@ -129,6 +129,8 @@ def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
       R.InvokeWith{bindAs(callee, depth, signal, setter), bindAs(value, depth, signal, setter), updater}
     case R.Invoke{callee}:
       R.Invoke{bindAs(callee, depth, signal, setter)}
+    case R.FromInput{callee}:
+      R.FromInput{bindAs(callee, depth, signal, setter)}
     case R.OnCleanup{callee}:
       R.OnCleanup{bindAs(callee, depth, signal, setter)}
     case R.WatchExpr{awaiter, body}:

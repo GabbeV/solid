@@ -27,7 +27,7 @@ def allocate(+w: R.World, cell: Nat, inner: Nat) -> B.Bundle<R.World, Nat>:
   +plan = B.length(R.StreamPlan, R.World.streamPlans(w))
   +object = B.length(R.AsyncObject, R.World.asyncObjects(w))
   +w = R.World.with_deferredArena(w, R.DeferredArena.with_iterators(arena, B.append(R.DeferredIterator, R.DeferredArena.iterators(arena), [R.DeferredIterator{cell, inner, iterator, True{}}])))
-  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{[], True{}, R.Empty{}, 0n, id, R.Empty{}}]))
+  +w = R.World.with_streamPlans(w, B.append(R.StreamPlan, R.World.streamPlans(w), [R.StreamPlan{[], True{}, R.Empty{}, 0n, id, R.Empty{}, R.FromNone{}}]))
   +w = R.World.with_iterators(w, B.append(R.ExternalIterator, R.World.iterators(w), [R.ExternalIterator{plan, 0n, 0n}]))
   B.Bundle{R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{False{}, R.Unresolved{}, [], plan}])), object}
 

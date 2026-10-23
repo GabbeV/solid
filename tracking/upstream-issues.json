@@ -276,7 +276,7 @@
     {
       "id": "SOLID-FROM-SYNC-UNSUBSCRIBE-008",
       "classification": "confirmed-upstream-bug",
-      "status": "upstream-fix-verified-unported",
+      "status": "upstream-fix-integrated-restricted",
       "sourceCommit": "aece1d448b648d6e946d098f565445d30124b8c2",
       "sourceUnit": "from.ts",
       "record": "tracking/upstream/from-sync-unsubscribe.md",
@@ -285,23 +285,23 @@
       "playgroundVerification": "repros/playground/from-sync-unsubscribe-baseline-browser.json",
       "candidateFixPatch": "tracking/upstream/from-sync-unsubscribe.patch",
       "validationRecord": "tracking/upstream/from-sync-unsubscribe-validation.json",
-      "sourceOnly": true,
-      "preservesBaseline": true,
+      "sourceOnly": false,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": null,
       "fixUrl": "https://github.com/solidjs/solid/pull/4233",
-      "bendScope": "Merged fix is present in the verbatim reference and passes all three native tiers. Open-window deferred stream wrapping / from remain explicit unfinished Bend operations at this checkpoint. No workaround is installed.",
+      "bendScope": "Merged #4233 late assigned teardown and local throwing-unsubscribe containment now execute for the admitted direct function subscription branch. 282 paired histories and complete fixed lifecycle proof; Observable objects/object unsubscribe/wrapped iterable remain unfinished. No workaround.",
       "playgroundUrl": "https://s.olid.uk/id/7C4FKqDuRECgu4aY9Qi-4g",
       "playgroundHostedVerification": "repros/playground/from-sync-unsubscribe-hosted.json",
       "playgroundPackageVersion": "mizulu/solid2@aece1d44",
       "lastRevalidation": {
-        "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+        "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
         "date": "2026-10-23",
-        "result": "Merged fix passes unchanged source-built production/development/observe repros. Affected Bend paths remain explicitly unported at this checkpoint."
+        "result": "Native three-tier source revalidation retained; direct callback subscription merged fix now also has Bend parity."
       },
       "fixMergedCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
-      "validatedSourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
-      "latestValidationRecord": "tracking/reviews/solid-b9b6f333-validation.json"
+      "validatedSourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+      "latestValidationRecord": "tracking/from-subscriptions-validation.json"
     },
     {
       "id": "SOLID-DEFERRED-SYNC-ERROR-009",

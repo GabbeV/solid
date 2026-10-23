@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "activeDeviationIds": [],
+  "publicHistoryCount": 4234,
+  "closedRegressionCount": 73,
+  "newPublicHistories": 282,
+  "privateBindingControls": 288,
+  "finiteCompleteProgramControls": {
+    "count": 14,
+    "prefixesEach": 120,
+    "budgets": [
+      120,
+      121,
+      180
+    ]
+  },
+  "kernel": {
+    "newRoots": 16,
+    "localLaws": 14,
+    "completeProgramme": "fixed owned from(fn) constructor/read/dispose/flush for every admitted ordinary payload and budget >=120",
+    "result": "exact final Machine; array payload preserved; exactly one unsubscribe; Healthy",
+    "allPriorDomainsBudgetsRetained": true,
+    "rootReceipt": "tracking/checked.json"
+  },
+  "negative": {
+    "configured": 551,
+    "finite": 459,
+    "kernel": 92,
+    "newFocused": 12,
+    "completePriorReceipt": "tracking/reviews/solid-225014bf-complete-negative.json",
+    "freshComplete551Sweep": false,
+    "compileResourceFailuresCredited": false,
+    "finiteOracleLimit": "Stale push after completed consumer was not observable to the public consumer; a quantified closure-state law rejects this mutation instead. Initial accepted mutation attempt excluded."
+  },
+  "preservedSourceBugIds": [
+    "SOLID-DEFERRED-PROTOCOL-ERROR-010"
+  ],
+  "newBugOrWorkaround": false,
+  "limitations": [
+    "Observable/interop objects",
+    "object unsubscribe",
+    "wrapped input AsyncIterable",
+    "arbitrary protocol getters/methods and manual async-generator bodies",
+    "arbitrary async progress/graph families",
+    "nonproduction hooks"
+  ],
+  "draftFailuresCredited": false,
+  "publicSuite": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-all-tests.log",
+    "sha256": "d97cf65bace2796e0e0c6a1f1dc7e3ef0f49e25021208c8455bb1c41f1af339c"
+  },
+  "alignment": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-all-alignment.log",
+    "sha256": "894acef8e9bc1909282e01ace4aeccbe8b3d73441d6668fb7f9dcc5524d3681c"
+  },
+  "subscriptionHistories": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-direct-tests.log",
+    "sha256": "d786e8d37b82af5fc8546163fbb52b10cd20935d82dcb859e72fbaa41966aa38"
+  },
+  "privateBinding": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-bind-tests.log",
+    "sha256": "641745e84e25eb1ffd88ad7ce488950f97e8ae02647e8127a6ca2148ac73c778"
+  },
+  "finiteProgramme": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-proof-controls.log",
+    "sha256": "76a9c6f3a927741a51d32799b4850019e37c673548a40a0585a463af0de52693"
+  },
+  "localKernel": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-laws.log",
+    "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+  },
+  "negativeFocused": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-negative-final.log",
+    "sha256": "1520a53af2cd548cf88e5cfec430b61f31152a09117c529c6721f3d09eb91b69"
+  }
+}

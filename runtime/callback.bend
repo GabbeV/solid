@@ -132,6 +132,8 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.InvokeWith{bindWith(callee, args), bindWith(value, args), updater}
     case R.Invoke{callee}:
       R.Invoke{bindWith(callee, args)}
+    case R.FromInput{callee}:
+      R.FromInput{bindWith(callee, args)}
     case R.OnCleanup{callee}:
       R.OnCleanup{bindWith(callee, args)}
     case R.WatchExpr{awaiter, body}:

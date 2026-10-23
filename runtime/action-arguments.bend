@@ -125,6 +125,8 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.InvokeWith{bindWith(callee, depth, args), bindWith(value, depth, args), updater}
     case R.Invoke{callee}:
       R.Invoke{bindWith(callee, depth, args)}
+    case R.FromInput{callee}:
+      R.FromInput{bindWith(callee, depth, args)}
     case R.OnCleanup{callee}:
       R.OnCleanup{bindWith(callee, depth, args)}
     case R.WatchExpr{awaiter, body}:

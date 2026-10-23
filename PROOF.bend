@@ -1,3 +1,7 @@
+import ./proof/from-laws.bend as FromLaws
+import ./proof/from-driver.bend as FromDriver
+import ./proof/from-program.bend as FromProgram
+import ./proof/from-outcome.bend as FromOutcome
 import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
 import ./proof/async-cleanup-program.bend as CleanupProgram
@@ -1086,3 +1090,51 @@ def Laws.supersede_override_failure(w, rest, stack, prior, saved):
 
 def Laws.supersede_chain_continuation(w, rest, stack, id, tail, first, second, before, after):
   SupersedeLaws.chainContinuation(w, rest, stack, id, tail, first, second, before, after)
+
+def Laws.from_settle_no_wait(w, plan, known):
+  FromLaws.settleNoWait(w, plan, known)
+
+def Laws.from_emitted_done(w, plan, value, known):
+  FromLaws.emittedDone(w, plan, value, known)
+
+def Laws.from_closed_noop(w, plan, known):
+  FromLaws.closedNoop(w, plan, known)
+
+def Laws.from_close_open(w, plan, known):
+  FromLaws.closeOpen(w, plan, known)
+
+def Laws.from_finish_no_wait(w, plan, known):
+  FromLaws.finishNoWait(w, plan, known)
+
+def Laws.from_allocate_world(w, state):
+  FromLaws.allocateWorld(w, state)
+
+def Laws.from_allocate_identity(w, state):
+  FromLaws.allocateIdentity(w, state)
+
+def Laws.from_fulfilled(w, id, rejected, value, object, prior):
+  FromLaws.fulfilled(w, id, rejected, value, object, prior)
+
+def Laws.from_rejected(w, id, rejected, value, object, prior):
+  FromLaws.rejected(w, id, rejected, value, object, prior)
+
+def Laws.from_no_observers(w, rejected, value):
+  FromLaws.noObservers(w, rejected, value)
+
+def Laws.from_cleanup_throw(w, rest, saved, cause):
+  FromLaws.cleanupThrow(w, rest, saved, cause)
+
+def Laws.from_cleanup_type_error(w, rest, saved):
+  FromLaws.cleanupTypeError(w, rest, saved)
+
+def Laws.from_preserve_exhaustion(w, rest, saved):
+  FromLaws.preserveExhaustion(w, rest, saved)
+
+def Laws.from_finished(w, rest, stack, plan):
+  FromLaws.finished(w, rest, stack, plan)
+
+def Laws.from_program_complete(input, extra):
+  FromProgram.complete(input, extra)
+
+def Laws.from_program_value_cleanup(input, extra):
+  FromOutcome.result(input, extra)

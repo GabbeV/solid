@@ -1,3 +1,9 @@
+import ./runtime/from-state.bend as FromState
+import ./runtime/promise-input.bend as NativePromise
+import ./proof/from-laws.bend as FromLaws
+import ./proof/from-driver.bend as FromDriver
+import ./proof/from-program.bend as FromProgram
+import ./proof/from-outcome.bend as FromOutcome
 import ./runtime/supersede.bend as Supersede
 import Base
 import ./examples/async-cleanup.bend as CleanupExample
@@ -2247,3 +2253,104 @@ law supersede_chain_continuation:
   for before: Nat
   for after: Nat
   {Core.callbackAction(w, rest, stack, id, tail, first, second, R.SupersedeChain{before, after}) == Core.Machine{w, Core.Evaluate{R.CallProgram{before}, R.Undefined{}} <> Core.SupersedeFinally{after, stack} <> Core.Callback{id, tail, first, second} <> rest, stack} : Core.Machine}
+
+law from_settle_no_wait:
+  for w: R.World
+  for plan: Nat
+  for known: {R.FromSubscription.waiting(FromState.subscription(w, plan)) == 0n : Nat}
+  {FromState.settle(w, plan) == w : R.World}
+
+law from_emitted_done:
+  for w: R.World
+  for plan: Nat
+  for value: R.Value
+  for known: {R.FromSubscription.done(FromState.subscription(w, plan)) == True{} : Bool}
+  {FromState.emitted(w, plan, value) == w : R.World}
+
+law from_closed_noop:
+  for w: R.World
+  for plan: Nat
+  for known: {R.FromSubscription.closed(FromState.subscription(w, plan)) == True{} : Bool}
+  {FromState.close(w, plan) == B.Bundle{w, R.Null{}} : B.Bundle<R.World, R.Value>}
+
+law from_close_open:
+  for w: R.World
+  for plan: Nat
+  for known: {R.FromSubscription.closed(FromState.subscription(w, plan)) == False{} : Bool}
+  {FromState.close(w, plan) == B.Bundle{FromState.store(w, plan, R.FromSubscription.with_unsubscribe(R.FromSubscription.with_done(R.FromSubscription.with_closed(FromState.subscription(w, plan), True{}), True{}), R.Null{})), R.FromSubscription.unsubscribe(FromState.subscription(w, plan))} : B.Bundle<R.World, R.Value>}
+
+law from_finish_no_wait:
+  for w: R.World
+  for plan: Nat
+  for known: {R.FromSubscription.waiting(FromState.subscription(w, plan)) == 0n : Nat}
+  {FromState.finish(w, plan) == FromState.store(w, plan, R.FromSubscription.with_has(FromState.subscription(w, plan), False{})) : R.World}
+
+law from_allocate_world:
+  for w: R.World
+  for state: R.AsyncSettlement
+  {B.first(R.World, Nat, NativePromise.allocate(w, state)) == R.World.with_asyncObjects(w, B.append(R.AsyncObject, R.World.asyncObjects(w), [R.AsyncObject{False{}, state, [], 0n}])) : R.World}
+
+law from_allocate_identity:
+  for w: R.World
+  for state: R.AsyncSettlement
+  {B.second(R.World, Nat, NativePromise.allocate(w, state)) == B.length(R.AsyncObject, R.World.asyncObjects(w)) : Nat}
+
+law from_fulfilled:
+  for w: R.World
+  for id: Nat
+  for rejected: Bool
+  for value: R.Value
+  for object: R.AsyncObject
+  for prior: R.Value
+  {NativePromise.settleState(w, id, rejected, value, object, R.Fulfilled{prior}) == w : R.World}
+
+law from_rejected:
+  for w: R.World
+  for id: Nat
+  for rejected: Bool
+  for value: R.Value
+  for object: R.AsyncObject
+  for prior: R.Value
+  {NativePromise.settleState(w, id, rejected, value, object, R.Rejected{prior}) == w : R.World}
+
+law from_no_observers:
+  for w: R.World
+  for rejected: Bool
+  for value: R.Value
+  {NativePromise.deliveries([], w, rejected, value) == w : R.World}
+
+law from_cleanup_throw:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  for cause: R.Value
+  {Core.fromCleanupCatch(w, rest, saved, R.CallbackThrown{cause}) == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, saved} : Core.Machine}
+
+law from_cleanup_type_error:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  {Core.fromCleanupCatch(w, rest, saved, R.TypeError{}) == Core.Machine{R.World.with_fault(w, R.Healthy{}), rest, saved} : Core.Machine}
+
+law from_preserve_exhaustion:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for saved: List<&2, R.Value>
+  {Core.fromCleanupCatch(w, rest, saved, R.Exhausted{}) == Core.Machine{w, rest, saved} : Core.Machine}
+
+law from_finished:
+  for w: R.World
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  for plan: Nat
+  {Core.dispatch(w, Core.FromFinished{plan} <> rest, stack) == Core.Machine{FromState.finish(w, plan), rest, R.StepResult{True{}, R.Undefined{}} <> stack} : Core.Machine}
+
+law from_program_complete:
+  for input: Payload.Ordinary
+  for extra: Nat
+  {Core.run(Nat.add(120n, extra), FromDriver.before(input)) == FromProgram.state_120(input) : Core.Machine}
+
+law from_program_value_cleanup:
+  for input: Payload.Ordinary
+  for extra: Nat
+  {FromOutcome.outcome(Core.run(Nat.add(120n, extra), FromDriver.before(input))) == FromOutcome.Outcome{R.Present{Payload.value(input)}, 1n, R.Healthy{}} : FromOutcome.Outcome}

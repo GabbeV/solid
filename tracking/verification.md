@@ -8,7 +8,7 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
 - build checks/emits one Bend runtime and bundles the actual full Solid index.
 - test compares 203 normal, 18 synchronous-error, 68 ordinary-flight, 255 iterator,
   158 resolve/refresh, 16 held-error-recovery, 136 default-until, 60 until-option
-  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred, 32 multiple-deferred, 108 first-load stream and eight cdd95616 landing-barrier histories and 16 async replacement cleanup histories and 32 merged synchronous-error and 184 stream-refetch histories: 3952 total, plus explicit host object-identity and native timeout
+  99 host-error, 74 callback, 73 ownership, 71 argument/disposer, 52 context and 24 bound-cleanup and 158 nested-construction and 55 local-signal and 40 escaped-accessor, 11 reentrant-setter, 40 escaped-setter and 51 computed-accessor and 81 writable-signal and 42 setter-cleanup and 48 returned-cleanup and 66 callable-initializer and 64 first-class-callback histories plus 16 seeded long histories, 50 upstream-integration and 82 teardown-expression histories plus 12 pin-update untrack histories plus 54 getter-cleanup histories plus 47 tracked-effect and 54 onSettled histories plus 66 reaction and 12 original reaction-function histories plus 64 flush callback and 134 custom comparator histories plus 67 action, eight lexical action and 45 reusable-action-function histories plus 12 d682022c pin-update histories plus 70 variable-arity, 25 direct-owner, 22 typed-array, 54 repeat and 57 mapArray index-mode and 62 plain-keyed, 27 mapper-arity/index-accessor and 53 extracted-key histories, plus 66 children-flatten histories, plus 36 rc.17 cleanup-policy histories, plus 11 signed-zero, 64 optimistic and 104 verdict-window and 73 non-store affects and 162 deferred, 32 multiple-deferred, 108 first-load stream and eight cdd95616 landing-barrier histories and 16 async replacement cleanup histories and 32 merged synchronous-error and 184 stream-refetch and 282 direct from subscription histories: 4234 total, plus explicit host object-identity and native timeout
   checks, eight native flush scheduling-IO controls and eight finite fixed-initial constructor/setter/value and eight symbolic-initial constructor controls and 64 general constructor/setter/drain controls, 64 finite children-flatten exact-machine/World/native controls, eight two-memo/render canonical/native controls, 512 two-update memo controls, 49 arbitrary-length memo programs / 1,260 prefix comparisons and 36 synthetic steady-pass controls, 27 independent native generator/factory action controls, plus four independent source-only action-contract controls. It compares actual callbacks, returned/thrown values, wrapper identity,
   node fields, compute/read/apply/cleanup order, text, reports/halts and native
   promise observers where relevant. Source-only paired controls additionally
@@ -27,12 +27,11 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations configures 534 isolated source-changing copies:
-  446 finite differential/structural variants and 88 kernel proof-property
-  variants. The historical 519-variant complete receipt plus two ordinary-payload
-  variants establish the previous 521 checkpoint. This source refresh checks
-  all 71 affected deferred variants, including three new ones; no fresh full
-  524-variant sweep is claimed yet. The first-load stream receipt records both complete disjoint shards. The previous workaround variants now reintroduce fixed bugs; new variants
+- mutations configures 551 isolated source-changing copies:
+  459 finite differential/structural variants and 92 kernel proof-property
+  variants. The frozen preceding 539-variant rc.18 checkpoint has a complete
+  receipt at reviews/solid-225014bf-complete-negative.json; twelve new focused
+  subscription controls are compiled and rejected separately. The previous workaround variants now reintroduce fixed bugs; new variants
   also target lazy releases, error recovery, protocol containment and empty flatten. The active runtime is not mutated by this check.
 - check validates deviation records/pins, rejects drift or a stale build, runs
   PROOF.bend with the independent --verdict kernel, checks dependencies did not
@@ -518,3 +517,10 @@ the production runtime and every existing theorem domain/budget. Development
 event diagnostic windows remain outside Bend. All three merged fixes and the
 new protocol-error bug/control are revalidated on unchanged source-built tiers.
 The current source receipt is reviews/solid-225014bf-validation.json.
+
+The direct from subscription checkpoint additionally checks 288 actual factory
+binding controls and fourteen ordinary-payload lifecycle programmes, each with
+120 prefix comparisons and three exact-Machine budgets. Sixteen new quantified
+roots state complete programme/value/cleanup and fourteen local properties;
+see [the precise scope](from-subscriptions.md). These are separate from the
+73 closed regression count and do not prove arbitrary async histories.

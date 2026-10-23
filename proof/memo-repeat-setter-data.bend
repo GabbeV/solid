@@ -177,183 +177,186 @@ def data_55() -> List<&2, R.HostJob>:
 def data_56() -> List<&2, R.NextInput>:
   []
 
-def data_57() -> R.StreamPlan:
-  R.StreamPlan{data_56(), False{}, data_2(), 0n, 0n, data_2()}
+def data_57() -> R.FromState:
+  R.FromNone{}
 
-def data_58() -> List<&2, R.StreamPlan>:
-  [data_57()]
+def data_58() -> R.StreamPlan:
+  R.StreamPlan{data_56(), False{}, data_2(), 0n, 0n, data_2(), data_57()}
 
-def data_59() -> R.ExternalIterator:
+def data_59() -> List<&2, R.StreamPlan>:
+  [data_58()]
+
+def data_60() -> R.ExternalIterator:
   R.ExternalIterator{0n, 0n, 0n}
 
-def data_60() -> List<&2, R.ExternalIterator>:
-  [data_59()]
+def data_61() -> List<&2, R.ExternalIterator>:
+  [data_60()]
 
-def data_61() -> R.StreamState:
+def data_62() -> R.StreamState:
   R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, data_1(), 0n}
 
-def data_62() -> List<&2, R.StreamState>:
-  [data_61()]
+def data_63() -> List<&2, R.StreamState>:
+  [data_62()]
 
-def data_63() -> List<&2, R.IteratorEvent>:
+def data_64() -> List<&2, R.IteratorEvent>:
   []
 
-def data_64() -> R.Awaiter:
+def data_65() -> R.Awaiter:
   R.Awaiter{data_4(), False{}, 0n, 0n, 0n, 0n, data_49(), False{}, 0n, False{}, False{}, 0n}
 
-def data_65() -> List<&2, R.Awaiter>:
-  [data_64()]
+def data_66() -> List<&2, R.Awaiter>:
+  [data_65()]
 
-def data_66() -> R.AbortInput:
+def data_67() -> R.AbortInput:
   R.AbortInput{False{}, data_1()}
 
-def data_67() -> List<&2, R.AbortInput>:
-  [data_66()]
+def data_68() -> List<&2, R.AbortInput>:
+  [data_67()]
 
-def data_68() -> R.ContextKey:
+def data_69() -> R.ContextKey:
   R.ContextKey{data_1(), data_2()}
 
-def data_69() -> List<&2, R.ContextKey>:
-  [data_68()]
+def data_70() -> List<&2, R.ContextKey>:
+  [data_69()]
 
-def data_70() -> List<&2, R.ContextEntry>:
+def data_71() -> List<&2, R.ContextEntry>:
   []
 
-def data_71() -> R.ContextRecord:
-  R.ContextRecord{data_70()}
+def data_72() -> R.ContextRecord:
+  R.ContextRecord{data_71()}
 
-def data_72() -> List<&2, R.ContextRecord>:
-  [data_71()]
+def data_73() -> List<&2, R.ContextRecord>:
+  [data_72()]
 
-def data_73() -> List<&2, R.Expr>:
+def data_74() -> List<&2, R.Expr>:
   [data_4()]
 
-def data_74() -> List<&2, R.ReactionState>:
+def data_75() -> List<&2, R.ReactionState>:
   []
 
-def data_75() -> List<&2, R.ComparatorBinding>:
+def data_76() -> List<&2, R.ComparatorBinding>:
   []
 
-def data_76() -> List<&2, R.ActionState>:
+def data_77() -> List<&2, R.ActionState>:
   []
 
-def data_77() -> List<&2, R.ActionWait>:
+def data_78() -> List<&2, R.ActionWait>:
   []
 
-def data_78() -> List<&2, R.ArrayData>:
+def data_79() -> List<&2, R.ArrayData>:
   []
 
-def data_79() -> List<&2, R.RepeatState>:
+def data_80() -> List<&2, R.RepeatState>:
   []
 
-def data_80() -> List<&2, R.MapState>:
+def data_81() -> List<&2, R.MapState>:
   []
 
-def data_81() -> List<&2, R.Guess>:
+def data_82() -> List<&2, R.Guess>:
   []
 
-def data_82() -> R.LaneMount:
+def data_83() -> R.LaneMount:
   R.MountUnset{}
 
-def data_83() -> R.LaneState:
-  R.LaneState{data_25(), data_48(), data_25(), data_81(), 0n, data_82()}
+def data_84() -> R.LaneState:
+  R.LaneState{data_25(), data_48(), data_25(), data_82(), 0n, data_83()}
 
-def data_84() -> R.VerdictState:
+def data_85() -> R.VerdictState:
   R.VerdictState{False{}, False{}, False{}, False{}}
 
-def data_85() -> R.Value:
+def data_86() -> R.Value:
   R.Null{}
 
-def data_86() -> R.DeferredCell:
-  R.DeferredCell{0n, data_85(), False{}, False{}}
+def data_87() -> R.DeferredCell:
+  R.DeferredCell{0n, data_86(), False{}, False{}}
 
-def data_87() -> R.DeferredBinding:
-  R.DeferredBinding{data_86(), 0n}
+def data_88() -> R.DeferredBinding:
+  R.DeferredBinding{data_87(), 0n}
 
-def data_88() -> List<&2, R.DeferredBinding>:
-  [data_87()]
+def data_89() -> List<&2, R.DeferredBinding>:
+  [data_88()]
 
-def data_89() -> List<&2, R.DeferredWait>:
+def data_90() -> List<&2, R.DeferredWait>:
   []
 
-def data_90() -> R.DeferredIterator:
+def data_91() -> R.DeferredIterator:
   R.DeferredIterator{0n, 0n, 0n, False{}}
 
-def data_91() -> List<&2, R.DeferredIterator>:
-  [data_90()]
+def data_92() -> List<&2, R.DeferredIterator>:
+  [data_91()]
 
-def data_92() -> R.DeferredArena:
-  R.DeferredArena{data_88(), data_25(), data_89(), data_91()}
+def data_93() -> R.DeferredArena:
+  R.DeferredArena{data_89(), data_25(), data_90(), data_92()}
 
-def data_93(+initial: Nat, +first: Nat) -> R.World:
-  R.World{data_20(first), data_23(), data_24(), 1n, 0n, False{}, data_25(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), False{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_94(+initial: Nat, +first: Nat) -> R.World:
+  R.World{data_20(first), data_23(), data_24(), 1n, 0n, False{}, data_25(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), False{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
-def data_94() -> List<&2, Nat>:
+def data_95() -> List<&2, Nat>:
   [2n]
 
-def data_95(+initial: Nat, +first: Nat) -> R.World:
-  R.World{data_20(first), data_23(), data_24(), 1n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_96(+initial: Nat, +first: Nat) -> R.World:
+  R.World{data_20(first), data_23(), data_24(), 1n, 0n, False{}, data_95(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
-def data_96(+input: Nat) -> R.Value:
+def data_97(+input: Nat) -> R.Value:
   R.Number{input}
 
-def data_97(+input: Nat) -> R.Slot:
-  R.Present{data_96(input)}
+def data_98(+input: Nat) -> R.Slot:
+  R.Present{data_97(input)}
 
-def data_98(+first: Nat, +input: Nat) -> R.Node:
-  R.Node{data_9(), data_10(first), data_97(input), False{}, 0, 0, 0, 0n, data_11(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+def data_99(+first: Nat, +input: Nat) -> R.Node:
+  R.Node{data_9(), data_10(first), data_98(input), False{}, 0, 0, 0, 0n, data_11(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_99(+first: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_98(first, input), data_19(first)]
+def data_100(+first: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_99(first, input), data_19(first)]
 
-def data_100(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  R.World{data_99(first, input), data_23(), data_24(), 1n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_101(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
+  R.World{data_100(first, input), data_23(), data_24(), 1n, 0n, False{}, data_95(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
-def data_101() -> R.Stamp:
+def data_102() -> R.Stamp:
   R.Stamped{3n}
 
-def data_102(+first: Nat, +input: Nat) -> R.Node:
-  R.Node{data_9(), data_10(first), data_97(input), False{}, 0, 0, 0, 0n, data_101(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+def data_103(+first: Nat, +input: Nat) -> R.Node:
+  R.Node{data_9(), data_10(first), data_98(input), False{}, 0, 0, 0, 0n, data_102(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_103(+first: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_102(first, input), data_19(first)]
+def data_104(+first: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_103(first, input), data_19(first)]
 
-def data_104(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  R.World{data_103(first, input), data_23(), data_24(), 1n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_105(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
+  R.World{data_104(first, input), data_23(), data_24(), 1n, 0n, False{}, data_95(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
-def data_105(+first: Nat) -> R.Node:
+def data_106(+first: Nat) -> R.Node:
   R.Node{data_13(), data_14(first), data_2(), False{}, 0, 16392, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 3n, 1n, 0n, 0n, 0n, data_18(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
-def data_106(+first: Nat, +input: Nat) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_102(first, input), data_105(first)]
+def data_107(+first: Nat, +input: Nat) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_103(first, input), data_106(first)]
 
-def data_107() -> List<&2, Nat>:
+def data_108() -> List<&2, Nat>:
   [3n]
 
-def data_108(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  R.World{data_106(first, input), data_23(), data_107(), 0n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_109(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
+  R.World{data_107(first, input), data_23(), data_108(), 0n, 0n, False{}, data_95(), data_25(), data_25(), data_26(), 0n, False{}, False{}, False{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_55(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
-def data_109() -> List<&2, R.HostJob>:
+def data_110() -> List<&2, R.HostJob>:
   [data_54(), data_54()]
 
-def data_110(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  R.World{data_106(first, input), data_23(), data_107(), 0n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, False{}, True{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_109(), 0n, data_58(), data_60(), data_62(), data_63(), data_65(), False{}, False{}, data_38(), data_67(), data_69(), data_72(), 0n, data_48(), False{}, data_73(), data_74(), data_75(), 0n, data_76(), data_77(), data_78(), data_79(), data_80(), 0n, data_83(), data_84(), data_2(), data_25(), data_92()}
+def data_111(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
+  R.World{data_107(first, input), data_23(), data_108(), 0n, 0n, False{}, data_95(), data_25(), data_25(), data_26(), 0n, False{}, False{}, True{}, 1n, 3n, data_28(), data_34(initial, first), data_35(), True{}, data_25(), data_40(), data_43(), data_25(), 0n, False{}, False{}, data_44(), 0n, data_47(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_38(), data_48(), data_51(), data_53(), data_110(), 0n, data_59(), data_61(), data_63(), data_64(), data_66(), False{}, False{}, data_38(), data_68(), data_70(), data_73(), 0n, data_48(), False{}, data_74(), data_75(), data_76(), 0n, data_77(), data_78(), data_79(), data_80(), data_81(), 0n, data_84(), data_85(), data_2(), data_25(), data_93()}
 
 def origin(+initial: Nat, +first: Nat) -> R.World:
-  data_93(initial, first)
+  data_94(initial, first)
 
 def queued(+initial: Nat, +first: Nat) -> R.World:
-  data_95(initial, first)
+  data_96(initial, first)
 
 def slotted(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  data_100(initial, first, input)
+  data_101(initial, first, input)
 
 def stamped(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  data_104(initial, first, input)
+  data_105(initial, first, input)
 
 def inserted(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  data_108(initial, first, input)
+  data_109(initial, first, input)
 
 def scheduled(+initial: Nat, +first: Nat, +input: Nat) -> R.World:
-  data_110(initial, first, input)
+  data_111(initial, first, input)
 

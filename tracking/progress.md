@@ -5,8 +5,7 @@ concrete additions and checked guarantees, not a percentage of the whole package
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
 is 225014bf (declares rc.18). The latest integration ports merged synchronous-error
 flight retirement (#4231), with 32 added histories and three quantified
-boundaries; merged #4232 is now integrated in the typed stream wrapper; #4233 is validated
-in native tiers while from remains outside the current Bend profile. The earlier fallback/cleanup checkpoint
+boundaries; merged #4232 is now integrated in the typed stream wrapper; #4233 is integrated in the admitted direct from(fn) branch; Observable/wrapped-iterable inputs remain unfinished. The earlier fallback/cleanup checkpoint
 remains at bb82345. Active
 store/folded-lane read paths remain explicit omissions. The deviation register
 remains empty.
@@ -20,9 +19,9 @@ remains empty.
 | Typed actions | No public action engine | Reusable function identities, finite argument vectors without a fixed arity cap and nested parameter capture, plus typed invocation/resume, held writes, nesting/overlap, lexical capture, errors and return adoption |
 | Children resolver | Unported | Typed zero-arity accessor chains, nested arrays, filtering, pending/error collection and deferred resolving wrappers through the core |
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
-| Public comparison corpus | 2,348 histories | 3,952 histories, plus separate native scheduling and finite memo-boundary controls |
+| Public comparison corpus | 2,348 histories | 4,234 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 534 configured (446 finite, 88 kernel); complete preceding 524 sweep plus ten new focused controls |
+| Compiled mutation checks | 116 | 551 configured (459 finite, 92 kernel); complete frozen preceding 539 sweep plus twelve new focused controls |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -490,3 +489,10 @@ the production runtime and every existing theorem domain/budget. Development
 event diagnostic windows remain outside Bend. All three merged fixes and the
 new protocol-error bug/control are revalidated on unchanged source-built tiers.
 The current source receipt is reviews/solid-225014bf-validation.json.
+
+The direct subscription milestone ports from(fn) closure state, real callback
+invocation, coalescing and owner cleanup through the existing engines. It adds
+a complete ordinary-payload owned lifecycle proof (constructor/read/dispose/flush
+and exactly one unsubscribe, budgets >=120) and fourteen local World laws.
+The 282 paired histories and 288 private binding controls support source
+fidelity separately from these proofs. See [the scope](from-subscriptions.md).

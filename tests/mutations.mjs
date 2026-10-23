@@ -5,6 +5,19 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["from emission loses latest payload", "runtime/from-state.bend", "R.FromSubscription.with_latest(s, value)", "R.FromSubscription.with_latest(s, R.Undefined{})", "tests/from-subscriptions.mjs", "emitted"],
+  ["from done guard erases buffered last emission", "runtime/from-state.bend", "R.FromSubscription.has(s),", "Bool.and(R.FromSubscription.has(s), Bool.not(R.FromSubscription.done(s))),", "tests/from-subscriptions.mjs", "next"],
+  ["from waiting emission resolves as done", "runtime/from-state.bend", "R.StepResult{False{}, R.FromSubscription.latest(s)}", "R.StepResult{True{}, R.FromSubscription.latest(s)}", "tests/from-subscriptions.mjs", "settle"],
+  ["from close skips live unsubscribe", "runtime/from-state.bend", "R.FromSubscription.closed(s),", "True{},", "tests/from-subscriptions.mjs", "close"],
+  ["from completed subscription forgets late teardown", "runtime/core.bend", "R.FromSubscription.closed(From.subscription(w, plan)),", "False{},", "tests/from-subscriptions.mjs", "fromSubscribed"],
+  ["from owner binding skips supersede", "runtime/core.bend", "+w = Supersede.register(w, callback)", "+w = w", "tests/from-bind-alignment.mjs", "fromBind"],
+  ["from forbidden owner accepts cleanup", "runtime/core.bend", "Bool.not(B.has(R.Node.config(B.node(w, owner)), K.CONFIG_CHILDREN_FORBIDDEN()))", "True{}", "tests/from-bind-alignment.mjs", "fromBind"],
+  ["from owner cleanup captures wrong finish", "runtime/core.bend", "O.cleanup(w, owner, callback)", "O.cleanup(w, owner, 1n)", "tests/from-bind-alignment.mjs", "fromBind"],
+  ["from unsubscribe error escapes local catch", "runtime/core.bend", "case R.CallbackThrown{cause}: Machine{R.World.with_fault(w, R.Healthy{}), rest, saved}", "case R.CallbackThrown{cause}: Machine{w, rest, saved}", "tests/from-subscriptions.mjs", "fromCleanupCatch"],
+  ["from stale callback writes after done", "runtime/from-state.bend", "R.FromSubscription.done(s),", "False{},", "tests/proof-properties.mjs", "emitted", "from-laws"],
+  ["from kernel retains captured unsubscribe", "runtime/from-state.bend", "R.FromSubscription.with_unsubscribe(R.FromSubscription.with_done(R.FromSubscription.with_closed(s, True{}), True{}), R.Null{})", "R.FromSubscription.with_done(R.FromSubscription.with_closed(s, True{}), True{})", "tests/proof-properties.mjs", "close", "from-laws"],
+  ["from programme kernel drops emission value", "runtime/from-state.bend", "R.FromSubscription.with_latest(s, value)", "R.FromSubscription.with_latest(s, R.Undefined{})", "tests/proof-properties.mjs", "emitted", "from-outcome"],
+
   ["supersede chain loses undefined callback return", "runtime/core.bend", "<> SupersedeFinally{after, stack} <> Callback{id, tail, first, second} <> rest", "<> SupersedeFinally{after, stack} <> rest", "tests/supersede-alignment.mjs", "callbackAction"],
   ["supersede fresh extension becomes null", "runtime/supersede.bend", "R.NodeExtension.with_inFlight(x, R.FlightUndefined{})", "R.NodeExtension.with_inFlight(x, R.FlightEmpty{})", "tests/supersede-alignment.mjs", "registerEligible"],
   ["supersede chained callbacks run in reverse", "runtime/core.bend", "Evaluate{R.CallProgram{before}, R.Undefined{}} <> SupersedeFinally{after, stack}", "Evaluate{R.CallProgram{after}, R.Undefined{}} <> SupersedeFinally{before, stack}", "tests/supersede-alignment.mjs", "callbackAction"],
@@ -19,7 +32,7 @@ const mutations=[
   ["deferred refetch bare yield retains first flag", "runtime/deferred-stream.bend", "+w = store(w, id, R.DeferredIterator.with_first(s, False{}))", "+w = w", "tests/deferred-refetch-stream.mjs", "firstInput"],
   ["deferred refetch kernel loses nullish return fallback", "runtime/deferred-stream.bend", "_ => resolvedDone(w), _ => B.Bundle{w, Input.RawReturn{value}}", "_ => B.Bundle{w, Input.RawReturn{value}}, _ => B.Bundle{w, Input.RawReturn{value}}", "tests/proof-properties.mjs", "returnInput", "deferred-stream-laws"],
   ["deferred refetch kernel mutates first before throwing", "runtime/deferred-stream.bend", "case R.ThrowNext{error}: B.Bundle{w, R.ThrowNext{error}}", "case R.ThrowNext{error}: B.Bundle{store(w, id, R.DeferredIterator.with_first(wrapper(w, id), False{})), R.ThrowNext{error}}", "tests/proof-properties.mjs", "firstInput", "deferred-stream-laws"],
-  ["deferred refetch failed factory still asks", "runtime/core.bend", "B.choose(~Machine, B.ok(w),", "B.choose(~Machine, True{},", "tests/deferred-refetch-stream.mjs", "deferredStream"],
+  ["deferred refetch failed factory still asks", "runtime/core.bend", "B.choose(~Machine, B.ok(w),", "B.choose(~Machine, True{},", "tests/deferred-refetch-stream.mjs", "deferredWrapped"],
   ["deferred refetch serve loses held pending value", "runtime/core.bend", "Deferred.served(w, cell, B.second(R.World, R.Value, pair))", "B.second(R.World, R.Value, pair)", "tests/deferred-refetch-stream.mjs", "deferredAfterIterator"],
 
   ["deferred sync-error omits ending superseded flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/pin-b9b6f333.mjs", "sourceFailed"],
@@ -566,7 +579,7 @@ const mutations=[
   ['refresh waiter runs eagerly','runtime/signals.bend','_ => R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.WatchStart{id}]))','_ => makeWatch(256n, w, id)','tests/waiters.mjs'],
   ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
-  ['iterator return omitted','runtime/iterator-input.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs','returned'],
+  ['iterator return omitted','runtime/iterator-input.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs','returnedExternal'],
   ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
   ['unresolved promise commits','runtime/flight.bend','R.AsyncObserver.resolved(o)','True{}','tests/async.mjs'],
   ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
