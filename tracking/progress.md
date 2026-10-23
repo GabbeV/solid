@@ -609,3 +609,18 @@ guard-bypass mutation hit the RSS limit and is not credited. An indexed certific
 avoids repeated constructor unfolding that exhausted kernel fuel; its result field
 and construction are checked without changing runtime or kernel limits.
 No runtime/representation/host/source changes, new Solid bug or deviation occurred.
+
+
+## Empty completed-group eligibility (2026-10-23)
+
+The [eligibility extension](action-eligibility.md) adds the general actual false
+blocker contract for a healthy ordinary transaction with zero actions, no owned
+nodes and no live lanes. It preserves the full World/judge using the existing
+public budget. A constructed certificate supplies the transaction premises after
+both actual completions in either order, including arbitrary finite pair
+lookup/rejoin histories; initial health and empty live lanes remain explicit.
+Forty-eight paired private empty-group controls and the existing public/native
+histories pass. One additional kernel negative brings configured variants to
+588 (469 finite /119 kernel); no full-sweep claim. The nonempty owned-node/flight
+and lane branches and actual rendered publication remain open. No runtime,
+source, host, toolchain or deviation changed, and no new Solid bug was found.

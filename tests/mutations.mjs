@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["empty ordinary group invents a nested blocker", "runtime/transaction.bend", "Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}}", "Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, True{}}", "tests/proof-properties.mjs", "blockStep", "transaction-empty"],
   ["second completion retains its last obligation", "runtime/action-state.bend", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)", "B.choose(~Nat, Nat.is_eq(R.Transaction.open(B.transaction(w, t)), 1n), _ => 1n, _ => Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n))", "tests/proof-properties.mjs", "done", "action-pair-completion"],
   ["second completion loses the retired route", "runtime/action-state.bend", "B.schedule(B.store_transaction(w, t,", "B.schedule(B.store_transaction(B.store_transaction(w, R.ActionState.transaction(get(w, id)), R.Transaction.with_into(B.transaction(w, R.ActionState.transaction(get(w, id))), 0n)), t,", "tests/proof-properties.mjs", "done", "action-pair-completion"],
   ["settled wait invariant reopens matching cells", "runtime/action-state.bend", "R.ActionWait.with_settled(entry, True{})", "R.ActionWait.with_settled(entry, False{})", "tests/proof-properties.mjs", "settleWait", "action-wait-settlement"],

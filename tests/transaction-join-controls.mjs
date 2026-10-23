@@ -26,7 +26,7 @@ try{
  const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
  const bendShape=t=>{const {$:tag,...fields}=t;return {...fields,nodes:list(t.nodes),renderQueue:list(t.renderQueue),userQueue:list(t.userQueue),reruns:list(t.reruns),marks:t.marks.$==='NoIds'?null:list(t.marks.items)};};
  const vectors=(seed,size)=>Array.from({length:size},(_,i)=>({id:seed+i}));
- let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0;
+ let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0;
  for(const prefix of [0,1,4])for(const gap of [0,1,3])for(const suffix of [0,2])for(const reverse of [false,true])for(const markState of [0,1,2,3])for(const emptyPresentMarks of [false,true]){
   S.live.length=0;let world=API.createWorld();const tx=[null];
   const left=1+prefix,right=left+1+gap,total=right+suffix;
@@ -66,6 +66,21 @@ try{
   for(const query of [left,right]){const p=T.resolveTx(world,query);assert.deepEqual(p.left,world);assert.equal(p.right,target);queries++;}
   fixtures++;
  }
+ // Empty ordinary groups at allocated positions: no owned nodes or lanes.
+ // These are native/private helper fixtures, not public action histories.
+ for(const prefix of [0,1,4])for(const gap of [0,2])for(const suffix of [0,2])for(const reverse of [false,true])for(const judge of [0,9]){
+  S.live.length=0;let world=API.createWorld();const native=[null];
+  const left=1+prefix,right=left+1+gap,total=right+suffix;
+  for(let i=1;i<=total;i++){world=T.newTransaction(world,false,0).left;native.push(S.newTransaction(false));}
+  world={...world,judge,context:77,tracking:true,clock:11};
+  const source=reverse?right:left,target=reverse?left:right;
+  world=T.merge(world,source,target);S.merge(native[source],native[target]);
+  const previous=S.judge,answer=T.blocked(world,target);
+  assert.equal(answer.right,false,'empty zero-action ordinary group is eligible');
+  assert.deepEqual(answer.left,world,'empty eligibility preserves complete World/judge');
+  assert.equal(S.blocked(native[target]),false);assert.equal(S.judge,previous);
+  emptyBlockerControls++;
+ }
  // Actual action opening: each existing action cell receives a fresh nonzero
  // group and one obligation, while entry methods/result and all other cells
  // survive. These are Bend helper/frame controls, not native public histories.
@@ -85,5 +100,5 @@ try{
 
   openingControls++;
  }
- console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,publicHistories:false}));
+ console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,emptyBlockerControls,publicHistories:false}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

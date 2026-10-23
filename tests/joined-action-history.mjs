@@ -62,6 +62,7 @@ for(const reverseCreate of [false,true])for(const reverseFinish of [false,true])
    assert.equal(list(b.world.txArena)[representative].open,1-position,name+' Bend debt');
    if(position===0){assert.equal(S.blocked(root),true);assert.deepEqual(seen,[initial],name+' other action still blocks publication');}
   }
+  assert.equal(S.blocked(root),false,name+' completed synchronous graph is eligible');
   const last=finishWrite?values[finished[1]+3]:values[created[1]+1];
   assert.deepEqual(seen,[initial,last],name+' one joined publication');assert.deepEqual(b.read('x'),last);
   histories++;

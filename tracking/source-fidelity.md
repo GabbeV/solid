@@ -66,7 +66,9 @@ capture/debt, and selected allocated-root joins establish transfer and pair
 resolver room. A two-action family now removes those premises through both
 completions in either order, with arbitrary finite pair lookup/rejoin histories
 before/between/after them; see [the completion extension](action-completion.md). General forest,
-once-only delivery and publication invariants remain open.
+once-only delivery and publication invariants remain open. The
+[eligibility extension](action-eligibility.md) follows the source empty-group
+blocker path under explicit health/no-live-lane conditions; no runtime delta.
 
 ## Upstream review and discrepancies
 

@@ -17,7 +17,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | --- | --- | --- | --- |
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
@@ -76,7 +76,10 @@ now checks both completion orders with arbitrary finite pair lookups/rejoins
 before, between and afterward. A constructed certificate contains the full World
 equality, and its checked corollary gives zero live representative action debt.
 A separate invariant connects actual wait marking, lookup and duplicate guards
-through arbitrary finite append/settlement histories.
+through arbitrary finite append/settlement histories. The
+[eligibility extension](action-eligibility.md) supplies actual `blocked == false`
+after both completions for this empty-owned-node prefix, with explicit initial
+health/no-live-lane conditions and complete post-completion World preservation.
 
 ## Next proof obligations, in order
 
@@ -87,8 +90,8 @@ through arbitrary finite append/settlement histories.
 2. Relate outstanding action/flight identities to the representative open count.
    Complete once-only action delivery beyond the checked settled-yield wait-list invariant, and distinguish scheduling joins from result/question
    authority. The original transaction record's retained count is not live debt.
-3. Extend the checked positive-count blocker bridge through zero-debt flight/lane
-   judgments and actual flush/publication boundaries;
+3. Extend the checked positive-count and empty-group eligibility bridges through
+   nonempty owned-node/flight/lane judgments and actual flush/publication boundaries;
    prove the ordinary renderer observation while carrying the real World through
    branching event histories. Keep stack, continuation and ambient scopes explicit.
 4. Add supersession/rejection/disposal, then overlapping held optimistic guesses,

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "c0d0ac2973a0d4cd62fdd5b222ffa797b8342515",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "cc3ee74099f5a3113748703d969460a867e7695c",
+  "signalsSourceDrift": false,
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 2,
+  "publicHistories": 4486,
+  "closedRegressions": 73,
+  "publicNativeHistoriesRechecked": 48,
+  "publicObservedPrefixes": 408,
+  "newPairedPrivateEmptyBlockerControls": 48,
+  "retainedPrivatePositiveBlockerControls": 320,
+  "configuredMutations": 588,
+  "finiteMutations": 469,
+  "kernelMutations": 119,
+  "newFocusedKernelRejections": 1,
+  "freshComplete588Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "Actual blocked returns false for a healthy selected ordinary transaction with zero actions, empty owned-node list and no live lanes, preserving complete World/judge in four source blocker tasks within its existing public budget. The constructed two-action completion certificate supplies transaction premises after both done prefixes in either order, with arbitrary finite pair lookup/rejoin histories before/between/after; initial health and no-live-lane conditions remain explicit.",
+  "assumptions": [
+    "Healthy initial World; no live lanes.",
+    "Same successful factory/opening prefix and once-per-selected-action completion admission as preceding completion checkpoint.",
+    "Generator expressions are unexecuted data; no intervening writes or owned flights are introduced by this family."
+  ],
+  "remaining": [
+    "Nonempty owned-node/flight and active-lane blocker branches",
+    "Full once-only action/flight/result protocol and observer identity reachability",
+    "Intervening writes, settlements, disposal and arbitrary component joins",
+    "Global forest/live-list validity and actual flush/rendered publication",
+    "External delivery/fairness"
+  ],
+  "composedSeal": "tracking/checked.json is the authoritative completed full-input/kernel record for this checkpoint.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPRState": "open, unmerged",
+  "moduleSha256": {
+    "proof/transaction-empty.bend": "18e9527b3c58b3cfb49d452c46995232a3be1efbad72ec92f694f22ba689e9b6",
+    "proof/action-pair-eligibility.bend": "a9623831f72ef1b98a91e3cc4d7c077be3077798fe1acd7357afa16ca1dee521"
+  },
+  "logs": {
+    "zero-blocker-public.log": {
+      "path": "/workspace/scratch/zero-blocker-public.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-pair-eligibility-third.log": {
+      "path": "/workspace/scratch/action-pair-eligibility-third.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "action-empty-private.log": {
+      "path": "/workspace/scratch/action-empty-private.log",
+      "sha256": "336c39805f362d7db387888fe0ec4f4c804facb43fc26ea7cfe2cd077994590e"
+    },
+    "action-empty-public.log": {
+      "path": "/workspace/scratch/action-empty-public.log",
+      "sha256": "60111707deeb4d935ae2d77f36c415aa5de3de470623299519a43d2ec3680b95"
+    },
+    "action-empty-negative.log": {
+      "path": "/workspace/scratch/action-empty-negative.log",
+      "sha256": "b6929afc21677753ce4d12fd932b64d781ac8ae544b6ba7952c5de0b196c5de5"
+    }
+  }
+}

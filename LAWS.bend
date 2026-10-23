@@ -1,3 +1,5 @@
+import ./proof/transaction-empty.bend as EmptyBlocker
+import ./proof/action-pair-eligibility.bend as PairEligibility
 import ./proof/transaction-count-pair.bend as CountedPair
 import ./proof/action-pair-completion.bend as PairCompletion
 import ./proof/action-wait-settlement.bend as WaitSettlement
@@ -2892,3 +2894,31 @@ law settled_action_wait_history_rejects_duplicate:
   for value: R.Value
   for found: {Action.find(waits, id) == Some{R.ActionWait{id, action, 0, settled}} : Maybe<&2, R.ActionWait>}
   {Core.asyncActionDelivery(R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack, id, rejected, value, Action.find(WaitSettlement.run(events, Action.settleWait(waits, id)), id)) == Core.Machine{R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack} : Core.Machine}
+
+
+law empty_ordinary_transaction_is_eligible:
+  for w: R.World
+  for tx: Nat
+  for healthy: {B.ok(w) == True{} : Bool}
+  for zero: {R.Transaction.open(B.transaction(w, tx)) == 0n : Nat}
+  for empty: {R.Transaction.nodes(B.transaction(w, tx)) == [] : List<&2, Nat>}
+  for ordinary: {R.Transaction.lane(B.transaction(w, tx)) == False{} : Bool}
+  for noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}
+  {Transactions.blocked(w, tx) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
+
+# Successful prefixes do not execute generator slices or create owned flights.
+# The no-live-lanes and healthy initial state premises remain explicit.
+law constructed_completed_pair_is_eligible:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for second: Bool
+  for initial: List<&2, JoinedHistory.JoinEvent>
+  for middle: List<&2, JoinedHistory.JoinEvent>
+  for final: List<&2, JoinedHistory.JoinEvent>
+  for healthy: {B.ok(w) == True{} : Bool}
+  for noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}
+  PairEligibility.Eligibility<ActionPair.second(w, before, cells, first, other), before, reverse, PairCompletion.selectedId(cells, second), PairCompletion.selectedId(cells, Bool.not(second)), initial, middle, final>

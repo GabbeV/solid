@@ -1,3 +1,5 @@
+import ./proof/transaction-empty.bend as EmptyBlocker
+import ./proof/action-pair-eligibility.bend as PairEligibility
 import ./proof/transaction-count-pair.bend as CountedPair
 import ./proof/action-pair-completion.bend as PairCompletion
 import ./proof/action-wait-settlement.bend as WaitSettlement
@@ -1360,3 +1362,10 @@ def Laws.settled_action_wait_stays_settled(events, waits, id, action, settled, f
 
 def Laws.settled_action_wait_history_rejects_duplicate(w, rest, stack, events, waits, id, action, settled, rejected, value, found):
   WaitSettlement.duplicateHistory(w, rest, stack, events, waits, id, action, settled, rejected, value, found)
+
+
+def Laws.empty_ordinary_transaction_is_eligible(w, tx, healthy, zero, empty, ordinary, noLanes):
+  EmptyBlocker.public(w, tx, healthy, zero, empty, ordinary, noLanes)
+
+def Laws.constructed_completed_pair_is_eligible(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes):
+  PairEligibility.constructed(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes)
