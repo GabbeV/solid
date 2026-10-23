@@ -5,6 +5,16 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["created action contract loses allocated result identity", "runtime/action-state.bend", "methods, B.second(R.World, Nat, pair)", "methods, 0n", "tests/proof-properties.mjs", "create", "action-created"],
+  ["join contract drops source render work", "runtime/transaction.bend", "B.append(Nat, R.Transaction.renderQueue(into), R.Transaction.renderQueue(from))", "R.Transaction.renderQueue(into)", "tests/proof-properties.mjs", "mergeResolved", "transaction-join"],
+  ["join contract reverses user work", "runtime/transaction.bend", "B.append(R.QueueEntry, R.Transaction.userQueue(into), R.Transaction.userQueue(from))", "B.append(R.QueueEntry, R.Transaction.userQueue(from), R.Transaction.userQueue(into))", "tests/proof-properties.mjs", "mergeResolved", "transaction-join"],
+  ["join contract forgets source marks", "runtime/transaction.bend", "appendMarks(R.Transaction.marks(into), R.Transaction.marks(from))", "R.Transaction.marks(into)", "tests/proof-properties.mjs", "mergeResolved", "transaction-join"],
+  ["join contract retires target instead of source", "runtime/transaction.bend", "removeIdentity(R.World.transactions(w), t)", "removeIdentity(R.World.transactions(w), f)", "tests/proof-properties.mjs", "mergeResolved", "transaction-pair"],
+  ["join contract erases retired count", "runtime/transaction.bend", "R.Transaction.with_into(from, f)", "R.Transaction.with_open(R.Transaction.with_into(from, f), 0n)", "tests/proof-properties.mjs", "mergeResolved", "transaction-pair"],
+  ["join contract overwrites unrelated sentinel", "runtime/transaction.bend", "+w = B.store_transaction(w, f, into)", "+w = B.store_transaction(B.store_transaction(w, 0n, into), f, into)", "tests/proof-properties.mjs", "mergeResolved", "transaction-pair"],
+  ["opening contract reuses old question", "runtime/action-state.bend", "+pair = Q.nextQuestion(w)", "+pair = {B.Bundle{w, R.World.questions(w)} : B.Bundle<R.World, R.Question>}", "tests/proof-properties.mjs", "open", "action-opening"],
+  ["joined completion removes two obligations", "runtime/action-state.bend", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 2n)", "tests/proof-properties.mjs", "done", "action-join"],
+
   ["redirect terminal resolution corrupts ambient context", "runtime/transaction.bend", "_ => B.Bundle{w, id}", "_ => B.Bundle{R.World.with_context(w, 0n), id}", "tests/proof-properties.mjs", "resolveLoop", "transaction-resolution"],
   ["redirect traversal returns the stale identity", "runtime/transaction.bend", "_ => resolveLoop(p, w, into)", "_ => B.Bundle{w, id}", "tests/proof-properties.mjs", "resolveLoop", "transaction-resolution"],
   ["same component rejoin bypasses root identity guard", "runtime/transaction.bend", "Bool.or(Nat.is_eq(t, f),", "Bool.or(False{},", "tests/proof-properties.mjs", "mergeResolved", "transaction-rejoin-history"],

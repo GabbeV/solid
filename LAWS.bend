@@ -1,3 +1,11 @@
+import ./proof/transaction-joined-history.bend as JoinedHistory
+import ./proof/action-created.bend as ActionCreated
+import ./proof/action-pair.bend as ActionPair
+import ./proof/scheduler-frame.bend as ScheduleFrame
+import ./runtime/question.bend as OpeningQuestion
+import ./proof/transaction-pair.bend as JoinedPair
+import ./proof/action-join.bend as JoinedAction
+import ./proof/action-opening.bend as ActionOpening
 import ./proof/transaction-resolution.bend as RedirectPaths
 import ./proof/action-resolution.bend as ActionRouting
 import ./proof/transaction-rejoin-history.bend as RejoinHistories
@@ -2590,3 +2598,167 @@ law transaction_rejoin_histories:
   for root: Nat
   for events: List<&2, RejoinHistories.RejoinEvent<w, root>>
   {RejoinHistories.run(w, root, events, w) == RejoinHistories.Audit{w, RejoinHistories.expected(w, root, events)} : RejoinHistories.Audit}
+
+law distinct_transaction_join_world:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  {JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse) == JoinedPair.after(w, prefix, left, gap, right, suffix, reverse) : R.World}
+
+law joined_source_resolves:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  {Transactions.resolveTx(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.sourceId(prefix, gap, reverse)) == B.Bundle{JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse)} : B.Bundle<R.World, Nat>}
+
+law joined_target_resolves:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  {Transactions.resolveTx(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse)) == B.Bundle{JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse)} : B.Bundle<R.World, Nat>}
+
+law joined_obligations:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  {R.Transaction.open(B.transaction(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse))) == JoinedPair.obligations(left, right, reverse) : Nat}
+
+law joined_action_completion:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  for retired: Bool
+  for id: Nat
+  for remaining: Nat
+  for captured: {R.ActionState.transaction(Action.get(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), id)) == JoinedAction.capturedId(prefix, gap, reverse, retired) : Nat}
+  for positive: {JoinedPair.obligations(left, right, reverse) == 1n+remaining : Nat}
+  {Action.done(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), id) == B.schedule(B.store_transaction(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse), R.Transaction.with_open(B.transaction(JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse), JoinedPair.targetId(prefix, gap, reverse)), remaining))) : R.World}
+
+law action_open_allocated:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for before: List<&2, R.ActionState>
+  for entry: R.ActionState
+  for after: List<&2, R.ActionState>
+  {Action.open(ActionOpening.scope(w, arena, before, entry, after), B.length(R.ActionState, before)) == ActionOpening.expected(w, arena, before, entry, after) : R.World}
+
+law action_open_captured:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for before: List<&2, R.ActionState>
+  for entry: R.ActionState
+  for after: List<&2, R.ActionState>
+  {Action.get(Action.open(ActionOpening.scope(w, arena, before, entry, after), B.length(R.ActionState, before)), B.length(R.ActionState, before)) == ActionOpening.updated(entry, 1n+B.length(R.Transaction, arena), OpeningQuestion.increment(R.World.questions(w))) : R.ActionState}
+
+law action_open_obligation:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for before: List<&2, R.ActionState>
+  for entry: R.ActionState
+  for after: List<&2, R.ActionState>
+  {B.transaction(Action.open(ActionOpening.scope(w, arena, before, entry, after), B.length(R.ActionState, before)), 1n+B.length(R.Transaction, arena)) == ActionOpening.record(1n, True{}) : R.Transaction}
+
+
+law distinct_join_rejoin_histories:
+  for w: R.World
+  for prefix: List<&2, R.Transaction>
+  for left: R.Transaction
+  for gap: List<&2, R.Transaction>
+  for right: R.Transaction
+  for suffix: List<&2, R.Transaction>
+  for reverse: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  {JoinedHistory.run(JoinedPair.sourceId(prefix, gap, reverse), JoinedPair.targetId(prefix, gap, reverse), events, JoinedPair.merged(w, prefix, left, gap, right, suffix, reverse)) == JoinedHistory.Audit{JoinedPair.after(w, prefix, left, gap, right, suffix, reverse), JoinedHistory.expected(JoinedPair.targetId(prefix, gap, reverse), events)} : JoinedHistory.Audit}
+
+law constructed_action_opens:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for methods: R.Expr
+  {ActionCreated.run(w, arena, cells, methods) == ActionCreated.expected(w, arena, cells, methods) : R.World}
+
+law constructed_action_captured:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for methods: R.Expr
+  {Action.get(ActionCreated.run(w, arena, cells, methods), 1n+B.length(R.ActionState, cells)) == ActionOpening.updated(ActionCreated.cell(w, methods), 1n+B.length(R.Transaction, arena), OpeningQuestion.increment(R.World.questions(w))) : R.ActionState}
+
+law constructed_action_obligation:
+  for w: R.World
+  for arena: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for methods: R.Expr
+  {B.transaction(ActionCreated.run(w, arena, cells, methods), 1n+B.length(R.Transaction, arena)) == ActionOpening.record(1n, True{}) : R.Transaction}
+
+law action_pair_allocated_slots:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  {R.World.txArena(ActionPair.second(w, before, cells, first, other)) == B.blank_transaction() <> B.append(R.Transaction, before, [ActionOpening.record(1n, True{}), ActionOpening.record(1n, True{})]) : List<&2, R.Transaction>}
+
+law action_pair_joined_open_count:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  {R.Transaction.open(B.transaction(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse))) == 2n : Nat}
+
+law action_pair_first_completion:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for finishSecond: Bool
+  {Action.done(ActionPair.joined(w, before, cells, first, other, reverse), ActionPair.idFor(w, before, cells, first, finishSecond)) == B.schedule(B.store_transaction(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse), R.Transaction.with_open(B.transaction(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse)), 1n))) : R.World}
+
+law action_pair_rejoin_history:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  {JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse)) == JoinedHistory.Audit{ActionPair.joined(w, before, cells, first, other, reverse), JoinedHistory.expected(JoinedPair.targetId(before, [], reverse), events)} : JoinedHistory.Audit}
+
+law action_pair_first_completion_after_history:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for finishSecond: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  {Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)) == B.schedule(B.store_transaction(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse), R.Transaction.with_open(B.transaction(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse)), 1n))) : R.World}
+
+law scheduling_preserves_action_ledger:
+  for w: R.World
+  {ScheduleFrame.ledger(B.schedule(w)) == ScheduleFrame.ledger(w) : ScheduleFrame.LedgerFrame}

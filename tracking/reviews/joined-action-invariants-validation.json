@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "4978ae1f4cd2fec23f3faea0efe23626f8014ad9",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "cc3ee74099f5a3113748703d969460a867e7695c",
+  "signalsSourceDrift": false,
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 18,
+  "publicHistories": 4486,
+  "newPublicHistories": 48,
+  "newObservedPublicPrefixes": 408,
+  "newIndependentNativeGeneratorControls": 48,
+  "closedRegressions": 73,
+  "privateControls": {
+    "joinFixtures": 288,
+    "exactRejoins": 1152,
+    "resolverQueries": 576,
+    "bendOpeningFrames": 32,
+    "publicHistories": false
+  },
+  "configuredMutations": 581,
+  "finiteMutations": 469,
+  "kernelMutations": 112,
+  "newFocusedKernelRejections": 9,
+  "freshComplete581Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "Actual action allocation/opening establishes fresh captured group/question and one obligation with exact World. Distinct selected allocated roots at arbitrary positions transfer ordered work/counts, preserve surrounding World and establish structural public resolver room. Two real allocation/opening prefixes joined in either direction have two obligations; arbitrary finite pair lookups/rejoins preserve World; either first completion through its actual captured ID leaves one with source scheduling. Scheduling preserves arena/live list/action captures.",
+  "remaining": [
+    "Second and once-only action completion across intervening permitted events",
+    "Global redirect forest, live-list and full action/flight ledger preservation",
+    "Body callback/protocol validity and external delivery/fairness",
+    "Held rendered publication theorem; rejection/supersession/disposal and optimistic histories"
+  ],
+  "toolingAttempts": [
+    {
+      "stage": "original nested specification",
+      "result": "elaborator process killed with exit 137 after excessive memory growth; no proof claim"
+    },
+    {
+      "stage": "compact constructor normal form",
+      "result": "independent kernel out of fuel in joinShape; no proof claim for that version"
+    },
+    {
+      "stage": "opaque World operation contracts plus checked normal form",
+      "result": "module and composed roots pass at unchanged limits"
+    }
+  ],
+  "newUpstreamBugOrWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPreservedAtPin": true,
+  "moduleSha256": {
+    "proof/transaction-arena.bend": "8486d818a2dbea8cc712b070f941aa7512e1442edac48ca81a9ca203d463e605",
+    "proof/transaction-join.bend": "b3f90ffe1a0e2ddb0b349049c80f6cffe2d107bd56a31125dab285a08ecb5475",
+    "proof/transaction-pair.bend": "3ffa9d81fb6202818ee629d90948e1b25f4589e394d8d127bbd8849826338422",
+    "proof/transaction-joined-history.bend": "c033735eddf4ce91725eb56630dca9305a86e2a81abe4591743117487030c7b7",
+    "proof/action-opening.bend": "fdbbc4d648851f0b544abffd8bf1b9d72cb417d8ce7e518cee00e9527a97ca36",
+    "proof/action-created.bend": "ac2e0ec82478c460436174490e19187252ac181673866804159129ac7ce253a2",
+    "proof/action-pair.bend": "cadf638a54d9eedd497cef47920ab043ff80091c6aecb12ec3255ad72cbe5094",
+    "proof/scheduler-frame.bend": "3615b55619213b8dc684a7116e35ba8e53e68b212ede9e0ff6086fab4c7202a0",
+    "proof/action-join.bend": "d96eede34d2d16555d831e683b46da334cac056232db074c0a8a8cb691546c3e"
+  },
+  "logs": {
+    "composed": {
+      "path": "/workspace/scratch/joined-action-composed-final.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "pairModule": {
+      "path": "/workspace/scratch/action-pair-histories.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "createdModule": {
+      "path": "/workspace/scratch/action-created-normal.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "scheduleFrame": {
+      "path": "/workspace/scratch/scheduler-frame-second.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "allPublicTests": {
+      "path": "/workspace/scratch/joined-action-full-tests.log",
+      "sha256": "0fe9203e876c51c524226839471b8acfccca0235ab98834cd29e584633ac1459",
+      "passed": true,
+      "lastLines": [
+        "Proof process success, rejection and infrastructure/resource stops remain distinct.",
+        "4 source-only action controls preserve first/resumed-slice scheduling, production callback-without-drain behavior, held writes, rejection and nested depth; paired Bend action evidence is checked separately."
+      ]
+    },
+    "newPublicHistories": {
+      "path": "/workspace/scratch/joined-action-public-third.log",
+      "sha256": "60111707deeb4d935ae2d77f36c415aa5de3de470623299519a43d2ec3680b95",
+      "passed": true,
+      "lastLines": [
+        "{\"publicHistories\":48,\"observedPrefixes\":408,\"nativeGeneratorControls\":48,\"scope\":\"two joined held actions, both creation/completion orders, opaque/text/nullable payloads, independent publication and optional final writes; finite evidence, not a general proof\"}"
+      ]
+    },
+    "privateJoinControls": {
+      "path": "/workspace/scratch/transaction-join-controls-third.log",
+      "sha256": "62dd6c5efa757dfcbe53579cc297ed8ad9904712385a1e6b5351e91dc7be12b5",
+      "passed": true,
+      "lastLines": [
+        "{\"privateJoinFixtures\":288,\"exactRejoins\":1152,\"resolverQueries\":576,\"bendOpeningFrameControls\":32,\"publicHistories\":false}"
+      ]
+    },
+    "joinNegatives": {
+      "path": "/workspace/scratch/transaction-join-negatives-first.log",
+      "sha256": "4513621d8146137d2c3e6dd1c26da95c4cc2541398cbe5d28940efc83c00c38f",
+      "passed": true,
+      "lastLines": [
+        "Rejected mutation: joined completion removes two obligations",
+        "8 source-changing variants rejected by differential or kernel assertions."
+      ]
+    },
+    "createdNegative": {
+      "path": "/workspace/scratch/action-created-negative.log",
+      "sha256": "558072526440e658401b614946cca284674282e4ebcaee45692a937f5e0150f4",
+      "passed": true,
+      "lastLines": [
+        "Rejected mutation: created action contract loses allocated result identity",
+        "1 source-changing variants rejected by differential or kernel assertions."
+      ]
+    },
+    "currentNextImpact": {
+      "path": "/workspace/scratch/joined-action-current-next-impact.json",
+      "sha256": "98a939c288da3da9a0370059291f3c16c2e3d132fc8ce5ef6f8f28b83a2bb7d4",
+      "passed": true,
+      "lastLines": [
+        "  \"changedFiles\": []",
+        "}"
+      ]
+    }
+  }
+}

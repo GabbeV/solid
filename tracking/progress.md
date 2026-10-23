@@ -550,3 +550,29 @@ and valid redirect forest through distinct-component joins and completion, then
 connecting it to actual publication/render observations. The intended reader-
 indexed model, environment/once-only/resource assumptions and source draft-rule
 limits are in general-properties.md. No new source bug or workaround was found.
+
+
+## Constructed action groups and first completion (2026-10-23)
+
+The [join checkpoint](transaction-joins.md) moves from assumed capture/count/room
+premises to real action allocation/opening and a constructed two-action family.
+It proves exact distinct-root transfer at arbitrary allocated positions, derives
+the pair's actual resolver bound, and carries any finite sequence of lookups and
+rejoins before either action completes first through its captured identity. The
+representative starts with two obligations and that completion leaves one with
+source scheduling. The full World, queued work order and retained retired-source
+metadata are explicit. The second/once-only completion, global live forest and
+rendered publication remain open. Runtime, host, source pin and deviation register
+are unchanged.
+
+288 private join fixtures plus 32 opening-frame controls, and 48 new paired
+public histories with independently authored native generators support fidelity
+separately. Nine new kernel negatives are rejected. Public totals are 4,486;
+closed regressions stay 73. Configured mutation totals are 581 (469 finite /112
+kernel); the earlier frozen complete sweep is not relabeled.
+
+Nested constructor elaboration first ran out of memory, and the next join
+composition exhausted kernel fuel. Checked normal forms and opaque operation
+boundaries remove repeated expansion; the final roots pass without increasing
+limits or changing theorem domains. The user filed deferred protocol-error PR
+#4248; the baseline bug remains preserved and no new source bug was found.

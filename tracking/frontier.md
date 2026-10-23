@@ -17,12 +17,12 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | --- | --- | --- | --- |
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Local open-sum/redirect laws; certified arbitrary finite redirect resolution; same-component lookup/rejoin histories; conditional completion routing | Construction and preservation of the complete action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and first completion after arbitrary finite lookup/rejoin histories | Second/once-only completion, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 
-4,438 public differential histories and 73 closed regressions remain supporting
+4,486 public differential histories and 73 closed regressions remain supporting
 evidence. Configured mutation totals and completed frozen sweeps are distinct in
 [verification.md](verification.md). These counts are not a completion percentage.
 The [fidelity ledger](source-fidelity.md) and [proof catalogue](general-properties.md)
@@ -62,11 +62,20 @@ work. `action-resolution.bend` connects a certified captured identity to the rea
 completion prefix, decrementing a positive representative count and scheduling.
 These are dependencies of the selected milestone, not its completion.
 
+The [next dependency checkpoint](transaction-joins.md) now establishes real
+allocation/opening captures and debt, distinct-root ordered transfer at arbitrary
+allocated positions, and public resolver room for the joined pair. Two actual
+action prefixes followed by a join have exactly two obligations. Either action's
+first completion after any finite sequence of pair lookups/rejoins removes one
+obligation from the live representative; no capture/count/room premise is supplied.
+This does not yet cover the second completion or rendered publication.
+
 ## Next proof obligations, in order
 
-1. Establish valid identities and redirect certificates from real action opening
-   and distinct-component joins; preserve them across completion and queue transfer.
-   Derive traversal room from an acyclic finite arena rather than assume it.
+1. Extend the constructed two-action prefix/first-completion invariant through
+   the second completion and intervening permitted work. Preserve live membership
+   and routes across general distinct-component joins; derive the global resolver
+   bound from an acyclic finite arena. Pair allocation/transfer/room are now checked.
 2. Relate outstanding action/flight identities to the representative open count.
    Prove once-only completion and distinguish scheduling joins from result/question
    authority. The original transaction record's retained count is not live debt.
@@ -90,6 +99,7 @@ small contracts/history proofs avoid that particular expansion without changing
 the runtime or checker limits.
 
 `SOLID-DEFERRED-PROTOCOL-ERROR-010` remains reproduced and preserved at the pin;
-see [the report evidence](upstream/deferred-protocol-error.md). No new upstream
+see [PR #4248](https://github.com/solidjs/solid/pull/4248) and
+[the report evidence](upstream/deferred-protocol-error.md). No new upstream
 bug or workaround was introduced by the invariant work. Draft source-rule questions
 and intended observations must remain distinct from checked source behavior.

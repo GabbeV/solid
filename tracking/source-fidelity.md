@@ -60,10 +60,12 @@ therefore does not independently prove the machine's numeric return value. Retai
 direct machine/stack observations alongside facade comparisons. Private helper
 fixtures may expose native module state in memory; they are not public API histories.
 
-The current redirect/history proof addition changes no runtime, host, vendored
-source or adapter semantics. It proves properties of existing operations under
-explicit route, budget and positive-open premises, not that arbitrary environments
-establish those premises.
+The [action/join constructor extension](transaction-joins.md) changes no runtime,
+host, vendored source or adapter semantics. Real action prefixes establish their
+capture/debt, and selected allocated-root joins establish transfer and pair
+resolver room. A two-action family now removes those premises through its first
+completion after arbitrary finite pair lookup/rejoin histories. General forest,
+once-only delivery and publication invariants remain open.
 
 ## Upstream review and discrepancies
 

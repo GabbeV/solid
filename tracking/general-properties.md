@@ -17,7 +17,8 @@ The runtime and checker were not changed for the current invariant work.
 | `from` lifecycles | Complete fixed direct/wrapped lifecycles over every represented `R.Value`, exact payload/cleanup/cancellation; bridges retain ordinary families | Arena-token validity and arbitrary JS protocols are separate; [from-values.md](from-values.md) |
 | Promise and wrapped cancellation | Six arbitrary-World/list preservation roots, masking only Promise objects, host jobs and stream plans | Frame safety, not async progress; [from-promise-frame.md](from-promise-frame.md) |
 | Redirect resolution and rejoin histories | Arbitrary certified finite path and sufficient budget; fresh-root construction; same-component lookup/rejoin histories of arbitrary finite length, exact World and queried representatives | Actual field certificates and explicit public-budget room; no general arena validity/forest-size theorem yet |
-| Action completion | Captured old identity resolves to current representative; one positive obligation is removed there, followed by source scheduling | Conditional route/budget/open premises; callback once-only delivery and ledger reachability not yet proved |
+| Action construction and distinct joins | Actual allocation/opening, nonzero captured group, one obligation, exact World; distinct selected allocated roots at arbitrary positions, ordered work/count transfer and derived pair traversal room | Successful factory-return prefix; ordinary roots/represented vectors; global forest/live-list validity remains open |
+| Constructed two-action histories | Actual two action allocation/opening prefixes and either join direction; two obligations, arbitrary finite pair queries/rejoins, then either first completion through its captured ID leaving one obligation with exact source scheduling | At most one completion, terminating body slice; no second/duplicate completion, arbitrary writes/settlements, or renderer publication theorem |
 | Lanes, latest/pending and optimistic values | Quantified source-helper, question, answer, read, group and frame properties; representative exact programmes | Not general held-guess correction or arbitrary async consistency |
 | Closed regressions | 73 integrated concrete reactive/error/cleanup/async executions | Integration evidence, not a theorem over arbitrary histories |
 
@@ -86,6 +87,11 @@ really appends a zero-redirect record; an arena lens proves its returned identit
 selects that record and establishes a terminal route. The public `resolveTx`
 corollary requires `1 + arena length = depth + 1 + extra`. The next structural
 proof must derive this room from a valid finite acyclic arena.
+
+The [constructed join extension](transaction-joins.md) supplies allocated selected
+roots, real action capture/debt and structural resolver room for that pair, then
+composes arbitrary finite pair lookups/rejoins and either first completion. It
+does not close the following general-forest restrictions.
 
 A route alone does **not** establish allocated identities: an out-of-range lookup
 uses the representation's blank fallback. It also does not prove every transaction

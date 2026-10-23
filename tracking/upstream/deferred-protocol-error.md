@@ -1,8 +1,9 @@
 # Deferred iterator protocol errors can retain an obsolete flight
 
 Confirmed against unchanged next@b9b6f333 (rc.17), production/development/observe.
-No issue or PR has been filed for this specific remaining case. A tested candidate
-is pushed separately; it is not installed in the pinned reference or Bend runtime.
+The user filed [PR #4248](https://github.com/solidjs/solid/pull/4248) for this
+specific remaining case. Its tested candidate is separate from the pinned reference
+and Bend runtime.
 
 After a deferred value has produced a real answer, returning an iterable whose
 first next() throws synchronously records the error but leaves isPending true.
@@ -68,6 +69,8 @@ the four standard signals scenarios are unchanged; focused createDeferred and
 createDeferred+createSignal imports each shrink one minified byte (-15/-25 Brotli).
 No timing/performance guarantee is claimed from these size results.
 
-The branch is pushed for a prefilled PR form for the user to review and submit;
-no PR number exists yet. The translation still preserves the baseline defect,
-with no source repin or semantic deviation.
+The user submitted [PR #4248](https://github.com/solidjs/solid/pull/4248). The
+[saved one-button playground](https://s.olid.uk/id/hp0AznLHR9i1OSfuoCu86g) is
+pinned to rc.18; reopening it and changing only next to async next confirms the
+failing baseline and passing control. The translation still preserves the baseline
+defect, with no source repin or semantic deviation.

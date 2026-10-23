@@ -1,3 +1,10 @@
+import ./proof/transaction-joined-history.bend as JoinedHistory
+import ./proof/action-created.bend as ActionCreated
+import ./proof/action-pair.bend as ActionPair
+import ./proof/scheduler-frame.bend as ScheduleFrame
+import ./proof/transaction-pair.bend as JoinedPair
+import ./proof/action-join.bend as JoinedAction
+import ./proof/action-opening.bend as ActionOpening
 import ./proof/transaction-resolution.bend as RedirectPaths
 import ./proof/action-resolution.bend as ActionRouting
 import ./proof/transaction-rejoin-history.bend as RejoinHistories
@@ -1255,3 +1262,58 @@ def Laws.action_completion_route(w, id, path, extra, remaining, captured, room, 
 
 def Laws.transaction_rejoin_histories(w, root, events):
   RejoinHistories.preserves(w, root, events)
+
+def Laws.distinct_transaction_join_world(w, prefix, left, gap, right, suffix, reverse):
+  JoinedPair.merge(w, prefix, left, gap, right, suffix, reverse)
+
+def Laws.joined_source_resolves(w, prefix, left, gap, right, suffix, reverse):
+  JoinedPair.sourceResolves(w, prefix, left, gap, right, suffix, reverse)
+
+def Laws.joined_target_resolves(w, prefix, left, gap, right, suffix, reverse):
+  JoinedPair.targetResolves(w, prefix, left, gap, right, suffix, reverse)
+
+def Laws.joined_obligations(w, prefix, left, gap, right, suffix, reverse):
+  JoinedPair.count(w, prefix, left, gap, right, suffix, reverse)
+
+def Laws.joined_action_completion(w, prefix, left, gap, right, suffix, reverse, retired, id, remaining, captured, positive):
+  JoinedAction.completion(w, prefix, left, gap, right, suffix, reverse, retired, id, remaining, captured, positive)
+
+def Laws.action_open_allocated(w, arena, before, entry, after):
+  ActionOpening.allocated(w, arena, before, entry, after)
+
+def Laws.action_open_captured(w, arena, before, entry, after):
+  ActionOpening.captured(w, arena, before, entry, after)
+
+def Laws.action_open_obligation(w, arena, before, entry, after):
+  ActionOpening.obligation(w, arena, before, entry, after)
+
+
+def Laws.distinct_join_rejoin_histories(w, prefix, left, gap, right, suffix, reverse, events):
+  JoinedHistory.joined(w, prefix, left, gap, right, suffix, reverse, events)
+
+def Laws.constructed_action_opens(w, arena, cells, methods):
+  ActionCreated.opens(w, arena, cells, methods)
+
+def Laws.constructed_action_captured(w, arena, cells, methods):
+  ActionCreated.captures(w, arena, cells, methods)
+
+def Laws.constructed_action_obligation(w, arena, cells, methods):
+  ActionCreated.obligation(w, arena, cells, methods)
+
+def Laws.action_pair_allocated_slots(w, before, cells, first, other):
+  ActionPair.arena(w, before, cells, first, other)
+
+def Laws.action_pair_joined_open_count(w, before, cells, first, other, reverse):
+  ActionPair.two(w, before, cells, first, other, reverse)
+
+def Laws.action_pair_first_completion(w, before, cells, first, other, reverse, finishSecond):
+  ActionPair.completeFirst(w, before, cells, first, other, reverse, finishSecond)
+
+def Laws.action_pair_rejoin_history(w, before, cells, first, other, reverse, events):
+  ActionPair.history(w, before, cells, first, other, reverse, events)
+
+def Laws.action_pair_first_completion_after_history(w, before, cells, first, other, reverse, finishSecond, events):
+  ActionPair.completeAfterHistory(w, before, cells, first, other, reverse, finishSecond, events)
+
+def Laws.scheduling_preserves_action_ledger(w):
+  ScheduleFrame.preserves(w)

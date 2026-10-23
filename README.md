@@ -10,9 +10,10 @@ now runs through the existing iterator engine and has an ordinary-payload comple
 The objective is increasingly general properties of reactive behavior and useful
 upstream counterexamples. The [current milestone](tracking/frontier.md) targets
 branching held-action histories. Its first [invariant proofs](tracking/general-properties.md)
-cover arbitrary certified redirect paths and finite lookup/rejoin histories,
-with conditional completion through older transaction identities. The full
-action/flight ledger and rendered visibility theorem remain open.
+cover arbitrary certified redirect paths. [Constructed action/join contracts](tracking/transaction-joins.md)
+now connect real allocation/opening, either join direction, arbitrary finite pair
+lookups/rejoins and either first completion through its original identity. The
+second completion, full action/flight ledger and rendered visibility theorem remain open.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
@@ -67,7 +68,7 @@ iterator engine. The stream refetch wrapper is implemented; from/store/boundary 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 3,952 public histories, 539 configured mutation
+budget. Current evidence totals 4,486 public histories, 581 configured mutation
 controls and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -79,7 +80,7 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `225014bf` (rc.18), matching `next` checked on
+The reviewed Solid pin is now `225014bf` (rc.18), whose signals sources match `next@cc3ee740` checked on
 2026-10-23. [The source review](tracking/reviews/solid-225014bf.md) accounts for
 all 77 recorded Solid inputs. This update changes development event diagnostics;
 production Bend operations and every existing theorem domain/budget are unchanged.
@@ -89,7 +90,7 @@ Merged #4231/#4232 are integrated; #4233 is validated in native builds while
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 539 source-changing variants
+npm run mutations                # reject 581 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

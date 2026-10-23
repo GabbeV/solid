@@ -339,7 +339,7 @@
     {
       "id": "SOLID-DEFERRED-PROTOCOL-ERROR-010",
       "classification": "confirmed-upstream-bug",
-      "status": "candidate-ready-unsubmitted",
+      "status": "pr-open",
       "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
       "sourceUnit": "deferred.ts:createDeferred wrapped iterator acquisition/first next",
       "record": "tracking/upstream/deferred-protocol-error.md",
@@ -350,12 +350,12 @@
       "reproducer": "tests/deferred-refetch-stream.mjs",
       "preservesBaseline": true,
       "activeDeviationId": null,
-      "reportUrl": null,
-      "fixUrl": null,
+      "reportUrl": "https://github.com/solidjs/solid/pull/4248",
+      "fixUrl": "https://github.com/solidjs/solid/pull/4248",
       "lastRevalidation": {
         "sourceCommit": "cc3ee74099f5a3113748703d969460a867e7695c",
         "date": "2026-10-23",
-        "result": "Fresh unchanged three-tier builds reproduce all 120 expected native outcomes and six JSX/browser cases; #4112 seven-test regression passes. Separate candidate fixes all 120 native/six browser cases and passes full signals suite; PR form prepared for user, not submitted."
+        "result": "Fresh unchanged three-tier builds reproduce all 120 expected native outcomes and six JSX/browser cases; #4112 seven-test regression passes. Separate candidate fixes all 120 native/six browser cases and passes full signals suite; User submitted PR #4248; baseline remains unchanged."
       },
       "candidateFixBranch": "fix/deferred-protocol-flight",
       "candidatePublishedCommit": "58d3d52de9c02bff038e8a7ec30823a0e9a4f26b",
@@ -365,7 +365,8 @@
       "relatedFixUrls": [
         "https://github.com/solidjs/solid/pull/4158",
         "https://github.com/solidjs/solid/pull/4231"
-      ]
+      ],
+      "playgroundUrl": "https://s.olid.uk/id/hp0AznLHR9i1OSfuoCu86g"
     }
   ]
 }
