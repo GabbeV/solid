@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "cd4e33dacca1b654a90a51c8f9c35aad10fe7115",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 6,
+  "publicHistories": 4630,
+  "closedRegressions": 73,
+  "retainedDifferentialGraphWriteScenarios": 203,
+  "retainedPromiseHistories": 68,
+  "configuredMutations": 600,
+  "finiteMutations": 475,
+  "kernelMutations": 125,
+  "newFocusedKernelRejections": 2,
+  "newFocusedFiniteRejections": 1,
+  "freshComplete600Sweep": false,
+  "claim": "Actual callback-free staging/notification/held-default setter helpers and arbitrary finite helper-write histories preserve all committed node values, tree and event trace. Active ordinary core post-updater setter bridge and actual returned-argument stack are checked.",
+  "domain": [
+    "Arbitrary R.Value data and finite represented node/link storage; no arithmetic payload restriction.",
+    "Arbitrary Worlds and mark fuel, including malformed/faulted/exhausted cases; preservation does not assert health/success.",
+    "Active core bridge requires zero custom comparator and no override; updater execution lies before this boundary."
+  ],
+  "remaining": [
+    "Custom comparator/updater callbacks and lane/override writes",
+    "Pending graph/membership/authority invariant through intervening writes",
+    "Full queued flush, flight delivery and eventual coordinated reveal",
+    "Validity, callback termination, host delivery/fairness"
+  ],
+  "observation": "Pure committed node-value list plus complete World.tree and World.events; not a public accessor read or second runtime.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "moduleSha256": {
+    "proof/committed-storage-frame.bend": "0166cc72d216c3d73f98e9514f276218e6c3fe665f1bc9541c85dca137aad16d",
+    "proof/heap-committed-frame.bend": "8f3b7b8d506e4cd720416d2ae4b9866f968aa977543f0218f6a4a6fbd6237439",
+    "proof/staging-committed-frame.bend": "b022a4f80de7b40ffb013f0ec10b8e8002d0e892ae5498ef32b835c4c3320040",
+    "proof/setter-committed-frame.bend": "61dda43f132d8c690d1712d76e1c0466ae6981cf3bce405594469c63f6abddd3",
+    "proof/ordinary-setter-frame.bend": "2293f09af417cc5f990b31abd452ba62d9bcd506a05fbd42797279db8b1548a8",
+    "proof/staging-write-history.bend": "e1b1e4ae3ddf5253f74e1c145ff843b259f03d457f78ea094263c08ea2f430ee"
+  },
+  "logs": {
+    "committed-storage-frame.log": {
+      "path": "/workspace/scratch/committed-storage-frame.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "heap-committed-frame-insert.log": {
+      "path": "/workspace/scratch/heap-committed-frame-insert.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "staging-committed-frame-first.log": {
+      "path": "/workspace/scratch/staging-committed-frame-first.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "setter-committed-frame-complete.log": {
+      "path": "/workspace/scratch/setter-committed-frame-complete.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "ordinary-setter-frame.log": {
+      "path": "/workspace/scratch/ordinary-setter-frame.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "staging-write-history.log": {
+      "path": "/workspace/scratch/staging-write-history.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5"
+    },
+    "staging-frame-mutation-targets.log": {
+      "path": "/workspace/scratch/staging-frame-mutation-targets.log",
+      "sha256": "9c30f662b64665ceff78f76f54eb7ce0370a073cc09a1a79b8c7210d4f6b57e3"
+    },
+    "staging-frame-negatives.log": {
+      "path": "/workspace/scratch/staging-frame-negatives.log",
+      "sha256": "a89463b94fcaa288599036ed44536356ef28be3db5e7304182eb45f9cb3c2ac6"
+    },
+    "staging-frame-differential.log": {
+      "path": "/workspace/scratch/staging-frame-differential.log",
+      "sha256": "382c40ef3b0046b00af7562046d1399b2165108d6d1decb0375ee9c1be1e023b"
+    },
+    "staging-frame-async.log": {
+      "path": "/workspace/scratch/staging-frame-async.log",
+      "sha256": "4669aa77d72861ad42a07ee6162dae062de3cc81b0f22b1be97e99d71a2cdaac"
+    }
+  },
+  "composedSeal": "tracking/checked.json records the completed final full-input/kernel check."
+}

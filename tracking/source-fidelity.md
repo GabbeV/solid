@@ -122,3 +122,13 @@ allocated storage lenses. It supplies membership/layout to the checked pending
 rendered history; initial status/parking construction remains explicit. The 54
 native private fixtures retain untouched source helper bodies. No runtime/host/
 representation/source/toolchain/limit/deviation change or new upstream bug.
+
+## Committed observation through staging (2026-10-23)
+
+[Staging/default-setter frames](committed-staging.md) use unchanged actual
+write, read-state, heap, transaction and active core setter operations. The
+observation explicitly retains committed node storage, tree and event trace; it
+is not substituted for source reader/posture behavior. Custom comparator and
+lane/override core branches are excluded from the active bridge. Finite source
+controls and independent kernel checks remain separate. No runtime/host/source/
+representation/toolchain/limit/deviation change or new Solid bug.

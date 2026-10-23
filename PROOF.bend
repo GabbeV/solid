@@ -1,3 +1,11 @@
+import ./proof/committed-storage-frame.bend as CommittedStorage
+import ./proof/heap-committed-frame.bend as HeapStorage
+import ./proof/staging-committed-frame.bend as StagedStorage
+import ./proof/setter-committed-frame.bend as SetterStorage
+import ./proof/ordinary-setter-frame.bend as OrdinaryStorage
+import ./proof/staging-write-history.bend as StagingHistory
+import ./runtime/write.bend as RuntimeWrites
+import ./runtime/heap.bend as RuntimeHeap
 import ./proof/transaction-list-construction.bend as ListConstruction
 import ./proof/completion-graph-frame.bend as CompletionGraphFrame
 import ./proof/pending-rendered-snapshot.bend as PendingRendered
@@ -1447,3 +1455,27 @@ def Laws.fresh_list_enters_pending_rendered_history(w, id, before, record, after
 
 def Laws.same_capture_list_is_exact_identity(w, id, tx, slot, allocated, capture):
   ListConstruction.repeated(w, id, tx, slot, allocated, capture)
+
+
+def Laws.heap_marking_preserves_committed_observation(fuel, w, work):
+  HeapStorage.markWork(fuel, w, work)
+
+
+def Laws.staging_preserves_committed_observation(w, id, value):
+  StagedStorage.stages(w, id, value)
+
+
+def Laws.resolved_setter_preserves_committed_observation(w, id, current, value):
+  SetterStorage.resolved(w, id, current, value)
+
+
+def Laws.ordinary_core_setter_preserves_committed_observation(w, rest, stack, id, current, value, override, custom):
+  OrdinaryStorage.ordinary(w, rest, stack, id, current, value, override, custom)
+
+
+def Laws.ordinary_core_setter_returns_resolved_argument(w, rest, stack, id, current, value, override, custom):
+  OrdinaryStorage.result(w, rest, stack, id, current, value, override, custom)
+
+
+def Laws.staging_write_history_preserves_committed_observation(writes, w):
+  StagingHistory.preserves(writes, w)

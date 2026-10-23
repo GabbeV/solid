@@ -17,10 +17,17 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 597 = 474 finite + 123 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 600 = 475 finite + 125 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 597 sweep claimed |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 600 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
+
+The [committed-staging receipt](reviews/committed-staging-validation.json) adds
+six roots for unchanged committed values/tree/trace through actual heap/staging/
+held-default setters and finite helper-write histories, including an active
+ordinary core setter/stack bridge. Existing 203 graph/write and 68 Promise
+histories pass. Two kernel record-store negatives and one finite premature-commit
+negative are rejected. Pure frames are not successful drains or public reads.
 
 The [rendered list-construction receipt](reviews/rendered-list-construction-validation.json)
 adds four roots connecting the actual allocated-slot list operation to pending

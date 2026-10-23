@@ -1,3 +1,11 @@
+import ./proof/committed-storage-frame.bend as CommittedStorage
+import ./proof/heap-committed-frame.bend as HeapStorage
+import ./proof/staging-committed-frame.bend as StagedStorage
+import ./proof/setter-committed-frame.bend as SetterStorage
+import ./proof/ordinary-setter-frame.bend as OrdinaryStorage
+import ./proof/staging-write-history.bend as StagingHistory
+import ./runtime/write.bend as RuntimeWrites
+import ./runtime/heap.bend as RuntimeHeap
 import ./proof/transaction-list-construction.bend as ListConstruction
 import ./proof/completion-graph-frame.bend as CompletionGraphFrame
 import ./proof/pending-rendered-snapshot.bend as PendingRendered
@@ -3156,3 +3164,55 @@ law same_capture_list_is_exact_identity:
   for allocated: {R.Node.x(B.node(w, id)) == 1n+slot : Nat}
   for capture: {R.NodeExtension.transaction(B.extension(w, id)) == tx : Nat}
   {Transactions.list(w, id, tx) == w : R.World}
+
+
+law heap_marking_preserves_committed_observation:
+  for +fuel: Nat
+  for +w: R.World
+  for +work: List<&2, RuntimeHeap.Mark>
+  {CommittedStorage.observe(RuntimeHeap.mark_work(fuel, w, work)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law staging_preserves_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  {CommittedStorage.observe(RuntimeWrites.stageResolved(w, id, value)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law resolved_setter_preserves_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +current: R.Value
+  for +value: R.Value
+  {CommittedStorage.observe(RuntimeWrites.setResolved(w, id, current, value)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law ordinary_core_setter_preserves_committed_observation:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +current: R.Value
+  for +value: R.Value
+  for override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  for custom: {Equality.custom(w, id) == 0n : Nat}
+  {CommittedStorage.observe(Core.world(Core.setResolved(w, rest, stack, id, current, value))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law ordinary_core_setter_returns_resolved_argument:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +current: R.Value
+  for +value: R.Value
+  for override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  for custom: {Equality.custom(w, id) == 0n : Nat}
+  {Core.values(Core.setResolved(w, rest, stack, id, current, value)) == value <> stack : List<&2, R.Value>}
+
+
+law staging_write_history_preserves_committed_observation:
+  for +writes: List<&2, StagingHistory.Write>
+  for +w: R.World
+  {CommittedStorage.observe(StagingHistory.run(writes, w)) == CommittedStorage.observe(w) : CommittedStorage.View}

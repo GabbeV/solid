@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["staging frame kernel erases committed value during pending store", "representation/records.bend", "      Node{kind, value, v, equals, config, flags,", "      Node{kind, Undefined{}, v, equals, config, flags,", "tests/proof-properties.mjs", "Node.with_pending", "committed-storage-frame"],
+  ["heap frame kernel erases committed value during flag store", "representation/records.bend", "      Node{kind, value, pending, equals, config, v,", "      Node{kind, Undefined{}, pending, equals, config, v,", "tests/proof-properties.mjs", "Node.with_flags", "committed-storage-frame"],
+  ["staging flight control commits proposal before landing", "runtime/write.bend", "B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))", "B.store_node(w, id, R.Node.with_value(B.node(w, id), value))", "tests/joined-action-flight-history.mjs", "stageResolved"],
+
   ["fresh list control omits captured membership", "runtime/transaction.bend", "+w = B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), t))", "+w = w", "tests/transaction-list-controls.mjs", "list"],
   ["fresh list control omits owned-list insertion", "runtime/transaction.bend", "B.store_transaction(w, t, R.Transaction.with_nodes(B.transaction(w, t), B.append(Nat, R.Transaction.nodes(B.transaction(w, t)), [id]))))", "w)", "tests/transaction-list-controls.mjs", "list"],
   ["repeated list control appends the node again", "runtime/transaction.bend", "Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), t)", "False{}", "tests/transaction-list-controls.mjs", "list"],

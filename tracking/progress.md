@@ -692,3 +692,20 @@ Fifty-four paired native/Bend private fixtures and 162 exact re-listings pass;
 pending status is installed explicitly in the fixtures. Three finite mutations
 are rejected; configuration 597 (474 finite /123 kernel), no new complete sweep.
 No runtime, host, representation, pin, toolchain or semantic deviation changed.
+
+
+## Writes retain committed observations across arbitrary storage (2026-10-23)
+
+The [staging frame](committed-staging.md) adds six roots over arbitrary represented
+payloads and finite node/link storage: actual heap/notifications, stage replacement,
+held joins/default comparison and arbitrary finite helper-write histories retain
+all committed values, the rendered tree and event trace. An active ordinary core
+post-updater setter bridge retains the observation and returns the real argument
+on its machine stack. Fault/exhaustion behavior is retained, not proved successful.
+Full pending/membership preservation through writes and complete queued flush/
+flight publication remain open. No runtime/source/toolchain changes.
+
+Existing 203 differential graph/write scenarios and 68 Promise histories pass.
+Two kernel record-store negatives and one finite premature-publication negative
+are rejected: configuration 600 (475 finite /125 kernel), no new complete sweep.
+No new Solid bug or semantic workaround was introduced.

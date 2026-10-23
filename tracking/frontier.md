@@ -15,7 +15,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 
 | Area | Implementation and correspondence evidence | Semantic proof coverage | Remaining scope |
 | --- | --- | --- | --- |
-| Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
+| Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace frame through actual staging/default setter and finite helper-write histories; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
 | Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; conditional positive-debt landing-scan retention; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
@@ -94,7 +94,12 @@ and full once-only result protocol remain open. The
 [list-construction entry](rendered-list-construction.md) now supplies initial
 membership/owned layout through the actual list operation on allocated slots,
 and composes directly with the history. Earlier pending-status/posture and
-callback/parking construction remain explicit.
+callback/parking construction remain explicit. The complementary
+[committed-staging frame](committed-staging.md) now covers actual staging,
+notifications, held/default setters and arbitrary finite helper-write histories
+for all represented payloads/storage shapes, with an active ordinary core setter
+and stack-return bridge. The full pending/membership invariant through writes,
+flight delivery and queued flush/publication remain open.
 
 ## Next proof obligations, in order
 
