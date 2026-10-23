@@ -7,7 +7,7 @@ turning test counts into a package-completion percentage.
 Current verification: 3952 differential histories, 539 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
-now pinned at b9b6f333 (declares rc.17) and the semantic deviation register is empty. See [verification.md](verification.md).
+now pinned at 225014bf (declares rc.18) and the semantic deviation register is empty. See [verification.md](verification.md).
 
 The user now explicitly requires a source-followable translation. Read
 [source-fidelity.md](source-fidelity.md) for the contract and the audit of existing
@@ -892,3 +892,11 @@ quantified roots, with five compiled negative checks (539 configured: 450 finite
 complete-program domains and budgets are retained. The complete preceding
 534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
 still unfinished and no deviation is active.
+
+
+The subsequent [rc.18 source refresh](reviews/solid-225014bf.md) pins 225014bf,
+reviews seven changed inputs among all 77 recorded Solid files, and preserves
+the production runtime and every existing theorem domain/budget. Development
+event diagnostic windows remain outside Bend. All three merged fixes and the
+new protocol-error bug/control are revalidated on unchanged source-built tiers.
+The current source receipt is reviews/solid-225014bf-validation.json.

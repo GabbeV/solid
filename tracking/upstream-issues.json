@@ -351,7 +351,12 @@
       "preservesBaseline": true,
       "activeDeviationId": null,
       "reportUrl": null,
-      "fixUrl": null
+      "fixUrl": null,
+      "lastRevalidation": {
+        "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+        "date": "2026-10-23",
+        "result": "120 unchanged native cases and six actual JSX browser controls preserve the defect; no patch or report."
+      }
     }
   ]
 }

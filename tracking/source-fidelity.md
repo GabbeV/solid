@@ -1,6 +1,6 @@
 # Source fidelity and upstream tracking
 
-Current pin: Solid b9b6f333 (declares rc.17), matching fetched next on 2026-10-23.
+Current pin: Solid 225014bf (declares rc.18), matching fetched next on 2026-10-23.
 [The latest integration](reviews/solid-b9b6f333.md) copies merged #4231–#4233
 verbatim, ports synchronous-error flight retirement in the admitted deferred
 catch, and repairs the translated caught-fault posture before its helper runs.
@@ -487,3 +487,11 @@ quantified roots, with five compiled negative checks (539 configured: 450 finite
 complete-program domains and budgets are retained. The complete preceding
 534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
 still unfinished and no deviation is active.
+
+
+The subsequent [rc.18 source refresh](reviews/solid-225014bf.md) pins 225014bf,
+reviews seven changed inputs among all 77 recorded Solid files, and preserves
+the production runtime and every existing theorem domain/budget. Development
+event diagnostic windows remain outside Bend. All three merged fixes and the
+new protocol-error bug/control are revalidated on unchanged source-built tiers.
+The current source receipt is reviews/solid-225014bf-validation.json.

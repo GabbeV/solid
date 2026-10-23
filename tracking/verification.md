@@ -1,6 +1,6 @@
 # Verification and trust boundary
 
-Pins: Solid b9b6f3339a971b9ea06740151b029987a84ee13e (declares rc.17); Bend
+Pins: Solid 225014bf8757421a2ea0a9c6ddc148b965eed000 (declares rc.18); Bend
  e5527d5be0c441d00f1f7d2fb61eb464fa478e5c (2.0.37); Lean 4.34.0;
 Bun 1.3.14. Dependency integrities are in package-lock.json; vendored hashes and
 production flags are in upstream/pins.json. Vendored files match the reviewed pin; the historical baseline is preserved.
@@ -510,3 +510,11 @@ quantified roots, with five compiled negative checks (539 configured: 450 finite
 complete-program domains and budgets are retained. The complete preceding
 534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
 still unfinished and no deviation is active.
+
+
+The subsequent [rc.18 source refresh](reviews/solid-225014bf.md) pins 225014bf,
+reviews seven changed inputs among all 77 recorded Solid files, and preserves
+the production runtime and every existing theorem domain/budget. Development
+event diagnostic windows remain outside Bend. All three merged fixes and the
+new protocol-error bug/control are revalidated on unchanged source-built tiers.
+The current source receipt is reviews/solid-225014bf-validation.json.

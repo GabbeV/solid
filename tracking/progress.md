@@ -3,7 +3,7 @@
 The working translation is still an incremental port. These checkpoints measure
 concrete additions and checked guarantees, not a percentage of the whole package.
 The earlier baseline checkpoint is c446418; the earlier action/proof session started at e6a17b5; the current continuation started at c4f0bbf; the active source pin
-is b9b6f333 (declares rc.17). The latest integration ports merged synchronous-error
+is 225014bf (declares rc.18). The latest integration ports merged synchronous-error
 flight retirement (#4231), with 32 added histories and three quantified
 boundaries; merged #4232 is now integrated in the typed stream wrapper; #4233 is validated
 in native tiers while from remains outside the current Bend profile. The earlier fallback/cleanup checkpoint
@@ -482,3 +482,11 @@ quantified roots, with five compiled negative checks (539 configured: 450 finite
 complete-program domains and budgets are retained. The complete preceding
 534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
 still unfinished and no deviation is active.
+
+
+The subsequent [rc.18 source refresh](reviews/solid-225014bf.md) pins 225014bf,
+reviews seven changed inputs among all 77 recorded Solid files, and preserves
+the production runtime and every existing theorem domain/budget. Development
+event diagnostic windows remain outside Bend. All three merged fixes and the
+new protocol-error bug/control are revalidated on unchanged source-built tiers.
+The current source receipt is reviews/solid-225014bf-validation.json.

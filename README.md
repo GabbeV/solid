@@ -1,9 +1,9 @@
 # Solid 2 signals in Bend 2
 
 An executable **incremental translation of the non-store core** of
-`@solidjs/signals` 2.0.0-rc.17. This is **not yet the complete signals package**.
+`@solidjs/signals` 2.0.0-rc.18. This is **not yet the complete signals package**.
 
-The source is pinned to next@b9b6f333. [The latest integration](tracking/reviews/solid-b9b6f333.md)
+The source is pinned to next@225014bf. [The latest integration](tracking/reviews/solid-b9b6f333.md)
 ports merged deferred error handling. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. Full-package and arbitrary-async-graph guarantees remain open.
 
@@ -72,13 +72,12 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `b9b6f333` (declares rc.17), matching `next`
-checked on 2026-10-23. [The integration review](tracking/reviews/solid-b9b6f333.md)
-ports #4231's synchronous-error deferred flight retirement and validates the
-merged #4232/#4233 fixes in native builds. All 77 recorded Solid inputs match Git.
-The stream wrapper is now implemented; from remains unfinished in Bend. The source-changed catch
-boundary theorem has a new conclusion over its original domain; complete-program
-domains and sufficient budgets are unchanged. No semantic workaround is active.
+The reviewed Solid pin is now `225014bf` (rc.18), matching `next` checked on
+2026-10-23. [The source review](tracking/reviews/solid-225014bf.md) accounts for
+all 77 recorded Solid inputs. This update changes development event diagnostics;
+production Bend operations and every existing theorem domain/budget are unchanged.
+Merged #4231/#4232 are integrated; #4233 is validated in native builds while
+`from` wiring remains unfinished. No semantic workaround is active.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
@@ -277,3 +276,8 @@ typed external request refreshes, then publishes 21 and clears isPending.
 Bend directly. It prints cleanup counts 0 while shown, 0 while the replacement
 is pending, and 1 when that replacement rejects, followed by Healthy. See
 [async-cleanup.bend](examples/async-cleanup.bend).
+
+
+The [rc.18 refresh](tracking/reviews/solid-225014bf.md) updates the pin to 225014bf;
+its source changes are development event diagnostics. Production Bend operations
+and all existing theorem domains/budgets are unchanged.

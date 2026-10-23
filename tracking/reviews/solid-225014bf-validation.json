@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "baseline": "b9b6f3339a971b9ea06740151b029987a84ee13e",
+  "version": "2.0.0-rc.18",
+  "nativeSourceClean": true,
+  "recordedSolidInputs": 77,
+  "changedInputPaths": [
+    "upstream/solid/packages/signals/package.json",
+    "upstream/solid/packages/signals/src/core/action.ts",
+    "upstream/solid/packages/signals/src/core/core.ts",
+    "upstream/solid/packages/signals/src/core/effect.ts",
+    "upstream/solid/packages/signals/src/core/scheduler.ts",
+    "upstream/solid/packages/signals/src/core/verdict.ts",
+    "upstream/solid/packages/signals/src/store/store.ts"
+  ],
+  "productionBendRuntimeChanged": false,
+  "preExistingProgrammeDomainsBudgetsRetained": true,
+  "activeDeviationIds": [],
+  "native": {
+    "buildAllThreeJsTiers": true,
+    "sourceDeclarations": true,
+    "suite": {
+      "filesPassed": 341,
+      "testsPassed": 5547,
+      "expectedFailures": 2,
+      "skips": 2
+    },
+    "buildLog": {
+      "path": "/workspace/scratch/night-next225-native-build-final.log",
+      "sha256": "4c25c8235277c80e23dd2827cd50043f99e32504c80e3b92332365b02c9826ff"
+    },
+    "suiteLog": {
+      "path": "/workspace/scratch/night-next225-native-suite.log",
+      "sha256": "09045261792f771c42a6fa3bb68069c126d1842d62c65bb2270d0f6f8fe48dbd"
+    },
+    "threeMergedFixControls": 60,
+    "preservedProtocolErrorControls": 120,
+    "reproLog": {
+      "path": "/workspace/scratch/night-next225-repros.json",
+      "sha256": "c854a3167f2d86542f5ed7e158e68ea06496b52c9771edb299e1c8bee06bfa37"
+    },
+    "browserCases": 6,
+    "browserReceipt": "repros/playground/deferred-protocol-error-browser-225014bf.json",
+    "initialPnpmAutoInstallPolicyStopCredited": false,
+    "sourceLockfilePolicyChanged": false
+  },
+  "currentBendChecks": {
+    "build": {
+      "passed": true,
+      "path": "/workspace/scratch/night-next225-bend-build.log",
+      "sha256": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125"
+    },
+    "public": {
+      "passed": true,
+      "path": "/workspace/scratch/night-next225-public.log",
+      "sha256": "3cccb54cda23e14ddb07e9ab5902de2a57e56ca6ea8cee169254976eaf42683e"
+    },
+    "alignment": {
+      "passed": true,
+      "path": "/workspace/scratch/night-next225-alignment.log",
+      "sha256": "39853554d2aec99cb2d97d8d057664b99a343a9f92cc24d80a6e3ed30d2e47af"
+    }
+  },
+  "countsUnchanged": {
+    "publicHistories": 3952,
+    "closedRegressions": 73,
+    "configuredMutations": 539,
+    "finite": 450,
+    "kernel": 89
+  },
+  "rootReceipt": "tracking/checked.json",
+  "allRecordedSolidInputsByteMatchGit": true
+}
