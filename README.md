@@ -13,7 +13,8 @@ branching held-action histories. Its first [invariant proofs](tracking/general-p
 cover arbitrary certified redirect paths. [Constructed action/join contracts](tracking/transaction-joins.md)
 now connect real allocation/opening, either join direction, arbitrary finite pair
 lookups/rejoins and either first completion through its original identity. The
-second completion, full action/flight ledger and rendered visibility theorem remain open.
+[actual blocker judgment](tracking/action-blocker.md) also holds before/after that
+completion. The second completion, full action/flight ledger and rendered visibility theorem remain open.
 
 The governing requirement is operation-level source fidelity so future Solid
 commits can be followed directly. The current port still has alignment gaps; see
@@ -68,7 +69,7 @@ iterator engine. The stream refetch wrapper is implemented; from/store/boundary 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 4,486 public histories, 581 configured mutation
+budget. Current evidence totals 4,486 public histories, 583 configured mutation
 controls and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -90,7 +91,7 @@ Merged #4231/#4232 are integrated; #4233 is validated in native builds while
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 581 source-changing variants
+npm run mutations                # reject 583 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

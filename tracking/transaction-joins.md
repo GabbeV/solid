@@ -115,3 +115,9 @@ boundary lets the actual constructor certificates be composed without repeatedly
 expanding both constructors inside every operand. The final module and active
 composed roots check with the existing pinned toolchain and limits. No runtime
 algorithm, theorem domain or kernel limit was changed to obtain these results.
+
+
+The subsequent [blocker extension](action-blocker.md) connects these constructed
+counts to actual `blocked`, before and after the first completion. The hashes and
+581-mutation configuration in this receipt belong to checkpoint 0578dded; the
+later receipt records current additional coverage and configuration separately.

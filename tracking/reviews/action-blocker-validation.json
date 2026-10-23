@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baselineCheckpoint": "0578dded5af561d01e55796866c87ee4b7d94a56",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "currentNextChecked": "cc3ee74099f5a3113748703d969460a867e7695c",
+  "signalsSourceDrift": false,
+  "runtimeHostRepresentationSourceUnchanged": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 5,
+  "previousConstructedActionJoinRoots": 18,
+  "publicHistories": 4486,
+  "closedRegressions": 73,
+  "privatePositiveBlockerOutcomes": 320,
+  "pairedNativePrivateOutcomes": 288,
+  "publicNativeHistoriesRechecked": 48,
+  "publicObservedPrefixes": 408,
+  "broadBlockerAlignment": {
+    "programs": 1190,
+    "nativeJudgments": 29700
+  },
+  "configuredMutations": 583,
+  "finiteMutations": 469,
+  "kernelMutations": 114,
+  "newFocusedKernelRejections": 2,
+  "freshComplete583Sweep": false,
+  "frozenCompleteReceipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "claim": "For any healthy World and positive current selected count, actual blocked returns true and preserves complete World/judge within its own public budget. Two real action allocation/opening prefixes and either join direction establish that judgment, including arbitrary finite pair lookup/rejoin histories. After either first completion through its captured identity, the updated representative remains allocated with count one, source scheduling retains its state/health, and actual blocked still returns true preserving the entire post-completion World, also after any admitted finite pair lookup/rejoin history.",
+  "addedPremise": "Healthy initial World (B.ok(w) == True). Capture, positive count, selected identity allocation and traversal bounds come from the checked constructors/operations.",
+  "remaining": [
+    "Second and once-only callback completion",
+    "Intervening writes, settlements, disposal and general forest/live-list/flight ledger",
+    "Zero-action flight/lane blockers and actual flush/rendered publication",
+    "External delivery/fairness and arbitrary callback/protocol validity"
+  ],
+  "composedSeal": "tracking/checked.json is the authoritative completed full-input/kernel record for this checkpoint.",
+  "previousFullExecutableSuite": "tracking/reviews/joined-action-invariants-validation.json at 0578dded; no runtime changes; both subsequently tightened test files re-run here.",
+  "newSolidBugOrSemanticWorkaround": false,
+  "previousBugPR": "https://github.com/solidjs/solid/pull/4248",
+  "previousBugPRState": "open, unmerged",
+  "previousBugPreservedAtPin": true,
+  "moduleSha256": {
+    "proof/transaction-positive.bend": "3599dc5dfbb6f84aaa1ac261fc152cce97caee3f0f976462582df2a3454bfd17",
+    "proof/action-blocker.bend": "7f6453cb95c54c0ee2f90bc0611132807b855b815746179eae3d6dab9ceef9db",
+    "proof/transaction-positive-update.bend": "c773f708875978ce62f710b815f18ba6685f25b0a3b9530659fa73a862317602",
+    "proof/action-blocker-finish.bend": "221edf0eb2b412ae1e6adf52d3e9c67a8be7989a7ddba440ffe52862f7108528"
+  },
+  "logs": {
+    "positiveModule": {
+      "path": "/workspace/scratch/transaction-positive-second.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "constructedBlockerAndHistoryModule": {
+      "path": "/workspace/scratch/action-blocker-history.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "existingSlotCountUpdateModule": {
+      "path": "/workspace/scratch/positive-update-first.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "postFirstCompletionBlockerModule": {
+      "path": "/workspace/scratch/action-blocker-finish-second.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "passed": true,
+      "lastLines": [
+        "ALL PROOFS CHECK",
+        "bend 2.0.38 is available: run bend update"
+      ]
+    },
+    "privateControls": {
+      "path": "/workspace/scratch/positive-blocker-controls.log",
+      "sha256": "4a23930b76bcf220c0e609b031b84438532a0557f6087ef33d2506f2785a178c",
+      "passed": true,
+      "lastLines": [
+        "{\"privateJoinFixtures\":288,\"exactRejoins\":1152,\"resolverQueries\":576,\"bendOpeningFrameControls\":32,\"positiveBlockerControls\":320,\"publicHistories\":false}"
+      ]
+    },
+    "publicNativeControls": {
+      "path": "/workspace/scratch/action-blocker-public-controls.log",
+      "sha256": "60111707deeb4d935ae2d77f36c415aa5de3de470623299519a43d2ec3680b95",
+      "passed": true,
+      "lastLines": [
+        "{\"publicHistories\":48,\"observedPrefixes\":408,\"nativeGeneratorControls\":48,\"scope\":\"two joined held actions, both creation/completion orders, opaque/text/nullable payloads, independent publication and optional final writes; finite evidence, not a general proof\"}"
+      ]
+    },
+    "broadBlockerAlignment": {
+      "path": "/workspace/scratch/positive-blocker-existing-alignment.log",
+      "sha256": "208fee774d14675a043d47bfec78f346b8a426d13a255a42277dfd06e2b9f3cf",
+      "passed": true,
+      "lastLines": [
+        "1190 lane-blocking helper programs / 29700 native judgments match nested/group holds, own-versus-guess flights, source ownership, redirects and judge restoration after every call."
+      ]
+    },
+    "focusedNegatives": {
+      "path": "/workspace/scratch/positive-blocker-negatives.log",
+      "sha256": "9dfafa63f1f9757879b1fd00bd5f3e6f76c8feb72c1bbf819e013be9a079d69b",
+      "passed": true,
+      "lastLines": [
+        "Rejected mutation: positive blocker omits judge restoration",
+        "2 source-changing variants rejected by differential or kernel assertions."
+      ]
+    }
+  }
+}

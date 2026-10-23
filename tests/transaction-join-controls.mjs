@@ -19,14 +19,14 @@ try{
  }
  const T=modules.transaction,A=modules['action-state'],API=modules.api;
  const list=xs=>{const out=[];while('head'in xs){out.push(xs.head);xs=xs.tail;}return out;};
- const bundle=await build({stdin:{contents:"export * from './index.ts';export {newTransaction,merge,resolveTx} from './core/scheduler.ts';export {transactions as live} from './core/scheduler.ts';",resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'membership-observation',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions};'}));}}]});
+ const bundle=await build({stdin:{contents:"export * from './index.ts';export {newTransaction,merge,resolveTx,blocked,judge} from './core/scheduler.ts';export {transactions as live} from './core/scheduler.ts';",resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'membership-observation',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions,judge};'}));}}]});
  const nativeFile=path.join(dir,'native.mjs');fs.writeFileSync(nativeFile,bundle.outputFiles[0].text);const S=await import(pathToFileURL(nativeFile));
 
  const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
  const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
  const bendShape=t=>{const {$:tag,...fields}=t;return {...fields,nodes:list(t.nodes),renderQueue:list(t.renderQueue),userQueue:list(t.userQueue),reruns:list(t.reruns),marks:t.marks.$==='NoIds'?null:list(t.marks.items)};};
  const vectors=(seed,size)=>Array.from({length:size},(_,i)=>({id:seed+i}));
- let fixtures=0,rejoins=0,queries=0,openingControls=0;
+ let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0;
  for(const prefix of [0,1,4])for(const gap of [0,1,3])for(const suffix of [0,2])for(const reverse of [false,true])for(const markState of [0,1,2,3])for(const emptyPresentMarks of [false,true]){
   S.live.length=0;let world=API.createWorld();const tx=[null];
   const left=1+prefix,right=left+1+gap,total=right+suffix;
@@ -55,6 +55,11 @@ try{
   assert.deepEqual(list(world.txArena)[source],{...sourceBefore,into:target},'retired record retains its captured count/vectors');
   assert.equal(list(world.txArena)[target].open,targetBefore.open+sourceBefore.open);
   assert.equal(list(world.txArena)[target].parent,targetBefore.parent);
+  const savedJudge=S.judge,blocked=T.blocked(world,target);
+  assert.equal(blocked.right,true);assert.equal(S.blocked(tx[target]),true);
+  assert.deepEqual(blocked.left,world,'positive action count preserves complete World/judge');
+  assert.equal(S.judge,savedJudge,'native positive count restores the previous judge');positiveBlockerControls++;
+
   for(const [a,b]of [[source,target],[target,source],[source,source],[target,target]]){
    const before=world;world=T.merge(world,a,b);S.merge(tx[a],tx[b]);assert.deepEqual(world,before,'rejoin transfers nothing twice');compare();rejoins++;
   }
@@ -76,7 +81,9 @@ try{
   assert.deepEqual(list(after.txArena).slice(0,-1),list(old.txArena));assert.deepEqual(list(after.transactions),[...list(old.transactions),t]);
   const mask=new Set(['txArena','transactions','questions','actions']);for(const k of Object.keys(old))if(!mask.has(k))assert.deepEqual(after[k],old[k],k);
   for(let i=0;i<entries.length;i++)if(i!==id)assert.deepEqual(list(after.actions)[i],entries[i]);
+  const blocked=T.blocked(after,t);assert.equal(blocked.right,true);assert.deepEqual(blocked.left,after);positiveBlockerControls++;
+
   openingControls++;
  }
- console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,publicHistories:false}));
+ console.log(JSON.stringify({privateJoinFixtures:fixtures,exactRejoins:rejoins,resolverQueries:queries,bendOpeningFrameControls:openingControls,positiveBlockerControls,publicHistories:false}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -1,3 +1,6 @@
+import ./proof/action-blocker-finish.bend as ActionBlockerFinish
+import ./proof/transaction-positive.bend as PositiveBlocker
+import ./proof/action-blocker.bend as ActionBlocker
 import ./proof/transaction-joined-history.bend as JoinedHistory
 import ./proof/action-created.bend as ActionCreated
 import ./proof/action-pair.bend as ActionPair
@@ -2762,3 +2765,55 @@ law action_pair_first_completion_after_history:
 law scheduling_preserves_action_ledger:
   for w: R.World
   {ScheduleFrame.ledger(B.schedule(w)) == ScheduleFrame.ledger(w) : ScheduleFrame.LedgerFrame}
+
+law positive_transaction_blocks_exact_world:
+  for w: R.World
+  for tx: Nat
+  for remaining: Nat
+  for healthy: {B.ok(w) == True{} : Bool}
+  for positive: {R.Transaction.open(B.transaction(w, tx)) == 1n+remaining : Nat}
+  {Transactions.blocked(w, tx) == B.Bundle{w, True{}} : B.Bundle<R.World, Bool>}
+
+law constructed_action_pair_blocks:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for healthy: {B.ok(w) == True{} : Bool}
+  {Transactions.blocked(ActionPair.joined(w, before, cells, first, other, reverse), JoinedPair.targetId(before, [], reverse)) == B.Bundle{ActionPair.joined(w, before, cells, first, other, reverse), True{}} : B.Bundle<R.World, Bool>}
+
+law constructed_action_pair_history_blocks:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  for healthy: {B.ok(w) == True{} : Bool}
+  {Transactions.blocked(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), JoinedPair.targetId(before, [], reverse)) == B.Bundle{ActionPair.joined(w, before, cells, first, other, reverse), True{}} : B.Bundle<R.World, Bool>}
+
+law first_action_completion_still_blocks:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for finishSecond: Bool
+  for healthy: {B.ok(w) == True{} : Bool}
+  {Transactions.blocked(Action.done(ActionPair.joined(w, before, cells, first, other, reverse), ActionPair.idFor(w, before, cells, first, finishSecond)), JoinedPair.targetId(before, [], reverse)) == B.Bundle{Action.done(ActionPair.joined(w, before, cells, first, other, reverse), ActionPair.idFor(w, before, cells, first, finishSecond)), True{}} : B.Bundle<R.World, Bool>}
+
+law first_action_completion_after_history_still_blocks:
+  for w: R.World
+  for before: List<&2, R.Transaction>
+  for cells: List<&2, R.ActionState>
+  for first: R.Expr
+  for other: R.Expr
+  for reverse: Bool
+  for finishSecond: Bool
+  for events: List<&2, JoinedHistory.JoinEvent>
+  for healthy: {B.ok(w) == True{} : Bool}
+  {Transactions.blocked(Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), JoinedPair.targetId(before, [], reverse)) == B.Bundle{Action.done(JoinedHistory.world(JoinedHistory.run(JoinedPair.sourceId(before, [], reverse), JoinedPair.targetId(before, [], reverse), events, ActionPair.joined(w, before, cells, first, other, reverse))), ActionPair.idFor(w, before, cells, first, finishSecond)), True{}} : B.Bundle<R.World, Bool>}

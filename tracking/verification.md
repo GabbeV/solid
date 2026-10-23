@@ -17,10 +17,14 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 581 = 469 finite + 112 kernel variants after nine new allocation/join variants |
+| Configured mutations | 583 = 469 finite + 114 kernel variants after eleven new allocation/join/blocker variants |
 | Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 581 sweep claimed |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 583 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
+
+The [blocker receipt](reviews/action-blocker-validation.json) adds the exact
+positive-count judgment and its constructed before/after-first-completion
+corollaries, 320 direct outcomes and two further kernel negatives.
 
 The [constructed action/join receipt](reviews/joined-action-invariants-validation.json)
 records the new quantified contracts, constructed branching prefix, native controls

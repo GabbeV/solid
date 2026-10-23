@@ -1,3 +1,6 @@
+import ./proof/action-blocker-finish.bend as ActionBlockerFinish
+import ./proof/transaction-positive.bend as PositiveBlocker
+import ./proof/action-blocker.bend as ActionBlocker
 import ./proof/transaction-joined-history.bend as JoinedHistory
 import ./proof/action-created.bend as ActionCreated
 import ./proof/action-pair.bend as ActionPair
@@ -1317,3 +1320,18 @@ def Laws.action_pair_first_completion_after_history(w, before, cells, first, oth
 
 def Laws.scheduling_preserves_action_ledger(w):
   ScheduleFrame.preserves(w)
+
+def Laws.positive_transaction_blocks_exact_world(w, tx, remaining, healthy, positive):
+  PositiveBlocker.public(w, tx, remaining, healthy, positive)
+
+def Laws.constructed_action_pair_blocks(w, before, cells, first, other, reverse, healthy):
+  ActionBlocker.blocked(w, before, cells, first, other, reverse, healthy)
+
+def Laws.constructed_action_pair_history_blocks(w, before, cells, first, other, reverse, events, healthy):
+  ActionBlocker.afterHistory(w, before, cells, first, other, reverse, events, healthy)
+
+def Laws.first_action_completion_still_blocks(w, before, cells, first, other, reverse, finishSecond, healthy):
+  ActionBlockerFinish.afterOne(w, before, cells, first, other, reverse, finishSecond, healthy)
+
+def Laws.first_action_completion_after_history_still_blocks(w, before, cells, first, other, reverse, finishSecond, events, healthy):
+  ActionBlockerFinish.afterHistory(w, before, cells, first, other, reverse, finishSecond, events, healthy)

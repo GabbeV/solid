@@ -576,3 +576,14 @@ composition exhausted kernel fuel. Checked normal forms and opaque operation
 boundaries remove repeated expansion; the final roots pass without increasing
 limits or changing theorem domains. The user filed deferred protocol-error PR
 #4248; the baseline bug remains preserved and no new source bug was found.
+
+
+The [blocker connection](action-blocker.md) extends this with five quantified roots:
+the actual healthy-world positive-count judgment, constructed two-action and
+arbitrary finite pair-history judgments, and the corresponding judgments after
+either first completion. The complete post-completion World/judge is preserved.
+The existing public/native controls still pass; private controls add 320 positive
+judgments and the broad 1,190-program blocker alignment passes. Two more kernel
+negatives bring configuration to 583 (469 finite /114 kernel), without a new
+full-sweep claim. The second completion, zero-debt eligibility and rendered
+publication remain open. No runtime/source/host change or new Solid bug occurred.

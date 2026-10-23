@@ -6,7 +6,7 @@ import {setImmediate} from 'node:timers/promises';
 import {build} from 'esbuild';
 import {BendRuntime,list} from '../host/bend.mjs';
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
-const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live} from './core/scheduler.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
+const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
@@ -46,7 +46,7 @@ for(const reverseCreate of [false,true])for(const reverseFinish of [false,true])
    root??=S.live[0];compare();
   }
   S.flush();b.flush();compare();
-  assert.equal(root._open,2,name+' both obligations are live');assert.deepEqual(seen,[initial]);
+  assert.equal(root._open,2,name+' both obligations are live');assert.equal(S.blocked(root),true);assert.deepEqual(seen,[initial]);
   const txs=list(b.world.txArena),firstTx=list(b.world.actions)[1].transaction;
   const representative=(()=>{let t=firstTx;while(txs[t].into)t=txs[t].into;return t;})();
   assert.equal(txs[representative].open,2);
@@ -60,7 +60,7 @@ for(const reverseCreate of [false,true])for(const reverseFinish of [false,true])
    await setImmediate();compare();
    assert.equal(root._open,1-position,name+' source debt');
    assert.equal(list(b.world.txArena)[representative].open,1-position,name+' Bend debt');
-   if(position===0)assert.deepEqual(seen,[initial],name+' other action still blocks publication');
+   if(position===0){assert.equal(S.blocked(root),true);assert.deepEqual(seen,[initial],name+' other action still blocks publication');}
   }
   const last=finishWrite?values[finished[1]+3]:values[created[1]+1];
   assert.deepEqual(seen,[initial,last],name+' one joined publication');assert.deepEqual(b.read('x'),last);

@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["positive blocker ignores action debt", "runtime/transaction.bend", "Nat.is_ne(R.Transaction.open(B.transaction(w, tx)), 0n)", "False{}", "tests/proof-properties.mjs", "blockStep", "transaction-positive"],
+  ["positive blocker omits judge restoration", "runtime/transaction.bend", "BlockFrame{R.World.with_judge(w, previous), rest, result}", "BlockFrame{w, rest, result}", "tests/proof-properties.mjs", "blockStep", "transaction-positive"],
+
   ["created action contract loses allocated result identity", "runtime/action-state.bend", "methods, B.second(R.World, Nat, pair)", "methods, 0n", "tests/proof-properties.mjs", "create", "action-created"],
   ["join contract drops source render work", "runtime/transaction.bend", "B.append(Nat, R.Transaction.renderQueue(into), R.Transaction.renderQueue(from))", "R.Transaction.renderQueue(into)", "tests/proof-properties.mjs", "mergeResolved", "transaction-join"],
   ["join contract reverses user work", "runtime/transaction.bend", "B.append(R.QueueEntry, R.Transaction.userQueue(into), R.Transaction.userQueue(from))", "B.append(R.QueueEntry, R.Transaction.userQueue(from), R.Transaction.userQueue(into))", "tests/proof-properties.mjs", "mergeResolved", "transaction-join"],
