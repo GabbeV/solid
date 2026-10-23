@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "status": "unverified experiment",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeBaselineCheckpoint": "e41a86f6b90ddabdc451cf011208d9994c20c2da",
+  "runtimeAndHostUnchanged": true,
+  "finiteControls": {
+    "count": 21,
+    "actualPrefixes": 3570,
+    "phases": [
+      47,
+      0,
+      13,
+      36,
+      71,
+      1,
+      1,
+      1
+    ],
+    "passed": true
+  },
+  "completeKernelPassed": false,
+  "resourceFailureCreditedAsNegative": false,
+  "logs": {
+    "finiteControls": {
+      "path": "/workspace/scratch/night-from-async-controls.log",
+      "sha256": "1e05f7002e433d37589dbe1ead0359f1d3447fa45c1a1cd3830a7b534987f174",
+      "verdict": "21 late-push from lifecycles compare 3570 actual prefixes across eight explicit host/application phases, four quota vectors, exact final Machines, initial seed/queued delivery/late cancellation, and native data/function identities.\n"
+    },
+    "completeKernel": {
+      "path": "/workspace/scratch/night-from-async-kernel.log",
+      "sha256": "85c0318c691abb1465f46dfb6f37616f73da8738e6429ccdc2ca18cc5ea3ee20",
+      "verdict": "file:///workspace/solid-signals-bend/tests/proof-properties.mjs:20\n  if(result.error||result.signal||result.status===null||/infrastructure|out of (?:fuel|memory)|INTERNAL PANIC/.test(result.stdout+'\\n'+result.stderr))throw new Error(name+' proof check resource/infrastructure failure: '+(result.error?.message??result.signal??'resource limit')+'\\n'+result.stdout.slice(-1000)+'\\n'+result.stderr.slice(-1000));\n                                                                                                                                                            ^\n\nError: from-async-program proof check resource/infrastructure failure: resource limit\n\nSOME PROOFS FAIL\nIn step_3_0:\nout of fuel\nSorry - this is a mismatch between the TypeScript implementation, and the formalized BendTT kernel. Your proofs may or may not be correct, and we cannot validate them yet. This will be addressed in a fu"
+    },
+    "deliveryCandidate": {
+      "path": "/workspace/scratch/night-from-async-delivery-facts.log",
+      "sha256": "c9448c3dd2a7e083a3e296abdcd4a0a27f372452c70640ca305858d8b4627e81",
+      "verdict": "SOME PROOFS FAIL\nIn arriving:\nout of fuel\nSorry - this is a mismatch between the TypeScript implementation, and the formalized BendTT kernel. Your proofs may or may not be correct, and we cannot validate them yet. This will be addressed in a future update. Meanwhile, feel free to open an issue to report this bug.\nbend 2.0.38 is available: run bend update\n"
+    },
+    "stepFrameCandidate": {
+      "path": "/workspace/scratch/night-from-async-step-frame.log",
+      "sha256": "971ff430d2b12e92b9fc5ada6c0f2cfeeb7cf03c9a167478048b34d4c1dae55d",
+      "verdict": "SOME PROOFS FAIL\nIn transition:\nout of fuel\nSorry - this is a mismatch between the TypeScript implementation, and the formalized BendTT kernel. Your proofs may or may not be correct, and we cannot validate them yet. This will be addressed in a future update. Meanwhile, feel free to open an issue to report this bug.\nbend 2.0.38 is available: run bend update\n"
+    }
+  }
+}

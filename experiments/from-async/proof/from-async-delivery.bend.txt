@@ -1,0 +1,69 @@
+# Checked source-helper return points for the large delivery step. Canonical
+# arena data is untrusted; each equation uses the existing runtime operation.
+import Base
+import ./from-async-cuts.bend as Cuts
+import ./from-async-routing.bend as Routing
+import ./from-async-states.bend as M
+import ../runtime/core.bend as C
+import ../runtime/flight.bend as F
+import ../runtime/write.bend as W
+import ../representation/records.bend as R
+import ../representation/base.bend as B
+
+def before(+input: R.Value) -> R.World:
+  +w = C.world(M.phase_3_0(input))
+  B.store_stream(w, 1n, R.StreamState.with_hadValue(B.stream(w, 1n), True{}))
+
+def after(input: R.Value) -> R.World:
+  C.world(M.phase_3_1(input))
+
+def prepared(+input: R.Value) ->
+  {F.prepareAsyncWrite(before(input), 3n, 1n) == B.Bundle{before(input), True{}} : B.Bundle<R.World, Bool>}:
+  {==}
+
+def written(+input: R.Value) ->
+  {W.setSignal(before(input), 3n, input) == after(input) : R.World}:
+  {==}
+
+def healthyBundle(+w: R.World) -> B.Bundle<R.World, Bool>:
+  B.Bundle{w, B.ok(w)}
+
+def began(+input: R.Value) ->
+  {F.beginAsyncWrite(before(input), 3n, 1n, input) == B.Bundle{after(input), True{}} : B.Bundle<R.World, Bool>}:
+  Equal.trans(B.Bundle<R.World, Bool>, F.beginAsyncWrite(before(input), 3n, 1n, input), Cuts.beginAfter(B.Bundle{before(input), True{}}, 3n, input), B.Bundle{after(input), True{}},
+    Equal.cong(B.Bundle<R.World, Bool>, B.Bundle<R.World, Bool>, pair => Cuts.beginAfter(pair, 3n, input), F.prepareAsyncWrite(before(input), 3n, 1n), B.Bundle{before(input), True{}}, prepared(input)),
+    Equal.trans(B.Bundle<R.World, Bool>, Cuts.beginAfter(B.Bundle{before(input), True{}}, 3n, input), healthyBundle(after(input)), B.Bundle{after(input), True{}},
+      Equal.cong(R.World, B.Bundle<R.World, Bool>, post => healthyBundle(post), W.setSignal(before(input), 3n, input), after(input), written(input)), {==}))
+
+def asynchronous(+input: R.Value) ->
+  {C.asyncWrite(before(input), [], [], 3n, 1n, input, [C.IterateOrRelease{1n}]) == M.phase_3_1(input) : C.Machine}:
+  Equal.trans(C.Machine, C.asyncWrite(before(input), [], [], 3n, 1n, input, [C.IterateOrRelease{1n}]), C.asyncWriteAfterValue(after(input), [], [], 3n, [C.IterateOrRelease{1n}]), M.phase_3_1(input),
+    Cuts.defaultAsync(before(input), [], [], 3n, 1n, input, [C.IterateOrRelease{1n}], after(input), {==}, began(input)),
+    Cuts.afterPresent(after(input), [], [], 3n, [C.IterateOrRelease{1n}], {==}))
+
+def arriving(+input: R.Value) ->
+  {C.stepFulfilledResult(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) == M.phase_3_1(input) : C.Machine}:
+  %asynchronous(input) : {C.stepFulfilledResult(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) == _ : C.Machine}
+  Cuts.liveResult(C.world(M.phase_3_0(input)), [], [], 1n, input, {==}, {==})
+
+def routeFrame(+input: R.Value) ->
+  {Routing.frame(C.world(M.phase_3_0(input)), input) == C.world(M.phase_3_0(input)) : R.World}:
+  {==}
+
+def routed(+input: R.Value) ->
+  {C.asyncFulfill(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) == C.stepFulfilledResult(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) : C.Machine}:
+  Equal.trans(C.Machine, C.asyncFulfill(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}), C.asyncFulfill(Routing.frame(C.world(M.phase_3_0(input)), input), [], [], 1n, R.StepResult{False{}, input}), C.stepFulfilledResult(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}),
+    Equal.cong(R.World, C.Machine, w => C.asyncFulfill(w, [], [], 1n, R.StepResult{False{}, input}), C.world(M.phase_3_0(input)), Routing.frame(C.world(M.phase_3_0(input)), input), Equal.sym(R.World, Routing.frame(C.world(M.phase_3_0(input)), input), C.world(M.phase_3_0(input)), routeFrame(input))),
+    Equal.trans(C.Machine, C.asyncFulfill(Routing.frame(C.world(M.phase_3_0(input)), input), [], [], 1n, R.StepResult{False{}, input}), C.stepFulfilledResult(Routing.frame(C.world(M.phase_3_0(input)), input), [], [], 1n, R.StepResult{False{}, input}), C.stepFulfilledResult(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}),
+      Routing.fulfilled(C.world(M.phase_3_0(input)), input),
+      Equal.cong(R.World, C.Machine, w => C.stepFulfilledResult(w, [], [], 1n, R.StepResult{False{}, input}), Routing.frame(C.world(M.phase_3_0(input)), input), C.world(M.phase_3_0(input)), routeFrame(input))))
+
+def fulfilledResult(+input: R.Value) ->
+  {C.asyncFulfill(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) == M.phase_3_1(input) : C.Machine}:
+  %arriving(input) : {C.asyncFulfill(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}) == _ : C.Machine}
+  routed(input)
+
+def step(+input: R.Value) ->
+  {C.step(M.phase_3_0(input)) == M.phase_3_1(input) : C.Machine}:
+  %fulfilledResult(input) : {C.step(M.phase_3_0(input)) == _ : C.Machine}
+  Cuts.fulfilled(C.world(M.phase_3_0(input)), [], [], 1n, R.StepResult{False{}, input}, {==})

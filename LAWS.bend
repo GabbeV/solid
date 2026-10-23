@@ -1,3 +1,4 @@
+import ./proof/from-promise-frame.bend as FromPromiseFrame
 import ./proof/from-value-driver.bend as FromValueDriver
 import ./proof/from-value-program.bend as FromValueProgram
 import ./proof/from-value-outcome.bend as FromValueOutcome
@@ -2491,3 +2492,44 @@ law from_value_ordinary_bridge:
 law from_iterable_value_ordinary_bridge:
   for input: Payload.Ordinary
   {FromIterableValueDriver.before(Payload.value(input)) == FromIterableDriver.before(input) : Core.Machine}
+
+law from_promise_deliveries_frame:
+  for observers: List<&2, Nat>
+  for w: R.World
+  for rejected: Bool
+  for value: R.Value
+  {FromPromiseFrame.erase(NativePromise.deliveries(observers, w, rejected, value)) == FromPromiseFrame.erase(w) : R.World}
+
+law from_promise_settlement_frame:
+  for w: R.World
+  for id: Nat
+  for rejected: Bool
+  for value: R.Value
+  for object: R.AsyncObject
+  for state: R.AsyncSettlement
+  {FromPromiseFrame.erase(NativePromise.settleState(w, id, rejected, value, object, state)) == FromPromiseFrame.erase(w) : R.World}
+
+law from_promise_settle_frame:
+  for w: R.World
+  for id: Nat
+  for rejected: Bool
+  for value: R.Value
+  {FromPromiseFrame.erase(NativePromise.settle(w, id, rejected, value)) == FromPromiseFrame.erase(w) : R.World}
+
+law from_pending_frame:
+  for items: List<&2, Nat>
+  for w: R.World
+  {FromPromiseFrame.erase(WrappedFrom.resolvePending(items, w)) == FromPromiseFrame.erase(w) : R.World}
+
+law from_finish_frame:
+  for w: R.World
+  for plan: Nat
+  {FromPromiseFrame.erase(WrappedFrom.finish(w, plan)) == FromPromiseFrame.erase(w) : R.World}
+
+law from_callback_delivery_frame:
+  for w: R.World
+  for plan: Nat
+  for output: Nat
+  for rejected: Bool
+  for value: R.Value
+  {FromPromiseFrame.erase(WrappedFrom.deliver(w, plan, output, rejected, value)) == FromPromiseFrame.erase(w) : R.World}

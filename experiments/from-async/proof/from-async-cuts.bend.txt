@@ -1,0 +1,78 @@
+# Algebraic cuts of the actual async delivery entry. Runtime and kernel
+# budgets remain unchanged; cuts avoid normalizing the whole route at once.
+import Base
+import ../runtime/flight.bend as Flight
+import ../runtime/write.bend as Write
+import ../runtime/equality.bend as EQ
+import ../runtime/constants.bend as K
+import ../runtime/owner.bend as Owner
+import ./memo-setter-cuts.bend as Step
+import ../runtime/core.bend as C
+import ../representation/base.bend as B
+import ../representation/records.bend as R
+
+def fulfilled(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
+  {C.step(C.Machine{w, C.AsyncFulfill{observer, value} <> rest, stack}) == C.asyncFulfill(w, rest, stack, observer, value) : C.Machine}:
+  Equal.trans(C.Machine, C.step(C.Machine{w, C.AsyncFulfill{observer, value} <> rest, stack}), C.dispatch(w, C.AsyncFulfill{observer, value} <> rest, stack), C.asyncFulfill(w, rest, stack, observer, value), Step.step_head(w, C.AsyncFulfill{observer, value}, rest, stack, ready), {==})
+
+def initial(+w: R.World, +observer: Nat) -> Bool:
+  Bool.and(R.AsyncObserver.isSync(B.asyncObserver(w, observer)), R.StreamState.initialRead(B.stream(w, R.AsyncObserver.stream(B.asyncObserver(w, observer)))))
+
+def stale(+w: R.World, +observer: Nat) -> Bool:
+  +s = B.stream(w, R.AsyncObserver.stream(B.asyncObserver(w, observer)))
+  Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, R.StreamState.node(s)))), R.StreamState.result(s))
+
+def live(+w: R.World, rest: List<&2, C.Task>, stack: List<&2, R.Value>, +observer: Nat, value: R.Value) -> C.Machine:
+  +stream = R.AsyncObserver.stream(B.asyncObserver(w, observer))
+  +s = B.stream(w, stream)
+  C.asyncWrite(B.store_stream(w, stream, R.StreamState.with_hadValue(s, True{})), rest, stack, R.StreamState.node(s), R.StreamState.result(s), value, [C.IterateOrRelease{stream}])
+
+def liveChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value, sync: Bool, +old: Bool) -> C.Machine:
+  B.choose(~C.Machine, sync,
+    _ => C.Machine{Flight.syncFulfilled(w, observer, R.StepResult{False{}, value}), rest, stack},
+    _ => B.choose(~C.Machine, old, _ => C.Machine{w, rest, stack}, _ => live(w, rest, stack, observer, value)))
+
+def liveResult(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +observer: Nat, +value: R.Value,
+  first: {initial(w, observer) == False{} : Bool}, current: {stale(w, observer) == False{} : Bool}) ->
+  {C.stepFulfilledResult(w, rest, stack, observer, R.StepResult{False{}, value}) == live(w, rest, stack, observer, value) : C.Machine}:
+  Equal.trans(C.Machine, C.stepFulfilledResult(w, rest, stack, observer, R.StepResult{False{}, value}), liveChoice(w, rest, stack, observer, value, False{}, stale(w, observer)), live(w, rest, stack, observer, value),
+    Equal.cong(Bool, C.Machine, sync => liveChoice(w, rest, stack, observer, value, sync, stale(w, observer)), initial(w, observer), False{}, first),
+    Equal.cong(Bool, C.Machine, old => liveChoice(w, rest, stack, observer, value, False{}, old), stale(w, observer), False{}, current))
+
+def asyncTail(+pair: B.Bundle<R.World, Bool>, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +then: List<&2, C.Task>) -> C.Machine:
+  +w = B.first(R.World, Bool, pair)
+  B.choose(~C.Machine, B.second(R.World, Bool, pair),
+    _ => C.asyncWriteAfterValue(w, rest, stack, id, then), _ => C.Machine{w, rest, stack})
+
+def asyncChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +value: R.Value, +then: List<&2, C.Task>, direct: Bool) -> C.Machine:
+  B.choose(~C.Machine, direct,
+    _ => asyncTail(Flight.beginAsyncWrite(w, id, result, value), rest, stack, id, then),
+    _ =>
+      +pair = Flight.prepareAsyncWrite(w, id, result)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~C.Machine, B.second(R.World, Bool, pair),
+        _ => C.setResolved(w, C.Discard{} <> C.AsyncWriteAfterSetter{id, then} <> rest, stack, id, B.current(B.node(w, id)), value),
+        _ => C.Machine{w, rest, stack}))
+
+def defaultAsync(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +result: Nat, +value: R.Value, +then: List<&2, C.Task>, +after: R.World,
+  direct: {Bool.and(Nat.is_eq(EQ.custom(w, id), 0n), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))) == True{} : Bool},
+  began: {Flight.beginAsyncWrite(w, id, result, value) == B.Bundle{after, True{}} : B.Bundle<R.World, Bool>}) ->
+  {C.asyncWrite(w, rest, stack, id, result, value, then) == C.asyncWriteAfterValue(after, rest, stack, id, then) : C.Machine}:
+  Equal.trans(C.Machine, C.asyncWrite(w, rest, stack, id, result, value, then), asyncTail(Flight.beginAsyncWrite(w, id, result, value), rest, stack, id, then), C.asyncWriteAfterValue(after, rest, stack, id, then),
+    Equal.cong(Bool, C.Machine, yes => asyncChoice(w, rest, stack, id, result, value, then, yes), Bool.and(Nat.is_eq(EQ.custom(w, id), 0n), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))), True{}, direct),
+    Equal.cong(B.Bundle<R.World, Bool>, C.Machine, pair => asyncTail(pair, rest, stack, id, then), Flight.beginAsyncWrite(w, id, result, value), B.Bundle{after, True{}}, began))
+
+def beginAfter(+pair: B.Bundle<R.World, Bool>, +id: Nat, +value: R.Value) -> B.Bundle<R.World, Bool>:
+  +w = B.first(R.World, Bool, pair)
+  +w = B.choose(~R.World, B.second(R.World, Bool, pair), _ => Write.setSignal(w, id, value), _ => w)
+  B.Bundle{w, Bool.and(B.second(R.World, Bool, pair), B.ok(w))}
+
+def afterChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +then: List<&2, C.Task>, present: Bool) -> C.Machine:
+  +ending = {C.AsyncWriteAfterTrim{id} <> C.AsyncWriteSchedule{} <> C.AsyncFlush{} <> B.append(C.Task, then, rest) : List<&2, C.Task>}
+  B.choose(~C.Machine, Bool.not(present),
+    _ => C.Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), C.OwnerTasks{[Owner.TrimDeps{id}]} <> ending, stack},
+    _ => C.Machine{w, ending, stack})
+
+def afterPresent(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +then: List<&2, C.Task>, present: {B.present(R.Node.pending(B.node(w, id))) == True{} : Bool}) ->
+  {C.asyncWriteAfterValue(w, rest, stack, id, then) == C.Machine{w, C.AsyncWriteAfterTrim{id} <> C.AsyncWriteSchedule{} <> C.AsyncFlush{} <> B.append(C.Task, then, rest), stack} : C.Machine}:
+  Equal.cong(Bool, C.Machine, yes => afterChoice(w, rest, stack, id, then, yes), B.present(R.Node.pending(B.node(w, id))), True{}, present)

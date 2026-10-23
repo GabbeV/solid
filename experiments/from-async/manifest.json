@@ -1,0 +1,47 @@
+[
+  {
+    "originalPath": "proof/from-async-cuts.bend",
+    "archivedPath": "proof/from-async-cuts.bend.txt",
+    "sha256": "d3807a3284facdeb15c43e190cb82f8c97146a0edd4f68db4f1e11a63fe38357"
+  },
+  {
+    "originalPath": "proof/from-async-delivery.bend",
+    "archivedPath": "proof/from-async-delivery.bend.txt",
+    "sha256": "4308fe840d80e831c60932f6daf80425efbe72391db84726e9dac66c9bb1abd1"
+  },
+  {
+    "originalPath": "proof/from-async-driver.bend",
+    "archivedPath": "proof/from-async-driver.bend.txt",
+    "sha256": "4d35c4c308238359c1eda7c593e13f8f54fd3484745d888c368f0d5b51ba2335"
+  },
+  {
+    "originalPath": "proof/from-async-program.bend",
+    "archivedPath": "proof/from-async-program.bend.txt",
+    "sha256": "d524d2c52b72a6407a328bea240c1f54cff8136aa6a1e2241c771120fc417015"
+  },
+  {
+    "originalPath": "proof/from-async-routing.bend",
+    "archivedPath": "proof/from-async-routing.bend.txt",
+    "sha256": "d2ffe395772f472e7ea999829a849cf8bb94c37194a5ba9f209c1a8de9c946b4"
+  },
+  {
+    "originalPath": "proof/from-async-states.bend",
+    "archivedPath": "proof/from-async-states.bend.txt",
+    "sha256": "fd2568fe87f4a4299c125e01f01b5aba356e6e73bc650fc45feec0a38ee4f8ad"
+  },
+  {
+    "originalPath": "proof/from-async-write-frame.bend",
+    "archivedPath": "proof/from-async-write-frame.bend.txt",
+    "sha256": "1f6599a15d0dee78db725ac780fbe22c9084f4c08b7da5976325fe27c61f0940"
+  },
+  {
+    "originalPath": "tests/from-async-proof-controls.mjs",
+    "archivedPath": "tests/from-async-proof-controls.mjs.txt",
+    "sha256": "ac1c4998a98b4a9b3b76ad34c6e9475d5897a405dd23273a764d5d56bee8cecc"
+  },
+  {
+    "originalPath": "tools/from-async-witness.mjs",
+    "archivedPath": "tools/from-async-witness.mjs.txt",
+    "sha256": "886e0f1204f4414cad4ff185d5fe2ae61ae3f98da5b033b585d29272477dbc1a"
+  }
+]

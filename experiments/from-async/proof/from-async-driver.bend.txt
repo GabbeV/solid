@@ -1,0 +1,59 @@
+# Actual constructor, explicit queued setup/Promise delivery boundaries,
+# later captured source callback, final read/dispose. No reactive policy is
+# implemented by this driver: every phase runs the existing Core machine.
+import Base
+import ../representation/records.bend as R
+import ../representation/base.bend as B
+import ../runtime/api.bend as A
+import ../runtime/core.bend as C
+import ../runtime/construct.bend as N
+
+def input() -> R.World:
+  +w = A.createContext(A.createWorld(), R.Undefined{}, R.Empty{})
+  +w = A.registerProgram(w, R.CleanupProgram{[R.CallbackEvaluate{R.ContextSet{1n, R.Argument{0n}, R.Literal{R.OwnerReference{1n}}}}, R.CallbackReturn{R.Literal{R.ProgramReference{2n}}}], False{}, 3n})
+  A.registerProgram(w, R.CleanupProgram{[R.CleanupEmit{99n}], False{}, 0n})
+
+def start() -> C.Machine:
+  C.Machine{input(), [C.Evaluate{R.Invoke{R.RootScope{R.MemoAccessor{R.FromInput{R.Literal{R.ProgramReference{1n}}}, R.NodeOptions.with_equals(R.NodeOptions.with_loading(N.defaults(), R.Present{R.Number{0n}}), False{})}, False{}}}, R.Undefined{}}], []}
+
+def hostJob(w: R.World, job: R.HostJob) -> C.Machine:
+  match job:
+    case R.FlushJob{}: C.Machine{w, [C.Evaluate{R.FlushNow{}, R.Undefined{}}], []}
+    case R.DeliveryJob{+observer, rejected, +value}:
+      C.Machine{w, [B.choose(~C.Task, rejected, _ => C.AsyncReject{observer, value}, _ => C.AsyncFulfill{observer, value})], []}
+    case _: C.Machine{R.World.with_fault(w, R.Unsupported{990n}), [], []}
+
+def hostJobs(+w: R.World, jobs: List<&2, R.HostJob>) -> C.Machine:
+  match jobs:
+    case Nil{}: C.Machine{w, [], []}
+    case job <> tail: hostJob(R.World.with_hostJobs(w, tail), job)
+
+def hostWorld(+w: R.World) -> C.Machine:
+  hostJobs(w, R.World.hostJobs(w))
+
+def host(previous: C.Machine) -> C.Machine:
+  hostWorld(C.world(previous))
+
+def emit(previous: C.Machine, value: R.Value) -> C.Machine:
+  C.Machine{C.world(previous), [C.Evaluate{R.InvokeWith{R.ContextGet{1n, R.Literal{R.OwnerReference{1n}}}, R.Literal{value}, False{}}, R.Undefined{}}], []}
+
+def finish(previous: C.Machine) -> C.Machine:
+  C.Machine{C.world(previous), [C.Evaluate{R.ArrayLiteral{R.CallArgumentsItem{R.Invoke{R.Literal{R.AccessorReference{3n}}}, R.CallArgumentsItem{R.Invoke{R.Literal{R.RootDisposerReference{2n}}}, R.CallArgumentsItem{R.FlushNow{}, R.CallArgumentsEnd{}}}}}, R.Undefined{}}], []}
+
+# The application keeps the array returned by finish; after queued callbacks
+# it reads that already-created array identity again (no payload is fabricated).
+def observe(previous: C.Machine) -> C.Machine:
+  C.Machine{C.world(previous), [C.Evaluate{R.Literal{R.ArrayReference{0n}}, R.Undefined{}}], []}
+
+def step(machine: C.Machine) -> C.Machine:
+  C.step(machine)
+
+def execute(first: Nat, setup: Nat, event: Nat, delivery: Nat, final: Nat, queued: Nat, canceled: Nat, observation: Nat, value: R.Value) -> C.Machine:
+  +m = C.run(first, start())
+  +m = C.run(setup, host(m))
+  +m = C.run(event, emit(m, value))
+  +m = C.run(delivery, host(m))
+  +m = C.run(final, finish(m))
+  +m = C.run(queued, host(m))
+  +m = C.run(canceled, host(m))
+  C.run(observation, observe(m))

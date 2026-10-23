@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations configures 566 isolated source-changing copies:
-  469 finite differential/structural variants and 97 kernel proof-property
+- mutations configures 568 isolated source-changing copies:
+  469 finite differential/structural variants and 99 kernel proof-property
   variants. The frozen preceding 539-variant rc.18 checkpoint has a complete
   receipt at reviews/solid-225014bf-complete-negative.json; twelve new focused
   subscription controls are compiled and rejected separately. The previous workaround variants now reintroduce fixed bugs; new variants
@@ -538,3 +538,9 @@ controls check 3,708 prefixes, including function identity and self-iterable
 data. Two targeted kernel variants bring configuration to 566 (469 finite,
 97 kernel); the frozen 551 direct-subscription receipt is recorded separately.
 Arbitrary arena-token validity and arbitrary async histories remain open.
+
+The [Promise/cancellation preservation checkpoint](from-promise-frame.md) adds
+six quantified roots and two focused kernel variants, bringing the current
+configuration to 568 (469 finite, 99 kernel). The complete 564-variant sweep
+remains attached to its frozen preceding runtime checkpoint. The longer
+late-push programme is an unverified experiment, excluded from active roots.

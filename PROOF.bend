@@ -1,3 +1,4 @@
+import ./proof/from-promise-frame.bend as FromPromiseFrame
 import ./proof/from-value-driver.bend as FromValueDriver
 import ./proof/from-value-program.bend as FromValueProgram
 import ./proof/from-value-outcome.bend as FromValueOutcome
@@ -1212,3 +1213,21 @@ def Laws.from_value_ordinary_bridge(input):
 
 def Laws.from_iterable_value_ordinary_bridge(input):
   FromValueBridges.iterable(input)
+
+def Laws.from_promise_deliveries_frame(observers, w, rejected, value):
+  FromPromiseFrame.deliveries(observers, w, rejected, value)
+
+def Laws.from_promise_settlement_frame(w, id, rejected, value, object, state):
+  FromPromiseFrame.settlement(w, id, rejected, value, object, state)
+
+def Laws.from_promise_settle_frame(w, id, rejected, value):
+  FromPromiseFrame.settle(w, id, rejected, value)
+
+def Laws.from_pending_frame(items, w):
+  FromPromiseFrame.pending(items, w)
+
+def Laws.from_finish_frame(w, plan):
+  FromPromiseFrame.finish(w, plan)
+
+def Laws.from_callback_delivery_frame(w, plan, output, rejected, value):
+  FromPromiseFrame.deliver(w, plan, output, rejected, value)

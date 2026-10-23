@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeBaselineCheckpoint": "e41a86f6b90ddabdc451cf011208d9994c20c2da",
+  "runtimeAndHostUnchanged": true,
+  "activeDeviationIds": [],
+  "newRoots": 6,
+  "claim": "Promise delivery/settlement and wrapped pending-list cancellation, finish and callback delivery preserve all World fields except asyncObjects, hostJobs and streamPlans, for arbitrary represented Worlds and finite lists.",
+  "configuredMutations": 568,
+  "finiteMutations": 469,
+  "kernelMutations": 99,
+  "newFocusedKernelVariants": 2,
+  "freshComplete568Sweep": false,
+  "frozenComplete564Receipt": "tracking/reviews/from-wrapped-complete-negative.json",
+  "longerAsyncProgrammeProven": false,
+  "experiment": "experiments/from-async/README.md",
+  "newUpstreamBugOrWorkaround": false,
+  "evidence": {
+    "frameKernel": {
+      "passed": true,
+      "log": "/workspace/scratch/night-from-promise-frame-kernel.log",
+      "sha256": "b61cf1a2cb7332f6a6cd5868144059bd687afaede30d9b71f17b4e0dc66edfe5",
+      "verdict": "ALL PROOFS CHECK\nbend 2.0.38 is available: run bend update\n"
+    },
+    "focusedNegatives": {
+      "passed": true,
+      "log": "/workspace/scratch/night-from-promise-frame-negative.log",
+      "sha256": "24864129c885d61d15c6c86e7f4bd0769e6a63f67099db74614399e3b500864b",
+      "verdict": "Rejected mutation: from Promise frame loses ambient context on empty deliveries\nRejected mutation: from cancellation frame changes tracking\n2 source-changing variants rejected by differential or kernel assertions.\n"
+    }
+  }
+}

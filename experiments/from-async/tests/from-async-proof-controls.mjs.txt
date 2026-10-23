@@ -1,0 +1,64 @@
+// Finite native controls supplement the arbitrary-R.Value kernel families.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+
+const root=fileURLToPath(new URL('../',import.meta.url));
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-from-async-controls-'));
+try {
+  const source=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):root;
+  for(const folder of ['runtime','representation','observation'])
+    fs.cpSync(path.join(source,folder),path.join(dir,folder),{recursive:true});
+  fs.cpSync(path.join(root,'proof'),path.join(dir,'proof'),{recursive:true});
+  async function compile(name) {
+    const output=path.join(dir,name+'.mjs');
+    const built=spawnSync(path.join(root,'node_modules/.bin/bun'),
+      ['upstream/bend/bend2/main.ts',path.join(dir,'proof',name+'.bend'),'-o',output],
+      {cwd:root,encoding:'utf8',maxBuffer:1024*1024});
+    assert.equal(built.status,0,built.stderr);
+    return (await import(pathToFileURL(output))).default;
+  }
+  const D=await compile('from-async-driver'),P=await compile('from-async-program');
+  const list=xs=>{const out=[];while('head'in xs){out.push(xs.head);xs=xs.tail;}return out;};
+  const reference=new Map([[7,{item:'first'}],[19,{item:'second'}]]);
+  const cases=[['undefined',undefined,{$:'Undefined'}],['null',null,{$:'Null'}],
+   ...[false,true].map(b=>['boolean',b,{$:'Boolean',b}]),...[0,1,2**40].map(n=>['natural',n,{$:'Number',n}]),
+   ['negative-zero',-0,{$:'NegativeZero'}],['NaN',NaN,{$:'NotANumber'}],...['','opaque','λ'].map(s=>['string',s,{$:'StringValue',s}]),
+   ...[7,19].map(id=>['reference',reference.get(id),{$:'Reference',id}]),
+   ['empty-function',null,{$:'ProgramReference',callback:0}],['subscribe-function',null,{$:'ProgramReference',callback:1}],['unsubscribe-function',null,{$:'ProgramReference',callback:2}],
+   ['sender-function',null,{$:'ProgramReference',callback:3}],['accessor-function',null,{$:'AccessorReference',signal:3}],['disposer-function',null,{$:'RootDisposerReference',owner:2}],['self-iterable',null,{$:'AsyncValue',identity:1}]];
+  const lengths=[47,0,13,36,71,1,1,1];let count=0,prefixes=0;
+  for(const[kind,ordinary,input]of cases){
+   const label=JSON.stringify([kind,input]);let machine;
+   const makers=[()=>D.start(),m=>D.host(m),m=>D.emit(m,input),m=>D.host(m),m=>D.finish(m),m=>D.host(m),m=>D.host(m),m=>D.observe(m)];
+   for(let phase=0;phase<makers.length;phase++){
+    machine=makers[phase](machine);assert.deepEqual(machine,P['phase_'+phase+'_0'](input),label+' phase '+phase+' entry');
+    for(let i=0;i<lengths[phase];i++){machine=D.step(machine);assert.deepEqual(machine,P['phase_'+phase+'_'+(i+1)](input),label+' phase '+phase+' prefix '+i);prefixes++;}
+    if(phase===0||phase===2){assert.deepEqual(list(machine.world.nodes)[3].value,{$:'Number',n:0});assert.equal(list(machine.world.nodes)[3].loading,true);}
+    if(phase===2){assert.deepEqual(list(machine.world.asyncObjects)[2].state,{$:'Fulfilled',value:{$:'StepResult',done:false,value:input}});assert.deepEqual(list(machine.world.hostJobs),[{$:'DeliveryJob',observer:1,rejected:false,value:{$:'StepResult',done:false,value:input}}]);}
+   }
+   for(const extra of[0,1,20])assert.deepEqual(D.execute(...lengths.map(n=>n+extra),input),machine,label+' uniform extra '+extra);
+   assert.deepEqual(D.execute(...lengths.map((n,i)=>n+i%3),input),machine,label+' independent quotas');
+   const id=list(machine.values)[0].id;assert.deepEqual(list(list(machine.world.arrays)[id].slots)[0],{$:'Present',value:input});
+   assert.deepEqual(list(machine.world.events).filter(e=>e.$==='CleanupObserved'),[{$:'CleanupObserved',callback:2,code:99}]);
+   assert.equal(machine.world.fault.$,'Healthy');assert.equal(machine.world.halted,false);assert.deepEqual(list(machine.world.hostJobs),[]);assert.deepEqual(list(machine.world.reports),[]);
+   assert.deepEqual(list(machine.world.nodes)[3].value,input);assert.equal(list(machine.world.nodes)[3].loading,false);assert.equal((list(machine.world.nodes)[3].flags&64)!==0,true);
+   for(const promise of[3,4])assert.deepEqual(list(machine.world.asyncObjects)[promise].state,{$:'Fulfilled',value:{$:'StepResult',done:true,value:{$:'Undefined'}}});
+   const S=await import(pathToFileURL(path.join(root,'build/solid.mjs'))+'?from-async-control='+count);
+   const key=S.createContext(undefined);let parent,stopParent,get,stop,source,send,cleaned=0,called=0;
+   S.createRoot(dispose=>{parent=S.getOwner();stopParent=dispose;});
+   const empty=()=>{called++;},cleanup=()=>{cleaned++;};
+   function subscribe(next){S.setContext(key,next,parent);return cleanup;}
+   const value=()=>kind==='empty-function'?empty:kind==='subscribe-function'?subscribe:kind==='unsubscribe-function'?cleanup:kind==='sender-function'?send:kind==='accessor-function'?get:kind==='disposer-function'?stop:kind==='self-iterable'?source:ordinary;
+   get=S.createRoot(dispose=>{stop=dispose;return S.createMemo(()=>(source=S.from(subscribe)),{loadingValue:0,equals:false});});
+   assert.equal(get(),0);assert.equal(S.isPending(get),false);await new Promise(resolve=>setImmediate(resolve));
+   send=S.getContext(key,parent);assert.equal(typeof send,'function');const expected=value();send(expected);assert.equal(get(),0);assert.equal(cleaned,0);
+   await Promise.resolve();assert.ok(Object.is(get(),expected),label+' native delivered value/identity');assert.equal(cleaned,0);
+   const result=[get(),stop(),S.flush()];assert.ok(Object.is(result[0],expected));assert.deepEqual(result.slice(1),[undefined,undefined]);assert.equal(cleaned,1);assert.equal(called,0);
+   await new Promise(resolve=>setImmediate(resolve));assert.equal(cleaned,1);assert.equal(called,0);assert.ok(Object.is(result[0],expected));stopParent();count++;
+  }
+  console.log(`${count} late-push from lifecycles compare ${prefixes} actual prefixes across eight explicit host/application phases, four quota vectors, exact final Machines, initial seed/queued delivery/late cancellation, and native data/function identities.`);
+}finally{fs.rmSync(dir,{recursive:true,force:true});}

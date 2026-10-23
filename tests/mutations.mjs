@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["from Promise frame loses ambient context on empty deliveries", "runtime/promise-input.bend", "case Nil{}: w", "case Nil{}: R.World.with_context(w, 0n)", "tests/proof-properties.mjs", "deliveries", "from-promise-frame"],
+  ["from cancellation frame changes tracking", "runtime/from-wrap.bend", "+w = store(w, plan, R.FromWrapped.with_closed(s, True{}))", "+w = R.World.with_tracking(store(w, plan, R.FromWrapped.with_closed(s, True{})), False{})", "tests/proof-properties.mjs", "finish", "from-promise-frame"],
+
   ["from value kernel loses function-valued data", "representation/records.bend", "      latest\n", "      match latest:\n        case ProgramReference{callback}: Undefined{}\n        case other: other\n", "tests/proof-properties.mjs", "FromSubscription.latest", "from-value-outcome"],
   ["from iterable value kernel loses iterable-valued data", "representation/records.bend", "      syncValue\n", "      match syncValue:\n        case AsyncValue{identity}: Undefined{}\n        case other: other\n", "tests/proof-properties.mjs", "StreamState.syncValue", "from-iterable-value-outcome"],
 

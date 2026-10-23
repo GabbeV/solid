@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 4438 differential histories, 566 configured compiled mutations,
+Current verification: 4438 differential histories, 568 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 225014bf (declares rc.18) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -928,3 +928,8 @@ controls check 3,708 prefixes, including function identity and self-iterable
 data. Two targeted kernel variants bring configuration to 566 (469 finite,
 97 kernel); the frozen 551 direct-subscription receipt is recorded separately.
 Arbitrary arena-token validity and arbitrary async histories remain open.
+
+The [Promise/cancellation preservation checkpoint](from-promise-frame.md) adds
+six quantified roots without runtime changes. The longer late-push complete
+programme remains an explicitly unverified archived experiment, blocked by the
+pinned independent kernel reduction limit; its finite native controls pass.
