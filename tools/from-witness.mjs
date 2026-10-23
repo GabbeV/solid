@@ -5,8 +5,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const wrapped=process.argv.includes('--iterable');
-const parameterType='Payload.Ordinary',driver=wrapped?'from-iterable-driver':'from-driver';
+const wrapped=process.argv.includes('--iterable'),universal=process.argv.includes('--value');
+const parameterType=universal?'R.Value':'Payload.Ordinary',driver=wrapped?(universal?'from-iterable-value-driver':'from-iterable-driver'):(universal?'from-value-driver':'from-driver');
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-from-witness-'));
 try{
 const emitted=path.join(dir,'driver.mjs');
@@ -30,12 +30,12 @@ function show(value,type,ns='R'){
  if(plain==='Nat')return value+'n';if(plain==='U32')return String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
- if(family==='R.Value'&&value.$==='Number'&&value.n===7365819)return intern('Payload.value(input)','R.Value');
+ if(family==='R.Value'&&value.$==='Number'&&value.n===7365819)return intern(universal?'input':'Payload.value(input)','R.Value');
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+family+' '+JSON.stringify(value));
  return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+family+'.'+value.$+'.'+name);return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
 }
 
-let m=D.before({$:'DataNatural',value:7365819}),states=[m];
+let m=D.before(universal?{$:'Number',n:7365819}:{$:'DataNatural',value:7365819}),states=[m];
 for(let i=0;i<1024&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
 if('head'in m.tasks||m.world.fault.$!=='Healthy')throw Error('From programme did not finish');
 const steps=states.length-1;if(steps!==(wrapped?84:120))throw Error('Review changed from programme length '+steps);
@@ -52,30 +52,30 @@ import ./${driver}.bend as Driver
 import ./ordinary-payload.bend as Payload
 
 `;
-for(let i=0;i<states.length;i++)out+=`def state_${i}(+input: Payload.Ordinary) -> C.Machine:
+for(let i=0;i<states.length;i++)out+=`def state_${i}(+input: ${parameterType}) -> C.Machine:
   ${show(states[i],'C.Machine')}
 
 `;
-for(let i=0;i<steps;i++)out+=`def step_${i}(+input: Payload.Ordinary) -> {C.step(state_${i}(input)) == state_${i+1}(input) : C.Machine}:
+for(let i=0;i<steps;i++)out+=`def step_${i}(+input: ${parameterType}) -> {C.step(state_${i}(input)) == state_${i+1}(input) : C.Machine}:
   {==}
 
 `;
-out+=`def witness(+input: Payload.Ordinary) -> P.Path<state_0(input), state_${steps}(input)>:
+out+=`def witness(+input: ${parameterType}) -> P.Path<state_0(input), state_${steps}(input)>:
   `;
 for(let i=0;i<steps;i++)out+=`P.PathStep{state_${i+1}(input), step_${i}(input), `;
 out+=`P.PathEnd{${show(m.world,'R.World')}, ${show(m.values,'List<&2, R.Value>')}, {==}, {==}}`+'}'.repeat(steps)+'\n';
 out+=`
-def entry(+input: Payload.Ordinary) -> {Driver.before(input) == state_0(input) : C.Machine}:
+def entry(+input: ${parameterType}) -> {Driver.before(input) == state_0(input) : C.Machine}:
   {==}
 
 def connect(-fuel: Nat, -start: C.Machine, -canonical: C.Machine, -end: C.Machine, linked: {start == canonical : C.Machine}, run: {C.run(fuel, canonical) == end : C.Machine}) -> {C.run(fuel, start) == end : C.Machine}:
   Equal.trans(C.Machine, C.run(fuel, start), C.run(fuel, canonical), end, Equal.cong(C.Machine, C.Machine, m => C.run(fuel, m), start, canonical, linked), run)
 
-def complete(+input: Payload.Ordinary, +extra: Nat) -> {C.run(Nat.add(${steps}n, extra), Driver.before(input)) == state_${steps}(input) : C.Machine}:
+def complete(+input: ${parameterType}, +extra: Nat) -> {C.run(Nat.add(${steps}n, extra), Driver.before(input)) == state_${steps}(input) : C.Machine}:
   connect(Nat.add(${steps}n, extra), Driver.before(input), state_0(input), state_${steps}(input), entry(input), P.retimed(state_0(input), state_${steps}(input), witness(input), extra, Nat.add(${steps}n, extra), {==}))
 `;
 const index=out.indexOf('def state_0(');out=out.slice(0,index)+declarations.join('\n')+'\n'+out.slice(index);
-const dest=path.join(root,wrapped?'proof/from-iterable-program.bend':'proof/from-program.bend');
+const dest=path.join(root,wrapped?(universal?'proof/from-iterable-value-program.bend':'proof/from-iterable-program.bend'):(universal?'proof/from-value-program.bend':'proof/from-program.bend'));
 if(process.argv.includes('--check')){if(fs.readFileSync(dest,'utf8')!==out)throw Error('From witness stale');}else fs.writeFileSync(dest,out);
-console.log(`${steps} actual owned ${wrapped?'from(AsyncIterable)':'from(fn)'} constructor/read/dispose/flush steps; symbolic ordinary payload, exact final Machine.`);
+console.log(`${steps} actual owned ${wrapped?'from(AsyncIterable)':'from(fn)'} constructor/read/dispose/flush steps; symbolic ${universal?'arbitrary represented value':'ordinary payload'}, exact final Machine.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

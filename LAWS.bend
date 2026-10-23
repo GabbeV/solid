@@ -1,3 +1,10 @@
+import ./proof/from-value-driver.bend as FromValueDriver
+import ./proof/from-value-program.bend as FromValueProgram
+import ./proof/from-value-outcome.bend as FromValueOutcome
+import ./proof/from-iterable-value-driver.bend as FromIterableValueDriver
+import ./proof/from-iterable-value-program.bend as FromIterableValueProgram
+import ./proof/from-iterable-value-outcome.bend as FromIterableValueOutcome
+import ./proof/from-value-bridges.bend as FromValueBridges
 import ./runtime/from-wrap.bend as WrappedFrom
 import ./proof/from-wrap-laws.bend as FromWrapLaws
 import ./proof/from-iterable-driver.bend as FromIterableDriver
@@ -2456,3 +2463,31 @@ law from_wrap_cached_iterator:
   for ordinary: {FromState.factory(w, source) == False{} : Bool}
   for cached: {Nat.is_ne(DeferredStreamRuntime.planWrapper(w, source), 0n) == True{} : Bool}
   {Core.fromOpenState(w, rest, stack, R.FromIterable{source}) == Core.Machine{w, Core.FromWrapOpened{} <> rest, R.IteratorReference{DeferredStreamRuntime.iterator(w, source)} <> stack} : Core.Machine}
+
+law from_value_program_complete:
+  for input: R.Value
+  for extra: Nat
+  {Core.run(Nat.add(120n, extra), FromValueDriver.before(input)) == FromValueProgram.state_120(input) : Core.Machine}
+
+law from_value_program_result:
+  for input: R.Value
+  for extra: Nat
+  {FromOutcome.outcome(Core.run(Nat.add(120n, extra), FromValueDriver.before(input))) == FromOutcome.Outcome{R.Present{input}, 1n, R.Healthy{}} : FromOutcome.Outcome}
+
+law from_iterable_value_program_complete:
+  for input: R.Value
+  for extra: Nat
+  {Core.run(Nat.add(84n, extra), FromIterableValueDriver.before(input)) == FromIterableValueProgram.state_84(input) : Core.Machine}
+
+law from_iterable_value_program_result:
+  for input: R.Value
+  for extra: Nat
+  {FromIterableOutcome.outcome(Core.run(Nat.add(84n, extra), FromIterableValueDriver.before(input))) == FromIterableOutcome.Outcome{R.Present{input}, 1n, True{}, [], R.Unresolved{}, R.Fulfilled{R.StepResult{True{}, R.Undefined{}}}, R.Healthy{}} : FromIterableOutcome.Outcome}
+
+law from_value_ordinary_bridge:
+  for input: Payload.Ordinary
+  {FromValueDriver.before(Payload.value(input)) == FromDriver.before(input) : Core.Machine}
+
+law from_iterable_value_ordinary_bridge:
+  for input: Payload.Ordinary
+  {FromIterableValueDriver.before(Payload.value(input)) == FromIterableDriver.before(input) : Core.Machine}

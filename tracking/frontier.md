@@ -4,7 +4,7 @@ This is an incremental executable translation, not a completed package port.
 [Progress checkpoints](progress.md) compare this session with c446418 without
 turning test counts into a package-completion percentage.
 
-Current verification: 4438 differential histories, 564 configured compiled mutations,
+Current verification: 4438 differential histories, 566 configured compiled mutations,
 and 73 composed closed Bend regressions, plus quantified array-storage and
 general payload/question/callback/path helper laws. The Bend toolchain pin is unchanged; Solid is
 now pinned at 225014bf (declares rc.18) and the semantic deviation register is empty. See [verification.md](verification.md).
@@ -919,3 +919,12 @@ thirteen local guard/closure laws). Observable/interop and object unsubscribe
 remain unfinished. Thirteen new compiled negative controls configure 564
 variants (469 finite, 95 kernel). All earlier programme domains/budgets stand.
 No new bug, patch, upstream report or semantic deviation is added.
+
+The [arbitrary-value proof extension](from-values.md) changes no runtime. Six
+new roots quantify both complete from lifecycles over every R.Value and prove
+their exact payload/cleanup/cancellation results, with bridges retaining the
+ordinary families and sufficient budgets. 36 separate native/executable
+controls check 3,708 prefixes, including function identity and self-iterable
+data. Two targeted kernel variants bring configuration to 566 (469 finite,
+97 kernel); the frozen 551 direct-subscription receipt is recorded separately.
+Arbitrary arena-token validity and arbitrary async histories remain open.

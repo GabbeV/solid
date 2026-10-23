@@ -21,7 +21,7 @@ remains empty.
 | Collection helper | Array payloads/repeat unported | Typed arrays, production repeat and mapArray keyed:false row-signal/staged-commit/abort paths through the existing core; plain identity-keyed matching and small moves; extracted keys and formal-arity-selected reactive index accessors |
 | Public comparison corpus | 2,348 histories | 4,438 histories, plus separate native scheduling and finite memo-boundary controls |
 | Closed semantic regressions | 56 | 73 positive regressions; two formerly preserved bugs now pass their merged fixes |
-| Compiled mutation checks | 116 | 564 configured (469 finite, 95 kernel); frozen preceding sweep receipts and focused new controls are tracked separately |
+| Compiled mutation checks | 116 | 566 configured (469 finite, 97 kernel); frozen preceding sweep receipts and focused new controls are tracked separately |
 
 Implementation additions and semantic proofs are separate forms of progress.
 Differential histories compare behavior with pinned Solid; mutation checks test
@@ -503,3 +503,12 @@ It adds a complete ordinary-payload lifecycle proof with an unresolved inner
 Promise and canceled outer pull, plus thirteen local laws. 204 public histories
 and 384 separate protocol controls support correspondence. This extends
 implementation and proof coverage together; arbitrary async histories stay open.
+
+The [arbitrary-value proof extension](from-values.md) changes no runtime. Six
+new roots quantify both complete from lifecycles over every R.Value and prove
+their exact payload/cleanup/cancellation results, with bridges retaining the
+ordinary families and sufficient budgets. 36 separate native/executable
+controls check 3,708 prefixes, including function identity and self-iterable
+data. Two targeted kernel variants bring configuration to 566 (469 finite,
+97 kernel); the frozen 551 direct-subscription receipt is recorded separately.
+Arbitrary arena-token validity and arbitrary async histories remain open.

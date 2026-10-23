@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "sourceCommit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "runtimeBaselineCheckpoint": "8353373f0003ca66b1611ff6972e447e1c6bb28f",
+  "runtimeAndHostUnchanged": true,
+  "activeDeviationIds": [],
+  "publicHistoryCount": 4438,
+  "closedRegressionCount": 73,
+  "newRoots": 6,
+  "domain": "Every R.Value for the fixed direct subscription (>=120) and wrapped iterable (>=84) owned lifecycle families",
+  "allPriorDomainsBudgetsRetained": true,
+  "inputBridges": 2,
+  "finiteControls": {
+    "count": 36,
+    "actualPrefixes": 3708,
+    "budgets": "exact threshold, threshold+1, threshold+60",
+    "nativeValueAndFunctionIdentity": true
+  },
+  "negative": {
+    "newKernelVariants": 2,
+    "configured": 566,
+    "finite": 469,
+    "kernel": 97,
+    "frozenDirectSubscriptionCompleteReceipt": "tracking/reviews/from-subscriptions-complete-negative.json",
+    "freshComplete566Sweep": false,
+    "compilationResourceFailuresCredited": false
+  },
+  "selectorCounterexamples": [
+    {
+      "name": "from value kernel loses function-valued data",
+      "ordinaryFiniteControls": 13,
+      "actualOrdinaryValuesRetained": true,
+      "lostValue": {
+        "$": "ProgramReference",
+        "callback": 2
+      },
+      "actualChangedResult": {
+        "$": "Undefined"
+      },
+      "kernelRejectRecordedSeparately": true
+    },
+    {
+      "name": "from iterable value kernel loses iterable-valued data",
+      "ordinaryFiniteControls": 13,
+      "actualOrdinaryValuesRetained": true,
+      "lostValue": {
+        "$": "AsyncValue",
+        "identity": 2
+      },
+      "actualChangedResult": {
+        "$": "Undefined"
+      },
+      "kernelRejectRecordedSeparately": true
+    }
+  ],
+  "draftFailuresCredited": false,
+  "limits": [
+    "Arena-dependent token validity is separate",
+    "No arbitrary graph/async-history progress theorem",
+    "No JS encoding/compiler or TS equivalence theorem",
+    "No new runtime data kinds, protocol methods or JS syntax"
+  ],
+  "newUpstreamBugOrWorkaround": false,
+  "nativeControls": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-value-controls.log",
+    "sha256": "d3aa5bf7d4a0c60348dc97b938da06bfb683c7bce45d01b0575b1633753262d7"
+  },
+  "negativeFocused": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-value-negative.log",
+    "sha256": "62fc1b9d200bc03da5ccdd286f9843b82a21942d4e81e9582b5426fd1375dc9c"
+  },
+  "executableChangedValueControls": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-value-domain-controls.log",
+    "sha256": "36be039cce3b649e4a7c200c3dd28bf68f77e1d599c1127bba38a551e28be26e"
+  },
+  "directResultKernel": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-value-outcome-kernel.log",
+    "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+  },
+  "wrappedResultKernel": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-iterable-value-outcome-kernel.log",
+    "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+  },
+  "bridgeKernel": {
+    "passed": true,
+    "log": "/workspace/scratch/night-from-value-bridges.log",
+    "sha256": "9cca7ac039862238b37636be8493a8672ec5f87093313482468b37a759c8d5d4"
+  }
+}

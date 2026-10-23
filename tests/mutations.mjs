@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["from value kernel loses function-valued data", "representation/records.bend", "      latest\n", "      match latest:\n        case ProgramReference{callback}: Undefined{}\n        case other: other\n", "tests/proof-properties.mjs", "FromSubscription.latest", "from-value-outcome"],
+  ["from iterable value kernel loses iterable-valued data", "representation/records.bend", "      syncValue\n", "      match syncValue:\n        case AsyncValue{identity}: Undefined{}\n        case other: other\n", "tests/proof-properties.mjs", "StreamState.syncValue", "from-iterable-value-outcome"],
+
   ["from wrap kernel reopens cached deferred iterator", "runtime/core.bend", "_ => B.Bundle{w, DeferredStream.iterator(w, source)}", "_ => IteratorInput.open(w, source)", "tests/proof-properties.mjs", "fromOpenState", "from-wrap-laws"],
   ["from wrap loses bare value", "runtime/from-wrap.bend", "case other: B.Bundle{w, other}", "case other: B.Bundle{w, R.BareNext{True{}, R.Undefined{}}}", "tests/from-iterables.mjs", "wrapInput"],
   ["from wrap fails to register pending resolver", "runtime/from-wrap.bend", "B.append(Nat, R.FromWrapped.pending(s), [output])", "R.FromWrapped.pending(s)", "tests/from-iterables.mjs", "wrapInput"],

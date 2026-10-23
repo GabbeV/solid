@@ -27,8 +27,8 @@ production flags are in upstream/pins.json. Vendored files match the reviewed pi
   states are branch probes, not arbitrary public programs. In-memory test exports
   expose private state/reset it; source function bodies and vendored files stay
   unchanged. Direct closure tests invoke the actual installed source callback.
-- mutations configures 564 isolated source-changing copies:
-  469 finite differential/structural variants and 95 kernel proof-property
+- mutations configures 566 isolated source-changing copies:
+  469 finite differential/structural variants and 97 kernel proof-property
   variants. The frozen preceding 539-variant rc.18 checkpoint has a complete
   receipt at reviews/solid-225014bf-complete-negative.json; twelve new focused
   subscription controls are compiled and rejected separately. The previous workaround variants now reintroduce fixed bugs; new variants
@@ -529,3 +529,12 @@ Wrapped from additionally checks 384 concurrent-pull/cancellation method
 controls, 14 complete programmes with 84 prefix comparisons each, and fifteen
 new quantified roots. See [the precise scope](from-iterables.md); counts do
 not imply a package-completion percentage or a general async-progress theorem.
+
+The [arbitrary-value proof extension](from-values.md) changes no runtime. Six
+new roots quantify both complete from lifecycles over every R.Value and prove
+their exact payload/cleanup/cancellation results, with bridges retaining the
+ordinary families and sufficient budgets. 36 separate native/executable
+controls check 3,708 prefixes, including function identity and self-iterable
+data. Two targeted kernel variants bring configuration to 566 (469 finite,
+97 kernel); the frozen 551 direct-subscription receipt is recorded separately.
+Arbitrary arena-token validity and arbitrary async histories remain open.

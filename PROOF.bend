@@ -1,3 +1,10 @@
+import ./proof/from-value-driver.bend as FromValueDriver
+import ./proof/from-value-program.bend as FromValueProgram
+import ./proof/from-value-outcome.bend as FromValueOutcome
+import ./proof/from-iterable-value-driver.bend as FromIterableValueDriver
+import ./proof/from-iterable-value-program.bend as FromIterableValueProgram
+import ./proof/from-iterable-value-outcome.bend as FromIterableValueOutcome
+import ./proof/from-value-bridges.bend as FromValueBridges
 import ./proof/from-wrap-laws.bend as FromWrapLaws
 import ./proof/from-iterable-driver.bend as FromIterableDriver
 import ./proof/from-iterable-program.bend as FromIterableProgram
@@ -1187,3 +1194,21 @@ def Laws.from_iterable_program_cancels_pull(input, extra):
 
 def Laws.from_wrap_cached_iterator(w, rest, stack, source, ordinary, cached):
   FromWrapLaws.cachedIterator(w, rest, stack, source, ordinary, cached)
+
+def Laws.from_value_program_complete(input, extra):
+  FromValueProgram.complete(input, extra)
+
+def Laws.from_value_program_result(input, extra):
+  FromValueOutcome.result(input, extra)
+
+def Laws.from_iterable_value_program_complete(input, extra):
+  FromIterableValueProgram.complete(input, extra)
+
+def Laws.from_iterable_value_program_result(input, extra):
+  FromIterableValueOutcome.result(input, extra)
+
+def Laws.from_value_ordinary_bridge(input):
+  FromValueBridges.subscription(input)
+
+def Laws.from_iterable_value_ordinary_bridge(input):
+  FromValueBridges.iterable(input)
