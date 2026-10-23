@@ -39,5 +39,123 @@
   },
   "filed": false,
   "patchInstalled": false,
-  "publicTranslationEvidence": "tests/deferred-refetch-stream.mjs; preserved first-next/factory-error cases and passing controls"
+  "publicTranslationEvidence": "tests/deferred-refetch-stream.mjs; preserved first-next/factory-error cases and passing controls",
+  "latestRevalidation": {
+    "sourceCommit": "cc3ee74099f5a3113748703d969460a867e7695c",
+    "date": "2026-10-23",
+    "nativeCases": 120,
+    "browserCases": 6,
+    "existing4112RegressionTestsPassed": 7,
+    "signalsSourcesUnchangedFromPin": true,
+    "exactFiledIssueOrPullFound": false,
+    "relatedIssue": "https://github.com/solidjs/solid/issues/4112",
+    "relatedFixes": [
+      4158,
+      4231
+    ],
+    "logs": {
+      "nativeDevelopment": {
+        "path": "/workspace/scratch/protocol-latest-cc3ee740-development.json",
+        "sha256": "209691bd0bb0906315fb66ad3a683484f736770f4c9ec7940d37f3a30923ee21"
+      },
+      "nativeProduction": {
+        "path": "/workspace/scratch/protocol-latest-cc3ee740-production.json",
+        "sha256": "209691bd0bb0906315fb66ad3a683484f736770f4c9ec7940d37f3a30923ee21"
+      },
+      "nativeObserve": {
+        "path": "/workspace/scratch/protocol-latest-cc3ee740-observe.json",
+        "sha256": "209691bd0bb0906315fb66ad3a683484f736770f4c9ec7940d37f3a30923ee21"
+      },
+      "browser": {
+        "path": "/workspace/scratch/protocol-latest-cc3ee740-browser.json",
+        "sha256": "c0eed976ccbc21e969517d726cc3b0446591eb2e9857473b53fb9a6690300781"
+      },
+      "oldReportRegression": {
+        "path": "/workspace/scratch/protocol-latest-cc3ee740-4112-tests.log",
+        "sha256": "7c8fb367a897f5dc91e76954b5693aba9a6e2bacf2e1c8561f8c1510e423c098"
+      }
+    }
+  },
+  "candidate": {
+    "baseCommit": "cc3ee74099f5a3113748703d969460a867e7695c",
+    "worktree": "/workspace/solid-deferred-protocol-candidate",
+    "published": true,
+    "fix": "Extend existing compute try/catch through returned-result protocol setup and initial serving; same NotReady parking, flight retirement and original rethrow.",
+    "newTests": 26,
+    "baselineFailures": 13,
+    "baselinePassingControls": 13,
+    "focusedTestsPassed": 100,
+    "fullSuite": {
+      "filesPassed": 342,
+      "testsPassed": 5573,
+      "expectedFailures": 2,
+      "skipped": 2
+    },
+    "fixedNativeCases": 120,
+    "fixedBrowserCases": 6,
+    "noNewWrapperOrCatchAllocation": true,
+    "focusedSize": [
+      {
+        "version": "base",
+        "name": "createDeferred",
+        "minified": 19345,
+        "brotli": 7286
+      },
+      {
+        "version": "base",
+        "name": "createDeferred+createSignal",
+        "minified": 19874,
+        "brotli": 7456
+      },
+      {
+        "version": "candidate",
+        "name": "createDeferred",
+        "minified": 19344,
+        "brotli": 7271
+      },
+      {
+        "version": "candidate",
+        "name": "createDeferred+createSignal",
+        "minified": 19873,
+        "brotli": 7431
+      }
+    ],
+    "logs": {
+      "focused": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-focused.log",
+        "sha256": "a5606f4d6df4719b69dd79006955620092106a28d51bb373cdd2280c3d5fa823"
+      },
+      "suite": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-suite.log",
+        "sha256": "9829b46acb20cf49efbed22bdacab4a45a275de5241981349488d4d2fc39b16a"
+      },
+      "types": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-types.log",
+        "sha256": "537eedd4cae947f51cb3c32dc2c774cb40f67c4c88f9b2027232e40cb612bb45"
+      },
+      "build": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-build.log",
+        "sha256": "76800ff1ec24aac95c3cde5e0d077dafc5bc8297819623857a27beedb360a332"
+      },
+      "browser": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-browser.log",
+        "sha256": "d827dee58ac79742ce21d72540b8e277dc0cc68cc44d3c6950e55c284ebdbf0b"
+      },
+      "size": {
+        "path": "/workspace/scratch/deferred-protocol-candidate-size.json",
+        "sha256": "374255a84787ce88eed320d26822920908b4582c9f2d5e1e5b6c7066d9a9be14"
+      }
+    },
+    "files": {
+      "packages/signals/src/deferred.ts": "5d1f68b8b56112a9b9466a25c136dfed5256150ebf2363b6756fe697ec6d7d53",
+      "packages/signals/tests/deferred-protocol-error-flight.test.ts": "e0a36df97ddabd683d3ea9e65bbedb84a4d72a1ebec33aad3d1d642c4a5d5bed"
+    },
+    "branch": "fix/deferred-protocol-flight",
+    "publishedCommit": "58d3d52de9c02bff038e8a7ec30823a0e9a4f26b",
+    "submitted": false,
+    "changeset": true,
+    "standardSignalsSizeScenariosUnchanged": 4,
+    "prettierPassed": true,
+    "releaseInvariantsPassed": true
+  }
 }
