@@ -110,6 +110,8 @@ it("also reaches the optimistic leaf when the root path is first observed during
       }
     );
     refresh = () => setRefreshing(true);
+    // Keep the guess alive while mounting. A bare setter's late-mount
+    // behavior is separate from traversing an active optimistic override.
     const write = action(function* () {
       setLocal(draft => {
         draft[0].value = 1;

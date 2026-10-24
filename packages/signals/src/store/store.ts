@@ -2031,12 +2031,15 @@ const traps: ProxyHandler<StoreTarget> = {
     if (
       optHooks !== null &&
       target.ch &&
-      optRead(target) &&
+      target.fam?.overlaid?.size &&
       verdict === null &&
-      target.fam!.overlaid?.size
+      optRead(target)
     ) {
       const inner: StoreTarget = (src as any)[$TARGET];
       const fw = inner?.fam?.node;
+      // Only unwrap a directly backed source. An intervening derived store
+      // still has its own read-through and pending gates; this does not fix
+      // that extra layer by recursively bypassing those gates.
       if (fw?._statusFlags === STATUS_PENDING && !inner.ch) {
         const frame = committed(inner);
         if (
