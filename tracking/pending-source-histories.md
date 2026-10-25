@@ -34,9 +34,9 @@ reject cache, subscriber-shape and node-arena corruption during removal.
 [Validation](reviews/pending-source-histories-validation.json).
 
 These are source-Set subprotocol histories. Valid IDs alone do not prove that a
-full public callback/flight controller can generate every event order. General
-fresh-carrier membership is proved separately; its extension-zero/auxiliary-arena
-premises have not yet been derived from the arbitrary-sized memo/render graph.
+full public callback/flight controller can generate every event order. The [constructor context](registration-context.md) now derives the fresh-carrier
+extension-zero/auxiliary-arena premises for the default parentless memo/render
+family.
 Status/readiness, full once-only action/flight accounting, arbitrary topology,
 owner callbacks and coordinated flush/reveal remain open. Eventual host delivery
 and fairness are not asserted.

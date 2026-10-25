@@ -1,3 +1,7 @@
+import ./proof/node-pointer-observation.bend as NodePointers
+import ./proof/graph-extension-pointers.bend as GraphExtensionPointers
+import ./proof/memo-render-pending-context.bend as RegistrationContext
+import ./proof/memo-render-registration.bend as ConstructedRegistration
 import ./proof/pending-source-history.bend as SourceHistory
 import ./proof/pending-command-history.bend as SourceCommands
 import ./proof/memo-render-source-history.bend as ConstructedSources
@@ -4468,3 +4472,120 @@ law actual_memo_render_source_commands_retain_committed_observation:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 10n, ConstructedSources.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+
+
+law fresh_graph_allocation_retains_extension_pointers:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  {NodePointers.observe(GraphAllocation.source(w, root, leaf)) == NodePointers.observe(w) : List<&2, Nat>}
+
+
+law actual_memo_render_construction_supplies_pending_registration_context:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  RegistrationContext.Context<w, MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), DefaultNode.index(MemoRender.memo(w, sourceExpr)), B.length(R.Link, links)>
+
+
+law actual_memo_render_source_registration_is_constructed:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  ConstructedRegistration.Registered<ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), DefaultNode.index(MemoRender.memo(w, sourceExpr)), B.length(R.Link, links)>
+
+
+law actual_memo_render_registration_constructs_bounded_settlement_return:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+
+
+law actual_memo_render_registration_retains_committed_observation:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n, ConstructedRegistration.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+
+
+law actual_memo_render_registration_then_removal_retires_source:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.hasSource(CarrierRoundTrip.removed(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(MemoRender.memo(w, sourceExpr)), DefaultNode.index(w)), DefaultNode.index(MemoRender.memo(w, sourceExpr)), DefaultNode.index(w)) == False{} : Bool}

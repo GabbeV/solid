@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "021453c3649526dcce7bf4e6fed9d21af8351b27",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 547,
+  "newRoots": 6,
+  "composedRoots": 553,
+  "allEarlierTheoremDomainsRetained": true,
+  "constructorToFreshCarrierPremiseGapClosedFor": "default parentless memo/render raw-helper family",
+  "derivedAfterActualConstruction": [
+    "valid target/source identities",
+    "zero leaf extension pointer",
+    "retained extension and pending-Set arenas",
+    "initial sentinels transported to registration input",
+    "source ID nonzero from actual allocation",
+    "retained one-edge graph and actual source membership"
+  ],
+  "initialContextPremises": [
+    "Healthy fault",
+    "nonempty node/link arena",
+    "null computed-parent identity",
+    "blank extension zero and empty Set zero"
+  ],
+  "desiredFinalStateOrMembershipEquationPremises": false,
+  "typedConstructedRegistrationCases": 144,
+  "actualTenStepReturns": 144,
+  "actualDriverSplits": 432,
+  "javascriptSuppliesEqualityEvidence": false,
+  "newFocusedKernelRejections": 3,
+  "configuredMutations": 650,
+  "finiteMutations": 484,
+  "kernelMutations": 166,
+  "completeFrozenSweep": "tracking/reviews/complete-633-negative.json",
+  "focusedVariantsAfterFrozen633": 17,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "callback evaluation/full public flight-controller reachability",
+    "Set membership implies pending-status/readiness",
+    "general final Core membership/status",
+    "global identity/once-only action-flight ledger",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "graph-extension-pointers-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-extension-pointers-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "constructor-auxiliary-frame-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/constructor-auxiliary-frame-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-pending-context-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-pending-context-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-registration-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-registration-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-registration-fixture-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-registration-fixture-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "registration-context-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/registration-context-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "registration-context-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/registration-context-controls1.log",
+      "sha256": "deb8c5b4bc2bb2cc82be47d1b8957e1d697c85e707e8227e68cfe1eda05d6abc"
+    },
+    "context-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/context-mutation-targets.log",
+      "sha256": "e33a0bf95cc27b24f7d8bb8fda852517159d4f0bab4dfad769de3572a5dbf7b6"
+    },
+    "context-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/context-negatives.log",
+      "sha256": "e328fcb5b1bc0849dc1128c16b580482399e250588b6cb988916b213cd6f03f5"
+    }
+  }
+}

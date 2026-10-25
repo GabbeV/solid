@@ -1,3 +1,7 @@
+import ./proof/node-pointer-observation.bend as NodePointers
+import ./proof/graph-extension-pointers.bend as GraphExtensionPointers
+import ./proof/memo-render-pending-context.bend as RegistrationContext
+import ./proof/memo-render-registration.bend as ConstructedRegistration
 import ./proof/pending-source-history.bend as SourceHistory
 import ./proof/pending-command-history.bend as SourceCommands
 import ./proof/memo-render-source-history.bend as ConstructedSources
@@ -1962,3 +1966,27 @@ def Laws.actual_memo_render_source_commands_construct_bounded_settlement_return(
 
 def Laws.actual_memo_render_source_commands_retain_committed_observation(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack):
   ConstructedSources.frame(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack)
+
+
+def Laws.fresh_graph_allocation_retains_extension_pointers(w, root, leaf):
+  GraphExtensionPointers.allocated(w, root, leaf)
+
+
+def Laws.actual_memo_render_construction_supplies_pending_registration_context(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena):
+  RegistrationContext.build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena)
+
+
+def Laws.actual_memo_render_source_registration_is_constructed(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
+  ConstructedRegistration.prepare(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)
+
+
+def Laws.actual_memo_render_registration_constructs_bounded_settlement_return(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack):
+  ConstructedRegistration.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack)
+
+
+def Laws.actual_memo_render_registration_retains_committed_observation(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack):
+  ConstructedRegistration.frame(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack)
+
+
+def Laws.actual_memo_render_registration_then_removal_retires_source(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
+  ConstructedRegistration.retired(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)

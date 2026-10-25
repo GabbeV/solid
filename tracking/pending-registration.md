@@ -42,8 +42,8 @@ Bend/kernel limits and all prior domains/budgets are unchanged. No semantic
 deviation or new upstream bug was introduced or found by this checkpoint.
 
 The arbitrary-World node-constructor and graph family, registration preservation
-and fresh carrier contracts are reusable pieces. The compact fixture does not yet
-compose all fresh-carrier premises from the arbitrary-sized memo/render constructor
+and fresh carrier contracts are reusable pieces. The [constructor context](registration-context.md) now composes the fresh-carrier
+premises from the arbitrary-sized default parentless memo/render constructor
 family. Callback evaluation, global source-identity validity, complete action/
 flight accounting, owned construction/options and coordinated flush/reveal remain
 open. Set add/delete safety is not a once-only flight or eventual-delivery theorem.

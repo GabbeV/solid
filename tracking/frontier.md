@@ -305,3 +305,16 @@ new kernel faults are rejected. This is a helper subprotocol, with ten Core task
 of room after the history; public controller reachability, general final readiness,
 full accounting and coordinated reveal remain open. Runtime/source/host/limits
 and prior domains are unchanged.
+
+
+## General constructor-to-registration context (2026-10-25)
+
+The [context bridge](registration-context.md) closes the fresh-carrier premise
+gap for actual default parentless memo/render allocation/setup/link. It derives
+valid IDs, zero leaf extension pointer and retained auxiliary arenas, then
+constructs membership for the actual source registration result and the bounded
+return/frame/helper-retirement corollaries. Six roots extend 547 to 553; 144
+constructed registration cases and 432 driver splits pass, with three new kernel
+fault rejections. Initial context/sentinels remain explicit; callback/controller
+reachability, status/readiness, full accounting and coordinated reveal remain
+open. Runtime/source/host/limits and previous domains are unchanged.

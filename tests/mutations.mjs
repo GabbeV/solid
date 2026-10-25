@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["registration context kernel changes fresh extension identity", "runtime/graph-state.bend", "+w = B.store_node(w, sub, R.Node.with_depsTail(B.node(w, sub), id))", "+w = B.store_node(w, sub, R.Node.with_x(R.Node.with_depsTail(B.node(w, sub), id), 1n))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],
+  ["registration context kernel discards extension arena during linking", "runtime/graph-state.bend", "B.bump(w)", "B.bump(R.World.with_extensions(w, []))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],
+  ["registration context kernel discards pending Set arena during linking", "runtime/graph-state.bend", "B.bump(w)", "B.bump(R.World.with_pendingSets(w, []))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],
+
   ["source history kernel changes cache during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = B.store_node(B.store_pendingSet(w, set, xs), id, R.Node.with_value(B.node(w, id), R.Undefined{}))", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],
   ["source history kernel changes subscriber shape during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = B.store_node(B.store_pendingSet(w, set, xs), id, R.Node.with_subs(B.node(w, id), 1n))", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],
   ["source history kernel loses node allocation during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = R.World.with_nodes(B.store_pendingSet(w, set, xs), [])", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],

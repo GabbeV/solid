@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 647 = 484 finite + 163 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 650 = 484 finite + 166 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
-| Later negative evidence | Fourteen focused kernel variants after frozen633: three graph, three node, five registration and three history faults; current647 is not a complete sweep |
+| Later negative evidence | Seventeen focused kernel variants after frozen633: graph/node/registration/history/context faults; current650 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -344,3 +344,16 @@ new kernel faults are rejected. This is a helper subprotocol, with ten Core task
 of room after the history; public controller reachability, general final readiness,
 full accounting and coordinated reveal remain open. Runtime/source/host/limits
 and prior domains are unchanged.
+
+
+## General constructor-to-registration context (2026-10-25)
+
+The [context bridge](registration-context.md) closes the fresh-carrier premise
+gap for actual default parentless memo/render allocation/setup/link. It derives
+valid IDs, zero leaf extension pointer and retained auxiliary arenas, then
+constructs membership for the actual source registration result and the bounded
+return/frame/helper-retirement corollaries. Six roots extend 547 to 553; 144
+constructed registration cases and 432 driver splits pass, with three new kernel
+fault rejections. Initial context/sentinels remain explicit; callback/controller
+reachability, status/readiness, full accounting and coordinated reveal remain
+open. Runtime/source/host/limits and previous domains are unchanged.
