@@ -1,3 +1,5 @@
+import ./proof/pending-notification-status.bend as GeneralStatus
+import ./proof/pending-source-status-frame.bend as ErrorStatusFrame
 import ./proof/action-wait-allocation.bend as WaitAllocation
 import ./proof/action-wait-range.bend as WaitRange
 import ./proof/action-wait-construction.bend as WaitConstruction
@@ -2132,3 +2134,21 @@ def Laws.created_action_wait_duplicate_retains_actual_current_machine(values, pr
 
 def Laws.constructed_wait_ignores_then_throw_after_settlement(w, action, result, events, rest, stack, error, valid):
   WaitHistory.constructedThrow(w, action, result, events, rest, stack, error, valid)
+
+def Laws.valid_pending_notification_selects_every_incoming_status_word(w,node,source,serial,valid):
+  GeneralStatus.selected(w,node,source,serial,valid)
+
+def Laws.valid_pending_notification_sets_pending_bit(w,node,source,serial,valid):
+  GeneralStatus.pending(w,node,source,serial,valid)
+
+def Laws.valid_pending_notification_clears_error_bit(w,node,source,serial,valid):
+  GeneralStatus.errorCleared(w,node,source,serial,valid)
+
+def Laws.pending_error_bookkeeping_preserves_all_status_words(w,node,source,error):
+  ErrorStatusFrame.setError(w,node,source,error)
+
+def Laws.pending_selected_status_always_pending(flags):
+  GeneralStatus.selectedPending(flags)
+
+def Laws.pending_selected_status_never_error(flags):
+  GeneralStatus.selectedError(flags)

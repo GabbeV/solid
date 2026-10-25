@@ -17,7 +17,7 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 664 = 484 finite + 180 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 666 = 484 finite + 182 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
 | Later negative evidence | Thirty-one later focused kernel variants at their individual checkpoints, including idle disposal and notification; current664 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -413,3 +413,34 @@ extend 572 to 585; 368 typed histories, 736 guard/368 catch checks, six native
 sequences and five focused negatives pass. Full generator/once-only debt/flush/
 reveal remain open. Pending status composition's resource-stopped attempts are
 archived explicitly; no runtime/source/toolchain/domain/budget change.
+
+## Every incoming status word (2026-10-25)
+
+The new `pending-notification-status.bend` contract derives the actual
+`storeStatus` pending-branch result from only a valid selected node and a
+nonzero incoming NotReady source. The incoming U32 word is arbitrary, including
+an existing error or no-value status. No carrier snapshot or no-old-error premise
+is needed for this **status projection**. The result is the source selection
+`PENDING | (NO_VALUE ? UNINITIALIZED : old & UNINITIALIZED)`.
+
+`pending-source-status-frame.bend` separately proves all node status words survive
+actual pending-error bookkeeping. Word-mask induction (at arbitrary bit width,
+lifted to U32) proves the selected pending bit true and error bit false. These
+compose with the actual operation, rather than checking an enumerated list of
+flags. Earlier membership/error-identity contracts retain their stronger arena
+premises and unchanged domains.
+
+The private/native controls prepare native-consistent old-error extensions; the
+initial failed private setup set only an error flag with no extension and was
+corrected as an adapter-domain mistake, not an upstream bug. High-bit and all
+low-bit combinations cover fresh/allocated/duplicate/other-source cases. Neither
+these controls nor the new status theorem establishes public callback reachability,
+shown-error identity, accessor `isPending` policy, successful settlement or final
+renderer reveal. In particular, a stored pending bit is not alone a theorem about
+what an accessor displays. Two focused source corruptions check preservation of
+the incoming word while capturing an old shown error and rejection of retaining
+the old error bit.
+
+Six roots extend 585 to 591. Runtime, source, host, theorem domains and checker
+limits are unchanged. Complete664 is running separately on frozen fb4dd44b; the
+two newer focused faults are not included in that historical sweep.

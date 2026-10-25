@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "fb4dd44b14135e76f0b4a7bc1b38a4cfb6564b8a",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "previousRootsRetained": 585,
+  "newRoots": 6,
+  "composedRoots": 591,
+  "allIncomingU32StatusWords": true,
+  "statusPremises": [
+    "valid selected node",
+    "nonzero NotReady source represented as 1+source"
+  ],
+  "carrierSnapshotOrNoErrorPremiseForStatus": false,
+  "pendingAndErrorBitCorollaries": true,
+  "bitAlgebra": "induction over arbitrary-width Word then U32 lift; no numeric enumeration",
+  "earlierMembershipIdentityDomainsRetained": true,
+  "privateNativeControlsExpected": 240,
+  "privateSetupCorrection": "ERROR implies a native extension; initial manual flags-only state corrected before crediting controls",
+  "focusedKernelRejections": 2,
+  "configuredMutations": 666,
+  "finiteMutations": 484,
+  "kernelMutations": 182,
+  "completeCurrentSweep": false,
+  "frozenComplete664Sweep": "fb4dd44b, running separately; not evidence for later variants",
+  "kernelAndToolchainLimitsUnchanged": true,
+  "activeDeviationIds": []
+}

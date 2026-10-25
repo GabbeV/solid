@@ -1,3 +1,5 @@
+import ./proof/pending-notification-status.bend as GeneralStatus
+import ./proof/pending-source-status-frame.bend as ErrorStatusFrame
 import ./proof/action-wait-allocation.bend as WaitAllocation
 import ./proof/action-wait-range.bend as WaitRange
 import ./proof/action-wait-construction.bend as WaitConstruction
@@ -4928,3 +4930,42 @@ law constructed_wait_ignores_then_throw_after_settlement:
   for +error: R.Value
   for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
   {Core.actionYieldThrow(WaitHistory.afterRegistered(w,action,result,events),rest,stack,WaitAllocation.index(w),R.CallbackThrown{error}) == Core.Machine{R.World.with_fault(WaitHistory.afterRegistered(w,action,result,events),R.Healthy{}),rest,stack} : Core.Machine}
+
+law valid_pending_notification_selects_every_incoming_status_word:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)) == SourceStatusFrame.select(R.Node.status(B.node(w,node))) : U32}
+
+law valid_pending_notification_sets_pending_bit:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)),K.STATUS_PENDING()) == True{} : Bool}
+
+law valid_pending_notification_clears_error_bit:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)),K.STATUS_ERROR()) == False{} : Bool}
+
+law pending_error_bookkeeping_preserves_all_status_words:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +error: R.Value
+  {SourceStatusFrame.observe(RuntimePendingState.setPendingError(w,node,source,error)) == SourceStatusFrame.observe(w) : List<&2,U32>}
+
+law pending_selected_status_always_pending:
+  for +flags: U32
+  {B.has(SourceStatusFrame.select(flags),K.STATUS_PENDING()) == True{} : Bool}
+
+law pending_selected_status_never_error:
+  for +flags: U32
+  {B.has(SourceStatusFrame.select(flags),K.STATUS_ERROR()) == False{} : Bool}

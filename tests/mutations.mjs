@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["pending status kernel preserves old error bit on reask", "runtime/status.bend", "B.set(K.STATUS_PENDING(), carried)", "B.set(B.set(K.STATUS_PENDING(), carried), U32.and(R.Node.status(B.node(w, id)), K.STATUS_ERROR()))", "tests/proof-properties.mjs", "storeStatus", "pending-status-negative-probes"],
+  ["pending status kernel clears input status while capturing shown error", "runtime/status.bend", "B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id))))", "B.store_node(B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id)))), id, R.Node.with_status(B.node(w, id), 0))", "tests/proof-properties.mjs", "storeStatus", "pending-status-negative-probes"],
+
   ["wait construction kernel fails to clear a caught post callback throw", "runtime/core.bend", "+w = R.World.with_fault(w, R.Healthy{})", "+w = w", "tests/proof-properties.mjs", "actionYieldCaught", "action-wait-negative-probes"],
 
   ["wait construction kernel reuses an observer identity", "runtime/flight.bend", "+id = B.length(R.AsyncObserver, R.World.asyncObservers(w))", "+id = Nat.sub(B.length(R.AsyncObserver, R.World.asyncObservers(w)), 1n)", "tests/proof-properties.mjs", "newObserver", "action-wait-negative-probes"],
