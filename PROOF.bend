@@ -1,3 +1,4 @@
+import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
 import ./proof/action-first-retirement.bend as FirstRetirement
 import ./proof/action-first-constructed.bend as FirstDelivery
@@ -2247,3 +2248,15 @@ def Laws.constructed_terminal_delivery_retires_single_obligation_and_output(valu
 
 def Laws.retired_delivery_retains_exact_machine_on_later_duplicates(values,rest,stack,rejected,value,events,lateRejected,lateValue):
   FirstRetirement.duplicate(values,rest,stack,rejected,value,events,lateRejected,lateValue)
+
+def Laws.callback_table_helper_histories_retain_outer_world(events,w):
+  HelperContext.history(events,w)
+
+def Laws.allocated_actor_stays_valid_through_helper_prefix(values,prefix):
+  HelperContext.beforeAllocated(values,prefix)
+
+def Laws.allocated_actor_full_cell_survives_helper_prefix(values,prefix):
+  HelperContext.beforeCell(values,prefix)
+
+def Laws.retired_action_stays_zero_through_helper_suffix(values,rest,stack,rejected,value,events):
+  HelperContext.afterRetirementZero(values,rest,stack,rejected,value,events)

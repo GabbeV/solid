@@ -54,3 +54,16 @@ with the corrected actor binding. Four new focused kernel faults are rejected.
 The complete664 historical receipt remains separate from11 later focused faults;
 current675 is not a complete sweep. No active runtime/source/host/limit or
 semantic-policy change.
+
+## Actor context across helper histories
+
+[The outer-context invariant](action-helper-context.md) masks only the four actual
+callback tables and retains every other World field through arbitrary finite
+helper histories. Allocated actor room and the full captured cell now follow
+after each permitted constructor prefix, and actual terminal retirement's zero
+count survives later helper suffixes. Four roots extend618 to622; stronger finite
+outer-World observations pass. Three new context corruptions and a fresh run of
+all14 later faults are rejected. Full664 remains a separately frozen receipt;
+current678 is not claimed as a complete sweep. Runtime/source/host/limits remain
+unchanged. General pre-arrival controller composition and full ledger/flush/
+reveal remain open.

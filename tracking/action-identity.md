@@ -40,3 +40,16 @@ retirement cases,33 deliberate wrong-alias traps and22 native terminal-generator
 controls. Four focused runtime faults reject a wrong capture, omitted mark,
 unretired debt and adoption of a thenable rejection reason. Runtime, source,
 host codecs, execution budgets and kernel limits are unchanged.
+
+## Actor context across helper histories
+
+[The outer-context invariant](action-helper-context.md) masks only the four actual
+callback tables and retains every other World field through arbitrary finite
+helper histories. Allocated actor room and the full captured cell now follow
+after each permitted constructor prefix, and actual terminal retirement's zero
+count survives later helper suffixes. Four roots extend618 to622; stronger finite
+outer-World observations pass. Three new context corruptions and a fresh run of
+all14 later faults are rejected. Full664 remains a separately frozen receipt;
+current678 is not claimed as a complete sweep. Runtime/source/host/limits remain
+unchanged. General pre-arrival controller composition and full ledger/flush/
+reveal remain open.

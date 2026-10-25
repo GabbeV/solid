@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "fce942027ac18b7cd6a4bb6c7b1407af1276eadf",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "latestNextChecked": "d786bcf6259f5d481dbebda8a1bed7b6c4e00da0",
+  "nextProductionDelta": "none, documentation only",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "previousRootsRetained": 618,
+  "newRoots": 4,
+  "composedRoots": 622,
+  "maskedFields": [
+    "asyncObjects",
+    "asyncObservers",
+    "actionWaits",
+    "hostJobs"
+  ],
+  "allOtherWorldFieldsRetained": true,
+  "actorValidAndFullCellDerivedAfterEveryPrefix": true,
+  "actualRetirementZeroCountRetainedAfterEverySuffix": true,
+  "finiteOrders": {
+    "old": 368,
+    "expanded": 408,
+    "rawClients": 12,
+    "nativeRepeated": 6
+  },
+  "terminalControls": {
+    "actual": 66,
+    "staleMachines": 396,
+    "badAlias": 33,
+    "native": 22
+  },
+  "newFocusedFaults": 3,
+  "freshCombinedLaterFaults": 14,
+  "combinedReceipt": "tracking/reviews/final-14-negative.json",
+  "configuredMutations": 678,
+  "finiteMutations": 484,
+  "kernelMutations": 194,
+  "completeCurrentSweep": false,
+  "frozenCompleteSweep": "664 on fb4dd44b with962 unchanged tracked inputs; actor-binding scope qualified by HARNESS-ACTION-IDENTITY-001",
+  "identityConsumerAudit": [
+    "transaction controls retain create right IDs",
+    "constructed pairs explicitly reserve caller-provided initial arenas",
+    "primitive/legacy alias fixtures intentionally malformed and qualified"
+  ],
+  "limitsUnchanged": true,
+  "activeDeviationIds": []
+}

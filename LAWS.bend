@@ -1,3 +1,4 @@
+import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
 import ./proof/action-first-retirement.bend as FirstRetirement
 import ./proof/action-first-constructed.bend as FirstDelivery
@@ -5177,3 +5178,27 @@ law retired_delivery_retains_exact_machine_on_later_duplicates:
   for +lateRejected: Bool
   for +lateValue: R.Value
   {Core.asyncActionDelivery(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events)),FirstDelivery.tasks(FirstRetirement.after(values,rest,stack,rejected,value,events)),Core.values(FirstRetirement.after(values,rest,stack,rejected,value,events)),1n,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events))),1n)) == FirstRetirement.after(values,rest,stack,rejected,value,events) : Core.Machine}
+
+law callback_table_helper_histories_retain_outer_world:
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +w: R.World
+  {HelperContext.erase(WaitHistory.run(events,w)) == HelperContext.erase(w) : R.World}
+
+law allocated_actor_stays_valid_through_helper_prefix:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Nat.is_lt(AllocatedWaitFixture.action(values),B.length(R.ActionState,R.World.actions(AllocatedWaitFixture.before(values,prefix)))) == True{} : Bool}
+
+law allocated_actor_full_cell_survives_helper_prefix:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Action.get(AllocatedWaitFixture.before(values,prefix),AllocatedWaitFixture.action(values)) == Action.get(AllocatedWaitFixture.initial(values),AllocatedWaitFixture.action(values)) : R.ActionState}
+
+law retired_action_stays_zero_through_helper_suffix:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  for +events: List<&2,WaitHistory.WaitEvent>
+  {R.Transaction.open(B.transaction(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events)),1n)) == 0n : Nat}
