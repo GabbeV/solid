@@ -1,3 +1,6 @@
+import ./proof/pending-notification-carrier.bend as PendingNotification
+import ./proof/pending-notification-fixture.bend as NotificationFixture
+import ./proof/single-carrier-frame.bend as SingleCarrier
 import ./proof/idle-disposal-schedule.bend as IdleDisposal
 import ./proof/pending-carrier-state.bend as CarrierState
 import ./proof/pending-carrier-cycles.bend as CarrierCycles
@@ -4729,3 +4732,63 @@ law queued_computed_disposal_requests_future_flush:
 law empty_unheld_computed_disposal_does_not_request_flush:
   for +value: R.Value
   {R.World.scheduled(IdleDisposal.dispose(value, [])) == False{} : Bool}
+
+
+law actual_pending_notification_constructs_single_carrier:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  SingleCarrier.Single<PendingNotification.notified(w,node,source,serial),node,source>
+
+
+law actual_pending_notification_records_source_membership:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  {RuntimePendingState.hasSource(PendingNotification.notified(w,node,source,serial),node,1n+source) == True{} : Bool}
+
+
+law actual_pending_notification_retains_incoming_error_identity:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  {R.NodeExtension.error(B.extension(PendingNotification.notified(w,node,source,serial),node)) == PendingNotification.error(serial,source) : R.Value}
+
+
+law actual_pending_notification_selects_source_status_bits:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)) == PendingNotification.flags(CarrierState.addWorld(w,node,source),node) : U32}
+
+
+law actual_pending_notification_preserves_committed_content:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  {CommittedStorage.observe(PendingNotification.notified(w,node,source,serial)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law constructed_notification_control_supplies_all_carrier_premises:
+  for +values: List<&2,R.Value>
+  for +value: R.Value
+  for +extensions: List<&2,R.NodeExtension>
+  for +sets: List<&2,List<&2,Nat>>
+  for +incoming: NotificationFixture.Incoming
+  for +serial: Nat
+  SingleCarrier.Single<NotificationFixture.after(values,value,extensions,sets,incoming,serial),NotificationFixture.leaf(values,value,extensions,sets),B.length(R.Node,ConstructedFixture.nodes(values))>

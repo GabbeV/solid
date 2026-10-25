@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "aa5d7d0b3afc786a8b28c580d1b1ada0244c02ce",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "latestNextReviewed": "d786bcf6259f5d481dbebda8a1bed7b6c4e00da0",
+  "newerCommitChanges": [
+    "documentation/performance-experiments.md"
+  ],
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "previousRootsRetained": 564,
+  "newRoots": 6,
+  "composedRoots": 570,
+  "typedConstructorNotificationCases": 120,
+  "pairedNativeLocalResultCases": 120,
+  "javascriptSuppliesEqualityEvidence": false,
+  "incomingErrorStatusBranchIncluded": false,
+  "sourceIdentity": "arbitrary nonzero represented source; typed construction control ties it to allocated memo",
+  "fullEffectNotificationOrPropagationProved": false,
+  "controllerCallbackReachabilityProved": false,
+  "committedContent": "all node committed values, full tree and event trace",
+  "focusedKernelRejections": 4,
+  "largeProbeRssStopsCredited": false,
+  "kernelAndToolchainLimitsUnchanged": true,
+  "oldDomainsAndBudgetsRetained": true,
+  "configuredMutations": 657,
+  "finiteMutations": 484,
+  "kernelMutations": 173,
+  "completeCurrentSweep": false,
+  "historicalCompleteSweep": "tracking/reviews/complete-633-negative.json",
+  "activeDeviationIds": []
+}

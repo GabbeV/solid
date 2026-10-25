@@ -1,3 +1,6 @@
+import ./proof/pending-notification-carrier.bend as PendingNotification
+import ./proof/pending-notification-fixture.bend as NotificationFixture
+import ./proof/single-carrier-frame.bend as SingleCarrier
 import ./proof/idle-disposal-schedule.bend as IdleDisposal
 import ./proof/pending-carrier-state.bend as CarrierState
 import ./proof/pending-carrier-cycles.bend as CarrierCycles
@@ -2038,3 +2041,27 @@ def Laws.queued_computed_disposal_requests_future_flush(value, head, tail):
 
 def Laws.empty_unheld_computed_disposal_does_not_request_flush(value):
   IdleDisposal.empty(value)
+
+
+def Laws.actual_pending_notification_constructs_single_carrier(w, node, source, serial, snapshot, noError):
+  PendingNotification.single(w, node, source, serial, snapshot, noError)
+
+
+def Laws.actual_pending_notification_records_source_membership(w, node, source, serial, snapshot, noError):
+  PendingNotification.member(w, node, source, serial, snapshot, noError)
+
+
+def Laws.actual_pending_notification_retains_incoming_error_identity(w, node, source, serial, snapshot, noError):
+  PendingNotification.errorResult(w, node, source, serial, snapshot, noError)
+
+
+def Laws.actual_pending_notification_selects_source_status_bits(w, node, source, serial, snapshot, noError, valid):
+  PendingNotification.statusResult(w, node, source, serial, snapshot, noError, valid)
+
+
+def Laws.actual_pending_notification_preserves_committed_content(w, node, source, serial, noError):
+  PendingNotification.content(w, node, source, serial, noError)
+
+
+def Laws.constructed_notification_control_supplies_all_carrier_premises(values, value, extensions, sets, incoming, serial):
+  NotificationFixture.ready(values, value, extensions, sets, incoming, serial)

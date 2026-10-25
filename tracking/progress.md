@@ -948,3 +948,14 @@ The production owner guard follows #4254, with 64 paired controls and two new
 local kernel roots (562 to 564). Native build/types and 344 files / 5,579 tests
 pass. Full rebase seal and execution results are recorded with this checkpoint.
 No new upstream bug was found; physical GC remains outside Bend semantics.
+
+## Pending notification connects carrier, status and error
+
+[The notification contract](pending-notification.md) constructs singleton
+source membership, Solid's status-bit selection and exact incoming NotReadyError
+identity from a prior carrier snapshot and a no-existing-error input condition.
+Actual status/error writes preserve committed content. The 120 typed constructed
+cases and paired native local-result controls pass; four compact kernel negatives
+are rejected. Six roots extend 564 to 570. This stops before effect notification,
+propagation and public controller callbacks; readiness/accounting/reveal remain
+open. Runtime/source/host and previous theorem domains/budgets are unchanged.

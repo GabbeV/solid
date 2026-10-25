@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 653 = 484 finite + 169 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 657 = 484 finite + 173 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
-| Later negative evidence | Twenty later focused kernel variants at their individual checkpoints, including the new idle-disposal guard; current653/new pin is not a complete sweep |
+| Later negative evidence | Twenty-four later focused kernel variants at their individual checkpoints, including idle disposal and notification; current657 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -377,5 +377,16 @@ limits and old domains/budgets are unchanged.
 pending-queue scheduling guard and preserves the earlier source/proof domains.
 The native full suite passes 344 files / 5,579 tests; 64 private native/Bend
 scheduling cases and two kernel guard roots pass. Physical JavaScript GC is not
-modeled. All 564 composed roots are checked by the current seal; no global
+modeled. That refresh checked all 564 then-active composed roots; no global
 queue-draining or eventual-render theorem follows from this local guard.
+
+## Pending notification connects carrier, status and error
+
+[The notification contract](pending-notification.md) constructs singleton
+source membership, Solid's status-bit selection and exact incoming NotReadyError
+identity from a prior carrier snapshot and a no-existing-error input condition.
+Actual status/error writes preserve committed content. The 120 typed constructed
+cases and paired native local-result controls pass; four compact kernel negatives
+are rejected. Six roots extend 564 to 570. This stops before effect notification,
+propagation and public controller callbacks; readiness/accounting/reveal remain
+open. Runtime/source/host and previous theorem domains/budgets are unchanged.

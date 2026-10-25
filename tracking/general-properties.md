@@ -363,3 +363,9 @@ roots extend 553 to 562. The 131 finite controls and 449 duplicate no-op checks
 pass; two new kernel faults are rejected. Status/readiness, complete public
 flight/action protocol and coordinated reveal remain open. Runtime/source/host/
 limits and old domains/budgets are unchanged.
+
+The [pending notification construction](pending-notification.md) connects the
+actual local notification stores to carrier membership, selected status bits and
+incoming NotReadyError identity, with preserved committed content. Its earlier
+carrier/input validity and no-existing-error conditions are explicit; callback
+reachability, effect notification, propagation and queued reveal remain open.

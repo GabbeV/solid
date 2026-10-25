@@ -147,7 +147,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `4ea2f498` (2026-10-25). All 77 recorded Solid inputs match the pin.
+Latest next checked: `d786bcf6` (documentation only after production pin `4ea2f498`, 2026-10-25). All 77 recorded Solid inputs match the pin.
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -338,5 +338,16 @@ limits and old domains/budgets are unchanged.
 pending-queue scheduling guard and preserves the earlier source/proof domains.
 The native full suite passes 344 files / 5,579 tests; 64 private native/Bend
 scheduling cases and two kernel guard roots pass. Physical JavaScript GC is not
-modeled. All 564 composed roots are checked by the current seal; no global
+modeled. That refresh checked all 564 then-active composed roots; no global
 queue-draining or eventual-render theorem follows from this local guard.
+
+## Pending notification connects carrier, status and error
+
+[The notification contract](pending-notification.md) constructs singleton
+source membership, Solid's status-bit selection and exact incoming NotReadyError
+identity from a prior carrier snapshot and a no-existing-error input condition.
+Actual status/error writes preserve committed content. The 120 typed constructed
+cases and paired native local-result controls pass; four compact kernel negatives
+are rejected. Six roots extend 564 to 570. This stops before effect notification,
+propagation and public controller callbacks; readiness/accounting/reveal remain
+open. Runtime/source/host and previous theorem domains/budgets are unchanged.

@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["notification carrier kernel omits source registration", "runtime/status.bend", "+w = B.first(R.World, Bool, P.addPendingSource(w, id, source))", "+w = w", "tests/proof-properties.mjs", "storeStatus", "notification-negative-probes"],
+  ["notification carrier kernel drops the pending status bit", "runtime/status.bend", "B.set(K.STATUS_PENDING(), carried)", "carried", "tests/proof-properties.mjs", "storeStatus", "notification-negative-probes"],
+  ["notification carrier kernel loses incoming error identity", "runtime/pending-state.bend", "R.NodeExtension.with_error(B.extension(w, id), error)", "R.NodeExtension.with_error(B.extension(w, id), R.Undefined{})", "tests/proof-properties.mjs", "setPendingError", "notification-negative-probes"],
+  ["notification carrier kernel destroys the never-valued status carry", "runtime/status.bend", "+carried = B.choose(~U32, B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE()),", "+carried = B.choose(~U32, False{},", "tests/proof-properties.mjs", "storeStatus", "notification-negative-probes"],
+
   ["idle disposal kernel fails to schedule a retained pending queue", "runtime/owner.bend", "Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))", "False{}", "tests/proof-properties.mjs", "afterPark", "idle-disposal-schedule"],
 
   ["carrier cycle kernel mutates duplicate World epoch", "runtime/pending-state.bend", "_ => B.Bundle{w, False{}}", "_ => B.Bundle{B.bump(w), False{}}", "tests/proof-properties.mjs", "addPendingSource", "pending-carrier-cycle-negative-probes"],
