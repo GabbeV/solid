@@ -180,3 +180,12 @@ The runtime is unchanged. The existing 120 forked non-trim fixtures now execute
 880 actual steps through their queued flush boundary. General committed storage
 through the whole settlement body remains an unverified resource-limited attempt;
 owner callbacks, successful completion and coordinated final publication stay open.
+
+## Owner continuation and local completion
+
+The [owner extension](owner-continuations.md) expands the actual-step prefix
+induction to stack-neutral owner work. A healthy no-stale dependency trim now has
+a constructed two-step prefix and exact whole-machine completion. All 160 forked
+arrivals run to their queued flush in the existing finite controls. This closes a
+local internal-completion obligation, not general graph progress or final reveal.
+The complete frozen 608 sweep is verified; later focused variants remain separate.

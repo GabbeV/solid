@@ -20,6 +20,8 @@ The receipt names the exact source checkpoint and candidate/log hashes.
 
 The separately active pending-continuation and pending-stack-history modules
 prove stack/capture contracts and actual-step prefix induction. They do not rely
-on this candidate. Owner release may clear unobserved caches; the stronger
-all-cache observation cannot be carried through that boundary unchanged. The
-selected larger milestone needs an appropriate rendered observation there.
+on this candidate. Owner release can invoke cleanup code; unrestricted callbacks may write or
+flush, so a content frame needs an explicit callback contract. The source
+bookkeeping itself retains cached `_value`; an earlier explanation that it
+directly cleared the value was incorrect. The selected larger milestone also
+needs a renderer/target observation that permits independent publication.

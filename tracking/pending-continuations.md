@@ -65,8 +65,11 @@ an active root, and no resource failure is counted as a semantic result.
 Actual owner trim/release, callback behavior, successful traversal bounds,
 reachable-state construction/preservation for the pending graph, the later flush,
 coordinated publication and eventual host-delivered reveal remain separate.
-Disposing an unobserved cache may change its stored value without UI publication;
-carrying every cache slot unchanged through release would be the wrong target.
+Source `unobserved`/`disposeChildren` bookkeeping retains the cached `_value`;
+an earlier explanation saying it directly cleared that value was incorrect.
+Unrestricted cleanup callbacks can write, flush or dispose, so their observation
+contract must be explicit. Independent UI publication also requires a selected
+renderer/target observation rather than a blanket whole-World freeze.
 No new upstream bug or semantic workaround was found at this checkpoint.
 
 See [the validation receipt](reviews/pending-continuations-validation.json).

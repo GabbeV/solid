@@ -213,3 +213,13 @@ premise, desired stack equation or runtime budget is supplied to the induction.
 World content, traversal success, owner callbacks and publication are separate;
 see [domains and exclusions](pending-continuations.md). The general settlement
 committed-storage attempt is archived and unverified, not an active root.
+
+## Owner continuation and no-stale trim completion
+
+Four roots add stack-neutral actual owner-step safety, a constructed no-stale trim
+prefix, its two-step height and exact whole-machine return after those steps.
+The existing prefix induction now admits structural owner work, including queuing
+a callback without executing its body. The generic stack result needs no health
+premise; exact no-stale completion requires input health and the selected suffix
+edge to be zero. Full storage, callback and publication properties are separate.
+See [the owner domains](owner-continuations.md).

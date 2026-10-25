@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "abad61345fed9252da1fc7f652ec5ffaef750de9",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "representationChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 466,
+  "newRoots": 4,
+  "composedRoots": 470,
+  "allEarlierTheoremDomainsRetained": true,
+  "prefixGrammarExpandedToOwnerBookkeeping": true,
+  "ownerTaskConstructors": 31,
+  "excludedOwnerTaskKinds": [
+    "WriteValue",
+    "WriteForward",
+    "Action"
+  ],
+  "callbackBodiesExecutedByProof": false,
+  "genericStackNeedsHealth": false,
+  "noStaleTrimCompletionRequires": [
+    "healthy World",
+    "selected stale-suffix edge is zero"
+  ],
+  "trimCompletionActualCoreSteps": 2,
+  "trimCompletionExactWholeWorldAndCaller": true,
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "executedSettlementPrefixes": 160,
+  "actualCoreSteps": 1360,
+  "dependentVisits": 80,
+  "structuralOwnerSteps": 80,
+  "noStaleTrimCompleteControls": 40,
+  "queuedFlushBoundariesReached": 160,
+  "callbackStartBoundariesReached": 0,
+  "configuredMutations": 615,
+  "finiteMutations": 480,
+  "kernelMutations": 135,
+  "newFocusedKernelRejections": 3,
+  "completeSweepOfCurrentConfiguration": false,
+  "completeFrozenSweep": "tracking/reviews/solid-2a0da2fc-complete-negative.json",
+  "resourceFailuresCredited": false,
+  "sourceExplanationCorrection": "unobserved/disposeChildren bookkeeping retains cached _value; prior direct-clearing explanation was incorrect. Unrestricted callback behavior and independent publication still need scoped observations.",
+  "notProved": [
+    "general stale-suffix unlink and release callback execution",
+    "general settlement storage frame",
+    "pending graph reachable-state preservation and successful traversal bound",
+    "runtime fuel sufficiency for the complete program",
+    "full flush and coordinated publication",
+    "eventual host delivery or fairness"
+  ],
+  "logs": {
+    "owner-continuation-check4.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-continuation-check4.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "owner-trim-history-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-trim-history-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "owner-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "owner-prefix-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-prefix-controls1.log",
+      "sha256": "18ed4ece5ac3e908ad5e6326038e9a5d4f88d16b5feb229236bc923f8ab956ee"
+    },
+    "owner-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-mutation-targets.log",
+      "sha256": "098b6f97d469f1c69c04df1181c33fc8828b322f7e3bd016054069fcf0b7626c"
+    },
+    "owner-focused-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/owner-focused-negatives.log",
+      "sha256": "10ba0a666c1922cb4e64497bc23c097fc71730de741c0629b30952380e448beb"
+    }
+  }
+}

@@ -782,3 +782,17 @@ execute 120 prefixes /880 steps to the queued flush; four kernel negatives rejec
 targeted stack/capture/source faults. A general settlement storage-frame proof
 still hits kernel reduction fuel and is archived unverified; runtime/source/limits
 unchanged. Owner release, graph progress and final publication remain open.
+
+## 2026-10-25 — Owner continuation and local completion
+
+Expanded the actual-step caller-stack induction to structural owner queue heads.
+Four new roots prove owner-step stack retention and construct/finish a healthy
+no-stale dependency trim in exactly two steps with the whole World and caller
+continuation unchanged. All 160 forked arrivals now execute 1,360 actual steps to
+their queued flushes; 40 trim returns preserve the exact machine. Three new kernel
+negatives are rejected. The complete frozen608 sweep on 83b633b2 also finishes:
+all named variants rejected, all 798 tracked sealed hashes unchanged. Corrected
+an earlier explanation about direct cache-value clearing: source unobserved
+bookkeeping retains `_value`; arbitrary cleanup bodies remain a separate boundary.
+No runtime, source, limits or semantic deviation changed. Full graph progress and
+coordinated publication remain open.

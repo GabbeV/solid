@@ -68,6 +68,7 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./runtime/supersede.bend as Supersede
 import Base
+import ./proof/owner-continuation.bend as OwnerContinuation
 import ./proof/pending-continuation.bend as PendingContinuation
 import ./proof/pending-stack-history.bend as PendingHistory
 import ./examples/async-cleanup.bend as CleanupExample
@@ -3485,3 +3486,42 @@ law constructed_settlement_schedule_prefix_has_two_actual_steps:
   for +released: List<&2, Nat>
   for +scheduled: Bool
   {PendingHistory.height(PendingHistory.input(w, Core.AsyncWriteSchedule{} <> rest, stack, PendingHistory.Pending{[], visited, released, scheduled}), PendingHistory.emptyThenSchedule(w, rest, stack, visited, released, scheduled)) == 2n : Nat}
+
+
+law owner_bookkeeping_step_preserves_caller_stack:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +tasks: List<&2, RuntimeOwner.Task>
+  for +allowed: {OwnerContinuation.neutralHead(tasks) == True{} : Bool}
+  {Core.values(Core.step(Core.Machine{w, Core.OwnerTasks{tasks} <> rest, stack})) == stack : List<&2, R.Value>}
+
+
+law no_stale_owner_trim_completes_in_two_core_steps:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +edge: {OwnerContinuation.staleEdge(w, id) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {Core.step(Core.step(Core.Machine{w, Core.OwnerTasks{[RuntimeOwner.TrimDeps{id}]} <> rest, stack})) == Core.Machine{w, rest, stack} : Core.Machine}
+
+
+law no_stale_owner_trim_prefix_is_constructed:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +edge: {OwnerContinuation.staleEdge(w, id) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  PendingHistory.Programme<PendingHistory.input(w, rest, stack, PendingHistory.OwnerWork{[RuntimeOwner.TrimDeps{id}], {==}})>
+
+
+law constructed_owner_trim_prefix_has_two_actual_steps:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +edge: {OwnerContinuation.staleEdge(w, id) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {PendingHistory.height(PendingHistory.input(w, rest, stack, PendingHistory.OwnerWork{[RuntimeOwner.TrimDeps{id}], {==}}), PendingHistory.ownerTrimPrefix(w, rest, stack, id, edge, healthy)) == 2n : Nat}

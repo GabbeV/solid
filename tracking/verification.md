@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 612 = 480 finite + 132 kernel variants, including completion/wait/blocker/landing invariants |
-| Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; complete 608 sweep running on frozen 83b633b2; no complete 612 sweep claimed |
+| Configured mutations | 615 = 480 finite + 135 kernel variants, including completion/wait/blocker/landing invariants |
+| Complete negative sweep | Frozen source-integration checkpoint 83b633b2: all 608 named variants compiled/rejected, with tracked sealed inputs unchanged; [receipt](reviews/solid-2a0da2fc-complete-negative.json) |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four pending and three owner focused kernel variants rejected; no complete 615 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -220,3 +220,12 @@ their queued flush. Four focused kernel negatives are rejected. Caller-stack
 preservation is proved by induction over certified actual-step prefixes; the
 stronger settlement storage frame is explicitly unverified. No resource failure
 is credited as a semantic negative, and no runtime or limit changed.
+
+## Owner bookkeeping and bounded return
+
+The [owner receipt](reviews/owner-continuations-validation.json) records four new
+roots with all earlier 466 retained. The prefix domain expands to structural
+owner work. All 160 accepted forked arrivals now run 1,360 steps to their queued
+flushes, including 40 trims independently confirmed to have no stale suffix.
+Three targeted source faults are rejected by the kernel. The separate frozen608
+receipt verifies exact named-set equality and all 798 tracked input hashes.

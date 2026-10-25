@@ -29,7 +29,7 @@ const bundle=await build({stdin:{contents:"export * from './index.ts';export {re
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0;
+let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0;
 for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const {family,rejectAction} of [{family:'text',rejectAction:-1},{family:'nullable',rejectAction:-1},{family:'references',rejectAction:-1},{family:'text',rejectAction:0},{family:'text',rejectAction:1}])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
@@ -121,23 +121,38 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
      // Execute the actual core bookkeeping continuations up to the first owner
      // release or flush. Those boundaries can run application code or publish;
      // they are retained, not assumed to preserve every cached node value.
-     if(tasks[0].$!=='OwnerTasks'){
+     {
+      if(tasks[0].$==='OwnerTasks'){
+       const currentNode=list(prefix.world.nodes)[asyncId],tail=currentNode.depsTail;
+       const staleEdge=tail?list(prefix.world.links)[tail].nextDep:currentNode.deps;
+       assert.equal(staleEdge,0,name+' source trim selector has no stale suffix');
+       const returned=C.step(C.step(prefix));
+       assert.deepEqual(returned.world,prefix.world,name+' no-stale trim completes with exact World');
+       assert.deepEqual(list(returned.tasks),ending,name+' two-step trim retains caller work');
+       assert.deepEqual(list(returned.values),list(valueStack),name+' two-step trim retains caller stack');
+       ownerTrimCompleteControls++;
+      }
       let machine=prefix,steps=0,visits=0;
       for(;;){
        const head=list(machine.tasks)[0];
-       if(!head||!['AsyncWriteAfterTrim','PendingTasks','AsyncWriteSchedule'].includes(head.$))break;
+       if(!head||!['OwnerTasks','AsyncWriteAfterTrim','PendingTasks','AsyncWriteSchedule'].includes(head.$))break;
+       if(head.$==='OwnerTasks'){
+        const first=list(head.tasks)[0];
+        if(first&&['WriteValue','WriteForward','Action'].includes(first.$))break;
+        structuralOwnerSteps++;
+       }
        if(head.$==='PendingTasks'&&list(head.tasks)[0]?.$==='Visit')visits++;
        machine=C.step(machine);steps++;
        assert.ok(steps<200,'finite valid fixture settlement must terminate before its flush');
        assert.equal(machine.world.fault.$,'Healthy',name+' actual settlement stays healthy');
        assert.deepEqual(committed(machine.world),originalView,name+' actual settlement retains committed storage/tree/trace');
        assert.deepEqual(list(machine.values),list(valueStack),name+' actual settlement retains nonempty caller stack');
-       const retained=ending.slice(head.$==='AsyncWriteSchedule'?2:1);
+       const retained=ending.slice(head.$==='OwnerTasks'?0:head.$==='AsyncWriteSchedule'?2:1);
        assert.deepEqual(list(machine.tasks).slice(-retained.length),retained,name+' actual settlement retains exact flush/then/caller tail');
       }
       const boundary=list(machine.tasks)[0];
-      assert.ok(boundary&&['OwnerTasks','AsyncFlush'].includes(boundary.$),name+' explicit release/flush boundary');
-      if(boundary.$==='OwnerTasks')settlementReleaseBoundaries++;else settlementFlushBoundaries++;
+      assert.ok(boundary&&['Evaluate','OwnerTasks','AsyncFlush'].includes(boundary.$),name+' explicit release/flush boundary');
+      if(boundary.$==='OwnerTasks')settlementReleaseBoundaries++;else if(boundary.$==='Evaluate')callbackStartBoundaries++;else settlementFlushBoundaries++;
       assert.ok(steps>0);settlementPrefixes++;settlementSteps+=steps;settlementVisits+=visits;
      }
 
@@ -160,4 +175,5 @@ assert.ok(acceptedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover 
 assert.ok(trimmedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover queued owner trim');
 assert.ok(settlementPrefixes>0&&settlementSteps>0&&settlementVisits>0,'settlement fixtures must execute actual dependent traversal');
 assert.ok(settlementFlushBoundaries>0,'settlement fixtures must reach their queued flush');
-console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+assert.ok(ownerTrimCompleteControls>0&&structuralOwnerSteps>0,'owner trim fixtures must execute actual structural work');
+console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

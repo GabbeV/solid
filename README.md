@@ -35,7 +35,7 @@ callback expressions. JavaScript supplies the test host and payload encoding.
 The implementation, differential tests, and composed proofs use the same runtime.
 [General semantic properties](tracking/general-properties.md) now cover arbitrary
 publication slots/payloads, read policies and a complete numeric signal program.
-The [pending-continuation extension](tracking/pending-continuations.md) now proves caller-stack preservation by induction over arbitrary finite permitted prefixes of actual core settlement steps; callbacks and flush publication remain separate. There is no second scheduler hidden behind the proof. The
+The [pending-continuation extension](tracking/pending-continuations.md) now proves caller-stack preservation by induction over arbitrary finite permitted prefixes of actual core settlement steps. The [owner extension](tracking/owner-continuations.md) includes bookkeeping and proves exact two-step completion of a no-stale dependency trim; callback bodies and flush publication remain separate. There is no second scheduler hidden behind the proof. The
 [scalar-memo history family](tracking/memo-history-proof.md) now proves any finite
 nonempty sequence of write/flush batches of any finite nonempty size for every
 natural initial value and proposal,
@@ -94,7 +94,7 @@ all preceding theorem domains/budgets remain. No semantic workaround is active.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 612 source-changing variants
+npm run mutations                # reject 615 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

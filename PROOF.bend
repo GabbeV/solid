@@ -64,6 +64,7 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
+import ./proof/owner-continuation.bend as OwnerContinuation
 import ./proof/pending-continuation.bend as PendingContinuation
 import ./proof/pending-stack-history.bend as PendingHistory
 import ./proof/async-cleanup-program.bend as CleanupProgram
@@ -1595,3 +1596,19 @@ def Laws.nonempty_settlement_schedule_prefix_is_constructed(w, rest, stack, visi
 
 def Laws.constructed_settlement_schedule_prefix_has_two_actual_steps(w, rest, stack, visited, released, scheduled):
   PendingHistory.emptyThenScheduleHeight(w, rest, stack, visited, released, scheduled)
+
+
+def Laws.owner_bookkeeping_step_preserves_caller_stack(w, rest, stack, tasks, allowed):
+  OwnerContinuation.stepStack(w, rest, stack, tasks, allowed)
+
+
+def Laws.no_stale_owner_trim_completes_in_two_core_steps(w, rest, stack, id, edge, healthy):
+  OwnerContinuation.trimComplete(w, rest, stack, id, edge, healthy)
+
+
+def Laws.no_stale_owner_trim_prefix_is_constructed(w, rest, stack, id, edge, healthy):
+  PendingHistory.ownerTrimPrefix(w, rest, stack, id, edge, healthy)
+
+
+def Laws.constructed_owner_trim_prefix_has_two_actual_steps(w, rest, stack, id, edge, healthy):
+  PendingHistory.ownerTrimHeight(w, rest, stack, id, edge, healthy)
