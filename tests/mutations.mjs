@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["wait construction kernel fails to clear a caught post callback throw", "runtime/core.bend", "+w = R.World.with_fault(w, R.Healthy{})", "+w = w", "tests/proof-properties.mjs", "actionYieldCaught", "action-wait-negative-probes"],
+
+  ["wait construction kernel reuses an observer identity", "runtime/flight.bend", "+id = B.length(R.AsyncObserver, R.World.asyncObservers(w))", "+id = Nat.sub(B.length(R.AsyncObserver, R.World.asyncObservers(w)), 1n)", "tests/proof-properties.mjs", "newObserver", "action-wait-negative-probes"],
+  ["wait construction kernel registers an already settled yield", "runtime/action-state.bend", "R.ActionWait{observer, action, kind, False{}}", "R.ActionWait{observer, action, kind, True{}}", "tests/proof-properties.mjs", "wait", "action-wait-negative-probes"],
+  ["wait construction kernel prepends instead of source append order", "runtime/action-state.bend", "B.append(R.ActionWait, R.World.actionWaits(w), [R.ActionWait{observer, action, kind, False{}}])", "R.ActionWait{observer, action, kind, False{}} <> R.World.actionWaits(w)", "tests/proof-properties.mjs", "wait", "action-wait-negative-probes"],
+  ["wait construction kernel omits result observer registration", "runtime/flight.bend", "B.append(Nat, R.AsyncObject.observers(object), [observer])", "R.AsyncObject.observers(object)", "tests/proof-properties.mjs", "addObserver", "action-wait-negative-probes"],
+
   ["source status frame kernel clears status during registration", "runtime/pending-state.bend", "+w = E.ext(w, id)", "+w = B.store_node(E.ext(w, id), id, R.Node.with_status(B.node(w, id), 0))", "tests/proof-properties.mjs", "addPendingSource", "status-frame-negative-probes"],
   ["source status frame kernel clears status while allocating extension", "runtime/extension.bend", "R.Node.with_x(B.node(w, id), x)", "R.Node.with_status(R.Node.with_x(B.node(w, id), x), 0)", "tests/proof-properties.mjs", "ext", "status-frame-negative-probes"],
 

@@ -1,3 +1,8 @@
+import ./proof/action-wait-allocation.bend as WaitAllocation
+import ./proof/action-wait-range.bend as WaitRange
+import ./proof/action-wait-construction.bend as WaitConstruction
+import ./proof/action-wait-history.bend as WaitHistory
+import ./proof/action-wait-fixture.bend as WaitFixture
 import ./proof/node-status-frame.bend as SourceStatusFrame
 import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
@@ -4812,3 +4817,114 @@ law pending_notification_selects_actual_incoming_status:
   for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
   for +valid: {B.valid(w,node) == True{} : Bool}
   {R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)) == SourceStatusFrame.select(R.Node.status(B.node(w,node))) : U32}
+
+
+law actual_action_wait_returns_observer_allocation_identity:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +kind: U32
+  {B.second(R.World,Nat,Action.wait(w,action,result,kind)) == WaitAllocation.index(w) : Nat}
+
+
+law actual_action_wait_constructs_observer_capture:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +kind: U32
+  {B.asyncObserver(WaitAllocation.after(w,action,result,kind),WaitAllocation.index(w)) == R.AsyncObserver{0n,result,True{},False{},False{},R.Undefined{},R.Undefined{},0n} : R.AsyncObserver}
+
+
+law actual_action_wait_subscribes_existing_result:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +kind: U32
+  for +validResult: {Nat.is_lt(result,B.length(R.AsyncObject,R.World.asyncObjects(w))) == True{} : Bool}
+  {B.asyncObject(WaitAllocation.after(w,action,result,kind),result) == WaitAllocation.updated(w,result,WaitAllocation.index(w)) : R.AsyncObject}
+
+
+law actual_action_wait_constructs_fresh_unsettled_lookup:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +kind: U32
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {Action.find(R.World.actionWaits(WaitAllocation.after(w,action,result,kind)),WaitAllocation.index(w)) == Some{R.ActionWait{WaitAllocation.index(w),action,kind,False{}}} : Maybe<&2,R.ActionWait>}
+
+
+law actual_action_wait_preserves_observer_range:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +kind: U32
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {WaitRange.below(R.World.actionWaits(WaitAllocation.after(w,action,result,kind)),WaitAllocation.index(WaitAllocation.after(w,action,result,kind))) == True{} : Bool}
+
+
+law actual_wait_allocation_mark_histories_preserve_range:
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +w: R.World
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {WaitRange.below(R.World.actionWaits(WaitHistory.run(events,w)),WaitAllocation.index(WaitHistory.run(events,w))) == True{} : Bool}
+
+
+law constructed_wait_remains_duplicate_guarded_after_actual_histories:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {Core.asyncActionDelivery(WaitHistory.afterRegistered(w,action,result,events),rest,stack,WaitAllocation.index(w),rejected,value,Action.find(R.World.actionWaits(WaitHistory.afterRegistered(w,action,result,events)),WaitAllocation.index(w))) == Core.Machine{WaitHistory.afterRegistered(w,action,result,events),rest,stack} : Core.Machine}
+
+
+law actual_wait_allocation_mark_histories_retain_committed_content:
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +w: R.World
+  {CommittedStorage.observe(WaitHistory.run(events,w)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law created_action_supplies_wait_range_after_actual_prefix:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {WaitRange.below(R.World.actionWaits(WaitFixture.before(values,prefix)),WaitAllocation.index(WaitFixture.before(values,prefix))) == True{} : Bool}
+
+
+law created_action_wait_has_nonzero_fresh_observer:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Nat.is_ne(WaitFixture.fresh(values,prefix),0n) == True{} : Bool}
+
+
+law created_action_wait_retains_settled_lookup_after_actual_suffix:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +suffix: List<&2,WaitHistory.WaitEvent>
+  {Action.find(R.World.actionWaits(WaitFixture.final(values,prefix,suffix)),WaitFixture.fresh(values,prefix)) == Some{R.ActionWait{WaitFixture.fresh(values,prefix),1n,0,True{}}} : Maybe<&2,R.ActionWait>}
+
+
+law created_action_wait_duplicate_retains_actual_current_machine:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +suffix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {Core.asyncActionDelivery(WaitFixture.final(values,prefix,suffix),rest,stack,WaitFixture.fresh(values,prefix),rejected,value,Action.find(R.World.actionWaits(WaitFixture.final(values,prefix,suffix)),WaitFixture.fresh(values,prefix))) == Core.Machine{WaitFixture.final(values,prefix,suffix),rest,stack} : Core.Machine}
+
+
+law constructed_wait_ignores_then_throw_after_settlement:
+  for +w: R.World
+  for +action: Nat
+  for +result: Nat
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +error: R.Value
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {Core.actionYieldThrow(WaitHistory.afterRegistered(w,action,result,events),rest,stack,WaitAllocation.index(w),R.CallbackThrown{error}) == Core.Machine{R.World.with_fault(WaitHistory.afterRegistered(w,action,result,events),R.Healthy{}),rest,stack} : Core.Machine}

@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 659 = 484 finite + 175 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 664 = 484 finite + 180 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
-| Later negative evidence | Twenty-six later focused kernel variants at their individual checkpoints, including idle disposal and notification; current659 is not a complete sweep |
+| Later negative evidence | Thirty-one later focused kernel variants at their individual checkpoints, including idle disposal and notification; current664 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -399,3 +399,17 @@ allocation. Pending notification consequently selects its carry from the actual
 input flags. Two roots extend 570 to 572; 108 private/native controls and two
 compact kernel negatives pass. No runtime/source/domain/budget change. Full
 controller and settlement composition, readiness/accounting/reveal remain open.
+
+## Actual action wait construction and guarded histories
+
+[The wait construction contracts](action-wait-construction.md) derive fresh
+observer identity/capture, result-slot subscription, an unsettled lookup and
+retained range from actual registration. Arbitrary finite registration/observer-
+allocation/mark histories keep the first settled lookup; duplicate yielded-value
+callbacks retain the exact current World/tasks/stack, including transaction counts.
+The post-callback synchronous throw catch is connected too. Actual action/Promise
+creation supplies a typed initial context and nonzero identities. Thirteen roots
+extend 572 to 585; 368 typed histories, 736 guard/368 catch checks, six native
+sequences and five focused negatives pass. Full generator/once-only debt/flush/
+reveal remain open. Pending status composition's resource-stopped attempts are
+archived explicitly; no runtime/source/toolchain/domain/budget change.

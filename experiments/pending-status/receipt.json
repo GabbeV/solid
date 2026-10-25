@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "bendVersion": "2.0.37",
+  "verdict": "unverified: independent kernel out of fuel",
+  "creditedAsProof": false,
+  "activeRuntimeChanged": false,
+  "kernelOrToolchainLimitsChanged": false,
+  "earlierDomainsReduced": false,
+  "baselinePendingSha256": "2048313b69cb18d6adf7b2700f1b6944a5a53d82bcd55d090f36b14654b2357c",
+  "files": {
+    "pending-last-source.bend.txt": "fb472ec15c0374882e5e0cd902245f09059a0946ee5a1efd27a7a340ebba1d6d",
+    "settled-zero-phase.bend.txt": "9faf9214dad900e2b1a0904da5e22e41d66580197328bb74acbdbffe4c838bd8",
+    "pending-settlement-status.bend.txt": "d2dc7945ad0e535361f64c36d267836754d48b1d1187f94868b024e23c13eae6",
+    "node-status-operations.bend.txt": "5760b7623ccb396e53603d1dd70cf54c1b02cb96bd4deec51b666aa6310ad373",
+    "pending-source-status-frame.bend.txt": "77455f32483dcfc0f54577d562cc86a150a5e21eed8313f8f2c82bab64f5303d",
+    "transaction-status-frame.bend.txt": "34142ec1f636739e4de6c57b8f2c37147033327dfb5f7262c01134d2e862a0be"
+  },
+  "logs": {
+    "last-source-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/last-source-kernel.log",
+      "sha256": "a850080fa0ba877687d5eb0d639725c753a247f2da57d9b68a2cf366183c9484",
+      "outOfFuelObserved": true
+    },
+    "last-source-cuts-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/last-source-cuts-kernel.log",
+      "sha256": "a850080fa0ba877687d5eb0d639725c753a247f2da57d9b68a2cf366183c9484",
+      "outOfFuelObserved": true
+    },
+    "last-source-observation-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/last-source-observation-kernel.log",
+      "sha256": "28846664b2eaae79900d2fecaaac1d4021869e788b39db5fa708fd465f4b6529",
+      "outOfFuelObserved": true
+    },
+    "last-source-rewrite-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/last-source-rewrite-kernel.log",
+      "sha256": "28846664b2eaae79900d2fecaaac1d4021869e788b39db5fa708fd465f4b6529",
+      "outOfFuelObserved": true
+    },
+    "settled-zero-phase-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/settled-zero-phase-kernel.log",
+      "sha256": "a850080fa0ba877687d5eb0d639725c753a247f2da57d9b68a2cf366183c9484",
+      "outOfFuelObserved": true
+    },
+    "pending-status-control-runtime-segment-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/pending-status-control-runtime-segment-kernel.log",
+      "sha256": "4e68aa4383037a92d804d1a53810cf838d21de695dec0bd4559425632655f21a",
+      "outOfFuelObserved": true
+    },
+    "pending-status-control-world-match-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/pending-status-control-world-match-kernel.log",
+      "sha256": "4e68aa4383037a92d804d1a53810cf838d21de695dec0bd4559425632655f21a",
+      "outOfFuelObserved": true
+    },
+    "pending-settlement-status-kernel.log": {
+      "path": "/workspace/scratch/evening-2026-10-25/pending-settlement-status-kernel.log",
+      "sha256": "3f0951cb066b28e76e6aeddc2f7b6c6e2929cb479a5e32227a48292849d1c319",
+      "outOfFuelObserved": true
+    }
+  }
+}

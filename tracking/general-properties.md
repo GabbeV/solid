@@ -369,3 +369,8 @@ actual local notification stores to carrier membership, selected status bits and
 incoming NotReadyError identity, with preserved committed content. Its earlier
 carrier/input validity and no-existing-error conditions are explicit; callback
 reachability, effect notification, propagation and queued reveal remain open.
+
+[Constructed action wait histories](action-wait-construction.md) derive fresh
+lookup/range premises from actual registration, connect arbitrary finite helper
+histories to exact current-Machine duplicate guards and the settled .then catch,
+and preserve committed content. Full generator/debt/reveal remains open.

@@ -360,3 +360,17 @@ allocation. Pending notification consequently selects its carry from the actual
 input flags. Two roots extend 570 to 572; 108 private/native controls and two
 compact kernel negatives pass. No runtime/source/domain/budget change. Full
 controller and settlement composition, readiness/accounting/reveal remain open.
+
+## Actual action wait construction and guarded histories
+
+[The wait construction contracts](action-wait-construction.md) derive fresh
+observer identity/capture, result-slot subscription, an unsettled lookup and
+retained range from actual registration. Arbitrary finite registration/observer-
+allocation/mark histories keep the first settled lookup; duplicate yielded-value
+callbacks retain the exact current World/tasks/stack, including transaction counts.
+The post-callback synchronous throw catch is connected too. Actual action/Promise
+creation supplies a typed initial context and nonzero identities. Thirteen roots
+extend 572 to 585; 368 typed histories, 736 guard/368 catch checks, six native
+sequences and five focused negatives pass. Full generator/once-only debt/flush/
+reveal remain open. Pending status composition's resource-stopped attempts are
+archived explicitly; no runtime/source/toolchain/domain/budget change.

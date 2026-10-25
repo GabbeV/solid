@@ -1,3 +1,8 @@
+import ./proof/action-wait-allocation.bend as WaitAllocation
+import ./proof/action-wait-range.bend as WaitRange
+import ./proof/action-wait-construction.bend as WaitConstruction
+import ./proof/action-wait-history.bend as WaitHistory
+import ./proof/action-wait-fixture.bend as WaitFixture
 import ./proof/node-status-frame.bend as SourceStatusFrame
 import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
@@ -2075,3 +2080,55 @@ def Laws.source_registration_preserves_all_node_status_words(w, node, source):
 
 def Laws.pending_notification_selects_actual_incoming_status(w, node, source, serial, snapshot, noError, valid):
   NotificationInput.inputStatus(w, node, source, serial, snapshot, noError, valid)
+
+
+def Laws.actual_action_wait_returns_observer_allocation_identity(w, action, result, kind):
+  WaitAllocation.identity(w, action, result, kind)
+
+
+def Laws.actual_action_wait_constructs_observer_capture(w, action, result, kind):
+  WaitAllocation.observerRecord(w, action, result, kind)
+
+
+def Laws.actual_action_wait_subscribes_existing_result(w, action, result, kind, validResult):
+  WaitAllocation.subscribedObject(w, action, result, kind, validResult)
+
+
+def Laws.actual_action_wait_constructs_fresh_unsettled_lookup(w, action, result, kind, valid):
+  WaitConstruction.found(w, action, result, kind, valid)
+
+
+def Laws.actual_action_wait_preserves_observer_range(w, action, result, kind, valid):
+  WaitConstruction.bounded(w, action, result, kind, valid)
+
+
+def Laws.actual_wait_allocation_mark_histories_preserve_range(events, w, valid):
+  WaitHistory.historyRange(events, w, valid)
+
+
+def Laws.constructed_wait_remains_duplicate_guarded_after_actual_histories(w, action, result, events, rest, stack, rejected, value, valid):
+  WaitHistory.constructedDuplicate(w, action, result, events, rest, stack, rejected, value, valid)
+
+
+def Laws.actual_wait_allocation_mark_histories_retain_committed_content(events, w):
+  WaitHistory.historyContent(events, w)
+
+
+def Laws.created_action_supplies_wait_range_after_actual_prefix(values, prefix):
+  WaitFixture.beforeRange(values, prefix)
+
+
+def Laws.created_action_wait_has_nonzero_fresh_observer(values, prefix):
+  WaitFixture.freshPositive(values, prefix)
+
+
+def Laws.created_action_wait_retains_settled_lookup_after_actual_suffix(values, prefix, suffix):
+  WaitFixture.settled(values, prefix, suffix)
+
+
+def Laws.created_action_wait_duplicate_retains_actual_current_machine(values, prefix, suffix, rest, stack, rejected, value):
+  WaitFixture.duplicate(values, prefix, suffix, rest, stack, rejected, value)
+
+
+def Laws.constructed_wait_ignores_then_throw_after_settlement(w, action, result, events, rest, stack, error, valid):
+  WaitHistory.constructedThrow(w, action, result, events, rest, stack, error, valid)
