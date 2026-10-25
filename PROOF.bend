@@ -1,3 +1,5 @@
+import ./proof/node-status-frame.bend as SourceStatusFrame
+import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
 import ./proof/pending-notification-fixture.bend as NotificationFixture
 import ./proof/single-carrier-frame.bend as SingleCarrier
@@ -2065,3 +2067,11 @@ def Laws.actual_pending_notification_preserves_committed_content(w, node, source
 
 def Laws.constructed_notification_control_supplies_all_carrier_premises(values, value, extensions, sets, incoming, serial):
   NotificationFixture.ready(values, value, extensions, sets, incoming, serial)
+
+
+def Laws.source_registration_preserves_all_node_status_words(w, node, source):
+  SourceStatusFrame.added(w, node, 1n+source)
+
+
+def Laws.pending_notification_selects_actual_incoming_status(w, node, source, serial, snapshot, noError, valid):
+  NotificationInput.inputStatus(w, node, source, serial, snapshot, noError, valid)

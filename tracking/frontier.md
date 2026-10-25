@@ -351,3 +351,12 @@ cases and paired native local-result controls pass; four compact kernel negative
 are rejected. Six roots extend 564 to 570. This stops before effect notification,
 propagation and public controller callbacks; readiness/accounting/reveal remain
 open. Runtime/source/host and previous theorem domains/budgets are unchanged.
+
+## Notification status carry comes from incoming state
+
+The [stronger input-status contract](pending-notification.md) proves that actual
+source registration preserves every node status word, including extension
+allocation. Pending notification consequently selects its carry from the actual
+input flags. Two roots extend 570 to 572; 108 private/native controls and two
+compact kernel negatives pass. No runtime/source/domain/budget change. Full
+controller and settlement composition, readiness/accounting/reveal remain open.

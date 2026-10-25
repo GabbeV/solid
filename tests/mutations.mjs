@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["source status frame kernel clears status during registration", "runtime/pending-state.bend", "+w = E.ext(w, id)", "+w = B.store_node(E.ext(w, id), id, R.Node.with_status(B.node(w, id), 0))", "tests/proof-properties.mjs", "addPendingSource", "status-frame-negative-probes"],
+  ["source status frame kernel clears status while allocating extension", "runtime/extension.bend", "R.Node.with_x(B.node(w, id), x)", "R.Node.with_status(R.Node.with_x(B.node(w, id), x), 0)", "tests/proof-properties.mjs", "ext", "status-frame-negative-probes"],
+
   ["notification carrier kernel omits source registration", "runtime/status.bend", "+w = B.first(R.World, Bool, P.addPendingSource(w, id, source))", "+w = w", "tests/proof-properties.mjs", "storeStatus", "notification-negative-probes"],
   ["notification carrier kernel drops the pending status bit", "runtime/status.bend", "B.set(K.STATUS_PENDING(), carried)", "carried", "tests/proof-properties.mjs", "storeStatus", "notification-negative-probes"],
   ["notification carrier kernel loses incoming error identity", "runtime/pending-state.bend", "R.NodeExtension.with_error(B.extension(w, id), error)", "R.NodeExtension.with_error(B.extension(w, id), R.Undefined{})", "tests/proof-properties.mjs", "setPendingError", "notification-negative-probes"],

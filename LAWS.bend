@@ -1,3 +1,5 @@
+import ./proof/node-status-frame.bend as SourceStatusFrame
+import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
 import ./proof/pending-notification-fixture.bend as NotificationFixture
 import ./proof/single-carrier-frame.bend as SingleCarrier
@@ -4792,3 +4794,21 @@ law constructed_notification_control_supplies_all_carrier_premises:
   for +incoming: NotificationFixture.Incoming
   for +serial: Nat
   SingleCarrier.Single<NotificationFixture.after(values,value,extensions,sets,incoming,serial),NotificationFixture.leaf(values,value,extensions,sets),B.length(R.Node,ConstructedFixture.nodes(values))>
+
+
+law source_registration_preserves_all_node_status_words:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  {SourceStatusFrame.observe(CarrierState.addWorld(w,node,source)) == SourceStatusFrame.observe(w) : List<&2,U32>}
+
+
+law pending_notification_selects_actual_incoming_status:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {R.Node.status(B.node(PendingNotification.notified(w,node,source,serial),node)) == SourceStatusFrame.select(R.Node.status(B.node(w,node))) : U32}

@@ -42,3 +42,21 @@ Runtime, source pin, host ABI, kernel/toolchain, old theorem domains and old
 103/118-step programme bounds are unchanged. No semantic deviation or new
 upstream bug. next@d786bcf6 was reviewed: its only change after the production
 pin4ea2f498 is documentation/performance-experiments.md.
+
+## Carry from the actual input status
+
+Registration now has an all-node status-word frame over arbitrary Worlds and
+source identities, including fresh extension allocation. A projection-polymorphic
+node-list lens supplies storage/readback facts; concrete actual extension/Set
+helper laws instantiate the existing observer-polymorphic registration proof.
+The stronger notification corollary therefore selects its pending/uninitialized
+carry directly from the incoming node status, rather than from a post-add state.
+Earlier six notification roots and domains remain unchanged.
+
+Two roots extend 570 to 572. The 108 private/native controls cover full status
+words (including 0xffffffff), varying node positions and fresh/allocated/duplicate/
+other-source input branches. Two compact kernel faults reject status loss in
+either registration or extension allocation. No runtime, source, host, toolchain
+or proof-budget change. This remains the local notification portion; full
+effect notification/controller/settlement/readiness/accounting/reveal are open.
+[Validation](reviews/source-status-frame-validation.json).

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "ee9ea4eae9500da2c5faa70950132ea76b23dae3",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "previousRootsRetained": 570,
+  "newRoots": 2,
+  "composedRoots": 572,
+  "allNodeStatusWordFrame": true,
+  "actualNotificationCarryFromIncomingState": true,
+  "oldNotificationDomainsRetained": true,
+  "privateNativeStatusControls": 108,
+  "statusWordsInclude": "0,1,2,4,5,8,10,15,0xffffffff",
+  "branches": [
+    "fresh extension",
+    "allocated empty carrier",
+    "duplicate source",
+    "another source present"
+  ],
+  "focusedKernelRejections": 2,
+  "configuredMutations": 659,
+  "finiteMutations": 484,
+  "kernelMutations": 175,
+  "completeCurrentSweep": false,
+  "kernelAndToolchainLimitsUnchanged": true,
+  "activeDeviationIds": []
+}
