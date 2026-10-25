@@ -1,3 +1,9 @@
+import ./proof/node-store-lookup.bend as NodeStore
+import ./proof/graph-fresh-link.bend as FreshGraph
+import ./proof/graph-allocation-construction.bend as GraphAllocated
+import ./proof/graph-link-construction.bend as GraphLinked
+import ./proof/graph-empty-allocation.bend as GraphAllocation
+import ./runtime/graph-state.bend as RuntimeGraph
 import ./proof/bounded-core-return.bend as BoundedReturn
 import ./proof/pending-leaf-return.bend as LeafReturn
 import ./proof/pending-visit-control.bend as VisitControl
@@ -3960,3 +3966,118 @@ law one_edge_return_room_is_derived:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   {Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), BoundedReturn.slack(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == 10n : Nat}
+
+
+law existing_slot_node_update_reads_written_record:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Node
+  for +room: {Nat.is_lt(id, B.length(R.Node, R.World.nodes(w))) == True{} : Bool}
+  {B.node(B.store_node(w, id, value), id) == value : R.Node}
+
+
+law different_node_update_retains_other_record:
+  for +w: R.World
+  for +write: Nat
+  for +read: Nat
+  for +value: R.Node
+  for +different: {Nat.is_eq(read, write) == False{} : Bool}
+  {B.node(B.store_node(w, write, value), read) == B.node(w, read) : R.Node}
+
+
+law fresh_graph_link_uses_actual_empty_tail_allocation:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +previous: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat}
+  for +deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}
+  for +empty: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}
+  {RuntimeGraph.link(w, root, leaf) == RuntimeGraph.allocate(w, root, leaf, 0n, 0n, 0n) : R.World}
+
+
+law fresh_graph_allocation_constructs_one_edge_shape:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +validRoot: {B.valid(w, root) == True{} : Bool}
+  for +validLeaf: {B.valid(w, leaf) == True{} : Bool}
+  for +different: {Nat.is_eq(leaf, root) == False{} : Bool}
+  for +positive: {GraphAllocation.index(w) == 1n+edge : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  GraphAllocated.OneEdge<GraphAllocation.source(w, root, leaf), root, leaf, edge>
+
+
+law fresh_graph_link_constructs_one_edge_shape:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +first: R.Link
+  for +links: List<&2, R.Link>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +validRoot: {B.valid(w, root) == True{} : Bool}
+  for +validLeaf: {B.valid(w, leaf) == True{} : Bool}
+  for +different: {Nat.is_eq(leaf, root) == False{} : Bool}
+  for +rootEmpty: {R.Node.subs(B.node(w, root)) == 0n : Nat}
+  for +rootTail: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}
+  for +deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}
+  for +depsTail: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  for +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}
+  GraphAllocated.OneEdge<RuntimeGraph.link(w, root, leaf), root, leaf, B.length(R.Link, links)>
+
+
+law constructed_graph_starts_bounded_settlement_return:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +first: R.Link
+  for +links: List<&2, R.Link>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +validRoot: {B.valid(w, root) == True{} : Bool}
+  for +validLeaf: {B.valid(w, leaf) == True{} : Bool}
+  for +different: {Nat.is_eq(leaf, root) == False{} : Bool}
+  for +rootEmpty: {R.Node.subs(B.node(w, root)) == 0n : Nat}
+  for +rootTail: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}
+  for +deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}
+  for +depsTail: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  for +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}
+  BoundedReturn.Returned<OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 10n>
+
+
+law graph_construction_and_settlement_retain_committed_observation:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +first: R.Link
+  for +links: List<&2, R.Link>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +validRoot: {B.valid(w, root) == True{} : Bool}
+  for +validLeaf: {B.valid(w, leaf) == True{} : Bool}
+  for +different: {Nat.is_eq(leaf, root) == False{} : Bool}
+  for +rootEmpty: {R.Node.subs(B.node(w, root)) == 0n : Nat}
+  for +rootTail: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}
+  for +deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}
+  for +depsTail: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  for +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 10n, GraphLinked.startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law fresh_graph_allocation_keeps_allocated_node_ids_valid:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +read: Nat
+  for +known: {B.valid(w, read) == True{} : Bool}
+  {B.valid(GraphAllocation.source(w, root, leaf), read) == True{} : Bool}

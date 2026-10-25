@@ -857,3 +857,16 @@ uses actual driver fuel. Eight roots extend 500 to 508. Eighty real ten-step and
 40 trimmed returns, plus private nine-step/five-step alternatives, pass. Runtime,
 source, domains and limits are unchanged. Public premise construction, full
 accounting and coordinated flush/reveal remain open.
+
+
+## Actual graph construction (2026-10-25)
+
+The [graph construction family](graph-construction.md) derives the one-edge
+settlement premises from actual `graph.link`/allocation on initially valid,
+distinct nodes with empty lists, including either recomputing flag. It retains
+node validity/health and committed contents, then constructs the exact bounded
+caller return. Eight roots extend 508 to 516; 64 typed constructor controls,
+192 actual-driver splits, 144 native graph alignment cases and three focused
+kernel negatives pass. Runtime/source/limits are unchanged. Initial public node
+allocation, arbitrary graph histories, full accounting and coordinated reveal
+remain open.

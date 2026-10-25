@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["fresh graph kernel creates a self-linked subscriber tail", "runtime/graph-state.bend", "R.Link{dep, sub, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "R.Link{dep, sub, nextDep, prevSub, id, R.Node.depGen(B.node(w, sub))}", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
+  ["fresh graph kernel selects the source instead of the leaf", "runtime/graph-state.bend", "R.Link{dep, sub, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "R.Link{dep, dep, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
+  ["fresh graph kernel omits the first subscriber head", "runtime/graph-state.bend", "_ => B.store_node(w, dep, R.Node.with_subs(B.node(w, dep), id)))", "_ => B.store_node(w, dep, R.Node.with_subs(B.node(w, dep), 0n)))", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
+
   ["one-edge completion kernel reads the previous subscriber cursor", "runtime/pending.bend", "case Next{+edge, root, source} <> rest:\n      Machine{w, Walk{R.Link.nextSub(B.link(w, edge)), root, source} <> rest, visited, released, scheduled}", "case Next{+edge, root, source} <> rest:\n      Machine{w, Walk{R.Link.prevSub(B.link(w, edge)), root, source} <> rest, visited, released, scheduled}", "tests/proof-properties.mjs", "advance", "pending-leaf-return"],
   ["one-edge completion control queues a forbidden leaf release", "runtime/pending.bend", "B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())", "True{}", "tests/joined-action-flight-history.mjs", "settledTail"],
   ["one-edge completion kernel publishes during final scheduling", "runtime/core.bend", "case AsyncWriteSchedule{} <> rest:\n      Machine{B.schedule(w), rest, stack}", "case AsyncWriteSchedule{} <> rest:\n      Machine{B.event(B.schedule(w), R.Applied{0n, R.Undefined{}, R.Undefined{}}), rest, stack}", "tests/proof-properties.mjs", "dispatch", "pending-leaf-return"],

@@ -1,3 +1,9 @@
+import ./proof/node-store-lookup.bend as NodeStore
+import ./proof/graph-fresh-link.bend as FreshGraph
+import ./proof/graph-allocation-construction.bend as GraphAllocated
+import ./proof/graph-link-construction.bend as GraphLinked
+import ./proof/graph-empty-allocation.bend as GraphAllocation
+import ./runtime/graph-state.bend as RuntimeGraph
 import ./proof/bounded-core-return.bend as BoundedReturn
 import ./proof/pending-leaf-return.bend as LeafReturn
 import ./proof/pending-visit-control.bend as VisitControl
@@ -1783,3 +1789,35 @@ def Laws.one_edge_leaf_suffix_fault_unwinds_in_two_steps(w, edge, root, visited,
 
 def Laws.one_edge_return_room_is_derived(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto):
   OneEdgeDriver.room(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)
+
+
+def Laws.existing_slot_node_update_reads_written_record(w, id, value, room):
+  NodeStore.nodeSame(w, id, value, room)
+
+
+def Laws.different_node_update_retains_other_record(w, write, read, value, different):
+  NodeStore.nodeOther(w, write, read, value, different)
+
+
+def Laws.fresh_graph_link_uses_actual_empty_tail_allocation(w, root, leaf, previous, deps, empty):
+  FreshGraph.freshEmptyDependencies(w, root, leaf, previous, deps, empty)
+
+
+def Laws.fresh_graph_allocation_constructs_one_edge_shape(w, root, leaf, edge, healthy, validRoot, validLeaf, different, positive, noSubscribers, noAuto):
+  GraphAllocated.build(w, root, leaf, edge, healthy, validRoot, validLeaf, different, positive, noSubscribers, noAuto)
+
+
+def Laws.fresh_graph_link_constructs_one_edge_shape(w, root, leaf, first, links, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena):
+  GraphLinked.build(w, root, leaf, first, links, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena)
+
+
+def Laws.constructed_graph_starts_bounded_settlement_return(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena):
+  GraphLinked.startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena)
+
+
+def Laws.graph_construction_and_settlement_retain_committed_observation(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena):
+  GraphLinked.frame(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena)
+
+
+def Laws.fresh_graph_allocation_keeps_allocated_node_ids_valid(w, root, leaf, read, known):
+  GraphAllocated.valid(w, root, leaf, read, known)

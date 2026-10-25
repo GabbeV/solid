@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "73eda48277da33c642abc12e38abba2330824383",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 508,
+  "newRoots": 8,
+  "composedRoots": 516,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPayloadsSourceLeafIdsCallerWorkAndStack": true,
+  "inputPremises": [
+    "Healthy initial fault",
+    "distinct allocated source/leaf IDs",
+    "empty source subscriber head/tail",
+    "empty leaf dependency head/tail",
+    "leaf has no subscribers and no auto-dispose configuration",
+    "nonempty reserved link arena"
+  ],
+  "derivedFacts": [
+    "actual fresh graph.link result",
+    "positive subscriber head",
+    "selected leaf",
+    "zero next-subscriber cursor",
+    "retained node validity and health",
+    "leaf subscriber/configuration facts",
+    "actual settlement bounded return and committed frame"
+  ],
+  "recomputingFlagUnrestricted": true,
+  "constructedReturnMaximum": 10,
+  "typedConstructorCases": 64,
+  "actualDriverSplits": 192,
+  "javascriptSuppliesEqualityEvidence": false,
+  "nativeGraphAlignmentCases": 144,
+  "newFocusedKernelRejections": 3,
+  "configuredMutations": 636,
+  "finiteMutations": 484,
+  "kernelMutations": 152,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "initial public node allocation",
+    "arbitrary graph shape/history",
+    "healthy final result",
+    "queued owner callbacks/flush",
+    "complete action/flight accounting",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "node-store-lookup-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-store-lookup-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-empty-allocation-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-empty-allocation-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-allocation-properties-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-allocation-properties-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-fresh-link-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-fresh-link-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-allocation-construction-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-allocation-construction-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-link-construction-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-link-construction-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-construction-frame-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-construction-frame-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-link-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-link-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-construction-fixture-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-construction-fixture-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "graph-construction-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-construction-controls1.log",
+      "sha256": "d325d5fae56706464db45d2cf8ae50651ad9072517630314b1364ececb769799"
+    },
+    "graph-alignment.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-alignment.log",
+      "sha256": "8012fe7a943a98bfe4e1a3bfd74a55955f8653373c1a68c8927d1f98691d75ec"
+    },
+    "graph-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/graph-negatives.log",
+      "sha256": "aedaaca8f6835f9732f5d7a6f0540bbfc1ee8b474cc3f3e899f48e386e4e778e"
+    }
+  }
+}
