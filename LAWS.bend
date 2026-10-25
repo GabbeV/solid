@@ -1,3 +1,8 @@
+import ./proof/bounded-core-return.bend as BoundedReturn
+import ./proof/pending-leaf-return.bend as LeafReturn
+import ./proof/pending-visit-control.bend as VisitControl
+import ./proof/one-edge-settlement-return.bend as OneEdgeReturn
+import ./proof/one-edge-return-driver.bend as OneEdgeDriver
 import ./proof/subscriber-topology-frame.bend as SubscriberShape
 import ./proof/pending-topology-frame.bend as PendingTopology
 import ./proof/core-pending-topology.bend as CoreTopology
@@ -3834,3 +3839,124 @@ law settled_leaf_derives_its_actual_pending_machine_shape:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   {RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source) == RuntimePending.Machine{PendingMachine.world(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source)), RuntimePending.Walk{0n, root, source} <> tasks, id <> visited, released, PendingMachine.scheduled(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source))} : RuntimePending.Machine}
+
+
+law actual_leaf_visit_next_control_is_constructed:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  for +id: Nat
+  for +root: Nat
+  for +source: Nat
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  VisitControl.Next<VisitControl.observe(RuntimePending.advance(w, RuntimePending.Visit{id, root, source} <> tasks, visited, released, scheduled)), tasks, released, root, source>
+
+
+law one_edge_settlement_bounded_return_is_constructed:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}
+  for +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}
+  for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  BoundedReturn.Returned<OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n>
+
+
+law one_edge_settlement_retains_committed_observation:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}
+  for +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}
+  for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law one_edge_settlement_uses_remaining_actual_driver_fuel:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}
+  for +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}
+  for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  for +remaining: Nat
+  {Core.run(Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), remaining), OneEdgeReturn.start(w, root, rest, stack)) == Core.run(remaining, Core.Machine{BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), rest, stack}) : Core.Machine}
+
+
+law no_stale_trimmed_one_edge_return_is_constructed:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}
+  for +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}
+  for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  for +noStale: {OwnerContinuation.staleEdge(w, root) == 0n : Nat}
+  BoundedReturn.Returned<OneEdgeReturn.trimmed(w, root, rest, stack), rest, stack, 12n>
+
+
+law one_edge_leaf_suffix_completes_in_seven_healthy_steps:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +visited: List<&2, Nat>
+  for +scheduled: Bool
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +ready: {B.ok(w) == True{} : Bool}
+  for +end: {R.Link.nextSub(B.link(w, edge)) == 0n : Nat}
+  {PendingHistory.iterate(7n, LeafReturn.start(w, edge, root, visited, scheduled, rest, stack)) == Core.Machine{B.schedule(LeafReturn.endWorld(w, scheduled)), rest, stack} : Core.Machine}
+
+
+law one_edge_leaf_suffix_fault_unwinds_in_two_steps:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +visited: List<&2, Nat>
+  for +scheduled: Bool
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +broken: {B.ok(w) == False{} : Bool}
+  {PendingHistory.iterate(2n, LeafReturn.start(w, edge, root, visited, scheduled, rest, stack)) == Core.Machine{w, rest, stack} : Core.Machine}
+
+
+law one_edge_return_room_is_derived:
+  for +w: R.World
+  for +edge: Nat
+  for +root: Nat
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}
+  for +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}
+  for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  {Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), BoundedReturn.slack(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == 10n : Nat}

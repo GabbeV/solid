@@ -25,13 +25,14 @@ try{
 const T=privateModules.transaction,C=privateModules.core;
 const asList=encodeList;
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
-const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY,CONFIG_AUTO_DISPOSE} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
+const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY,CONFIG_AUTO_DISPOSE,CONFIG_HELD} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
 let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0,independentApplyControls=0,selectedUiChecks=0,emptySettlementSixStepControls=0,trimmedEmptyEightStepControls=0,emptyDriverSplitControls=0,emptyDriverExhaustionControls=0;
 // Positive actual-release queueing controls. This fork does not execute the
 // queued owner work or claim a native/public release history.
+let oneEdgeTenStepControls=0,trimmedOneEdgeTwelveStepControls=0,oneEdgeDriverSplitControls=0,oneEdgeExhaustionControls=0,privateAbsentCarrierControls=0,privateFaultReturnControls=0;
 let queuedReleaseFrameControls=0,faultedPendingFrameControls=0,pendingTopologyStepControls=0,settledLeafShapeControls=0;
 {
  const fixture=new BendRuntime({async:true});
@@ -191,6 +192,41 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
        assert.deepEqual(trimmed,returned,name+' optional trim plus settlement finishes in exactly eight steps');trimmedEmptyEightStepControls++;
       }
      }
+     if(!direct){
+      const hadTrim=tasks[0].$==='OwnerTasks';
+      let input=prefix;if(hadTrim)input=C.step(C.step(input));
+      assert.equal(list(input.tasks)[0].$,'AsyncWriteAfterTrim');
+      const nodes=list(input.world.nodes),edge=nodes[asyncId].subs;
+      assert.ok(edge>0,name+' one-edge source has a subscriber');
+      const link=list(input.world.links)[edge],leaf=link.sub,leafNode=nodes[leaf];
+      assert.equal(link.nextSub,0);assert.equal(leafNode.subs,0);assert.equal(leafNode.config&S.CONFIG_AUTO_DISPOSE,0);
+      const fields=list(input.world.extensions),carrier=fields[leafNode.x];
+      assert.ok(list(list(input.world.pendingSets)[carrier.pendingSources]).includes(asyncId),name+' real leaf visit has the source carrier');
+      const frame=world=>({values:list(world.nodes).map(n=>n.value),tree:world.tree,events:world.events});
+      const run=(machine,length)=>{for(let i=0;i<length;i++)machine=C.step(machine);return machine;};
+      const returned=run(input,10);
+      assert.deepEqual(list(returned.tasks),ending.slice(2),name+' actual one-edge settlement returns at ten steps');
+      assert.deepEqual(list(returned.values),list(valueStack));assert.deepEqual(frame(returned.world),frame(input.world));assert.equal(returned.world.fault.$,'Healthy');oneEdgeTenStepControls++;
+      for(const remaining of [0,1,7]){
+       const whole=C.run(10+remaining,input),split=C.run(remaining,returned);
+       assert.deepEqual(whole,split,name+' one-edge actual driver retains exact remaining fuel');oneEdgeDriverSplitControls++;
+       if(remaining===0){assert.equal(whole.world.fault.$,'Exhausted');assert.deepEqual(list(whole.tasks),[]);assert.deepEqual(list(whole.values),[]);oneEdgeExhaustionControls++;}
+      }
+      if(hadTrim){assert.deepEqual(run(prefix,12),returned,name+' no-stale trim plus one-edge settlement returns in twelve steps');trimmedOneEdgeTwelveStepControls++;}
+      // Private malformed/partial-state controls, never installed in the public
+      // native/Bend history. The theorem deliberately does not assume a valid
+      // global transaction forest or that a pending carrier is still present.
+      const withoutCarrier={...input,world:{...input.world,extensions:asList(fields.map((x,index)=>index===leafNode.x?{...x,pendingSources:0}:x))}};
+      const skipped=run(withoutCarrier,9);
+      assert.deepEqual(list(skipped.tasks),ending.slice(2),name+' absent carrier returns one step sooner');
+      assert.deepEqual(list(skipped.values),list(valueStack));assert.deepEqual(frame(skipped.world),frame(input.world));privateAbsentCarrierControls++;
+      const member=carrier.transaction;assert.ok(member>0);assert.notEqual(leafNode.config&S.CONFIG_HELD,0);
+      const badRoute={...input,world:{...input.world,txArena:asList(list(input.world.txArena).map((tx,index)=>index===member?{...tx,into:member}:tx))}};
+      const faulted=run(badRoute,5);
+      assert.equal(faulted.world.fault.$,'Exhausted',name+' invalid redirect faults in the actual visitor');
+      assert.deepEqual(list(faulted.tasks),ending.slice(2),name+' fault unwinds to the exact caller at five steps');
+      assert.deepEqual(list(faulted.values),list(valueStack));assert.deepEqual(frame(faulted.world),frame(input.world));privateFaultReturnControls++;
+     }
      // Execute the actual core bookkeeping continuations up to the first owner
      // release or flush. Those boundaries can run application code or publish;
      // they are retained, not assumed to preserve every cached node value.
@@ -263,5 +299,6 @@ assert.ok(settlementFlushBoundaries>0,'settlement fixtures must reach their queu
 assert.ok(ownerTrimCompleteControls>0&&structuralOwnerSteps>0,'owner trim fixtures must execute actual structural work');
 assert.ok(independentApplyControls>0&&selectedUiChecks>0,'selected renderer fixtures must observe real independent applications and text results');
 assert.ok(emptySettlementSixStepControls>0,'empty-subscriber fixtures must cover the actual six-step path');
+assert.ok(oneEdgeTenStepControls>0&&trimmedOneEdgeTwelveStepControls>0&&privateAbsentCarrierControls>0&&privateFaultReturnControls>0);
 assert.ok(pendingTopologyStepControls>0&&settledLeafShapeControls>0);
-console.log(JSON.stringify({pendingTopologyStepControls,settledLeafShapeControls,queuedReleaseFrameControls,faultedPendingFrameControls,publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,emptySettlementSixStepControls,trimmedEmptyEightStepControls,emptyDriverSplitControls,emptyDriverExhaustionControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+console.log(JSON.stringify({oneEdgeTenStepControls,trimmedOneEdgeTwelveStepControls,oneEdgeDriverSplitControls,oneEdgeExhaustionControls,privateAbsentCarrierControls,privateFaultReturnControls,pendingTopologyStepControls,settledLeafShapeControls,queuedReleaseFrameControls,faultedPendingFrameControls,publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,emptySettlementSixStepControls,trimmedEmptyEightStepControls,emptyDriverSplitControls,emptyDriverExhaustionControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

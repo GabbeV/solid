@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 630 = 483 finite + 147 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 633 = 484 finite + 149 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen 4975adf2: all 619 named variants rejected with canonical lists and unchanged 817 tracked input hashes; [receipt](reviews/canonical-list-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; three further topology kernel variants rejected; current630 is not a complete sweep |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; three further topology kernel variants rejected; one further finite/two kernel one-edge faults rejected; current633 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -275,3 +275,15 @@ leaf derives its exact control layout around the actual computed World, private
 visited/released locals and scheduled bit. The 1,280 step and 80 leaf controls
 pass; three new metadata corruptions are kernel-rejected. Runtime/source/task
 budgets are unchanged. Successful general traversal and final reveal remain open.
+
+
+## Constructed one-edge return (2026-10-25)
+
+The [one-edge return family](one-edge-return.md) derives actual control and a ten-step upper room from
+Healthy input/one-edge/non-autodisposed-leaf facts, carrying the exact World and
+caller work/stack. A no-stale trim composes to twelve. Early returns and faults
+are explicit alternatives; the complete segment retains committed content and
+uses actual driver fuel. Eight roots extend 500 to 508. Eighty real ten-step and
+40 trimmed returns, plus private nine-step/five-step alternatives, pass. Runtime,
+source, domains and limits are unchanged. Public premise construction, full
+accounting and coordinated flush/reveal remain open.

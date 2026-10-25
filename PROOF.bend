@@ -1,3 +1,8 @@
+import ./proof/bounded-core-return.bend as BoundedReturn
+import ./proof/pending-leaf-return.bend as LeafReturn
+import ./proof/pending-visit-control.bend as VisitControl
+import ./proof/one-edge-settlement-return.bend as OneEdgeReturn
+import ./proof/one-edge-return-driver.bend as OneEdgeDriver
 import ./proof/subscriber-topology-frame.bend as SubscriberShape
 import ./proof/pending-topology-frame.bend as PendingTopology
 import ./proof/core-pending-topology.bend as CoreTopology
@@ -1746,3 +1751,35 @@ def Laws.settled_non_autodisposed_node_retains_prior_release_list(w, tasks, visi
 
 def Laws.settled_leaf_derives_its_actual_pending_machine_shape(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto):
   PendingMachine.settledLeaf(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto)
+
+
+def Laws.actual_leaf_visit_next_control_is_constructed(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto):
+  VisitControl.visit(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto)
+
+
+def Laws.one_edge_settlement_bounded_return_is_constructed(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto):
+  OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)
+
+
+def Laws.one_edge_settlement_retains_committed_observation(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto):
+  OneEdgeReturn.frame(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)
+
+
+def Laws.one_edge_settlement_uses_remaining_actual_driver_fuel(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto, remaining):
+  OneEdgeDriver.driver(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto, remaining)
+
+
+def Laws.no_stale_trimmed_one_edge_return_is_constructed(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto, noStale):
+  OneEdgeReturn.completeTrimmed(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto, noStale)
+
+
+def Laws.one_edge_leaf_suffix_completes_in_seven_healthy_steps(w, edge, root, visited, scheduled, rest, stack, ready, end):
+  LeafReturn.healthy(w, edge, root, visited, scheduled, rest, stack, ready, end)
+
+
+def Laws.one_edge_leaf_suffix_fault_unwinds_in_two_steps(w, edge, root, visited, scheduled, rest, stack, broken):
+  LeafReturn.fault(w, edge, root, visited, scheduled, rest, stack, broken)
+
+
+def Laws.one_edge_return_room_is_derived(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto):
+  OneEdgeDriver.room(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)

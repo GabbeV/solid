@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "32b007dff2f6e810101f2aa689d65c4a95fc6b8c",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 500,
+  "newRoots": 8,
+  "composedRoots": 508,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPayloadsSourceLeafIdsCallerWorkAndStack": true,
+  "inputPremises": [
+    "Healthy input fault",
+    "nonzero source subscriber edge selects the leaf",
+    "selected edge nextSub is zero",
+    "leaf subscriber head is zero",
+    "leaf auto-dispose configuration absent"
+  ],
+  "constructedReturnMaximum": 10,
+  "noStaleTrimmedMaximum": 12,
+  "certificateFields": [
+    "actual step count",
+    "slack",
+    "computed World",
+    "used plus slack equals maximum",
+    "exact actual-step caller return"
+  ],
+  "wholeSegmentCommittedFrame": [
+    "every committed node value",
+    "complete tree",
+    "complete event trace"
+  ],
+  "driverRemainingFuelUnchanged": true,
+  "successAndFaultDistinguished": true,
+  "unappliedVisitorExtraction": true,
+  "unverifiedWholeMachineComparisonsUsed": false,
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "publicSelectedTextChecks": 2280,
+  "realOneEdgeTenStepControls": 80,
+  "realTrimmedTwelveStepControls": 40,
+  "actualDriverSplitControls": 240,
+  "zeroFuelExhaustionControls": 80,
+  "privateAbsentCarrierNineStepControls": 80,
+  "privateRedirectCycleFiveStepFaultControls": 80,
+  "privateMalformedStatesClaimedPubliclyReachable": false,
+  "configuredMutations": 633,
+  "finiteMutations": 484,
+  "kernelMutations": 149,
+  "newFocusedFiniteRejections": 1,
+  "newFocusedKernelRejections": 2,
+  "completeSweepOfCurrentConfiguration": false,
+  "completeFrozen619": "tracking/reviews/canonical-list-complete-negative.json",
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "public constructor establishes graph premises",
+    "global forest/live-list validity",
+    "healthy final status",
+    "queued flush publication",
+    "owner callback execution",
+    "complete action/flight accounting",
+    "eventual host delivery/callback termination/fairness"
+  ],
+  "logs": {
+    "pending-visit-control-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-visit-control-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "core-visit-control-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/core-visit-control-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-leaf-return-check5.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-leaf-return-check5.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "bounded-core-return-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/bounded-core-return-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "one-edge-visit-return-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-visit-return-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "one-edge-settlement-return-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-settlement-return-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "one-edge-return-driver-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-return-driver-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "one-edge-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "one-edge-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-controls1.log",
+      "sha256": "bbac430808bf870d2e50b2e8d9f7b4f85b15de5472be781421cc42e35d403bbc"
+    },
+    "one-edge-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-mutation-targets.log",
+      "sha256": "c6415beb274aa0ac056e4662152379eff0e512498a3d0addda4e642b988674a0"
+    },
+    "one-edge-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/one-edge-negatives.log",
+      "sha256": "094a54a8c37348ca8eb897b2850054bc92279791b1a0591cf7413bc76f5d2cd3"
+    }
+  }
+}

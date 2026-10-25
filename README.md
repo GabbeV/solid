@@ -328,3 +328,15 @@ leaf derives its exact control layout around the actual computed World, private
 visited/released locals and scheduled bit. The 1,280 step and 80 leaf controls
 pass; three new metadata corruptions are kernel-rejected. Runtime/source/task
 budgets are unchanged. Successful general traversal and final reveal remain open.
+
+
+## Constructed one-edge return (2026-10-25)
+
+The [one-edge return family](tracking/one-edge-return.md) derives actual control and a ten-step upper room from
+Healthy input/one-edge/non-autodisposed-leaf facts, carrying the exact World and
+caller work/stack. A no-stale trim composes to twelve. Early returns and faults
+are explicit alternatives; the complete segment retains committed content and
+uses actual driver fuel. Eight roots extend 500 to 508. Eighty real ten-step and
+40 trimmed returns, plus private nine-step/five-step alternatives, pass. Runtime,
+source, domains and limits are unchanged. Public premise construction, full
+accounting and coordinated flush/reveal remain open.
