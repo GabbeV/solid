@@ -36,18 +36,20 @@ def skip(+w: R.World, tasks: List<&2, Task>, visited: List<&2, Nat>, released: L
   w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()), _ => H.enqueueSub(w, id), _ => w)
   Machine{w, tasks, visited, released, scheduled}
 
-def settled(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, root: Nat, source: Nat) -> Machine:
-  visited = {id <> visited : List<&2, Nat>}
-  +w = B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w)))
-  +remaining = B.get(Nat, P.items(B.pendingSources(w, id)), 0n, 0n)
-  +errored = B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())
+# settlePendingSource's settled-node status block, in source mutation order.
+# These named segments share the original function's locals; no task is added.
+def settledStatus(+w: R.World, +id: Nat, +remaining: Nat, +errored: Bool) -> R.World:
   +w = B.choose(~R.World, Nat.is_ne(remaining, 0n),
     _ => B.choose(~R.World, errored, _ => w, _ => P.setPendingError(w, id, remaining, R.Undefined{})),
     _ =>
       +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.clear(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))
       +w = B.choose(~R.World, errored, _ => w, _ => P.setPendingError(w, id, 0n, R.Undefined{}))
       B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => X.joinNode(w, id), _ => w))
-  +last = Nat.is_eq(remaining, 0n)
+  w
+
+# settled-node enqueue/unblock/release-list tail. Queueing owner release is
+# still deferred until after live dependent traversal.
+def settledTail(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, root: Nat, source: Nat, +last: Bool) -> Machine:
   +blocked = Bool.and(last, B.truth(B.selected(R.NodeExtension.blocked(B.extension(w, id)), R.Undefined{})))
   +w = B.choose(~R.World, Bool.and(B.ok(w), blocked), _ => H.enqueueSub(w, id), _ => w)
   +w = B.choose(~R.World, Bool.and(B.ok(w), Bool.and(last, Nat.is_ne(R.Node.x(B.node(w, id)), 0n))),
@@ -55,6 +57,14 @@ def settled(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +releas
   released = B.choose(~List<&2, Nat>, Bool.and(B.ok(w), Bool.and(last, Bool.and(Nat.is_eq(R.Node.subs(B.node(w, id)), 0n), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())))),
     _ => B.append(Nat, released, [id]), _ => released)
   Machine{w, Walk{R.Node.subs(B.node(w, id)), root, source} <> tasks, visited, released, Bool.or(scheduled, blocked)}
+
+def settled(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, root: Nat, source: Nat) -> Machine:
+  visited = {id <> visited : List<&2, Nat>}
+  +w = B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w)))
+  +remaining = B.get(Nat, P.items(B.pendingSources(w, id)), 0n, 0n)
+  +errored = B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR())
+  +w = settledStatus(w, id, remaining, errored)
+  settledTail(w, tasks, visited, released, scheduled, id, root, source, Nat.is_eq(remaining, 0n))
 
 def visitRemoved(+w: R.World, +tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat, +source: Nat) -> Machine:
   +pair = P.removePendingSource(w, id, source)

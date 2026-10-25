@@ -305,3 +305,15 @@ local internal-completion results; public input construction, nonempty traversal
 and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
 splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
 verified separately on frozen4975adf2; four later focused kernel variants pass.
+
+
+## General pending content safety (2026-10-25)
+
+The [active pending frame/history proof](tracking/pending-committed-history.md) closes the previous callback-free settlement
+storage-frame obstacle without reducing its observation: all committed values,
+the full tree and trace are retained through actual pending steps and arbitrary
+finite certified body-only prefixes. Six roots extend 487 to 493. The source
+status/tail blocks now have names; an inlining audit recovers the exact previous
+statements and order. Public/alignment suites pass; no runtime task, semantic
+policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
+general successful termination and coordinated flush/reveal remain open.

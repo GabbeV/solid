@@ -11,5 +11,9 @@
   "activeProofsRelyOnCandidate": false,
   "runtimeOrKernelLimitsChanged": false,
   "theoremDomainReduced": false,
-  "semanticRejectionCredited": false
+  "semanticRejectionCredited": false,
+  "supersededBy": "proof/pending-settlement-frame.bend",
+  "supersedingDocumentation": "tracking/pending-committed-history.md",
+  "originalCandidateStillUnverified": true,
+  "originalDomainPreservedByActiveProof": true
 }

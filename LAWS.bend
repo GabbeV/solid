@@ -1,3 +1,6 @@
+import ./proof/pending-settlement-frame.bend as SettlementFrame
+import ./proof/core-pending-frame.bend as CoreSettlementFrame
+import ./proof/pending-committed-history.bend as SettlementHistory
 import ./proof/deferred-protocol-scope.bend as DeferredProtocolScope
 import ./proof/completion-live-history.bend as CompletionMembership
 import ./proof/completion-history-landing.bend as HistoryLanding
@@ -3698,3 +3701,61 @@ law constructed_empty_subscriber_prefix_has_six_steps:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +healthy: {B.ok(w) == True{} : Bool}
   {PendingHistory.height(EmptySettlement.start(w, id, rest, stack), EmptySettlement.programme(w, id, rest, stack, noSubscribers, healthy)) == 6n : Nat}
+
+
+law actual_settled_node_retains_committed_observation:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  for +id: Nat
+  for +root: Nat
+  for +source: Nat
+  {CommittedStorage.observe(SettlementFrame.world(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law actual_pending_traversal_retains_committed_observation:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {CommittedStorage.observe(SettlementFrame.world(RuntimePending.advance(w, tasks, visited, released, scheduled))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law actual_core_pending_step_retains_committed_observation:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {CommittedStorage.observe(Core.world(Core.step(Core.Machine{w, Core.PendingTasks{tasks, visited, released, scheduled} <> rest, stack}))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law callback_free_settlement_history_retains_committed_observation:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
+  {CommittedStorage.observe(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope))) == CommittedStorage.observe(Core.world(scope)) : CommittedStorage.View}
+
+
+law callback_free_settlement_history_retains_selected_observation:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  {RenderedView.observe(renderers, targets, Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope))) == RenderedView.observe(renderers, targets, Core.world(scope)) : RenderedView.View}
+
+
+law constructed_empty_subscriber_prefix_is_content_safe:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {SettlementHistory.bodyOnly(EmptySettlement.start(w, id, rest, stack), EmptySettlement.programme(w, id, rest, stack, noSubscribers, healthy)) == True{} : Bool}

@@ -135,7 +135,7 @@ that publication result.
 
 ## Obstacles and bug status
 
-The 170-step late-push `from` candidate hits the pinned kernel's reduction limit;
+The 170-step late-push `from` candidate still hits the pinned kernel's reduction limit;
 its passing finite controls are not a proof. It remains an explicitly unverified
 [archive](../experiments/from-async/README.md), excluded from active roots. The new
 small contracts/history proofs avoid that particular expansion without changing
@@ -177,8 +177,8 @@ settlement/schedule task steps and arbitrary finite permitted prefixes for calle
 stack preservation, including fault unwinding. Captured release locals/cursor and
 self-settlement order are exact contracts; a nonempty prefix is constructed.
 The runtime is unchanged. The existing 120 forked non-trim fixtures now execute
-880 actual steps through their queued flush boundary. General committed storage
-through the whole settlement body remains an unverified resource-limited attempt;
+880 actual steps through their queued flush boundary. General committed storage through callback-free settlement is now checked in
+the later active frame/history extension;
 owner callbacks, successful completion and coordinated final publication stay open.
 
 ## Owner continuation and local completion
@@ -213,3 +213,15 @@ local internal-completion results; public input construction, nonempty traversal
 and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
 splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
 verified separately on frozen4975adf2; four later focused kernel variants pass.
+
+
+## General pending content safety (2026-10-25)
+
+The [active pending frame/history proof](pending-committed-history.md) closes the previous callback-free settlement
+storage-frame obstacle without reducing its observation: all committed values,
+the full tree and trace are retained through actual pending steps and arbitrary
+finite certified body-only prefixes. Six roots extend 487 to 493. The source
+status/tail blocks now have names; an inlining audit recovers the exact previous
+statements and order. Public/alignment suites pass; no runtime task, semantic
+policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
+general successful termination and coordinated flush/reveal remain open.

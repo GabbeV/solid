@@ -368,9 +368,9 @@
       "restrictions": "Self-only retirement before choosing first remaining source or full clearStatus; blocked clear and requested status mask retained. Actual asyncWrite caller unfinished."
     },
     "core/async.ts:settlePendingSource": {
-      "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, skip, Walk, Next, Release, End; runtime/pending.bend:beginSettlement, advance; runtime/core.bend:PendingTasks, pendingResume, pendingTasks",
+      "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, settledStatus, settledTail, skip, Walk, Next, Release, End; runtime/pending.bend:beginSettlement, advance; runtime/core.bend:PendingTasks, pendingResume, pendingTasks",
       "status": "partial",
-      "restrictions": "Root retirement, full retryReaches, early-return visited semantics, remaining error/source identity, held join, blocked retry and collect-then-release order retained. Core callers suspend on each eligible owner release with captured visited/released/scheduled locals and current graph eligibility. Restricted direct facade composes the same segments. Active lane/boundary/store hooks and arbitrary JavaScript callbacks remain outside the admitted profile."
+      "restrictions": "Root retirement, full retryReaches, early-return visited semantics, remaining error/source identity, held join, blocked retry and collect-then-release order retained. Core callers suspend on each eligible owner release with captured visited/released/scheduled locals and current graph eligibility. Restricted direct facade composes the same segments. Active lane/boundary/store hooks and arbitrary JavaScript callbacks remain outside the admitted profile. settledStatus and settledTail are named extractions of the original settled-node blocks; tools/pending-segment-check.mjs verifies exact previous statements after inlining, with original branches, mutation order, locals and Core step count retained."
     },
     "core/async.ts:releaseIfSettledUnobserved": {
       "bend": "runtime/pending.bend:releaseIfSettledUnobserved; runtime/pending.bend:releasable; runtime/core.bend:pendingTasks, passReleases",

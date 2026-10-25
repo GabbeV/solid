@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 623 = 480 finite + 143 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 627 = 483 finite + 144 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen 4975adf2: all 619 named variants rejected with canonical lists and unchanged 817 tracked input hashes; [receipt](reviews/canonical-list-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four later no-subscriber kernel variants rejected; current623 is not a complete sweep |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; current627 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -120,8 +120,8 @@ assumed package-completion measure.
 
 Use focused checks while developing. At a coherent checkpoint run the composed
 kernel and checks appropriate to the actual changes; broaden tests when changes
-or unresolved failures justify it. No runtime/host change is part of the current
-proof/documentation checkpoint. Frozen complete sweeps and fresh focused checks
+or unresolved failures justify it. The latest runtime change only extracts the source settled-node status/tail
+segments; their exact inlining audit and public/alignment reruns are recorded. Frozen complete sweeps and fresh focused checks
 are deliberately distinct evidence.
 
 ## What each layer establishes
@@ -218,7 +218,7 @@ ten new roots and the existing 456 retained roots. The 120 accepted non-trim
 public-history snapshots now execute 880 actual settlement/schedule steps to
 their queued flush. Four focused kernel negatives are rejected. Caller-stack
 preservation is proved by induction over certified actual-step prefixes; the
-stronger settlement storage frame is explicitly unverified. No resource failure
+stronger settlement storage frame was still unverified at that earlier checkpoint; the later active frame/history extension closes it. No resource failure
 is credited as a semantic negative, and no runtime or limit changed.
 
 ## Owner bookkeeping and bounded return
@@ -252,3 +252,15 @@ local internal-completion results; public input construction, nonempty traversal
 and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
 splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
 verified separately on frozen4975adf2; four later focused kernel variants pass.
+
+
+## General pending content safety (2026-10-25)
+
+The [active pending frame/history proof](pending-committed-history.md) closes the previous callback-free settlement
+storage-frame obstacle without reducing its observation: all committed values,
+the full tree and trace are retained through actual pending steps and arbitrary
+finite certified body-only prefixes. Six roots extend 487 to 493. The source
+status/tail blocks now have names; an inlining audit recovers the exact previous
+statements and order. Public/alignment suites pass; no runtime task, semantic
+policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
+general successful termination and coordinated flush/reveal remain open.

@@ -176,3 +176,15 @@ runtime and proofs are unchanged. Full public and alignment suites pass again.
 The older frozen608 receipt lists the seven affected finite variants; a fresh
 corrected sweep supersedes that evidence. This is a harness defect, not an
 upstream Solid bug or a semantic deviation.
+
+
+## General pending content safety (2026-10-25)
+
+The [active pending frame/history proof](pending-committed-history.md) closes the previous callback-free settlement
+storage-frame obstacle without reducing its observation: all committed values,
+the full tree and trace are retained through actual pending steps and arbitrary
+finite certified body-only prefixes. Six roots extend 487 to 493. The source
+status/tail blocks now have names; an inlining audit recovers the exact previous
+statements and order. Public/alignment suites pass; no runtime task, semantic
+policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
+general successful termination and coordinated flush/reveal remain open.

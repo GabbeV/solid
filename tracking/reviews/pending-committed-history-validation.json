@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "061a645d2604e8578e009681053da82542eca257",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": true,
+  "runtimeChange": "Extract original settled-node status and tail blocks into named source segments; exact statement audit after inlining",
+  "inlinedStatementsIdentical": true,
+  "bodySha256": "0c2b78444faa0e4f1b13558924b662c0c87d9d933632d45cf87d985aa3a1538b",
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 487,
+  "newRoots": 6,
+  "composedRoots": 493,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPayloadsGraphsCallerWorkAndStack": true,
+  "observation": [
+    "all committed node values",
+    "complete tree",
+    "complete event trace"
+  ],
+  "allowedPrefixPhases": [
+    "pending",
+    "afterTrim",
+    "schedule"
+  ],
+  "excludedPrefixPhases": [
+    "owner work",
+    "callback execution",
+    "flush"
+  ],
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "publicSelectedTextChecks": 2280,
+  "executedFulfillmentPrefixes": 160,
+  "actualSettlementOwnerSteps": 1360,
+  "privateQueuedReleaseControls": 2,
+  "privateFaultUnwindControls": 2,
+  "fullPublicCommandPassed": true,
+  "fullAlignmentCommandPassed": true,
+  "configuredMutations": 627,
+  "finiteMutations": 483,
+  "kernelMutations": 144,
+  "newFocusedFiniteRejections": 3,
+  "newFocusedKernelRejections": 1,
+  "completeSweepOfCurrentConfiguration": false,
+  "completeFrozen619": "tracking/reviews/canonical-list-complete-negative.json",
+  "initialNegativeInfrastructureStops": 2,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "general successful traversal or health",
+    "public constructor establishes graph invariants",
+    "arbitrary callback effects",
+    "full joined-action publication invariant",
+    "queued flush execution",
+    "eventual host delivery/fairness"
+  ],
+  "logs": {
+    "pending-committed-factored-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-committed-factored-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "core-pending-frame-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/core-pending-frame-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-committed-history-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-committed-history-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-frame-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-frame-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-segment-audit.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-segment-audit.log",
+      "sha256": "4b3bdaa46ce00334bf763bff912b7a4313eb26466a4ae1528eeca1e1bac953a3"
+    },
+    "pending-segment-build.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-segment-build.log",
+      "sha256": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125"
+    },
+    "pending-segment-public.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-segment-public.log",
+      "sha256": "e691e4e9659ad0422fbb26c817dfa84ce8215072526a3d851ba37394c4c43bfc"
+    },
+    "pending-segment-alignment.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-segment-alignment.log",
+      "sha256": "bffc0a3566cdeca8467ae546492db393e9d62a776fed3cf51b6fb198dc1d8de9"
+    },
+    "pending-frame-release-controls.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-frame-release-controls.log",
+      "sha256": "ba0e880d431ad3b24e32eaac57a078eea6614f98c9fb68d1b7fedc3e7761b452"
+    },
+    "pending-frame-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-frame-negatives.log",
+      "sha256": "97b1a79ef8bd6fc8aef36c4555f2e07f1877fd37bcf7ee75cb6fd495d7012375"
+    },
+    "pending-frame-negatives2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-frame-negatives2.log",
+      "sha256": "bc26397cac2e2ea6b466f7e0383014d92e1c64192374dd11ee7b253f2481af44"
+    },
+    "pending-frame-negatives3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-frame-negatives3.log",
+      "sha256": "01f8f5f9e930f52eabae6c38b3f60d08a1ffc865d1d3918218f4038a27012c20"
+    }
+  }
+}

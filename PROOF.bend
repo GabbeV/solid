@@ -1,3 +1,6 @@
+import ./proof/pending-settlement-frame.bend as SettlementFrame
+import ./proof/core-pending-frame.bend as CoreSettlementFrame
+import ./proof/pending-committed-history.bend as SettlementHistory
 import ./proof/deferred-protocol-scope.bend as DeferredProtocolScope
 import ./proof/completion-live-history.bend as CompletionMembership
 import ./proof/completion-history-landing.bend as HistoryLanding
@@ -1686,3 +1689,27 @@ def Laws.empty_subscriber_settlement_prefix_is_constructed(w, id, rest, stack, n
 
 def Laws.constructed_empty_subscriber_prefix_has_six_steps(w, id, rest, stack, noSubscribers, healthy):
   EmptySettlement.programmeHeight(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.actual_settled_node_retains_committed_observation(w, tasks, visited, released, scheduled, id, root, source):
+  SettlementFrame.settled(w, tasks, visited, released, scheduled, id, root, source)
+
+
+def Laws.actual_pending_traversal_retains_committed_observation(w, tasks, visited, released, scheduled):
+  SettlementFrame.advance(w, tasks, visited, released, scheduled)
+
+
+def Laws.actual_core_pending_step_retains_committed_observation(w, rest, stack, tasks, visited, released, scheduled):
+  CoreSettlementFrame.step(w, rest, stack, tasks, visited, released, scheduled)
+
+
+def Laws.callback_free_settlement_history_retains_committed_observation(scope, programme, allowed):
+  SettlementHistory.iterationFrame(scope, programme, allowed)
+
+
+def Laws.callback_free_settlement_history_retains_selected_observation(scope, programme, allowed, renderers, targets):
+  SettlementHistory.rendered(scope, programme, allowed, renderers, targets)
+
+
+def Laws.constructed_empty_subscriber_prefix_is_content_safe(w, id, rest, stack, noSubscribers, healthy):
+  SettlementHistory.constructedBody(w, id, rest, stack, noSubscribers, healthy)
