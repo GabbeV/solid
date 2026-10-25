@@ -12,18 +12,21 @@ import ./action-wait-construction.bend as Register
 import ./action-wait-settlement.bend as Wait
 import ./observer-allocation-frame.bend as Observer
 import ./action-laws.bend as Guard
+import ./observer-capture-history.bend as Capture
 
 
 type WaitEvent is Data:
   WaitRegister{action: Nat,result: Nat,kind: U32}
   ObserverAllocate{node: Nat,result: Nat}
   WaitMark{observer: Nat}
+  ObserverCapture{operation: Capture.Operation}
 
 def step(+w: R.World,event: WaitEvent) -> R.World:
   match event:
     case WaitRegister{action,result,kind}: Allocation.after(w,action,result,kind)
     case ObserverAllocate{node,result}: Observer.after(w,node,result)
     case WaitMark{observer}: R.World.with_actionWaits(w,A.settleWait(R.World.actionWaits(w),observer))
+    case ObserverCapture{operation}: Capture.after(w,operation)
 
 def run(events: List<&2,WaitEvent>,w: R.World) -> R.World:
   match events:
@@ -54,6 +57,7 @@ def stepRange(+w: R.World,event: WaitEvent,valid: {Range.below(R.World.actionWai
     case WaitRegister{action,result,kind}: Register.bounded(w,action,result,kind,valid)
     case ObserverAllocate{node,result}: observerRange(w,node,result,valid)
     case WaitMark{id}: markedRange(w,id,valid)
+    case ObserverCapture{operation}: Capture.range(w,operation,valid)
 
 def historyRange(events: List<&2,WaitEvent>,+w: R.World,valid: {Range.below(R.World.actionWaits(w),Allocation.index(w)) == True{} : Bool}) -> {Range.below(R.World.actionWaits(run(events,w)),Allocation.index(run(events,w))) == True{} : Bool}:
   match events:
@@ -66,6 +70,7 @@ def stepFound(+w: R.World,event: WaitEvent,+id: Nat,+observer: Nat,+action: Nat,
     case WaitRegister{newAction,result,newKind}: Register.oldLookup(w,newAction,result,newKind,id,R.ActionWait{observer,action,kind,True{}},found)
     case ObserverAllocate{node,result}:
       Equal.trans(Maybe<&2,R.ActionWait>,A.find(R.World.actionWaits(Observer.after(w,node,result)),id),A.find(R.World.actionWaits(w),id),Some{R.ActionWait{observer,action,kind,True{}}},Equal.cong(List<&2,R.ActionWait>,Maybe<&2,R.ActionWait>,waits=>A.find(waits,id),R.World.actionWaits(Observer.after(w,node,result)),R.World.actionWaits(w),Observer.waits(w,node,result)),found)
+    case ObserverCapture{operation}: Capture.found(w,operation,id,R.ActionWait{observer,action,kind,True{}},found)
     case WaitMark{+other}:
       +entries = A.settleWait(R.World.actionWaits(w),other)
       Equal.trans(Maybe<&2,R.ActionWait>,A.find(R.World.actionWaits(step(w,WaitMark{other})),id),A.find(entries,id),Some{R.ActionWait{observer,action,kind,True{}}},Equal.cong(List<&2,R.ActionWait>,Maybe<&2,R.ActionWait>,rows=>A.find(rows,id),R.World.actionWaits(step(w,WaitMark{other})),entries,Allocation.waitsStored(w,entries)),Wait.otherKeeps(R.World.actionWaits(w),id,other,observer,action,kind,found))
@@ -94,6 +99,7 @@ def stepPositive(+w: R.World,event: WaitEvent,positive: {Nat.is_ne(Allocation.in
       Equal.trans(Bool,Nat.is_ne(Allocation.index(Allocation.after(w,action,result,kind)),0n),Nat.is_ne(Nat.add(Allocation.index(w),1n),0n),True{},Equal.cong(Nat,Bool,id=>Nat.is_ne(id,0n),Allocation.index(Allocation.after(w,action,result,kind)),Nat.add(Allocation.index(w),1n),Allocation.size(w,action,result,kind)),Range.successorPositive(Allocation.index(w)))
     case ObserverAllocate{node,result}:
       Equal.trans(Bool,Nat.is_ne(Allocation.index(Observer.after(w,node,result)),0n),Nat.is_ne(Nat.add(Allocation.index(w),1n),0n),True{},Equal.cong(Nat,Bool,id=>Nat.is_ne(id,0n),Allocation.index(Observer.after(w,node,result)),Nat.add(Allocation.index(w),1n),Observer.size(w,node,result)),Range.successorPositive(Allocation.index(w)))
+    case ObserverCapture{operation}: Capture.positive(w,operation,positive)
     case WaitMark{id}:
       Equal.trans(Bool,Nat.is_ne(Allocation.index(step(w,WaitMark{id})),0n),Nat.is_ne(Allocation.index(w),0n),True{},Equal.cong(Nat,Bool,index=>Nat.is_ne(index,0n),Allocation.index(step(w,WaitMark{id})),Allocation.index(w),indexUnchanged(w,A.settleWait(R.World.actionWaits(w),id))),positive)
 
@@ -117,6 +123,7 @@ def stepContent(+w: R.World,event: WaitEvent) -> {Content.observe(step(w,event))
     case WaitRegister{action,result,kind}: Allocation.content(w,action,result,kind)
     case ObserverAllocate{node,result}: Observer.content(w,node,result)
     case WaitMark{id}: markContent(w,id)
+    case ObserverCapture{operation}: Capture.content(w,operation)
 
 def historyContent(events: List<&2,WaitEvent>,+w: R.World) -> {Content.observe(run(events,w)) == Content.observe(w) : Content.View}:
   match events:

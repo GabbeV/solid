@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "e841aa1c897162f619874180c386587aeca75cc8",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "previousRootsRetained": 595,
+  "newRoots": 7,
+  "composedRoots": 602,
+  "existingHistoryDomains": "expanded datatype; all old cases remain admitted",
+  "newActualHelpers": [
+    "flight.syncFulfilled",
+    "flight.syncRejected",
+    "iterator-state.newStepObserver",
+    "iterator-state.ignoreThen"
+  ],
+  "primitiveObserverWriteFrame": "whole wait list retained, same arena length, same committed values/tree/trace",
+  "streamObserverConstruction": "fresh returned identity and source current-stream capture derived",
+  "newTypedHistories": 408,
+  "newDuplicateChecks": 816,
+  "newCaughtThrowChecks": 408,
+  "actualRawClientCases": 12,
+  "oldTypedHistories": 368,
+  "oldNativeSequences": 6,
+  "oldNativeStaleInvocations": 70,
+  "focusedKernelRejections": 3,
+  "configuredMutations": 671,
+  "finiteMutations": 484,
+  "kernelMutations": 187,
+  "completeCurrentSweep": false,
+  "frozenCompleteSweep": "664 on fb4dd44b with962 sealed inputs, plus7 later focused faults",
+  "notProven": [
+    "first actual delivery establishes mark",
+    "whole generator once-only debt",
+    "whole from/deferred client composition",
+    "global identity/forest/ledger",
+    "flush/reveal"
+  ],
+  "limitsUnchanged": true,
+  "activeDeviationIds": []
+}

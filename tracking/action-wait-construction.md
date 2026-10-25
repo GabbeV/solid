@@ -56,3 +56,13 @@ toolchain limits are unchanged. No semantic deviation or new upstream bug.
 The pending-settlement status composition remains open after unchanged-kernel
 out-of-fuel attempts; those are [unverified experiments](../experiments/pending-status/README.md),
 not active roots or reasons to change the source algorithm.
+
+## Other observer clients in action wait histories
+
+[The capture extension](observer-captures.md) admits actual synchronous fulfilled/
+rejected capture, stream-step allocation and ignored-return subscription into the
+constructed wait histories. Existing guard/range/content/catch domains expand;
+seven new helper/capture roots extend595 to602. 408 new orders,12 actual raw
+client constructions and three focused faults pass; all old368 cases and six
+native sequences remain. First actual delivery/marking, complete generator/debt
+and queued flush/reveal remain open. Runtime/source/host/limits are unchanged.

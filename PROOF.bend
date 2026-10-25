@@ -1,3 +1,6 @@
+import ./proof/observer-write-frame.bend as ObserverWrites
+import ./proof/observer-capture-history.bend as ObserverCapture
+import ./runtime/iterator-state.bend as ObserverIterator
 import ./proof/pending-notification-footprint.bend as NotificationFootprint
 import ./proof/pending-notification-storage.bend as NotificationStorage
 import ./proof/status-notification-room.bend as NotificationRoom
@@ -2167,3 +2170,24 @@ def Laws.no_error_pending_store_retains_initial_health(w,node,source,serial,noEr
 
 def Laws.valid_node_supplies_two_steps_in_actual_notifier_budget(w,node,valid):
   NotificationRoom.room(w,node,valid)
+
+def Laws.observer_record_writes_retain_wait_entries(w,observer,record):
+  ObserverWrites.storeWaits(w,observer,record)
+
+def Laws.observer_record_writes_retain_arena_size(w,observer,record):
+  ObserverWrites.storeSize(w,observer,record)
+
+def Laws.actual_observer_capture_has_source_counter_result(w,operation):
+  ObserverCapture.size(w,operation)
+
+def Laws.actual_observer_capture_retains_committed_content(w,operation):
+  ObserverCapture.content(w,operation)
+
+def Laws.actual_observer_capture_preserves_wait_range(w,operation,valid):
+  ObserverCapture.range(w,operation,valid)
+
+def Laws.stream_step_observer_returns_fresh_identity(w,stream):
+  ObserverWrites.streamIdentity(w,stream)
+
+def Laws.stream_step_observer_captures_current_stream_record(w,stream):
+  ObserverWrites.streamRecord(w,stream)

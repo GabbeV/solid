@@ -1,3 +1,6 @@
+import ./proof/observer-write-frame.bend as ObserverWrites
+import ./proof/observer-capture-history.bend as ObserverCapture
+import ./runtime/iterator-state.bend as ObserverIterator
 import ./proof/pending-notification-footprint.bend as NotificationFootprint
 import ./proof/pending-notification-storage.bend as NotificationStorage
 import ./proof/status-notification-room.bend as NotificationRoom
@@ -5003,3 +5006,41 @@ law valid_node_supplies_two_steps_in_actual_notifier_budget:
   for +node: Nat
   for +valid: {B.valid(w,node) == True{} : Bool}
   {Nat.mul(4n,B.budget(w)) == 2n+NotificationRoom.remaining(R.World.nodes(w),R.World.links(w)) : Nat}
+
+law observer_record_writes_retain_wait_entries:
+  for +w: R.World
+  for +observer: Nat
+  for +record: R.AsyncObserver
+  {R.World.actionWaits(B.store_asyncObserver(w,observer,record)) == R.World.actionWaits(w) : List<&2,R.ActionWait>}
+
+law observer_record_writes_retain_arena_size:
+  for +w: R.World
+  for +observer: Nat
+  for +record: R.AsyncObserver
+  {WaitAllocation.index(B.store_asyncObserver(w,observer,record)) == WaitAllocation.index(w) : Nat}
+
+law actual_observer_capture_has_source_counter_result:
+  for +w: R.World
+  for +operation: ObserverCapture.Operation
+  {WaitAllocation.index(ObserverCapture.after(w,operation)) == ObserverCapture.bound(w,operation) : Nat}
+
+law actual_observer_capture_retains_committed_content:
+  for +w: R.World
+  for +operation: ObserverCapture.Operation
+  {CommittedStorage.observe(ObserverCapture.after(w,operation)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+law actual_observer_capture_preserves_wait_range:
+  for +w: R.World
+  for +operation: ObserverCapture.Operation
+  for +valid: {WaitRange.below(R.World.actionWaits(w),WaitAllocation.index(w)) == True{} : Bool}
+  {WaitRange.below(R.World.actionWaits(ObserverCapture.after(w,operation)),WaitAllocation.index(ObserverCapture.after(w,operation))) == True{} : Bool}
+
+law stream_step_observer_returns_fresh_identity:
+  for +w: R.World
+  for +stream: Nat
+  {B.second(R.World,Nat,ObserverIterator.newStepObserver(w,stream)) == WaitAllocation.index(w) : Nat}
+
+law stream_step_observer_captures_current_stream_record:
+  for +w: R.World
+  for +stream: Nat
+  {B.asyncObserver(ObserverWrites.stepWorld(w,stream),WaitAllocation.index(w)) == ObserverWrites.stepRecord(w,stream) : R.AsyncObserver}

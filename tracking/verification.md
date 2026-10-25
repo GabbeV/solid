@@ -17,7 +17,7 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 668 = 484 finite + 184 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 671 = 484 finite + 187 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
 | Later negative evidence | Thirty-one later focused kernel variants at their individual checkpoints, including idle disposal and notification; complete664 on frozen fb4dd44b is verified separately; current668 has four later focused kernel rejections |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -443,3 +443,13 @@ No compilation, timeout or resource failure was credited as rejection. This
 covers the constructed-wait checkpoint. The four later focused status/footprint
 faults and current positive roots are reported separately; this is not a claim
 of a complete sweep of current668.
+
+## Other observer clients in action wait histories
+
+[The capture extension](observer-captures.md) admits actual synchronous fulfilled/
+rejected capture, stream-step allocation and ignored-return subscription into the
+constructed wait histories. Existing guard/range/content/catch domains expand;
+seven new helper/capture roots extend595 to602. 408 new orders,12 actual raw
+client constructions and three focused faults pass; all old368 cases and six
+native sequences remain. First actual delivery/marking, complete generator/debt
+and queued flush/reveal remain open. Runtime/source/host/limits are unchanged.
