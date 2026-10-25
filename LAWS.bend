@@ -1,3 +1,9 @@
+import ./proof/default-node-literals.bend as DefaultLiterals
+import ./proof/parentless-node-construction.bend as FreshNodeSetup
+import ./proof/default-computed-construction.bend as DefaultNode
+import ./proof/memo-render-construction.bend as MemoRender
+import ./proof/memo-render-fixture.bend as ConstructedFixture
+import ./runtime/construct-state.bend as RuntimeConstruct
 import ./proof/node-store-lookup.bend as NodeStore
 import ./proof/graph-fresh-link.bend as FreshGraph
 import ./proof/graph-allocation-construction.bend as GraphAllocated
@@ -4081,3 +4087,120 @@ law fresh_graph_allocation_keeps_allocated_node_ids_valid:
   for +read: Nat
   for +known: {B.valid(w, read) == True{} : Bool}
   {B.valid(GraphAllocation.source(w, root, leaf), read) == True{} : Bool}
+
+
+law default_signal_allocation_is_actual_literal_append:
+  for +w: R.World
+  for +value: R.Value
+  {RuntimeConstruct.signal(w, value, RuntimeConstruct.defaults()) == RuntimeConstruct.append(w, DefaultLiterals.signalRecord(w, value)) : R.World}
+
+
+law parentless_computed_setup_installs_fresh_heap_slot:
+  for +w: R.World
+  for +node: R.Node
+  for +parentZero: {R.Node.parent(node) == 0n : Nat}
+  for +room: {Nat.is_lt(0n, B.length(R.Node, R.World.nodes(w))) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  {RuntimeConstruct.setupComputedNode(RuntimeConstruct.append(w, node), FreshNodeSetup.index(w)) == RuntimeConstruct.append(w, FreshNodeSetup.record(w, node)) : R.World}
+
+
+law default_computed_allocation_derives_its_node_record:
+  for +w: R.World
+  for +expr: R.Expr
+  for +which: DefaultNode.Family
+  for +room: {Nat.is_lt(0n, DefaultNode.index(w)) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  {B.node(DefaultNode.source(w, expr, which), DefaultNode.index(w)) == DefaultNode.record(w, expr, which) : R.Node}
+
+
+law default_computed_allocation_derives_valid_identity:
+  for +w: R.World
+  for +expr: R.Expr
+  for +which: DefaultNode.Family
+  for +room: {Nat.is_lt(0n, DefaultNode.index(w)) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +first: R.Node
+  for +tail: List<&2, R.Node>
+  for +known: {R.World.nodes(w) == first <> tail : List<&2, R.Node>}
+  {B.valid(DefaultNode.source(w, expr, which), DefaultNode.index(w)) == True{} : Bool}
+
+
+law default_computed_allocation_retains_existing_node:
+  for +w: R.World
+  for +expr: R.Expr
+  for +which: DefaultNode.Family
+  for +room: {Nat.is_lt(0n, DefaultNode.index(w)) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +read: Nat
+  for +fits: {Nat.is_lt(read, DefaultNode.index(w)) == True{} : Bool}
+  {B.node(DefaultNode.source(w, expr, which), read) == B.node(w, read) : R.Node}
+
+
+law actual_memo_render_graph_is_constructed:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  GraphAllocated.OneEdge<MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), DefaultNode.index(MemoRender.memo(w, sourceExpr)), B.length(R.Link, links)>
+
+
+law actual_memo_render_graph_starts_bounded_settlement_return:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+
+
+law actual_memo_render_graph_settlement_retains_committed_observation:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n, MemoRender.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena))) == CommittedStorage.observe(MemoRender.allocated(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+
+
+law reserved_arena_memo_render_return_requires_no_final_state_premises:
+  for +values: List<&2, R.Value>
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(ConstructedFixture.input(values), sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(ConstructedFixture.input(values)), rest, stack), rest, stack, 10n>

@@ -300,3 +300,17 @@ caller return. Eight roots extend 508 to 516; 64 typed constructor controls,
 kernel negatives pass. Runtime/source/limits are unchanged. Initial public node
 allocation, arbitrary graph histories, full accounting and coordinated reveal
 remain open.
+
+
+## Actual node construction (2026-10-25)
+
+The [default constructor family](node-construction.md) derives fresh valid IDs,
+node records and the graph input metadata through actual signal/memo/render
+allocation and parentless setup. Memo/render allocation then actual `graph.link`
+constructs the bounded settlement return, without final-state premises. Nine
+roots extend 516 to 525; 48 typed controls and 144 driver splits pass, with three
+new focused kernel rejections. Callbacks/flight registration are not executed;
+these finite cases cover the absent-carrier alternative. Initial healthy context,
+reserved arenas and null-parent computed identity remain explicit. Runtime, host,
+source and limits are unchanged. Callback/registration integration, full
+accounting and coordinated reveal remain open.

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "2db4149faf4e983e80be5ecb9ba9cac7152fc5d9",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 516,
+  "newRoots": 9,
+  "composedRoots": 525,
+  "allEarlierTheoremDomainsRetained": true,
+  "actualDefaultConstructorFamilies": [
+    "signal literal/append",
+    "parentless memo literal/append/setup",
+    "parentless render literal/append/setup"
+  ],
+  "initialContext": [
+    "Healthy fault",
+    "nonempty reserved node/link arenas",
+    "null computed-parent identity"
+  ],
+  "derivedFacts": [
+    "fresh actual node records and valid IDs",
+    "retained existing identities and full node records",
+    "source and leaf distinct IDs from actual consecutive arena lengths",
+    "empty node lists and absent render auto-dispose",
+    "actual graph certificate and bounded settlement return",
+    "committed frame across graph creation/return from post-allocation state"
+  ],
+  "arbitraryWorldExpressionsCallerWorkAndStack": true,
+  "typedRawConstructorCases": 48,
+  "actualDriverSplits": 144,
+  "javascriptSuppliesEqualityEvidence": false,
+  "callbacksExecuted": false,
+  "flightRegistrationExecuted": false,
+  "finiteCasesUseAbsentCarrierAlternative": true,
+  "newFocusedKernelRejections": 3,
+  "configuredMutations": 639,
+  "finiteMutations": 484,
+  "kernelMutations": 155,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "complete public primitive constructor execution",
+    "owned/options construction",
+    "callback execution",
+    "pending carrier or flight registration",
+    "full action/flight accounting",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "node-append-construction-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-append-construction-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "node-allocation-validity-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-allocation-validity-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "computed-setup-construction-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/computed-setup-construction-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "default-node-literals-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/default-node-literals-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "parentless-node-construction-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/parentless-node-construction-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "default-computed-construction-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/default-computed-construction-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-construction-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-construction-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-fixture-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-fixture-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "constructor-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/constructor-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "node-construction-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-construction-controls1.log",
+      "sha256": "96d96eb13d87df222070f8f2c48eabdcb270ba5cda12918d18647237d28754b4"
+    },
+    "node-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-mutation-targets.log",
+      "sha256": "e33a0bf95cc27b24f7d8bb8fda852517159d4f0bab4dfad769de3572a5dbf7b6"
+    },
+    "node-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/node-negatives.log",
+      "sha256": "19673d97a3cfbdc70d15884a089ceebc49565c454b8a563e85f7a8ac7612cae3"
+    }
+  }
+}

@@ -1,3 +1,9 @@
+import ./proof/default-node-literals.bend as DefaultLiterals
+import ./proof/parentless-node-construction.bend as FreshNodeSetup
+import ./proof/default-computed-construction.bend as DefaultNode
+import ./proof/memo-render-construction.bend as MemoRender
+import ./proof/memo-render-fixture.bend as ConstructedFixture
+import ./runtime/construct-state.bend as RuntimeConstruct
 import ./proof/node-store-lookup.bend as NodeStore
 import ./proof/graph-fresh-link.bend as FreshGraph
 import ./proof/graph-allocation-construction.bend as GraphAllocated
@@ -1821,3 +1827,39 @@ def Laws.graph_construction_and_settlement_retain_committed_observation(w, root,
 
 def Laws.fresh_graph_allocation_keeps_allocated_node_ids_valid(w, root, leaf, read, known):
   GraphAllocated.valid(w, root, leaf, read, known)
+
+
+def Laws.default_signal_allocation_is_actual_literal_append(w, value):
+  DefaultLiterals.signal(w, value)
+
+
+def Laws.parentless_computed_setup_installs_fresh_heap_slot(w, node, parentZero, room, nullComputed):
+  FreshNodeSetup.exact(w, node, parentZero, room, nullComputed)
+
+
+def Laws.default_computed_allocation_derives_its_node_record(w, expr, which, room, nullComputed):
+  DefaultNode.node(w, expr, which, room, nullComputed)
+
+
+def Laws.default_computed_allocation_derives_valid_identity(w, expr, which, room, nullComputed, first, tail, known):
+  DefaultNode.fresh(w, expr, which, room, nullComputed, first, tail, known)
+
+
+def Laws.default_computed_allocation_retains_existing_node(w, expr, which, room, nullComputed, read, fits):
+  DefaultNode.oldNode(w, expr, which, room, nullComputed, read, fits)
+
+
+def Laws.actual_memo_render_graph_is_constructed(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena):
+  MemoRender.build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena)
+
+
+def Laws.actual_memo_render_graph_starts_bounded_settlement_return(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena):
+  MemoRender.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena)
+
+
+def Laws.actual_memo_render_graph_settlement_retains_committed_observation(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena):
+  MemoRender.frame(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena)
+
+
+def Laws.reserved_arena_memo_render_return_requires_no_final_state_premises(values, sourceExpr, effectExpr, target, program, cleanup, rest, stack):
+  ConstructedFixture.complete(values, sourceExpr, effectExpr, target, program, cleanup, rest, stack)

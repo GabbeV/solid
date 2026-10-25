@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["node construction kernel omits parentless memo auto disposal", "runtime/construct-state.bend", "Bool.or(Nat.is_eq(parent, 0n), R.NodeOptions.lazy(options))", "False{}", "tests/proof-properties.mjs", "computed", "constructor-negative-probes"],
+  ["node construction kernel incorrectly auto disposes render effects", "runtime/construct-state.bend", "config = B.set(config, R.NodeOptions.extraConfig(options))", "config = B.set(B.set(config, K.CONFIG_AUTO_DISPOSE()), R.NodeOptions.extraConfig(options))", "tests/proof-properties.mjs", "createEffectNode", "constructor-negative-probes"],
+  ["node construction kernel fails to initialize its own heap pointer", "runtime/construct-state.bend", "R.Node.with_prevHeap(B.node(w, id), id)", "R.Node.with_prevHeap(B.node(w, id), 0n)", "tests/proof-properties.mjs", "setupComputedNode", "constructor-negative-probes"],
+
   ["fresh graph kernel creates a self-linked subscriber tail", "runtime/graph-state.bend", "R.Link{dep, sub, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "R.Link{dep, sub, nextDep, prevSub, id, R.Node.depGen(B.node(w, sub))}", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
   ["fresh graph kernel selects the source instead of the leaf", "runtime/graph-state.bend", "R.Link{dep, sub, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "R.Link{dep, dep, nextDep, prevSub, 0n, R.Node.depGen(B.node(w, sub))}", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
   ["fresh graph kernel omits the first subscriber head", "runtime/graph-state.bend", "_ => B.store_node(w, dep, R.Node.with_subs(B.node(w, dep), id)))", "_ => B.store_node(w, dep, R.Node.with_subs(B.node(w, dep), 0n)))", "tests/proof-properties.mjs", "allocate", "graph-link-negative-probes"],
