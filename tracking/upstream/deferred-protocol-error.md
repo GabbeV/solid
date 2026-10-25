@@ -1,5 +1,10 @@
 # Deferred iterator protocol errors can retain an obsolete flight
 
+Merged as [#4248](https://github.com/solidjs/solid/pull/4248), commit
+`0dd40b28`, and integrated at Solid pin `2a0da2fc` on 2026-10-25. The
+[integration review](../reviews/solid-2a0da2fc.md) records the passing replay.
+The failure evidence below describes the earlier pinned baseline.
+
 Confirmed against unchanged next@b9b6f333 (rc.17), production/development/observe.
 The user filed [PR #4248](https://github.com/solidjs/solid/pull/4248) for this
 specific remaining case. Its tested candidate is separate from the pinned reference

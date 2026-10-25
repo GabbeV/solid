@@ -1,3 +1,4 @@
+import ./proof/deferred-protocol-scope.bend as DeferredProtocolScope
 import ./proof/completion-live-history.bend as CompletionMembership
 import ./proof/completion-history-landing.bend as HistoryLanding
 import ./proof/live-membership.bend as LiveMembership
@@ -1545,3 +1546,10 @@ def Laws.rendered_completion_history_retains_live_occurrence(w, root, programme,
 
 def Laws.rendered_completion_history_derives_held_scan(w, predecessor, programme, certificate, location, rest, stack, frame):
   HistoryLanding.after(w, predecessor, programme, certificate, location, rest, stack, frame)
+
+
+def Laws.deferred_result_return_closes_protocol_catch(cell, open, saved, rest):
+  DeferredProtocolScope.closes(cell, open, saved, rest)
+
+def Laws.deferred_protocol_throw_uses_shared_source_catch(w, cell, open, saved, rest, stack):
+  DeferredProtocolScope.catches(w, cell, open, saved, rest, stack)

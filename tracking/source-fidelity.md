@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `225014bf8757421a2ea0a9c6ddc148b965eed000`, rc.18. The latest
-[source review](reviews/solid-225014bf.md) records the verbatim inputs and checks.
+Current pin: Solid `2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5`, rc.18. The latest
+[source review](reviews/solid-2a0da2fc.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or
@@ -91,8 +91,8 @@ the linked area reviews. Current milestone priorities are in [frontier.md](front
 
 The [landing scan extension](action-landing-scan.md) checks the source retention
 branch without a runtime delta. Its live-list lookup premise stays explicit.
-Current next@b4d8e6bb has zero signals source drift in the fetched source-impact
-comparison; new commits only add the canvas example.
+At the 2026-10-23 checkpoint, next@b4d8e6bb had zero signals source drift.
+The current 2a0da2fc review below supersedes that earlier source check.
 
 ## Nonempty rendered blocker extension (2026-10-23)
 
@@ -155,3 +155,14 @@ the constructive scan certificate is independently checked at unchanged limits.
 Certified rendered completion/check audits retain the live list and derive the
 actual final held scan from initial membership and the checked history. Source
 cleanup/flush tasks remain queued rather than assumed executed.
+
+
+## Merged protocol and first-error fixes (2026-10-25)
+
+[The source refresh](reviews/solid-2a0da2fc.md) integrates #4248's existing catch
+scope extension and #4250's STATUS_NO_VALUE rules. Result/iterator processing
+remains in its source catch until its actual return, using a passive continuation;
+no extra happy-path dispatch changes earlier sufficient bounds. notifyStatus's
+both pending-source and bare-status flag selections follow the source. The new
+erased dev diagnostic type and compiler/web SSR changes remain outside this
+production non-store runtime. No semantic deviation or kernel/limit change.

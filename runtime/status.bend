@@ -80,12 +80,17 @@ def storeStatus(+w: R.World, +id: Nat, +status: U32, +error: R.Value) -> R.World
       +w = B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()),
         _ => B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id)))), _ => w)
       +w = B.first(R.World, Bool, P.addPendingSource(w, id, source))
-      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(K.STATUS_PENDING(), U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))))
+      +carried = B.choose(~U32, B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE()),
+        _ => K.STATUS_UNINITIALIZED(), _ => U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))
+      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(K.STATUS_PENDING(), carried)))
       P.setPendingError(w, id, source, error),
     _ =>
       +w = P.clearPendingSources(w, id)
-      +flags = B.choose(~U32, U32.is_eq(status, K.STATUS_ERROR()), _ => status,
-        _ => B.set(status, U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
+      +carried = B.choose(~U32, U32.is_eq(status, K.STATUS_ERROR()),
+        _ => B.choose(~U32, B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE())), _ => K.STATUS_NO_VALUE(), _ => 0),
+        _ => B.choose(~U32, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE())),
+          _ => K.STATUS_UNINITIALIZED(), _ => U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
+      +flags = B.set(status, carried)
       +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), flags))
       +w = E.ext(w, id)
       B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error)))

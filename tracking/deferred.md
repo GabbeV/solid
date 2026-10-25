@@ -76,11 +76,11 @@ was not credited: private lifecycle controls already test held landing, but the
 public cases do not independently isolate that callback flag from downstream
 engine holding. This is a coverage limit, not evidence of an upstream defect.
 
-The original catch behavior is preserved, including the confirmed synchronous
-error/obsolete-flight defect (SOLID-DEFERRED-SYNC-ERROR-009). Four public baseline
-cases retain its until/refresh behavior. The three reported source defects have
-isolated repros and candidate patches; none is installed and no issue/PR has
-been filed. The semantic deviation register remains empty.
+The [current source refresh](reviews/solid-2a0da2fc.md) integrates the merged
+synchronous body-error fix (#4231) and returned-protocol catch extension (#4248).
+Their original failures and report history remain in the issue ledger. No
+semantic workaround is active; callbacks and pending errors follow the source
+ask/land/rethrow policy.
 
 
 ## Multiple deferred values
@@ -121,5 +121,6 @@ ordinary-payload fixed one-yield programme for every budget >=118, and ten
 compiled negative controls (534 configured). Every prior complete-program
 domain/budget is retained. The preceding 524-variant complete sweep applies to
 9c1f2ec, as recorded in reviews/solid-b9b6f333-complete-negative.json.
-A newly confirmed protocol-error bug010 remains faithfully preserved; from/
-onSupersede and store/boundary/snapshot scopes remain unfinished.
+Protocol-error bug010 is now fixed upstream and integrated; its earlier failure
+receipts are historical. Direct/wrapped from and onSupersede are admitted;
+Observable/interop and store/boundary/snapshot scopes remain unfinished.

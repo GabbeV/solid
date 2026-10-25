@@ -9,7 +9,7 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `225014bf` (rc.18); Bend 2.0.37 and its independent kernel are
+Solid is pinned to `2a0da2fc` (rc.18); Bend 2.0.37 and its independent kernel are
 unchanged. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
 
@@ -22,7 +22,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 
-4,726 public differential histories and 73 closed regressions remain supporting
+4,750 public differential histories and 73 closed regressions remain supporting
 evidence. Configured mutation totals and completed frozen sweeps are distinct in
 [verification.md](verification.md). These counts are not a completion percentage.
 The [fidelity ledger](source-fidelity.md) and [proof catalogue](general-properties.md)
@@ -141,14 +141,16 @@ its passing finite controls are not a proof. It remains an explicitly unverified
 small contracts/history proofs avoid that particular expansion without changing
 the runtime or checker limits.
 
-`SOLID-DEFERRED-PROTOCOL-ERROR-010` remains reproduced and preserved at the pin;
-see [PR #4248](https://github.com/solidjs/solid/pull/4248) and
-[the report evidence](upstream/deferred-protocol-error.md). No new upstream
-bug or workaround was introduced by the invariant work. Draft source-rule questions
-and intended observations must remain distinct from checked source behavior.
+`SOLID-DEFERRED-PROTOCOL-ERROR-010` is fixed upstream and integrated from
+[#4248](https://github.com/solidjs/solid/pull/4248). Its historical failure receipts
+remain linked in [the report](upstream/deferred-protocol-error.md). The
+[current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
+status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `b4d8e6bb` (canvas example only). A fetched source snapshot
-has zero signals source drift from the pin; #4248 remains open and unmerged.
+Latest next checked: `2a0da2fc`. All 77 recorded Solid inputs match the pin.
+The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
+These production fixes precede the next queued-settlement/flush composition.
+
 
 
 The [constructed live-selection proof](live-selection.md) now derives the

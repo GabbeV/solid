@@ -54,8 +54,8 @@ try{
       halted:S.probeHalted,haltNotified:S.probeHaltNotified,exception:decode(exception),reports:reports.map(([kind,cause])=>[kind,decode(cause)])};
   }
   let count=0;
-  for(const op of [0,1,2,4])for(const kind of [0,1,2,3])for(let status=0;status<8;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
+  for(const op of [0,1,2,4])for(const kind of [0,1,2,3])for(let status=0;status<16;status++)for(const config of [0,K.CONFIG_REDERIVE,K.CONFIG_VERDICT])for(let code=0;code<4;code++)for(const sources of [false,true]){
     assert.deepEqual(actual(B.run(op,kind,status,config,code,sources)),reference(op,kind,status,config,code,sources),JSON.stringify({op,kind,status,config,code,sources}));count++;
   }
-  console.log(`${count} status-state comparisons match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, node-owned forwarding and halt partial states. Tracked effects retain their distinct pending/error notifier branches.`);
+  console.log(`${count} status-state comparisons, including all STATUS_NO_VALUE bit combinations, match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, node-owned forwarding and halt partial states. Tracked effects retain their distinct pending/error notifier branches.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

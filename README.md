@@ -3,8 +3,8 @@
 An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.18. This is **not yet the complete signals package**.
 
-The source is pinned to next@225014bf. [The latest source review](tracking/reviews/solid-225014bf.md)
-records the rc.18 refresh after integrating merged deferred fixes. [Stream refetch](tracking/deferred-stream-refetch.md)
+The source is pinned to next@2a0da2fc. [The latest source review](tracking/reviews/solid-2a0da2fc.md)
+records merged protocol-flight retirement and first-error re-ask handling. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
 
 The objective is increasingly general properties of reactive behavior and useful
@@ -85,17 +85,16 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is now `225014bf` (rc.18), whose signals sources match `next@cc3ee740` checked on
-2026-10-23. [The source review](tracking/reviews/solid-225014bf.md) accounts for
-all 77 recorded Solid inputs. This update changes development event diagnostics;
-production Bend operations and every existing theorem domain/budget are unchanged.
-Merged #4231/#4232 are integrated; #4233 is validated in native builds while
-`from` wiring remains unfinished. No semantic workaround is active.
+The reviewed Solid pin is `2a0da2fc` (rc.18). [The source review](tracking/reviews/solid-2a0da2fc.md)
+accounts for all 77 verbatim Solid inputs and integrates merged #4248/#4250.
+Deferred protocol errors now retire their flights; never-valued error re-asks
+restore pending-uninitialized status. Earlier #4231/#4232/#4233 integration and
+all preceding theorem domains/budgets remain. No semantic workaround is active.
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 589 source-changing variants
+npm run mutations                # reject 608 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy
@@ -291,6 +290,6 @@ is pending, and 1 when that replacement rejects, followed by Healthy. See
 [async-cleanup.bend](examples/async-cleanup.bend).
 
 
-The [rc.18 refresh](tracking/reviews/solid-225014bf.md) updates the pin to 225014bf;
-its source changes are development event diagnostics. Production Bend operations
-and all existing theorem domains/budgets are unchanged.
+The [earlier rc.18 refresh](tracking/reviews/solid-225014bf.md) recorded development
+event diagnostics. The [current refresh](tracking/reviews/solid-2a0da2fc.md) integrates
+merged protocol-flight and first-error fixes while retaining earlier proof domains/budgets.

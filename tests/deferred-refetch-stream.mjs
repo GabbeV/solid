@@ -124,31 +124,29 @@ for(const immediate of[false,true]){
   ['resolve','gate',2],['tick'],['expect',read('d'),21],['expect',{isPending:read('d')},true],['resolveStep','second',31],['tick'],['expect',read('d'),31],['dispose']
  ]);
 }
-// Preserve the newly confirmed source protocol-error defect. A throw before
-// the first yield leaves this wrapper's flight live; a prior bare yield lands
-// it. The body-throw and promised-rejection controls are checked separately.
+// Merged #4248: protocol throws share the source catch, retiring the flight
+// before the error is delivered. Prior yields/obsolete flights remain controls.
 for(const immediate of[false,true])for(const prior of[false,true])for(const bareFirst of[false,true])for(const method of['awaitUntil','awaitRefresh']){
  let inError=false;
- await scenario(`preserved first protocol throw ${immediate}/${prior}/${bareFirst}/${method}`,[
+ await scenario(`merged first protocol throw ${immediate}/${prior}/${bareFirst}/${method}`,[
   ['future','old',{immediate}],['stream','s',[...(bareFirst?[{value:1}]:[]),{throw:99}]],['signal','mode',0],
   ['deferred','d',select({same:[read('mode'),lit(2)]},future('s'),select(read('mode'),future('old'),lit(0)))],['flush'],
-  ...(prior?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],['expect',{isPending:read('d')},!bareFirst],
+  ...(prior?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],['expect',{isPending:read('d')},false],
   [method,'truth',...(method==='awaitRefresh'?['d']:[read('d')])],['tick'],['resolve','old',9],['tick'],
-  ['expect',{isPending:read('d')},!bareFirst],['set','mode',0],['flush'],['tick'],['expect',read('d'),0],['expect',{isPending:read('d')},false],['dispose']
- ],(op,args,b)=>{if(op==='set'&&args[0]==='mode')inError=args[1]===2;if(op==='tick'&&inError)assert.equal(b.portEvents.length,bareFirst?1:0,'source baseline first-throw flight behavior');});
+  ['expect',{isPending:read('d')},false],['set','mode',0],['flush'],['tick'],['expect',read('d'),0],['expect',{isPending:read('d')},false],['dispose']
+ ],(op,args,b)=>{if(op==='set'&&args[0]==='mode')inError=args[1]===2;if(op==='tick'&&inError)assert.equal(b.portEvents.length,1,'merged protocol catch settles the current error');});
 }
 for(const immediate of[false,true])for(const deferred of[false,true])for(const prior of[false,true])for(const method of['awaitUntil','awaitRefresh']){
- let inError=false,oldSettled=false;
- await scenario(`factory throw outside source fn catch ${immediate}/${deferred}/${prior}/${method}`,[
+ let inError=false;
+ await scenario(`factory throw inside shared source catch ${immediate}/${deferred}/${prior}/${method}`,[
   ['future','old',{immediate}],['stream','s',[],{factoryThrows:99}],['signal','mode',0],
   [deferred?'deferred':'memo','d',select({same:[read('mode'),lit(2)]},future('s'),select(read('mode'),future('old'),lit(0)))],['flush'],
-  ...(prior?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],['expect',{isPending:read('d')},deferred&&prior],
+  ...(prior?[['set','mode',1],['flush']]:[]),['set','mode',2],['flush'],['expect',{isPending:read('d')},false],
   [method,'truth',...(method==='awaitRefresh'?['d']:[read('d')])],['tick'],['resolve','old',9],['tick'],
   ['expect',{isPending:read('d')},false],['read','d'],['set','mode',0],['flush'],['tick'],['expect',read('d'),0],['dispose']
  ],(op,args,b)=>{
   if(op==='set'&&args[0]==='mode')inError=args[1]===2;
-  if(op==='resolve'&&args[0]==='old')oldSettled=true;
-  if(op==='tick'&&inError)assert.equal(b.portEvents.length,deferred&&prior&&!oldSettled?0:1,'source baseline factory throw retains only an existing flight');
+  if(op==='tick'&&inError)assert.equal(b.portEvents.length,1,'factory error no longer waits on an obsolete flight');
  });
 }
 for(const error of[undefined,null,false,99,{ref:3}])for(const deferred of[false,true]){
@@ -159,4 +157,4 @@ for(const error of[undefined,null,false,99,{ref:3}])for(const deferred of[false,
   ['resolve','old',9],['tick'],['expect',{isPending:read('d')},false],['read','d'],['dispose']
  ]);
 }
-console.log(`${count} deferred refetch stream histories compare values, verdicts, callback counts, iterator calls, replacement/held identities, flattening, cleanup and preserved protocol errors.`);
+console.log(`${count} deferred refetch stream histories compare values, verdicts, callback counts, iterator calls, replacement/held identities, flattening, cleanup and merged protocol-error flight retirement.`);

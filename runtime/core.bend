@@ -92,6 +92,7 @@ type Task is Data:
   DeferredCleanup{cell: Nat, compute: R.Expr, previous: R.Value}
   DeferredOpen{cell: Nat, compute: R.Expr, previous: R.Value}
   DeferredResult{cell: Nat, open: Bool, saved: List<&2, R.Value>}
+  DeferredCatch{cell: Nat, open: Bool, saved: List<&2, R.Value>}
   DeferredObserve{cell: Nat, result: Nat}
   DeferredRegisterFlight{cell: Nat, node: Nat, result: Nat}
   DeferredRegisterQuestion{cell: Nat, node: Nat, result: Nat}
@@ -696,7 +697,13 @@ def deferredBody(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +c
   +node = R.World.context(w)
   Machine{Deferred.setNode(w, cell, node), DeferredConfigure{cell, compute, previous} <> rest, stack}
 
-# A successful fn return is outside the wrapper's try/catch from here onward.
+# The source try/catch now includes result processing (#4248). Its passive
+# continuation is consumed at return, with no additional machine dispatch.
+def deferredReturned(tasks: List<&2, Task>) -> List<&2, Task>:
+  match tasks:
+    case DeferredCatch{cell, open, saved} <> rest: rest
+    case other: other
+
 # Closed-window streams use the original ordinary Finish/iterator path.
 # An answered stream is wrapped before the original engine consumes it.
 def deferredResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +cell: Nat, +open: Bool) -> Machine:
@@ -706,9 +713,9 @@ def deferredResult(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
         _ => B.choose(~Machine, Nat.is_ne(R.AsyncObject.stream(B.asyncObject(w, result)), 0n),
           _ => Machine{w, DeferredStreamCall{cell, result} <> rest, tail},
           _ => Machine{Deferred.ask(w, cell, R.AsyncValue{result}), DeferredObserve{cell, result} <> rest, tail}),
-        _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, R.AsyncValue{result} <> tail})
+        _ => Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), deferredReturned(rest), R.AsyncValue{result} <> tail})
     case +value <> tail:
-      Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, value <> tail}
+      Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), deferredReturned(rest), value <> tail}
     case _:
       Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -2512,7 +2519,7 @@ def deferredAfterThen(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
       _ =>
         +pair = F.thenValue(w, observer)
         +w = B.first(R.World, R.Value, pair)
-        B.choose(~Machine, B.ok(w), _ => Machine{w, rest, Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> stack}, _ => Machine{w, rest, stack})))
+        B.choose(~Machine, B.ok(w), _ => Machine{w, deferredReturned(rest), Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> stack}, _ => Machine{w, rest, stack})))
 
 # handleAsync's live iterator result returns to serve, then to the original
 # Finish frame that detects this body already registered its own flight.
@@ -2522,7 +2529,7 @@ def deferredAfterIterator(+w: R.World, +rest: List<&2, Task>, stack: List<&2, R.
       +pair = F.liveValue(w, R.StreamState.node(B.stream(w, stream)), landed, value)
       +w = B.first(R.World, R.Value, pair)
       B.choose(~Machine, B.ok(w),
-        _ => Machine{w, rest, Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> tail},
+        _ => Machine{w, deferredReturned(rest), Deferred.served(w, cell, B.second(R.World, R.Value, pair)) <> tail},
         _ => Machine{w, rest, tail})
     case _: Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
 
@@ -4443,8 +4450,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
     case DeferredOpen{+cell, compute, previous} <> +rest:
       +w = Deferred.openWindow(w, cell)
       Machine{w, Evaluate{compute, previous} <> DeferredResult{cell, R.DeferredCell.answered(Deferred.cell(w, cell)), stack} <> rest, stack}
-    case DeferredResult{cell, open, saved} <> rest:
-      deferredResult(w, rest, stack, cell, open)
+    case DeferredResult{+cell, +open, saved} <> rest:
+      deferredResult(w, DeferredCatch{cell, open, saved} <> rest, stack, cell, open)
+    case DeferredCatch{cell, open, saved} <> rest:
+      Machine{w, rest, stack}
     case DeferredObserve{+cell, +result} <> rest:
       +pair = F.newObserver(w, 0n, result)
       +w = B.first(R.World, Nat, pair)
@@ -5239,6 +5248,8 @@ def unwind(+w: R.World, tasks: List<&2, Task>, stack: List<&2, R.Value>) -> Mach
     case SupersedeRestore{prior, saved} <> rest:
       Machine{w, rest, saved}
     case DeferredResult{cell, open, saved} <> rest:
+      deferredUnwind(w, rest, cell, open, saved, R.World.fault(w))
+    case DeferredCatch{cell, open, saved} <> rest:
       deferredUnwind(w, rest, cell, open, saved, R.World.fault(w))
     case LatestEnd{latest, dispatch, saved} <> rest:
       Machine{Verdict.restoreLatest(w, latest, dispatch), rest, saved}

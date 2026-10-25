@@ -7,19 +7,19 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `225014bf` (rc.18), Bend to 2.0.37, and the independent kernel
+Solid is pinned to `2a0da2fc` (rc.18), Bend to 2.0.37, and the independent kernel
 and Lean pin are unchanged. No semantic deviation is active.
 
 | Evidence | Current scope |
 | --- | --- |
-| Public differential corpus | 4,726 histories; restricted admitted callback/value/IO grammar |
+| Public differential corpus | 4,750 histories; restricted admitted callback/value/IO grammar |
 | Closed composed regressions | 73 fixed end-to-end Bend executions; separate from quantified proofs |
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 604 = 476 finite + 128 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 608 = 480 finite + 128 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen wrapped-runtime checkpoint 8353373: 564 named variants, all rejected with sealed inputs unchanged; [receipt](reviews/from-wrapped-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 604 sweep claimed |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; no fresh complete 608 sweep claimed |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -199,3 +199,14 @@ The retained rendered-action suite includes 96 additional rejection histories;
 240 native-generator/Bend histories and 2,280 observed prefixes now cover that
 slice. The public corpus is 4,726. The quantified history still admits only its
 explicit completion/check transitions; rejection controls are finite evidence.
+
+
+## Merged catch and no-value integration (2026-10-25)
+
+[Source review and receipt](reviews/solid-2a0da2fc.md): 24 new public first-error
+histories, 184 retained deferred-stream histories with fixed error expectations,
+6,144 private status cases over all no-value bit combinations, 120 native
+three-tier protocol cases and six actual JSX cases. Four focused finite negative
+variants are rejected. Earlier 454 roots check after the production changes;
+two catch-scope roots extend them. The final full-input record is checked.json.
+No new whole-package, boundary, arbitrary-history or progress guarantee is implied.

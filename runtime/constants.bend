@@ -205,22 +205,26 @@ def STATUS_ERROR() -> U32:
 def STATUS_UNINITIALIZED() -> U32:
   4
 
-# upstream/solid/packages/signals/src/core/constants.ts:211 — 2
+# upstream/solid/packages/signals/src/core/constants.ts:211 — 1 << 3
+def STATUS_NO_VALUE() -> U32:
+  8
+
+# upstream/solid/packages/signals/src/core/constants.ts:215 — 2
 def CAUGHT_REARMED() -> U32:
   2
 
-# upstream/solid/packages/signals/src/core/constants.ts:213 — 0
+# upstream/solid/packages/signals/src/core/constants.ts:217 — 0
 def EFFECT_PURE() -> U32:
   0
 
-# upstream/solid/packages/signals/src/core/constants.ts:214 — 1
+# upstream/solid/packages/signals/src/core/constants.ts:218 — 1
 def EFFECT_RENDER() -> U32:
   1
 
-# upstream/solid/packages/signals/src/core/constants.ts:215 — 2
+# upstream/solid/packages/signals/src/core/constants.ts:219 — 2
 def EFFECT_USER() -> U32:
   2
 
-# upstream/solid/packages/signals/src/core/constants.ts:216 — 3
+# upstream/solid/packages/signals/src/core/constants.ts:220 — 3
 def EFFECT_TRACKED() -> U32:
   3

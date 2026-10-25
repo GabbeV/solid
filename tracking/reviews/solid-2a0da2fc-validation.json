@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "baseline": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+  "baselineCheckpoint": "1c5ae9fe4c9ca669fe51b61840cb5c52c46f68c0",
+  "version": "2.0.0-rc.18",
+  "nativeSourceClean": true,
+  "recordedSolidInputs": 77,
+  "changedRecordedSolidInputs": 4,
+  "productionBendRuntimeChanged": true,
+  "preExistingProgrammeDomainsBudgetsRetained": true,
+  "previousActiveRootsRetained": 454,
+  "newRoots": 2,
+  "dataProgrammeSteps": 103,
+  "streamProgrammeSteps": 118,
+  "activeDeviationIds": [],
+  "kernelAndToolchainLimitsUnchanged": true,
+  "native": {
+    "buildAllThreeJsTiers": true,
+    "sourceDeclarations": true,
+    "filesPassed": 343,
+    "testsPassed": 5576,
+    "expectedFailures": 2,
+    "skips": 2,
+    "fixedProtocolCases": 120,
+    "actualBrowserCases": 6
+  },
+  "publicHistories": 4750,
+  "newFirstErrorHistories": 24,
+  "retainedDeferredRefetchHistories": 184,
+  "statusPrivateControls": 6144,
+  "configuredMutations": 608,
+  "finiteMutations": 480,
+  "kernelMutations": 128,
+  "focusedNewFiniteRejections": 4,
+  "freshComplete608Sweep": false,
+  "proofOrganization": "Passive DeferredCatch surrounds result processing and closes in return helpers, preserving original successful programme dispatch counts; stream intermediate witness states regenerated.",
+  "omissions": [
+    "Active error/loading boundaries remain outside admitted Bend profile",
+    "New server diagnostic type is erased; SSR/compiler/web serialization remain unported",
+    "General action/flight ledger and queued flush/final publication remain open"
+  ],
+  "logs": {
+    "native-build.log": {
+      "path": "/workspace/scratch/night-2026-10-25/native-build.log",
+      "sha256": "1375e905ee376517686bb0fbad0af8561629a7f4c11425ca789da8805d8f924c"
+    },
+    "native-types.log": {
+      "path": "/workspace/scratch/night-2026-10-25/native-types.log",
+      "sha256": "537eedd4cae947f51cb3c32dc2c774cb40f67c4c88f9b2027232e40cb612bb45"
+    },
+    "native-tests.log": {
+      "path": "/workspace/scratch/night-2026-10-25/native-tests.log",
+      "sha256": "93baf15ed76f36401a3e7fac193023bd9962e17fd79638d13f7bb51fa164e5d3"
+    },
+    "native-protocol-fixed-production.json": {
+      "path": "/workspace/scratch/night-2026-10-25/native-protocol-fixed-production.json",
+      "sha256": "7bedb1414dfabcfbd0a2d8f18abf02fc6d7cfee1df74f3a863b66037f8616e67"
+    },
+    "native-protocol-fixed-dev.json": {
+      "path": "/workspace/scratch/night-2026-10-25/native-protocol-fixed-dev.json",
+      "sha256": "7bedb1414dfabcfbd0a2d8f18abf02fc6d7cfee1df74f3a863b66037f8616e67"
+    },
+    "native-protocol-fixed-observe.json": {
+      "path": "/workspace/scratch/night-2026-10-25/native-protocol-fixed-observe.json",
+      "sha256": "7bedb1414dfabcfbd0a2d8f18abf02fc6d7cfee1df74f3a863b66037f8616e67"
+    },
+    "browser-fixed.json": {
+      "path": "/workspace/scratch/night-2026-10-25/browser-fixed.json",
+      "sha256": "7ce79cc000336da35f17aef8a1f56454099d01ff6354797073c54b55ed84cb79"
+    },
+    "port-build3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/port-build3.log",
+      "sha256": "172a396b645a9c93337067789a81374dd17f618902f0a375c9fd5d4db109e125"
+    },
+    "port-tests1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/port-tests1.log",
+      "sha256": "bbbc3f70105e9c36c180f803c696eba4f00ffe6c98be9edceac470a2c5635260"
+    },
+    "port-tests-final.log": {
+      "path": "/workspace/scratch/night-2026-10-25/port-tests-final.log",
+      "sha256": "e26ebe035a8d2f6d8b057a561e4be0159b5005aa64e138a93c465b90a66019d6"
+    },
+    "port-alignment1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/port-alignment1.log",
+      "sha256": "1b0d2cff0d4ac51cebfe5dd34a93dafeb5bbe7b4cb57a056318755668e04d622"
+    },
+    "no-value-integration3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/no-value-integration3.log",
+      "sha256": "a5497bad8cbe216c013aded3c095c203acca592d65708369ec9ca576f9a71979"
+    },
+    "status-flags-expanded.log": {
+      "path": "/workspace/scratch/night-2026-10-25/status-flags-expanded.log",
+      "sha256": "a9a9bcb65e76435b75f8aa7766616bb8f3641c2248e6a60827e7af9e27ef68e5"
+    },
+    "merged-focused-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/merged-focused-negatives.log",
+      "sha256": "1232c056603bded233da385f0cf10ec98c78f957bdf13c40525233786d541a94"
+    },
+    "mutation-targets3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/mutation-targets3.log",
+      "sha256": "dd5ceaf40174060fc7cf8a8fcce39bf6750480593d35ecabd2992e7dd3c54727"
+    },
+    "deferred-witness.log": {
+      "path": "/workspace/scratch/night-2026-10-25/deferred-witness.log",
+      "sha256": "51249a2fed7ef85bbe5170afd8b6873c6960565cd39de24f8cff617ec07192c1"
+    },
+    "deferred-payload-witness.log": {
+      "path": "/workspace/scratch/night-2026-10-25/deferred-payload-witness.log",
+      "sha256": "51249a2fed7ef85bbe5170afd8b6873c6960565cd39de24f8cff617ec07192c1"
+    },
+    "deferred-stream-witness.log": {
+      "path": "/workspace/scratch/night-2026-10-25/deferred-stream-witness.log",
+      "sha256": "c7a73d5f52e5a27102b3886f9cbf91ed29435b8d67d87fd2eb237e785eb001a2"
+    },
+    "port-kernel1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/port-kernel1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "protocol-scope-kernel.log": {
+      "path": "/workspace/scratch/night-2026-10-25/protocol-scope-kernel.log",
+      "sha256": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d"
+    }
+  },
+  "composedSeal": "tracking/checked.json is the completed final full-input/kernel record."
+}

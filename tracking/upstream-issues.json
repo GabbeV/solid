@@ -339,7 +339,7 @@
     {
       "id": "SOLID-DEFERRED-PROTOCOL-ERROR-010",
       "classification": "confirmed-upstream-bug",
-      "status": "pr-open",
+      "status": "fixed-upstream-and-integrated",
       "sourceCommit": "b9b6f3339a971b9ea06740151b029987a84ee13e",
       "sourceUnit": "deferred.ts:createDeferred wrapped iterator acquisition/first next",
       "record": "tracking/upstream/deferred-protocol-error.md",
@@ -348,14 +348,14 @@
       "playgroundVerification": "repros/playground/deferred-protocol-error-browser.json",
       "validationRecord": "tracking/upstream/deferred-protocol-error-validation.json",
       "reproducer": "tests/deferred-refetch-stream.mjs",
-      "preservesBaseline": true,
+      "preservesBaseline": false,
       "activeDeviationId": null,
       "reportUrl": "https://github.com/solidjs/solid/pull/4248",
       "fixUrl": "https://github.com/solidjs/solid/pull/4248",
       "lastRevalidation": {
-        "sourceCommit": "cc3ee74099f5a3113748703d969460a867e7695c",
-        "date": "2026-10-23",
-        "result": "Fresh unchanged three-tier builds reproduce all 120 expected native outcomes and six JSX/browser cases; #4112 seven-test regression passes. Separate candidate fixes all 120 native/six browser cases and passes full signals suite; User submitted PR #4248; baseline remains unchanged."
+        "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+        "date": "2026-10-25",
+        "result": "Merged fix integrated in Bend. All 120 native three-tier repro/control cases and six real JSX cases pass the fixed policy; 184 differential stream histories now assert released protocol-error flights. Historical baseline evidence retained."
       },
       "candidateFixBranch": "fix/deferred-protocol-flight",
       "candidatePublishedCommit": "58d3d52de9c02bff038e8a7ec30823a0e9a4f26b",
@@ -366,7 +366,11 @@
         "https://github.com/solidjs/solid/pull/4158",
         "https://github.com/solidjs/solid/pull/4231"
       ],
-      "playgroundUrl": "https://s.olid.uk/id/hp0AznLHR9i1OSfuoCu86g"
+      "playgroundUrl": "https://s.olid.uk/id/hp0AznLHR9i1OSfuoCu86g",
+      "baselineEvidenceRetained": true,
+      "fixedCommit": "0dd40b28f04b3091432752ff57c47b13dc9a986d",
+      "integratedSourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+      "integrationReview": "tracking/reviews/solid-2a0da2fc.md"
     }
   ]
 }

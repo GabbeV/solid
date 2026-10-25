@@ -49,8 +49,8 @@ def doneValue(w: R.World) ->
   {B.second(R.World, Input.Returned, D.resolvedDone(w)) == Input.PromiseReturn{B.length(R.AsyncObject, R.World.asyncObjects(w))} : Input.Returned}:
   {==}
 
-# Protocol throws occur after fn's catch, so this continuation does not turn
-# them into source-function throws or silently repair the upstream flight bug.
+# This return continuation is not itself a catch. Since #4248 its enclosing
+# DeferredCatch remains in rest and executes the source's shared ask/land catch.
 def serveUnwind(w: R.World, cell: Nat, rest: List<&2, C.Task>, stack: List<&2, R.Value>) ->
   {C.unwind(w, C.DeferredAfterIterator{cell} <> rest, stack) == C.Machine{w, rest, stack} : C.Machine}:
   {==}

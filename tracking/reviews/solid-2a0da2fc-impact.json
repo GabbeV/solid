@@ -1,0 +1,187 @@
+{
+  "baseline": {
+    "repository": "https://github.com/solidjs/solid",
+    "commit": "225014bf8757421a2ea0a9c6ddc148b965eed000",
+    "branch": "next",
+    "version": "2.0.0-rc.18"
+  },
+  "candidate": {
+    "path": "/workspace/solid-next-2a0da2fc/packages/signals/src",
+    "kind": "local working-tree snapshot; commit and cleanliness not asserted"
+  },
+  "scope": "signals src/**/*.ts; separately review tests, documentation, build conditions and initialization reachability",
+  "evidence": "Correspondence and TS parity require review/revalidation. Existing Bend proofs remain about their pinned program, not this candidate.",
+  "deviationsToReview": [],
+  "changedFiles": [
+    {
+      "file": "core/async.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "5a4557a1e98011582de35015cd156b7374c52f94a97123d262194c0ed0908363",
+      "afterSha256": "3bb8899673c92c90c0fce64217812438b632a318d06bf19227390a330184aed4",
+      "changedUnits": [
+        {
+          "key": "core/async.ts:notifyStatus",
+          "change": "changed",
+          "before": [
+            {
+              "start": 888,
+              "end": 933
+            }
+          ],
+          "after": [
+            {
+              "start": 889,
+              "end": 948
+            }
+          ],
+          "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 8,
+            "after": 11,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/async.ts:addPendingSource",
+          "bend": "runtime/pending-state.bend:addPendingSource, hasSource, items"
+        },
+        {
+          "key": "core/async.ts:removePendingSource",
+          "bend": "runtime/pending-state.bend:removePendingSource, remove"
+        },
+        {
+          "key": "core/async.ts:clearPendingSources",
+          "bend": "runtime/pending-state.bend:clearPendingSources"
+        },
+        {
+          "key": "core/async.ts:retryReaches",
+          "bend": "runtime/pending-state.bend:retryReaches, retryLoop"
+        },
+        {
+          "key": "core/async.ts:parkLoadingWindow",
+          "bend": "runtime/pending-state.bend:parkLoadingWindow"
+        },
+        {
+          "key": "core/async.ts:setPendingError",
+          "bend": "runtime/pending-state.bend:setPendingError, preserveOrCreate, notReadyError"
+        },
+        {
+          "key": "core/async.ts:releaseIfSettledUnobserved",
+          "bend": "runtime/pending.bend:releaseIfSettledUnobserved; runtime/pending.bend:releasable; runtime/core.bend:pendingTasks, passReleases"
+        },
+        {
+          "key": "core/async.ts:releaseSettledDependents",
+          "bend": "runtime/pending.bend:releaseSettledDependents, Collect, CollectWalk, CollectNext, Release; runtime/pending.bend:beginReleaseSettledDependents, advance; runtime/core.bend:PendingTasks, finishHandleError"
+        },
+        {
+          "key": "core/async.ts:stageError",
+          "bend": "runtime/pending.bend:stageError, stageWrap; runtime/pending.bend:beginStageError; runtime/core.bend:ErrorStageSettle, ErrorAfterStage, CatchStageSettle, CatchStageFinish"
+        },
+        {
+          "key": "core/async.ts:settleErroredDependents",
+          "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd"
+        },
+        {
+          "key": "core/async.ts:settlePendingSource",
+          "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, skip, Walk, Next, Release, End; runtime/pending.bend:beginSettlement, advance; runtime/core.bend:PendingTasks, pendingResume, pendingTasks"
+        },
+        {
+          "key": "core/async.ts:releaseFlightTeardown",
+          "bend": "runtime/owner.bend:releaseFlightTeardown"
+        },
+        {
+          "key": "core/async.ts:onSupersede",
+          "bend": "runtime/supersede.bend:eligible, registerEligible, register, chain; runtime/core.bend:callbackAction SupersedeChain, supersedeFinally, SupersedeRestore/unwind; representation/base.bend:flight, sameFlight; runtime/api.bend:registerSupersede"
+        },
+        {
+          "key": "core/async.ts:handleAsync",
+          "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks; runtime/flight.bend:liveValue"
+        },
+        {
+          "key": "core/async.ts:clearStatus",
+          "bend": "runtime/status.bend:clearStatus"
+        },
+        {
+          "key": "core/async.ts:landStatus",
+          "bend": "runtime/pending.bend:landStatus"
+        },
+        {
+          "key": "core/async.ts:notifyStatus",
+          "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped"
+        },
+        {
+          "key": "core/async.ts:propagateStatus",
+          "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom"
+        }
+      ]
+    },
+    {
+      "file": "core/constants.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "c680291fb01f82f06d57faf19608790ad7bd0dc05a3d4cdf06985d67d615e80a",
+      "afterSha256": "0e6085a98f9a4563d82e823b0a86b5636c2d1379c4d1b84755af28cfc0faea7f",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "core/dev.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "141e1d66a356fb61fc05360bbeb2ebd5642b37b9b291fa336ce1f26c0d4bee9c",
+      "afterSha256": "848f82311c4bedf02ba7c7932f2732dcdcff8509d2f2484bdad3c2583dac6872",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "deferred.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "eacea8937da5861689059660cc341e1e391a0924b0f989ff44a7877ea89a24aa",
+      "afterSha256": "5d1f68b8b56112a9b9466a25c136dfed5256150ebf2363b6756fe697ec6d7d53",
+      "changedUnits": [
+        {
+          "key": "deferred.ts:createDeferred",
+          "change": "changed",
+          "before": [
+            {
+              "start": 93,
+              "end": 196
+            }
+          ],
+          "after": [
+            {
+              "start": 93,
+              "end": 195
+            }
+          ],
+          "bend": "runtime/core.bend:deferredConstruct, deferredCreate, deferredBody, deferredResult, deferredObserveState, deferredAfterThen; runtime/deferred-runtime.bend; runtime/deferred-lifecycle.bend; runtime/api.bend:createDeferred; runtime/deferred-stream.bend; runtime/iterator-input.bend; runtime/core.bend:deferredStream, deferredAfterIterator",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 14,
+            "after": 14,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "deferred.ts:lagOf",
+          "bend": "runtime/deferred-state.bend:lagOf, walk, laggingOf"
+        },
+        {
+          "key": "deferred.ts:createDeferred",
+          "bend": "runtime/core.bend:deferredConstruct, deferredCreate, deferredBody, deferredResult, deferredObserveState, deferredAfterThen; runtime/deferred-runtime.bend; runtime/deferred-lifecycle.bend; runtime/api.bend:createDeferred; runtime/deferred-stream.bend; runtime/iterator-input.bend; runtime/core.bend:deferredStream, deferredAfterIterator"
+        }
+      ]
+    }
+  ]
+}

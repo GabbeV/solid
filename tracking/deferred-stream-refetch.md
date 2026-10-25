@@ -49,7 +49,8 @@ corpus is 534 (446 finite, 88 kernel). The complete 524-variant receipt applies
 to the preceding 9c1f2ec checkpoint; subsequent full sweeps identify their own
 frozen checkpoint rather than inheriting that credit.
 
-The new [protocol-error report](upstream/deferred-protocol-error.md) records an
-upstream defect preserved by this path. No workaround or semantic deviation is
+The [protocol-error report](upstream/deferred-protocol-error.md) retains the earlier
+failure evidence. The defect is now fixed upstream and integrated at 2a0da2fc;
+protocol processing shares the source catch and retires the current flight. No workaround or semantic deviation is
 installed. `from`/onSupersede, arbitrary JavaScript protocol getters/method bodies,
 store/boundary/snapshot scopes and nonproduction hooks remain unfinished.

@@ -758,3 +758,15 @@ pass and are retained: all settlement orders, either rejecting action and both
 creation orders, with direct/memo-backed render and independent work. The selected
 suite now has 240 histories /2,280 prefixes; public corpus 4,726. Rejection remains
 outside the quantified completion/check theorem. No new source bug was found.
+
+
+## Merged fixes restored before settlement proofs (2026-10-25)
+
+Solid is refreshed from 225014bf to 2a0da2fc (rc.18). #4248 protocol-flight
+retirement is integrated and bug010 is marked fixed with its earlier evidence
+retained; #4250 supplies no-value status on first-error re-asks. The native repro
+now passes all 120 three-tier cases and all six JSX cases. Twenty-four new public
+histories bring the corpus to 4,750; private status coverage expands to 6,144.
+Two catch-scope roots retain earlier domains and 103/118 sufficient bounds.
+Four new finite negatives are rejected: 608 configured (480 finite /128 kernel),
+no fresh full sweep claimed yet. No active deviation or kernel/limit change.

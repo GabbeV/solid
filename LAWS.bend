@@ -1,3 +1,4 @@
+import ./proof/deferred-protocol-scope.bend as DeferredProtocolScope
 import ./proof/completion-live-history.bend as CompletionMembership
 import ./proof/completion-history-landing.bend as HistoryLanding
 import ./proof/live-membership.bend as LiveMembership
@@ -3370,3 +3371,20 @@ law rendered_completion_history_derives_held_scan:
   for +stack: List<&2, R.Value>
   for +frame: Core.SeamFrame
   ConstructedScan.Selected<RenderedHistory.world(RenderedHistory.run(w, 1n+predecessor, programme, w)), 1n+predecessor, rest, stack, frame>
+
+
+law deferred_result_return_closes_protocol_catch:
+  for cell: Nat
+  for open: Bool
+  for saved: List<&2, R.Value>
+  for rest: List<&2, Core.Task>
+  {Core.deferredReturned(Core.DeferredCatch{cell, open, saved} <> rest) == rest : List<&2, Core.Task>}
+
+law deferred_protocol_throw_uses_shared_source_catch:
+  for w: R.World
+  for cell: Nat
+  for open: Bool
+  for saved: List<&2, R.Value>
+  for rest: List<&2, Core.Task>
+  for stack: List<&2, R.Value>
+  {Core.unwind(w, Core.DeferredCatch{cell, open, saved} <> rest, stack) == Core.deferredUnwind(w, rest, cell, open, saved, R.World.fault(w)) : Core.Machine}

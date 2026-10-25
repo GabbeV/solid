@@ -195,3 +195,10 @@ and scan position from actual allocation/opening/join and either first completio
 with arbitrary finite pair lookup/rejoin prefixes. The result carries both lookup
 and exact held scan certificates. It does not promote arbitrary helper storage
 frames to global validity or full reactive reachability.
+
+
+The [2a0da2fc source refresh](reviews/solid-2a0da2fc.md) retains every earlier
+proof domain and sufficient budget under merged catch/no-value handling. Two
+quantified passive-catch close/unwind contracts connect the enlarged source
+scope to the existing original-error/caller-stack handler. They are local scope
+contracts, not arbitrary error-history or queued-publication proofs.

@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["deferred protocol catch ends before result handling", "runtime/core.bend", "deferredResult(w, DeferredCatch{cell, open, saved} <> rest, stack, cell, open)", "deferredResult(w, rest, stack, cell, open)", "tests/deferred-refetch-stream.mjs", "dispatch"],
+  ["initial-error status loses its no-value marker", "runtime/status.bend", "B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE()))", "False{}", "tests/pin-2a0da2fc.mjs", "storeStatus"],
+  ["no-value reask fails to restore uninitialized status", "runtime/status.bend", "B.choose(~U32, B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE()),\n        _ => K.STATUS_UNINITIALIZED()", "B.choose(~U32, False{},\n        _ => K.STATUS_UNINITIALIZED()", "tests/pin-2a0da2fc.mjs", "storeStatus"],
+  ["successful undefined is mistaken for missing value", "runtime/status.bend", "B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE()))", "Bool.or(B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE())), B.equal(R.Node.value(B.node(w, id)), R.Undefined{}))", "tests/pin-2a0da2fc.mjs", "storeStatus"],
+
   ["live occurrence kernel ignores a present source", "runtime/transaction.bend", "B.contains(xs, id)", "False{}", "tests/proof-properties.mjs", "removeIdentity", "live-membership"],
   ["live occurrence control clears groups during completion", "runtime/action-state.bend", "B.schedule(B.store_transaction(w, t,", "B.schedule(B.store_transaction(R.World.with_transactions(w, []), t,", "tests/joined-action-flight-history.mjs", "done"],
 
@@ -104,14 +109,14 @@ const mutations=[
   ["deferred sync-error omits ending superseded flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/pin-b9b6f333.mjs", "sourceFailed"],
   ["deferred sync-error kernel preserves obsolete flight", "runtime/deferred-lifecycle.bend", "_ => land(w, state, R.DeferredCell.flight(R.DeferredState.cell(state)), False{})", "_ => B.Bundle{w, state}", "tests/proof-properties.mjs", "sourceFailed", "deferred-lifecycle"],
   ["deferred catch kernel leaves active caught fault", "runtime/core.bend", "Deferred.sourceFailed(R.World.with_fault(w, R.Healthy{}), cell, open, cause)", "Deferred.sourceFailed(w, cell, open, cause)", "tests/proof-properties.mjs", "deferredUnwind", "deferred-error-probe"],
-  ["deferred payload kernel drops empty strings", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.StringValue{\"\"}), _ => R.Undefined{}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
-  ["deferred payload kernel aliases object references", "runtime/core.bend", "rest, value <> tail}", "rest, B.choose(~R.Value, B.equal(value, R.Reference{7n}), _ => R.Reference{19n}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
+  ["deferred payload kernel drops empty strings", "runtime/core.bend", "deferredReturned(rest), value <> tail}", "deferredReturned(rest), B.choose(~R.Value, B.equal(value, R.StringValue{\"\"}), _ => R.Undefined{}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
+  ["deferred payload kernel aliases object references", "runtime/core.bend", "deferredReturned(rest), value <> tail}", "deferredReturned(rest), B.choose(~R.Value, B.equal(value, R.Reference{7n}), _ => R.Reference{19n}, _ => value) <> tail}", "tests/deferred-payload-discrimination.mjs", "deferredResult", "deferred-payload-program"],
   ["async cleanup program omits rejection retirement", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/proof-properties.mjs", "handleErrorNotify", "async-cleanup-program"],
   ["async retirement omits parked cleanup", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "False{}", "tests/pin-3cbfaf1a.mjs", "handleErrorNotify"],
   ["async retirement kernel disposes staged errors", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "Bool.not(pending)", "tests/proof-properties.mjs", "handleErrorNotify", "async-error-retirement"],
   ["async retirement kernel disposes pending transfers", "runtime/core.bend", "Bool.and(publishes, Bool.not(pending))", "publishes", "tests/proof-properties.mjs", "handleErrorNotify", "async-error-retirement"],
   ["cdd kernel queued release changes clock", "runtime/scheduler.bend", "+w = R.World.with_renderQueue", "+w = R.World.with_clock(w, Nat.add(1n, R.World.clock(w)))\n  +w = R.World.with_renderQueue", "tests/proof-properties.mjs", "releaseQueues", "landing-release"],
-  ["deferred first-stream discards the raw async return", "runtime/core.bend", "rest, R.AsyncValue{result} <> tail}", "rest, R.Undefined{} <> tail}", "tests/deferred-first-stream.mjs", "deferredResult"],
+  ["deferred first-stream discards the raw async return", "runtime/core.bend", "deferredReturned(rest), R.AsyncValue{result} <> tail}", "deferredReturned(rest), R.Undefined{} <> tail}", "tests/deferred-first-stream.mjs", "deferredResult"],
 
   ["deferred multiple resets the shared lagging set", "runtime/deferred-runtime.bend", "R.DeferredArena.lagging(R.World.deferredArena(w))", "[]", "tests/deferred-multiple.mjs", "state"],
   ["deferred multiple routes all done callbacks to first cell", "runtime/deferred-runtime.bend", "R.DeferredWait{observer, id, flight}", "R.DeferredWait{observer, 1n, flight}", "tests/deferred-multiple.mjs", "registerWait"],
@@ -133,7 +138,7 @@ const mutations=[
   ["deferred public eager becomes lazy", "runtime/core.bend", "R.NodeOptions.lazy(options)", "True{}", "tests/deferred.mjs", "deferredCreate"],
   ["deferred public lazy becomes eager", "runtime/core.bend", "R.NodeOptions.lazy(options)", "False{}", "tests/deferred.mjs", "deferredCreate"],
   ["deferred public skips initial construction", "runtime/core.bend", "Recompute{id, True{}} <> ending", "ending", "tests/deferred.mjs", "deferredCreate"],
-  ["deferred public data does not land", "runtime/core.bend", "Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), rest, value <> tail}", "Machine{w, rest, value <> tail}", "tests/deferred.mjs", "deferredResult"],
+  ["deferred public data does not land", "runtime/core.bend", "Machine{Deferred.land(w, cell, R.DeferredCell.flight(Deferred.cell(w, cell)), False{}), deferredReturned(rest), value <> tail}", "Machine{w, deferredReturned(rest), value <> tail}", "tests/deferred.mjs", "deferredResult"],
   ["deferred public closed window asks", "runtime/core.bend", "B.choose(~Machine, open,", "B.choose(~Machine, True{},", "tests/deferred.mjs", "deferredResult"],
   ["deferred public open window does not ask", "runtime/core.bend", "Deferred.ask(w, cell, R.AsyncValue{result})", "w", "tests/deferred.mjs", "deferredResult"],
   ["deferred public does not deliver done", "runtime/core.bend", "Machine{Deferred.deliver(w, wait), rest, stack}", "Machine{w, rest, stack}", "tests/deferred.mjs", "deferredDelivery"],
