@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "83b633b21b919e04363bfc0126e54ea6b63bf83a",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "representationChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 456,
+  "newRoots": 10,
+  "composedRoots": 466,
+  "allPreviousTheoremDomainsRetained": true,
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "zeroDebtSnapshots": 80,
+  "forkedAsyncPrefixes": 160,
+  "queuedOwnerTrims": 40,
+  "executedSettlementPrefixes": 120,
+  "actualCoreSteps": 880,
+  "dependentVisits": 40,
+  "ownerReleaseBoundariesReached": 0,
+  "queuedFlushBoundariesReached": 120,
+  "nonemptyConstructorPrefixSteps": 2,
+  "configuredMutations": 612,
+  "finiteMutations": 480,
+  "kernelMutations": 132,
+  "newFocusedKernelRejections": 4,
+  "completeSweepOfCurrentConfiguration": false,
+  "runningFrozenSweep": {
+    "checkpoint": "83b633b21b919e04363bfc0126e54ea6b63bf83a",
+    "configured": 608
+  },
+  "resourceFailuresCredited": false,
+  "unverifiedStrongStorageCandidate": "experiments/pending-settlement-frame/evidence.json",
+  "proved": [
+    "actual Core.step retains arbitrary caller stacks at pending, after-trim and scheduling heads, including fault unwinding",
+    "release boundary retains private walk locals and cursor across queued owner work",
+    "certified finite prefix equals its height repeated actual Core.step calls",
+    "structural induction preserves caller stack through every permitted prefix",
+    "a nonempty two-step prefix is constructed for every World and caller stack"
+  ],
+  "notProved": [
+    "general storage frame through the full settled-node body",
+    "graph reachability and successful traversal bounds",
+    "owner callback/release execution",
+    "runtime fuel sufficiency",
+    "full flush and coordinated publication",
+    "eventual host delivery or fairness"
+  ],
+  "logs": {
+    "pending-continuation-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-continuation-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-stack-history-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-stack-history-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "continuation-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/continuation-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "settlement-prefix-controls2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/settlement-prefix-controls2.log",
+      "sha256": "cafaa2fcdda30930da085207968b0fa73b17f5856a122fa0e3e20e9bc7e81020"
+    },
+    "continuation-mutation-targets2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/continuation-mutation-targets2.log",
+      "sha256": "8ee3f7017387a434fc92db2f9f29cdd9fd1a7049c025f536c62bbc1aacf48345"
+    },
+    "continuation-focused-negatives2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/continuation-focused-negatives2.log",
+      "sha256": "cc54b7740cc3049583bac515949a0ef91323b17fadfce3d4283c6dcc890d7b5b"
+    }
+  }
+}

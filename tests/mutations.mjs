@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["pending continuation kernel clears the caller stack", "runtime/core.bend", "PendingTasks{tasks, visited, released, scheduled} <> rest, stack}", "PendingTasks{tasks, visited, released, scheduled} <> rest, []}", "tests/proof-properties.mjs", "pendingResume", "pending-continuation"],
+  ["pending release kernel loses its captured visited list", "runtime/core.bend", "+again = {PendingTasks{Q.Release{1n+index} <> tail, visited, released, scheduled} <> rest : List<&2, Task>}", "+again = {PendingTasks{Q.Release{1n+index} <> tail, [], released, scheduled} <> rest : List<&2, Task>}", "tests/proof-properties.mjs", "pendingTasks", "pending-continuation"],
+  ["pending self-settlement kernel uses the zero source", "runtime/core.bend", "case AsyncWriteAfterTrim{+id} <> rest:\n      pendingResume(rest, stack, Q.beginSettlement(w, id, id))", "case AsyncWriteAfterTrim{+id} <> rest:\n      pendingResume(rest, stack, Q.beginSettlement(w, id, 0n))", "tests/proof-properties.mjs", "dispatch", "pending-continuation"],
+  ["pending fault unwind kernel clears the caller stack", "runtime/core.bend", "case task <> rest:\n      Machine{w, rest, stack}", "case task <> rest:\n      Machine{w, rest, []}", "tests/proof-properties.mjs", "unwind", "pending-continuation"],
+
   ["deferred protocol catch ends before result handling", "runtime/core.bend", "deferredResult(w, DeferredCatch{cell, open, saved} <> rest, stack, cell, open)", "deferredResult(w, rest, stack, cell, open)", "tests/deferred-refetch-stream.mjs", "dispatch"],
   ["initial-error status loses its no-value marker", "runtime/status.bend", "B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE()))", "False{}", "tests/pin-2a0da2fc.mjs", "storeStatus"],
   ["no-value reask fails to restore uninitialized status", "runtime/status.bend", "B.choose(~U32, B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE()),\n        _ => K.STATUS_UNINITIALIZED()", "B.choose(~U32, False{},\n        _ => K.STATUS_UNINITIALIZED()", "tests/pin-2a0da2fc.mjs", "storeStatus"],

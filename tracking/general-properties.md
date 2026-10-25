@@ -202,3 +202,14 @@ proof domain and sufficient budget under merged catch/no-value handling. Two
 quantified passive-catch close/unwind contracts connect the enlarged source
 scope to the existing original-error/caller-stack handler. They are local scope
 contracts, not arbitrary error-history or queued-publication proofs.
+
+## Pending continuation and prefix induction
+
+Ten roots in `pending-continuation.bend` and `pending-stack-history.bend` cover
+actual core pending/after-trim/schedule stack contracts, exact release capture and
+self-settlement, empty-queue return, actual-step agreement and arbitrary finite
+permitted prefix induction. A nonempty two-step prefix is constructed. No health
+premise, desired stack equation or runtime budget is supplied to the induction.
+World content, traversal success, owner callbacks and publication are separate;
+see [domains and exclusions](pending-continuations.md). The general settlement
+committed-storage attempt is archived and unverified, not an active root.

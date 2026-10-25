@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpoint": "83b633b21b919e04363bfc0126e54ea6b63bf83a",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "active": false,
+  "result": "independent kernel out of fuel in tailByRemainingFrame",
+  "candidateSha256": "018a108a0744bb079ac5309ff31f02f174f24735b2e2d0690053877ce1d2990e",
+  "logPath": "/workspace/scratch/night-2026-10-25/core-settlement-check5.log",
+  "logSha256": "7f137fc0c76b0d8b9254da0af3f20622adc2ab82e1fb3dfb40d118ff7c3cc2e8",
+  "activeProofsRelyOnCandidate": false,
+  "runtimeOrKernelLimitsChanged": false,
+  "theoremDomainReduced": false,
+  "semanticRejectionCredited": false
+}

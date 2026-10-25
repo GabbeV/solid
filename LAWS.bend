@@ -68,6 +68,8 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./runtime/supersede.bend as Supersede
 import Base
+import ./proof/pending-continuation.bend as PendingContinuation
+import ./proof/pending-stack-history.bend as PendingHistory
 import ./examples/async-cleanup.bend as CleanupExample
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
@@ -3388,3 +3390,98 @@ law deferred_protocol_throw_uses_shared_source_catch:
   for rest: List<&2, Core.Task>
   for stack: List<&2, R.Value>
   {Core.unwind(w, Core.DeferredCatch{cell, open, saved} <> rest, stack) == Core.deferredUnwind(w, rest, cell, open, saved, R.World.fault(w)) : Core.Machine}
+
+
+law pending_step_preserves_arbitrary_caller_stack:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {Core.values(Core.step(Core.Machine{w, Core.PendingTasks{tasks, visited, released, scheduled} <> rest, stack})) == stack : List<&2, R.Value>}
+
+
+law async_settlement_step_preserves_caller_stack:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  {Core.values(Core.step(Core.Machine{w, Core.AsyncWriteAfterTrim{id} <> rest, stack})) == stack : List<&2, R.Value>}
+
+
+law async_schedule_step_preserves_caller_stack:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {Core.values(Core.step(Core.Machine{w, Core.AsyncWriteSchedule{} <> rest, stack})) == stack : List<&2, R.Value>}
+
+
+law async_after_trim_uses_exact_self_settlement:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  {Core.dispatch(w, Core.AsyncWriteAfterTrim{id} <> rest, stack) == Core.pendingResume(rest, stack, RuntimePending.beginSettlement(w, id, id)) : Core.Machine}
+
+
+law empty_pending_queue_returns_exact_caller:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {Core.step(Core.Machine{w, Core.PendingTasks{[], visited, released, scheduled} <> rest, stack}) == Core.Machine{w, rest, stack} : Core.Machine}
+
+
+law pending_release_keeps_its_captured_continuation:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +index: Nat
+  for +tail: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {Core.pendingTasks(w, rest, stack, RuntimePending.Release{index} <> tail, visited, released, scheduled) ==
+    B.choose(~Core.Machine, Nat.is_ge(index, B.length(Nat, released)),
+      _ => Core.Machine{w, Core.PendingTasks{tail, visited, released, scheduled} <> rest, stack},
+      _ =>
+        +id = B.get(Nat, released, index, 0n)
+        +again = {Core.PendingTasks{RuntimePending.Release{1n+index} <> tail, visited, released, scheduled} <> rest : List<&2, Core.Task>}
+        Core.Machine{w, B.choose(~List<&2, Core.Task>, RuntimePending.releasable(w, id), _ => Core.OwnerTasks{[RuntimeOwner.Unobserved{id}]} <> again, _ => again), stack}) : Core.Machine}
+
+
+law settlement_prefix_is_actual_core_iteration:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +actual: Core.Machine
+  {PendingHistory.run(scope, programme, actual) == PendingHistory.iterate(PendingHistory.height(scope, programme), actual) : Core.Machine}
+
+
+law settlement_prefix_preserves_caller_stack_by_induction:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  {Core.values(PendingHistory.iterate(PendingHistory.height(scope, programme), scope)) == Core.values(scope) : List<&2, R.Value>}
+
+
+law nonempty_settlement_schedule_prefix_is_constructed:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  PendingHistory.Programme<PendingHistory.input(w, Core.AsyncWriteSchedule{} <> rest, stack, PendingHistory.Pending{[], visited, released, scheduled})>
+
+
+law constructed_settlement_schedule_prefix_has_two_actual_steps:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {PendingHistory.height(PendingHistory.input(w, Core.AsyncWriteSchedule{} <> rest, stack, PendingHistory.Pending{[], visited, released, scheduled}), PendingHistory.emptyThenSchedule(w, rest, stack, visited, released, scheduled)) == 2n : Nat}

@@ -64,6 +64,8 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
+import ./proof/pending-continuation.bend as PendingContinuation
+import ./proof/pending-stack-history.bend as PendingHistory
 import ./proof/async-cleanup-program.bend as CleanupProgram
 import ./proof/async-error-retirement.bend as ErrorRetirement
 import ./proof/landing-release.bend as LandingRelease
@@ -1553,3 +1555,43 @@ def Laws.deferred_result_return_closes_protocol_catch(cell, open, saved, rest):
 
 def Laws.deferred_protocol_throw_uses_shared_source_catch(w, cell, open, saved, rest, stack):
   DeferredProtocolScope.catches(w, cell, open, saved, rest, stack)
+
+
+def Laws.pending_step_preserves_arbitrary_caller_stack(w, rest, stack, tasks, visited, released, scheduled):
+  PendingContinuation.pendingStack(w, rest, stack, tasks, visited, released, scheduled)
+
+
+def Laws.async_settlement_step_preserves_caller_stack(w, rest, stack, id):
+  PendingContinuation.afterTrimStepStack(w, rest, stack, id)
+
+
+def Laws.async_schedule_step_preserves_caller_stack(w, rest, stack):
+  PendingContinuation.scheduleStepStack(w, rest, stack)
+
+
+def Laws.async_after_trim_uses_exact_self_settlement(w, rest, stack, id):
+  PendingContinuation.afterTrimExact(w, rest, stack, id)
+
+
+def Laws.empty_pending_queue_returns_exact_caller(w, rest, stack, visited, released, scheduled):
+  PendingContinuation.emptyExact(w, rest, stack, visited, released, scheduled)
+
+
+def Laws.pending_release_keeps_its_captured_continuation(w, rest, stack, index, tail, visited, released, scheduled):
+  PendingContinuation.releaseExact(w, rest, stack, index, tail, visited, released, scheduled)
+
+
+def Laws.settlement_prefix_is_actual_core_iteration(scope, programme, actual):
+  PendingHistory.actualSteps(scope, programme, actual)
+
+
+def Laws.settlement_prefix_preserves_caller_stack_by_induction(scope, programme):
+  PendingHistory.iterationStack(scope, programme)
+
+
+def Laws.nonempty_settlement_schedule_prefix_is_constructed(w, rest, stack, visited, released, scheduled):
+  PendingHistory.emptyThenSchedule(w, rest, stack, visited, released, scheduled)
+
+
+def Laws.constructed_settlement_schedule_prefix_has_two_actual_steps(w, rest, stack, visited, released, scheduled):
+  PendingHistory.emptyThenScheduleHeight(w, rest, stack, visited, released, scheduled)

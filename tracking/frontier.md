@@ -169,3 +169,14 @@ then the actual scheduled flush. Carry callback/error policy and live root
 resolution explicitly: settlement may join held nodes, so unchanged live lists
 cannot be assumed across that traversal. The held-count versus still-pending
 flight cases must be related before claiming the final coordinated reveal.
+
+## Executed pending continuations
+
+The [pending continuation extension](pending-continuations.md) now checks actual
+settlement/schedule task steps and arbitrary finite permitted prefixes for caller
+stack preservation, including fault unwinding. Captured release locals/cursor and
+self-settlement order are exact contracts; a nonempty prefix is constructed.
+The runtime is unchanged. The existing 120 forked non-trim fixtures now execute
+880 actual steps through their queued flush boundary. General committed storage
+through the whole settlement body remains an unverified resource-limited attempt;
+owner callbacks, successful completion and coordinated final publication stay open.

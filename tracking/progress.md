@@ -770,3 +770,15 @@ histories bring the corpus to 4,750; private status coverage expands to 6,144.
 Two catch-scope roots retain earlier domains and 103/118 sufficient bounds.
 Four new finite negatives are rejected: 608 configured (480 finite /128 kernel),
 no fresh full sweep claimed yet. No active deviation or kernel/limit change.
+
+## 2026-10-25 — Actual pending continuations
+
+After syncing the upstream integration at 83b633b2, added ten roots for actual
+settlement/schedule caller-stack contracts, captured owner-release continuation,
+self-settlement and finite-prefix induction over actual Core.step. Constructed a
+nonempty prefix without assuming the desired stack equation. Retained 456 earlier
+roots and all earlier domains. The modified existing public-history controls
+execute 120 prefixes /880 steps to the queued flush; four kernel negatives reject
+targeted stack/capture/source faults. A general settlement storage-frame proof
+still hits kernel reduction fuel and is archived unverified; runtime/source/limits
+unchanged. Owner release, graph progress and final publication remain open.
