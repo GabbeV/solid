@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["notification footprint kernel loses incoming configuration", "runtime/status.bend", "R.Node.with_status(B.node(w, id), B.set(K.STATUS_PENDING(), carried))", "R.Node.with_config(R.Node.with_status(B.node(w, id), B.set(K.STATUS_PENDING(), carried)), 0)", "tests/proof-properties.mjs", "storeStatus", "notification-footprint-negative-probes"],
+  ["notification footprint kernel creates a fault while storing pending error", "runtime/pending-state.bend", "B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error))", "R.World.with_fault(B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error)), R.Exhausted{})", "tests/proof-properties.mjs", "setPendingError", "notification-footprint-negative-probes"],
+
   ["pending status kernel preserves old error bit on reask", "runtime/status.bend", "B.set(K.STATUS_PENDING(), carried)", "B.set(B.set(K.STATUS_PENDING(), carried), U32.and(R.Node.status(B.node(w, id)), K.STATUS_ERROR()))", "tests/proof-properties.mjs", "storeStatus", "pending-status-negative-probes"],
   ["pending status kernel clears input status while capturing shown error", "runtime/status.bend", "B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id))))", "B.store_node(B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id)))), id, R.Node.with_status(B.node(w, id), 0))", "tests/proof-properties.mjs", "storeStatus", "pending-status-negative-probes"],
 

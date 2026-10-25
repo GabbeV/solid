@@ -1,3 +1,6 @@
+import ./proof/pending-notification-footprint.bend as NotificationFootprint
+import ./proof/pending-notification-storage.bend as NotificationStorage
+import ./proof/status-notification-room.bend as NotificationRoom
 import ./proof/pending-notification-status.bend as GeneralStatus
 import ./proof/pending-source-status-frame.bend as ErrorStatusFrame
 import ./proof/action-wait-allocation.bend as WaitAllocation
@@ -2152,3 +2155,15 @@ def Laws.pending_selected_status_always_pending(flags):
 
 def Laws.pending_selected_status_never_error(flags):
   GeneralStatus.selectedError(flags)
+
+def Laws.no_error_pending_store_preserves_subscriber_topology(w,node,source,serial,noError):
+  NotificationFootprint.topology(w,node,source,serial,noError)
+
+def Laws.no_error_pending_store_preserves_graph_size_links_fault(w,node,source,serial,noError):
+  NotificationStorage.stored(w,node,source,serial,noError)
+
+def Laws.no_error_pending_store_retains_initial_health(w,node,source,serial,noError,healthy):
+  NotificationStorage.healthy(w,node,source,serial,noError,healthy)
+
+def Laws.valid_node_supplies_two_steps_in_actual_notifier_budget(w,node,valid):
+  NotificationRoom.room(w,node,valid)

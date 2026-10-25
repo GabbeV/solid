@@ -5,7 +5,7 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/pending-state.bend as P
 import ../runtime/extension.bend as E
-import ./pending-carrier-existing.bend as Segment
+import ./pending-add-operations.bend as Segment
 
 def created(+w: R.World, +id: Nat) -> R.World:
   +pair = B.newPendingSet(w, [])

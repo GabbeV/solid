@@ -1,3 +1,6 @@
+import ./proof/pending-notification-footprint.bend as NotificationFootprint
+import ./proof/pending-notification-storage.bend as NotificationStorage
+import ./proof/status-notification-room.bend as NotificationRoom
 import ./proof/pending-notification-status.bend as GeneralStatus
 import ./proof/pending-source-status-frame.bend as ErrorStatusFrame
 import ./proof/action-wait-allocation.bend as WaitAllocation
@@ -4969,3 +4972,34 @@ law pending_selected_status_always_pending:
 law pending_selected_status_never_error:
   for +flags: U32
   {B.has(SourceStatusFrame.select(flags),K.STATUS_ERROR()) == False{} : Bool}
+
+law no_error_pending_store_preserves_subscriber_topology:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  {SubscriberShape.observe(PendingNotification.notified(w,node,source,serial)) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+law no_error_pending_store_preserves_graph_size_links_fault:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  {GraphStorage.storage(PendingNotification.notified(w,node,source,serial)) == GraphStorage.storage(w) : GraphStorage.Storage}
+
+law no_error_pending_store_retains_initial_health:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {B.ok(PendingNotification.notified(w,node,source,serial)) == True{} : Bool}
+
+law valid_node_supplies_two_steps_in_actual_notifier_budget:
+  for +w: R.World
+  for +node: Nat
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {Nat.mul(4n,B.budget(w)) == 2n+NotificationRoom.remaining(R.World.nodes(w),R.World.links(w)) : Nat}

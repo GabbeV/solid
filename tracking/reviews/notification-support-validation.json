@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "f4dca0ba8aae27912116ed0f91bd6999baa8f1a9",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "proofOnlyElementaryOperationSplit": true,
+  "previousRootsRetained": 591,
+  "newRoots": 4,
+  "composedRoots": 595,
+  "domains": [
+    "actual local pending stores with initial no-error word, arbitrary World/node/source, no carrier snapshot",
+    "health additionally assumes initial Healthy",
+    "two-step public-budget room requires only valid selected node"
+  ],
+  "nativeActualDriverControls": 81,
+  "focusedKernelRejections": 2,
+  "configuredMutations": 668,
+  "finiteMutations": 484,
+  "kernelMutations": 184,
+  "completeCurrentSweep": false,
+  "wholeLeafControllerTheorem": "unverified, archived resource stop at actual dispatch",
+  "isolatedRuntimeSegmentExperimentApplied": false,
+  "oldStandaloneStatusCheck": "full591 passed; redundant standalone twice timed out at unchanged 90s guard",
+  "splitStandaloneStatusCheck": "passed with unchanged 90s and4GiB guard",
+  "kernelAndExecutionLimitsUnchanged": true,
+  "activeDeviationIds": []
+}

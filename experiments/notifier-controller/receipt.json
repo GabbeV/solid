@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "status": "unverified composition, excluded from active roots",
+  "runtimeApplied": false,
+  "runtimeStatusRestoredByteForByte": true,
+  "proofOraclesWeakened": false,
+  "kernelOrExecutionLimitsChanged": false,
+  "nativeLeafControls": 81,
+  "limits": "full initial no-error leaf notify composition resource-stopped at dispatch; wider old-error topology choice resource-stopped too",
+  "runtimeNamingExperiment": "exact source-tail extraction in scratch did not fix the stop; restored original, never applied to active runtime",
+  "initialWideFrontendAttempt": "stopped at observed ~12GiB; not credited; subsequent attempts used unchanged 90s/4GiB process-group guard",
+  "archiveHashes": {
+    "notifier-source-control.bend.txt": "bf886c624eef26d40f6e639c0920be156620a2e61032e353e6804d7dfd8c2936",
+    "pending-leaf-notification.bend.txt": "20dc240172520787d8cb24ca86bc15ec976021fcbef872d570005217bb2d84fd"
+  },
+  "logs": {
+    "notification-footprint-kernel.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "notification-footprint-slim-kernel.log": "d6dd03889b70b07b3776e4334d24c3c333e08553c7c08d8cfebe9913b4a9693f",
+    "notification-footprint-separated-kernel.log": "d34ed2111e9c074e7c8ba7bb9af0ae1a05a54940f60868ef6c8f8907c6230db5",
+    "notification-footprint-branch-kernel.log": "d34ed2111e9c074e7c8ba7bb9af0ae1a05a54940f60868ef6c8f8907c6230db5",
+    "leaf-notification-complete-kernel.log": "d6dd03889b70b07b3776e4334d24c3c333e08553c7c08d8cfebe9913b4a9693f",
+    "leaf-notification-thin-kernel.log": "08baacd480789acc6c3e74f32731b01894cd1fdc1429a5523de2e6dc6891e372",
+    "notifier-source-cut-kernel.log": "e45656216f32cb60bfa529d48e90d5227e4f57a89c06a622c9f39b1613435871",
+    "notifier-source-segment-kernel.log": "e45656216f32cb60bfa529d48e90d5227e4f57a89c06a622c9f39b1613435871",
+    "leaf-notification-cut-application-kernel.log": "08baacd480789acc6c3e74f32731b01894cd1fdc1429a5523de2e6dc6891e372"
+  }
+}

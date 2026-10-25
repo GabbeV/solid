@@ -8,7 +8,7 @@ import ../runtime/extension.bend as E
 import ../runtime/constants.bend as K
 import ./node-observation-lens.bend as Lens
 import ./pending-add-frame.bend as Add
-import ./pending-notification-carrier.bend as Notify
+import ./pending-notification-operations.bend as Notify
 
 
 def project(node: R.Node) -> U32:

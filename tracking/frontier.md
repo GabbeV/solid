@@ -375,33 +375,22 @@ sequences and five focused negatives pass. Full generator/once-only debt/flush/
 reveal remain open. Pending status composition's resource-stopped attempts are
 archived explicitly; no runtime/source/toolchain/domain/budget change.
 
-## Every incoming status word (2026-10-25)
+## General pending status classification
 
-The new `pending-notification-status.bend` contract derives the actual
-`storeStatus` pending-branch result from only a valid selected node and a
-nonzero incoming NotReady source. The incoming U32 word is arbitrary, including
-an existing error or no-value status. No carrier snapshot or no-old-error premise
-is needed for this **status projection**. The result is the source selection
-`PENDING | (NO_VALUE ? UNINITIALIZED : old & UNINITIALIZED)`.
+[The status projection contract](pending-notification.md) derives the actual local
+pending store's selected word and pending/error bits for every incoming U32 word,
+including existing-error cases, from valid node identity alone. Earlier carrier/
+error-identity domains remain unchanged. Six roots extend 585 to 591; 240 private/
+native controls and two focused kernel faults pass. Callback reachability, full
+controller settlement, global accounting and coordinated reveal remain open.
+The proof-only dependency split retains every statement and checker limit.
 
-`pending-source-status-frame.bend` separately proves all node status words survive
-actual pending-error bookkeeping. Word-mask induction (at arbitrary bit width,
-lifted to U32) proves the selected pending bit true and error bit false. These
-compose with the actual operation, rather than checking an enumerated list of
-flags. Earlier membership/error-identity contracts retain their stronger arena
-premises and unchanged domains.
+## Notification control dependencies
 
-The private/native controls prepare native-consistent old-error extensions; the
-initial failed private setup set only an error flag with no extension and was
-corrected as an adapter-domain mistake, not an upstream bug. High-bit and all
-low-bit combinations cover fresh/allocated/duplicate/other-source cases. Neither
-these controls nor the new status theorem establishes public callback reachability,
-shown-error identity, accessor `isPending` policy, successful settlement or final
-renderer reveal. In particular, a stored pending bit is not alone a theorem about
-what an accessor displays. Two focused source corruptions check preservation of
-the incoming word while capturing an old shown error and rejection of retaining
-the old error bit.
-
-Six roots extend 585 to 591. Runtime, source, host, theorem domains and checker
-limits are unchanged. Complete664 is running separately on frozen fb4dd44b; the
-two newer focused faults are not included in that historical sweep.
+[The local-store footprint and original-budget contracts](pending-notification.md)
+preserve no-error input shape/links/count/fault, retain health and derive two
+notifier steps of room from valid node identity. Four roots extend 591 to 595;
+81 native/driver controls and two focused faults pass. The actual whole notifier
+composition remains [unverified](../experiments/notifier-controller/README.md) at
+the dispatch boundary. Its isolated runtime-naming experiment was discarded;
+active runtime/source/host/limits and earlier domains remain unchanged.

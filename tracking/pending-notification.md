@@ -91,3 +91,43 @@ the old error bit.
 Six roots extend 585 to 591. Runtime, source, host, theorem domains and checker
 limits are unchanged. Complete664 is running separately on frozen fb4dd44b; the
 two newer focused faults are not included in that historical sweep.
+
+
+## Proof dependency split
+
+The elementary local-operation definitions now live in
+`pending-notification-operations.bend` and `pending-add-operations.bend`. Earlier
+exported helpers forward to the same definitions; their statements/domains remain
+unchanged. Small status laws no longer import a full graph/callback history merely
+to use a node-validity or Nat-reflexivity consequence. `natural-logic.bend` provides
+those elementary facts without controller dependencies.
+
+Before this split, the independent full591 check passed in 288.0 seconds but the
+redundant standalone status-module check hit its 90-second process guard twice.
+The split standalone check passes under that unchanged guard and the 4GiB process-
+group cap. The full composed check is rerun before this split is sealed.
+No runtime, source body, host adapter, kernel fuel or execution budget changed.
+
+
+## Notification control dependencies
+
+Four new active roots preserve the incoming no-error local store's subscriber
+shape, node count/intrusive links/fault and initial Healthy result, and derive two
+steps of room in the **original** notifier budget from a valid node. The shape
+observer retains every node kind/configuration/subscriber head and all links;
+no carrier snapshot or final-state equation is supplied. The health conclusion
+requires initial health. All earlier status and membership domains remain active.
+
+These are the dependencies of a complete leaf notifier result. That composition
+is still **unverified** at the actual dispatch boundary; the archived attempts and
+resource receipts are in [experiments/notifier-controller](../experiments/notifier-controller/README.md).
+The 81 actual raw memo-construction/notifier controls match native Solid, preserve
+visited/scheduled locals across two dispatcher steps and retain explicit one-step
+exhaustion. They do not replace the missing general controller theorem or prove
+public callback reachability. An isolated exact source-tail naming experiment did
+not resolve the reduction stop, was never applied to the active runtime, and was
+discarded. No runtime/source/host/limit/budget or semantic policy changed.
+
+Four roots extend 591 to 595. Two focused kernel faults reject lost configuration
+and a fault introduced while storing a pending error. The proof-only elementary
+operation split keeps the old helper names and statements as forwarding aliases.

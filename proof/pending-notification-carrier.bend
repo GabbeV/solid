@@ -1,6 +1,7 @@
 # Actual notifyStatus local pending stores construct status/error/membership
 # together. This is before effect notification and dependent propagation.
 import Base
+import ./pending-notification-operations.bend as Operations
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/status.bend as A
@@ -20,26 +21,32 @@ import ./committed-storage-frame.bend as Content
 import ./pending-source-committed-frame.bend as PendingContent
 
 def error(serial: Nat, source: Nat) -> R.Value:
-  R.NotReadyFailure{serial,1n+source}
+  Operations.error(serial,source)
+
 
 def carried(+w: R.World,+node: Nat) -> U32:
-  B.choose(~U32,B.has(R.Node.status(B.node(w,node)),K.STATUS_NO_VALUE()),_=>K.STATUS_UNINITIALIZED(),_=>U32.and(R.Node.status(B.node(w,node)),K.STATUS_UNINITIALIZED()))
+  Operations.carried(w,node)
+
 
 def flags(w: R.World,node: Nat) -> U32:
-  B.set(K.STATUS_PENDING(),carried(w,node))
+  Operations.flags(w,node)
+
 
 def statused(+w: R.World,+node: Nat) -> R.World:
-  B.store_node(w,node,R.Node.with_status(B.node(w,node),flags(w,node)))
+  Operations.statused(w,node)
+
 
 def finish(+w: R.World,+node: Nat,+source: Nat,+serial: Nat) -> R.World:
-  P.setPendingError(statused(w,node),node,1n+source,error(serial,source))
+  Operations.finish(w,node,source,serial)
+
 
 def choice(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,show: Bool) -> R.World:
-  +w = B.choose(~R.World,show,_=>B.store_extension(w,node,R.NodeExtension.with_shownError(B.extension(w,node),R.NodeExtension.error(B.extension(w,node)))),_=>w)
-  finish(State.addWorld(w,node,source),node,source,serial)
+  Operations.choice(w,node,source,serial,show)
+
 
 def notified(w: R.World,node: Nat,source: Nat,serial: Nat) -> R.World:
-  A.storeStatus(w,node,K.STATUS_PENDING(),error(serial,source))
+  Operations.notified(w,node,source,serial)
+
 
 def exact(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}) ->
   {notified(w,node,source,serial) == finish(State.addWorld(w,node,source),node,source,serial) : R.World}:
@@ -74,8 +81,8 @@ def errorField(+record: R.NodeExtension,+value: R.Value) -> {R.NodeExtension.err
     case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
 
 def statusField(+record: R.Node,+flags: U32) -> {R.Node.status(R.Node.with_status(record,flags)) == flags : U32}:
-  match record:
-    case R.Node{kind,value,pending,equals,config,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+  Operations.statusField(record,flags)
+
 
 def finishError(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+single: Single.Single<w,node,source>) ->
   {R.NodeExtension.error(B.extension(finish(w,node,source,serial),node)) == error(serial,source) : R.Value}:

@@ -1,0 +1,45 @@
+# Actual first notifier step, with its leaf branch derived from incoming shape.
+import Base
+import ../representation/records.bend as R
+import ../representation/base.bend as B
+import ../runtime/status.bend as A
+import ../runtime/constants.bend as K
+import ../runtime/transaction.bend as X
+import ./pending-notification-operations.bend as N
+import ./pending-notification-footprint.bend as Frame
+import ./subscriber-topology-frame.bend as Topology
+import ./pending-notification-storage.bend as Storage
+import ./status-notification-room.bend as Room
+import ./notifier-source-control.bend as Cut
+
+
+def dispatch(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+rest: List<&2,A.Task>,+visited: List<&2,Nat>,+scheduled: Bool,noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}) -> {A.dispatch(w,A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled) == Cut.selected(N.notified(w,node,source,serial),node,source,serial,rest,visited,scheduled,Topology.shape(B.node(w,node))) : A.Machine}:
+  +next = N.notified(w,node,source,serial)
+  Equal.trans(A.Machine,A.notifyStored(next,node,K.STATUS_PENDING(),N.error(serial,source),rest,visited,scheduled),Cut.selected(next,node,source,serial,rest,visited,scheduled,Topology.shape(B.node(next,node))),Cut.selected(next,node,source,serial,rest,visited,scheduled,Topology.shape(B.node(w,node))),Cut.selectorExact(next,node,source,serial,rest,visited,scheduled),Equal.cong(Topology.Shape,A.Machine,shape=>Cut.selected(next,node,source,serial,rest,visited,scheduled,shape),Topology.shape(B.node(next,node)),Topology.shape(B.node(w,node)),Topology.read(w,next,node,Frame.topology(w,node,source,serial,noError))))
+
+
+def leaf(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+rest: List<&2,A.Task>,+visited: List<&2,Nat>,+scheduled: Bool,+config: U32,shape: {Topology.shape(B.node(w,node)) == Topology.Shape{R.Memo{},config,0n} : Topology.Shape},noGuess: {B.has(config,K.CONFIG_GUESS()) == False{} : Bool},noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}) -> {A.dispatch(w,A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled) == A.Machine{N.notified(w,node,source,serial),A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled} : A.Machine}:
+  +next = N.notified(w,node,source,serial)
+  Equal.trans(A.Machine,A.dispatch(w,A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled),Cut.selected(next,node,source,serial,rest,visited,scheduled,Topology.shape(B.node(w,node))),A.Machine{next,A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled},dispatch(w,node,source,serial,rest,visited,scheduled,noError),Equal.trans(A.Machine,Cut.selected(next,node,source,serial,rest,visited,scheduled,Topology.shape(B.node(w,node))),Cut.selected(next,node,source,serial,rest,visited,scheduled,Topology.Shape{R.Memo{},config,0n}),A.Machine{next,A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)} <> rest,visited,scheduled},Equal.cong(Topology.Shape,A.Machine,s=>Cut.selected(next,node,source,serial,rest,visited,scheduled,s),Topology.shape(B.node(w,node)),Topology.Shape{R.Memo{},config,0n},shape),Equal.cong(Bool,A.Machine,guess=>Cut.choice(next,node,source,serial,rest,visited,scheduled,Topology.Shape{R.Memo{},config,0n},guess),B.has(config,K.CONFIG_GUESS()),False{},noGuess)))
+
+
+def runStep(+fuel: Nat,+w: R.World,+task: A.Task,+rest: List<&2,A.Task>,+visited: List<&2,Nat>,+scheduled: Bool,healthy: {B.ok(w) == True{} : Bool}) -> {A.run(1n+fuel,A.Machine{w,task <> rest,visited,scheduled}) == A.run(fuel,A.dispatch(w,task <> rest,visited,scheduled)) : R.World}:
+  Equal.cong(Bool,R.World,ready=>B.choose(~R.World,ready,_=>A.run(fuel,A.dispatch(w,task <> rest,visited,scheduled)),_=>w),B.ok(w),True{},healthy)
+
+def emptyRun(+fuel: Nat,+w: R.World,+visited: List<&2,Nat>,+scheduled: Bool) -> {A.run(fuel,A.Machine{w,[],visited,scheduled}) == w : R.World}:
+  match fuel:
+    case 0n: {==}
+    case 1n+p: {==}
+
+
+def propagateZero(+w: R.World,+fuel: Nat,+source: Nat,+serial: Nat,+visited: List<&2,Nat>,+scheduled: Bool,healthy: {B.ok(w) == True{} : Bool}) -> {A.run(1n+fuel,A.Machine{w,[A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)}],visited,scheduled}) == w : R.World}:
+  Equal.trans(R.World,A.run(1n+fuel,A.Machine{w,[A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)}],visited,scheduled}),A.run(fuel,A.Machine{w,[],visited,scheduled}),w,runStep(fuel,w,A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)},[],visited,scheduled,healthy),emptyRun(fuel,w,visited,scheduled))
+
+def complete(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+remaining: Nat,+config: U32,shape: {Topology.shape(B.node(w,node)) == Topology.Shape{R.Memo{},config,0n} : Topology.Shape},noGuess: {B.has(config,K.CONFIG_GUESS()) == False{} : Bool},+noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool},+healthy: {B.ok(w) == True{} : Bool}) -> {A.run(2n+remaining,A.Machine{w,[A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)}],[],False{}}) == N.notified(w,node,source,serial) : R.World}:
+  +next = N.notified(w,node,source,serial)
+  +start = {A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)} : A.Task}
+  Equal.trans(R.World,A.run(2n+remaining,A.Machine{w,[start],[],False{}}),A.run(1n+remaining,A.dispatch(w,[start],[],False{})),next,runStep(1n+remaining,w,start,[],[],False{},healthy),Equal.trans(R.World,A.run(1n+remaining,A.dispatch(w,[start],[],False{})),A.run(1n+remaining,A.Machine{next,[A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)}],[],False{}}),next,Equal.cong(A.Machine,R.World,machine=>A.run(1n+remaining,machine),A.dispatch(w,[start],[],False{}),A.Machine{next,[A.Propagate{0n,K.STATUS_PENDING(),N.error(serial,source)}],[],False{}},leaf(w,node,source,serial,[],[],False{},config,shape,noGuess,noError)),propagateZero(next,remaining,source,serial,[],False{},Storage.healthy(w,node,source,serial,noError,healthy))))
+
+def public(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+config: U32,shape: {Topology.shape(B.node(w,node)) == Topology.Shape{R.Memo{},config,0n} : Topology.Shape},noGuess: {B.has(config,K.CONFIG_GUESS()) == False{} : Bool},noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool},healthy: {B.ok(w) == True{} : Bool},valid: {B.valid(w,node) == True{} : Bool}) -> {A.notifyStatusWith(w,node,K.STATUS_PENDING(),N.error(serial,source)) == N.notified(w,node,source,serial) : R.World}:
+  +remaining = Room.remaining(R.World.nodes(w),R.World.links(w))
+  Equal.trans(R.World,A.notifyStatusWith(w,node,K.STATUS_PENDING(),N.error(serial,source)),A.run(2n+remaining,A.Machine{w,[A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)}],[],False{}}),N.notified(w,node,source,serial),Equal.cong(Nat,R.World,fuel=>A.run(fuel,A.Machine{w,[A.Notify{node,K.STATUS_PENDING(),N.error(serial,source)}],[],False{}}),Nat.mul(4n,B.budget(w)),2n+remaining,Room.room(w,node,valid)),complete(w,node,source,serial,remaining,config,shape,noGuess,noError,healthy))
