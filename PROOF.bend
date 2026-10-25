@@ -64,6 +64,9 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
+import ./proof/core-run-prefix.bend as CoreRunPrefix
+import ./proof/pending-removal-footprint.bend as RemovalFootprint
+import ./proof/empty-settlement-completion.bend as EmptySettlement
 import ./proof/rendered-observation.bend as RenderedView
 import ./proof/rendered-independent-apply.bend as IndependentApply
 import ./proof/rendered-async-prefix.bend as RenderedArrival
@@ -1647,3 +1650,39 @@ def Laws.independent_actual_apply_step_retains_selected_observation(renderers, t
 
 def Laws.ordinary_async_arrival_retains_selected_observation(renderers, targets, w, rest, stack, id, result, value, then, custom, override):
   RenderedArrival.preserves(renderers, targets, w, rest, stack, id, result, value, then, custom, override)
+
+
+def Laws.actual_core_run_splits_at_step_prefix(length, remaining, machine):
+  CoreRunPrefix.split(length, remaining, machine)
+
+
+def Laws.actual_core_zero_fuel_exhaustion_is_explicit(w, head, tail, stack):
+  CoreRunPrefix.exhausts(w, head, tail, stack)
+
+
+def Laws.pending_source_removal_retains_nodes_links_fault(w, id, source):
+  RemovalFootprint.removed(w, id, source)
+
+
+def Laws.empty_subscriber_settlement_returns_caller_in_six_steps(w, id, rest, stack, noSubscribers, healthy):
+  EmptySettlement.exact(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.empty_subscriber_settlement_composes_with_actual_run(w, id, rest, stack, remaining, noSubscribers, healthy):
+  EmptySettlement.runBoundary(w, id, rest, stack, remaining, noSubscribers, healthy)
+
+
+def Laws.empty_subscriber_settlement_preserves_committed_observation(w, id, rest, stack, noSubscribers, healthy):
+  EmptySettlement.committed(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.empty_subscriber_settlement_remains_healthy(w, id, rest, stack, noSubscribers, healthy):
+  EmptySettlement.healthyResult(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.empty_subscriber_settlement_prefix_is_constructed(w, id, rest, stack, noSubscribers, healthy):
+  EmptySettlement.programme(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.constructed_empty_subscriber_prefix_has_six_steps(w, id, rest, stack, noSubscribers, healthy):
+  EmptySettlement.programmeHeight(w, id, rest, stack, noSubscribers, healthy)

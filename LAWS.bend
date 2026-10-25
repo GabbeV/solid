@@ -68,6 +68,9 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./runtime/supersede.bend as Supersede
 import Base
+import ./proof/core-run-prefix.bend as CoreRunPrefix
+import ./proof/pending-removal-footprint.bend as RemovalFootprint
+import ./proof/empty-settlement-completion.bend as EmptySettlement
 import ./observation/tree.bend as RenderedTree
 import ./proof/rendered-observation.bend as RenderedView
 import ./proof/rendered-independent-apply.bend as IndependentApply
@@ -3612,3 +3615,86 @@ law ordinary_async_arrival_retains_selected_observation:
   for +custom: {Equality.custom(w, id) == 0n : Nat}
   for +override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
   {RenderedView.observe(renderers, targets, Core.world(Core.asyncWrite(w, rest, stack, id, result, value, then))) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law actual_core_run_splits_at_step_prefix:
+  for +length: Nat
+  for +remaining: Nat
+  for +machine: Core.Machine
+  {Core.run(Nat.add(length, remaining), machine) == Core.run(remaining, PendingHistory.iterate(length, machine)) : Core.Machine}
+
+
+law actual_core_zero_fuel_exhaustion_is_explicit:
+  for +w: R.World
+  for +head: Core.Task
+  for +tail: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {Core.run(0n, Core.Machine{w, head <> tail, stack}) == Core.Machine{R.World.with_fault(w, R.Exhausted{}), [], []} : Core.Machine}
+
+
+law pending_source_removal_retains_nodes_links_fault:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  {RemovalFootprint.observe(B.first(R.World, Bool, PendingState.removePendingSource(w, id, source))) == RemovalFootprint.observe(w) : RemovalFootprint.View}
+
+
+law empty_subscriber_settlement_returns_caller_in_six_steps:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {PendingHistory.iterate(6n, EmptySettlement.start(w, id, rest, stack)) == Core.Machine{B.schedule(EmptySettlement.after(w, id)), rest, stack} : Core.Machine}
+
+
+law empty_subscriber_settlement_composes_with_actual_run:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +remaining: Nat
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {Core.run(Nat.add(6n, remaining), EmptySettlement.start(w, id, rest, stack)) == Core.run(remaining, Core.Machine{B.schedule(EmptySettlement.after(w, id)), rest, stack}) : Core.Machine}
+
+
+law empty_subscriber_settlement_preserves_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {CommittedStorage.observe(Core.world(PendingHistory.iterate(6n, EmptySettlement.start(w, id, rest, stack)))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law empty_subscriber_settlement_remains_healthy:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {B.ok(Core.world(PendingHistory.iterate(6n, EmptySettlement.start(w, id, rest, stack)))) == True{} : Bool}
+
+
+law empty_subscriber_settlement_prefix_is_constructed:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  PendingHistory.Programme<EmptySettlement.start(w, id, rest, stack)>
+
+
+law constructed_empty_subscriber_prefix_has_six_steps:
+  for +w: R.World
+  for +id: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  {PendingHistory.height(EmptySettlement.start(w, id, rest, stack), EmptySettlement.programme(w, id, rest, stack, noSubscribers, healthy)) == 6n : Nat}

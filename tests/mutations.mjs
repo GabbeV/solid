@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["actual driver kernel hides zero-fuel exhaustion", "runtime/core.bend", "Machine{R.World.with_fault(w, R.Exhausted{}), [], []}", "Machine{R.World.with_fault(w, R.TypeError{}), [], []}", "tests/proof-properties.mjs", "run", "core-run-prefix"],
+  ["empty settlement kernel loses the caller at return", "runtime/core.bend", "case Nil{}:\n      Machine{w, rest, stack}", "case Nil{}:\n      Machine{w, [], stack}", "tests/proof-properties.mjs", "pendingTasks", "empty-settlement-completion"],
+  ["empty walk kernel advances a zero cursor", "runtime/pending.bend", "case Walk{+edge, +root, +source} <> +rest:\n      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest, visited, released, scheduled},", "case Walk{+edge, +root, +source} <> +rest:\n      B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, Next{0n, root, source} <> rest, visited, released, scheduled},", "tests/proof-properties.mjs", "advance", "empty-settlement-completion"],
+  ["empty settlement schedule kernel drops caller work", "runtime/core.bend", "case AsyncWriteSchedule{} <> rest:\n      Machine{B.schedule(w), rest, stack}", "case AsyncWriteSchedule{} <> rest:\n      Machine{B.schedule(w), [], stack}", "tests/proof-properties.mjs", "dispatch", "empty-settlement-completion"],
+
   ["selected text kernel drops the real text write", "observation/tree.bend", "store(w, id, R.TreeNode.with_text(get(w, id), value))", "w", "tests/proof-properties.mjs", "setText", "rendered-observation"],
   ["selected text kernel writes a different target", "observation/tree.bend", "store(w, id, R.TreeNode.with_text(get(w, id), value))", "store(w, 1n+id, R.TreeNode.with_text(get(w, id), value))", "tests/proof-properties.mjs", "setText", "rendered-observation"],
   ["independent apply kernel writes the selected target", "runtime/core.bend", "T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))", "T.setText(w, 2n, R.Node.value(B.node(w, id)))", "tests/proof-properties.mjs", "applyEffect", "rendered-independent-apply"],

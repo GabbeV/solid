@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 619 = 480 finite + 139 kernel variants, including completion/wait/blocker/landing invariants |
-| Complete negative sweep | Frozen 83b633b2: 608 named rejections and unchanged hashes; subsequent ABI caveat affects seven finite variants; [qualified receipt](reviews/solid-2a0da2fc-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; pending/owner/observation focused variants rejected; corrected full619 sweep pending |
+| Configured mutations | 623 = 480 finite + 143 kernel variants, including completion/wait/blocker/landing invariants |
+| Complete negative sweep | Frozen 4975adf2: all 619 named variants rejected with canonical lists and unchanged 817 tracked input hashes; [receipt](reviews/canonical-list-complete-negative.json) |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four later no-subscriber kernel variants rejected; current623 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -173,8 +173,8 @@ claimed.
 
 Classify significant failures, preserve baseline evidence and reduce to pinned
 real Solid before an upstream claim. Relevant current fixes/issues must be checked
-before preparing a report. The existing deferred protocol-error defect remains
-preserved; this invariant checkpoint adds no new upstream bug or workaround.
+before preparing a report. The original deferred protocol-error evidence remains preserved and its merged
+fix is integrated; this invariant checkpoint adds no new upstream bug or workaround.
 Reports/PRs are user-controlled. Feature-branch checkpoint synchronization is
 already authorized and remains separate from upstream publication.
 
@@ -238,5 +238,17 @@ laws, while independent apply and ordinary arrival preserve that observation.
 The list ABI repair is material to private-fixture evidence: four files now use
 the emitted constructor and strict decoding, with full public/alignment reruns.
 Typed proofs are unaffected. Do not quote the old complete608 receipt without its
-subsequent seven-finite-variant caveat. A fresh frozen corrected sweep is required
-and recorded separately when complete.
+subsequent seven-finite-variant caveat. The fresh frozen corrected619 sweep passes with exact named-set equality and
+all 817 tracked input hashes unchanged; see the canonical-list receipt above.
+
+
+## No-subscriber settlement return (2026-10-25)
+
+The [settlement completion contract](empty-settlement-completion.md) adds nine roots: a constructed actual six-step
+prefix returns arbitrary caller work/stack, preserves committed content and stays
+Healthy from input health/empty-subscriber facts. The actual Core.run decomposition
+retains the original remaining fuel and explicit exhaustion policy. These are
+local internal-completion results; public input construction, nonempty traversal
+and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
+splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
+verified separately on frozen4975adf2; four later focused kernel variants pass.

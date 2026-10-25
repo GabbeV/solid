@@ -188,7 +188,8 @@ induction to stack-neutral owner work. A healthy no-stale dependency trim now ha
 a constructed two-step prefix and exact whole-machine completion. All 160 forked
 arrivals run to their queued flush in the existing finite controls. This closes a
 local internal-completion obligation, not general graph progress or final reveal.
-The complete frozen 608 sweep is verified; later focused variants remain separate.
+The frozen608 sweep is qualified by the later ABI finding; the corrected619
+sweep is now verified on4975adf2. Later focused variants remain separate.
 
 ## Selected renderer observation and ABI correction
 
@@ -199,4 +200,16 @@ Disjointness, mount assumptions and callback boundaries remain explicit. These
 are operation safety/visibility contracts, not the full history/reveal theorem.
 [HARNESS-LIST-ABI-001](list-abi.md) corrects malformed private-control list tags;
 all public/alignment commands pass with canonical encoding. The old608 receipt
-has a precise seven-finite-variant caveat; a fresh corrected sweep follows.
+has a precise seven-finite-variant caveat; a fresh corrected619 sweep now passes.
+
+
+## No-subscriber settlement return (2026-10-25)
+
+The [settlement completion contract](empty-settlement-completion.md) adds nine roots: a constructed actual six-step
+prefix returns arbitrary caller work/stack, preserves committed content and stays
+Healthy from input health/empty-subscriber facts. The actual Core.run decomposition
+retains the original remaining fuel and explicit exhaustion policy. These are
+local internal-completion results; public input construction, nonempty traversal
+and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
+splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
+verified separately on frozen4975adf2; four later focused kernel variants pass.

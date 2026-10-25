@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "4975adf26cb6d6a45e6c05649d4ae1f5f08b293c",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 478,
+  "newRoots": 9,
+  "composedRoots": 487,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPayloadsCallerWorkAndStack": true,
+  "inputPremises": [
+    "World fault is Healthy",
+    "selected node subscriber head is zero"
+  ],
+  "constructedPrefixSteps": 6,
+  "successfulSegment": "actual after-trim, pending walk/release/end/return, schedule",
+  "notClaimed": [
+    "public constructor establishes the input premises",
+    "nonempty subscriber traversal completion",
+    "callback execution",
+    "full joined-action publication invariant",
+    "queued flush execution",
+    "eventual host delivery/fairness"
+  ],
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "publicSelectedTextChecks": 2280,
+  "emptySettlementSixStepControls": 80,
+  "actualDriverSplitControls": 240,
+  "zeroFuelExhaustionControls": 80,
+  "executedFulfillmentPrefixes": 160,
+  "actualSettlementOwnerSteps": 1360,
+  "noStaleMemoTrimControls": 40,
+  "configuredMutations": 623,
+  "finiteMutations": 480,
+  "kernelMutations": 143,
+  "newFocusedKernelRejections": 4,
+  "completeSweepOfCurrentConfiguration": false,
+  "completeFrozen619": "tracking/reviews/canonical-list-complete-negative.json",
+  "resourceFailuresCredited": false,
+  "logs": {
+    "empty-settlement-controls4.log": {
+      "path": "/workspace/scratch/night-2026-10-25/empty-settlement-controls4.log",
+      "sha256": "ef37b58a97566eb780747a0d2abb23b79ad04fb5b1508fa748c039e1d6f96b0b"
+    },
+    "empty-settlement-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/empty-settlement-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "empty-settlement-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/empty-settlement-negatives.log",
+      "sha256": "7b424a86aef5c7e2228fac2170a6cc03f648ff7b3931d3d64e503de6f65668ef"
+    },
+    "empty-settlement-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/empty-settlement-mutation-targets.log",
+      "sha256": "e61c7504d6508a2a9e9f10e55eab3a7e23389578788e71ef020e37a3bec30abe"
+    },
+    "empty-settlement-completion-check5.log": {
+      "path": "/workspace/scratch/night-2026-10-25/empty-settlement-completion-check5.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-removal-footprint-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-removal-footprint-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "core-run-prefix-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/core-run-prefix-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    }
+  }
+}

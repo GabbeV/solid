@@ -293,3 +293,15 @@ is pending, and 1 when that replacement rejects, followed by Healthy. See
 The [earlier rc.18 refresh](tracking/reviews/solid-225014bf.md) recorded development
 event diagnostics. The [current refresh](tracking/reviews/solid-2a0da2fc.md) integrates
 merged protocol-flight and first-error fixes while retaining earlier proof domains/budgets.
+
+
+## No-subscriber settlement return (2026-10-25)
+
+The [settlement completion contract](tracking/empty-settlement-completion.md) adds nine roots: a constructed actual six-step
+prefix returns arbitrary caller work/stack, preserves committed content and stays
+Healthy from input health/empty-subscriber facts. The actual Core.run decomposition
+retains the original remaining fuel and explicit exhaustion policy. These are
+local internal-completion results; public input construction, nonempty traversal
+and queued flush/publication remain open. Eighty direct-arrival controls, 240 driver
+splits and 80 exhaustion controls pass. The corrected full619 negative sweep is
+verified separately on frozen4975adf2; four later focused kernel variants pass.

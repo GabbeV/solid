@@ -29,7 +29,7 @@ const bundle=await build({stdin:{contents:"export * from './index.ts';export {re
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0,independentApplyControls=0,selectedUiChecks=0;
+let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0,independentApplyControls=0,selectedUiChecks=0,emptySettlementSixStepControls=0,trimmedEmptyEightStepControls=0,emptyDriverSplitControls=0,emptyDriverExhaustionControls=0;
 for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const {family,rejectAction} of [{family:'text',rejectAction:-1},{family:'nullable',rejectAction:-1},{family:'references',rejectAction:-1},{family:'text',rejectAction:0},{family:'text',rejectAction:1}])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
@@ -133,6 +133,38 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
      assert.deepEqual(tasks.slice(-ending.length),ending,name+' fulfillment prefix retains trim/schedule/flush/then/caller task order');
      if(tasks.length>ending.length){assert.equal(tasks[0].$,'OwnerTasks');assert.deepEqual(list(tasks[0].tasks),[{$:'TrimDeps',id:asyncId}]);trimmedAsyncPrefixControls++;}
      acceptedAsyncPrefixControls++;
+     if(direct){
+      const hadTrim=tasks[0].$==='OwnerTasks';
+      let input=prefix;
+      if(hadTrim){input=C.step(C.step(input));}
+      assert.equal(list(input.tasks)[0].$,'AsyncWriteAfterTrim');
+      assert.equal(list(input.world.nodes)[asyncId].subs,0,name+' direct renderer has no subscribers');
+      assert.equal(input.world.fault.$,'Healthy');
+      // The successful write already removed its self carrier and requested a
+      // flush. The six-step segment has no further observable/metadata change
+      // in these real snapshots, so exact World equality is an independent oracle.
+      const ext=list(input.world.extensions)[list(input.world.nodes)[asyncId].x];
+      const pendingSlots=list(list(input.world.pendingSets)[ext.pendingSources]);
+      assert.ok(!pendingSlots.includes(asyncId),name+' self carrier already retired');
+      assert.equal(input.world.scheduled,true,name+' source arrival requested flush');
+      let returned=input;for(let step=0;step<6;step++)returned=C.step(returned);
+      assert.deepEqual(returned.world,input.world,name+' six-step empty settlement retains exact scheduled World');
+      assert.deepEqual(list(returned.tasks),ending.slice(2),name+' six-step empty settlement returns to queued flush');
+      assert.deepEqual(list(returned.values),list(valueStack));
+      emptySettlementSixStepControls++;
+      for(const remaining of [0,1,7]){
+       const whole=C.run(6+remaining,input),split=C.run(remaining,returned);
+       assert.deepEqual(whole,split,name+' actual driver uses exactly the remaining suffix fuel');emptyDriverSplitControls++;
+       if(remaining===0){
+        assert.equal(whole.world.fault.$,'Exhausted',name+' queued caller still needs fuel');
+        assert.deepEqual(list(whole.tasks),[]);assert.deepEqual(list(whole.values),[]);emptyDriverExhaustionControls++;
+       }
+      }
+      if(hadTrim){
+       let trimmed=prefix;for(let step=0;step<8;step++)trimmed=C.step(trimmed);
+       assert.deepEqual(trimmed,returned,name+' optional trim plus settlement finishes in exactly eight steps');trimmedEmptyEightStepControls++;
+      }
+     }
      // Execute the actual core bookkeeping continuations up to the first owner
      // release or flush. Those boundaries can run application code or publish;
      // they are retained, not assumed to preserve every cached node value.
@@ -192,4 +224,5 @@ assert.ok(settlementPrefixes>0&&settlementSteps>0&&settlementVisits>0,'settlemen
 assert.ok(settlementFlushBoundaries>0,'settlement fixtures must reach their queued flush');
 assert.ok(ownerTrimCompleteControls>0&&structuralOwnerSteps>0,'owner trim fixtures must execute actual structural work');
 assert.ok(independentApplyControls>0&&selectedUiChecks>0,'selected renderer fixtures must observe real independent applications and text results');
-console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+assert.ok(emptySettlementSixStepControls>0,'empty-subscriber fixtures must cover the actual six-step path');
+console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,emptySettlementSixStepControls,trimmedEmptyEightStepControls,emptyDriverSplitControls,emptyDriverExhaustionControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
