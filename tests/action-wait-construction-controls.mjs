@@ -17,17 +17,17 @@ try{
  const F=modules.fixture,A=modules.action,Flight=modules.flight,C=modules.core,b=new BendRuntime(),zero=encodeList([]),sequences=[];
  for(let length=0;length<=5;length++)for(let code=0;code<3**length;code++){let n=code;sequences.push(Array.from({length},()=>{const d=n%3;n=Math.floor(n/3);return d;}));}
  sequences.push(Array.from({length:64},(_,i)=>i%3),Array(32).fill(0),Array(32).fill(1),Array(64).fill(2));
- const event=(op,i)=>op===0?{$:'WaitRegister',action:1,result:2,kind:i%3}:op===1?{$:'ObserverAllocate',node:0,result:2}:{$:'WaitMark',observer:i%5};
+ const event=(op,i)=>op===0?{$:'WaitRegister',action:0,result:2,kind:i%3}:op===1?{$:'ObserverAllocate',node:0,result:2}:{$:'WaitMark',observer:i%5};
  function replay(w,events){for(const e of events){if(e.$==='WaitRegister')w=A.wait(w,e.action,e.result,e.kind).left;else if(e.$==='ObserverAllocate')w=Flight.newObserver(w,e.node,e.result).left;else w={...w,actionWaits:A.settleWait(w.actionWaits,e.observer)};}return w;}
  const observation=w=>({values:list(w.nodes).map(n=>n.value),tree:w.tree,events:w.events});let cases=0,duplicateChecks=0,caughtThrows=0;
  for(const [index,sequence]of sequences.entries()){
   const payload=[undefined,null,false,0,-0,NaN,'cached',{ref:1}][index%8],values=encodeList(Array.from({length:[0,3,11][index%3]},(_,i)=>b.encode(i%2?payload:i))),prefix=sequence.map((op,i)=>event(op,index+i)),suffix=[...sequence].reverse().map((op,i)=>event((op+index)%3,index+i+1)),prefixList=encodeList(prefix),suffixList=encodeList(suffix);
-  const initial=F.initial(values),before=F.before(values,prefixList),fresh=F.fresh(values,prefixList);assert.deepEqual(before,replay(initial,prefix));assert.equal(fresh,list(before.asyncObservers).length);assert.equal(A.find(before.actionWaits,fresh).$,'None');
-  const registered=F.registered(values,prefixList),pair=A.wait(before,1,2,0);assert.deepEqual(registered,pair.left);assert.equal(pair.right,fresh);assert.deepEqual(A.find(registered.actionWaits,fresh),{$:'Some',value:{$:'ActionWait',observer:fresh,action:1,kind:0,settled:false}});
+  const initial=F.initial(values),before=F.before(values,prefixList),fresh=F.fresh(values,prefixList);assert.equal(F.action(values),F.created(values).right);assert.ok(F.action(values)<list(initial.actions).length);assert.ok(F.action(values)<list(before.actions).length);assert.equal(list(initial.actions)[F.action(values)].methods.$,'ActionEnd');assert.equal(list(initial.txArena)[list(initial.actions)[F.action(values)].transaction].open,1);assert.deepEqual(before,replay(initial,prefix));assert.equal(fresh,list(before.asyncObservers).length);assert.equal(A.find(before.actionWaits,fresh).$,'None');
+  const registered=F.registered(values,prefixList),pair=A.wait(before,F.action(values),F.result(values),0);assert.deepEqual(registered,pair.left);assert.equal(pair.right,fresh);assert.deepEqual(A.find(registered.actionWaits,fresh),{$:'Some',value:{$:'ActionWait',observer:fresh,action:F.action(values),kind:0,settled:false}});
   const marked={...registered,actionWaits:A.settleWait(registered.actionWaits,fresh)},after=F.final(values,prefixList,suffixList);assert.deepEqual(after,replay(marked,suffix));assert.deepEqual(observation(after),observation(initial));
   assert.equal(list(after.asyncObservers).length,1+prefix.filter(e=>e.$!=='WaitMark').length+1+suffix.filter(e=>e.$!=='WaitMark').length);
   for(const entry of list(after.actionWaits))assert.ok(entry.observer<list(after.asyncObservers).length);
-  assert.deepEqual(A.find(after.actionWaits,fresh),{$:'Some',value:{$:'ActionWait',observer:fresh,action:1,kind:0,settled:true}});
+  assert.deepEqual(A.find(after.actionWaits,fresh),{$:'Some',value:{$:'ActionWait',observer:fresh,action:F.action(values),kind:0,settled:true}});
   const rest=index%2?encodeList([{$:'AsyncWriteSchedule'}]):zero,stack=encodeList([b.encode(payload),b.encode('caller'),b.encode(index)]),expected={$:'Machine',world:after,tasks:rest,values:stack};
   // Inspect the actual Machine field ABI; full World/tasks/value stack remain.
   const yes=C.asyncFulfillOrdinary(after,rest,stack,fresh,b.encode(payload)),no=C.asyncRejectOrdinary(after,rest,stack,fresh,b.encode('late rejection'));

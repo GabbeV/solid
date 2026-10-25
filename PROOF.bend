@@ -1,3 +1,10 @@
+import ./proof/action-output-rejection.bend as ActionOutputRejection
+import ./proof/action-first-retirement.bend as FirstRetirement
+import ./proof/action-first-constructed.bend as FirstDelivery
+import ./proof/action-first-frame.bend as FirstFrame
+import ./proof/action-resume-frame.bend as ResumeFrame
+import ./proof/action-resume-transaction.bend as ResumeTransaction
+import ./runtime/transaction.bend as ActionTransaction
 import ./proof/observer-write-frame.bend as ObserverWrites
 import ./proof/observer-capture-history.bend as ObserverCapture
 import ./runtime/iterator-state.bend as ObserverIterator
@@ -10,7 +17,8 @@ import ./proof/action-wait-allocation.bend as WaitAllocation
 import ./proof/action-wait-range.bend as WaitRange
 import ./proof/action-wait-construction.bend as WaitConstruction
 import ./proof/action-wait-history.bend as WaitHistory
-import ./proof/action-wait-fixture.bend as WaitFixture
+import ./proof/action-wait-legacy-fixture.bend as WaitFixture
+import ./proof/action-wait-fixture.bend as AllocatedWaitFixture
 import ./proof/node-status-frame.bend as SourceStatusFrame
 import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
@@ -2122,19 +2130,19 @@ def Laws.actual_wait_allocation_mark_histories_retain_committed_content(events, 
   WaitHistory.historyContent(events, w)
 
 
-def Laws.created_action_supplies_wait_range_after_actual_prefix(values, prefix):
+def Laws.legacy_unallocated_alias_created_action_supplies_wait_range_after_actual_prefix(values, prefix):
   WaitFixture.beforeRange(values, prefix)
 
 
-def Laws.created_action_wait_has_nonzero_fresh_observer(values, prefix):
+def Laws.legacy_unallocated_alias_created_action_wait_has_nonzero_fresh_observer(values, prefix):
   WaitFixture.freshPositive(values, prefix)
 
 
-def Laws.created_action_wait_retains_settled_lookup_after_actual_suffix(values, prefix, suffix):
+def Laws.legacy_unallocated_alias_created_action_wait_retains_settled_lookup_after_actual_suffix(values, prefix, suffix):
   WaitFixture.settled(values, prefix, suffix)
 
 
-def Laws.created_action_wait_duplicate_retains_actual_current_machine(values, prefix, suffix, rest, stack, rejected, value):
+def Laws.legacy_unallocated_alias_created_action_wait_duplicate_retains_actual_current_machine(values, prefix, suffix, rest, stack, rejected, value):
   WaitFixture.duplicate(values, prefix, suffix, rest, stack, rejected, value)
 
 
@@ -2191,3 +2199,51 @@ def Laws.stream_step_observer_returns_fresh_identity(w,stream):
 
 def Laws.stream_step_observer_captures_current_stream_record(w,stream):
   ObserverWrites.streamRecord(w,stream)
+
+def Laws.created_action_identity_is_actually_allocated(values):
+  AllocatedWaitFixture.allocated(values)
+
+def Laws.registered_wait_captures_allocated_action_identity(values,prefix):
+  AllocatedWaitFixture.lookup(values,prefix)
+
+def Laws.allocated_action_supplies_wait_range_after_helper_prefix(values,prefix):
+  AllocatedWaitFixture.beforeRange(values,prefix)
+
+def Laws.allocated_action_wait_has_nonzero_observer(values,prefix):
+  AllocatedWaitFixture.freshPositive(values,prefix)
+
+def Laws.allocated_action_wait_retains_settled_lookup(values,prefix,suffix):
+  AllocatedWaitFixture.settled(values,prefix,suffix)
+
+def Laws.allocated_action_wait_retains_current_machine(values,prefix,suffix,rest,stack,rejected,value):
+  AllocatedWaitFixture.duplicate(values,prefix,suffix,rest,stack,rejected,value)
+
+def Laws.actual_action_join_retains_pre_entry_captures(w,transaction):
+  ResumeTransaction.joinFuture(w,transaction)
+
+def Laws.admitted_action_method_staging_retains_observer_context(w,rest,stack,action,value,rejected,state,method):
+  FirstFrame.methods(w,rest,stack,action,value,rejected,state,method)
+
+def Laws.actual_action_resume_retains_observer_context(w,rest,stack,action,value,rejected,method,known):
+  FirstFrame.resume(w,rest,stack,action,value,rejected,method,known)
+
+def Laws.constructed_first_delivery_sets_its_settled_wait(values,rest,stack,rejected,value):
+  FirstDelivery.lookup(values,rest,stack,rejected,value)
+
+def Laws.constructed_first_delivery_retains_wait_range(values,rest,stack,rejected,value):
+  FirstDelivery.range(values,rest,stack,rejected,value)
+
+def Laws.constructed_first_delivery_retains_committed_content(values,rest,stack,rejected,value):
+  FirstDelivery.content(values,rest,stack,rejected,value)
+
+def Laws.constructed_first_delivery_guards_its_actual_machine(values,rest,stack,rejected,value,events,lateRejected,lateValue):
+  FirstDelivery.duplicate(values,rest,stack,rejected,value,events,lateRejected,lateValue)
+
+def Laws.action_rejection_reason_is_not_adopted(w,rest,stack,action,result,value):
+  ActionOutputRejection.raw(w,rest,stack,action,result,value)
+
+def Laws.constructed_terminal_delivery_retires_single_obligation_and_output(values,rest,stack,rejected,value):
+  FirstRetirement.completed(values,rest,stack,rejected,value)
+
+def Laws.retired_delivery_retains_exact_machine_on_later_duplicates(values,rest,stack,rejected,value,events,lateRejected,lateValue):
+  FirstRetirement.duplicate(values,rest,stack,rejected,value,events,lateRejected,lateValue)

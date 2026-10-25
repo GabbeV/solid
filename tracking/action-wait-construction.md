@@ -66,3 +66,18 @@ seven new helper/capture roots extend595 to602. 408 new orders,12 actual raw
 client constructions and three focused faults pass; all old368 cases and six
 native sequences remain. First actual delivery/marking, complete generator/debt
 and queued flush/reveal remain open. Runtime/source/host/limits are unchanged.
+
+## Derived actor identity and actual first delivery
+
+[HARNESS-ACTION-IDENTITY-001](action-identity.md) corrects a fixture that forced
+unallocated actor1 even though create returned0. Four earlier helper domains are
+retained under explicit legacy names and their construction wording is qualified.
+[The actual callback/retirement family](action-first-delivery.md) now derives the
+binding, establishes its settled mark through real first delivery, retires one
+constructed obligation/output through actual ActionStepReturn, and preserves
+its actual Machine under later stale callbacks/helper histories. General resume/
+pre-entry frames and all-value raw rejection laws are checked separately. Sixteen
+roots extend602 to618;66 native-model return cases,22 native generators and four
+focused faults pass. The general arbitrary-World delivery composition remains
+archived unverified; full generator/flight ledger and queued flush/reveal stay
+open. Runtime/source/host/limits are unchanged.

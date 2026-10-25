@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "status": "unverified, no active root",
+  "scope": "arbitrary-World delivered composition after generic admitted-method resume",
+  "runtimeChanged": false,
+  "limitsChanged": false,
+  "artifactSha256": "678f7d2c41cbea0965fde44617e83f60be6fb3bc1dbc086f8b86d9aeb5811e93",
+  "failedLogSha256": "ce36d4080ea4b23c5bcd628fdffa7cbc23f825502acae472132dddb7a8d6ae35"
+}

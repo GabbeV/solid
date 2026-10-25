@@ -1,3 +1,10 @@
+import ./proof/action-output-rejection.bend as ActionOutputRejection
+import ./proof/action-first-retirement.bend as FirstRetirement
+import ./proof/action-first-constructed.bend as FirstDelivery
+import ./proof/action-first-frame.bend as FirstFrame
+import ./proof/action-resume-frame.bend as ResumeFrame
+import ./proof/action-resume-transaction.bend as ResumeTransaction
+import ./runtime/transaction.bend as ActionTransaction
 import ./proof/observer-write-frame.bend as ObserverWrites
 import ./proof/observer-capture-history.bend as ObserverCapture
 import ./runtime/iterator-state.bend as ObserverIterator
@@ -10,7 +17,8 @@ import ./proof/action-wait-allocation.bend as WaitAllocation
 import ./proof/action-wait-range.bend as WaitRange
 import ./proof/action-wait-construction.bend as WaitConstruction
 import ./proof/action-wait-history.bend as WaitHistory
-import ./proof/action-wait-fixture.bend as WaitFixture
+import ./proof/action-wait-legacy-fixture.bend as WaitFixture
+import ./proof/action-wait-fixture.bend as AllocatedWaitFixture
 import ./proof/node-status-frame.bend as SourceStatusFrame
 import ./proof/pending-notification-input.bend as NotificationInput
 import ./proof/pending-notification-carrier.bend as PendingNotification
@@ -4896,26 +4904,26 @@ law actual_wait_allocation_mark_histories_retain_committed_content:
   {CommittedStorage.observe(WaitHistory.run(events,w)) == CommittedStorage.observe(w) : CommittedStorage.View}
 
 
-law created_action_supplies_wait_range_after_actual_prefix:
+law legacy_unallocated_alias_created_action_supplies_wait_range_after_actual_prefix:
   for +values: List<&2,R.Value>
   for +prefix: List<&2,WaitHistory.WaitEvent>
   {WaitRange.below(R.World.actionWaits(WaitFixture.before(values,prefix)),WaitAllocation.index(WaitFixture.before(values,prefix))) == True{} : Bool}
 
 
-law created_action_wait_has_nonzero_fresh_observer:
+law legacy_unallocated_alias_created_action_wait_has_nonzero_fresh_observer:
   for +values: List<&2,R.Value>
   for +prefix: List<&2,WaitHistory.WaitEvent>
   {Nat.is_ne(WaitFixture.fresh(values,prefix),0n) == True{} : Bool}
 
 
-law created_action_wait_retains_settled_lookup_after_actual_suffix:
+law legacy_unallocated_alias_created_action_wait_retains_settled_lookup_after_actual_suffix:
   for +values: List<&2,R.Value>
   for +prefix: List<&2,WaitHistory.WaitEvent>
   for +suffix: List<&2,WaitHistory.WaitEvent>
   {Action.find(R.World.actionWaits(WaitFixture.final(values,prefix,suffix)),WaitFixture.fresh(values,prefix)) == Some{R.ActionWait{WaitFixture.fresh(values,prefix),1n,0,True{}}} : Maybe<&2,R.ActionWait>}
 
 
-law created_action_wait_duplicate_retains_actual_current_machine:
+law legacy_unallocated_alias_created_action_wait_duplicate_retains_actual_current_machine:
   for +values: List<&2,R.Value>
   for +prefix: List<&2,WaitHistory.WaitEvent>
   for +suffix: List<&2,WaitHistory.WaitEvent>
@@ -5044,3 +5052,128 @@ law stream_step_observer_captures_current_stream_record:
   for +w: R.World
   for +stream: Nat
   {B.asyncObserver(ObserverWrites.stepWorld(w,stream),WaitAllocation.index(w)) == ObserverWrites.stepRecord(w,stream) : R.AsyncObserver}
+
+law created_action_identity_is_actually_allocated:
+  for +values: List<&2,R.Value>
+  {Nat.is_lt(AllocatedWaitFixture.action(values),B.length(R.ActionState,R.World.actions(AllocatedWaitFixture.initial(values)))) == True{} : Bool}
+
+law registered_wait_captures_allocated_action_identity:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Action.find(R.World.actionWaits(AllocatedWaitFixture.registered(values,prefix)),AllocatedWaitFixture.fresh(values,prefix)) == Some{R.ActionWait{AllocatedWaitFixture.fresh(values,prefix),AllocatedWaitFixture.action(values),0,False{}}} : Maybe<&2,R.ActionWait>}
+
+law allocated_action_supplies_wait_range_after_helper_prefix:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {WaitRange.below(R.World.actionWaits(AllocatedWaitFixture.before(values,prefix)),WaitAllocation.index(AllocatedWaitFixture.before(values,prefix))) == True{} : Bool}
+
+law allocated_action_wait_has_nonzero_observer:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Nat.is_ne(AllocatedWaitFixture.fresh(values,prefix),0n) == True{} : Bool}
+
+law allocated_action_wait_retains_settled_lookup:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +suffix: List<&2,WaitHistory.WaitEvent>
+  {Action.find(R.World.actionWaits(AllocatedWaitFixture.final(values,prefix,suffix)),AllocatedWaitFixture.fresh(values,prefix)) == Some{R.ActionWait{AllocatedWaitFixture.fresh(values,prefix),AllocatedWaitFixture.action(values),0,True{}}} : Maybe<&2,R.ActionWait>}
+
+law allocated_action_wait_retains_current_machine:
+  for +values: List<&2,R.Value>
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +suffix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {Core.asyncActionDelivery(AllocatedWaitFixture.final(values,prefix,suffix),rest,stack,AllocatedWaitFixture.fresh(values,prefix),rejected,value,Action.find(R.World.actionWaits(AllocatedWaitFixture.final(values,prefix,suffix)),AllocatedWaitFixture.fresh(values,prefix))) == Core.Machine{AllocatedWaitFixture.final(values,prefix,suffix),rest,stack} : Core.Machine}
+
+law actual_action_join_retains_pre_entry_captures:
+  for +w: R.World
+  for +transaction: Nat
+  {ResumeFrame.observe(ActionTransaction.joinFuture(w,transaction)) == ResumeFrame.observe(w) : ResumeFrame.View}
+
+law admitted_action_method_staging_retains_observer_context:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +action: Nat
+  for +value: R.Value
+  for +rejected: Bool
+  for +state: R.ActionState
+  for +method: FirstFrame.Method
+  {ObserverWrites.observe(Core.world(Core.actionStepMethods(w,rest,stack,action,value,rejected,state,FirstFrame.expression(method)))) == ObserverWrites.observe(w) : ObserverWrites.View}
+
+law actual_action_resume_retains_observer_context:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +action: Nat
+  for +value: R.Value
+  for +rejected: Bool
+  for +method: FirstFrame.Method
+  for +known: {R.ActionState.methods(Action.get(w,action)) == FirstFrame.expression(method) : R.Expr}
+  {ObserverWrites.observe(Core.world(Core.actionResume(w,rest,stack,action,value,rejected))) == ObserverWrites.observe(w) : ObserverWrites.View}
+
+law constructed_first_delivery_sets_its_settled_wait:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {Action.find(R.World.actionWaits(Core.world(FirstDelivery.first(values,rest,stack,rejected,value))),1n) == Some{R.ActionWait{1n,AllocatedWaitFixture.action(values),0,True{}}} : Maybe<&2,R.ActionWait>}
+
+law constructed_first_delivery_retains_wait_range:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {WaitRange.below(R.World.actionWaits(Core.world(FirstDelivery.first(values,rest,stack,rejected,value))),WaitAllocation.index(Core.world(FirstDelivery.first(values,rest,stack,rejected,value)))) == True{} : Bool}
+
+law constructed_first_delivery_retains_committed_content:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {CommittedStorage.observe(Core.world(FirstDelivery.first(values,rest,stack,rejected,value))) == CommittedStorage.observe(FirstDelivery.initial(values)) : CommittedStorage.View}
+
+law constructed_first_delivery_guards_its_actual_machine:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(FirstDelivery.after(values,rest,stack,rejected,value,events)),FirstDelivery.tasks(FirstDelivery.after(values,rest,stack,rejected,value,events)),Core.values(FirstDelivery.after(values,rest,stack,rejected,value,events)),1n,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(FirstDelivery.after(values,rest,stack,rejected,value,events))),1n)) == FirstDelivery.after(values,rest,stack,rejected,value,events) : Core.Machine}
+
+law action_rejection_reason_is_not_adopted:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +action: Nat
+  for +result: Nat
+  for +value: R.Value
+  {Core.actionOutputValue(w,rest,stack,action,result,True{},value) == Core.actionSettled(w,rest,stack,result,True{},value) : Core.Machine}
+
+law constructed_terminal_delivery_retires_single_obligation_and_output:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  FirstRetirement.Retired<values,rest,stack,rejected,value>
+
+law retired_delivery_retains_exact_machine_on_later_duplicates:
+  for +values: List<&2,R.Value>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events)),FirstDelivery.tasks(FirstRetirement.after(values,rest,stack,rejected,value,events)),Core.values(FirstRetirement.after(values,rest,stack,rejected,value,events)),1n,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events))),1n)) == FirstRetirement.after(values,rest,stack,rejected,value,events) : Core.Machine}

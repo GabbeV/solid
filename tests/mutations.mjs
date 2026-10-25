@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["first delivery kernel captures an unallocated action alias", "runtime/action-state.bend", "R.ActionWait{observer, action, kind, False{}}", "R.ActionWait{observer, 1n+action, kind, False{}}", "tests/proof-properties.mjs", "wait", "action-first-negative-probes"],
+  ["first delivery kernel omits the once only yielded wait mark", "runtime/core.bend", "+w = R.World.with_actionWaits(w, Action.settleWait(R.World.actionWaits(w), R.ActionWait.observer(entry)))", "+w = w", "tests/proof-properties.mjs", "actionDelivery", "action-first-negative-probes"],
+  ["first delivery kernel leaves terminal action debt open", "runtime/action-state.bend", "Nat.sub(R.Transaction.open(B.transaction(w, t)), 1n)", "R.Transaction.open(B.transaction(w, t))", "tests/proof-properties.mjs", "done", "action-first-negative-probes"],
+  ["first delivery kernel adopts a thenable rejection reason", "runtime/core.bend", "Bool.not(rejected)", "True{}", "tests/proof-properties.mjs", "actionOutputValue", "action-first-negative-probes"],
+
   ["observer capture kernel discards settled waits on synchronous fulfillment", "runtime/flight.bend", "B.store_asyncObserver(w, observer, R.AsyncObserver.with_resolved(R.AsyncObserver.with_syncValue(B.asyncObserver(w, observer), value), True{}))", "R.World.with_actionWaits(B.store_asyncObserver(w, observer, R.AsyncObserver.with_resolved(R.AsyncObserver.with_syncValue(B.asyncObserver(w, observer), value), True{})), [])", "tests/proof-properties.mjs", "syncFulfilled", "observer-capture-negative-probes"],
   ["observer capture kernel reuses the previous stream callback identity", "runtime/iterator-state.bend", "+id = B.length(R.AsyncObserver, R.World.asyncObservers(w))", "+id = Nat.sub(B.length(R.AsyncObserver, R.World.asyncObservers(w)), 1n)", "tests/proof-properties.mjs", "newStepObserver", "observer-capture-negative-probes"],
   ["observer capture kernel discards settled waits on ignored return", "runtime/iterator-state.bend", "+object = B.asyncObject(w, result)", "+w = R.World.with_actionWaits(w, [])\n  +object = B.asyncObject(w, result)", "tests/proof-properties.mjs", "ignoreThen", "observer-capture-negative-probes"],
