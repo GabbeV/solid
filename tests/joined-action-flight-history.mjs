@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
 import {build} from 'esbuild';
-import {BendRuntime,list} from '../host/bend.mjs';
+import {BendRuntime,list,encodeList} from '../host/bend.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,13 +23,13 @@ try{
  }
 }finally{fs.rmSync(privateDir,{recursive:true,force:true});}
 const T=privateModules.transaction,C=privateModules.core;
-const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
+const asList=encodeList;
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
 const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
-let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0;
+let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0,independentApplyControls=0,selectedUiChecks=0;
 for(const direct of [false,true])for(const reverseCreate of [false,true])for(const events of [['a','b','flight'],['b','a','flight'],['a','flight','b'],['b','flight','a'],['flight','a','b'],['flight','b','a']])for(const {family,rejectAction} of [{family:'text',rejectAction:-1},{family:'nullable',rejectAction:-1},{family:'references',rejectAction:-1},{family:'text',rejectAction:0},{family:'text',rejectAction:1}])for(const independent of [false,true]){
  const S=await import(moduleUrl+'#joined-actions='+histories),b=new BendRuntime({async:true});
  const references=Array.from({length:5},(_,id)=>Object.freeze({id}));
@@ -48,7 +48,7 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
    S.createRenderEffect(derived,value=>{seen.push(encode(value));});
    S.createRenderEffect(free,value=>{freeSeen.push(value);});
   });
-  b.future('flight');b.signal('x',initial);b.signal('free',10);const compute={select:[{same:[{read:'x'},lit(initial)]},lit(initial),{future:'flight'}]};if(direct)b.effect('view',compute);else{b.memo('derived',compute);b.effect('view',{read:'derived'});}b.effect('freeView',{read:'free'});b.future('a');b.future('b');
+  b.future('flight');b.signal('x',initial);b.signal('free',10);const compute={select:[{same:[{read:'x'},lit(initial)]},lit(initial),{future:'flight'}]};if(direct)b.effect('view',compute);else{b.memo('derived',compute);b.effect('view',{read:'derived'});}b.effect('freeView',{read:'free'},{target:3});b.future('a');b.future('b');
   S.flush();b.flush();
   const applies=target=>b.trace().filter(e=>e[0]==='apply'&&e[1]===target).map(e=>e[2]);
   const compare=()=>{
@@ -56,7 +56,10 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
    assert.deepEqual(applies('view'),seen,name+' ordinary renderer');
    assert.deepEqual(applies('freeView'),freeSeen,name+' independent renderer');
    assert.deepEqual(b.asyncErrors,[],name+' host errors');
-   assert.equal(b.world.fault.$,'Healthy');assert.equal(b.world.actionDepth,0);assert.equal(b.world.question.$,'QuestionZero');prefixes++;
+   assert.equal(b.world.fault.$,'Healthy');assert.equal(b.world.actionDepth,0);assert.equal(b.world.question.$,'QuestionZero');
+   const tree=list(b.world.tree);
+   assert.deepEqual(b.decode(tree[2].text),seen.at(-1),name+' selected mechanical text matches native renderer result');
+   assert.deepEqual(b.decode(tree[3].text),freeSeen.at(-1),name+' independent mechanical text matches native renderer result');selectedUiChecks++;prefixes++;
   };
   const action=S.action(function* (index){set(raw[index+1]);yield gates[index].promise;return raw[index+3];});
   let root;
@@ -99,6 +102,18 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
     assert.deepEqual(scan.world,before,name+' blocked graph scan retains World');
     assert.deepEqual(list(scan.tasks),[{$:'LandTransactions',frame,remaining:index},...list(rest)]);
     assert.deepEqual(list(scan.values),list(stack));renderedScanControls++;
+    // A separate renderer/target can apply while this group is held. Fork one
+    // actual Core.step without installing the private result in the public run.
+    const selected=world=>({texts:[list(world.tree)[2].text],applications:list(world.events).filter(e=>e.$==='Applied'&&e.id===b.ids.view)});
+    const callerValues=asList([{$:'StringValue',s:'independent caller'},{$:'Number',n:23}]);
+    const saved=structuredClone(before),selectedBefore=structuredClone(selected(before));
+    const applied=C.step({$:'Machine',world:before,tasks:asList([{$:'ApplyEffect',id:b.ids.freeView},...list(rest)]),values:callerValues});
+    assert.deepEqual(before,saved,name+' private independent apply retains input snapshot');
+    assert.deepEqual(selected(applied.world),selectedBefore,name+' independent actual apply retains selected text and application trace');
+    assert.notDeepEqual(applied.world.events,before.events,name+' independent apply really records an application');
+    assert.deepEqual(list(applied.world.tree)[3].text,list(before.nodes)[b.ids.freeView].value,name+' independent target receives the source committed value');
+    assert.deepEqual(list(applied.values),list(callerValues),name+' independent apply retains caller stack');
+    assert.equal(applied.world.fault.$,'Healthy');independentApplyControls++;
     // Fork a callback-free fulfillment prefix; do not install or drain it in
     // the real history. The public native/control event sequence stays intact.
     const asyncId=b.ids[direct?'view':'derived'],node=list(before.nodes)[asyncId],extension=list(before.extensions)[node.x];
@@ -176,4 +191,5 @@ assert.ok(trimmedAsyncPrefixControls>0,'fulfillment prefix fixtures must cover q
 assert.ok(settlementPrefixes>0&&settlementSteps>0&&settlementVisits>0,'settlement fixtures must execute actual dependent traversal');
 assert.ok(settlementFlushBoundaries>0,'settlement fixtures must reach their queued flush');
 assert.ok(ownerTrimCompleteControls>0&&structuralOwnerSteps>0,'owner trim fixtures must execute actual structural work');
-console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+assert.ok(independentApplyControls>0&&selectedUiChecks>0,'selected renderer fixtures must observe real independent applications and text results');
+console.log(JSON.stringify({publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

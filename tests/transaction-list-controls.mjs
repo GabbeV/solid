@@ -8,7 +8,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
-import {BendRuntime,list} from '../host/bend.mjs';
+import {BendRuntime,list,encodeList} from '../host/bend.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-list-controls-'));
 const modules={};
 try{
@@ -40,7 +40,7 @@ for(const priorGroups of [0,2,5])for(const suffixGroups of [0,3])for(const prefi
   for(let i=0;i<prefixLength;i++){S.list(nativeNodes[i],txs[tx]);b.world=T.list(b.world,b.ids['node'+i],tx);}
   S.ext(target);b.world=E.ext(b.world,id);
   target._statusFlags=1;
-  const nodes=list(b.world.nodes);nodes[id]={...nodes[id],status:1};b.world={...b.world,nodes:nodes.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'})};
+  const nodes=list(b.world.nodes);nodes[id]={...nodes[id],status:1};b.world={...b.world,nodes:encodeList(nodes)};
   const before=structuredClone(b.world),slot=nodes[id].x;
   assert.ok(slot>0);assert.equal(list(before.extensions)[slot].transaction,0);
   S.list(target,txs[tx]);b.world=T.list(b.world,id,tx);

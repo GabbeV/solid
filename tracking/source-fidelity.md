@@ -166,3 +166,13 @@ no extra happy-path dispatch changes earlier sufficient bounds. notifyStatus's
 both pending-source and bare-status flag selections follow the source. The new
 erased dev diagnostic type and compiler/web SSR changes remain outside this
 production non-store runtime. No semantic deviation or kernel/limit change.
+
+## Private list ABI repair
+
+[HARNESS-LIST-ABI-001](list-abi.md) repairs four private-control files that manually
+encoded Cons instead of the emitted Con constructor. Encoding now derives from
+actual ABI constructors and decoding rejects malformed tags/fields. The typed
+runtime and proofs are unchanged. Full public and alignment suites pass again.
+The older frozen608 receipt lists the seven affected finite variants; a fresh
+corrected sweep supersedes that evidence. This is a harness defect, not an
+upstream Solid bug or a semantic deviation.

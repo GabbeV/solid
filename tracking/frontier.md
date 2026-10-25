@@ -189,3 +189,14 @@ a constructed two-step prefix and exact whole-machine completion. All 160 forked
 arrivals run to their queued flush in the existing finite controls. This closes a
 local internal-completion obligation, not general graph progress or final reveal.
 The complete frozen 608 sweep is verified; later focused variants remain separate.
+
+## Selected renderer observation and ABI correction
+
+The [selected observation laws](rendered-observation.md) now expose actual chosen
+text writes/application events and preserve that observation through another
+renderer/target's actual apply step and an ordinary async-arrival prefix.
+Disjointness, mount assumptions and callback boundaries remain explicit. These
+are operation safety/visibility contracts, not the full history/reveal theorem.
+[HARNESS-LIST-ABI-001](list-abi.md) corrects malformed private-control list tags;
+all public/alignment commands pass with canonical encoding. The old608 receipt
+has a precise seven-finite-variant caveat; a fresh corrected sweep follows.

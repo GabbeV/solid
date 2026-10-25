@@ -40,7 +40,7 @@ The [pending-continuation extension](tracking/pending-continuations.md) now prov
 nonempty sequence of write/flush batches of any finite nonempty size for every
 natural initial value and proposal,
 including the real constructor, sufficient per-update budgets and exact final
-state. General graphs, effects and async histories remain open.
+state. The [selected-renderer laws](tracking/rendered-observation.md) now retain the chosen text/application observation through an actual independent apply step, with positive laws proving selected updates remain visible. General graphs, effects and async histories remain open.
 The public `flush(() => ...)` overload now supports nested synchronous drains,
 returned values and exception-safe depth restoration; see [flush callbacks](tracking/flush-callbacks.md).
 Custom comparator programs now run through signal writes, memo publication, async
@@ -94,7 +94,7 @@ all preceding theorem domains/budgets remain. No semantic workaround is active.
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 615 source-changing variants
+npm run mutations                # reject 619 source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

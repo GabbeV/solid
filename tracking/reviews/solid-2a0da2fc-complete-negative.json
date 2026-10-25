@@ -631,5 +631,30 @@
     "leaked staging",
     "untrack subscribes",
     "wrong render result"
-  ]
+  ],
+  "subsequentHarnessCaveat": {
+    "id": "HARNESS-LIST-ABI-001",
+    "discovered": "2026-10-25",
+    "classification": "private control fixture ABI defect; typed proofs and upstream runtime unchanged",
+    "detail": "Four private-control files constructed Cons lookalikes instead of emitted Con lists. Some helpers ignored the tag; strict Core.dispatch did not. Earlier private-list evidence is superseded by canonical-encoder controls and a fresh sweep.",
+    "files": [
+      "tests/transaction-resolution-controls.mjs",
+      "tests/transaction-join-controls.mjs",
+      "tests/transaction-list-controls.mjs",
+      "tests/joined-action-flight-history.mjs"
+    ],
+    "affectedConfiguredVariants": 7,
+    "affectedVariantNames": [
+      "live occurrence control clears groups during completion",
+      "staging flight control commits proposal before landing",
+      "fresh list control omits captured membership",
+      "fresh list control omits owned-list insertion",
+      "repeated list control appends the node again",
+      "completion flight control discards owned graph nodes",
+      "rendered flight control ignores pending render nodes"
+    ],
+    "typedKernelSubsetAffected": false,
+    "originalNamedCountAndFrozenHashesRemainHistoricalFacts": true,
+    "correctedSweep": "pending, current configuration619"
+  }
 }

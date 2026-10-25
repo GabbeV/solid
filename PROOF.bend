@@ -64,6 +64,9 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./proof/supersede-laws.bend as SupersedeLaws
 import Base
+import ./proof/rendered-observation.bend as RenderedView
+import ./proof/rendered-independent-apply.bend as IndependentApply
+import ./proof/rendered-async-prefix.bend as RenderedArrival
 import ./proof/owner-continuation.bend as OwnerContinuation
 import ./proof/pending-continuation.bend as PendingContinuation
 import ./proof/pending-stack-history.bend as PendingHistory
@@ -1612,3 +1615,35 @@ def Laws.no_stale_owner_trim_prefix_is_constructed(w, rest, stack, id, edge, hea
 
 def Laws.constructed_owner_trim_prefix_has_two_actual_steps(w, rest, stack, id, edge, healthy):
   PendingHistory.ownerTrimHeight(w, rest, stack, id, edge, healthy)
+
+
+def Laws.selected_text_update_exposes_the_actual_payload(renderers, w, id, value):
+  RenderedView.textPresent(renderers, w, id, value)
+
+
+def Laws.selected_application_event_is_retained(targets, w, id, value, previous):
+  RenderedView.eventPresent(targets, w, id, value, previous)
+
+
+def Laws.foreign_text_target_retains_selected_observation(renderers, targets, w, id, value, absent):
+  RenderedView.textOther(renderers, targets, w, id, value, absent)
+
+
+def Laws.foreign_application_retains_selected_observation(renderers, targets, w, id, value, previous, absent):
+  RenderedView.eventOther(renderers, targets, w, id, value, previous, absent)
+
+
+def Laws.node_storage_alone_does_not_publish_selected_text(renderers, targets, w, id, node):
+  RenderedView.storeNode(renderers, targets, w, id, node)
+
+
+def Laws.committed_storage_frame_implies_selected_frame(renderers, targets, w, next, same):
+  RenderedView.fromCommitted(renderers, targets, w, next, same)
+
+
+def Laws.independent_actual_apply_step_retains_selected_observation(renderers, targets, w, rest, stack, id, absentRenderer, absentTarget):
+  IndependentApply.stepFrame(renderers, targets, w, rest, stack, id, absentRenderer, absentTarget)
+
+
+def Laws.ordinary_async_arrival_retains_selected_observation(renderers, targets, w, rest, stack, id, result, value, then, custom, override):
+  RenderedArrival.preserves(renderers, targets, w, rest, stack, id, result, value, then, custom, override)

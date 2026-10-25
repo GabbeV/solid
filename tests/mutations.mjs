@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["selected text kernel drops the real text write", "observation/tree.bend", "store(w, id, R.TreeNode.with_text(get(w, id), value))", "w", "tests/proof-properties.mjs", "setText", "rendered-observation"],
+  ["selected text kernel writes a different target", "observation/tree.bend", "store(w, id, R.TreeNode.with_text(get(w, id), value))", "store(w, 1n+id, R.TreeNode.with_text(get(w, id), value))", "tests/proof-properties.mjs", "setText", "rendered-observation"],
+  ["independent apply kernel writes the selected target", "runtime/core.bend", "T.setText(w, R.Node.target(B.node(w, id)), R.Node.value(B.node(w, id)))", "T.setText(w, 2n, R.Node.value(B.node(w, id)))", "tests/proof-properties.mjs", "applyEffect", "rendered-independent-apply"],
+  ["independent apply kernel misattributes its event", "runtime/core.bend", "R.Applied{id, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))}", "R.Applied{0n, R.Node.value(B.node(w, id)), R.Node.prevValue(B.node(w, id))}", "tests/proof-properties.mjs", "applyEffect", "rendered-independent-apply"],
+
   ["owner continuation kernel clears the caller stack", "runtime/core.bend", "OwnerTasks{tasks} <> rest, stack}", "OwnerTasks{tasks} <> rest, []}", "tests/proof-properties.mjs", "ownerResume", "owner-continuation"],
   ["owner callback-start kernel clears its caller stack", "runtime/core.bend", "Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail} <> rest, stack}", "Evaluate{R.CallProgram{callback}, R.Undefined{}} <> CleanupFinally{stack} <> OwnerTasks{tail} <> rest, []}", "tests/proof-properties.mjs", "ownerTasks", "owner-continuation"],
   ["owner no-stale trim kernel erases retained dependencies", "runtime/owner.bend", "B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest},\n        _ => Machine{w, UnlinkLoop{edge} <> TrimDepSlots{id, tail} <> rest})", "B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{B.store_node(w, id, R.Node.with_deps(B.node(w, id), 0n)), rest},\n        _ => Machine{w, UnlinkLoop{edge} <> TrimDepSlots{id, tail} <> rest})", "tests/proof-properties.mjs", "dispatch", "owner-continuation"],

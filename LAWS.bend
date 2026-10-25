@@ -68,6 +68,10 @@ import ./proof/from-program.bend as FromProgram
 import ./proof/from-outcome.bend as FromOutcome
 import ./runtime/supersede.bend as Supersede
 import Base
+import ./observation/tree.bend as RenderedTree
+import ./proof/rendered-observation.bend as RenderedView
+import ./proof/rendered-independent-apply.bend as IndependentApply
+import ./proof/rendered-async-prefix.bend as RenderedArrival
 import ./proof/owner-continuation.bend as OwnerContinuation
 import ./proof/pending-continuation.bend as PendingContinuation
 import ./proof/pending-stack-history.bend as PendingHistory
@@ -3525,3 +3529,86 @@ law constructed_owner_trim_prefix_has_two_actual_steps:
   for +edge: {OwnerContinuation.staleEdge(w, id) == 0n : Nat}
   for +healthy: {B.ok(w) == True{} : Bool}
   {PendingHistory.height(PendingHistory.input(w, rest, stack, PendingHistory.OwnerWork{[RuntimeOwner.TrimDeps{id}], {==}}), PendingHistory.ownerTrimPrefix(w, rest, stack, id, edge, healthy)) == 2n : Nat}
+
+
+law selected_text_update_exposes_the_actual_payload:
+  for +renderers: List<&2, Nat>
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  {RenderedView.shownTexts(RenderedView.observe(renderers, [id], RenderedTree.setText(w, id, value))) == [value] : List<&2, R.Value>}
+
+
+law selected_application_event_is_retained:
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +previous: R.Value
+  {RenderedView.shownApplications(RenderedView.observe([id], targets, B.event(w, R.Applied{id, value, previous}))) == B.append(R.TraceEvent, RenderedView.shownApplications(RenderedView.observe([id], targets, w)), [R.Applied{id, value, previous}]) : List<&2, R.TraceEvent>}
+
+
+law foreign_text_target_retains_selected_observation:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +absent: {B.contains(targets, id) == False{} : Bool}
+  {RenderedView.observe(renderers, targets, RenderedTree.setText(w, id, value)) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law foreign_application_retains_selected_observation:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +previous: R.Value
+  for +absent: {B.contains(renderers, id) == False{} : Bool}
+  {RenderedView.observe(renderers, targets, B.event(w, R.Applied{id, value, previous})) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law node_storage_alone_does_not_publish_selected_text:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +id: Nat
+  for +node: R.Node
+  {RenderedView.observe(renderers, targets, B.store_node(w, id, node)) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law committed_storage_frame_implies_selected_frame:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +next: R.World
+  for +same: {CommittedStorage.observe(next) == CommittedStorage.observe(w) : CommittedStorage.View}
+  {RenderedView.observe(renderers, targets, next) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law independent_actual_apply_step_retains_selected_observation:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +absentRenderer: {B.contains(renderers, id) == False{} : Bool}
+  for +absentTarget: {B.contains(targets, R.Node.target(B.node(w, id))) == False{} : Bool}
+  {RenderedView.observe(renderers, targets, Core.world(Core.step(Core.Machine{w, Core.ApplyEffect{id} <> rest, stack}))) == RenderedView.observe(renderers, targets, w) : RenderedView.View}
+
+
+law ordinary_async_arrival_retains_selected_observation:
+  for +renderers: List<&2, Nat>
+  for +targets: List<&2, Nat>
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +result: Nat
+  for +value: R.Value
+  for +then: List<&2, Core.Task>
+  for +custom: {Equality.custom(w, id) == 0n : Nat}
+  for +override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {RenderedView.observe(renderers, targets, Core.world(Core.asyncWrite(w, rest, stack, id, result, value, then))) == RenderedView.observe(renderers, targets, w) : RenderedView.View}

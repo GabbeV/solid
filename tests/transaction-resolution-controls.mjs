@@ -1,6 +1,7 @@
 // Private source-helper controls, separate from public histories and proofs.
 // No TypeScript function body is replaced; fixture access exposes membership.
 import assert from 'node:assert/strict';
+import {list,encodeList} from '../host/bend.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -18,7 +19,6 @@ try{
   assert.equal(result.status,0,result.stderr);modules[name]=(await import(pathToFileURL(output))).default;
  }
  const T=modules.transaction,A=modules['action-state'],API=modules.api;
- const list=xs=>{const out=[];while('head'in xs){out.push(xs.head);xs=xs.tail;}return out;};
  const bundle=await build({stdin:{contents:"export * from './index.ts';export {newTransaction,merge,resolveTx} from './core/scheduler.ts';export {transactions as live} from './core/scheduler.ts';",resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'membership-observation',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions};'}));}}]});
  const nativeFile=path.join(dir,'native.mjs');fs.writeFileSync(nativeFile,bundle.outputFiles[0].text);const S=await import(pathToFileURL(nativeFile));
  let fixtures=0,queries=0,rejoins=0,completions=0;
@@ -54,7 +54,7 @@ try{
   const action=list(world.actions)[created.right];world=A.store(world,created.right,{...action,transaction:order[0]});
   for(const remaining of [0,1,5]){
    const arena=list(world.txArena),rootTx=arena[representative];arena[representative]={...rootTx,open:remaining+1};
-   const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
+   const asList=encodeList;
    const before={...world,txArena:asList(arena)};const after=A.done(before,created.right),updated=list(after.txArena);
    assert.equal(updated[representative].open,remaining);
    for(let i=0;i<arena.length;i++)if(i!==representative)assert.deepEqual(updated[i],arena[i],'other transaction untouched');
@@ -66,7 +66,7 @@ try{
  // Bad cyclic fixture is outside the certified-path domain and must fault.
  let cyclic=API.createWorld();for(let i=0;i<2;i++)cyclic=T.newTransaction(cyclic,false,0).left;
  const entries=list(cyclic.txArena);entries[1]={...entries[1],into:2};entries[2]={...entries[2],into:1};
- const asList=xs=>xs.reduceRight((tail,head)=>({$:'Cons',head,tail}),{$:'Nil'});
+ const asList=encodeList;
  const bad=T.resolveTx({...cyclic,txArena:asList(entries)},1);assert.equal(bad.left.fault.$,'Exhausted');
  console.log(JSON.stringify({fixtures,queries,rejoins,positiveCompletionPrefixes:completions,cyclicExhaustionControls:1,kind:'private helpers; not public histories or a proof'}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

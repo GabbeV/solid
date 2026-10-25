@@ -796,3 +796,17 @@ an earlier explanation about direct cache-value clearing: source unobserved
 bookkeeping retains `_value`; arbitrary cleanup bodies remain a separate boundary.
 No runtime, source, limits or semantic deviation changed. Full graph progress and
 coordinated publication remain open.
+
+## 2026-10-25 — Selected observation and canonical list ABI
+
+Added eight selected text/application laws, including positive visibility and an
+actual independent apply-step frame. The ordinary async arrival also retains the
+selected observation through the prior committed frame. Distinct mechanical
+targets and 80 real private apply steps now complement 2,280 native-backed public
+text observations. The probe exposed malformed Cons lists in four private-control
+files; the actual emitter uses Con. Added ABI-derived encoding and strict decode,
+reran the full public/alignment suites, and qualified the old608 receipt's seven
+affected finite variants. Typed proofs were unaffected. No runtime/source/limits
+or semantic deviation changed; general graph construction and final publication
+remain open. Four new kernel negatives are rejected; a fresh corrected sweep
+follows on a frozen checkpoint.

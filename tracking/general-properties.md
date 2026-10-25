@@ -223,3 +223,13 @@ a callback without executing its body. The generic stack result needs no health
 premise; exact no-stale completion requires input health and the selected suffix
 edge to be zero. Full storage, callback and publication properties are separate.
 See [the owner domains](owner-continuations.md).
+
+## Selected text/application observation
+
+Eight roots add positive selected text/event laws, foreign target/event frames,
+arbitrary node-storage frame, projection of the stronger committed frame, actual
+independent ApplyEffect-step safety and the actual ordinary async-arrival bridge.
+Payloads are arbitrary `R.Value`; targets/renderers are explicit IDs. Mount
+visibility and queued callback execution remain separate. Supporting list lookup
+proofs preserve actual sparse/existing-slot behavior. See the
+[observation scope](rendered-observation.md).

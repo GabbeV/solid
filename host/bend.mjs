@@ -8,11 +8,23 @@ import {HostErrors,errorKind} from './errors.mjs';
 // All constructed values/expressions come from ONE emitted closure. This is
 // the only module that knows the pinned emitter's list/record representation.
 export const ABI = R;
-export function list(xs) {
-  const out = [];
-  while ('head' in xs) { out.push(xs.head); xs = xs.tail; }
-  return out;
+// Derive list tags from real emitted constructors. Handwritten lookalike tags
+// are not valid ABI data even when a particular helper ignores the tag.
+const listNilTag=R.emptyNexts().$;
+const listConTag=R.bareNext(false,R.vUndefined(),R.emptyNexts()).$;
+export function encodeList(items) {
+  return items.reduceRight((tail,head)=>({$:listConTag,head,tail}),R.emptyNexts());
 }
+export function list(xs) {
+  const out=[];
+  for(;;){
+    if(!xs||typeof xs!=='object')throw new TypeError('Malformed Bend list ABI value');
+    if(xs.$===listNilTag)return out;
+    if(xs.$!==listConTag||!Object.hasOwn(xs,'head')||!Object.hasOwn(xs,'tail'))throw new TypeError('Malformed Bend list ABI tag or fields');
+    out.push(xs.head);xs=xs.tail;
+  }
+}
+
 const tags = {
   array:R.vArray(0).$, undefined:R.vUndefined().$, null:R.vNull().$, number:R.vNumber(0).$, negativeZero:R.vNegativeZero().$,
   bool:R.vBoolean(false).$, ref:R.vReference(0).$, owner:R.vOwner(0).$, nan:R.vNaN().$,

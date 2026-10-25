@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "ce91eb2761c4d0bcbc565d2709dd863f2809dee3",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "representationChanged": false,
+  "hostChanged": true,
+  "hostChange": "Canonical emitted list ABI encoder and strict list-tag decoding; malformed private fixtures corrected",
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 470,
+  "newRoots": 8,
+  "composedRoots": 478,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryRepresentedPayloads": true,
+  "observation": [
+    "selected mechanical text values",
+    "selected renderer application events"
+  ],
+  "positiveDiscrimination": [
+    "actual selected text write exposes supplied value",
+    "actual selected event appends exact event and payload"
+  ],
+  "notClaimed": [
+    "mount visibility/removal",
+    "arbitrary queued callback effects",
+    "scheduler reaches independent apply",
+    "full joined-action publication invariant",
+    "general pending-source successful traversal bound",
+    "eventual host delivery/fairness"
+  ],
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "publicSelectedTextChecks": 2280,
+  "privateActualIndependentApplySteps": 80,
+  "executedFulfillmentPrefixes": 160,
+  "actualSettlementOwnerSteps": 1360,
+  "noStaleTrimControls": 40,
+  "fullPublicCommandPassed": true,
+  "fullAlignmentCommandPassed": true,
+  "configuredMutations": 619,
+  "finiteMutations": 480,
+  "kernelMutations": 139,
+  "newFocusedKernelRejections": 4,
+  "completeSweepOfCurrentConfiguration": false,
+  "freshCorrectedSweepRequired": true,
+  "historical608Caveat": "tracking/reviews/solid-2a0da2fc-complete-negative.json",
+  "affectedHistoricalFiniteVariants": 7,
+  "typedKernelProofsUnaffectedByAbiDefect": true,
+  "resourceFailuresCredited": false,
+  "logs": {
+    "list-abi-controls.log": {
+      "path": "/workspace/scratch/night-2026-10-25/list-abi-controls.log",
+      "sha256": "e53291b25654bf7d450f3036bf5f1a836cc5a13761c5dbd5b9bc7046d7f636ff"
+    },
+    "rendered-observation-controls2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-observation-controls2.log",
+      "sha256": "0aa19ae7e8aed495a9d6fcb2bb32a4335d5b8078302bea28936c594601b87eb8"
+    },
+    "abi-full-public-tests.log": {
+      "path": "/workspace/scratch/night-2026-10-25/abi-full-public-tests.log",
+      "sha256": "50dee11379959ad2b13273b87f25463df72fdd4e90ba1975d764cc5c2d786ab3"
+    },
+    "abi-full-alignment.log": {
+      "path": "/workspace/scratch/night-2026-10-25/abi-full-alignment.log",
+      "sha256": "bffc0a3566cdeca8467ae546492db393e9d62a776fed3cf51b6fb198dc1d8de9"
+    },
+    "rendered-independent-apply-check5.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-independent-apply-check5.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "rendered-async-prefix-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-async-prefix-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "rendered-focused-negatives2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-focused-negatives2.log",
+      "sha256": "f13b2ae9d213564abb6a82fd306a076ec18161ac256121e19f7c1a94fd888ac2"
+    },
+    "rendered-mutation-targets2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-mutation-targets2.log",
+      "sha256": "c486cb016b9a9c0b186acd914610413575c452d293e1f3d8f704770e050848b4"
+    },
+    "rendered-composed3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/rendered-composed3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    }
+  }
+}
