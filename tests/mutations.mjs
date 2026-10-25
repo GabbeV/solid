@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["idle disposal kernel fails to schedule a retained pending queue", "runtime/owner.bend", "Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))", "False{}", "tests/proof-properties.mjs", "afterPark", "idle-disposal-schedule"],
+
   ["carrier cycle kernel mutates duplicate World epoch", "runtime/pending-state.bend", "_ => B.Bundle{w, False{}}", "_ => B.Bundle{B.bump(w), False{}}", "tests/proof-properties.mjs", "addPendingSource", "pending-carrier-cycle-negative-probes"],
   ["carrier cycle kernel reuses a retired captured Set", "runtime/pending-state.bend", "B.newPendingSet(w, [])", "B.choose(~B.Bundle<R.World, Nat>, Nat.is_eq(B.length(List<&2, Nat>, R.World.pendingSets(w)), 1n), _ => B.newPendingSet(w, []), _ => B.Bundle{w, 1n})", "tests/proof-properties.mjs", "addPendingSource", "pending-carrier-cycle-negative-probes"],
 

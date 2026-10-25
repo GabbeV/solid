@@ -940,3 +940,11 @@ roots extend 553 to 562. The 131 finite controls and 449 duplicate no-op checks
 pass; two new kernel faults are rejected. Status/readiness, complete public
 flight/action protocol and coordinated reveal remain open. Runtime/source/host/
 limits and old domains/budgets are unchanged.
+
+## 2026-10-25: final next refresh and idle-disposal guard
+
+Reviewed four further next commits and repinned 77 exact inputs to 4ea2f498.
+The production owner guard follows #4254, with 64 paired controls and two new
+local kernel roots (562 to 564). Native build/types and 344 files / 5,579 tests
+pass. Full rebase seal and execution results are recorded with this checkpoint.
+No new upstream bug was found; physical GC remains outside Bend semantics.

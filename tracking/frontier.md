@@ -9,7 +9,7 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `2a0da2fc` (rc.18); Bend 2.0.37 and its independent kernel are
+Solid is pinned to `4ea2f498` (rc.18); Bend 2.0.37 and its independent kernel are
 unchanged. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
 
@@ -147,7 +147,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `2a0da2fc`. All 77 recorded Solid inputs match the pin.
+Latest next checked: `4ea2f498` (2026-10-25). All 77 recorded Solid inputs match the pin.
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -331,3 +331,12 @@ roots extend 553 to 562. The 131 finite controls and 449 duplicate no-op checks
 pass; two new kernel faults are rejected. Status/readiness, complete public
 flight/action protocol and coordinated reveal remain open. Runtime/source/host/
 limits and old domains/budgets are unchanged.
+
+## Idle-disposal scheduling refresh
+
+[Reviewed next 4ea2f498](reviews/solid-4ea2f498.md) integrates #4254's retained
+pending-queue scheduling guard and preserves the earlier source/proof domains.
+The native full suite passes 344 files / 5,579 tests; 64 private native/Bend
+scheduling cases and two kernel guard roots pass. Physical JavaScript GC is not
+modeled. All 564 composed roots are checked by the current seal; no global
+queue-draining or eventual-render theorem follows from this local guard.

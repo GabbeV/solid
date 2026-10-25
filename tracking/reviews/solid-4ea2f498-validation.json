@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "baseline": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "checkpointBase": "6d92c3f75a8c988bf17dc58e0c5f4888ed039cd7",
+  "recordedSolidInputs": 77,
+  "changedRecordedSolidInputs": 5,
+  "native": {
+    "allThreeJsTiers": true,
+    "sourceDeclarations": true,
+    "filesPassed": 344,
+    "testsPassed": 5579,
+    "expectedFailures": 2,
+    "skips": 2
+  },
+  "nativeBendGuardCases": 64,
+  "previousRootsRetained": 562,
+  "newRoots": 2,
+  "composedRoots": 564,
+  "focusedKernelRejections": 1,
+  "configuredMutations": 653,
+  "finiteMutations": 484,
+  "kernelMutations": 169,
+  "completeCurrentSweep": false,
+  "historicalCompleteSweep": "tracking/reviews/complete-633-negative.json",
+  "allEarlierDomainsBudgetsRetained": true,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "physicalJavaScriptGCModeled": false,
+  "fullQueuedFlushRevealProved": false
+}

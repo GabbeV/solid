@@ -1,3 +1,4 @@
+import ./proof/idle-disposal-schedule.bend as IdleDisposal
 import ./proof/pending-carrier-state.bend as CarrierState
 import ./proof/pending-carrier-cycles.bend as CarrierCycles
 import ./proof/memo-render-carrier-cycles.bend as ConstructedCarrierCycles
@@ -4717,3 +4718,14 @@ law constructed_carrier_cycle_source_is_the_allocated_memo:
   for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
   for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
   {DefaultNode.index(w) == 1n+B.length(R.Node, nodes) : Nat}
+
+
+law queued_computed_disposal_requests_future_flush:
+  for +value: R.Value
+  for +head: Nat
+  for +tail: List<&2, Nat>
+  {R.World.scheduled(IdleDisposal.dispose(value, head <> tail)) == True{} : Bool}
+
+law empty_unheld_computed_disposal_does_not_request_flush:
+  for +value: R.Value
+  {R.World.scheduled(IdleDisposal.dispose(value, [])) == False{} : Bool}

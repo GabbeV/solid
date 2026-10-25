@@ -189,42 +189,46 @@ def CONFIG_WIDE() -> U32:
 def CONFIG_SUPERSEDES() -> U32:
   134217728
 
-# upstream/solid/packages/signals/src/core/constants.ts:204 — 0
+# upstream/solid/packages/signals/src/core/constants.ts:209 — 1 << 28
+def CONFIG_KEY_BAG() -> U32:
+  268435456
+
+# upstream/solid/packages/signals/src/core/constants.ts:211 — 0
 def STATUS_NONE() -> U32:
   0
 
-# upstream/solid/packages/signals/src/core/constants.ts:205 — 1 << 0
+# upstream/solid/packages/signals/src/core/constants.ts:212 — 1 << 0
 def STATUS_PENDING() -> U32:
   1
 
-# upstream/solid/packages/signals/src/core/constants.ts:206 — 1 << 1
+# upstream/solid/packages/signals/src/core/constants.ts:213 — 1 << 1
 def STATUS_ERROR() -> U32:
   2
 
-# upstream/solid/packages/signals/src/core/constants.ts:207 — 1 << 2
+# upstream/solid/packages/signals/src/core/constants.ts:214 — 1 << 2
 def STATUS_UNINITIALIZED() -> U32:
   4
 
-# upstream/solid/packages/signals/src/core/constants.ts:211 — 1 << 3
+# upstream/solid/packages/signals/src/core/constants.ts:218 — 1 << 3
 def STATUS_NO_VALUE() -> U32:
   8
 
-# upstream/solid/packages/signals/src/core/constants.ts:215 — 2
+# upstream/solid/packages/signals/src/core/constants.ts:222 — 2
 def CAUGHT_REARMED() -> U32:
   2
 
-# upstream/solid/packages/signals/src/core/constants.ts:217 — 0
+# upstream/solid/packages/signals/src/core/constants.ts:224 — 0
 def EFFECT_PURE() -> U32:
   0
 
-# upstream/solid/packages/signals/src/core/constants.ts:218 — 1
+# upstream/solid/packages/signals/src/core/constants.ts:225 — 1
 def EFFECT_RENDER() -> U32:
   1
 
-# upstream/solid/packages/signals/src/core/constants.ts:219 — 2
+# upstream/solid/packages/signals/src/core/constants.ts:226 — 2
 def EFFECT_USER() -> U32:
   2
 
-# upstream/solid/packages/signals/src/core/constants.ts:220 — 3
+# upstream/solid/packages/signals/src/core/constants.ts:227 — 3
 def EFFECT_TRACKED() -> U32:
   3

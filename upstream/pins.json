@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+    "commit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
     "branch": "next",
     "version": "2.0.0-rc.18"
   },
@@ -161,8 +161,8 @@
     "upstream/solid/packages/signals/src/core/attribution-feedback.ts": "3a219c6ffb68b48e54a432cc1ea664a76474f780385e85536e26456aad60c632",
     "upstream/solid/packages/signals/src/core/attribution-hooks.ts": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939",
     "upstream/solid/packages/signals/src/core/attribution-queries.ts": "d6b65b2e39bb08f8281ef580e8616fdb134d0cf5bc78fb08cbe75ddcec61e119",
-    "upstream/solid/packages/signals/src/core/attribution.ts": "a219aa1cc6566b0be0ffe0196d3e6cbf6effeed2d4a0acc478b15c26783a776f",
-    "upstream/solid/packages/signals/src/core/constants.ts": "0e6085a98f9a4563d82e823b0a86b5636c2d1379c4d1b84755af28cfc0faea7f",
+    "upstream/solid/packages/signals/src/core/attribution.ts": "9bea57b52c355c59a6af8dee9b7183842705cbc1863ace08209fda32adb27dd0",
+    "upstream/solid/packages/signals/src/core/constants.ts": "e134276d46a395791b463f85c298cf8921cc3e6a60f41913d13f9c8332a8172e",
     "upstream/solid/packages/signals/src/core/context.ts": "c8e48ff3653fced14c8cd06a86e25b9b46bab609cd74794d27a32c3042a24e0c",
     "upstream/solid/packages/signals/src/core/core.ts": "cf261a2451e790cfad6bbde2c9fcd8bf551cbcfea8cc741c704542a8d63e86e1",
     "upstream/solid/packages/signals/src/core/dev.ts": "848f82311c4bedf02ba7c7932f2732dcdcff8509d2f2484bdad3c2583dac6872",
@@ -176,8 +176,8 @@
     "upstream/solid/packages/signals/src/core/index.ts": "d0bfe3b40e6c28db013fc829b1ebf1a5e3c3d906c347c66df560f30e85fbe8d4",
     "upstream/solid/packages/signals/src/core/invariants.ts": "f3538ec163bc6a367049892c9b80063e048f6ba8bafa500819ac237bb9d6547d",
     "upstream/solid/packages/signals/src/core/lanes.ts": "fbc6c5251cded8dc14cd69b8127324e422d769cded2c7538c0273aae0da75e0c",
-    "upstream/solid/packages/signals/src/core/owner.ts": "ff2f186bf3db182a4134057ff3672b86e7af260a4526621531a01696425ddd76",
-    "upstream/solid/packages/signals/src/core/scheduler.ts": "4e2b60e92fcdd333d0c6339a69eecddf67c506ca108ae00267902bca721b92cc",
+    "upstream/solid/packages/signals/src/core/owner.ts": "8643ad1e398675521221dd65bef06616dd6b75b80df4948bb52c02f087381faf",
+    "upstream/solid/packages/signals/src/core/scheduler.ts": "e312155861125169c4106a0a044e7cdea69540acbaa0335872d787e958a7cda3",
     "upstream/solid/packages/signals/src/core/truth.ts": "bf56301573b8d496f7f2bc2f4a247ff2e4dffad7d4784aefb6781551ede9c9ec",
     "upstream/solid/packages/signals/src/core/types.ts": "d072279ac92717efc2a218c908ce012b31cc623f5122c0f8753997a63776ccdb",
     "upstream/solid/packages/signals/src/core/verdict.ts": "fc86051dae2b586527f909c5dfb8d9353d4a6ed9bc2f4eff8c45330116b47469",
@@ -200,6 +200,6 @@
     "upstream/solid/packages/signals/src/store/storePath.ts": "5b7587a755c09aa4d32dc8515a942497fa249f6cf151c065d2fd5e74451b2666",
     "upstream/solid/packages/signals/src/store/target.ts": "d651342f9a184c0fc5cbfdd41a18f8cf2748e9b17b329a4038b8756eedeec9d3",
     "upstream/solid/packages/signals/src/store/types.ts": "00d50fa1a2393887a5d18e96b223ae4cbbc8b9b7706cca0784055c0872319e51",
-    "upstream/solid/packages/signals/src/store/utils.ts": "48c7061b90a64ce5cef4faae298de47207d3db5ed56e01701a26d10160ff6095"
+    "upstream/solid/packages/signals/src/store/utils.ts": "2b2a7ae2bcbf24040506cfd71e5f1dde550870710dcffbefa9071f2dd29669ad"
   }
 }

@@ -7,7 +7,7 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `2a0da2fc` (rc.18), Bend to 2.0.37, and the independent kernel
+Solid is pinned to `4ea2f498` (rc.18), Bend to 2.0.37, and the independent kernel
 and Lean pin are unchanged. No semantic deviation is active.
 
 | Evidence | Current scope |
@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 652 = 484 finite + 168 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 653 = 484 finite + 169 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
-| Later negative evidence | Nineteen focused kernel variants after frozen633: graph/node/registration/history/context/cycle faults; current652 is not a complete sweep |
+| Later negative evidence | Twenty later focused kernel variants at their individual checkpoints, including the new idle-disposal guard; current653/new pin is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -370,3 +370,12 @@ roots extend 553 to 562. The 131 finite controls and 449 duplicate no-op checks
 pass; two new kernel faults are rejected. Status/readiness, complete public
 flight/action protocol and coordinated reveal remain open. Runtime/source/host/
 limits and old domains/budgets are unchanged.
+
+## Idle-disposal scheduling refresh
+
+[Reviewed next 4ea2f498](reviews/solid-4ea2f498.md) integrates #4254's retained
+pending-queue scheduling guard and preserves the earlier source/proof domains.
+The native full suite passes 344 files / 5,579 tests; 64 private native/Bend
+scheduling cases and two kernel guard roots pass. Physical JavaScript GC is not
+modeled. All 564 composed roots are checked by the current seal; no global
+queue-draining or eventual-render theorem follows from this local guard.

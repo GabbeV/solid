@@ -1,3 +1,4 @@
+import ./proof/idle-disposal-schedule.bend as IdleDisposal
 import ./proof/pending-carrier-state.bend as CarrierState
 import ./proof/pending-carrier-cycles.bend as CarrierCycles
 import ./proof/memo-render-carrier-cycles.bend as ConstructedCarrierCycles
@@ -2029,3 +2030,11 @@ def Laws.actual_memo_render_carrier_cycles_membership_matches_last_command(w, so
 
 def Laws.constructed_carrier_cycle_source_is_the_allocated_memo(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
   ConstructedCarrierCycles.sourceIdentity(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)
+
+
+def Laws.queued_computed_disposal_requests_future_flush(value, head, tail):
+  IdleDisposal.queued(value, head, tail)
+
+
+def Laws.empty_unheld_computed_disposal_does_not_request_flush(value):
+  IdleDisposal.empty(value)
