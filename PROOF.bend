@@ -1,3 +1,6 @@
+import ./proof/pending-source-history.bend as SourceHistory
+import ./proof/pending-command-history.bend as SourceCommands
+import ./proof/memo-render-source-history.bend as ConstructedSources
 import ./proof/pending-add-preservation.bend as PendingAddPreserved
 import ./proof/pending-add-one-edge.bend as PendingRegistration
 import ./proof/pending-carrier-existing.bend as CarrierExisting
@@ -1923,3 +1926,39 @@ def Laws.fresh_node_duplicate_source_removal_retains_entire_world(w, id, source,
 
 def Laws.fresh_node_source_retirement_clears_pending_pointer(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
   FreshCarrier.retiredPointer(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)
+
+
+def Laws.permitted_source_histories_retain_committed_observation(w, history):
+  SourceHistory.content(w, history)
+
+
+def Laws.permitted_source_histories_retain_subscriber_topology(w, history):
+  SourceHistory.topology(w, history)
+
+
+def Laws.permitted_source_histories_retain_graph_storage_and_fault(w, history):
+  SourceHistory.storage(w, history)
+
+
+def Laws.permitted_source_histories_retain_constructed_one_edge_certificate(w, root, leaf, edge, history, shape):
+  SourceHistory.graph(w, root, leaf, edge, history, shape)
+
+
+def Laws.permitted_source_histories_construct_bounded_settlement_return(w, root, leaf, edge, history, rest, stack, shape):
+  SourceHistory.startReturn(w, root, leaf, edge, history, rest, stack, shape)
+
+
+def Laws.permitted_source_histories_and_settlement_retain_committed_observation(w, root, leaf, edge, history, rest, stack, shape):
+  SourceHistory.returnedFrame(w, root, leaf, edge, history, rest, stack, shape)
+
+
+def Laws.selected_source_command_history_validity_is_constructed(w, commands, root, leaf, edge, shape):
+  SourceCommands.build(w, commands, root, leaf, edge, shape)
+
+
+def Laws.actual_memo_render_source_commands_construct_bounded_settlement_return(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack):
+  ConstructedSources.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack)
+
+
+def Laws.actual_memo_render_source_commands_retain_committed_observation(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack):
+  ConstructedSources.frame(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack)

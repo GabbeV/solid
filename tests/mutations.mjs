@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["source history kernel changes cache during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = B.store_node(B.store_pendingSet(w, set, xs), id, R.Node.with_value(B.node(w, id), R.Undefined{}))", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],
+  ["source history kernel changes subscriber shape during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = B.store_node(B.store_pendingSet(w, set, xs), id, R.Node.with_subs(B.node(w, id), 1n))", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],
+  ["source history kernel loses node allocation during removal", "runtime/pending-state.bend", "+w = B.store_pendingSet(w, set, xs)", "+w = R.World.with_nodes(B.store_pendingSet(w, set, xs), [])", "tests/proof-properties.mjs", "removePendingSource", "pending-source-history-negative-probes"],
+
   ["pending registration kernel skips the source insertion", "runtime/pending-state.bend", "B.append(Nat, B.pendingSlots(w, set), [source])", "B.pendingSlots(w, set)", "tests/proof-properties.mjs", "addPendingSource", "pending-registration-negative-probes"],
   ["pending registration kernel reports duplicate insertion as new", "runtime/pending-state.bend", "_ => B.Bundle{w, False{}}", "_ => B.Bundle{w, True{}}", "tests/proof-properties.mjs", "addPendingSource", "pending-registration-negative-probes"],
   ["pending registration kernel removes a slot instead of leaving a tombstone", "runtime/pending-state.bend", "_ => 0n <> rest", "_ => rest", "tests/proof-properties.mjs", "removeSlot", "pending-registration-negative-probes"],

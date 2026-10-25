@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "0fa4d125ab061cc620aecb0dfaae23b2aaadec67",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 538,
+  "newRoots": 9,
+  "composedRoots": 547,
+  "allEarlierTheoremDomainsRetained": true,
+  "historyDomain": "arbitrary finite sequences of actual add/remove source operations, each with valid target/source IDs in actual input World",
+  "desiredTransitionOrFinalInvariantPremises": false,
+  "constructedCommandValidity": true,
+  "actualDefaultMemoRenderConstructionComposed": true,
+  "preserved": [
+    "committed values/tree/trace",
+    "subscriber shape and all links",
+    "node count and fault",
+    "constructed one-edge certificate"
+  ],
+  "postHistorySettlementRoom": 10,
+  "historyOrSetScanConstantTimeClaimed": false,
+  "earlyAndFaultAlternativesRetained": true,
+  "typedConstructedHistories": 131,
+  "allBinaryOrdersThroughLength": 6,
+  "longestFiniteControl": 64,
+  "actualDriverSplits": 393,
+  "javascriptSuppliesEqualityEvidence": false,
+  "newFocusedKernelRejections": 3,
+  "configuredMutations": 647,
+  "finiteMutations": 484,
+  "kernelMutations": 163,
+  "completeFrozenSweep": "tracking/reviews/complete-633-negative.json",
+  "focusedVariantsAfterFrozen633": 14,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "all histories reachable from full public callback/flight controller",
+    "general final Core membership or readiness",
+    "broad constructor-to-fresh-carrier premise composition",
+    "global identity/once-only action-flight ledger",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "pending-one-edge-transport-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-one-edge-transport-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-source-history-check4.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-source-history-check4.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-command-history-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-command-history-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-source-history-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-source-history-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-source-history-fixture-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-source-history-fixture-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-source-history-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-source-history-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-source-history-controls2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-source-history-controls2.log",
+      "sha256": "0e3bdac65fda2716ce126f23c914b06bdbee4e5cc60f926d3c868f4168e85497"
+    },
+    "history-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/history-mutation-targets.log",
+      "sha256": "e33a0bf95cc27b24f7d8bb8fda852517159d4f0bab4dfad769de3572a5dbf7b6"
+    },
+    "history-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/history-negatives.log",
+      "sha256": "1550ab5744d4ff685a27bd3c76b3391cc87098f3f4b7709edf828685536b3738"
+    }
+  }
+}

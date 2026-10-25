@@ -1,3 +1,6 @@
+import ./proof/pending-source-history.bend as SourceHistory
+import ./proof/pending-command-history.bend as SourceCommands
+import ./proof/memo-render-source-history.bend as ConstructedSources
 import ./proof/pending-add-preservation.bend as PendingAddPreserved
 import ./proof/pending-add-one-edge.bend as PendingRegistration
 import ./proof/pending-carrier-existing.bend as CarrierExisting
@@ -4361,3 +4364,107 @@ law fresh_node_source_retirement_clears_pending_pointer:
   for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
   for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
   {R.NodeExtension.pendingSources(B.extension(CarrierRoundTrip.removed(w, id, 1n+source), id)) == 0n : Nat}
+
+
+law permitted_source_histories_retain_committed_observation:
+  for +w: R.World
+  for +history: SourceHistory.History<w>
+  {CommittedStorage.observe(SourceHistory.run(w, history)) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law permitted_source_histories_retain_subscriber_topology:
+  for +w: R.World
+  for +history: SourceHistory.History<w>
+  {SubscriberShape.observe(SourceHistory.run(w, history)) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+
+law permitted_source_histories_retain_graph_storage_and_fault:
+  for +w: R.World
+  for +history: SourceHistory.History<w>
+  {GraphStorage.storage(SourceHistory.run(w, history)) == GraphStorage.storage(w) : GraphStorage.Storage}
+
+
+law permitted_source_histories_retain_constructed_one_edge_certificate:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +history: SourceHistory.History<w>
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  GraphAllocated.OneEdge<SourceHistory.run(w, history), root, leaf, edge>
+
+
+law permitted_source_histories_construct_bounded_settlement_return:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +history: SourceHistory.History<w>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  BoundedReturn.Returned<OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 10n>
+
+
+law permitted_source_histories_and_settlement_retain_committed_observation:
+  for +w: R.World
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +history: SourceHistory.History<w>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 10n, SourceHistory.startReturn(w, root, leaf, edge, history, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law selected_source_command_history_validity_is_constructed:
+  for +w: R.World
+  for +commands: List<&2, SourceCommands.Command>
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  SourceHistory.History<w>
+
+
+law actual_memo_render_source_commands_construct_bounded_settlement_return:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +commands: List<&2, SourceCommands.Command>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+
+
+law actual_memo_render_source_commands_retain_committed_observation:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +commands: List<&2, SourceCommands.Command>
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 10n, ConstructedSources.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}

@@ -322,3 +322,18 @@ completed with all 851 input hashes/trackership verified; current644 has eleven
 later focused rejections. Full public callback/flight protocol, global identity/
 ledger validity, broad constructor-to-carrier composition and coordinated reveal
 remain open. Runtime/source/host/limits are unchanged.
+
+
+## Permitted source-Set histories (2026-10-25)
+
+The [source-history family](pending-source-histories.md) proves content/topology/
+storage safety and a constructed post-history bounded return over arbitrary
+finite valid-ID add/remove histories. An arbitrary list of selected-edge commands
+gets every validity certificate from the constructed graph, including after
+actual default memo/render allocation/setup/link. Nine roots extend 538 to 547.
+The 131 finite histories include every binary order through length six and cycles
+up to 64 operations, with 393 driver splits and captured tombstone checks. Three
+new kernel faults are rejected. This is a helper subprotocol, with ten Core tasks
+of room after the history; public controller reachability, general final readiness,
+full accounting and coordinated reveal remain open. Runtime/source/host/limits
+and prior domains are unchanged.
