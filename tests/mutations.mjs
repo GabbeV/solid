@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["carrier cycle kernel mutates duplicate World epoch", "runtime/pending-state.bend", "_ => B.Bundle{w, False{}}", "_ => B.Bundle{B.bump(w), False{}}", "tests/proof-properties.mjs", "addPendingSource", "pending-carrier-cycle-negative-probes"],
+  ["carrier cycle kernel reuses a retired captured Set", "runtime/pending-state.bend", "B.newPendingSet(w, [])", "B.choose(~B.Bundle<R.World, Nat>, Nat.is_eq(B.length(List<&2, Nat>, R.World.pendingSets(w)), 1n), _ => B.newPendingSet(w, []), _ => B.Bundle{w, 1n})", "tests/proof-properties.mjs", "addPendingSource", "pending-carrier-cycle-negative-probes"],
+
   ["registration context kernel changes fresh extension identity", "runtime/graph-state.bend", "+w = B.store_node(w, sub, R.Node.with_depsTail(B.node(w, sub), id))", "+w = B.store_node(w, sub, R.Node.with_x(R.Node.with_depsTail(B.node(w, sub), id), 1n))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],
   ["registration context kernel discards extension arena during linking", "runtime/graph-state.bend", "B.bump(w)", "B.bump(R.World.with_extensions(w, []))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],
   ["registration context kernel discards pending Set arena during linking", "runtime/graph-state.bend", "B.bump(w)", "B.bump(R.World.with_pendingSets(w, []))", "tests/proof-properties.mjs", "allocate", "registration-context-negative-probes"],

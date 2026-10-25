@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "cca01577ad4995387d7b5ffd4581dcb1eab5fbca",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 553,
+  "newRoots": 9,
+  "composedRoots": 562,
+  "allEarlierTheoremDomainsRetained": true,
+  "sourceDomain": "one arbitrary nonzero represented source identity; source allocation/liveness not inferred in the generic family",
+  "stateInvariant": [
+    "fresh valid node / reserved auxiliary sentinels",
+    "allocated empty extension with retained range and reserved Set arena",
+    "allocated extension and singleton selected-source Set with actual range/storage"
+  ],
+  "actualNextWorldInvariantConstructed": true,
+  "arbitraryFiniteCommandLists": true,
+  "finalMembershipMatchesLastCommand": true,
+  "emptyHistoryRetainsInitialMembership": true,
+  "proofCarryingAndDirectActualWorldExecutionEqual": true,
+  "memoRenderConstructionSuppliesInitialInvariant": true,
+  "sourceIdentityIsAllocatedMemoInConstructedFamily": true,
+  "typedCycleHistories": 131,
+  "allBinaryOrdersThroughLength": 6,
+  "longestFiniteControl": 64,
+  "duplicateWholeWorldNoOpChecks": 449,
+  "javascriptSuppliesEqualityEvidence": false,
+  "newFocusedKernelRejections": 2,
+  "configuredMutations": 652,
+  "finiteMutations": 484,
+  "kernelMutations": 168,
+  "completeFrozenSweep": "tracking/reviews/complete-633-negative.json",
+  "focusedVariantsAfterFrozen633": 19,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "Set membership implies status/readiness",
+    "general membership after Core settlement",
+    "full public callback/flight-controller reachability",
+    "global action/flight ledger or source liveness",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "pending-carrier-arena-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-arena-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-state-check3.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-state-check3.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-cycles-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-cycles-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "memo-render-carrier-cycles-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/memo-render-carrier-cycles-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-cycle-fixture-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-cycle-fixture-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-cycle-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-cycle-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-cycle-controls1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-cycle-controls1.log",
+      "sha256": "f06c1f0822afd7aa6eddb2dbe7395d3d9ee5ffdfcd6ccc78dabe2c9213cd2972"
+    },
+    "cycle-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/cycle-mutation-targets.log",
+      "sha256": "77a14cd4301cf97ab49d8cde21acd7496e5bf0c5ff2cda71ada17c181bed98b3"
+    },
+    "cycle-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/cycle-negatives.log",
+      "sha256": "9b0da49e40c5713fe96c78e5bae0f04c46da7ea6230b99c4b7ede6eb407703ff"
+    }
+  }
+}

@@ -1,3 +1,6 @@
+import ./proof/pending-carrier-state.bend as CarrierState
+import ./proof/pending-carrier-cycles.bend as CarrierCycles
+import ./proof/memo-render-carrier-cycles.bend as ConstructedCarrierCycles
 import ./proof/node-pointer-observation.bend as NodePointers
 import ./proof/graph-extension-pointers.bend as GraphExtensionPointers
 import ./proof/memo-render-pending-context.bend as RegistrationContext
@@ -4589,3 +4592,128 @@ law actual_memo_render_registration_then_removal_retires_source:
   for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
   for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
   {RuntimePendingState.hasSource(CarrierRoundTrip.removed(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(MemoRender.memo(w, sourceExpr)), DefaultNode.index(w)), DefaultNode.index(MemoRender.memo(w, sourceExpr)), DefaultNode.index(w)) == False{} : Bool}
+
+
+law carrier_snapshot_represents_actual_source_membership:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w, node, source>
+  {RuntimePendingState.hasSource(w, node, 1n+source) == CarrierState.present(w, node, source, snapshot) : Bool}
+
+
+law carrier_snapshot_survives_actual_next_source_command:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w, node, source>
+  for +command: SourceCommands.Command
+  CarrierState.CarrierSnapshot<CarrierState.next(w, node, source, command), node, source>
+
+
+law carrier_snapshot_after_command_matches_add_remove_choice:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w, node, source>
+  for +command: SourceCommands.Command
+  {CarrierState.present(CarrierState.next(w, node, source, command), node, source, CarrierState.step(w, node, source, snapshot, command)) == CarrierState.isAdd(command) : Bool}
+
+
+law carrier_cycle_proof_state_executes_actual_helper_worlds:
+  for +node: Nat
+  for +source: Nat
+  for +commands: List<&2, SourceCommands.Command>
+  for +w: R.World
+  for +initial: CarrierState.CarrierSnapshot<w, node, source>
+  {CarrierCycles.world(node, source, CarrierCycles.run(node, source, commands, w, initial)) == CarrierCycles.executeWorld(node, source, commands, w) : R.World}
+
+
+law single_source_cycles_membership_matches_last_command:
+  for +node: Nat
+  for +source: Nat
+  for +commands: List<&2, SourceCommands.Command>
+  for +w: R.World
+  for +initial: CarrierState.CarrierSnapshot<w, node, source>
+  {RuntimePendingState.hasSource(CarrierCycles.executeWorld(node, source, commands, w), node, 1n+source) == CarrierCycles.expected(commands, CarrierState.present(w, node, source, initial)) : Bool}
+
+
+law fresh_source_cycles_membership_matches_last_command:
+  for +node: Nat
+  for +source: Nat
+  for +commands: List<&2, SourceCommands.Command>
+  for +w: R.World
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, node) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, node)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.hasSource(CarrierCycles.world(node, source, CarrierCycles.run(node, source, commands, w, CarrierCycles.fresh(w, node, source, extensions, sets, valid, empty, extensionArena, setArena))), node, 1n+source) == CarrierCycles.expected(commands, False{}) : Bool}
+
+
+law actual_memo_render_carrier_cycle_invariant_is_constructed:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  CarrierState.CarrierSnapshot<MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(MemoRender.memo(w, sourceExpr)), B.length(R.Node, nodes)>
+
+
+law actual_memo_render_carrier_cycles_membership_matches_last_command:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  for +commands: List<&2, SourceCommands.Command>
+  {RuntimePendingState.hasSource(ConstructedCarrierCycles.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, commands), DefaultNode.index(MemoRender.memo(w, sourceExpr)), 1n+B.length(R.Node, nodes)) == CarrierCycles.expected(commands, False{}) : Bool}
+
+
+law constructed_carrier_cycle_source_is_the_allocated_memo:
+  for +w: R.World
+  for +sourceExpr: R.Expr
+  for +effectExpr: R.Expr
+  for +target: Nat
+  for +program: Nat
+  for +cleanup: Nat
+  for +first: R.Node
+  for +nodes: List<&2, R.Node>
+  for +firstLink: R.Link
+  for +links: List<&2, R.Link>
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
+  for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
+  for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {DefaultNode.index(w) == 1n+B.length(R.Node, nodes) : Nat}

@@ -318,3 +318,16 @@ constructed registration cases and 432 driver splits pass, with three new kernel
 fault rejections. Initial context/sentinels remain explicit; callback/controller
 reachability, status/readiness, full accounting and coordinated reveal remain
 open. Runtime/source/host/limits and previous domains are unchanged.
+
+
+## General single-source cycle membership (2026-10-25)
+
+The [cycle invariant](carrier-cycles.md) now constructs fresh/empty/singleton
+source snapshots through actual add/remove transitions and proves membership for
+arbitrary finite command lists, including re-registration and duplicate calls.
+Proof-carrying and direct actual-helper World execution agree, and actual default
+memo/render construction supplies the initial invariant/source identity. Nine
+roots extend 553 to 562. The 131 finite controls and 449 duplicate no-op checks
+pass; two new kernel faults are rejected. Status/readiness, complete public
+flight/action protocol and coordinated reveal remain open. Runtime/source/host/
+limits and old domains/budgets are unchanged.

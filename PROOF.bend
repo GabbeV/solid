@@ -1,3 +1,6 @@
+import ./proof/pending-carrier-state.bend as CarrierState
+import ./proof/pending-carrier-cycles.bend as CarrierCycles
+import ./proof/memo-render-carrier-cycles.bend as ConstructedCarrierCycles
 import ./proof/node-pointer-observation.bend as NodePointers
 import ./proof/graph-extension-pointers.bend as GraphExtensionPointers
 import ./proof/memo-render-pending-context.bend as RegistrationContext
@@ -1990,3 +1993,39 @@ def Laws.actual_memo_render_registration_retains_committed_observation(w, source
 
 def Laws.actual_memo_render_registration_then_removal_retires_source(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
   ConstructedRegistration.retired(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)
+
+
+def Laws.carrier_snapshot_represents_actual_source_membership(w, node, source, snapshot):
+  CarrierState.sound(w, node, source, snapshot)
+
+
+def Laws.carrier_snapshot_survives_actual_next_source_command(w, node, source, snapshot, command):
+  CarrierState.step(w, node, source, snapshot, command)
+
+
+def Laws.carrier_snapshot_after_command_matches_add_remove_choice(w, node, source, snapshot, command):
+  CarrierState.stepPresent(w, node, source, snapshot, command)
+
+
+def Laws.carrier_cycle_proof_state_executes_actual_helper_worlds(node, source, commands, w, initial):
+  CarrierCycles.worldAgreement(node, source, commands, w, initial)
+
+
+def Laws.single_source_cycles_membership_matches_last_command(node, source, commands, w, initial):
+  CarrierCycles.worldMembership(node, source, commands, w, initial)
+
+
+def Laws.fresh_source_cycles_membership_matches_last_command(node, source, commands, w, extensions, sets, valid, empty, extensionArena, setArena):
+  CarrierCycles.freshMembership(node, source, commands, w, extensions, sets, valid, empty, extensionArena, setArena)
+
+
+def Laws.actual_memo_render_carrier_cycle_invariant_is_constructed(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
+  ConstructedCarrierCycles.seed(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)
+
+
+def Laws.actual_memo_render_carrier_cycles_membership_matches_last_command(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, commands):
+  ConstructedCarrierCycles.membership(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, commands)
+
+
+def Laws.constructed_carrier_cycle_source_is_the_allocated_memo(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena):
+  ConstructedCarrierCycles.sourceIdentity(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena)
