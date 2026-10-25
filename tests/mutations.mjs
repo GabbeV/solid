@@ -5,6 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["pending registration kernel skips the source insertion", "runtime/pending-state.bend", "B.append(Nat, B.pendingSlots(w, set), [source])", "B.pendingSlots(w, set)", "tests/proof-properties.mjs", "addPendingSource", "pending-registration-negative-probes"],
+  ["pending registration kernel reports duplicate insertion as new", "runtime/pending-state.bend", "_ => B.Bundle{w, False{}}", "_ => B.Bundle{w, True{}}", "tests/proof-properties.mjs", "addPendingSource", "pending-registration-negative-probes"],
+  ["pending registration kernel removes a slot instead of leaving a tombstone", "runtime/pending-state.bend", "_ => 0n <> rest", "_ => rest", "tests/proof-properties.mjs", "removeSlot", "pending-registration-negative-probes"],
+  ["pending registration kernel keeps an empty source pointer", "runtime/pending-state.bend", "_ => B.store_extension(w, id, R.NodeExtension.with_pendingSources(B.extension(w, id), 0n))", "_ => w", "tests/proof-properties.mjs", "removePendingSource", "pending-registration-negative-probes"],
+  ["pending registration kernel reuses the reserved zero Set", "runtime/pending-state.bend", "B.newPendingSet(w, [])", "{B.Bundle{w, 0n} : B.Bundle<R.World, Nat>}", "tests/proof-properties.mjs", "addPendingSource", "pending-registration-negative-probes"],
+
   ["node construction kernel omits parentless memo auto disposal", "runtime/construct-state.bend", "Bool.or(Nat.is_eq(parent, 0n), R.NodeOptions.lazy(options))", "False{}", "tests/proof-properties.mjs", "computed", "constructor-negative-probes"],
   ["node construction kernel incorrectly auto disposes render effects", "runtime/construct-state.bend", "config = B.set(config, R.NodeOptions.extraConfig(options))", "config = B.set(B.set(config, K.CONFIG_AUTO_DISPOSE()), R.NodeOptions.extraConfig(options))", "tests/proof-properties.mjs", "createEffectNode", "constructor-negative-probes"],
   ["node construction kernel fails to initialize its own heap pointer", "runtime/construct-state.bend", "R.Node.with_prevHeap(B.node(w, id), id)", "R.Node.with_prevHeap(B.node(w, id), 0n)", "tests/proof-properties.mjs", "setupComputedNode", "constructor-negative-probes"],

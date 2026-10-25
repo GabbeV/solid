@@ -1,3 +1,11 @@
+import ./proof/pending-add-preservation.bend as PendingAddPreserved
+import ./proof/pending-add-one-edge.bend as PendingRegistration
+import ./proof/pending-carrier-existing.bend as CarrierExisting
+import ./proof/pending-fresh-set.bend as FreshCarrierSet
+import ./proof/pending-fresh-carrier.bend as FreshCarrier
+import ./proof/pending-carrier-roundtrip.bend as CarrierRoundTrip
+import ./proof/graph-allocation-properties.bend as GraphStorage
+import ./runtime/pending-state.bend as RuntimePendingState
 import ./proof/default-node-literals.bend as DefaultLiterals
 import ./proof/parentless-node-construction.bend as FreshNodeSetup
 import ./proof/default-computed-construction.bend as DefaultNode
@@ -4204,3 +4212,152 @@ law reserved_arena_memo_render_return_requires_no_final_state_premises:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(ConstructedFixture.input(values), sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(ConstructedFixture.input(values)), rest, stack), rest, stack, 10n>
+
+
+law actual_source_registration_retains_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  {CommittedStorage.observe(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, source))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law actual_source_registration_retains_subscriber_topology:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  {SubscriberShape.observe(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, source))) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+
+law actual_source_registration_retains_graph_storage_and_fault:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  {GraphStorage.storage(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, source))) == GraphStorage.storage(w) : GraphStorage.Storage}
+
+
+law actual_source_registration_retains_constructed_one_edge_certificate:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  GraphAllocated.OneEdge<PendingRegistration.result(w, id, source), root, leaf, edge>
+
+
+law registered_one_edge_graph_constructs_bounded_settlement_return:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  BoundedReturn.Returned<OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 10n>
+
+
+law registration_and_settlement_retain_committed_observation:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +root: Nat
+  for +leaf: Nat
+  for +edge: Nat
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 10n, PendingRegistration.startReturn(w, id, source, root, leaf, edge, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law allocated_empty_source_set_add_constructs_membership:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extension: Nat
+  for +set: Nat
+  for +allocated: {R.Node.x(B.node(w, id)) == 1n+extension : Nat}
+  for +known: {R.NodeExtension.pendingSources(B.extension(w, id)) == 1n+set : Nat}
+  for +slots: {B.pendingSlots(w, 1n+set) == [] : List<&2, Nat>}
+  for +room: {Nat.is_lt(1n+set, B.length(List<&2, Nat>, R.World.pendingSets(w))) == True{} : Bool}
+  {RuntimePendingState.hasSource(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, 1n+source)), id, 1n+source) == True{} : Bool}
+
+
+law fresh_source_set_add_constructs_membership:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extension: Nat
+  for +sets: List<&2, List<&2, Nat>>
+  for +allocated: {R.Node.x(B.node(w, id)) == 1n+extension : Nat}
+  for +empty: {R.NodeExtension.pendingSources(B.extension(w, id)) == 0n : Nat}
+  for +fits: {Nat.is_lt(R.Node.x(B.node(w, id)), B.length(R.NodeExtension, R.World.extensions(w))) == True{} : Bool}
+  for +arena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.hasSource(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, 1n+source)), id, 1n+source) == True{} : Bool}
+
+
+law fresh_node_add_constructs_extension_set_and_membership:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, id) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.hasSource(B.first(R.World, Bool, RuntimePendingState.addPendingSource(w, id, 1n+source)), id, 1n+source) == True{} : Bool}
+
+
+law fresh_node_add_then_remove_retires_its_source:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, id) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.hasSource(CarrierRoundTrip.removed(w, id, 1n+source), id, 1n+source) == False{} : Bool}
+
+
+law fresh_node_duplicate_source_add_retains_entire_world:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, id) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.addPendingSource(CarrierRoundTrip.added(w, id, 1n+source), id, 1n+source) == B.Bundle{CarrierRoundTrip.added(w, id, 1n+source), False{}} : B.Bundle<R.World, Bool>}
+
+
+law fresh_node_duplicate_source_removal_retains_entire_world:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, id) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {RuntimePendingState.removePendingSource(CarrierRoundTrip.removed(w, id, 1n+source), id, 1n+source) == B.Bundle{CarrierRoundTrip.removed(w, id, 1n+source), False{}} : B.Bundle<R.World, Bool>}
+
+
+law fresh_node_source_retirement_clears_pending_pointer:
+  for +w: R.World
+  for +id: Nat
+  for +source: Nat
+  for +extensions: List<&2, R.NodeExtension>
+  for +sets: List<&2, List<&2, Nat>>
+  for +valid: {B.valid(w, id) == True{} : Bool}
+  for +empty: {R.Node.x(B.node(w, id)) == 0n : Nat}
+  for +extensionArena: {R.World.extensions(w) == B.blank_extension() <> extensions : List<&2, R.NodeExtension>}
+  for +setsArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
+  {R.NodeExtension.pendingSources(B.extension(CarrierRoundTrip.removed(w, id, 1n+source), id)) == 0n : Nat}

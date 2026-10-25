@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "96dea71d2f6edf0d8faeca403144604e0018c77e",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 525,
+  "newRoots": 13,
+  "composedRoots": 538,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPreservationBranches": [
+    "duplicate add",
+    "existing/fresh extension",
+    "existing/fresh Set"
+  ],
+  "preservedObservations": [
+    "committed values/tree/events",
+    "subscriber kind/config/head and all links",
+    "node count and fault"
+  ],
+  "graphCertificateAndBoundedReturnPreserved": true,
+  "freshNodeCarrierInitialFacts": [
+    "valid selected node with zero extension pointer",
+    "reserved blank extension zero",
+    "reserved empty Set zero",
+    "nonzero source identity"
+  ],
+  "constructedFacts": [
+    "positive allocated extension and range",
+    "positive allocated pending Set and range",
+    "singleton membership",
+    "actual add/delete exact Worlds",
+    "last-source pointer clear and source absent",
+    "duplicate add/delete whole-World no-ops"
+  ],
+  "sourceIdentityAllocationOrLivenessInferred": false,
+  "typedFreshRegistrationCases": 128,
+  "actualTenStepReturns": 128,
+  "actualDriverSplits": 384,
+  "duplicateNoOpChecks": 384,
+  "javascriptSuppliesEqualityEvidence": false,
+  "newFocusedKernelRejections": 5,
+  "configuredMutations": 644,
+  "finiteMutations": 484,
+  "kernelMutations": 160,
+  "completeFrozenSweep": "tracking/reviews/complete-633-negative.json",
+  "focusedVariantsAfterFrozen633": 11,
+  "completeSweepOfCurrentConfiguration": false,
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "arbitrary-sized memo/render constructors compose every fresh-carrier premise",
+    "general Core final membership/status result",
+    "complete public callback/flight lifecycle",
+    "global valid source-ID or action/flight ledger",
+    "coordinated reveal/eventual delivery"
+  ],
+  "logs": {
+    "pending-carrier-existing-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-existing-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-add-frame-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-add-frame-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-add-preservation-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-add-preservation-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-add-one-edge-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-add-one-edge-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-auxiliary-lookup-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-auxiliary-lookup-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-fresh-set-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-fresh-set-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-retirement-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-retirement-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-carrier-roundtrip-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-carrier-roundtrip-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-fresh-extension-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-fresh-extension-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-fresh-carrier-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-fresh-carrier-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-registration-fixture-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-registration-fixture-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-registration-negative-probes-check1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-registration-negative-probes-check1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-registration-controls2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-registration-controls2.log",
+      "sha256": "ccdafc338261fb0a36c374c26ac43baaf094881368a748e22e9afa81c37852f4"
+    },
+    "registration-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/registration-mutation-targets.log",
+      "sha256": "782514fe16d6151f140788a022181b794cd86036e686437712d9ea6880924148"
+    },
+    "registration-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/registration-negatives.log",
+      "sha256": "885457eaf2b5b9b832e26fa6331aeaa6128c2ec4e668c7997415e765493939ab"
+    }
+  }
+}

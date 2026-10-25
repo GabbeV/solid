@@ -1,3 +1,11 @@
+import ./proof/pending-add-preservation.bend as PendingAddPreserved
+import ./proof/pending-add-one-edge.bend as PendingRegistration
+import ./proof/pending-carrier-existing.bend as CarrierExisting
+import ./proof/pending-fresh-set.bend as FreshCarrierSet
+import ./proof/pending-fresh-carrier.bend as FreshCarrier
+import ./proof/pending-carrier-roundtrip.bend as CarrierRoundTrip
+import ./proof/graph-allocation-properties.bend as GraphStorage
+import ./runtime/pending-state.bend as RuntimePendingState
 import ./proof/default-node-literals.bend as DefaultLiterals
 import ./proof/parentless-node-construction.bend as FreshNodeSetup
 import ./proof/default-computed-construction.bend as DefaultNode
@@ -1863,3 +1871,55 @@ def Laws.actual_memo_render_graph_settlement_retains_committed_observation(w, so
 
 def Laws.reserved_arena_memo_render_return_requires_no_final_state_premises(values, sourceExpr, effectExpr, target, program, cleanup, rest, stack):
   ConstructedFixture.complete(values, sourceExpr, effectExpr, target, program, cleanup, rest, stack)
+
+
+def Laws.actual_source_registration_retains_committed_observation(w, id, source):
+  PendingAddPreserved.content(w, id, source)
+
+
+def Laws.actual_source_registration_retains_subscriber_topology(w, id, source):
+  PendingAddPreserved.topology(w, id, source)
+
+
+def Laws.actual_source_registration_retains_graph_storage_and_fault(w, id, source):
+  PendingAddPreserved.storage(w, id, source)
+
+
+def Laws.actual_source_registration_retains_constructed_one_edge_certificate(w, id, source, root, leaf, edge, shape):
+  PendingRegistration.build(w, id, source, root, leaf, edge, shape)
+
+
+def Laws.registered_one_edge_graph_constructs_bounded_settlement_return(w, id, source, root, leaf, edge, rest, stack, shape):
+  PendingRegistration.startReturn(w, id, source, root, leaf, edge, rest, stack, shape)
+
+
+def Laws.registration_and_settlement_retain_committed_observation(w, id, source, root, leaf, edge, rest, stack, shape):
+  PendingRegistration.frame(w, id, source, root, leaf, edge, rest, stack, shape)
+
+
+def Laws.allocated_empty_source_set_add_constructs_membership(w, id, source, extension, set, allocated, known, slots, room):
+  CarrierExisting.addedContains(w, id, source, extension, set, allocated, known, slots, room)
+
+
+def Laws.fresh_source_set_add_constructs_membership(w, id, source, extension, sets, allocated, empty, fits, arena):
+  FreshCarrierSet.contains(w, id, source, extension, sets, allocated, empty, fits, arena)
+
+
+def Laws.fresh_node_add_constructs_extension_set_and_membership(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
+  FreshCarrier.contains(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)
+
+
+def Laws.fresh_node_add_then_remove_retires_its_source(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
+  FreshCarrier.retired(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)
+
+
+def Laws.fresh_node_duplicate_source_add_retains_entire_world(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
+  FreshCarrier.duplicateAdd(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)
+
+
+def Laws.fresh_node_duplicate_source_removal_retains_entire_world(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
+  FreshCarrier.duplicateRemove(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)
+
+
+def Laws.fresh_node_source_retirement_clears_pending_pointer(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena):
+  FreshCarrier.retiredPointer(w, id, source, extensions, sets, valid, empty, extensionArena, setsArena)

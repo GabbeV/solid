@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 633 = 484 finite + 149 kernel variants, including completion/wait/blocker/landing invariants |
-| Complete negative sweep | Frozen 4975adf2: all 619 named variants rejected with canonical lists and unchanged 817 tracked input hashes; [receipt](reviews/canonical-list-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; three further topology kernel variants rejected; one further finite/two kernel one-edge faults rejected; current633 is not a complete sweep |
+| Configured mutations | 644 = 484 finite + 160 kernel variants, including constructor/registration/return invariants |
+| Complete negative sweep | Frozen 73eda482: all 633 named variants rejected; exact set and unchanged 851 tracked input hashes verified; [receipt](reviews/complete-633-negative.json) |
+| Later negative evidence | Eleven focused kernel variants after frozen633: three graph, three node and five registration faults; current644 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -314,3 +314,18 @@ these finite cases cover the absent-carrier alternative. Initial healthy context
 reserved arenas and null-parent computed identity remain explicit. Runtime, host,
 source and limits are unchanged. Callback/registration integration, full
 accounting and coordinated reveal remain open.
+
+
+## Actual source registration and retirement (2026-10-25)
+
+The [pending registration family](pending-registration.md) preserves the graph,
+committed frame, health and node count through every actual add branch. It
+constructs fresh extension/Set membership from initial valid-node/reserved-arena
+facts, derives add/delete and duplicate whole-World contracts, and carries a
+constructed graph through registration to bounded settlement return. Thirteen
+roots extend 525 to 538; 128 actual ten-step cases, 384 driver splits and 384
+duplicate no-op checks pass. Five new kernel faults are rejected. Frozen633
+completed with all 851 input hashes/trackership verified; current644 has eleven
+later focused rejections. Full public callback/flight protocol, global identity/
+ledger validity, broad constructor-to-carrier composition and coordinated reveal
+remain open. Runtime/source/host/limits are unchanged.

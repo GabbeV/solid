@@ -884,3 +884,18 @@ these finite cases cover the absent-carrier alternative. Initial healthy context
 reserved arenas and null-parent computed identity remain explicit. Runtime, host,
 source and limits are unchanged. Callback/registration integration, full
 accounting and coordinated reveal remain open.
+
+
+## Actual source registration and retirement (2026-10-25)
+
+The [pending registration family](pending-registration.md) preserves the graph,
+committed frame, health and node count through every actual add branch. It
+constructs fresh extension/Set membership from initial valid-node/reserved-arena
+facts, derives add/delete and duplicate whole-World contracts, and carries a
+constructed graph through registration to bounded settlement return. Thirteen
+roots extend 525 to 538; 128 actual ten-step cases, 384 driver splits and 384
+duplicate no-op checks pass. Five new kernel faults are rejected. Frozen633
+completed with all 851 input hashes/trackership verified; current644 has eleven
+later focused rejections. Full public callback/flight protocol, global identity/
+ledger validity, broad constructor-to-carrier composition and coordinated reveal
+remain open. Runtime/source/host/limits are unchanged.
