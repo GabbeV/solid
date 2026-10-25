@@ -25,14 +25,14 @@ try{
 const T=privateModules.transaction,C=privateModules.core;
 const asList=encodeList;
 const source=new URL('../upstream/solid/packages/signals/src/',import.meta.url).pathname;
-const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
+const bundle=await build({stdin:{contents:"export * from './index.ts';export {resolveTx,live,blocked} from './core/scheduler.ts';export {REACTIVE_DIRTY,CONFIG_AUTO_DISPOSE} from './core/constants.ts';",resolveDir:source,loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'live-transactions-only',setup(b){b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>import('node:fs').then(fs=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+'\nexport {transactions as live};'})));}}]});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const lit=lit=>({lit}),seq=(...seq)=>({seq}),result=(value,done=false)=>({iteratorResult:{value,done}});
 const write=value=>({invokeWith:{callee:lit({setter:'x'}),value:lit(value)}});
 let histories=0,rejectedActionHistories=0,prefixes=0,zeroDebtGraphControls=0,renderedScanControls=0,asyncPrefixControls=0,acceptedAsyncPrefixControls=0,trimmedAsyncPrefixControls=0,settlementPrefixes=0,settlementSteps=0,settlementVisits=0,settlementReleaseBoundaries=0,settlementFlushBoundaries=0,ownerTrimCompleteControls=0,structuralOwnerSteps=0,callbackStartBoundaries=0,independentApplyControls=0,selectedUiChecks=0,emptySettlementSixStepControls=0,trimmedEmptyEightStepControls=0,emptyDriverSplitControls=0,emptyDriverExhaustionControls=0;
 // Positive actual-release queueing controls. This fork does not execute the
 // queued owner work or claim a native/public release history.
-let queuedReleaseFrameControls=0,faultedPendingFrameControls=0;
+let queuedReleaseFrameControls=0,faultedPendingFrameControls=0,pendingTopologyStepControls=0,settledLeafShapeControls=0;
 {
  const fixture=new BendRuntime({async:true});
  fixture.memo('unused',{lit:'cached later'},{lazy:true});
@@ -215,7 +215,19 @@ for(const direct of [false,true])for(const reverseCreate of [false,true])for(con
         structuralOwnerSteps++;
        }
        if(head.$==='PendingTasks'&&list(head.tasks)[0]?.$==='Visit')visits++;
+       const topology=world=>({nodes:list(world.nodes).map(n=>({kind:n.kind,config:n.config,subs:n.subs})),links:world.links});
+       const previous=machine;
        machine=C.step(machine);steps++;
+       if(head.$!=='OwnerTasks'){
+        assert.deepEqual(topology(machine.world),topology(previous.world),name+' actual pending step retains kind/config/subscriber heads and links');pendingTopologyStepControls++;
+       }
+       if(head.$==='PendingTasks'&&list(head.tasks)[0]?.$==='Visit'){
+        const visit=list(head.tasks)[0],leaf=list(previous.world.nodes)[visit.id];
+        assert.equal(leaf.subs,0);assert.equal(leaf.config&S.CONFIG_AUTO_DISPOSE,0);
+        const next=list(machine.tasks)[0];assert.equal(next.$,'PendingTasks');
+        assert.deepEqual(list(next.tasks)[0],{$:'Walk',edge:0,root:visit.root,source:visit.source});
+        assert.deepEqual(list(next.visited),[visit.id]);assert.deepEqual(list(next.released),[]);settledLeafShapeControls++;
+       }
        assert.ok(steps<200,'finite valid fixture settlement must terminate before its flush');
        assert.equal(machine.world.fault.$,'Healthy',name+' actual settlement stays healthy');
        assert.deepEqual(committed(machine.world),originalView,name+' actual settlement retains committed storage/tree/trace');
@@ -251,4 +263,5 @@ assert.ok(settlementFlushBoundaries>0,'settlement fixtures must reach their queu
 assert.ok(ownerTrimCompleteControls>0&&structuralOwnerSteps>0,'owner trim fixtures must execute actual structural work');
 assert.ok(independentApplyControls>0&&selectedUiChecks>0,'selected renderer fixtures must observe real independent applications and text results');
 assert.ok(emptySettlementSixStepControls>0,'empty-subscriber fixtures must cover the actual six-step path');
-console.log(JSON.stringify({queuedReleaseFrameControls,faultedPendingFrameControls,publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,emptySettlementSixStepControls,trimmedEmptyEightStepControls,emptyDriverSplitControls,emptyDriverExhaustionControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));
+assert.ok(pendingTopologyStepControls>0&&settledLeafShapeControls>0);
+console.log(JSON.stringify({pendingTopologyStepControls,settledLeafShapeControls,queuedReleaseFrameControls,faultedPendingFrameControls,publicHistories:histories,rejectedActionHistories,observedPrefixes:prefixes,nativeGeneratorControls:histories,zeroDebtGraphControls,renderedScanControls,asyncPrefixControls,acceptedAsyncPrefixControls,trimmedAsyncPrefixControls,settlementPrefixes,settlementSteps,settlementVisits,settlementReleaseBoundaries,settlementFlushBoundaries,ownerTrimCompleteControls,structuralOwnerSteps,callbackStartBoundaries,independentApplyControls,selectedUiChecks,emptySettlementSixStepControls,trimmedEmptyEightStepControls,emptyDriverSplitControls,emptyDriverExhaustionControls,scope:'two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof'}));

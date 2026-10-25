@@ -1,3 +1,8 @@
+import ./proof/subscriber-topology-frame.bend as SubscriberShape
+import ./proof/pending-topology-frame.bend as PendingTopology
+import ./proof/core-pending-topology.bend as CoreTopology
+import ./proof/pending-topology-history.bend as TopologyHistory
+import ./proof/pending-machine-shape.bend as PendingMachine
 import ./proof/pending-settlement-frame.bend as SettlementFrame
 import ./proof/core-pending-frame.bend as CoreSettlementFrame
 import ./proof/pending-committed-history.bend as SettlementHistory
@@ -1713,3 +1718,31 @@ def Laws.callback_free_settlement_history_retains_selected_observation(scope, pr
 
 def Laws.constructed_empty_subscriber_prefix_is_content_safe(w, id, rest, stack, noSubscribers, healthy):
   SettlementHistory.constructedBody(w, id, rest, stack, noSubscribers, healthy)
+
+
+def Laws.actual_pending_traversal_retains_subscriber_topology(w, tasks, visited, released, scheduled):
+  PendingTopology.advance(w, tasks, visited, released, scheduled)
+
+
+def Laws.actual_core_pending_step_retains_subscriber_topology(w, rest, stack, tasks, visited, released, scheduled):
+  CoreTopology.step(w, rest, stack, tasks, visited, released, scheduled)
+
+
+def Laws.callback_free_settlement_history_retains_subscriber_topology(scope, programme, allowed):
+  TopologyHistory.iterationFrame(scope, programme, allowed)
+
+
+def Laws.callback_free_settlement_history_retains_selected_subscriber_shape(scope, programme, allowed, id):
+  TopologyHistory.selectedNode(scope, programme, allowed, id)
+
+
+def Laws.callback_free_settlement_history_retains_selected_link(scope, programme, allowed, edge):
+  TopologyHistory.selectedLink(scope, programme, allowed, edge)
+
+
+def Laws.settled_non_autodisposed_node_retains_prior_release_list(w, tasks, visited, released, scheduled, id, root, source, noAuto):
+  PendingMachine.settledNoReleases(w, tasks, visited, released, scheduled, id, root, source, noAuto)
+
+
+def Laws.settled_leaf_derives_its_actual_pending_machine_shape(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto):
+  PendingMachine.settledLeaf(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto)

@@ -17,9 +17,9 @@ and Lean pin are unchanged. No semantic deviation is active.
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 627 = 483 finite + 144 kernel variants, including completion/wait/blocker/landing invariants |
+| Configured mutations | 630 = 483 finite + 147 kernel variants, including completion/wait/blocker/landing invariants |
 | Complete negative sweep | Frozen 4975adf2: all 619 named variants rejected with canonical lists and unchanged 817 tracked input hashes; [receipt](reviews/canonical-list-complete-negative.json) |
-| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; current627 is not a complete sweep |
+| Later negative evidence | Focused value/frame/invariant variants, separately recorded; four no-subscriber kernel variants plus three later finite/one kernel content variants rejected; three further topology kernel variants rejected; current630 is not a complete sweep |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -264,3 +264,14 @@ status/tail blocks now have names; an inlining audit recovers the exact previous
 statements and order. Public/alignment suites pass; no runtime task, semantic
 policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
 general successful termination and coordinated flush/reveal remain open.
+
+
+## Pending topology and derived leaf control (2026-10-25)
+
+The [topology/leaf extension](pending-topology.md) adds seven roots, retaining the earlier 493. Actual
+pending helpers/core steps and arbitrary certified body prefixes retain node
+kind/configuration/subscriber heads and all intrusive links. A non-autodisposed
+leaf derives its exact control layout around the actual computed World, private
+visited/released locals and scheduled bit. The 1,280 step and 80 leaf controls
+pass; three new metadata corruptions are kernel-rejected. Runtime/source/task
+budgets are unchanged. Successful general traversal and final reveal remain open.

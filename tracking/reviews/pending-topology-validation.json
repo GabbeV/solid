@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-25",
+  "checkpointBase": "ca2212d93ae62d74ec3ef59b7b82d6ce7af33c22",
+  "sourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
+  "runtimeChanged": false,
+  "hostChanged": false,
+  "toolchainAndKernelLimitsUnchanged": true,
+  "activeDeviationIds": [],
+  "previousRootsRetained": 493,
+  "newRoots": 7,
+  "composedRoots": 500,
+  "allEarlierTheoremDomainsRetained": true,
+  "arbitraryWorldPayloadsGraphsCallerWorkAndStack": true,
+  "footprint": [
+    "all node kinds",
+    "all node configurations",
+    "all node subscriber heads",
+    "all intrusive links"
+  ],
+  "allowedPrefixPhases": [
+    "pending",
+    "afterTrim",
+    "schedule"
+  ],
+  "leafInputPremises": [
+    "zero subscriber head",
+    "auto-dispose config absent"
+  ],
+  "leafResultFields": [
+    "actual computed World",
+    "zero walk plus original tasks",
+    "node prepended to visited",
+    "original release list",
+    "actual scheduled flag"
+  ],
+  "publicHistoriesUnchanged": 4750,
+  "existingPairedJoinedFlightHistories": 240,
+  "publicSelectedTextChecks": 2280,
+  "actualPendingTopologyStepControls": 1280,
+  "actualSettledLeafShapeControls": 80,
+  "configuredMutations": 630,
+  "finiteMutations": 483,
+  "kernelMutations": 147,
+  "newFocusedKernelRejections": 3,
+  "completeSweepOfCurrentConfiguration": false,
+  "completeFrozen619": "tracking/reviews/canonical-list-complete-negative.json",
+  "resourceFailuresCredited": false,
+  "notClaimed": [
+    "public constructor establishes graph invariants",
+    "general successful traversal or health",
+    "source Set uniqueness",
+    "arbitrary callback effects",
+    "full joined-action publication invariant",
+    "queued flush execution",
+    "eventual host delivery/fairness"
+  ],
+  "logs": {
+    "pending-topology-frame-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-frame-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-prefix-frame-check4.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-prefix-frame-check4.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-topology-history-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-history-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-machine-shape-check2.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-machine-shape-check2.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-topology-controls.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-controls.log",
+      "sha256": "04cc28e264360f78c804fb391b51807a0d0e4cb6dd43e9eabbcb40ef3e3b9acf"
+    },
+    "pending-topology-composed1.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-composed1.log",
+      "sha256": "f8112e97acc37ad4c5d88e93fadd4403fe4b1b372f3a5a00ddc6c1d797bf853d"
+    },
+    "pending-topology-mutation-targets.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-mutation-targets.log",
+      "sha256": "89f230e82ec8d7696025d9eb755fb36f3192e7a4cfadb645291d95a8307c5cd8"
+    },
+    "pending-topology-negatives.log": {
+      "path": "/workspace/scratch/night-2026-10-25/pending-topology-negatives.log",
+      "sha256": "7986e7b63fc38a6d72112dff797a9ffd125ff4409d22e4d9a8a7eed44b243ece"
+    }
+  }
+}

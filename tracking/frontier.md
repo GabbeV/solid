@@ -225,3 +225,14 @@ status/tail blocks now have names; an inlining audit recovers the exact previous
 statements and order. Public/alignment suites pass; no runtime task, semantic
 policy, theorem domain, witness budget or kernel limit changed. Owner callbacks,
 general successful termination and coordinated flush/reveal remain open.
+
+
+## Pending topology and derived leaf control (2026-10-25)
+
+The [topology/leaf extension](pending-topology.md) adds seven roots, retaining the earlier 493. Actual
+pending helpers/core steps and arbitrary certified body prefixes retain node
+kind/configuration/subscriber heads and all intrusive links. A non-autodisposed
+leaf derives its exact control layout around the actual computed World, private
+visited/released locals and scheduled bit. The 1,280 step and 80 leaf controls
+pass; three new metadata corruptions are kernel-rejected. Runtime/source/task
+budgets are unchanged. Successful general traversal and final reveal remain open.

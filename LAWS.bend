@@ -1,3 +1,8 @@
+import ./proof/subscriber-topology-frame.bend as SubscriberShape
+import ./proof/pending-topology-frame.bend as PendingTopology
+import ./proof/core-pending-topology.bend as CoreTopology
+import ./proof/pending-topology-history.bend as TopologyHistory
+import ./proof/pending-machine-shape.bend as PendingMachine
 import ./proof/pending-settlement-frame.bend as SettlementFrame
 import ./proof/core-pending-frame.bend as CoreSettlementFrame
 import ./proof/pending-committed-history.bend as SettlementHistory
@@ -3759,3 +3764,73 @@ law constructed_empty_subscriber_prefix_is_content_safe:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +healthy: {B.ok(w) == True{} : Bool}
   {SettlementHistory.bodyOnly(EmptySettlement.start(w, id, rest, stack), EmptySettlement.programme(w, id, rest, stack, noSubscribers, healthy)) == True{} : Bool}
+
+
+law actual_pending_traversal_retains_subscriber_topology:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {SubscriberShape.observe(PendingTopology.world(RuntimePending.advance(w, tasks, visited, released, scheduled))) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+
+law actual_core_pending_step_retains_subscriber_topology:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  {SubscriberShape.observe(Core.world(Core.step(Core.Machine{w, Core.PendingTasks{tasks, visited, released, scheduled} <> rest, stack}))) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+
+law callback_free_settlement_history_retains_subscriber_topology:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
+  {SubscriberShape.observe(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope))) == SubscriberShape.observe(Core.world(scope)) : SubscriberShape.View}
+
+
+law callback_free_settlement_history_retains_selected_subscriber_shape:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
+  for +id: Nat
+  {SubscriberShape.shape(B.node(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope)), id)) == SubscriberShape.shape(B.node(Core.world(scope), id)) : SubscriberShape.Shape}
+
+
+law callback_free_settlement_history_retains_selected_link:
+  for +scope: Core.Machine
+  for +programme: PendingHistory.Programme<scope>
+  for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
+  for +edge: Nat
+  {B.link(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope)), edge) == B.link(Core.world(scope), edge) : R.Link}
+
+
+law settled_non_autodisposed_node_retains_prior_release_list:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  for +id: Nat
+  for +root: Nat
+  for +source: Nat
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  {PendingMachine.releases(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source)) == released : List<&2, Nat>}
+
+
+law settled_leaf_derives_its_actual_pending_machine_shape:
+  for +w: R.World
+  for +tasks: List<&2, RuntimePending.Task>
+  for +visited: List<&2, Nat>
+  for +released: List<&2, Nat>
+  for +scheduled: Bool
+  for +id: Nat
+  for +root: Nat
+  for +source: Nat
+  for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
+  for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
+  {RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source) == RuntimePending.Machine{PendingMachine.world(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source)), RuntimePending.Walk{0n, root, source} <> tasks, id <> visited, released, PendingMachine.scheduled(RuntimePending.settled(w, tasks, visited, released, scheduled, id, root, source))} : RuntimePending.Machine}
