@@ -1,3 +1,5 @@
+import ./proof/action-method-wait-fixture.bend as MethodWaitFixture
+import ./proof/action-method-first-history.bend as MethodFirstHistory
 import ./proof/action-retirement-context.bend as ActionRetirementContext
 import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
@@ -2261,3 +2263,34 @@ def Laws.allocated_actor_full_cell_survives_helper_prefix(values,prefix):
 
 def Laws.retired_action_stays_zero_through_helper_suffix(values,rest,stack,rejected,value,events):
   ActionRetirementContext.afterRetirementZero(values,rest,stack,rejected,value,events)
+
+def Laws.admitted_yielded_callback_enters_with_observer_frame(w,rest,stack,observer,action,rejected,value,method,known):
+  FirstFrame.delivered(w,rest,stack,observer,action,rejected,value,method,known)
+
+
+def Laws.method_action_actor_allocated_after_helper_prefix(values,method,prefix):
+  MethodFirstHistory.allocated(values,method,prefix)
+
+
+def Laws.method_action_capture_survives_real_wait_registration(values,method,prefix):
+  MethodFirstHistory.methods(values,method,prefix)
+
+
+def Laws.first_method_callback_after_helpers_retains_observer_context(values,method,prefix,rest,stack,rejected,value):
+  MethodFirstHistory.frame(values,method,prefix,rest,stack,rejected,value)
+
+
+def Laws.first_method_callback_after_helpers_establishes_settled_lookup(values,method,prefix,rest,stack,rejected,value):
+  MethodFirstHistory.firstFound(values,method,prefix,rest,stack,rejected,value)
+
+
+def Laws.first_method_callback_after_helpers_retains_wait_range(values,method,prefix,rest,stack,rejected,value):
+  MethodFirstHistory.firstRange(values,method,prefix,rest,stack,rejected,value)
+
+
+def Laws.first_method_callback_after_helpers_retains_committed_content(values,method,prefix,rest,stack,rejected,value):
+  MethodFirstHistory.firstContent(values,method,prefix,rest,stack,rejected,value)
+
+
+def Laws.first_method_callback_and_helper_suffix_guard_current_machine(values,method,prefix,rest,stack,rejected,value,events,lateRejected,lateValue):
+  MethodFirstHistory.duplicate(values,method,prefix,rest,stack,rejected,value,events,lateRejected,lateValue)

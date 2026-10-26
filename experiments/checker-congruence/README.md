@@ -9,5 +9,6 @@ proof, must compile before its executable is used. See
 
 The reproduction is a checker efficiency case, not a Solid bug or a replacement
 reactivity model. The source runtime, pinned frontend and vendored kernel remain
-unchanged. The candidate is not yet the default verification profile at this
-checkpoint; its results and the baseline seal have separate provenance.
+unchanged. The optimized profile is now the recorded default for repository verification.
+The baseline622-root seal and the full678 optimized negative sweep retain separate
+provenance; the native executables used by the sweep and managed build are identical.

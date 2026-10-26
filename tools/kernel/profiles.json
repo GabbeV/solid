@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "defaultProfile": "baseline",
+  "defaultProfile": "same-head-congruence-v1",
   "baselineSource": "upstream/bend/bend2/bendtt.lean",
   "baselineSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335",
   "congruence": {

@@ -1,3 +1,5 @@
+import ./proof/action-method-wait-fixture.bend as MethodWaitFixture
+import ./proof/action-method-first-history.bend as MethodFirstHistory
 import ./proof/action-retirement-context.bend as ActionRetirementContext
 import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
@@ -5203,3 +5205,87 @@ law retired_action_stays_zero_through_helper_suffix:
   for +value: R.Value
   for +events: List<&2,WaitHistory.WaitEvent>
   {R.Transaction.open(B.transaction(Core.world(FirstRetirement.after(values,rest,stack,rejected,value,events)),1n)) == 0n : Nat}
+
+law admitted_yielded_callback_enters_with_observer_frame:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +observer: Nat
+  for +action: Nat
+  for +rejected: Bool
+  for +value: R.Value
+  for +method: FirstFrame.Method
+  for known: {R.ActionState.methods(Action.get(w,action)) == FirstFrame.expression(method) : R.Expr}
+  {FirstFrame.observe(Core.world(Core.actionDelivery(w,rest,stack,R.ActionWait{observer,action,0,False{}},rejected,value))) == FirstFrame.observe(FirstFrame.marked(w,observer)) : ObserverWrites.View}
+
+
+law method_action_actor_allocated_after_helper_prefix:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {Nat.is_lt(MethodWaitFixture.action(values,method),B.length(R.ActionState,R.World.actions(MethodWaitFixture.registered(values,method,prefix)))) == True{} : Bool}
+
+
+law method_action_capture_survives_real_wait_registration:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {R.ActionState.methods(Action.get(MethodWaitFixture.registered(values,method,prefix),MethodWaitFixture.action(values,method))) == FirstFrame.expression(method) : R.Expr}
+
+
+law first_method_callback_after_helpers_retains_observer_context:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {ObserverWrites.observe(Core.world(MethodFirstHistory.first(values,method,prefix,rest,stack,rejected,value))) == ObserverWrites.observe(FirstFrame.marked(MethodWaitFixture.registered(values,method,prefix),MethodWaitFixture.fresh(values,method,prefix))) : ObserverWrites.View}
+
+
+law first_method_callback_after_helpers_establishes_settled_lookup:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {Action.find(R.World.actionWaits(Core.world(MethodFirstHistory.first(values,method,prefix,rest,stack,rejected,value))),MethodWaitFixture.fresh(values,method,prefix)) == Some{R.ActionWait{MethodWaitFixture.fresh(values,method,prefix),MethodWaitFixture.action(values,method),0,True{}}} : Maybe<&2,R.ActionWait>}
+
+
+law first_method_callback_after_helpers_retains_wait_range:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {WaitRange.below(R.World.actionWaits(Core.world(MethodFirstHistory.first(values,method,prefix,rest,stack,rejected,value))),WaitAllocation.index(Core.world(MethodFirstHistory.first(values,method,prefix,rest,stack,rejected,value)))) == True{} : Bool}
+
+
+law first_method_callback_after_helpers_retains_committed_content:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {CommittedStorage.observe(Core.world(MethodFirstHistory.first(values,method,prefix,rest,stack,rejected,value))) == CommittedStorage.observe(MethodWaitFixture.initial(values,method)) : CommittedStorage.View}
+
+
+law first_method_callback_and_helper_suffix_guard_current_machine:
+  for +values: List<&2,R.Value>
+  for +method: FirstFrame.Method
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),MethodFirstHistory.tasks(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),Core.values(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),MethodWaitFixture.fresh(values,method,prefix),lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events))),MethodWaitFixture.fresh(values,method,prefix))) == MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events) : Core.Machine}

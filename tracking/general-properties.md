@@ -374,3 +374,15 @@ reachability, effect notification, propagation and queued reveal remain open.
 lookup/range premises from actual registration, connect arbitrary finite helper
 histories to exact current-Machine duplicate guards and the settled .then catch,
 and preserve committed content. Full generator/debt/reveal remains open.
+
+## Constructed admitted-method first arrivals, 2026-10-26
+
+[The first-arrival contracts](action-method-first.md) now derive actor room, method
+capture and fresh lookup from actual creation/opening/Promise/wait operations after
+arbitrary finite admitted helper prefixes. Actual dispatch establishes its settled
+mark; content/range and exact stale-Machine safety compose through later helper
+suffixes. Both terminal and arbitrary next/throw Body methods are admitted; their
+queued evaluation, full generator/flight ledger and final reveal are outside this
+result. The recovered generic dispatch equation is checked with the recorded
+Lean-checked congruence profile, not assumed after its old baseline resource stop.
+Earlier root domains remain; source runtime and checker fuel are unchanged.

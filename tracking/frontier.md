@@ -9,8 +9,9 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `4ea2f498` (rc.18); Bend 2.0.37 and its independent kernel are
-unchanged. No semantic deviation is active. This is an incremental production,
+Solid is pinned to `4ea2f498` (rc.18); the Bend2.0.37 frontend and vendored
+snapshot remain unchanged. Independent verification uses the recorded, Lean-checked
+[congruence-first kernel profile](kernel-congruence.md) with unchanged fuel. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
 
 | Area | Implementation and correspondence evidence | Semantic proof coverage | Remaining scope |
@@ -438,8 +439,22 @@ reveal remain open.
 The [congruence-first checker candidate](kernel-congruence.md) recovers the blocked
 general action-delivery equation with a fully checked Lean soundness development
 and unchanged fuel. Candidate and baseline receipts remain distinct; the active
-default and 622-root seal still use the baseline. A complete frozen678 negative
-sweep is in progress, not credited as complete. Terminal-retirement proof imports
+default and622-root seal at the first infrastructure checkpoint used baseline.
+The subsequent full678 negative sweep is complete, with the recorded optimized
+checker. Current integration is described below. Terminal-retirement proof imports
 are separated from generic callback-table frames. Runtime/source/host semantics
 are unchanged. The next application is real first delivery after arbitrary
 admitted helper prefixes, then pending retirement/status and queued flush/reveal.
+
+## Real first delivery after arbitrary helper prefixes
+
+[The admitted-method family](action-method-first.md) constructs actor/method/fresh
+wait premises, executes the actual first callback after any admitted helper prefix,
+and carries the settled lookup, range and committed content into arbitrary helper
+suffixes and exact stale-Machine guards. It covers End and arbitrary next/throw
+Body expressions before queued evaluation. Eight roots extend622 to630. The
+previous general dispatch resource stop is recovered with the explicitly recorded
+Lean-checked congruence profile. Full generator/flight accounting and queued
+user-body/flush/reveal remain open. Runtime/representation/host/source pin are
+unchanged. The frozen678 negative sweep is complete; four newer focused faults
+are separate, and current682 is not a fresh complete sweep.

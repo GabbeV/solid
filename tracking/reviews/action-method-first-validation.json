@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "checkpointBase": "6b76b664d675ee2354f1a05c0eaab5de0c865ddb",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "proofProfile": "same-head-congruence-v1",
+  "previousComposedRootsRetained": 622,
+  "newComposedRoots": 8,
+  "composedRoots": 630,
+  "supportedMethodForms": [
+    "End",
+    "Body with arbitrary next/throw/tail expressions and catch flag"
+  ],
+  "arbitraryFinitePrefixAndSuffix": true,
+  "actorAndMethodAndFreshLookupDerived": true,
+  "firstCallbackIsActualSourceDelivery": true,
+  "finalSettledLookupIsNotAnInput": true,
+  "observerArenaAndCommittedContentRetained": true,
+  "laterDuplicateRetainsExactCurrentMachine": true,
+  "executesQueuedUserBody": false,
+  "fullPublicInvocationToWaitReachabilityProved": false,
+  "fullGeneratorFlightLedgerOrFlushRevealProved": false,
+  "finiteControls": {
+    "helperOrders": 408,
+    "methodChoices": 3,
+    "actualFirstCallbacks": 2448,
+    "exactStaleMachines": 4896,
+    "longestPrefix": 64,
+    "terminalReturnChecksFiniteOnly": 816
+  },
+  "compactNegativeProbesPositive": true,
+  "focusedKernelRejections": 4,
+  "negativeNames": [
+    "method first kernel erases committed nodes during transaction entry",
+    "method first kernel discards observer arena during transaction entry",
+    "method first kernel discards wait cells while advancing body",
+    "method first kernel treats every yielded callback as a duplicate"
+  ],
+  "broadNegativeRssStopCredited": false,
+  "configuredMutations": 682,
+  "finiteMutations": 484,
+  "kernelMutations": 198,
+  "completeCurrentSweep": false,
+  "frozenCompleteSweep": "678 on frozen27f8 with declared optimized checker; all1009 sealed inputs unchanged and tracked",
+  "runtimeRepresentationHostOrSourcePinChanged": false,
+  "activeSemanticDeviations": [],
+  "logs": {
+    "active-method-first-controls": "96c91020689f33e53b30d40e328ce77206a7fcce2ce970e56bc8f8180f91938e",
+    "active-method-first-kernel": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d",
+    "method-negative-positive": "f396598716f79da38a8ae112dc8556d1900359f11595b04a387fbb52b59adb4d",
+    "method-four-negatives-compact": "040d455a2034774599ab63a62f3ab1a47dff070198696f669cfe4c4169028d56"
+  }
+}

@@ -35,9 +35,11 @@ depth, action-cell and transaction changes. The resume theorem assumes that the
 input action cell contains one of the admitted method forms; join/ambient work
 preserves that premise. It does not execute queued `Evaluate` programs.
 
-The more general arbitrary-World first-delivery composition still hits reduction
-resources and is [archived](../experiments/action-first-general/README.md). The
-constructed terminal family above is checked. Neither result proves the complete
+The original baseline-kernel failure remains [archived](../experiments/action-first-general/README.md).
+The general admitted-method dispatch composition now checks with the explicitly
+recorded congruence-first kernel, and [real construction and helper histories](action-method-first.md)
+supply its method premise for both End and Body. The earlier constructed terminal
+family above remains checked. These results do not prove the complete
 arbitrary-generator/once-only flight ledger, arbitrary graph writes/settlements,
 whole public invocation-to-wait reachability or coordinated flush/reveal. The
 helper histories retain their existing scoped protocol interpretation.

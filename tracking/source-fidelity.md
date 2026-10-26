@@ -223,3 +223,12 @@ input/kernel result. The completed 633-variant sweep is historical evidence on
 frozen 73eda482 at 2a0da2fc; the current 653 configuration has not had a complete
 sweep. Twenty later focused kernel variants passed at their individual checkpoints,
 including this new scheduling variant; that is not a fresh complete sweep.
+
+## Proof-checker efficiency overlay, 2026-10-26
+
+The [recorded kernel profile](kernel-congruence.md) changes conversion search
+order and updates its complete Lean soundness proof. It adds no semantic
+substitution to the source-followable runtime. All runtime, representation, host
+and pinned-source bytes remain unchanged in this run; correspondence accounting
+is not closed by proof counts. New first-arrival contracts remain properties of
+the admitted Bend protocol, not a formal TS/Bend equivalence theorem.

@@ -340,3 +340,17 @@ uses actual driver fuel. Eight roots extend 500 to 508. Eighty real ten-step and
 40 trimmed returns, plus private nine-step/five-step alternatives, pass. Runtime,
 source, domains and limits are unchanged. Public premise construction, full
 accounting and coordinated flush/reveal remain open.
+
+## Composed callback entry and checker efficiency (2026-10-26)
+
+[Actual first arrivals](tracking/action-method-first.md) now compose real action/
+Promise/wait construction, arbitrary admitted helper prefixes, End or next/throw
+Body staging, settled lookup and exact later stale-callback guards. The630-root
+seal uses a [recorded congruence-first BendTT profile](tracking/kernel-congruence.md)
+whose full Lean soundness/consistency development checks without new axioms or
+fuel increases. The original Bend snapshot and baseline profile remain available.
+First profile preparation also needs a `patch` command alongside the existing
+Lean/C toolchain. The full678 frozen negative sweep and four later focused checks
+have separate provenance; full generator/flight accounting, queued user-body
+execution and coordinated flush/reveal remain open. Source runtime, representation
+and host adapters are unchanged.
