@@ -1063,3 +1063,5 @@ excludes already-held/override/custom-comparator writes; full protocol/flight an
 queued publication are unfinished. Runtime/source/host and older budgets/domains
 remain. Resource-stopped attempts stay uncredited; verified checkpoints require
 the full independent composed verdict and tracked input seal.
+
+The668-root checkpoint `fb9c8ad4` checks finite real setter bodies and constructed retirement (343.3s,1,117 sealed inputs). The next held-staging dependency adds canonical same-component joining, allocated snapshot progress and actual held staging health/identity contracts; complete held-body/publication composition remains open.

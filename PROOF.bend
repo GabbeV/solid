@@ -1,3 +1,16 @@
+import ./proof/held-setter-entry.bend as HeldStage0
+import ./proof/list-update-lookup.bend as HeldStage1
+import ./proof/held-stash-frame.bend as HeldStage2
+import ./proof/held-stash-snapshot.bend as HeldStage3
+import ./proof/extension-store-lenses.bend as HeldStage4
+import ./proof/held-stage-health.bend as HeldStage5
+import ./proof/held-stage-intake.bend as HeldStage6
+import ./proof/held-write-outer.bend as HeldStage7
+import ./proof/ordinary-stage-tail.bend as HeldStage8
+import ./proof/held-stage-topology.bend as HeldStage9
+import ./proof/ordinary-stage-topology.bend as HeldStage10
+import ./proof/pointer-store-frame.bend as HeldStage11
+import ./proof/pointer-notification-frame.bend as HeldStage12
 import ./proof/subscriber-walk-health.bend as WriteBody0
 import ./proof/subscriber-walk-step.bend as WriteBody1
 import ./proof/ordinary-write-outer.bend as WriteBody2
@@ -2502,3 +2515,27 @@ def Laws.constructed_finite_setter_body_has_zero_live_action_debt(initial,values
 
 def Laws.actual_constant_updater_expression_keeps_committed_storage(w,rest,stack,id,value,previous,healthy,ordinary,override,custom):
   WriteBody12.committed(w,rest,stack,id,value,previous,healthy,ordinary,override,custom)
+
+
+def Laws.canonical_held_source_join_preserves_group_and_only_schedules(w,id,offset,canonical,current,stopped):
+  HeldStage0.actual(w,id,offset,canonical,current,stopped)
+
+
+def Laws.held_snapshot_stash_retains_error_flight_and_control_fields(w,id,existing):
+  HeldStage2.actual(w,id,existing)
+
+
+def Laws.allocated_held_extension_records_the_actual_flushed_snapshot(w,id,room):
+  HeldStage3.tailWritten(w,id,room)
+
+
+def Laws.held_staging_with_certified_subscribers_preserves_health(w,path,id,value,extra,health,unmarked,valid,head,room,context,signal,existing):
+  HeldStage5.healthy(w,path,id,value,extra,health,unmarked,valid,head,room,context,signal,existing)
+
+
+def Laws.held_staging_retains_source_shape_and_link_storage(w,id,value,context,signal,existing):
+  HeldStage9.shape(w,id,value,context,signal,existing)
+
+
+def Laws.held_staging_retains_every_allocated_extension_identity(w,id,value,context,signal,existing):
+  HeldStage9.pointers(w,id,value,context,signal,existing)

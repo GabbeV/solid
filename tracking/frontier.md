@@ -539,3 +539,5 @@ full public protocol reachability, arbitrary user code, flight accounting and
 queued flush/reveal remain open. Runtime/source/host and earlier domains/budgets
 remain unchanged. The next useful extension is a source-faithful same-component
 held setter and its extension/stash obligations, then queued slice publication.
+
+The [held-staging dependency](held-staging.md) now covers canonical held-source joining, precise snapshot preservation/progress, actual held intake/staging health and retained source/extension identities. Repeated held-body certificate construction and the full public/publication composition remain open.

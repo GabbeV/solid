@@ -445,3 +445,7 @@ excludes already-held/override/custom-comparator writes; full protocol/flight an
 queued publication are unfinished. Runtime/source/host and older budgets/domains
 remain. Resource-stopped attempts stay uncredited; verified checkpoints require
 the full independent composed verdict and tracked input seal.
+
+## Held source entry and staging
+
+See [held-staging.md](held-staging.md) for the actual canonical source-group join, allocated snapshot progress, precise full-control frame and held staging/subscriber safety contracts. Snapshot observations retain all flight/error/group fields; source shape and extension pointers have separate checked frames. This does not broaden the ordinary-body domain.

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "sourcePin": "1d6c40fb459735ecbeebfaa6be8b8c142597fd34",
+  "runtimeChanged": false,
+  "checkerProfile": "same-head-congruence-v1",
+  "composedRoots": {
+    "before": 668,
+    "candidate": 674,
+    "authority": "Fresh independent full composed verdict and exact sealed inputs in tracking/checked.json; individual module checks are additional evidence."
+  },
+  "operationModules": [
+    "extension-store-lenses",
+    "held-setter-entry",
+    "held-stash-frame",
+    "held-stash-snapshot",
+    "held-write-outer",
+    "held-stage-intake",
+    "held-stage-health",
+    "pointer-store-frame",
+    "pointer-heap-frame",
+    "pointer-notification-frame",
+    "held-stage-topology"
+  ],
+  "finiteControls": {
+    "helperCases": 1352,
+    "payloadRepresentations": 13,
+    "savedSnapshots": 676,
+    "cachedIdentities": 676,
+    "nativePortJoinedGenerators": 32,
+    "writesAfterResume": 336
+  },
+  "newKernelNegativeVariants": 7,
+  "configuredMutations": {
+    "finite": 487,
+    "kernel": 225,
+    "total": 712
+  },
+  "mutationCreditPolicy": "Unchanged oracle must pass, changed runtime must compile and kernel must reject semantically. No timeout, fuel/memory exhaustion or compile failure is credited. Focused seven pass is recorded only after actual success; whole configured712 has not been freshly run.",
+  "scope": "Canonical positive terminal held-source join; valid-extension snapshot progress and precise frame; actual held stage intake/tail/subscriber safety, shape and extension-pointer preservation. Complete held body/profile/publication composition remains open.",
+  "focusedNegativeVerification": {
+    "unchangedOraclePassed": true,
+    "compiledAndRejected": 7,
+    "variants": [
+      "held stage kernel destroys an existing in-flight identity",
+      "held stage kernel snapshots committed instead of pending data",
+      "held stage kernel stamps the next clock instead of current window",
+      "held stage kernel spends group debt while saving a snapshot",
+      "held stage kernel omits scheduling a same-component join",
+      "held stage kernel erases a canonical transaction cache",
+      "held stage kernel clears the allocated extension during heap insertion"
+    ],
+    "oracleSha256": "ba893f4590958e6d23d2feca54b563ac1ab9eba4b2fbec86ba469d33375803e9",
+    "runnerFooter": "7 source-changing variants rejected by differential or kernel assertions."
+  }
+}

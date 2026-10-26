@@ -1,3 +1,16 @@
+import ./proof/held-setter-entry.bend as HeldStage0
+import ./proof/list-update-lookup.bend as HeldStage1
+import ./proof/held-stash-frame.bend as HeldStage2
+import ./proof/held-stash-snapshot.bend as HeldStage3
+import ./proof/extension-store-lenses.bend as HeldStage4
+import ./proof/held-stage-health.bend as HeldStage5
+import ./proof/held-stage-intake.bend as HeldStage6
+import ./proof/held-write-outer.bend as HeldStage7
+import ./proof/ordinary-stage-tail.bend as HeldStage8
+import ./proof/held-stage-topology.bend as HeldStage9
+import ./proof/ordinary-stage-topology.bend as HeldStage10
+import ./proof/pointer-store-frame.bend as HeldStage11
+import ./proof/pointer-notification-frame.bend as HeldStage12
 import ./proof/subscriber-walk-health.bend as WriteBody0
 import ./proof/subscriber-walk-step.bend as WriteBody1
 import ./proof/ordinary-write-outer.bend as WriteBody2
@@ -5765,3 +5778,64 @@ law actual_constant_updater_expression_keeps_committed_storage:
   for override: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()) == False{} : Bool}
   for custom: {Equality.custom(w,id) == 0n : Nat}
   {CommittedStorage.observe(Core.world(PendingHistory.iterate(3n,WriteBody12.start(w,rest,stack,id,value,previous)))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law canonical_held_source_join_preserves_group_and_only_schedules:
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for canonical: {R.NodeExtension.transaction(B.extension(w,id)) == 1n+offset : Nat}
+  for current: {R.World.flushTransaction(w) == 1n+offset : Nat}
+  for +stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
+  {Transactions.joinNode(w,id) == HeldStage0.scheduled(w) : R.World}
+
+
+law held_snapshot_stash_retains_error_flight_and_control_fields:
+  for +w: R.World
+  for +id: Nat
+  for existing: {Nat.is_eq(R.Node.x(B.node(w,id)),0n) == False{} : Bool}
+  {HeldStage2.observe(ReadState.stashFlushed(w,id),R.Node.x(B.node(w,id))) == HeldStage2.observe(w,R.Node.x(B.node(w,id))) : R.World}
+
+
+law allocated_held_extension_records_the_actual_flushed_snapshot:
+  for +w: R.World
+  for +id: Nat
+  for +room: {Nat.is_lt(R.Node.x(B.node(w,id)),B.length(R.NodeExtension,R.World.extensions(w))) == True{} : Bool}
+  {B.extension(StagedStorage.stashTail(w,id),id) == HeldStage3.updated(w,id) : R.NodeExtension}
+
+
+law held_staging_with_certified_subscribers_preserves_health:
+  for +w: R.World
+  for +path: WriteBody1.Path<w>
+  for +id: Nat
+  for +value: R.Value
+  for +extra: Nat
+  for health: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  for unmarked: {R.World.marked(w) == False{} : Bool}
+  for valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool}
+  for head: {R.Node.subs(B.node(w,id)) == WriteBody1.origin(w,path) : Nat}
+  for room: {B.budget(w) == Nat.add(WriteBody1.depth(w,path),extra) : Nat}
+  for context: {R.World.context(w) == 0n : Nat}
+  for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
+  for existing: {Nat.is_eq(R.Node.x(B.node(w,id)),0n) == False{} : Bool}
+  {R.World.fault(RuntimeWrites.stageResolved(w,id,value)) == R.Healthy{} : R.Fault}
+
+
+law held_staging_retains_source_shape_and_link_storage:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for context: {R.World.context(w) == 0n : Nat}
+  for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
+  for +existing: {Nat.is_eq(R.Node.x(B.node(w,id)),0n) == False{} : Bool}
+  {SubscriberShape.observe(RuntimeWrites.stageResolved(w,id,value)) == SubscriberShape.observe(w) : SubscriberShape.View}
+
+
+law held_staging_retains_every_allocated_extension_identity:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for context: {R.World.context(w) == 0n : Nat}
+  for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
+  for +existing: {Nat.is_eq(R.Node.x(B.node(w,id)),0n) == False{} : Bool}
+  {NodePointers.observe(RuntimeWrites.stageResolved(w,id,value)) == NodePointers.observe(w) : List<&2,Nat>}

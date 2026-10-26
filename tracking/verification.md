@@ -572,3 +572,7 @@ passing runtime-only oracle; the earlier resource-stopped attempts receive no
 credit. Current configured705=487 finite+218 kernel targets are current. Complete
 frozen700 remains a separate scoped receipt, not a fresh complete705 claim. See
 [body validation](reviews/ordinary-action-bodies-validation.json).
+
+### Held staging extension after668
+
+[Held-staging scope and evidence](held-staging.md) and its [receipt](reviews/held-staging-validation.json) add seven runtime-only kernel fault variants: source flight, saved pending slot, clock, group debt, join scheduling, canonical cache and heap extension identity. Configured712=487 finite+225 kernel. Fresh focused credit requires the runner successful seven-variant footer; earlier complete frozen700 and focused body5 are separate. No complete712 sweep is claimed. Full composed credit requires the fresh independent674-root verdict and exact input seal.
