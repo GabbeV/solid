@@ -148,7 +148,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `d786bcf6` (documentation only after production pin `4ea2f498`, 2026-10-25). All 77 recorded Solid inputs match the pin.
+Latest next checked: `1d6c40fb` (2026-10-26). All77 recorded Solid inputs match the pin; its reviewed changes and excluded store/boundary profile are recorded below.
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -505,3 +505,19 @@ is checked. Three roots extend646 to649.22 native public programs and seven new
 compiled negative variants pass. Callback execution/fairness and final global
 publication remain separate. This supersedes the intermediate repin's explicit
 onFlush omission. The source pin and all older theorem domains/budgets remain.
+
+
+## Actual method-body return and retirement, 2026-10-26 evening
+
+[The method-return contracts](action-body-return.md) now cross queued literal
+method evaluation and `ActionStepReturn` after arbitrary admitted helper prefixes.
+Construction supplies health, captured identity, route, room and positive debt;
+actual completion retires that debt and retains the settled-yield guard through
+arbitrary helper suffixes and stale current-Machine callbacks. General all-value
+output handling preserves every other field and caller stack, including pending
+Promise adoption. Nine roots extend649 to658.1,950 typed body returns and16
+native-generator/port cases pass. Public invocation-to-host reachability, full
+identity accounting, real body writes and queued flush/reveal remain open.
+A newly added malformed negative oracle was caught and discarded; the runner
+now requires unchanged kernel oracles to pass before crediting rejection.
+Runtime/source/host, earlier theorem domains and limits are unchanged.

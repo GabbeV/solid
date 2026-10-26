@@ -5,6 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["action body kernel fails to exit action depth", "runtime/core.bend", "+w = Action.exit(w)", "+w = w", "tests/proof-properties.mjs", "actionStepReturn", "action-body-negative-probes"],
+  ["action body kernel stores a wrapped continuation instead of next method", "runtime/core.bend", "R.ActionState.with_methods(state, tail)", "R.ActionState.with_methods(state, R.Then{tail, R.Literal{R.Undefined{}}})", "tests/proof-properties.mjs", "actionStepMethods", "action-body-negative-probes"],
+  ["action body kernel discards settled waits while producing output", "runtime/core.bend", "actionOutputValue(w, rest, stack, id, result, rejected, value)", "actionOutputValue(R.World.with_actionWaits(w, []), rest, stack, id, result, rejected, value)", "tests/proof-properties.mjs", "actionOutputState", "action-body-negative-probes"],
+  ["action body kernel discards settled waits while adopting return", "runtime/core.bend", "Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), rest, stack}", "Machine{R.World.with_actionWaits(R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), []), rest, stack}", "tests/proof-properties.mjs", "actionOutputValue", "action-body-negative-probes"],
+  ["action body kernel appends output to caller stack", "runtime/core.bend", "False{}, rejected, value} <> rest, stack}", "False{}, rejected, value} <> rest, B.append(R.Value, stack, [R.Undefined{}])}", "tests/proof-properties.mjs", "actionSettled", "action-body-negative-probes"],
+
   ["onFlush kernel omits flush scheduling", "runtime/on-flush.bend", "+w = B.schedule(w)", "+w = w", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
   ["onFlush kernel reverses callback and flush outbox order", "runtime/on-flush.bend", "B.append(R.HostJob,R.World.hostJobs(w),[R.MicrotaskCallback{body}])", "R.MicrotaskCallback{body} <> R.World.hostJobs(w)", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
   ["onFlush kernel appends a spurious callback", "runtime/on-flush.bend", "[R.MicrotaskCallback{body}]", "[R.MicrotaskCallback{body},R.MicrotaskCallback{R.Literal{R.Undefined{}}}]", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
@@ -793,6 +799,15 @@ for(const [name,file,before,after,test,anchor]of selected){
  if(source.slice(start,end).split(before).length!==2)throw new Error('Mutation must select exactly one source operation: '+name);
 }
 if(process.env.BEND_MUTATION_VALIDATE_ONLY){console.log(`${selected.length} mutation operation targets are current; no semantic test was run.`);process.exit(0);}
+// An already failing kernel oracle cannot establish a mutant rejection. Check
+// each selected kernel module on the unchanged runtime before compiling mutants.
+const baselineModules=new Map();
+for(const [name,file,before,after,test,anchor,proofModule] of selected)if(proofModule)baselineModules.set(proofModule,test);
+const {BEND_EMIT_FILE:ignoredMutationInput,...baselineEnvironment}=process.env;
+for(const [proofModule,test] of baselineModules){
+ const baseline=spawnSync(process.execPath,[test],{cwd:root,env:{...baselineEnvironment,BEND_PROOF_MODULE:proofModule},encoding:'utf8',maxBuffer:1024*1024});
+ if(baseline.status!==0)throw new Error('PROBE_PRECONDITION_FAILED: unchanged kernel oracle '+proofModule+' must pass before mutation credit\n'+baseline.stdout.slice(-1000)+'\n'+baseline.stderr.slice(-3000));
+}
 let caught=0;
 for(const [name,file,before,after,test='tests/differential.mjs',anchor,proofModule] of selected) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'bend-signals-mutation-'));

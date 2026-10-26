@@ -527,3 +527,19 @@ is checked. Three roots extend646 to649.22 native public programs and seven new
 compiled negative variants pass. Callback execution/fairness and final global
 publication remain separate. This supersedes the intermediate repin's explicit
 onFlush omission. The source pin and all older theorem domains/budgets remain.
+
+
+## Executed action body and baseline-oracle check, 2026-10-26 evening
+
+[The body-return domains](action-body-return.md) and
+[receipt](reviews/action-body-validation.json) add nine roots649->658,1,950 typed
+body returns,3,900 stale-Machine controls,130 pending adoptions and16 independently
+authored native-generator/port cases. Five new compiled kernel variants are
+rejected by the separately passing compact oracle. An initial undefined helper
+made that oracle fail unchanged; those apparent rejections were discarded.
+The mutation runner now requires each selected kernel oracle to pass unchanged
+before any mutant can receive credit. A deliberately malformed copied oracle
+is refused with zero credited rejections. Current configured700=487 finite+213
+kernel targets are current; the independent frozen695 sweep is still in progress,
+and this checkpoint does not claim a complete700 sweep. Earlier completed frozen
+receipts remain scoped to their exact inputs/checker. Budgets are unchanged.

@@ -1,3 +1,19 @@
+import ./proof/action-context-reconstruction.bend as BodyImportedReconstruct
+import ./runtime/core.bend as Core
+import ./proof/action-output-frame.bend as BodyOutput
+import ./proof/transaction-resolution.bend as ActionPaths
+import ./proof/pending-stack-history.bend as BodySteps
+import ./proof/action-body-return.bend as BodyReturn
+import ./proof/action-body-entry.bend as BodyEntry
+import ./proof/action-first-frame.bend as BodyFirstFrame
+import ./proof/action-body-retirement.bend as BodyRetire
+import ./proof/action-body-constructed.bend as BodyConstruct
+import ./proof/action-method-wait-fixture.bend as BodyInput
+import ./proof/action-wait-history.bend as BodyHistory
+import ./proof/action-body-guard.bend as BodyGuard
+import ./proof/action-method-first-history.bend as BodyFirst
+import ./proof/action-body-debt.bend as BodyDebt
+import ./proof/transaction-route-transport.bend as RouteTransport
 import ./proof/onflush-registration.bend as FlushRegistration
 import ./proof/onflush-source-control.bend as FlushControl
 import ./runtime/on-flush.bend as FlushOperation
@@ -2387,3 +2403,39 @@ def Laws.nonempty_idle_onflush_registrations_have_exact_ordered_outbox(w,body,re
 
 def Laws.actual_onflush_expression_queues_without_running_body(w,rest,stack,body,previous):
   FlushControl.source(w,rest,stack,body,previous)
+
+
+def Laws.action_output_retains_every_field_except_promise_storage_and_host_requests(w,rest,stack,id,rejected,answer):
+  BodyOutput.output(w,rest,stack,id,rejected,answer)
+
+
+def Laws.certified_group_routes_survive_transaction_arena_frames(w,next,path,extra,same,room):
+  RouteTransport.public(w,next,path,extra,same,room)
+
+
+def Laws.literal_action_result_executes_two_real_steps_to_completion(w,rest,stack,id,value,healthy):
+  BodyReturn.complete(w,rest,stack,id,value,healthy)
+
+
+def Laws.actual_action_resume_enters_terminating_literal_method(w,rest,stack,id,incoming,rejected,value,tail,known):
+  BodyEntry.resume(w,rest,stack,id,incoming,rejected,value,tail,known)
+
+
+def Laws.actual_terminating_body_retires_captured_live_group_obligation(w,rest,stack,id,value,path,extra,remaining,healthy,captured,room,open):
+  BodyRetire.complete(w,rest,stack,id,value,path,extra,remaining,healthy,captured,room,open)
+
+
+def Laws.constructed_body_return_retires_debt_after_arbitrary_helper_prefix(values,value,tail,prefix,rest,stack,incoming,rejected):
+  BodyConstruct.completedOuter(values,value,tail,prefix,rest,stack,incoming,rejected)
+
+
+def Laws.stale_yield_after_body_return_preserves_current_machine(values,value,tail,prefix,rest,stack,incoming,rejected,events,lateRejected,lateValue):
+  BodyGuard.duplicate(values,value,tail,prefix,rest,stack,incoming,rejected,events,lateRejected,lateValue)
+
+
+def Laws.constructed_body_retirement_zero_debt_survives_helper_suffix(values,value,tail,prefix,rest,stack,incoming,rejected,events):
+  BodyDebt.suffixZero(values,value,tail,prefix,rest,stack,incoming,rejected,events)
+
+
+def Laws.action_output_preserves_arbitrary_caller_stack(w,rest,stack,id,rejected,value):
+  BodyOutput.outputStack(w,rest,stack,id,rejected,value)

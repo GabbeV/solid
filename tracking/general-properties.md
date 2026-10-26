@@ -422,3 +422,13 @@ is checked. Three roots extend646 to649.22 native public programs and seven new
 compiled negative variants pass. Callback execution/fairness and final global
 publication remain separate. This supersedes the intermediate repin's explicit
 onFlush omission. The source pin and all older theorem domains/budgets remain.
+
+
+The evening [actual method-return checkpoint](action-body-return.md) adds nine
+composed roots649->658: general output/stack and route transport, two-step literal
+body completion, captured resume, constructed retirement after arbitrary admitted
+helper prefixes, retained stale-callback guards and zero debt through suffixes.
+The source's group retirement precedes returned-Promise adoption. Full public
+protocol reachability, real body writes, flight accounting and queued publication
+remain open. Runtime/source/host and budgets are unchanged; malformed negative
+oracle failures receive no credit, and unchanged kernel oracles must pass first.

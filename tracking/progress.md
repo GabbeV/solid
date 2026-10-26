@@ -1040,3 +1040,13 @@ all14 later faults are rejected. Full664 remains a separately frozen receipt;
 current678 is not claimed as a complete sweep. Runtime/source/host/limits remain
 unchanged. General pre-arrival controller composition and full ledger/flush/
 reveal remain open.
+
+
+The evening [actual method-return checkpoint](action-body-return.md) adds nine
+composed roots649->658: general output/stack and route transport, two-step literal
+body completion, captured resume, constructed retirement after arbitrary admitted
+helper prefixes, retained stale-callback guards and zero debt through suffixes.
+The source's group retirement precedes returned-Promise adoption. Full public
+protocol reachability, real body writes, flight accounting and queued publication
+remain open. Runtime/source/host and budgets are unchanged; malformed negative
+oracle failures receive no credit, and unchanged kernel oracles must pass first.

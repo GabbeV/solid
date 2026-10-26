@@ -1,3 +1,18 @@
+import ./proof/action-context-reconstruction.bend as BodyImportedReconstruct
+import ./proof/action-output-frame.bend as BodyOutput
+import ./proof/transaction-resolution.bend as ActionPaths
+import ./proof/pending-stack-history.bend as BodySteps
+import ./proof/action-body-return.bend as BodyReturn
+import ./proof/action-body-entry.bend as BodyEntry
+import ./proof/action-first-frame.bend as BodyFirstFrame
+import ./proof/action-body-retirement.bend as BodyRetire
+import ./proof/action-body-constructed.bend as BodyConstruct
+import ./proof/action-method-wait-fixture.bend as BodyInput
+import ./proof/action-wait-history.bend as BodyHistory
+import ./proof/action-body-guard.bend as BodyGuard
+import ./proof/action-method-first-history.bend as BodyFirst
+import ./proof/action-body-debt.bend as BodyDebt
+import ./proof/transaction-route-transport.bend as RouteTransport
 import ./proof/onflush-registration.bend as FlushRegistration
 import ./proof/onflush-source-control.bend as FlushControl
 import ./runtime/on-flush.bend as FlushOperation
@@ -5503,3 +5518,112 @@ law actual_onflush_expression_queues_without_running_body:
   for +body: R.Expr
   for +previous: R.Value
   {Core.evaluate(w,rest,stack,R.OnFlush{body},previous) == Core.Machine{FlushOperation.register(w,body),rest,R.Undefined{} <> stack} : Core.Machine}
+
+
+law action_output_retains_every_field_except_promise_storage_and_host_requests:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +rejected: Bool
+  for +answer: R.Value
+  {BodyOutput.outer(Core.world(Core.actionOutput(w,rest,stack,id,rejected,answer))) == BodyOutput.outer(w) : R.World}
+
+
+law certified_group_routes_survive_transaction_arena_frames:
+  for +w: R.World
+  for +next: R.World
+  for +path: RedirectPaths.Route<w>
+  for +extra: Nat
+  for +same: {R.World.txArena(next) == R.World.txArena(w) : List<&2,R.Transaction>}
+  for room: {1n+B.length(R.Transaction,R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w,path),1n+extra) : Nat}
+  {Transactions.resolveTx(next,RedirectPaths.origin(w,path)) == B.Bundle{next,RedirectPaths.terminal(w,path)} : B.Bundle<R.World,Nat>}
+
+
+law literal_action_result_executes_two_real_steps_to_completion:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for +healthy: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  {PendingHistory.iterate(2n,BodyReturn.start(w,rest,stack,id,value)) == Core.actionDone(Action.exit(w),rest,stack,id,False{},value) : Core.Machine}
+
+
+law actual_action_resume_enters_terminating_literal_method:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +value: R.Value
+  for +tail: R.Expr
+  for known: {R.ActionState.methods(Action.get(w,id)) == FirstFrame.expression(BodyEntry.method(value,tail)) : R.Expr}
+  {Core.actionResume(w,rest,stack,id,incoming,rejected) == BodyReturn.start(BodyEntry.prepared(w,id,tail),Core.ActionSliceEnd{R.World.question(w)} <> rest,stack,id,value) : Core.Machine}
+
+
+law actual_terminating_body_retires_captured_live_group_obligation:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for +path: RedirectPaths.Route<w>
+  for +extra: Nat
+  for +remaining: Nat
+  for healthy: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  for captured: {R.ActionState.transaction(Action.get(w,id)) == RedirectPaths.origin(w,path) : Nat}
+  for room: {1n+B.length(R.Transaction,R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w,path),1n+extra) : Nat}
+  for open: {R.Transaction.open(B.transaction(w,RedirectPaths.terminal(w,path))) == 1n+remaining : Nat}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(2n,BodyReturn.start(w,rest,stack,id,value)))) == BodyOutput.outer(BodyRetire.target(w,RedirectPaths.terminal(w,path),remaining)) : R.World}
+
+
+law constructed_body_return_retires_debt_after_arbitrary_helper_prefix:
+  for +values: List<&2,R.Value>
+  for +value: R.Value
+  for +tail: R.Expr
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {BodyOutput.outer(Core.world(BodyConstruct.returned(values,value,tail,prefix,rest,stack,incoming,rejected))) == BodyOutput.outer(BodyRetire.target(BodyConstruct.ready(values,value,tail,prefix),1n,0n)) : R.World}
+
+
+law stale_yield_after_body_return_preserves_current_machine:
+  for +values: List<&2,R.Value>
+  for +value: R.Value
+  for +tail: R.Expr
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events)),MethodFirstHistory.tasks(BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events)),Core.values(BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events)),MethodWaitFixture.fresh(values,BodyEntry.method(value,tail),prefix),lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events))),MethodWaitFixture.fresh(values,BodyEntry.method(value,tail),prefix))) == BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events) : Core.Machine}
+
+
+law constructed_body_retirement_zero_debt_survives_helper_suffix:
+  for +values: List<&2,R.Value>
+  for +value: R.Value
+  for +tail: R.Expr
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +events: List<&2,WaitHistory.WaitEvent>
+  {BodyDebt.count(Core.world(BodyGuard.after(values,value,tail,prefix,rest,stack,incoming,rejected,events))) == 0n : Nat}
+
+
+law action_output_preserves_arbitrary_caller_stack:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +rejected: Bool
+  for +value: R.Value
+  {Core.values(Core.actionOutput(w,rest,stack,id,rejected,value)) == stack : List<&2,R.Value>}
