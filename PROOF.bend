@@ -1,3 +1,6 @@
+import ./proof/onflush-registration.bend as FlushRegistration
+import ./proof/onflush-source-control.bend as FlushControl
+import ./runtime/on-flush.bend as FlushOperation
 import ./proof/lane-never-pending.bend as NeverPending
 import ./proof/heap-status-frame.bend as HeapStatus
 import ./proof/pending-tail-status.bend as TailStatus
@@ -2374,3 +2377,13 @@ def Laws.constructed_memo_render_notification_and_controller_clear_pending(value
 
 def Laws.never_shown_render_read_exits_existing_verdict_lane(w,rest,stack,reader,node,lane,empty,present,same):
   NeverPending.exits(w,rest,stack,reader,node,lane,empty,present,same)
+
+
+def Laws.finite_onflush_registrations_retain_every_non_scheduling_field(bodies,w):
+  FlushRegistration.outerHistory(bodies,w)
+
+def Laws.nonempty_idle_onflush_registrations_have_exact_ordered_outbox(w,body,rest):
+  FlushRegistration.nonempty(w,body,rest)
+
+def Laws.actual_onflush_expression_queues_without_running_body(w,rest,stack,body,previous):
+  FlushControl.source(w,rest,stack,body,previous)

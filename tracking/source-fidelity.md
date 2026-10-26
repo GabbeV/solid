@@ -243,3 +243,15 @@ counterexample rejects removal of the reset. The broad mutated oracle's RSS
 stop is not credited. The new onFlush API is unfinished at this intermediate
 checkpoint; stores and mounted boundaries remain excluded. Budgets and earlier
 theorem domains are retained. No semantic deviation is active.
+
+## onFlush integration, 2026-10-26 evening
+
+[The source-followable API and registration contracts](onflush.md) now implement
+schedule followed by a raw microtask callback, with no owner capture or effect
+cleanup substitution. Arbitrary finite registration histories preserve all World
+fields except four scheduling fields; nonempty idle histories have an exact full
+World and one ordered callback job per registration. The actual evaluator bridge
+is checked. Three roots extend646 to649.22 native public programs and seven new
+compiled negative variants pass. Callback execution/fairness and final global
+publication remain separate. This supersedes the intermediate repin's explicit
+onFlush omission. The source pin and all older theorem domains/budgets remain.

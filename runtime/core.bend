@@ -2,6 +2,7 @@
 # Defunctionalized expressions are reusable callbacks. The same machine drives
 # nested pulls and the flush: the JS adapter has no scheduling implementation.
 import Base
+import ./on-flush.bend as OnFlush
 import ./deferred-runtime.bend as Deferred
 import ./deferred-stream.bend as DeferredStream
 import ./from-state.bend as From
@@ -921,6 +922,8 @@ def evaluate(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, expr
       Machine{w, Evaluate{node, prev} <> ReactionFireValue{reaction} <> rest, stack}
     case R.OnSettled{body}:
       onSettled(w, rest, stack, body)
+    case R.OnFlush{body}:
+      Machine{OnFlush.register(w,body),rest,R.Undefined{} <> stack}
     case R.TrackedCreate{body}:
       trackedEffect(w, rest, stack, body)
     case R.TrackedBody{body}:

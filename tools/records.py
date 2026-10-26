@@ -117,6 +117,7 @@ type AsyncSettlement is Data:
 # These are external delivery/queueMicrotask requests, not reactive decisions.
 type HostJob is Data:
   FlushJob{}
+  MicrotaskCallback{body: Expr}
   DeliveryJob{observer: Nat, rejected: Bool, value: Value}
   WatchStart{awaiter: Nat}
   WatchDelivery{awaiter: Nat, rejected: Bool, value: Value}
@@ -231,6 +232,7 @@ type Expr is Data:
   ReactionTracking{reaction: Nat, body: Expr}
   ReactionFire{reaction: Nat, node: Expr}
   OnSettled{body: Expr}
+  OnFlush{body: Expr}
   TrackedCreate{body: Expr}
   TrackedBody{body: Expr}
   RootScope{body: Expr, transparent: Bool}

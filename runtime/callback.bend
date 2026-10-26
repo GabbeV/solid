@@ -106,6 +106,8 @@ def bindWith(expr: R.Expr, +args: Arguments) -> R.Expr:
       R.ReactionFire{reaction, bindWith(node, args)}
     case R.OnSettled{body}:
       R.OnSettled{bindWith(body, args)}
+    case R.OnFlush{body}:
+      R.OnFlush{bindWith(body, args)}
     case R.TrackedCreate{body}:
       R.TrackedCreate{bindWith(body, args)}
     case R.DeferredAccessor{compute, options}:

@@ -1,3 +1,6 @@
+import ./proof/onflush-registration.bend as FlushRegistration
+import ./proof/onflush-source-control.bend as FlushControl
+import ./runtime/on-flush.bend as FlushOperation
 import ./proof/lane-never-pending.bend as NeverPending
 import ./proof/heap-status-frame.bend as HeapStatus
 import ./proof/pending-tail-status.bend as TailStatus
@@ -5480,3 +5483,23 @@ law never_shown_render_read_exits_existing_verdict_lane:
   for +present: {Nat.is_ne(R.World.passLane(w),0n) == True{} : Bool}
   for +same: {Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,R.World.passLane(w))))),R.World.passLane(w)) == True{} : Bool}
   {Core.laneReadRender(w,rest,stack,reader,node,lane,False{},K.STATUS_PENDING()) == Core.Machine{R.World.with_passLane(w,0n),rest,R.NotPendingToken{} <> stack} : Core.Machine}
+
+
+law finite_onflush_registrations_retain_every_non_scheduling_field:
+  for +bodies: List<&2,R.Expr>
+  for +w: R.World
+  {FlushRegistration.outer(FlushRegistration.history(bodies,w)) == FlushRegistration.outer(w) : R.World}
+
+law nonempty_idle_onflush_registrations_have_exact_ordered_outbox:
+  for +w: R.World
+  for +body: R.Expr
+  for +rest: List<&2,R.Expr>
+  {FlushRegistration.history(body <> rest,FlushRegistration.idle(w)) == FlushRegistration.queued(w,FlushRegistration.expectedJobs(w,body,rest)) : R.World}
+
+law actual_onflush_expression_queues_without_running_body:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +body: R.Expr
+  for +previous: R.Value
+  {Core.evaluate(w,rest,stack,R.OnFlush{body},previous) == Core.Machine{FlushOperation.register(w,body),rest,R.Undefined{} <> stack} : Core.Machine}

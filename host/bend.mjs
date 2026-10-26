@@ -156,6 +156,7 @@ export function expression(e, ids, programs={},futures={},encodeValue=encode,con
   if(Object.hasOwn(e,'flushCall'))return R.flushValue(expression(e.flushCall,ids,programs,futures,encodeValue,contexts));
   if(e.flushNow)return R.flushNow();
   if(e.settled)return R.settled(expression(e.settled,ids,programs,futures,encodeValue,contexts));
+  if(Object.hasOwn(e,'onFlush'))return R.afterFlush(expression(e.onFlush,ids,programs,futures,encodeValue,contexts));
   if(e.trackedCreate)return R.trackedCreate(expression(e.trackedCreate,ids,programs,futures,encodeValue,contexts));
   if(e.optimisticComputeScope){
     const {compute,options={},body={lit:undefined}}=e.optimisticComputeScope;
@@ -388,7 +389,8 @@ export class BendRuntime {
       }
       queueMicrotask(()=>{
         try {
-          if(kind===10)this.world=R.adoptAction(this.fuel,this.world,job.action,job.value);
+          if(kind===11)this.world=R.runOnFlush(this.fuel,this.world,job.body);
+          else if(kind===10)this.world=R.adoptAction(this.fuel,this.world,job.action,job.value);
           else if(kind===1)this.world=R.deliver(this.fuel,this.world,job.observer,job.rejected,job.value);
           else if(kind===2){this.world=R.startRefresh(this.fuel,this.world,job.awaiter);this.bindAwaiter(job.awaiter);}
           else if(kind===3)this.world=R.deliverWatch(this.world,job.awaiter,job.rejected,job.value);
@@ -612,6 +614,10 @@ export class BendRuntime {
     const before=R.nextId(this.world);
     this.world=R.onSettled(this.fuel,this.world,expression(body,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts),this.ownerId(owner));
     if(R.nextId(this.world)>before){this.ids[name]=before;this.reverse[before]=name;}
+    this.check();
+  }
+  onFlush(body) {
+    this.world=R.onFlush(this.world,expression(body,this.ids,this.programs,this.futures,v=>this.encode(v),this.contexts));
     this.check();
   }
   tracked(name,body,{owner='root'}={}) {

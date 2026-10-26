@@ -23812,8 +23812,12 @@
           "start": 1269,
           "end": 1291,
           "sha256": "bf316e10745f4df62682a0262bc1b6f32bab5ad92655d309d303e67dee030c24",
-          "status": "open",
-          "mapping": null
+          "status": "restricted",
+          "mapping": {
+            "bend": "runtime/on-flush.bend:register; runtime/core.bend:evaluate OnFlush; runtime/api.bend:onFlush, afterFlush, runOnFlush; host/bend.mjs:drainJobs",
+            "status": "restricted",
+            "restrictions": "Production schedule then queueMicrotask, raw zero-argument callback with ignored return, actual outbox order and ordinary host errors. Typed callback/body and existing closure bindings; dev diagnostics, arbitrary JS closures and browser fairness remain outside scope. See tracking/onflush.md."
+          }
         }
       ],
       "branches": [

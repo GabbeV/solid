@@ -24,3 +24,13 @@ A general exact branch theorem passes. Its first broad mutated check hit4GiB
 and is uncredited; a positive compact oracle rejects the source reset omission.
 The premature composed check was stopped before documentation/input edits; no
 success is claimed for it. Target646; onFlush is explicitly the next API task.
+
+Repin milestone2c9e4b45 is synced:646 roots,1,059 sealed tracked inputs,248.1s
+verdict. Its public test command passed via the preserved pre-restart prefix and
+resumed suffix; full alignment passed. Ported onFlush in an isolated copy, then
+the shared runtime:22 public native programs pass. Arbitrary finite registration
+order/full-frame and actual evaluator contracts pass individually. Seven valid
+new negatives reject ordering/defer/capture corruptions. A linear-usage compile
+failure is excluded. Retargeted an existing moved lane mutation and rejected it.
+Target649 roots /695 configured mutations; full current sweep is not claimed.
+Next return to action body/return/ledger construction after this API checkpoint.

@@ -109,6 +109,8 @@ def bindWith(expr: R.Expr, +depth: Nat, +args: Z.Arguments) -> R.Expr:
       R.ReactionFire{reaction, bindWith(node, depth, args)}
     case R.OnSettled{body}:
       R.OnSettled{bindWith(body, depth, args)}
+    case R.OnFlush{body}:
+      R.OnFlush{bindWith(body, depth, args)}
     case R.TrackedCreate{body}:
       R.TrackedCreate{bindWith(body, depth, args)}
     case R.ContextGet{key, owner}:

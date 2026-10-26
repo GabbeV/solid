@@ -1,4 +1,5 @@
 import Base
+import ./on-flush.bend as OnFlush
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../observation/tree.bend as T
@@ -444,6 +445,8 @@ def deliverWatch(w: R.World, id: Nat, rejected: Bool, value: R.Value) -> R.World
 
 def hostJobKind(job: R.HostJob) -> U32:
   match job:
+    case R.MicrotaskCallback{body}:
+      11
     case R.FlushJob{}:
       0
     case R.DeliveryJob{observer, rejected, value}:
@@ -678,3 +681,16 @@ def registerSupersede(w: R.World, callback: Nat) -> R.World:
 # Public from constructor; the callback source is a first-class typed callable.
 def fromInput(callee: R.Expr) -> R.Expr:
   R.FromInput{callee}
+
+
+# The same production source operation is used by expression and public entries.
+def onFlush(w: R.World,body: R.Expr) -> R.World:
+  OnFlush.register(w,body)
+
+def afterFlush(body: R.Expr) -> R.Expr:
+  R.OnFlush{body}
+
+# Host invocation of the raw zero-argument microtask callback. Its return value
+# is ignored; thrown values leave through the ordinary host error boundary.
+def runOnFlush(fuel: Nat,w: R.World,body: R.Expr) -> R.World:
+  C.world(C.eval(fuel,w,body,R.Undefined{}))

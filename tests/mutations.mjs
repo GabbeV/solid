@@ -5,6 +5,14 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["onFlush kernel omits flush scheduling", "runtime/on-flush.bend", "+w = B.schedule(w)", "+w = w", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
+  ["onFlush kernel reverses callback and flush outbox order", "runtime/on-flush.bend", "B.append(R.HostJob,R.World.hostJobs(w),[R.MicrotaskCallback{body}])", "R.MicrotaskCallback{body} <> R.World.hostJobs(w)", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
+  ["onFlush kernel appends a spurious callback", "runtime/on-flush.bend", "[R.MicrotaskCallback{body}]", "[R.MicrotaskCallback{body},R.MicrotaskCallback{R.Literal{R.Undefined{}}}]", "tests/proof-properties.mjs", "register", "onflush-negative-probes"],
+  ["onFlush kernel starts body before host microtask delivery", "runtime/core.bend", "Machine{OnFlush.register(w,body),rest,R.Undefined{} <> stack}", "Machine{w,Evaluate{body,prev} <> rest,stack}", "tests/proof-properties.mjs", "evaluate", "onflush-negative-probes"],
+  ["onFlush closure loses ordinary callback arguments", "runtime/callback.bend", "R.OnFlush{bindWith(body, args)}", "R.OnFlush{body}", "tests/on-flush.mjs", "bindWith"],
+  ["onFlush closure loses action parameters", "runtime/action-arguments.bend", "R.OnFlush{bindWith(body, depth, args)}", "R.OnFlush{body}", "tests/on-flush.mjs", "bindWith"],
+  ["onFlush closure loses lexical signal binding", "runtime/lexical.bend", "R.OnFlush{bindAs(body, depth, signal, setter)}", "R.OnFlush{body}", "tests/on-flush.mjs", "bindAs"],
+
   ["lane never pending kernel keeps verdict pass when read must escape", "runtime/core.bend", "R.World.with_passLane(w, 0n)", "w", "tests/proof-properties.mjs", "laneReadRender", "lane-never-negative-probes"],
 
   ["pending controller kernel heap insertion changes status", "runtime/heap.bend", "R.Node.with_height(n, height)", "R.Node.with_status(R.Node.with_height(n, height), 0)", "tests/proof-properties.mjs", "actualInsertIntoHeap", "pending-completion-negative-probes"],
@@ -459,7 +467,7 @@ const mutations=[
   ['truth serves unconfirmed staging as final','runtime/core.bend','_ => Machine{w, rest, R.Undefined{} <> stack}','_ => Machine{w, rest, R.Number{1n} <> stack}','tests/lane-read-alignment.mjs','truthNode'],
   ['lane read serves outdated errored derivation','runtime/core.bend','Bool.and(Bool.not(guess), B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()))','False{}','tests/lane-read-alignment.mjs','laneRead'],
   ['untracked lane read leaks unrevealed staging','runtime/core.bend','Machine{w, rest, Lanes.display(w, id) <> stack}','Machine{w, rest, Truth.laneValueOf(w, id) <> stack}','tests/lane-read-alignment.mjs','laneReadReader'],
-  ['lane loading loses fallthrough token','runtime/core.bend','_ => Machine{w, rest, R.NotPendingToken{} <> stack}','_ => Machine{w, rest, R.Undefined{} <> stack}','tests/lane-read-alignment.mjs','laneReadRender'],
+  ['lane loading loses fallthrough token','runtime/core.bend','_ => Machine{w, rest, R.NotPendingToken{} <> stack}','_ => Machine{w, rest, R.Undefined{} <> stack}','tests/lane-read-alignment.mjs','laneReadOutside'],
   ['lane stale render readers are appended twice','runtime/core.bend','B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_SCREEN_READ())','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],
   ['unrevealed initial lane value stops suspending','runtime/core.bend','Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED())))','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],
   ['held lane reads enter before reveal','runtime/core.bend','Bool.or(R.Transaction.held(B.transaction(w, lane)), Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING())))','False{}','tests/lane-read-alignment.mjs','laneReadRenderEnd'],

@@ -366,3 +366,8 @@ stamping, heap enqueue and unblock. A constructed memo/render corollary supplies
 the carrier premise from local notification stores. Dependent traversal, owner
 release and final publication remain open; see the
 [controller scope](tracking/pending-completion.md#actual-retirement-controller-and-constructed-entry).
+
+[onFlush](tracking/onflush.md) now follows the production schedule/microtask
+operation. Arbitrary finite registration sequences have an exact ordered outbox
+and retain the reactive state; callback execution and final publication remain
+separate proof obligations.

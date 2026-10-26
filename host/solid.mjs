@@ -134,6 +134,10 @@ export class SolidRuntime {
       const track=this.evaluate(e.reactionArm.callee,prev,values,locals),body=e.reactionArm.tracking;
       return this.armReaction(track,()=>this.evaluate(body,undefined,values,locals));
     }
+    if(Object.hasOwn(e,'onFlush')){
+      this.S.onFlush(()=>{try{this.evaluate(e.onFlush,undefined,values,locals);}catch(error){this.asyncErrors.push(this.errorShape(error));}});
+      return;
+    }
     if(e.settled){
       const owner=this.S.getOwner(),owned=owner&&!(owner._config&16);
       const name=owned?'#nested'+(this.nestedSerial=(this.nestedSerial??0)+1):undefined;
@@ -645,6 +649,9 @@ export class SolidRuntime {
       return this.returnedCleanup(this.evaluate(body,undefined,values,locals));
     });
     if(parent){const node=parent._firstChild;this.sourceNames.set(node,name);this.notPending??=node._pendingValue;}
+  }
+  onFlush(body){
+    this.S.onFlush(()=>{try{this.evaluate(body);}catch(error){this.asyncErrors.push(this.errorShape(error));}});
   }
   tracked(name,body,{owner='root'}={}){
     return this.S.runWithOwner(this.ownerFor(owner),()=>this.createTracked(name,body));

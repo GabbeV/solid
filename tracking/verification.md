@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 688 = 484 finite + 204 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 695 = 487 finite + 208 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen a6d4: all682 named variants rejected in an interrupted/resumed sweep with its declared checker; all1026 sealed inputs unchanged and tracked; [receipt](reviews/complete-682-negative.json) |
-| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current688 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
+| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current695 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -515,3 +515,15 @@ counterexample rejects removal of the reset. The broad mutated oracle's RSS
 stop is not credited. The new onFlush API is unfinished at this intermediate
 checkpoint; stores and mounted boundaries remain excluded. Budgets and earlier
 theorem domains are retained. No semantic deviation is active.
+
+## onFlush integration, 2026-10-26 evening
+
+[The source-followable API and registration contracts](onflush.md) now implement
+schedule followed by a raw microtask callback, with no owner capture or effect
+cleanup substitution. Arbitrary finite registration histories preserve all World
+fields except four scheduling fields; nonempty idle histories have an exact full
+World and one ordered callback job per registration. The actual evaluator bridge
+is checked. Three roots extend646 to649.22 native public programs and seven new
+compiled negative variants pass. Callback execution/fairness and final global
+publication remain separate. This supersedes the intermediate repin's explicit
+onFlush omission. The source pin and all older theorem domains/budgets remain.

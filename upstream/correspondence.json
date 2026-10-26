@@ -1116,6 +1116,11 @@
       "bend": "runtime/from-wrap.bend; runtime/iterator-methods.bend; runtime/core.bend:fromOpenState, FromWrapOpened, fromBind, fromSetFinish, fromWrapDelivery, FromWrappedFinish, FromWrapFinishFinally, iteratorReturn",
       "status": "restricted",
       "restrictions": "Typed external AsyncIterable and nested typed from/deferred factory identities. Exact pending resolver Set order, delete guards, native output Promise timing, bare/throw pass-through, forwarded next vector and no-argument inner return. 204 public histories; 384 separate concurrent-pull/cancellation/native protocol controls. Complete fixed owned ordinary-payload programme >=84 with canceled output and unresolved inner Promise; 13 local laws. Arbitrary mutable methods/getters, then calls that throw/inspect callback results, manual async generators and nonproduction hooks remain open; source bug010 preserved. See tracking/from-iterables.md. The complete >=84 programme additionally quantifies over arbitrary R.Value, preserving function/iterable data tokens; token validity and arbitrary async histories remain separate."
+    },
+    "signals.ts:onFlush": {
+      "bend": "runtime/on-flush.bend:register; runtime/core.bend:evaluate OnFlush; runtime/api.bend:onFlush, afterFlush, runOnFlush; host/bend.mjs:drainJobs",
+      "status": "restricted",
+      "restrictions": "Production schedule then queueMicrotask, raw zero-argument callback with ignored return, actual outbox order and ordinary host errors. Typed callback/body and existing closure bindings; dev diagnostics, arbitrary JS closures and browser fairness remain outside scope. See tracking/onflush.md."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

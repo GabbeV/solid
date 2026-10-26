@@ -113,6 +113,8 @@ def bindAs(expr: R.Expr, +depth: Nat, +signal: Nat, +setter: R.Value) -> R.Expr:
       R.ReactionFire{reaction, bindAs(node, depth, signal, setter)}
     case R.OnSettled{body}:
       R.OnSettled{bindAs(body, depth, signal, setter)}
+    case R.OnFlush{body}:
+      R.OnFlush{bindAs(body, depth, signal, setter)}
     case R.TrackedCreate{body}:
       R.TrackedCreate{bindAs(body, depth, signal, setter)}
     case R.ContextGet{key, owner}:
