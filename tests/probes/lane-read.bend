@@ -106,3 +106,13 @@ def answered(spec: Spec) -> B.Bundle<R.World, R.Question>:
 
 def compare(a: R.Question, b: R.Question) -> Q.Order:
   Q.compare(a, b)
+
+
+# A prior latest() read moved the render pass into its parent's verdict lane.
+# Keep the existing Spec and its older callers unchanged.
+def fixtureVerdict(+spec: Spec) -> C.Machine:
+  +w = initial(spec)
+  +pass = R.World.passLane(w)
+  +parent = R.Transaction.parent(B.transaction(w, pass))
+  +w = B.store_transaction(w, parent, R.Transaction.with_verdict(B.transaction(w, parent), pass))
+  execute(fixtureOp(spec), w)

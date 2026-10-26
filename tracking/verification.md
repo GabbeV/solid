@@ -7,7 +7,7 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `4ea2f498` (rc.18). The Bend2.0.37 frontend and vendored snapshot
+Solid is pinned to `1d6c40fb` (rc.18). The Bend2.0.37 frontend and vendored snapshot
 remain unchanged. The independent checker uses the recorded, fully Lean-checked
 [congruence profile](kernel-congruence.md); Lean4.34.0 and kernel fuel are unchanged. No semantic deviation is active.
 
@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 687 = 484 finite + 203 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 688 = 484 finite + 204 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen a6d4: all682 named variants rejected in an interrupted/resumed sweep with its declared checker; all1026 sealed inputs unchanged and tracked; [receipt](reviews/complete-682-negative.json) |
-| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current687 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
+| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current688 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -504,3 +504,14 @@ The [actual controller receipt](reviews/pending-controller-validation.json) adds
 six composed roots,192 native settlement controls and two focused rejections.
 All frozen682 names remain a separate complete receipt; five newer negatives
 have focused evidence, not a fresh full687 sweep.
+
+## Repin to next@1d6c40fb, 2026-10-26 evening
+
+The [review](reviews/solid-1d6c40fb.md) audits changed operations and explicit
+profile exclusions. The lane never-shown read fix and a new generic branch
+contract extend645 to646 roots. Native build/declarations and350 files /5,606
+tests pass.3,258 helper cases and720 question controls match; a compact kernel
+counterexample rejects removal of the reset. The broad mutated oracle's RSS
+stop is not credited. The new onFlush API is unfinished at this intermediate
+checkpoint; stores and mounted boundaries remain excluded. Budgets and earlier
+theorem domains are retained. No semantic deviation is active.

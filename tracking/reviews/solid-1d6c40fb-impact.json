@@ -1,0 +1,1382 @@
+{
+  "baseline": {
+    "repository": "https://github.com/solidjs/solid",
+    "commit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+    "branch": "next",
+    "version": "2.0.0-rc.18"
+  },
+  "candidate": {
+    "path": "/workspace/solid-next-1d6c40fb/packages/signals/src",
+    "kind": "local working-tree snapshot; commit and cleanliness not asserted"
+  },
+  "scope": "signals src/**/*.ts; separately review tests, documentation, build conditions and initialization reachability",
+  "evidence": "Correspondence and TS parity require review/revalidation. Existing Bend proofs remain about their pinned program, not this candidate.",
+  "deviationsToReview": [],
+  "changedFiles": [
+    {
+      "file": "boundaries.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "a7c0244f18c60b920d56d46e2115f72be37a4ec3df1be6ac88476763dcefd8b9",
+      "afterSha256": "7bda0454038cb6188751cc51e544e2dd066e141cbe0300a6ad4e1bdd44dbf65a",
+      "changedUnits": [
+        {
+          "key": "boundaries.ts:boundarySeam",
+          "change": "changed",
+          "before": [
+            {
+              "start": 360,
+              "end": 390
+            }
+          ],
+          "after": [
+            {
+              "start": 364,
+              "end": 394
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 8,
+            "after": 8,
+            "status": "required"
+          }
+        },
+        {
+          "key": "boundaries.ts:catchStatus",
+          "change": "changed",
+          "before": [
+            {
+              "start": 222,
+              "end": 256
+            }
+          ],
+          "after": [
+            {
+              "start": 226,
+              "end": 260
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 10,
+            "after": 10,
+            "status": "required"
+          }
+        },
+        {
+          "key": "boundaries.ts:caught",
+          "change": "changed",
+          "before": [
+            {
+              "start": 177,
+              "end": 197
+            }
+          ],
+          "after": [
+            {
+              "start": 180,
+              "end": 200
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 4,
+            "after": 4,
+            "status": "required"
+          }
+        },
+        {
+          "key": "boundaries.ts:createBoundary",
+          "change": "changed",
+          "before": [
+            {
+              "start": 517,
+              "end": 727
+            }
+          ],
+          "after": [
+            {
+              "start": 521,
+              "end": 739
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 34,
+            "after": 36,
+            "status": "required"
+          }
+        },
+        {
+          "key": "boundaries.ts:flip",
+          "change": "changed",
+          "before": [
+            {
+              "start": 204,
+              "end": 210
+            }
+          ],
+          "after": [
+            {
+              "start": 207,
+              "end": 214
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 2,
+            "after": 2,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "core/action.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "0b22bf272cfa2cdc87c619c28fe55b2bc906a926589d7a22a47908d362f56073",
+      "afterSha256": "8256e976b64f50ba91d2d909617cae2fd7d03382b2d6a95225e1a82c0b604974",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/action.ts:inTransaction",
+          "bend": "runtime/core.bend:actionResume, ActionSliceEnd, ActionRestoreQuestion"
+        },
+        {
+          "key": "core/action.ts:action",
+          "bend": "runtime/action-state.bend:function, create, open, done, enter, exit, wait, settleWait; runtime/core.bend:ActionOpened, ActionExecutorEnd, actionStep/Methods/Return/Fault, actionRun, actionYield, actionSubscribe, actionDelivery, ActionYieldCatch, actionOutput; runtime/action-arguments.bend:bind, bindMany, bindWith; runtime/core.bend:InvokeManyCallee, InvokeManyValue, invokeManyArguments, invokeMany, bindCallActions; runtime/api.bend:actionCreate, actionParameter, actionInvoke, actionMethod, iteratorResult"
+        }
+      ]
+    },
+    {
+      "file": "core/async.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "3bb8899673c92c90c0fce64217812438b632a318d06bf19227390a330184aed4",
+      "afterSha256": "5d1c357723c9f101d1adff6cd9af68b43cad8e9b40c9cc9aea18f12e9d9301d8",
+      "changedUnits": [
+        {
+          "key": "core/async.ts:handleAsync",
+          "change": "changed",
+          "before": [
+            {
+              "start": 406,
+              "end": 843
+            }
+          ],
+          "after": [
+            {
+              "start": 407,
+              "end": 850
+            }
+          ],
+          "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks; runtime/flight.bend:liveValue",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 54,
+            "after": 54,
+            "status": "required"
+          }
+        },
+        {
+          "key": "core/async.ts:propagateStatus",
+          "change": "changed",
+          "before": [
+            {
+              "start": 955,
+              "end": 1031
+            }
+          ],
+          "after": [
+            {
+              "start": 962,
+              "end": 1041
+            }
+          ],
+          "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 7,
+            "after": 7,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/async.ts:addPendingSource",
+          "bend": "runtime/pending-state.bend:addPendingSource, hasSource, items"
+        },
+        {
+          "key": "core/async.ts:removePendingSource",
+          "bend": "runtime/pending-state.bend:removePendingSource, remove"
+        },
+        {
+          "key": "core/async.ts:clearPendingSources",
+          "bend": "runtime/pending-state.bend:clearPendingSources"
+        },
+        {
+          "key": "core/async.ts:retryReaches",
+          "bend": "runtime/pending-state.bend:retryReaches, retryLoop"
+        },
+        {
+          "key": "core/async.ts:parkLoadingWindow",
+          "bend": "runtime/pending-state.bend:parkLoadingWindow"
+        },
+        {
+          "key": "core/async.ts:setPendingError",
+          "bend": "runtime/pending-state.bend:setPendingError, preserveOrCreate, notReadyError"
+        },
+        {
+          "key": "core/async.ts:releaseIfSettledUnobserved",
+          "bend": "runtime/pending.bend:releaseIfSettledUnobserved; runtime/pending.bend:releasable; runtime/core.bend:pendingTasks, passReleases"
+        },
+        {
+          "key": "core/async.ts:releaseSettledDependents",
+          "bend": "runtime/pending.bend:releaseSettledDependents, Collect, CollectWalk, CollectNext, Release; runtime/pending.bend:beginReleaseSettledDependents, advance; runtime/core.bend:PendingTasks, finishHandleError"
+        },
+        {
+          "key": "core/async.ts:stageError",
+          "bend": "runtime/pending.bend:stageError, stageWrap; runtime/pending.bend:beginStageError; runtime/core.bend:ErrorStageSettle, ErrorAfterStage, CatchStageSettle, CatchStageFinish"
+        },
+        {
+          "key": "core/async.ts:settleErroredDependents",
+          "bend": "runtime/status.bend:settleErroredDependents, SettleVisit, SettleWalk, SettleNext, SettleEnd"
+        },
+        {
+          "key": "core/async.ts:settlePendingSource",
+          "bend": "runtime/pending.bend:settlePendingSource, Visit, visitRemoved, settled, settledStatus, settledTail, skip, Walk, Next, Release, End; runtime/pending.bend:beginSettlement, advance; runtime/core.bend:PendingTasks, pendingResume, pendingTasks"
+        },
+        {
+          "key": "core/async.ts:releaseFlightTeardown",
+          "bend": "runtime/owner.bend:releaseFlightTeardown"
+        },
+        {
+          "key": "core/async.ts:onSupersede",
+          "bend": "runtime/supersede.bend:eligible, registerEligible, register, chain; runtime/core.bend:callbackAction SupersedeChain, supersedeFinally, SupersedeRestore/unwind; representation/base.bend:flight, sameFlight; runtime/api.bend:registerSupersede"
+        },
+        {
+          "key": "core/async.ts:handleAsync",
+          "bend": "runtime/flight.bend:register, thenResult, handleError, asyncWrite, settleAutodispose; runtime/core.bend:subscribeState, subscribe, afterThen, AsyncFulfill, AsyncReject, AsyncFlush, SettleAuto; runtime/iterator-state.bend:newStream, next, close; runtime/core.bend:consumeIterator, iterateStream, afterStep, afterConsume, stepFulfilledResult, stepRejected, afterIterator, IterateOrRelease, recordFlight, recordQuestion, addObserver; runtime/core.bend:RegisterFlight, RegisterQuestion, RegisterSources, RegisterObserver, SubscribeThen; runtime/flight.bend:beginAsyncWrite, shouldSettleAutodispose, beginHandleError, ErrorPosture, thenValue; runtime/core.bend:asyncWrite, AsyncWriteAfterTrim, AsyncWriteSchedule, handleError, handleErrorStarted, handleErrorNotify, finishHandleError, ErrorStageSettle, ErrorAfterStage, ErrorSettleSource, ErrorAfterPending, ThenRejected, StepRejectedReturn, PendingTasks; runtime/flight.bend:liveValue"
+        },
+        {
+          "key": "core/async.ts:clearStatus",
+          "bend": "runtime/status.bend:clearStatus"
+        },
+        {
+          "key": "core/async.ts:landStatus",
+          "bend": "runtime/pending.bend:landStatus"
+        },
+        {
+          "key": "core/async.ts:notifyStatus",
+          "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped"
+        },
+        {
+          "key": "core/async.ts:propagateStatus",
+          "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom"
+        }
+      ]
+    },
+    {
+      "file": "core/core.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "cf261a2451e790cfad6bbde2c9fcd8bf551cbcfea8cc741c704542a8d63e86e1",
+      "afterSha256": "138c10d9719c09151b0332606b6018a34a98577d3621a3ed8c237623afae6f21",
+      "changedUnits": [
+        {
+          "key": "core/core.ts:recompute",
+          "change": "changed",
+          "before": [
+            {
+              "start": 308,
+              "end": 889
+            }
+          ],
+          "after": [
+            {
+              "start": 308,
+              "end": 891
+            }
+          ],
+          "bend": "runtime/core.bend:LanePass, PassFrame, seatPass, passValue, recomputeFlight, recomputeAfterFlight, recomputeAfterTeardown, recomputePrepared, catchStatus, catchPass, startPassFinally, passFinallyBody, passFinallyTail, joinedPass, restoreMount, PassReleases, afterPass, PassLaneStage, stagePassAt, stagePass, publishState, publicationChanged, publishCompared, markPublishedEffectAs, publishStoresAs, PublishOutcome, publicationCompleted, retireOutgoing, FinishPublication, QueuePublication, queuePublicationIn, AfterDeadPass; existing flight/iterator/owner/pending continuations remain shared",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 90,
+            "after": 90,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/core.ts:laneFrameMember",
+          "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeapInto"
+        },
+        {
+          "key": "core/core.ts:recompute",
+          "bend": "runtime/core.bend:LanePass, PassFrame, seatPass, passValue, recomputeFlight, recomputeAfterFlight, recomputeAfterTeardown, recomputePrepared, catchStatus, catchPass, startPassFinally, passFinallyBody, passFinallyTail, joinedPass, restoreMount, PassReleases, afterPass, PassLaneStage, stagePassAt, stagePass, publishState, publicationChanged, publishCompared, markPublishedEffectAs, publishStoresAs, PublishOutcome, publicationCompleted, retireOutgoing, FinishPublication, QueuePublication, queuePublicationIn, AfterDeadPass; existing flight/iterator/owner/pending continuations remain shared"
+        },
+        {
+          "key": "core/core.ts:updateIfNecessary",
+          "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags"
+        },
+        {
+          "key": "core/core.ts:computed",
+          "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions; runtime/core.bend:SignalComputeScope, MemoSignalReady"
+        },
+        {
+          "key": "core/core.ts:computed",
+          "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions; runtime/core.bend:SignalComputeScope, MemoSignalReady"
+        },
+        {
+          "key": "core/core.ts:computed",
+          "bend": "runtime/construct-state.bend:computed; runtime/construct.bend:computed; runtime/core.bend:evaluate(MemoRead); runtime/api.bend:createMemoWithOptions; runtime/core.bend:SignalComputeScope, MemoSignalReady"
+        },
+        {
+          "key": "core/core.ts:ext",
+          "bend": "runtime/extension.bend:ext; representation/base.bend:blank_extension"
+        },
+        {
+          "key": "core/core.ts:joinPass",
+          "bend": "runtime/transaction.bend:joinPass, enterRead"
+        },
+        {
+          "key": "core/core.ts:frameRead",
+          "bend": "runtime/transaction.bend:frameRead, enterRead"
+        },
+        {
+          "key": "core/core.ts:bornInto",
+          "bend": "runtime/transaction.bend:bornInto"
+        },
+        {
+          "key": "core/core.ts:parkChildren",
+          "bend": "runtime/owner.bend:parkChildren, markDisposal"
+        },
+        {
+          "key": "core/core.ts:createEffectNode",
+          "bend": "runtime/construct-state.bend:createEffectNode; runtime/construct.bend:createEffectNode"
+        },
+        {
+          "key": "core/core.ts:setupComputedNode",
+          "bend": "runtime/construct-state.bend:setupComputedNode; runtime/construct.bend:setupComputedNode; runtime/owner.bend:linkChild"
+        },
+        {
+          "key": "core/core.ts:signal",
+          "bend": "runtime/construct-state.bend:signal; runtime/construct.bend:signal"
+        },
+        {
+          "key": "core/core.ts:untrack",
+          "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind"
+        },
+        {
+          "key": "core/core.ts:prepareComputed",
+          "bend": "runtime/core.bend:readNode, prepareDisposed"
+        },
+        {
+          "key": "core/core.ts:readerSeesCommitted",
+          "bend": "runtime/read-state.bend:readerSeesCommitted"
+        },
+        {
+          "key": "core/core.ts:markUnflushedStaged",
+          "bend": "runtime/read-state.bend:markUnflushedStaged"
+        },
+        {
+          "key": "core/core.ts:unflushedValue",
+          "bend": "runtime/read-state.bend:unflushedValue"
+        },
+        {
+          "key": "core/core.ts:stashFlushed",
+          "bend": "runtime/read-state.bend:stashFlushed"
+        },
+        {
+          "key": "core/core.ts:markLateLinker",
+          "bend": "runtime/read-state.bend:markLateLinker"
+        },
+        {
+          "key": "core/core.ts:resyncUnflushedCompanions",
+          "bend": "runtime/read-state.bend:resyncUnflushedCompanions"
+        },
+        {
+          "key": "core/core.ts:pullComputed",
+          "bend": "runtime/core.bend:pullComputed, raiseSourceHeight, VerdictRaiseHeight; plain RaiseHeight return additionally performs read F-6"
+        },
+        {
+          "key": "core/core.ts:read",
+          "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone"
+        },
+        {
+          "key": "core/core.ts:serve",
+          "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker"
+        },
+        {
+          "key": "core/core.ts:stagedRead",
+          "bend": "runtime/read-state.bend:stagedRead; runtime/core.bend:stagedRead forwards; runtime/lanes-state.bend:enterLane invokes the same helper"
+        },
+        {
+          "key": "core/core.ts:stagedScreen",
+          "bend": "runtime/transaction.bend:stagedScreen"
+        },
+        {
+          "key": "core/core.ts:notePromotedWrite",
+          "bend": "runtime/read-state.bend:notePromotedWrite; runtime/write.bend:setSignal"
+        },
+        {
+          "key": "core/core.ts:isSame",
+          "bend": "runtime/core.bend:isSame, equalityCatch, setResolved, SetSignalCompared, publishState, PublishCompared, asyncWrite, ParkIntake, ParkCompared; runtime/equality.bend:isSame, custom, register; runtime/write.bend:beforeCompare, skipCompare, stageResolved"
+        },
+        {
+          "key": "core/core.ts:setSignal",
+          "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater; runtime/core.bend:signalUpdater; runtime/core.bend:setPlainResolved, LaneWrite"
+        },
+        {
+          "key": "core/core.ts:setMemo",
+          "bend": "runtime/memo-write.bend:held, finish; runtime/core.bend:memoRawArgument, memoUpdater, SetMemoArgument, SetMemoForward, SetMemoAfter, setterTask; runtime/memo-write.bend:clear (no-argument bound cleanup); runtime/core.bend:memoDelegate; runtime/memo-write.bend:recover"
+        },
+        {
+          "key": "core/core.ts:runWithOwner",
+          "bend": "runtime/ambient.bend:enterOwner, restore; runtime/core.bend:EnterOwner, RestoreContext, enterOwner, enterOwnerValue; runtime/api.bend:createRoot"
+        },
+        {
+          "key": "core/core.ts:staleValues",
+          "bend": "runtime/core.bend:RestoreStale, TrackedAfterCleanup; representation/records.bend:World.stale"
+        },
+        {
+          "key": "core/core.ts:markRefresh",
+          "bend": "runtime/core.bend:markRefresh; runtime/api.bend:refresh (invalidation facade only)"
+        }
+      ]
+    },
+    {
+      "file": "core/dev.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "848f82311c4bedf02ba7c7932f2732dcdcff8509d2f2484bdad3c2583dac6872",
+      "afterSha256": "179ddf547cf4a9872de977e5c46185a71bc0f4b57f615c014b5f7182043d810b",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "core/lanes.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "fbc6c5251cded8dc14cd69b8127324e422d769cded2c7538c0273aae0da75e0c",
+      "afterSha256": "684c9af9307b1de4aceb95063fd2ed64595d8e8ed3581d88aa36604112663e87",
+      "changedUnits": [
+        {
+          "key": "core/lanes.ts:laneRead",
+          "change": "changed",
+          "before": [
+            {
+              "start": 554,
+              "end": 613
+            }
+          ],
+          "after": [
+            {
+              "start": 554,
+              "end": 615
+            }
+          ],
+          "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadRenderEnd, laneReadEnter",
+          "mappingStatus": "restricted",
+          "branchReview": {
+            "before": 16,
+            "after": 16,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/lanes.ts:newLane",
+          "bend": "runtime/lanes-state.bend:newLane"
+        },
+        {
+          "key": "core/lanes.ts:display",
+          "bend": "runtime/lanes-state.bend:display"
+        },
+        {
+          "key": "core/lanes.ts:guessedValueOf",
+          "bend": "runtime/lanes-state.bend:guessedValueOf"
+        },
+        {
+          "key": "core/lanes.ts:pendingGuessOf",
+          "bend": "runtime/lanes-state.bend:pendingGuessOf, pendingGuessLoop"
+        },
+        {
+          "key": "core/lanes.ts:optimisticWrite",
+          "bend": "runtime/core.bend:optimisticWrite, optimisticResolved, OptimisticResolved, OptimisticCompared; runtime/lanes-state.bend:pushGuess"
+        },
+        {
+          "key": "core/lanes.ts:inFlight",
+          "bend": "runtime/transaction.bend:laneInFlight; runtime/lanes-state.bend:inFlight"
+        },
+        {
+          "key": "core/lanes.ts:applyGuesses",
+          "bend": "runtime/core.bend:applyGuesses, applyGuessNew, applyGuessFree, applyGuessBorn, applyGuessOverride, applyGuessEnd, ApplyGuessCompared"
+        },
+        {
+          "key": "core/lanes.ts:enterLane",
+          "bend": "runtime/lanes-state.bend:enterLane"
+        },
+        {
+          "key": "core/lanes.ts:under",
+          "bend": "runtime/lanes-state.bend:under, underLoop"
+        },
+        {
+          "key": "core/lanes.ts:linkLanes",
+          "bend": "runtime/lanes-state.bend:linkLanes, groupLoop"
+        },
+        {
+          "key": "core/lanes.ts:linkBlocked",
+          "bend": "runtime/transaction.bend:linkBlocked, blockStep / LinkedMembers, ContinueLinked"
+        },
+        {
+          "key": "core/lanes.ts:unlink",
+          "bend": "runtime/lanes-state.bend:unlink"
+        },
+        {
+          "key": "core/lanes.ts:verdictLane",
+          "bend": "runtime/lanes-state.bend:verdictLane"
+        },
+        {
+          "key": "core/lanes.ts:laneStage",
+          "bend": "runtime/lanes-state.bend:laneStage, leaveStage, leaveStageEnd, clearStageConfig, computationStage, effectStage, framePending, hasStageLane; StageError retains false/true/source forms"
+        },
+        {
+          "key": "core/lanes.ts:supersede",
+          "bend": "runtime/core.bend:supersede, supersedeAfter, supersedeEnd"
+        },
+        {
+          "key": "core/lanes.ts:dissolveLane",
+          "bend": "runtime/core.bend:dissolveLane, dissolveNodes, dissolveDerivation, dissolveCommitted, DissolveCompared, DissolveShown, DissolveHidden"
+        },
+        {
+          "key": "core/lanes.ts:laneRead",
+          "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadRenderEnd, laneReadEnter"
+        },
+        {
+          "key": "core/lanes.ts:guessFlights",
+          "bend": "runtime/transaction.bend:guessFlights, guessFlightLoop"
+        },
+        {
+          "key": "core/lanes.ts:laneCorrections",
+          "bend": "runtime/core.bend:laneCorrections, laneCorrectionsLoop, laneCorrectionNodes, LaneCorrectionCompared"
+        },
+        {
+          "key": "core/lanes.ts:laneSeam",
+          "bend": "runtime/core.bend:laneSeam, laneSeamNodes, LaneSeamCleared"
+        },
+        {
+          "key": "core/lanes.ts:endLanes",
+          "bend": "runtime/core.bend:endLanes, endLanesLoop"
+        },
+        {
+          "key": "core/lanes.ts:lanesBlocked",
+          "bend": "runtime/transaction.bend:lanesBlocked, blockStep / JudgeLanes, AfterLinked"
+        },
+        {
+          "key": "core/lanes.ts:nestedBlocked",
+          "bend": "runtime/transaction.bend:nestedBlocked, blockStep / NestedMembers, ContinueNested"
+        },
+        {
+          "key": "core/lanes.ts:laneWrite",
+          "bend": "runtime/core.bend:laneWrite, laneWriteChanged, LaneWriteCompared, LaneWriteDone"
+        },
+        {
+          "key": "core/lanes.ts:laneOutcome",
+          "bend": "runtime/core.bend:laneOutcome, LaneOutcomeCompared, LaneOutcomeDone"
+        },
+        {
+          "key": "core/lanes.ts:stale",
+          "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less"
+        },
+        {
+          "key": "core/lanes.ts:answered",
+          "bend": "runtime/lanes-state.bend:answered, answeredLoop"
+        },
+        {
+          "key": "core/lanes.ts:applyGuessesAt",
+          "bend": "runtime/core.bend:applyGuessesAt"
+        },
+        {
+          "key": "core/lanes.ts:laneSeams",
+          "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop"
+        }
+      ]
+    },
+    {
+      "file": "core/scheduler.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "e312155861125169c4106a0a044e7cdea69540acbaa0335872d787e958a7cda3",
+      "afterSha256": "8d48ff52eb82b7a3c8fd5cce557e0e6614f14fd4cef19e6ddf463bc05667d33f",
+      "changedUnits": [
+        {
+          "key": "core/scheduler.ts:GlobalQueue.settle",
+          "change": "changed",
+          "before": [
+            {
+              "start": 900,
+              "end": 1086
+            }
+          ],
+          "after": [
+            {
+              "start": 902,
+              "end": 1089
+            }
+          ],
+          "bend": "runtime/core.bend:beginSettle, settleJoined, settleApplied, afterParkIntake, parkVerdictZombies, finishSettleIntake, afterLaneSeams, landTransactions, landPrepared, landNodes, landEnd, orderedRuns, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, reruns, releaseQueues",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 27,
+            "after": 27,
+            "status": "required"
+          }
+        },
+        {
+          "key": "core/scheduler.ts:haltReactivity",
+          "change": "changed",
+          "before": [
+            {
+              "start": 729,
+              "end": 766
+            }
+          ],
+          "after": [
+            {
+              "start": 731,
+              "end": 768
+            }
+          ],
+          "bend": "runtime/status.bend:haltReactivity; representation/base.bend:report",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 3,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "core/scheduler.ts:land",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1177,
+              "end": 1206
+            }
+          ],
+          "after": [
+            {
+              "start": 1180,
+              "end": 1209
+            }
+          ],
+          "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction; runtime/core.bend:ReleaseTransactionQueues, user_task",
+          "mappingStatus": "partial",
+          "branchReview": {
+            "before": 6,
+            "after": 6,
+            "status": "required"
+          }
+        },
+        {
+          "key": "core/scheduler.ts:notifyHalted",
+          "change": "changed",
+          "before": [
+            {
+              "start": 781,
+              "end": 790
+            }
+          ],
+          "after": [
+            {
+              "start": 783,
+              "end": 792
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 2,
+            "after": 2,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "core/scheduler.ts:newTransaction",
+          "bend": "runtime/transaction.bend:newTransaction"
+        },
+        {
+          "key": "core/scheduler.ts:joinPassTx",
+          "bend": "runtime/transaction.bend:joinPassTx"
+        },
+        {
+          "key": "core/scheduler.ts:txOf",
+          "bend": "runtime/transaction.bend:txOf"
+        },
+        {
+          "key": "core/scheduler.ts:liveTx",
+          "bend": "runtime/transaction.bend:liveTx"
+        },
+        {
+          "key": "core/scheduler.ts:resolveTx",
+          "bend": "runtime/transaction.bend:resolveTx"
+        },
+        {
+          "key": "core/scheduler.ts:joinFuture",
+          "bend": "runtime/transaction.bend:joinFuture"
+        },
+        {
+          "key": "core/scheduler.ts:merge",
+          "bend": "runtime/transaction.bend:merge"
+        },
+        {
+          "key": "core/scheduler.ts:blocked",
+          "bend": "runtime/transaction.bend:blocked, blockRun, blockStep / JudgeTx, RestoreJudge"
+        },
+        {
+          "key": "core/scheduler.ts:blockersOf",
+          "bend": "runtime/transaction.bend:blockersOf"
+        },
+        {
+          "key": "core/scheduler.ts:ownFlights",
+          "bend": "runtime/transaction.bend:ownFlights"
+        },
+        {
+          "key": "core/scheduler.ts:ownSource",
+          "bend": "runtime/transaction.bend:ownSource"
+        },
+        {
+          "key": "core/scheduler.ts:blockedBy",
+          "bend": "runtime/transaction.bend:blockedBy"
+        },
+        {
+          "key": "core/scheduler.ts:onScreen",
+          "bend": "runtime/transaction.bend:onScreen"
+        },
+        {
+          "key": "core/scheduler.ts:removalStagedBy",
+          "bend": "runtime/transaction.bend:removalStagedBy"
+        },
+        {
+          "key": "core/scheduler.ts:deferZombie",
+          "bend": "runtime/scheduler.bend:deferZombie; runtime/core.bend:heapLoop"
+        },
+        {
+          "key": "core/scheduler.ts:holdNode",
+          "bend": "runtime/transaction.bend:holdNode"
+        },
+        {
+          "key": "core/scheduler.ts:list",
+          "bend": "runtime/transaction.bend:list"
+        },
+        {
+          "key": "core/scheduler.ts:holdFrame",
+          "bend": "runtime/transaction.bend:holdFrame"
+        },
+        {
+          "key": "core/scheduler.ts:unhold",
+          "bend": "runtime/transaction.bend:unhold"
+        },
+        {
+          "key": "core/scheduler.ts:enterAction",
+          "bend": "runtime/action-state.bend:enter"
+        },
+        {
+          "key": "core/scheduler.ts:exitAction",
+          "bend": "runtime/action-state.bend:exit"
+        },
+        {
+          "key": "core/scheduler.ts:setQuestion",
+          "bend": "runtime/question.bend:setQuestion; representation/records.bend:World.question"
+        },
+        {
+          "key": "core/scheduler.ts:nextQuestion",
+          "bend": "runtime/question.bend:nextQuestion, increment; representation/records.bend:World.questions"
+        },
+        {
+          "key": "core/scheduler.ts:schedule",
+          "bend": "representation/base.bend:schedule; runtime/api.bend:clearHostJobs; host/bend.mjs:drainJobs"
+        },
+        {
+          "key": "core/scheduler.ts:haltReactivity",
+          "bend": "runtime/status.bend:haltReactivity; representation/base.bend:report"
+        },
+        {
+          "key": "core/scheduler.ts:haltReactivityAt",
+          "bend": null
+        },
+        {
+          "key": "core/scheduler.ts:resetErrorHalt",
+          "bend": "runtime/api.bend:resetErrorHalt"
+        },
+        {
+          "key": "core/scheduler.ts:GlobalQueue.flush",
+          "bend": "runtime/core.bend:round, heapLoop, seam, RenderQueue, UserQueue, FlushFinally, RoundEnd"
+        },
+        {
+          "key": "core/scheduler.ts:GlobalQueue.settle",
+          "bend": "runtime/core.bend:beginSettle, settleJoined, settleApplied, afterParkIntake, parkVerdictZombies, finishSettleIntake, afterLaneSeams, landTransactions, landPrepared, landNodes, landEnd, orderedRuns, completeSettle, zombieLoop; runtime/scheduler.bend:parkPendingNodes, reruns, releaseQueues"
+        },
+        {
+          "key": "core/scheduler.ts:GlobalQueue.run",
+          "bend": "runtime/core.bend:RenderQueue, UserQueue, RunEffect"
+        },
+        {
+          "key": "core/scheduler.ts:GlobalQueue.enqueue",
+          "bend": "runtime/write.bend:enqueueIn, enqueue"
+        },
+        {
+          "key": "core/scheduler.ts:reruns",
+          "bend": "runtime/scheduler.bend:reruns, rerunsLoop, rerunOne, clearChildRuns"
+        },
+        {
+          "key": "core/scheduler.ts:land",
+          "bend": "runtime/core.bend:LandTransactions, landTransactions, landPrepared, landNodes, landEnd; runtime/affects-scope.bend:releaseTransaction; runtime/core.bend:ReleaseTransactionQueues, user_task"
+        },
+        {
+          "key": "core/scheduler.ts:releaseQueues",
+          "bend": "runtime/scheduler.bend:releaseQueues"
+        },
+        {
+          "key": "core/scheduler.ts:staleReader",
+          "bend": "runtime/transaction.bend:staleReader"
+        },
+        {
+          "key": "core/scheduler.ts:queuePendingNode",
+          "bend": "runtime/scheduler.bend:queuePendingNode"
+        },
+        {
+          "key": "core/scheduler.ts:bumpNotifyEpoch",
+          "bend": "representation/base.bend:bump"
+        },
+        {
+          "key": "core/scheduler.ts:insertSubs",
+          "bend": "runtime/write.bend:insertSubs, insert_subs; runtime/scheduler.bend:insertSubs wrapper"
+        },
+        {
+          "key": "core/scheduler.ts:laneDirty",
+          "bend": "runtime/lanes-state.bend:laneDirty"
+        },
+        {
+          "key": "core/scheduler.ts:sameLane",
+          "bend": "runtime/lanes-state.bend:sameLane"
+        },
+        {
+          "key": "core/scheduler.ts:commitPendingNode",
+          "bend": "runtime/scheduler.bend:commitPendingNode, commitValue, commitComputed, commitComputedPrefix, commitAnswerValue, finishCommitFields, afterCommitTrim, disposeCommittedFrame; runtime/core.bend:commitPending, commitFinish, commitAfterTrim, CommitPending, CommitFinish, CommitAfterTrim"
+        },
+        {
+          "key": "core/scheduler.ts:commitPendingNodes",
+          "bend": "runtime/scheduler.bend:commitPendingNodes, commit_list; runtime/core.bend:commitIntake, trimIntake, finishSettleIntake"
+        },
+        {
+          "key": "core/scheduler.ts:flush",
+          "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry"
+        },
+        {
+          "key": "core/scheduler.ts:flush",
+          "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry"
+        },
+        {
+          "key": "core/scheduler.ts:flush",
+          "bend": "runtime/core.bend:flush, publicFlush, flushCallback, flushCallbackFinally, flushCallbackRestore, FlushArgument, dispatch/unwind; runtime/api.bend:flushCallback, flushValue, flushNow, flushEntry"
+        }
+      ]
+    },
+    {
+      "file": "index.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "bf3dc8a774fff61fedad5d6a8c3ed05b916fef9ce0de0fb160cfde2369e0b9d1",
+      "afterSha256": "298fea89dd2ff9121da631d7f43f5f2022ffcf3b3c1da153cf79d868725357f2",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "signals.ts",
+      "change": "changed",
+      "excludedStore": false,
+      "beforeSha256": "d3d7dabbfa45dcd47b7ea3ccc12168c83a1cf646d519a6880013b8428b23a4f1",
+      "afterSha256": "33be4d319745acd65091092f94068bc462ab00798a16161c9e20ca4a04a3c356",
+      "changedUnits": [
+        {
+          "key": "signals.ts:onFlush",
+          "change": "added",
+          "before": [],
+          "after": [
+            {
+              "start": 1269,
+              "end": 1291
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 2,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": [
+        {
+          "key": "signals.ts:onCleanup",
+          "bend": "runtime/core.bend:onCleanup, onCleanupValue, OnCleanup; runtime/callable.bend:cleanup, encode, find, bound; runtime/owner.bend:cleanup; runtime/callable.bend:cleanupSetter, encodeSetter; runtime/owner.bend:CleanupBoundSetter, clearSetter; runtime/core.bend:registerProgramCleanup, callbackExists, OwnerTasks; runtime/callable.bend:encodeProgram; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode"
+        },
+        {
+          "key": "signals.ts:accessor",
+          "bend": "runtime/callable.bend:accessor; runtime/core.bend:invokeValue; runtime/lexical.bend:bind LocalAccessor; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode"
+        },
+        {
+          "key": "signals.ts:createSignal",
+          "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope, runtime/core.bend:signalCompute, callableSignal, CreateSignal, MemoSignalReady; runtime/api.bend:createSignalInput"
+        },
+        {
+          "key": "signals.ts:createSignal",
+          "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope, runtime/core.bend:signalCompute, callableSignal, CreateSignal, MemoSignalReady; runtime/api.bend:createSignalInput"
+        },
+        {
+          "key": "signals.ts:createSignal",
+          "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope, runtime/core.bend:signalCompute, callableSignal, CreateSignal, MemoSignalReady; runtime/api.bend:createSignalInput"
+        },
+        {
+          "key": "signals.ts:createSignal",
+          "bend": "runtime/api.bend:signalScope; runtime/core.bend:CreateSignal; runtime/construct-state.bend:signal; runtime/lexical.bend:bind; runtime/core.bend:SignalComputeScope, MemoSignalReady; runtime/api.bend:signalComputeScope, runtime/core.bend:signalCompute, callableSignal, CreateSignal, MemoSignalReady; runtime/api.bend:createSignalInput"
+        },
+        {
+          "key": "signals.ts:createOptimistic",
+          "bend": "runtime/core.bend:optimisticCompute, CreateOptimistic, OptimisticReady, OptimisticArgument, OptimisticUpdater; runtime/callable.bend:optimisticSetter, optimisticTarget; runtime/lexical.bend:bindAs; runtime/api.bend:optimisticScope, optimisticComputeScope"
+        },
+        {
+          "key": "signals.ts:createOptimistic",
+          "bend": "runtime/core.bend:optimisticCompute, CreateOptimistic, OptimisticReady, OptimisticArgument, OptimisticUpdater; runtime/callable.bend:optimisticSetter, optimisticTarget; runtime/lexical.bend:bindAs; runtime/api.bend:optimisticScope, optimisticComputeScope"
+        },
+        {
+          "key": "signals.ts:createOptimistic",
+          "bend": "runtime/core.bend:optimisticCompute, CreateOptimistic, OptimisticReady, OptimisticArgument, OptimisticUpdater; runtime/callable.bend:optimisticSetter, optimisticTarget; runtime/lexical.bend:bindAs; runtime/api.bend:optimisticScope, optimisticComputeScope"
+        },
+        {
+          "key": "signals.ts:createOptimistic",
+          "bend": "runtime/core.bend:optimisticCompute, CreateOptimistic, OptimisticReady, OptimisticArgument, OptimisticUpdater; runtime/callable.bend:optimisticSetter, optimisticTarget; runtime/lexical.bend:bindAs; runtime/api.bend:optimisticScope, optimisticComputeScope"
+        },
+        {
+          "key": "signals.ts:createEffect",
+          "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)"
+        },
+        {
+          "key": "signals.ts:createRenderEffect",
+          "bend": "runtime/api.bend:nestedEffect; runtime/core.bend:evaluate(EffectCreate)"
+        },
+        {
+          "key": "signals.ts:createTrackedEffect",
+          "bend": "runtime/api.bend:createTrackedEffect; runtime/core.bend:TrackedCreate, trackedEffect"
+        },
+        {
+          "key": "signals.ts:createReaction",
+          "bend": "runtime/reaction-state.bend:create, get, store; runtime/core.bend:reactionArm, reactionArmAfterDispose, reactionFire, ReactionReturn, ReactionAssignCleanup; runtime/api.bend:createReaction"
+        },
+        {
+          "key": "signals.ts:watch",
+          "bend": "runtime/signals.bend:makeWatch; runtime/core.bend:WatchExpr, WatchFinish, watchCause, watchFinish; runtime/watch-state.bend:queueAnswer, ownJoined"
+        },
+        {
+          "key": "signals.ts:resolve",
+          "bend": "runtime/signals.bend:resolve, creationCatch, deliver; runtime/watch-state.bend:settle; runtime/api.bend:resolveValue; host/bend.mjs:awaitValue"
+        },
+        {
+          "key": "signals.ts:refresh",
+          "bend": "runtime/signals.bend:refresh, startRefresh, makeWatch, deliver; runtime/api.bend:refresh; host/bend.mjs:awaitRefresh"
+        },
+        {
+          "key": "signals.ts:until",
+          "bend": "runtime/signals.bend:until, untilOptions, untilResources, settleUntil, fireUntil, UntilFire, timeoutUntil, abortUntil, makeWatch, watchConfig, deliver; runtime/watch-state.bend:postAnswer, untilInPass; runtime/api.bend:untilValue, untilWithOptions, timeoutUntil, abortUntil, createAbortInput, setAbortInput; host/bend.mjs:awaitUntil, controller, abort, drainJobs"
+        },
+        {
+          "key": "signals.ts:onSettled",
+          "bend": "runtime/core.bend:onSettled, fireSettled, user_task, user_tasks; runtime/write.bend:enqueueUserCallback; runtime/api.bend:onSettled"
+        }
+      ]
+    },
+    {
+      "file": "store/affects.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "3adca4d18279788835eee80fb357cd40cbb0e2ae0d124922ce5b4b6605f4eda5",
+      "afterSha256": "83f395966911482512b8fe21888848c0571e2f47195d819783133494ce6c303f",
+      "changedUnits": [
+        {
+          "key": "store/affects.ts:walk",
+          "change": "changed",
+          "before": [
+            {
+              "start": 74,
+              "end": 108
+            }
+          ],
+          "after": [
+            {
+              "start": 74,
+              "end": 108
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 16,
+            "after": 16,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/hooks.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "8db334561528a83f4b60b7ccd90cca863a3dd1665d01cfa39ff6c1dbe1e4dd1f",
+      "afterSha256": "3b05f7a48cb7137a1b231a9255e7ed69df035817ac4df22b3d44cf0d86a40502",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/projection.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "7ff8040f4769e1454a626b996502128494d26badcf147305399bae7bc8bb1f0f",
+      "afterSha256": "ebeaa9c1897046477f3e77d82eeed93841428841f8bb9028ecb0cd2f0ca26e09",
+      "changedUnits": [
+        {
+          "key": "store/projection.ts:createProjectionInternal",
+          "change": "changed",
+          "before": [
+            {
+              "start": 309,
+              "end": 357
+            }
+          ],
+          "after": [
+            {
+              "start": 322,
+              "end": 371
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 9,
+            "after": 9,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/projection.ts:familyStatus",
+          "change": "added",
+          "before": [],
+          "after": [
+            {
+              "start": 191,
+              "end": 194
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 0,
+            "after": 2,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/reconcile.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "aea4411eceab2309ba8bbc769410845c0529d7055b29ef3b1643fee09844c28e",
+      "afterSha256": "8d586953b081c442a52bce4aab8c6bbe3112f0d1154e11114a303ab2ce2dd166",
+      "changedUnits": [
+        {
+          "key": "store/reconcile.ts:applyAdopt",
+          "change": "changed",
+          "before": [
+            {
+              "start": 92,
+              "end": 273
+            }
+          ],
+          "after": [
+            {
+              "start": 92,
+              "end": 273
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 54,
+            "after": 54,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/reconcile.ts:reconcileState",
+          "change": "changed",
+          "before": [
+            {
+              "start": 45,
+              "end": 87
+            }
+          ],
+          "after": [
+            {
+              "start": 45,
+              "end": 87
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 14,
+            "after": 14,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/store.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "f75071f36cff17ef43fdc42f2ca7e7db9df99f879e7acbe022356a19ba6c1c57",
+      "afterSha256": "4b1017e1fb0050ec92ea7d0d4f78cc6046df8d80eb6722ea5161628f7ca1ea64",
+      "changedUnits": [
+        {
+          "key": "store/store.ts:ensurePB",
+          "change": "changed",
+          "before": [
+            {
+              "start": 688,
+              "end": 720
+            }
+          ],
+          "after": [
+            {
+              "start": 688,
+              "end": 720
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 8,
+            "after": 8,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:enumerationSource",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1876,
+              "end": 1885
+            }
+          ],
+          "after": [
+            {
+              "start": 1886,
+              "end": 1895
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 3,
+            "after": 3,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:getOwnPropertyDescriptor",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2173,
+              "end": 2209
+            }
+          ],
+          "after": [
+            {
+              "start": 2183,
+              "end": 2219
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 10,
+            "after": 10,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:has",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2136,
+              "end": 2164
+            }
+          ],
+          "after": [
+            {
+              "start": 2146,
+              "end": 2174
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 10,
+            "after": 10,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:notifyWrites",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1129,
+              "end": 1272
+            }
+          ],
+          "after": [
+            {
+              "start": 1139,
+              "end": 1282
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 42,
+            "after": 42,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:reportReplacedContainers",
+          "change": "changed",
+          "before": [
+            {
+              "start": 1049,
+              "end": 1097
+            }
+          ],
+          "after": [
+            {
+              "start": 1049,
+              "end": 1107
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 14,
+            "after": 18,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:snapshotWalk",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2583,
+              "end": 2653
+            }
+          ],
+          "after": [
+            {
+              "start": 2593,
+              "end": 2663
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 30,
+            "after": 30,
+            "status": "required"
+          }
+        },
+        {
+          "key": "store/store.ts:storeSetter",
+          "change": "changed",
+          "before": [
+            {
+              "start": 2366,
+              "end": 2422
+            }
+          ],
+          "after": [
+            {
+              "start": 2376,
+              "end": 2432
+            }
+          ],
+          "bend": null,
+          "mappingStatus": "open",
+          "branchReview": {
+            "before": 12,
+            "after": 12,
+            "status": "required"
+          }
+        }
+      ],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    },
+    {
+      "file": "store/target.ts",
+      "change": "changed",
+      "excludedStore": true,
+      "beforeSha256": "d651342f9a184c0fc5cbfdd41a18f8cf2748e9b17b329a4038b8756eedeec9d3",
+      "afterSha256": "07f2e254886b3f18abe3a3016c10ad5dc92e85a661763f03f843cb948984cca8",
+      "changedUnits": [],
+      "fileReview": "Review imports, fields, flags, module initializers, comments and unindexed operations as well as named functions.",
+      "existingMappings": []
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import ./proof/lane-never-pending.bend as NeverPending
 import ./proof/heap-status-frame.bend as HeapStatus
 import ./proof/pending-tail-status.bend as TailStatus
 import ./proof/pending-retirement-controller.bend as RetirementController
@@ -5466,3 +5467,16 @@ law constructed_memo_render_notification_and_controller_clear_pending:
   for +released: List<&2,Nat>
   for +scheduled: Bool
   {B.has(R.Node.status(B.node(TailStatus.world(ConstructedRetirement.constructed(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)),NotificationFixture.leaf(values,value,extensions,sets))),K.STATUS_PENDING()) == False{} : Bool}
+
+
+law never_shown_render_read_exits_existing_verdict_lane:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +reader: Nat
+  for +node: Nat
+  for +lane: Nat
+  for +empty: {B.present(R.NodeExtension.lane(B.extension(w,node))) == False{} : Bool}
+  for +present: {Nat.is_ne(R.World.passLane(w),0n) == True{} : Bool}
+  for +same: {Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,R.World.passLane(w))))),R.World.passLane(w)) == True{} : Bool}
+  {Core.laneReadRender(w,rest,stack,reader,node,lane,False{},K.STATUS_PENDING()) == Core.Machine{R.World.with_passLane(w,0n),rest,R.NotPendingToken{} <> stack} : Core.Machine}

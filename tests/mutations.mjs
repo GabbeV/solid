@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["lane never pending kernel keeps verdict pass when read must escape", "runtime/core.bend", "R.World.with_passLane(w, 0n)", "w", "tests/proof-properties.mjs", "laneReadRender", "lane-never-negative-probes"],
+
   ["pending controller kernel heap insertion changes status", "runtime/heap.bend", "R.Node.with_height(n, height)", "R.Node.with_status(R.Node.with_height(n, height), 0)", "tests/proof-properties.mjs", "actualInsertIntoHeap", "pending-completion-negative-probes"],
   ["pending controller kernel unblock reinstalls pending", "runtime/pending.bend", "B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{False{}}}))", "B.store_node(B.store_extension(w, id, R.NodeExtension.with_blocked(B.extension(w, id), R.Present{R.Boolean{False{}}})), id, R.Node.with_status(B.node(w, id), B.set(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))", "tests/proof-properties.mjs", "settledTail", "pending-completion-negative-probes"],
 

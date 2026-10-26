@@ -923,9 +923,9 @@
       "restrictions": "Optional one-element error box is Empty/Present(Value); clear before raw rethrow or drop. Called after the complete flush loop, after public root teardown outside a running flush, and at first fatal halt. Dev loop guard/observe diagnostics remain outside the production profile."
     },
     "core/lanes.ts:laneRead": {
-      "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadRenderEnd, laneReadEnter",
+      "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadOutside, laneReadRenderEnd, laneReadEnter",
       "status": "restricted",
-      "restrictions": "Exact admitted node/reader branches and source mutation order; optional folded-store callback and slot-node families excluded. Internal helper only: public active core hook installation remains unfinished. See tracking/lane-reads.md."
+      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md."
     },
     "core/lanes.ts:stale": {
       "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",

@@ -16,3 +16,11 @@ Read-only upstream fetch finds next@1d6c40fb, including lane pending-order fixes
 store/boundary fixes, size changes and onFlush. The pinned source remains4ea2f498
 until operation review, integration and revalidation. No new upstream bug is
 claimed from this work.
+
+Controller milestone5518d159 is synced:645 roots,1,054 sealed tracked inputs,
+233.6s verdict. Audited next@1d6c40fb: JS/declarations and350 native files pass.
+Ported #4275's verdict-lane exit;3,258 helper and720 question controls pass.
+A general exact branch theorem passes. Its first broad mutated check hit4GiB
+and is uncredited; a positive compact oracle rejects the source reset omission.
+The premature composed check was stopped before documentation/input edits; no
+success is claimed for it. Target646; onFlush is explicitly the next API task.

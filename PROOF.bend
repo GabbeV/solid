@@ -1,3 +1,4 @@
+import ./proof/lane-never-pending.bend as NeverPending
 import ./proof/heap-status-frame.bend as HeapStatus
 import ./proof/pending-tail-status.bend as TailStatus
 import ./proof/pending-retirement-controller.bend as RetirementController
@@ -2369,3 +2370,7 @@ def Laws.local_notification_constructs_actual_controller_pending_clear(w,node,so
 
 def Laws.constructed_memo_render_notification_and_controller_clear_pending(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled):
   ConstructedRetirement.constructedCleared(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)
+
+
+def Laws.never_shown_render_read_exits_existing_verdict_lane(w,rest,stack,reader,node,lane,empty,present,same):
+  NeverPending.exits(w,rest,stack,reader,node,lane,empty,present,same)

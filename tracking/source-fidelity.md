@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `4ea2f49862a53c8cc405f4b746525d5d78bf434f`, rc.18. The latest
-[source review](reviews/solid-4ea2f498.md) records the verbatim inputs and checks.
+Current pin: Solid `1d6c40fb459735ecbeebfaa6be8b8c142597fd34`, rc.18. The latest
+[source review](reviews/solid-1d6c40fb.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or
@@ -232,3 +232,14 @@ substitution to the source-followable runtime. All runtime, representation, host
 and pinned-source bytes remain unchanged in this run; correspondence accounting
 is not closed by proof counts. New first-arrival contracts remain properties of
 the admitted Bend protocol, not a formal TS/Bend equivalence theorem.
+
+## Repin to next@1d6c40fb, 2026-10-26 evening
+
+The [review](reviews/solid-1d6c40fb.md) audits changed operations and explicit
+profile exclusions. The lane never-shown read fix and a new generic branch
+contract extend645 to646 roots. Native build/declarations and350 files /5,606
+tests pass.3,258 helper cases and720 question controls match; a compact kernel
+counterexample rejects removal of the reset. The broad mutated oracle's RSS
+stop is not credited. The new onFlush API is unfinished at this intermediate
+checkpoint; stores and mounted boundaries remain excluded. Budgets and earlier
+theorem domains are retained. No semantic deviation is active.

@@ -9,7 +9,7 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `4ea2f498` (rc.18); the Bend2.0.37 frontend and vendored
+Solid is pinned to `1d6c40fb` (rc.18); the Bend2.0.37 frontend and vendored
 snapshot remain unchanged. Independent verification uses the recorded, Lean-checked
 [congruence-first kernel profile](kernel-congruence.md) with unchanged fuel. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
@@ -482,3 +482,14 @@ budgets remain. Dependent traversal, owner-release execution, full action/flight
 ledger and final publication are still open. Runtime/source/host are unchanged.
 The next prerequisite is auditing the newly advanced `next` source before more
 proof work over affected lane and async paths.
+
+## Repin to next@1d6c40fb, 2026-10-26 evening
+
+The [review](reviews/solid-1d6c40fb.md) audits changed operations and explicit
+profile exclusions. The lane never-shown read fix and a new generic branch
+contract extend645 to646 roots. Native build/declarations and350 files /5,606
+tests pass.3,258 helper cases and720 question controls match; a compact kernel
+counterexample rejects removal of the reset. The broad mutated oracle's RSS
+stop is not credited. The new onFlush API is unfinished at this intermediate
+checkpoint; stores and mounted boundaries remain excluded. Budgets and earlier
+theorem domains are retained. No semantic deviation is active.

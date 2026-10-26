@@ -531,8 +531,8 @@ def laneReadRenderEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
         Machine{w, rest, Lanes.display(w, id) <> stack}),
     _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))
 
-def laneReadRender(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
-  B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(B.has(status, K.STATUS_PENDING()), Bool.not(B.present(R.NodeExtension.lane(B.extension(w, id)))))),
+def laneReadOutside(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32, +never: Bool) -> Machine:
+  B.choose(~Machine, never,
     _ => Machine{w, rest, R.NotPendingToken{} <> stack},
     _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(B.present(R.Node.pending(B.node(w, id))), Bool.and(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_HELD()), Nat.is_ne(R.World.flushTransaction(w), 0n)))),
       _ =>
@@ -546,12 +546,23 @@ def laneReadRender(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>
           _ => laneReadRenderEnd(w, rest, stack, reader, id, lane, guess, status)),
       _ => laneReadRenderEnd(w, rest, stack, reader, id, lane, guess, status)))
 
+# lanes.ts:laneRead's tracked render branch. A verdict read may have moved this
+# pass into a lane before a later never-shown flight is read (#4275).
+def laneReadRender(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  +never = Bool.and(Bool.not(guess), Bool.and(B.has(status, K.STATUS_PENDING()), Bool.not(B.present(R.NodeExtension.lane(B.extension(w, id))))))
+  +pass = R.World.passLane(w)
+  +w = B.choose(~R.World, Bool.and(never, Bool.and(Nat.is_ne(pass, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, pass)))), pass))),
+    _ => R.World.with_passLane(w, 0n), _ => w)
+  B.choose(~Machine, Bool.or(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(Lanes.sameLane(w, R.World.passLane(w), lane))),
+    _ => laneReadOutside(w, rest, stack, reader, id, lane, guess, status, never),
+    _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))
+
 def laneReadReader(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
   B.choose(~Machine, Nat.is_eq(reader, 0n), _ => Machine{w, rest, Truth.laneValueOf(w, id) <> stack},
     _ => B.choose(~Machine, Bool.or(Bool.not(R.World.tracking(w)), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())),
       _ => B.choose(~Machine, Bool.or(Nat.is_eq(R.World.passLane(w), 0n), B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())),
         _ => Machine{w, rest, Lanes.display(w, id) <> stack}, _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status)),
-      _ => B.choose(~Machine, Bool.and(X.isRender(R.Node.kind(B.node(w, reader))), Bool.or(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(Lanes.sameLane(w, R.World.passLane(w), lane)))),
+      _ => B.choose(~Machine, X.isRender(R.Node.kind(B.node(w, reader))),
         _ => laneReadRender(w, rest, stack, reader, id, lane, guess, status), _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))))
 
 def laneRead(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat) -> Machine:
