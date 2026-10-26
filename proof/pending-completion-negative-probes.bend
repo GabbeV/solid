@@ -5,6 +5,7 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/status.bend as A
 import ../runtime/pending.bend as Q
+import ../runtime/heap.bend as H
 import ../runtime/pending-state.bend as P
 import ../runtime/constants.bend as K
 
@@ -28,4 +29,18 @@ def retired() -> R.World:
   B.first(R.World,Bool,P.removePendingSource(notified(),1n,1n))
 
 def clears_last_pending_bit() -> {B.has(R.Node.status(B.node(Q.settledStatus(retired(),1n,0n,False{}),1n)),K.STATUS_PENDING()) == False{} : Bool}:
+  {==}
+
+
+def heapInput() -> R.World:
+  B.store_node(initial(),1n,R.Node.with_flags(R.Node.with_status(B.node(initial(),1n),5),0))
+
+def heap_keeps_status() -> {R.Node.status(B.node(H.enqueueSub(heapInput(),1n),1n)) == 5 : U32}:
+  {==}
+
+def world(machine: Q.Machine) -> R.World:
+  match machine:
+    case Q.Machine{w,tasks,visited,released,scheduled}: w
+
+def controller_keeps_last_pending_clear() -> {B.has(R.Node.status(B.node(world(Q.visitRemoved(notified(),[],[],[],False{},1n,1n,1n)),1n)),K.STATUS_PENDING()) == False{} : Bool}:
   {==}

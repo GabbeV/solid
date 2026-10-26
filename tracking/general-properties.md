@@ -397,3 +397,16 @@ nine roots extend630 to639 without changing previous domains. Enqueue, dependent
 traversal, owner release and final reveal remain separate stages. The old baseline
 resource stops remain archived; the new results use the explicit Lean-checked
 congruence profile. Runtime/representation/host/source pins are unchanged.
+
+## Actual pending retirement controller, 2026-10-26 evening
+
+[The controller extension](pending-completion.md#actual-retirement-controller-and-constructed-entry)
+connects actual heap/status preservation and the enqueue/unblock tail to real
+`settled`/`visitRemoved` pending-bit clearing. Notification-local stores construct
+the singleton premise; raw memo/render construction supplies the initial carrier
+snapshot in the constructed corollary. Six roots extend639 to645;192 native
+controls and two focused kernel rejections pass. Earlier domains and checker
+budgets remain. Dependent traversal, owner-release execution, full action/flight
+ledger and final publication are still open. Runtime/source/host are unchanged.
+The next prerequisite is auditing the newly advanced `next` source before more
+proof work over affected lane and async paths.

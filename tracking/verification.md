@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 685 = 484 finite + 201 kernel variants, including constructor/registration/return invariants |
+| Configured mutations | 687 = 484 finite + 203 kernel variants, including constructor/registration/return invariants |
 | Complete negative sweep | Frozen a6d4: all682 named variants rejected in an interrupted/resumed sweep with its declared checker; all1026 sealed inputs unchanged and tracked; [receipt](reviews/complete-682-negative.json) |
-| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current685 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
+| Later negative evidence | Four method-entry and three pending-completion corruptions rejected by compact kernel counterexamples; current687 is not a fresh complete sweep. Older frozen receipts retain their original scopes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -499,3 +499,8 @@ nine additional roots,162 native/driver controls and three new focused kernel
 rejections. Both full execution and full source-alignment commands passed on
 frozen a6d4c84b with the same production runtime. The checker now also seals all
 tracking documents and receipts, excluding the output seal itself.
+
+The [actual controller receipt](reviews/pending-controller-validation.json) adds
+six composed roots,192 native settlement controls and two focused rejections.
+All frozen682 names remain a separate complete receipt; five newer negatives
+have focused evidence, not a fresh full687 sweep.

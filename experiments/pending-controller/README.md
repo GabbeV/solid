@@ -1,3 +1,8 @@
+Update, 2026-10-26 evening: the cleared-only controller and constructed
+memo/render corollary are now active, with a fresh composed check; see
+[the integration](../../tracking/pending-completion.md#actual-retirement-controller-and-constructed-entry).
+The original combined-content resource stop remains unproved and archived below.
+
 # Pending-controller follow-on candidates
 
 These proof-only candidates continue the active639-root milestone. Restore the

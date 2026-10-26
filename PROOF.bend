@@ -1,3 +1,8 @@
+import ./proof/heap-status-frame.bend as HeapStatus
+import ./proof/pending-tail-status.bend as TailStatus
+import ./proof/pending-retirement-controller.bend as RetirementController
+import ./proof/pending-notification-retirement.bend as NotificationRetirement
+import ./proof/pending-notification-retirement-constructed.bend as ConstructedRetirement
 import ./proof/pending-leaf-notification.bend as LeafNotify
 import ./proof/notifier-source-control.bend as NotifyCut
 import ./proof/pending-last-source.bend as LastSource
@@ -2340,3 +2345,27 @@ def Laws.sole_pending_source_removal_and_status_clear_pending(w,node,source,sing
 
 def Laws.unheld_empty_carrier_has_exact_settled_status_world(w,node,empty,valid,noHeld):
   LastSource.exact(w,node,empty,valid,noHeld)
+
+
+def Laws.heap_enqueue_preserves_all_node_status_words(w,node):
+  HeapStatus.enqueue(w,node)
+
+
+def Laws.settlement_tail_preserves_all_node_status_words(w,tasks,visited,released,scheduled,node,root,source,last):
+  TailStatus.tail(w,tasks,visited,released,scheduled,node,root,source,last)
+
+
+def Laws.actual_empty_carrier_settled_controller_clears_pending(w,tasks,visited,released,scheduled,node,root,source,empty,valid):
+  RetirementController.settledCleared(w,tasks,visited,released,scheduled,node,root,source,empty,valid)
+
+
+def Laws.actual_single_source_removed_controller_clears_pending(w,tasks,visited,released,scheduled,node,root,source,single,valid):
+  RetirementController.removedCleared(w,tasks,visited,released,scheduled,node,root,source,single,valid)
+
+
+def Laws.local_notification_constructs_actual_controller_pending_clear(w,node,source,serial,tasks,visited,released,scheduled,root,snapshot,noError,valid):
+  NotificationRetirement.cleared(w,node,source,serial,tasks,visited,released,scheduled,root,snapshot,noError,valid)
+
+
+def Laws.constructed_memo_render_notification_and_controller_clear_pending(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled):
+  ConstructedRetirement.constructedCleared(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)

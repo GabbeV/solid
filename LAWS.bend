@@ -1,3 +1,8 @@
+import ./proof/heap-status-frame.bend as HeapStatus
+import ./proof/pending-tail-status.bend as TailStatus
+import ./proof/pending-retirement-controller.bend as RetirementController
+import ./proof/pending-notification-retirement.bend as NotificationRetirement
+import ./proof/pending-notification-retirement-constructed.bend as ConstructedRetirement
 import ./proof/pending-leaf-notification.bend as LeafNotify
 import ./proof/notifier-source-control.bend as NotifyCut
 import ./proof/pending-last-source.bend as LastSource
@@ -5384,3 +5389,80 @@ law unheld_empty_carrier_has_exact_settled_status_world:
   for +valid: {B.valid(w,node) == True{} : Bool}
   for +noHeld: {B.has(R.Node.config(B.node(w,node)),K.CONFIG_HELD()) == False{} : Bool}
   {RuntimePending.settledStatus(w,node,0n,False{}) == LastSource.cleared(w,node) : R.World}
+
+
+law heap_enqueue_preserves_all_node_status_words:
+  for +w: R.World
+  for +node: Nat
+  {StatusOperations.observe(RuntimeHeap.enqueueSub(w,node)) == StatusOperations.observe(w) : List<&2,U32>}
+
+
+law settlement_tail_preserves_all_node_status_words:
+  for +w: R.World
+  for +tasks: List<&2,RuntimePending.Task>
+  for +visited: List<&2,Nat>
+  for +released: List<&2,Nat>
+  for +scheduled: Bool
+  for +node: Nat
+  for +root: Nat
+  for +source: Nat
+  for +last: Bool
+  {StatusOperations.observe(TailStatus.world(RuntimePending.settledTail(w,tasks,visited,released,scheduled,node,root,source,last))) == StatusOperations.observe(w) : List<&2,U32>}
+
+
+law actual_empty_carrier_settled_controller_clears_pending:
+  for +w: R.World
+  for +tasks: List<&2,RuntimePending.Task>
+  for +visited: List<&2,Nat>
+  for +released: List<&2,Nat>
+  for +scheduled: Bool
+  for +node: Nat
+  for +root: Nat
+  for +source: Nat
+  for +empty: LastSource.EmptyCarrier<w,node>
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(TailStatus.world(RuntimePending.settled(w,tasks,visited,released,scheduled,node,root,source)),node)),K.STATUS_PENDING()) == False{} : Bool}
+
+
+law actual_single_source_removed_controller_clears_pending:
+  for +w: R.World
+  for +tasks: List<&2,RuntimePending.Task>
+  for +visited: List<&2,Nat>
+  for +released: List<&2,Nat>
+  for +scheduled: Bool
+  for +node: Nat
+  for +root: Nat
+  for +source: Nat
+  for +single: SingleCarrier.Single<w,node,source>
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(TailStatus.world(RuntimePending.visitRemoved(w,tasks,visited,released,scheduled,node,root,1n+source)),node)),K.STATUS_PENDING()) == False{} : Bool}
+
+
+law local_notification_constructs_actual_controller_pending_clear:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +tasks: List<&2,RuntimePending.Task>
+  for +visited: List<&2,Nat>
+  for +released: List<&2,Nat>
+  for +scheduled: Bool
+  for +root: Nat
+  for +snapshot: CarrierState.CarrierSnapshot<w,node,source>
+  for +noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(TailStatus.world(NotificationRetirement.after(w,node,source,serial,tasks,visited,released,scheduled,root)),node)),K.STATUS_PENDING()) == False{} : Bool}
+
+
+law constructed_memo_render_notification_and_controller_clear_pending:
+  for +values: List<&2,R.Value>
+  for +value: R.Value
+  for +extensions: List<&2,R.NodeExtension>
+  for +sets: List<&2,List<&2,Nat>>
+  for +incoming: NotificationFixture.Incoming
+  for +serial: Nat
+  for +tasks: List<&2,RuntimePending.Task>
+  for +visited: List<&2,Nat>
+  for +released: List<&2,Nat>
+  for +scheduled: Bool
+  {B.has(R.Node.status(B.node(TailStatus.world(ConstructedRetirement.constructed(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)),NotificationFixture.leaf(values,value,extensions,sets))),K.STATUS_PENDING()) == False{} : Bool}

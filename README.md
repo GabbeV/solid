@@ -360,3 +360,9 @@ connect actual leaf-notifier completion to its original budget and actual final
 source removal to the status phase's pending-bit clear, including held joins.
 They recover earlier checker resource stops; full settlement/flush/reveal remains
 open. Runtime and pinned sources are unchanged.
+
+The actual settlement controller now carries the pending-bit clear through time
+stamping, heap enqueue and unblock. A constructed memo/render corollary supplies
+the carrier premise from local notification stores. Dependent traversal, owner
+release and final publication remain open; see the
+[controller scope](tracking/pending-completion.md#actual-retirement-controller-and-constructed-entry).

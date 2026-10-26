@@ -38,10 +38,10 @@ PENDING is false for the selected node, including held/error cases. It also
 proves the actual removal reported success.
 
 The source's `settled` controller additionally stamps time, queues work and
-clears blocked state, then traverses dependents and performs deferred owner
-release. The last-source status theorem does not yet include those stages,
-full action/flight accounting, successful flush or eventual rendered reveal.
-These remain dependencies of the joined held-action milestone.
+clears blocked state. These stages are now included in the follow-on below.
+Dependent traversal, deferred owner-release execution, full action/flight
+accounting, successful flush and eventual rendered reveal remain dependencies
+of the joined held-action milestone.
 
 Nine composed roots extend630 to639. Existing root domains are retained. The162
 native/Bend leaf controls cover all16 low status words and two high-bit controls,
@@ -50,3 +50,36 @@ completion and explicit one-step exhaustion. Three compact actual-operation
 kernel counterexamples reject loss of the continuation, an undersized public
 budget and failure to clear the last pending bit. Test counts support these
 contracts; they are not an overall completion percentage.
+
+## Actual retirement controller and constructed entry
+
+Six further roots extend639 to645. `heap-status-frame.bend` proves the actual
+intrusive heap enqueue preserves every node status word, including a faulted
+or exhausted traversal. `pending-tail-status.bend` carries that frame through
+the actual enqueue/unblock/release-list tail. These are status safety contracts,
+not successful heap draining or cleanup execution.
+
+`pending-retirement-controller.bend` now proves the actual `settled` and
+`visitRemoved` controllers clear the last pending bit. It transports the empty
+carrier and validity through the real time stamp, then carries the clear through
+the tail. Held joins and incoming error status remain admitted; no final World,
+zero-count result or clear-status equation is a premise.
+
+`pending-notification-retirement.bend` supplies the singleton premise using the
+actual local notification stores. Its initial carrier snapshot, valid identity
+and no incoming ERROR condition are explicit. The separate constructed corollary
+uses the existing raw default memo/render allocation/link and five incoming
+status setups, with arbitrary represented payloads, prefix values and auxiliary
+arenas, to construct that initial snapshot. The theorem's caller supplies no
+carrier, valid-ID or final-zero certificate. This still starts from the local
+notification operation, before outer effect notification/propagation.
+
+The split removes unrelated committed-content proof imports and recovers the
+same pending-clear statement within the original90s/4GiB module limits. The
+combined content attempt's failure remains archived and is not assumed true.
+192 private native/full Bend source settlements and direct controllers agree on
+status, membership, time, blocking, scheduling and retained errors, with a real
+transaction allocated for held states. Two new compact kernel counterexamples
+reject heap status corruption and reinstating PENDING during unblock. They were
+replayed after the unmodified compact oracle passed. Full publication remains
+open; there is no runtime or source semantic change at this checkpoint.
