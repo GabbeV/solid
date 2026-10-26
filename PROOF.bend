@@ -1,3 +1,4 @@
+import ./proof/action-retirement-context.bend as ActionRetirementContext
 import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
 import ./proof/action-first-retirement.bend as FirstRetirement
@@ -2259,4 +2260,4 @@ def Laws.allocated_actor_full_cell_survives_helper_prefix(values,prefix):
   HelperContext.beforeCell(values,prefix)
 
 def Laws.retired_action_stays_zero_through_helper_suffix(values,rest,stack,rejected,value,events):
-  HelperContext.afterRetirementZero(values,rest,stack,rejected,value,events)
+  ActionRetirementContext.afterRetirementZero(values,rest,stack,rejected,value,events)

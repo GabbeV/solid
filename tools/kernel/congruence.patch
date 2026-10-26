@@ -1,0 +1,73 @@
+--- a/bendtt.lean
++++ b/bendtt.lean
+@@ -981,0 +982,6 @@
++def Term.sameHead (a b : Term) : Bool :=
++  match (Term.unspine a []).1, (Term.unspine b []).1 with
++  | Ref k, Ref j => k == j
++  | Var i, Var j => i == j
++  | _, _ => false
++
+@@ -988,8 +994,17 @@
+-      let (a, m) := Term.wnf ck cl n a []
+-      let (b, m) := Term.wnf ck cl (min m n) b []
+-      match Term.parts a b with
+-      | some ps =>
+-        let go := fun (r : Bool × Nat) (p : Term × Term) =>
+-          if r.1 then Term.conv ck (cl && !Term.binds a) (min r.2 n) p.1 p.2 else r
+-        ps.foldl go (true, min m n)
+-      | none => (false, m)
++      let pre := match Term.parts a b with
++        | some ps =>
++          if Term.sameHead a b then
++            let go := fun (r : Bool × Nat) (p : Term × Term) =>
++              if r.1 then Term.conv ck (cl && !Term.binds a) (min r.2 n) p.1 p.2 else r
++            ps.foldl go (true, n)
++          else (false, n)
++        | none => (false, n)
++      if pre.1 then pre else
++        let (a, m) := Term.wnf ck cl (min pre.2 n) a []
++        let (b, m) := Term.wnf ck cl (min m n) b []
++        match Term.parts a b with
++        | some ps =>
++          let go := fun (r : Bool × Nat) (p : Term × Term) =>
++            if r.1 then Term.conv ck (cl && !Term.binds a) (min r.2 n) p.1 p.2 else r
++          ps.foldl go (true, min m n)
++        | none => (false, m)
+@@ -2165,8 +2180,29 @@
+-  unfold Term.conv; split; nofun; split
+-  · intro _; subst_vars; exact crefl
+-  split; split; split
+-  · intro h; rename_i hps
+-    have ⟨_, hf⟩ := fold_true (g := fun m x y => Term.conv ck _ (min m _) x y) h
+-    have ⟨c, h1, h2⟩ := parts_conv hps fun p m => have ⟨_, hp⟩ := hf p m; ih _ (by omega) hp
+-    exact ⟨c, pars_trans (wnf_nil hb ‹_›) h1, pars_trans (wnf_nil hb ‹_›) h2⟩
+-  · nofun
++  cases n with
++  | zero => simp [Term.conv]
++  | succ n =>
++    have finish (budget : Nat) :
++        (let (a, m) := Term.wnf ck cl budget a []
++         let (b, m) := Term.wnf ck cl (min m n) b []
++         match Term.parts a b with
++         | some ps => ps.foldl (fun (r : Bool × Nat) (p : Term × Term) =>
++             if r.1 then Term.conv ck (cl && !Term.binds a) (min r.2 n) p.1 p.2 else r) (true, min m n)
++         | none => (false, m)).1 = true → Conv bk a b := by
++      split; split; split
++      · intro h; rename_i hps
++        have ⟨_, hf⟩ := fold_true (g := fun m x y => Term.conv ck _ (min m _) x y) h
++        have ⟨c, h1, h2⟩ := parts_conv hps fun p m => have ⟨_, hp⟩ := hf p m; ih _ (by omega) hp
++        exact ⟨c, pars_trans (wnf_nil hb ‹_›) h1, pars_trans (wnf_nil hb ‹_›) h2⟩
++      · nofun
++    unfold Term.conv
++    split
++    · intro _; subst_vars; exact crefl
++    split
++    · split
++      · dsimp only
++        split
++        · intro _; rename_i hpre
++          have ⟨_, hf⟩ := fold_true (g := fun m x y => Term.conv ck _ (min m _) x y) hpre
++          exact parts_conv (by assumption) fun p m => have ⟨_, hp⟩ := hf p m; ih _ (by omega) hp
++        · exact finish _
++      · simpa only [Bool.false_eq_true, ↓reduceIte, Nat.min_self] using finish n
++    · simpa only [Bool.false_eq_true, ↓reduceIte, Nat.min_self] using finish n

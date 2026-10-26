@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "defaultProfile": "baseline",
+  "baselineSource": "upstream/bend/bend2/bendtt.lean",
+  "baselineSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335",
+  "congruence": {
+    "profile": "same-head-congruence-v1",
+    "patch": "tools/kernel/congruence.patch",
+    "patchSha256": "3c1f84ea4023b06004b2c9e2fd485e9e73289f04e529f03d4044cd5ba990350b",
+    "sourceSha256": "5f3a860067b165ad75e2c8978b4457d0b4ab6a8522c110938eb5e743fc87f244",
+    "fuel": 400000000,
+    "soundnessTheorems": [
+      "conv_sound",
+      "book_check",
+      "consistent"
+    ],
+    "allowedAxioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  }
+}

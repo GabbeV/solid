@@ -432,3 +432,14 @@ all14 later faults are rejected. Full664 remains a separately frozen receipt;
 current678 is not claimed as a complete sweep. Runtime/source/host/limits remain
 unchanged. General pre-arrival controller composition and full ledger/flush/
 reveal remain open.
+
+## Composition efficiency investigation, 2026-10-26
+
+The [congruence-first checker candidate](kernel-congruence.md) recovers the blocked
+general action-delivery equation with a fully checked Lean soundness development
+and unchanged fuel. Candidate and baseline receipts remain distinct; the active
+default and 622-root seal still use the baseline. A complete frozen678 negative
+sweep is in progress, not credited as complete. Terminal-retirement proof imports
+are separated from generic callback-table frames. Runtime/source/host semantics
+are unchanged. The next application is real first delivery after arbitrary
+admitted helper prefixes, then pending retirement/status and queued flush/reveal.

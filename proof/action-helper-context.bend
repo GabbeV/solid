@@ -11,8 +11,6 @@ import ./observer-capture-history.bend as Capture
 import ./observer-write-frame.bend as Observer
 import ./action-wait-allocation.bend as Allocation
 import ./action-wait-fixture.bend as Input
-import ./action-first-retirement.bend as Retire
-import ../runtime/core.bend as C
 
 
 def erase(w: R.World) -> R.World:
@@ -126,11 +124,3 @@ def arenaErased(+w: R.World) -> {R.World.txArena(erase(w)) == R.World.txArena(w)
 def historyArena(+events: List<&2,History.WaitEvent>,+w: R.World) -> {R.World.txArena(History.run(events,w)) == R.World.txArena(w) : List<&2,R.Transaction>}:
   +next = History.run(events,w)
   Equal.trans(List<&2,R.Transaction>,R.World.txArena(next),R.World.txArena(erase(next)),R.World.txArena(w),Equal.sym(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(next),arenaErased(next)),Equal.trans(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(erase(w)),R.World.txArena(w),Equal.cong(R.World,List<&2,R.Transaction>,state=>R.World.txArena(state),erase(next),erase(w),history(events,w)),arenaErased(w)))
-
-def zero(+values: List<&2,R.Value>,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+rejected: Bool,+value: R.Value,certificate: Retire.Retired<values,rest,stack,rejected,value>) -> {R.Transaction.open(B.transaction(C.world(Retire.retired(values,rest,stack,rejected,value)),1n)) == 0n : Nat}:
-  match certificate:
-    case Retire.RetiredAt{open,result,lookup}: open
-
-def afterRetirementZero(+values: List<&2,R.Value>,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+rejected: Bool,+value: R.Value,+events: List<&2,History.WaitEvent>) -> {R.Transaction.open(B.transaction(C.world(Retire.after(values,rest,stack,rejected,value,events)),1n)) == 0n : Nat}:
-  +done = C.world(Retire.retired(values,rest,stack,rejected,value))
-  Equal.trans(Nat,R.Transaction.open(B.transaction(C.world(Retire.after(values,rest,stack,rejected,value,events)),1n)),R.Transaction.open(B.transaction(done,1n)),0n,Equal.cong(List<&2,R.Transaction>,Nat,rows=>R.Transaction.open(B.get(R.Transaction,rows,1n,B.blank_transaction())),R.World.txArena(History.run(events,done)),R.World.txArena(done),historyArena(events,done)),zero(values,rest,stack,rejected,value,Retire.completed(values,rest,stack,rejected,value)))

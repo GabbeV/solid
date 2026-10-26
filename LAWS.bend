@@ -1,3 +1,4 @@
+import ./proof/action-retirement-context.bend as ActionRetirementContext
 import ./proof/action-helper-context.bend as HelperContext
 import ./proof/action-output-rejection.bend as ActionOutputRejection
 import ./proof/action-first-retirement.bend as FirstRetirement

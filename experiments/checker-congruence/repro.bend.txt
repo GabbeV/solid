@@ -1,0 +1,19 @@
+import Base
+
+def alias(x: Nat) -> Nat:
+  x
+
+def choose(condition: Bool,yes: Nat,no: Nat) -> Nat:
+  match condition:
+    case True{}: yes
+    case False{}: no
+
+def branch(depth: Nat,+x: Nat) -> Nat:
+  match depth:
+    case 0n: x
+    case 1n+p:
+      +previous = branch(p,x)
+      choose(Nat.is_eq(previous,0n),previous,previous)
+
+def same(+x: Nat) -> {branch(18n,x) == branch(18n,alias(x)) : Nat}:
+  {==}

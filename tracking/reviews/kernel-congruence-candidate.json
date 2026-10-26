@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "checkpointBase": "27f8defb525d8e1373d6de91720888b70d71fcee",
+  "scope": "Isolated congruence-first kernel candidate; default profile still baseline and active composed roots still622. Later active integration requires a new seal.",
+  "baselineSourceSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335",
+  "optimizedSourceSha256": "5f3a860067b165ad75e2c8978b4457d0b4ab6a8522c110938eb5e743fc87f244",
+  "patchSha256": "3c1f84ea4023b06004b2c9e2fd485e9e73289f04e529f03d4044cd5ba990350b",
+  "allLeanTheoremsChecked": true,
+  "leanAxiomsAudit": [
+    "'conv_sound' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "'book_check' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "'consistent' depends on axioms: [propext, Classical.choice, Quot.sound]"
+  ],
+  "fuelUnchanged": 400000000,
+  "runtimeChanged": false,
+  "vendoredToolchainChanged": false,
+  "activeSemanticDeviations": [],
+  "positiveRawKernelCases": 6,
+  "falseRawKernelEquationsRejected": 3,
+  "existingComposedRootsChecked": 622,
+  "fullNegativeSweep": "678 running in frozen27f8 checkout; no completed sweep credit yet",
+  "timingsAreDiagnosticNotControlledBenchmarks": true,
+  "minimalBaseline": {
+    "seconds": 14.365800948,
+    "status": 1,
+    "resourceStop": true,
+    "success": false,
+    "logSha256": "b4d0706fbdf2b7e71ffccdf040918bdbdd62d32bcdd4e84843a97e7f2323e6d0"
+  },
+  "minimalOptimized": {
+    "seconds": 0.171398037,
+    "status": 0,
+    "resourceStop": false,
+    "success": true,
+    "logSha256": "5c53c0ca6c70f034a9dbc48d19a2e9220b94bf68607ba8f4067c6fa9b2994c66"
+  },
+  "generalDeliveryBaseline": {
+    "seconds": 18.709673477,
+    "status": 1,
+    "resourceStop": true,
+    "success": false,
+    "logSha256": "e80cb4432a73313b114e36d3da2bd1a6e7ffa3489c23828a0df85ad3ea926aff"
+  },
+  "generalDeliveryOptimized": {
+    "seconds": 3.679177009,
+    "status": 0,
+    "resourceStop": false,
+    "success": true,
+    "logSha256": "3ce48182196b4c9e8f6541221a80b8bc2a3b37c2a4123f11c0a51ad8bdbae586"
+  },
+  "full622Optimized": {
+    "seconds": 186.86049434900002,
+    "status": 0,
+    "resourceStop": false,
+    "success": true,
+    "logSha256": "bd0b7538342a2233e6f47ce215b535400155b9d9667dc63e9fcf7a8145f5ae04"
+  },
+  "baselineRefactor622AlsoChecked": true,
+  "baselineRefactorKernelSeconds": 325.95309765499997,
+  "managedProfileBuild": {
+    "bin": "/workspace/solid-signals-bend/build/kernels/same-head-congruence-v1-60381fe3fb35ca5019ffed4d/bendtt",
+    "schemaVersion": 1,
+    "profile": "same-head-congruence-v1",
+    "inputs": {
+      "baselineSha256": "cc78aa9ff3491ff1b788797bdcab4cb98107dcb1730ed99834f6933b11d88335",
+      "patchSha256": "3c1f84ea4023b06004b2c9e2fd485e9e73289f04e529f03d4044cd5ba990350b",
+      "sourceSha256": "5f3a860067b165ad75e2c8978b4457d0b4ab6a8522c110938eb5e743fc87f244",
+      "profileSha256": "b1847257c0b09463f87cb47c3cd4ed406d64e7a093eb4826d4efa0dd901e0691",
+      "recipeSha256": "92796c773f8d72badeaf79d17ea092b3eeb17d4ba178e4fb987cdf5d6e6d5983",
+      "leanVersion": "Lean (version 4.34.0, x86_64-unknown-linux-gnu, commit 293d5d0c0c3f3dded4688b3ccd6a33939ac5102b, Release)",
+      "leanExecutableSha256": "e8baaa71855a616dc351028f3ad2200051b0671f423a1696a100e809302d5550",
+      "leancExecutableSha256": "68a45f8329e2d79133cdcc7b1fa494e37844282d7b5f8908ce1deda7cfdf161a"
+    },
+    "outputs": {
+      "bendtt.lean": "5f3a860067b165ad75e2c8978b4457d0b4ab6a8522c110938eb5e743fc87f244",
+      "audit.lean": "3d4ca845dc0df9984b120a9b48459c7ba6a1d89431551c1d1baab8429f59f981",
+      "lean.log": "f96bb6e91f567e3bbc2d612373c4996030cb1db75bf2ce547c0f67d43258cbba",
+      "compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "link.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bendtt": "972e1c39f2fdcadb3aa1784133e34ca91fddfaf3ba41d4fcddffad4bef141910"
+    },
+    "allLeanTheoremsChecked": true,
+    "auditedTheorems": [
+      "conv_sound",
+      "book_check",
+      "consistent"
+    ],
+    "allowedAxioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "fuel": 400000000
+  },
+  "prototypeExecutableSha256": "972e1c39f2fdcadb3aa1784133e34ca91fddfaf3ba41d4fcddffad4bef141910",
+  "managedPrototypeExecutableIdentical": true,
+  "managedRawKernelTestLogSha256": "b269336b23be8f0f5025738984fb03d24f28d9f7765a64b16325527ae1f39cad"
+}

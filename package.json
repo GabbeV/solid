@@ -15,7 +15,9 @@
     "example:list": "bun upstream/bend/bend2/main.ts examples/list.bend",
     "example:pending": "bun upstream/bend/bend2/main.ts examples/pending.bend",
     "example:deferred": "bun upstream/bend/bend2/main.ts examples/deferred.bend",
-    "example:cleanup": "bun upstream/bend/bend2/main.ts examples/async-cleanup.bend"
+    "example:cleanup": "bun upstream/bend/bend2/main.ts examples/async-cleanup.bend",
+    "kernel:prepare": "node tools/kernel-profile.mjs same-head-congruence-v1",
+    "test:kernel": "node tests/kernel-congruence.mjs"
   },
   "devDependencies": {
     "bun": "1.3.14",
