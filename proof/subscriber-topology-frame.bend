@@ -269,3 +269,17 @@ def read(+w: R.World, +next: R.World, +id: Nat, same: {observe(next) == observe(
     Equal.sym(Shape, B.get(Shape, shapes(R.World.nodes(next)), id, shape(B.blank_node())), shape(B.node(next, id)), readValues(R.World.nodes(next), id)),
     Equal.trans(Shape, B.get(Shape, nodes(observe(next)), id, shape(B.blank_node())), B.get(Shape, nodes(observe(w)), id, shape(B.blank_node())), shape(B.node(w, id)),
       Equal.cong(View, Shape, view => B.get(Shape, nodes(view), id, shape(B.blank_node())), observe(next), observe(w), same), readValues(R.World.nodes(w), id)))
+
+def shapePending(+node: R.Node,+value: R.Slot) -> {shape(R.Node.with_pending(node,value)) == shape(node) : Shape}:
+  match node:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}: {==}
+
+def pending(+w: R.World,+id: Nat,+value: R.Slot) -> {observe(B.store_node(w,id,R.Node.with_pending(B.node(w,id),value))) == observe(w) : View}:
+  store(w,id,R.Node.with_pending(B.node(w,id),value),shapePending(B.node(w,id),value))
+
+def shapeNotified(+node: R.Node,+value: R.Stamp) -> {shape(R.Node.with_notified(node,value)) == shape(node) : Shape}:
+  match node:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}: {==}
+
+def notified(+w: R.World,+id: Nat,+value: R.Stamp) -> {observe(B.store_node(w,id,R.Node.with_notified(B.node(w,id),value))) == observe(w) : View}:
+  store(w,id,R.Node.with_notified(B.node(w,id),value),shapeNotified(B.node(w,id),value))

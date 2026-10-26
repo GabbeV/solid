@@ -543,3 +543,32 @@ is refused with zero credited rejections. Current configured700=487 finite+213
 kernel targets are current; the independent frozen695 sweep is still in progress,
 and this checkpoint does not claim a complete700 sweep. Earlier completed frozen
 receipts remain scoped to their exact inputs/checker. Budgets are unchanged.
+
+
+## Complete frozen700 and ordinary setter bodies
+
+[Complete695](reviews/complete-695-negative.json) verifies all1066 frozen a275f00
+inputs and all94 unchanged kernel oracles. The subsequent
+[complete700 sweep](reviews/complete-700-negative.json) verifies all1079 frozen
+cf7cdf08 inputs and the mandatory unchanged-oracle gate for all95 selected kernel
+modules. Every named variant compiles and is rejected exactly once; input trees
+and declared checker hashes remain unchanged. No resource or compile failure is
+credited. These receipts supersede the earlier in-progress status for those
+exact frozen snapshots, without relabeling them as newer source scopes.
+
+The [ordinary setter-body domains](ordinary-action-bodies.md) add ten roots668
+in total, with896 finite body/caller checks,8,904 setters,16 native generator/port
+programs and eight pending output adoptions. New focused negative tests are
+separate from complete700. An initial larger negative oracle hit the4GiB frontend
+bound and received no credit; its smaller real-signal boundary oracle must pass
+unchanged and reject compiled variants. The full independent composed verdict
+is required before this checkpoint is sealed. Diagnostic compiler experiments,
+standalone aggregate time/fuel stops and frontend-only checks are not independent
+mathematical verdicts. Kernel profile/fuel and negative-probe limits are unchanged.
+
+
+All five new ordinary-body variants compile and are rejected by the independently
+passing runtime-only oracle; the earlier resource-stopped attempts receive no
+credit. Current configured705=487 finite+218 kernel targets are current. Complete
+frozen700 remains a separate scoped receipt, not a fresh complete705 claim. See
+[body validation](reviews/ordinary-action-bodies-validation.json).

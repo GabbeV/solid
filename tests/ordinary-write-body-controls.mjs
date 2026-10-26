@@ -1,0 +1,45 @@
+// Finite actual body/caller controls plus independently authored native generators.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+import {spawnSync} from 'node:child_process';import {pathToFileURL,fileURLToPath} from 'node:url';
+import {build} from 'esbuild';
+import {BendRuntime,list,encodeList} from '../host/bend.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-write-body-'));
+try{
+ const proofRoot=path.join(dir,'inputs'),sourceRoot=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):root;fs.mkdirSync(proofRoot);
+ for(const name of ['runtime','representation','observation'])fs.cpSync(path.join(sourceRoot,name),path.join(proofRoot,name),{recursive:true});
+ fs.cpSync(path.join(root,'proof'),path.join(proofRoot,'proof'),{recursive:true});
+ const modules={};
+ for(const [name,input]of [['eval','proof/ordinary-body-evaluation.bend'],['graph','proof/ordinary-write-constructed.bend'],['history','proof/ordinary-write-history.bend'],['core','runtime/core.bend'],['action','runtime/action-state.bend']]){
+  const output=path.join(dir,name+'.mjs'),r=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(proofRoot,input),'-o',output],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});assert.equal(r.status,0,r.stdout+'\n'+r.stderr);modules[name]=(await import(pathToFileURL(output))).default;
+ }
+ const E=modules.eval,G=modules.graph,H=modules.history,C=modules.core,A=modules.action,b=new BendRuntime(),nil=encodeList([]),payloads=[undefined,null,false,true,0,-0,NaN,1,'','saved',{ref:31}].map(v=>b.encode(v));payloads.push({$:'ProgramReference',callback:0},{$:'AccessorReference',signal:1},{$:'StepResult',done:false,value:b.encode('data')});
+ const primitive=v=>v.$==='Undefined'?{known:true,value:undefined}:v.$==='Null'?{known:true,value:null}:v.$==='Boolean'?{known:true,value:v.b}:v.$==='Number'?{known:true,value:v.n}:v.$==='NegativeZero'?{known:true,value:-0}:v.$==='NotANumber'?{known:true,value:NaN}:v.$==='StringValue'?{known:true,value:v.s}:({known:false});
+ const strictSame=(a,c)=>{const x=primitive(a),y=primitive(c);if(x.known&&y.known)return x.value===y.value;if(a.$!==c.$)return false;if(a.$==='Reference')return a.id===c.id;if(a.$==='ProgramReference')return a.callback===c.callback;if(a.$==='AccessorReference')return a.signal===c.signal;return false;};
+ const content=w=>({values:list(w.nodes).map(n=>n.value),tree:w.tree,events:w.events});let cases=0,writes=0,stacks=0;
+ const sequences=[[],[b.encode(0)],[b.encode(1)],...payloads.map(v=>[b.encode(1),v]),...Array.from({length:payloads.length},(_,i)=>Array.from({length:16},(_,n)=>payloads[(n+i)%payloads.length])),Array.from({length:64},(_,i)=>payloads[i%payloads.length])];
+ for(const valuesArray of sequences)for(const answer of payloads)for(const rejected of [false,true]){
+  const values=encodeList(valuesArray),initial=G.linked(b.encode(0)),id=G.source(b.encode(0)),expr=E.expression(values,id,answer),methods={$:'ActionMethods',next:expr,catches:true,thrown:expr,tail:{$:'ActionEnd'}},created=A.create(initial,methods),actor=created.right,opened=A.open(created.left,actor),group=list(opened.actions)[actor].transaction,stack=encodeList([b.encode('caller'),answer,b.encode(42)]),rest=encodeList([{$:'AsyncWriteSchedule'}]),start=C.actionResume(opened,rest,stack,actor,b.encode('input'),rejected),before=start.world;
+  assert.equal(before.actionDepth,1);assert.equal(list(before.txArena)[group].open,1);const steps=1+E.cost(values);assert.equal(steps,2+5*valuesArray.length);let current=start;for(let n=0;n<steps;n++)current=C.step(current);
+  assert.equal(current.world.fault.$,'Healthy');assert.equal(current.world.actionDepth,0);assert.equal(list(current.world.txArena)[group].open,0);assert.deepEqual(current.values,stack);stacks++;
+  assert.deepEqual(content(current.world),content(initial));assert.deepEqual(list(current.world.actions)[actor].methods,{$:'ActionEnd'});assert.deepEqual(list(current.tasks).map(t=>t.$),['DeliverObservers','ActionSliceEnd','AsyncWriteSchedule']);
+  const pending=list(current.world.nodes)[id].pending;
+  let expectedPending={$:'Empty'},expectedValue=b.encode(0);for(const value of valuesArray)if(!strictSame(expectedValue,value)){expectedPending={$:'Present',value};expectedValue=value;}assert.deepEqual(pending,expectedPending);
+  assert.deepEqual(list(current.world.asyncObjects)[list(opened.actions)[actor].result].state,{$:'Fulfilled',value:answer});
+  const afterWrites=H.run(values,before,id);assert.equal(afterWrites.fault.$,'Healthy');assert.equal(list(afterWrites.txArena)[group].open,1);assert.deepEqual(afterWrites.actions,before.actions);assert.deepEqual(afterWrites.actionWaits,before.actionWaits);assert.deepEqual(afterWrites.txArena,before.txArena);assert.deepEqual(content(afterWrites),content(initial));writes+=valuesArray.length;cases++;
+ }
+ const bundled=await build({stdin:{contents:"export * from './index.ts';export {setContextInternal} from './core/core.ts';export {flushTransaction,actionDepth} from './core/scheduler.ts';",resolveDir:path.join(root,'upstream/solid/packages/signals/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'}}),nativeFile=path.join(dir,'native.mjs');fs.writeFileSync(nativeFile,bundled.outputFiles[0].text);const S=await import(pathToFileURL(nativeFile));let nativeCases=0,adoptions=0;
+ for(const length of [0,1,4,16])for(const rejected of [false,true])for(const adopts of [false,true]){
+  S.setContextInternal(null);const values=Array.from({length},(_,i)=>[1,false,'',undefined,null,7,'saved',0][i%8]),input=Promise.withResolvers(),returned=Promise.withResolvers(),seen=[];let get,set,dispose;
+  S.createRoot(d=>{dispose=d;[get,set]=S.createSignal(0);const memo=S.createMemo(get);S.createRenderEffect(memo,value=>{seen.push(value);});});S.flush();
+  const port=new BendRuntime({async:true});port.signal('x',0);port.memo('memo',{read:'x'});port.effect('view',{read:'memo'});port.flush();port.future('input');if(adopts)port.future('return');
+  const native=S.action(function*(){try{yield input.promise;}catch{}for(const value of values)set(()=>value);return adopts?returned.promise:'saved';})();native.catch(()=>{});const group=S.flushTransaction;
+  const body={seq:[...values.map(value=>({invokeWith:{callee:{lit:{setter:'x'}},value:{lit:value},updater:true}})),{iteratorResult:{done:true,value:adopts?{future:'return'}:{lit:'saved'}}}]},promise=port.runAction('save',{steps:[{next:{iteratorResult:{done:false,value:{future:'input'}}}},{next:body,throw:body}]}),actor=list(port.world.actions)[0];promise.catch(()=>{});
+  assert.deepEqual(seen,[0]);assert.equal(group._open,1);assert.equal(list(port.world.txArena)[actor.transaction].open,1);
+  if(rejected){input.reject('input failed');port.reject('input','input failed');}else{input.resolve('input');port.resolve('input','input');}
+  await new Promise(resolve=>setImmediate(resolve));const final=length?values.at(-1):0;assert.ok(Object.is(get(),final));assert.ok(Object.is(port.read('x'),get()));assert.deepEqual(port.trace().filter(e=>e[0]==='apply'&&e[1]==='view').map(e=>e[2]),seen);assert.deepEqual(seen,Object.is(final,0)?[0]:[0,final]);assert.equal(group._open,0);assert.equal(list(port.world.txArena)[actor.transaction].open,0);assert.equal(S.actionDepth,0);assert.equal(port.world.actionDepth,0);
+  if(adopts){let settled=false;promise.then(()=>{settled=true;});await Promise.resolve();assert.equal(settled,false);returned.resolve('saved');port.resolve('return','saved');adoptions++;}
+  assert.equal(await promise,await native);dispose();port.dispose();S.flush();port.flush();nativeCases++;
+ }
+ console.log(JSON.stringify({sampledWriteSequences:sequences.length,actualBodyCases:cases,actualSetterExpressions:writes,callerStackChecks:stacks,longestBodyWrites:64,nativeGeneratorPortCases:nativeCases,pendingReturnAdoptions:adoptions,scope:'actual finite setter bodies and terminal return before queued slice-end; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate'}));
+}finally{fs.rmSync(dir,{recursive:true,force:true});}

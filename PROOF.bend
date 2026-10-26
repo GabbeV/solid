@@ -1,3 +1,26 @@
+import ./proof/subscriber-walk-health.bend as WriteBody0
+import ./proof/subscriber-walk-step.bend as WriteBody1
+import ./proof/ordinary-write-outer.bend as WriteBody2
+import ./proof/subscriber-notification-health.bend as WriteBody3
+import ./proof/ordinary-write-profile.bend as WriteBody4
+import ./proof/ordinary-setter-health.bend as WriteBody5
+import ./proof/ordinary-setter-topology.bend as WriteBody6
+import ./proof/ordinary-shape-facts.bend as WriteBody7
+import ./proof/subscriber-path-transport.bend as WriteBody8
+import ./proof/ordinary-body-evaluation.bend as WriteBody9
+import ./proof/ordinary-profile-control.bend as WriteBody10
+import ./proof/ordinary-write-history.bend as WriteBody11
+import ./proof/ordinary-updater-evaluation.bend as WriteBody12
+import ./proof/core-prefix-compose.bend as WriteBody13
+import ./proof/ordinary-write-constructed.bend as WriteBody14
+import ./proof/ordinary-body-retirement.bend as WriteBody15
+import ./proof/ordinary-body-return.bend as WriteBody16
+import ./proof/ordinary-body-constructed.bend as WriteBody17
+import ./proof/ordinary-body-construction-normal.bend as WriteBody18
+import ./proof/ordinary-profile-transport.bend as WriteBody19
+import ./proof/ordinary-body-entry.bend as WriteBody20
+import ./proof/ordinary-body-constructed-count.bend as WriteBody21
+import ./proof/action-retirement-count.bend as WriteBody22
 import ./proof/action-context-reconstruction.bend as BodyImportedReconstruct
 import ./runtime/core.bend as Core
 import ./proof/action-output-frame.bend as BodyOutput
@@ -2439,3 +2462,43 @@ def Laws.constructed_body_retirement_zero_debt_survives_helper_suffix(values,val
 
 def Laws.action_output_preserves_arbitrary_caller_stack(w,rest,stack,id,rejected,value):
   BodyOutput.outputStack(w,rest,stack,id,rejected,value)
+
+
+def Laws.certified_subscriber_walk_retains_full_outer_world_and_fault(w,path,current,extra,same,known):
+  WriteBody0.walk(w,path,current,extra,same,known)
+
+
+def Laws.actual_subscriber_notification_uses_certified_arena_budget(base,path,w,id,extra,same,unmarked,valid,matches,room):
+  WriteBody3.publicFrom(base,path,w,id,extra,same,unmarked,valid,matches,room)
+
+
+def Laws.actual_ordinary_setter_preserves_constructed_source_profile(w,id,value,profile):
+  WriteBody4.next(w,id,value,profile)
+
+
+def Laws.finite_actual_setter_body_evaluates_with_structural_bound(values,w,id,answer,rest,stack,profile):
+  WriteBody9.complete(values,w,id,answer,rest,stack,profile)
+
+
+def Laws.raw_signal_render_constructor_supplies_finite_write_history_profile(values,initial):
+  WriteBody11.constructedHistory(values,initial)
+
+
+def Laws.finite_ordinary_body_retires_original_captured_live_obligation(values,w,id,answer,actor,rest,stack,profile,route,extra,remaining,captured,room,open):
+  WriteBody15.complete(values,w,id,answer,actor,rest,stack,profile,route,extra,remaining,captured,room,open)
+
+
+def Laws.finite_ordinary_body_return_retains_arbitrary_caller_stack(values,w,id,answer,actor,rest,stack,profile):
+  WriteBody16.savedStack(values,w,id,answer,actor,rest,stack,profile)
+
+
+def Laws.constructed_actual_method_body_and_group_retirement(initial,values,answer,rest,stack,incoming,rejected):
+  WriteBody17.complete(initial,values,answer,rest,stack,incoming,rejected)
+
+
+def Laws.constructed_finite_setter_body_has_zero_live_action_debt(initial,values,answer,rest,stack,incoming,rejected):
+  WriteBody21.zero(initial,values,answer,rest,stack,incoming,rejected)
+
+
+def Laws.actual_constant_updater_expression_keeps_committed_storage(w,rest,stack,id,value,previous,healthy,ordinary,override,custom):
+  WriteBody12.committed(w,rest,stack,id,value,previous,healthy,ordinary,override,custom)

@@ -16,9 +16,9 @@ non-store port with an explicit callback/host grammar, not the whole package.
 
 | Area | Implementation and correspondence evidence | Semantic proof coverage | Remaining scope |
 | --- | --- | --- | --- |
-| Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace frame through actual staging/default setter and finite helper-write histories; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
+| Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace and full ordinary control frames through actual staging/default setter, finite helper histories and finite real setter-body evaluation; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Already-held setter/body composition, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
@@ -521,3 +521,21 @@ identity accounting, real body writes and queued flush/reveal remain open.
 A newly added malformed negative oracle was caught and discarded; the runner
 now requires unchanged kernel oracles to pass before crediting rejection.
 Runtime/source/host, earlier theorem domains and limits are unchanged.
+
+
+## Finite real setter bodies and captured retirement
+
+[The ordinary action-body contracts](ordinary-action-bodies.md) execute arbitrary
+finite constant-result setter bodies through real staging/notification and method
+return. A constructed profile supplies health, shape, actual subscriber path and
+room; every write constructs its successor certificate. The real core has a
+syntax-derived bound and retains caller work. Original actor/group storage survives
+these writes, allowing certified captured debt to retire after the body. Actual
+constructor/controller integration supplies the entry profile and zero-debt
+corollary. Ten roots extend658 to668 after the required composed verdict.896 body
+executions and16 native generator/port programs are supporting controls. This is
+the ordinary non-held/default-comparator/imperative profile; already-held writes,
+full public protocol reachability, arbitrary user code, flight accounting and
+queued flush/reveal remain open. Runtime/source/host and earlier domains/budgets
+remain unchanged. The next useful extension is a source-faithful same-component
+held setter and its extension/stash obligations, then queued slice publication.

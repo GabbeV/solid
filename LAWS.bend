@@ -1,3 +1,26 @@
+import ./proof/subscriber-walk-health.bend as WriteBody0
+import ./proof/subscriber-walk-step.bend as WriteBody1
+import ./proof/ordinary-write-outer.bend as WriteBody2
+import ./proof/subscriber-notification-health.bend as WriteBody3
+import ./proof/ordinary-write-profile.bend as WriteBody4
+import ./proof/ordinary-setter-health.bend as WriteBody5
+import ./proof/ordinary-setter-topology.bend as WriteBody6
+import ./proof/ordinary-shape-facts.bend as WriteBody7
+import ./proof/subscriber-path-transport.bend as WriteBody8
+import ./proof/ordinary-body-evaluation.bend as WriteBody9
+import ./proof/ordinary-profile-control.bend as WriteBody10
+import ./proof/ordinary-write-history.bend as WriteBody11
+import ./proof/ordinary-updater-evaluation.bend as WriteBody12
+import ./proof/core-prefix-compose.bend as WriteBody13
+import ./proof/ordinary-write-constructed.bend as WriteBody14
+import ./proof/ordinary-body-retirement.bend as WriteBody15
+import ./proof/ordinary-body-return.bend as WriteBody16
+import ./proof/ordinary-body-constructed.bend as WriteBody17
+import ./proof/ordinary-body-construction-normal.bend as WriteBody18
+import ./proof/ordinary-profile-transport.bend as WriteBody19
+import ./proof/ordinary-body-entry.bend as WriteBody20
+import ./proof/ordinary-body-constructed-count.bend as WriteBody21
+import ./proof/action-retirement-count.bend as WriteBody22
 import ./proof/action-context-reconstruction.bend as BodyImportedReconstruct
 import ./proof/action-output-frame.bend as BodyOutput
 import ./proof/transaction-resolution.bend as ActionPaths
@@ -5627,3 +5650,118 @@ law action_output_preserves_arbitrary_caller_stack:
   for +rejected: Bool
   for +value: R.Value
   {Core.values(Core.actionOutput(w,rest,stack,id,rejected,value)) == stack : List<&2,R.Value>}
+
+
+law certified_subscriber_walk_retains_full_outer_world_and_fault:
+  for +w: R.World
+  for path: WriteBody1.Path<w>
+  for +current: R.World
+  for +extra: Nat
+  for +same: {WriteBody2.observe(current) == WriteBody2.observe(w) : R.World}
+  for +known: {R.World.marked(w) == False{} : Bool}
+  {WriteBody2.observe(RuntimeWrites.insert_subs(Nat.add(WriteBody1.depth(w,path),extra),current,WriteBody1.origin(w,path))) == WriteBody2.observe(w) : R.World}
+
+
+law actual_subscriber_notification_uses_certified_arena_budget:
+  for +base: R.World
+  for +path: WriteBody1.Path<base>
+  for +w: R.World
+  for +id: Nat
+  for +extra: Nat
+  for same: {WriteBody2.observe(w) == WriteBody2.observe(base) : R.World}
+  for unmarked: {R.World.marked(base) == False{} : Bool}
+  for valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool}
+  for matches: {R.Node.subs(B.node(w,id)) == WriteBody1.origin(base,path) : Nat}
+  for room: {B.budget(w) == Nat.add(WriteBody1.depth(base,path),extra) : Nat}
+  {WriteBody2.observe(RuntimeWrites.insertSubs(w,id)) == WriteBody2.observe(base) : R.World}
+
+
+law actual_ordinary_setter_preserves_constructed_source_profile:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +profile: WriteBody4.Profile<w,id>
+  WriteBody4.Profile<RuntimeWrites.setSignal(w,id,value),id>
+
+
+law finite_actual_setter_body_evaluates_with_structural_bound:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +profile: WriteBody4.Profile<w,id>
+  {PendingHistory.iterate(WriteBody9.cost(values),WriteBody9.start(w,values,id,answer,rest,stack)) == WriteBody9.finished(w,values,id,answer,rest,stack) : Core.Machine}
+
+
+law raw_signal_render_constructor_supplies_finite_write_history_profile:
+  for +values: List<&2,R.Value>
+  for +initial: R.Value
+  WriteBody4.Profile<WriteBody11.run(values,WriteBody14.linked(initial),WriteBody14.source(initial)),WriteBody14.source(initial)>
+
+
+law finite_ordinary_body_retires_original_captured_live_obligation:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +actor: Nat
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +profile: WriteBody4.Profile<w,id>
+  for +route: RedirectPaths.Route<w>
+  for +extra: Nat
+  for +remaining: Nat
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RedirectPaths.origin(w,route) : Nat}
+  for room: {1n+B.length(R.Transaction,R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w,route),1n+extra) : Nat}
+  for open: {R.Transaction.open(B.transaction(w,RedirectPaths.terminal(w,route))) == 1n+remaining : Nat}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+WriteBody9.cost(values),WriteBody16.start(w,values,id,answer,actor,rest,stack)))) == BodyOutput.outer(BodyRetire.target(WriteBody11.run(values,w,id),RedirectPaths.terminal(w,route),remaining)) : R.World}
+
+
+law finite_ordinary_body_return_retains_arbitrary_caller_stack:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +actor: Nat
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for profile: WriteBody4.Profile<w,id>
+  {Core.values(PendingHistory.iterate(1n+WriteBody9.cost(values),WriteBody16.start(w,values,id,answer,actor,rest,stack))) == stack : List<&2,R.Value>}
+
+
+law constructed_actual_method_body_and_group_retirement:
+  for +initial: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+WriteBody9.cost(values),WriteBody17.start(initial,values,answer,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(WriteBody11.run(values,WriteBody17.ready(initial,values,answer),WriteBody14.source(initial)),1n,0n)) : R.World}
+
+
+law constructed_finite_setter_body_has_zero_live_action_debt:
+  for +initial: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {WriteBody22.count(Core.world(PendingHistory.iterate(1n+WriteBody9.cost(values),WriteBody17.start(initial,values,answer,rest,stack,incoming,rejected))),1n) == 0n : Nat}
+
+
+law actual_constant_updater_expression_keeps_committed_storage:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +value: R.Value
+  for +previous: R.Value
+  for healthy: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  for ordinary: {Core.memoNode(R.Node.kind(B.node(w,id))) == False{} : Bool}
+  for override: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()) == False{} : Bool}
+  for custom: {Equality.custom(w,id) == 0n : Nat}
+  {CommittedStorage.observe(Core.world(PendingHistory.iterate(3n,WriteBody12.start(w,rest,stack,id,value,previous)))) == CommittedStorage.observe(w) : CommittedStorage.View}
