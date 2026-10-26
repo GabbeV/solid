@@ -148,7 +148,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `0847122e` (2026-10-26). All77 recorded Solid inputs match the pin; its reviewed changes and excluded store/boundary profile are recorded below.
+Latest next observed: `f5cf675a` (2026-10-26 22:18 UTC). All77 selected source input bytes still equal the0847122e pin; the two later commits concern excluded Solid/SSR behavior. [Byte comparison](reviews/next-f5cf675a-observation.json).
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -545,3 +545,8 @@ The [held-staging dependency](held-staging.md) now covers canonical held-source 
 ## Repin to0847122e and held-body extension
 
 The [source review](reviews/solid-0847122e.md) records exact shared frame flags/reads/re-entry and excluded boundary APIs. The [held-body result](held-body-histories.md) constructs preserved canonical source/group/extension certificates and evaluates arbitrary finite real setter bodies through retirement. Its raw construction starts at the body task; the full held-before-resume entry bridge, redirects at source entry and publication remain open.
+
+
+## Actual held resume and retirement
+
+The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.

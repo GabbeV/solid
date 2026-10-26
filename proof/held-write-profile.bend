@@ -83,3 +83,7 @@ def terminal(-w: R.World,-id: Nat,-offset: Nat,profile: Profile<w,id,offset>) ->
 def groupValid(-w: R.World,-id: Nat,-offset: Nat,profile: Profile<w,id,offset>) -> {Nat.is_lt(1n+offset,B.length(R.Transaction,R.World.txArena(w))) == True{} : Bool}:
   match profile:
     case HeldAt{path,extra,health,unmarked,valid,head,room,context,signal,held,override,custom,existing,extensionRoom,canonical,future,terminal,groupRoom}: groupRoom
+
+def future(-w: R.World,-id: Nat,-offset: Nat,profile: Profile<w,id,offset>) -> {R.World.flushTransaction(w) == 1n+offset : Nat}:
+  match profile:
+    case HeldAt{path,extra,health,unmarked,valid,head,room,context,signal,held,override,custom,existing,extensionRoom,canonical,future,terminal,groupRoom}: future

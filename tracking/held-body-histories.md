@@ -65,6 +65,10 @@ settlement, group eligibility or an eventual render. Already-redirected source
 caches and distinct-component joins are outside this canonical profile; the
 captured action identity itself may have a certified redirect route.
 
+The [actual-resume extension](held-resume-retirement.md) now derives body-entry
+facts operationally for fresh and already-current canonical groups. It does not
+use the still-open full-World constructor commutation equation.
+
 ## Evidence
 
 Eight composed roots extend674 to682. Mathematical checkpoint credit comes from
@@ -73,12 +77,12 @@ the fresh independent full-book verdict and exact input seal in
 probe passes on the new0847122e runtime in75.5 seconds within the unchanged
 90-second/4GiB probe limits. Fuel-stopped constructor attempts remain unproved.
 
-The real body controls now execute1,792 ordinary/held cases,17,808 setters and
-1,792 saved stacks. Their896 held cases run actual captured resume after holding
-the source and check the entry-world commutation finitely. Existing independently
-authored native controls cover16 generator/adoption cases and32 joined held-action
-cases, including caught rejection and a separately pending rendered flight.
-These are supporting controls, not a formal TypeScript/Bend equivalence claim.
+The expanded real body controls execute2,688 ordinary/held cases,26,712 setters
+and2,688 saved stacks. Their1,792 held cases include896 already-current-group
+entries and check the entry-world commutation finitely. Independently authored
+native controls cover32 generator cases, including16 pending output-adoption
+cases, and the separate joined-action controls cover32 held-action cases. These
+are supporting controls, not a formal TypeScript/Bend equivalence claim.
 
 The focused eight runtime-only faults pass the unchanged oracle, compile and are
 semantically rejected on0847122e. Configured713=487 finite+226 kernel is distinct

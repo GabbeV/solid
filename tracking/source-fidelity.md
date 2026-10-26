@@ -259,3 +259,8 @@ onFlush omission. The source pin and all older theorem domains/budgets remain.
 ## Repin to0847122e and held-body extension
 
 The [source review](reviews/solid-0847122e.md) records exact shared frame flags/reads/re-entry and excluded boundary APIs. The [held-body result](held-body-histories.md) constructs preserved canonical source/group/extension certificates and evaluates arbitrary finite real setter bodies through retirement. Its raw construction starts at the body task; the full held-before-resume entry bridge, redirects at source entry and publication remain open.
+
+
+## Actual held resume and retirement
+
+The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.

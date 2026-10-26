@@ -30,3 +30,14 @@ Use actual list/extension store lenses and group lookup facts instead of asking
 reflexivity to expand both full Worlds repeatedly. Retain all original fields,
 mutation order, original capture and caller task/stack obligations. Do not assume
 an intermediate healthy profile or increase checker limits to declare success.
+
+The smaller operational preparation contracts now check and compose into
+[actual resume-through-retirement](../../tracking/held-resume-retirement.md) for
+fresh and already-current canonical groups. This resolves the local entry
+dependency without requiring this full-World constructor equation. The equation
+itself and full public construction remain unproved.
+
+A further generic direct-reflexivity shortcut did not establish the required
+branch equalities; its failing diagnostic hit the output limit in6.24s. It gets
+no credit. The next approach needs explicit extension/store and branch-lifting
+lemmas, not an assumption that the shortcut is a valid but expensive proof.

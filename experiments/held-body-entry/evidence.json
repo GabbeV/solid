@@ -15,6 +15,15 @@
       "status": 1,
       "failure": "out of fuel",
       "proofCredit": false
+    },
+    {
+      "diagnostic": "generic-normal-source-observation-shortcut",
+      "seconds": 6.244627432,
+      "status": null,
+      "signal": "SIGKILL",
+      "failure": "Invalid direct-reflexivity attempt: abstract hold/list choices do not distribute through differing records automatically; diagnostic output limit interrupts error rendering. No successful verdict.",
+      "sourceSha256": "0bd689625c11fd986ed4b4f980b7387dafcaff388db7c3cce26b1712dc61ba09",
+      "proofCredit": false
     }
   ],
   "runtimeWorkaround": false,

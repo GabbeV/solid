@@ -3,8 +3,8 @@
 An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.18. This is **not yet the complete signals package**.
 
-The source is pinned to next@2a0da2fc. [The latest source review](tracking/reviews/solid-2a0da2fc.md)
-records merged protocol-flight retirement and first-error re-ask handling. [Stream refetch](tracking/deferred-stream-refetch.md)
+The source is pinned to next@0847122e. [The latest source review](tracking/reviews/solid-0847122e.md)
+records shared frame configuration and held re-entry changes. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
 
 The objective is increasingly general properties of reactive behavior and useful
@@ -73,7 +73,7 @@ iterator engine. The stream refetch wrapper is implemented; from/store/boundary 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 4,486 public histories, 589 configured mutation
+budget. Current evidence totals 4,750 public histories, 713 configured mutation
 controls and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -85,16 +85,24 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is `2a0da2fc` (rc.18). [The source review](tracking/reviews/solid-2a0da2fc.md)
-accounts for all 77 verbatim Solid inputs and integrates merged #4248/#4250.
-Deferred protocol errors now retire their flights; never-valued error re-asks
-restore pending-uninitialized status. Earlier #4231/#4232/#4233 integration and
-all preceding theorem domains/budgets remain. No semantic workaround is active.
+The reviewed Solid pin is `0847122e` (rc.18). [The source review](tracking/reviews/solid-0847122e.md)
+accounts for all77 verbatim Solid inputs and shared frame changes. A later
+[upstream observation](tracking/reviews/next-f5cf675a-observation.json) finds all
+selected input bytes unchanged at `f5cf675a`; its later SSR fixes are outside
+this signals profile. No semantic workaround is active.
+
+The [actual held resume result](tracking/held-resume-retirement.md) now derives
+its body-entry certificate, original capture and count storage, then evaluates
+any admitted finite setter list and retires one obligation. Both fresh and
+already-current canonical groups are covered. Public waiting/joining/disposal
+histories, source-entry redirects and eventual rendered publication remain open.
+Complete negative sweeps keep their frozen source/proof identities separate
+from these quantified proofs; see [verification](tracking/verification.md).
 
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # reject 619 source-changing variants
+npm run mutations                # check 713 configured source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy

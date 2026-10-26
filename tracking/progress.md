@@ -1067,3 +1067,10 @@ the full independent composed verdict and tracked input seal.
 The668-root checkpoint `fb9c8ad4` checks finite real setter bodies and constructed retirement (343.3s,1,117 sealed inputs). The next held-staging dependency adds canonical same-component joining, allocated snapshot progress and actual held staging health/identity contracts; complete held-body/publication composition remains open.
 
 Checkpoint674 `8d5e414d` independently checks held staging (349.2s,1,132 inputs). The following candidate repins exact source to0847122e and adds finite already-held setter bodies, preserved certificates and raw constructed zero-debt retirement; it does not assert the unproved held-before-resume bridge or full publication. Native source suite:351 files /5,614 passing tests.
+
+
+Late-evening actual-entry extension: five roots compose actual captured resume through finite held-body evaluation and one-obligation retirement, deriving the body profile/capture/count storage from initial facts for fresh/current canonical groups. Full-World constructor commutation remains unproved and unused. Expanded2,688 body controls /26,712 setters and32 native generator cases pass, including16 separately pending output adoptions. [Scope](held-resume-retirement.md), [receipt](reviews/held-resume-retirement-validation.json). Full composed687 verdict and exact seal are required for mathematical checkpoint credit.
+
+The687-root entry book passed in421.9s. Two further path-certified capture-alias join dependencies check independently in5.07s; full resumed-alias composition remains open. All77 selected source bytes still match latest observed next@f5cf675a.
+
+Full713 on frozenfc38211d/0847122e completed:713 compiled semantic rejections,97 mandatory unchanged kernel oracles passed,1150 unchanged tracked sealed inputs. Exact receipt remains distinct from the new689-root proof book. No new upstream bug or semantic workaround this run.

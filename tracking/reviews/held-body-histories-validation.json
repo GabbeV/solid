@@ -56,6 +56,6 @@
     "finite": 487,
     "kernel": 226
   },
-  "fullMutationScope": "Complete712 is separately frozen at8d5e414d/1d6c40fb; it must finish and preserve exact sealed inputs before receipt credit. No complete713 claim.",
+  "fullMutationScope": "Complete713 finished on frozenfc38211d/0847122e: all713 ordered unique variants compile and are semantically rejected after97 mandatory unchanged kernel oracle modules pass. All1150 sealed inputs remain unchanged/tracked. See complete-713-negative.json. New689-root proof terms remain separate from that frozen682-root sweep.",
   "finalProofAuthority": "Fresh complete independent682-root verdict and exact input seal in tracking/checked.json."
 }

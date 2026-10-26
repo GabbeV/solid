@@ -1,3 +1,12 @@
+import ./proof/held-preparation-alias-join.bend as HeldAlias0
+import ./proof/held-preparation-source.bend as HeldResume0
+import ./proof/held-source-view.bend as HeldResume1
+import ./proof/held-source-operations.bend as HeldResume2
+import ./proof/held-preparation-profile.bend as HeldResume3
+import ./proof/held-source-transfer.bend as HeldResume4
+import ./proof/held-preparation-control.bend as HeldResume5
+import ./proof/action-method-store.bend as HeldResume6
+import ./proof/held-resume-retirement.bend as HeldResume7
 import ./proof/held-setter-frames.bend as HeldBody0
 import ./proof/held-write-profile.bend as HeldBody1
 import ./proof/held-transition-frame.bend as HeldBody2
@@ -5934,3 +5943,94 @@ law constructed_owned_source_body_reaches_zero_live_action_debt:
   for +rest: List<&2,Core.Task>
   for +stack: List<&2,R.Value>
   {WriteBody22.count(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldBody6.start(HeldBody8.normalized(initial),values,WriteBody14.source(initial),answer,0n,rest,stack))),1n) == 0n : Nat}
+
+
+law captured_fresh_preparation_retains_the_held_source_observation:
+  for +w: R.World
+  for +actor: Nat
+  for +offset: Nat
+  for +tail: R.Expr
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
+  {HeldResume1.observe(BodyEntry.prepared(w,actor,tail)) == HeldResume1.observe(HeldResume0.flush(w,1n+offset)) : HeldResume1.View}
+
+
+law current_group_preparation_constructs_the_held_body_profile:
+  for +w: R.World
+  for +id: Nat
+  for +actor: Nat
+  for +offset: Nat
+  for +tail: R.Expr
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
+  HeldBody1.Profile<BodyEntry.prepared(w,actor,tail),id,offset>
+
+
+law actual_action_preparation_preserves_the_original_positive_capture:
+  for +w: R.World
+  for +actor: Nat
+  for +offset: Nat
+  for +tail: R.Expr
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
+  {R.ActionState.transaction(Action.get(BodyEntry.prepared(w,actor,tail),actor)) == 1n+offset : Nat}
+
+
+law current_group_actual_resume_runs_held_body_and_retires_one_obligation:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law fresh_group_actual_resume_runs_held_body_and_retires_one_obligation:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law certified_captured_alias_joins_its_already_current_canonical_group:
+  for +w: R.World
+  for +rootOffset: Nat
+  for +captureOffset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+rootOffset>
+  for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
+  for future: {R.World.flushTransaction(w) == 1n+rootOffset : Nat}
+  for stopped: {R.Transaction.into(B.transaction(w,1n+rootOffset)) == 0n : Nat}
+  {Transactions.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.scheduled(w) : R.World}
+
+
+law certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot:
+  for +w: R.World
+  for +rootOffset: Nat
+  for +captureOffset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+rootOffset>
+  for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  {Transactions.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.scheduled(HeldResume0.flush(w,1n+rootOffset)) : R.World}

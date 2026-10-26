@@ -1,3 +1,12 @@
+import ./proof/held-preparation-alias-join.bend as HeldAlias0
+import ./proof/held-preparation-source.bend as HeldResume0
+import ./proof/held-source-view.bend as HeldResume1
+import ./proof/held-source-operations.bend as HeldResume2
+import ./proof/held-preparation-profile.bend as HeldResume3
+import ./proof/held-source-transfer.bend as HeldResume4
+import ./proof/held-preparation-control.bend as HeldResume5
+import ./proof/action-method-store.bend as HeldResume6
+import ./proof/held-resume-retirement.bend as HeldResume7
 import ./proof/held-setter-frames.bend as HeldBody0
 import ./proof/held-write-profile.bend as HeldBody1
 import ./proof/held-transition-frame.bend as HeldBody2
@@ -2581,3 +2590,31 @@ def Laws.actual_owned_source_constructor_supplies_the_held_body_profile(initial)
 
 def Laws.constructed_owned_source_body_reaches_zero_live_action_debt(initial,values,answer,rest,stack):
   HeldBody9.zero(initial,values,answer,rest,stack)
+
+
+def Laws.captured_fresh_preparation_retains_the_held_source_observation(w,actor,offset,tail,captured,empty,stopped):
+  HeldResume0.actual(w,actor,offset,tail,captured,empty,stopped)
+
+
+def Laws.current_group_preparation_constructs_the_held_body_profile(w,id,actor,offset,tail,initial,captured):
+  HeldResume3.current(w,id,actor,offset,tail,initial,captured)
+
+
+def Laws.actual_action_preparation_preserves_the_original_positive_capture(w,actor,offset,tail,captured):
+  HeldResume5.capture(w,actor,offset,tail,captured)
+
+
+def Laws.current_group_actual_resume_runs_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,open,known):
+  HeldResume7.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,open,known)
+
+
+def Laws.fresh_group_actual_resume_runs_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known):
+  HeldResume7.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known)
+
+
+def Laws.certified_captured_alias_joins_its_already_current_canonical_group(w,rootOffset,captureOffset,alias,positive,future,stopped):
+  HeldAlias0.current(w,rootOffset,captureOffset,alias,positive,future,stopped)
+
+
+def Laws.certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot(w,rootOffset,captureOffset,alias,positive,empty):
+  HeldAlias0.fresh(w,rootOffset,captureOffset,alias,positive,empty)

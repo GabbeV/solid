@@ -575,8 +575,21 @@ frozen700 remains a separate scoped receipt, not a fresh complete705 claim. See
 
 ### Held staging extension after668
 
-[Held-staging scope and evidence](held-staging.md) and its [receipt](reviews/held-staging-validation.json) add seven runtime-only kernel fault variants: source flight, saved pending slot, clock, group debt, join scheduling, canonical cache and heap extension identity. Configured712=487 finite+225 kernel. Fresh focused credit requires the runner successful seven-variant footer; earlier complete frozen700 and focused body5 are separate. No complete712 sweep is claimed. Full composed credit requires the fresh independent674-root verdict and exact input seal.
+[Held-staging scope and evidence](held-staging.md) and its [receipt](reviews/held-staging-validation.json) add seven runtime-only kernel fault variants: source flight, saved pending slot, clock, group debt, join scheduling, canonical cache and heap extension identity. Configured712=487 finite+225 kernel. Fresh focused credit requires the runner successful seven-variant footer; earlier complete frozen700 and focused body5 are separate. Complete712 subsequently finished on the exact frozen674-root checkpoint; see complete-712-negative.json. Full composed credit requires the fresh independent674-root verdict and exact input seal.
 
 ### Canonical held bodies and0847122e
 
 The [body receipt](reviews/held-body-histories-validation.json) records1,792 ordinary/held body controls and the focused8 compiled semantic rejections on0847122e, including a suppressed-comparison join-order fault. Configured713=487 finite+226 kernel; complete frozen712 at8d5e414d is a separate source/corpus. Whole682-root independent verdict and exact input seal are required before checkpoint credit. The [source validation](reviews/solid-0847122e-validation.json) separates exact source bytes, native tests, alignment and regenerated data from that mathematical verdict.
+
+
+### Held actual resume entry
+
+Five new roots compose actual captured resume through finite held-body evaluation and retirement; [scope](held-resume-retirement.md). The complete712 sweep on frozen8d5e414d now finished:712 exact ordered unique named rejections,97 passing mandatory unchanged kernel oracle modules and1132 unchanged tracked sealed inputs; [receipt](reviews/complete-712-negative.json). This is distinct from the frozen713 run onfc38211d/0847122e and from the new687-root candidate.
+
+
+The687-root entry/retirement book passed independently in421.9s. Two certified captured-alias join dependencies extend the final candidate to689; they do not assert full callback entry/retirement for aliases. Final checkpoint authority remains the fresh full verdict and input seal.
+
+
+### Complete713 on0847122e
+
+The full frozenfc38211d/0847122e sweep finished successfully:713 exact ordered unique names,487 finite and226 kernel variants, all compiled and semantically rejected. All97 mandatory unchanged kernel oracle modules passed first. All1150 sealed inputs remain tracked and byte-identical; no compilation/resource failures receive credit. [Receipt](reviews/complete-713-negative.json). The frozen682-root sweep is distinct from the final689-root book.

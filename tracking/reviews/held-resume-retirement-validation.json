@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "sourceCommit": "0847122e9fc9681fda7feef37d5427db7316e56d",
+  "candidateComposedRoots": 689,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "runtimeChanges": false,
+  "scopeDocument": "tracking/held-resume-retirement.md",
+  "independentProbe": {
+    "status": 0,
+    "verdict": "ALL PROOFS CHECK",
+    "seconds": 9.747840961,
+    "timeoutSeconds": 90,
+    "maxRssBytes": 4294967296
+  },
+  "finiteControls": {
+    "sampledWriteSequences": 32,
+    "actualBodyCases": 2688,
+    "heldBodyCases": 1792,
+    "currentGroupCases": 896,
+    "heldEntryCommutations": 1792,
+    "actualSetterExpressions": 26712,
+    "callerStackChecks": 2688,
+    "longestBodyWrites": 64,
+    "nativeGeneratorPortCases": 32,
+    "pendingReturnAdoptions": 16,
+    "scope": "actual ordinary and fresh/current-group already-held finite setter bodies and terminal return before queued slice-end; finite held-entry commutation is not a general proof; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate"
+  },
+  "controlLogSha256": "6edcb039ff765882b25f19c27a185675716dd35f67005fd01fa4bbf14ffe2061",
+  "nativeSameGroupDetail": "Returning the held signal to its original value can still run the render effect again; exact native/port traces agree. No coalescing workaround.",
+  "unproved": [
+    "full-World hold-before-resume constructor commutation",
+    "public reachability through arbitrary waits, joins and disposal",
+    "source-entry redirected caches",
+    "once-only action/flight delivery",
+    "queued slice-end, eligibility and eventual publication"
+  ],
+  "negativeScope": "Complete713 finished on frozenfc38211d/0847122e: all713 ordered unique variants compile and are semantically rejected after97 mandatory unchanged kernel oracle modules pass. All1150 sealed inputs remain unchanged/tracked. See complete-713-negative.json. New689-root proof terms remain separate from that frozen682-root sweep.",
+  "mathematicalAuthority": "Fresh independent whole-book verdict and exact input hashes in tracking/checked.json.",
+  "completed687Book": {
+    "independentVerdict": true,
+    "seconds": 421.9,
+    "scope": "Before the two alias-join roots and final documentation/module-registry refresh; no final689 credit inferred."
+  },
+  "aliasJoinDependency": {
+    "independentVerdict": true,
+    "seconds": 5.065383862,
+    "composedRoots": 2,
+    "scope": "Actual joinFuture only for certified positive captured paths, fresh/current flush groups. Full resumed alias composition remains open."
+  }
+}

@@ -453,3 +453,8 @@ See [held-staging.md](held-staging.md) for the actual canonical source-group joi
 ## Already-held body histories
 
 [Held-body histories](held-body-histories.md) derive the next canonical group/extension/path certificate after actual joins, comparison and staging, then compose arbitrary finite real setter bodies and captured-obligation retirement. The raw owned-source family supplies the complete profile and has a checked zero-debt body-task corollary. The full before-resume construction equation and public publication remain open; finite commutation controls are separate.
+
+
+## Actual held resume and retirement
+
+The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.
