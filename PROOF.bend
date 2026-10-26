@@ -1,3 +1,13 @@
+import ./proof/pending-leaf-notification.bend as LeafNotify
+import ./proof/notifier-source-control.bend as NotifyCut
+import ./proof/pending-last-source.bend as LastSource
+import ./proof/pending-last-source-status.bend as LastStatus
+import ./proof/pending-settlement-status.bend as StatusPhase
+import ./proof/node-status-operations.bend as StatusOperations
+import ./proof/subscriber-topology-frame.bend as NotifyTopology
+import ./proof/graph-allocation-properties.bend as NotifyStorage
+import ./proof/pending-notification-operations.bend as NotifyOperations
+import ./runtime/status.bend as NotifyRuntime
 import ./proof/action-method-wait-fixture.bend as MethodWaitFixture
 import ./proof/action-method-first-history.bend as MethodFirstHistory
 import ./proof/action-retirement-context.bend as ActionRetirementContext
@@ -2294,3 +2304,39 @@ def Laws.first_method_callback_after_helpers_retains_committed_content(values,me
 
 def Laws.first_method_callback_and_helper_suffix_guard_current_machine(values,method,prefix,rest,stack,rejected,value,events,lateRejected,lateValue):
   MethodFirstHistory.duplicate(values,method,prefix,rest,stack,rejected,value,events,lateRejected,lateValue)
+
+
+def Laws.pending_notification_retains_topology_for_any_input_status(w,node,source,serial):
+  NotificationFootprint.allTopology(w,node,source,serial)
+
+
+def Laws.pending_notification_retains_storage_for_any_input_status(w,node,source,serial):
+  NotificationStorage.allStored(w,node,source,serial)
+
+
+def Laws.pending_leaf_notification_preserves_machine_continuation(w,node,source,serial,rest,visited,scheduled,config,shape,noGuess):
+  LeafNotify.leaf(w,node,source,serial,rest,visited,scheduled,config,shape,noGuess)
+
+
+def Laws.pending_leaf_notification_completes_with_existing_public_budget(w,node,source,serial,config,shape,noGuess,healthy,valid):
+  LeafNotify.public(w,node,source,serial,config,shape,noGuess,healthy,valid)
+
+
+def Laws.settled_status_has_exact_all_node_status_projection(w,node,remaining,errored):
+  StatusPhase.observed(w,node,remaining,errored)
+
+
+def Laws.sole_pending_source_removal_constructs_empty_carrier(w,node,source,single):
+  LastSource.retired(w,node,source,single)
+
+
+def Laws.sole_pending_source_removal_reports_success(w,node,source,single):
+  LastStatus.removalReported(w,node,source,single)
+
+
+def Laws.sole_pending_source_removal_and_status_clear_pending(w,node,source,single,valid):
+  LastStatus.retiredCleared(w,node,source,single,valid)
+
+
+def Laws.unheld_empty_carrier_has_exact_settled_status_world(w,node,empty,valid,noHeld):
+  LastSource.exact(w,node,empty,valid,noHeld)

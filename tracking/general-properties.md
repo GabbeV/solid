@@ -386,3 +386,14 @@ queued evaluation, full generator/flight ledger and final reveal are outside thi
 result. The recovered generic dispatch equation is checked with the recorded
 Lean-checked congruence profile, not assumed after its old baseline resource stop.
 Earlier root domains remain; source runtime and checker fuel are unchanged.
+
+## Recovered pending-controller compositions, 2026-10-26
+
+[The pending completion contracts](pending-completion.md) now prove actual leaf
+notification dispatch and completion under the original public budget, including
+incoming error status. Actual singleton removal supplies its empty carrier and
+zero count; the real status phase clears PENDING even through held joins. These
+nine roots extend630 to639 without changing previous domains. Enqueue, dependent
+traversal, owner release and final reveal remain separate stages. The old baseline
+resource stops remain archived; the new results use the explicit Lean-checked
+congruence profile. Runtime/representation/host/source pins are unchanged.

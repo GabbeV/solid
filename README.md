@@ -354,3 +354,9 @@ Lean/C toolchain. The full678 frozen negative sweep and four later focused check
 have separate provenance; full generator/flight accounting, queued user-body
 execution and coordinated flush/reveal remain open. Source runtime, representation
 and host adapters are unchanged.
+
+The [pending completion contracts](tracking/pending-completion.md) additionally
+connect actual leaf-notifier completion to its original budget and actual final
+source removal to the status phase's pending-bit clear, including held joins.
+They recover earlier checker resource stops; full settlement/flush/reveal remains
+open. Runtime and pinned sources are unchanged.

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-26",
+  "profile": "same-head-congruence-v1",
+  "fuel": 400000000,
+  "moduleSecondsLimit": 90,
+  "processGroupBytesLimit": 4294967296,
+  "activeComposedRootCredit": false,
+  "results": {
+    "heap": {
+      "seconds": 3.2678148760000005,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "ALL PROOFS CHECK\n"
+    },
+    "tail": {
+      "seconds": 2.398867592,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "ALL PROOFS CHECK\n"
+    },
+    "controller": {
+      "seconds": 37.077198115,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "ALL PROOFS CHECK\n"
+    },
+    "clearedOnly": {
+      "seconds": 32.996514027,
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "ALL PROOFS CHECK\n"
+    },
+    "fullAttempt": {
+      "seconds": 51.89028542,
+      "status": null,
+      "signal": "SIGKILL",
+      "error": "proof process-group RSS limit",
+      "stdout": ""
+    },
+    "combinedGenericAttempt": {
+      "seconds": 59.563444925999995,
+      "status": null,
+      "signal": "SIGKILL",
+      "error": "proof process-group RSS limit",
+      "stdout": ""
+    }
+  },
+  "nativeSettlementControls": 192,
+  "controlsLogSha256": "808f8fe2aca9dd94f6af69bd98a40d1c8d1f14e31e65f69070c39d71d9b55247",
+  "candidateSourceSha256": {
+    "notification-retirement-full-attempt.bend.txt": "79cbc56f30947d73ea7c4da704ec83f3348cefee5e010270c5230fab208e5a22",
+    "node-status-operations.bend.txt": "1bd2ac354ef0f3b515b02f8f981d2cdb43ff813ad9e3d837b2cc9cb4f8e61319",
+    "pending-retirement-controller.bend.txt": "e423f9a259a33ecd19bcd5152dcc300ceca22e5bb2ff5ad3a4644dcb7598348e",
+    "pending-tail-status.bend.txt": "630bf80a6c91c656a23d2d20d36b83af253fa36aed8705e01ab5acbb0c9ebaa8",
+    "heap-status-frame.bend.txt": "a5e06534bf167941e6f83b15521652e6415642a38a2de2920aa086067da89b0f",
+    "pending-notification-retirement.bend.txt": "5f234fd09880a313a1f3118f757b14e3a11491e4ecba2bca437efaeef9c0bb95"
+  }
+}

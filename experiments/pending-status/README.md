@@ -1,4 +1,11 @@
-# Unverified pending-status compositions
+# Archived baseline resource stops
+
+The original failures and reproduction instructions below are retained. On
+2026-10-26 the explicit, fully Lean-checked congruence-first profile recovered the
+zero-phase, no-held exact-World and all-node status compositions with unchanged
+fuel and unchanged runtime. Active contracts and remaining controller stages are
+in [pending-completion](../../tracking/pending-completion.md). The archived
+baseline verdicts remain failures; they are not retroactively credited.
 
 These are proof experiments against source pin4ea2f498 and Bend2.0.37, not active
 proof roots or a substitute implementation. The generic no-held whole-World

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "checkpointBase": "a6d4c84b65696b81601ee8afbd14a5e402e7f82a",
+  "sourceCommit": "4ea2f49862a53c8cc405f4b746525d5d78bf434f",
+  "proofProfile": "same-head-congruence-v1",
+  "previousComposedRootsRetained": 630,
+  "newComposedRoots": 9,
+  "composedRoots": 639,
+  "actualLeafDispatcherAndPublicBudget": true,
+  "incomingErrorStatusAdmitted": true,
+  "singletonRemovalConstructsEmptyCarrierAndZeroCount": true,
+  "actualStatusPhaseClearsPendingIncludingHeldJoins": true,
+  "wholeDependentControllerInActiveRoots": false,
+  "fullPublicReachabilityOrFlightLedgerOrFlushRevealProved": false,
+  "nativeLeafControls": 162,
+  "focusedKernelRejections": 3,
+  "configuredMutations": 685,
+  "finiteMutations": 484,
+  "kernelMutations": 201,
+  "runtimeRepresentationHostOrSourcePinChanged": false,
+  "activeSemanticDeviations": [],
+  "logsSha256": {
+    "fullExecutionOnFrozen630": "8133022f06aacca38958cc402977a91ae9fce4b7cf7b530e286cd96dbed64dc4",
+    "fullAlignmentOnFrozen630": "bffc0a3566cdeca8467ae546492db393e9d62a776fed3cf51b6fb198dc1d8de9",
+    "leaf162": "add74331e39b8d2ec29a5fefe9f3ec51b5b58162972bee6811f85a1fe89cf6de",
+    "threeFocusedKernelRejections": "e7f63b632addd8a9e248b154a44ef64d5f4bddfa06c1b03ff6d923549acca911",
+    "positiveCompactProbe": "9d24d287235cc3b1719a93d32eb735bc5611e11d8eb3776bcc909d0f836ea1ff",
+    "composed639": "5fecfb46d8bc5b98c6daefea69e1fcabe3e095966d9fcf3fce6c05930d539e0b"
+  }
+}

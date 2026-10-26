@@ -50,7 +50,9 @@ for(const name of ['solid-signals','playground']){
   const reproRoot=path.join(root,'repros',name);
   checked.push(...fs.readdirSync(reproRoot,{withFileTypes:true}).filter(e=>e.isFile()).map(e=>path.join(reproRoot,e.name)).sort());
 }
-const inputs=Object.fromEntries(checked.map(p=>[path.relative(root,p),hash(fs.readFileSync(p))]));
+// Coverage documents and evidence receipts are inputs too; exclude the seal itself.
+checked.push(...files(path.join(root,'tracking')).filter(p=>path.relative(root,p)!=='tracking/checked.json'));
+const inputs=Object.fromEntries([...new Set(checked)].map(p=>[path.relative(root,p),hash(fs.readFileSync(p))]));
 const lawNames=[...fs.readFileSync(path.join(root,'LAWS.bend'),'utf8').matchAll(/^law ([A-Za-z0-9_]+):/gm)].map(x=>x[1]);
 const proofNames=[...fs.readFileSync(path.join(root,'PROOF.bend'),'utf8').matchAll(/^def Laws\.([A-Za-z0-9_]+)\(/gm)].map(x=>x[1]);
 if(new Set(lawNames).size!==lawNames.length||new Set(proofNames).size!==proofNames.length||JSON.stringify([...lawNames].sort())!==JSON.stringify([...proofNames].sort()))throw new Error('Composed law/proof names do not match exactly');

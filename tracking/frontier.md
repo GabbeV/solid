@@ -458,3 +458,14 @@ Lean-checked congruence profile. Full generator/flight accounting and queued
 user-body/flush/reveal remain open. Runtime/representation/host/source pin are
 unchanged. The frozen678 negative sweep is complete; four newer focused faults
 are separate, and current682 is not a fresh complete sweep.
+
+## Recovered pending-controller compositions, 2026-10-26
+
+[The pending completion contracts](pending-completion.md) now prove actual leaf
+notification dispatch and completion under the original public budget, including
+incoming error status. Actual singleton removal supplies its empty carrier and
+zero count; the real status phase clears PENDING even through held joins. These
+nine roots extend630 to639 without changing previous domains. Enqueue, dependent
+traversal, owner release and final reveal remain separate stages. The old baseline
+resource stops remain archived; the new results use the explicit Lean-checked
+congruence profile. Runtime/representation/host/source pins are unchanged.

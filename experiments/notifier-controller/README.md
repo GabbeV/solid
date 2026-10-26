@@ -1,3 +1,12 @@
+# Archived notifier baseline resource stop
+
+The original attempt below remains historical. The actual dispatcher/public-budget
+composition is now independently checked in `proof/pending-leaf-notification.bend`
+with the recorded congruence profile; see
+[pending-completion](../../tracking/pending-completion.md). It uses the real
+`status.dispatch`, not the discarded naming experiment. It also admits incoming
+error status. Runtime and original fuel are unchanged.
+
 # Unverified notifier-controller composition
 
 Actual no-error local-store topology, size/link/fault, health and structural

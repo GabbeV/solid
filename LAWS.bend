@@ -1,3 +1,13 @@
+import ./proof/pending-leaf-notification.bend as LeafNotify
+import ./proof/notifier-source-control.bend as NotifyCut
+import ./proof/pending-last-source.bend as LastSource
+import ./proof/pending-last-source-status.bend as LastStatus
+import ./proof/pending-settlement-status.bend as StatusPhase
+import ./proof/node-status-operations.bend as StatusOperations
+import ./proof/subscriber-topology-frame.bend as NotifyTopology
+import ./proof/graph-allocation-properties.bend as NotifyStorage
+import ./proof/pending-notification-operations.bend as NotifyOperations
+import ./runtime/status.bend as NotifyRuntime
 import ./proof/action-method-wait-fixture.bend as MethodWaitFixture
 import ./proof/action-method-first-history.bend as MethodFirstHistory
 import ./proof/action-retirement-context.bend as ActionRetirementContext
@@ -5289,3 +5299,88 @@ law first_method_callback_and_helper_suffix_guard_current_machine:
   for +lateRejected: Bool
   for +lateValue: R.Value
   {Core.asyncActionDelivery(Core.world(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),MethodFirstHistory.tasks(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),Core.values(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events)),MethodWaitFixture.fresh(values,method,prefix),lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events))),MethodWaitFixture.fresh(values,method,prefix))) == MethodFirstHistory.after(values,method,prefix,rest,stack,rejected,value,events) : Core.Machine}
+
+
+law pending_notification_retains_topology_for_any_input_status:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  {NotifyTopology.observe(NotifyOperations.notified(w,node,source,serial)) == NotifyTopology.observe(w) : NotifyTopology.View}
+
+
+law pending_notification_retains_storage_for_any_input_status:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  {NotifyStorage.storage(NotifyOperations.notified(w,node,source,serial)) == NotifyStorage.storage(w) : NotifyStorage.Storage}
+
+
+law pending_leaf_notification_preserves_machine_continuation:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +rest: List<&2,NotifyRuntime.Task>
+  for +visited: List<&2,Nat>
+  for +scheduled: Bool
+  for +config: U32
+  for +shape: {NotifyTopology.shape(B.node(w,node)) == NotifyTopology.Shape{R.Memo{},config,0n} : NotifyTopology.Shape}
+  for +noGuess: {B.has(config,K.CONFIG_GUESS()) == False{} : Bool}
+  {NotifyRuntime.dispatch(w,NotifyRuntime.Notify{node,K.STATUS_PENDING(),NotifyOperations.error(serial,source)} <> rest,visited,scheduled) == NotifyRuntime.Machine{NotifyOperations.notified(w,node,source,serial),NotifyRuntime.Propagate{0n,K.STATUS_PENDING(),NotifyOperations.error(serial,source)} <> rest,visited,scheduled} : NotifyRuntime.Machine}
+
+
+law pending_leaf_notification_completes_with_existing_public_budget:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +serial: Nat
+  for +config: U32
+  for +shape: {NotifyTopology.shape(B.node(w,node)) == NotifyTopology.Shape{R.Memo{},config,0n} : NotifyTopology.Shape}
+  for +noGuess: {B.has(config,K.CONFIG_GUESS()) == False{} : Bool}
+  for +healthy: {B.ok(w) == True{} : Bool}
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {NotifyRuntime.notifyStatusWith(w,node,K.STATUS_PENDING(),NotifyOperations.error(serial,source)) == NotifyOperations.notified(w,node,source,serial) : R.World}
+
+
+law settled_status_has_exact_all_node_status_projection:
+  for +w: R.World
+  for +node: Nat
+  for +remaining: Nat
+  for +errored: Bool
+  {StatusOperations.observe(RuntimePending.settledStatus(w,node,remaining,errored)) == StatusPhase.expected(w,node,remaining) : List<&2,U32>}
+
+
+law sole_pending_source_removal_constructs_empty_carrier:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +single: SingleCarrier.Single<w,node,source>
+  LastSource.EmptyCarrier<CarrierState.removeWorld(w,node,source),node>
+
+
+law sole_pending_source_removal_reports_success:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +single: SingleCarrier.Single<w,node,source>
+  {B.second(R.World,Bool,PendingState.removePendingSource(w,node,1n+source)) == True{} : Bool}
+
+
+law sole_pending_source_removal_and_status_clear_pending:
+  for +w: R.World
+  for +node: Nat
+  for +source: Nat
+  for +single: SingleCarrier.Single<w,node,source>
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  {B.has(R.Node.status(B.node(LastStatus.afterRemoval(w,node,source),node)),K.STATUS_PENDING()) == False{} : Bool}
+
+
+law unheld_empty_carrier_has_exact_settled_status_world:
+  for +w: R.World
+  for +node: Nat
+  for +empty: LastSource.EmptyCarrier<w,node>
+  for +valid: {B.valid(w,node) == True{} : Bool}
+  for +noHeld: {B.has(R.Node.config(B.node(w,node)),K.CONFIG_HELD()) == False{} : Bool}
+  {RuntimePending.settledStatus(w,node,0n,False{}) == LastSource.cleared(w,node) : R.World}

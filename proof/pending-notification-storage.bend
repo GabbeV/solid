@@ -27,3 +27,20 @@ def stored(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,noError: {B.has(R.No
 
 def healthy(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool},known: {B.ok(w) == True{} : Bool}) -> {B.ok(N.notified(w,node,source,serial)) == True{} : Bool}:
   Equal.trans(Bool,B.ok(N.notified(w,node,source,serial)),B.ok(w),True{},Equal.cong(Storage.Storage,Bool,view=>B.healthy(Storage.fault(view)),Storage.storage(N.notified(w,node,source,serial)),Storage.storage(w),stored(w,node,source,serial,noError)),known)
+
+
+def shownStorage(+w: R.World,+node: Nat,+show: Bool) -> {Storage.storage(Local.shown(w,node,show)) == Storage.storage(w) : Storage.Storage}:
+  match show:
+    case False{}: {==}
+    case True{}: Aux.storeExtension(w,node,R.NodeExtension.with_shownError(B.extension(w,node),R.NodeExtension.error(B.extension(w,node))))
+
+
+def choiceStorage(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+show: Bool) -> {Storage.storage(N.choice(w,node,source,serial,show)) == Storage.storage(w) : Storage.Storage}:
+  +first = Local.shown(w,node,show)
+  Storage.compose(w,first,N.choice(w,node,source,serial,show),afterAdd(first,node,source,serial),shownStorage(w,node,show))
+
+def allStored(+w: R.World,+node: Nat,+source: Nat,+serial: Nat) -> {Storage.storage(N.notified(w,node,source,serial)) == Storage.storage(w) : Storage.Storage}:
+  choiceStorage(w,node,source,serial,B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()))
+
+def allHealthy(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,known: {B.ok(w) == True{} : Bool}) -> {B.ok(N.notified(w,node,source,serial)) == True{} : Bool}:
+  Equal.trans(Bool,B.ok(N.notified(w,node,source,serial)),B.ok(w),True{},Equal.cong(Storage.Storage,Bool,view=>B.healthy(Storage.fault(view)),Storage.storage(N.notified(w,node,source,serial)),Storage.storage(w),allStored(w,node,source,serial)),known)

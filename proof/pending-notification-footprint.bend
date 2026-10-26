@@ -44,3 +44,17 @@ def localExact(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,noError: {B.has(
 
 def topology(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,noError: {B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()) == False{} : Bool}) -> {Topology.observe(N.notified(w,node,source,serial)) == Topology.observe(w) : Topology.View}:
   Equal.trans(Topology.View,Topology.observe(N.notified(w,node,source,serial)),Topology.observe(N.finish(B.first(R.World,Bool,P.addPendingSource(w,node,1n+source)),node,source,serial)),Topology.observe(w),Equal.cong(R.World,Topology.View,state=>Topology.observe(state),N.notified(w,node,source,serial),N.finish(B.first(R.World,Bool,P.addPendingSource(w,node,1n+source)),node,source,serial),localExact(w,node,source,serial,noError)),afterAdd(w,node,source,serial))
+
+
+def shownTopology(+w: R.World,+node: Nat,+show: Bool) -> {Topology.observe(shown(w,node,show)) == Topology.observe(w) : Topology.View}:
+  match show:
+    case False{}: {==}
+    case True{}: Topology.storeExtension(w,node,R.NodeExtension.with_shownError(B.extension(w,node),R.NodeExtension.error(B.extension(w,node))))
+
+
+def choiceTopology(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+show: Bool) -> {Topology.observe(N.choice(w,node,source,serial,show)) == Topology.observe(w) : Topology.View}:
+  +first = shown(w,node,show)
+  Topology.compose(w,first,N.choice(w,node,source,serial,show),afterAdd(first,node,source,serial),shownTopology(w,node,show))
+
+def allTopology(+w: R.World,+node: Nat,+source: Nat,+serial: Nat) -> {Topology.observe(N.notified(w,node,source,serial)) == Topology.observe(w) : Topology.View}:
+  choiceTopology(w,node,source,serial,B.has(R.Node.status(B.node(w,node)),K.STATUS_ERROR()))

@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["pending completion kernel drops queued notifier continuation", "runtime/status.bend", "Machine{w, Propagate{R.Node.subs(B.node(w, id)), status, error} <> rest, visited, scheduled}", "Machine{w, [Propagate{R.Node.subs(B.node(w, id)), status, error}], visited, scheduled}", "tests/proof-properties.mjs", "dispatch", "pending-completion-negative-probes"],
+  ["pending completion kernel underbudgets public leaf notification", "runtime/status.bend", "Nat.mul(4n, B.budget(w))", "1n", "tests/proof-properties.mjs", "notifyStatusWith", "pending-completion-negative-probes"],
+  ["pending completion kernel leaves last source pending", "runtime/pending.bend", "B.clear(R.Node.status(B.node(w, id)), K.STATUS_PENDING())", "R.Node.status(B.node(w, id))", "tests/proof-properties.mjs", "settledStatus", "pending-completion-negative-probes"],
+
   ["method first kernel erases committed nodes during transaction entry", "runtime/core.bend", "+w = X.joinFuture(w, R.ActionState.transaction(state))", "+w = R.World.with_nodes(X.joinFuture(w, R.ActionState.transaction(state)), [])", "tests/proof-properties.mjs", "actionResume", "action-method-negative-probes"],
   ["method first kernel discards observer arena during transaction entry", "runtime/core.bend", "+w = X.joinFuture(w, R.ActionState.transaction(state))", "+w = R.World.with_asyncObservers(X.joinFuture(w, R.ActionState.transaction(state)), [])", "tests/proof-properties.mjs", "actionResume", "action-method-negative-probes"],
   ["method first kernel discards wait cells while advancing body", "runtime/core.bend", "+w = Action.store(w, id, R.ActionState.with_methods(state, tail))", "+w = R.World.with_actionWaits(Action.store(w, id, R.ActionState.with_methods(state, tail)), [])", "tests/proof-properties.mjs", "actionStepMethods", "action-method-negative-probes"],
