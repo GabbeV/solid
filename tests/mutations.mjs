@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["held stage kernel omits join before suppressed comparison", "runtime/write.bend", "B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD())", "False{}", "tests/proof-properties.mjs", "beforeCompare", "held-stage-negative-probes"],
   ["held stage kernel destroys an existing in-flight identity", "runtime/read-state.bend", "R.NodeExtension.with_flushed(B.extension(w, id), R.Node.pending(B.node(w, id)))", "R.NodeExtension.with_inFlight(R.NodeExtension.with_flushed(B.extension(w, id), R.Node.pending(B.node(w, id))), R.FlightEmpty{})", "tests/proof-properties.mjs", "stashFlushed", "held-stage-negative-probes"],
   ["held stage kernel snapshots committed instead of pending data", "runtime/read-state.bend", "R.Node.pending(B.node(w, id))", "R.Present{R.Node.value(B.node(w, id))}", "tests/proof-properties.mjs", "stashFlushed", "held-stage-negative-probes"],
   ["held stage kernel stamps the next clock instead of current window", "runtime/read-state.bend", "R.Stamped{R.World.clock(w)}", "R.Stamped{1n+R.World.clock(w)}", "tests/proof-properties.mjs", "stashFlushed", "held-stage-negative-probes"],

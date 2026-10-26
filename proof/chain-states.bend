@@ -89,7 +89,7 @@ def data_25() -> R.Expr:
   R.Add{data_24(), data_14()}
 
 def data_26() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 0, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_27() -> List<&2, R.Node>:
   [data_6(), data_8(), data_11(), data_17(), data_22(), data_26()]
@@ -365,7 +365,7 @@ def data_117() -> R.Node:
   R.Node{data_12(), data_18(), data_2(), False{}, 0, 1, 0, 0n, data_3(), 2n, 2n, 1n, 3n, 3n, 1n, 0n, 4n, 1n, 0n, 3n, 5n, data_21(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_118() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 10, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 10, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_119(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_116(), data_117(), data_118()]
@@ -953,7 +953,7 @@ def data_313(+input: Nat) -> C.Machine:
   C.Machine{data_309(input), data_312(), data_126()}
 
 def data_314() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 2, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 2, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_315(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_314()]
@@ -983,7 +983,7 @@ def data_323(+input: Nat) -> C.Machine:
   C.Machine{data_317(input), data_322(), data_126()}
 
 def data_324() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 4, 0, 0n, data_3(), 3n, 0n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 4, 0, 0n, data_3(), 3n, 0n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_325(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_324()]
@@ -1040,7 +1040,7 @@ def data_342(+input: Nat) -> C.Machine:
   C.Machine{data_327(input), data_341(), data_126()}
 
 def data_343() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 4, 0, 0n, data_3(), 3n, 3n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 4, 0, 0n, data_3(), 3n, 3n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_344(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_343()]
@@ -1085,7 +1085,7 @@ def data_357(+input: Nat) -> C.Machine:
   C.Machine{data_347(input), data_356(), data_126()}
 
 def data_358() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 16388, 0, 0n, data_3(), 3n, 3n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 16388, 0, 0n, data_3(), 3n, 3n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_359(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_358()]
@@ -1124,7 +1124,7 @@ def data_370(+input: Nat) -> C.Machine:
   C.Machine{data_362(input), data_369(), data_282(input)}
 
 def data_371() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 16388, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 16388, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_372(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_371()]
@@ -1166,7 +1166,7 @@ def data_384(+input: Nat) -> C.Machine:
   C.Machine{data_377(input), data_381(), data_383(input)}
 
 def data_385() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_386(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_385()]
@@ -1184,7 +1184,7 @@ def data_390(+input: Nat) -> C.Machine:
   C.Machine{data_387(input), data_389(input), data_126()}
 
 def data_391(+input: Nat) -> R.Node:
-  R.Node{data_23(), data_382(input), data_2(), False{}, 0, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), True{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_382(input), data_2(), False{}, 8388608, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), True{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_392(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_391(input)]
@@ -1559,7 +1559,7 @@ def data_515(+input: Nat) -> C.Machine:
   C.Machine{data_510(input), data_514(), data_126()}
 
 def data_516(+input: Nat) -> R.Node:
-  R.Node{data_23(), data_382(input), data_2(), False{}, 0, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_382(input), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_382(input), data_2(), False{}, 8388608, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_382(input), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_517(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_424(input), data_433(input), data_457(input), data_516(input)]
@@ -1643,7 +1643,7 @@ def data_543(+input: Nat) -> R.World:
   R.World{data_542(input), data_256(), data_143(), 1n, 2n, False{}, data_216(), data_35(), data_35(), data_36(), 0n, False{}, True{}, True{}, 0n, 9n, data_41(), data_271(input), data_53(), False{}, data_35(), data_58(), data_61(), data_35(), 0n, False{}, False{}, data_62(), 0n, data_65(), data_35(), 0n, 0n, 0n, 0n, data_35(), data_56(), data_66(), data_69(), data_71(), data_122(), 0n, data_76(), data_78(), data_80(), data_81(), data_83(), False{}, False{}, data_56(), data_85(), data_87(), data_90(), 0n, data_66(), False{}, data_91(), data_92(), data_93(), 0n, data_94(), data_95(), data_96(), data_97(), data_98(), 0n, data_101(), data_102(), data_2(), data_35(), data_110()}
 
 def data_544() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), True{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 16384, 0, 0n, data_3(), 3n, 4n, 2n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), True{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_545(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_214(input), data_304(input), data_544()]
@@ -1676,7 +1676,7 @@ def data_554(+input: Nat) -> R.World:
   R.World{data_553(input), data_33(), data_34(), 0n, 0n, True{}, data_38(), data_35(), data_35(), data_36(), 0n, False{}, False{}, False{}, 0n, 7n, data_41(), data_52(), data_53(), True{}, data_35(), data_58(), data_61(), data_35(), 0n, False{}, False{}, data_62(), 0n, data_65(), data_35(), 0n, 0n, 0n, 0n, data_35(), data_56(), data_66(), data_69(), data_71(), data_72(), 0n, data_76(), data_78(), data_80(), data_81(), data_83(), False{}, False{}, data_56(), data_85(), data_87(), data_90(), 0n, data_66(), False{}, data_91(), data_92(), data_93(), 0n, data_94(), data_95(), data_96(), data_97(), data_98(), 0n, data_101(), data_102(), data_2(), data_35(), data_110()}
 
 def data_555() -> R.Node:
-  R.Node{data_23(), data_18(), data_2(), False{}, 0, 1, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_23(), data_18(), data_2(), False{}, 8388608, 1, 0, 0n, data_3(), 3n, 4n, 1n, 0n, 0n, 2n, 0n, 5n, 1n, 0n, 4n, 0n, data_25(), False{}, data_18(), 2n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_556(+input: Nat) -> List<&2, R.Node>:
   [data_6(), data_8(), data_115(input), data_116(), data_117(), data_555()]

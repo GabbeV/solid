@@ -1065,3 +1065,5 @@ remain. Resource-stopped attempts stay uncredited; verified checkpoints require
 the full independent composed verdict and tracked input seal.
 
 The668-root checkpoint `fb9c8ad4` checks finite real setter bodies and constructed retirement (343.3s,1,117 sealed inputs). The next held-staging dependency adds canonical same-component joining, allocated snapshot progress and actual held staging health/identity contracts; complete held-body/publication composition remains open.
+
+Checkpoint674 `8d5e414d` independently checks held staging (349.2s,1,132 inputs). The following candidate repins exact source to0847122e and adds finite already-held setter bodies, preserved certificates and raw constructed zero-debt retirement; it does not assert the unproved held-before-resume bridge or full publication. Native source suite:351 files /5,614 passing tests.

@@ -449,3 +449,7 @@ the full independent composed verdict and tracked input seal.
 ## Held source entry and staging
 
 See [held-staging.md](held-staging.md) for the actual canonical source-group join, allocated snapshot progress, precise full-control frame and held staging/subscriber safety contracts. Snapshot observations retain all flight/error/group fields; source shape and extension pointers have separate checked frames. This does not broaden the ordinary-body domain.
+
+## Already-held body histories
+
+[Held-body histories](held-body-histories.md) derive the next canonical group/extension/path certificate after actual joins, comparison and staging, then compose arbitrary finite real setter bodies and captured-obligation retirement. The raw owned-source family supplies the complete profile and has a checked zero-debt body-task corollary. The full before-resume construction equation and public publication remain open; finite commutation controls are separate.

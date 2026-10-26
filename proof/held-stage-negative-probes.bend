@@ -49,3 +49,7 @@ def reader() -> R.World:
 
 def heapPointer() -> {R.Node.x(B.node(H.actualInsertIntoHeap(reader(),2n),2n)) == 2n : Nat}:
   {==}
+
+# With equality suppressing staging, the held-entry join must still schedule.
+def suppressedSetterSchedules() -> {R.World.scheduled(W.setSignal(source(),1n,R.Number{7n})) == True{} : Bool}:
+  {==}

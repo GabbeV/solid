@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0847122e9fc9681fda7feef37d5427db7316e56d",
+  "candidateComposedRoots": 682,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "runtimeChanges": "Only reviewed upstream0847122e shared frame plumbing; no proof-driven runtime change.",
+  "newProofModules": [
+    "held-extension-frame",
+    "held-transition-frame",
+    "held-write-profile",
+    "held-setter-frames",
+    "held-write-history",
+    "held-profile-control",
+    "held-body-evaluation",
+    "held-body-return",
+    "held-body-retirement",
+    "held-body-owned-profile",
+    "held-body-constructed-retirement",
+    "held-write-outer"
+  ],
+  "rawConstructedBodyProbe": {
+    "independentVerdict": true,
+    "seconds": 75.497121977,
+    "timeoutSeconds": 90,
+    "maxRssBytes": 4294967296
+  },
+  "formalEntryBoundary": "Raw held source constructor and body-task evaluation are covered. Holding before captured resume then preparing the same World is not yet proved; out-of-fuel attempts are uncredited.",
+  "finiteBodyControls": {
+    "cases": 1792,
+    "heldCases": 896,
+    "heldEntryCommutationChecks": 896,
+    "setters": 17808,
+    "callerStacks": 1792,
+    "nativeGenerators": 16,
+    "joinedHeldNativeCases": 32
+  },
+  "focusedNegativeVariants": {
+    "unchangedOraclePassed": true,
+    "compiledAndRejected": 8,
+    "names": [
+      "held stage kernel omits join before suppressed comparison",
+      "held stage kernel destroys an existing in-flight identity",
+      "held stage kernel snapshots committed instead of pending data",
+      "held stage kernel stamps the next clock instead of current window",
+      "held stage kernel spends group debt while saving a snapshot",
+      "held stage kernel omits scheduling a same-component join",
+      "held stage kernel erases a canonical transaction cache",
+      "held stage kernel clears the allocated extension during heap insertion"
+    ],
+    "sourcePin": "0847122e9fc9681fda7feef37d5427db7316e56d",
+    "oracleSha256": "d1fc5165a676b187b9ca75520bcae067828bf1ef60577e961be76c8be74de729"
+  },
+  "configuredMutations": {
+    "total": 713,
+    "finite": 487,
+    "kernel": 226
+  },
+  "fullMutationScope": "Complete712 is separately frozen at8d5e414d/1d6c40fb; it must finish and preserve exact sealed inputs before receipt credit. No complete713 claim.",
+  "finalProofAuthority": "Fresh complete independent682-root verdict and exact input seal in tracking/checked.json."
+}

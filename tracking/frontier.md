@@ -9,7 +9,7 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `1d6c40fb` (rc.18); the Bend2.0.37 frontend and vendored
+Solid is pinned to `0847122e` (rc.18); the Bend2.0.37 frontend and vendored
 snapshot remain unchanged. Independent verification uses the recorded, Lean-checked
 [congruence-first kernel profile](kernel-congruence.md) with unchanged fuel. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
@@ -18,7 +18,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | --- | --- | --- | --- |
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace and full ordinary control frames through actual staging/default setter, finite helper histories and finite real setter-body evaluation; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Already-held setter/body composition, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Public held entry/parking and source-cache redirects, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
@@ -148,7 +148,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next checked: `1d6c40fb` (2026-10-26). All77 recorded Solid inputs match the pin; its reviewed changes and excluded store/boundary profile are recorded below.
+Latest next checked: `0847122e` (2026-10-26). All77 recorded Solid inputs match the pin; its reviewed changes and excluded store/boundary profile are recorded below.
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -541,3 +541,7 @@ remain unchanged. The next useful extension is a source-faithful same-component
 held setter and its extension/stash obligations, then queued slice publication.
 
 The [held-staging dependency](held-staging.md) now covers canonical held-source joining, precise snapshot preservation/progress, actual held intake/staging health and retained source/extension identities. Repeated held-body certificate construction and the full public/publication composition remain open.
+
+## Repin to0847122e and held-body extension
+
+The [source review](reviews/solid-0847122e.md) records exact shared frame flags/reads/re-entry and excluded boundary APIs. The [held-body result](held-body-histories.md) constructs preserved canonical source/group/extension certificates and evaluates arbitrary finite real setter bodies through retirement. Its raw construction starts at the body task; the full held-before-resume entry bridge, redirects at source entry and publication remain open.

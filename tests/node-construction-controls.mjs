@@ -31,7 +31,7 @@ try{
   const nodes=list(linked.nodes),edge=nodes[rootId].subs;
   assert.equal(nodes.length,rootId+2);assert.equal(nodes[rootId].kind.$,'Memo');assert.equal(nodes[leafId].kind.$,'Render');
   assert.equal(nodes[rootId].prevHeap,rootId);assert.equal(nodes[leafId].prevHeap,leafId);
-  assert.equal(nodes[rootId].config,32);assert.equal(nodes[leafId].config,0);assert.equal(nodes[leafId].subs,0);
+  assert.equal(nodes[rootId].config,32);assert.equal(nodes[leafId].config,1<<23);assert.equal(nodes[leafId].subs,0);
   assert.equal(edge,1);assert.equal(list(linked.links)[edge].sub,leafId);assert.equal(list(linked.links)[edge].nextSub,0);assert.equal(linked.fault.$,'Healthy');
   assert.deepEqual(list(allocated.nodes).slice(0,rootId),list(initial.nodes),'old nodes retained through actual allocation');
   assert.deepEqual(observed(linked),observed(allocated),'actual graph creation retains committed content');

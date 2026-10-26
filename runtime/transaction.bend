@@ -146,7 +146,7 @@ def isRender(kind: R.NodeKind) -> Bool:
 def frameRead(+w: R.World, +reader: Nat, +id: Nat) -> B.Bundle<R.World, Bool>:
   +verdict = B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())
   +lane = Nat.is_ne(R.World.passLane(w), 0n)
-  +cold = Bool.and(Bool.or(Bool.not(lane), Bool.and(B.has(R.Node.status(B.node(w, reader)), K.STATUS_UNINITIALIZED()), B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))), Bool.and(Bool.not(verdict), Bool.or(Bool.not(isRender(R.Node.kind(B.node(w, reader)))), B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED()))))
+  +cold = Bool.and(Bool.or(Bool.not(lane), Bool.and(B.has(R.Node.status(B.node(w, reader)), K.STATUS_UNINITIALIZED()), B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()))), Bool.and(Bool.not(verdict), Bool.or(Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_FRAME())), B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED()))))
   B.choose(~B.Bundle<R.World, Bool>, cold, _ => B.Bundle{w, False{}},
     _ =>
       +pair = txOf(w, id)
@@ -521,11 +521,10 @@ def reenterHeld(+w: R.World, +id: Nat) -> R.World:
   +t = B.second(R.World, Nat, pair)
   +n = B.node(w, id)
   B.choose(~R.World, Bool.or(R.Transaction.lane(B.transaction(w, t)), B.has(R.Node.config(n), K.CONFIG_LAGS())), _ => w,
-    _ => B.choose(~R.World, Bool.and(Bool.not(isRender(R.Node.kind(n))), Bool.not(B.has(R.Node.config(n), K.CONFIG_VERDICT()))),
+    _ => B.choose(~R.World, Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_VERDICT(), K.CONFIG_FRAME()))),
       _ => joinPassTx(w, t, False{}),
       _ => B.choose(~R.World, Bool.and(Nat.is_ne(t, R.World.flushTransaction(w)), Bool.not(Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), B.has(R.Node.config(n), K.CONFIG_HELD_FRAME())))),
         _ =>
           +w = B.store_node(w, id, R.Node.with_pending(n, R.Empty{}))
-          B.choose(~R.World, isRender(R.Node.kind(n)),
-            _ => B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), _ => w),
+          B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))),
         _ => w)))

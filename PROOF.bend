@@ -1,3 +1,13 @@
+import ./proof/held-setter-frames.bend as HeldBody0
+import ./proof/held-write-profile.bend as HeldBody1
+import ./proof/held-transition-frame.bend as HeldBody2
+import ./proof/held-write-history.bend as HeldBody3
+import ./proof/held-body-evaluation.bend as HeldBody4
+import ./proof/held-profile-control.bend as HeldBody5
+import ./proof/held-body-return.bend as HeldBody6
+import ./proof/held-body-retirement.bend as HeldBody7
+import ./proof/held-body-owned-profile.bend as HeldBody8
+import ./proof/held-body-constructed-retirement.bend as HeldBody9
 import ./proof/held-setter-entry.bend as HeldStage0
 import ./proof/list-update-lookup.bend as HeldStage1
 import ./proof/held-stash-frame.bend as HeldStage2
@@ -2539,3 +2549,35 @@ def Laws.held_staging_retains_source_shape_and_link_storage(w,id,value,context,s
 
 def Laws.held_staging_retains_every_allocated_extension_identity(w,id,value,context,signal,existing):
   HeldStage9.pointers(w,id,value,context,signal,existing)
+
+
+def Laws.actual_held_setter_constructs_next_group_extension_and_path_profile(w,id,value,offset,profile):
+  HeldBody0.next(w,id,value,offset,profile)
+
+
+def Laws.finite_held_setter_history_constructs_its_preserved_profile(values,w,id,offset,profile):
+  HeldBody3.invariant(values,w,id,offset,profile)
+
+
+def Laws.finite_held_setter_history_retains_precise_outer_and_graph_frames(values,w,id,offset,profile):
+  HeldBody3.retained(values,w,id,offset,profile)
+
+
+def Laws.finite_actual_held_setter_body_has_structurally_bounded_evaluation(values,w,id,answer,rest,stack,offset,profile):
+  HeldBody4.complete(values,w,id,answer,rest,stack,offset,profile)
+
+
+def Laws.finite_held_body_return_preserves_the_arbitrary_caller_stack(values,w,id,answer,actor,rest,stack,offset,profile):
+  HeldBody6.savedStack(values,w,id,answer,actor,rest,stack,offset,profile)
+
+
+def Laws.finite_held_body_retires_the_original_captured_live_obligation(values,w,id,answer,actor,rest,stack,offset,profile,route,extra,remaining,captured,room,open):
+  HeldBody7.complete(values,w,id,answer,actor,rest,stack,offset,profile,route,extra,remaining,captured,room,open)
+
+
+def Laws.actual_owned_source_constructor_supplies_the_held_body_profile(initial):
+  HeldBody8.profile(initial)
+
+
+def Laws.constructed_owned_source_body_reaches_zero_live_action_debt(initial,values,answer,rest,stack):
+  HeldBody9.zero(initial,values,answer,rest,stack)

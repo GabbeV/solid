@@ -6,7 +6,7 @@ import ../runtime/construct-state.bend as N
 import ../runtime/constants.bend as K
 
 def effectRecord(+w: R.World, expr: R.Expr, target: Nat, program: Nat, returnedCleanup: Nat) -> R.Node:
-  {R.Node{R.Render{}, R.Undefined{}, R.Empty{}, False{}, 0,
+  {R.Node{R.Render{}, R.Undefined{}, R.Empty{}, False{}, K.CONFIG_FRAME(),
     K.REACTIVE_LAZY(), K.STATUS_UNINITIALIZED(), R.World.clock(w), R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     expr, False{}, R.Undefined{}, target, False{},

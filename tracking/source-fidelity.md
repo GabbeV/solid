@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `1d6c40fb459735ecbeebfaa6be8b8c142597fd34`, rc.18. The latest
-[source review](reviews/solid-1d6c40fb.md) records the verbatim inputs and checks.
+Current pin: Solid `0847122e9fc9681fda7feef37d5427db7316e56d`, rc.18. The latest
+[source review](reviews/solid-0847122e.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or
@@ -255,3 +255,7 @@ is checked. Three roots extend646 to649.22 native public programs and seven new
 compiled negative variants pass. Callback execution/fairness and final global
 publication remain separate. This supersedes the intermediate repin's explicit
 onFlush omission. The source pin and all older theorem domains/budgets remain.
+
+## Repin to0847122e and held-body extension
+
+The [source review](reviews/solid-0847122e.md) records exact shared frame flags/reads/re-entry and excluded boundary APIs. The [held-body result](held-body-histories.md) constructs preserved canonical source/group/extension certificates and evaluates arbitrary finite real setter bodies through retirement. Its raw construction starts at the body task; the full held-before-resume entry bridge, redirects at source entry and publication remain open.

@@ -1,3 +1,13 @@
+import ./proof/held-setter-frames.bend as HeldBody0
+import ./proof/held-write-profile.bend as HeldBody1
+import ./proof/held-transition-frame.bend as HeldBody2
+import ./proof/held-write-history.bend as HeldBody3
+import ./proof/held-body-evaluation.bend as HeldBody4
+import ./proof/held-profile-control.bend as HeldBody5
+import ./proof/held-body-return.bend as HeldBody6
+import ./proof/held-body-retirement.bend as HeldBody7
+import ./proof/held-body-owned-profile.bend as HeldBody8
+import ./proof/held-body-constructed-retirement.bend as HeldBody9
 import ./proof/held-setter-entry.bend as HeldStage0
 import ./proof/list-update-lookup.bend as HeldStage1
 import ./proof/held-stash-frame.bend as HeldStage2
@@ -5839,3 +5849,88 @@ law held_staging_retains_every_allocated_extension_identity:
   for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
   for +existing: {Nat.is_eq(R.Node.x(B.node(w,id)),0n) == False{} : Bool}
   {NodePointers.observe(RuntimeWrites.stageResolved(w,id,value)) == NodePointers.observe(w) : List<&2,Nat>}
+
+
+law actual_held_setter_constructs_next_group_extension_and_path_profile:
+  for +w: R.World
+  for +id: Nat
+  for +value: R.Value
+  for +offset: Nat
+  for +profile: HeldBody1.Profile<w,id,offset>
+  HeldBody1.Profile<RuntimeWrites.setSignal(w,id,value),id,offset>
+
+
+law finite_held_setter_history_constructs_its_preserved_profile:
+  for values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for profile: HeldBody1.Profile<w,id,offset>
+  HeldBody1.Profile<HeldBody3.run(values,w,id),id,offset>
+
+
+law finite_held_setter_history_retains_precise_outer_and_graph_frames:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for +profile: HeldBody1.Profile<w,id,offset>
+  HeldBody2.Transition<w,HeldBody3.run(values,w,id),id>
+
+
+law finite_actual_held_setter_body_has_structurally_bounded_evaluation:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +profile: HeldBody1.Profile<w,id,offset>
+  {PendingHistory.iterate(HeldBody4.cost(values),HeldBody4.start(w,values,id,answer,rest,stack)) == HeldBody4.finished(w,values,id,answer,rest,stack) : Core.Machine}
+
+
+law finite_held_body_return_preserves_the_arbitrary_caller_stack:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +actor: Nat
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for profile: HeldBody1.Profile<w,id,offset>
+  {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldBody6.start(w,values,id,answer,actor,rest,stack))) == stack : List<&2,R.Value>}
+
+
+law finite_held_body_retires_the_original_captured_live_obligation:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +answer: R.Value
+  for +actor: Nat
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +profile: HeldBody1.Profile<w,id,offset>
+  for +route: RedirectPaths.Route<w>
+  for +extra: Nat
+  for +remaining: Nat
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RedirectPaths.origin(w,route) : Nat}
+  for room: {1n+B.length(R.Transaction,R.World.txArena(w)) == Nat.add(RedirectPaths.depth(w,route),1n+extra) : Nat}
+  for open: {R.Transaction.open(B.transaction(w,RedirectPaths.terminal(w,route))) == 1n+remaining : Nat}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldBody6.start(w,values,id,answer,actor,rest,stack)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,w,id),RedirectPaths.terminal(w,route),remaining)) : R.World}
+
+
+law actual_owned_source_constructor_supplies_the_held_body_profile:
+  for +initial: R.Value
+  HeldBody1.Profile<HeldBody8.normalized(initial),WriteBody14.source(initial),0n>
+
+
+law constructed_owned_source_body_reaches_zero_live_action_debt:
+  for +initial: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  {WriteBody22.count(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldBody6.start(HeldBody8.normalized(initial),values,WriteBody14.source(initial),answer,0n,rest,stack))),1n) == 0n : Nat}

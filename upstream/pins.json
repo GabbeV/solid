@@ -1,7 +1,7 @@
 {
   "solid": {
     "repository": "https://github.com/solidjs/solid",
-    "commit": "1d6c40fb459735ecbeebfaa6be8b8c142597fd34",
+    "commit": "0847122e9fc9681fda7feef37d5427db7316e56d",
     "branch": "next",
     "version": "2.0.0-rc.18"
   },
@@ -153,7 +153,7 @@
     "upstream/solid/packages/signals/src/affects.ts": "6f23a5f6327fcf92c03ab6868357c915b93f61389b2be2a2faafe856c05138f1",
     "upstream/solid/packages/signals/src/attribution.prod.ts": "3f7ab4a323d9434d58ec70647d12a7b6aed0cd5e2cdaca75f471839168e77953",
     "upstream/solid/packages/signals/src/attribution.ts": "d345df77eb12b257107d34d6eb9080040809a908f0f3cf9487f8489d418444fb",
-    "upstream/solid/packages/signals/src/boundaries.ts": "7bda0454038cb6188751cc51e544e2dd066e141cbe0300a6ad4e1bdd44dbf65a",
+    "upstream/solid/packages/signals/src/boundaries.ts": "589667b606dd90038a834d20903394a85ec93000a92beb350e9a847651562d5a",
     "upstream/solid/packages/signals/src/carved.ts": "46481bca5e4b9c4897ffefc8d485b45008ba490ec380e75f6b797085a6849ce1",
     "upstream/solid/packages/signals/src/core/action.ts": "8256e976b64f50ba91d2d909617cae2fd7d03382b2d6a95225e1a82c0b604974",
     "upstream/solid/packages/signals/src/core/async.ts": "5d1c357723c9f101d1adff6cd9af68b43cad8e9b40c9cc9aea18f12e9d9301d8",
@@ -162,9 +162,9 @@
     "upstream/solid/packages/signals/src/core/attribution-hooks.ts": "b4ceed70dbf3c30620d06fc26b05b909eb47bb6ca047f4988e1dc1f79d266939",
     "upstream/solid/packages/signals/src/core/attribution-queries.ts": "d6b65b2e39bb08f8281ef580e8616fdb134d0cf5bc78fb08cbe75ddcec61e119",
     "upstream/solid/packages/signals/src/core/attribution.ts": "9bea57b52c355c59a6af8dee9b7183842705cbc1863ace08209fda32adb27dd0",
-    "upstream/solid/packages/signals/src/core/constants.ts": "e134276d46a395791b463f85c298cf8921cc3e6a60f41913d13f9c8332a8172e",
+    "upstream/solid/packages/signals/src/core/constants.ts": "032216626507b27f50565c2af9433d5c0126ed9aba9af5a5202174da96321693",
     "upstream/solid/packages/signals/src/core/context.ts": "c8e48ff3653fced14c8cd06a86e25b9b46bab609cd74794d27a32c3042a24e0c",
-    "upstream/solid/packages/signals/src/core/core.ts": "138c10d9719c09151b0332606b6018a34a98577d3621a3ed8c237623afae6f21",
+    "upstream/solid/packages/signals/src/core/core.ts": "5e820de1d3c438eac0330bb440f8be4f6f9e18a4d4ea3be8067dd0379d0ed9f3",
     "upstream/solid/packages/signals/src/core/dev.ts": "179ddf547cf4a9872de977e5c46185a71bc0f4b57f615c014b5f7182043d810b",
     "upstream/solid/packages/signals/src/core/effect.ts": "e8f969ad80ccb4b75291096f1baa533aab881df9c6f463836293f33b64ec4495",
     "upstream/solid/packages/signals/src/core/error-hooks.ts": "5b58b7db8056352e1995061bd37e85b67ae89cae4dadbfe4a0832daf6ed816e0",

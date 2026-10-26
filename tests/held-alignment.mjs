@@ -68,6 +68,14 @@ try{
     const args=[7+index%3,[0,1,2,4,5][rng(5)],[0,K.CONFIG_INPUTS_PUBLISHED,K.CONFIG_STAGED_ERROR,K.CONFIG_STAGED,K.CONFIG_HELD_FRAME,K.CONFIG_LAGS][rng(6)],rng(3),rng(4),[0,K.CONFIG_CHILDREN_FORBIDDEN,K.CONFIG_HELD|K.CONFIG_HELD_FRAME][rng(3)],rng(2)?K.STATUS_UNINITIALIZED:0,!!rng(2),!!rng(2),!!rng(2),!!rng(2),rng(4),[0,K.REACTIVE_MANUAL_WRITE,K.REACTIVE_CHECK,K.REACTIVE_MANUAL_WRITE|K.REACTIVE_CHECK][rng(4)],!!rng(2)];
     assert.deepEqual(actual(B.fixtureMemo(...args)),reference(...args),JSON.stringify(args));memoCount++;
   }
+  // #4302 separates frame posture from node kind. Exercise frame-marked
+  // memos and explicitly unmarked render nodes independently in actual source.
+  let frameCount=0;
+  for(const op of [0,1,4])for(const config of [0,K.CONFIG_FRAME])for(const reader of [1,2])for(const readerConfig of [0,K.CONFIG_FRAME])for(const staging of [0,1,2])for(const running of [false,true])for(const joined of [false,true]){
+    const args=[op,0,config,staging,reader,readerConfig,0,true,running,joined,false,3];
+    assert.deepEqual(actual(B.fixture(...args)),reference(...args),JSON.stringify({framePosture:args}));frameCount++;
+  }
+  console.log(`${frameCount} frame-posture comparisons independently vary CONFIG_FRAME and memo/render kind across reads and held re-entry.`);
   console.log(`${memoCount} setMemo comparisons match actual TS raw/updater calls, committed-versus-staged previous values, manual writes, held rederivation flags, heaps and schedules.`);
   console.log(`${count} held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

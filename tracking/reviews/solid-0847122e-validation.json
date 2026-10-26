@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0847122e9fc9681fda7feef37d5427db7316e56d",
+  "previousCommit": "1d6c40fb459735ecbeebfaa6be8b8c142597fd34",
+  "recordedSolidInputs": 77,
+  "allRecordedInputsExactGitBytes": true,
+  "changedRecordedInputs": 3,
+  "nativeSignalsBuildTiers": 3,
+  "nativeSourceDeclarations": true,
+  "nativeTestFiles": 351,
+  "nativeTestsPassed": 5614,
+  "nativeExpectedFailures": 2,
+  "nativeSkips": 2,
+  "constructorComparisons": 10752,
+  "framePostureComparisons": 288,
+  "completeAlignmentCommandPassed": true,
+  "activeSemanticDeviations": [],
+  "witnessDelta": "Only12 chain data render configuration literals;95 steps retained. Full independent verdict still required.",
+  "excludedApis": [
+    "mounted boundary/reveal constructors",
+    "stores",
+    "web hydration/DOM reconciler"
+  ],
+  "review": "tracking/reviews/solid-0847122e.md"
+}

@@ -576,3 +576,7 @@ frozen700 remains a separate scoped receipt, not a fresh complete705 claim. See
 ### Held staging extension after668
 
 [Held-staging scope and evidence](held-staging.md) and its [receipt](reviews/held-staging-validation.json) add seven runtime-only kernel fault variants: source flight, saved pending slot, clock, group debt, join scheduling, canonical cache and heap extension identity. Configured712=487 finite+225 kernel. Fresh focused credit requires the runner successful seven-variant footer; earlier complete frozen700 and focused body5 are separate. No complete712 sweep is claimed. Full composed credit requires the fresh independent674-root verdict and exact input seal.
+
+### Canonical held bodies and0847122e
+
+The [body receipt](reviews/held-body-histories-validation.json) records1,792 ordinary/held body controls and the focused8 compiled semantic rejections on0847122e, including a suppressed-comparison join-order fault. Configured713=487 finite+226 kernel; complete frozen712 at8d5e414d is a separate source/corpus. Whole682-root independent verdict and exact input seal are required before checkpoint credit. The [source validation](reviews/solid-0847122e-validation.json) separates exact source bytes, native tests, alignment and regenerated data from that mathematical verdict.

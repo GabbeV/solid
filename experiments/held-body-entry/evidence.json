@@ -1,0 +1,22 @@
+{
+  "checkerProfile": "same-head-congruence-v1",
+  "fuel": 400000000,
+  "attempts": [
+    {
+      "diagnostic": "held-construction-probe",
+      "seconds": 57.440290132,
+      "status": 1,
+      "failure": "out of fuel",
+      "proofCredit": false
+    },
+    {
+      "diagnostic": "held-construction-steps-probe",
+      "seconds": 89.033019286,
+      "status": 1,
+      "failure": "out of fuel",
+      "proofCredit": false
+    }
+  ],
+  "runtimeWorkaround": false,
+  "statementExcludedFromComposedRoots": true
+}

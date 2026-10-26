@@ -73,9 +73,19 @@ def computed(+w: R.World, expr: R.Expr, +options: R.NodeOptions, +parent: Nat) -
 
 # core/core.ts:createEffectNode production literal. Loading, equals, lazy,
 # _noSnapshot and auto-dispose options are deliberately NOT borrowed from memo.
-def createEffectNode(+w: R.World, expr: R.Expr, kind: R.NodeKind, target: Nat, +options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
+# core.ts:createEffectNode's type << 23 configuration prefix, including the
+# unused user-effect bit. Tracked public effects use their separate constructor.
+def effectType(kind: R.NodeKind) -> U32:
+  match kind:
+    case R.Render{}: K.EFFECT_RENDER()
+    case R.User{}: K.EFFECT_USER()
+    case R.Tracked{}: K.EFFECT_TRACKED()
+    case _: K.EFFECT_PURE()
+
+def createEffectNode(+w: R.World, expr: R.Expr, +kind: R.NodeKind, target: Nat, +options: R.NodeOptions, +parent: Nat, program: Nat, returnedCleanup: Nat) -> R.World:
   +id = B.length(R.Node, R.World.nodes(w))
-  +config = bit(R.NodeOptions.transparent(options), K.CONFIG_TRANSPARENT())
+  +config = U32.shln(effectType(kind),23n)
+  +config = B.set(config,bit(R.NodeOptions.transparent(options), K.CONFIG_TRANSPARENT()))
   +config = B.set(config, bit(R.NodeOptions.ownedWrite(options), K.CONFIG_OWNED_WRITE()))
   +config = B.set(config, bit(R.NodeOptions.sync(options), K.CONFIG_SYNC()))
   config = B.set(config, R.NodeOptions.extraConfig(options))
