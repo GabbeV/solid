@@ -1,3 +1,8 @@
+import ./runtime/transaction.bend as ParkTransactions
+import ./proof/transaction-membership-frame.bend as ParkMembership
+import ./proof/park-transaction-frame.bend as ParkCounts
+import ./proof/held-frame-leaf.bend as HeldLeafFrame
+import ./proof/held-park-leaf.bend as ParkLeaf
 import ./runtime/constants.bend as QuietConstants
 import ./runtime/scheduler.bend as QuietScheduler
 import ./proof/held-park-intake.bend as QuietPark
@@ -7516,3 +7521,49 @@ law actual_quiet_held_settlement_and_scan_preserve_committed_storage:
   for +live: {R.World.transactions(w) == [1n+offset] : List<&2,Nat>}
   for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   {CommittedStorage.observe(Core.world(PendingHistory.iterate(2n,QuietSettle.start(w,rest,stack,offset)))) == CommittedStorage.observe(w) : CommittedStorage.View}
+
+
+law actual_node_holding_preserves_group_metadata_except_membership:
+  for +w: R.World
+  for +id: Nat
+  for +tx: Nat
+  {ParkMembership.observe(ParkTransactions.holdNode(w,id,tx)) == ParkMembership.observe(w) : List<&2,R.Transaction>}
+
+
+law actual_finite_child_hold_walk_preserves_group_metadata_even_when_exhausted:
+  for +fuel: Nat
+  for +w: R.World
+  for +work: List<&2,ParkTransactions.Task>
+  {ParkMembership.observe(ParkTransactions.holdRun(fuel,w,work)) == ParkMembership.observe(w) : List<&2,R.Transaction>}
+
+
+law actual_default_pending_intake_preserves_every_groups_action_count:
+  for +w: R.World
+  for +tx: Nat
+  for +group: Nat
+  {R.Transaction.open(B.transaction(QuietScheduler.parkPendingNodes(w,tx),group)) == R.Transaction.open(B.transaction(w,group)) : Nat}
+
+
+law actual_childless_frame_walk_uses_source_budget_and_is_identity:
+  for +w: R.World
+  for +id: Nat
+  for +tx: Nat
+  for child: {R.Node.firstChild(B.node(w,id)) == 0n : Nat}
+  for nonempty: {List.is_empty(&2,R.Node,R.World.nodes(w)) == False{} : Bool}
+  {ParkTransactions.holdFrame(w,id,tx) == w : R.World}
+
+
+law actual_childless_unowned_parking_runs_node_holding_without_frame_change:
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for ready: ParkLeaf.Ready<w,id,offset>
+  {QuietScheduler.parkPendingNode(w,id,1n+offset) == ParkTransactions.holdNode(w,id,1n+offset) : R.World}
+
+
+law actual_childless_unowned_parking_preserves_its_initial_health:
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for ready: ParkLeaf.Ready<w,id,offset>
+  {B.ok(QuietScheduler.parkPendingNode(w,id,1n+offset)) == B.ok(w) : Bool}

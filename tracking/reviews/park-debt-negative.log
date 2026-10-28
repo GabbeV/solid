@@ -1,0 +1,3 @@
+Rejected mutation: park debt kernel node membership overwrites the action count
+Rejected mutation: park debt kernel exhausted child walk erases action debt
+2 source-changing variants rejected by differential or kernel assertions.

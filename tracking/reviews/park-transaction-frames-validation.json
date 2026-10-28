@@ -1,0 +1,63 @@
+{
+  "scope": "General group metadata/action-count safety through actual node/child/default parking operations; separate initial-state successful childless unowned parking contract. Mixed intake/queued Round reachability remains open.",
+  "sourcePin": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "runtimeChanged": false,
+  "kernelProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "compactRssLimitBytes": 4294967296,
+  "compactWallLimitSeconds": 90,
+  "compactResults": [
+    {
+      "file": "/workspace/solid-signals-bend/proof/park-transaction-frame.bend",
+      "mode": "--verdict",
+      "seconds": 3.383781405,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-node-listing.bend",
+      "mode": "--verdict",
+      "seconds": 3.595067562,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-park-leaf.bend",
+      "mode": "--verdict",
+      "seconds": 3.829588977,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    }
+  ],
+  "proofInputs": {
+    "proof/transaction-membership-frame.bend": "ca2192397559530ed5227ba97858ce997f0168cf4870356164bb7bdc8d16c5f9",
+    "proof/park-transaction-frame.bend": "ceb4ec07a79eba6b72deddcc7e7b41912252616916339dd48b0af5536b1adaa9",
+    "proof/held-frame-leaf.bend": "0e3f8aa2570beb8c6a504abfb00d7d85d60e26c2ee03d9b1d5d0fd846bcc1330",
+    "proof/held-node-listing.bend": "a073287b503d6fd56bfc74a60624961ec4ab4b7c1d599b6c61fb3a69ac8b80d1",
+    "proof/held-park-leaf.bend": "7e4529b249f5da9eb13b7c2d55b12df6be674ff5161aa8caab81fad1e28054df",
+    "proof/park-count-negative-probes.bend": "e4dfa78834000a348d8a9ff893b77dceb0851f409fed3c759fc71e5fd1dccc34"
+  },
+  "negative": {
+    "configuredTotal": 733,
+    "finite": 496,
+    "kernel": 237,
+    "focusedCompiledAndRejected": 2,
+    "unchangedOracle": "park-count-negative-probes",
+    "unchangedOraclePassed": true,
+    "log": "tracking/reviews/park-debt-negative.log",
+    "failedAttempt": "The first holdNode mutant failed affine compilation because its changed body reused t; zero rejection credit. Its parameter quantity was corrected before both complete compiler-valid source faults were checked and rejected."
+  },
+  "limitations": [
+    "Count/group metadata safety does not imply healthy or successful arbitrary child walks.",
+    "Default-only parking facade does not execute custom comparison callbacks.",
+    "Successful leaf Ready premises are initial operation facts, not yet constructed from the heap pass.",
+    "Mixed source/reader intake, full queued Round, host transport and branching publication remain open."
+  ],
+  "credit": "Only completed independent verdicts count. The normal complete composed seal remains authoritative. No checker/source/fuel changes."
+}

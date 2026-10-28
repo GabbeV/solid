@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["park debt kernel node membership overwrites the action count", "runtime/transaction.bend", "def holdNode(+w: R.World, +id: Nat, t: Nat) -> R.World:\n  list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t)", "def holdNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:\n  B.store_transaction(list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t), t, R.Transaction.with_open(B.transaction(w, t), 0n))", "tests/proof-properties.mjs", "holdNode", "park-count-negative-probes"],
+  ["park debt kernel exhausted child walk erases action debt", "runtime/transaction.bend", "R.World.with_fault(w, R.Exhausted{})", "R.World.with_fault(B.store_transaction(w, 1n, R.Transaction.with_open(B.transaction(w, 1n), 0n)), R.Exhausted{})", "tests/proof-properties.mjs", "holdRun", "park-count-negative-probes"],
+
   ["quiet settlement kernel reholds an ineligible pending node", "runtime/scheduler.bend", "+w = B.choose(~R.World, eligible, _ => X.holdNode(w, id, t), _ => w)", "+w = X.holdNode(w, id, t)", "tests/proof-properties.mjs", "parkChanged", "quiet-settlement-negative-probes"],
   ["quiet settlement kernel drops the detached render queue", "runtime/core.bend", "SeamFrame{t, renders, users, R.World.renderQueue(w), R.World.userQueue(w)}", "SeamFrame{t, [], users, R.World.renderQueue(w), R.World.userQueue(w)}", "tests/proof-properties.mjs", "afterLaneSeams", "quiet-settlement-negative-probes"],
   ["quiet settlement kernel omits the captured park intake", "runtime/core.bend", "+w = S.parkPendingNodes(w, t)", "+w = w", "tests/proof-properties.mjs", "settleApplied", "quiet-settlement-negative-probes"],

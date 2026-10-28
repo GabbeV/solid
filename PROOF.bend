@@ -1,3 +1,7 @@
+import ./proof/transaction-membership-frame.bend as ParkMembership
+import ./proof/park-transaction-frame.bend as ParkCounts
+import ./proof/held-frame-leaf.bend as HeldLeafFrame
+import ./proof/held-park-leaf.bend as ParkLeaf
 import ./proof/held-park-intake.bend as QuietPark
 import ./proof/held-park-loop.bend as QuietParkLoop
 import ./proof/held-settle-scan.bend as QuietSettle
@@ -3082,3 +3086,27 @@ def Laws.actual_held_settlement_and_scan_skip_the_remaining_positive_group(w,res
 
 def Laws.actual_quiet_held_settlement_and_scan_preserve_committed_storage(w,rest,stack,offset,remaining,ready,live,open):
   QuietSettle.committed(w,rest,stack,offset,remaining,ready,live,open)
+
+
+def Laws.actual_node_holding_preserves_group_metadata_except_membership(w,id,tx):
+  ParkMembership.node(w,id,tx)
+
+
+def Laws.actual_finite_child_hold_walk_preserves_group_metadata_even_when_exhausted(fuel,w,work):
+  ParkMembership.holdRun(fuel,w,work)
+
+
+def Laws.actual_default_pending_intake_preserves_every_groups_action_count(w,tx,group):
+  ParkCounts.count(w,tx,group)
+
+
+def Laws.actual_childless_frame_walk_uses_source_budget_and_is_identity(w,id,tx,child,nonempty):
+  HeldLeafFrame.leaf(w,id,tx,child,nonempty)
+
+
+def Laws.actual_childless_unowned_parking_runs_node_holding_without_frame_change(w,id,offset,ready):
+  ParkLeaf.actual(w,id,offset,ready)
+
+
+def Laws.actual_childless_unowned_parking_preserves_its_initial_health(w,id,offset,ready):
+  ParkLeaf.health(w,id,offset,ready)

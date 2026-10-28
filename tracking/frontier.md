@@ -73,6 +73,11 @@ The completed dependencies now connect source construction to actual core work:
   facts. It constructs its scan task and derives the retained positive blocker,
   caller continuation and committed-storage frame. Constructing that initial
   certificate after the queued Round/heap phase remains open.
+- [Parking count and leaf-frame contracts](park-transaction-frames.md) cover
+  arbitrary finite default parking/child walks without assuming retained group
+  counts. A separately certified childless unowned node parks successfully and
+  retains health. Mixed source/reader intake and its heap-derived admission
+  facts remain to be composed.
 
 These quantify over finite admitted body lists and represented values, not a
 fixed enumeration of payloads. The generic operation contracts retain explicit
