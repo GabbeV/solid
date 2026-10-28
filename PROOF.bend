@@ -1,3 +1,15 @@
+import ./proof/held-static-operations.bend as JoinedBody20260
+import ./proof/held-source-static.bend as JoinedBody20261
+import ./proof/transaction-join.bend as JoinedBody20262
+import ./proof/held-pair-join-profile.bend as JoinedBody20263
+import ./proof/held-virtual-group-profile.bend as JoinedBody20264
+import ./proof/held-pair-generic-body.bend as JoinedBody20265
+import ./proof/held-first-ready.bend as JoinedBody20266
+import ./proof/held-pair-generic-state.bend as JoinedBody20267
+import ./proof/held-pair-generic-context.bend as JoinedBody20268
+import ./proof/held-pair-generic-aliases.bend as JoinedBody20269
+import ./proof/held-pair-constructed-body.bend as JoinedBody202610
+import ./proof/held-first-ready-construction.bend as JoinedBody202611
 import ./proof/held-source-cache-view.bend as CacheResume20260
 import ./proof/held-source-cache-retirement.bend as CacheResume20261
 import ./proof/held-source-cache-resume.bend as CacheResume20262
@@ -2833,3 +2845,23 @@ def Laws.current_group_source_cache_alias_resume_restores_caller_stack(w,actor,v
 
 def Laws.fresh_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
   CacheResume20262.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+
+
+def Laws.certified_transaction_merge_preserves_held_source_heap_facts(w,left,right,source,target):
+  JoinedBody20260.merge(w,left,right,source,target)
+
+
+def Laws.actual_distinct_root_merge_constructs_surviving_group_membership(w,prefix,left,gap,right,suffix,reverse):
+  JoinedBody20263.allocated(w,prefix,left,gap,right,suffix,reverse)
+
+
+def Laws.certified_first_controller_constructs_joined_body_retirement(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready):
+  JoinedBody20265.complete(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready)
+
+
+def Laws.raw_two_controller_join_runs_either_finite_body_and_retires_one_obligation(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedBody202610.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_two_controller_join_body_restores_arbitrary_caller_stack(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedBody202610.savedStack(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)

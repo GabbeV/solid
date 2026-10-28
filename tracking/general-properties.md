@@ -516,3 +516,13 @@ fault tests omission of the alias-resolution cache store; complete frozen726
 remains a separate earlier scope. Full public construction/parking, mixed
 interception, joined branching event histories, flight ledger and publication
 remain open. The new raw two-controller join construction is separate work.
+
+[Joined controller bodies](joined-controller-bodies.md) now connect actual raw
+graph/create/open/hold/create/open/join construction in either direction to
+either finite real setter body, the output-masked retirement target for one
+remaining obligation, and arbitrary caller-stack restoration. A separately
+checked concrete Ready factory discharges the generic boundary certificate.
+No later source profile, cache route, resolver result or count is assumed. The
+first remaining steps are a direct count/blocker corollary and a constructed
+second-body invariant; full public parking/host, flight ledger and publication
+remain open. Five roots require a fresh738-root whole-book verdict and exact seal.

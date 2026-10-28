@@ -620,3 +620,14 @@ unchanged cache-rebase oracle before rejection credit. The3120 body controls
 include144 distinct source/capture identities; they are finite evidence alongside
 the generalized resume proofs. Full733-root checkpoint credit requires a fresh
 whole-book verdict/seal.
+
+
+The joined-controller body candidate adds five roots,640 finite internal pairs
+with1,280 body prefixes, and64 native/port public generator histories. The latter
+check rendered retention across the first completion and native final reveal.
+They are separate from the internal-prefix domain and from proof credit. The
+unchanged400M-fuel checker passes the final closed constructor import book; the
+first closed-wrapper fuel stop and earlier memory/authoring failures receive zero
+credit. Full738-root checkpoint credit requires a fresh complete verdict and seal.
+Configured727 mutations and the frozen complete726/727 sweeps remain separately
+scoped; no new runtime delta or mutant is introduced by this proof extension.

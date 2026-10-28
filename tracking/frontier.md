@@ -578,3 +578,9 @@ independent certified source/cache captures through actual preparation, finite
 body retirement and stack restoration, including zero writes retaining the old
 cache. Construction through distinct joins is the next dependency; this does not
 close the global action/flight or renderer-publication invariant.
+
+The [joined-body construction](joined-controller-bodies.md) now supplies both
+controller captures, the joined representative and source/cache body facts from
+actual raw construction. Either finite body reaches the one-obligation retirement
+target and restores its caller stack. A direct count/blocker corollary and the
+second-body invariant remain open, followed by full host/flush/publication.

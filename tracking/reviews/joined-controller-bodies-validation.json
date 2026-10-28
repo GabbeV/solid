@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateRoots": 738,
+  "newRoots": 5,
+  "newProofModules": [
+    "action-constructor-static",
+    "controller-second-normal",
+    "held-controller-data",
+    "held-first-controller-fields",
+    "held-first-ready-construction",
+    "held-first-ready",
+    "held-opened-arena",
+    "held-pair-constructed-body",
+    "held-pair-generic-aliases",
+    "held-pair-generic-body",
+    "held-pair-generic-context",
+    "held-pair-generic-facts",
+    "held-pair-generic-join",
+    "held-pair-generic-state",
+    "held-pair-join-profile",
+    "held-profile-retarget",
+    "held-source-static",
+    "held-static-operations",
+    "held-virtual-group-profile",
+    "transaction-merge-frame"
+  ],
+  "runtimeChanged": false,
+  "sourceChanged": false,
+  "checkerFuel": 400000000,
+  "maxRssBytes": 4294967296,
+  "combinedBookWallSeconds": 240,
+  "independentChecks": {
+    "genericConstructorFactsSeconds": 9.399397408999999,
+    "genericJoinSeconds": 13.836560831,
+    "genericAliasClosureSeconds": 14.498697473,
+    "genericBodySeconds": 15.695047664,
+    "concreteReadyFactorySeconds": 65.45646909,
+    "concreteBodyAndStackSeconds": 79.087617181
+  },
+  "proofBoundary": "real raw graph/create/open/hold/create/open/join through captured resume and finite real setter body, output-masked World retirement target for one remaining obligation, and saved caller stack",
+  "assumedIntermediateInvariant": false,
+  "sourceAndCapturedRoutesConstructed": true,
+  "zeroWritesRetainCache": true,
+  "finiteControls": {
+    "internalPairs": 640,
+    "internalBodies": 1280,
+    "publicNativePortPairs": 64,
+    "bothCompletionOrders": true,
+    "publicLiveDebtSequence": [
+      2,
+      1,
+      0
+    ]
+  },
+  "uncreditedAttempts": {
+    "rawJoin90SecondDeadline": true,
+    "largerRawAndEarlyGenericContext4GiBStops": true,
+    "initialConcreteWrapperFuelStopSeconds": 116.29483975,
+    "directCountCorollary4GiBStop": true,
+    "forwardUnfilledHelperAndRuntimeIndexedTemplateErrors": true,
+    "earlyPublicFixtureAssumedWrongRootAndNoEqualFinalApply": true
+  },
+  "resourceResolution": "generic checked Ready boundary; opaque metadata projection contracts; helper declarations filled before use; match for runtime-indexed certificates; explicit shared constructor heads in closed root statement. No checker budget/rule change.",
+  "remaining": [
+    "direct count and blocker corollaries",
+    "actual second body invariant after first completion",
+    "full public factory/parking/host construction",
+    "queued Round execution and publication",
+    "arbitrary branching global action/flight ledger"
+  ],
+  "wholeBookCredit": "requires fresh complete composed verdict and tracked-input seal"
+}

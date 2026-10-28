@@ -1,3 +1,15 @@
+import ./proof/held-static-operations.bend as JoinedBody20260
+import ./proof/held-source-static.bend as JoinedBody20261
+import ./proof/transaction-join.bend as JoinedBody20262
+import ./proof/held-pair-join-profile.bend as JoinedBody20263
+import ./proof/held-virtual-group-profile.bend as JoinedBody20264
+import ./proof/held-pair-generic-body.bend as JoinedBody20265
+import ./proof/held-first-ready.bend as JoinedBody20266
+import ./proof/held-pair-generic-state.bend as JoinedBody20267
+import ./proof/held-pair-generic-context.bend as JoinedBody20268
+import ./proof/held-pair-generic-aliases.bend as JoinedBody20269
+import ./proof/held-pair-constructed-body.bend as JoinedBody202610
+import ./proof/held-first-ready-construction.bend as JoinedBody202611
 import ./proof/held-source-cache-view.bend as CacheResume20260
 import ./proof/held-source-cache-retirement.bend as CacheResume20261
 import ./proof/held-source-cache-resume.bend as CacheResume20262
@@ -6749,3 +6761,67 @@ law fresh_group_source_cache_alias_resume_restores_caller_stack:
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
+
+
+law certified_transaction_merge_preserves_held_source_heap_facts:
+  for +w: R.World
+  for +left: Nat
+  for +right: Nat
+  for +source: RejoinHistories.Alias<w,left>
+  for +target: RejoinHistories.Alias<w,right>
+  {JoinedBody20261.observe(Transactions.merge(w,RejoinHistories.identity(w,left,source),RejoinHistories.identity(w,right,target))) == JoinedBody20261.observe(w) : JoinedBody20261.View}
+
+
+law actual_distinct_root_merge_constructs_surviving_group_membership:
+  for +w: R.World
+  for +prefix: List<&2,R.Transaction>
+  for +left: R.Transaction
+  for +gap: List<&2,R.Transaction>
+  for +right: R.Transaction
+  for +suffix: List<&2,R.Transaction>
+  for +reverse: Bool
+  {Nat.is_lt(JoinedPair.targetId(prefix,gap,reverse),B.length(R.Transaction,R.World.txArena(JoinedPair.merged(w,prefix,left,gap,right,suffix,reverse)))) == True{} : Bool}
+
+
+law certified_first_controller_constructs_joined_body_retirement:
+  for +seed: R.World
+  for +id: Nat
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +ready: JoinedBody20266.Ready<seed,id,JoinedBody20265.left(HeldResume7.methods(values,id,answer),other,second)>
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(seed,id,values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(JoinedBody20265.world(seed,id,values,answer,other,reverse,second),JoinedBody20268.actor(second),R.ActionEnd{}),id),JoinedBody20268.root(reverse),1n)) : R.World}
+
+
+law raw_two_controller_join_runs_either_finite_body_and_retires_one_obligation:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),R.ActionEnd{}),HeldConstruct6.source(value)),JoinedBody20268.root(reverse),1n)) : R.World}
+
+
+law raw_two_controller_join_body_restores_arbitrary_caller_stack:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
