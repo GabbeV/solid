@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "previousCheckedCheckpoint": "9533ad64374587058eefec7cdeda957b423b24f6",
+  "newComposedRoots": 12,
+  "candidateComposedRoots": 762,
+  "sourceRuntimeUnchanged": true,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "probeMaxRssBytes": 4294967296,
+  "compactProbeWallSeconds": 90,
+  "combinedProbeWallSeconds": 240,
+  "freshComposedVerdictRequired": true,
+  "independentProbes": [
+    {
+      "log": "source-input-successor.log",
+      "sha256": "644a3b8737e7676ff85b2a943a689883adbc8bba9221f5c948ec99633e5a42b3",
+      "seconds": 9.260715903,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "body-controller-frame-fixed.log",
+      "sha256": "54256da6082b43df919ff3740612fb1892733c3a7d315aa70ba099e7ffc58f04",
+      "seconds": 9.869677299000001,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "prepared-other-controller.log",
+      "sha256": "a93159a0a7b1873c9d80c4bd71782c6b2cbef522b023aa1294df61880e44ec34",
+      "seconds": 5.232888047,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "controller-ready.log",
+      "sha256": "99eb4cf508c59bd6d0c658b06c1a76e257abb492562a9637bb53bd2c0fdc6d8c",
+      "seconds": 8.891624648,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "next-controller-body.log",
+      "sha256": "7d61c1b0d526ed2220af07217bfa3bbae8224f38383d00d553c32865948a5fc2",
+      "seconds": 9.316727002,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-generic-next.log",
+      "sha256": "6f176997ad5729ef5207e69f515cc5489e7e0672fc201dcc1401260a1f375f87",
+      "seconds": 10.968053927000001,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-second-body.log",
+      "sha256": "a4dfe964c1422f157f695cfde8d9e0447d181801d9b8765085ee5096bb6f01da",
+      "seconds": 67.873843051,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-second-count-fixed.log",
+      "sha256": "37286bc49c725829fc24982b9de9a86f42ae48816c4e0706558c0f91f496ebb8",
+      "seconds": 64.560941096,
+      "verdict": "ALL PROOFS CHECK"
+    }
+  ],
+  "uncreditedAuthoringFailures": [
+    "A reused linear profile needed unrestricted binding before final frame verdict.",
+    "A generated wrapper used a wrong path/naive comma split; corrected before the final official count/stack book verdict."
+  ],
+  "negative": {
+    "configured": 728,
+    "completeSweep": false,
+    "separatelyCompiledAndRejected": 1,
+    "name": "controller store kernel overwrites the adjacent controller",
+    "unchangedMandatoryOracle": "held-prepared-other-controller",
+    "unchangedOraclePassed": true,
+    "resourceOrCompileFailuresCredited": false,
+    "runnerExitCode": 0,
+    "logSha256": "058e0b610bba589afab49abc1371704e629f108b80241bf68f28391ff3f72233",
+    "previousFullScope": "Frozen733-root7f7d complete727 with101 unchanged oracles/1224 tracked sealed inputs; see complete-727-negative.json."
+  },
+  "domains": [
+    "Arbitrary finite admitted first and second default updater lists, payloads/answers, both join directions and choices of first controller.",
+    "Actual first resulting World used to derive source cache route/profile, other controller capture/positive identity/method and its initial one-obligation count.",
+    "Actual second current-group resume reaches zero-debt evidence; direct count and caller-stack corollaries are closed."
+  ],
+  "restrictions": [
+    "Two explicit internal resume frames share the exact first resulting World; queued output/slice/Round and host delivery between them remain uncomposed.",
+    "Zero action debt is separate from output Promise adoption, owned-flight accounting, queued flush and renderer publication."
+  ],
+  "remaining": [
+    "Compose actual queued continuations and permitted public event histories without introducing post-task invariant assumptions.",
+    "Full factory/parking/host/mixed-interception/flight and publication composition."
+  ],
+  "newConfirmedUpstreamBugs": [],
+  "activeSemanticDeviations": []
+}

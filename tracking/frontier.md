@@ -594,3 +594,13 @@ invariant, including zero writes retaining an old cache. Controller/route/method
 transport and uninterrupted second-body/continuation composition remain next,
 followed by public host, flight ledger and queued flush/publication. Twelve new
 roots require the fresh750-root independent verdict and exact tracked-input seal.
+
+
+The [derived other-controller handoff](held-next-body.md) now constructs actual
+source/cache and other-controller capture/route/method facts after either first
+finite body, then proves the other actual resume/body has zero remaining action
+debt and restores its caller stack. Both completion orders and join directions
+are quantified. This is a two-resume contract sharing the exact first result
+World; uninterrupted queued output/slice/Round and public host composition remain
+open, as do result adoption, owned flights and renderer publication. Twelve roots
+require a fresh762-root independent verdict and tracked-input seal.

@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 727 = 496 finite + 231 kernel variants |
+| Configured mutations | 728 = 496 finite + 232 kernel variants; the extra adjacent-controller store fault is checked separately |
 | Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
 | Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -639,3 +639,13 @@ post-body source profile. Reified execution evidence is constructed, and separat
 soundness roots discharge count/health/blocker/profile conclusions. All runtime
 bytes and checker rules/budgets remain unchanged. The750-root candidate requires
 its fresh complete verdict and exact seal; stopped drafts receive no credit.
+
+
+The [derived other-controller handoff](held-next-body.md) now constructs actual
+source/cache and other-controller capture/route/method facts after either first
+finite body, then proves the other actual resume/body has zero remaining action
+debt and restores its caller stack. Both completion orders and join directions
+are quantified. This is a two-resume contract sharing the exact first result
+World; uninterrupted queued output/slice/Round and public host composition remain
+open, as do result adoption, owned flights and renderer publication. Twelve roots
+require a fresh762-root independent verdict and tracked-input seal.

@@ -62,3 +62,8 @@ Executing the second body in an uninterrupted admitted event history, full
 public factory/parking/host construction, arbitrary branching action/flight
 histories, queued Round execution and renderer publication remain open. A
 blocked group is a safety result, not a theorem of eventual publication.
+
+
+The subsequent [handoff extension](held-next-body.md) derives the controller and
+source-cache inputs for the second resume and its zero-count/stack result. The
+uninterrupted queued/public-history and publication restrictions remain in force.

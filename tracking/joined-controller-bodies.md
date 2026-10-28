@@ -56,3 +56,8 @@ remain next work. Full public factory/parking/host
 construction, arbitrary branching action/flight histories, queued Round execution
 and renderer publication are not proved by this milestone. Runtime/source bytes
 and all prior theorem domains remain unchanged; no semantic workaround was added.
+
+
+The [derived handoff](held-next-body.md) subsequently closes the other-controller
+source/cache/capture/route/method premises and internal second-body count/stack
+result. The queued continuation and public event-history composition remain open.

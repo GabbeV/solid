@@ -1,3 +1,12 @@
+import ./proof/held-source-input-successor.bend as NextBody20260
+import ./proof/held-body-controller-frame.bend as NextBody20261
+import ./proof/held-prepared-other-controller.bend as NextBody20262
+import ./proof/held-next-controller-body.bend as NextBody20263
+import ./proof/held-controller-ready.bend as NextBody20264
+import ./proof/held-pair-generic-next.bend as NextBody20265
+import ./proof/held-pair-constructed-next.bend as NextBody20266
+import ./proof/held-pair-second-body.bend as NextBody20267
+import ./proof/held-pair-second-count.bend as NextBody20268
 import ./proof/held-cache-virtual-history.bend as CountEvidence20260
 import ./proof/held-source-cache-debt.bend as CountEvidence20261
 import ./proof/held-count-certificate.bend as CountEvidence20262
@@ -2923,3 +2932,51 @@ def Laws.constructed_body_evidence_constructs_the_actual_successor_source_profil
 
 def Laws.raw_two_controller_join_first_body_constructs_the_successor_source_profile(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
   CountEvidence20269.profile(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.finite_cached_alias_setters_construct_the_actual_next_cache_route(values,w,id,offset,input):
+  NextBody20260.written(values,w,id,offset,input)
+
+
+def Laws.actual_retirement_preserves_the_constructed_source_cache_route(written,next,id,offset,remaining,input,same):
+  NextBody20260.retired(written,next,id,offset,remaining,input,same)
+
+
+def Laws.finite_body_retirement_preserves_controller_records_and_redirects(values,w,next,id,offset,remaining,input,same):
+  NextBody20261.frame(values,w,next,id,offset,remaining,input,same)
+
+
+def Laws.preparing_one_controller_preserves_a_different_controllers_record(w,actor,other,tail,different):
+  NextBody20262.preparedOther(w,actor,other,tail,different)
+
+
+def Laws.finite_body_proof_constructs_the_next_controller_handoff(before,steps,body,values,id,offset,other,captureOffset,methods,input,controller,same):
+  NextBody20263.fromBody(before,steps,body,values,id,offset,other,captureOffset,methods,input,controller,same)
+
+
+def Laws.constructed_handoff_second_body_retires_the_last_obligation(before,steps,id,offset,other,captureOffset,values,answer,rest,stack,incoming,rejected,ready):
+  NextBody20263.complete(before,steps,id,offset,other,captureOffset,values,answer,rest,stack,incoming,rejected,ready)
+
+
+def Laws.constructed_handoff_second_body_restores_the_caller_value_stack(before,steps,id,offset,other,captureOffset,values,answer,rest,stack,incoming,rejected,ready):
+  NextBody20263.savedStack(before,steps,id,offset,other,captureOffset,values,answer,rest,stack,incoming,rejected,ready)
+
+
+def Laws.certified_first_controller_constructs_both_body_handoff(seed,id,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,ready):
+  NextBody20265.complete(seed,id,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,ready)
+
+
+def Laws.raw_joined_controllers_construct_the_second_body_handoff(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected):
+  NextBody20266.complete(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_joined_controllers_second_resume_retires_the_last_obligation(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected):
+  NextBody20267.complete(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected)
+
+
+def Laws.raw_joined_controllers_second_resume_has_exactly_zero_live_debt(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected):
+  NextBody20268.count(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected)
+
+
+def Laws.raw_joined_controllers_second_resume_restores_its_caller_stack(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected):
+  NextBody20268.savedStack(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected)
