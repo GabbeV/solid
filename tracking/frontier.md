@@ -65,6 +65,9 @@ The completed dependencies now connect source construction to actual core work:
   first-body output Machine, drains its classified observer prefix, derives all
   slice scheduling guards and reaches Round before saved-question restoration.
   The actual resulting group still has one obligation and is an unchanged blocker.
+  [Live-list construction and frames](held-live-list.md) also derive its live
+  occurrence and a local scanner-step contract on that constructed snapshot.
+  This does not establish that Round reaches the scanner task.
 
 These quantify over finite admitted body lists and represented values, not a
 fixed enumeration of payloads. The generic operation contracts retain explicit
@@ -77,7 +80,10 @@ root or test totals, determine the checked checkpoint.
 ## Remaining composition, in working order
 
 1. Execute the queued Round/landing/restoration path using the constructed live
-   group and blocker facts. Connect that path to the other controller's next
+   group and blocker facts. Transport them through companion resynchronization,
+   pending-write intake/parking and lane/seam phases before the actual scan; the
+   local scan step on the queued snapshot does not establish that reachability.
+   Connect that path to the other controller's next
    actual delivery; the current two-resume handoff does not yet prove the
    uninterrupted queued/public event history.
 2. Close full public action factory/parking/host and mixed from/deferred ordinary

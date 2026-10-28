@@ -1,3 +1,10 @@
+import ./proof/held-live-construction.bend as JoinedLive20260
+import ./proof/held-controller-data.bend as JoinedLive20261
+import ./proof/action-constructor-static.bend as JoinedLive20262
+import ./proof/held-pair-generic-join.bend as JoinedLive20263
+import ./proof/held-live-group-frame.bend as JoinedLive20264
+import ./proof/held-pair-constructed-live.bend as JoinedLive20265
+import ./proof/held-pair-generic-live.bend as JoinedLive20266
 import ./proof/held-source-cache-output-queue.bend as JoinedRound20260
 import ./proof/action-output-queue-debt.bend as JoinedRound20261
 import ./proof/held-pair-constructed-output-queue.bend as JoinedRound20262
@@ -3028,3 +3035,27 @@ def Laws.raw_joined_controller_round_boundary_retains_one_obligation(value,value
 
 def Laws.raw_joined_controller_round_boundary_remains_an_unchanged_blocker(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
   JoinedRound20267.blocked(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_first_held_controller_constructs_its_initial_live_list(value,methods):
+  JoinedLive20260.initial(value,methods)
+
+
+def Laws.actual_second_controller_open_appends_its_live_group(w,methods):
+  JoinedLive20260.secondController(w,methods)
+
+
+def Laws.actual_distinct_pair_join_constructs_the_surviving_live_group_list(seed,id,first,second,reverse,ready,live):
+  JoinedLive20260.joined(seed,id,first,second,reverse,ready,live)
+
+
+def Laws.finite_held_setter_body_retirement_preserves_the_exact_live_group_list(values,w,next,id,offset,remaining,input,same):
+  JoinedLive20264.retired(values,w,next,id,offset,remaining,input,same)
+
+
+def Laws.raw_joined_controller_round_snapshot_constructs_its_live_group_occurrence(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedLive20265.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_joined_round_snapshot_scan_step_skips_the_live_blocked_group(value,values,answer,other,reverse,second,rest,stack,incoming,rejected,scanRest,scanStack,frame):
+  JoinedLive20265.step(value,values,answer,other,reverse,second,rest,stack,incoming,rejected,scanRest,scanStack,frame)

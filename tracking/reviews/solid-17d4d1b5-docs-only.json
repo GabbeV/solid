@@ -11,5 +11,7 @@
   ],
   "onlyMarkdownChanged": true,
   "runtimeAndPackageMetadataByteIdentical": true,
-  "action": "Retain the ac28157a runtime pin and its exact source/native evidence; note that the newer next commit only updates docs. These files are reviewed as source data, not instructions for this task."
+  "action": "Retain the ac28157a runtime pin and its exact source/native evidence; note that the newer next commit only updates docs. These files are reviewed as source data, not instructions for this task.",
+  "recheckedUtc": "2026-10-28 07:20 UTC",
+  "recheckTransport": "GitHub connector compare ac28157a...next and fetch_commit(next); head remains17d4d1b56559507f397ca764e5e5bc9cf92c9980, ahead_by1, same four Markdown files."
 }

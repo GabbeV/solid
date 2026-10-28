@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "previousCheckedCheckpoint": "efe7b2de32616def76f8ab7da9095be369b38ddf",
+  "newComposedRoots": 6,
+  "candidateComposedRoots": 778,
+  "sourceRuntimeUnchanged": true,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "probeMaxRssBytes": 4294967296,
+  "compactProbeWallSeconds": 90,
+  "combinedProbeWallSeconds": 240,
+  "freshComposedVerdictRequired": true,
+  "independentProbes": [
+    {
+      "log": "live-construction.log",
+      "sha256": "1dae6686514b1c4b9c4e543ef53f13e6ec9a3ee9df2a34dd333ce0b2b39e9d9e",
+      "seconds": 11.05331659,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "live-group-frame.log",
+      "sha256": "eb422086496e83bcced3cb850af47d5169b4b53108c25a9b0505b811695b1154",
+      "seconds": 8.627733114,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-live.log",
+      "sha256": "89da4b35ed2e733fd753aaa95a9e2e6c95c6908811ab0ed4cf99041b5439f94c",
+      "seconds": 121.93997539,
+      "verdict": "ALL PROOFS CHECK"
+    }
+  ],
+  "constructedFacts": [
+    "Initial raw held-controller live list, actual second open append and distinct-root join surviving live list.",
+    "Exact live-list preservation by prepared finite held body/retirement/output queue.",
+    "Actual first-body queued-Round World supplies its sole live representative occurrence.",
+    "Local scanner Machine explicitly constructed on that snapshot skips its positive blocked group in one actual Core.step, retaining World/caller stack/tasks."
+  ],
+  "restriction": "This is not scanner-task reachability from the original Round task. Companion resynchronization, pending intake/park, lane/seam and restoration transport still need composition. The local scanner frame/task is an explicit operation input; no whole-Round or publication theorem is claimed.",
+  "negativeScope": "Configured728, earlier complete727 frozen733-root7f7d plus one focused adjacent-controller store rejection. No fresh full sweep or new test count claimed.",
+  "newConfirmedUpstreamBugs": [],
+  "activeSemanticDeviations": []
+}

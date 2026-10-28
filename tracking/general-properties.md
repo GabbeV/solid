@@ -555,3 +555,10 @@ reaches Round before saved-question restoration with count1 and an unchanged
 actual blocker. Round execution and the uninterrupted host/publication history
 remain open. Ten roots require the fresh772-root independent verdict and tracked
 seal; runtime/source/checker semantics are unchanged.
+
+
+[Constructed live-list facts](held-live-list.md) derive the surviving occurrence
+through real construction/join/preparation/body/output draining, plus an actual
+local scanner step on the queued-Round snapshot. The latter explicitly supplies
+the scanner task as an operation input; Round intake/park/lane/seam reachability
+is still open. Six roots require the fresh778-root independent verdict/seal.

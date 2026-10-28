@@ -1,3 +1,10 @@
+import ./proof/held-live-construction.bend as JoinedLive20260
+import ./proof/held-controller-data.bend as JoinedLive20261
+import ./proof/action-constructor-static.bend as JoinedLive20262
+import ./proof/held-pair-generic-join.bend as JoinedLive20263
+import ./proof/held-live-group-frame.bend as JoinedLive20264
+import ./proof/held-pair-constructed-live.bend as JoinedLive20265
+import ./proof/held-pair-generic-live.bend as JoinedLive20266
 import ./proof/held-source-cache-output-queue.bend as JoinedRound20260
 import ./proof/action-output-queue-debt.bend as JoinedRound20261
 import ./proof/held-pair-constructed-output-queue.bend as JoinedRound20262
@@ -7387,3 +7394,69 @@ law raw_joined_controller_round_boundary_remains_an_unchanged_blocker:
   for +incoming: R.Value
   for +rejected: Bool
   {Transactions.blocked(Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),1n+JoinedPair.targetPred([],[],reverse)) == B.Bundle{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),True{}} : B.Bundle<R.World,Bool>}
+
+
+law raw_first_held_controller_constructs_its_initial_live_list:
+  for +value: R.Value
+  for +methods: R.Expr
+  {R.World.transactions(HeldConstruct3.opened(value,methods)) == [1n] : List<&2,Nat>}
+
+
+law actual_second_controller_open_appends_its_live_group:
+  for +w: R.World
+  for +methods: R.Expr
+  {R.World.transactions(JoinedBody20267.opened(w,methods)) == B.append(Nat,R.World.transactions(w),[B.length(R.Transaction,R.World.txArena(w))]) : List<&2,Nat>}
+
+
+law actual_distinct_pair_join_constructs_the_surviving_live_group_list:
+  for +seed: R.World
+  for +id: Nat
+  for +first: R.Expr
+  for +second: R.Expr
+  for +reverse: Bool
+  for +ready: JoinedBody20266.Ready<seed,id,first>
+  for live: {R.World.transactions(seed) == [1n] : List<&2,Nat>}
+  {R.World.transactions(JoinedBody20267.joined(seed,second,reverse)) == [JoinedBody20268.root(reverse)] : List<&2,Nat>}
+
+
+law finite_held_setter_body_retirement_preserves_the_exact_live_group_list:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +next: R.World
+  for +id: Nat
+  for +offset: Nat
+  for +remaining: Nat
+  for input: CountEvidence20263.Input<w,id,offset>
+  for same: {BodyOutput.outer(next) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,w,id),1n+offset,remaining)) : R.World}
+  {R.World.transactions(next) == R.World.transactions(w) : List<&2,Nat>}
+
+
+law raw_joined_controller_round_snapshot_constructs_its_live_group_occurrence:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {R.World.transactions(Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected)))) == [JoinedBody20268.root(reverse)] : List<&2,Nat>}
+
+
+law raw_joined_round_snapshot_scan_step_skips_the_live_blocked_group:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +scanRest: List<&2,Core.Task>
+  for +scanStack: List<&2,R.Value>
+  for +frame: Core.SeamFrame
+  {Core.step(Core.Machine{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),Core.LandTransactions{frame,1n} <> scanRest,scanStack}) == Core.Machine{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),Core.LandTransactions{frame,0n} <> scanRest,scanStack} : Core.Machine}
