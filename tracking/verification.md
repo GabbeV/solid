@@ -649,3 +649,12 @@ are quantified. This is a two-resume contract sharing the exact first result
 World; uninterrupted queued output/slice/Round and public host composition remain
 open, as do result adoption, owned flights and renderer publication. Twelve roots
 require a fresh762-root independent verdict and tracked-input seal.
+
+
+The [joined-body queued-Round extension](joined-body-round.md) connects real
+constructed captures/source/body execution to the exact output queue, finite
+observer request drain and actual slice-end guards. Its closed initial Machine
+reaches Round before saved-question restoration with count1 and an unchanged
+actual blocker. Round execution and the uninterrupted host/publication history
+remain open. Ten roots require the fresh772-root independent verdict and tracked
+seal; runtime/source/checker semantics are unchanged.

@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "previousCheckedCheckpoint": "388cfefcf50cf4385e7b310e65a5e2479160f19d",
+  "newComposedRoots": 10,
+  "candidateComposedRoots": 772,
+  "sourceRuntimeUnchanged": true,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "probeMaxRssBytes": 4294967296,
+  "compactProbeWallSeconds": 90,
+  "combinedProbeWallSeconds": 240,
+  "freshComposedVerdictRequired": true,
+  "independentProbes": [
+    {
+      "log": "source-cache-output-queue-fixed2.log",
+      "sha256": "cb53072af392a67a8cadd64fc119b4280c86c9c8d01f1eea693810178ece4d84",
+      "seconds": 10.303826442000002,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-output-queue-fixed.log",
+      "sha256": "03169f0d471f8cd0c06deeea450e9440f2b5cdac2095530f64b53501114fa300",
+      "seconds": 66.56135619400001,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "cached-body-control-fixed.log",
+      "sha256": "8ea072e306ebafc6fe789a76c7d56dad655dffaf986aac546e7ddc8b5506c470",
+      "seconds": 35.544604363000005,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-control-flags.log",
+      "sha256": "4c11df29e11bb6819a84682454b317060e5355d780bb91a7a4877eb059a7efae",
+      "seconds": 36.05241808900001,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-generic-round.log",
+      "sha256": "7e65b9e22b7dbbcedd9375177a3d5e4ab0472e9c9de49e18ed2ee5e5feb4d9bc",
+      "seconds": 49.030131735000005,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "output-queue-debt.log",
+      "sha256": "119b9b6035315bb6172b339e7589057f7433040fa9c69f52679050f9e48e9756",
+      "seconds": 8.676372989999999,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-round.log",
+      "sha256": "7c8aba5c3c63701df866e5ef9c1da479ad130c1830964d3f603a3ff617df8e19",
+      "seconds": 105.931260579,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-round-observations.log",
+      "sha256": "3737de5fd217f80c917673ccc20ece5f8266dce62351c6be5331f3ab25b43b1c",
+      "seconds": 109.308633265,
+      "verdict": "ALL PROOFS CHECK"
+    }
+  ],
+  "uncreditedAuthoringFailures": [
+    "Local match was moved to a filled top-level helper, as required by Bend syntax.",
+    "Duplicate import alias corrected before final queue book verdict.",
+    "General Nat subtraction-zero lemma used to prove exit/enter identity; failed reflexivity attempt receives no credit."
+  ],
+  "constructedFacts": [
+    "Raw graph, first create/open/hold, second create/open/join supplies source/cache/actor/method and scalar control premises.",
+    "Exact post-body Machine and output classifier are constructed from real operations.",
+    "Finite non-immediate observer-prefix drain preserves task suffix/stack and appends ordered host requests.",
+    "One real slice-end step reaches queued Round then saved-question restoration and caller work.",
+    "Actual final one-obligation count and unchanged blocked query derive from construction/body/debt/health and exact queue/slice frames."
+  ],
+  "restrictions": [
+    "Arbitrary finite admitted default-updater bodies on the constructed raw graph; generic certified initial heaps/flags remain explicit.",
+    "Observer callbacks and output Promise adoption are not executed by the drain.",
+    "Arrival at queued Round is not Round execution or renderer publication.",
+    "Internal second-resume handoff has not been composed with the intervening queued/host event history."
+  ],
+  "negativeScope": "Configured728; complete727 is frozen733-root7f7d/1224 inputs/101 oracles, plus one focused adjacent-controller-store rejection on the later proof module. No new complete sweep is claimed.",
+  "historicalFrontier": {
+    "path": "tracking/reviews/frontier-through-388cfefc.md",
+    "sha256": "42131ca8ac6fc85afadb3c70aeb22de08ad078c8d62eeb757100039c1dfcfc29"
+  },
+  "newConfirmedUpstreamBugs": [],
+  "activeSemanticDeviations": []
+}

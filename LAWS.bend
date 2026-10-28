@@ -1,3 +1,11 @@
+import ./proof/held-source-cache-output-queue.bend as JoinedRound20260
+import ./proof/action-output-queue-debt.bend as JoinedRound20261
+import ./proof/held-pair-constructed-output-queue.bend as JoinedRound20262
+import ./proof/held-pair-generic-output-queue.bend as JoinedRound20263
+import ./proof/held-pair-generic-round.bend as JoinedRound20264
+import ./proof/held-cached-body-control.bend as JoinedRound20265
+import ./proof/held-pair-control-flags.bend as JoinedRound20266
+import ./proof/held-pair-constructed-round.bend as JoinedRound20267
 import ./proof/held-source-input-successor.bend as NextBody20260
 import ./proof/held-body-controller-frame.bend as NextBody20261
 import ./proof/held-prepared-other-controller.bend as NextBody20262
@@ -7195,3 +7203,187 @@ law raw_joined_controllers_second_resume_restores_its_caller_stack:
   for +nextIncoming: R.Value
   for +nextRejected: Bool
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(nextValues),HeldResume7.start(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),HeldResume7.methods(nextValues,HeldConstruct6.source(value),nextAnswer),second)),HeldConstruct6.source(value),values,answer,HeldResume7.methods(nextValues,HeldConstruct6.source(value),nextAnswer),reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),JoinedBody20268.actor(Bool.not(second)),nextRest,nextStack,nextIncoming,nextRejected))) == nextStack : List<&2,R.Value>}
+
+
+law current_cached_alias_resume_has_the_exact_post_body_output_machine:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected) == HeldBody6.done(BodyEntry.prepared(w,actor,R.ActionEnd{}),values,id,answer,actor,JoinedRound20260.work(w,rest),stack) : Core.Machine}
+
+
+law fresh_cached_alias_resume_has_the_exact_post_body_output_machine:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(SourceCache0.canonical(w,id,1n+offset),1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected) == HeldBody6.done(BodyEntry.prepared(w,actor,R.ActionEnd{}),values,id,answer,actor,JoinedRound20260.work(w,rest),stack) : Core.Machine}
+
+
+law current_cached_alias_resume_constructs_a_finite_exact_output_drain:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {PendingHistory.iterate(ActionOutput0.cost(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.currentQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)),JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected)) == Core.Machine{ActionOutput0.world(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.currentQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)),JoinedRound20260.work(w,rest),stack} : Core.Machine}
+
+
+law fresh_cached_alias_resume_constructs_a_finite_exact_output_drain:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(SourceCache0.canonical(w,id,1n+offset),1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {PendingHistory.iterate(ActionOutput0.cost(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)),JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected)) == Core.Machine{ActionOutput0.world(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)),JoinedRound20260.work(w,rest),stack} : Core.Machine}
+
+
+law actual_output_observer_drain_preserves_derived_body_obligation_count:
+  for +before: Core.Machine
+  for +steps: Nat
+  for +id: Nat
+  for +offset: Nat
+  for +remaining: Nat
+  for outcome: CountEvidence20262.Outcome<before,steps,id,offset,remaining>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +form: ActionOutput0.Queue<PendingHistory.iterate(steps,before),rest,stack>
+  {WriteBody22.count(ActionOutput0.world(PendingHistory.iterate(steps,before),rest,stack,form),1n+offset) == remaining : Nat}
+
+
+law raw_joined_controller_body_has_a_finite_exact_output_drain:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {PendingHistory.iterate(ActionOutput0.cost(JoinedRound20260.after(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),values,rest,stack,incoming,rejected),JoinedRound20260.work(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),rest),stack,JoinedRound20262.classify(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)),JoinedRound20260.after(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),values,rest,stack,incoming,rejected)) == Core.Machine{ActionOutput0.world(JoinedRound20260.after(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),values,rest,stack,incoming,rejected),JoinedRound20260.work(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),rest),stack,JoinedRound20262.classify(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)),JoinedRound20260.work(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),rest),stack} : Core.Machine}
+
+
+law certified_joined_controller_body_reaches_queued_round_with_derived_guards:
+  for +seed: R.World
+  for +id: Nat
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +ready: JoinedBody20266.Ready<seed,id,JoinedBody20265.left(HeldResume7.methods(values,id,answer),other,second)>
+  for +known: {RoundConstruct20262.observe(seed) == RoundConstruct20262.Flags{0n,False{},False{}} : RoundConstruct20262.View}
+  {PendingHistory.iterate(JoinedRound20264.cost(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known),HeldResume7.start(JoinedBody20265.world(seed,id,values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected)) == Core.Machine{JoinedRound20264.world(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known),Core.Round{} <> Core.ActionRestoreQuestion{R.World.question(JoinedBody20265.world(seed,id,values,answer,other,reverse,second))} <> rest,stack} : Core.Machine}
+
+
+law raw_joined_controller_body_reaches_round_before_saved_question_restore:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected)) == Core.Machine{JoinedRound20264.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),Core.Round{} <> Core.ActionRestoreQuestion{R.World.question(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second))} <> rest,stack} : Core.Machine}
+
+
+law raw_joined_controller_round_boundary_retains_one_obligation:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {WriteBody22.count(Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),1n+JoinedPair.targetPred([],[],reverse)) == 1n : Nat}
+
+
+law raw_joined_controller_round_boundary_remains_an_unchanged_blocker:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {Transactions.blocked(Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),1n+JoinedPair.targetPred([],[],reverse)) == B.Bundle{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),True{}} : B.Bundle<R.World,Bool>}

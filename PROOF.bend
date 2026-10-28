@@ -1,3 +1,11 @@
+import ./proof/held-source-cache-output-queue.bend as JoinedRound20260
+import ./proof/action-output-queue-debt.bend as JoinedRound20261
+import ./proof/held-pair-constructed-output-queue.bend as JoinedRound20262
+import ./proof/held-pair-generic-output-queue.bend as JoinedRound20263
+import ./proof/held-pair-generic-round.bend as JoinedRound20264
+import ./proof/held-cached-body-control.bend as JoinedRound20265
+import ./proof/held-pair-control-flags.bend as JoinedRound20266
+import ./proof/held-pair-constructed-round.bend as JoinedRound20267
 import ./proof/held-source-input-successor.bend as NextBody20260
 import ./proof/held-body-controller-frame.bend as NextBody20261
 import ./proof/held-prepared-other-controller.bend as NextBody20262
@@ -2980,3 +2988,43 @@ def Laws.raw_joined_controllers_second_resume_has_exactly_zero_live_debt(value,v
 
 def Laws.raw_joined_controllers_second_resume_restores_its_caller_stack(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected):
   NextBody20268.savedStack(value,values,answer,nextValues,nextAnswer,reverse,second,rest,stack,incoming,rejected,nextRest,nextStack,nextIncoming,nextRejected)
+
+
+def Laws.current_cached_alias_resume_has_the_exact_post_body_output_machine(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
+  JoinedRound20260.currentExact(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
+
+
+def Laws.fresh_cached_alias_resume_has_the_exact_post_body_output_machine(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
+  JoinedRound20260.freshExact(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+
+
+def Laws.current_cached_alias_resume_constructs_a_finite_exact_output_drain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
+  JoinedRound20260.currentDrain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
+
+
+def Laws.fresh_cached_alias_resume_constructs_a_finite_exact_output_drain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
+  JoinedRound20260.freshDrain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+
+
+def Laws.actual_output_observer_drain_preserves_derived_body_obligation_count(before,steps,id,offset,remaining,outcome,rest,stack,form):
+  JoinedRound20261.remaining(before,steps,id,offset,remaining,outcome,rest,stack,form)
+
+
+def Laws.raw_joined_controller_body_has_a_finite_exact_output_drain(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedRound20262.drain(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.certified_joined_controller_body_reaches_queued_round_with_derived_guards(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known):
+  JoinedRound20264.complete(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known)
+
+
+def Laws.raw_joined_controller_body_reaches_round_before_saved_question_restore(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedRound20267.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_joined_controller_round_boundary_retains_one_obligation(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedRound20267.count(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_joined_controller_round_boundary_remains_an_unchanged_blocker(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  JoinedRound20267.blocked(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
