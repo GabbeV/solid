@@ -1,3 +1,8 @@
+import ./runtime/constants.bend as QuietConstants
+import ./runtime/scheduler.bend as QuietScheduler
+import ./proof/held-park-intake.bend as QuietPark
+import ./proof/held-park-loop.bend as QuietParkLoop
+import ./proof/held-settle-scan.bend as QuietSettle
 import ./proof/held-live-construction.bend as JoinedLive20260
 import ./proof/held-controller-data.bend as JoinedLive20261
 import ./proof/action-constructor-static.bend as JoinedLive20262
@@ -7460,3 +7465,54 @@ law raw_joined_round_snapshot_scan_step_skips_the_live_blocked_group:
   for +scanStack: List<&2,R.Value>
   for +frame: Core.SeamFrame
   {Core.step(Core.Machine{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),Core.LandTransactions{frame,1n} <> scanRest,scanStack}) == Core.Machine{Core.world(PendingHistory.iterate(JoinedRound20264.cost(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,JoinedBody202611.constructed(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),RoundConstruct20262.raw(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second))),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),Core.LandTransactions{frame,0n} <> scanRest,scanStack} : Core.Machine}
+
+
+law quiet_held_pending_entry_is_unchanged_by_actual_parking:
+  for +w: R.World
+  for +id: Nat
+  for +tx: Nat
+  for held: {B.has(R.Node.config(B.node(w,id)),B.set(QuietConstants.CONFIG_HELD(),QuietConstants.CONFIG_OVERRIDE())) == True{} : Bool}
+  for unstaged: {B.has(R.Node.config(B.node(w,id)),QuietConstants.CONFIG_STAGED()) == False{} : Bool}
+  {QuietScheduler.parkPendingNode(w,id,tx) == w : R.World}
+
+
+law finite_quiet_held_intake_uses_actual_park_budget_and_clears_only_intake:
+  for +w: R.World
+  for +tx: Nat
+  for +intake: QuietPark.Intake<w,B.length(Nat,R.World.pendingNodes(w))>
+  for first: {QuietPark.cursor(w,B.length(Nat,R.World.pendingNodes(w)),intake) == 0n : Nat}
+  for healthy: {B.ok(w) == True{} : Bool}
+  {QuietScheduler.parkPendingNodes(w,tx) == R.World.with_pendingNodes(w,[]) : R.World}
+
+
+law quiet_held_settlement_constructs_its_actual_scanner_task:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +ready: QuietSettle.Ready<w,offset>
+  {Core.step(QuietSettle.start(w,rest,stack,offset)) == QuietSettle.scanning(w,rest,stack,offset) : Core.Machine}
+
+
+law actual_held_settlement_and_scan_skip_the_remaining_positive_group:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +remaining: Nat
+  for +ready: QuietSettle.Ready<w,offset>
+  for live: {R.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  {PendingHistory.iterate(2n,QuietSettle.start(w,rest,stack,offset)) == QuietSettle.skipped(w,rest,stack,offset) : Core.Machine}
+
+
+law actual_quiet_held_settlement_and_scan_preserve_committed_storage:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +remaining: Nat
+  for +ready: QuietSettle.Ready<w,offset>
+  for +live: {R.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  {CommittedStorage.observe(Core.world(PendingHistory.iterate(2n,QuietSettle.start(w,rest,stack,offset)))) == CommittedStorage.observe(w) : CommittedStorage.View}

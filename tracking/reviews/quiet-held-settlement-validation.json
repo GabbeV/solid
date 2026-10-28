@@ -1,0 +1,92 @@
+{
+  "scope": "Initial-state quiet held settlement/scan operation contracts; queued Round/heap construction of their initial facts remains open.",
+  "sourcePin": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "runtimeChanged": false,
+  "kernelProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "compactRssLimitBytes": 4294967296,
+  "compactWallLimitSeconds": 90,
+  "compactResults": [
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-park-loop.bend",
+      "mode": "--verdict",
+      "seconds": 1.389983626,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-park-construction.bend",
+      "mode": "--verdict",
+      "seconds": 1.2193266210000002,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/settle-lane-empty.bend",
+      "mode": "--verdict",
+      "seconds": 1.875197212,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-settle-intake.bend",
+      "mode": "--verdict",
+      "seconds": 2.31998078,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-settle-frame.bend",
+      "mode": "--verdict",
+      "seconds": 2.2816488299999995,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    },
+    {
+      "file": "/workspace/solid-signals-bend/proof/held-settle-scan.bend",
+      "mode": "--verdict",
+      "seconds": 5.059812854,
+      "status": 0,
+      "signal": null,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n"
+    }
+  ],
+  "proofInputs": {
+    "proof/natural-addition.bend": "61ba76363f6641d75ed6d3614177128b221936b71140dd0d46947af704c75ced",
+    "proof/held-park-intake.bend": "7249426fb71394851af8186ababf0d360312458aba3534cecd4f83512db38f10",
+    "proof/held-park-loop.bend": "621851e58c216e3a932c31893e09bb594592493486cadccd855fb8aaed8859ce",
+    "proof/held-park-construction.bend": "a22731a07c59ee4d35c3e636677c20f50d8bb73a216eebf67895ee6d36b29044",
+    "proof/settle-lane-empty.bend": "d181a803f852cb53834347f40aff8bd37e14e36f08debfdbe1f3e5a898c3350b",
+    "proof/held-settle-intake.bend": "331910d039523bbf9ab11fc765a92f952da336f25751012ff27a15dd784e067e",
+    "proof/held-settle-frame.bend": "7c7285dbc37321993250a2a6948e54eabd847b6aa48a1408f6fbe5c4221b4ae9",
+    "proof/held-settle-scan.bend": "bda8cdec8dbebeb2f2fe91170b1093a3623c62484db079f65e0d0bf7fc37db60",
+    "proof/quiet-settlement-negative-probes.bend": "8394a419944ed12bda52cab1e7f166beaebc3bd0b4225c046370248cbdfaae9a"
+  },
+  "negative": {
+    "configuredTotal": 731,
+    "finite": 496,
+    "kernel": 235,
+    "focusedCompiledAndRejected": 3,
+    "unchangedOracle": "quiet-settlement-negative-probes",
+    "unchangedOraclePassed": true,
+    "log": "tracking/reviews/quiet-held-settlement-negative.log",
+    "failedAttempt": "The initial generic negative diagnostic exceeded the proof-output guard; zero rejection credit. Reduced primitive projections passed unchanged before all three compiler-valid mutants were rejected. No limit was raised."
+  },
+  "limitations": [
+    "Does not establish queued Round/heap reachability of Ready.",
+    "Does not cover staged child frames, active lane hooks or deferred zombies.",
+    "Does not prove full host transport, restoration, flight accounting or branching publication."
+  ],
+  "credit": "Only completed independent verdicts count. Unsplit resource-limited drafts and the initial output-limited mutation run receive zero credit; the current complete composed seal is authoritative."
+}

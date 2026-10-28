@@ -2,6 +2,11 @@
 import Base
 import ./list-update-lookup.bend as Logic
 
+def andLeft(+left: Bool,+right: Bool,both: {Bool.and(left,right) == True{} : Bool}) -> {left == True{} : Bool}:
+  match left:
+    case True{}: {==}
+    case False{}: Empty.absurd({False{} == True{} : Bool},Logic.impossible(Equal.sym(Bool,False{},True{},both)))
+
 def andRight(+left: Bool,+right: Bool,both: {Bool.and(left,right) == True{} : Bool}) -> {right == True{} : Bool}:
   match left:
     case True{}: both

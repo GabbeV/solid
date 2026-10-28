@@ -562,3 +562,13 @@ through real construction/join/preparation/body/output draining, plus an actual
 local scanner step on the queued-Round snapshot. The latter explicitly supplies
 the scanner task as an operation input; Round intake/park/lane/seam reachability
 is still open. Six roots require the fresh778-root independent verdict/seal.
+
+
+[Quiet held settlement](quiet-held-settlement.md) now proves actual settlement
+creates its scanner task and the following scan retains a positive-debt group,
+with committed storage and caller work unchanged. This is an initial-state
+operation contract with finite actual pending-list flag certificates and empty
+lane/zombie hooks. Its premises are not yet constructed after the queued Round's
+heap work; that reachability gap is explicit. Five new composed roots require
+the normal whole-book independent verdict and tracked-input seal. No runtime,
+source pin or checker change is involved; no new upstream bug or deviation.

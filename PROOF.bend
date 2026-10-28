@@ -1,3 +1,6 @@
+import ./proof/held-park-intake.bend as QuietPark
+import ./proof/held-park-loop.bend as QuietParkLoop
+import ./proof/held-settle-scan.bend as QuietSettle
 import ./proof/held-live-construction.bend as JoinedLive20260
 import ./proof/held-controller-data.bend as JoinedLive20261
 import ./proof/action-constructor-static.bend as JoinedLive20262
@@ -3059,3 +3062,23 @@ def Laws.raw_joined_controller_round_snapshot_constructs_its_live_group_occurren
 
 def Laws.raw_joined_round_snapshot_scan_step_skips_the_live_blocked_group(value,values,answer,other,reverse,second,rest,stack,incoming,rejected,scanRest,scanStack,frame):
   JoinedLive20265.step(value,values,answer,other,reverse,second,rest,stack,incoming,rejected,scanRest,scanStack,frame)
+
+
+def Laws.quiet_held_pending_entry_is_unchanged_by_actual_parking(w,id,tx,held,unstaged):
+  QuietPark.node(w,id,tx,held,unstaged)
+
+
+def Laws.finite_quiet_held_intake_uses_actual_park_budget_and_clears_only_intake(w,tx,intake,first,healthy):
+  QuietParkLoop.captured(w,tx,intake,first,healthy)
+
+
+def Laws.quiet_held_settlement_constructs_its_actual_scanner_task(w,rest,stack,offset,ready):
+  QuietSettle.begins(w,rest,stack,offset,ready)
+
+
+def Laws.actual_held_settlement_and_scan_skip_the_remaining_positive_group(w,rest,stack,offset,remaining,ready,live,open):
+  QuietSettle.complete(w,rest,stack,offset,remaining,ready,live,open)
+
+
+def Laws.actual_quiet_held_settlement_and_scan_preserve_committed_storage(w,rest,stack,offset,remaining,ready,live,open):
+  QuietSettle.committed(w,rest,stack,offset,remaining,ready,live,open)

@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 728 = 496 finite + 232 kernel variants; the extra adjacent-controller store fault is checked separately |
+| Configured mutations | 731 = 496 finite + 235 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
 | Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
 | Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -665,3 +665,13 @@ through real construction/join/preparation/body/output draining, plus an actual
 local scanner step on the queued-Round snapshot. The latter explicitly supplies
 the scanner task as an operation input; Round intake/park/lane/seam reachability
 is still open. Six roots require the fresh778-root independent verdict/seal.
+
+
+[Quiet held settlement](quiet-held-settlement.md) now proves actual settlement
+creates its scanner task and the following scan retains a positive-debt group,
+with committed storage and caller work unchanged. This is an initial-state
+operation contract with finite actual pending-list flag certificates and empty
+lane/zombie hooks. Its premises are not yet constructed after the queued Round's
+heap work; that reachability gap is explicit. Five new composed roots require
+the normal whole-book independent verdict and tracked-input seal. No runtime,
+source pin or checker change is involved; no new upstream bug or deviation.

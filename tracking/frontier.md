@@ -68,6 +68,11 @@ The completed dependencies now connect source construction to actual core work:
   [Live-list construction and frames](held-live-list.md) also derive its live
   occurrence and a local scanner-step contract on that constructed snapshot.
   This does not establish that Round reaches the scanner task.
+- [Quiet held settlement](quiet-held-settlement.md) proves an actual two-step
+  settlement/scan segment from certified initial pending-node and empty-hook
+  facts. It constructs its scan task and derives the retained positive blocker,
+  caller continuation and committed-storage frame. Constructing that initial
+  certificate after the queued Round/heap phase remains open.
 
 These quantify over finite admitted body lists and represented values, not a
 fixed enumeration of payloads. The generic operation contracts retain explicit
@@ -83,6 +88,9 @@ root or test totals, determine the checked checkpoint.
    group and blocker facts. Transport them through companion resynchronization,
    pending-write intake/parking and lane/seam phases before the actual scan; the
    local scan step on the queued snapshot does not establish that reachability.
+   The quiet-intake settlement-to-scan contract is available, but its initial
+   conditions must be constructed after heap processing; pending computed
+   child frames may require a wider intake contract.
    Connect that path to the other controller's next
    actual delivery; the current two-resume handoff does not yet prove the
    uninterrupted queued/public event history.

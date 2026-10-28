@@ -1,0 +1,4 @@
+Rejected mutation: quiet settlement kernel reholds an ineligible pending node
+Rejected mutation: quiet settlement kernel drops the detached render queue
+Rejected mutation: quiet settlement kernel omits the captured park intake
+3 source-changing variants rejected by differential or kernel assertions.

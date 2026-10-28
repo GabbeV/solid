@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["quiet settlement kernel reholds an ineligible pending node", "runtime/scheduler.bend", "+w = B.choose(~R.World, eligible, _ => X.holdNode(w, id, t), _ => w)", "+w = X.holdNode(w, id, t)", "tests/proof-properties.mjs", "parkChanged", "quiet-settlement-negative-probes"],
+  ["quiet settlement kernel drops the detached render queue", "runtime/core.bend", "SeamFrame{t, renders, users, R.World.renderQueue(w), R.World.userQueue(w)}", "SeamFrame{t, [], users, R.World.renderQueue(w), R.World.userQueue(w)}", "tests/proof-properties.mjs", "afterLaneSeams", "quiet-settlement-negative-probes"],
+  ["quiet settlement kernel omits the captured park intake", "runtime/core.bend", "+w = S.parkPendingNodes(w, t)", "+w = w", "tests/proof-properties.mjs", "settleApplied", "quiet-settlement-negative-probes"],
+
   ["controller store kernel overwrites the adjacent controller", "runtime/action-state.bend", "R.World.with_actions(w, List.set(&2, R.ActionState, R.World.actions(w), id, state))", "R.World.with_actions(w, List.set(&2, R.ActionState, R.World.actions(w), 1n+id, state))", "tests/proof-properties.mjs", "store", "held-prepared-other-controller"],
   ["source cache kernel omits canonical storage after alias resolution", "runtime/transaction.bend", "B.Bundle{B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), tx)), tx}", "B.Bundle{w, tx}", "tests/proof-properties.mjs", "txOf", "held-source-cache-rebase"],
   ["queued output kernel drops the observer prefix", "runtime/core.bend", "DeliverObservers{R.AsyncObject.observers(object), False{}, rejected, value} <> rest", "rest", "tests/proof-properties.mjs", "actionSettled", "action-output-continuation"],
