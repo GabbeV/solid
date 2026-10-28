@@ -36,3 +36,26 @@ The new theorem starts at the body task. Lifting both source-cache and captured
 alias certificates through actual resume, distinct-component preparation joins,
 full public protocol reachability, queued publication and a global action/flight
 ledger remain open. No source/runtime algorithm or checker rule was changed.
+
+## Actual resume with source-cache aliases
+
+The cache contract now composes actual captured resume, question/join/method
+preparation, arbitrary finite setter-body evaluation, obligation retirement and
+caller-stack restoration. The source cache and action capture have independent
+certified finite routes to the same representative; neither must equal the
+representative at entry. Fresh and already-current groups are covered. Initial
+source/route/count/method facts are required; later profiles, cache routes, health
+and resolver answers are derived. Zero setters retain the old cache exactly.
+The first actual setter resolves/stores the cache before comparison, including
+a suppressed write. Retirement charges the live representative and retains the
+original action capture. The virtual cache view is proof data, not a runtime store.
+
+Six roots extend727 to733 and require a fresh whole-book verdict/seal. The compact
+resume/stack import book passed in10.99s with unchanged400M fuel/4GiB RSS/90s
+wall deadline. The3120 finite body cases include288 source-cache cases and144
+cases where cache and capture start at distinct identities. Native generator
+controls and output adoption remain separate evidence. One new compiling kernel
+fault tests omission of the alias-resolution cache store; complete frozen726
+remains a separate earlier scope. Full public construction/parking, mixed
+interception, joined branching event histories, flight ledger and publication
+remain open. The new raw two-controller join construction is separate work.

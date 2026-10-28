@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["source cache kernel omits canonical storage after alias resolution", "runtime/transaction.bend", "B.Bundle{B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), tx)), tx}", "B.Bundle{w, tx}", "tests/proof-properties.mjs", "txOf", "held-source-cache-rebase"],
   ["queued output kernel drops the observer prefix", "runtime/core.bend", "DeliverObservers{R.AsyncObject.observers(object), False{}, rejected, value} <> rest", "rest", "tests/proof-properties.mjs", "actionSettled", "action-output-continuation"],
   ["queued output kernel loses caller work during adoption", "runtime/core.bend", "Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), rest, stack}", "Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), [], stack}", "tests/proof-properties.mjs", "actionOutputValue", "action-output-continuation"],
   ["queued observer kernel targets another identity", "runtime/core.bend", "F.enqueueDelivery(w, id, rejected, value)", "F.enqueueDelivery(w, 1n+id, rejected, value)", "tests/proof-properties.mjs", "deliverObservers", "action-output-delivery-loop"],

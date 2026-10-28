@@ -613,3 +613,10 @@ verdict. Compact versus combined module deadlines are explicit in the runner;
 no checker fuel or rules changed. Pending complete726 negative sweep remains
 scoped to frozen722-root cb13517d and is not credited before its successful footer
 and hash/sequence audit.
+
+The source-cache resume extension adds six roots and one configured kernel fault:
+727 configured variants =496 finite+231 kernel. The new fault requires a passing
+unchanged cache-rebase oracle before rejection credit. The3120 body controls
+include144 distinct source/capture identities; they are finite evidence alongside
+the generalized resume proofs. Full733-root checkpoint credit requires a fresh
+whole-book verdict/seal.

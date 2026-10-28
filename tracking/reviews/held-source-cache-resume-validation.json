@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateRoots": 733,
+  "newRoots": 6,
+  "runtimeChanged": false,
+  "sourceChanged": false,
+  "independentResumeBookSeconds": 10.985904255,
+  "independentVerdict": "ALL PROOFS CHECK",
+  "checkerFuel": 400000000,
+  "maxRssBytes": 4294967296,
+  "compactWallDeadlineSeconds": 90,
+  "separateAliasOrigins": true,
+  "zeroWritesRetainCache": true,
+  "firstSetterCanonicalizesBeforeComparison": true,
+  "finiteControls": {
+    "actualBodies": 3120,
+    "heldBodies": 2224,
+    "sourceCacheCases": 288,
+    "distinctCacheCaptureCases": 144,
+    "actualSetterExpressions": 33876,
+    "nativeGeneratorCases": 32,
+    "pendingOutputAdoptions": 16
+  },
+  "configuredMutations": 727,
+  "wholeBookCredit": "requires fresh complete verdict and exact seal",
+  "remaining": [
+    "full public invocation/parking/host",
+    "constructed arbitrary redirect forests",
+    "mixed interception",
+    "global flight ledger",
+    "Round execution and publication"
+  ],
+  "focusedNegative": {
+    "compiledAndRejected": 1,
+    "mandatoryUnchangedKernelBaselinePassed": true,
+    "module": "held-source-cache-rebase",
+    "logSha256": "d17491f985eaee96b5e2fba1a6ea498f7b1675a7533c18117c7b14b65856a9aa",
+    "compilationOrResourceFailuresCredited": false
+  }
+}

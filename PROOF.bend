@@ -1,3 +1,7 @@
+import ./proof/held-source-cache-view.bend as CacheResume20260
+import ./proof/held-source-cache-retirement.bend as CacheResume20261
+import ./proof/held-source-cache-resume.bend as CacheResume20262
+import ./proof/held-source-cache-preparation.bend as CacheResume20263
 import ./proof/held-construction-context.bend as RoundConstruct20260
 import ./proof/held-delivery-constructor-state.bend as RoundConstruct20261
 import ./proof/action-control-flags.bend as RoundConstruct20262
@@ -2805,3 +2809,27 @@ def Laws.constructed_ordinary_outer_interception_selects_action_delivery(initial
 
 def Laws.constructed_fulfillment_or_rejection_task_reaches_queued_round(value,values,answer,prefix,rest,stack,incoming,rejected):
   RoundConstruct20268.complete(value,values,answer,prefix,rest,stack,incoming,rejected)
+
+
+def Laws.virtual_source_cache_view_transports_across_equal_source_observations(w,next,id,root,equal):
+  CacheResume20260.same(w,next,id,root,equal)
+
+
+def Laws.redirected_source_cache_body_retires_original_captured_obligation(values,w,id,answer,actor,rest,stack,offset,alias,cached,profile,route,extra,remaining,captured,room,open):
+  CacheResume20261.retire(values,w,id,answer,actor,rest,stack,offset,alias,cached,profile,route,extra,remaining,captured,room,open)
+
+
+def Laws.current_group_resume_handles_independent_source_and_capture_aliases(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
+  CacheResume20262.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
+
+
+def Laws.fresh_group_resume_handles_independent_source_and_capture_aliases(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
+  CacheResume20262.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+
+
+def Laws.current_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
+  CacheResume20262.currentStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
+
+
+def Laws.fresh_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
+  CacheResume20262.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
