@@ -247,7 +247,7 @@ def data_79() -> R.LaneMount:
   R.MountUnset{}
 
 def data_80() -> R.LaneState:
-  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_79()}
+  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_79(), data_24()}
 
 def data_81() -> R.VerdictState:
   R.VerdictState{False{}, False{}, False{}, False{}}

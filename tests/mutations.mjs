@@ -5,6 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["lane entered render keeps a foreign verdict seat", "runtime/core.bend", "Bool.or(never, Nat.is_ne(pass, lane))", "never", "tests/lane-read-alignment.mjs", "laneReadRender"],
+  ["lane entered pending token ignores unshown lane", "runtime/core.bend", "Bool.and(never, R.Transaction.shown(B.transaction(w, lane)))", "never", "tests/lane-read-alignment.mjs", "laneReadOutside"],
+  ["lane entered verdict reader is not recorded", "runtime/core.bend", "B.append(Nat, R.LaneState.entered(R.World.laneState(w)), [reader])", "R.LaneState.entered(R.World.laneState(w))", "tests/pin-ac28157a.mjs", "laneReadEntered"],
+  ["lane entered held reader is not rescheduled", "runtime/core.bend", "R.Transaction.held(B.transaction(w, R.NodeExtension.transaction(B.extension(w, reader))))", "False{}", "tests/lane-seams-alignment.mjs", "laneEnteredPop"],
+  ["lane entered pop reads the oldest reader", "runtime/core.bend", "B.get(Nat, readers, index, 0n)", "B.get(Nat, readers, 0n, 0n)", "tests/lane-seams-alignment.mjs", "laneEnteredPop"],
+  ["lane entered confirmation rejoins unrelated current work", "runtime/core.bend", "Machine{w, rest, stack}", "Machine{X.joinFuture(w, parent), rest, stack}", "tests/lane-lifecycle-alignment.mjs", "supersedeEnd"],
   ["held stage kernel omits join before suppressed comparison", "runtime/write.bend", "B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD())", "False{}", "tests/proof-properties.mjs", "beforeCompare", "held-stage-negative-probes"],
   ["held stage kernel destroys an existing in-flight identity", "runtime/read-state.bend", "R.NodeExtension.with_flushed(B.extension(w, id), R.Node.pending(B.node(w, id)))", "R.NodeExtension.with_inFlight(R.NodeExtension.with_flushed(B.extension(w, id), R.Node.pending(B.node(w, id))), R.FlightEmpty{})", "tests/proof-properties.mjs", "stashFlushed", "held-stage-negative-probes"],
   ["held stage kernel snapshots committed instead of pending data", "runtime/read-state.bend", "R.Node.pending(B.node(w, id))", "R.Present{R.Node.value(B.node(w, id))}", "tests/proof-properties.mjs", "stashFlushed", "held-stage-negative-probes"],

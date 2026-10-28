@@ -380,7 +380,11 @@ export function laneStage(
  * at the parent's landing — while the display keeps what it shows until
  * then. A confirmation is silent (A17): the truth stays staged beneath the
  * guess for the parent's commit, the guess stays the value; only a reader
- * of the truth (CONFIG_AUTHORITATIVE) is told its view changed. */
+ * of the truth (CONFIG_AUTHORITATIVE) is told its view changed. Either way
+ * the parent takes this node, not the tick that carried the truth (D-33):
+ * one landing answering two actions' guesses (a store re-ask over two
+ * rows) must not tie them together; a pass that derives from the held
+ * truth joins the parent on its own (`joinPass`). */
 /** Observe: the correction round is replacing a guess with the value it
  * covered (no landing beneath it) — `optimisticReverted`'s "reverted". */
 let reverting = false;
@@ -416,7 +420,6 @@ export function supersede(n: Signal<any> | Computed<any>, value: unknown, change
     GlobalQueue._confirmed?.(l);
   }
   n._pendingValue = value;
-  joinFuture(parent);
 }
 
 /** A lane's end, two ways. `into === null`: the parent landed — the lane's
@@ -550,7 +553,11 @@ function dissolveLane(l: Transaction, into: Transaction | null, except?: Signal<
  * has shown, or one the seam has not judged yet (its run waits on the
  * verdict: released if the lane shows, held if it blocks) — and sees the
  * lane's latest. NOT_PENDING falls through: lane work's read of a pending
- * member throws like any. */
+ * member throws like any. A verdict reader entering a lane the seam has
+ * not judged reads ahead of it like a staging read: if the seam holds the
+ * lane, the pass re-derives on the screen (`entered`, #4284) — `latest()`
+ * beside the lane's nodes tears ahead of the hold however the reads are
+ * grouped into effects. */
 export function laneRead(c: Computed<any> | null, el: Signal<any> | Computed<any>): unknown {
   const guess = el._config & CONFIG_GUESS;
   const l = txOf(el);
@@ -586,10 +593,13 @@ export function laneRead(c: Computed<any> | null, el: Signal<any> | Computed<any
     const never = pending && el._x!._lane === NOT_PENDING;
     // D-28: a leaf a verdict read moved into the lane still throws on such
     // a flight — the pass leaves the lane, and its frame holds as if the
-    // read had come first (S-39, #4275).
-    if (never && passLane?._parent!._verdict === passLane) setPassLane(null);
+    // read had come first (S-39, #4275). Nor does a verdict lane's seat carry
+    // the leaf into another lane (no link): it reads that lane as from the
+    // frame's seat (#4284).
+    if ((never || passLane !== l) && passLane?._parent!._verdict === passLane) setPassLane(null);
     if (passLane === null || !sameLane(passLane, l)) {
-      if (never) return NOT_PENDING;
+      // (A lane that has never shown: the screen is the committed value.)
+      if (never && l._shown) return NOT_PENDING;
       if (
         !guess &&
         el._pendingValue !== NOT_PENDING &&
@@ -608,6 +618,9 @@ export function laneRead(c: Computed<any> | null, el: Signal<any> | Computed<any
         }
         return display(el);
       }
+      // A verdict reader reads ahead of the seam's verdict: re-derived on the
+      // screen if the lane holds (#4284).
+      if (c._config & CONFIG_VERDICT && l._parent!._verdict !== l) entered.push(c);
     }
   }
   enterLane(l, c);
@@ -855,7 +868,17 @@ const laneSeams = (leaks: Computed<any>[] | null): void => {
     }
   for (let k = Math.min(judged, lanes.length) - 1; k >= 0; k--)
     laneSeam(lanes[k], leaked.indexOf(lanes[k]) !== -1);
+  // A verdict reader that entered a lane this seam held: its run waits with
+  // the lane, and the verdict beside it would freeze — it re-derives next
+  // round from the frame's seat, a stale reader of the lane (#4284).
+  for (let r; (r = entered.pop()); )
+    if (r._x!._transaction?._held) {
+      r._flags &= ~REACTIVE_LANE_DIRTY;
+      enqueueSub(r);
+    }
 };
+/** Render effects that read a verdict and entered a lane before its seam (#4284). */
+const entered: Computed<any>[] = [];
 installLaneHooks(
   laneRead,
   laneStage,

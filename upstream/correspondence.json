@@ -923,9 +923,9 @@
       "restrictions": "Optional one-element error box is Empty/Present(Value); clear before raw rethrow or drop. Called after the complete flush loop, after public root teardown outside a running flush, and at first fatal halt. Dev loop guard/observe diagnostics remain outside the production profile."
     },
     "core/lanes.ts:laneRead": {
-      "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadOutside, laneReadRenderEnd, laneReadEnter",
+      "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadOutside, laneReadRenderEnd, laneReadEnter, laneReadEntered",
       "status": "restricted",
-      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md."
+      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md. Reviewed ac28157a/#4304: foreign verdict seats leave before another lane; the pending fast token requires a shown lane; verdict readers entering an unjudged non-verdict lane append to the source entered array. New live entered stack is separate from stagedReaders."
     },
     "core/lanes.ts:stale": {
       "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",
@@ -960,7 +960,7 @@
     "core/lanes.ts:supersede": {
       "bend": "runtime/core.bend:supersede, supersedeAfter, supersedeEnd",
       "status": "restricted",
-      "restrictions": "txOf/parent resolution, changed dissolution then live shown-slot copy, hold/notification, stage-before-join; installed truth confirmation retained. Store echo and observe hooks excluded. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+      "restrictions": "txOf/parent resolution, changed dissolution then live shown-slot copy, hold/notification, stage without joinFuture, as removed upstream in ac28157a/#4330; installed truth confirmation retained. Store echo and observe hooks excluded. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
     },
     "core/lanes.ts:dissolveLane": {
       "bend": "runtime/core.bend:dissolveLane, dissolveNodes, dissolveDerivation, dissolveCommitted, DissolveCompared, DissolveShown, DissolveHidden",
@@ -1023,9 +1023,9 @@
       "restrictions": "Records old lane prefix before application, including the empty queue arm. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
     },
     "core/lanes.ts:laneSeams": {
-      "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop",
+      "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop, laneEnteredLoop, laneEnteredPop; runtime/lanes-state.bend:enteredPrefix",
       "status": "restricted",
-      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md. Reviewed ac28157a/#4304: after the fixed reverse lane prefix, the live entered array is popped last-to-first; each held reader clears lane-dirty before enqueue. Duplicate/order/store boundaries retained. Existing empty-hook fast path also requires entered empty."
     },
     "core/core.ts:laneFrameMember": {
       "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeapInto",

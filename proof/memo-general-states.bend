@@ -251,7 +251,7 @@ def data_79() -> R.LaneMount:
   R.MountUnset{}
 
 def data_80() -> R.LaneState:
-  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_79()}
+  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_79(), data_24()}
 
 def data_81() -> R.VerdictState:
   R.VerdictState{False{}, False{}, False{}, False{}}
@@ -371,7 +371,7 @@ def data_119() -> R.LaneMount:
   R.MountFalse{}
 
 def data_120() -> R.LaneState:
-  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_119()}
+  R.LaneState{data_24(), data_45(), data_24(), data_78(), 0n, data_119(), data_24()}
 
 def data_121(+initial: Nat, +input: Nat) -> R.World:
   R.World{data_118(initial, input), data_22(), data_23(), 0n, 0n, False{}, data_98(), data_24(), data_24(), data_25(), 0n, False{}, True{}, True{}, 0n, 3n, data_27(), data_31(initial), data_32(), False{}, data_24(), data_37(), data_40(), data_24(), 0n, False{}, False{}, data_41(), 0n, data_44(), data_24(), 0n, 0n, 0n, 0n, data_24(), data_35(), data_45(), data_48(), data_50(), data_100(), 0n, data_55(), data_57(), data_59(), data_60(), data_62(), False{}, False{}, data_35(), data_64(), data_66(), data_69(), 0n, data_45(), False{}, data_70(), data_71(), data_72(), 0n, data_73(), data_74(), data_75(), data_76(), data_77(), 0n, data_120(), data_81(), data_2(), data_24(), data_89()}

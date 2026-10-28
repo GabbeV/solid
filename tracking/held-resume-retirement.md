@@ -1,5 +1,8 @@
 # Actual held action resume through finite body retirement
 
+The [captured-alias extension](held-alias-resume.md) now also derives this path
+for certified redirected action captures; source caches remain canonical.
+
 The previous held-body theorem began at an evaluator body task. This extension
 starts at actual `Core.actionResume`, derives the body-entry facts from the
 initial World, evaluates the admitted finite setter body and terminal return,
@@ -55,8 +58,8 @@ path certificate supplies the arena budget and derives the real resolver result.
 For an already-current group, actual merge preserves the World before conditional
 scheduling; for an empty slot, the real representative is selected before that
 scheduling. No post-join resolver answer is supplied. The isolated module checks
-in5.07 seconds. This is a dependency for extending callback entry to aliases,
-not yet that full resume/body/retirement composition.
+in5.07 seconds. At that checkpoint this was only a join dependency. The [later extension](held-alias-resume.md)
+now composes actual resumed aliases through the body and retirement.
 
 The687-root book passed independently in421.9 seconds before this two-root
 extension. The final689-root candidate needs its own full verdict and exact seal;

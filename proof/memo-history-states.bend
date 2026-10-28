@@ -238,7 +238,7 @@ def data_75() -> R.LaneMount:
   R.MountUnset{}
 
 def data_76() -> R.LaneState:
-  R.LaneState{data_25(), data_42(), data_25(), data_74(), 0n, data_75()}
+  R.LaneState{data_25(), data_42(), data_25(), data_74(), 0n, data_75(), data_25()}
 
 def data_77() -> R.VerdictState:
   R.VerdictState{False{}, False{}, False{}, False{}}
@@ -355,7 +355,7 @@ def data_114() -> R.LaneMount:
   R.MountFalse{}
 
 def data_115() -> R.LaneState:
-  R.LaneState{data_25(), data_42(), data_25(), data_74(), 0n, data_114()}
+  R.LaneState{data_25(), data_42(), data_25(), data_74(), 0n, data_114(), data_25()}
 
 def data_116(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:
   R.World{data_113(tick, previous, input), data_23(tick), data_24(), 0n, 0n, False{}, data_94(), data_25(), data_25(), data_26(), 0n, False{}, True{}, True{}, Nat.add(1n, tick), Nat.add(4n, tick), data_28(), events, data_29(), False{}, data_25(), data_34(), data_37(), data_25(), 0n, False{}, False{}, data_38(), 0n, data_41(), data_25(), 0n, 0n, 0n, 0n, data_25(), data_32(), data_42(), data_45(), data_47(), B.append(R.HostJob, jobs, [data_95()]), 0n, data_51(), data_53(), data_55(), data_56(), data_58(), False{}, False{}, data_32(), data_60(), data_62(), data_65(), 0n, data_42(), False{}, data_66(), data_67(), data_68(), 0n, data_69(), data_70(), data_71(), data_72(), data_73(), 0n, data_115(), data_77(), data_2(), data_25(), data_85()}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "previousCommit": "0847122e9fc9681fda7feef37d5427db7316e56d",
+  "recordedSolidInputs": 77,
+  "allRecordedInputsExactGitBytes": true,
+  "changedRecordedInputs": 14,
+  "nativeSignalsBuildTiers": 3,
+  "nativeSourceDeclarations": true,
+  "nativeTestFiles": 355,
+  "nativeTestsPassed": 5646,
+  "nativeExpectedFailures": 2,
+  "nativeSkips": 2,
+  "privateLaneReadCases": 3498,
+  "questionOrderCases": 720,
+  "privateLaneSeamCases": 2080,
+  "publicGroupingHistories": 9,
+  "completeAlignmentCommandPassed": true,
+  "configuredMutations": {
+    "total": 719,
+    "finite": 493,
+    "kernel": 226
+  },
+  "focusedCompiledSemanticRejections": {
+    "total": 6,
+    "names": [
+      "lane entered render keeps a foreign verdict seat",
+      "lane entered pending token ignores unshown lane",
+      "lane entered verdict reader is not recorded",
+      "lane entered held reader is not rescheduled",
+      "lane entered pop reads the oldest reader",
+      "lane entered confirmation rejoins unrelated current work"
+    ],
+    "logSha256": "59d3e4b0cd68d2f802069b6971794fffedf6c2debc9a2e23a71c988df24a8d39"
+  },
+  "earlierFullMutationScope": "Complete713 belongs to frozenfc38211d/0847122e. No complete719 sweep is inferred for the new pin or corpus.",
+  "activeSemanticDeviations": [],
+  "kernelFuelUnchanged": 400000000,
+  "sourceDrivenOldEquationsReplaced": [
+    "never-shown pending token -> cleared-seat outside dispatch, with separate shown/unshown consequences",
+    "zero reveal count -> actual entered-reader drain",
+    "supersede final parent join -> pending store without join"
+  ],
+  "witnessPolicy": "New LaneState.entered field is empty in old concrete constructor families. Regenerated step counts/domains unchanged. Three old semantic statements follow intentional upstream changes, documented explicitly.",
+  "publicSuite": {
+    "passed": true,
+    "logSha256": "60f75c6ad1cbfef00bdf2530f1cdadf682675e04c54d0f75da7bf9fd56706a6b",
+    "scope": "Complete npm test command exited0 on rc19. Its ordinary body-control prefix was subsequently rerun with all original cases plus144 captured-alias bodies; all2832 current cases pass."
+  },
+  "mathematicalAuthority": "Fresh whole691-root independent verdict and exact input seal, not frontend output or generator success.",
+  "rebase691IndependentBook": {
+    "passed": true,
+    "seconds": 375.73054766499996,
+    "scope": "Before the nine-root captured-alias extension; final700 requires a fresh verdict/seal."
+  }
+}

@@ -193,6 +193,7 @@ type Task is Data:
   EqualityCatch{id: Nat, saved: List<&2, R.Value>}
   LaneLeakLoop{readers: List<&2, Nat>, index: Nat, leaked: List<&2, Nat>}
   LaneRevealLoop{leaked: List<&2, Nat>, remaining: Nat}
+  LaneEnteredLoop{}
   OptimisticResolved{id: Nat, previous: R.Value}
   OptimisticCompared{id: Nat, value: R.Value}
   ApplyGuesses{parent: Nat, lane: Nat, index: Nat}
@@ -518,6 +519,13 @@ def laneReadEnter(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
   +value = B.choose(~R.Value, Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING())), _ => R.NotPendingToken{}, _ => Truth.laneValueOf(w, id))
   Machine{w, rest, value <> stack}
 
+# lanes.ts:laneRead after the outside display-return branches, before enterLane.
+# Keep each entered reader in append order; the seam pops them in reverse.
+def laneReadEntered(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
+  +w = B.choose(~R.World, Bool.and(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT()), Nat.is_ne(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, lane)))), lane)),
+    _ => R.World.with_laneState(w, R.LaneState.with_entered(R.World.laneState(w), B.append(Nat, R.LaneState.entered(R.World.laneState(w)), [reader]))), _ => w)
+  laneReadEnter(w, rest, stack, reader, id, lane, guess, status)
+
 def laneReadRenderEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
   B.choose(~Machine, Bool.or(R.Transaction.held(B.transaction(w, lane)), Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING()))),
     _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED()))),
@@ -530,10 +538,10 @@ def laneReadRenderEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
             +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_FRAME_READ(), K.REACTIVE_SCREEN_READ()))))
             B.store_transaction(w, lane, R.Transaction.with_reruns(B.transaction(w, lane), B.append(Nat, R.Transaction.reruns(B.transaction(w, lane)), [reader]))))
         Machine{w, rest, Lanes.display(w, id) <> stack}),
-    _ => laneReadEnter(w, rest, stack, reader, id, lane, guess, status))
+    _ => laneReadEntered(w, rest, stack, reader, id, lane, guess, status))
 
 def laneReadOutside(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32, +never: Bool) -> Machine:
-  B.choose(~Machine, never,
+  B.choose(~Machine, Bool.and(never, R.Transaction.shown(B.transaction(w, lane))),
     _ => Machine{w, rest, R.NotPendingToken{} <> stack},
     _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(B.present(R.Node.pending(B.node(w, id))), Bool.and(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_HELD()), Nat.is_ne(R.World.flushTransaction(w), 0n)))),
       _ =>
@@ -552,7 +560,7 @@ def laneReadOutside(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 def laneReadRender(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
   +never = Bool.and(Bool.not(guess), Bool.and(B.has(status, K.STATUS_PENDING()), Bool.not(B.present(R.NodeExtension.lane(B.extension(w, id))))))
   +pass = R.World.passLane(w)
-  +w = B.choose(~R.World, Bool.and(never, Bool.and(Nat.is_ne(pass, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, pass)))), pass))),
+  +w = B.choose(~R.World, Bool.and(Bool.or(never, Nat.is_ne(pass, lane)), Bool.and(Nat.is_ne(pass, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, pass)))), pass))),
     _ => R.World.with_passLane(w, 0n), _ => w)
   B.choose(~Machine, Bool.or(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(Lanes.sameLane(w, R.World.passLane(w), lane))),
     _ => laneReadOutside(w, rest, stack, reader, id, lane, guess, status, never),
@@ -3165,7 +3173,7 @@ def finishSettleIntake(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Va
   +users = R.World.userQueue(w)
   +w = R.World.with_renderQueue(R.World.with_userQueue(w, []), [])
   # Fused empty hook: no callbacks/reveals or retained reader array exist.
-  B.choose(~Machine, Bool.and(List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w))), List.is_empty(&2, Nat, R.LaneState.stagedReaders(R.World.laneState(w)))),
+  B.choose(~Machine, Bool.and(List.is_empty(&2, Nat, R.LaneState.live(R.World.laneState(w))), Bool.and(List.is_empty(&2, Nat, R.LaneState.stagedReaders(R.World.laneState(w))), List.is_empty(&2, Nat, R.LaneState.entered(R.World.laneState(w))))),
     _ => afterLaneSeams(w, rest, stack, t, renders, users),
     _ => laneSeams(w, AfterLaneSeams{t, renders, users} <> rest, stack, B.choose(~R.OptionalIds, Nat.is_ne(t, 0n), _ => R.SomeIds{R.LaneState.stagedReaders(R.World.laneState(w))}, _ => R.NoIds{})))
 
@@ -3926,7 +3934,7 @@ def mapRemoved(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +n
 # ordinary-node profile; authoritative confirmation uses the installed hook.
 def supersedeEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +parent: Nat, +value: R.Value) -> Machine:
   +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
-  Machine{X.joinFuture(w, parent), rest, stack}
+  Machine{w, rest, stack}
 
 
 def supersedeAfter(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lane: Nat, +parent: Nat, +value: R.Value) -> Machine:
@@ -4219,10 +4227,30 @@ def applyGuesses(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
         _ => applyGuessNew(w, rest, stack, parent, lane, index, id, value)))
 
 
+# lanes.ts:laneSeams's final live entered.pop() loop. Pop/store precedes the
+# held check, lane-dirty clearing and enqueue. An empty array adds no task.
+def laneEnteredPop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +readers: List<&2, Nat>, remaining: Nat) -> Machine:
+  match remaining:
+    case 0n: Machine{w, rest, stack}
+    case 1n+ +index:
+      +reader = B.get(Nat, readers, index, 0n)
+      +w = R.World.with_laneState(w, R.LaneState.with_entered(R.World.laneState(w), Lanes.enteredPrefix(index, readers)))
+      B.choose(~Machine, Nat.is_eq(reader, 0n), _ => Machine{w, rest, stack},
+        _ =>
+          +w = B.choose(~R.World, R.Transaction.held(B.transaction(w, R.NodeExtension.transaction(B.extension(w, reader)))),
+            _ =>
+              +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.clear(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_DIRTY())))
+              H.enqueueSub(w, reader), _ => w)
+          Machine{w, LaneEnteredLoop{} <> rest, stack})
+
+def laneEnteredLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>) -> Machine:
+  +readers = R.LaneState.entered(R.World.laneState(w))
+  laneEnteredPop(w, rest, stack, readers, B.length(Nat, readers))
+
 def laneRevealLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +leaked: List<&2, Nat>, remaining: Nat) -> Machine:
   match remaining:
     case 0n:
-      Machine{w, rest, stack}
+      laneEnteredLoop(w, rest, stack)
     case 1n+ +index:
       +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
       laneSeam(w, LaneRevealLoop{leaked, index} <> rest, stack, lane, B.contains(leaked, lane))
@@ -4673,6 +4701,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       laneLeakLoop(w, rest, stack, readers, index, leaked)
     case LaneRevealLoop{leaked, remaining} <> rest:
       laneRevealLoop(w, rest, stack, leaked, remaining)
+    case LaneEnteredLoop{} <> rest:
+      laneEnteredLoop(w, rest, stack)
     case OptimisticResolved{+id, +previous} <> +rest:
       match stack:
         case value <> tail:

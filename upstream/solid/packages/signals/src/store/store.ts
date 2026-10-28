@@ -995,9 +995,9 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
                 else delete (v as any)[key];
               }
           } else {
-            for (const key of Reflect.ownKeys(pb)) copyOwn(v, pb, key);
+            for (const key of Reflect.ownKeys(pb)) if (key !== $OWNER) copyOwn(v, pb, key);
             for (const key of Reflect.ownKeys(old)) {
-              if (!hasOwn.call(pb, key)) delete (v as any)[key];
+              if (key !== $OWNER && !hasOwn.call(pb, key)) delete (v as any)[key];
             }
           }
         } else {
@@ -1142,13 +1142,18 @@ function notifyWrites(t: StoreTarget): void {
   // Optimistic channel: a user's writes on an optimistic family become
   // guesses on the nodes (lanes); the draft is discarded, the committed
   // backing never touched.
-  if (optHooks && userWrite && t.fam?.opt === true) {
-    // The draft is discarded first: the diff reads the target (its nodes
-    // are born from the committed frame, not the draft).
-    t.pb = null;
-    t.wk = null;
-    t.pb = optHooks.writes(t, pb);
-    return;
+  if (optHooks && t.fam?.opt === true) {
+    if (userWrite) {
+      // The draft is discarded first: the diff reads the target (its nodes
+      // are born from the committed frame, not the draft).
+      t.pb = null;
+      t.wk = null;
+      t.pb = optHooks.writes(t, pb);
+      return;
+    }
+    // The derive's draft: new rows under guessed rows are paired with them
+    // first (D-34, #4329).
+    optHooks.pair(t, pb);
   }
   const old = t.v;
   // Devtools mutation hook: full-key diff (dev-only cost) so unobserved

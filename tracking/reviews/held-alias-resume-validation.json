@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateComposedRoots": 700,
+  "runtimeChangesForProofs": false,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "isolatedKernelVerdict": {
+    "seconds": 9.862419544999998,
+    "timeoutSeconds": 90,
+    "maxRssBytes": 4294967296,
+    "passed": true
+  },
+  "finiteControls": {
+    "sampledWriteSequences": 32,
+    "actualBodyCases": 2832,
+    "heldBodyCases": 1936,
+    "currentGroupCases": 968,
+    "heldEntryCommutations": 1936,
+    "aliasBodyCases": 144,
+    "constructedRedirectLengths": [
+      1,
+      3,
+      8
+    ],
+    "actualSetterExpressions": 29124,
+    "callerStackChecks": 2832,
+    "longestBodyWrites": 64,
+    "nativeGeneratorPortCases": 32,
+    "pendingReturnAdoptions": 16,
+    "scope": "actual ordinary and fresh/current-group already-held finite setter bodies, including captured redirect chains, and terminal return before queued slice-end; finite held-entry commutation is not a general proof; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate"
+  },
+  "finiteControlLogSha256": "bf38eaa8bc0d617b0c323921c084afd9f6f124df02244c33dd415f02449b16ed",
+  "scope": "Actual captured-alias resume through finite held setter body, one representative obligation retirement and saved caller stack, fresh/current canonical source group. Initial alias route and arena room; no intermediate/final profile/count/resolver assumptions.",
+  "remaining": [
+    "source-entry redirected caches",
+    "distinct-component preparation joins",
+    "full public delivery/reachable construction",
+    "global once-only action/flight ledger",
+    "queued slice-end and publication"
+  ],
+  "rebase691Book": {
+    "passed": true,
+    "seconds": 375.7,
+    "scope": "Earlier source-rebase book before this nine-root proof extension and expanded controls; no final700 credit inferred."
+  },
+  "negativeScope": "Focused6 new source faults pass; configured719 separate from historical full713. No complete719 claim until frozen run finishes.",
+  "authority": "Fresh complete independent700-root verdict and exact input seal in tracking/checked.json.",
+  "completePublicSuitePassed": true,
+  "publicSuiteLogSha256": "60f75c6ad1cbfef00bdf2530f1cdadf682675e04c54d0f75da7bf9fd56706a6b"
+}

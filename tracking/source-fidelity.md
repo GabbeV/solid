@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `0847122e9fc9681fda7feef37d5427db7316e56d`, rc.18. The latest
-[source review](reviews/solid-0847122e.md) records the verbatim inputs and checks.
+Current pin: Solid `ac28157aba6d03b806f0043bce70a87d515e953e`, rc.19. The latest
+[source review](reviews/solid-ac28157a.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or
@@ -264,3 +264,11 @@ The [source review](reviews/solid-0847122e.md) records exact shared frame flags/
 ## Actual held resume and retirement
 
 The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.
+
+
+## Reviewed rc.19 lane rebase
+
+[ac28157a review](reviews/solid-ac28157a.md) records foreign verdict-seat routing, shown-only pending token, distinct entered-reader stack and its final reverse drain, and removal of the supersede parent join. Three old equations are explicitly replaced to match the changed source. Active snapshot/store/hydration work remains excluded; no workaround or checker limit change.
+
+
+The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.

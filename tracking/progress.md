@@ -1074,3 +1074,9 @@ Late-evening actual-entry extension: five roots compose actual captured resume t
 The687-root entry book passed in421.9s. Two further path-certified capture-alias join dependencies check independently in5.07s; full resumed-alias composition remains open. All77 selected source bytes still match latest observed next@f5cf675a.
 
 Full713 on frozenfc38211d/0847122e completed:713 compiled semantic rejections,97 mandatory unchanged kernel oracles passed,1150 unchanged tracked sealed inputs. Exact receipt remains distinct from the new689-root proof book. No new upstream bug or semantic workaround this run.
+
+
+2026-10-28: reviewedrc.19/ac28157a rebase ports entered verdict readers and their final reverse seam drain, foreign verdict-seat routing and supersede without the parent join. Native355files/5646tests pass. Three former equations are explicitly replaced as required by changed upstream behavior; two shown/unshown consequence roots extend689to691. All prior payload domains and fixed witness bounds remain, subject to fresh independent verification. No new bug or workaround.
+
+
+The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.

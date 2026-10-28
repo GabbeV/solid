@@ -593,3 +593,8 @@ The687-root entry/retirement book passed independently in421.9s. Two certified c
 ### Complete713 on0847122e
 
 The full frozenfc38211d/0847122e sweep finished successfully:713 exact ordered unique names,487 finite and226 kernel variants, all compiled and semantically rejected. All97 mandatory unchanged kernel oracle modules passed first. All1150 sealed inputs remain tracked and byte-identical; no compilation/resource failures receive credit. [Receipt](reviews/complete-713-negative.json). The frozen682-root sweep is distinct from the final689-root book.
+
+
+## 2026-10-28 rc.19 source rebase
+
+The [review](reviews/solid-ac28157a.md) and [receipt](reviews/solid-ac28157a-validation.json) separate77 exact Git source inputs, source-driven replacements of three old equations,355 native files/5646 passing tests, complete helper alignment and expanded entered-reader/public grouping controls. Six new compiled semantic faults are rejected. Configured719=493 finite+226 kernel remains distinct from the old full713 frozen sweep. Fresh whole691-root mathematical verification and exact seal are required for this source checkpoint.

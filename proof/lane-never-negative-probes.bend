@@ -8,7 +8,7 @@ import ../runtime/constants.bend as K
 
 def initial() -> R.World:
   +w = R.World.with_nodes(B.empty(),[B.blank_node(),R.Node.with_kind(B.blank_node(),R.Memo{}),R.Node.with_kind(B.blank_node(),R.Render{})])
-  +w = R.World.with_txArena(w,[B.blank_transaction(),R.Transaction.with_verdict(B.blank_transaction(),2n),R.Transaction.with_parent(R.Transaction.with_lane(B.blank_transaction(),True{}),1n)])
+  +w = R.World.with_txArena(w,[B.blank_transaction(),R.Transaction.with_verdict(B.blank_transaction(),2n),R.Transaction.with_shown(R.Transaction.with_parent(R.Transaction.with_lane(B.blank_transaction(),True{}),1n),True{})])
   R.World.with_passLane(w,2n)
 
 def result() -> C.Machine:

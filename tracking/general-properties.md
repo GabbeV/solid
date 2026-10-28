@@ -458,3 +458,6 @@ See [held-staging.md](held-staging.md) for the actual canonical source-group joi
 ## Actual held resume and retirement
 
 The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.
+
+
+The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.

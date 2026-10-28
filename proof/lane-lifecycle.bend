@@ -19,7 +19,7 @@ def reverseEndEntry(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Val
   {==}
 
 def confirmationEnd(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +parent: Nat, +value: R.Value) ->
-  {C.supersedeEnd(w, rest, stack, id, parent, value) == C.Machine{Tx.joinFuture(B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), parent), rest, stack} : C.Machine}:
+  {C.supersedeEnd(w, rest, stack, id, parent, value) == C.Machine{B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), rest, stack} : C.Machine}:
   {==}
 
 def hiddenCorrection(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat) ->

@@ -253,3 +253,11 @@ def pushGuess(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
   +state = R.World.laneState(w)
   +w = R.World.with_laneState(w, R.LaneState.with_pendingGuesses(state, B.append(R.Guess, R.LaneState.pendingGuesses(state), [R.Guess{id, value, B.second(R.World, R.Question, pair)}])))
   B.schedule(w)
+
+# Persistent-list representation of entered.pop(): retain the prefix before
+# selecting/processing the removed reader, preserving the source store order.
+def enteredPrefix(count: Nat, readers: List<&2, Nat>) -> List<&2, Nat>:
+  match count readers:
+    case 0n _: []
+    case _ Nil{}: []
+    case 1n+left reader <> tail: reader <> enteredPrefix(left, tail)

@@ -1,3 +1,8 @@
+import ./proof/transaction-route-rebase.bend as AliasResume0
+import ./proof/held-alias-preparation.bend as AliasResume1
+import ./proof/held-alias-body-input.bend as AliasResume2
+import ./proof/held-alias-resume-retirement.bend as AliasResume3
+import ./proof/lane-pending-display.bend as RebaseLane0
 import ./proof/held-preparation-alias-join.bend as HeldAlias0
 import ./proof/held-preparation-source.bend as HeldResume0
 import ./proof/held-source-view.bend as HeldResume1
@@ -982,7 +987,7 @@ def Laws.lane_committed_effect_skips_value_comparison(w, rest, stack, id, shown)
 def Laws.lane_end_starts_live_reverse_scan(w, rest, stack, parent):
   LaneLifecycle.reverseEndEntry(w, rest, stack, parent)
 
-def Laws.lane_confirmation_stages_before_join(w, rest, stack, id, parent, value):
+def Laws.lane_confirmation_stages_truth_without_joining_parent(w, rest, stack, id, parent, value):
   LaneLifecycle.confirmationEnd(w, rest, stack, id, parent, value)
 
 def Laws.lane_hidden_correction_clears_frame_flags(w, rest, stack, id):
@@ -1030,7 +1035,7 @@ def Laws.lane_guess_null_leaks_still_reveal_prefix(w, rest, stack):
 def Laws.lane_guess_reveals_are_capped_to_current_prefix(w, rest, stack, leaked):
   GuessLaws.emptyLeaks(w, rest, stack, leaked)
 
-def Laws.lane_guess_zero_reveals_preserve_world(w, rest, stack, leaked):
+def Laws.lane_guess_zero_reveals_continue_entered_reader_drain(w, rest, stack, leaked):
   GuessLaws.zeroReveal(w, rest, stack, leaked)
 
 def Laws.scalar_strict_signed_zero(n):
@@ -2446,7 +2451,7 @@ def Laws.constructed_memo_render_notification_and_controller_clear_pending(value
   ConstructedRetirement.constructedCleared(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)
 
 
-def Laws.never_shown_render_read_exits_existing_verdict_lane(w,rest,stack,reader,node,lane,empty,present,same):
+def Laws.never_valued_render_read_routes_from_cleared_verdict_seat(w,rest,stack,reader,node,lane,empty,present,same):
   NeverPending.exits(w,rest,stack,reader,node,lane,empty,present,same)
 
 
@@ -2618,3 +2623,47 @@ def Laws.certified_captured_alias_joins_its_already_current_canonical_group(w,ro
 
 def Laws.certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot(w,rootOffset,captureOffset,alias,positive,empty):
   HeldAlias0.fresh(w,rootOffset,captureOffset,alias,positive,empty)
+
+
+def Laws.never_valued_pending_read_returns_token_from_a_shown_lane(w,rest,stack,reader,id,lane,known):
+  RebaseLane0.shown(w,rest,stack,reader,id,lane,known)
+
+
+def Laws.never_valued_pending_read_retains_outside_display_when_lane_unshown(w,rest,stack,reader,id,lane,known):
+  RebaseLane0.unshown(w,rest,stack,reader,id,lane,known)
+
+
+def Laws.retained_redirect_vector_constructs_next_route_with_origin_terminal_and_depth(w,next,path,same):
+  AliasResume0.move(w,next,path,same)
+
+
+def Laws.retained_redirect_vector_constructs_next_alias_and_arena_room(w,next,root,alias,same):
+  AliasResume0.moveAlias(w,next,root,alias,same)
+
+
+def Laws.captured_alias_current_preparation_retains_source_profile_observation(w,actor,offset,captureOffset,tail,alias,captured,positive,future,stopped):
+  AliasResume1.current(w,actor,offset,captureOffset,tail,alias,captured,positive,future,stopped)
+
+
+def Laws.captured_alias_fresh_preparation_retains_selected_source_observation(w,actor,offset,captureOffset,tail,alias,captured,positive,empty):
+  AliasResume1.fresh(w,actor,offset,captureOffset,tail,alias,captured,positive,empty)
+
+
+def Laws.actual_preparation_retains_the_original_positive_captured_alias(w,actor,offset,captureOffset,tail,alias,captured,positive):
+  AliasResume2.capture(w,actor,offset,captureOffset,tail,alias,captured,positive)
+
+
+def Laws.captured_alias_current_resume_runs_finite_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known):
+  AliasResume3.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known)
+
+
+def Laws.captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known):
+  AliasResume3.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known)
+
+
+def Laws.captured_alias_current_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known):
+  AliasResume3.currentStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known)
+
+
+def Laws.captured_alias_fresh_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known):
+  AliasResume3.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known)

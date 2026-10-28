@@ -9,7 +9,7 @@ and includes superseded omissions and counts.
 
 ## Current coverage
 
-Solid is pinned to `0847122e` (rc.18); the Bend2.0.37 frontend and vendored
+Solid is pinned to `ac28157a` (rc.19); the Bend2.0.37 frontend and vendored
 snapshot remain unchanged. Independent verification uses the recorded, Lean-checked
 [congruence-first kernel profile](kernel-congruence.md) with unchanged fuel. No semantic deviation is active. This is an incremental production,
 non-store port with an explicit callback/host grammar, not the whole package.
@@ -23,7 +23,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 
-4,750 public differential histories and 73 closed regressions remain supporting
+4,759 public differential histories and 73 closed regressions remain supporting
 evidence. Configured mutation totals and completed frozen sweeps are distinct in
 [verification.md](verification.md). These counts are not a completion percentage.
 The [fidelity ledger](source-fidelity.md) and [proof catalogue](general-properties.md)
@@ -148,7 +148,7 @@ remain linked in [the report](upstream/deferred-protocol-error.md). The
 [current source review](reviews/solid-2a0da2fc.md) also integrates #4250's no-value
 status on first-error re-asks. No active semantic workaround or new upstream bug.
 
-Latest next observed: `f5cf675a` (2026-10-26 22:18 UTC). All77 selected source input bytes still equal the0847122e pin; the two later commits concern excluded Solid/SSR behavior. [Byte comparison](reviews/next-f5cf675a-observation.json).
+Latest next reviewed: `ac28157a` (2026-10-28). All77 selected files match the exact Git tree. [Review](reviews/solid-ac28157a.md). Earlier observations and frozen sweep receipts retain their original commits.
 The new catch-scope roots retain earlier proof domains and 103/118-step bounds.
 These production fixes precede the next queued-settlement/flush composition.
 
@@ -550,3 +550,11 @@ The [source review](reviews/solid-0847122e.md) records exact shared frame flags/
 ## Actual held resume and retirement
 
 The [resume extension](held-resume-retirement.md) starts at actual captured resume, derives the held body profile and retains original capture/full count storage, then evaluates the finite setter body and retires one obligation. Fresh and already-current canonical groups are covered. Full public wait/join/disposal construction and publication remain open; the unproved full-World constructor equation is unused.
+
+
+## 2026-10-28 source update
+
+The [rc.19 review](reviews/solid-ac28157a.md) records new entered-reader scheduling and supersede ownership without joining the delivery tick. Source-driven changes to three earlier equations are explicit. The actual held-resume/retirement milestone remains the next composition target; mounted snapshots, stores and full publication remain open.
+
+
+The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.

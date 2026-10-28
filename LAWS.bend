@@ -1,3 +1,8 @@
+import ./proof/transaction-route-rebase.bend as AliasResume0
+import ./proof/held-alias-preparation.bend as AliasResume1
+import ./proof/held-alias-body-input.bend as AliasResume2
+import ./proof/held-alias-resume-retirement.bend as AliasResume3
+import ./proof/lane-pending-display.bend as RebaseLane0
 import ./proof/held-preparation-alias-join.bend as HeldAlias0
 import ./proof/held-preparation-source.bend as HeldResume0
 import ./proof/held-source-view.bend as HeldResume1
@@ -1717,14 +1722,14 @@ law lane_end_starts_live_reverse_scan:
   for +parent: Nat
   {Core.endLanes(w, rest, stack, parent) == Core.Machine{w, Core.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack} : Core.Machine}
 
-law lane_confirmation_stages_before_join:
+law lane_confirmation_stages_truth_without_joining_parent:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +id: Nat
   for +parent: Nat
   for +value: R.Value
-  {Core.supersedeEnd(w, rest, stack, id, parent, value) == Core.Machine{LaneJudgment.joinFuture(B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), parent), rest, stack} : Core.Machine}
+  {Core.supersedeEnd(w, rest, stack, id, parent, value) == Core.Machine{B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value})), rest, stack} : Core.Machine}
 
 law lane_hidden_correction_clears_frame_flags:
   for +w: R.World
@@ -1839,12 +1844,12 @@ law lane_guess_reveals_are_capped_to_current_prefix:
   for +leaked: List<&2, Nat>
   {Core.laneLeakLoop(w, rest, stack, [], 0n, leaked) == Core.Machine{w, Core.LaneRevealLoop{leaked, Nat.min(R.LaneState.judged(R.World.laneState(w)), B.length(Nat, R.LaneState.live(R.World.laneState(w))))} <> rest, stack} : Core.Machine}
 
-law lane_guess_zero_reveals_preserve_world:
+law lane_guess_zero_reveals_continue_entered_reader_drain:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +leaked: List<&2, Nat>
-  {Core.laneRevealLoop(w, rest, stack, leaked, 0n) == Core.Machine{w, rest, stack} : Core.Machine}
+  {Core.laneRevealLoop(w, rest, stack, leaked, 0n) == Core.laneEnteredLoop(w, rest, stack) : Core.Machine}
 
 law scalar_strict_signed_zero:
   for +n: Nat
@@ -5542,7 +5547,7 @@ law constructed_memo_render_notification_and_controller_clear_pending:
   {B.has(R.Node.status(B.node(TailStatus.world(ConstructedRetirement.constructed(values,value,extensions,sets,incoming,serial,tasks,visited,released,scheduled)),NotificationFixture.leaf(values,value,extensions,sets))),K.STATUS_PENDING()) == False{} : Bool}
 
 
-law never_shown_render_read_exits_existing_verdict_lane:
+law never_valued_render_read_routes_from_cleared_verdict_seat:
   for +w: R.World
   for +rest: List<&2,Core.Task>
   for +stack: List<&2,R.Value>
@@ -5552,7 +5557,7 @@ law never_shown_render_read_exits_existing_verdict_lane:
   for +empty: {B.present(R.NodeExtension.lane(B.extension(w,node))) == False{} : Bool}
   for +present: {Nat.is_ne(R.World.passLane(w),0n) == True{} : Bool}
   for +same: {Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,R.World.passLane(w))))),R.World.passLane(w)) == True{} : Bool}
-  {Core.laneReadRender(w,rest,stack,reader,node,lane,False{},K.STATUS_PENDING()) == Core.Machine{R.World.with_passLane(w,0n),rest,R.NotPendingToken{} <> stack} : Core.Machine}
+  {Core.laneReadRender(w,rest,stack,reader,node,lane,False{},K.STATUS_PENDING()) == Core.laneReadOutside(R.World.with_passLane(w,0n),rest,stack,reader,node,lane,False{},K.STATUS_PENDING(),True{}) : Core.Machine}
 
 
 law finite_onflush_registrations_retain_every_non_scheduling_field:
@@ -6034,3 +6039,167 @@ law certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot:
   for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   {Transactions.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.scheduled(HeldResume0.flush(w,1n+rootOffset)) : R.World}
+
+
+law never_valued_pending_read_returns_token_from_a_shown_lane:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +reader: Nat
+  for +id: Nat
+  for +lane: Nat
+  for known: {R.Transaction.shown(B.transaction(w,lane)) == True{} : Bool}
+  {Core.laneReadOutside(w,rest,stack,reader,id,lane,False{},K.STATUS_PENDING(),True{}) == Core.Machine{w,rest,R.NotPendingToken{} <> stack} : Core.Machine}
+
+
+law never_valued_pending_read_retains_outside_display_when_lane_unshown:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +reader: Nat
+  for +id: Nat
+  for +lane: Nat
+  for known: {R.Transaction.shown(B.transaction(w,lane)) == False{} : Bool}
+  {Core.laneReadOutside(w,rest,stack,reader,id,lane,False{},K.STATUS_PENDING(),True{}) == Core.laneReadOutside(w,rest,stack,reader,id,lane,False{},K.STATUS_PENDING(),False{}) : Core.Machine}
+
+
+law retained_redirect_vector_constructs_next_route_with_origin_terminal_and_depth:
+  for +w: R.World
+  for +next: R.World
+  for path: RedirectPaths.Route<w>
+  for +same: {AliasResume0.parents(next) == AliasResume0.parents(w) : List<&2,Nat>}
+  AliasResume0.Rebased<w,next,path>
+
+
+law retained_redirect_vector_constructs_next_alias_and_arena_room:
+  for +w: R.World
+  for +next: R.World
+  for +root: Nat
+  for alias: RejoinHistories.Alias<w,root>
+  for +same: {AliasResume0.parents(next) == AliasResume0.parents(w) : List<&2,Nat>}
+  AliasResume0.AliasRebased<w,next,root,alias>
+
+
+law captured_alias_current_preparation_retains_source_profile_observation:
+  for +w: R.World
+  for +actor: Nat
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +tail: R.Expr
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for future: {R.World.flushTransaction(w) == 1n+offset : Nat}
+  for stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
+  {HeldResume1.observe(BodyEntry.prepared(w,actor,tail)) == HeldResume1.observe(w) : HeldResume1.View}
+
+
+law captured_alias_fresh_preparation_retains_selected_source_observation:
+  for +w: R.World
+  for +actor: Nat
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +tail: R.Expr
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  {HeldResume1.observe(BodyEntry.prepared(w,actor,tail)) == HeldResume1.observe(HeldResume0.flush(w,1n+offset)) : HeldResume1.View}
+
+
+law actual_preparation_retains_the_original_positive_captured_alias:
+  for +w: R.World
+  for +actor: Nat
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +tail: R.Expr
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  {R.ActionState.transaction(Action.get(BodyEntry.prepared(w,actor,tail),actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+
+
+law captured_alias_current_resume_runs_finite_held_body_and_retires_one_obligation:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law captured_alias_current_resume_restores_arbitrary_caller_stack:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
+
+
+law captured_alias_fresh_resume_restores_arbitrary_caller_stack:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
