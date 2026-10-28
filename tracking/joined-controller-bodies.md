@@ -49,8 +49,10 @@ retains the rendered zero and final reveal matches native Solid. The live
 representative is resolved rather than guessed from either original capture.
 Native repeat applications of an equal final value are retained in the comparison.
 
-The direct count/blocker corollary and a constructed invariant for the second
-body after the first remain next work. Full public factory/parking/host
+The [count/blocker extension](held-count-evidence.md) now supplies the direct
+count/blocker corollary and the successor source-profile part of the second
+body invariant. The controller/route/method and full second-body composition
+remain next work. Full public factory/parking/host
 construction, arbitrary branching action/flight histories, queued Round execution
 and renderer publication are not proved by this milestone. Runtime/source bytes
 and all prior theorem domains remain unchanged; no semantic workaround was added.

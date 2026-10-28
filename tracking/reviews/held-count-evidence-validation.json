@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "extension": "Constructed first finite joined-controller body count, actual blocked identity and successor virtual source profile",
+  "previousCheckedCheckpoint": "733c8ffd0bc25919e32ef5878090635fd65b0777",
+  "newComposedRoots": 12,
+  "candidateComposedRoots": 750,
+  "sourceRuntimeUnchanged": true,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "probeMaxRssBytes": 4294967296,
+  "compactProbeWallSeconds": 90,
+  "combinedProbeWallSeconds": 240,
+  "freshComposedVerdictRequired": true,
+  "independentProbes": [
+    {
+      "log": "held-cache-virtual-history-solo.log",
+      "sha256": "34a89c90ad530648e15123333fdb3f313f7f310d37e0c52eaa5728af25bb5675",
+      "seconds": 10.832493097,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "body-input-solo.log",
+      "sha256": "321b0d2b69836cfbc01c088e511a1d11669242125b935f83c844717b8ba9c780",
+      "seconds": 10.455117226,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "count-certificate-evidence-solo.log",
+      "sha256": "16a69875f69889ee7d604bae019a0b8cfcc4411f82e925fb624cee8f50bedde3",
+      "seconds": 10.411215277,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "source-cache-debt-direct.log",
+      "sha256": "d6a840956453cb59f76642e39272cc9df85da104ae39330d9648d97c054017b3",
+      "seconds": 9.204228581,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-debt.log",
+      "sha256": "bbfeaaa28a84c6d9f464aa036d0c3c0dfb04d59e790cc350157c45375a29d7fa",
+      "seconds": 66.182818959,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-count.log",
+      "sha256": "9ebcb11c912d91fcb229d77de47eef0ade63a898d99a47c12d98c45a64b7cdad",
+      "seconds": 65.05166769200001,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-blocked.log",
+      "sha256": "30a628e008ca05edd4732a32dc69d4f530946ca8b2b4e0e0845cde632804fb22",
+      "seconds": 61.999419849,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "retirement-profile.log",
+      "sha256": "a5ad197ed96ee455c000da4e2979a4f71c830de897d278d52f4a5d9ac0885180",
+      "seconds": 7.629862272,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "count-source-profile.log",
+      "sha256": "d50f5750b81f7e570c516282cc367181e5c88f8cbdf4ae79f4857436a6c81c87",
+      "seconds": 9.466389101999999,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    },
+    {
+      "log": "pair-constructed-profile.log",
+      "sha256": "8c3b0f77787f99211bb757402a4dcc1c5ac1ad67ab0d837527f5ae897d24720d",
+      "seconds": 63.277999005000005,
+      "status": 0,
+      "verdict": "ALL PROOFS CHECK"
+    }
+  ],
+  "uncreditedAttempts": [
+    "Earlier scalar count goals exhausted process RSS.",
+    "Helper-call fromBody adapter exhausted frontend RSS; debug copy localized it to def_check before lowering.",
+    "Instrumented frontend run is diagnostic only, not proof credit."
+  ],
+  "representationFix": "Construct the identical Evidence/Outcome directly rather than calling through the helper; checked again with unchanged official frontend/checker.",
+  "constructedPremises": [
+    "Raw graph, first create/open/hold, second create/open and either real join.",
+    "Initial source/cache/capture/group membership and live debt derived.",
+    "Prepared body source profile, alias transport, written successor and final debt derived.",
+    "Output-masked World equality plus allocated count store derives actual count/health/blocker.",
+    "Profile-sufficient source observation preserved by debt store; evidence constructs virtual canonical actual successor source profile."
+  ],
+  "restrictions": [
+    "Finite default-updater setter grammar; source heap and public callbacks remain admitted/scoped.",
+    "Starts at actual captured resume after constructed internal controller opening/join; full public factory/parking/host construction remains separate.",
+    "Post-body virtual cache is proof-only and does no store; zero actual writes may retain an old cache."
+  ],
+  "remaining": [
+    "Other controller capture/route/method transport and uninterrupted second-body/continuation composition.",
+    "Global action/flight event histories and queued Round/renderer publication."
+  ],
+  "supportingControls": "Unchanged runtime uses prior sealed private/public pair controls; no new runtime test count claimed.",
+  "completeNegativeEvidence": "Frozen733-root7f7d complete727 with101 mandatory unchanged kernel oracles; exact ordered names/tracked hashes verified in complete-727-negative.json, not relabeled as new proof sweep.",
+  "newConfirmedUpstreamBugs": [],
+  "activeSemanticDeviations": []
+}

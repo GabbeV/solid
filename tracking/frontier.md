@@ -584,3 +584,13 @@ controller captures, the joined representative and source/cache body facts from
 actual raw construction. Either finite body reaches the one-obligation retirement
 target and restores its caller stack. A direct count/blocker corollary and the
 second-body invariant remain open, followed by full host/flush/publication.
+
+
+[Constructed count/blocker evidence](held-count-evidence.md) closes the prior
+direct first-body corollary: raw two-controller construction plus either finite
+body leaves exactly one live obligation and an actual unchanged blocked result.
+The constructed successor source profile discharges part of the second-body
+invariant, including zero writes retaining an old cache. Controller/route/method
+transport and uninterrupted second-body/continuation composition remain next,
+followed by public host, flight ledger and queued flush/publication. Twelve new
+roots require the fresh750-root independent verdict and exact tracked-input seal.

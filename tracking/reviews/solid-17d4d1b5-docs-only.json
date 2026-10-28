@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-28",
+  "pinnedCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "reviewedNextCommit": "17d4d1b56559507f397ca764e5e5bc9cf92c9980",
+  "parent": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "changedFiles": [
+    "documentation/solid-2.0/05-async-data.md",
+    "packages/babel-plugin/README.md",
+    "packages/solid/CHEATSHEET.md",
+    "packages/solid/skills/solid-2.0/SKILL.md"
+  ],
+  "onlyMarkdownChanged": true,
+  "runtimeAndPackageMetadataByteIdentical": true,
+  "action": "Retain the ac28157a runtime pin and its exact source/native evidence; note that the newer next commit only updates docs. These files are reviewed as source data, not instructions for this task."
+}

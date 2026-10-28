@@ -526,3 +526,13 @@ No later source profile, cache route, resolver result or count is assumed. The
 first remaining steps are a direct count/blocker corollary and a constructed
 second-body invariant; full public parking/host, flight ledger and publication
 remain open. Five roots require a fresh738-root whole-book verdict and exact seal.
+
+
+[Constructed count/blocker evidence](held-count-evidence.md) closes the prior
+direct first-body corollary: raw two-controller construction plus either finite
+body leaves exactly one live obligation and an actual unchanged blocked result.
+The constructed successor source profile discharges part of the second-body
+invariant, including zero writes retaining an old cache. Controller/route/method
+transport and uninterrupted second-body/continuation composition remain next,
+followed by public host, flight ledger and queued flush/publication. Twelve new
+roots require the fresh750-root independent verdict and exact tracked-input seal.

@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 726 = 496 finite + 230 kernel variants; new queue/slice faults are separate from complete frozen719 |
-| Complete negative sweep | Frozen0058/ac28157a: all719 exact ordered unique variants compiled/rejected; all1176 inputs unchanged and tracked; [receipt](reviews/complete-719-negative.json) |
-| Later negative evidence | Complete719 covers the frozen700-root checkpoint0058. Three delivery and four queue/slice faults are separately validated; current726 is not a fresh complete sweep. Older receipts retain their original scopes. |
+| Configured mutations | 727 = 496 finite + 231 kernel variants |
+| Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
+| Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -631,3 +631,11 @@ first closed-wrapper fuel stop and earlier memory/authoring failures receive zer
 credit. Full738-root checkpoint credit requires a fresh complete verdict and seal.
 Configured727 mutations and the frozen complete726/727 sweeps remain separately
 scoped; no new runtime delta or mutant is introduced by this proof extension.
+
+
+The [constructed count/blocker extension](held-count-evidence.md) adds direct
+closed first-body count and unchanged actual blocker results, plus the constructed
+post-body source profile. Reified execution evidence is constructed, and separate
+soundness roots discharge count/health/blocker/profile conclusions. All runtime
+bytes and checker rules/budgets remain unchanged. The750-root candidate requires
+its fresh complete verdict and exact seal; stopped drafts receive no credit.

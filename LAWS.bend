@@ -1,3 +1,13 @@
+import ./proof/held-cache-virtual-history.bend as CountEvidence20260
+import ./proof/held-source-cache-debt.bend as CountEvidence20261
+import ./proof/held-count-certificate.bend as CountEvidence20262
+import ./proof/held-cache-body-input.bend as CountEvidence20263
+import ./proof/held-pair-generic-debt.bend as CountEvidence20264
+import ./proof/held-pair-constructed-debt.bend as CountEvidence20265
+import ./proof/held-pair-constructed-count.bend as CountEvidence20266
+import ./proof/held-count-source-profile.bend as CountEvidence20267
+import ./proof/held-retirement-source-profile.bend as CountEvidence20268
+import ./proof/held-pair-constructed-profile.bend as CountEvidence20269
 import ./proof/held-static-operations.bend as JoinedBody20260
 import ./proof/held-source-static.bend as JoinedBody20261
 import ./proof/transaction-join.bend as JoinedBody20262
@@ -6825,3 +6835,174 @@ law raw_two_controller_join_body_restores_arbitrary_caller_stack:
   for +incoming: R.Value
   for +rejected: Bool
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
+
+
+law finite_cached_alias_body_constructs_a_virtual_final_source_profile:
+  for +values: List<&2,R.Value>
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +profile: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  HeldBody1.Profile<SourceCache0.canonical(HeldBody3.run(values,w,id),id,1n+offset),id,offset>
+
+
+law current_cached_alias_resume_constructs_its_count_evidence:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  CountEvidence20262.Outcome<HeldResume7.start(w,actor,rest,stack,incoming,rejected),1n+HeldBody4.cost(values),id,offset,remaining>
+
+
+law fresh_cached_alias_resume_constructs_its_count_evidence:
+  for +w: R.World
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(SourceCache0.canonical(w,id,1n+offset),1n+offset),id,offset>
+  for +sourceAlias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,sourceAlias) : Nat}
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  CountEvidence20262.Outcome<HeldResume7.start(w,actor,rest,stack,incoming,rejected),1n+HeldBody4.cost(values),id,offset,remaining>
+
+
+law constructed_body_evidence_proves_actual_remaining_count:
+  for +before: Core.Machine
+  for +steps: Nat
+  for +id: Nat
+  for +offset: Nat
+  for +remaining: Nat
+  for outcome: CountEvidence20262.Outcome<before,steps,id,offset,remaining>
+  {WriteBody22.count(Core.world(PendingHistory.iterate(steps,before)),1n+offset) == remaining : Nat}
+
+
+law constructed_body_evidence_proves_actual_post_body_health:
+  for +before: Core.Machine
+  for +steps: Nat
+  for +id: Nat
+  for +offset: Nat
+  for +remaining: Nat
+  for outcome: CountEvidence20262.Outcome<before,steps,id,offset,remaining>
+  {R.World.fault(Core.world(PendingHistory.iterate(steps,before))) == R.Healthy{} : R.Fault}
+
+
+law one_remaining_body_obligation_is_an_actual_unchanged_blocker:
+  for +before: Core.Machine
+  for +steps: Nat
+  for +id: Nat
+  for +offset: Nat
+  for +outcome: CountEvidence20262.Outcome<before,steps,id,offset,1n>
+  {Transactions.blocked(Core.world(PendingHistory.iterate(steps,before)),1n+offset) == B.Bundle{Core.world(PendingHistory.iterate(steps,before)),True{}} : B.Bundle<R.World,Bool>}
+
+
+law certified_first_controller_constructs_joined_body_count_evidence:
+  for +seed: R.World
+  for +id: Nat
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +ready: JoinedBody20266.Ready<seed,id,JoinedBody20265.left(HeldResume7.methods(values,id,answer),other,second)>
+  CountEvidence20262.Outcome<HeldResume7.start(JoinedBody20265.world(seed,id,values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected),1n+HeldBody4.cost(values),id,JoinedPair.targetPred([],[],reverse),1n>
+
+
+law raw_two_controller_join_constructs_finite_body_count_evidence:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  CountEvidence20262.Outcome<HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected),1n+HeldBody4.cost(values),HeldConstruct6.source(value),JoinedPair.targetPred([],[],reverse),1n>
+
+
+law raw_two_controller_join_first_body_leaves_exactly_one_obligation:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {WriteBody22.count(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),1n+JoinedPair.targetPred([],[],reverse)) == 1n : Nat}
+
+
+law raw_two_controller_join_first_body_keeps_the_live_group_blocked:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {Transactions.blocked(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),1n+JoinedPair.targetPred([],[],reverse)) == B.Bundle{Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),True{}} : B.Bundle<R.World,Bool>}
+
+
+law constructed_body_evidence_constructs_the_actual_successor_source_profile:
+  for +before: Core.Machine
+  for +steps: Nat
+  for +id: Nat
+  for +offset: Nat
+  for +remaining: Nat
+  for proof: CountEvidence20262.Outcome<before,steps,id,offset,remaining>
+  HeldBody1.Profile<SourceCache0.canonical(Core.world(PendingHistory.iterate(steps,before)),id,1n+offset),id,offset>
+
+
+law raw_two_controller_join_first_body_constructs_the_successor_source_profile:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +other: R.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  HeldBody1.Profile<SourceCache0.canonical(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(JoinedBody20265.world(HeldConstruct3.opened(value,JoinedBody20265.left(HeldResume7.methods(values,HeldConstruct6.source(value),answer),other,second)),HeldConstruct6.source(value),values,answer,other,reverse,second),JoinedBody20268.actor(second),rest,stack,incoming,rejected))),HeldConstruct6.source(value),1n+JoinedPair.targetPred([],[],reverse)),HeldConstruct6.source(value),JoinedPair.targetPred([],[],reverse)>

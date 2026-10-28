@@ -1,3 +1,13 @@
+import ./proof/held-cache-virtual-history.bend as CountEvidence20260
+import ./proof/held-source-cache-debt.bend as CountEvidence20261
+import ./proof/held-count-certificate.bend as CountEvidence20262
+import ./proof/held-cache-body-input.bend as CountEvidence20263
+import ./proof/held-pair-generic-debt.bend as CountEvidence20264
+import ./proof/held-pair-constructed-debt.bend as CountEvidence20265
+import ./proof/held-pair-constructed-count.bend as CountEvidence20266
+import ./proof/held-count-source-profile.bend as CountEvidence20267
+import ./proof/held-retirement-source-profile.bend as CountEvidence20268
+import ./proof/held-pair-constructed-profile.bend as CountEvidence20269
 import ./proof/held-static-operations.bend as JoinedBody20260
 import ./proof/held-source-static.bend as JoinedBody20261
 import ./proof/transaction-join.bend as JoinedBody20262
@@ -2865,3 +2875,51 @@ def Laws.raw_two_controller_join_runs_either_finite_body_and_retires_one_obligat
 
 def Laws.raw_two_controller_join_body_restores_arbitrary_caller_stack(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
   JoinedBody202610.savedStack(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.finite_cached_alias_body_constructs_a_virtual_final_source_profile(values,w,id,offset,alias,cached,profile):
+  CountEvidence20260.after(values,w,id,offset,alias,cached,profile)
+
+
+def Laws.current_cached_alias_resume_constructs_its_count_evidence(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
+  CountEvidence20261.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
+
+
+def Laws.fresh_cached_alias_resume_constructs_its_count_evidence(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
+  CountEvidence20261.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+
+
+def Laws.constructed_body_evidence_proves_actual_remaining_count(before,steps,id,offset,remaining,outcome):
+  CountEvidence20262.count(before,steps,id,offset,remaining,outcome)
+
+
+def Laws.constructed_body_evidence_proves_actual_post_body_health(before,steps,id,offset,remaining,outcome):
+  CountEvidence20262.healthy(before,steps,id,offset,remaining,outcome)
+
+
+def Laws.one_remaining_body_obligation_is_an_actual_unchanged_blocker(before,steps,id,offset,outcome):
+  CountEvidence20262.blocked(before,steps,id,offset,outcome)
+
+
+def Laws.certified_first_controller_constructs_joined_body_count_evidence(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready):
+  CountEvidence20264.complete(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready)
+
+
+def Laws.raw_two_controller_join_constructs_finite_body_count_evidence(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  CountEvidence20265.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_two_controller_join_first_body_leaves_exactly_one_obligation(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  CountEvidence20266.count(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.raw_two_controller_join_first_body_keeps_the_live_group_blocked(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  CountEvidence20266.blocked(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.constructed_body_evidence_constructs_the_actual_successor_source_profile(before,steps,id,offset,remaining,proof):
+  CountEvidence20267.outcome(before,steps,id,offset,remaining,proof)
+
+
+def Laws.raw_two_controller_join_first_body_constructs_the_successor_source_profile(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  CountEvidence20269.profile(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
