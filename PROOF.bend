@@ -1,3 +1,14 @@
+import ./proof/held-delivery-constructed.bend as ConstructDelivery0
+import ./proof/held-delivery-constructed-input.bend as ConstructDelivery1
+import ./proof/held-hold-view.bend as HeldConstruct0
+import ./proof/held-hold-control.bend as HeldConstruct1
+import ./proof/held-opened-profile.bend as HeldConstruct2
+import ./proof/held-opened-state.bend as HeldConstruct3
+import ./proof/held-body-opened-normal.bend as HeldConstruct4
+import ./proof/action-constructor-state.bend as HeldConstruct5
+import ./proof/ordinary-graph-data.bend as HeldConstruct6
+import ./proof/held-hold-future.bend as HeldConstruct7
+import ./proof/held-opened-retirement.bend as HeldConstruct8
 import ./proof/held-action-delivery.bend as HeldDelivery0
 import ./proof/action-delivery-input.bend as HeldDelivery1
 import ./proof/held-action-delivery-guard.bend as HeldDelivery2
@@ -2694,3 +2705,31 @@ def Laws.ordinary_fresh_observer_delivery_restores_caller_stack(w,observer,actor
 
 def Laws.ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue):
   HeldDelivery2.freshDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue)
+
+
+def Laws.actual_hold_source_view_is_computed_from_its_initial_source_view(w,id,t):
+  HeldConstruct0.holdObserved(w,id,t)
+
+
+def Laws.holding_a_source_preserves_action_capture_and_all_group_open_counts(w,id,t):
+  HeldConstruct1.hold(w,id,t)
+
+
+def Laws.actual_create_open_hold_constructs_the_fresh_resume_source_profile(initial,methods):
+  HeldConstruct2.profile(initial,methods)
+
+
+def Laws.constructed_held_resume_body_retires_its_only_live_action_obligation(initial,values,answer,rest,stack,incoming,rejected):
+  HeldConstruct8.zero(initial,values,answer,rest,stack,incoming,rejected)
+
+
+def Laws.constructed_ordinary_observer_delivery_runs_a_finite_held_body_and_retires(value,values,answer,prefix,rest,stack,incoming,rejected):
+  ConstructDelivery0.complete(value,values,answer,prefix,rest,stack,incoming,rejected)
+
+
+def Laws.constructed_ordinary_observer_delivery_preserves_arbitrary_caller_stack(value,values,answer,prefix,rest,saved,incoming,rejected):
+  ConstructDelivery0.stack(value,values,answer,prefix,rest,saved,incoming,rejected)
+
+
+def Laws.constructed_ordinary_observer_delivery_is_a_noop_after_its_first_body(value,values,answer,prefix,rest,stack,incoming,rejected,suffix,lateRejected,lateValue):
+  ConstructDelivery0.duplicate(value,values,answer,prefix,rest,stack,incoming,rejected,suffix,lateRejected,lateValue)

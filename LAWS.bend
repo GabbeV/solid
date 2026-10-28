@@ -1,3 +1,14 @@
+import ./proof/held-delivery-constructed.bend as ConstructDelivery0
+import ./proof/held-delivery-constructed-input.bend as ConstructDelivery1
+import ./proof/held-hold-view.bend as HeldConstruct0
+import ./proof/held-hold-control.bend as HeldConstruct1
+import ./proof/held-opened-profile.bend as HeldConstruct2
+import ./proof/held-opened-state.bend as HeldConstruct3
+import ./proof/held-body-opened-normal.bend as HeldConstruct4
+import ./proof/action-constructor-state.bend as HeldConstruct5
+import ./proof/ordinary-graph-data.bend as HeldConstruct6
+import ./proof/held-hold-future.bend as HeldConstruct7
+import ./proof/held-opened-retirement.bend as HeldConstruct8
 import ./proof/held-action-delivery.bend as HeldDelivery0
 import ./proof/action-delivery-input.bend as HeldDelivery1
 import ./proof/held-action-delivery-guard.bend as HeldDelivery2
@@ -6355,3 +6366,73 @@ law ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history:
   for +lateRejected: Bool
   for +lateValue: R.Value
   {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),Core.values(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),observer,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events))),observer)) == HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events) : Core.Machine}
+
+
+law actual_hold_source_view_is_computed_from_its_initial_source_view:
+  for +w: R.World
+  for +id: Nat
+  for +t: Nat
+  {HeldResume1.observe(Transactions.holdNode(w,id,t)) == HeldConstruct0.hold(HeldResume1.observe(w),id,t) : HeldResume1.View}
+
+
+law holding_a_source_preserves_action_capture_and_all_group_open_counts:
+  for +w: R.World
+  for +id: Nat
+  for +t: Nat
+  {HeldConstruct1.observe(Transactions.holdNode(w,id,t)) == HeldConstruct1.observe(w) : HeldConstruct1.View}
+
+
+law actual_create_open_hold_constructs_the_fresh_resume_source_profile:
+  for +initial: R.Value
+  for +methods: R.Expr
+  HeldBody1.Profile<HeldResume0.flush(HeldConstruct2.opened(initial,methods),1n),HeldConstruct6.source(initial),0n>
+
+
+law constructed_held_resume_body_retires_its_only_live_action_obligation:
+  for +initial: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {WriteBody22.count(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(HeldConstruct2.opened(initial,HeldResume7.methods(values,HeldConstruct6.source(initial),answer)),0n,rest,stack,incoming,rejected))),1n) == 0n : Nat}
+
+
+law constructed_ordinary_observer_delivery_runs_a_finite_held_body_and_retires:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {BodyOutput.outer(Core.world(HeldDelivery0.after(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rejected,incoming,values))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(HeldDelivery1.marked(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix)),0n,R.ActionEnd{}),HeldConstruct6.source(value)),1n,0n)) : R.World}
+
+
+law constructed_ordinary_observer_delivery_preserves_arbitrary_caller_stack:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +saved: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {Core.values(HeldDelivery0.after(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,saved,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rejected,incoming,values)) == saved : List<&2,R.Value>}
+
+
+law constructed_ordinary_observer_delivery_is_a_noop_after_its_first_body:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +suffix: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),Core.values(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix))),ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix))) == HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix) : Core.Machine}

@@ -561,3 +561,6 @@ The [captured-alias extension](held-alias-resume.md) derives actual question/joi
 
 
 The [ordinary observer-delivery extension](held-action-delivery.md) connects actual first-match lookup and settled marking to captured-alias held-body execution, representative retirement and arbitrary caller-stack retention. The marked cell survives the body, and a repeated current lookup after any finite permitted wait-helper history preserves the complete Machine. Public outer interception/parking construction, source-cache redirects, full ledger and queued publication remain open. Six roots require a fresh complete706-root verdict and seal.
+
+
+The [constructed held-delivery extension](held-constructed-delivery.md) closes the prior hold-before-resume profile gap through checked source/control projections, without assuming full-World commutation. Real graph/create/open/hold/input/wait construction supplies the profile, capture, positive debt and fresh lookup; arbitrary finite helper prefixes/suffixes surround the actual held body, retirement and duplicate guard. Public invocation/parking/outer host delivery, source-cache aliases, distinct preparation joins, the global flight ledger and queued publication remain open. Seven roots require the fresh complete713-root verdict/seal.

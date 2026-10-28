@@ -2,36 +2,23 @@
 # original captured-group debt. This is a constructed controller entry, not a
 # proof of every public generator invocation or external callback delivery.
 import Base
+import ./action-constructor-state.bend as Data
 import ../representation/records.bend as R
 import ../representation/base.bend as B
-import ../runtime/core.bend as C
 import ../runtime/action-state.bend as A
-import ../runtime/constants.bend as K
-import ../runtime/equality.bend as Equality
 import ./ordinary-write-constructed.bend as Graph
-import ./ordinary-write-profile.bend as P
-import ./ordinary-write-history.bend as History
-import ./ordinary-body-evaluation.bend as Eval
-import ./ordinary-body-return.bend as Body
 import ./ordinary-body-entry.bend as Entry
-import ./ordinary-body-retirement.bend as Retire
 import ./action-body-entry.bend as Prepared
-import ./action-body-retirement.bend as Exit
 import ./action-first-frame.bend as First
-import ./action-output-frame.bend as Output
-import ./subscriber-walk-step.bend as Path
-import ./transaction-resolution.bend as Routes
-import ./pending-stack-history.bend as Steps
 
 def created(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> B.Bundle<R.World,Nat>:
-  A.create(Graph.linked(initial),First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})))
+  Data.created(initial,First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})))
 
 def actor(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> Nat:
-  B.second(R.World,Nat,created(initial,values,answer))
+  Data.actor(initial,First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})))
 
 def opened(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> R.World:
-  +pair = created(initial,values,answer)
-  A.open(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair))
+  Data.opened(initial,First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})))
 
 def ready(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> R.World:
   Prepared.prepared(opened(initial,values,answer),actor(initial,values,answer),R.ActionEnd{})
@@ -39,9 +26,7 @@ def ready(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> R.Wor
 # Proof normal form of this closed constructor family; the equation below
 # checks it against actual create/open/captured resume, with no runtime change.
 def normalized(w: R.World) -> R.World:
-  match w:
-    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
-      R.World{nodes, links, buckets, minimum, maximum, marked, pendingNodes, trims, renderQueue, userQueue, context, tracking, running, True{}, clock, epoch, tree, events, fault, unflushedStaged, promotedWrites, extensions, cleanupPrograms, dormantNodes, errorSerial, halted, haltNotified, reports, callbackEffect, B.append(R.Transaction,txArena,[R.Transaction{[],[],[],[],0n,0n,False{},0n,1n,True{},0n,False{},False{},R.NoIds{}}]), B.append(Nat,transactions,[1n]), 1n, passTx, passLane, judge, deferredZombies, R.QuestionOdd{R.QuestionZero{}}, pendingSets, B.append(R.AsyncObject,asyncObjects,[R.AsyncObject{False{},R.Unresolved{},[],0n}]), asyncObservers, B.append(R.HostJob,hostJobs,[R.FlushJob{}]), syncDepth, streamPlans, iterators, streams, iteratorEvents, awaiters, truthReadHook, truthConfirmedHook, R.QuestionOdd{R.QuestionZero{}}, abortInputs, contextKeys, contextRecords, deferredReleases, releaseLists, stale, settledCallbacks, reactions, comparators, 1n, [R.ActionState{1n,R.QuestionOdd{R.QuestionZero{}},R.ActionEnd{},1n}], actionWaits, arrays, repeats, maps, activeMarks, laneState, verdictState, cleanupError, ambientMarks, deferredArena}
+  Data.normalized(w)
 
 def normalizedExact(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> {ready(initial,values,answer) == normalized(Graph.linked(initial)) : R.World}:
   {==}

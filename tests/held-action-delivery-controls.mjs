@@ -22,12 +22,14 @@ try {
  const graph=()=>{const signal=N.signal(b.world,b.encode(0),N.defaults()),source=list(b.world.nodes).length,reader=list(signal.nodes).length;return G.link(N.createEffectNode(signal,{$:'Read',id:source},{$:'Render'},0,N.defaults(),0,0,0),source,reader);};
  const payloads=[undefined,false,0,-0,NaN,'saved',{ref:17}].map(v=>b.encode(v));
  let bodies=0,duplicates=0;
- for(const depth of [0,1,3,8])for(const current of [false,true])for(const rejected of [false,true])for(const writes of [[],[b.encode(1)],[b.encode(1),b.encode(0),b.encode(2),b.encode(2)]])for(const answer of payloads){
+ for(const prefixMode of [0,1,2])for(const depth of [0,1,3,8])for(const current of [false,true])for(const rejected of [false,true])for(const writes of [[],[b.encode(1)],[b.encode(1),b.encode(0),b.encode(2),b.encode(2)]])for(const answer of payloads){
   const id=list(b.world.nodes).length,expr=writes.reduceRight((tail,value)=>({$:'Then',first:{$:'WriteExpr',signal:id,value:{$:'Literal',value},updater:true},second:tail}),{$:'Literal',value:{$:'StepResult',done:true,value:answer}}),methods={$:'ActionMethods',next:expr,catches:true,thrown:expr,tail:{$:'ActionEnd'}},created=A.create(graph(),methods),actor=created.right;
   let w=A.open(created.left,actor),group=list(w.actions)[actor].transaction;const capture=group;
   for(let hop=0;hop<depth;hop++){const pair=X.newTransaction(w,false,0);w=X.merge(pair.left,group,pair.right);group=pair.right;}
   w=X.holdNode(w,id,group);if(current)w=X.joinFuture(w,group);
-  const future=F.newThenable(w,false,{$:'Unresolved'}),registered=A.wait(future.left,actor,future.right,0),observer=registered.right;w=registered.left;
+  const future=F.newThenable(w,false,{$:'Unresolved'});w=future.left;
+  if(prefixMode){const prior=A.wait(w,actor,future.right,prefixMode===1?1:0);w=prior.left;if(prefixMode===2){w=F.newObserver(w,0,future.right).left;w={...w,actionWaits:A.settleWait(w.actionWaits,prior.right)};}}
+  const registered=A.wait(w,actor,future.right,0),observer=registered.right;w=registered.left;
   const stack=encodeList([answer,b.encode('caller')]),rest=encodeList([{$:'AsyncWriteSchedule'}]),incoming=b.encode('input');
   // Execute the actual dispatcher and core; the syntax-derived prefix ends
   // before DeliverObservers/ActionSliceEnd, matching the theorem boundary.
@@ -49,6 +51,6 @@ try {
    assert.deepEqual(repeated,later,'a repeated current lookup must preserve the entire machine');duplicates++;
   }
  }
- assert.equal(bodies,336);assert.equal(duplicates,2688);
- console.log(JSON.stringify({ordinaryObserverBodies:bodies,duplicateCurrentLookups:duplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate'}));
+ assert.equal(bodies,1008);assert.equal(duplicates,8064);
+ console.log(JSON.stringify({ordinaryObserverBodies:bodies,helperPrefixModes:3,duplicateCurrentLookups:duplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate'}));
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

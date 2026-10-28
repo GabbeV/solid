@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateComposedRoots": 713,
+  "runtimeChangesForProofs": false,
+  "proofConstructorDataFactored": true,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "checkerMaxRssBytes": 4294967296,
+  "compactDiagnosticDeadlineSeconds": 90,
+  "combinedImportBookDeadlineSeconds": 240,
+  "independentVerdicts": {
+    "hold-view-full": {
+      "passed": true,
+      "seconds": 1.904323269,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "1f3f8366ea87b25f5dc57a7073a051e5729ad592413f1721f84e8dc6bd8bf90f"
+    },
+    "hold-future": {
+      "passed": true,
+      "seconds": 1.418034736,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "468467ecb30209b7d5e4556f56dbbf1644ebd3580697364e9f457f56e3faae0c"
+    },
+    "hold-control": {
+      "passed": true,
+      "seconds": 1.626461401,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "946666d1731cd8b8c8b18fc17ac9834258e594d4f4ada4e1bde261c3da0a6a19"
+    },
+    "opened-profile-factored": {
+      "passed": true,
+      "seconds": 51.369273559999996,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "3ede7c1c8753c936883213929470040a9246877f3ba6cae33131afaee54b22ee"
+    },
+    "opened-facts-factored": {
+      "passed": true,
+      "seconds": 17.451848456,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "eb5e89a8efaecf45eac3f97927027cc34c8631898ce834804aa9ff259b9259ae"
+    },
+    "opened-retirement-zero": {
+      "passed": true,
+      "seconds": 66.224824897,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "39e8e5dc86b81eff164923681c18e62e2a0840fd9bbfbc179217338b01675f12"
+    },
+    "action-registration-frame": {
+      "passed": true,
+      "seconds": 36.407966845,
+      "wallDeadlineSeconds": 90,
+      "logSha256": "8b2cfb6ba04734e5549b5077a397cd3f3d674d94658758c4ca48321ed769e45c"
+    },
+    "delivery-constructed-input-book": {
+      "passed": true,
+      "seconds": 98.164078117,
+      "wallDeadlineSeconds": 240,
+      "logSha256": "a8e66a673e2beeb44bc9023f9419a0f4e4b103b4c78a7c92557ff26a85a418a0"
+    },
+    "delivery-constructed-book": {
+      "passed": true,
+      "seconds": 98.72105230700001,
+      "wallDeadlineSeconds": 240,
+      "logSha256": "d5622aa8f06bee6577266b36ce8569985574bfaa3764e5ff2d6ad8fd41891509"
+    }
+  },
+  "retainedBodyControls": {
+    "sampledWriteSequences": 32,
+    "actualBodyCases": 2832,
+    "heldBodyCases": 1936,
+    "currentGroupCases": 968,
+    "heldEntryCommutations": 1936,
+    "aliasBodyCases": 144,
+    "constructedRedirectLengths": [
+      1,
+      3,
+      8
+    ],
+    "actualSetterExpressions": 29124,
+    "callerStackChecks": 2832,
+    "longestBodyWrites": 64,
+    "nativeGeneratorPortCases": 32,
+    "pendingReturnAdoptions": 16,
+    "scope": "actual ordinary and fresh/current-group already-held finite setter bodies, including captured redirect chains, and terminal return before queued slice-end; finite held-entry commutation is not a general proof; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate"
+  },
+  "retainedBodyControlLogSha256": "bf38eaa8bc0d617b0c323921c084afd9f6f124df02244c33dd415f02449b16ed",
+  "deliveryControls": {
+    "ordinaryObserverBodies": 1008,
+    "helperPrefixModes": 3,
+    "duplicateCurrentLookups": 8064,
+    "capturedRedirectLengths": [
+      0,
+      1,
+      3,
+      8
+    ],
+    "scope": "actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate"
+  },
+  "deliveryControlLogSha256": "b14bd23ad0aa14538a15d046ec7de11dd21e3823b3babc0c45eedd114fe673cc",
+  "scope": "Raw actual graph/create/open/hold, pending input allocation and fresh wait registration, arbitrary finite private helper prefix, real ordinary first lookup/mark, finite held setter body/retirement, saved stack and duplicate current-Machine no-op after a finite private helper suffix. No intermediate profile or lookup/count answer is supplied.",
+  "uncredited": [
+    "Whole-World constructor commutation remains unproved and unused.",
+    "Earlier compact90s construction probes timed out; only completed independent verdicts are credited.",
+    "Compilation/setup errors and resource-stopped negative oracles receive no rejection credit."
+  ],
+  "remaining": [
+    "full public invocation/parking and host/outer from/deferred delivery",
+    "source-cache aliases and distinct preparation joins",
+    "global once-only action/flight ledger",
+    "queued slice-end and flush",
+    "rendered publication"
+  ],
+  "authority": "Fresh complete713-root independent verdict and exact tracked input seal in tracking/checked.json."
+}

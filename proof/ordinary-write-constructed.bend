@@ -2,10 +2,9 @@
 # updater profile facts. This is a raw constructor/graph entry, not a whole public
 # render invocation or a claim that the effect's callback has already executed.
 import Base
+import ./ordinary-graph-data.bend as Data
 import ../representation/records.bend as R
 import ../representation/base.bend as B
-import ../runtime/construct-state.bend as N
-import ../runtime/graph-state.bend as G
 import ../runtime/core.bend as C
 import ./ordinary-write-outer.bend as Frame
 import ./ordinary-updater-evaluation.bend as Eval
@@ -14,19 +13,19 @@ import ./pending-stack-history.bend as Steps
 import ./subscriber-walk-step.bend as Path
 
 def signal(initial: R.Value) -> R.World:
-  N.signal(B.empty(),initial,N.defaults())
+  Data.signal(initial)
 
 def source(initial: R.Value) -> Nat:
-  B.length(R.Node,R.World.nodes(B.empty()))
+  Data.source(initial)
 
 def reader(initial: R.Value) -> Nat:
-  B.length(R.Node,R.World.nodes(signal(initial)))
+  Data.reader(initial)
 
 def allocated(+initial: R.Value) -> R.World:
-  N.createEffectNode(signal(initial),R.Read{source(initial)},R.Render{},0n,N.defaults(),0n,0n,0n)
+  Data.allocated(initial)
 
 def linked(+initial: R.Value) -> R.World:
-  G.link(allocated(initial),source(initial),reader(initial))
+  Data.linked(initial)
 
 def next(+initial: R.Value) -> {R.Link.nextSub(B.link(linked(initial),1n)) == 0n : Nat}:
   {==}

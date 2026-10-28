@@ -601,3 +601,6 @@ The [review](reviews/solid-ac28157a.md) and [receipt](reviews/solid-ac28157a-val
 
 
 [Ordinary observer-delivery validation](reviews/held-action-delivery-validation.json) records the six-root extension, unchanged checker/runtime, 336 actual bodies,2688 duplicate lookups and three independently compiled finite source-fault rejections. The whole-guard RSS-stopped mutant and early fixture/compile failures receive no credit. The complete frozen719 run remains separate.
+
+
+[Constructed held-delivery validation](reviews/held-constructed-delivery-validation.json) records actual constructor-supplied entry/lookup/count facts, larger independent import-book verdicts with explicit wall deadlines, preserved2832-body/32-native controls and expanded1008-body/8064-duplicate finite helper-prefix controls. Runtime, fuel, RSS bound, checker rules and earlier theorem domains/step bounds are unchanged. Full713-root checkpoint credit requires its own exact sealed verdict.
