@@ -5,6 +5,11 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["queued output kernel drops the observer prefix", "runtime/core.bend", "DeliverObservers{R.AsyncObject.observers(object), False{}, rejected, value} <> rest", "rest", "tests/proof-properties.mjs", "actionSettled", "action-output-continuation"],
+  ["queued output kernel loses caller work during adoption", "runtime/core.bend", "Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), rest, stack}", "Machine{R.World.with_hostJobs(w, B.append(R.HostJob, R.World.hostJobs(w), [R.ActionAdopt{id, R.AsyncValue{source}}])), [], stack}", "tests/proof-properties.mjs", "actionOutputValue", "action-output-continuation"],
+  ["queued observer kernel targets another identity", "runtime/core.bend", "F.enqueueDelivery(w, id, rejected, value)", "F.enqueueDelivery(w, 1n+id, rejected, value)", "tests/proof-properties.mjs", "deliverObservers", "action-output-delivery-loop"],
+  ["slice entry kernel loses saved question restore", "runtime/core.bend", "+ending = {ActionRestoreQuestion{question} <> rest : List<&2, Task>}", "+ending = {rest : List<&2, Task>}", "tests/proof-properties.mjs", "dispatch", "action-slice-entry"],
+
   ["held delivery composed control omits settled marking before the body", "runtime/core.bend", "+w = R.World.with_actionWaits(w, Action.settleWait(R.World.actionWaits(w), R.ActionWait.observer(entry)))", "+w = w", "tests/held-action-delivery-controls.mjs", "actionDelivery"],
   ["held delivery composed control repeats an already settled yielded body", "runtime/core.bend", "Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry))", "False{}", "tests/held-action-delivery-controls.mjs", "actionDelivery"],
   ["held delivery composed control loses waits during terminal output", "runtime/core.bend", "actionOutputValue(w, rest, stack, id, result, rejected, value)", "actionOutputValue(R.World.with_actionWaits(w, []), rest, stack, id, result, rejected, value)", "tests/held-action-delivery-controls.mjs", "actionOutputState"],

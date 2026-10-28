@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 722 = 496 finite + 226 kernel variants; the added delivery controls are separate from the running frozen719 sweep |
-| Complete negative sweep | Frozen fc38211d/0847122e: all713 exact ordered unique variants rejected; all1150 inputs unchanged and tracked; [receipt](reviews/complete-713-negative.json) |
-| Later negative evidence | The frozen700-root checkpoint0058 has a complete719 run in progress. Three new delivery controls are separate. Older frozen receipts retain their original scopes. |
+| Configured mutations | 726 = 496 finite + 230 kernel variants; new queue/slice faults are separate from complete frozen719 |
+| Complete negative sweep | Frozen0058/ac28157a: all719 exact ordered unique variants compiled/rejected; all1176 inputs unchanged and tracked; [receipt](reviews/complete-719-negative.json) |
+| Later negative evidence | Complete719 covers the frozen700-root checkpoint0058. Three delivery and four queue/slice faults are separately validated; current726 is not a fresh complete sweep. Older receipts retain their original scopes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -604,3 +604,6 @@ The [review](reviews/solid-ac28157a.md) and [receipt](reviews/solid-ac28157a-val
 
 
 [Constructed held-delivery validation](reviews/held-constructed-delivery-validation.json) records actual constructor-supplied entry/lookup/count facts, larger independent import-book verdicts with explicit wall deadlines, preserved2832-body/32-native controls and expanded1008-body/8064-duplicate finite helper-prefix controls. Runtime, fuel, RSS bound, checker rules and earlier theorem domains/step bounds are unchanged. Full713-root checkpoint credit requires its own exact sealed verdict.
+
+
+[Output/source-cache validation](reviews/action-output-and-source-cache-validation.json) separates the nine-root candidate, source-cache-before-merge controls, finite output-request drains, local slice guards, four compiled kernel rejections and the completed frozen719 sweep. All1008 body-to-queued-Round controls and8064 duplicates pass; full scheduler Round execution/publication remain outside this result.

@@ -42,6 +42,13 @@ try {
   assert.deepEqual(finished.values,stack);assert.deepEqual(list(finished.tasks).map(t=>t.$),['DeliverObservers','ActionSliceEnd','AsyncWriteSchedule']);
   assert.equal(list(finished.world.nodes)[id].pending.$,writes.length?'Present':'Empty');
   if(writes.length)assert.deepEqual(list(finished.world.nodes)[id].pending.value,writes.at(-1));
+  const afterObservers=C.step(finished);
+  assert.deepEqual(afterObservers.world,finished.world);assert.deepEqual(afterObservers.values,stack);
+  assert.deepEqual(list(afterObservers.tasks).map(t=>t.$),['ActionSliceEnd','AsyncWriteSchedule']);
+  const round=C.step(afterObservers);
+  assert.deepEqual(round.world,finished.world);assert.deepEqual(round.values,stack);
+  assert.deepEqual(list(round.tasks).map(t=>t.$),['Round','ActionRestoreQuestion','AsyncWriteSchedule']);
+  assert.deepEqual(list(round.tasks)[1].question,w.question);
   bodies++;
   for(const events of [[],[{$:'WaitMark',observer}],[{$:'WaitRegister',action:actor,result:future.right,kind:0},{$:'ObserverAllocate',node:0,result:future.right},{$:'WaitMark',observer}],[{$:'WaitRegister',action:actor,result:future.right,kind:1},{$:'WaitMark',observer:observer+1}]])for(const lateRejected of [false,true]){
    let later=finish();
@@ -52,5 +59,5 @@ try {
   }
  }
  assert.equal(bodies,1008);assert.equal(duplicates,8064);
- console.log(JSON.stringify({ordinaryObserverBodies:bodies,helperPrefixModes:3,duplicateCurrentLookups:duplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate'}));
+ console.log(JSON.stringify({ordinaryObserverBodies:bodies,helperPrefixModes:3,bodyToQueuedRoundCases:bodies,duplicateCurrentLookups:duplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate'}));
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

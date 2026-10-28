@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateComposedRoots": 722,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "compactDeadlineSeconds": 90,
+  "maxRssBytes": 4294967296,
+  "runtimeChangesForProofs": false,
+  "isolatedIndependentVerdicts": {
+    "output-continuation-v3": {
+      "passed": true,
+      "seconds": 5.455954033,
+      "logSha256": "0c9f2fb8846b54f1ddaf0f1a6588f883a858f85f08337d3edf4250de3ff6d1a9"
+    },
+    "delivery-output-drain": {
+      "passed": true,
+      "seconds": 12.41760218,
+      "logSha256": "68f173044f8e58be5908e87a30570b924cdca7bf085ef43407adb5d7c442a3c9"
+    },
+    "retirement-health": {
+      "passed": true,
+      "seconds": 4.393920947000001,
+      "logSha256": "a0e3ff42edadae86a353b12cb5af97e282a19730e741514adb208942ab90aa54"
+    },
+    "slice-entry-v2": {
+      "passed": true,
+      "seconds": 5.085581337,
+      "logSha256": "3488fae3e002942f7878e36dc1382c50a9ab8ad9dc1b872b5127c31dd0c9735f"
+    },
+    "action-control-flags": {
+      "passed": true,
+      "seconds": 30.041127049,
+      "logSha256": "8815ef6b6bafa3140eac3cb3ca53e7774e0a9085afb9c715ac12d4a83c402e84"
+    },
+    "source-cache-history": {
+      "passed": true,
+      "seconds": 7.925148674999999,
+      "logSha256": "f1e4ece3e4573b055e6912be3e78aa0fbfc0adbce147ba8507635998dedd2b77"
+    },
+    "source-cache-body-v2": {
+      "passed": true,
+      "seconds": 7.848194515,
+      "logSha256": "fee544457434b0c51dc784414127b88a7ebc2a2cf5c87bf0ae1dfc2f761ab434"
+    }
+  },
+  "finiteControls": {
+    "output-continuation-controls-final": {
+      "outputCases": 336,
+      "actualObserverPrefixSteps": 520,
+      "pendingOutputAdoptions": 8,
+      "sliceGuardCases": 24,
+      "observerLengths": [
+        0,
+        1,
+        3,
+        12
+      ],
+      "scope": "actual output states/fulfillment/rejection/adoption, callback registration order, host request outbox, exact caller work/values and nested/outer slice guards; Round execution and host callback delivery remain separate"
+    },
+    "delivery-round-controls": {
+      "ordinaryObserverBodies": 1008,
+      "helperPrefixModes": 3,
+      "bodyToQueuedRoundCases": 1008,
+      "duplicateCurrentLookups": 8064,
+      "capturedRedirectLengths": [
+        0,
+        1,
+        3,
+        8
+      ],
+      "scope": "actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate"
+    },
+    "source-cache-body-controls": {
+      "sampledWriteSequences": 32,
+      "actualBodyCases": 2976,
+      "heldBodyCases": 2080,
+      "currentGroupCases": 1040,
+      "heldEntryCommutations": 1936,
+      "aliasBodyCases": 288,
+      "sourceCacheAliasCases": 144,
+      "constructedRedirectLengths": [
+        1,
+        3,
+        8
+      ],
+      "actualSetterExpressions": 31500,
+      "callerStackChecks": 2976,
+      "longestBodyWrites": 64,
+      "nativeGeneratorPortCases": 32,
+      "pendingReturnAdoptions": 16,
+      "scope": "actual ordinary and fresh/current-group already-held finite setter bodies, including captured and source-cache redirect chains, and terminal return before queued slice-end; finite held-entry commutation is not a general proof; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate"
+    }
+  },
+  "finiteControlLogSha256": {
+    "output-continuation-controls-final": "91ee50aaadfe0b2e26ef6d2389a30e39decaa39448738a3cc4be925be0eddfe9",
+    "delivery-round-controls": "f0f365a2b6303571e343ca7d68abfe3143929614beace1388fa71b4af1ac5d76",
+    "source-cache-body-controls": "3e77a3fd3b764b198dfbb4de3df08436b232e53644ba5010d776d2a5779126ac"
+  },
+  "focusedCompiledRejections": [
+    "queued output kernel drops the observer prefix",
+    "queued output kernel loses caller work during adoption",
+    "queued observer kernel targets another identity",
+    "slice entry kernel loses saved question restore"
+  ],
+  "negativeLogSha256": "7bc2651cda7364ed06ad07bd8ee4a90afa4df1ee17c6812e4fbf296f5c4f0824",
+  "configuredMutations": {
+    "total": 726,
+    "finite": 496,
+    "kernel": 230
+  },
+  "completeEarlierSweep": {
+    "checkpoint": "0058d42246fccfafd7d99b96219511b828c84211",
+    "source": "ac28157aba6d03b806f0043bce70a87d515e953e",
+    "roots": 700,
+    "sealedInputs": 1176,
+    "compiledRejected": 719,
+    "receipt": "complete-719-negative.json",
+    "sameRuntimeAndCheckerAsCandidate": true,
+    "proofAndControlCorporaDiffer": true
+  },
+  "uncredited": [
+    "Earlier output-control fixture setup/field/count errors receive no credit. Final controls use the correct AsyncValue.identity and assert the adoption payload.",
+    "A filter string that matched no mutations receives no credit; the final exact four-row run passed.",
+    "Resource-stopped and failed proof/compilation attempts receive no credit."
+  ],
+  "scope": [
+    "Actual output caller task/stack shape and finite observer-request drain; initial body facts derive successful arrival at the queued slice end.",
+    "Local nested restore and scheduled outer Round-selection branches; executing Round and deriving constructor-to-Round flags remain open.",
+    "Nonempty source-cache alias bodies derive the first canonical successor and subsequent profile from initial field/route facts; no silent canonicalization of zero setters."
+  ],
+  "authority": "Fresh complete722-root verdict and exact tracked input seal in tracking/checked.json."
+}

@@ -1,3 +1,10 @@
+import ./proof/held-source-cache-rebase.bend as SourceCache0
+import ./proof/held-source-cache-body.bend as SourceCache1
+import ./proof/action-output-continuation.bend as ActionOutput0
+import ./proof/action-output-delivery-loop.bend as ActionOutput1
+import ./proof/held-delivery-output-entry.bend as ActionOutput2
+import ./proof/action-retirement-health.bend as ActionOutput3
+import ./proof/action-slice-entry.bend as ActionOutput4
 import ./proof/held-delivery-constructed.bend as ConstructDelivery0
 import ./proof/held-delivery-constructed-input.bend as ConstructDelivery1
 import ./proof/held-hold-view.bend as HeldConstruct0
@@ -6436,3 +6443,118 @@ law constructed_ordinary_observer_delivery_is_a_noop_after_its_first_body:
   for +lateRejected: Bool
   for +lateValue: R.Value
   {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),Core.values(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix)),ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix))),ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix))) == HeldDelivery2.afterEvents(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),incoming,rejected,values,suffix) : Core.Machine}
+
+
+law actual_action_output_retains_an_exact_caller_task_suffix:
+  for +w: R.World
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +id: Nat
+  for +rejected: Bool
+  for +answer: R.Value
+  ActionOutput0.Queue<Core.actionDone(w,rest,stack,id,rejected,answer),rest,stack>
+
+
+law classified_action_output_prefix_has_a_finite_exact_core_drain:
+  for +machine: Core.Machine
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +form: ActionOutput0.Queue<machine,rest,stack>
+  for healthy: {R.World.fault(Core.world(machine)) == R.Healthy{} : R.Fault}
+  {PendingHistory.iterate(ActionOutput0.cost(machine,rest,stack,form),machine) == Core.Machine{ActionOutput0.world(machine,rest,stack,form),rest,stack} : Core.Machine}
+
+
+law ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  {PendingHistory.iterate(ActionOutput0.cost(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)),HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == Core.Machine{ActionOutput0.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)),ActionOutput2.work(w,observer,rest),stack} : Core.Machine}
+
+
+law nested_action_slice_restores_the_saved_caller_question:
+  for +w: R.World
+  for +question: R.Question
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +healthy: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  for depth: {R.World.actionDepth(w) == 1n+offset : Nat}
+  {PendingHistory.iterate(2n,ActionOutput4.start(w,question,rest,stack)) == Core.Machine{Q.setQuestion(w,question),rest,stack} : Core.Machine}
+
+
+law scheduled_outer_action_slice_queues_round_before_question_restore:
+  for +w: R.World
+  for +question: R.Question
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for healthy: {R.World.fault(w) == R.Healthy{} : R.Fault}
+  for +depth: {R.World.actionDepth(w) == 0n : Nat}
+  for running: {R.World.running(w) == False{} : Bool}
+  for halted: {R.World.halted(w) == False{} : Bool}
+  for ready: {R.World.scheduled(w) == True{} : Bool}
+  {Core.step(ActionOutput4.start(w,question,rest,stack)) == Core.Machine{w,Core.Round{} <> Core.ActionRestoreQuestion{question} <> rest,stack} : Core.Machine}
+
+
+law certified_source_cache_redirect_is_resolved_and_stored_by_actual_txof:
+  for +w: R.World
+  for +id: Nat
+  for +root: Nat
+  for +alias: RejoinHistories.Alias<w,root>
+  for cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,root,alias) : Nat}
+  {Transactions.txOf(w,id) == B.Bundle{SourceCache0.canonical(w,id,root),root} : B.Bundle<R.World,Nat>}
+
+
+law first_real_setter_constructs_the_canonical_source_cache_successor:
+  for +w: R.World
+  for +id: Nat
+  for +offset: Nat
+  for +value: R.Value
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +profile: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  HeldBody1.Profile<RuntimeWrites.setSignal(w,id,value),id,offset>
+
+
+law nonempty_source_cache_alias_body_has_a_structural_exact_core_bound:
+  for +w: R.World
+  for +head: R.Value
+  for +tail: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +offset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +profile: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  {PendingHistory.iterate(HeldBody4.cost(head <> tail),HeldBody4.start(w,head <> tail,id,answer,rest,stack)) == HeldBody4.finished(w,head <> tail,id,answer,rest,stack) : Core.Machine}
+
+
+law nonempty_source_cache_alias_body_constructs_its_final_held_profile:
+  for +w: R.World
+  for +head: R.Value
+  for +tail: List<&2,R.Value>
+  for +id: Nat
+  for +offset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for profile: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
+  HeldBody1.Profile<HeldBody3.run(head <> tail,w,id),id,offset>

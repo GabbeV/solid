@@ -1,3 +1,10 @@
+import ./proof/held-source-cache-rebase.bend as SourceCache0
+import ./proof/held-source-cache-body.bend as SourceCache1
+import ./proof/action-output-continuation.bend as ActionOutput0
+import ./proof/action-output-delivery-loop.bend as ActionOutput1
+import ./proof/held-delivery-output-entry.bend as ActionOutput2
+import ./proof/action-retirement-health.bend as ActionOutput3
+import ./proof/action-slice-entry.bend as ActionOutput4
 import ./proof/held-delivery-constructed.bend as ConstructDelivery0
 import ./proof/held-delivery-constructed-input.bend as ConstructDelivery1
 import ./proof/held-hold-view.bend as HeldConstruct0
@@ -2733,3 +2740,39 @@ def Laws.constructed_ordinary_observer_delivery_preserves_arbitrary_caller_stack
 
 def Laws.constructed_ordinary_observer_delivery_is_a_noop_after_its_first_body(value,values,answer,prefix,rest,stack,incoming,rejected,suffix,lateRejected,lateValue):
   ConstructDelivery0.duplicate(value,values,answer,prefix,rest,stack,incoming,rejected,suffix,lateRejected,lateValue)
+
+
+def Laws.actual_action_output_retains_an_exact_caller_task_suffix(w,rest,stack,id,rejected,answer):
+  ActionOutput0.done(w,rest,stack,id,rejected,answer)
+
+
+def Laws.classified_action_output_prefix_has_a_finite_exact_core_drain(machine,rest,stack,form,healthy):
+  ActionOutput0.drain(machine,rest,stack,form,healthy)
+
+
+def Laws.ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found):
+  ActionOutput2.drain(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found)
+
+
+def Laws.nested_action_slice_restores_the_saved_caller_question(w,question,rest,stack,offset,healthy,depth):
+  ActionOutput4.nested(w,question,rest,stack,offset,healthy,depth)
+
+
+def Laws.scheduled_outer_action_slice_queues_round_before_question_restore(w,question,rest,stack,healthy,depth,running,halted,ready):
+  ActionOutput4.scheduled(w,question,rest,stack,healthy,depth,running,halted,ready)
+
+
+def Laws.certified_source_cache_redirect_is_resolved_and_stored_by_actual_txof(w,id,root,alias,cached):
+  SourceCache0.txOf(w,id,root,alias,cached)
+
+
+def Laws.first_real_setter_constructs_the_canonical_source_cache_successor(w,id,offset,value,alias,cached,profile):
+  SourceCache0.successor(w,id,offset,value,alias,cached,profile)
+
+
+def Laws.nonempty_source_cache_alias_body_has_a_structural_exact_core_bound(w,head,tail,id,answer,rest,stack,offset,alias,cached,profile):
+  SourceCache1.complete(w,head,tail,id,answer,rest,stack,offset,alias,cached,profile)
+
+
+def Laws.nonempty_source_cache_alias_body_constructs_its_final_held_profile(w,head,tail,id,offset,alias,cached,profile):
+  SourceCache1.afterProfile(w,head,tail,id,offset,alias,cached,profile)
