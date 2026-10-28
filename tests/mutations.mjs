@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["held delivery composed control omits settled marking before the body", "runtime/core.bend", "+w = R.World.with_actionWaits(w, Action.settleWait(R.World.actionWaits(w), R.ActionWait.observer(entry)))", "+w = w", "tests/held-action-delivery-controls.mjs", "actionDelivery"],
+  ["held delivery composed control repeats an already settled yielded body", "runtime/core.bend", "Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry))", "False{}", "tests/held-action-delivery-controls.mjs", "actionDelivery"],
+  ["held delivery composed control loses waits during terminal output", "runtime/core.bend", "actionOutputValue(w, rest, stack, id, result, rejected, value)", "actionOutputValue(R.World.with_actionWaits(w, []), rest, stack, id, result, rejected, value)", "tests/held-action-delivery-controls.mjs", "actionOutputState"],
+
   ["lane entered render keeps a foreign verdict seat", "runtime/core.bend", "Bool.or(never, Nat.is_ne(pass, lane))", "never", "tests/lane-read-alignment.mjs", "laneReadRender"],
   ["lane entered pending token ignores unshown lane", "runtime/core.bend", "Bool.and(never, R.Transaction.shown(B.transaction(w, lane)))", "never", "tests/lane-read-alignment.mjs", "laneReadOutside"],
   ["lane entered verdict reader is not recorded", "runtime/core.bend", "B.append(Nat, R.LaneState.entered(R.World.laneState(w)), [reader])", "R.LaneState.entered(R.World.laneState(w))", "tests/pin-ac28157a.mjs", "laneReadEntered"],

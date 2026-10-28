@@ -1,3 +1,6 @@
+import ./proof/held-action-delivery.bend as HeldDelivery0
+import ./proof/action-delivery-input.bend as HeldDelivery1
+import ./proof/held-action-delivery-guard.bend as HeldDelivery2
 import ./proof/transaction-route-rebase.bend as AliasResume0
 import ./proof/held-alias-preparation.bend as AliasResume1
 import ./proof/held-alias-body-input.bend as AliasResume2
@@ -6203,3 +6206,152 @@ law captured_alias_fresh_resume_restores_arbitrary_caller_stack:
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
+
+
+law ordinary_current_observer_delivery_runs_aliased_held_body_and_retires_once:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  {BodyOutput.outer(Core.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(HeldDelivery1.marked(w,observer),actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law ordinary_current_observer_delivery_restores_caller_stack:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  {Core.values(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == stack : List<&2,R.Value>}
+
+
+law ordinary_current_observer_delivery_cannot_repeat_after_body_and_wait_history:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<w,id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),Core.values(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),observer,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events))),observer)) == HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events) : Core.Machine}
+
+
+law ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  {BodyOutput.outer(Core.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(HeldDelivery1.marked(w,observer),actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
+
+
+law ordinary_fresh_observer_delivery_restores_caller_stack:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  {Core.values(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == stack : List<&2,R.Value>}
+
+
+law ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history:
+  for +w: R.World
+  for +observer: Nat
+  for +actor: Nat
+  for +values: List<&2,R.Value>
+  for +id: Nat
+  for +answer: R.Value
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  for +offset: Nat
+  for +captureOffset: Nat
+  for +remaining: Nat
+  for +initial: HeldBody1.Profile<HeldResume0.flush(w,1n+offset),id,offset>
+  for +alias: RejoinHistories.Alias<w,1n+offset>
+  for +captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
+  for +positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  for +events: List<&2,WaitHistory.WaitEvent>
+  for +lateRejected: Bool
+  for +lateValue: R.Value
+  {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),Core.values(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),observer,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events))),observer)) == HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events) : Core.Machine}

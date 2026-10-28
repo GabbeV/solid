@@ -1,3 +1,6 @@
+import ./proof/held-action-delivery.bend as HeldDelivery0
+import ./proof/action-delivery-input.bend as HeldDelivery1
+import ./proof/held-action-delivery-guard.bend as HeldDelivery2
 import ./proof/transaction-route-rebase.bend as AliasResume0
 import ./proof/held-alias-preparation.bend as AliasResume1
 import ./proof/held-alias-body-input.bend as AliasResume2
@@ -2667,3 +2670,27 @@ def Laws.captured_alias_current_resume_restores_arbitrary_caller_stack(w,actor,v
 
 def Laws.captured_alias_fresh_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known):
   AliasResume3.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known)
+
+
+def Laws.ordinary_current_observer_delivery_runs_aliased_held_body_and_retires_once(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found):
+  HeldDelivery0.current(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found)
+
+
+def Laws.ordinary_current_observer_delivery_restores_caller_stack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known,found):
+  HeldDelivery0.currentStack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known,found)
+
+
+def Laws.ordinary_current_observer_delivery_cannot_repeat_after_body_and_wait_history(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found,events,lateRejected,lateValue):
+  HeldDelivery2.currentDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found,events,lateRejected,lateValue)
+
+
+def Laws.ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found):
+  HeldDelivery0.fresh(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found)
+
+
+def Laws.ordinary_fresh_observer_delivery_restores_caller_stack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found):
+  HeldDelivery0.freshStack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)
+
+
+def Laws.ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue):
+  HeldDelivery2.freshDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue)

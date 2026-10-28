@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "candidateComposedRoots": 706,
+  "runtimeChangesForProofs": false,
+  "checkerProfile": "same-head-congruence-v1",
+  "checkerFuel": 400000000,
+  "diagnosticTimeoutSeconds": 90,
+  "diagnosticMaxRssBytes": 4294967296,
+  "isolatedIndependentVerdicts": {
+    "delivery-input": {
+      "passed": true,
+      "seconds": 5.075164547,
+      "logSha256": "5bb2da84cc284516ef6082803a0f6cb7ecd2e9939771827ed47174f96eb894c2"
+    },
+    "action-delivery-retirement": {
+      "passed": true,
+      "seconds": 8.191018219,
+      "logSha256": "90544fbac8cdd64dd3e95deb87238a4855889def17680a8f29fcea7843919e8d"
+    },
+    "action-delivery-guard-v2": {
+      "passed": true,
+      "seconds": 35.817071776,
+      "logSha256": "360fcc24e6f3fb6d7313c343cfd1f11510259000e13207bae147992406aa6670"
+    }
+  },
+  "finiteControls": {
+    "ordinaryObserverBodies": 336,
+    "duplicateCurrentLookups": 2688,
+    "capturedRedirectLengths": [
+      0,
+      1,
+      3,
+      8
+    ],
+    "scope": "actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate"
+  },
+  "finiteControlLogSha256": "0fb9ec7d2b1e587059cea19f1bf4e358badc638c59bbe86d80dc6a7a1f4ddc6b",
+  "finiteControlSourceSha256": "35609c7e837bfc011942814e67fc79adcc4bfaf63b134a2901b679cca9300013",
+  "focusedCompiledRejected": [
+    "held delivery composed control omits settled marking before the body",
+    "held delivery composed control repeats an already settled yielded body",
+    "held delivery composed control loses waits during terminal output"
+  ],
+  "negativeLogSha256": "abd2f652c26f5a0d8897ba20044154c182f0283027bc1cbfaf6d3ab94cf53a57",
+  "configuredMutations": {
+    "total": 722,
+    "finite": 496,
+    "kernel": 226
+  },
+  "uncredited": [
+    "Whole-guard mutation exceeded RSS; no rejection credit. Finite oracles now compile only runtime sources and construct their own actual controller program, avoiding dependent proof compilation as the rejection signal. Earlier failed fixture/setup attempts and proof compilation failures receive no credit."
+  ],
+  "scope": "Real ordinary action lookup, settled marking, captured-alias held body, one-obligation retirement, arbitrary saved stack and exact duplicate current-Machine no-op after admitted finite wait-helper histories. Initial source profile, captured route/count/method/first-match facts; no post-event invariant assumption.",
+  "remaining": [
+    "full public outer from/deferred dispatch and host delivery",
+    "source-cache redirects",
+    "initial construction/parking integration",
+    "distinct-component preparation joins",
+    "global action/flight ledger",
+    "queued slice-end and rendered publication"
+  ],
+  "authority": "Fresh complete706-root independent verdict and exact input seal in tracking/checked.json; isolated/frontend checks are supplementary."
+}

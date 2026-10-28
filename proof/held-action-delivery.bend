@@ -1,0 +1,49 @@
+# Ordinary action observer lookup, settled-cell marking, actual alias resume,
+# finite setter-body evaluation and retirement. This starts at the real ordinary
+# action dispatcher, not the outer from/deferred interceptor or host event loop.
+import Base
+import ../representation/records.bend as R
+import ../representation/base.bend as B
+import ../runtime/core.bend as C
+import ../runtime/action-state.bend as A
+import ./held-write-profile.bend as P
+import ./held-preparation-source.bend as Source
+import ./action-body-entry.bend as Entry
+import ./held-body-evaluation.bend as Eval
+import ./held-write-history.bend as History
+import ./action-body-retirement.bend as Exit
+import ./action-output-frame.bend as Output
+import ./held-resume-retirement.bend as Resume
+import ./held-alias-resume-retirement.bend as Body
+import ./action-delivery-input.bend as Input
+import ./transaction-rejoin-history.bend as Alias
+import ./pending-stack-history.bend as Steps
+
+def start(+w: R.World,rest: List<&2,C.Task>,stack: List<&2,R.Value>,+observer: Nat,rejected: Bool,value: R.Value) -> C.Machine:
+  C.asyncActionDelivery(w,rest,stack,observer,rejected,value,A.find(R.World.actionWaits(w),observer))
+
+def after(+w: R.World,rest: List<&2,C.Task>,stack: List<&2,R.Value>,observer: Nat,rejected: Bool,value: R.Value,+values: List<&2,R.Value>) -> C.Machine:
+  Steps.iterate(1n+Eval.cost(values),start(w,rest,stack,observer,rejected,value))
+
+def accepted(+w: R.World,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+observer: Nat,+actor: Nat,+rejected: Bool,+value: R.Value,found: {A.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}) -> {start(w,rest,stack,observer,rejected,value) == Resume.start(Input.marked(w,observer),actor,rest,stack,value,rejected) : C.Machine}:
+  Equal.cong(Maybe<&2,R.ActionWait>,C.Machine,result=>C.asyncActionDelivery(w,rest,stack,observer,rejected,value,result),A.find(R.World.actionWaits(w),observer),Some{R.ActionWait{observer,actor,0,False{}}},found)
+
+def current(+w: R.World,+observer: Nat,+actor: Nat,+values: List<&2,R.Value>,+id: Nat,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool,+offset: Nat,+captureOffset: Nat,+remaining: Nat,+initial: P.Profile<w,id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat},known: {R.ActionState.methods(A.get(w,actor)) == Resume.methods(values,id,answer) : R.Expr},found: {A.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}) -> {Output.outer(C.world(after(w,rest,stack,observer,rejected,incoming,values))) == Output.outer(Exit.target(History.run(values,Entry.prepared(Input.marked(w,observer),actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}:
+  +marked = Input.marked(w,observer)
+  +target = Exit.target(History.run(values,Entry.prepared(marked,actor,R.ActionEnd{}),id),1n+offset,remaining)
+  Equal.trans(R.World,Output.outer(C.world(after(w,rest,stack,observer,rejected,incoming,values))),Output.outer(C.world(Steps.iterate(1n+Eval.cost(values),Resume.start(marked,actor,rest,stack,incoming,rejected)))),Output.outer(target),Equal.cong(C.Machine,R.World,m=>Output.outer(C.world(Steps.iterate(1n+Eval.cost(values),m))),start(w,rest,stack,observer,rejected,incoming),Resume.start(marked,actor,rest,stack,incoming,rejected),accepted(w,rest,stack,observer,actor,rejected,incoming,found)),Body.current(marked,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,Input.profile(w,observer,id,offset,initial),Input.markedAlias(w,observer,offset,alias),Input.capture(w,observer,actor,offset,alias,captured),Input.positive(w,observer,offset,captureOffset,alias,positive),Input.open(w,observer,offset,remaining,open),Input.methods(w,observer,actor,Resume.methods(values,id,answer),known)))
+
+def fresh(+w: R.World,+observer: Nat,+actor: Nat,+values: List<&2,R.Value>,+id: Nat,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool,+offset: Nat,+captureOffset: Nat,+remaining: Nat,+initial: P.Profile<Source.flush(w,1n+offset),id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},empty: {R.World.flushTransaction(w) == 0n : Nat},open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat},known: {R.ActionState.methods(A.get(w,actor)) == Resume.methods(values,id,answer) : R.Expr},found: {A.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}) -> {Output.outer(C.world(after(w,rest,stack,observer,rejected,incoming,values))) == Output.outer(Exit.target(History.run(values,Entry.prepared(Input.marked(w,observer),actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}:
+  +marked = Input.marked(w,observer)
+  +target = Exit.target(History.run(values,Entry.prepared(marked,actor,R.ActionEnd{}),id),1n+offset,remaining)
+  +nextEmpty = Equal.trans(Nat,R.World.flushTransaction(marked),R.World.flushTransaction(w),0n,Input.future(w,observer),empty)
+  Equal.trans(R.World,Output.outer(C.world(after(w,rest,stack,observer,rejected,incoming,values))),Output.outer(C.world(Steps.iterate(1n+Eval.cost(values),Resume.start(marked,actor,rest,stack,incoming,rejected)))),Output.outer(target),Equal.cong(C.Machine,R.World,m=>Output.outer(C.world(Steps.iterate(1n+Eval.cost(values),m))),start(w,rest,stack,observer,rejected,incoming),Resume.start(marked,actor,rest,stack,incoming,rejected),accepted(w,rest,stack,observer,actor,rejected,incoming,found)),Body.fresh(marked,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,Input.freshProfile(w,observer,id,offset,initial),Input.markedAlias(w,observer,offset,alias),Input.capture(w,observer,actor,offset,alias,captured),Input.positive(w,observer,offset,captureOffset,alias,positive),nextEmpty,Input.open(w,observer,offset,remaining,open),Input.methods(w,observer,actor,Resume.methods(values,id,answer),known)))
+
+def currentStack(+w: R.World,+observer: Nat,+actor: Nat,+values: List<&2,R.Value>,+id: Nat,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool,+offset: Nat,+captureOffset: Nat,+initial: P.Profile<w,id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},known: {R.ActionState.methods(A.get(w,actor)) == Resume.methods(values,id,answer) : R.Expr},found: {A.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}) -> {C.values(after(w,rest,stack,observer,rejected,incoming,values)) == stack : List<&2,R.Value>}:
+  +marked = Input.marked(w,observer)
+  Equal.trans(List<&2,R.Value>,C.values(after(w,rest,stack,observer,rejected,incoming,values)),C.values(Steps.iterate(1n+Eval.cost(values),Resume.start(marked,actor,rest,stack,incoming,rejected))),stack,Equal.cong(C.Machine,List<&2,R.Value>,m=>C.values(Steps.iterate(1n+Eval.cost(values),m)),start(w,rest,stack,observer,rejected,incoming),Resume.start(marked,actor,rest,stack,incoming,rejected),accepted(w,rest,stack,observer,actor,rejected,incoming,found)),Body.currentStack(marked,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,Input.profile(w,observer,id,offset,initial),Input.markedAlias(w,observer,offset,alias),Input.capture(w,observer,actor,offset,alias,captured),Input.positive(w,observer,offset,captureOffset,alias,positive),Input.methods(w,observer,actor,Resume.methods(values,id,answer),known)))
+
+def freshStack(+w: R.World,+observer: Nat,+actor: Nat,+values: List<&2,R.Value>,+id: Nat,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool,+offset: Nat,+captureOffset: Nat,+initial: P.Profile<Source.flush(w,1n+offset),id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},empty: {R.World.flushTransaction(w) == 0n : Nat},known: {R.ActionState.methods(A.get(w,actor)) == Resume.methods(values,id,answer) : R.Expr},found: {A.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}) -> {C.values(after(w,rest,stack,observer,rejected,incoming,values)) == stack : List<&2,R.Value>}:
+  +marked = Input.marked(w,observer)
+  +nextEmpty = Equal.trans(Nat,R.World.flushTransaction(marked),R.World.flushTransaction(w),0n,Input.future(w,observer),empty)
+  Equal.trans(List<&2,R.Value>,C.values(after(w,rest,stack,observer,rejected,incoming,values)),C.values(Steps.iterate(1n+Eval.cost(values),Resume.start(marked,actor,rest,stack,incoming,rejected))),stack,Equal.cong(C.Machine,List<&2,R.Value>,m=>C.values(Steps.iterate(1n+Eval.cost(values),m)),start(w,rest,stack,observer,rejected,incoming),Resume.start(marked,actor,rest,stack,incoming,rejected),accepted(w,rest,stack,observer,actor,rejected,incoming,found)),Body.freshStack(marked,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,Input.freshProfile(w,observer,id,offset,initial),Input.markedAlias(w,observer,offset,alias),Input.capture(w,observer,actor,offset,alias,captured),Input.positive(w,observer,offset,captureOffset,alias,positive),nextEmpty,Input.methods(w,observer,actor,Resume.methods(values,id,answer),known)))

@@ -461,3 +461,6 @@ The [resume extension](held-resume-retirement.md) starts at actual captured resu
 
 
 The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.
+
+
+The [ordinary observer-delivery extension](held-action-delivery.md) connects actual first-match lookup and settled marking to captured-alias held-body execution, representative retirement and arbitrary caller-stack retention. The marked cell survives the body, and a repeated current lookup after any finite permitted wait-helper history preserves the complete Machine. Public outer interception/parking construction, source-cache redirects, full ledger and queued publication remain open. Six roots require a fresh complete706-root verdict and seal.
