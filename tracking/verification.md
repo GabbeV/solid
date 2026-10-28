@@ -607,3 +607,9 @@ The [review](reviews/solid-ac28157a.md) and [receipt](reviews/solid-ac28157a-val
 
 
 [Output/source-cache validation](reviews/action-output-and-source-cache-validation.json) separates the nine-root candidate, source-cache-before-merge controls, finite output-request drains, local slice guards, four compiled kernel rejections and the completed frozen719 sweep. All1008 body-to-queued-Round controls and8064 duplicates pass; full scheduler Round execution/publication remain outside this result.
+
+The five-root constructed outer-task extension requires a fresh727-root whole-book
+verdict. Compact versus combined module deadlines are explicit in the runner;
+no checker fuel or rules changed. Pending complete726 negative sweep remains
+scoped to frozen722-root cb13517d and is not credited before its successful footer
+and hash/sequence audit.

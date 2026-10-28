@@ -18,7 +18,7 @@ non-store port with an explicit callback/host grammar, not the whole package.
 | --- | --- | --- | --- |
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace and full ordinary control frames through actual staging/default setter, finite helper histories and finite real setter-body evaluation; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
-| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Public held entry/parking and source-cache redirects, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
+| Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Real action allocation/opening contracts; distinct allocated-root World/queue/count transfer; constructed two-action join and both completion orders with arbitrary finite lookup/rejoin histories before/between/after; positive blocker before/after the first; settled-yield wait-list preservation; completed empty-group eligibility without live lanes; positive-debt landing-scan retention with a constructed live occurrence/position; nonempty rendered snapshot blockage/scan retention and completion-prefix/check history preservation with retained live list and derived final scan | Full public held entry/parking/host transport, source-cache redirects at resume, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
 | Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
@@ -106,6 +106,11 @@ the complete delivery and queued flush/publication remain open. The
 content and caller stack, rejects stale results by exact identity and returns the
 source trim/settlement/schedule/flush/continuation order. Execution of that queued
 tail and coordinated final reveal remain open.
+
+The constructed ordinary family now starts at an actual fulfillment/rejection
+core task and reaches a queued Round, deriving entry/health/readiness from raw
+construction through finite body and output drain. This remains short of executing
+that Round or proving publication; see [scope](action-output-continuations.md).
 
 ## Next proof obligations, in order
 

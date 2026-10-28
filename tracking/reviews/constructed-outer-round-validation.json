@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-28",
+  "sourceCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "newRoots": 5,
+  "candidateRoots": 727,
+  "runtimeChanged": false,
+  "checkerFuel": 400000000,
+  "maxRssBytes": 4294967296,
+  "combinedBookWallDeadlineSeconds": 240,
+  "independentTaskBook": {
+    "seconds": 195.231871526,
+    "status": 0,
+    "verdict": "ALL PROOFS CHECK"
+  },
+  "constructionSuppliesPremises": true,
+  "resultBoundary": "Round queued before saved question restoration; no Round execution/publication claim",
+  "wholeBookCredit": "requires fresh composed verdict and exact tracked seal",
+  "finiteControls": {
+    "outerTaskEntries": 1008,
+    "bodyToRoundCases": 1008,
+    "duplicateOrdinaryLookup": 8064,
+    "duplicateOuterLookup": 8064
+  }
+}

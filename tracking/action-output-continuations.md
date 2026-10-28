@@ -41,3 +41,26 @@ runtime faults compile and are rejected after mandatory unchanged kernel baselin
 Round execution, later host callbacks, full public invocation/parking and global
 flight/publication accounting remain open. In particular, scheduling a Round is
 not a proof that all pending work eventually renders.
+
+## Constructed outer task to queued Round
+
+The actual raw graph/action/open/hold/input/wait construction, with an arbitrary
+finite permitted helper prefix, now supplies all premises for a real core
+`AsyncFulfill` or `AsyncReject` task. Its ordinary `from`/deferred interception is
+derived empty, rather than assumed at dispatch. The finite setter body retires
+its obligation, drains the non-immediate output-request prefix and executes the
+outer `ActionSliceEnd`, reaching `Round` followed by the saved-question restoration
+and caller task suffix. Caller value stack is retained. Initial payloads, body
+write list, answer, helper prefix, incoming value, rejection flag and caller work
+are quantified; no final health, ready flag, lookup or profile is supplied.
+
+The source constructor is factored into one shared data module. Larger combined
+import books use an explicit240s wall deadline, retaining the same400M checker
+fuel,4GiB RSS and Lean-checked executable. The combined task book independently
+passed in195.23s; this is not a performance claim. Full composed checkpoint credit
+requires a fresh727-root verdict and tracked-input seal. The1008 finite controls
+now execute actual outer tasks and additionally check8064 outer duplicate lookups.
+
+This closes constructed ordinary task entry to the queued Round boundary. It does
+not execute Round, construct the full public action factory/parking/host loop, or
+cover mixed `from`/deferred interception, global flight accounting and publication.

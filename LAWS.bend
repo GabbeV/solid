@@ -1,3 +1,12 @@
+import ./proof/held-construction-context.bend as RoundConstruct20260
+import ./proof/held-delivery-constructor-state.bend as RoundConstruct20261
+import ./proof/action-control-flags.bend as RoundConstruct20262
+import ./proof/action-schedule-ready.bend as RoundConstruct20263
+import ./proof/held-constructed-round-boundary.bend as RoundConstruct20264
+import ./proof/held-constructed-round-state.bend as RoundConstruct20265
+import ./proof/action-output-queue-state.bend as RoundConstruct20266
+import ./proof/ordinary-outer-entry.bend as RoundConstruct20267
+import ./proof/ordinary-constructed-task-round.bend as RoundConstruct20268
 import ./proof/held-source-cache-rebase.bend as SourceCache0
 import ./proof/held-source-cache-body.bend as SourceCache1
 import ./proof/action-output-continuation.bend as ActionOutput0
@@ -6558,3 +6567,53 @@ law nonempty_source_cache_alias_body_constructs_its_final_held_profile:
   for cached: {R.NodeExtension.transaction(B.extension(w,id)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
   for profile: HeldBody1.Profile<SourceCache0.canonical(w,id,1n+offset),id,offset>
   HeldBody1.Profile<HeldBody3.run(head <> tail,w,id),id,offset>
+
+
+law constructed_held_delivery_preserves_initial_action_control_flags:
+  for +value: R.Value
+  for +methods: R.Expr
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  {RoundConstruct20262.observe(RoundConstruct20261.registered(value,methods,prefix)) == RoundConstruct20262.Flags{0n,False{},False{}} : RoundConstruct20262.View}
+
+
+law unhalted_action_retirement_schedules_work:
+  for +w: R.World
+  for +root: Nat
+  for +remaining: Nat
+  for known: {R.World.halted(w) == False{} : Bool}
+  {R.World.scheduled(BodyRetire.target(w,root,remaining)) == True{} : Bool}
+
+
+law constructed_ordinary_delivery_reaches_queued_round_after_finite_body:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {PendingHistory.iterate(Nat.add(1n+HeldBody4.cost(values),1n+RoundConstruct20264.cost(value,values,answer,prefix,rest,stack,incoming,rejected)),HeldDelivery0.start(ConstructDelivery1.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,ConstructDelivery1.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rejected,incoming)) == RoundConstruct20264.target(value,values,answer,prefix,rest,stack,incoming,rejected) : Core.Machine}
+
+
+law constructed_ordinary_outer_interception_selects_action_delivery:
+  for +initial: R.Value
+  for +methods: R.Expr
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +rejected: Bool
+  for +value: R.Value
+  {Core.fromWrapDelivery(RoundConstruct20261.registered(initial,methods,prefix),rest,stack,RoundConstruct20261.observer(initial,methods,prefix),rejected,value) == HeldDelivery0.start(RoundConstruct20261.registered(initial,methods,prefix),rest,stack,RoundConstruct20261.observer(initial,methods,prefix),rejected,value) : Core.Machine}
+
+
+law constructed_fulfillment_or_rejection_task_reaches_queued_round:
+  for +value: R.Value
+  for +values: List<&2,R.Value>
+  for +answer: R.Value
+  for +prefix: List<&2,WaitHistory.WaitEvent>
+  for +rest: List<&2,Core.Task>
+  for +stack: List<&2,R.Value>
+  for +incoming: R.Value
+  for +rejected: Bool
+  {PendingHistory.iterate(Nat.add(1n,Nat.add(1n+HeldBody4.cost(values),1n+RoundConstruct20264.cost(value,values,answer,prefix,rest,stack,incoming,rejected))),RoundConstruct20268.start(RoundConstruct20261.registered(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rest,stack,RoundConstruct20261.observer(value,HeldResume7.methods(values,HeldConstruct6.source(value),answer),prefix),rejected,incoming)) == RoundConstruct20264.target(value,values,answer,prefix,rest,stack,incoming,rejected) : Core.Machine}

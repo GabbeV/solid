@@ -1,6 +1,6 @@
 // Ordinary observer lookup through held setter bodies, then a repeated current
 // lookup. These finite controls supplement quantified proofs; the outer
-// from/deferred interception and host event loop are separate boundaries.
+// mixed from/deferred interception and host event loop are separate boundaries.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -21,7 +21,7 @@ try {
  const {N,G,C,A,X,F}=modules,b=new BendRuntime();
  const graph=()=>{const signal=N.signal(b.world,b.encode(0),N.defaults()),source=list(b.world.nodes).length,reader=list(signal.nodes).length;return G.link(N.createEffectNode(signal,{$:'Read',id:source},{$:'Render'},0,N.defaults(),0,0,0),source,reader);};
  const payloads=[undefined,false,0,-0,NaN,'saved',{ref:17}].map(v=>b.encode(v));
- let bodies=0,duplicates=0;
+ let bodies=0,duplicates=0,outerDuplicates=0;
  for(const prefixMode of [0,1,2])for(const depth of [0,1,3,8])for(const current of [false,true])for(const rejected of [false,true])for(const writes of [[],[b.encode(1)],[b.encode(1),b.encode(0),b.encode(2),b.encode(2)]])for(const answer of payloads){
   const id=list(b.world.nodes).length,expr=writes.reduceRight((tail,value)=>({$:'Then',first:{$:'WriteExpr',signal:id,value:{$:'Literal',value},updater:true},second:tail}),{$:'Literal',value:{$:'StepResult',done:true,value:answer}}),methods={$:'ActionMethods',next:expr,catches:true,thrown:expr,tail:{$:'ActionEnd'}},created=A.create(graph(),methods),actor=created.right;
   let w=A.open(created.left,actor),group=list(w.actions)[actor].transaction;const capture=group;
@@ -33,7 +33,7 @@ try {
   const stack=encodeList([answer,b.encode('caller')]),rest=encodeList([{$:'AsyncWriteSchedule'}]),incoming=b.encode('input');
   // Execute the actual dispatcher and core; the syntax-derived prefix ends
   // before DeliverObservers/ActionSliceEnd, matching the theorem boundary.
-  const finish=()=>{let machine=C.asyncActionDelivery(w,rest,stack,observer,rejected,incoming,A.find(w.actionWaits,observer));for(let step=0;step<2+5*writes.length;step++)machine=C.step(machine);return machine;};
+  const finish=()=>{const initial={$:'Machine',world:w,tasks:encodeList([{$:rejected?'AsyncReject':'AsyncFulfill',observer,value:incoming},...list(rest)]),values:stack};let machine=C.step(initial);assert.deepEqual(machine,C.asyncActionDelivery(w,rest,stack,observer,rejected,incoming,A.find(w.actionWaits,observer)));for(let step=0;step<2+5*writes.length;step++)machine=C.step(machine);return machine;};
   const finished=finish();
   assert.equal(finished.world.fault.$,'Healthy');assert.equal(finished.world.actionDepth,0);
   assert.equal(list(finished.world.actions)[actor].transaction,capture);
@@ -55,9 +55,9 @@ try {
    for(const event of events){let next=later.world;if(event.$==='WaitRegister')next=A.wait(next,event.action,event.result,event.kind).left;else if(event.$==='ObserverAllocate')next=F.newObserver(next,event.node,event.result).left;else next={...next,actionWaits:A.settleWait(next.actionWaits,event.observer)};later={...later,world:next};}
    const found=A.find(later.world.actionWaits,observer);
    const repeated=C.asyncActionDelivery(later.world,later.tasks,later.values,observer,lateRejected,b.encode('late'),found);
-   assert.deepEqual(repeated,later,'a repeated current lookup must preserve the entire machine');duplicates++;
+   assert.deepEqual(repeated,later,'a repeated current lookup must preserve the entire machine');duplicates++;assert.deepEqual(C.fromWrapDelivery(later.world,later.tasks,later.values,observer,lateRejected,b.encode('late')),later,'ordinary outer interception must retain duplicate Machine equality');outerDuplicates++;
   }
  }
  assert.equal(bodies,1008);assert.equal(duplicates,8064);
- console.log(JSON.stringify({ordinaryObserverBodies:bodies,helperPrefixModes:3,bodyToQueuedRoundCases:bodies,duplicateCurrentLookups:duplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; outer interception and public flush are separate'}));
+ console.log(JSON.stringify({ordinaryObserverBodies:bodies,helperPrefixModes:3,bodyToQueuedRoundCases:bodies,actualOuterTaskEntries:bodies,duplicateCurrentLookups:duplicates,outerDuplicateLookups:outerDuplicates,capturedRedirectLengths:[0,1,3,8],scope:'actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; mixed interception, host transport and public flush are separate'}));
 } finally {fs.rmSync(dir,{recursive:true,force:true});}

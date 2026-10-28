@@ -2,6 +2,7 @@
 # admitted helper prefixes are permitted; this does not model the host loop or
 # claim the full public generator invocation/parking prefix.
 import Base
+import ./held-delivery-constructor-state.bend as State
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/action-state.bend as A
@@ -21,19 +22,19 @@ import ./transaction-rejoin-history.bend as Alias
 import ./held-preparation-profile.bend as Prep
 
 def initial(+value: R.Value,methods: R.Expr) -> R.World:
-  Frame.future(Input.opened(value,methods))
+  State.initial(value,methods)
 
 def result(value: R.Value,methods: R.Expr) -> Nat:
-  Frame.result(Input.opened(value,methods))
+  State.result(value,methods)
 
 def before(value: R.Value,methods: R.Expr,prefix: List<&2,History.WaitEvent>) -> R.World:
-  History.run(prefix,initial(value,methods))
+  State.before(value,methods,prefix)
 
 def registered(+value: R.Value,+methods: R.Expr,+prefix: List<&2,History.WaitEvent>) -> R.World:
-  Allocation.after(before(value,methods,prefix),0n,result(value,methods),0)
+  State.registered(value,methods,prefix)
 
 def observer(value: R.Value,methods: R.Expr,prefix: List<&2,History.WaitEvent>) -> Nat:
-  Allocation.index(before(value,methods,prefix))
+  State.observer(value,methods,prefix)
 
 def profile(+value: R.Value,+methods: R.Expr,+prefix: List<&2,History.WaitEvent>) -> P.Profile<Source.flush(registered(value,methods,prefix),1n),Graph.source(value),0n>:
   +w = Input.opened(value,methods)

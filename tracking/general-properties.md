@@ -470,3 +470,26 @@ The [constructed held-delivery extension](held-constructed-delivery.md) closes t
 
 
 [Output continuation contracts](action-output-continuations.md) derive exact caller task suffixes, finite non-immediate observer-request drains and actual arrival at the queued slice end from initial delivery/body facts. Local nested/outer slice contracts preserve restoration order; full Round/publication remains open. [Source-cache alias bodies](held-source-cache-aliases.md) resolve the first real setter before comparison and construct the canonical successor for an arbitrary finite nonempty body; zero setters retain the old cache. Nine roots require a fresh complete722-root verdict/seal. Actual source-cache resume and the full protocol/flight ledger remain open.
+
+## Constructed outer task to queued Round
+
+The actual raw graph/action/open/hold/input/wait construction, with an arbitrary
+finite permitted helper prefix, now supplies all premises for a real core
+`AsyncFulfill` or `AsyncReject` task. Its ordinary `from`/deferred interception is
+derived empty, rather than assumed at dispatch. The finite setter body retires
+its obligation, drains the non-immediate output-request prefix and executes the
+outer `ActionSliceEnd`, reaching `Round` followed by the saved-question restoration
+and caller task suffix. Caller value stack is retained. Initial payloads, body
+write list, answer, helper prefix, incoming value, rejection flag and caller work
+are quantified; no final health, ready flag, lookup or profile is supplied.
+
+The source constructor is factored into one shared data module. Larger combined
+import books use an explicit240s wall deadline, retaining the same400M checker
+fuel,4GiB RSS and Lean-checked executable. The combined task book independently
+passed in195.23s; this is not a performance claim. Full composed checkpoint credit
+requires a fresh727-root verdict and tracked-input seal. The1008 finite controls
+now execute actual outer tasks and additionally check8064 outer duplicate lookups.
+
+This closes constructed ordinary task entry to the queued Round boundary. It does
+not execute Round, construct the full public action factory/parking/host loop, or
+cover mixed `from`/deferred interception, global flight accounting and publication.

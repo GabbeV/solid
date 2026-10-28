@@ -1,3 +1,12 @@
+import ./proof/held-construction-context.bend as RoundConstruct20260
+import ./proof/held-delivery-constructor-state.bend as RoundConstruct20261
+import ./proof/action-control-flags.bend as RoundConstruct20262
+import ./proof/action-schedule-ready.bend as RoundConstruct20263
+import ./proof/held-constructed-round-boundary.bend as RoundConstruct20264
+import ./proof/held-constructed-round-state.bend as RoundConstruct20265
+import ./proof/action-output-queue-state.bend as RoundConstruct20266
+import ./proof/ordinary-outer-entry.bend as RoundConstruct20267
+import ./proof/ordinary-constructed-task-round.bend as RoundConstruct20268
 import ./proof/held-source-cache-rebase.bend as SourceCache0
 import ./proof/held-source-cache-body.bend as SourceCache1
 import ./proof/action-output-continuation.bend as ActionOutput0
@@ -2776,3 +2785,23 @@ def Laws.nonempty_source_cache_alias_body_has_a_structural_exact_core_bound(w,he
 
 def Laws.nonempty_source_cache_alias_body_constructs_its_final_held_profile(w,head,tail,id,offset,alias,cached,profile):
   SourceCache1.afterProfile(w,head,tail,id,offset,alias,cached,profile)
+
+
+def Laws.constructed_held_delivery_preserves_initial_action_control_flags(value,methods,prefix):
+  RoundConstruct20260.flags(value,methods,prefix)
+
+
+def Laws.unhalted_action_retirement_schedules_work(w,root,remaining,known):
+  RoundConstruct20263.target(w,root,remaining,known)
+
+
+def Laws.constructed_ordinary_delivery_reaches_queued_round_after_finite_body(value,values,answer,prefix,rest,stack,incoming,rejected):
+  RoundConstruct20264.complete(value,values,answer,prefix,rest,stack,incoming,rejected)
+
+
+def Laws.constructed_ordinary_outer_interception_selects_action_delivery(initial,methods,prefix,rest,stack,rejected,value):
+  RoundConstruct20267.constructed(initial,methods,prefix,rest,stack,rejected,value)
+
+
+def Laws.constructed_fulfillment_or_rejection_task_reaches_queued_round(value,values,answer,prefix,rest,stack,incoming,rejected):
+  RoundConstruct20268.complete(value,values,answer,prefix,rest,stack,incoming,rejected)
