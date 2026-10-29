@@ -1,3 +1,11 @@
+import ./proof/park-admitted-loop.bend as MixedParkAdmittedLoop
+import ./proof/park-mixed-construction.bend as MixedParkMixedConstruction
+import ./proof/holding-outer.bend as MixedHoldingOuter
+import ./proof/holding-committed.bend as MixedHoldingCommitted
+import ./proof/fresh-node-holding.bend as MixedFreshNodeHolding
+import ./proof/fresh-render-parking.bend as MixedFreshRenderParking
+import ./proof/mixed-settle-scan.bend as MixedMixedSettleScan
+import ./proof/data-result.bend as MixedDataResult
 import ./proof/transaction-membership-frame.bend as ParkMembership
 import ./proof/park-transaction-frame.bend as ParkCounts
 import ./proof/held-frame-leaf.bend as HeldLeafFrame
@@ -3110,3 +3118,39 @@ def Laws.actual_childless_unowned_parking_runs_node_holding_without_frame_change
 
 def Laws.actual_childless_unowned_parking_preserves_its_initial_health(w,id,offset,ready):
   ParkLeaf.health(w,id,offset,ready)
+
+
+def Laws.admitted_mixed_pending_intake_uses_actual_source_budget_and_clears_intake(amount,w,offset,admitted,healthy):
+  MixedParkAdmittedLoop.captured(amount,w,offset,admitted,healthy)
+
+
+def Laws.actual_two_entry_source_reader_parking_constructs_the_held_reader(w,source,reader,offset,known,held,unstaged,ready,healthy):
+  MixedParkMixedConstruction.complete(w,source,reader,offset,known,held,unstaged,ready,healthy)
+
+
+def Laws.actual_node_holding_retains_every_non_arena_world_field(w,id,tx):
+  MixedHoldingOuter.node(w,id,tx)
+
+
+def Laws.actual_node_holding_preserves_committed_storage_tree_and_trace(w,id,tx):
+  MixedHoldingCommitted.node(w,id,tx)
+
+
+def Laws.actual_fresh_node_holding_allocates_its_extension_without_losing_node_fields(w,id,offset,valid,fresh):
+  MixedFreshNodeHolding.node(w,id,offset,valid,fresh)
+
+
+def Laws.actual_fresh_render_parks_even_when_its_pending_slot_is_absent(w,id,offset,ready):
+  MixedFreshRenderParking.actual(w,id,offset,ready)
+
+
+def Laws.actual_mixed_settlement_and_scan_retain_the_positive_group_and_caller_work(w,source,reader,offset,rest,stack,remaining,ready,live,open):
+  MixedMixedSettleScan.complete(w,source,reader,offset,rest,stack,remaining,ready,live,open)
+
+
+def Laws.actual_mixed_settlement_and_scan_preserve_committed_storage(w,source,reader,offset,rest,stack,remaining,ready,live,open):
+  MixedMixedSettleScan.committed(w,source,reader,offset,rest,stack,remaining,ready,live,open)
+
+
+def Laws.ordinary_represented_data_finishes_without_async_carrier_processing(w,rest,stack,frame,id,value,known):
+  MixedDataResult.finish(w,rest,stack,frame,id,value,known)

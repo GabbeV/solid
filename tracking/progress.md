@@ -1094,3 +1094,12 @@ Existing789 roots retain their domains except explicitly source-driven boundary
 updates; independent verification/sealing remains required, with no new bug or
 semantic workaround. A stale Boolean-case proof caused excessive error rendering;
 it is repaired without increasing checker fuel or weakening the theorem.
+
+
+2026-10-29: the ordinary feature push at0ffa4d49 completes the178605cf rc.19
+source update, with789 roots independently checked and no active deviation.
+Mixed source/render settlement now has an initial-state parking/scan contract,
+including real fresh/empty-slot render parking and arbitrary ordinary data
+classification. The next dependency is heap-derived admission, followed by actual
+next delivery and a branching action/flight publication invariant. See the current
+[frontier](frontier.md) rather than earlier chronological pin/count snapshots.

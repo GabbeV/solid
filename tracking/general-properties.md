@@ -581,3 +581,11 @@ derives successful holding, the identity child-frame walk and retained health.
 Mixed source/render intake and the earlier heap reachability remain open. Six
 new roots require the normal composed independent verdict and exact input seal;
 no runtime/source/checker change or new upstream bug/deviation is involved.
+
+
+[Mixed held settlement](mixed-held-settlement.md) adds finite admitted parking,
+initial two-entry construction, exact fresh-render extension allocation and
+non-arena/committed frames. Its actual two settlement/scan steps derive post-state
+health, debt and caller preservation; raw Round/heap reachability remains open.
+Ordinary result classification quantifies over all represented non-AsyncValue
+payloads. Nine new roots await the current complete composed verdict/seal.

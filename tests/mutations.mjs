@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["mixed parking control treats an unready render as a skipped memo", "runtime/scheduler.bend", "Bool.not(X.isRender(R.Node.kind(n)))", "True{}", "tests/mixed-parking-controls.mjs", "parkLoading"],
+  ["mixed parking control omits fresh reader membership", "runtime/transaction.bend", "list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t)", "B.choose(~R.World, Nat.is_eq(R.Node.x(B.node(w,id)),0n), _ => w, _ => list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t))", "tests/mixed-parking-controls.mjs", "holdNode"],
+  ["mixed parking control skips the reader after the source", "runtime/scheduler.bend", "park_list(p, w, t, 1n+index, count)", "park_list(p, w, t, 2n+index, count)", "tests/mixed-parking-controls.mjs", "park_list"],
+
   ["pin178 borrowed guess is not saved", "runtime/lanes-state.bend", "+w = R.World.with_laneState(w, R.LaneState.with_kept(state, B.append(R.KeptGuess, R.LaneState.kept(state), [R.KeptGuess{id, R.NodeExtension.lane(x), R.NodeExtension.transaction(x), R.NodeExtension.q(x), lane}])))", "+w = w", "tests/pin-178605cf.mjs", "take"],
   ["pin178 restored guess loses its saved value", "runtime/core.bend", "R.KeptGuess.value(entry)", "R.Present{R.Undefined{}}", "tests/pin-178605cf.mjs", "restoreKept"],
   ["pin178 borrowed guess is never marked reverted", "runtime/core.bend", "_ => Lanes.markReverted(w, lane)", "_ => w", "tests/pin-178605cf.mjs", "supersedeAfter"],

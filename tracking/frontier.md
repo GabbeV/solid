@@ -76,8 +76,10 @@ The completed dependencies now connect source construction to actual core work:
 - [Parking count and leaf-frame contracts](park-transaction-frames.md) cover
   arbitrary finite default parking/child walks without assuming retained group
   counts. A separately certified childless unowned node parks successfully and
-  retains health. Mixed source/reader intake and its heap-derived admission
-  facts remain to be composed.
+  retains health. [Mixed source/render intake](mixed-held-settlement.md) now
+  constructs actual parking and the following positive-debt scan, including
+  fresh render extensions with absent pending slots. Its admission still must
+  be constructed after actual Round/heap processing.
 
 These quantify over finite admitted body lists and represented values, not a
 fixed enumeration of payloads. The generic operation contracts retain explicit
@@ -93,9 +95,10 @@ root or test totals, determine the checked checkpoint.
    group and blocker facts. Transport them through companion resynchronization,
    pending-write intake/parking and lane/seam phases before the actual scan; the
    local scan step on the queued snapshot does not establish that reachability.
-   The quiet-intake settlement-to-scan contract is available, but its initial
-   conditions must be constructed after heap processing; pending computed
-   child frames may require a wider intake contract.
+   Quiet and mixed source/render settlement-to-scan contracts are available,
+   including fresh-extension/absent-slot render readers. Their initial
+   conditions must still be constructed after heap processing; arbitrary child
+   frames are further scope.
    Connect that path to the other controller's next
    actual delivery; the current two-resume handoff does not yet prove the
    uninterrupted queued/public event history.

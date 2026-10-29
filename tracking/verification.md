@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 739 = 502 finite + 237 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
+| Configured mutations | 742 = 505 finite + 237 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
 | Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
 | Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -701,3 +701,17 @@ push boundaries follow the new source; the nonguess leaf-notification statement
 retains its original assumptions and result. Preliminary interrupted authoring
 checks receive no credit. The final completed verdict/input seal in checked.json
 is the mathematical authority, with the unchanged profile and fuel.
+
+
+The source update completed at0ffa4d4916df2e34aae226be20db74e34f280494:
+789 roots,1320 tracked inputs,539.011613221s, normal feature-branch push verified
+against the remote. The unchanged checker/profile/fuel passed the complete book.
+All remaining public test modules from affects.mjs passed after the shared-build
+interruption; original prefix plus resumed tail cover the public suite. The
+complete alignment suite and new source controls passed. No incomplete command
+is described as an uninterrupted successful whole-suite run.
+
+[Mixed parking](mixed-held-settlement.md) adds320 paired private source/Bend
+controls and three compiler-valid semantic rejections, separate from the old
+frozen727 full sweep. Nine new roots require the fresh798-root full verdict.
+No runtime, source or checker change is involved.

@@ -83,6 +83,14 @@
       "seconds": 88.010798099,
       "independentVerdict": false,
       "reason": "Unchanged frontend API diagnostic only; final official verdict remains required."
+    },
+    "completedCheckpoint": {
+      "commit": "0ffa4d4916df2e34aae226be20db74e34f280494",
+      "roots": 789,
+      "trackedInputs": 1320,
+      "seconds": 539.011613221,
+      "independentVerdict": true,
+      "normalFeaturePushVerified": true
     }
   },
   "limitations": [
@@ -96,5 +104,12 @@
     "rawKernelCounterexamples": 3,
     "fuel": 400000000,
     "logSha256": "39efc80618ff4ed5c981423a3481e08e1de79839cf72262e4b371298c83805ec"
-  }
+  },
+  "publicSuite": {
+    "prefixPassed": true,
+    "remainingFromAffectsPassed": true,
+    "interruption": "Concurrent rebuild removed shared emitted runtime; rebuilt and resumed every remaining module.",
+    "singleUninterruptedFullRun": false
+  },
+  "alignmentSuitePassed": true
 }

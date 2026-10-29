@@ -1,3 +1,20 @@
+import ./representation/records.bend as MixedRecords
+import ./representation/base.bend as MixedBase
+import ./runtime/scheduler.bend as MixedScheduler
+import ./proof/park-admission.bend as MixedParkAdmission
+import ./runtime/transaction.bend as MixedTransaction
+import ./runtime/constants.bend as MixedConstants
+import ./proof/parkable-leaf.bend as MixedParkableLeaf
+import ./proof/holding-outer.bend as MixedHoldingOuter
+import ./proof/committed-storage-frame.bend as MixedCommittedStorageFrame
+import ./proof/fresh-node-holding.bend as MixedFreshNodeHolding
+import ./proof/fresh-render-parking.bend as MixedFreshRenderParking
+import ./proof/mixed-settle-scan.bend as MixedMixedSettleScan
+import ./runtime/core.bend as MixedCore
+import ./proof/held-settle-scan.bend as MixedHeldSettleScan
+import ./proof/pending-stack-history.bend as MixedPendingStackHistory
+import ./proof/mixed-settle.bend as MixedMixedSettle
+import ./proof/data-result.bend as MixedDataResult
 import ./runtime/transaction.bend as ParkTransactions
 import ./proof/transaction-membership-frame.bend as ParkMembership
 import ./proof/park-transaction-frame.bend as ParkCounts
@@ -7567,3 +7584,95 @@ law actual_childless_unowned_parking_preserves_its_initial_health:
   for +offset: Nat
   for ready: ParkLeaf.Ready<w,id,offset>
   {B.ok(QuietScheduler.parkPendingNode(w,id,1n+offset)) == B.ok(w) : Bool}
+
+
+law admitted_mixed_pending_intake_uses_actual_source_budget_and_clears_intake:
+  for +amount: Nat
+  for +w: MixedRecords.World
+  for +offset: Nat
+  for +admitted: MixedParkAdmission.Admitted(amount,w,offset,0n,MixedBase.length(Nat,MixedRecords.World.pendingNodes(w)))
+  for +healthy: {MixedBase.ok(w) == True{} : Bool}
+  {MixedScheduler.parkPendingNodes(w,1n+offset) == MixedRecords.World.with_pendingNodes(MixedParkAdmission.walk(amount,w,offset,0n),[]) : MixedRecords.World}
+
+
+law actual_two_entry_source_reader_parking_constructs_the_held_reader:
+  for +w: MixedRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +known: {MixedRecords.World.pendingNodes(w) == [source,reader] : List<&2,Nat>}
+  for +held: {MixedBase.has(MixedRecords.Node.config(MixedBase.node(w,source)),MixedBase.set(MixedConstants.CONFIG_HELD(),MixedConstants.CONFIG_OVERRIDE())) == True{} : Bool}
+  for +unstaged: {MixedBase.has(MixedRecords.Node.config(MixedBase.node(w,source)),MixedConstants.CONFIG_STAGED()) == False{} : Bool}
+  for +ready: MixedParkableLeaf.Ready<w,reader,offset>
+  for healthy: {MixedBase.ok(w) == True{} : Bool}
+  {MixedScheduler.parkPendingNodes(w,1n+offset) == MixedRecords.World.with_pendingNodes(MixedTransaction.holdNode(w,reader,1n+offset),[]) : MixedRecords.World}
+
+
+law actual_node_holding_retains_every_non_arena_world_field:
+  for +w: MixedRecords.World
+  for +id: Nat
+  for +tx: Nat
+  {MixedHoldingOuter.observe(MixedTransaction.holdNode(w,id,tx)) == MixedHoldingOuter.observe(w) : MixedRecords.World}
+
+
+law actual_node_holding_preserves_committed_storage_tree_and_trace:
+  for +w: MixedRecords.World
+  for +id: Nat
+  for +tx: Nat
+  {MixedCommittedStorageFrame.observe(MixedTransaction.holdNode(w,id,tx)) == MixedCommittedStorageFrame.observe(w) : MixedCommittedStorageFrame.View}
+
+
+law actual_fresh_node_holding_allocates_its_extension_without_losing_node_fields:
+  for +w: MixedRecords.World
+  for +id: Nat
+  for +offset: Nat
+  for +valid: {Nat.is_lt(id,MixedBase.length(MixedRecords.Node,MixedRecords.World.nodes(w))) == True{} : Bool}
+  for +fresh: {MixedRecords.Node.x(MixedBase.node(w,id)) == 0n : Nat}
+  {MixedBase.node(MixedTransaction.holdNode(w,id,1n+offset),id) == MixedFreshNodeHolding.record(w,id) : MixedRecords.Node}
+
+
+law actual_fresh_render_parks_even_when_its_pending_slot_is_absent:
+  for +w: MixedRecords.World
+  for +id: Nat
+  for +offset: Nat
+  for ready: MixedFreshRenderParking.Ready<w,id>
+  {MixedScheduler.parkPendingNode(w,id,1n+offset) == MixedTransaction.holdNode(w,id,1n+offset) : MixedRecords.World}
+
+
+law actual_mixed_settlement_and_scan_retain_the_positive_group_and_caller_work:
+  for +w: MixedRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +rest: List<&2,MixedCore.Task>
+  for +stack: List<&2,MixedRecords.Value>
+  for +remaining: Nat
+  for +ready: MixedMixedSettle.Ready<w,source,reader,offset>
+  for live: {MixedRecords.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for open: {MixedRecords.Transaction.open(MixedBase.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  {MixedPendingStackHistory.iterate(2n,MixedHeldSettleScan.start(w,rest,stack,offset)) == MixedMixedSettleScan.skipped(w,reader,offset,rest,stack) : MixedCore.Machine}
+
+
+law actual_mixed_settlement_and_scan_preserve_committed_storage:
+  for +w: MixedRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +rest: List<&2,MixedCore.Task>
+  for +stack: List<&2,MixedRecords.Value>
+  for +remaining: Nat
+  for +ready: MixedMixedSettle.Ready<w,source,reader,offset>
+  for +live: {MixedRecords.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for +open: {MixedRecords.Transaction.open(MixedBase.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  {MixedCommittedStorageFrame.observe(MixedCore.world(MixedPendingStackHistory.iterate(2n,MixedHeldSettleScan.start(w,rest,stack,offset)))) == MixedCommittedStorageFrame.observe(w) : MixedCommittedStorageFrame.View}
+
+
+law ordinary_represented_data_finishes_without_async_carrier_processing:
+  for +w: MixedRecords.World
+  for +rest: List<&2,MixedCore.Task>
+  for +stack: List<&2,MixedRecords.Value>
+  for +frame: MixedCore.PassFrame
+  for +id: Nat
+  for +value: MixedRecords.Value
+  for known: {MixedDataResult.plain(value) == True{} : Bool}
+  {MixedCore.finishShape(w,rest,value <> stack,frame,id) == MixedCore.finishReady(w,rest,value <> stack,frame,False{}) : MixedCore.Machine}
