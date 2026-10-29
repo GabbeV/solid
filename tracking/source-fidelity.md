@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `ac28157aba6d03b806f0043bce70a87d515e953e`, rc.19. The latest
-[source review](reviews/solid-ac28157a.md) records the verbatim inputs and checks.
+Current pin: Solid `178605cfcbfaf4243d157600095a63111047b164`, rc.19. The latest
+[source review](reviews/solid-178605cf.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or
@@ -272,3 +272,18 @@ The [resume extension](held-resume-retirement.md) starts at actual captured resu
 
 
 The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.
+
+
+## Borrowed guesses and verdict/flight fixes (178605cf, 2026-10-29)
+
+The [source review](reviews/solid-178605cf.md) records the new five-tuple kept
+stack, raw reverted-lane identity membership, separate persistent guessing flags,
+actual commit-before-restoration continuation, question/refresh hold distinction,
+creator-ancestor verdict routing, lazy/dormant wake outside verdict dispatch,
+shown-lane exit and transaction mark release. These are source-driven runtime
+updates. Stores, mounted boundaries and duplicate-copy diagnostics remain
+explicit omissions; their successful upstream tests do not constitute Bend coverage.
+
+The existing nonguess notification theorem retains its domain and conclusion;
+its proof-side control alias now includes the persistent guessing gate and
+source parent choice. No semantic deviation or checker/fuel change is introduced.

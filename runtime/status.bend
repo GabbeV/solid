@@ -117,8 +117,15 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
       +w = B.first(R.World, R.Value, pair)
       +error = B.second(R.World, R.Value, pair)
       +w = storeStatus(w, id, status, error)
-      B.choose(~Machine, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())),
-        _ => Machine{B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => X.joinFuture(w, 0n), _ => w), rest, visited, scheduled},
+      B.choose(~Machine, Bool.and(R.LaneState.guessing(R.World.laneState(w)), Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))),
+        _ =>
+          +w = B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n),
+            _ => B.choose(~R.World, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_REASK()), _ => X.joinFuture(w, 0n),
+              _ =>
+                +pair = X.txOf(w, id)
+                +w = B.first(R.World, Nat, pair)
+                X.joinFuture(w, R.Transaction.parent(B.transaction(w, B.second(R.World, Nat, pair))))), _ => w)
+          Machine{w, rest, visited, scheduled},
         _ => B.choose(~Machine, B.effect(R.Node.kind(B.node(w, id))),
           _ =>
             w = notifyEffectStatus(w, id)

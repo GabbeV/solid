@@ -3,7 +3,7 @@
 An executable **incremental translation of the non-store core** of
 `@solidjs/signals` 2.0.0-rc.19. This is **not yet the complete signals package**.
 
-The source is pinned to next@ac28157a. [The latest source review](tracking/reviews/solid-ac28157a.md)
+The source is pinned to next@178605cf. [The latest source review](tracking/reviews/solid-178605cf.md)
 records verdict/lane grouping, entered-reader draining and removal of the supersede parent join. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
 
@@ -85,7 +85,7 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is `ac28157a` (rc.19). [The source review](tracking/reviews/solid-ac28157a.md)
+The reviewed Solid pin is `178605cf` (rc.19). [The source review](tracking/reviews/solid-178605cf.md)
 accounts for all77 verbatim inputs and the lane/supersede changes. Active
 snapshots, stores and hydration remain explicit scope limits. No semantic
 workaround is active.

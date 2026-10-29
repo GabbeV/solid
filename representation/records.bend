@@ -3005,78 +3005,181 @@ def Guess.with_question(r: Guess, v: Question) -> Guess:
     case Guess{node, value, question}:
       Guess{node, value, v}
 
+type KeptGuess is Data:
+  KeptGuess{node: Nat, value: Slot, transaction: Nat, question: Question, holder: Nat}
+
+def KeptGuess.node(r: KeptGuess) -> Nat:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      node
+
+def KeptGuess.with_node(r: KeptGuess, v: Nat) -> KeptGuess:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      KeptGuess{v, value, transaction, question, holder}
+
+def KeptGuess.value(r: KeptGuess) -> Slot:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      value
+
+def KeptGuess.with_value(r: KeptGuess, v: Slot) -> KeptGuess:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      KeptGuess{node, v, transaction, question, holder}
+
+def KeptGuess.transaction(r: KeptGuess) -> Nat:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      transaction
+
+def KeptGuess.with_transaction(r: KeptGuess, v: Nat) -> KeptGuess:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      KeptGuess{node, value, v, question, holder}
+
+def KeptGuess.question(r: KeptGuess) -> Question:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      question
+
+def KeptGuess.with_question(r: KeptGuess, v: Question) -> KeptGuess:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      KeptGuess{node, value, transaction, v, holder}
+
+def KeptGuess.holder(r: KeptGuess) -> Nat:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      holder
+
+def KeptGuess.with_holder(r: KeptGuess, v: Nat) -> KeptGuess:
+  match r:
+    case KeptGuess{node, value, transaction, question, holder}:
+      KeptGuess{node, value, transaction, question, v}
+
 type LaneState is Data:
-  LaneState{live: List<&2, Nat>, groups: List<&2, List<&2, Nat>>, stagedReaders: List<&2, Nat>, pendingGuesses: List<&2, Guess>, judged: Nat, root: LaneMount, entered: List<&2, Nat>}
+  LaneState{live: List<&2, Nat>, groups: List<&2, List<&2, Nat>>, stagedReaders: List<&2, Nat>, pendingGuesses: List<&2, Guess>, judged: Nat, root: LaneMount, entered: List<&2, Nat>, guessing: Bool, guessed: Bool, kept: List<&2, KeptGuess>, reverted: List<&2, Nat>, reverting: Bool}
 
 def LaneState.live(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       live
 
 def LaneState.with_live(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{v, groups, stagedReaders, pendingGuesses, judged, root, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{v, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.groups(r: LaneState) -> List<&2, List<&2, Nat>>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       groups
 
 def LaneState.with_groups(r: LaneState, v: List<&2, List<&2, Nat>>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, v, stagedReaders, pendingGuesses, judged, root, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, v, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.stagedReaders(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       stagedReaders
 
 def LaneState.with_stagedReaders(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, groups, v, pendingGuesses, judged, root, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, v, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.pendingGuesses(r: LaneState) -> List<&2, Guess>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       pendingGuesses
 
 def LaneState.with_pendingGuesses(r: LaneState, v: List<&2, Guess>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, groups, stagedReaders, v, judged, root, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, v, judged, root, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.judged(r: LaneState) -> Nat:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       judged
 
 def LaneState.with_judged(r: LaneState, v: Nat) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, v, root, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, v, root, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.root(r: LaneState) -> LaneMount:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       root
 
 def LaneState.with_root(r: LaneState, v: LaneMount) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, v, entered}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, v, entered, guessing, guessed, kept, reverted, reverting}
 
 def LaneState.entered(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
       entered
 
 def LaneState.with_entered(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, v}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, v, guessing, guessed, kept, reverted, reverting}
+
+def LaneState.guessing(r: LaneState) -> Bool:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      guessing
+
+def LaneState.with_guessing(r: LaneState, v: Bool) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, v, guessed, kept, reverted, reverting}
+
+def LaneState.guessed(r: LaneState) -> Bool:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      guessed
+
+def LaneState.with_guessed(r: LaneState, v: Bool) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, v, kept, reverted, reverting}
+
+def LaneState.kept(r: LaneState) -> List<&2, KeptGuess>:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      kept
+
+def LaneState.with_kept(r: LaneState, v: List<&2, KeptGuess>) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, v, reverted, reverting}
+
+def LaneState.reverted(r: LaneState) -> List<&2, Nat>:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      reverted
+
+def LaneState.with_reverted(r: LaneState, v: List<&2, Nat>) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, v, reverting}
+
+def LaneState.reverting(r: LaneState) -> Bool:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      reverting
+
+def LaneState.with_reverting(r: LaneState, v: Bool) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, v}
 
 type VerdictState is Data:
   VerdictState{latestActive: Bool, probing: Bool, probeFound: Bool, dispatch: Bool}

@@ -207,6 +207,7 @@ type Task is Data:
   LaneCorrections{live: List<&2, Nat>, judged: Bool}
   LaneCorrectionNodes{lane: Nat, index: Nat}
   LaneCorrectionCompared{id: Nat, truth: R.Value}
+  LaneCorrectionEnd{}
   SupersedeAfter{id: Nat, lane: Nat, parent: Nat, value: R.Value}
   DissolveLane{lane: Nat, into: Nat, except: Nat}
   DissolveNodes{lane: Nat, into: Nat, except: Nat, index: Nat}
@@ -218,6 +219,8 @@ type Task is Data:
   LaneSeamCleared{id: Nat}
   EndLanes{parent: Nat}
   EndLanesLoop{parent: Nat, remaining: Nat}
+  EndKept{parent: Nat, remaining: Nat}
+  RestoreKept{parent: Nat, entry: R.KeptGuess}
   LaneReadDone{id: Nat, reader: Nat, forced: Bool}
   TruthNode{id: Nat}
   TruthDeps{edge: Nat}
@@ -292,6 +295,7 @@ type Task is Data:
   ProbeEnd{probing: Bool, found: Bool, dispatch: Bool, saved: List<&2, R.Value>}
   VerdictRaiseHeight{source: Nat, reader: Nat}
   VerdictPulled{node: Nat, reader: Nat, owned: Bool, tracked: Bool}
+  VerdictPrepared{node: Nat, reader: Nat, owned: Bool, tracked: Bool}
   VerdictGuessCompared{node: Nat, reader: Nat, lane: Nat}
   VerdictHeldFinal{node: Nat, reader: Nat, tracked: Bool}
   ReadPrepared{id: Nat}
@@ -528,16 +532,16 @@ def laneReadEntered(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value
 
 def laneReadRenderEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32) -> Machine:
   B.choose(~Machine, Bool.or(R.Transaction.held(B.transaction(w, lane)), Bool.and(Bool.not(guess), B.has(status, K.STATUS_PENDING()))),
-    _ => B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED()))),
-      _ =>
-        +pair = P.notReadyError(w, 0n)
-        Machine{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, stack},
-      _ =>
-        +w = B.choose(~R.World, B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_SCREEN_READ()), _ => w,
-          _ =>
-            +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_FRAME_READ(), K.REACTIVE_SCREEN_READ()))))
-            B.store_transaction(w, lane, R.Transaction.with_reruns(B.transaction(w, lane), B.append(Nat, R.Transaction.reruns(B.transaction(w, lane)), [reader]))))
-        Machine{w, rest, Lanes.display(w, id) <> stack}),
+    _ =>
+      +w = B.choose(~R.World, B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_SCREEN_READ()), _ => w,
+        _ =>
+          +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_FRAME_READ(), K.REACTIVE_SCREEN_READ()))))
+          B.store_transaction(w, lane, R.Transaction.with_reruns(B.transaction(w, lane), B.append(Nat, R.Transaction.reruns(B.transaction(w, lane)), [reader]))))
+      B.choose(~Machine, Bool.and(Bool.not(guess), Bool.and(Bool.not(R.Transaction.shown(B.transaction(w, lane))), B.has(status, K.STATUS_UNINITIALIZED()))),
+        _ =>
+          +pair = P.notReadyError(w, 0n)
+          Machine{R.World.with_fault(B.first(R.World, R.Value, pair), R.CallbackThrown{B.second(R.World, R.Value, pair)}), rest, stack},
+        _ => Machine{w, rest, Lanes.display(w, id) <> stack}),
     _ => laneReadEntered(w, rest, stack, reader, id, lane, guess, status))
 
 def laneReadOutside(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +reader: Nat, +id: Nat, +lane: Nat, +guess: Bool, +status: U32, +never: Bool) -> Machine:
@@ -1621,26 +1625,27 @@ def stagedRead(w: R.World, reader: Nat, source: Nat) -> R.World:
   V.stagedRead(w, reader, source)
 
 # core/core.ts:prepareComputed, with refresh=false at the read call site.
-def prepareDisposed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+def prepareDisposedAt(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +after: Task) -> Machine:
   +n = B.node(w, id)
   +parent = R.Node.parent(n)
   B.choose(~Machine, B.has(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()),
     _ => B.choose(~Machine, Bool.and(Nat.is_ne(parent, 0n), B.has(R.Node.flags(B.node(w, parent)), K.REACTIVE_DISPOSED())),
-      _ => Machine{B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()))), ReadPrepared{id} <> rest, stack},
+      _ => Machine{B.store_node(w, id, R.Node.with_config(n, B.clear(R.Node.config(n), K.CONFIG_AUTO_DISPOSE()))), after <> rest, stack},
       _ =>
         w = B.choose(~R.World, Bool.and(Nat.is_ne(parent, 0n), Bool.not(B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()))),
           _ => O.linkChild(w, parent, id), _ => w)
-        Machine{w, Recompute{id, True{}} <> ReadPrepared{id} <> rest, stack}),
-    _ => Machine{w, ReadPrepared{id} <> rest, stack})
+        Machine{w, Recompute{id, True{}} <> after <> rest, stack}),
+    _ => Machine{w, after <> rest, stack})
 
-def readNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  B.choose(~Machine, B.valid(w, id),
-    _ => B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), 512),
-      _ => Machine{B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), 512))),
-        Recompute{id, True{}} <> ReadPrepared{id} <> rest, stack},
-      _ => B.choose(~Machine, Bool.and(B.computed(R.Node.kind(B.node(w, id))), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())),
-        _ => prepareDisposed(w, rest, stack, id), _ => Machine{w, ReadPrepared{id} <> rest, stack})),
-    _ => Machine{R.World.with_fault(w, R.BadId{}), [], []})
+def prepareDisposed(w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  prepareDisposedAt(w, rest, stack, id, ReadPrepared{id})
+
+def prepareComputed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +after: Task) -> Machine:
+  B.choose(~Machine, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_LAZY()),
+    _ => Machine{B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.clear(R.Node.flags(B.node(w, id)), K.REACTIVE_LAZY()))),
+      Recompute{id, True{}} <> after <> rest, stack},
+    _ => B.choose(~Machine, Bool.and(B.computed(R.Node.kind(B.node(w, id))), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED())),
+      _ => prepareDisposedAt(w, rest, stack, id, after), _ => Machine{w, after <> rest, stack}))
 
 # core.ts:pullComputed, with the caller's source return point explicit.
 def pullComputed(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +after: Task, +carry: Bool) -> Machine:
@@ -1853,14 +1858,26 @@ def verdictAfterPull(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
     _ => verdictOverride(w, rest, stack, id, reader, tracked),
     _ => verdictPlain(w, rest, stack, id, reader, owned, tracked))
 
-def verdictValue(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat) -> Machine:
+# verdict.ts: the owned/tracked locals are captured before waking the memo.
+# Both prepareComputed and pullComputed execute outside the verdict window.
+def verdictValue(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +id: Nat, +reader: Nat) -> Machine:
   +owned = Bool.and(Nat.is_ne(reader, 0n), Bool.not(B.has(R.Node.config(B.node(w, reader)), K.CONFIG_CHILDREN_FORBIDDEN())))
   +tracked = Bool.and(owned, R.World.tracking(w))
+  prepareComputed(Verdict.setDispatch(w, False{}), rest, stack, id, VerdictPrepared{id, reader, owned, tracked})
+
+def verdictPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +owned: Bool, +tracked: Bool) -> Machine:
   +links = Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))
   +w = B.choose(~R.World, links, _ => G.link(w, id, reader), _ => w)
   B.choose(~Machine, Bool.and(links, B.computed(R.Node.kind(B.node(w, id)))),
-    _ => pullComputed(Verdict.setDispatch(w, False{}), rest, stack, id, reader, VerdictPulled{id, reader, owned, tracked}, False{}),
-    _ => verdictAfterPull(w, rest, stack, id, reader, owned, tracked))
+    _ => pullComputed(w, rest, stack, id, reader, VerdictPulled{id, reader, owned, tracked}, False{}),
+    _ => verdictAfterPull(Verdict.setDispatch(w, True{}), rest, stack, id, reader, owned, tracked))
+
+def readNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
+  B.choose(~Machine, B.valid(w, id),
+    _ => B.choose(~Machine, R.VerdictState.dispatch(R.World.verdictState(w)),
+      _ => verdictValue(w, rest, stack, id, B.parentComputed(w, R.World.context(w))),
+      _ => prepareComputed(w, rest, stack, id, ReadPrepared{id})),
+    _ => Machine{R.World.with_fault(w, R.BadId{}), [], []})
 
 def readPlainPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
   +n = B.node(w, id)
@@ -1870,9 +1887,7 @@ def readPlainPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Val
   B.choose(~Machine, fast, _ => readSignalFast(w, rest, stack, id), _ => prepareSlow(w, rest, stack, id))
 
 def readPrepared(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat) -> Machine:
-  B.choose(~Machine, R.VerdictState.dispatch(R.World.verdictState(w)),
-    _ => verdictValue(w, rest, stack, id, B.parentComputed(w, R.World.context(w))),
-    _ => readPlainPrepared(w, rest, stack, id))
+  readPlainPrepared(w, rest, stack, id)
 
 def serveSelected(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +reader: Nat, +u: R.Slot) -> Machine:
   B.choose(~Machine, B.present(u),
@@ -1980,7 +1995,9 @@ def seatPass(+w: R.World, +id: Nat, +create: Bool) -> B.Bundle<R.World, LanePass
 
 def joinedPass(+w: R.World, +id: Nat, +frame: LanePass) -> Bool:
   +staged = Bool.and(hasMount(passMount(frame)), Bool.or(Nat.is_ne(previousLane(frame), 0n), Bool.or(B.effect(R.Node.kind(B.node(w, id))), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING())))))
-  +mask = B.choose(~U32, staged, _ => U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ()), _ => K.REACTIVE_JOINED())
+  +mask = B.choose(~U32, hasMount(passMount(frame)),
+    _ => B.choose(~U32, staged, _ => U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ()), _ => 0),
+    _ => K.REACTIVE_JOINED())
   B.has(R.Node.flags(B.node(w, id)), mask)
 
 def restoreMount(+w: R.World, frame: LanePass) -> R.World:
@@ -1997,7 +2014,7 @@ def passValue(+w: R.World, +id: Nat) -> R.Value:
 def recomputePrepared(+w: R.World, rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +create: Bool, released: Nat, +lanePass: LanePass) -> Machine:
   +n = B.node(w, id)
   reask = Bool.and(B.has(R.Node.flags(n), K.REACTIVE_REASK()),
-    Bool.not(Bool.and(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Bool.not(R.NodeExtension.reask(B.extension(w, id)))))))
+    Bool.not(Bool.and(Bool.or(B.has(R.Node.status(n), K.STATUS_PENDING()), Bool.and(R.LaneState.guessing(R.World.laneState(w)), B.present(R.Node.pending(n)))), Bool.and(Nat.is_ne(R.Node.x(n), 0n), Bool.not(R.NodeExtension.reask(B.extension(w, id)))))))
   +context = R.World.context(w)
   +w = R.World.with_context(w, id)
   +n = R.Node.with_depsTail(n, 0n)
@@ -3938,6 +3955,7 @@ def supersedeEnd(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
 
 
 def supersedeAfter(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +lane: Nat, +parent: Nat, +value: R.Value) -> Machine:
+  +w = B.choose(~R.World, Bool.and(R.LaneState.guessed(R.World.laneState(w)), R.LaneState.reverting(R.World.laneState(w))), _ => Lanes.markReverted(w, lane), _ => w)
   +w = B.choose(~R.World, R.Transaction.shown(B.transaction(w, lane)),
     _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}))), _ => w)
   +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS()))))
@@ -4067,8 +4085,57 @@ def laneSeamNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>,
 # lanes.ts:endLanes scans the current live array backwards, nested lanes first.
 
 def endLanes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat) -> Machine:
-  Machine{w, EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack}
+  B.choose(~Machine, R.LaneState.guessed(R.World.laneState(w)),
+    _ => Machine{w, EndKept{parent, B.length(R.KeptGuess, R.LaneState.kept(R.World.laneState(w)))} <> rest, stack},
+    _ => Machine{w, EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack})
 
+
+# lanes.ts:endLanes scans the captured reverse prefix of the live kept stack.
+# Splice happens before restoration, so cleanup callbacks observe its removal.
+def removeKept(items: List<&2, R.KeptGuess>, index: Nat) -> List<&2, R.KeptGuess>:
+  match items index:
+    case Nil{} _: []
+    case head <> tail 0n: tail
+    case head <> tail 1n+left: head <> removeKept(tail, left)
+
+def restoreKept(+w: R.World, rest: List<&2, Task>, stack: List<&2, R.Value>, +parent: Nat, +entry: R.KeptGuess) -> Machine:
+  +id = R.KeptGuess.node(entry)
+  +w = B.store_extension(w, id, R.NodeExtension.with_lane(B.extension(w, id), R.KeptGuess.value(entry)))
+  +w = B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), R.KeptGuess.question(entry)))
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_OVERRIDE(), K.CONFIG_GUESS()))))
+  +w = X.list(w, id, R.KeptGuess.transaction(entry))
+  Machine{Lanes.rerun(w, id, parent), rest, stack}
+
+def endKeptNode(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +entry: R.KeptGuess) -> Machine:
+  +id = R.KeptGuess.node(entry)
+  # _slotTake can replace the node; refuse that unported store crossing.
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_SLOT_NODE()),
+    _ => Machine{R.World.with_fault(w, R.Unsupported{86n}), rest, stack},
+    _ =>
+      +w = E.ext(w, id)
+      +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), 0n), _ => B.Bundle{w, True{}},
+        _ =>
+          +pair = X.txOf(w, id)
+          B.Bundle{B.first(R.World, Nat, pair), Nat.is_eq(B.second(R.World, Nat, pair), parent)})
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~Machine, B.second(R.World, Bool, pair),
+        _ => Machine{w, CommitPending{id} <> RestoreKept{parent, entry} <> rest, stack},
+        _ => Machine{w, rest, stack}))
+
+def endKept(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, remaining: Nat) -> Machine:
+  match remaining:
+    case 0n:
+      Machine{w, EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack}
+    case 1n+ +index:
+      +entry = B.get(R.KeptGuess, R.LaneState.kept(R.World.laneState(w)), index, R.KeptGuess{0n, R.Empty{}, 0n, R.QuestionZero{}, 0n})
+      +pair = X.resolveTx(w, R.Transaction.parent(B.transaction(w, R.KeptGuess.holder(entry))))
+      +w = B.first(R.World, Nat, pair)
+      +ending = {EndKept{parent, index} <> rest : List<&2, Task>}
+      B.choose(~Machine, Nat.is_ne(B.second(R.World, Nat, pair), parent), _ => Machine{w, ending, stack},
+        _ =>
+          +w = R.World.with_laneState(w, R.LaneState.with_kept(R.World.laneState(w), removeKept(R.LaneState.kept(R.World.laneState(w)), index)))
+          B.choose(~Machine, Bool.and(B.contains(R.LaneState.reverted(R.World.laneState(w)), R.KeptGuess.holder(entry)), B.contains(R.LaneState.live(R.World.laneState(w)), R.KeptGuess.transaction(entry))),
+            _ => endKeptNode(w, ending, stack, parent, entry), _ => Machine{w, ending, stack}))
 
 def endLanesLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +parent: Nat, +remaining: Nat) -> Machine:
   match remaining:
@@ -4092,6 +4159,7 @@ def laneWriteChanged(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Valu
   Machine{B.schedule(w), rest, value <> stack}
 
 def laneWrite(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value) -> Machine:
+  # The optional _slotTake hook is a no-op for admitted non-store nodes.
   B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()),
     _ => B.choose(~Machine, Lanes.stale(w, id, R.World.question(w)),
       _ =>
@@ -4149,7 +4217,9 @@ def laneCorrectionNodes(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.V
       B.choose(~Machine, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), Nat.is_eq(R.NodeExtension.transaction(B.extension(w, id)), lane)),
         _ =>
           +truth = B.selected(R.Node.pending(B.node(w, id)), R.Node.value(B.node(w, id)))
-          rawEquals(w, LaneCorrectionCompared{id, truth} <> ending, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), truth),
+          +w = B.choose(~R.World, R.LaneState.guessed(R.World.laneState(w)),
+            _ => R.World.with_laneState(w, R.LaneState.with_reverting(R.World.laneState(w), Bool.not(B.present(R.Node.pending(B.node(w, id)))))), _ => w)
+          rawEquals(w, LaneCorrectionCompared{id, truth} <> LaneCorrectionEnd{} <> ending, stack, id, B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{}), truth),
         _ => Machine{w, ending, stack}))
 
 # lanes.ts:optimisticWrite, preserving updater before raw comparison and
@@ -4273,15 +4343,17 @@ def laneLeakLoop(+w: R.World, +rest: List<&2, Task>, +stack: List<&2, R.Value>, 
         _ =>
           +lane = R.NodeExtension.transaction(B.extension(w, reader))
           +parent = R.Transaction.parent(B.transaction(w, lane))
-          +verdict = Bool.and(Nat.is_ne(lane, 0n), Bool.and(Nat.is_ne(parent, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, parent)), lane)))
-          B.choose(~Machine, verdict,
+          +isLane = R.Transaction.lane(B.transaction(w, lane))
+          +ordinarySkip = Bool.and(Nat.is_ne(lane, 0n), Bool.and(Bool.not(isLane), Bool.not(B.has(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_STAGED_READ(), K.REACTIVE_PROBE_UNANSWERED())))))
+          +verdict = Bool.and(isLane, Bool.and(Nat.is_ne(parent, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, parent)), lane)))
+          B.choose(~Machine, ordinarySkip, _ => Machine{w, ending, stack}, _ => B.choose(~Machine, verdict,
             _ => B.choose(~Machine, B.has(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT()),
               _ => B.choose(~Machine, Bool.not(B.has(R.Node.flags(B.node(w, reader)), K.REACTIVE_PROBE_UNANSWERED())), _ => Machine{w, ending, stack}, _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane)),
               _ =>
                 +pair = X.blocked(w, parent)
                 +w = B.first(R.World, Bool, pair)
                 B.choose(~Machine, Bool.not(B.second(R.World, Bool, pair)), _ => Machine{w, ending, stack}, _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))),
-            _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane))))
+            _ => laneLeakAdmit(w, rest, stack, readers, index, leaked, reader, lane)))))
 
 
 # isPending's catch observes the live found flag before restoring its caller.
@@ -4755,6 +4827,9 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
           supersede(w, rest, tail, id, truth, Bool.not(B.truth(verdict)))
         case _:
           Machine{R.World.with_fault(w, R.TypeError{}), rest, []}
+    case LaneCorrectionEnd{} <> rest:
+      Machine{B.choose(~R.World, R.LaneState.guessed(R.World.laneState(w)),
+        _ => R.World.with_laneState(w, R.LaneState.with_reverting(R.World.laneState(w), False{})), _ => w), rest, stack}
     case SupersedeAfter{id, lane, parent, value} <> rest:
       supersedeAfter(w, rest, stack, id, lane, parent, value)
     case DissolveLane{lane, into, except} <> rest:
@@ -4781,6 +4856,10 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       endLanes(w, rest, stack, parent)
     case EndLanesLoop{parent, remaining} <> rest:
       endLanesLoop(w, rest, stack, parent, remaining)
+    case EndKept{parent, remaining} <> rest:
+      endKept(w, rest, stack, parent, remaining)
+    case RestoreKept{parent, entry} <> rest:
+      restoreKept(w, rest, stack, parent, entry)
     case TruthNode{id} <> rest:
       truthNode(w, rest, stack, id)
     case TruthDeps{+edge} <> +rest:
@@ -5003,6 +5082,8 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +stack: List<&2, R.Value>) -> M
       Machine{Verdict.restoreProbe(w, probing, found, dispatch), rest, R.Boolean{answer} <> saved}
     case VerdictRaiseHeight{source, reader} <> rest:
       Machine{raiseSourceHeight(w, source, reader), rest, stack}
+    case VerdictPrepared{id, reader, owned, tracked} <> rest:
+      verdictPrepared(w, rest, stack, id, reader, owned, tracked)
     case VerdictPulled{id, reader, owned, tracked} <> rest:
       verdictAfterPull(Verdict.setDispatch(w, True{}), rest, stack, id, reader, owned, tracked)
     case VerdictGuessCompared{id, reader, lane} <> +rest:

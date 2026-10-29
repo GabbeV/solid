@@ -76,13 +76,32 @@ def pendingVerdict(+w: R.World, +reader: Nat, +id: Nat) -> R.World:
             verdictRead(B.first(R.World, Nat, pair), reader, B.second(R.World, Nat, pair), False{}),
           _ => B.choose(~R.World, R.World.running(w), _ => provisionalVerdict(w, reader, False{}), _ => w)), _ => w))
 
+# creatorPass is the Root._parentComputed forwarding getter in base.bend.
+# Walk only ancestors whose pass is still computing; retain all born bits.
+def bornNext(fuel: Nat, +w: R.World, +p: Nat, +born: U32) -> B.Bundle<R.World, U32>:
+  match fuel:
+    case 0n:
+      B.choose(~B.Bundle<R.World, U32>, Bool.and(Nat.is_ne(p, 0n), B.has(R.Node.flags(B.node(w, p)), K.REACTIVE_RECOMPUTING_DEPS())),
+        _ => B.Bundle{R.World.with_fault(w, R.Exhausted{}), born}, _ => B.Bundle{w, born})
+    case 1n+left:
+      B.choose(~B.Bundle<R.World, U32>, Bool.and(Nat.is_ne(p, 0n), B.has(R.Node.flags(B.node(w, p)), K.REACTIVE_RECOMPUTING_DEPS())),
+        _ => bornNext(left, w, B.parentComputed(w, R.Node.parent(B.node(w, p))), U32.or(born, U32.and(R.Node.flags(B.node(w, p)), U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ())))),
+        _ => B.Bundle{w, born})
+
+def bornLoop(fuel: Nat, +w: R.World, parent: Nat, born: U32) -> B.Bundle<R.World, U32>:
+  bornNext(fuel, w, B.parentComputed(w, parent), born)
+
 def markVerdictReader(+w: R.World, window: U32) -> R.World:
   # window's 1/2 attribution only runs in __OBSERVE__, outside this profile.
   +reader = B.parentComputed(w, R.World.context(w))
   B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w)),
     _ =>
-      +w = B.store_node(w, reader, R.Node.with_config(B.node(w, reader), B.set(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())))
-      B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_PROBED()))), _ => w)
+      +pair = bornLoop(1n+B.length(R.Node, R.World.nodes(w)), w, R.Node.parent(B.node(w, reader)), 0)
+      +w = B.first(R.World, U32, pair)
+      +born = B.second(R.World, U32, pair)
+      +w = B.choose(~R.World, U32.is_eq(born, 0),
+        _ => B.store_node(w, reader, R.Node.with_config(B.node(w, reader), B.set(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT()))), _ => w)
+      B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_PROBED(), born)))), _ => w)
 
 def observeAfterBirth(+w: R.World, +reader: Nat, +id: Nat, born: Bool) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, born, _ => B.Bundle{w, False{}},

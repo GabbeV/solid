@@ -1080,3 +1080,17 @@ Full713 on frozenfc38211d/0847122e completed:713 compiled semantic rejections,97
 
 
 The [captured-alias extension](held-alias-resume.md) derives actual question/join/method preparation, finite setter-body execution, one-obligation representative retirement and saved caller stack from initial source/capture/route/count facts. Any certified finite captured redirect path with structural arena room is allowed. Source cache remains canonical; public delivery, distinct merges, full ledger and publication remain open. The nine-root extension requires its own whole700-root independent verdict and seal.
+
+
+2026-10-29: source update to178605cf/rc.19 integrates borrowed optimistic guesses,
+restoration after revert, distinct arming flags, question/refresh holds, creator-
+ancestor verdicts, wake outside verdict dispatch, shown-lane exit and marks that
+outlive their declaring action while a source flight is pending. The review and
+receipt separate the admitted non-store changes from store/boundary/dev omissions.
+Native380files/5858tests pass. There are720 borrowed helper/alias controls,168
+other focused controls and20 actual public histories including saved falsy guesses.
+Six new and six moved-operation semantic faults compile and are rejected.
+Existing789 roots retain their domains except explicitly source-driven boundary
+updates; independent verification/sealing remains required, with no new bug or
+semantic workaround. A stale Boolean-case proof caused excessive error rendering;
+it is repaired without increasing checker fuel or weakening the theorem.

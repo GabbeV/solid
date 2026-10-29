@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "sourceCommit": "178605cfcbfaf4243d157600095a63111047b164",
+  "previousCommit": "ac28157aba6d03b806f0043bce70a87d515e953e",
+  "recordedSolidInputs": 78,
+  "changedRecordedInputs": 26,
+  "allRecordedInputsExactGitBytes": true,
+  "activeSemanticDeviations": [],
+  "native": {
+    "buildTiers": 3,
+    "sourceDeclarations": true,
+    "testFiles": 380,
+    "testsPassed": 5858,
+    "expectedFailures": 2,
+    "skips": 2,
+    "buildLogSha256": "49a1a3a1c41ad9b1ae51df698ed0137114b4e16ab840f5bfa6af569158dff739",
+    "typesLogSha256": "4821ddf81252d580893d77df34ab286d88259c884796fbe6a1669625703af959",
+    "testsLogSha256": "a363145c67a6c3bcf74ef180cda89bc4a266f8c2aaa002886995e73d81c476eb"
+  },
+  "newControls": {
+    "borrowedGuessCases": 720,
+    "markFlightCases": 12,
+    "pendingGuessJoinCases": 12,
+    "verdictAncestorCases": 144,
+    "publicActionHistories": 20,
+    "publicGraphForms": [
+      "ordinary input change",
+      "optimistic input change plus revert"
+    ],
+    "renderGrouping": [
+      "one combined effect",
+      "two separate effects"
+    ],
+    "savedGuessValues": [
+      "number",
+      "undefined",
+      "zero",
+      "false",
+      "null"
+    ],
+    "privateLogSha256": "4857f6c8911254b7c07080caf647a5c7ccbc08523b6fae5a45f5b4ac6dad1287",
+    "publicLogSha256": "3b704de20cdf0f50b196c885354949a64c96b0b4c1ae96538aefd4077cd5762f",
+    "scope": "Private actual helper fixtures plus finite public generator/constructor/IO histories; not a reachability or TS/Bend equivalence proof.",
+    "resolvedActionParentAliases": "Both redirect directions compare resolved parents, avoiding a false cross-action take."
+  },
+  "negativeChecks": {
+    "configured": 739,
+    "finite": 502,
+    "kernel": 237,
+    "newCompiledSemanticRejections": 6,
+    "movedOperationCompiledSemanticRejections": 6,
+    "newLogSha256": "45fdbd50756bfb576b9e6ce62d382e496485af180e19fd23ee1d9c3ae1251a4b",
+    "movedLogSha256": "87ad58e1753dd72a6e2a10cda23513fba5574d39507528d00b68564de2e8deb3",
+    "allOperationTargetsCurrent": true,
+    "targetValidationIsNotRejectionCredit": true,
+    "completeSweep": "No new full sweep. Frozen727 remains tied to old7f7d/ac28157a and733-root snapshot."
+  },
+  "proofMigration": {
+    "rootCount": 789,
+    "statementChanges": [
+      "Lane-end checks the kept prefix before the live reverse scan when guessed.",
+      "Pending guess push includes distinct guessing and guessed stores."
+    ],
+    "statementPreserved": [
+      "Nonguess leaf notifier domain/result unchanged; source control alias includes new flag/parent choice.",
+      "Memo lane entry domain/result unchanged; explicit cases on the new guessed flag."
+    ],
+    "witnessesRegenerated": true,
+    "generatorIsNotTrusted": true,
+    "focusedIndependentModules": [
+      "lane-lifecycle",
+      "lane-guesses",
+      "pending-leaf-notification",
+      "lane-stage"
+    ],
+    "interruptedAttemptsReceiveZeroCredit": true,
+    "checkerProfile": "same-head-congruence-v1",
+    "fuel": 400000000,
+    "finalAuthority": "A completed fresh whole-book verdict and exact tracked-input seal in tracking/checked.json; this receipt alone does not grant mathematical checkpoint credit.",
+    "frontendDiagnostic": {
+      "passed": true,
+      "seconds": 88.010798099,
+      "independentVerdict": false,
+      "reason": "Unchanged frontend API diagnostic only; final official verdict remains required."
+    }
+  },
+  "limitations": [
+    "Production non-store grammar; mounted boundary/store/dev-copy mechanisms remain unported.",
+    "Raw scalar slotTake no-op and explicit unsupported slot restoration do not implement store families.",
+    "General arbitrary branching action/flight ledger and publication theorem remains open."
+  ],
+  "kernelSelfChecks": {
+    "allLeanTheoremsChecked": true,
+    "positiveCases": 6,
+    "rawKernelCounterexamples": 3,
+    "fuel": 400000000,
+    "logSha256": "39efc80618ff4ed5c981423a3481e08e1de79839cf72262e4b371298c83805ec"
+  }
+}

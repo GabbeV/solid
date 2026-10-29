@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["pin178 borrowed guess is not saved", "runtime/lanes-state.bend", "+w = R.World.with_laneState(w, R.LaneState.with_kept(state, B.append(R.KeptGuess, R.LaneState.kept(state), [R.KeptGuess{id, R.NodeExtension.lane(x), R.NodeExtension.transaction(x), R.NodeExtension.q(x), lane}])))", "+w = w", "tests/pin-178605cf.mjs", "take"],
+  ["pin178 restored guess loses its saved value", "runtime/core.bend", "R.KeptGuess.value(entry)", "R.Present{R.Undefined{}}", "tests/pin-178605cf.mjs", "restoreKept"],
+  ["pin178 borrowed guess is never marked reverted", "runtime/core.bend", "_ => Lanes.markReverted(w, lane)", "_ => w", "tests/pin-178605cf.mjs", "supersedeAfter"],
+  ["pin178 transaction releases a still flying mark", "runtime/affects-scope.bend", "B.second(R.World, Bool, pair)", "False{}", "tests/pin-178605cf.mjs", "transactionReleaseLoop"],
+  ["pin178 pending guess opens unrelated hold for new question", "runtime/status.bend", "X.joinFuture(w, R.Transaction.parent(B.transaction(w, B.second(R.World, Nat, pair))))", "X.joinFuture(w, 0n)", "tests/pin-178605cf.mjs", "dispatch"],
+  ["pin178 newborn verdict always becomes frame reader", "runtime/verdict-state.bend", "U32.is_eq(born, 0)", "True{}", "tests/pin-178605cf.mjs", "markVerdictReader"],
+
   ["park debt kernel node membership overwrites the action count", "runtime/transaction.bend", "def holdNode(+w: R.World, +id: Nat, t: Nat) -> R.World:\n  list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t)", "def holdNode(+w: R.World, +id: Nat, +t: Nat) -> R.World:\n  B.store_transaction(list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t), t, R.Transaction.with_open(B.transaction(w, t), 0n))", "tests/proof-properties.mjs", "holdNode", "park-count-negative-probes"],
   ["park debt kernel exhausted child walk erases action debt", "runtime/transaction.bend", "R.World.with_fault(w, R.Exhausted{})", "R.World.with_fault(B.store_transaction(w, 1n, R.Transaction.with_open(B.transaction(w, 1n), 0n)), R.Exhausted{})", "tests/proof-properties.mjs", "holdRun", "park-count-negative-probes"],
 
@@ -368,7 +375,7 @@ const mutations=[
   ["affects omits schedule", "runtime/affects-scope.bend", "B.schedule(register(w, node))", "register(w, node)", "tests/affects.mjs", "affects"],
   ["affects drops duplicate marks", "runtime/affects-scope.bend", "R.SomeIds{B.append(Nat, items, [node])}", "R.SomeIds{[node]}", "tests/affects.mjs", "push"],
   ["affects omits release decrement", "runtime/affects-scope.bend", "+pair = M.unmark(w, node)", "+pair = M.unmark(M.mark(w, node), node)", "tests/affects.mjs", "releaseLoop"],
-  ["affects skips transaction release", "runtime/affects-scope.bend", "+w = release(w, nodes)", "+w = w", "tests/affects.mjs", "releaseTransactionValue"],
+  ["affects skips transaction release", "runtime/affects-scope.bend", "release(B.store_transaction(w, t, R.Transaction.with_marks(B.transaction(w, t), R.SomeIds{[]})), done)", "B.store_transaction(w, t, R.Transaction.with_marks(B.transaction(w, t), R.SomeIds{[]}))", "tests/affects.mjs", "transactionReleaseLoop"],
   ["affects releases pending ambient marks", "runtime/affects-scope.bend", "B.has(R.Node.status(B.node(w, node)), K.STATUS_PENDING())", "False{}", "tests/affects.mjs", "inFlight"],
   ["affects retains finished ambient marks", "runtime/affects-scope.bend", "+w = R.World.with_ambientMarks(w, take(kept, R.World.ambientMarks(w)))", "+w = w", "tests/affects.mjs", "ambientLoop"],
   ["affects drops pending ambient marks", "runtime/affects-scope.bend", "1n+index, 1n+kept, done", "1n+index, kept, done", "tests/affects.mjs", "ambientLoop"],
@@ -381,11 +388,11 @@ const mutations=[
   ["affects kernel absent release changes scope", "runtime/affects-scope.bend", "case R.NoIds{}:\n      w", "case R.NoIds{}:\n      R.World.with_scheduled(w, False{})", "tests/proof-properties.mjs", "releaseTransactionValue", "affects-scope"],
   ["affects kernel complete declaration returns a value", "runtime/core.bend", "Machine{MarkScope.affects(w, target), rest, R.Undefined{} <> tail}", "Machine{MarkScope.affects(w, target), rest, R.Number{0n} <> tail}", "tests/proof-properties.mjs", "dispatch", "affects-program"],
 
-  ["window read ignores the active dispatcher", "runtime/core.bend", "R.VerdictState.dispatch(R.World.verdictState(w))", "False{}", "tests/verdict-windows.mjs", "readPrepared"],
+  ["window read ignores the active dispatcher", "runtime/core.bend", "R.VerdictState.dispatch(R.World.verdictState(w))", "False{}", "tests/verdict-windows.mjs", "readNode"],
   ["window latest skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 2)", "+w = w", "tests/verdict-windows.mjs", "latestWindow"],
   ["window probe skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 1)", "+w = w", "tests/verdict-windows.mjs", "pendingWindow"],
-  ["window tracked pull inherits outer window", "runtime/core.bend", "pullComputed(Verdict.setDispatch(w, False{}),", "pullComputed(w,", "tests/verdict-read-alignment.mjs", "verdictValue"],
-  ["window verdict pull applies plain read verdict carry", "runtime/core.bend", "VerdictPulled{id, reader, owned, tracked}, False{})", "VerdictPulled{id, reader, owned, tracked}, True{})", "tests/verdict-read-alignment.mjs", "verdictValue"],
+  ["window tracked pull inherits outer window", "runtime/core.bend", "prepareComputed(Verdict.setDispatch(w, False{}),", "prepareComputed(w,", "tests/verdict-read-alignment.mjs", "verdictValue"],
+  ["window verdict pull applies plain read verdict carry", "runtime/core.bend", "VerdictPulled{id, reader, owned, tracked}, False{})", "VerdictPulled{id, reader, owned, tracked}, True{})", "tests/verdict-read-alignment.mjs", "verdictPrepared"],
   ["window mark hook bypasses active global guard", "runtime/core.bend", "Marks.covered(w, id)", "Marks.marked(w, id, [])", "tests/verdict-read-alignment.mjs", "verdictAfterPull"],
   ["window guess comparison inherits isSame containment", "runtime/core.bend", "rawEquals(w, VerdictGuessCompared{", "isSame(w, VerdictGuessCompared{", "tests/verdict-comparators.mjs", "verdictOverride"],
   ["window guess read serves held truth", "runtime/core.bend", "B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{})", "Truth.laneValueOf(w, id)", "tests/verdict-read-alignment.mjs", "verdictGuessValue"],
@@ -537,7 +544,7 @@ const mutations=[
   ['lane stage leave allocates a cold extension','runtime/lanes-state.bend','B.Bundle{clearStageConfig(w, id), False{}}','B.Bundle{clearStageConfig(E.ext(w, id), id), False{}}','tests/proof-properties.mjs','leaveStage','lane-stage'],
   ['lane stage steals pending frame leaf','runtime/lanes-state.bend','B.Bundle{W.queuePendingNode(w, id), False{}}','B.Bundle{Tx.list(w, id, lane), True{}}','tests/proof-properties.mjs','effectStage','lane-stage'],
   ['lane stage treats true error as pending source','runtime/lanes-state.bend','case _:\n      False{}','case _:\n      True{}','tests/proof-properties.mjs','framePending','lane-stage'],
-  ['lane stage keeps a confirmed guess marker','runtime/lanes-state.bend','B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())','R.Node.config(B.node(w, id))','tests/lane-stage-alignment.mjs','computationStage'],
+  ['lane stage keeps a confirmed guess marker','runtime/lanes-state.bend','B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS())','R.Node.config(B.node(w, id))','tests/lane-stage-alignment.mjs','clearGuessUnlessErrored'],
   ['lane stage always wakes a shown exit','runtime/lanes-state.bend','B.second(R.World, Bool, pair)','False{}','tests/lane-stage-alignment.mjs','leaveStage'],
   ['lane stage queues first loading in the old frame','runtime/lanes-state.bend','Bool.not(B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED()))','True{}','tests/lane-stage-alignment.mjs','framePending'],
   ['lane stage ignores an interrupted pass','runtime/lanes-state.bend','stageErrored(error)','False{}','tests/lane-stage-alignment.mjs','laneStage'],
@@ -570,7 +577,7 @@ const mutations=[
   ['lane guesses serve staged truth instead of their guess','runtime/truth-state.bend','Bool.not(B.has(R.Node.config(n), K.CONFIG_GUESS()))','True{}','tests/proof-properties.mjs','laneValueOf','lane-laws'],
   ['lane merging leaves members pointing to retired group','runtime/lanes-state.bend','B.store_transaction(w, member, R.Transaction.with_links(B.transaction(w, member), ga))','w','tests/lanes-state-alignment.mjs','groupLoop'],
   ['lane unlink does not mutate the shared group','runtime/lanes-state.bend','storeGroup(w, g, P.remove(groups(w, g), lane))','w','tests/lanes-state-alignment.mjs','unlink'],
-  ['lane first read loses joined staged-reader intake','runtime/lanes-state.bend','Bool.and(B.has(flags, K.REACTIVE_JOINED()), B.has(flags, K.REACTIVE_STAGED_READ()))','False{}','tests/lanes-state-alignment.mjs','enterLane'],
+  ['lane first read loses joined staged-reader intake','runtime/lanes-state.bend','Bool.and(B.has(flags, K.REACTIVE_STAGED_READ()), Bool.or(R.LaneState.guessed(R.World.laneState(w)), B.has(flags, K.REACTIVE_JOINED())))','False{}','tests/lanes-state-alignment.mjs','enterLane'],
   ['lane dirty skips unowned render readers','runtime/lanes-state.bend','B.effect(R.Node.kind(B.node(w, reader)))','False{}','tests/lanes-state-alignment.mjs','dirtyLoop'],
   ['lane staged read includes never-initialized source','runtime/read-state.bend','B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED())','False{}','tests/lanes-state-alignment.mjs','stagedRead'],
   ['mark global count fails to increment','runtime/affects-marks.bend','1n+R.World.activeMarks(w)','R.World.activeMarks(w)','tests/proof-properties.mjs','mark','mark-laws'],

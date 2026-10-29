@@ -1071,7 +1071,7 @@ def Laws.lane_leaked_seam_holds_without_reveal(w, rest, stack, lane):
 def Laws.lane_committed_effect_skips_value_comparison(w, rest, stack, id, shown):
   LaneLifecycle.effectCommit(w, rest, stack, id, shown)
 
-def Laws.lane_end_starts_live_reverse_scan(w, rest, stack, parent):
+def Laws.lane_end_checks_kept_before_live_reverse_scan(w, rest, stack, parent):
   LaneLifecycle.reverseEndEntry(w, rest, stack, parent)
 
 def Laws.lane_confirmation_stages_truth_without_joining_parent(w, rest, stack, id, parent, value):

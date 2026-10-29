@@ -357,3 +357,14 @@ quantified roots, with five compiled negative checks (539 configured: 450 finite
 complete-program domains and budgets are retained. The complete preceding
 534-variant stream receipt names its frozen 93de532 checkpoint; from wiring is
 still unfinished and no deviation is active.
+
+
+At 178605cf, LaneState additionally carries five distinct source module globals:
+scheduler `guessing`, lanes `guessed`, the ordered KeptGuess list, `reverted`
+identity membership and production `reverting`. Persistent flags are not inferred
+from current arrays. KeptGuess preserves node, old lane Slot, raw cached owner,
+exact binary question and borrowing holder; absent differs from present undefined.
+Stable transaction identities model the WeakSet's membership, with no public GC/
+finalization observation. Source order, reverse-prefix removal and callback return
+boundaries are in the [source review](reviews/solid-178605cf.md). This grouping is
+representation only and does not collapse the two arming stores into one.

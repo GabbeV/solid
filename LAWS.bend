@@ -1805,12 +1805,12 @@ law lane_committed_effect_skips_value_comparison:
   for +shown: R.Slot
   {Core.dissolveCommitted(w, rest, stack, id, True{}, shown) == Core.Machine{w, rest, stack} : Core.Machine}
 
-law lane_end_starts_live_reverse_scan:
+law lane_end_checks_kept_before_live_reverse_scan:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +parent: Nat
-  {Core.endLanes(w, rest, stack, parent) == Core.Machine{w, Core.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack} : Core.Machine}
+  {Core.endLanes(w, rest, stack, parent) == B.choose(~Core.Machine, R.LaneState.guessed(R.World.laneState(w)), _ => Core.Machine{w, Core.EndKept{parent, B.length(R.KeptGuess, R.LaneState.kept(R.World.laneState(w)))} <> rest, stack}, _ => Core.Machine{w, Core.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack}) : Core.Machine}
 
 law lane_confirmation_stages_truth_without_joining_parent:
   for +w: R.World

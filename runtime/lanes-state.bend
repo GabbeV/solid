@@ -1,5 +1,5 @@
-# core/lanes.ts identities and routing. Seams/staging/corrections are separate
-# unfinished engine crossings, not approximated by these helpers.
+# core/lanes.ts identities, routing, borrowed guesses and staging helpers.
+# Callback/commit/seam continuations live in core.bend; stores stay excluded.
 import Base
 import ./truth-state.bend as T
 import ./question.bend as Question
@@ -101,7 +101,7 @@ def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
     _ =>
       +w = R.World.with_passLane(w, lane)
       +flags = R.Node.flags(B.node(w, reader))
-      B.choose(~R.World, Bool.and(B.has(flags, K.REACTIVE_JOINED()), B.has(flags, K.REACTIVE_STAGED_READ())), _ => V.stagedRead(w, reader, 0n), _ => w),
+      B.choose(~R.World, Bool.and(B.has(flags, K.REACTIVE_STAGED_READ()), Bool.or(R.LaneState.guessed(R.World.laneState(w)), B.has(flags, K.REACTIVE_JOINED()))), _ => V.stagedRead(w, reader, 0n), _ => w),
     _ => B.choose(~R.World, sameLane(w, p, lane), _ => R.World.with_passLane(w, lane),
       _ =>
         +pair = under(w, p, lane)
@@ -160,13 +160,16 @@ def leaveStage(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(R.Node.x(B.node(w, id)), 0n), _ => B.Bundle{clearStageConfig(w, id), False{}},
     _ =>
       +tx = R.NodeExtension.transaction(B.extension(w, id))
-      +w = B.choose(~R.World, Bool.and(Nat.is_ne(tx, 0n), R.Transaction.shown(B.transaction(w, tx))),
-        _ =>
-          +pair = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, tx)))
-          +pair = Tx.blocked(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair))
-          +w = B.first(R.World, Bool, pair)
-          B.choose(~R.World, B.second(R.World, Bool, pair), _ => w,
-            _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN())))), _ => w)
+      +w = B.choose(~R.World, Bool.and(R.Transaction.lane(B.transaction(w, tx)), R.Transaction.shown(B.transaction(w, tx))),
+        _ => B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), 0n),
+          _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN()))),
+          _ =>
+            +pair = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, tx)))
+            +pair = Tx.blocked(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair))
+            +w = B.first(R.World, Bool, pair)
+            B.choose(~R.World, B.second(R.World, Bool, pair),
+              _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), display(w, id))),
+              _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN()))))), _ => w)
       leaveStageEnd(w, id, tx))
 
 def hasStageLane(+w: R.World, +id: Nat) -> Bool:
@@ -191,14 +194,56 @@ def effectStage(+w: R.World, +id: Nat, +lane: Nat, +error: StageError) -> B.Bund
         B.Bundle{Tx.list(w, id, lane), True{}}),
     _ => B.Bundle{Tx.list(w, id, lane), True{}})
 
-def computationStage(+w: R.World, +id: Nat, lane: Nat, error: StageError) -> B.Bundle<R.World, Bool>:
+# lanes.ts:rerun walks current subscriber links in source order.
+def rerunLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat) -> R.World:
+  match fuel:
+    case 0n:
+      B.choose(~R.World, Nat.is_eq(edge, 0n), _ => w, _ => R.World.with_fault(w, R.Exhausted{}))
+    case 1n+p:
+      B.choose(~R.World, Nat.is_eq(edge, 0n), _ => w,
+        _ =>
+          +w = Tx.staleReader(w, R.Link.sub(B.link(w, edge)), lane)
+          rerunLoop(p, w, R.Link.nextSub(B.link(w, edge)), lane))
+
+def rerun(+w: R.World, +id: Nat, lane: Nat) -> R.World:
+  rerunLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane)
+
+# Source kept array is an ordered stack of five-tuples, not a set.
+def take(+w: R.World, +id: Nat, +lane: Nat, +detach: Bool) -> R.World:
+  +x = B.extension(w, id)
+  +state = R.World.laneState(w)
+  +w = R.World.with_laneState(w, R.LaneState.with_kept(state, B.append(R.KeptGuess, R.LaneState.kept(state), [R.KeptGuess{id, R.NodeExtension.lane(x), R.NodeExtension.transaction(x), R.NodeExtension.q(x), lane}])))
+  +w = rerun(w, id, lane)
+  +mask = B.choose(~U32, detach, _ => U32.or(K.CONFIG_GUESS(), K.CONFIG_OVERRIDE()), _ => K.CONFIG_GUESS())
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), mask)))
+  B.choose(~R.World, detach,
+    _ => B.store_extension(w, id, R.NodeExtension.with_lane(R.NodeExtension.with_transaction(B.extension(w, id), 0n), R.Empty{})),
+    _ => Tx.list(w, id, lane))
+
+def markReverted(+w: R.World, +lane: Nat) -> R.World:
+  +state = R.World.laneState(w)
+  B.choose(~R.World, B.contains(R.LaneState.reverted(state), lane), _ => w,
+    _ => R.World.with_laneState(w, R.LaneState.with_reverted(state, B.append(Nat, R.LaneState.reverted(state), [lane]))))
+
+def clearGuessUnlessErrored(+w: R.World, +id: Nat, error: StageError) -> R.World:
+  B.choose(~R.World, stageErrored(error), _ => w,
+    _ => B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))))
+
+def computationStage(+w: R.World, +id: Nat, +lane: Nat, +error: StageError) -> B.Bundle<R.World, Bool>:
   +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()), _ => w,
     _ =>
       +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{}))
       +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(B.clear(R.Node.config(B.node(w, id)), U32.or(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())), K.CONFIG_OVERRIDE())))
       E.ext(w, id))
-  +w = B.choose(~R.World, stageErrored(error), _ => w,
-    _ => B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()))))
+  +old = R.NodeExtension.transaction(B.extension(w, id))
+  +w = B.choose(~R.World, Bool.and(R.LaneState.guessed(R.World.laneState(w)), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), R.Transaction.lane(B.transaction(w, old)))),
+    _ =>
+      +a = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, old)))
+      +b = Tx.resolveTx(B.first(R.World, Nat, a), R.Transaction.parent(B.transaction(B.first(R.World, Nat, a), lane)))
+      +w = B.first(R.World, Nat, b)
+      B.choose(~R.World, Nat.is_ne(B.second(R.World, Nat, a), B.second(R.World, Nat, b)),
+        _ => take(w, id, lane, False{}), _ => clearGuessUnlessErrored(w, id, error)),
+    _ => clearGuessUnlessErrored(w, id, error))
   B.Bundle{Tx.list(w, id, lane), True{}}
 
 def laneStage(+w: R.World, +id: Nat, +lane: Nat, create: Bool, +error: StageError) -> B.Bundle<R.World, Bool>:
@@ -252,6 +297,8 @@ def pushGuess(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
   +w = B.first(R.World, R.Question, pair)
   +state = R.World.laneState(w)
   +w = R.World.with_laneState(w, R.LaneState.with_pendingGuesses(state, B.append(R.Guess, R.LaneState.pendingGuesses(state), [R.Guess{id, value, B.second(R.World, R.Question, pair)}])))
+  +w = R.World.with_laneState(w, R.LaneState.with_guessing(R.World.laneState(w), True{}))
+  +w = R.World.with_laneState(w, R.LaneState.with_guessed(R.World.laneState(w), True{}))
   B.schedule(w)
 
 # Persistent-list representation of entered.pop(): retain the prefix before

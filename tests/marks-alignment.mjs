@@ -34,7 +34,7 @@ try {
         export function probeResetMarks(){active=0;}
       `}));
       b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
-        export function probeResetQueue(){clock=0;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=9;dirtyQueue._max=0;dirtyQueue._marked=false;}
+        export function probeResetQueue(){guessing=false;clock=0;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=9;dirtyQueue._max=0;dirtyQueue._marked=false;}
       `}));
     }
   }]});

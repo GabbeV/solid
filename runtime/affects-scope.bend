@@ -53,22 +53,39 @@ def releaseLoop(fuel: Nat, +w: R.World, +nodes: List<&2, Nat>, +index: Nat) -> R
 def release(+w: R.World, +nodes: List<&2, Nat>) -> R.World:
   releaseLoop(1n+B.length(Nat, nodes), w, nodes, 0n)
 
-def releaseTransactionValue(+w: R.World, +t: Nat, scope: R.OptionalIds) -> R.World:
-  match scope:
-    case R.NoIds{}:
-      w
-    case R.SomeIds{nodes}:
-      +w = release(w, nodes)
-      B.choose(~R.World, B.ok(w), _ => B.store_transaction(w, t, R.Transaction.with_marks(B.transaction(w, t), R.SomeIds{[]})), _ => w)
-
-def releaseTransaction(+w: R.World, +t: Nat) -> R.World:
-  releaseTransactionValue(w, t, R.Transaction.marks(B.transaction(w, t)))
-
 # STATUS_PENDING short-circuits the unported store slot-flight hook.
 def inFlight(+w: R.World, +node: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.status(B.node(w, node)), K.STATUS_PENDING()), _ => B.Bundle{w, True{}},
     _ => B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, node)), K.CONFIG_SLOT_NODE()),
       _ => B.Bundle{R.World.with_fault(w, R.Unsupported{86n}), False{}}, _ => B.Bundle{w, False{}}))
+
+# Transaction release retains a marked node whose own flight is still up.
+# The original scope is cleared before unmark/repoll begins.
+def transactionReleaseLoop(fuel: Nat, +w: R.World, +t: Nat, +nodes: List<&2, Nat>, +index: Nat, +done: List<&2, Nat>) -> R.World:
+  match fuel:
+    case 0n:
+      R.World.with_fault(w, R.Exhausted{})
+    case 1n+ +p:
+      B.choose(~R.World, Nat.is_ge(index, B.length(Nat, nodes)),
+        _ => release(B.store_transaction(w, t, R.Transaction.with_marks(B.transaction(w, t), R.SomeIds{[]})), done),
+        _ =>
+          +node = B.get(Nat, nodes, index, 0n)
+          +pair = inFlight(w, node)
+          +w = B.first(R.World, Bool, pair)
+          B.choose(~R.World, B.ok(w),
+            _ => B.choose(~R.World, B.second(R.World, Bool, pair),
+              _ => transactionReleaseLoop(p, R.World.with_ambientMarks(w, B.append(Nat, R.World.ambientMarks(w), [node])), t, nodes, 1n+index, done),
+              _ => transactionReleaseLoop(p, w, t, nodes, 1n+index, B.append(Nat, done, [node]))), _ => w))
+
+def releaseTransactionValue(+w: R.World, +t: Nat, scope: R.OptionalIds) -> R.World:
+  match scope:
+    case R.NoIds{}:
+      w
+    case R.SomeIds{+nodes}:
+      transactionReleaseLoop(1n+B.length(Nat, nodes), w, t, nodes, 0n, [])
+
+def releaseTransaction(+w: R.World, +t: Nat) -> R.World:
+  releaseTransactionValue(w, t, R.Transaction.marks(B.transaction(w, t)))
 
 def take(count: Nat, items: List<&2, Nat>) -> List<&2, Nat>:
   match count items:

@@ -8,8 +8,8 @@ belong in [session notes](session-2026-10-28.md) and [progress.md](progress.md).
 The [previous accumulated frontier](reviews/frontier-through-388cfefc.md) is an
 exact historical snapshot; its earlier omissions and next steps may be superseded.
 
-Solid is pinned to `ac28157a` (rc.19). Reviewed next child17d4d1b5 changes only
-Markdown; runtime/package metadata are identical. The Bend2.0.37 frontend/vendor
+Solid is pinned to `178605cf` (rc.19). The [source review](reviews/solid-178605cf.md)
+records the integrated optimistic borrowing, verdict/flight and mark-release fixes. The Bend2.0.37 frontend/vendor
 and fully Lean-checked congruence checker profile/fuel remain unchanged. No
 semantic deviation is active. This is an incremental production, non-store port
 with an explicit callback/host grammar, not the whole package. See the
@@ -23,7 +23,7 @@ and [verification record](verification.md) for admitted domains and evidence.
 | Graph, owners, reads/writes, queues and errors | One shared runtime; public histories plus operation-level native controls | General publication/frame/representation laws; committed storage/tree/trace and full ordinary control frames through actual staging/default setter, finite helper histories and finite real setter-body evaluation; closed error/cleanup regressions | Arbitrary topology, callback bodies and error/disposal histories |
 | Scalar memo | Actual constructor, setter and flush | Arbitrary finite write/flush histories and nonempty batches for natural payloads; exact carried World | Branching async events and variable graph shape |
 | Held actions and transactions | Real reusable action protocol, redirects, joins, parking/landing; native generator and private helper controls | Actual lookup/mark/resume/body/retirement/duplicate guards; constructed finite helper histories; raw joined-controller finite bodies with derived source/cache/capture/count/method facts; internal two-resume count2→1→0 and stack handoff; actual first body/output drain/slice to queued Round with count1 and unchanged blocker; earlier certified rendered-flight/landing-scan contracts remain separate | Full public held entry/parking/host transport, construction of arbitrary source-cache redirects, full once-only protocol, global forest/live-list preservation, full action/flight ledger and publication invariant |
-| Lanes, latest/pending, optimistic values | Admitted non-store public crossings and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
+| Lanes, latest/pending, optimistic values | Admitted non-store public crossings, saved/restored borrowed guesses and shared internal engine | Local question, lane, frame, answer and read properties; representative exact executions | Held optimistic correction/confirmation across arbitrary branching histories; boundaries and stores |
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 

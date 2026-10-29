@@ -15,7 +15,7 @@ def effectCommit(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>
   {==}
 
 def reverseEndEntry(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +parent: Nat) ->
-  {C.endLanes(w, rest, stack, parent) == C.Machine{w, C.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack} : C.Machine}:
+  {C.endLanes(w, rest, stack, parent) == B.choose(~C.Machine, R.LaneState.guessed(R.World.laneState(w)), _ => C.Machine{w, C.EndKept{parent, B.length(R.KeptGuess, R.LaneState.kept(R.World.laneState(w)))} <> rest, stack}, _ => C.Machine{w, C.EndLanesLoop{parent, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack}) : C.Machine}:
   {==}
 
 def confirmationEnd(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +parent: Nat, +value: R.Value) ->

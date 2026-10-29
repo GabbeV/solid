@@ -7,7 +7,7 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `ac28157a` (rc.19). The Bend2.0.37 frontend and vendored snapshot
+Solid is pinned to `178605cf` (rc.19). The Bend2.0.37 frontend and vendored snapshot
 remain unchanged. The independent checker uses the recorded, fully Lean-checked
 [congruence profile](kernel-congruence.md); Lean4.34.0 and kernel fuel are unchanged. No semantic deviation is active.
 
@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 733 = 496 finite + 237 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
+| Configured mutations | 739 = 502 finite + 237 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
 | Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
 | Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -684,3 +684,20 @@ derives successful holding, the identity child-frame walk and retained health.
 Mixed source/render intake and the earlier heap reachability remain open. Six
 new roots require the normal composed independent verdict and exact input seal;
 no runtime/source/checker change or new upstream bug/deviation is involved.
+
+
+## Source update to 178605cf (2026-10-29)
+
+The [review](reviews/solid-178605cf.md) separates 78 exact selected inputs,
+source-followable non-store runtime changes, admitted helper controls and excluded
+store/boundary/dev changes. Native signals builds/declarations and 380 upstream
+files /5,858 tests pass. New borrowed-guess, pending-question, ancestor-verdict and
+mark-flight controls are paired with unchanged source bodies. Six new compiled
+semantic mutations and the six moved-operation negative checks are separate from
+the old complete727 frozen sweep; target validation alone is not rejection credit.
+
+The existing 789-root book must pass anew on this runtime. Its lane-end and guess
+push boundaries follow the new source; the nonguess leaf-notification statement
+retains its original assumptions and result. Preliminary interrupted authoring
+checks receive no credit. The final completed verdict/input seal in checked.json
+is the mathematical authority, with the unchanged profile and fuel.

@@ -1,3 +1,4 @@
+import { checkForeignRead, enterCopy, exitCopy } from "./copies.js";
 import {
   clearStatus,
   handleAsync,
@@ -129,6 +130,7 @@ import {
   laneDirty,
   externalUntrackHook,
   freshHook,
+  guessing,
   laneOutcomeHook,
   laneReadHook,
   laneStageHook,
@@ -470,9 +472,15 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   // A19 exc. 2: a `refresh()` re-asks the question already answered — quiet
   // for the verdict — unless the question in flight is a new one, which the
   // re-ask does not launder (a poll during a quiet confirm stays quiet).
+  // Nor a guess's new question whose answer is still held (#4336: an
+  // action's refresh after an outside input change has not committed it).
   const reask =
     (el._flags & REACTIVE_REASK) !== 0 &&
-    !(el._statusFlags & STATUS_PENDING && el._x !== null && !el._x._reask);
+    !(
+      (el._statusFlags & STATUS_PENDING || (guessing && el._pendingValue !== NOT_PENDING)) &&
+      el._x !== null &&
+      !el._x._reask
+    );
 
   const oldcontext = context;
   context = el;
@@ -503,6 +511,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
     prevStrictRead = strictRead;
     strictRead = false;
   }
+  const prevCopy = __DEV__ ? enterCopy() : undefined;
   tracking = true;
   const isStaleEffect = isEffect && isEffect !== EFFECT_USER;
   const prevStale = stale;
@@ -572,7 +581,10 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   } finally {
     tracking = prevTracking;
     if (laneStageHook) laneRoot = prevMount;
-    if (__DEV__) strictRead = prevStrictRead;
+    if (__DEV__) {
+      strictRead = prevStrictRead;
+      exitCopy(prevCopy);
+    }
     if (isStaleEffect) stale = prevStale;
     // Consume the missed-wake latch (#3037, set by insertSubs): a dep write
     // landed beneath this pass on a link it had already validated. The wipe
@@ -582,11 +594,15 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
     missedWake = (el._flags & REACTIVE_MISSED_WAKE) !== 0;
     // A mount's staged read joins it — except a nested derivation left
     // pending: no render effect reaches it yet, so it holds nothing and
-    // reaches no boundary (Reader, #4203). A reader that does is caught.
+    // reaches no boundary (Reader, #4203), whatever it read — a memo the
+    // mount bore held over the staging included, at any depth (#4340). A
+    // reader that does is caught.
     joined = !!(
       el._flags &
-      (mount && (prevLane || isEffect || !(el._statusFlags & STATUS_PENDING))
-        ? REACTIVE_JOINED | REACTIVE_STAGED_READ
+      (mount
+        ? prevLane || isEffect || !(el._statusFlags & STATUS_PENDING)
+          ? REACTIVE_JOINED | REACTIVE_STAGED_READ
+          : 0
         : REACTIVE_JOINED)
     );
     // A verdict reader is one for as long as it probes, or reads a memo
@@ -1210,7 +1226,7 @@ export function bornInto(c: Computed<any>, t: Transaction): unknown {
 
 /** The computed whose pass a creation under `owner` belongs to (a root's is
  * its nearest computed ancestor's), or null outside every pass. */
-function creatorPass(owner: Owner | null): Computed<any> | null {
+export function creatorPass(owner: Owner | null): Computed<any> | null {
   return owner !== null && (owner as Root)._root
     ? (owner as Root)._parentComputed
     : (owner as Computed<any> | null);
@@ -1816,9 +1832,16 @@ export function pullComputed(owner: Computed<any>, c: Computed<any>): void {
   if (height >= c._height && owner._parent !== c) c._height = height + 1;
 }
 
-export function read<T>(el: Signal<T> | Computed<T>): T {
-  if (__DEV__) DEV.hooks.onRead?.(el);
-  if (__DEV__ && asyncTailFlights !== 0 && !tracking && untrackDepth === 0)
+/**
+ * Dev only: a read's diagnostics — the devtools read hook, the foreign-read
+ * check and the post-await untracked-read check. Every caller guards with
+ * `__DEV__`: `read` here, and a store leaf's read that is served without
+ * `read` (`nodeValue`'s first landing), so no read goes unseen in dev.
+ */
+export function devRead(el: Signal<any> | Computed<any>): void {
+  DEV.hooks.onRead?.(el);
+  if (!tracking) checkForeignRead();
+  if (asyncTailFlights !== 0 && !tracking && untrackDepth === 0)
     checkPostAwaitRead(
       el,
       el,
@@ -1827,6 +1850,10 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       ((el as any)._statusFlags & (STATUS_PENDING | STATUS_UNINITIALIZED)) ===
         (STATUS_PENDING | STATUS_UNINITIALIZED)
     );
+}
+
+export function read<T>(el: Signal<T> | Computed<T>): T {
+  if (__DEV__) devRead(el);
 
   let c = context;
   if ((c as Root)?._root) c = (c as Root)._parentComputed;
@@ -1837,11 +1864,12 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
   // undefined and mask to 0 on every site below.)
   const owner = el as Computed<any>;
 
-  if (typeof computed._fn === "function") prepareComputed(el as Computed<unknown>, false);
-
   // The verdict windows (`latest`, `isPending`; verdict.ts): one cold path,
-  // off this one, present only while a window is open.
+  // off this one, present only while a window is open. It wakes a lazy or
+  // dormant memo itself, outside the window (#4366).
   if (verdict !== null) return verdict(el, c as Computed<any> | null) as T;
+
+  if (typeof computed._fn === "function") prepareComputed(el as Computed<unknown>, false);
 
   if (
     !computed._fn &&

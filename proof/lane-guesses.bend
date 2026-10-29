@@ -28,7 +28,7 @@ def loopNewest(+w: R.World, +prefix: List<&2, R.Guess>, +id: Nat, +value: R.Valu
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_laneState:
-        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered}:
+        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered, +s_guessing, +s_guessed, +s_kept, +s_reverted, +s_reverting}:
           +queue = B.append(R.Guess, prefix, [R.Guess{id, value, q}])
           +s = scope(w, queue)
           +index = B.length(R.Guess, prefix)
@@ -42,7 +42,7 @@ def newestWins(+w: R.World, +prefix: List<&2, R.Guess>, +id: Nat, +value: R.Valu
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_laneState:
-        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered}:
+        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered, +s_guessing, +s_guessed, +s_kept, +s_reverted, +s_reverting}:
           +queue = B.append(R.Guess, prefix, [R.Guess{id, value, q}])
           Equal.trans(R.Slot, L.pendingGuessOf(scope(w, queue), id), L.pendingGuessLoop(scope(w, queue), id, 1n+B.length(R.Guess, prefix)), R.Present{value},
             Equal.cong(Nat, R.Slot, count => L.pendingGuessLoop(scope(w, queue), id, count), B.length(R.Guess, queue), 1n+B.length(R.Guess, prefix), lengthLast(prefix, R.Guess{id, value, q})),
@@ -53,7 +53,7 @@ def emptyLookup(+w: R.World, +id: Nat) ->
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_laneState:
-        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered}:
+        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered, +s_guessing, +s_guessed, +s_kept, +s_reverted, +s_reverting}:
           {==}
 
 def judgedEmpty(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +parent: Nat) ->
@@ -61,7 +61,7 @@ def judgedEmpty(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>,
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_laneState:
-        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered}:
+        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered, +s_guessing, +s_guessed, +s_kept, +s_reverted, +s_reverting}:
           {==}
 
 
@@ -79,14 +79,16 @@ def equalGuessReasks(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Va
   Equal.cong(Bool, C.Machine, guess => compared(w, rest, stack, id, value, guess), B.has(R.Node.config(B.node(w, id)), K.CONFIG_GUESS()), True{}, known)
 
 def pushed(+w: R.World, id: Nat, value: R.Value, q: R.Question) -> R.World:
-  R.World.with_laneState(w, R.LaneState.with_pendingGuesses(R.World.laneState(w), B.append(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)), [R.Guess{id, value, q}])))
+  +w = R.World.with_laneState(w, R.LaneState.with_pendingGuesses(R.World.laneState(w), B.append(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w)), [R.Guess{id, value, q}])))
+  +w = R.World.with_laneState(w, R.LaneState.with_guessing(R.World.laneState(w), True{}))
+  R.World.with_laneState(w, R.LaneState.with_guessed(R.World.laneState(w), True{}))
 
 def unstampedPush(+w: R.World, +id: Nat, +value: R.Value) ->
   {L.pushGuess(R.World.with_question(w, R.QuestionZero{}), id, value) == B.schedule(pushed(R.World.with_questions(R.World.with_question(w, R.QuestionZero{}), Q.increment(R.World.questions(w))), id, value, Q.increment(R.World.questions(w)))) : R.World}:
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_laneState:
-        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered}:
+        case R.LaneState{+s_live, +s_groups, +s_stagedReaders, +s_pendingGuesses, +s_judged, +s_root, +s_entered, +s_guessing, +s_guessed, +s_kept, +s_reverted, +s_reverting}:
           {==}
 
 # laneSeams' null path still judges the previously recorded live prefix.

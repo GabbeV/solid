@@ -85,7 +85,7 @@
     "core/core.ts:recompute": {
       "bend": "runtime/core.bend:LanePass, PassFrame, seatPass, passValue, recomputeFlight, recomputeAfterFlight, recomputeAfterTeardown, recomputePrepared, catchStatus, catchPass, startPassFinally, passFinallyBody, passFinallyTail, joinedPass, restoreMount, PassReleases, afterPass, PassLaneStage, stagePassAt, stagePass, publishState, publicationChanged, publishCompared, markPublishedEffectAs, publishStoresAs, PublishOutcome, publicationCompleted, retireOutgoing, FinishPublication, QueuePublication, queuePublicationIn, AfterDeadPass; existing flight/iterator/owner/pending continuations remain shared; runtime/transaction.bend:reenterHeld",
       "status": "partial",
-      "restrictions": "Source head lane selection precedes pre-body teardown; LanePass retains previous lane/root and current mount across callbacks. The previous/function argument and equality slot prefer pending, then override lane slot, then committed value. Body finally restores tracking/root/stale before mount-aware joined capture (#4171/#4207), flag/config wipe, context, deferred releases and reask. Stage refusal captures null publication lane while ambient lane remains installed. Equality isSame and raw guess outcomes keep separate catch policies; effect Object.is suppression, explicit captured-lane queueing, hidden/shown/private stores, subscriber laneDirty, born-held mainline behavior, error/pending retirement and trim/queue order execute through the one core machine. Publication tail restores previous lane before missed-wake scheduling. Dead passes clear dependencies/flight before restoring it. Active laneStage has an explicit call continuation; inactive paths retain constructor/drain budgets. Six scoped kernel properties and 5354 actual-source entry/full-pass programs plus 1728 nearest-owner/heap controls check this dependency; public optimistic/verdict constructors, flush wiring, freshHook/boundaries, folded/store/snapshot paths and arbitrary host protocols remain unfinished. rc.17 cleanup collection/rethrow policy remains unchanged. See tracking/lane-passes.md and the prior teardown and pin reviews for callback/flight restrictions. #4302 held re-entry preserves combined verdict/frame gating and unconditional held clearing in the foreign established-frame branch. Mounted boundary constructors remain unfinished."
+      "restrictions": "Source head lane selection precedes pre-body teardown; LanePass retains previous lane/root and current mount across callbacks. The previous/function argument and equality slot prefer pending, then override lane slot, then committed value. Body finally restores tracking/root/stale before mount-aware joined capture (#4171/#4207), flag/config wipe, context, deferred releases and reask. Stage refusal captures null publication lane while ambient lane remains installed. Equality isSame and raw guess outcomes keep separate catch policies; effect Object.is suppression, explicit captured-lane queueing, hidden/shown/private stores, subscriber laneDirty, born-held mainline behavior, error/pending retirement and trim/queue order execute through the one core machine. Publication tail restores previous lane before missed-wake scheduling. Dead passes clear dependencies/flight before restoring it. Active laneStage has an explicit call continuation; inactive paths retain constructor/drain budgets. Six scoped kernel properties and 5354 actual-source entry/full-pass programs plus 1728 nearest-owner/heap controls check this dependency; public optimistic/verdict constructors, flush wiring, freshHook/boundaries, folded/store/snapshot paths and arbitrary host protocols remain unfinished. rc.17 cleanup collection/rethrow policy remains unchanged. See tracking/lane-passes.md and the prior teardown and pin reviews for callback/flight restrictions. #4302 held re-entry preserves combined verdict/frame gating and unconditional held clearing in the foreign established-frame branch. Mounted boundary constructors remain unfinished. 178605cf: reask exception includes guessing && present pending; a mounted pending nested derivation with no previous lane/effect uses a zero joined mask. New dev-copy enter/exit excluded by production profile."
     },
     "core/core.ts:updateIfNecessary": {
       "bend": "runtime/core.bend:update, checkDeps, CheckNext, afterCheck, ClearFlags",
@@ -103,9 +103,9 @@
       "restrictions": "Source heap height gate, fresh-read alternative, update and shallow parent height order. The continuation choice fuses the plain read F-6 postlude only at its source site; verdict reads omit it and disable dispatch during the pull. No extra ordinary-path tasks or budget changes."
     },
     "core/core.ts:read": {
-      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone",
+      "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone, prepareComputed, prepareDisposedAt",
       "status": "partial",
-      "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md. Active verdict dispatch now occurs after prepareComputed and before ordinary fast/slow selection, invoking the complete non-store verdictValue body; read events follow successful value choice. See tracking/verdict-windows.md."
+      "restrictions": "Source fast/slow held entry, frame/committed selection, pending throw and untracked retry link, later-cycle error retry, staged-error throw, born-staged NotReady(null), root forwarding and dormant tail. Snapshot, spectating, active verdict/lane/boundary paths unfinished. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md. Active verdict dispatch now occurs after prepareComputed and before ordinary fast/slow selection, invoking the complete non-store verdictValue body; read events follow successful value choice. See tracking/verdict-windows.md. 178605cf dispatches verdict before prepareComputed; verdict itself wakes outside the window. DevRead/cross-copy diagnostics are outside the production profile."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
@@ -170,7 +170,7 @@
     "core/effect.ts:runEffect": {
       "bend": "runtime/core.bend:runEffect, effectCatch, userError, errorArmCatch, applyEffect, effectFinally, ApplyEffect, InstallEffectCleanup, EffectFinally, ErrorArmFinally, installReturned, InstallReturnedCleanup, OwnerTasks, TrimFinallyRestore; runtime/callable.bend:cleanupAccessor, encodeAccessor, findAccessor, boundAccessor; runtime/core.bend:callbackAction CleanupBoundAccessor, ReadNode",
       "status": "partial",
-      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Application/error bodies receive actual values/parameters and use shared core read continuations. Return-valued application callbacks select undefined or canonical bound root/setter/getter/named program functions. Assignment follows successful callback return and precedes finally. Prior cleanup and finally trim suspend through the same owner/core driver, preserving prior faults, caller operands and overriding cleanup/trim errors. General closures, active boundaries/held-run hooks and dev diagnostics remain unfinished. Getter boundary read events cannot be observed directly by the native host; other trace/state/dependency/alias checks remain active in the focused suite."
+      "restrictions": "Success/previous-cleanup/returned-cleanup path, compute-error user arm, explicit cleanup helper, callback/error-handler throw escalation, fresh wrapper versus raw escaping payload, finally and overriding trim throws retained. Application/error bodies receive actual values/parameters and use shared core read continuations. Return-valued application callbacks select undefined or canonical bound root/setter/getter/named program functions. Assignment follows successful callback return and precedes finally. Prior cleanup and finally trim suspend through the same owner/core driver, preserving prior faults, caller operands and overriding cleanup/trim errors. General closures, active boundaries/held-run hooks and dev diagnostics remain unfinished. Getter boundary read events cannot be observed directly by the native host; other trace/state/dependency/alias checks remain active in the focused suite. 178605cf first immediate render passes type=0 and bypasses heldRunHook. That distinction lies at the still-excluded active-boundary hook crossing; admitted no-boundary runs are unchanged."
     },
     "core/owner.ts:linkChild": {
       "bend": "runtime/owner.bend:linkChild",
@@ -295,7 +295,7 @@
     "core/async.ts:notifyStatus": {
       "bend": "runtime/status.bend:notifyStatus, notifyStatusWith, storeStatus, Notify, wrapped",
       "status": "partial",
-      "restrictions": "cdd95616 removed unused blockStatus/forwarding. Error/pending/clear stores, wrapper/source-set identity, shown-error stash, guess boundary and effect interception follow source order. Active laneStage and public non-store windows are connected; boundary/store family hooks remain unfinished."
+      "restrictions": "cdd95616 removed unused blockStatus/forwarding. Error/pending/clear stores, wrapper/source-set identity, shown-error stash, guess boundary and effect interception follow source order. Active laneStage and public non-store windows are connected; boundary/store family hooks remain unfinished. 178605cf guards guess pending interception with persistent guessing; outside a lane a new question joins txOf(guess).parent, whereas REASK joins null and does not resolve the guess cache first."
     },
     "core/async.ts:propagateStatus": {
       "bend": "runtime/status.bend:Propagate, PropagateNext; runtime/lanes-state.bend:laneStage, StagePendingFrom",
@@ -725,7 +725,7 @@
     "map.ts:updateKeyedMap": {
       "bend": "runtime/keyed-map.bend:updateParent, clear, frame, prepareIndices, saveItems, publishInitial, publishWindow; runtime/core.bend:mapRead, mapBegin, mapListValue, mapEmptyBody, mapFallbackCreate, mapRows, mapInvokeRow, mapInvokeIndex, mapMapped, mapAbort, mapPrefix, mapSuffix, mapPrepareStart, mapPrepare, mapPrepared, mapOld, mapOldPosition, mapRemoval, mapInitialCommit, mapCommitPrefix, mapWindow, mapWindowRows, mapWindowSuffix, mapRemoved",
       "status": "restricted",
-      "restrictions": "All three typed production keying modes, optional item/index signals and actual key callbacks. Captured prefix limit, strict prefix/suffix comparison, stable identity, pure-removal reset, reverse SameValueZero duplicate chains, source mapper catch/commit/disposal and no-row/no-index small-move gate retained. Key callbacks remain outside mapper catch. Packed-index overflow and active engines remain unfinished. Successful falsy fallback retention is integrated from #4211."
+      "restrictions": "All three typed production keying modes, optional item/index signals and actual key callbacks. Captured prefix limit, strict prefix/suffix comparison, stable identity, pure-removal reset, reverse SameValueZero duplicate chains, source mapper catch/commit/disposal and no-row/no-index small-move gate retained. Key callbacks remain outside mapper catch. Packed-index overflow and active engines remain unfinished. Successful falsy fallback retention is integrated from #4211. 178605cf adds $TARGET/shallowView after $TRACK and before length; typed ordinary arrays have no store target, so admitted list path is unchanged. Shallow proxy/backing optimization is excluded store scope."
     },
     "map.ts:stageRemoval": {
       "bend": "runtime/core.bend:mapRemovalMatch, mapRemovalOld, mapRemovalOldKey, mapRemovalFound, mapRemovalFailed, mapRemoval",
@@ -815,7 +815,7 @@
     "core/lanes.ts:enterLane": {
       "bend": "runtime/lanes-state.bend:enterLane",
       "status": "partial",
-      "restrictions": "LANE_READ before captured passLane, same/ancestor/descendant/unrelated routing; joined plus staged intake retained. No active core read/seam hook installed yet."
+      "restrictions": "Active non-store core hook. LANE_READ precedes captured passLane; same/ancestor/descendant/unrelated routing preserves source order. At 178605cf first-entry staged intake requires STAGED_READ and (guessed or JOINED). Persistent module-local guessed is distinct from scheduler guessing. Store/folded and instrumentation branches remain excluded."
     },
     "core/scheduler.ts:sameLane": {
       "bend": "runtime/lanes-state.bend:sameLane",
@@ -863,9 +863,9 @@
       "restrictions": "Initial loading returns before probe updates; current tracking/hold/flush gates and txOf/join helpers retained. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
     },
     "core/verdict.ts:markVerdictReader": {
-      "bend": "runtime/verdict-state.bend:markVerdictReader",
+      "bend": "runtime/verdict-state.bend:markVerdictReader, bornLoop, bornNext; representation/base.bend:parentComputed",
       "status": "partial",
-      "restrictions": "Root parentComputed forwarding, source config/flags stores; window attribution/dev hooks remain unfinished. Internal helper profile only; public window dispatch and active lane seam integration are unfinished."
+      "restrictions": "Production creatorPass/Root parentComputed forwarding. Walk currently computing creator ancestors, OR JOINED/STAGED_READ born bits; set VERDICT only when none, always PROBED|born. Structural arena budget, explicit Exhausted for malformed/cyclic overrun. Dev/observe window attribution excluded. Active window integration retained."
     },
     "core/verdict.ts:observeFlight": {
       "bend": "runtime/verdict-state.bend:observeFlight, observeAfterBirth",
@@ -885,7 +885,7 @@
     "core/lanes.ts:inFlight": {
       "bend": "runtime/transaction.bend:laneInFlight; runtime/lanes-state.bend:inFlight",
       "status": "restricted",
-      "restrictions": "One shared pending/store resolver body; unknown slot resolver explicitly refuses. Ordinary node branch matches source. Public creation, core seating/flush and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Production non-store truthiness of STATUS_PENDING; source numeric/undefined result is observed only as a condition here. Store slot-flight hook remains an explicit unsupported crossing (86), not false. No claim about raw helper return identity."
     },
     "core/lanes.ts:guessFlights": {
       "bend": "runtime/transaction.bend:guessFlights, guessFlightLoop",
@@ -908,9 +908,9 @@
       "restrictions": "Live lane scan, actual resolved parent identity, recursive full blocked then own guessFlights. Shared driver breaks the source scheduler/lanes recursion without a Bend module cycle. Active public constructors/read/stage/seam engines remain unfinished."
     },
     "core/lanes.ts:laneStage": {
-      "bend": "runtime/lanes-state.bend:laneStage, leaveStage, leaveStageEnd, clearStageConfig, computationStage, effectStage, framePending, hasStageLane; StageError retains false/true/source forms",
-      "status": "partial",
-      "restrictions": "Production typed computation/effect staging now preserves early exit/LEFT_SHOWN parent judgment, current lane clearing, override/frame-staging order, guess confirmation and pending effect frame refusal through actual blocked/queue/list/ext helpers. Active core stage invocation and lane read/write/seam/correction/dissolution still unfinished."
+      "bend": "runtime/lanes-state.bend:laneStage, leaveStage, leaveStageEnd, clearStageConfig, computationStage, effectStage, framePending, hasStageLane; StageError retains false/true/source forms, take, rerunLoop",
+      "status": "restricted",
+      "restrictions": "Active non-store production staging: shown lane exit marks LEFT_SHOWN outside a flush or after an unblocked parent; a blocked frame retains display in _value before clearing the lane. A written guess deriving under another resolved action parent is saved/taken before list; error forms and default frame refusal retained. Store node replacement and boundary/folded hooks excluded."
     },
     "core/owner.ts:runCleanup": {
       "bend": "runtime/owner.bend:RunCleanup, CleanupFinally, unwind; runtime/core.bend:ownerTasks, CleanupFinally, unwind; runtime/cleanup-state.bend:runCleanupCatch, collect, collectSlot",
@@ -925,7 +925,7 @@
     "core/lanes.ts:laneRead": {
       "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadOutside, laneReadRenderEnd, laneReadEnter, laneReadEntered",
       "status": "restricted",
-      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md. Reviewed ac28157a/#4304: foreign verdict seats leave before another lane; the pending fast token requires a shown lane; verdict readers entering an unjudged non-verdict lane append to the source entered array. New live entered stack is separate from stagedReaders."
+      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md. Reviewed ac28157a/#4304: foreign verdict seats leave before another lane; the pending fast token requires a shown lane; verdict readers entering an unjudged non-verdict lane append to the source entered array. New live entered stack is separate from stagedReaders. 178605cf registers FRAME_READ/SCREEN_READ and lane rerun before a never-shown uninitialized pending read throws, so reveal can wake the leaf (#4338)."
     },
     "core/lanes.ts:stale": {
       "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",
@@ -960,7 +960,7 @@
     "core/lanes.ts:supersede": {
       "bend": "runtime/core.bend:supersede, supersedeAfter, supersedeEnd",
       "status": "restricted",
-      "restrictions": "txOf/parent resolution, changed dissolution then live shown-slot copy, hold/notification, stage without joinFuture, as removed upstream in ac28157a/#4330; installed truth confirmation retained. Store echo and observe hooks excluded. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+      "restrictions": "Raw comparison verdict selects confirmation versus correction. Resolve/cache and captured parent, actual dissolve continuation, current guessed/reverting -> raw-lane WeakSet membership, shown screen preservation, config/lane clears, hold and subscriber notification, then pending store. No final parent join. WeakSet uses stable identity membership; GC/finalization not modeled. Store and instrumentation hooks excluded."
     },
     "core/lanes.ts:dissolveLane": {
       "bend": "runtime/core.bend:dissolveLane, dissolveNodes, dissolveDerivation, dissolveCommitted, DissolveCompared, DissolveShown, DissolveHidden",
@@ -973,14 +973,14 @@
       "restrictions": "Leaked/blocked short circuit, reruns, LEFT_SHOWN before member guard, nonguess staging, parked-frame disposal, live member continuation and queues. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
     },
     "core/lanes.ts:endLanes": {
-      "bend": "runtime/core.bend:endLanes, endLanesLoop",
+      "bend": "runtime/core.bend:endLanes, endKept, endKeptNode, removeKept, restoreKept, EndKept, RestoreKept, endLanesLoop",
       "status": "restricted",
-      "restrictions": "Live reverse scan, parent resolution, recursive nested teardown then dissolution. Well-formed acyclic lane parenting; finite shared fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md."
+      "restrictions": "178605cf scans a captured reverse prefix of the live ordered kept stack before the live nested-lane reverse scan. Splice precedes restoration callbacks; raw original holder/reverted/live-guess identities and resolved parent/current-cache eligibility remain distinct. Actual CommitPending continuation runs before saved lane/question/config/list/rerun restoration. Non-store nodes only; CONFIG_SLOT_NODE restoration refuses unported _slotTake replacement (86). Well-formed acyclic parenting and finite shared fuel explicit."
     },
     "core/lanes.ts:laneWrite": {
       "bend": "runtime/core.bend:laneWrite, laneWriteChanged, LaneWriteCompared, LaneWriteDone",
       "status": "restricted",
-      "restrictions": "Ambient question/stale held answer, raw comparator, supersede and derivation notification/time/schedule order. Folded store rebase excluded. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Active non-store core hook: ambient question/stale answer, raw comparator, supersede and derivation notification/time/schedule order. New optional _slotTake is a no-op for non-store nodes; store replacement/rebase callbacks excluded, not modeled by scalar take. See lane-answers and solid-178605cf review."
     },
     "core/lanes.ts:laneOutcome": {
       "bend": "runtime/core.bend:laneOutcome, LaneOutcomeCompared, LaneOutcomeDone",
@@ -990,7 +990,7 @@
     "core/lanes.ts:laneCorrections": {
       "bend": "runtime/core.bend:laneCorrections, laneCorrectionsLoop, laneCorrectionNodes, LaneCorrectionCompared",
       "status": "restricted",
-      "restrictions": "Source lane snapshot, resolved parent action/open/flight guards, live members and actual supersede returns. Store covered hook and observe attribution excluded. Core seating/flush now invoke these bodies. Public optimistic/verdict constructors/windows remain unfinished. See tracking/lane-answers.md."
+      "restrictions": "Snapshot live lanes, live member scan, parent acted/open/own-flight/guess-flight gates, raw truth comparator and supersede. Production guessed guard sets reverting before comparator and resets only after supersede returns; callback throws preserve the source interrupted state. Original lane is recorded reverted after dissolution, before shown/config/hold stores. Store covered/rebase hooks and instrumentation excluded."
     },
     "core/core.ts:stagedScreen": {
       "bend": "runtime/transaction.bend:stagedScreen",
@@ -1010,7 +1010,7 @@
     "core/lanes.ts:optimisticWrite": {
       "bend": "runtime/core.bend:optimisticWrite, optimisticResolved, OptimisticResolved, OptimisticCompared; runtime/lanes-state.bend:pushGuess",
       "status": "restricted",
-      "restrictions": "Captured writer previous value, one updater invocation, raw comparison, live GUESS reask gate, question allocation and scheduling. Typed callable protocol, not arbitrary JavaScript closures. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md."
+      "restrictions": "Actual updater before raw comparator; equality skips a new unguessed write, existing guess re-asks. Source ordered pending triple append, then scheduler guessing=true, module guessed=true, schedule. Flags persist even after guesses drain; never derived from pending array length. Callback protocol is explicit; general JS closures/store constructors excluded."
     },
     "core/lanes.ts:applyGuesses": {
       "bend": "runtime/core.bend:applyGuesses, applyGuessNew, applyGuessFree, applyGuessBorn, applyGuessOverride, applyGuessEnd, ApplyGuessCompared",
@@ -1025,7 +1025,7 @@
     "core/lanes.ts:laneSeams": {
       "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop, laneEnteredLoop, laneEnteredPop; runtime/lanes-state.bend:enteredPrefix",
       "status": "restricted",
-      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md. Reviewed ac28157a/#4304: after the fixed reverse lane prefix, the live entered array is popped last-to-first; each held reader clears lane-dirty before enqueue. Duplicate/order/store boundaries retained. Existing empty-hook fast path also requires entered empty."
+      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md. Reviewed ac28157a/#4304: after the fixed reverse lane prefix, the live entered array is popped last-to-first; each held reader clears lane-dirty before enqueue. Duplicate/order/store boundaries retained. Existing empty-hook fast path also requires entered empty. 178605cf skips ordinary transaction-held leak readers with neither STAGED_READ nor PROBE_UNANSWERED; lane verdict-parent logic remains a distinct branch (#4349)."
     },
     "core/core.ts:laneFrameMember": {
       "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeapInto",
@@ -1048,9 +1048,9 @@
       "restrictions": "Full production mark/capture/entry, live found result, owned/unowned/already-found NotReady policy and selective finally restoration. Adapter refusals remain outside the user-throw grammar. Native loading/error/window/action histories and whole-World scoped laws; no arbitrary async graph theorem. See tracking/verdict-windows.md."
     },
     "core/verdict.ts:verdictValue": {
-      "bend": "runtime/core.bend:verdictValue, verdictAfterPull, verdictOverride, verdictGuessValue, VerdictGuessCompared, verdictPlain, verdictHeld, VerdictHeldFinal, verdictHeldValue, verdictStaging, verdictTerminal, verdictBundle, VerdictPulled, VerdictRaiseHeight",
+      "bend": "runtime/core.bend:verdictValue, verdictAfterPull, verdictOverride, verdictGuessValue, VerdictGuessCompared, verdictPlain, verdictHeld, VerdictHeldFinal, verdictHeldValue, verdictStaging, verdictTerminal, verdictBundle, VerdictPulled, VerdictRaiseHeight, verdictPrepared, VerdictPrepared; prepareComputed, prepareDisposedAt",
       "status": "restricted",
-      "restrictions": "Complete production non-store body: owned/tracked capture, link/pull outside dispatch, guarded mark hook, raw guess/derived slot and flight choices, held screen/latest/probe/imperative joins, born-held staging, provisional/late-linker paths, pending/loading links and raw errors. Callback continuation order and partial exception state retained. 5322 actual source reads plus 44 raw comparator controls. Folded callbacks, spectating, snapshot/boundary/store/dev/observe protocols excluded. See tracking/verdict-windows.md."
+      "restrictions": "Complete production non-store body: owned/tracked capture, link/pull outside dispatch, guarded mark hook, raw guess/derived slot and flight choices, held screen/latest/probe/imperative joins, born-held staging, provisional/late-linker paths, pending/loading links and raw errors. Callback continuation order and partial exception state retained. 5322 actual source reads plus 44 raw comparator controls. Folded callbacks, spectating, snapshot/boundary/store/dev/observe protocols excluded. See tracking/verdict-windows.md. 178605cf captures owned/tracked before setVerdict(null), wakes lazy/dormant computed before link/pull, and restores dispatch afterward even without a tracked pull. Source exceptions are not silently guarded with a new finally."
     },
     "affects.ts:affects": {
       "bend": "runtime/core.bend:evaluate(Affects), AffectsTarget, AffectsApply; runtime/affects-scope.bend:affects",
@@ -1065,7 +1065,7 @@
     "affects.ts:release": {
       "bend": "runtime/affects-scope.bend:release, releaseLoop, releaseTransactionValue, releaseTransaction",
       "status": "partial",
-      "restrictions": "Indexed non-store unmark and last-mark repoll, then scope clear. Transaction scope stays present/empty, not null. Store releaseMarkScope remains excluded. See tracking/affects-scope.md."
+      "restrictions": "Indexed non-store unmark and last-mark repoll. 178605cf transaction-release hook classifies marked sources by own inFlight status, appends flying ones to ambient in source order, clears the present transaction scope, then releases done. Duplicates preserved. Store releaseMarkScope/slot-flight resolution excluded. See affects-scope and solid-178605cf review."
     },
     "affects.ts:inFlight": {
       "bend": "runtime/affects-scope.bend:inFlight",
@@ -1121,6 +1121,26 @@
       "bend": "runtime/on-flush.bend:register; runtime/core.bend:evaluate OnFlush; runtime/api.bend:onFlush, afterFlush, runOnFlush; host/bend.mjs:drainJobs",
       "status": "restricted",
       "restrictions": "Production schedule then queueMicrotask, raw zero-argument callback with ignored return, actual outbox order and ordinary host errors. Typed callback/body and existing closure bindings; dev diagnostics, arbitrary JS closures and browser fairness remain outside scope. See tracking/onflush.md."
+    },
+    "core/lanes.ts:take": {
+      "bend": "runtime/lanes-state.bend:take",
+      "status": "restricted",
+      "restrictions": "Ordered five-tuple snapshot of node, lane Slot, raw cached owner, exact question and borrowing holder; rerun current subscribers, clear GUESS (+OVERRIDE for detach), then list or clear cache/lane. Scalar production staging calls non-detach. Store slot-family/replacement callers remain unported; helper detach branch is tested, not full store coverage."
+    },
+    "core/lanes.ts:rerun": {
+      "bend": "runtime/lanes-state.bend:rerun, rerunLoop",
+      "status": "restricted",
+      "restrictions": "Source subscriber order and live nextSub after staleReader. Uses shared transaction rerun append and flags, explicit resource Exhausted. Arbitrary graph/callback progress remains outside the theorem scope."
+    },
+    "core/scheduler.ts:armGuessing": {
+      "bend": "runtime/lanes-state.bend:pushGuess; representation/records.bend:LaneState.guessing",
+      "status": "restricted",
+      "restrictions": "Persistent scheduler module flag set immediately after pending guess append, before module guessed and scheduling. Grouped in LaneState only as representation; distinct globals are not collapsed."
+    },
+    "core/core.ts:creatorPass": {
+      "bend": "representation/base.bend:parentComputed",
+      "status": "restricted",
+      "restrictions": "Existing nearest-computed Root forwarding; exported by 178605cf and reused by verdict ancestor walk. Typed owner IDs and valid arena assumptions; undefined/malformed JS owner protocols excluded."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

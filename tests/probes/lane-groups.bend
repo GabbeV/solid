@@ -24,7 +24,7 @@ def fixture(+prefix: List<&2, Nat>, +suffix: List<&2, Nat>, +present: Bool) -> B
 
 def linked(+group: Nat) -> B.Bundle<R.World, R.World>:
   +tx = R.Transaction.with_parent(R.Transaction.with_lane(B.blank_transaction(), True{}), 16n)
-  +w = R.World.with_laneState(base(), R.LaneState{[], [[], [1n, 2n], [2n, 1n], [1n, 2n]], [], [], 0n, R.MountUnset{}, []})
+  +w = R.World.with_laneState(base(), R.LaneState{[], [[], [1n, 2n], [2n, 1n], [1n, 2n]], [], [], 0n, R.MountUnset{}, [], False{}, False{}, [], [], False{}})
   +start = G.linkedFrame(w, tx, tx, peerRecords(13n, 3n, [1n, 2n]), group)
   B.Bundle{L.linkLanes(start, 1n, 2n), start}
 
