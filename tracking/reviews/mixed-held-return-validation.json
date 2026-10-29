@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "sourceCommit": "178605cfcbfaf4243d157600095a63111047b164",
+  "runtimeChanged": false,
+  "activeDeviations": [],
+  "newComposedRoots": 7,
+  "independentFocusedVerdict": "mixed-settle-return: independent kernel verdict passed.",
+  "pairedPrivateWholeRoundControls": 640,
+  "nativeCallerRestoration": "Explicit setQuestion after actual globalQueue.flush; no claim of public action transport.",
+  "negativeChecks": {
+    "configured": 748,
+    "finite": 510,
+    "kernel": 238,
+    "targetedCompiledSemanticRejections": 6,
+    "mandatoryUnchangedKernelBaseline": true,
+    "allOperationTargetsCurrent": true,
+    "initialSilentCallbackMutantAccepted": true,
+    "oracleStrengthenedWithObservableMarkers": true,
+    "newCompleteSweep": false
+  },
+  "logs": {
+    "queued-round-final-native.log": "ad96de9f5a82c76964a4503800988338b600f26993200f568359ca8bf8fccc8f",
+    "mixed-return-main-verdict.log": "ebd06bea897236e4ff88cb7162694cfd959db83008b6e15babf8b55212595557",
+    "parked-round-negative-final.log": "c9e15b7899dafb88c302c9d245c7192316b164a0115e5ccb82b0af53cbd5cf73"
+  },
+  "completedPreviousCheckpoint": {
+    "commit": "a5fa2e9504748829c3462d0a9e27f070d8e34990",
+    "roots": 798,
+    "trackedInputs": 1335,
+    "seconds": 552.370199302,
+    "normalPushRemoteVerified": true
+  },
+  "finalAuthority": "The completed current full805-root official verdict and exact input seal in tracking/checked.json; standalone verdicts do not replace it.",
+  "remaining": [
+    "Construct mixed admission from raw queued Round/heap execution",
+    "Public factory/host transport and uninterrupted next delivery",
+    "Global forest, once-only action/result and observed-flight ledger",
+    "General branching publication safety and eventual reveal"
+  ]
+}

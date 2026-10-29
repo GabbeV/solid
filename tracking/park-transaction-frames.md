@@ -22,8 +22,9 @@ are handled structurally; they are not silently treated as successful object
 allocation.
 
 There is also a separate successful parking contract for an allocated, unowned,
-childless node with a present pending value and `equals: false`, as on the
-ordinary render-reader path. Its `held-park-leaf.Ready` certificate states only
+childless node with a present pending value and `equals: false`, within that
+explicit allocated/pending-value domain. The current raw render pass instead
+needs the fresh/absent-slot branch linked below. Its `held-park-leaf.Ready` certificate states only
 initial facts: actual node/extension/group slot membership, an existing positive
 extension pointer, zero cached ownership, no children, initial park eligibility,
 present pending data, no custom comparator and the false equality option.
@@ -42,11 +43,14 @@ derived, rather than supplied as post-parking assumptions.
 
 This extends the ingredients available for [quiet settlement](quiet-held-settlement.md).
 Tracing the actual constructed first-body Round shows why it is needed: a
-changed source puts the render reader in the heap, recomputes it and produces a
-staged pending reader before settlement. An unchanged/no-write body avoids that
+changed source puts the render reader in the heap and recomputes it. The reader
+can be staged while its pending slot remains empty and its extension is still
+unallocated; its proposal is held in the render value/previous-value fields. An unchanged/no-write body avoids that
 work. The earlier quiet-intake theorem alone does not cover the changed case.
-The new contracts do not yet compose the mixed source/reader intake or construct
-its premises from the heap pass. Those remain explicit work at the frontier.
+[Mixed parking](mixed-held-settlement.md) now composes source/reader intake,
+including that fresh render branch; [round return](mixed-held-return.md) also
+composes the callback-parking/finally/restore continuation. Constructing their
+premises from the actual heap pass remains explicit work at the frontier.
 
 `R.Value` can represent asynchronous results as well as ordinary data. A reader
 pass cannot be assumed synchronous merely because its body is a source read.

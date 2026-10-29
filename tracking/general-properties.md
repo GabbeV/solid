@@ -589,3 +589,12 @@ non-arena/committed frames. Its actual two settlement/scan steps derive post-sta
 health, debt and caller preservation; raw Round/heap reachability remains open.
 Ordinary result classification quantifies over all represented non-AsyncValue
 payloads. Nine new roots await the current complete composed verdict/seal.
+
+
+[Mixed held round return](mixed-held-return.md) constructs the real Settle entry
+and executes its positive-group scan, callback parking and clock/finally/question
+restoration: eleven actual steps with retained caller work, stack, action count
+and committed storage. Generic operation contracts handle arbitrary callback
+arrays and preserve all non-queue group metadata. Seven roots require a fresh805-
+root composed verdict. Initial heap-derived admission/public reachability and
+branching action/flight/publication invariants remain open.

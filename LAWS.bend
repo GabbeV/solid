@@ -1,3 +1,31 @@
+import ./proof/settle-entry.bend as ReturnSettleEntry
+import ./representation/records.bend as ReturnRecords
+import ./representation/base.bend as ReturnBase
+import ./runtime/core.bend as ReturnCore
+import ./proof/held-queue-parking.bend as ReturnHeldQueueParking
+import ./runtime/transaction.bend as ReturnTransaction
+import ./runtime/scheduler.bend as ReturnScheduler
+import ./runtime/affects-scope.bend as ReturnAffectsScope
+import ./proof/transaction-resolution.bend as ReturnTransactionResolution
+import ./proof/natural-logic.bend as ReturnNaturalLogic
+import ./proof/held-queue-frame.bend as ReturnHeldQueueFrame
+import ./proof/committed-storage-frame.bend as ReturnCommittedStorageFrame
+import ./proof/arena-observation-lens.bend as ReturnArenaObservationLens
+import ./proof/quiet-round-return.bend as ReturnQuietRoundReturn
+import ./runtime/cleanup-state.bend as ReturnCleanupState
+import ./proof/action-body-return.bend as ReturnActionBodyReturn
+import ./proof/pending-stack-history.bend as ReturnPendingStackHistory
+import ./proof/core-run-prefix.bend as ReturnCoreRunPrefix
+import ./proof/mixed-settle-return.bend as ReturnMixedSettleReturn
+import ./proof/mixed-settle.bend as ReturnMixedSettle
+import ./proof/mixed-settle-scan.bend as ReturnMixedSettleScan
+import ./proof/held-settle-frame.bend as ReturnHeldSettleFrame
+import ./proof/core-prefix-compose.bend as ReturnCorePrefixCompose
+import ./proof/mixed-settle-entry-scan.bend as ReturnMixedSettleEntryScan
+import ./proof/mixed-parked-scope.bend as ReturnMixedParkedScope
+import ./proof/held-queue-return.bend as ReturnHeldQueueReturn
+import ./proof/settle-entered-ready.bend as ReturnSettleEnteredReady
+import ./proof/holding-committed.bend as ReturnHoldingCommitted
 import ./representation/records.bend as MixedRecords
 import ./representation/base.bend as MixedBase
 import ./runtime/scheduler.bend as MixedScheduler
@@ -7676,3 +7704,113 @@ law ordinary_represented_data_finishes_without_async_carrier_processing:
   for +value: MixedRecords.Value
   for known: {MixedDataResult.plain(value) == True{} : Bool}
   {MixedCore.finishShape(w,rest,value <> stack,frame,id) == MixedCore.finishReady(w,rest,value <> stack,frame,False{}) : MixedCore.Machine}
+
+
+law actual_empty_lane_and_guess_settlement_entry_retains_the_captured_group:
+  for +w: ReturnRecords.World
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for live: {List.is_empty(&2,Nat,ReturnRecords.LaneState.live(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for empty: {List.is_empty(&2,ReturnRecords.Guess,ReturnRecords.LaneState.pendingGuesses(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  {ReturnCore.beginSettle(w,rest,stack) == ReturnCore.settleApplied(ReturnSettleEntry.entered(w),rest,stack,ReturnRecords.World.flushTransaction(w)) : ReturnCore.Machine}
+
+
+law actual_held_seam_parks_captured_callbacks_in_the_live_group:
+  for +w: ReturnRecords.World
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for +offset: Nat
+  for +renders: List<&2,Nat>
+  for +users: List<&2,ReturnRecords.QueueEntry>
+  for terminal: {ReturnRecords.Transaction.into(ReturnBase.transaction(w,1n+offset)) == 0n : Nat}
+  for member: {ReturnBase.contains(ReturnRecords.World.transactions(w),1n+offset) == True{} : Bool}
+  for ambient: {List.is_empty(&2,Nat,ReturnRecords.World.ambientMarks(w)) == True{} : Bool}
+  for renderEmpty: {ReturnRecords.World.renderQueue(w) == [] : List<&2,Nat>}
+  for userEmpty: {ReturnRecords.World.userQueue(w) == [] : List<&2,ReturnRecords.QueueEntry>}
+  for zombies: {ReturnRecords.World.deferredZombies(w) == [] : List<&2,Nat>}
+  {ReturnCore.completeSettle(w,rest,stack,ReturnCore.SeamFrame{1n+offset,renders,users,[],[]}) == ReturnCore.Machine{ReturnHeldQueueParking.world(w,1n+offset,renders,users),ReturnCore.ZombieLoop{[]} <> rest,stack} : ReturnCore.Machine}
+
+
+law actual_callback_parking_preserves_every_groups_non_queue_metadata:
+  for +w: ReturnRecords.World
+  for +tx: Nat
+  for +renders: List<&2,Nat>
+  for +users: List<&2,ReturnRecords.QueueEntry>
+  {ReturnHeldQueueFrame.groups(ReturnHeldQueueParking.world(w,tx,renders,users)) == ReturnHeldQueueFrame.groups(w) : List<&2,ReturnRecords.Transaction>}
+
+
+law actual_quiet_round_returns_through_finally_and_restores_the_caller_question:
+  for +w: ReturnRecords.World
+  for +question: ReturnRecords.Question
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for +healthy: {ReturnBase.ok(w) == True{} : Bool}
+  for heap: {Nat.is_ge(ReturnRecords.World.maximum(w),ReturnRecords.World.minimum(w)) == False{} : Bool}
+  for pending: {ReturnRecords.World.pendingNodes(w) == [] : List<&2,Nat>}
+  for renderEmpty: {ReturnRecords.World.renderQueue(w) == [] : List<&2,Nat>}
+  for userEmpty: {ReturnRecords.World.userQueue(w) == [] : List<&2,ReturnRecords.QueueEntry>}
+  for cleanupEmpty: {ReturnRecords.World.cleanupError(w) == ReturnRecords.Empty{} : ReturnRecords.Slot}
+  {ReturnPendingStackHistory.iterate(6n,ReturnCore.Machine{w,ReturnQuietRoundReturn.work(question,rest),stack}) == ReturnCore.Machine{ReturnQuietRoundReturn.restored(w,question),rest,stack} : ReturnCore.Machine}
+
+
+law actual_mixed_held_settlement_returns_after_parking_its_callbacks:
+  for +w: ReturnRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for +remaining: Nat
+  for +ready: ReturnMixedSettle.Ready<w,source,reader,offset>
+  for +capture: {ReturnRecords.World.flushTransaction(w) == 1n+offset : Nat}
+  for +lanes: {List.is_empty(&2,Nat,ReturnRecords.LaneState.live(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +guesses: {List.is_empty(&2,ReturnRecords.Guess,ReturnRecords.LaneState.pendingGuesses(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +live: {ReturnRecords.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for +open: {ReturnRecords.Transaction.open(ReturnBase.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +question: ReturnRecords.Question
+  for heap: {Nat.is_ge(ReturnRecords.World.maximum(w),ReturnRecords.World.minimum(w)) == False{} : Bool}
+  for ambient: {List.is_empty(&2,Nat,ReturnRecords.World.ambientMarks(w)) == True{} : Bool}
+  for cleanup: {ReturnRecords.World.cleanupError(w) == ReturnRecords.Empty{} : ReturnRecords.Slot}
+  {ReturnPendingStackHistory.iterate(11n,ReturnMixedSettleEntryScan.start(w,ReturnQuietRoundReturn.work(question,rest),stack)) == ReturnCore.Machine{ReturnMixedSettleReturn.world(w,reader,offset,question),rest,stack} : ReturnCore.Machine}
+
+
+law actual_mixed_held_settlement_return_preserves_committed_storage:
+  for +w: ReturnRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for +remaining: Nat
+  for +ready: ReturnMixedSettle.Ready<w,source,reader,offset>
+  for +capture: {ReturnRecords.World.flushTransaction(w) == 1n+offset : Nat}
+  for +lanes: {List.is_empty(&2,Nat,ReturnRecords.LaneState.live(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +guesses: {List.is_empty(&2,ReturnRecords.Guess,ReturnRecords.LaneState.pendingGuesses(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +live: {ReturnRecords.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for +open: {ReturnRecords.Transaction.open(ReturnBase.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +question: ReturnRecords.Question
+  for heap: {Nat.is_ge(ReturnRecords.World.maximum(w),ReturnRecords.World.minimum(w)) == False{} : Bool}
+  for ambient: {List.is_empty(&2,Nat,ReturnRecords.World.ambientMarks(w)) == True{} : Bool}
+  for cleanup: {ReturnRecords.World.cleanupError(w) == ReturnRecords.Empty{} : ReturnRecords.Slot}
+  {ReturnCommittedStorageFrame.observe(ReturnCore.world(ReturnPendingStackHistory.iterate(11n,ReturnMixedSettleEntryScan.start(w,ReturnQuietRoundReturn.work(question,rest),stack)))) == ReturnCommittedStorageFrame.observe(w) : ReturnCommittedStorageFrame.View}
+
+
+law actual_mixed_held_settlement_return_retains_the_initial_action_debt:
+  for +w: ReturnRecords.World
+  for +source: Nat
+  for +reader: Nat
+  for +offset: Nat
+  for +rest: List<&2,ReturnCore.Task>
+  for +stack: List<&2,ReturnRecords.Value>
+  for +remaining: Nat
+  for +ready: ReturnMixedSettle.Ready<w,source,reader,offset>
+  for +capture: {ReturnRecords.World.flushTransaction(w) == 1n+offset : Nat}
+  for +lanes: {List.is_empty(&2,Nat,ReturnRecords.LaneState.live(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +guesses: {List.is_empty(&2,ReturnRecords.Guess,ReturnRecords.LaneState.pendingGuesses(ReturnRecords.World.laneState(w))) == True{} : Bool}
+  for +live: {ReturnRecords.World.transactions(w) == [1n+offset] : List<&2,Nat>}
+  for +open: {ReturnRecords.Transaction.open(ReturnBase.transaction(w,1n+offset)) == 1n+remaining : Nat}
+  for +question: ReturnRecords.Question
+  for heap: {Nat.is_ge(ReturnRecords.World.maximum(w),ReturnRecords.World.minimum(w)) == False{} : Bool}
+  for ambient: {List.is_empty(&2,Nat,ReturnRecords.World.ambientMarks(w)) == True{} : Bool}
+  for cleanup: {ReturnRecords.World.cleanupError(w) == ReturnRecords.Empty{} : ReturnRecords.Slot}
+  {ReturnRecords.Transaction.open(ReturnBase.transaction(ReturnCore.world(ReturnPendingStackHistory.iterate(11n,ReturnMixedSettleEntryScan.start(w,ReturnQuietRoundReturn.work(question,rest),stack))),1n+offset)) == 1n+remaining : Nat}

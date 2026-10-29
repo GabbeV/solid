@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["parked round control discards the prior user callback prefix", "runtime/core.bend", "B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, live)), users)", "users", "tests/queued-round-controls.mjs", "completeSettle"],
+  ["parked round control omits captured render callbacks", "runtime/core.bend", "B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)", "R.Transaction.renderQueue(B.transaction(w, live))", "tests/queued-round-controls.mjs", "completeSettle"],
+  ["parked round control executes its own callbacks while held", "runtime/core.bend", "B.choose(~List<&2, A>, parked, _ => landing, _ => B.append(A, own, landing))", "B.append(A, own, landing)", "tests/queued-round-controls.mjs", "orderedRuns"],
+  ["parked round control leaves the running flag installed", "runtime/core.bend", "Machine{R.World.with_passTx(R.World.with_running(w, False{}), 0n), rest, stack}", "Machine{R.World.with_passTx(w, 0n), rest, stack}", "tests/queued-round-controls.mjs", "dispatch"],
+  ["parked round control loses the caller question restoration", "runtime/core.bend", "Machine{Question.setQuestion(w, question), rest, stack}", "Machine{w, rest, stack}", "tests/queued-round-controls.mjs", "dispatch"],
+  ["parked round kernel omits recording the judged lane prefix", "runtime/core.bend", "+w = R.World.with_laneState(w, R.LaneState.with_judged(R.World.laneState(w), B.length(Nat, R.LaneState.live(R.World.laneState(w)))))", "+w = w", "tests/proof-properties.mjs", "applyGuessesAt", "settle-entry"],
+
   ["mixed parking control treats an unready render as a skipped memo", "runtime/scheduler.bend", "Bool.not(X.isRender(R.Node.kind(n)))", "True{}", "tests/mixed-parking-controls.mjs", "parkLoading"],
   ["mixed parking control omits fresh reader membership", "runtime/transaction.bend", "list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t)", "B.choose(~R.World, Nat.is_eq(R.Node.x(B.node(w,id)),0n), _ => w, _ => list(B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))), id, t))", "tests/mixed-parking-controls.mjs", "holdNode"],
   ["mixed parking control skips the reader after the source", "runtime/scheduler.bend", "park_list(p, w, t, 1n+index, count)", "park_list(p, w, t, 2n+index, count)", "tests/mixed-parking-controls.mjs", "park_list"],

@@ -1103,3 +1103,13 @@ including real fresh/empty-slot render parking and arbitrary ordinary data
 classification. The next dependency is heap-derived admission, followed by actual
 next delivery and a branching action/flight publication invariant. See the current
 [frontier](frontier.md) rather than earlier chronological pin/count snapshots.
+
+
+Mixed parking completed and pushed ata5fa2e950 (798 roots,1335 inputs,
+552.370199302s). The next composed contract reaches the caller after actual held
+settlement, scan, callback parking and round return in eleven real steps; count,
+committed storage and caller preservation are consequences of initial facts.
+640 paired whole-round controls and six targeted faults support correspondence
+and oracle quality. The raw queued Round/heap admission remains the next gap;
+no source/runtime/checker change or new upstream bug/deviation. Seven roots are
+promoted for the fresh805-root composed check.

@@ -1,3 +1,31 @@
+import ./proof/settle-entry.bend as ReturnSettleEntry
+import ./representation/records.bend as ReturnRecords
+import ./representation/base.bend as ReturnBase
+import ./runtime/core.bend as ReturnCore
+import ./proof/held-queue-parking.bend as ReturnHeldQueueParking
+import ./runtime/transaction.bend as ReturnTransaction
+import ./runtime/scheduler.bend as ReturnScheduler
+import ./runtime/affects-scope.bend as ReturnAffectsScope
+import ./proof/transaction-resolution.bend as ReturnTransactionResolution
+import ./proof/natural-logic.bend as ReturnNaturalLogic
+import ./proof/held-queue-frame.bend as ReturnHeldQueueFrame
+import ./proof/committed-storage-frame.bend as ReturnCommittedStorageFrame
+import ./proof/arena-observation-lens.bend as ReturnArenaObservationLens
+import ./proof/quiet-round-return.bend as ReturnQuietRoundReturn
+import ./runtime/cleanup-state.bend as ReturnCleanupState
+import ./proof/action-body-return.bend as ReturnActionBodyReturn
+import ./proof/pending-stack-history.bend as ReturnPendingStackHistory
+import ./proof/core-run-prefix.bend as ReturnCoreRunPrefix
+import ./proof/mixed-settle-return.bend as ReturnMixedSettleReturn
+import ./proof/mixed-settle.bend as ReturnMixedSettle
+import ./proof/mixed-settle-scan.bend as ReturnMixedSettleScan
+import ./proof/held-settle-frame.bend as ReturnHeldSettleFrame
+import ./proof/core-prefix-compose.bend as ReturnCorePrefixCompose
+import ./proof/mixed-settle-entry-scan.bend as ReturnMixedSettleEntryScan
+import ./proof/mixed-parked-scope.bend as ReturnMixedParkedScope
+import ./proof/held-queue-return.bend as ReturnHeldQueueReturn
+import ./proof/settle-entered-ready.bend as ReturnSettleEnteredReady
+import ./proof/holding-committed.bend as ReturnHoldingCommitted
 import ./proof/park-admitted-loop.bend as MixedParkAdmittedLoop
 import ./proof/park-mixed-construction.bend as MixedParkMixedConstruction
 import ./proof/holding-outer.bend as MixedHoldingOuter
@@ -3154,3 +3182,31 @@ def Laws.actual_mixed_settlement_and_scan_preserve_committed_storage(w,source,re
 
 def Laws.ordinary_represented_data_finishes_without_async_carrier_processing(w,rest,stack,frame,id,value,known):
   MixedDataResult.finish(w,rest,stack,frame,id,value,known)
+
+
+def Laws.actual_empty_lane_and_guess_settlement_entry_retains_the_captured_group(w,rest,stack,live,empty):
+  ReturnSettleEntry.begin(w,rest,stack,live,empty)
+
+
+def Laws.actual_held_seam_parks_captured_callbacks_in_the_live_group(w,rest,stack,offset,renders,users,terminal,member,ambient,renderEmpty,userEmpty,zombies):
+  ReturnHeldQueueParking.complete(w,rest,stack,offset,renders,users,terminal,member,ambient,renderEmpty,userEmpty,zombies)
+
+
+def Laws.actual_callback_parking_preserves_every_groups_non_queue_metadata(w,tx,renders,users):
+  ReturnHeldQueueFrame.world(w,tx,renders,users)
+
+
+def Laws.actual_quiet_round_returns_through_finally_and_restores_the_caller_question(w,question,rest,stack,healthy,heap,pending,renderEmpty,userEmpty,cleanupEmpty):
+  ReturnQuietRoundReturn.complete(w,question,rest,stack,healthy,heap,pending,renderEmpty,userEmpty,cleanupEmpty)
+
+
+def Laws.actual_mixed_held_settlement_returns_after_parking_its_callbacks(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup):
+  ReturnMixedSettleReturn.complete(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup)
+
+
+def Laws.actual_mixed_held_settlement_return_preserves_committed_storage(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup):
+  ReturnMixedSettleReturn.committed(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup)
+
+
+def Laws.actual_mixed_held_settlement_return_retains_the_initial_action_debt(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup):
+  ReturnMixedSettleReturn.count(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup)

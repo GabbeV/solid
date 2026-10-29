@@ -79,7 +79,10 @@ The completed dependencies now connect source construction to actual core work:
   retains health. [Mixed source/render intake](mixed-held-settlement.md) now
   constructs actual parking and the following positive-debt scan, including
   fresh render extensions with absent pending slots. Its admission still must
-  be constructed after actual Round/heap processing.
+  be constructed after actual Round/heap processing. [Actual round return](mixed-held-return.md)
+  now also parks captured callbacks on the group, executes the clock/finally/
+  restore continuation, and retains the initial positive action count and
+  committed storage with all intermediate premises derived.
 
 These quantify over finite admitted body lists and represented values, not a
 fixed enumeration of payloads. The generic operation contracts retain explicit
@@ -96,8 +99,9 @@ root or test totals, determine the checked checkpoint.
    pending-write intake/parking and lane/seam phases before the actual scan; the
    local scan step on the queued snapshot does not establish that reachability.
    Quiet and mixed source/render settlement-to-scan contracts are available,
-   including fresh-extension/absent-slot render readers. Their initial
-   conditions must still be constructed after heap processing; arbitrary child
+   including fresh-extension/absent-slot render readers and the actual callback-
+   parking/round-return continuation. Their initial conditions must still be
+   constructed after heap processing; arbitrary child
    frames are further scope.
    Connect that path to the other controller's next
    actual delivery; the current two-resume handoff does not yet prove the
