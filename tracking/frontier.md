@@ -74,6 +74,11 @@ The completed dependencies now connect source construction to actual core work:
   first body through actual Round/heap entry, and proves the trailing empty-bucket
   boundary. Changed-reader heap processing
   and the post-heap settlement certificate remain the next composition.
+- [Heap render read entry](heap-read-entry.md) proves the full graph-link frame,
+  same-flush `frameRead` identity and render `joinPass`/fast held-entry composition
+  from input facts. These execute the source operations without an assumed
+  successful poststate. Caller construction and the remaining recompute/parking
+  connection are still open.
 - [Quiet held settlement](quiet-held-settlement.md) proves an actual two-step
   settlement/scan segment from certified initial pending-node and empty-hook
   facts. It constructs its scan task and derives the retained positive blocker,

@@ -1,3 +1,12 @@
+import ./runtime/graph-state.bend as ReadTransactionGraph
+import ./proof/graph-link-frame.bend as ReadGraphFrame
+import ./proof/heap-frame-read.bend as ReadFrame
+import ./proof/heap-render-join.bend as ReadJoin
+import ./proof/heap-held-read.bend as ReadHeld
+import ./representation/records.bend as ReadRecords
+import ./representation/base.bend as ReadBase
+import ./runtime/transaction.bend as ReadTransaction
+import ./runtime/constants.bend as ReadConstants
 import ./proof/heap-entry-count.bend as HeapEntryHeapEntryCount
 import ./proof/action-retirement-count.bend as HeapEntryActionRetirementCount
 import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
@@ -3301,3 +3310,16 @@ def Laws.certified_joined_heap_entry_retains_one_action_obligation(seed,id,value
 
 def Laws.constructed_joined_heap_entry_retains_one_action_obligation(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
   HeapEntryHeapEntryCount.constructed(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.graph_link_retains_all_nonpointer_state(w,source,reader):
+  ReadGraphFrame.link(w,source,reader)
+
+def Laws.initialized_source_render_join_only_marks_the_reader(w,reader,source,rendered,initialized):
+  ReadJoin.render(w,reader,source,rendered,initialized)
+
+def Laws.same_flush_ordinary_frame_read_retains_world_and_staging(w,reader,source,root,canonical,stopped,current,ordinary,notVerdict):
+  ReadFrame.actual(w,reader,source,root,canonical,stopped,current,ordinary,notVerdict)
+
+def Laws.same_flush_held_fast_render_read_does_not_charge_another_group(w,offset,source,root,canonical,stopped,current,ordinary,notVerdict,held,children,rendered,initialized):
+  ReadHeld.actual(w,offset,source,root,canonical,stopped,current,ordinary,notVerdict,held,children,rendered,initialized)

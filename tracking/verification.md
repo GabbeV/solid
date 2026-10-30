@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 764 = 520 finite + 244 kernel variants; ten new rc.20 targeted faults are rejected; a fresh complete 764 sweep remains separate |
+| Configured mutations | 767 = 520 finite + 247 kernel variants; ten rc.20 targeted faults and three read-entry faults are rejected; a fresh complete 767 sweep remains separate |
 | Complete negative sweep | Frozen275c89e8/rc.19: all754 exact ordered variants compiled/rejected after107 unchanged kernel baselines; all1365 sealed inputs and outputs unchanged; [receipt](reviews/complete-754-negative.json) |
 | Negative-check scope | Complete754 covers frozen814-root275c89e8 at rc.19. The interrupted748 prefix and repaired tail remain separate scopes. Earlier727/726 receipts retain their old commits; no receipt is relabeled as covering later source/proof changes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |

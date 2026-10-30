@@ -1,3 +1,12 @@
+import ./runtime/graph-state.bend as ReadTransactionGraph
+import ./proof/graph-link-frame.bend as ReadGraphFrame
+import ./proof/heap-frame-read.bend as ReadFrame
+import ./proof/heap-render-join.bend as ReadJoin
+import ./proof/heap-held-read.bend as ReadHeld
+import ./representation/records.bend as ReadRecords
+import ./representation/base.bend as ReadBase
+import ./runtime/transaction.bend as ReadTransaction
+import ./runtime/constants.bend as ReadConstants
 import ./proof/heap-entry-count.bend as HeapEntryHeapEntryCount
 import ./proof/action-retirement-count.bend as HeapEntryActionRetirementCount
 import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
@@ -7999,3 +8008,48 @@ law constructed_joined_heap_entry_retains_one_action_obligation:
   for +incoming: HeapEntryRecords.Value
   for +rejected: Bool
   {HeapEntryActionRetirementCount.count(HeapEntryCore.world(HeapEntryPendingStackHistory.iterate(HeapEntryJoinedRoundHeapEntry.cost(HeapEntryJoinedRoundSweepInput.seed(value,values,answer,other,second),HeapEntryOrdinaryGraphData.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,HeapEntryHeldFirstReadyConstruction.constructed(value,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,HeapEntryOrdinaryGraphData.source(value),answer),other,second)),HeapEntryActionControlFlags.raw(value,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,HeapEntryOrdinaryGraphData.source(value),answer),other,second))),HeapEntryHeldResumeRetirement.start(HeapEntryHeldPairGenericBody.world(HeapEntryJoinedRoundSweepInput.seed(value,values,answer,other,second),HeapEntryOrdinaryGraphData.source(value),values,answer,other,reverse,second),HeapEntryHeldPairGenericContext.actor(second),rest,stack,incoming,rejected))),1n+HeapEntryTransactionPair.targetPred([],[],reverse)) == 1n : Nat}
+
+
+# Generic operation contracts for the changed reader's heap/render crossing.
+# Facts below concern the input World; no post-read success is a premise.
+law graph_link_retains_all_nonpointer_state:
+  for +w: ReadRecords.World
+  for +source: Nat
+  for +reader: Nat
+  {ReadGraphFrame.observe(ReadTransactionGraph.link(w,source,reader)) == ReadGraphFrame.observe(w) : ReadRecords.World}
+
+law initialized_source_render_join_only_marks_the_reader:
+  for +w: ReadRecords.World
+  for +reader: Nat
+  for +source: Nat
+  for rendered: {ReadRecords.Node.kind(ReadBase.node(w,reader)) == ReadRecords.Render{} : ReadRecords.NodeKind}
+  for initialized: {ReadBase.has(ReadRecords.Node.status(ReadBase.node(w,source)),ReadConstants.STATUS_UNINITIALIZED()) == False{} : Bool}
+  {ReadTransaction.joinPass(w,reader,source) == ReadJoin.marked(w,reader) : ReadRecords.World}
+
+law same_flush_ordinary_frame_read_retains_world_and_staging:
+  for +w: ReadRecords.World
+  for +reader: Nat
+  for +source: Nat
+  for +root: Nat
+  for canonical: {ReadRecords.NodeExtension.transaction(ReadBase.extension(w,source)) == root : Nat}
+  for stopped: {ReadRecords.Transaction.into(ReadBase.transaction(w,root)) == 0n : Nat}
+  for current: {ReadRecords.World.flushTransaction(w) == root : Nat}
+  for ordinary: {ReadRecords.World.passLane(w) == 0n : Nat}
+  for notVerdict: {ReadBase.has(ReadRecords.Node.config(ReadBase.node(w,reader)),ReadConstants.CONFIG_VERDICT()) == False{} : Bool}
+  {ReadTransaction.frameRead(w,reader,source) == ReadBase.Bundle{w,False{}} : ReadBase.Bundle<ReadRecords.World,Bool>}
+
+law same_flush_held_fast_render_read_does_not_charge_another_group:
+  for +w: ReadRecords.World
+  for +offset: Nat
+  for +source: Nat
+  for +root: Nat
+  for canonical: {ReadRecords.NodeExtension.transaction(ReadBase.extension(w,source)) == root : Nat}
+  for stopped: {ReadRecords.Transaction.into(ReadBase.transaction(w,root)) == 0n : Nat}
+  for current: {ReadRecords.World.flushTransaction(w) == root : Nat}
+  for ordinary: {ReadRecords.World.passLane(w) == 0n : Nat}
+  for notVerdict: {ReadBase.has(ReadRecords.Node.config(ReadBase.node(w,1n+offset)),ReadConstants.CONFIG_VERDICT()) == False{} : Bool}
+  for held: {ReadBase.has(ReadRecords.Node.config(ReadBase.node(w,source)),ReadConstants.CONFIG_HELD()) == True{} : Bool}
+  for children: {ReadBase.has(ReadRecords.Node.config(ReadBase.node(w,1n+offset)),ReadConstants.CONFIG_CHILDREN_FORBIDDEN()) == False{} : Bool}
+  for rendered: {ReadRecords.Node.kind(ReadBase.node(w,1n+offset)) == ReadRecords.Render{} : ReadRecords.NodeKind}
+  for initialized: {ReadBase.has(ReadRecords.Node.status(ReadBase.node(w,source)),ReadConstants.STATUS_UNINITIALIZED()) == False{} : Bool}
+  {ReadTransaction.enterRead(w,1n+offset,source,False{}) == ReadBase.Bundle{ReadJoin.marked(w,1n+offset),False{}} : ReadBase.Bundle<ReadRecords.World,Bool>}

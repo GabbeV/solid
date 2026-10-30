@@ -617,3 +617,13 @@ branch and mainline lane. The generic outgoing-error cut retains its arbitrary
 represented error through the actual publication store helper, including shown
 error preservation; its scalar no-error callers supply the source numeric-zero
 capture. No full reactive-history theorem follows from those operation contracts.
+
+
+## Generic heap read-entry dependencies
+
+[Heap render read entry](heap-read-entry.md) adds an unrestricted actual graph-link
+frame and three cache/posture-dependent source read/join contracts. They preserve
+arbitrary represented payloads and ambient state. The premises describe input
+fields, not successful post-read Worlds. The full tracked read, recompute and
+post-render settlement composition remain open; these are reusable operation
+contracts, not another fixed execution witness or a global publication theorem.

@@ -5,6 +5,9 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["read frame graph reuse clears pending data", "runtime/graph-state.bend", "R.Node.with_depsTail(B.node(w, sub), nextDep)", "R.Node.with_pending(B.node(w, sub), R.Empty{})", "tests/proof-properties.mjs", "reuse_or_append", "read-entry-negative-probes"],
+  ["read frame render joins unrelated group", "runtime/transaction.bend", "Bool.not(isRender(R.Node.kind(n)))", "True{}", "tests/proof-properties.mjs", "joinPass", "read-entry-negative-probes"],
+  ["read frame successful held join forces committed output", "runtime/transaction.bend", "B.Bundle{joinPass(w, reader, id), False{}}", "B.Bundle{joinPass(w, reader, id), True{}}", "tests/proof-properties.mjs", "enterRead", "read-entry-negative-probes"],
   ["rc20 throwing read records an internal successful serve", "runtime/core.bend", "ServeForError{id,reader}", "ServeFor{id,reader}", "tests/held-alignment.mjs", "readAnswer"],
   ["rc20 hold work ignores async classification", "runtime/verdict-work.bend", "B.has(R.Node.config(B.node(w,node)),K.CONFIG_ASYNC())", "True{}", "tests/pin-5e68925c.mjs", "holdWork"],
   ["rc20 hold work loses the lane pending exception", "runtime/verdict-work.bend", "R.Transaction.lane(B.transaction(w,R.NodeExtension.transaction(B.extension(w,node))))", "False{}", "tests/pin-5e68925c.mjs", "holdWork"],
@@ -324,7 +327,7 @@ const mutations=[
   ["cdd reruns loses effect frame", "runtime/rerun-state.bend", "effectType(R.Node.kind(n))", "{0n : Nat}", "tests/pin-cdd95616.mjs", "prepare"],
   ["cdd callback releases wrong transaction", "runtime/core.bend", "ReleaseTransactionQueues{transaction}", "ReleaseTransactionQueues{0n}", "tests/pin-cdd95616.mjs", "user_task"],
   ["cdd shared notifier ignores node status", "runtime/status.bend", "+status = R.Node.status(n)", "+status: U32 = 0", "tests/status-alignment.mjs", "notifyEffectStatus"],
-  ["cdd escalation wraps the raw thrown cause", "runtime/status.bend", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{cause})", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{R.StatusFailure{0n,node,cause,0n}})", "tests/status-alignment.mjs", "escalate"],
+  ["cdd escalation wraps the raw thrown cause", "runtime/status.bend", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{cause})", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{R.StatusFailure{0n,node,cause,\"wrapped\"}})", "tests/status-alignment.mjs", "escalate"],
   ["cdd shared pending tail ignores loading", "runtime/flight.bend", "R.Node.loading(B.node(w, id))", "False{}", "tests/deferred.mjs", "liveValue"],
 
   ["deferred kernel loses owned constructor parent", "runtime/core.bend", "N.computed(w, R.DeferredCompute{cell, compute}, options, R.World.context(w))", "N.computed(w, R.DeferredCompute{cell, compute}, options, 0n)", "tests/proof-properties.mjs", "deferredCreate", "deferred-program"],
@@ -461,7 +464,7 @@ const mutations=[
   ["flush leaks staged readers", "runtime/core.bend", "R.LaneState.with_stagedReaders(state, [])", "state", "tests/lane-flush-alignment.mjs", "afterLaneSeams"],
   ["flush skips lane seam reveals", "runtime/core.bend", "laneSeams(w, AfterLaneSeams{t, renders, users} <> rest, stack, t)", "afterLaneSeams(w, rest, stack, t, renders, users)", "tests/lane-flush-alignment.mjs", "finishSettleIntake"],
   ["flush skips lane ending before landing", "runtime/core.bend", "Machine{w, EndLanes{t} <> LandAfterLanes{frame, t} <> rest, stack}", "landPrepared(w, rest, stack, frame, t)", "tests/lane-flush-alignment.mjs", "landTransactions"],
-  ["flush skips landing node walk", "runtime/core.bend", "Machine{w,LandNodes{frame,t,0n,rerunFrame} <> rest,tail}", "landEnd(w,rest,tail,frame,t,rerunFrame)", "tests/lane-flush-alignment.mjs", "landAfterReruns"],
+  ["flush skips landing node walk", "runtime/core.bend", "Machine{w,LandNodes{frame,t,0n,rerunFrame} <> rest,tail}", "Machine{w,LandEnd{frame,t,rerunFrame} <> rest,tail}", "tests/lane-flush-alignment.mjs", "landAfterReruns"],
   ["flush forgets captured lane render queue", "runtime/core.bend", "orderedRuns(~Nat, parked, renders, laneRenders, R.World.renderQueue(w))", "orderedRuns(~Nat, parked, renders, [], R.World.renderQueue(w))", "tests/lane-flush-alignment.mjs", "completeSettle"],
   ["flush forgets captured lane user queue", "runtime/core.bend", "orderedRuns(~R.QueueEntry, parked, users, laneUsers, R.World.userQueue(w))", "orderedRuns(~R.QueueEntry, parked, users, [], R.World.userQueue(w))", "tests/lane-flush-alignment.mjs", "completeSettle"],
   ["flush drops original render intake", "runtime/core.bend", "+renders = R.World.renderQueue(w)", "+renders = {[] : List<&2, Nat>}", "tests/lane-flush-alignment.mjs", "finishSettleIntake"],
