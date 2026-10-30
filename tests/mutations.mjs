@@ -321,7 +321,7 @@ const mutations=[
   ["cdd kernel queued release loses transaction queues", "runtime/core.bend", "Machine{S.releaseQueues(w, transaction), rest, stack}", "Machine{w, rest, stack}", "tests/proof-properties.mjs", "dispatch", "landing-release"],
   ["cdd landing bypasses rederivation barrier", "runtime/core.bend", "Nat.is_ne(rerunFrame, 0n)", "False{}", "tests/pin-cdd95616.mjs", "landEnd"],
   ["cdd ordinary landing always defers", "runtime/core.bend", "Nat.is_ne(rerunFrame, 0n)", "True{}", "tests/pin-cdd95616.mjs", "landEnd"],
-  ["cdd reruns loses effect frame", "runtime/rerun-state.bend", "effectType(R.Node.kind(n))", "0n", "tests/pin-cdd95616.mjs", "prepare"],
+  ["cdd reruns loses effect frame", "runtime/rerun-state.bend", "effectType(R.Node.kind(n))", "{0n : Nat}", "tests/pin-cdd95616.mjs", "prepare"],
   ["cdd callback releases wrong transaction", "runtime/core.bend", "ReleaseTransactionQueues{transaction}", "ReleaseTransactionQueues{0n}", "tests/pin-cdd95616.mjs", "user_task"],
   ["cdd shared notifier ignores node status", "runtime/status.bend", "+status = R.Node.status(n)", "+status: U32 = 0", "tests/status-alignment.mjs", "notifyEffectStatus"],
   ["cdd escalation wraps the raw thrown cause", "runtime/status.bend", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{cause})", "R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{R.StatusFailure{0n,node,cause,0n}})", "tests/status-alignment.mjs", "escalate"],

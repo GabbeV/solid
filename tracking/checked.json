@@ -760,7 +760,7 @@
     "tests/memo-repeat-controls.mjs": "aabb45f3219b925d560a62bd24ba87c4607c2ed6f5ea1365786c6584b29fb62c",
     "tests/memo-witness-controls.mjs": "d9a2c20ef602cfbadd71a732d5ab6183b165209f0ea41ebf924d4d846afe0115",
     "tests/mixed-parking-controls.mjs": "c6296995efb119a84b59184e677595f411f658ba6b98a6885ef10fc8b202b34a",
-    "tests/mutations.mjs": "60055ad15f7ad00384eefcf6e65ca059eac2bc8be1e4af2230fcbfe1d7719ded",
+    "tests/mutations.mjs": "36cc5596283a0f3e980c6f96f95c60a15c1e512381e993687cffc46e586d430b",
     "tests/negative-zero.mjs": "9b7ca00fd58a519f94efc4eca2f1ab668b516e91a3dae40dc76dd1f5ef4e8b37",
     "tests/nested.mjs": "b56de5951bdb8fec48bafe347fc7942bca147478377457fd4eba662e643f26f2",
     "tests/node-construction-controls.mjs": "bdea8062178b1a749ce1881f865f2e6f4586ec5e99067688921b7159bd440024",
@@ -1383,7 +1383,7 @@
     "tracking/session-2026-10-26-evening.md": "aef28a391b84cd20863d3ee0f9b10834de2e51267313dc7e2f4b5cd013ab6476",
     "tracking/session-2026-10-28.md": "2a55eed6f60b84f1b0f25dff8b4f576afe59c84fa6b2b75a43a1c576a4c89303",
     "tracking/session-2026-10-29.md": "d283b43da4cc6768277f91ad3d39b1d25f7637c55a1df4063db5a37b251fb459",
-    "tracking/session-2026-10-30.md": "5e943285291c11124b3fc264b72d5d735987cf8326ab3cfb3687e4e88010e9f5"
+    "tracking/session-2026-10-30.md": "11727daa8a85506d8c3a5809c1992ebc8f5465bd9c51cfd6e2fe7ec491568551"
   },
   "outputs": {
     "build/runtime.mjs": "a0d1370c16060c6821b5db81f16abef9a89ee6609d60da9038b95a6caab3e7fe",
@@ -1391,7 +1391,7 @@
   },
   "proof": {
     "stdout": "ALL PROOFS CHECK",
-    "seconds": 612.064891084,
+    "seconds": 775.062485568,
     "composedRootCount": 816,
     "kernelProfile": "same-head-congruence-v1",
     "kernelSourceSha256": "5f3a860067b165ad75e2c8978b4457d0b4ab6a8522c110938eb5e743fc87f244",
