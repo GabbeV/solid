@@ -48,7 +48,7 @@ def ignoreState(+w: R.World, observer: Nat, immediate: Bool, state: R.AsyncSettl
 
 def ignoreThen(+w: R.World, +result: Nat) -> R.World:
   +observer = B.length(R.AsyncObserver, R.World.asyncObservers(w))
-  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}]))
+  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n, 0n}]))
   +object = B.asyncObject(w, result)
   +w = B.store_asyncObject(w, result, R.AsyncObject.with_observers(object, B.append(Nat, R.AsyncObject.observers(object), [observer])))
   ignoreState(w, observer, R.AsyncObject.immediate(object), R.AsyncObject.state(object))
@@ -74,4 +74,4 @@ def close(+w: R.World, +stream: Nat) -> R.World:
 def newStepObserver(+w: R.World, +stream: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObserver, R.World.asyncObservers(w))
   +state = B.stream(w, stream)
-  B.Bundle{R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{R.StreamState.node(state), R.StreamState.result(state), True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, stream}])), id}
+  B.Bundle{R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{R.StreamState.node(state), R.StreamState.result(state), True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, stream, 0n}])), id}

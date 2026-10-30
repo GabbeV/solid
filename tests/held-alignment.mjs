@@ -7,7 +7,12 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-held-probe-'));
 try{
-  const emitted=path.join(dir,'held.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','tests/probes/held.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+  let input=path.join(root,'tests/probes/held.bend');
+  if(process.env.BEND_EMIT_FILE){
+    const active=path.dirname(process.env.BEND_EMIT_FILE);for(const d of ['runtime','representation','observation'])fs.cpSync(path.join(active,d),path.join(dir,d),{recursive:true});
+    fs.mkdirSync(path.join(dir,'tests/probes'),{recursive:true});input=path.join(dir,'tests/probes/held.bend');fs.copyFileSync(path.join(root,'tests/probes/held.bend'),input);
+  }
+  const emitted=path.join(dir,'held.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',input,'-o',emitted],{cwd:root,encoding:'utf8'});
   assert.equal(compile.status,0,compile.stderr);const {default:B}=await import(pathToFileURL(emitted));
   const source=path.join(root,'upstream/solid/packages/signals/src');
   const bundle=await build({stdin:{contents:`
@@ -21,7 +26,7 @@ try{
       b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},args=>({loader:'ts',contents:fs.readFileSync(args.path,'utf8')+`
         export {pendingNodes as probePending,heldTrims as probeTrims,transactions as probeTransactions,flushTransaction as probeFlush,passTx as probePass,scheduled as probeScheduled};
         export function probeFlushSet(running,t){globalQueue._running=running;flushTransaction=t;}
-        export function probeReset(){guessing=false;clock=5;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=deferredZombies.length=transactions.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=1;dirtyQueue._max=0;dirtyQueue._marked=false;halted=haltNotified=false;passTx=flushTransaction=passLane=judge=null;}
+        export function probeReset(){latestOpened=null;guessing=false;clock=5;notifyEpoch=0;scheduled=false;syncDepth=1;pendingNodes.length=heldTrims.length=deferredZombies.length=transactions.length=0;globalQueue._running=false;globalQueue._queues=[[],[]];dirtyQueue._heap=[];dirtyQueue._min=1;dirtyQueue._max=0;dirtyQueue._marked=false;halted=haltNotified=false;passTx=flushTransaction=passLane=judge=null;}
       `}));
     }
   }]});
@@ -58,6 +63,10 @@ try{
       x:n._x?{tx:txid(n._x._transaction),error:decode(n._x._error),shown:decode(n._x._shownError),blocked:n._x._blocked,sources:n._x._pendingSources?[...n._x._pendingSources].map(id):undefined,flushed:n._x._flushed!==K.NOT_PENDING,flushedValue:n._x._flushed===K.NOT_PENDING?undefined:decode(n._x._flushed),flushedAt:n._x._flushedAt}:null})),
       heap:{minimum:S.dirtyQueue._min,maximum:S.dirtyQueue._max,marked:S.dirtyQueue._marked,buckets:Array.from({length:S.dirtyQueue._heap.length},(_,i)=>[i,id(S.dirtyQueue._heap[i])]).filter(([,id])=>id!==0)},live:S.probeTransactions.map(txid),tx:[{nodes:t._nodes.map(id),reruns:t._reruns.map(id),render:t._queues[0].map(()=>4),user:t._queues[1].map(()=>4)}],flush:txid(S.probeFlush),pass:txid(S.probePass),pending:S.probePending.map(id),trims:S.probeTrims.map(id),unflushed:S.unflushedStaged,promoted:S.probePromoted.map(id),scheduled:S.probeScheduled,context:id(S.context),tracking:S.tracking,events,threw,exception:decode(exception)};
   }
+  // A successful internal serve followed by the current source error is not
+  // a successful enclosing read. Retain serve's stores without a read event.
+  const internalServeError=[1,K.STATUS_ERROR,K.CONFIG_STAGED_ERROR,2,3,K.CONFIG_CHILDREN_FORBIDDEN,0,true,true,false,false,2];
+  assert.deepEqual(actual(B.fixture(...internalServeError)),reference(...internalServeError));
   let seed=0x613af9,count=0;const rng=n=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)%n;};
   for(let index=0;index<4096;index++){
     const args=[index%7,[0,1,2,4,5][rng(5)],[0,K.CONFIG_INPUTS_PUBLISHED,K.CONFIG_STAGED_ERROR,K.CONFIG_STAGED,K.CONFIG_HELD_FRAME,K.CONFIG_LAGS][rng(6)],rng(3),rng(4),[0,K.CONFIG_CHILDREN_FORBIDDEN,K.CONFIG_HELD|K.CONFIG_HELD_FRAME][rng(3)],rng(2)?K.STATUS_UNINITIALIZED:0,!!rng(2),!!rng(2),!!rng(2),!!rng(2),rng(4)];

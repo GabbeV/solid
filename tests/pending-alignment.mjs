@@ -30,7 +30,7 @@ try{
     if('identity'in v){if(!errors.has(v.identity))errors.set(v.identity,errors.size+1);return {kind:'cause'in v?'error':'pending',identity:errors.get(v.identity),source:v.source,...('cause'in v?{cause:decode(v.cause)}:{})};}
     if('n'in v)return v.n;if('b'in v)return v.b;return v.$==='Null'?null:undefined;
   };return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,time:n.time,
-      error:decode(extensions[n.x]?.error??{}),shown:decode(extensions[n.x]?.shownError??{}),blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,
+      error:decode(extensions[n.x]?.error??{}),shown:n.x?decode(extensions[n.x].shownError):undefined,blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,
       sources:extensions[n.x]?.pendingSources?list(list(w.pendingSets)[extensions[n.x].pendingSources]).filter(id=>id!==0):undefined,
       x:!!n.x,next:n.nextHeap,prev:n.prevHeap,first:n.firstChild,nextSibling:n.nextSibling,prevSibling:n.prevSibling,deps:n.deps,tail:n.depsTail,subs:n.subs,subsTail:n.subsTail,disposal:disposal(n.disposal)})),
     links:list(w.links).slice(1).map(l=>({...l,$:undefined})),events:list(w.events).map(e=>[e.callback,e.code]),

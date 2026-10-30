@@ -78,7 +78,7 @@ def member(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,snapshot: State.Carr
 
 def errorField(+record: R.NodeExtension,+value: R.Value) -> {R.NodeExtension.error(R.NodeExtension.with_error(record,value)) == value : R.Value}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
 
 def statusField(+record: R.Node,+flags: U32) -> {R.Node.status(R.Node.with_status(record,flags)) == flags : U32}:
   Operations.statusField(record,flags)

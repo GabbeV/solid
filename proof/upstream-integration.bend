@@ -73,7 +73,7 @@ def writableRecovery() -> WritableView:
     R.World.context(done), R.World.tracking(done), R.World.fault(done)}
 
 def expectedWritable() -> WritableView:
-  WritableView{R.Number{99n}, R.Number{99n}, R.Number{7n}, 0, False{}, R.Undefined{}, 0n, False{}, R.Healthy{}}
+  WritableView{R.Number{99n}, R.Number{99n}, R.Number{7n}, 0, False{}, R.Null{}, 0n, False{}, R.Healthy{}}
 
 type ProtocolView is Data:
   ProtocolView{last: R.Value, status: U32, error: R.Value, handlerCalls: Nat,

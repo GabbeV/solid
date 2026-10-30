@@ -1,4 +1,5 @@
-# A zero-action, empty ordinary pair is eligible when no nested lanes remain.
+# A zero-action, empty ordinary pair reports the source revelation delay
+# once no nested lanes remain. Arbitrary initial delay lists are retained.
 # This is actual blocked eligibility, not a renderer publication theorem.
 import Base
 import ../representation/records.bend as R
@@ -63,7 +64,7 @@ def finalAmbient(+w: R.World, +before: List<&2, R.Transaction>, +reverse: Bool) 
 def expectedEligible(+w: R.World, +before: List<&2, R.Transaction>, +reverse: Bool,
   ok: {B.ok(w) == True{} : Bool},
   noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}) ->
-  {X.blocked(expected(w, before, reverse), Pair.targetId(before, [], reverse)) == B.Bundle{expected(w, before, reverse), False{}} : B.Bundle<R.World, Bool>}:
+  {X.blocked(expected(w, before, reverse), Pair.targetId(before, [], reverse)) == Empty.answer(expected(w, before, reverse),Pair.targetId(before,[],reverse)) : B.Bundle<R.World, Bool>}:
   +s = expected(w, before, reverse)
   +root = Pair.targetId(before, [], reverse)
   +base = B.schedule(B.schedule(Pair.retire(w, Pair.sourceId(before, [], reverse))))
@@ -76,32 +77,32 @@ def expectedEligible(+w: R.World, +before: List<&2, R.Transaction>, +reverse: Bo
 
 def transport(+actual: R.World, +normal: R.World, +root: Nat,
   +same: {actual == normal : R.World},
-  eligible: {X.blocked(normal, root) == B.Bundle{normal, False{}} : B.Bundle<R.World, Bool>}) ->
-  {X.blocked(actual, root) == B.Bundle{actual, False{}} : B.Bundle<R.World, Bool>}:
-  Equal.trans(B.Bundle<R.World, Bool>, X.blocked(actual, root), X.blocked(normal, root), B.Bundle{actual, False{}},
+  eligible: {X.blocked(normal, root) == Empty.answer(normal,root) : B.Bundle<R.World, Bool>}) ->
+  {X.blocked(actual, root) == Empty.answer(actual,root) : B.Bundle<R.World, Bool>}:
+  Equal.trans(B.Bundle<R.World, Bool>, X.blocked(actual, root), X.blocked(normal, root), Empty.answer(actual,root),
     Equal.cong(R.World, B.Bundle<R.World, Bool>, state => X.blocked(state, root), actual, normal, same),
-    Equal.trans(B.Bundle<R.World, Bool>, X.blocked(normal, root), B.Bundle{normal, False{}}, B.Bundle{actual, False{}}, eligible,
-      Equal.cong(R.World, B.Bundle<R.World, Bool>, state => B.Bundle{state, False{}}, normal, actual, Equal.sym(R.World, actual, normal, same))))
+    Equal.trans(B.Bundle<R.World, Bool>, X.blocked(normal, root), Empty.answer(normal,root), Empty.answer(actual,root), eligible,
+      Equal.cong(R.World, B.Bundle<R.World, Bool>, state => Empty.answer(state,root), normal, actual, Equal.sym(R.World, actual, normal, same))))
 
 def fromCompletion(+w: R.World, +before: List<&2, R.Transaction>, +reverse: Bool, +firstId: Nat, +otherId: Nat,
   +initial: List<&2, History.JoinEvent>, +middle: List<&2, History.JoinEvent>, +final: List<&2, History.JoinEvent>,
   certificate: Complete.Completion<w, before, reverse, firstId, otherId, initial, middle, final>,
   ok: {B.ok(w) == True{} : Bool},
   noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}) ->
-  {X.blocked(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), Pair.targetId(before, [], reverse)) == B.Bundle{Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), False{}} : B.Bundle<R.World, Bool>}:
+  {X.blocked(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), Pair.targetId(before, [], reverse)) == Empty.answer(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final),Pair.targetId(before,[],reverse)) : B.Bundle<R.World, Bool>}:
   transport(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), expected(w, before, reverse), Pair.targetId(before, [], reverse), Complete.equation(w, before, reverse, firstId, otherId, initial, middle, final, certificate), expectedEligible(w, before, reverse, ok, noLanes))
 
 type Eligibility<-w: R.World, -before: List<&2, R.Transaction>, -reverse: Bool, -firstId: Nat, -otherId: Nat,
   -initial: List<&2, History.JoinEvent>, -middle: List<&2, History.JoinEvent>, -final: List<&2, History.JoinEvent>> is Data:
-  PairEligible{completion: Complete.Completion<w, before, reverse, firstId, otherId, initial, middle, final>,
-    eligible: {X.blocked(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), Pair.targetId(before, [], reverse)) == B.Bundle{Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), False{}} : B.Bundle<R.World, Bool>}}
+  PairJudged{completion: Complete.Completion<w, before, reverse, firstId, otherId, initial, middle, final>,
+    judgment: {X.blocked(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final), Pair.targetId(before, [], reverse)) == Empty.answer(Complete.run(X.merge(w, Pair.sourceId(before, [], reverse), Pair.targetId(before, [], reverse)), before, reverse, firstId, otherId, initial, middle, final),Pair.targetId(before,[],reverse)) : B.Bundle<R.World, Bool>}}
 
 def certify(+w: R.World, +before: List<&2, R.Transaction>, +reverse: Bool, +firstId: Nat, +otherId: Nat,
   +initial: List<&2, History.JoinEvent>, +middle: List<&2, History.JoinEvent>, +final: List<&2, History.JoinEvent>,
   +certificate: Complete.Completion<w, before, reverse, firstId, otherId, initial, middle, final>,
   ok: {B.ok(w) == True{} : Bool},
   noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}) -> Eligibility<w, before, reverse, firstId, otherId, initial, middle, final>:
-  PairEligible{certificate, fromCompletion(w, before, reverse, firstId, otherId, initial, middle, final, certificate, ok, noLanes)}
+  PairJudged{certificate, fromCompletion(w, before, reverse, firstId, otherId, initial, middle, final, certificate, ok, noLanes)}
 
 def expectedLanes(+w: R.World, +before: List<&2, R.Transaction>, +cells: List<&2, R.ActionState>, +first: R.Expr, +other: R.Expr) ->
   {R.LaneState.live(R.World.laneState(Actions.expected(w, before, cells, first, other))) == R.LaneState.live(R.World.laneState(w)) : List<&2, Nat>}:

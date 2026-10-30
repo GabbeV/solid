@@ -27,13 +27,13 @@ def unchangedNoRun(+w: R.World, +id: Nat, +value: R.Value, +create: Bool, +effec
     case True{}: {==}
 
 def noMountJoin(+w: R.World, +id: Nat, +previous: Nat, +old: R.LaneMount) ->
-  {C.joinedPass(w, id, C.LanePass{previous, old, R.MountFalse{}}) == B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED()) : Bool}:
+  {C.joinedPass(w, id, C.LanePass{previous, old, R.MountFalse{}, False{}}) == B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED()) : Bool}:
   {==}
 
 # Even with arbitrary current root/seat data, restore writes only the captured
 # root. It does not undo the lane a tracked read seated for publication.
 def restoreCapturedMount(+w: R.World, +previous: Nat, +old: R.LaneMount, +mount: R.LaneMount) ->
-  {C.restoreMount(w, C.LanePass{previous, old, mount}) == R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), old)) : R.World}:
+  {C.restoreMount(w, C.LanePass{previous, old, mount, False{}}) == R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), old)) : R.World}:
   {==}
 
 # Mainline truth outcomes return to the original publication continuation.

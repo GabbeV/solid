@@ -5,11 +5,11 @@ import ../representation/records.bend as R
 
 def expectedLatest(+w: R.World, latest: Bool, dispatch: Bool) -> R.World:
   +state = R.World.verdictState(w)
-  R.World.with_verdictState(w, R.VerdictState{latest, R.VerdictState.probing(state), R.VerdictState.probeFound(state), dispatch})
+  R.World.with_verdictState(w, R.VerdictState{latest, R.VerdictState.probing(state), R.VerdictState.probeFound(state), dispatch, R.VerdictState.latestOpened(state)})
 
 def expectedProbe(+w: R.World, probing: Bool, found: Bool, dispatch: Bool) -> R.World:
   +state = R.World.verdictState(w)
-  R.World.with_verdictState(w, R.VerdictState{R.VerdictState.latestActive(state), probing, found, dispatch})
+  R.World.with_verdictState(w, R.VerdictState{R.VerdictState.latestActive(state), probing, found, dispatch, R.VerdictState.latestOpened(state)})
 
 def loading(+w: R.World, +identity: Nat, +source: Nat, found: Bool) -> R.World:
   +w = R.World.with_verdictState(w, R.VerdictState.with_probeFound(R.World.verdictState(w), found))
@@ -20,7 +20,7 @@ def latestReturn(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def latestThrow(+w: R.World, +rest: List<&2, C.Task>, stack: List<&2, R.Value>, +saved: List<&2, R.Value>, +latest: Bool, +dispatch: Bool) ->
@@ -28,7 +28,7 @@ def latestThrow(+w: R.World, +rest: List<&2, C.Task>, stack: List<&2, R.Value>, 
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def probeReturn(+w: R.World, +rest: List<&2, C.Task>, stack: List<&2, R.Value>, +saved: List<&2, R.Value>, +probing: Bool, +found: Bool, +dispatch: Bool) ->
@@ -36,7 +36,7 @@ def probeReturn(+w: R.World, +rest: List<&2, C.Task>, stack: List<&2, R.Value>, 
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def probeNumeric(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, +probing: Bool, +found: Bool, +dispatch: Bool, +cause: Nat) ->
@@ -44,7 +44,7 @@ def probeNumeric(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def probeLoadingOwned(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, +probing: Bool, +found: Bool, +dispatch: Bool, +identity: Nat, +source: Nat) ->
@@ -52,7 +52,7 @@ def probeLoadingOwned(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.V
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def probeLoadingFound(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, +probing: Bool, +found: Bool, +dispatch: Bool, +identity: Nat, +source: Nat) ->
@@ -60,7 +60,7 @@ def probeLoadingFound(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.V
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           {==}
 
 def probeLoadingOutside(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R.Value>, +probing: Bool, +found: Bool, +dispatch: Bool, +identity: Nat, +source: Nat) ->
@@ -68,7 +68,7 @@ def probeLoadingOutside(+w: R.World, +rest: List<&2, C.Task>, +saved: List<&2, R
   match w:
     case R.World{+w_nodes, +w_links, +w_buckets, +w_minimum, +w_maximum, +w_marked, +w_pendingNodes, +w_trims, +w_renderQueue, +w_userQueue, +w_context, +w_tracking, +w_running, +w_scheduled, +w_clock, +w_epoch, +w_tree, +w_events, +w_fault, +w_unflushedStaged, +w_promotedWrites, +w_extensions, +w_cleanupPrograms, +w_dormantNodes, +w_errorSerial, +w_halted, +w_haltNotified, +w_reports, +w_callbackEffect, +w_txArena, +w_transactions, +w_flushTransaction, +w_passTx, +w_passLane, +w_judge, +w_deferredZombies, +w_question, +w_pendingSets, +w_asyncObjects, +w_asyncObservers, +w_hostJobs, +w_syncDepth, +w_streamPlans, +w_iterators, +w_streams, +w_iteratorEvents, +w_awaiters, +w_truthReadHook, +w_truthConfirmedHook, +w_questions, +w_abortInputs, +w_contextKeys, +w_contextRecords, +w_deferredReleases, +w_releaseLists, +w_stale, +w_settledCallbacks, +w_reactions, +w_comparators, +w_actionDepth, +w_actions, +w_actionWaits, +w_arrays, +w_repeats, +w_maps, +w_activeMarks, +w_laneState, +w_verdictState, +w_cleanupError, +w_ambientMarks, +w_deferredArena}:
       match w_verdictState:
-        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch}:
+        case R.VerdictState{+bodyLatest, +bodyProbing, +bodyFound, +bodyDispatch, +latestOpened}:
           match bodyFound:
             case False{}: {==}
             case True{}: {==}

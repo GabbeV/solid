@@ -79,7 +79,7 @@ def wrapInput(+w: R.World, +plan: Nat, input: R.NextInput) -> B.Bundle<R.World, 
       +observer = B.length(R.AsyncObserver, R.World.asyncObservers(w))
       +s = get(w, plan)
       +w = store(w, plan, R.FromWrapped.with_waits(R.FromWrapped.with_pending(s, B.append(Nat, R.FromWrapped.pending(s), [output])), B.append(R.FromWait, R.FromWrapped.waits(s), [R.FromWait{observer, output}])))
-      +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}]))
+      +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n, 0n}]))
       +object = B.asyncObject(w, result)
       +w = B.store_asyncObject(w, result, R.AsyncObject.with_observers(object, B.append(Nat, R.AsyncObject.observers(object), [observer])))
       B.Bundle{observerState(w, plan, output, observer, R.AsyncObject.immediate(object), R.AsyncObject.state(object)), R.PromiseNext{output}}

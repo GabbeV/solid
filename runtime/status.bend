@@ -12,6 +12,7 @@ import ./transaction.bend as X
 import ./error.bend as V
 import ./cleanup-state.bend as Cleanup
 import ./lanes-state.bend as Lanes
+import ./verdict-work.bend as VerdictWork
 
 def unwrapStatusError(error: R.Value) -> R.Value:
   V.unwrapStatusError(error)
@@ -35,11 +36,9 @@ def haltReactivity(+w: R.World, +cause: R.Value) -> R.World:
 
 # Shared production boundary-or-halt tail from effect.ts:escalate.
 # Active error boundaries remain outside this runtime's admitted profile.
-def escalate(+w: R.World, node: Nat, cause: R.Value, thrown: R.Value) -> R.World:
-  R.World.with_fault(haltReactivity(w, cause), R.CallbackThrown{thrown})
+def escalate(+w: R.World,node: Nat,+cause: R.Value) -> R.World:
+  R.World.with_fault(haltReactivity(w,cause),R.CallbackThrown{cause})
 
-# effect.ts:notifyEffectStatus now reads status/error directly from its node.
-# A pending render observer enters joinFuture in the shared mainline transaction path.
 def notifyEffectStatus(+w: R.World, +id: Nat) -> R.World:
   +n = B.node(w, id)
   +status = R.Node.status(n)
@@ -48,7 +47,7 @@ def notifyEffectStatus(+w: R.World, +id: Nat) -> R.World:
     _ => B.choose(~R.World, W.is_user(R.Node.kind(n)),
       _ => B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_ERROR()),
         _ => W.enqueue(B.store_node(w, id, R.Node.with_modified(n, True{})), id), _ => w),
-      _ => escalate(w, id, unwrapStatusError(error), error)),
+      _ => escalate(w, id, unwrapStatusError(error))),
     _ => B.choose(~R.World, Bool.and(X.isRender(R.Node.kind(n)), B.has(status, K.STATUS_PENDING())),
       _ => B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => X.joinFuture(w, 0n), _ => w), _ => w))
 
@@ -140,7 +139,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
           +pending = U32.is_eq(status, K.STATUS_PENDING())
           +source = B.choose(~Nat, pending, _ => P.notReadySource(error), _ => 0n)
           +next = {PropagateNext{edge, status, error} <> rest : List<&2, Task>}
-          B.choose(~Machine, Bool.or(B.has(R.Node.config(sub), B.set(K.CONFIG_REDERIVE(), K.CONFIG_VERDICT())),
+          B.choose(~Machine, Bool.or(Bool.or(B.has(R.Node.config(sub),K.CONFIG_REDERIVE()),Bool.and(B.has(R.Node.config(sub),K.CONFIG_VERDICT()),Bool.not(Bool.and(Nat.is_ne(source,0n),VerdictWork.holdWork(w,id,R.Link.dep(B.link(w,edge))))))),
               Bool.and(pending, Nat.is_ne(R.Link.gen(B.link(w, edge)), R.Node.depGen(sub)))),
             _ => Machine{B.schedule(H.enqueueSub(w, id)), next, visited, scheduled},
             _ => B.choose(~Machine, Bool.and(pending, Bool.and(Nat.is_ne(source, 0n), P.hasSource(w, id, source))),

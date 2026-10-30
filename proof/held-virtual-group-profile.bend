@@ -37,7 +37,7 @@ def static(+w: R.World,+id: Nat,+offset: Nat) -> {V.observe(state(w,id,offset)) 
 
 def transactionSet(+record: R.NodeExtension,+root: Nat) -> {R.NodeExtension.transaction(R.NodeExtension.with_transaction(record,root)) == root : Nat}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}:
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}:
       {==}
 
 def canonical(+w: R.World,+id: Nat,+offset: Nat,room: {Nat.is_lt(R.Node.x(B.node(w,id)),B.length(R.NodeExtension,R.World.extensions(w))) == True{} : Bool}) -> {R.NodeExtension.transaction(B.extension(state(w,id,offset),id)) == 1n+offset : Nat}:

@@ -102,4 +102,4 @@ def fixture(+spec: Spec) -> B.Bundle<R.World, C.LanePass>:
         _ => C.seatPass(w, 2n, create),
         _ =>
           +result = C.run(8192n, atBody(64n, C.recompute(w, [], [], 2n, create), bodyFlags))
-          B.Bundle{C.world(result), C.LanePass{0n, R.MountUnset{}, R.MountUnset{}}})
+          B.Bundle{C.world(result), C.LanePass{0n, R.MountUnset{}, R.MountUnset{}, False{}}})

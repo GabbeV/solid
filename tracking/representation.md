@@ -368,3 +368,19 @@ Stable transaction identities model the WeakSet's membership, with no public GC/
 finalization observation. Source order, reverse-prefix removal and callback return
 boundaries are in the [source review](reviews/solid-178605cf.md). This grouping is
 representation only and does not collapse the two arming stores into one.
+
+
+## rc.20 flight/revelation metadata
+
+`NodeExtension.parkedFlight` is distinct from `inFlight`: parked starts undefined,
+active registration may be null, and an adoption clears the parked capture before
+teardown. `LaneState.revealing` stores parent identities delayed by a reveal's
+re-derivation. `VerdictState.latestOpened` records the source scheduler global and
+is cleared with the captured flush transaction. Neither is a new scheduler.
+`AsyncObserver.mirrorTarget` is zero for ordinary callbacks. A no-handler Promise
+reaction uses a marker observer pointing to a fresh AsyncObject; its ordinary
+DeliveryJob settles the mirror before the registered node callback can run. The
+host has no separate reactive mirror map. The synchronous thenable facade keeps
+its existing undefined return and records the no-op call in the observer arena.
+A returned NOT_PENDING Value assigned to a source pending slot becomes Empty;
+wrapping it in Present would incorrectly publish the sentinel.

@@ -12,6 +12,7 @@
 import {
   CONFIG_CHILDREN_FORBIDDEN,
   CONFIG_GUESS,
+  CONFIG_ASYNC,
   CONFIG_HELD,
   CONFIG_INPUTS_PUBLISHED,
   CONFIG_OVERRIDE,
@@ -24,9 +25,10 @@ import {
   REACTIVE_JOINED,
   REACTIVE_LANE_READ,
   REACTIVE_PROBED,
+  REACTIVE_REASK,
   REACTIVE_PROBE_UNANSWERED,
-  REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_STAGED_READ,
+  REACTIVE_WINDOW,
   STATUS_ERROR,
   STATUS_PENDING,
   STATUS_UNINITIALIZED
@@ -35,6 +37,7 @@ import {
   bornInto,
   context,
   creatorPass,
+  creatorReads,
   joinPass,
   markLateLinker,
   prepareComputed,
@@ -156,32 +159,33 @@ function verdictRead(c: Computed<any>, t: Transaction, plain?: boolean): void {
  * watches the seam and runs again if the flush parks (a plain sync write
  * never glitches it true).
  *
- * `latest` has its answer either way — the proposal — and only the reader's
- * membership was open, so it is settled now: the frame gets its transaction
- * (`joinFuture(null)`; nothing holds it at the seam and it lands there, the
- * lane dissolving into it — a plain commit) and the reader is its verdict
- * lane's. One pass: a provisional pass re-derived at the seam ran everything
- * downstream of it twice (#3540 web). A pass that also read the frame's own
- * stagings plainly (REACTIVE_STAGED_READ) stays the frame's (`route` does
- * not move it); a verdict reader's plain read AFTER the window sees the
- * screen (`read`: `stagedScreen`). */
+ * `latest` has its answer either way — the proposal — but its reader's
+ * membership is the seam's too: the frame opens no transaction for it
+ * (#4365 — one opened for the read alone made a plain read after the window
+ * take it for a hold, `stagedScreen`, and serve the screen beside the
+ * staging in a frame nothing held). The reader watches the seam like a
+ * probe before anything joined: its pass is the frame's, and runs again in
+ * the verdict lane if the flush parks. Once the flush has joined a
+ * transaction, the reader is its verdict lane's at once; a pass that also
+ * read the frame's own stagings plainly (REACTIVE_STAGED_READ) stays the
+ * frame's (`route` does not move it). */
 function provisionalVerdict(c: Computed<any>, notFinal: boolean): void {
-  if (!probing) {
-    joinFuture(null);
-    verdictRead(c, flushTransaction!);
-    return;
-  }
   if (flushTransaction) {
-    if (notFinal) probeFound = true;
+    if (probing && notFinal) probeFound = true;
     verdictRead(c, flushTransaction);
-    if (c._flags & REACTIVE_STAGED_READ) watchVerdict(c);
+    if (probing && c._flags & REACTIVE_STAGED_READ) watchVerdict(c);
     return;
   }
   // Before anything joined, a staging that would not be final held has no
   // answer yet: whatever the seam decides, the pass runs again — a later
   // plain read of the same pass may route it into the verdict lane
   // (`observeFlight`), which the seam must not take as this probe's answer.
-  watchVerdict(c, notFinal);
+  // `latest` opens no transaction for its answer either (#4365): the plain
+  // read of a staging after it took one opened for it for a hold and paired
+  // the staging with the screen, in a frame nothing held. Its pass is the
+  // frame's — whole — and re-derives once if the flush parks (unanswered:
+  // its membership is the seam's, not the transaction it joins).
+  watchVerdict(c, !probing || notFinal);
 }
 
 /** A19 exc. 2 / A24: a flight that re-asks the question already answered
@@ -228,7 +232,15 @@ function pendingVerdict(c: Computed<any> | null, el: Computed<any>): void {
   if (probing && !quietPending(el)) probeFound = true;
   if (c && tracking) {
     if (el._config & CONFIG_HELD) verdictRead(c, txOf(el));
-    else if (globalQueue._running) provisionalVerdict(c, false); // decided above
+    else if (globalQueue._running) {
+      // `latest` of a flight serves the committed value, the frame's and the
+      // lane's alike (D-22): nothing is the seam's, so the reader is the
+      // verdict lane's now, as a plain read of a flight makes it
+      // (`observeFlight`). Its frame pass re-derived in the lane (R5) asked
+      // its question again (F-9, #4397). A staging's is the seam's (#4365).
+      if (!probing) joinFuture(null);
+      provisionalVerdict(c, false); // decided above
+    }
   }
 }
 
@@ -247,12 +259,12 @@ function markVerdictReader(window: number): void {
     // derivation of it does (`bornInto` once held) and stays its pass
     // (`route`); a verdict reader from its next pass. #4341: a memo born in
     // a newly opened <Match> read the screen, where its branch was closed.
-    let p: Computed<any> | null = c,
-      born = 0;
-    while ((p = creatorPass(p!._parent))?._flags! & REACTIVE_RECOMPUTING_DEPS)
-      born |= p!._flags & (REACTIVE_JOINED | REACTIVE_STAGED_READ);
-    if (!born) c._config |= CONFIG_VERDICT;
-    c._flags |= REACTIVE_PROBED | born;
+    // Not such a pass: a verdict reader now.
+    c._config &= ~CONFIG_ASYNC;
+    c._flags |=
+      REACTIVE_PROBED |
+      REACTIVE_WINDOW |
+      (creatorReads(c, 0) || ((c._config |= CONFIG_VERDICT), 0));
     // Observe tier: which windows this pass entered (1 `isPending`, 2
     // `latest`) — the hold census names the affordance (attribution.ts).
     if (__OBSERVE__) (c as any)._devWindows = ((c as any)._devWindows ?? 0) | window;
@@ -359,7 +371,9 @@ function heldLatest(el: Signal<any> | Computed<any>, c: Computed<any> | null): u
  *   differs (A24, A18 provenance). A derivation: `latest` sees the lane's
  *   latest (a landing a blocked lane holds has answered its question — the
  *   checkout's shipping text updates independently of the tax in flight),
- *   `isPending` the screen; not final while its own flight is up;
+ *   `isPending` the screen; not final while its own flight is up. A
+ *   derivation's first load in flight (nothing produced yet — an async memo
+ *   over a verdict memo, F-6) reads as the flight below: loading (D-22);
  * - a held node: the reader breaks out as the holder's verdict lane's and
  *   re-derives at the landing; `latest` serves the proposal (`heldLatest`),
  *   `isPending` answers `heldNotFinal`;
@@ -399,24 +413,43 @@ function verdictValue(el: Signal<any> | Computed<any>, c: Computed<any> | null):
     el._config & CONFIG_OVERRIDE &&
     !(owner._statusFlags & STATUS_ERROR && !(el._config & CONFIG_GUESS))
   ) {
-    const l = txOf(el);
-    if (tracked) verdictRead(c!, l._parent ?? l);
-    const flying = (owner._statusFlags & STATUS_PENDING) !== 0 && !quietPending(owner);
-    if (el._config & CONFIG_GUESS) {
+    const l = txOf(el),
+      flying = (owner._statusFlags & STATUS_PENDING) !== 0 && !quietPending(owner),
+      guess = el._config & CONFIG_GUESS,
+      // NOT_PENDING: a node born in the lane with nothing in it yet has no
+      // value in either view — loading, not pending, and no verdict to read
+      // ahead: it is read as any uninitialized node, NotReady below (A7, A19
+      // exc. 1; #4363), its reader not moved into the verdict lane.
+      v = guess ? 0 : latestActive && !flying ? laneValueOf(el) : display(el);
+    if (v !== NOT_PENDING) {
+      if (tracked) verdictRead(c!, l._parent ?? l);
+      if (guess) {
+        if (
+          probing &&
+          (flying ||
+            (el._pendingValue !== NOT_PENDING &&
+              (!el._equals || !el._equals(el._x!._lane as any, el._pendingValue as any))))
+        )
+          probeFound = true;
+        // A lane a correction folded under (D-34): `latest()` shows the hold's
+        // world whole — the truth beneath each guess, else what it covered.
+        if (latestActive && l.folded) return l.folded(null, el);
+        return el._x!._lane;
+      }
+      // A first load in flight with nothing produced yet: loading, for
+      // `latest` (D-22) as for `isPending` (A19 exc. 1) — unless an error
+      // answered it first: its re-ask is pending, the error its display
+      // (D-41, #4375).
       if (
-        probing &&
-        (flying ||
-          (el._pendingValue !== NOT_PENDING &&
-            (!el._equals || !el._equals(el._x!._lane as any, el._pendingValue as any))))
+        flying &&
+        v === el._value &&
+        owner._statusFlags & STATUS_UNINITIALIZED &&
+        (latestActive || !owner._x!._shownError)
       )
-        probeFound = true;
-      // A lane a correction folded under (D-34): `latest()` shows the hold's
-      // world whole — the truth beneath each guess, else what it covered.
-      if (latestActive && l.folded) return l.folded(null, el);
-      return el._x!._lane;
+        throw owner._x!._error;
+      if (probing && flying) probeFound = true;
+      return v;
     }
-    if (probing && flying) probeFound = true;
-    return latestActive && !flying ? laneValueOf(el) : display(el);
   }
   // Dev strict-read scopes (a component body, an effect callback) warn on a
   // verdict read as on any untracked read; the pending throw they add for a
@@ -502,10 +535,46 @@ function verdictValue(el: Signal<any> | Computed<any>, c: Computed<any> | null):
   return el._value;
 }
 
+/** D-25: a node whose fetch a hold is waiting on is that hold's work, not a
+ * verdict reader — a pass that re-runs it reads plainly — and a memo's
+ * posture is what it reads: one that reads a verdict reader's value is a
+ * verdict reader itself (#4050). An async memo with no verdict window of its
+ * own (REACTIVE_WINDOW: it read a verdict memo, it called neither `latest`
+ * nor `isPending`) is a verdict reader between its flights, and the hold's
+ * work while one is up or its hold re-runs it.
+ *
+ * At a pass's head (core.ts `recompute`): a pending node's pass — its
+ * flight is the transition's own work (#3884) — and a held one's re-run of
+ * such a memo read plainly: the write that re-ran it is its hold's, and
+ * served the screen it re-asked a question it had answered (A10, #4397).
+ * Only a memo that never asked: D-25's "a verdict posture outlives the pass
+ * that asked" is a pass that called `latest`/`isPending`, which clears
+ * CONFIG_ASYNC and stays a verdict reader whoever dirties it.
+ *
+ * On `source` going pending (`propagateStatus`): such a memo waits on it
+ * like any derivation (F-9) instead of re-deriving — what it read changed
+ * no value, so its re-run re-asked the question it was answering. Unless
+ * its own flight is up outside a lane on a new question of the source's:
+ * its re-run supersedes a flight asked of a value the source has moved past
+ * (re-asked by a `refresh()`, the source's question is the same one). */
+function holdWork(n: Computed<any>, source: Computed<any>): unknown {
+  // CONFIG_ASYNC records an async memo with no window of its own: its last
+  // answering pass registered a flight (`handleAsync`) and called neither
+  // `latest` nor `isPending`. A window (`markVerdictReader`), a sync answer or
+  // an error clears it; a pass left pending keeps the last answer's.
+  const own = n._config & CONFIG_ASYNC;
+  return (
+    own &&
+    (!(n._statusFlags & STATUS_PENDING) ||
+      n._x!._transaction?._lane ||
+      source._flags & REACTIVE_REASK)
+  );
+}
+
 // Installed at module evaluation — present exactly when something imports
 // `latest` or `isPending`. (`read` dispatches to `verdictValue` through
 // `verdict`, set while a window is open.)
-installVerdictHooks(observeFlight);
+installVerdictHooks(observeFlight, holdWork);
 /** A store read inside an untracked `isPending` probe found a live mark on
  * a record with no node to carry it (store/affects.ts): not final. */
 GlobalQueue._witnessMark = () => {

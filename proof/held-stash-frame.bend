@@ -14,12 +14,12 @@ def clean(record: R.NodeExtension) -> R.NodeExtension:
 
 def flushed(+record: R.NodeExtension,value: R.Slot) -> {clean(R.NodeExtension.with_flushed(record,value)) == clean(record) : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}:
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}:
       {==}
 
 def stamp(+record: R.NodeExtension,value: R.Stamp) -> {clean(R.NodeExtension.with_flushedAt(record,value)) == clean(record) : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}:
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}:
       {==}
 
 def erase(rows: List<&2,R.NodeExtension>,slot: Nat) -> List<&2,R.NodeExtension>:

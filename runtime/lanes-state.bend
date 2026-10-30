@@ -11,6 +11,7 @@ import ./constants.bend as K
 import ./transaction.bend as Tx
 import ./pending-state.bend as P
 import ./read-state.bend as V
+import ./creator-reads.bend as Creator
 
 def groups(+w: R.World, id: Nat) -> List<&2, Nat>:
   B.get(List<&2, Nat>, R.LaneState.groups(R.World.laneState(w)), id, [])
@@ -92,16 +93,29 @@ def unlink(+w: R.World, +lane: Nat) -> R.World:
 def display(+w: R.World, +id: Nat) -> R.Value:
   +x = B.extension(w, id)
   B.choose(~R.Value, Bool.and(R.Transaction.shown(B.transaction(w, R.NodeExtension.transaction(x))), B.present(R.NodeExtension.lane(x))),
-    _ => B.selected(R.NodeExtension.lane(x), R.Undefined{}), _ => R.Node.value(B.node(w, id)))
+    _ => B.selected(R.NodeExtension.lane(x), R.Undefined{}),
+    _ => B.choose(~R.Value, B.has(R.Node.status(B.node(w,id)),K.STATUS_UNINITIALIZED()), _ => R.NotPendingToken{}, _ => R.Node.value(B.node(w,id))))
+
+def effectType(kind: R.NodeKind) -> U32:
+  match kind:
+    case R.Render{}: 1
+    case R.User{}: 2
+    case R.Tracked{}: 3
+    case _: 0
 
 def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
   +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_READ())))
   +p = R.World.passLane(w)
   B.choose(~R.World, Nat.is_eq(p, 0n),
     _ =>
-      +w = R.World.with_passLane(w, lane)
-      +flags = R.Node.flags(B.node(w, reader))
-      B.choose(~R.World, Bool.and(B.has(flags, K.REACTIVE_STAGED_READ()), Bool.or(R.LaneState.guessed(R.World.laneState(w)), B.has(flags, K.REACTIVE_JOINED()))), _ => V.stagedRead(w, reader, 0n), _ => w),
+      +flags = R.Node.flags(B.node(w,reader))
+      +verdict = Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,lane)))),lane)
+      +pair = B.choose(~B.Bundle<R.World,U32>,verdict,_=>Creator.creatorReads(w,reader,B.choose(~U32,B.effect(R.Node.kind(B.node(w,reader))),_=>effectType(R.Node.kind(B.node(w,reader))),_=>flags)),_=>B.Bundle{w,0})
+      +w = B.first(R.World,U32,pair)
+      B.choose(~R.World,Bool.and(verdict,U32.is_ne(B.second(R.World,U32,pair),0)),_=>w,
+        _=>
+          +w = R.World.with_passLane(w,lane)
+          B.choose(~R.World,Bool.and(B.has(flags,K.REACTIVE_STAGED_READ()),Bool.or(R.LaneState.guessed(R.World.laneState(w)),Bool.or(verdict,B.has(flags,K.REACTIVE_JOINED())))),_=>V.stagedRead(w,reader,0n),_=>w)),
     _ => B.choose(~R.World, sameLane(w, p, lane), _ => R.World.with_passLane(w, lane),
       _ =>
         +pair = under(w, p, lane)
@@ -114,7 +128,7 @@ def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
               _ => R.World.with_passLane(linkLanes(w, p, lane), lane)))))
 
 # scheduler.ts:laneDirty. Called after insertSubs; does not enqueue by itself.
-def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat) -> R.World:
+def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat,+source: Nat) -> R.World:
   match fuel:
     case 0n:
       B.choose(~R.World, Nat.is_eq(edge, 0n), _ => w, _ => R.World.with_fault(w, R.Exhausted{}))
@@ -123,12 +137,14 @@ def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat) -> R.World:
         _ =>
           +reader = R.Link.sub(B.link(w, edge))
           +t = R.NodeExtension.transaction(B.extension(w, reader))
+          +w = B.choose(~R.World,Bool.and(Tx.isRender(R.Node.kind(B.node(w,reader))),B.has(R.Node.config(B.node(w,source)),K.CONFIG_VERDICT())),
+            _=>B.store_node(w,reader,R.Node.with_flags(R.Node.with_config(B.node(w,reader),B.set(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT())),B.clear(R.Node.flags(B.node(w,reader)),K.REACTIVE_LANE_DIRTY()))),_=>w)
           +eligible = B.choose(~Bool, R.Transaction.lane(B.transaction(w, t)), _ => sameLane(w, t, lane), _ => B.effect(R.Node.kind(B.node(w, reader))))
           +w = B.choose(~R.World, eligible, _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_DIRTY()))), _ => w)
-          dirtyLoop(p, w, R.Link.nextSub(B.link(w, edge)), lane))
+          dirtyLoop(p, w, R.Link.nextSub(B.link(w, edge)), lane,source))
 
 def laneDirty(+w: R.World, +id: Nat, lane: Nat) -> R.World:
-  dirtyLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane)
+  dirtyLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane,id)
 
 # lanes.ts:laneStage. Source errored is false, true, or the pending source
 # object; the third case is intentionally not collapsed into true.
@@ -284,11 +300,14 @@ def pendingGuessOf(+w: R.World, +id: Nat) -> R.Slot:
   pendingGuessLoop(w, id, B.length(R.Guess, R.LaneState.pendingGuesses(R.World.laneState(w))))
 
 def guessedValueOf(+w: R.World, +id: Nat) -> R.Value:
-  +guess = pendingGuessOf(w, id)
-  B.choose(~R.Value, B.present(guess), _ => B.selected(guess, R.Undefined{}),
-    _ => B.choose(~R.Value, B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()), _ => T.laneValueOf(w, id), _ => R.Node.value(B.node(w, id))))
+  +guess = pendingGuessOf(w,id)
+  B.choose(~R.Value,B.present(guess),_=>B.selected(guess,R.Undefined{}),
+    _=> B.choose(~R.Value,B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()),
+      _=>
+        +value = T.laneValueOf(w,id)
+        B.choose(~R.Value,B.equal(value,R.NotPendingToken{}),_=>R.Node.value(B.node(w,id)),_=>value),
+      _=> R.Node.value(B.node(w,id))))
 
-# Ordinary node branch; optional store slot-flight resolver is excluded.
 def inFlight(w: R.World, id: Nat) -> B.Bundle<R.World, Bool>:
   Tx.laneInFlight(w, id)
 
@@ -308,3 +327,8 @@ def enteredPrefix(count: Nat, readers: List<&2, Nat>) -> List<&2, Nat>:
     case 0n _: []
     case _ Nil{}: []
     case 1n+left reader <> tail: reader <> enteredPrefix(left, tail)
+
+# lanes.ts:laneSeams entry. Empty arrays are already canonical in the explicit
+# state representation; this setter represents the guarded length reset.
+def clearRevealing(+w: R.World) -> R.World:
+  R.World.with_laneState(w,R.LaneState.with_revealing(R.World.laneState(w),[]))

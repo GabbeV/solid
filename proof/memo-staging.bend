@@ -69,16 +69,16 @@ def step_13(+input: Nat) -> {C.step(M.state_13(input)) == M.state_14(input) : C.
   +ending = {C.FinishPublication{3n, False{}, False{}, False{}, 0n, 0n} <> rest : List<&2, C.Task>}
   +a = C.passReleases(w, rest, [], Cuts.frame(), 0n, value, False{}, False{}, False{}, R.Healthy{})
   +b = Cuts.afterRelease(w, rest, [], value)
-  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n)
-  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, 0n)
-  +e = C.publicationCompleted(ending, [], 3n, R.Undefined{}, 0n, False{}, B.Bundle{C.world(M.state_14(input)), True{}})
+  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{})
+  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, 0n, False{})
+  +e = C.publicationCompleted(ending, [], 3n, R.Number{0n}, 0n, False{}, B.Bundle{C.world(M.state_14(input)), True{}})
   Equal.trans(C.Machine, C.step(M.state_13(input)), a, M.state_14(input),
     Cuts.step_from_shape(M.state_13(input), w, rest, [], value, {==}, {==}),
     Equal.trans(C.Machine, a, b, M.state_14(input), Cuts.release_empty(w, rest, [], value, {==}),
       Equal.trans(C.Machine, b, c, M.state_14(input), Cuts.after_release_identity(w, rest, [], value, {==}, {==}),
         Equal.trans(C.Machine, c, d, M.state_14(input), Cuts.after_pass_live(w, rest, [], value, {==}, {==}, {==}),
           Equal.trans(C.Machine, d, e, M.state_14(input),
-            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(input)), True{}}, {==}, {==}, {==}, M.publication_13(input)),
+            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(input)), True{}}, {==}, {==}, {==}, M.publication_13(input)),
             {==})))))
 
 def step_14(+input: Nat) -> {C.step(M.state_14(input)) == M.state_15(input) : C.Machine}:

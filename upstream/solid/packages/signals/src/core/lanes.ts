@@ -59,8 +59,15 @@ import {
   STATUS_UNINITIALIZED
 } from "./constants.js";
 import { attrHooks } from "./attribution-hooks.js";
-import { ext, stagedRead, tracking } from "./core.js";
-import { NotReadyError } from "./error.js";
+import { bornInto, creatorReads, ext, stagedRead, tracking } from "./core.js";
+import { NotReadyError, type StatusError } from "./error.js";
+import {
+  handleAsync,
+  isThenable,
+  notifyStatus,
+  releaseFlightTeardown,
+  removePendingSource
+} from "./async.js";
 import { laneValueOf } from "./truth.js";
 import { enqueueSub } from "./heap.js";
 import {
@@ -74,6 +81,7 @@ import {
   joinFuture,
   laneDirty,
   list,
+  stagedReaders,
   staleReader,
   merge,
   newTransaction,
@@ -108,10 +116,15 @@ function newLane(parent: Transaction): Transaction {
 }
 
 /** What the screen shows for a lane's node: the lane's value once the lane
- * has revealed, the committed truth before. */
+ * has revealed, the committed truth before — NOT_PENDING when there is none
+ * (uninitialized, as `laneValueOf`): its read throws NotReady. */
 export function display(el: Signal<any> | Computed<any>): unknown {
   const v = el._x!._lane;
-  return el._x!._transaction!._shown && v !== NOT_PENDING ? v : el._value;
+  return el._x!._transaction!._shown && v !== NOT_PENDING
+    ? v
+    : (el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED
+      ? NOT_PENDING
+      : el._value;
 }
 
 /** Guesses written since the last seam (`[node, value, question, …]`).
@@ -125,9 +138,10 @@ const pendingGuesses: any[] = [];
  * lane's value or the committed one — what an optimistic updater composes
  * on (a store setter's draft too, store/optimistic.ts). */
 export function guessedValueOf<T>(n: Signal<T> | Computed<T>): T {
-  const g = pendingGuessOf(n);
-  if (g !== NOT_PENDING) return g as T;
-  return n._config & CONFIG_OVERRIDE ? (laneValueOf(n) as T) : n._value;
+  let g = pendingGuessOf(n);
+  return g !== NOT_PENDING || (n._config & CONFIG_OVERRIDE && (g = laneValueOf(n)) !== NOT_PENDING)
+    ? (g as T)
+    : n._value;
 }
 /** The unflushed guess to `n`, else NOT_PENDING. */
 export function pendingGuessOf(n: Signal<any> | Computed<any>): unknown {
@@ -261,25 +275,33 @@ function applyGuesses(parent: Transaction | null): void {
  * through an ancestor's guess stays its own (the screen plus its own
  * guesses). */
 export function enterLane(l: Transaction, c: Computed<any>): void {
-  c._flags |= REACTIVE_LANE_READ;
-  const p = passLane;
+  const f = (c._flags |= REACTIVE_LANE_READ),
+    p = passLane;
   if (p === null) {
+    const verdict = l._parent!._verdict === l;
+    // A verdict lane's value (a memo of `latest` / `isPending`, F-6) read by
+    // a derivation that already read the frame's staging or joined its
+    // hold, or by any pass a pass that did is creating: the verdict read
+    // does not break it out — it stays the frame's, as the same read inline
+    // does (verdict.ts `markVerdictReader`, `route`; D-25, D-26). An
+    // effect's own reads do not count (its `_type`, 1–3, carries neither bit).
+    if (!(verdict && creatorReads(c, (c as any)._type || f))) {
+      setPassLane(l);
+      // The pass read a held write before its first lane read (it joined the
+      // frame's future as mainline would): lane work sees the screen — the
+      // seam re-derives it on the committed world next round (`stagedReaders`,
+      // the park's repair), as it does a lane pass that read a staging. Not a
+      // pass whose held reads were all of nodes born held (no staged read,
+      // `stagedRead`): it has no committed world to re-derive on (#3969).
+      // (A pass not joined: a held write beside a guess, #4336; a leaf of a
+      // verdict lane — its plain reads are the screen's, D-26 `[s(), L()]`.)
+      if (f & REACTIVE_STAGED_READ && (guessed || verdict || f & REACTIVE_JOINED)) stagedRead(c);
+    }
+  } else if (sameLane(p, l)) setPassLane(l);
+  else if (!under(p, l)) {
+    if (!under(l, p)) linkLanes(p, l);
     setPassLane(l);
-    // The pass read a held write before its first lane read (it joined the
-    // frame's future as mainline would): lane work sees the screen — the
-    // seam re-derives it on the committed world next round (`stagedReaders`,
-    // the park's repair), as it does a lane pass that read a staging. Not a
-    // pass whose held reads were all of nodes born held (no staged read,
-    // `stagedRead`): it has no committed world to re-derive on (#3969).
-    // (A pass not joined: a held write beside a guess, #4336.)
-    if (c._flags & REACTIVE_STAGED_READ && (guessed || c._flags & REACTIVE_JOINED)) stagedRead(c);
-    return;
   }
-  if (sameLane(p, l)) return setPassLane(l);
-  if (under(p, l)) return;
-  if (under(l, p)) return setPassLane(l);
-  linkLanes(p, l);
-  setPassLane(l);
 }
 /** Is `l` nested under `a` (an ancestor lane)? */
 function under(l: Transaction, a: Transaction): boolean {
@@ -500,6 +522,8 @@ function dissolveLane(l: Transaction, into: Transaction | null, except?: Signal<
     l._verdict = null;
     if (lanes.indexOf(v) !== -1) dissolveLane(v, null);
   }
+  // First loads this dissolution leaves loading (below).
+  const loading: Computed<any>[] = [];
   for (let i = 0; i < l._nodes.length; i++) {
     const n = l._nodes[i];
     const x = n._x!;
@@ -535,8 +559,20 @@ function dissolveLane(l: Transaction, into: Transaction | null, except?: Signal<
       // lane's answer beside inputs that are the truth now: a fresh reader
       // of its flight observes it (#3648, #3651; #3305's commit beneath a
       // flight).
+      // Not a first load the lane produced nothing for whose own flight is
+      // up, nor one pending on such a load kept here (an identity memo of
+      // it, a derived store's derive): committing its empty `_value` would
+      // initialize it as `undefined`, which `latest()` would serve and
+      // `isPending()` call pending. It stays loading until its flight
+      // answers (D-22, A19 exc. 1; async-gen 3289 #929, 91501 #504, #156).
       x._transaction = null;
-      if (!effect && !guess) n._pendingValue = latest;
+      if (!effect && !guess)
+        slot === NOT_PENDING &&
+        ((n as Computed<any>)._statusFlags & (STATUS_UNINITIALIZED | STATUS_PENDING)) ===
+          (STATUS_UNINITIALIZED | STATUS_PENDING) &&
+        (x._inFlight || loading.some(q => x._pendingSources?.has(q)))
+          ? loading.push(n as Computed<any>)
+          : (n._pendingValue = latest);
       commitPendingNode(n);
       if (!effect) {
         if (
@@ -546,6 +582,18 @@ function dissolveLane(l: Transaction, into: Transaction | null, except?: Signal<
           n._config |= CONFIG_INPUTS_PUBLISHED;
         if (shown !== NOT_PENDING && (!n._equals || !n._equals(shown, n._value))) insertSubs(n);
       }
+      // A stale reader's own error — its pass (a memo's or a render
+      // effect's) threw over the committed value of what the parent held
+      // (A10), served as the screen — is no answer of the world landing now:
+      // it re-derives on it (A15; D-39, the landing is the new answer). The
+      // landing's `reruns` skips an errored reader: its error is an errored
+      // source's (#3945).
+      if (
+        (n as Computed<any>)._flags & REACTIVE_FRAME_READ &&
+        (n as Computed<any>)._statusFlags & STATUS_ERROR &&
+        (x._error as StatusError).source === n
+      )
+        enqueueSub(n as Computed<any>);
     } else if (guess) {
       // A guess of a dissolving lane: its truth — a landing held beneath it,
       // else the value it covered — is the parent's to land, and its readers
@@ -675,8 +723,10 @@ export function laneRead(c: Computed<any> | null, el: Signal<any> | Computed<any
           c._flags |= REACTIVE_FRAME_READ | REACTIVE_SCREEN_READ;
           l._reruns.push(c);
         }
-        if (!guess && !l._shown && status & STATUS_UNINITIALIZED) throw new NotReadyError(null);
-        return display(el);
+        // Nothing on screen yet (uninitialized: `display` is NOT_PENDING).
+        const v = display(el);
+        if (v === NOT_PENDING) throw new NotReadyError(null);
+        return v;
       }
       // A verdict reader reads ahead of the seam's verdict: re-derived on the
       // screen if the lane holds (#4284).
@@ -752,7 +802,7 @@ function laneSeam(l: Transaction, leaked: boolean): void {
   }
   l._held = false;
   l._shown = true;
-  reruns(l);
+  if (reruns(l)) revealing.push(resolveTx(l._parent!));
   for (let i = 0; i < l._nodes.length; i++) {
     const n = l._nodes[i] as Computed<any>;
     if (n._flags & LEFT_SHOWN) {
@@ -818,8 +868,14 @@ function endLanes(u: Transaction): void {
 function lanesBlocked(t: Transaction): boolean {
   return (t._lane && linkBlocked(t)) || nestedBlocked(t);
 }
+/** Parents whose lane revealed this seam with readers to re-derive there
+ * (`laneSeam`): the lane shows ahead of its parent (F-6), so the parent lands
+ * a round later — after those readers have shown the lane's answer — even
+ * when nothing else holds it (#4393). */
+const revealing: Transaction[] = [];
 /** The lanes under `t` (its own; a link group's are each other's). */
 function nestedBlocked(t: Transaction): boolean {
+  if (revealing.indexOf(t) !== -1) return true;
   for (let i = 0; i < lanes.length; i++) {
     const l = lanes[i];
     if (resolveTx(l._parent!) !== t) continue;
@@ -918,35 +974,79 @@ const applyGuessesAt = (parent: Transaction | null): void => {
   judged = lanes.length;
   if (pendingGuesses.length !== 0) applyGuesses(parent);
 };
-const laneSeams = (leaks: Computed<any>[] | null): void => {
+/** `t` is parked by `r`'s pass alone: each node keeping it — `t`'s own, or
+ * a lane's under it — is `r` itself (its flight, in the verdict lane) or a
+ * render effect pending on `r` only: the frame observing the lane work that
+ * read its staging. Anything else (an open action, a guess's flight,
+ * another flight) holds it on its own. */
+function heldBy(t: Transaction, r: Computed<any>): boolean {
+  if (t._open !== 0 || (t._lane && linkBlocked(t))) return false;
+  for (let k = -1, u = t; u; u = lanes[++k])
+    if (u === t || resolveTx(u._parent!) === t) {
+      if (u !== t && guessFlights(u)) return false;
+      for (let i = 0; i < u._nodes.length; i++) {
+        const n = u._nodes[i] as Computed<any>;
+        if (
+          n === r ||
+          !(n._statusFlags & STATUS_PENDING) ||
+          (n._x!._transaction !== null && txOf(n) !== u)
+        )
+          continue;
+        const s = n._x!._pendingSources;
+        if ((n as any)._type !== EFFECT_RENDER || s?.size !== 1 || !s.has(r)) return false;
+      }
+    }
+  return true;
+}
+const laneSeams = (t: Transaction | null): void => {
   // Passes that read a write the parked frame holds as the screen
   // (`stagedReaders`: lane work, a verdict reader before the verdict): they
   // re-derive on the committed world next round (and register as stale
   // readers of the transaction there); a lane's runs wait that round — a
   // lane sees the screen plus its own guesses.
+  if (revealing.length) revealing.length = 0;
   const leaked: Transaction[] = [];
-  if (leaks !== null)
-    for (let i = 0; i < leaks.length; i++) {
-      const r = leaks[i];
-      const l = r._x?._transaction;
+  if (t !== null)
+    for (let i = 0; i < stagedReaders.length; i++) {
+      const r = stagedReaders[i],
+        // A pass no transaction holds that read the frame's staging (an
+        // effect, a `[s(), latest(s)]` reader watched before the frame had
+        // a transaction): judged by the frame's — it re-derives only if the
+        // frame stays parked; landing here, what it read is the screen (one
+        // run, D-22).
+        l = r._x?._transaction || (r._flags & REACTIVE_STAGED_READ ? t : null);
       // A verdict reader a later read of the same pass routed into a verdict
       // lane answered for itself: it re-derives at the holder's landing, not
       // now (one run — #3322, #3540). Other verdict-lane work re-derives only
       // if the frame stays parked: a transaction landing at this seam makes
-      // what it read the screen (one run). A reader a transaction holds that
-      // read none of its stagings (a verdict reader that probed only a
-      // flight, held as the frame's pending observer or its staged
-      // derivation) has nothing to re-derive: its re-run re-enters that
-      // transaction and parks it again, every round — it runs at the
-      // landing (#4349).
+      // what it read the screen (one run). The frame is the transaction that
+      // holds what it read (`t`, this flush's — not always the lane's parent:
+      // a landing that reached a frame held elsewhere joined that one). Nor
+      // when only this pass keeps it parked (`heldBy`): the frame lands with
+      // the pass's answer, so what the pass read is the screen when anything
+      // shows it — re-derived on the committed world, it would ask a question
+      // already asked, over inputs the landing replaces. A reader a
+      // transaction holds that read none of its stagings (a verdict reader
+      // that probed only a flight, held as the frame's pending observer or
+      // its staged derivation) has nothing to re-derive: its re-run
+      // re-enters that transaction and parks it again, every round — it
+      // runs at the landing (#4349). One that read a staging re-derives only
+      // if its frame stays parked: landing at this seam, what it read is the
+      // screen (one run, D-22). Not one born into that frame (a held pass's
+      // child, ruling A): it has no screen, its reads are the transaction's
+      // either way — it runs again at the landing, not now.
       if (
         r._flags & REACTIVE_DISPOSED ||
         (l?._lane
           ? l._parent?._verdict === l &&
             (r._config & CONFIG_VERDICT
               ? !(r._flags & REACTIVE_PROBE_UNANSWERED)
-              : !blocked(l._parent))
-          : l && !(r._flags & (REACTIVE_STAGED_READ | REACTIVE_PROBE_UNANSWERED)))
+              : !blocked(t!) || heldBy(t!, r))
+          : l &&
+            !(
+              r._flags & REACTIVE_PROBE_UNANSWERED ||
+              (r._flags & REACTIVE_STAGED_READ && blocked(l) && !bornInto(r, l))
+            ))
       )
         continue;
       // A leaked effect re-derives seated in its lane from its first read: it
@@ -956,11 +1056,47 @@ const laneSeams = (leaks: Computed<any>[] | null): void => {
       // again — every round (#4014). A computed is already seated by its
       // override, and a written guess's own pass stays the frame's.
       if (l?._lane && (r as any)._type) r._flags |= REACTIVE_LANE_DIRTY;
+      // R5 for an async reader: its frame pass asked the frame's question
+      // (F-6's lane gets its own pass now). That flight is the frame's
+      // answer: the landing adopts it rather than asking it again (F-9: a
+      // re-ask of the same question is no new question; `reruns`). A frame
+      // landing at this seam has nothing to re-derive: the pass was the
+      // landing's, its flight the screen's answer. Sync or async, the
+      // reader's lane pass is still to come: the verdict lane it joins does
+      // not reveal this seam (F-6: the lane's readers show its answer
+      // together, D-23: atomic with the value) — revealed now, it showed a
+      // verdict beside the frame pass's value, before the pass that answers
+      // for the lane, and a reader of the re-derived memo read it outside
+      // the shown lane and waited for the frame (#4393).
+      else if (!l?._lane && r._flags & REACTIVE_PROBE_UNANSWERED) {
+        if (isThenable(r._x?._inFlight)) {
+          if (!blocked(t!)) continue;
+          r._x!._parked = r._x!._inFlight;
+        } else if (blocked(t!))
+          // A sync reader's lane pass re-derives the async memos over it (a
+          // memo over a verdict memo is a verdict reader, D-25 #4050; D-22:
+          // `latest()` extracted into a memo reads as inline). The flight
+          // each asked over its frame staging, up and held by `t`, is the
+          // frame's answer too: the landing adopts it (F-9).
+          for (let s = r._subs, n; s; s = s._nextSub)
+            if (
+              isThenable((n = s._sub)._x?._inFlight) &&
+              n._x!._pendingSources?.has(n) &&
+              n._config & CONFIG_HELD &&
+              txOf(n) === t
+            )
+              n._x!._parked = n._x!._inFlight;
+        if (t?._verdict && leaked.indexOf(t._verdict) === -1) leaked.push(t._verdict);
+      }
       enqueueSub(r);
       if (l?._lane && leaked.indexOf(l) === -1) leaked.push(l);
     }
-  for (let k = Math.min(judged, lanes.length) - 1; k >= 0; k--)
-    laneSeam(lanes[k], leaked.indexOf(lanes[k]) !== -1);
+  // A verdict lane born at this seam is judged with it: it exists only once
+  // a pass routed into it — the park seam's zombie verdict readers re-run
+  // as its work so that this seam reveals them (#3444).
+  for (let k = lanes.length - 1; k >= 0; k--)
+    if (k < judged || lanes[k]._parent?._verdict === lanes[k])
+      laneSeam(lanes[k], leaked.indexOf(lanes[k]) !== -1);
   // A verdict reader that entered a lane this seam held: its run waits with
   // the lane, and the verdict beside it would freeze — it re-derives next
   // round from the frame's seat, a stale reader of the lane (#4284).
@@ -969,6 +1105,36 @@ const laneSeams = (leaks: Computed<any>[] | null): void => {
       r._flags &= ~REACTIVE_LANE_DIRTY;
       enqueueSub(r);
     }
+};
+/** The landing's re-derive of a reader whose frame flight the seam parked
+ * (R5): the flight asked the question the landing would — adopted, it is
+ * asked once (F-9). Not over a pass already queued: that one asks anew.
+ * Registered as if this pass had returned it — the node pending on it, its
+ * landing the answer — through a promise of its own: the frame pass's
+ * registration still listens to the flight, and must not land it a second
+ * time. */
+const adoptParked = (r: Computed<any>): boolean => {
+  const parked = r._x?._parked;
+  if (!parked || r._flags & (REACTIVE_DIRTY | REACTIVE_CHECK | REACTIVE_IN_HEAP)) return false;
+  r._x!._parked = undefined;
+  releaseFlightTeardown(r);
+  try {
+    handleAsync(r, parked.then());
+  } catch {}
+  r._x!._blocked = true;
+  notifyStatus(r, STATUS_PENDING, new NotReadyError(r));
+  return true;
+};
+/** A15: lane work or a verdict reader was served `el`'s committed value
+ * (core.ts `frameRead`), so its pass does not wait on `el`'s flight: what
+ * `el`'s pending propagated onto it before the pass (its origins, `el`
+ * included) is not this pass's — the landing re-derives it (`reruns`).
+ * Kept, a pass that went pending on another source never woke when that
+ * source settled (#4397). Only a reader something made pending has anything
+ * to drop. */
+const laneServed = (c: Computed<any>, el: Signal<any> | Computed<any>): void => {
+  const from = (el as Computed<any>)._x?._pendingSources;
+  if (from && c._x?._pendingSources) for (const s of from) removePendingSource(c, s);
 };
 /** Render effects that read a verdict and entered a lane before its seam (#4284). */
 const entered: Computed<any>[] = [];
@@ -981,7 +1147,9 @@ installLaneHooks(
   laneSeams,
   () => lanes.length !== 0 && laneCorrections(),
   endLanes,
-  lanesBlocked
+  lanesBlocked,
+  adoptParked,
+  laneServed
 );
 if (__OBSERVE__)
   GlobalQueue._laneGuesses = t => {

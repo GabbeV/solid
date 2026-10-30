@@ -9,7 +9,7 @@ def laneValueOf(+w: R.World, +id: Nat) -> R.Value:
   +n = B.node(w, id)
   B.choose(~R.Value, Bool.and(Bool.not(B.has(R.Node.config(n), K.CONFIG_GUESS())), B.present(R.Node.pending(n))),
     _ => B.selected(R.Node.pending(n), R.Undefined{}),
-    _ => B.selected(R.NodeExtension.lane(B.extension(w, id)), R.Node.value(n)))
+    _ => B.selected(R.NodeExtension.lane(B.extension(w, id)), B.choose(~R.Value, B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), _ => R.NotPendingToken{}, _ => R.Node.value(n))))
 
 # truth.ts:truthConfirmed. The source walks live lane members/subscriber links
 # and enqueues authoritative readers only; it invokes no user callback.

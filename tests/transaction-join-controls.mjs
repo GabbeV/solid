@@ -91,7 +91,10 @@ try{
   const scan=C.landTransactions(world,rest,stack,frame,1+index);
   assert.deepEqual({...scan.world,transactions:world.transactions},world,'empty landing entry only retires the selected group');
   assert.deepEqual(list(scan.world.transactions),list(world.transactions).filter(id=>id!==target));
-  assert.deepEqual(list(scan.tasks),[{$:'LandNodes',frame,transaction:target,index:0,rerunFrame:0},...list(rest)]);
+  assert.deepEqual(list(scan.tasks),[{$:'RerunsLoop',transaction:target,index:0,frame:0},{$:'LandAfterReruns',frame,transaction:target},...list(rest)]);
+  const prepared=C.step(C.step(scan));
+  assert.deepEqual(list(prepared.tasks),[{$:'LandNodes',frame,transaction:target,index:0,rerunFrame:0},...list(rest)]);
+  assert.deepEqual(prepared.values,stack);
   assert.deepEqual(list(scan.values),list(stack));eligibleScanControls++;
 
   emptyBlockerControls++;

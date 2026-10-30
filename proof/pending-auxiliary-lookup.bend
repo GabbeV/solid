@@ -58,7 +58,7 @@ def newSetCount(+w: R.World) ->
 
 def pendingPointer(+record: R.NodeExtension, +set: Nat) -> {R.NodeExtension.pendingSources(R.NodeExtension.with_pendingSources(record, set)) == set : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}:
       {==}
 
 

@@ -25,17 +25,17 @@ def timeX(+node: R.Node,+time: Nat) -> {R.Node.x(R.Node.with_time(node,time)) ==
 
 def errorPointer(+record: R.NodeExtension,+error: R.Value) -> {R.NodeExtension.pendingSources(R.NodeExtension.with_error(record,error)) == R.NodeExtension.pendingSources(record) : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}:
       {==}
 
 def blockedPointer(+record: R.NodeExtension,+blocked: R.Slot) -> {R.NodeExtension.pendingSources(R.NodeExtension.with_blocked(record,blocked)) == R.NodeExtension.pendingSources(record) : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}:
       {==}
 
 def shownPointer(+record: R.NodeExtension,+error: R.Value) -> {R.NodeExtension.pendingSources(R.NodeExtension.with_shownError(record,error)) == R.NodeExtension.pendingSources(record) : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}:
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}:
       {==}
 
 def status(+w: R.World,+node: Nat,+flags: U32) -> Field.Frame<w,B.store_node(w,node,R.Node.with_status(B.node(w,node),flags)),node>:

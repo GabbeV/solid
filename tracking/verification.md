@@ -7,7 +7,7 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `178605cf` (rc.19). The Bend2.0.37 frontend and vendored snapshot
+Solid is pinned to `5e68925c` (rc.20). The Bend2.0.37 frontend and vendored snapshot
 remain unchanged. The independent checker uses the recorded, fully Lean-checked
 [congruence profile](kernel-congruence.md); Lean4.34.0 and kernel fuel are unchanged. No semantic deviation is active.
 
@@ -18,9 +18,9 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 748 = 510 finite + 238 kernel variants; focused checks of the adjacent-controller fault and quiet-settlement faults are separate from the frozen complete sweep |
-| Complete negative sweep | Frozen7f7d/ac28157a: all727 exact ordered unique variants compiled/rejected; all1224 sealed inputs unchanged and tracked;101 mandatory unchanged kernel oracles passed; [receipt](reviews/complete-727-negative.json) |
-| Negative-check scope | Complete727 covers the frozen733-root checkpoint7f7d. Complete726 separately covers frozen722-root cb13 with1210 inputs and100 mandatory oracles. Neither is relabeled as a sweep of later proof modules; [726 receipt](reviews/complete-726-negative.json). |
+| Configured mutations | 764 = 520 finite + 244 kernel variants; ten new rc.20 targeted faults are rejected; a fresh complete 764 sweep remains separate |
+| Complete negative sweep | Frozen275c89e8/rc.19: all754 exact ordered variants compiled/rejected after107 unchanged kernel baselines; all1365 sealed inputs and outputs unchanged; [receipt](reviews/complete-754-negative.json) |
+| Negative-check scope | Complete754 covers frozen814-root275c89e8 at rc.19. The interrupted748 prefix and repaired tail remain separate scopes. Earlier727/726 receipts retain their old commits; no receipt is relabeled as covering later source/proof changes. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
@@ -733,3 +733,17 @@ rejections at a lane-stage oracle gap. After repair, the targeted 266 tail passe
 them into an unchanged full sweep. New entry/heap checks bring the configured
 total to 754; targeted checks and resource-stopped attempts remain separate.
 [Round/heap contracts](round-heap-entry.md) require a fresh whole-book verdict.
+
+
+## 2026-10-30 rc.20 integration
+
+The [source review](reviews/solid-5e68925c.md) and [receipt](reviews/solid-5e68925c-validation.json)
+record the exact pin, native package validation, frozen public/alignment/checker
+inputs, changed source segments, ten targeted mutation rejections and the
+independent 816-root candidate verdict. The deferred-stream fuel stop is retained
+as an uncredited attempt; checked source-operation cuts recover the original
+claim at the same fuel. The accepted checkpoint's authoritative whole-book/input
+record is `tracking/checked.json`. Fresh whole764 mutation coverage is not claimed.
+The added heap-entry count roots retain one action obligation through the actual
+constructed first body and Round/heap entry; heap execution/publication remains
+the next composition, not an assumed post-state certificate.

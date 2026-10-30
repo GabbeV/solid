@@ -36,16 +36,17 @@ def unowned_read_does_not_join(w, id, slow):
   {==}
 
 # The slow serve point, after pending/error handling and unflushed-value
-# selection, likewise serves the committed value for a zero reader.
-law unowned_selected_read:
+# selection, serves committed for c=null while retaining the actual ambient
+# observer. A pre-existing fault yields no successful read observation.
+law zero_posture_selected_read_preserves_faults:
   for +w: R.World
   for +tasks: List<&2, C.Task>
   for +stack: List<&2, R.Value>
   for +id: Nat
   {C.serveSelected(w, tasks, stack, id, 0n, R.Empty{})
-    == C.served(w, tasks, stack, 0n, id, R.Node.value(B.node(w, id))) : C.Machine}
+    == B.choose(~C.Machine,Bool.not(B.ok(w)),_=>C.Machine{w,tasks,stack},_=>C.served(w,tasks,stack,B.parentComputed(w,R.World.context(w)),id,R.Node.value(B.node(w,id)))) : C.Machine}
 
-def unowned_selected_read(w, tasks, stack, id):
+def zero_posture_selected_read_preserves_faults(w, tasks, stack, id):
   {==}
 
 # A selected unflushed value takes precedence and marks the late linker.
@@ -57,7 +58,7 @@ law unflushed_value_is_selected:
   for +reader: Nat
   for +value: R.Value
   {C.serveSelected(w, tasks, stack, id, reader, R.Present{value})
-    == C.served(V.markLateLinker(w, reader), tasks, stack, reader, id, value) : C.Machine}
+    == C.served(V.markLateLinker(w, reader), tasks, stack, B.parentComputed(V.markLateLinker(w,reader),R.World.context(V.markLateLinker(w,reader))), id, value) : C.Machine}
 
 def unflushed_value_is_selected(w, tasks, stack, id, reader, value):
   {==}

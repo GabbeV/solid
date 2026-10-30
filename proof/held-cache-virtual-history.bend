@@ -23,7 +23,7 @@ def storeSelf(+w: R.World,+id: Nat) -> {B.store_extension(w,id,B.extension(w,id)
 
 def recordSelf(+record: R.NodeExtension) -> {R.NodeExtension.with_transaction(record,R.NodeExtension.transaction(record)) == record : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
 
 def cached(-w: R.World,-id: Nat,-offset: Nat,profile: P.Profile<w,id,offset>) -> {R.NodeExtension.transaction(B.extension(w,id)) == 1n+offset : Nat}:
   match profile:

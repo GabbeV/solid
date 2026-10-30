@@ -59,7 +59,7 @@ def fixture(spec: Spec) -> B.Bundle<R.World, Bool>:
       +w = R.World.with_running(w, running)
       +w = R.World.with_flushTransaction(w, flush)
       +w = R.World.with_passLane(w, pass)
-      +w = R.World.with_verdictState(w, R.VerdictState{latest, probing, probeFound, False{}})
+      +w = R.World.with_verdictState(w, R.VerdictState{latest, probing, probeFound, False{}, 0n})
       B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 0), _ => B.Bundle{w, V.quietPending(w, 2n)},
         _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 1), _ => B.Bundle{V.markVerdictReader(w, 1), False{}},
           _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 2), _ => B.Bundle{V.watchVerdict(w, 3n, notFinal), False{}},

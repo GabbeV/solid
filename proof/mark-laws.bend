@@ -19,7 +19,7 @@ def direct(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +nodes: List
       match node:
         case R.Node{+n_kind, +n_value, +n_pending, +n_equals, +n_config, +n_flags, +n_status, +n_time, +n_notified, +n_deps, +n_depsTail, +n_depGen, +n_subs, +n_subsTail, +n_height, +n_nextHeap, +n_prevHeap, +n_parent, +n_firstChild, +n_nextSibling, +n_prevSibling, +n_expr, +n_modified, +n_prevValue, +n_target, +n_loading, +n_x, +n_parentComputed, +n_scope, +n_childCount, +n_disposal, +n_cleanup, +n_effectProgram, +n_returnedCleanup, +n_errorProgram}:
           match extension:
-            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError}:
+            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError, +parkedFlight}:
               {==}
 
 def increment(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +nodes: List<&2, R.Node>, +extensions: List<&2, R.NodeExtension>, +count: Nat, +active: Nat) ->
@@ -30,7 +30,7 @@ def increment(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +nodes: L
       match node:
         case R.Node{+n_kind, +n_value, +n_pending, +n_equals, +n_config, +n_flags, +n_status, +n_time, +n_notified, +n_deps, +n_depsTail, +n_depGen, +n_subs, +n_subsTail, +n_height, +n_nextHeap, +n_prevHeap, +n_parent, +n_firstChild, +n_nextSibling, +n_prevSibling, +n_expr, +n_modified, +n_prevValue, +n_target, +n_loading, +n_x, +n_parentComputed, +n_scope, +n_childCount, +n_disposal, +n_cleanup, +n_effectProgram, +n_returnedCleanup, +n_errorProgram}:
           match extension:
-            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError}:
+            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError, +parkedFlight}:
               {==}
 
 def nonlast(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +nodes: List<&2, R.Node>, +extensions: List<&2, R.NodeExtension>, +count: Nat, +active: Nat) ->
@@ -41,7 +41,7 @@ def nonlast(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +nodes: Lis
       match node:
         case R.Node{+n_kind, +n_value, +n_pending, +n_equals, +n_config, +n_flags, +n_status, +n_time, +n_notified, +n_deps, +n_depsTail, +n_depGen, +n_subs, +n_subsTail, +n_height, +n_nextHeap, +n_prevHeap, +n_parent, +n_firstChild, +n_nextSibling, +n_prevSibling, +n_expr, +n_modified, +n_prevValue, +n_target, +n_loading, +n_x, +n_parentComputed, +n_scope, +n_childCount, +n_disposal, +n_cleanup, +n_effectProgram, +n_returnedCleanup, +n_errorProgram}:
           match extension:
-            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError}:
+            case R.NodeExtension{+x_inFlight, +x_flightTeardown, +x_error, +x_blocked, +x_pendingSources, +x_unobserved, +x_snapshotValue, +x_pendingFirstChild, +x_pendingDisposal, +x_transaction, +x_reask, +x_flushed, +x_flushedAt, +x_q, +x_lane, +x_marks, +x_shownError, +parkedFlight}:
               {==}
 
 def inactive(+w: R.World, +id: Nat) ->

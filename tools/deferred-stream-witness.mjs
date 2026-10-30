@@ -55,6 +55,12 @@ import ../runtime/core.bend as C
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./paths.bend as P
+import ./deferred-stream-cuts.bend as StreamCuts
+import ./action-body-return.bend as CoreSteps
+import ../runtime/deferred-stream.bend as StreamCutRuntime
+import ../runtime/deferred-runtime.bend as DeferredCutRuntime
+import ../runtime/flight.bend as StreamCutFlight
+import ../runtime/iterator-state.bend as StreamCutIterator
 import ../runtime/equality.bend as DeferredEQ\nimport ../runtime/constants.bend as DeferredK\nimport ./memo-setter-cuts.bend as SetterCuts
 import ./deferred-heap-cuts.bend as HeapCuts
 import ../runtime/write.bend as W
@@ -97,8 +103,61 @@ let equations=fs.readFileSync(path.join(root,'proof/deferred-setter-equations.tx
  .replaceAll('R.Number{initial}','R.Number{0n}').replaceAll('R.Number{next}','R.Number{1n}').replaceAll('state_34(', 'state_37(').replaceAll('state_35(', 'state_38(');
 if(payload)equations=equations.replaceAll('initial: Nat','initial: Payload.Ordinary').replaceAll('next: Nat','next: Payload.Ordinary').replaceAll('R.Number{initial}','Payload.value(initial)').replaceAll('R.Number{next}','Payload.value(next)');
 out+=equations+'\n\n';
+const streamIndex=58;
+if(states[streamIndex].tasks.head.$!=='DeferredStreamCall')throw Error('Review changed deferred stream entry');
+const streamStart=states[streamIndex], streamCell=streamStart.tasks.head.cell,streamSource=streamStart.tasks.head.source;
+const streamWrapped=D.streamWrap(streamStart.world,streamCell,streamSource),streamObject=streamWrapped.right;
+const streamNode=D.streamNode(streamWrapped.left,streamCell);
+const streamRegistered=D.streamRegistered(streamWrapped.left,streamCell,streamObject);
+const streamCreated=D.streamCreated(streamRegistered,streamNode,streamObject),streamIdentity=streamCreated.right;
+const streamTail=streamStart.tasks.tail, streamStack=streamStart.values;
+const streamWork={$:'Con',head:{$:'DeferredAfterIterator',cell:streamCell},tail:streamTail};
+out+=`def cutStreamRest(+initial: Nat, +next: Nat) -> List<&2,C.Task>:
+  ${show(streamTail,'List<&2, C.Task>')}
+
+def cutStreamStack(+initial: Nat, +next: Nat) -> List<&2,R.Value>:
+  ${show(streamStack,'List<&2, R.Value>')}
+
+def cutStreamWrapped(+initial: Nat, +next: Nat) -> R.World:
+  ${show(streamWrapped.left,'R.World')}
+
+def cutStreamRegistered(+initial: Nat, +next: Nat) -> R.World:
+  ${show(streamRegistered,'R.World')}
+
+def cutStreamCreated(+initial: Nat, +next: Nat) -> R.World:
+  ${show(streamCreated.left,'R.World')}
+
+def cutStreamWrapEq(+initial: Nat, +next: Nat) -> {StreamCutRuntime.wrap(C.world(state_${streamIndex}(initial,next)),${streamCell}n,${streamSource}n) == B.Bundle{cutStreamWrapped(initial,next),${streamObject}n} : B.Bundle<R.World,Nat>}:
+  {==}
+
+def cutStreamRegisterEq(+initial: Nat, +next: Nat) -> {StreamCutFlight.startFlight(DeferredCutRuntime.ask(cutStreamWrapped(initial,next),${streamCell}n,StreamCutRuntime.flight(cutStreamWrapped(initial,next),${streamObject}n)),${streamNode}n,${streamObject}n) == cutStreamRegistered(initial,next) : R.World}:
+  {==}
+
+def cutStreamCreateEq(+initial: Nat, +next: Nat) -> {StreamCutIterator.newStream(cutStreamRegistered(initial,next),${streamNode}n,${streamObject}n,${streamObject}n,False{},R.Undefined{}) == B.Bundle{cutStreamCreated(initial,next),${streamIdentity}n} : B.Bundle<R.World,Nat>}:
+  {==}
+
+def cutStreamAttachEq(+initial: Nat, +next: Nat) -> {C.attachIterator(cutStreamCreated(initial,next),C.DeferredAfterIterator{${streamCell}n} <> cutStreamRest(initial,next),cutStreamStack(initial,next),${streamNode}n,${streamIdentity}n,False{}) == state_${streamIndex+1}(initial,next) : C.Machine}:
+  {==}
+
+def streamEntryStep(+initial: Nat, +next: Nat) -> {C.step(state_${streamIndex}(initial,next)) == state_${streamIndex+1}(initial,next) : C.Machine}:
+  +origin = C.world(state_${streamIndex}(initial,next))
+  +rest = cutStreamRest(initial,next)
+  +stack = cutStreamStack(initial,next)
+  +wrapped = cutStreamWrapped(initial,next)
+  +registered = cutStreamRegistered(initial,next)
+  +created = cutStreamCreated(initial,next)
+  +a = C.deferredStream(origin,rest,stack,${streamCell}n,${streamSource}n)
+  +b = C.deferredWrapped(rest,stack,${streamCell}n,B.Bundle{wrapped,${streamObject}n})
+  +c = C.consumeIterator(registered,C.DeferredAfterIterator{${streamCell}n} <> rest,stack,${streamNode}n,${streamObject}n,${streamObject}n,False{},R.Undefined{})
+  +d = C.attachIterator(created,C.DeferredAfterIterator{${streamCell}n} <> rest,stack,${streamNode}n,${streamIdentity}n,False{})
+  Equal.trans(C.Machine,C.step(state_${streamIndex}(initial,next)),a,state_${streamIndex+1}(initial,next),CoreSteps.healthyStep(origin,C.DeferredStreamCall{${streamCell}n,${streamSource}n},rest,stack,{==}),
+    Equal.trans(C.Machine,a,b,state_${streamIndex+1}(initial,next),StreamCuts.launch(origin,rest,stack,${streamCell}n,${streamSource}n,wrapped,${streamObject}n,{==},cutStreamWrapEq(initial,next)),
+      Equal.trans(C.Machine,b,c,state_${streamIndex+1}(initial,next),StreamCuts.wrapped(wrapped,rest,stack,${streamCell}n,${streamObject}n,${streamNode}n,registered,{==},{==},cutStreamRegisterEq(initial,next)),
+        Equal.trans(C.Machine,c,d,state_${streamIndex+1}(initial,next),StreamCuts.created(registered,C.DeferredAfterIterator{${streamCell}n} <> rest,stack,${streamNode}n,${streamObject}n,created,${streamIdentity}n,{==},cutStreamCreateEq(initial,next),{==}),cutStreamAttachEq(initial,next)))))
+
+`;
 for(let i=0;i<steps;i++){
- let body=i===setterIndex?'setterStep(initial, next)':'{==}';
+ let body=i===setterIndex?'setterStep(initial, next)':i===streamIndex?'streamEntryStep(initial,next)':'{==}';
  if(payload&&(initialCases.has(i)||nextCases.has(i))){
   const variable=initialCases.has(i)?'initial':'next';
   body='match '+variable+':\n'+['DataUndefined{}','DataNull{}','DataBoolean{value}','DataNatural{value}','DataNegativeZero{}','DataNaN{}','DataString{value}','DataReference{identity}'].map(pattern=>'    case Payload.'+pattern+': {==}').join('\n');

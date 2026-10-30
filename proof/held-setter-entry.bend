@@ -12,7 +12,7 @@ import ./transaction-resolution.bend as Routes
 
 def resetTransaction(+record: R.NodeExtension) -> {R.NodeExtension.with_transaction(record,R.NodeExtension.transaction(record)) == record : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
 
 def storeRead(+w: R.World,+id: Nat) -> {B.store_extension(w,id,B.extension(w,id)) == w : R.World}:
   match w:

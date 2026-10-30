@@ -13,6 +13,7 @@ import ./owner.bend as O
 import ./write.bend as W
 import ./status.bend as A
 import ./transaction.bend as X
+import ./rerun-state.bend as Rerun
 
 # Public source-boundary names delegate to the single shared write path.
 def queuePendingNode(w: R.World, id: Nat) -> R.World:
@@ -80,7 +81,7 @@ def commitComputedPrefix(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
   +inFlight = Bool.and(Bool.not(B.present(R.Node.pending(n))), B.has(R.Node.status(n), K.STATUS_PENDING()))
   +err = B.has(R.Node.config(n), K.CONFIG_STAGED_ERROR())
   +w = B.choose(~R.World, Bool.and(Bool.not(inFlight), Nat.is_ne(R.Node.x(n), 0n)),
-    _ => B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.Undefined{})), _ => w)
+    _ => B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.Null{})), _ => w)
   +config = B.choose(~U32, inFlight,
     _ => B.set(B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_HELD_FRAME())), K.CONFIG_INPUTS_PUBLISHED()),
     _ => B.clear(R.Node.config(n), B.set(K.CONFIG_HELD(), B.set(K.CONFIG_HELD_FRAME(), B.set(K.CONFIG_STAGED(), B.set(K.CONFIG_INPUTS_PUBLISHED(), K.CONFIG_STAGED_ERROR()))))))
@@ -202,48 +203,8 @@ def parkPendingNodes(+w: R.World, t: Nat) -> R.World:
   B.choose(~R.World, B.ok(w), _ => R.World.with_pendingNodes(w, []), _ => w)
 
 # scheduler.ts:reruns, direct children of a rerun's old frame lose owed runs.
-def clearChildRuns(fuel: Nat, +w: R.World, +child: Nat) -> R.World:
-  match fuel:
-    case 0n:
-      B.choose(~R.World, Nat.is_eq(child, 0n), _ => w, _ => R.World.with_fault(w, R.Exhausted{}))
-    case 1n+p:
-      B.choose(~R.World, Nat.is_eq(child, 0n), _ => w,
-        _ =>
-          +w = B.choose(~R.World, B.effect(R.Node.kind(B.node(w, child))), _ => B.store_node(w, child, R.Node.with_modified(B.node(w, child), False{})), _ => w)
-          clearChildRuns(p, w, R.Node.nextSibling(B.node(w, child))))
-
-def effectType(kind: R.NodeKind) -> Nat:
-  match kind:
-    case R.Render{}: 1n
-    case R.User{}: 2n
-    case _: 0n
-
-def rerunOne(+w: R.World, +id: Nat, +frame: Nat) -> B.Bundle<R.World, Nat>:
-  +n = B.node(w, id)
-  B.choose(~B.Bundle<R.World, Nat>, Bool.or(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()), B.has(R.Node.status(n), K.STATUS_ERROR())), _ => B.Bundle{w, frame},
-    _ => B.choose(~B.Bundle<R.World, Nat>, Bool.or(B.has(R.Node.flags(n), K.REACTIVE_FRAME_READ()), B.has(R.Node.config(n), K.CONFIG_VERDICT())),
-      _ =>
-        +frame = B.choose(~Nat, Nat.is_eq(frame, 0n), _ => effectType(R.Node.kind(n)), _ => frame)
-        +w = B.store_node(w, id, R.Node.with_modified(R.Node.with_flags(n, B.clear(R.Node.flags(n), K.REACTIVE_FRAME_READ())), False{}))
-        +w = clearChildRuns(B.budget(w), w, R.Node.firstChild(B.node(w, id)))
-        B.Bundle{H.enqueueSub(w, id), frame}, _ => B.Bundle{w, frame}))
-
-def rerunsLoop(fuel: Nat, +w: R.World, +t: Nat, +index: Nat, +frame: Nat) -> B.Bundle<R.World, Nat>:
-  match fuel:
-    case 0n:
-      B.Bundle{R.World.with_fault(w, R.Exhausted{}), frame}
-    case 1n+p:
-      B.choose(~B.Bundle<R.World, Nat>, Nat.is_ge(index, B.length(Nat, R.Transaction.reruns(B.transaction(w, t)))), _ => B.Bundle{w, frame},
-        _ =>
-          +pair = rerunOne(w, B.get(Nat, R.Transaction.reruns(B.transaction(w, t)), index, 0n), frame)
-          +w = B.first(R.World, Nat, pair)
-          +frame = B.second(R.World, Nat, pair)
-          B.choose(~B.Bundle<R.World, Nat>, B.ok(w), _ => rerunsLoop(p, w, t, 1n+index, frame), _ => B.Bundle{w, frame}))
-
-def reruns(+w: R.World, +t: Nat) -> B.Bundle<R.World, Nat>:
-  +pair = rerunsLoop(1n+Nat.add(B.budget(w), B.length(Nat, R.Transaction.reruns(B.transaction(w, t)))), w, t, 0n, 0n)
-  +w = B.first(R.World, Nat, pair)
-  B.Bundle{B.choose(~R.World, B.ok(w), _ => B.store_transaction(w, t, R.Transaction.with_reruns(B.transaction(w, t), [])), _ => w), B.second(R.World, Nat, pair)}
+def clearChildRuns(fuel: Nat,w: R.World,child: Nat) -> R.World:
+  Rerun.clearChildRuns(fuel,w,child)
 
 def releaseQueues(+w: R.World, +t: Nat) -> R.World:
   +w = R.World.with_renderQueue(w, B.append(Nat, R.World.renderQueue(w), R.Transaction.renderQueue(B.transaction(w, t))))

@@ -52,7 +52,7 @@ def appendSize(+w: R.World,+record: R.AsyncObserver) -> {Allocation.index(append
   Equal.trans(Nat,Allocation.index(append(w,record)),B.length(R.AsyncObserver,B.append(R.AsyncObserver,R.World.asyncObservers(w),[record])),Nat.add(Allocation.index(w),1n),Equal.cong(List<&2,R.AsyncObserver>,Nat,rows=>B.length(R.AsyncObserver,rows),R.World.asyncObservers(append(w,record)),B.append(R.AsyncObserver,R.World.asyncObservers(w),[record]),rowsField(w,B.append(R.AsyncObserver,R.World.asyncObservers(w),[record]))),Arena.appendLength(R.AsyncObserver,R.World.asyncObservers(w),[record]))
 
 def stepRecord(+w: R.World,+stream: Nat) -> R.AsyncObserver:
-  R.AsyncObserver{R.StreamState.node(B.stream(w,stream)),R.StreamState.result(B.stream(w,stream)),True{},False{},False{},R.Undefined{},R.Undefined{},stream}
+  R.AsyncObserver{R.StreamState.node(B.stream(w,stream)),R.StreamState.result(B.stream(w,stream)),True{},False{},False{},R.Undefined{},R.Undefined{},stream, 0n}
 
 def stepWorld(w: R.World,stream: Nat) -> R.World:
   B.first(R.World,Nat,I.newStepObserver(w,stream))
@@ -113,7 +113,7 @@ def ignoreState(+w: R.World,+observer: Nat,+immediate: Bool,+state: R.AsyncSettl
 
 
 def ignoreRecord(result: Nat) -> R.AsyncObserver:
-  R.AsyncObserver{0n,result,False{},False{},False{},R.Undefined{},R.Undefined{},0n}
+  R.AsyncObserver{0n,result,False{},False{},False{},R.Undefined{},R.Undefined{},0n, 0n}
 
 def ignoreTail(+w: R.World,+observer: Nat,+result: Nat) -> R.World:
   +object = B.asyncObject(w,result)

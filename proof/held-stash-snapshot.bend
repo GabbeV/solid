@@ -43,7 +43,7 @@ def tailClock(+w: R.World,+id: Nat) -> {R.World.clock(Stage.stashTail(w,id)) == 
 
 def stampSetter(+record: R.NodeExtension,+stamp: R.Stamp) -> {R.NodeExtension.flushedAt(R.NodeExtension.with_flushedAt(record,stamp)) == stamp : R.Stamp}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
 
 def tailCurrent(+w: R.World,+id: Nat,room: {Nat.is_lt(R.Node.x(B.node(w,id)),B.length(R.NodeExtension,R.World.extensions(w))) == True{} : Bool}) -> {B.stampMatches(R.NodeExtension.flushedAt(B.extension(Stage.stashTail(w,id),id)),R.World.clock(Stage.stashTail(w,id))) == True{} : Bool}:
   +after = Stage.stashTail(w,id)

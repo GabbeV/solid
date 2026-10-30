@@ -1,6 +1,3 @@
-# Complete public data-to-buffered-stream refetch. The typed producer is an
-# external input, created before the owning root; every reactive operation
-# runs through the existing constructor/setter/flush/accessor evaluator.
 import Base
 import ./ordinary-payload.bend as Payload
 import ../representation/records.bend as R
@@ -9,6 +6,13 @@ import ../runtime/api.bend as A
 import ../runtime/core.bend as C
 import ../runtime/construct.bend as N
 import ../runtime/write.bend as W
+import ../runtime/deferred-stream.bend as Stream
+import ../runtime/deferred-runtime.bend as Deferred
+import ../runtime/flight.bend as Flight
+import ../runtime/iterator-state.bend as Iter
+# Complete public data-to-buffered-stream refetch. The typed producer is an
+# external input, created before the owning root; every reactive operation
+# runs through the existing constructor/setter/flush/accessor evaluator.
 
 def inputWorld(next: Payload.Ordinary) -> R.World:
   A.createStream(A.createWorld(), [R.BareNext{False{}, Payload.value(next)}, R.BareNext{True{}, R.Undefined{}}], True{}, False{}, R.Undefined{}, 0n)
@@ -44,3 +48,14 @@ def stageStamp(+w: R.World) -> R.World:
 
 def stageFlags(+w: R.World) -> R.World:
   B.store_node(w, 4n, R.Node.with_flags(B.node(w, 4n), 8))
+
+
+# Untrusted snapshot generation calls only; independent equations check them.
+
+def streamWrap(w: R.World,cell: Nat,source: Nat) -> B.Bundle<R.World,Nat>: Stream.wrap(w,cell,source)
+def streamNode(w: R.World,cell: Nat) -> Nat: R.DeferredCell.node(Deferred.cell(w,cell))
+def streamRegistered(+w: R.World,+cell: Nat,+result: Nat) -> R.World:
+  +node = R.DeferredCell.node(Deferred.cell(w,cell))
+  Flight.startFlight(Deferred.ask(w,cell,Stream.flight(w,result)),node,result)
+def streamCreated(w: R.World,node: Nat,+result: Nat) -> B.Bundle<R.World,Nat>: Iter.newStream(w,node,result,result,False{},R.Undefined{})
+def streamAttached(w: R.World,rest: List<&2,C.Task>,stack: List<&2,R.Value>,node: Nat,stream: Nat) -> C.Machine: C.attachIterator(w,rest,stack,node,stream,False{})

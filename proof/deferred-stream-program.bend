@@ -5,6 +5,12 @@ import ../runtime/core.bend as C
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./paths.bend as P
+import ./deferred-stream-cuts.bend as StreamCuts
+import ./action-body-return.bend as CoreSteps
+import ../runtime/deferred-stream.bend as StreamCutRuntime
+import ../runtime/deferred-runtime.bend as DeferredCutRuntime
+import ../runtime/flight.bend as StreamCutFlight
+import ../runtime/iterator-state.bend as StreamCutIterator
 import ../runtime/equality.bend as DeferredEQ
 import ../runtime/constants.bend as DeferredK
 import ./memo-setter-cuts.bend as SetterCuts
@@ -82,587 +88,587 @@ def data_20() -> R.Snapshot:
 def data_21() -> R.Question:
   R.QuestionZero{}
 
-def data_22() -> R.NodeExtension:
-  R.NodeExtension{data_19(), 0n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_21(), data_2(), 0n, data_1()}
-
-def data_23() -> List<&2, R.NodeExtension>:
-  [data_22()]
-
-def data_24() -> List<&2, R.CleanupAction>:
-  []
-
-def data_25() -> R.CleanupProgram:
-  R.CleanupProgram{data_24(), False{}, 0n}
-
-def data_26() -> List<&2, R.CleanupProgram>:
-  [data_25()]
-
-def data_27() -> List<&2, R.Report>:
-  []
-
-def data_28() -> R.OptionalIds:
-  R.NoIds{}
-
-def data_29() -> R.Transaction:
-  R.Transaction{data_13(), data_13(), data_14(), data_13(), 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, data_28()}
-
-def data_30() -> List<&2, R.Transaction>:
-  [data_29()]
-
-def data_31() -> List<&2, List<&2, Nat>>:
-  [data_13()]
-
-def data_32() -> R.AsyncSettlement:
-  R.Unresolved{}
-
-def data_33() -> R.AsyncObject:
-  R.AsyncObject{False{}, data_32(), data_13(), 0n}
-
-def data_34() -> R.AsyncObject:
-  R.AsyncObject{False{}, data_32(), data_13(), 1n}
-
-def data_35() -> List<&2, R.AsyncObject>:
-  [data_33(), data_34()]
-
-def data_36() -> R.AsyncObserver:
-  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, data_1(), data_1(), 0n}
-
-def data_37() -> List<&2, R.AsyncObserver>:
-  [data_36()]
-
-def data_38() -> List<&2, R.HostJob>:
-  []
-
-def data_39() -> List<&2, R.NextInput>:
-  []
-
-def data_40() -> R.FromState:
-  R.FromNone{}
-
-def data_41() -> R.StreamPlan:
-  R.StreamPlan{data_39(), False{}, data_2(), 0n, 0n, data_2(), data_40()}
-
-def data_42(+next: Payload.Ordinary) -> R.Value:
-  Payload.value(next)
-
-def data_43(+next: Payload.Ordinary) -> R.NextInput:
-  R.BareNext{False{}, data_42(next)}
-
-def data_44() -> R.NextInput:
-  R.BareNext{True{}, data_1()}
-
-def data_45(+next: Payload.Ordinary) -> List<&2, R.NextInput>:
-  [data_43(next), data_44()]
-
-def data_46(+next: Payload.Ordinary) -> R.StreamPlan:
-  R.StreamPlan{data_45(next), True{}, data_2(), 0n, 0n, data_2(), data_40()}
-
-def data_47(+next: Payload.Ordinary) -> List<&2, R.StreamPlan>:
-  [data_41(), data_46(next)]
-
-def data_48() -> R.ExternalIterator:
-  R.ExternalIterator{0n, 0n, 0n}
-
-def data_49() -> List<&2, R.ExternalIterator>:
-  [data_48()]
-
-def data_50() -> R.StreamState:
-  R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, data_1(), 0n}
-
-def data_51() -> List<&2, R.StreamState>:
-  [data_50()]
-
-def data_52() -> List<&2, R.IteratorEvent>:
-  []
-
-def data_53() -> R.Awaiter:
-  R.Awaiter{data_4(), False{}, 0n, 0n, 0n, 0n, data_32(), False{}, 0n, False{}, False{}, 0n}
-
-def data_54() -> List<&2, R.Awaiter>:
-  [data_53()]
-
-def data_55() -> R.AbortInput:
-  R.AbortInput{False{}, data_1()}
-
-def data_56() -> List<&2, R.AbortInput>:
-  [data_55()]
-
-def data_57() -> R.ContextKey:
-  R.ContextKey{data_1(), data_2()}
-
-def data_58() -> List<&2, R.ContextKey>:
-  [data_57()]
-
-def data_59() -> List<&2, R.ContextEntry>:
-  []
-
-def data_60() -> R.ContextRecord:
-  R.ContextRecord{data_59()}
-
-def data_61() -> List<&2, R.ContextRecord>:
-  [data_60()]
-
-def data_62() -> List<&2, R.Expr>:
-  [data_4()]
-
-def data_63() -> List<&2, R.ReactionState>:
-  []
-
-def data_64() -> List<&2, R.ComparatorBinding>:
-  []
-
-def data_65() -> List<&2, R.ActionState>:
-  []
-
-def data_66() -> List<&2, R.ActionWait>:
-  []
-
-def data_67() -> List<&2, R.ArrayData>:
-  []
-
-def data_68() -> List<&2, R.RepeatState>:
-  []
-
-def data_69() -> List<&2, R.MapState>:
-  []
-
-def data_70() -> List<&2, R.Guess>:
-  []
-
-def data_71() -> R.LaneMount:
-  R.MountUnset{}
-
-def data_72() -> List<&2, R.KeptGuess>:
-  []
-
-def data_73() -> R.LaneState:
-  R.LaneState{data_13(), data_31(), data_13(), data_70(), 0n, data_71(), data_13(), False{}, False{}, data_72(), data_13(), False{}}
-
-def data_74() -> R.VerdictState:
-  R.VerdictState{False{}, False{}, False{}, False{}}
-
-def data_75() -> R.Value:
+def data_22() -> R.Value:
   R.Null{}
 
-def data_76() -> R.DeferredCell:
-  R.DeferredCell{0n, data_75(), False{}, False{}}
-
-def data_77() -> R.DeferredBinding:
-  R.DeferredBinding{data_76(), 0n}
-
-def data_78() -> List<&2, R.DeferredBinding>:
-  [data_77()]
-
-def data_79() -> List<&2, R.DeferredWait>:
-  []
-
-def data_80() -> R.DeferredIterator:
-  R.DeferredIterator{0n, 0n, 0n, False{}}
-
-def data_81() -> List<&2, R.DeferredIterator>:
-  [data_80()]
-
-def data_82() -> R.DeferredArena:
-  R.DeferredArena{data_78(), data_13(), data_79(), data_81()}
-
-def data_83(+next: Payload.Ordinary) -> R.World:
-  R.World{data_9(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 0n, data_16(), data_17(), data_18(), False{}, data_13(), data_23(), data_26(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_82()}
-
-def data_84() -> R.Value:
-  R.Number{0n}
-
-def data_85() -> R.Expr:
-  R.Literal{data_84()}
-
-def data_86() -> R.NodeOptions:
-  R.NodeOptions{False{}, False{}, False{}, False{}, False{}, False{}, 0, data_2(), 0n, 0n}
-
-def data_87() -> R.Expr:
-  R.LocalRead{0n}
-
-def data_88() -> R.Value:
-  R.AsyncValue{1n}
-
-def data_89() -> R.Expr:
-  R.Literal{data_88()}
-
-def data_90(+initial: Payload.Ordinary) -> R.Value:
-  Payload.value(initial)
-
-def data_91(+initial: Payload.Ordinary) -> R.Expr:
-  R.Literal{data_90(initial)}
-
-def data_92(+initial: Payload.Ordinary) -> R.Expr:
-  R.Select{data_87(), data_89(), data_91(initial)}
-
-def data_93(+initial: Payload.Ordinary) -> R.Expr:
-  R.DeferredAccessor{data_92(initial), data_86()}
-
-def data_94(+initial: Payload.Ordinary) -> R.Expr:
-  R.SignalScope{data_85(), data_86(), data_93(initial)}
-
-def data_95(+initial: Payload.Ordinary) -> R.Expr:
-  R.RootScope{data_94(initial), False{}}
-
-def data_96() -> R.Value:
-  R.SetterReference{3n}
-
-def data_97() -> R.Expr:
-  R.Literal{data_96()}
-
-def data_98() -> R.Value:
-  R.Number{1n}
-
-def data_99() -> R.Expr:
-  R.Literal{data_98()}
-
-def data_100() -> R.Expr:
-  R.InvokeWith{data_97(), data_99(), False{}}
-
-def data_101() -> R.Expr:
-  R.FlushNow{}
-
-def data_102() -> R.Value:
-  R.AccessorReference{4n}
-
-def data_103() -> R.Expr:
-  R.Literal{data_102()}
-
-def data_104() -> R.Expr:
-  R.Invoke{data_103()}
-
-def data_105() -> R.Expr:
-  R.Then{data_101(), data_104()}
-
-def data_106() -> R.Expr:
-  R.Then{data_100(), data_105()}
-
-def data_107(+initial: Payload.Ordinary) -> R.Expr:
-  R.Then{data_95(initial), data_106()}
-
-def data_108(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_107(initial), data_1()}
-
-def data_109(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_108(initial)]
-
-def data_110() -> List<&2, R.Value>:
-  []
-
-def data_111(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_83(next), data_109(initial), data_110()}
-
-def data_112(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_95(initial), data_1()}
-
-def data_113() -> C.Task:
-  C.Discard{}
-
-def data_114() -> C.Task:
-  C.Evaluate{data_106(), data_1()}
-
-def data_115(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_112(initial), data_113(), data_114()]
-
-def data_116(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_83(next), data_115(initial), data_110()}
-
-def data_117() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_8()]
-
-def data_118(+next: Payload.Ordinary) -> R.World:
-  R.World{data_117(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_17(), data_18(), False{}, data_13(), data_23(), data_26(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_82()}
-
-def data_119(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_94(initial), data_1()}
-
-def data_120() -> C.Task:
-  C.RestoreContext{0n, False{}}
-
-def data_121(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_119(initial), data_120(), data_113(), data_114()]
-
-def data_122(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_118(next), data_121(initial), data_110()}
-
-def data_123() -> C.Task:
-  C.Evaluate{data_85(), data_1()}
-
-def data_124(+initial: Payload.Ordinary) -> C.Task:
-  C.CreateSignal{data_86(), data_93(initial), data_1()}
-
-def data_125(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_123(), data_124(initial), data_120(), data_113(), data_114()]
-
-def data_126(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_118(next), data_125(initial), data_110()}
-
-def data_127(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_124(initial), data_120(), data_113(), data_114()]
-
-def data_128() -> List<&2, R.Value>:
-  [data_84()]
-
-def data_129(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_118(next), data_127(initial), data_128()}
-
-def data_130() -> R.NodeKind:
-  R.Signal{}
-
-def data_131() -> R.Node:
-  R.Node{data_130(), data_84(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_132() -> List<&2, R.Node>:
-  [data_6(), data_8(), data_8(), data_131()]
-
-def data_133() -> R.TraceEvent:
-  R.Constructed{3n}
-
-def data_134() -> List<&2, R.TraceEvent>:
-  [data_133()]
-
-def data_135(+next: Payload.Ordinary) -> R.World:
-  R.World{data_132(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_134(), data_18(), False{}, data_13(), data_23(), data_26(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_82()}
-
-def data_136() -> R.Expr:
-  R.Read{3n}
-
-def data_137(+initial: Payload.Ordinary) -> R.Expr:
-  R.Select{data_136(), data_89(), data_91(initial)}
-
-def data_138(+initial: Payload.Ordinary) -> R.Expr:
-  R.DeferredAccessor{data_137(initial), data_86()}
-
-def data_139(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_138(initial), data_1()}
-
-def data_140(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_139(initial), data_120(), data_113(), data_114()]
-
-def data_141(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_135(next), data_140(initial), data_110()}
-
-def data_142() -> R.TraceEvent:
-  R.Constructed{4n}
-
-def data_143() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142()]
-
-def data_144() -> R.CleanupAction:
-  R.DeferredEnd{1n}
-
-def data_145() -> List<&2, R.CleanupAction>:
-  [data_144()]
-
-def data_146() -> R.CleanupProgram:
-  R.CleanupProgram{data_145(), False{}, 0n}
-
-def data_147() -> List<&2, R.CleanupProgram>:
-  [data_25(), data_146()]
-
-def data_148() -> R.DeferredBinding:
-  R.DeferredBinding{data_76(), 1n}
-
-def data_149() -> List<&2, R.DeferredBinding>:
-  [data_77(), data_148()]
-
-def data_150() -> R.DeferredArena:
-  R.DeferredArena{data_149(), data_13(), data_79(), data_81()}
-
-def data_151(+next: Payload.Ordinary) -> R.World:
-  R.World{data_132(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_143(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_150()}
-
-def data_152(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredCreate{1n, data_137(initial), data_86(), False{}}
-
-def data_153(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_152(initial), data_120(), data_113(), data_114()]
-
-def data_154(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_151(next), data_153(initial), data_110()}
-
-def data_155() -> R.Node:
-  R.Node{data_7(), data_1(), data_2(), True{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 4n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_156() -> R.NodeKind:
-  R.Memo{}
-
-def data_157(+initial: Payload.Ordinary) -> R.Expr:
-  R.DeferredCompute{1n, data_137(initial)}
-
-def data_158(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 0, 0, 4, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_159(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_131(), data_158(initial)]
-
-def data_160(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_159(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_143(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_150()}
-
-def data_161() -> C.Task:
-  C.Recompute{4n, True{}}
-
-def data_162() -> C.Task:
-  C.MemoAccessorReady{4n}
-
-def data_163() -> C.Task:
-  C.Evaluate{data_103(), data_1()}
-
-def data_164() -> List<&2, C.Task>:
-  [data_161(), data_162(), data_163(), data_120(), data_113(), data_114()]
-
-def data_165(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_160(initial, next), data_164(), data_110()}
-
-def data_166(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
-
-def data_167(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_131(), data_166(initial)]
-
-def data_168() -> R.TraceEvent:
-  R.Invoked{4n}
-
-def data_169() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168()]
-
-def data_170(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_167(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_169(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_150()}
-
-def data_171(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_157(initial), data_1()}
-
-def data_172() -> R.Flight:
+def data_23() -> R.Flight:
   R.FlightUndefined{}
 
+def data_24() -> R.NodeExtension:
+  R.NodeExtension{data_19(), 0n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_21(), data_2(), 0n, data_22(), data_23()}
+
+def data_25() -> List<&2, R.NodeExtension>:
+  [data_24()]
+
+def data_26() -> List<&2, R.CleanupAction>:
+  []
+
+def data_27() -> R.CleanupProgram:
+  R.CleanupProgram{data_26(), False{}, 0n}
+
+def data_28() -> List<&2, R.CleanupProgram>:
+  [data_27()]
+
+def data_29() -> List<&2, R.Report>:
+  []
+
+def data_30() -> R.OptionalIds:
+  R.NoIds{}
+
+def data_31() -> R.Transaction:
+  R.Transaction{data_13(), data_13(), data_14(), data_13(), 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, data_30()}
+
+def data_32() -> List<&2, R.Transaction>:
+  [data_31()]
+
+def data_33() -> List<&2, List<&2, Nat>>:
+  [data_13()]
+
+def data_34() -> R.AsyncSettlement:
+  R.Unresolved{}
+
+def data_35() -> R.AsyncObject:
+  R.AsyncObject{False{}, data_34(), data_13(), 0n}
+
+def data_36() -> R.AsyncObject:
+  R.AsyncObject{False{}, data_34(), data_13(), 1n}
+
+def data_37() -> List<&2, R.AsyncObject>:
+  [data_35(), data_36()]
+
+def data_38() -> R.AsyncObserver:
+  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, data_1(), data_1(), 0n, 0n}
+
+def data_39() -> List<&2, R.AsyncObserver>:
+  [data_38()]
+
+def data_40() -> List<&2, R.HostJob>:
+  []
+
+def data_41() -> List<&2, R.NextInput>:
+  []
+
+def data_42() -> R.FromState:
+  R.FromNone{}
+
+def data_43() -> R.StreamPlan:
+  R.StreamPlan{data_41(), False{}, data_2(), 0n, 0n, data_2(), data_42()}
+
+def data_44(+next: Payload.Ordinary) -> R.Value:
+  Payload.value(next)
+
+def data_45(+next: Payload.Ordinary) -> R.NextInput:
+  R.BareNext{False{}, data_44(next)}
+
+def data_46() -> R.NextInput:
+  R.BareNext{True{}, data_1()}
+
+def data_47(+next: Payload.Ordinary) -> List<&2, R.NextInput>:
+  [data_45(next), data_46()]
+
+def data_48(+next: Payload.Ordinary) -> R.StreamPlan:
+  R.StreamPlan{data_47(next), True{}, data_2(), 0n, 0n, data_2(), data_42()}
+
+def data_49(+next: Payload.Ordinary) -> List<&2, R.StreamPlan>:
+  [data_43(), data_48(next)]
+
+def data_50() -> R.ExternalIterator:
+  R.ExternalIterator{0n, 0n, 0n}
+
+def data_51() -> List<&2, R.ExternalIterator>:
+  [data_50()]
+
+def data_52() -> R.StreamState:
+  R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, data_1(), 0n}
+
+def data_53() -> List<&2, R.StreamState>:
+  [data_52()]
+
+def data_54() -> List<&2, R.IteratorEvent>:
+  []
+
+def data_55() -> R.Awaiter:
+  R.Awaiter{data_4(), False{}, 0n, 0n, 0n, 0n, data_34(), False{}, 0n, False{}, False{}, 0n}
+
+def data_56() -> List<&2, R.Awaiter>:
+  [data_55()]
+
+def data_57() -> R.AbortInput:
+  R.AbortInput{False{}, data_1()}
+
+def data_58() -> List<&2, R.AbortInput>:
+  [data_57()]
+
+def data_59() -> R.ContextKey:
+  R.ContextKey{data_1(), data_2()}
+
+def data_60() -> List<&2, R.ContextKey>:
+  [data_59()]
+
+def data_61() -> List<&2, R.ContextEntry>:
+  []
+
+def data_62() -> R.ContextRecord:
+  R.ContextRecord{data_61()}
+
+def data_63() -> List<&2, R.ContextRecord>:
+  [data_62()]
+
+def data_64() -> List<&2, R.Expr>:
+  [data_4()]
+
+def data_65() -> List<&2, R.ReactionState>:
+  []
+
+def data_66() -> List<&2, R.ComparatorBinding>:
+  []
+
+def data_67() -> List<&2, R.ActionState>:
+  []
+
+def data_68() -> List<&2, R.ActionWait>:
+  []
+
+def data_69() -> List<&2, R.ArrayData>:
+  []
+
+def data_70() -> List<&2, R.RepeatState>:
+  []
+
+def data_71() -> List<&2, R.MapState>:
+  []
+
+def data_72() -> List<&2, R.Guess>:
+  []
+
+def data_73() -> R.LaneMount:
+  R.MountUnset{}
+
+def data_74() -> List<&2, R.KeptGuess>:
+  []
+
+def data_75() -> R.LaneState:
+  R.LaneState{data_13(), data_33(), data_13(), data_72(), 0n, data_73(), data_13(), False{}, False{}, data_74(), data_13(), False{}, data_13()}
+
+def data_76() -> R.VerdictState:
+  R.VerdictState{False{}, False{}, False{}, False{}, 0n}
+
+def data_77() -> R.DeferredCell:
+  R.DeferredCell{0n, data_22(), False{}, False{}}
+
+def data_78() -> R.DeferredBinding:
+  R.DeferredBinding{data_77(), 0n}
+
+def data_79() -> List<&2, R.DeferredBinding>:
+  [data_78()]
+
+def data_80() -> List<&2, R.DeferredWait>:
+  []
+
+def data_81() -> R.DeferredIterator:
+  R.DeferredIterator{0n, 0n, 0n, False{}}
+
+def data_82() -> List<&2, R.DeferredIterator>:
+  [data_81()]
+
+def data_83() -> R.DeferredArena:
+  R.DeferredArena{data_79(), data_13(), data_80(), data_82()}
+
+def data_84(+next: Payload.Ordinary) -> R.World:
+  R.World{data_9(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 0n, data_16(), data_17(), data_18(), False{}, data_13(), data_25(), data_28(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_83()}
+
+def data_85() -> R.Value:
+  R.Number{0n}
+
+def data_86() -> R.Expr:
+  R.Literal{data_85()}
+
+def data_87() -> R.NodeOptions:
+  R.NodeOptions{False{}, False{}, False{}, False{}, False{}, False{}, 0, data_2(), 0n, 0n}
+
+def data_88() -> R.Expr:
+  R.LocalRead{0n}
+
+def data_89() -> R.Value:
+  R.AsyncValue{1n}
+
+def data_90() -> R.Expr:
+  R.Literal{data_89()}
+
+def data_91(+initial: Payload.Ordinary) -> R.Value:
+  Payload.value(initial)
+
+def data_92(+initial: Payload.Ordinary) -> R.Expr:
+  R.Literal{data_91(initial)}
+
+def data_93(+initial: Payload.Ordinary) -> R.Expr:
+  R.Select{data_88(), data_90(), data_92(initial)}
+
+def data_94(+initial: Payload.Ordinary) -> R.Expr:
+  R.DeferredAccessor{data_93(initial), data_87()}
+
+def data_95(+initial: Payload.Ordinary) -> R.Expr:
+  R.SignalScope{data_86(), data_87(), data_94(initial)}
+
+def data_96(+initial: Payload.Ordinary) -> R.Expr:
+  R.RootScope{data_95(initial), False{}}
+
+def data_97() -> R.Value:
+  R.SetterReference{3n}
+
+def data_98() -> R.Expr:
+  R.Literal{data_97()}
+
+def data_99() -> R.Value:
+  R.Number{1n}
+
+def data_100() -> R.Expr:
+  R.Literal{data_99()}
+
+def data_101() -> R.Expr:
+  R.InvokeWith{data_98(), data_100(), False{}}
+
+def data_102() -> R.Expr:
+  R.FlushNow{}
+
+def data_103() -> R.Value:
+  R.AccessorReference{4n}
+
+def data_104() -> R.Expr:
+  R.Literal{data_103()}
+
+def data_105() -> R.Expr:
+  R.Invoke{data_104()}
+
+def data_106() -> R.Expr:
+  R.Then{data_102(), data_105()}
+
+def data_107() -> R.Expr:
+  R.Then{data_101(), data_106()}
+
+def data_108(+initial: Payload.Ordinary) -> R.Expr:
+  R.Then{data_96(initial), data_107()}
+
+def data_109(+initial: Payload.Ordinary) -> C.Task:
+  C.Evaluate{data_108(initial), data_1()}
+
+def data_110(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_109(initial)]
+
+def data_111() -> List<&2, R.Value>:
+  []
+
+def data_112(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_84(next), data_110(initial), data_111()}
+
+def data_113(+initial: Payload.Ordinary) -> C.Task:
+  C.Evaluate{data_96(initial), data_1()}
+
+def data_114() -> C.Task:
+  C.Discard{}
+
+def data_115() -> C.Task:
+  C.Evaluate{data_107(), data_1()}
+
+def data_116(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_113(initial), data_114(), data_115()]
+
+def data_117(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_84(next), data_116(initial), data_111()}
+
+def data_118() -> List<&2, R.Node>:
+  [data_6(), data_8(), data_8()]
+
+def data_119(+next: Payload.Ordinary) -> R.World:
+  R.World{data_118(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_17(), data_18(), False{}, data_13(), data_25(), data_28(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_83()}
+
+def data_120(+initial: Payload.Ordinary) -> C.Task:
+  C.Evaluate{data_95(initial), data_1()}
+
+def data_121() -> C.Task:
+  C.RestoreContext{0n, False{}}
+
+def data_122(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_120(initial), data_121(), data_114(), data_115()]
+
+def data_123(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_119(next), data_122(initial), data_111()}
+
+def data_124() -> C.Task:
+  C.Evaluate{data_86(), data_1()}
+
+def data_125(+initial: Payload.Ordinary) -> C.Task:
+  C.CreateSignal{data_87(), data_94(initial), data_1()}
+
+def data_126(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_124(), data_125(initial), data_121(), data_114(), data_115()]
+
+def data_127(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_119(next), data_126(initial), data_111()}
+
+def data_128(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_125(initial), data_121(), data_114(), data_115()]
+
+def data_129() -> List<&2, R.Value>:
+  [data_85()]
+
+def data_130(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_119(next), data_128(initial), data_129()}
+
+def data_131() -> R.NodeKind:
+  R.Signal{}
+
+def data_132() -> R.Node:
+  R.Node{data_131(), data_85(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_133() -> List<&2, R.Node>:
+  [data_6(), data_8(), data_8(), data_132()]
+
+def data_134() -> R.TraceEvent:
+  R.Constructed{3n}
+
+def data_135() -> List<&2, R.TraceEvent>:
+  [data_134()]
+
+def data_136(+next: Payload.Ordinary) -> R.World:
+  R.World{data_133(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_135(), data_18(), False{}, data_13(), data_25(), data_28(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_83()}
+
+def data_137() -> R.Expr:
+  R.Read{3n}
+
+def data_138(+initial: Payload.Ordinary) -> R.Expr:
+  R.Select{data_137(), data_90(), data_92(initial)}
+
+def data_139(+initial: Payload.Ordinary) -> R.Expr:
+  R.DeferredAccessor{data_138(initial), data_87()}
+
+def data_140(+initial: Payload.Ordinary) -> C.Task:
+  C.Evaluate{data_139(initial), data_1()}
+
+def data_141(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_140(initial), data_121(), data_114(), data_115()]
+
+def data_142(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_136(next), data_141(initial), data_111()}
+
+def data_143() -> R.TraceEvent:
+  R.Constructed{4n}
+
+def data_144() -> List<&2, R.TraceEvent>:
+  [data_134(), data_143()]
+
+def data_145() -> R.CleanupAction:
+  R.DeferredEnd{1n}
+
+def data_146() -> List<&2, R.CleanupAction>:
+  [data_145()]
+
+def data_147() -> R.CleanupProgram:
+  R.CleanupProgram{data_146(), False{}, 0n}
+
+def data_148() -> List<&2, R.CleanupProgram>:
+  [data_27(), data_147()]
+
+def data_149() -> R.DeferredBinding:
+  R.DeferredBinding{data_77(), 1n}
+
+def data_150() -> List<&2, R.DeferredBinding>:
+  [data_78(), data_149()]
+
+def data_151() -> R.DeferredArena:
+  R.DeferredArena{data_150(), data_13(), data_80(), data_82()}
+
+def data_152(+next: Payload.Ordinary) -> R.World:
+  R.World{data_133(), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_144(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_151()}
+
+def data_153(+initial: Payload.Ordinary) -> C.Task:
+  C.DeferredCreate{1n, data_138(initial), data_87(), False{}}
+
+def data_154(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_153(initial), data_121(), data_114(), data_115()]
+
+def data_155(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_152(next), data_154(initial), data_111()}
+
+def data_156() -> R.Node:
+  R.Node{data_7(), data_1(), data_2(), True{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 4n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_157() -> R.NodeKind:
+  R.Memo{}
+
+def data_158(+initial: Payload.Ordinary) -> R.Expr:
+  R.DeferredCompute{1n, data_138(initial)}
+
+def data_159(+initial: Payload.Ordinary) -> R.Node:
+  R.Node{data_157(), data_1(), data_2(), False{}, 0, 0, 4, 0n, data_3(), 0n, 0n, 0n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_160(+initial: Payload.Ordinary) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_156(), data_132(), data_159(initial)]
+
+def data_161(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  R.World{data_160(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 0n, data_16(), data_144(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_151()}
+
+def data_162() -> C.Task:
+  C.Recompute{4n, True{}}
+
+def data_163() -> C.Task:
+  C.MemoAccessorReady{4n}
+
+def data_164() -> C.Task:
+  C.Evaluate{data_104(), data_1()}
+
+def data_165() -> List<&2, C.Task>:
+  [data_162(), data_163(), data_164(), data_121(), data_114(), data_115()]
+
+def data_166(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
+  C.Machine{data_161(initial, next), data_165(), data_111()}
+
+def data_167(+initial: Payload.Ordinary) -> R.Node:
+  R.Node{data_157(), data_1(), data_2(), False{}, 0, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+
+def data_168(+initial: Payload.Ordinary) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_156(), data_132(), data_167(initial)]
+
+def data_169() -> R.TraceEvent:
+  R.Invoked{4n}
+
+def data_170() -> List<&2, R.TraceEvent>:
+  [data_134(), data_143(), data_169()]
+
+def data_171(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  R.World{data_168(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_170(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_151()}
+
+def data_172(+initial: Payload.Ordinary) -> C.Task:
+  C.Evaluate{data_158(initial), data_1()}
+
 def data_173() -> C.LanePass:
-  C.LanePass{0n, data_71(), data_71()}
+  C.LanePass{0n, data_73(), data_73(), False{}}
 
 def data_174() -> C.PassFrame:
-  C.PassFrame{4n, True{}, 2n, False{}, 0n, False{}, data_1(), True{}, data_1(), 0n, False{}, data_172(), data_110(), 0n, False{}, data_173()}
+  C.PassFrame{4n, True{}, 2n, False{}, 0n, False{}, data_1(), True{}, data_85(), 0n, False{}, data_23(), data_111(), 0n, False{}, data_173()}
 
 def data_175() -> C.Task:
   C.Finish{data_174()}
 
 def data_176(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_171(initial), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_172(initial), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_177(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_170(initial, next), data_176(initial), data_110()}
+  C.Machine{data_171(initial, next), data_176(initial), data_111()}
 
 def data_178() -> R.DeferredCell:
-  R.DeferredCell{4n, data_75(), False{}, False{}}
+  R.DeferredCell{4n, data_22(), False{}, False{}}
 
 def data_179() -> R.DeferredBinding:
   R.DeferredBinding{data_178(), 1n}
 
 def data_180() -> List<&2, R.DeferredBinding>:
-  [data_77(), data_179()]
+  [data_78(), data_179()]
 
 def data_181() -> R.DeferredArena:
-  R.DeferredArena{data_180(), data_13(), data_79(), data_81()}
+  R.DeferredArena{data_180(), data_13(), data_80(), data_82()}
 
 def data_182(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_167(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_169(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_168(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_170(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_183(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredConfigure{1n, data_137(initial), data_1()}
+  C.DeferredConfigure{1n, data_138(initial), data_1()}
 
 def data_184(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_183(initial), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_183(initial), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_185(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_182(initial, next), data_184(initial), data_110()}
+  C.Machine{data_182(initial, next), data_184(initial), data_111()}
 
 def data_186(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_187(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_131(), data_186(initial)]
+  [data_6(), data_8(), data_156(), data_132(), data_186(initial)]
 
 def data_188(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_187(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_169(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_187(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_170(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_189(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredCleanup{1n, data_137(initial), data_1()}
+  C.DeferredCleanup{1n, data_138(initial), data_1()}
 
 def data_190(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_189(initial), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_189(initial), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_191(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_188(initial, next), data_190(initial), data_110()}
+  C.Machine{data_188(initial, next), data_190(initial), data_111()}
 
 def data_192() -> R.Disposal:
   R.OneDisposal{1n}
 
 def data_193(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 0n, 0n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_194(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_131(), data_193(initial)]
+  [data_6(), data_8(), data_156(), data_132(), data_193(initial)]
 
 def data_195(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_194(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_169(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_194(initial), data_11(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 1n, data_16(), data_170(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_196(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredOpen{1n, data_137(initial), data_1()}
+  C.DeferredOpen{1n, data_138(initial), data_1()}
 
 def data_197(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_196(initial), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_196(initial), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_198(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_195(initial, next), data_197(initial), data_110()}
+  C.Machine{data_195(initial, next), data_197(initial), data_111()}
 
 def data_199(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_137(initial), data_1()}
+  C.Evaluate{data_138(initial), data_1()}
 
 def data_200() -> C.Task:
-  C.DeferredResult{1n, False{}, data_110()}
+  C.DeferredResult{1n, False{}, data_111()}
 
 def data_201(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_199(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_199(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_202(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_195(initial, next), data_201(initial), data_110()}
+  C.Machine{data_195(initial, next), data_201(initial), data_111()}
 
 def data_203() -> C.Task:
-  C.Evaluate{data_136(), data_1()}
+  C.Evaluate{data_137(), data_1()}
 
 def data_204(+initial: Payload.Ordinary) -> C.Task:
-  C.Branch{data_89(), data_91(initial), data_1()}
+  C.Branch{data_90(), data_92(initial), data_1()}
 
 def data_205(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_203(), data_204(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_203(), data_204(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_206(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_195(initial, next), data_205(initial), data_110()}
+  C.Machine{data_195(initial, next), data_205(initial), data_111()}
 
 def data_207() -> C.Task:
   C.ReadNode{3n}
 
 def data_208(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_207(), data_204(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_207(), data_204(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_209(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_195(initial, next), data_208(initial), data_110()}
+  C.Machine{data_195(initial, next), data_208(initial), data_111()}
 
 def data_210() -> C.Task:
   C.ReadPrepared{3n}
 
 def data_211(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_210(), data_204(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_210(), data_204(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_212(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_195(initial, next), data_211(initial), data_110()}
+  C.Machine{data_195(initial, next), data_211(initial), data_111()}
 
 def data_213() -> R.Node:
-  R.Node{data_130(), data_84(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_131(), data_85(), data_2(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_214(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_1(), data_2(), False{}, 16384, 4, 4, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_215(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_213(), data_214(initial)]
+  [data_6(), data_8(), data_156(), data_213(), data_214(initial)]
 
 def data_216() -> R.Link:
   R.Link{3n, 4n, 0n, 0n, 0n, 1n}
@@ -671,70 +677,70 @@ def data_217() -> List<&2, R.Link>:
   [data_10(), data_216()]
 
 def data_218() -> R.TraceEvent:
-  R.ReadValue{4n, 3n, data_84()}
+  R.ReadValue{4n, 3n, data_85()}
 
 def data_219() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168(), data_218()]
+  [data_134(), data_143(), data_169(), data_218()]
 
 def data_220(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_215(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_215(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 4n, True{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_221(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_204(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_204(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_222(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_220(initial, next), data_221(initial), data_128()}
+  C.Machine{data_220(initial, next), data_221(initial), data_129()}
 
 def data_223(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_91(initial), data_1()}
+  C.Evaluate{data_92(initial), data_1()}
 
 def data_224(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_223(initial), data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_223(initial), data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_225(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_220(initial, next), data_224(initial), data_110()}
+  C.Machine{data_220(initial, next), data_224(initial), data_111()}
 
 def data_226() -> List<&2, C.Task>:
-  [data_200(), data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_200(), data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_227(+initial: Payload.Ordinary) -> List<&2, R.Value>:
-  [data_90(initial)]
+  [data_91(initial)]
 
 def data_228(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_220(initial, next), data_226(), data_227(initial)}
 
 def data_229() -> List<&2, C.Task>:
-  [data_175(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_175(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_230(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_220(initial, next), data_229(), data_227(initial)}
 
 def data_231(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_1(), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_1(), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_232(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_213(), data_231(initial)]
+  [data_6(), data_8(), data_156(), data_213(), data_231(initial)]
 
 def data_233(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_232(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_232(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_234(+initial: Payload.Ordinary) -> C.Task:
-  C.PassReleases{data_174(), 0n, data_90(initial), False{}, False{}, False{}, data_18()}
+  C.PassReleases{data_174(), 0n, data_91(initial), False{}, False{}, False{}, data_18()}
 
 def data_235(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_234(initial), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_234(initial), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_236(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_233(initial, next), data_235(initial), data_110()}
+  C.Machine{data_233(initial, next), data_235(initial), data_111()}
 
 def data_237(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_238(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_213(), data_237(initial)]
+  [data_6(), data_8(), data_156(), data_213(), data_237(initial)]
 
 def data_239(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_219(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_240() -> C.Task:
   C.PublishSettleSelf{4n, False{}}
@@ -743,16 +749,16 @@ def data_241() -> C.Task:
   C.FinishPublication{4n, True{}, False{}, False{}, 0n, 0n}
 
 def data_242() -> List<&2, C.Task>:
-  [data_240(), data_241(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_240(), data_241(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_243(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_242(), data_110()}
+  C.Machine{data_239(initial, next), data_242(), data_111()}
 
 def data_244() -> List<&2, C.Task>:
-  [data_241(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_241(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_245(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_244(), data_110()}
+  C.Machine{data_239(initial, next), data_244(), data_111()}
 
 def data_246() -> O.Task:
   O.TrimDeps{4n}
@@ -767,10 +773,10 @@ def data_249() -> C.Task:
   C.QueuePublication{4n, True{}, False{}, 0n, 0n}
 
 def data_250() -> List<&2, C.Task>:
-  [data_248(), data_249(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_248(), data_249(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_251(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_250(), data_110()}
+  C.Machine{data_239(initial, next), data_250(), data_111()}
 
 def data_252() -> List<&2, O.Task>:
   []
@@ -779,112 +785,112 @@ def data_253() -> C.Task:
   C.OwnerTasks{data_252()}
 
 def data_254() -> List<&2, C.Task>:
-  [data_253(), data_249(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_253(), data_249(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_255(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_254(), data_110()}
+  C.Machine{data_239(initial, next), data_254(), data_111()}
 
 def data_256() -> List<&2, C.Task>:
-  [data_249(), data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_249(), data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_257(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_256(), data_110()}
+  C.Machine{data_239(initial, next), data_256(), data_111()}
 
 def data_258() -> List<&2, C.Task>:
-  [data_162(), data_163(), data_120(), data_113(), data_114()]
+  [data_163(), data_164(), data_121(), data_114(), data_115()]
 
 def data_259(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_239(initial, next), data_258(), data_110()}
+  C.Machine{data_239(initial, next), data_258(), data_111()}
 
 def data_260() -> R.TraceEvent:
   R.AccessorBound{4n}
 
 def data_261() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168(), data_218(), data_260()]
+  [data_134(), data_143(), data_169(), data_218(), data_260()]
 
 def data_262(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 2n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_263() -> List<&2, C.Task>:
-  [data_163(), data_120(), data_113(), data_114()]
+  [data_164(), data_121(), data_114(), data_115()]
 
 def data_264(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_262(initial, next), data_263(), data_110()}
+  C.Machine{data_262(initial, next), data_263(), data_111()}
 
 def data_265() -> List<&2, C.Task>:
-  [data_120(), data_113(), data_114()]
+  [data_121(), data_114(), data_115()]
 
 def data_266() -> List<&2, R.Value>:
-  [data_102()]
+  [data_103()]
 
 def data_267(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_262(initial, next), data_265(), data_266()}
 
 def data_268(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_238(initial), data_217(), data_12(), 0n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_269() -> List<&2, C.Task>:
-  [data_113(), data_114()]
+  [data_114(), data_115()]
 
 def data_270(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_268(initial, next), data_269(), data_266()}
 
 def data_271() -> List<&2, C.Task>:
-  [data_114()]
+  [data_115()]
 
 def data_272(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_268(initial, next), data_271(), data_110()}
+  C.Machine{data_268(initial, next), data_271(), data_111()}
 
 def data_273() -> C.Task:
-  C.Evaluate{data_100(), data_1()}
+  C.Evaluate{data_101(), data_1()}
 
 def data_274() -> C.Task:
-  C.Evaluate{data_105(), data_1()}
+  C.Evaluate{data_106(), data_1()}
 
 def data_275() -> List<&2, C.Task>:
-  [data_273(), data_113(), data_274()]
+  [data_273(), data_114(), data_274()]
 
 def data_276(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_268(initial, next), data_275(), data_110()}
+  C.Machine{data_268(initial, next), data_275(), data_111()}
 
 def data_277() -> C.Task:
-  C.Evaluate{data_97(), data_1()}
+  C.Evaluate{data_98(), data_1()}
 
 def data_278() -> C.Task:
-  C.InvokeArgument{data_99(), False{}, data_1()}
+  C.InvokeArgument{data_100(), False{}, data_1()}
 
 def data_279() -> List<&2, C.Task>:
-  [data_277(), data_278(), data_113(), data_274()]
+  [data_277(), data_278(), data_114(), data_274()]
 
 def data_280(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_268(initial, next), data_279(), data_110()}
+  C.Machine{data_268(initial, next), data_279(), data_111()}
 
 def data_281() -> List<&2, C.Task>:
-  [data_278(), data_113(), data_274()]
+  [data_278(), data_114(), data_274()]
 
 def data_282() -> List<&2, R.Value>:
-  [data_96()]
+  [data_97()]
 
 def data_283(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_268(initial, next), data_281(), data_282()}
 
 def data_284() -> C.Task:
-  C.Evaluate{data_99(), data_1()}
+  C.Evaluate{data_100(), data_1()}
 
 def data_285() -> C.Task:
-  C.InvokeApplied{data_96()}
+  C.InvokeApplied{data_97()}
 
 def data_286() -> List<&2, C.Task>:
-  [data_284(), data_285(), data_113(), data_274()]
+  [data_284(), data_285(), data_114(), data_274()]
 
 def data_287(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_268(initial, next), data_286(), data_110()}
+  C.Machine{data_268(initial, next), data_286(), data_111()}
 
 def data_288() -> List<&2, C.Task>:
-  [data_285(), data_113(), data_274()]
+  [data_285(), data_114(), data_274()]
 
 def data_289() -> List<&2, R.Value>:
-  [data_98()]
+  [data_99()]
 
 def data_290(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_268(initial, next), data_288(), data_289()}
@@ -893,34 +899,34 @@ def data_291() -> C.Task:
   C.SetSignalArgument{3n}
 
 def data_292() -> List<&2, C.Task>:
-  [data_291(), data_113(), data_274()]
+  [data_291(), data_114(), data_274()]
 
 def data_293(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_268(initial, next), data_292(), data_289()}
 
 def data_294() -> C.Task:
-  C.SetSignalResolved{3n, data_84()}
+  C.SetSignalResolved{3n, data_85()}
 
 def data_295() -> List<&2, C.Task>:
-  [data_294(), data_113(), data_274()]
+  [data_294(), data_114(), data_274()]
 
 def data_296(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_268(initial, next), data_295(), data_289()}
 
 def data_297() -> R.Slot:
-  R.Present{data_98()}
+  R.Present{data_99()}
 
 def data_298() -> R.Stamp:
   R.Stamped{2n}
 
 def data_299() -> R.Node:
-  R.Node{data_130(), data_84(), data_297(), False{}, 0, 0, 0, 0n, data_298(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_131(), data_85(), data_297(), False{}, 0, 0, 0, 0n, data_298(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_300(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 16384, 8, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 16384, 8, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_301(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_300(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_300(initial)]
 
 def data_302() -> List<&2, Nat>:
   [4n]
@@ -935,10 +941,10 @@ def data_305() -> List<&2, R.HostJob>:
   [data_304()]
 
 def data_306(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, True{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, True{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_307() -> List<&2, C.Task>:
-  [data_113(), data_274()]
+  [data_114(), data_274()]
 
 def data_308(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_306(initial, next), data_307(), data_289()}
@@ -947,25 +953,25 @@ def data_309() -> List<&2, C.Task>:
   [data_274()]
 
 def data_310(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_306(initial, next), data_309(), data_110()}
+  C.Machine{data_306(initial, next), data_309(), data_111()}
 
 def data_311() -> C.Task:
-  C.Evaluate{data_101(), data_1()}
+  C.Evaluate{data_102(), data_1()}
 
 def data_312() -> C.Task:
-  C.Evaluate{data_104(), data_1()}
+  C.Evaluate{data_105(), data_1()}
 
 def data_313() -> List<&2, C.Task>:
-  [data_311(), data_113(), data_312()]
+  [data_311(), data_114(), data_312()]
 
 def data_314(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_306(initial, next), data_313(), data_110()}
+  C.Machine{data_306(initial, next), data_313(), data_111()}
 
 def data_315() -> C.Task:
   C.Round{}
 
 def data_316() -> List<&2, C.Task>:
-  [data_315(), data_113(), data_312()]
+  [data_315(), data_114(), data_312()]
 
 def data_317() -> List<&2, R.Value>:
   [data_1()]
@@ -974,7 +980,7 @@ def data_318(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_306(initial, next), data_316(), data_317()}
 
 def data_319(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 2n, data_16(), data_261(), data_18(), False{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_320() -> C.Task:
   C.RoundAfterSweep{}
@@ -986,7 +992,7 @@ def data_322() -> C.Task:
   C.RoundEnd{}
 
 def data_323() -> List<&2, C.Task>:
-  [data_320(), data_321(), data_322(), data_113(), data_312()]
+  [data_320(), data_321(), data_322(), data_114(), data_312()]
 
 def data_324(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_319(initial, next), data_323(), data_317()}
@@ -995,7 +1001,7 @@ def data_325() -> C.Task:
   C.HeapLoop{}
 
 def data_326() -> List<&2, C.Task>:
-  [data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_327(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_319(initial, next), data_326(), data_317()}
@@ -1004,40 +1010,40 @@ def data_328() -> C.Task:
   C.Recompute{4n, False{}}
 
 def data_329() -> List<&2, C.Task>:
-  [data_328(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_328(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_330(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_319(initial, next), data_329(), data_317()}
 
 def data_331(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 16384, 0, 0, 0n, data_3(), 1n, 1n, 1n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_332(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_331(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_331(initial)]
 
 def data_333() -> R.NodeExtension:
-  R.NodeExtension{data_19(), 0n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_21(), data_2(), 0n, data_1()}
+  R.NodeExtension{data_19(), 0n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_21(), data_2(), 0n, data_22(), data_23()}
 
 def data_334() -> List<&2, R.NodeExtension>:
-  [data_22(), data_333()]
+  [data_24(), data_333()]
 
 def data_335() -> R.LaneMount:
   R.MountFalse{}
 
 def data_336() -> R.LaneState:
-  R.LaneState{data_13(), data_31(), data_13(), data_70(), 0n, data_335(), data_13(), False{}, False{}, data_72(), data_13(), False{}}
+  R.LaneState{data_13(), data_33(), data_13(), data_72(), 0n, data_335(), data_13(), False{}, False{}, data_74(), data_13(), False{}, data_13()}
 
 def data_337(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_332(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_261(), data_18(), False{}, data_13(), data_334(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_332(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_261(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_181()}
 
 def data_338() -> C.LanePass:
-  C.LanePass{0n, data_71(), data_335()}
+  C.LanePass{0n, data_73(), data_335(), False{}}
 
 def data_339() -> C.Task:
   C.RecomputeAfterTeardown{4n, 0n, data_338()}
 
 def data_340() -> List<&2, C.Task>:
-  [data_339(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_339(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_341(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_337(initial, next), data_340(), data_317()}
@@ -1046,136 +1052,136 @@ def data_342() -> C.Task:
   C.RecomputePrepared{4n, False{}, 0n, data_338()}
 
 def data_343() -> List<&2, C.Task>:
-  [data_342(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_342(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_344(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_337(initial, next), data_343(), data_317()}
 
 def data_345(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 16384, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 16384, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_346(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_345(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_345(initial)]
 
 def data_347() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168(), data_218(), data_260(), data_168()]
+  [data_134(), data_143(), data_169(), data_218(), data_260(), data_169()]
 
 def data_348(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_346(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_346(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_181()}
 
 def data_349(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_157(initial), data_90(initial)}
+  C.Evaluate{data_158(initial), data_91(initial)}
 
 def data_350(+initial: Payload.Ordinary) -> C.PassFrame:
-  C.PassFrame{4n, False{}, 0n, False{}, 0n, False{}, data_90(initial), False{}, data_1(), 0n, False{}, data_19(), data_317(), 0n, False{}, data_338()}
+  C.PassFrame{4n, False{}, 0n, False{}, 0n, False{}, data_91(initial), False{}, data_85(), 0n, False{}, data_19(), data_317(), 0n, False{}, data_338()}
 
 def data_351(+initial: Payload.Ordinary) -> C.Task:
   C.Finish{data_350(initial)}
 
 def data_352(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_349(initial), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_349(initial), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_353(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_348(initial, next), data_352(initial), data_317()}
 
 def data_354(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredConfigure{1n, data_137(initial), data_90(initial)}
+  C.DeferredConfigure{1n, data_138(initial), data_91(initial)}
 
 def data_355(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_354(initial), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_354(initial), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_356(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_348(initial, next), data_355(initial), data_317()}
 
 def data_357(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredCleanup{1n, data_137(initial), data_90(initial)}
+  C.DeferredCleanup{1n, data_138(initial), data_91(initial)}
 
 def data_358(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_357(initial), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_357(initial), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_359(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_348(initial, next), data_358(initial), data_317()}
 
 def data_360(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 16384, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 16384, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_361(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_360(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_360(initial)]
 
 def data_362(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_361(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_361(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_181()}
 
 def data_363(+initial: Payload.Ordinary) -> C.Task:
-  C.DeferredOpen{1n, data_137(initial), data_90(initial)}
+  C.DeferredOpen{1n, data_138(initial), data_91(initial)}
 
 def data_364(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_363(initial), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_363(initial), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_365(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_362(initial, next), data_364(initial), data_317()}
 
 def data_366(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 540672, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 540672, 4, 0, 0n, data_3(), 1n, 0n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_367(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_366(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_366(initial)]
 
 def data_368() -> R.DeferredCell:
-  R.DeferredCell{4n, data_75(), False{}, True{}}
+  R.DeferredCell{4n, data_22(), False{}, True{}}
 
 def data_369() -> R.DeferredBinding:
   R.DeferredBinding{data_368(), 1n}
 
 def data_370() -> List<&2, R.DeferredBinding>:
-  [data_77(), data_369()]
+  [data_78(), data_369()]
 
 def data_371() -> R.DeferredArena:
-  R.DeferredArena{data_370(), data_13(), data_79(), data_81()}
+  R.DeferredArena{data_370(), data_13(), data_80(), data_82()}
 
 def data_372(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_367(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_371()}
+  R.World{data_367(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_347(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_371()}
 
 def data_373(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_137(initial), data_90(initial)}
+  C.Evaluate{data_138(initial), data_91(initial)}
 
 def data_374() -> C.Task:
   C.DeferredResult{1n, True{}, data_317()}
 
 def data_375(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_373(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_373(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_376(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_372(initial, next), data_375(initial), data_317()}
 
 def data_377(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_136(), data_90(initial)}
+  C.Evaluate{data_137(), data_91(initial)}
 
 def data_378(+initial: Payload.Ordinary) -> C.Task:
-  C.Branch{data_89(), data_91(initial), data_90(initial)}
+  C.Branch{data_90(), data_92(initial), data_91(initial)}
 
 def data_379(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_377(initial), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_377(initial), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_380(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_372(initial, next), data_379(initial), data_317()}
 
 def data_381(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_207(), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_207(), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_382(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_372(initial, next), data_381(initial), data_317()}
 
 def data_383(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_210(), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_210(), data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_384(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_372(initial, next), data_383(initial), data_317()}
 
 def data_385(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 540672, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 540672, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
 
 def data_386(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_385(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_385(initial)]
 
 def data_387() -> R.Link:
   R.Link{3n, 4n, 0n, 0n, 0n, 2n}
@@ -1184,37 +1190,37 @@ def data_388() -> List<&2, R.Link>:
   [data_10(), data_387()]
 
 def data_389() -> R.TraceEvent:
-  R.ReadValue{4n, 3n, data_98()}
+  R.ReadValue{4n, 3n, data_99()}
 
 def data_390() -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168(), data_218(), data_260(), data_168(), data_389()]
+  [data_134(), data_143(), data_169(), data_218(), data_260(), data_169(), data_389()]
 
 def data_391(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_386(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_334(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_305(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_371()}
+  R.World{data_386(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_305(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_371()}
 
 def data_392(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_378(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_393() -> List<&2, R.Value>:
-  [data_98(), data_1()]
+  [data_99(), data_1()]
 
 def data_394(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_391(initial, next), data_392(initial), data_393()}
 
 def data_395(+initial: Payload.Ordinary) -> C.Task:
-  C.Evaluate{data_89(), data_90(initial)}
+  C.Evaluate{data_90(), data_91(initial)}
 
 def data_396(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_395(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_395(initial), data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_397(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_391(initial, next), data_396(initial), data_317()}
 
 def data_398(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_374(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_374(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_399() -> List<&2, R.Value>:
-  [data_88(), data_1()]
+  [data_89(), data_1()]
 
 def data_400(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_391(initial, next), data_398(initial), data_399()}
@@ -1226,7 +1232,7 @@ def data_402() -> C.Task:
   C.DeferredCatch{1n, True{}, data_317()}
 
 def data_403(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_401(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_401(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_404(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_391(initial, next), data_403(initial), data_317()}
@@ -1238,10 +1244,10 @@ def data_406() -> R.Disposal:
   R.ManyDisposals{data_405()}
 
 def data_407(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 540672, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 537411584, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_408(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_407(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_407(initial)]
 
 def data_409() -> R.Flight:
   R.FlightActive{2n}
@@ -1340,10 +1346,10 @@ def data_440() -> R.Question:
   R.QuestionOdd{data_439()}
 
 def data_441() -> R.NodeExtension:
-  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 1n, data_1()}
+  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 1n, data_22(), data_23()}
 
 def data_442() -> List<&2, R.NodeExtension>:
-  [data_22(), data_441()]
+  [data_24(), data_441()]
 
 def data_443() -> R.CleanupAction:
   R.CleanupCloseIterator{1n}
@@ -1355,19 +1361,19 @@ def data_445() -> R.CleanupProgram:
   R.CleanupProgram{data_444(), False{}, 0n}
 
 def data_446() -> List<&2, R.CleanupProgram>:
-  [data_25(), data_146(), data_445()]
+  [data_27(), data_147(), data_445()]
 
 def data_447() -> R.AsyncObject:
-  R.AsyncObject{False{}, data_32(), data_13(), 2n}
+  R.AsyncObject{False{}, data_34(), data_13(), 2n}
 
 def data_448() -> List<&2, R.AsyncObject>:
-  [data_33(), data_34(), data_447()]
+  [data_35(), data_36(), data_447()]
 
 def data_449() -> R.StreamPlan:
-  R.StreamPlan{data_39(), True{}, data_2(), 0n, 1n, data_2(), data_40()}
+  R.StreamPlan{data_41(), True{}, data_2(), 0n, 1n, data_2(), data_42()}
 
 def data_450(+next: Payload.Ordinary) -> List<&2, R.StreamPlan>:
-  [data_41(), data_46(next), data_449()]
+  [data_43(), data_48(next), data_449()]
 
 def data_451() -> R.ExternalIterator:
   R.ExternalIterator{1n, 0n, 0n}
@@ -1376,13 +1382,13 @@ def data_452() -> R.ExternalIterator:
   R.ExternalIterator{2n, 0n, 0n}
 
 def data_453() -> List<&2, R.ExternalIterator>:
-  [data_48(), data_451(), data_452()]
+  [data_50(), data_451(), data_452()]
 
 def data_454() -> R.StreamState:
   R.StreamState{4n, 2n, 2n, False{}, False{}, True{}, data_1(), 2n}
 
 def data_455() -> List<&2, R.StreamState>:
-  [data_50(), data_454()]
+  [data_52(), data_454()]
 
 def data_456() -> R.IteratorEvent:
   R.IteratorStarted{1n, 1n}
@@ -1400,19 +1406,19 @@ def data_460() -> R.DeferredBinding:
   R.DeferredBinding{data_459(), 1n}
 
 def data_461() -> List<&2, R.DeferredBinding>:
-  [data_77(), data_460()]
+  [data_78(), data_460()]
 
 def data_462() -> R.DeferredIterator:
   R.DeferredIterator{1n, 1n, 2n, True{}}
 
 def data_463() -> List<&2, R.DeferredIterator>:
-  [data_80(), data_462()]
+  [data_81(), data_462()]
 
 def data_464() -> R.DeferredArena:
-  R.DeferredArena{data_461(), data_302(), data_79(), data_463()}
+  R.DeferredArena{data_461(), data_302(), data_80(), data_463()}
 
 def data_465(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_442(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_37(), data_305(), 0n, data_450(next), data_453(), data_455(), data_457(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 1n, data_336(), data_74(), data_2(), data_13(), data_464()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_442(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_39(), data_305(), 0n, data_450(next), data_453(), data_455(), data_457(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 1n, data_336(), data_76(), data_2(), data_13(), data_464()}
 
 def data_466() -> C.Task:
   C.IterateStream{1n}
@@ -1424,28 +1430,28 @@ def data_468() -> C.Task:
   C.DeferredAfterIterator{1n}
 
 def data_469(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_466(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_466(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_470(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_465(initial, next), data_469(initial), data_317()}
 
 def data_471() -> R.NodeExtension:
-  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 0n, data_1()}
+  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 0n, data_22(), data_23()}
 
 def data_472() -> List<&2, R.NodeExtension>:
-  [data_22(), data_471()]
+  [data_24(), data_471()]
 
 def data_473() -> R.AsyncObserver:
-  R.AsyncObserver{4n, 2n, True{}, False{}, False{}, data_1(), data_1(), 1n}
+  R.AsyncObserver{4n, 2n, True{}, False{}, False{}, data_1(), data_1(), 1n, 0n}
 
 def data_474() -> List<&2, R.AsyncObserver>:
-  [data_36(), data_473()]
+  [data_38(), data_473()]
 
 def data_475() -> R.ExternalIterator:
   R.ExternalIterator{1n, 1n, 0n}
 
 def data_476() -> List<&2, R.ExternalIterator>:
-  [data_48(), data_475(), data_452()]
+  [data_50(), data_475(), data_452()]
 
 def data_477() -> R.Slot:
   R.Present{data_1()}
@@ -1460,16 +1466,16 @@ def data_480() -> R.DeferredIterator:
   R.DeferredIterator{1n, 1n, 2n, False{}}
 
 def data_481() -> List<&2, R.DeferredIterator>:
-  [data_80(), data_480()]
+  [data_81(), data_480()]
 
 def data_482() -> R.DeferredArena:
-  R.DeferredArena{data_370(), data_13(), data_79(), data_481()}
+  R.DeferredArena{data_370(), data_13(), data_80(), data_481()}
 
 def data_483(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_474(), data_305(), 0n, data_450(next), data_476(), data_455(), data_479(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_474(), data_305(), 0n, data_450(next), data_476(), data_455(), data_479(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_484(+next: Payload.Ordinary) -> R.Value:
-  R.StepResult{False{}, data_42(next)}
+  R.StepResult{False{}, data_44(next)}
 
 def data_485(+next: Payload.Ordinary) -> C.Task:
   C.AsyncFulfill{1n, data_484(next)}
@@ -1478,52 +1484,52 @@ def data_486() -> C.Task:
   C.AfterStep{1n}
 
 def data_487(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_485(next), data_486(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_485(next), data_486(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_488(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_483(initial, next), data_487(initial, next), data_317()}
 
 def data_489(+next: Payload.Ordinary) -> R.AsyncObserver:
-  R.AsyncObserver{4n, 2n, True{}, True{}, False{}, data_484(next), data_1(), 1n}
+  R.AsyncObserver{4n, 2n, True{}, True{}, False{}, data_484(next), data_1(), 1n, 0n}
 
 def data_490(+next: Payload.Ordinary) -> List<&2, R.AsyncObserver>:
-  [data_36(), data_489(next)]
+  [data_38(), data_489(next)]
 
 def data_491(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_490(next), data_305(), 0n, data_450(next), data_476(), data_455(), data_479(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_490(next), data_305(), 0n, data_450(next), data_476(), data_455(), data_479(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_492(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_486(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_486(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_493(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_491(initial, next), data_492(initial), data_317()}
 
 def data_494(+next: Payload.Ordinary) -> R.AsyncObserver:
-  R.AsyncObserver{4n, 2n, False{}, True{}, False{}, data_484(next), data_1(), 1n}
+  R.AsyncObserver{4n, 2n, False{}, True{}, False{}, data_484(next), data_1(), 1n, 0n}
 
 def data_495(+next: Payload.Ordinary) -> List<&2, R.AsyncObserver>:
-  [data_36(), data_494(next)]
+  [data_38(), data_494(next)]
 
 def data_496(+next: Payload.Ordinary) -> R.StreamState:
-  R.StreamState{4n, 2n, 2n, True{}, False{}, True{}, data_42(next), 2n}
+  R.StreamState{4n, 2n, 2n, True{}, False{}, True{}, data_44(next), 2n}
 
 def data_497(+next: Payload.Ordinary) -> List<&2, R.StreamState>:
-  [data_50(), data_496(next)]
+  [data_52(), data_496(next)]
 
 def data_498(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_495(next), data_305(), 0n, data_450(next), data_476(), data_497(next), data_479(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_495(next), data_305(), 0n, data_450(next), data_476(), data_497(next), data_479(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_499(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_498(initial, next), data_469(initial), data_317()}
 
 def data_500(+next: Payload.Ordinary) -> List<&2, R.AsyncObserver>:
-  [data_36(), data_494(next), data_473()]
+  [data_38(), data_494(next), data_473()]
 
 def data_501() -> R.ExternalIterator:
   R.ExternalIterator{1n, 2n, 0n}
 
 def data_502() -> List<&2, R.ExternalIterator>:
-  [data_48(), data_501(), data_452()]
+  [data_50(), data_501(), data_452()]
 
 def data_503() -> R.IteratorEvent:
   R.IteratorNext{1n, 1n, data_477()}
@@ -1532,7 +1538,7 @@ def data_504() -> List<&2, R.IteratorEvent>:
   [data_456(), data_478(), data_503()]
 
 def data_505(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_500(next), data_305(), 0n, data_450(next), data_502(), data_497(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_500(next), data_305(), 0n, data_450(next), data_502(), data_497(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_506() -> R.Value:
   R.StepResult{True{}, data_1()}
@@ -1544,43 +1550,43 @@ def data_508() -> C.Task:
   C.AfterStep{2n}
 
 def data_509(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_507(), data_508(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_507(), data_508(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_510(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_505(initial, next), data_509(initial), data_317()}
 
 def data_511() -> R.AsyncObserver:
-  R.AsyncObserver{4n, 2n, True{}, True{}, False{}, data_506(), data_1(), 1n}
+  R.AsyncObserver{4n, 2n, True{}, True{}, False{}, data_506(), data_1(), 1n, 0n}
 
 def data_512(+next: Payload.Ordinary) -> List<&2, R.AsyncObserver>:
-  [data_36(), data_494(next), data_511()]
+  [data_38(), data_494(next), data_511()]
 
 def data_513(+next: Payload.Ordinary) -> R.StreamState:
-  R.StreamState{4n, 2n, 2n, True{}, True{}, True{}, data_42(next), 2n}
+  R.StreamState{4n, 2n, 2n, True{}, True{}, True{}, data_44(next), 2n}
 
 def data_514(+next: Payload.Ordinary) -> List<&2, R.StreamState>:
-  [data_50(), data_513(next)]
+  [data_52(), data_513(next)]
 
 def data_515(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_512(next), data_305(), 0n, data_450(next), data_502(), data_514(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_512(next), data_305(), 0n, data_450(next), data_502(), data_514(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_516(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_508(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_508(), data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_517(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_515(initial, next), data_516(initial), data_317()}
 
 def data_518() -> R.AsyncObserver:
-  R.AsyncObserver{4n, 2n, False{}, True{}, False{}, data_506(), data_1(), 1n}
+  R.AsyncObserver{4n, 2n, False{}, True{}, False{}, data_506(), data_1(), 1n, 0n}
 
 def data_519(+next: Payload.Ordinary) -> List<&2, R.AsyncObserver>:
-  [data_36(), data_494(next), data_518()]
+  [data_38(), data_494(next), data_518()]
 
 def data_520(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_514(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_514(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_521(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_467(), data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_522() -> R.Value:
   R.Boolean{True{}}
@@ -1592,19 +1598,19 @@ def data_524(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_520(initial, next), data_521(initial), data_523()}
 
 def data_525(+next: Payload.Ordinary) -> R.StreamState:
-  R.StreamState{4n, 2n, 2n, True{}, True{}, False{}, data_42(next), 2n}
+  R.StreamState{4n, 2n, 2n, True{}, True{}, False{}, data_44(next), 2n}
 
 def data_526(+next: Payload.Ordinary) -> List<&2, R.StreamState>:
-  [data_50(), data_525(next)]
+  [data_52(), data_525(next)]
 
 def data_527(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_408(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_528(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_468(), data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_529(+next: Payload.Ordinary) -> R.Value:
-  R.StreamVerdict{1n, True{}, data_42(next)}
+  R.StreamVerdict{1n, True{}, data_44(next)}
 
 def data_530(+next: Payload.Ordinary) -> List<&2, R.Value>:
   [data_529(next), data_1()]
@@ -1613,64 +1619,64 @@ def data_531(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_527(initial, next), data_528(initial), data_530(next)}
 
 def data_532(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 540672, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 537411584, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_533(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_532(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_532(initial)]
 
 def data_534(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_533(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_336(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_533(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_482()}
 
 def data_535(+initial: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_351(initial), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_536(+next: Payload.Ordinary) -> List<&2, R.Value>:
-  [data_42(next), data_1()]
+  [data_44(next), data_1()]
 
 def data_537(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_534(initial, next), data_535(initial), data_536(next)}
 
 def data_538(+initial: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_2(), False{}, 540672, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 537411584, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_539(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_538(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_538(initial)]
 
 def data_540(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_539(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_539(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_541(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Task:
-  C.PassReleases{data_350(initial), 0n, data_42(next), False{}, False{}, False{}, data_18()}
+  C.PassReleases{data_350(initial), 0n, data_44(next), False{}, False{}, False{}, data_18()}
 
 def data_542(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, C.Task>:
-  [data_541(initial, next), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_541(initial, next), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_543(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_540(initial, next), data_542(initial, next), data_317()}
 
 def data_544(+next: Payload.Ordinary) -> R.Slot:
-  R.Present{data_42(next)}
+  R.Present{data_44(next)}
 
 def data_545(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_544(next), False{}, 540672, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_544(next), False{}, 537411584, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_546(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_545(initial, next)]
+  [data_6(), data_8(), data_156(), data_299(), data_545(initial, next)]
 
 def data_547(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_546(initial, next), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_546(initial, next), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_548() -> C.Task:
   C.FinishPublication{4n, False{}, False{}, False{}, 0n, 0n}
 
 def data_549() -> List<&2, C.Task>:
-  [data_240(), data_548(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_240(), data_548(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_550(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_547(initial, next), data_549(), data_317()}
 
 def data_551() -> List<&2, C.Task>:
-  [data_548(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_548(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_552(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_547(initial, next), data_551(), data_317()}
@@ -1679,28 +1685,28 @@ def data_553() -> C.Task:
   C.QueuePublication{4n, False{}, False{}, 0n, 0n}
 
 def data_554() -> List<&2, C.Task>:
-  [data_553(), data_325(), data_321(), data_322(), data_113(), data_312()]
+  [data_553(), data_325(), data_321(), data_322(), data_114(), data_312()]
 
 def data_555(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_547(initial, next), data_554(), data_317()}
 
 def data_556(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_90(initial), data_544(next), False{}, 540800, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_91(initial), data_544(next), False{}, 537411712, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_557(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_556(initial, next)]
+  [data_6(), data_8(), data_156(), data_299(), data_556(initial, next)]
 
 def data_558() -> List<&2, Nat>:
   [3n, 4n]
 
 def data_559(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_557(initial, next), data_388(), data_12(), 0n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_557(initial, next), data_388(), data_12(), 0n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_560(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_559(initial, next), data_326(), data_317()}
 
 def data_561(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_557(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_557(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_562(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_561(initial, next), data_326(), data_317()}
@@ -1709,7 +1715,7 @@ def data_563() -> C.Task:
   C.Seam{}
 
 def data_564() -> List<&2, C.Task>:
-  [data_563(), data_321(), data_322(), data_113(), data_312()]
+  [data_563(), data_321(), data_322(), data_114(), data_312()]
 
 def data_565(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_561(initial, next), data_564(), data_317()}
@@ -1721,7 +1727,7 @@ def data_567() -> C.Task:
   C.AfterSettle{}
 
 def data_568() -> List<&2, C.Task>:
-  [data_566(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_566(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_569(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_561(initial, next), data_568(), data_317()}
@@ -1736,7 +1742,7 @@ def data_572() -> C.Task:
   C.FinishSettleIntake{0n}
 
 def data_573() -> List<&2, C.Task>:
-  [data_570(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_570(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_574(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_561(initial, next), data_573(), data_317()}
@@ -1748,22 +1754,22 @@ def data_576() -> C.Task:
   C.CommitIntake{1n}
 
 def data_577() -> List<&2, C.Task>:
-  [data_575(), data_576(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_575(), data_576(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_578(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_561(initial, next), data_577(), data_317()}
 
 def data_579() -> R.Node:
-  R.Node{data_130(), data_98(), data_2(), False{}, 0, 0, 0, 0n, data_298(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_131(), data_99(), data_2(), False{}, 0, 0, 0, 0n, data_298(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_580(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_579(), data_556(initial, next)]
+  [data_6(), data_8(), data_156(), data_579(), data_556(initial, next)]
 
 def data_581(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_580(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_580(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_582() -> List<&2, C.Task>:
-  [data_576(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_576(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_583(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_581(initial, next), data_582(), data_317()}
@@ -1775,25 +1781,25 @@ def data_585() -> C.Task:
   C.CommitIntake{2n}
 
 def data_586() -> List<&2, C.Task>:
-  [data_584(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_584(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_587(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_581(initial, next), data_586(), data_317()}
 
 def data_588(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.Node:
-  R.Node{data_156(), data_42(next), data_2(), False{}, 540672, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_157(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
+  R.Node{data_157(), data_44(next), data_2(), False{}, 537411584, 16384, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, False{}, 1n, 0n, 0n, 0n, data_406(), 0n, 0n, 0n, 0n}
 
 def data_589(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_579(), data_588(initial, next)]
+  [data_6(), data_8(), data_156(), data_579(), data_588(initial, next)]
 
 def data_590(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_472(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_591() -> C.Task:
   C.CommitFinish{4n, False{}}
 
 def data_592() -> List<&2, C.Task>:
-  [data_591(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_591(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_593(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_592(), data_317()}
@@ -1802,19 +1808,19 @@ def data_594() -> C.Task:
   C.CommitAfterTrim{4n, False{}}
 
 def data_595() -> List<&2, C.Task>:
-  [data_248(), data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_248(), data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_596(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_595(), data_317()}
 
 def data_597() -> List<&2, C.Task>:
-  [data_253(), data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_253(), data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_598(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_597(), data_317()}
 
 def data_599() -> List<&2, C.Task>:
-  [data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_594(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_600(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_599(), data_317()}
@@ -1829,7 +1835,7 @@ def data_603() -> C.Task:
   C.OwnerTasks{data_602()}
 
 def data_604() -> List<&2, C.Task>:
-  [data_603(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_603(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_605(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_604(), data_317()}
@@ -1844,7 +1850,7 @@ def data_608() -> C.Task:
   C.OwnerTasks{data_607()}
 
 def data_609() -> List<&2, C.Task>:
-  [data_608(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_608(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_610(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_609(), data_317()}
@@ -1859,7 +1865,7 @@ def data_613() -> C.Task:
   C.OwnerTasks{data_612()}
 
 def data_614() -> List<&2, C.Task>:
-  [data_613(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_613(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_615(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_614(), data_317()}
@@ -1874,7 +1880,7 @@ def data_618() -> C.Task:
   C.OwnerTasks{data_617()}
 
 def data_619() -> List<&2, C.Task>:
-  [data_618(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_618(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_620(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_619(), data_317()}
@@ -1889,19 +1895,19 @@ def data_623() -> C.Task:
   C.OwnerTasks{data_622()}
 
 def data_624() -> List<&2, C.Task>:
-  [data_623(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_623(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_625(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_590(initial, next), data_624(), data_317()}
 
 def data_626() -> R.NodeExtension:
-  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 0n, data_1()}
+  R.NodeExtension{data_409(), 2n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 0n, data_22(), data_23()}
 
 def data_627() -> List<&2, R.NodeExtension>:
-  [data_22(), data_626()]
+  [data_24(), data_626()]
 
 def data_628(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_558(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_629() -> O.Task:
   O.RunCleanup{1n}
@@ -1916,7 +1922,7 @@ def data_632() -> C.Task:
   C.OwnerTasks{data_631()}
 
 def data_633() -> List<&2, C.Task>:
-  [data_632(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_632(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_634(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_633(), data_317()}
@@ -1937,22 +1943,22 @@ def data_639() -> C.Task:
   C.OwnerTasks{data_638()}
 
 def data_640() -> List<&2, C.Task>:
-  [data_636(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_636(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_641(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_640(), data_317()}
 
 def data_642() -> C.Task:
-  C.Callback{1n, data_145(), data_1(), data_1()}
+  C.Callback{1n, data_146(), data_1(), data_1()}
 
 def data_643() -> List<&2, C.Task>:
-  [data_642(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_642(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_644(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_643(), data_317()}
 
 def data_645() -> O.Task:
-  O.Action{1n, data_144()}
+  O.Action{1n, data_145()}
 
 def data_646() -> List<&2, O.Task>:
   [data_645()]
@@ -1961,28 +1967,28 @@ def data_647() -> C.Task:
   C.OwnerTasks{data_646()}
 
 def data_648() -> C.Task:
-  C.Callback{1n, data_24(), data_1(), data_1()}
+  C.Callback{1n, data_26(), data_1(), data_1()}
 
 def data_649() -> List<&2, C.Task>:
-  [data_647(), data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_647(), data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_650(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_649(), data_317()}
 
 def data_651() -> List<&2, C.Task>:
-  [data_253(), data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_253(), data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_652(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_651(), data_317()}
 
 def data_653() -> List<&2, C.Task>:
-  [data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_648(), data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_654(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_653(), data_317()}
 
 def data_655() -> List<&2, C.Task>:
-  [data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_637(), data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_656() -> List<&2, R.Value>:
   [data_1(), data_1()]
@@ -1991,34 +1997,34 @@ def data_657(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_655(), data_656()}
 
 def data_658() -> List<&2, C.Task>:
-  [data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_639(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_659(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_658(), data_317()}
 
 def data_660() -> List<&2, C.Task>:
-  [data_253(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_253(), data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_661(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_660(), data_317()}
 
 def data_662() -> List<&2, C.Task>:
-  [data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_585(), data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_663(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_628(initial, next), data_662(), data_317()}
 
 def data_664(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_665() -> List<&2, C.Task>:
-  [data_571(), data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_571(), data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_666(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_665(), data_317()}
 
 def data_667() -> List<&2, C.Task>:
-  [data_572(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_572(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_668(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_667(), data_317()}
@@ -2030,7 +2036,7 @@ def data_670() -> C.Task:
   C.LandTransactions{data_669(), 0n}
 
 def data_671() -> List<&2, C.Task>:
-  [data_670(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_670(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_672(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_671(), data_317()}
@@ -2039,7 +2045,7 @@ def data_673() -> C.Task:
   C.CompleteSettle{data_669()}
 
 def data_674() -> List<&2, C.Task>:
-  [data_673(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_673(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_675(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_674(), data_317()}
@@ -2048,25 +2054,25 @@ def data_676() -> C.Task:
   C.ZombieLoop{data_13()}
 
 def data_677() -> List<&2, C.Task>:
-  [data_676(), data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_676(), data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_678(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_677(), data_317()}
 
 def data_679() -> List<&2, C.Task>:
-  [data_567(), data_321(), data_322(), data_113(), data_312()]
+  [data_567(), data_321(), data_322(), data_114(), data_312()]
 
 def data_680(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_664(initial, next), data_679(), data_317()}
 
 def data_681(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, True{}, False{}, 1n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, True{}, False{}, 1n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_682() -> C.Task:
   C.RenderQueue{}
 
 def data_683() -> List<&2, C.Task>:
-  [data_682(), data_321(), data_322(), data_113(), data_312()]
+  [data_682(), data_321(), data_322(), data_114(), data_312()]
 
 def data_684(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_681(initial, next), data_683(), data_317()}
@@ -2075,28 +2081,28 @@ def data_685() -> C.Task:
   C.UserQueue{}
 
 def data_686() -> List<&2, C.Task>:
-  [data_685(), data_321(), data_322(), data_113(), data_312()]
+  [data_685(), data_321(), data_322(), data_114(), data_312()]
 
 def data_687(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_681(initial, next), data_686(), data_317()}
 
 def data_688() -> List<&2, C.Task>:
-  [data_321(), data_322(), data_113(), data_312()]
+  [data_321(), data_322(), data_114(), data_312()]
 
 def data_689(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_681(initial, next), data_688(), data_317()}
 
 def data_690(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 1n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 1n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_691() -> List<&2, C.Task>:
-  [data_322(), data_113(), data_312()]
+  [data_322(), data_114(), data_312()]
 
 def data_692(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_690(initial, next), data_691(), data_317()}
 
 def data_693() -> List<&2, C.Task>:
-  [data_113(), data_312()]
+  [data_114(), data_312()]
 
 def data_694(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_690(initial, next), data_693(), data_317()}
@@ -2105,16 +2111,16 @@ def data_695() -> List<&2, C.Task>:
   [data_312()]
 
 def data_696(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_695(), data_110()}
+  C.Machine{data_690(initial, next), data_695(), data_111()}
 
 def data_697() -> C.Task:
   C.Invoke{}
 
 def data_698() -> List<&2, C.Task>:
-  [data_163(), data_697()]
+  [data_164(), data_697()]
 
 def data_699(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_698(), data_110()}
+  C.Machine{data_690(initial, next), data_698(), data_111()}
 
 def data_700() -> List<&2, C.Task>:
   [data_697()]
@@ -2129,7 +2135,7 @@ def data_703() -> List<&2, C.Task>:
   [data_702()]
 
 def data_704(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_703(), data_110()}
+  C.Machine{data_690(initial, next), data_703(), data_111()}
 
 def data_705() -> C.Task:
   C.ReadPrepared{4n}
@@ -2138,7 +2144,7 @@ def data_706() -> List<&2, C.Task>:
   [data_705()]
 
 def data_707(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_706(), data_110()}
+  C.Machine{data_690(initial, next), data_706(), data_111()}
 
 def data_708() -> C.Task:
   C.ReadStatus{4n}
@@ -2147,10 +2153,10 @@ def data_709() -> List<&2, C.Task>:
   [data_708()]
 
 def data_710(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_709(), data_110()}
+  C.Machine{data_690(initial, next), data_709(), data_111()}
 
 def data_711() -> C.Task:
-  C.Serve{4n}
+  C.ServeFor{4n, 0n}
 
 def data_712() -> C.Task:
   C.AfterServe{4n}
@@ -2159,22 +2165,22 @@ def data_713() -> List<&2, C.Task>:
   [data_711(), data_712()]
 
 def data_714(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  C.Machine{data_690(initial, next), data_713(), data_110()}
+  C.Machine{data_690(initial, next), data_713(), data_111()}
 
 def data_715(+next: Payload.Ordinary) -> R.TraceEvent:
-  R.ReadValue{0n, 4n, data_42(next)}
+  R.ReadValue{0n, 4n, data_44(next)}
 
 def data_716(+next: Payload.Ordinary) -> List<&2, R.TraceEvent>:
-  [data_133(), data_142(), data_168(), data_218(), data_260(), data_168(), data_389(), data_715(next)]
+  [data_134(), data_143(), data_169(), data_218(), data_260(), data_169(), data_389(), data_715(next)]
 
 def data_717(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 1n, 3n, data_16(), data_716(next), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_482()}
+  R.World{data_589(initial, next), data_388(), data_12(), 1n, 0n, False{}, data_13(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 1n, 3n, data_16(), data_716(next), data_18(), False{}, data_13(), data_627(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_519(next), data_305(), 0n, data_450(next), data_502(), data_526(next), data_504(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_482()}
 
 def data_718() -> List<&2, C.Task>:
   [data_712()]
 
 def data_719(+next: Payload.Ordinary) -> List<&2, R.Value>:
-  [data_42(next)]
+  [data_44(next)]
 
 def data_720(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_717(initial, next), data_718(), data_719(next)}
@@ -2186,49 +2192,76 @@ def data_722(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   C.Machine{data_717(initial, next), data_721(), data_719(next)}
 
 def data_723() -> R.Node:
-  R.Node{data_130(), data_84(), data_297(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
+  R.Node{data_131(), data_85(), data_297(), False{}, 0, 0, 0, 0n, data_3(), 0n, 0n, 0n, 1n, 1n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, data_4(), False{}, data_1(), 0n, False{}, 0n, 0n, 0n, 0n, data_5(), 0n, 0n, 0n, 0n}
 
 def data_724(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_723(), data_237(initial)]
+  [data_6(), data_8(), data_156(), data_723(), data_237(initial)]
 
 def data_725(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_724(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_724(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_726(+initial: Payload.Ordinary) -> List<&2, R.Node>:
-  [data_6(), data_8(), data_155(), data_299(), data_237(initial)]
+  [data_6(), data_8(), data_156(), data_299(), data_237(initial)]
 
 def data_727(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_726(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_726(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_728(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_301(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_301(initial), data_217(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
 
 def data_729(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
-  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_23(), data_147(), data_13(), 0n, False{}, False{}, data_27(), 0n, data_30(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_31(), data_35(), data_37(), data_38(), 0n, data_47(next), data_49(), data_51(), data_52(), data_54(), False{}, False{}, data_21(), data_56(), data_58(), data_61(), 0n, data_31(), False{}, data_62(), data_63(), data_64(), 0n, data_65(), data_66(), data_67(), data_68(), data_69(), 0n, data_73(), data_74(), data_2(), data_13(), data_181()}
+  R.World{data_301(initial), data_217(), data_302(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 0n, False{}, False{}, False{}, 0n, 2n, data_16(), data_261(), data_18(), True{}, data_13(), data_25(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_37(), data_39(), data_40(), 0n, data_49(next), data_51(), data_53(), data_54(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_75(), data_76(), data_2(), data_13(), data_181()}
+
+def data_730(+initial: Payload.Ordinary) -> List<&2, C.Task>:
+  [data_402(), data_351(initial), data_325(), data_321(), data_322(), data_114(), data_312()]
+
+def data_731() -> R.DeferredArena:
+  R.DeferredArena{data_370(), data_13(), data_80(), data_463()}
+
+def data_732(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  R.World{data_386(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_334(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_39(), data_305(), 0n, data_450(next), data_453(), data_53(), data_457(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 0n, data_336(), data_76(), data_2(), data_13(), data_731()}
+
+def data_733(+initial: Payload.Ordinary) -> R.Node:
+  R.Node{data_157(), data_91(initial), data_2(), False{}, 537411584, 16388, 0, 0n, data_3(), 1n, 1n, 2n, 0n, 0n, 0n, 0n, 4n, 2n, 0n, 0n, 0n, data_158(initial), False{}, data_1(), 0n, True{}, 1n, 0n, 0n, 0n, data_192(), 0n, 0n, 0n, 0n}
+
+def data_734(+initial: Payload.Ordinary) -> List<&2, R.Node>:
+  [data_6(), data_8(), data_156(), data_299(), data_733(initial)]
+
+def data_735() -> R.NodeExtension:
+  R.NodeExtension{data_409(), 0n, data_1(), data_2(), 0n, 0n, data_20(), 0n, data_192(), 0n, False{}, data_2(), data_3(), data_440(), data_2(), 1n, data_22(), data_23()}
+
+def data_736() -> List<&2, R.NodeExtension>:
+  [data_24(), data_735()]
+
+def data_737(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  R.World{data_734(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_736(), data_148(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_39(), data_305(), 0n, data_450(next), data_453(), data_53(), data_457(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 1n, data_336(), data_76(), data_2(), data_13(), data_464()}
+
+def data_738(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  R.World{data_734(initial), data_388(), data_12(), 0n, 0n, False{}, data_303(), data_13(), data_13(), data_14(), 4n, True{}, True{}, True{}, 0n, 3n, data_16(), data_390(), data_18(), False{}, data_13(), data_736(), data_446(), data_13(), 0n, False{}, False{}, data_29(), 0n, data_32(), data_13(), 0n, 0n, 0n, 0n, data_13(), data_21(), data_33(), data_448(), data_39(), data_305(), 0n, data_450(next), data_453(), data_455(), data_457(), data_56(), False{}, False{}, data_21(), data_58(), data_60(), data_63(), 0n, data_33(), False{}, data_64(), data_65(), data_66(), 0n, data_67(), data_68(), data_69(), data_70(), data_71(), 1n, data_336(), data_76(), data_2(), data_13(), data_464()}
 
 def state_0(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_111(initial, next)
+  data_112(initial, next)
 
 def state_1(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_116(initial, next)
+  data_117(initial, next)
 
 def state_2(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_122(initial, next)
+  data_123(initial, next)
 
 def state_3(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_126(initial, next)
+  data_127(initial, next)
 
 def state_4(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_129(initial, next)
+  data_130(initial, next)
 
 def state_5(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_141(initial, next)
+  data_142(initial, next)
 
 def state_6(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_154(initial, next)
+  data_155(initial, next)
 
 def state_7(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
-  data_165(initial, next)
+  data_166(initial, next)
 
 def state_8(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> C.Machine:
   data_177(initial, next)
@@ -2657,6 +2690,49 @@ def setterStep(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(s
       genericSetter(cutOrigin(initial, next), cutRest(initial, next), R.Number{0n}, R.Number{1n}, {==}, {==}, {==}),
       Equal.cong(R.World, C.Machine, w => C.Machine{w, cutRest(initial, next), [R.Number{1n}]}, W.setResolved(cutOrigin(initial, next), 3n, R.Number{0n}, R.Number{1n}), cutScheduled(initial, next), resolved(initial, next))))
 
+def cutStreamRest(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2,C.Task>:
+  data_730(initial)
+
+def cutStreamStack(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> List<&2,R.Value>:
+  data_317()
+
+def cutStreamWrapped(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  data_732(initial, next)
+
+def cutStreamRegistered(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  data_737(initial, next)
+
+def cutStreamCreated(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> R.World:
+  data_738(initial, next)
+
+def cutStreamWrapEq(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {StreamCutRuntime.wrap(C.world(state_58(initial,next)),1n,1n) == B.Bundle{cutStreamWrapped(initial,next),2n} : B.Bundle<R.World,Nat>}:
+  {==}
+
+def cutStreamRegisterEq(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {StreamCutFlight.startFlight(DeferredCutRuntime.ask(cutStreamWrapped(initial,next),1n,StreamCutRuntime.flight(cutStreamWrapped(initial,next),2n)),4n,2n) == cutStreamRegistered(initial,next) : R.World}:
+  {==}
+
+def cutStreamCreateEq(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {StreamCutIterator.newStream(cutStreamRegistered(initial,next),4n,2n,2n,False{},R.Undefined{}) == B.Bundle{cutStreamCreated(initial,next),1n} : B.Bundle<R.World,Nat>}:
+  {==}
+
+def cutStreamAttachEq(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.attachIterator(cutStreamCreated(initial,next),C.DeferredAfterIterator{1n} <> cutStreamRest(initial,next),cutStreamStack(initial,next),4n,1n,False{}) == state_59(initial,next) : C.Machine}:
+  {==}
+
+def streamEntryStep(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(state_58(initial,next)) == state_59(initial,next) : C.Machine}:
+  +origin = C.world(state_58(initial,next))
+  +rest = cutStreamRest(initial,next)
+  +stack = cutStreamStack(initial,next)
+  +wrapped = cutStreamWrapped(initial,next)
+  +registered = cutStreamRegistered(initial,next)
+  +created = cutStreamCreated(initial,next)
+  +a = C.deferredStream(origin,rest,stack,1n,1n)
+  +b = C.deferredWrapped(rest,stack,1n,B.Bundle{wrapped,2n})
+  +c = C.consumeIterator(registered,C.DeferredAfterIterator{1n} <> rest,stack,4n,2n,2n,False{},R.Undefined{})
+  +d = C.attachIterator(created,C.DeferredAfterIterator{1n} <> rest,stack,4n,1n,False{})
+  Equal.trans(C.Machine,C.step(state_58(initial,next)),a,state_59(initial,next),CoreSteps.healthyStep(origin,C.DeferredStreamCall{1n,1n},rest,stack,{==}),
+    Equal.trans(C.Machine,a,b,state_59(initial,next),StreamCuts.launch(origin,rest,stack,1n,1n,wrapped,2n,{==},cutStreamWrapEq(initial,next)),
+      Equal.trans(C.Machine,b,c,state_59(initial,next),StreamCuts.wrapped(wrapped,rest,stack,1n,2n,4n,registered,{==},{==},cutStreamRegisterEq(initial,next)),
+        Equal.trans(C.Machine,c,d,state_59(initial,next),StreamCuts.created(registered,C.DeferredAfterIterator{1n} <> rest,stack,4n,2n,created,1n,{==},cutStreamCreateEq(initial,next),{==}),cutStreamAttachEq(initial,next)))))
+
 def step_0(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(state_0(initial, next)) == state_1(initial, next) : C.Machine}:
   {==}
 
@@ -2848,7 +2924,7 @@ def step_57(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(stat
   {==}
 
 def step_58(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(state_58(initial, next)) == state_59(initial, next) : C.Machine}:
-  {==}
+  streamEntryStep(initial,next)
 
 def step_59(+initial: Payload.Ordinary, +next: Payload.Ordinary) -> {C.step(state_59(initial, next)) == state_60(initial, next) : C.Machine}:
   {==}

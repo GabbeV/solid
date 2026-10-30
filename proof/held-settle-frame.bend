@@ -6,13 +6,14 @@ import ../representation/base.bend as B
 import ../runtime/core.bend as C
 import ../runtime/scheduler.bend as S
 import ./held-settle-intake.bend as Intake
+import ../runtime/lanes-state.bend as Lanes
 import ./settle-lane-empty.bend as Lane
 import ./scheduler-frame.bend as Ledger
 import ./committed-storage-frame.bend as Committed
 import ./held-source-view.bend as Source
 
 def prepared(w: R.World) -> R.World:
-  S.clearTrims(Intake.trimmed(w))
+  Lanes.clearRevealing(S.clearTrims(Intake.trimmed(w)))
 
 def world(w: R.World) -> R.World:
   Lane.queues(prepared(w))
@@ -25,47 +26,89 @@ def shape(+w: R.World,rest: List<&2,C.Task>,stack: List<&2,R.Value>,tx: Nat) -> 
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def ledger(+w: R.World) -> {Ledger.ledger(world(w)) == Ledger.ledger(w) : Ledger.LedgerFrame}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def arena(+w: R.World) -> {R.World.txArena(world(w)) == R.World.txArena(w) : List<&2,R.Transaction>}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def live(+w: R.World) -> {R.World.transactions(world(w)) == R.World.transactions(w) : List<&2,Nat>}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def health(+w: R.World) -> {B.ok(world(w)) == B.ok(w) : Bool}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def committed(+w: R.World) -> {Committed.observe(world(w)) == Committed.observe(w) : Committed.View}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
 
 def source(+w: R.World) -> {Source.observe(world(w)) == Source.observe(w) : Source.View}:
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       match trims:
-        case Nil{}: {==}
-        case first <> tail: {==}
+        case Nil{}:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}
+        case first <> tail:
+          match laneState:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+              {==}

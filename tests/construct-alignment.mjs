@@ -25,7 +25,7 @@ try {
   const S=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
   const K=S.K;
   function list(xs) {const a=[];while('head' in xs){a.push(xs.head);xs=xs.tail;}return a;}
-  const value=v=>v&&Object.hasOwn(v,'n')?v.n:undefined;
+  const value=v=>v?.$==='Null'?null:v&&Object.hasOwn(v,'n')?v.n:undefined;
   const stamp=s=>Object.hasOwn(s,'value')?s.value:-1;
   function extension(x,bend) {
     if(!x)return null;

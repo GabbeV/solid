@@ -59,7 +59,7 @@ def observeState(+w: R.World, +id: Nat, +observer: Nat, immediate: Bool, state: 
 
 def observe(+w: R.World, +id: Nat, +result: Nat) -> R.World:
   +observer = B.length(R.AsyncObserver, R.World.asyncObservers(w))
-  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}]))
+  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{0n, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n, 0n}]))
   +w = D.registerWait(w, observer, R.DeferredIterator.cell(wrapper(w, id)), R.IteratorReference{R.DeferredIterator.iterator(wrapper(w, id))})
   +object = B.asyncObject(w, result)
   +w = B.store_asyncObject(w, result, R.AsyncObject.with_observers(object, B.append(Nat, R.AsyncObject.observers(object), [observer])))

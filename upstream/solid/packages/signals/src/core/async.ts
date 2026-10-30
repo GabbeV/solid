@@ -1,4 +1,5 @@
 import {
+  CONFIG_ASYNC,
   CONFIG_AUTO_DISPOSE,
   CONFIG_REDERIVE,
   CONFIG_GUESS,
@@ -13,6 +14,7 @@ import {
   EFFECT_USER,
   NOT_PENDING,
   REACTIVE_DIRTY,
+  REACTIVE_WINDOW,
   REACTIVE_DISPOSED,
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_REASK,
@@ -44,6 +46,7 @@ import {
   schedule,
   txOf,
   freshHook,
+  holdWorkHook,
   guessing,
   laneStageHook
 } from "./scheduler.js";
@@ -60,7 +63,7 @@ export function addPendingSource(el: Computed<any>, source: Computed<any>): bool
   return true;
 }
 
-function removePendingSource(el: Computed<any>, source: Computed<any>): boolean {
+export function removePendingSource(el: Computed<any>, source: Computed<any>): boolean {
   const sources = el._x?._pendingSources;
   if (!sources?.delete(source)) return false;
   if (!sources.size) el._x!._pendingSources = undefined;
@@ -313,8 +316,9 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // A19: a verdict reader holds no pending of its own (it was re-derived
       // when the source went pending, `propagateStatus`), and a landing
       // equal to the committed value notifies nobody — the source settling
-      // is its verdict changing: it runs again.
-      return node._config & CONFIG_VERDICT && enqueueSub(node);
+      // is its verdict changing: it runs again. (Verdict readers exist only
+      // with the verdict engine installed.)
+      return holdWorkHook && node._config & CONFIG_VERDICT && enqueueSub(node);
     visited.add(node);
     node._time = clock;
     const remaining = node._x?._pendingSources?.values().next().value;
@@ -426,7 +430,10 @@ export function handleAsync<T>(
   }
 
   if (!thenable && !iterator) {
-    if (el._x !== null) el._x._inFlight = null;
+    if (el._x !== null) {
+      el._x._inFlight = null;
+      if (holdWorkHook) el._config &= ~CONFIG_ASYNC;
+    }
     // A sync landing is the first real answer for a loadingValue node.
     el._loading = false;
     return result as T;
@@ -461,6 +468,11 @@ export function handleAsync<T>(
   // fired _flightTeardown. A future non-recompute registration path must
   // release it here before overwriting _inFlight.
   ext(el)._inFlight = result as PromiseLike<T> | AsyncIterable<T>;
+  // D-25 (verdict.ts `holdWork`): an async memo whose answering pass opened
+  // no verdict window of its own (`markVerdictReader` clears the bit).
+  // Kept by the verdict engine alone (`holdWorkHook`): a build without it
+  // folds the bit's upkeep away.
+  if (holdWorkHook && !(el._flags & REACTIVE_WINDOW)) el._config |= CONFIG_ASYNC;
   // The question this flight answers (A18 provenance, lanes.ts): the action
   // whose slice asked it; mainline is always the current question.
   el._x!._q = question || MAINLINE_QUESTION;
@@ -558,7 +570,7 @@ export function handleAsync<T>(
       // a verdict reader of the next flight would suspend instead of being
       // served the screen; held, both at the derive's commit.
       if (!(el._config & CONFIG_HELD)) {
-        el._x!._shownError = undefined;
+        el._x!._shownError = null;
         el._config &= ~CONFIG_INPUTS_PUBLISHED;
       }
       if (wasUninitialized) landStatus(el, true);
@@ -895,7 +907,7 @@ function landStatus(el: Computed<any>, clearUninitialized: boolean = false): voi
   } else clearStatus(el, clearUninitialized);
 }
 
-export function notifyStatus(el: Computed<any>, status: number, error: any): void {
+export function notifyStatus(el: Computed<any>, status: number, error?: any): void {
   // Wrap regular errors to track source node
   if (
     status === STATUS_ERROR &&
@@ -904,8 +916,7 @@ export function notifyStatus(el: Computed<any>, status: number, error: any): voi
   )
     error = new StatusError(el, error);
 
-  const pendingSource =
-    status === STATUS_PENDING && error instanceof NotReadyError ? error.source : undefined;
+  const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   // (CARVE 2: the lane assignment went with the engine.)
 
   if (status === STATUS_PENDING && pendingSource) {
@@ -967,8 +978,7 @@ export function notifyStatus(el: Computed<any>, status: number, error: any): voi
  * propagates the derive's status from each leaf to the leaf's readers
  * (store/projection.ts `wakeFamily`), exactly as a memo's would reach its. */
 export function propagateStatus(el: Computed<any>, status: number, error: any): void {
-  const pendingSource =
-    status === STATUS_PENDING && error instanceof NotReadyError ? error.source : undefined;
+  const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   forEachDependent(el, (sub, link) => {
     sub._time = clock;
     // A pending mark on a kept-tail link re-derives the subscriber instead of
@@ -990,8 +1000,15 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
     // Inheriting the error would make a probe's reader errored. A boundary's
     // output (CONFIG_REDERIVE, boundaries.ts) the same: content or fallback
     // is its pass's call.
+    // Not one D-25 makes the hold's work (verdict.ts `holdWork`): an async
+    // memo with no verdict window of its own reads a verdict memo's value,
+    // and that source going pending changes none of its reads — re-derived,
+    // it is served the committed value it already derived from (A10) and
+    // asks that question again. It waits on the source like any derivation
+    // (F-9), and asks its next question once, at the landing (#4397).
     if (
-      sub._config & (CONFIG_REDERIVE | CONFIG_VERDICT) ||
+      sub._config & CONFIG_REDERIVE ||
+      (holdWorkHook && sub._config & CONFIG_VERDICT && !(pendingSource && holdWorkHook(sub, el))) ||
       (status === STATUS_PENDING && link._gen !== sub._depGen)
     ) {
       enqueueSub(sub);

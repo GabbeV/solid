@@ -71,7 +71,7 @@ def initial(spec: Spec) -> R.World:
       +w = B.choose(~R.World, U32.is_ge(graph, 1), _ => G.link(w, 4n, 2n), _ => w)
       +w = B.choose(~R.World, U32.is_ge(graph, 2), _ => G.link(w, 5n, 2n), _ => w)
       +w = B.choose(~R.World, U32.is_ge(graph, 3), _ => G.link(w, 2n, 3n), _ => w)
-      +w = R.World.with_verdictState(w, R.VerdictState{latest, False{}, False{}, False{}})
+      +w = R.World.with_verdictState(w, R.VerdictState{latest, False{}, False{}, False{}, 0n})
       +w = R.World.with_question(w, query)
       +w = R.World.with_truthReadHook(w, True{})
       +w = R.World.with_clock(w, 5n)

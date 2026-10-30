@@ -70,16 +70,16 @@ def step_13(+initial: Nat, +input: Nat) -> {C.step(M.state_13(initial, input)) =
   +ending = {C.FinishPublication{3n, False{}, False{}, False{}, 0n, 0n} <> rest : List<&2, C.Task>}
   +a = C.passReleases(w, rest, [], GeneralCuts.frame(R.Number{Nat.add(initial, 1n)}), 0n, value, False{}, False{}, False{}, R.Healthy{})
   +b = Cuts.afterRelease(w, rest, [], value)
-  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n)
-  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, 0n)
-  +e = C.publicationCompleted(ending, [], 3n, R.Undefined{}, 0n, False{}, B.Bundle{C.world(M.state_14(initial, input)), True{}})
+  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{})
+  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, 0n, False{})
+  +e = C.publicationCompleted(ending, [], 3n, R.Number{0n}, 0n, False{}, B.Bundle{C.world(M.state_14(initial, input)), True{}})
   Equal.trans(C.Machine, C.step(M.state_13(initial, input)), a, M.state_14(initial, input),
     GeneralCuts.step_from_shape(R.Number{Nat.add(initial, 1n)}, M.state_13(initial, input), w, rest, [], value, {==}, {==}),
     Equal.trans(C.Machine, a, b, M.state_14(initial, input), GeneralCuts.release_empty(R.Number{Nat.add(initial, 1n)}, w, rest, [], value, {==}),
       Equal.trans(C.Machine, b, c, M.state_14(initial, input), Cuts.after_release_identity(w, rest, [], value, {==}, {==}),
         Equal.trans(C.Machine, c, d, M.state_14(initial, input), Cuts.after_pass_live(w, rest, [], value, {==}, {==}, {==}),
           Equal.trans(C.Machine, d, e, M.state_14(initial, input),
-            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(initial, input)), True{}}, {==}, {==}, {==}, M.publication_13(initial, input)),
+            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(initial, input)), True{}}, {==}, {==}, {==}, M.publication_13(initial, input)),
             {==})))))
 
 def step_14(+initial: Nat, +input: Nat) -> {C.step(M.state_14(initial, input)) == M.state_15(initial, input) : C.Machine}:

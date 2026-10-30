@@ -62,10 +62,10 @@ def halt(+w: R.World, +cause: R.Value) ->
   Frame.choice(R.World.halted(w), w, w, B.report(clean, 0, slot), {==},
     Frame.compose(w, halted, B.report(clean, 0, slot), Frame.compose(halted, clean, B.report(clean, 0, slot), report(clean, 0, slot), cleanupDrop(halted)), Frame.worldHalted(w, True{})))
 
-def escalate(+w: R.World, +id: Nat, +cause: R.Value, +thrown: R.Value) ->
-  {Frame.observe(S.escalate(w, id, cause, thrown)) == Frame.observe(w) : Frame.View}:
+def escalate(+w: R.World, +id: Nat, +cause: R.Value) ->
+  {Frame.observe(S.escalate(w, id, cause)) == Frame.observe(w) : Frame.View}:
   +next = S.haltReactivity(w, cause)
-  Frame.compose(w, next, S.escalate(w, id, cause, thrown), Frame.worldFault(next, R.CallbackThrown{thrown}), halt(w, cause))
+  Frame.compose(w, next, S.escalate(w, id, cause), Frame.worldFault(next, R.CallbackThrown{cause}), halt(w, cause))
 
 def notify(+w: R.World, +id: Nat) ->
   {Frame.observe(S.notifyEffectStatus(w, id)) == Frame.observe(w) : Frame.View}:
@@ -74,12 +74,12 @@ def notify(+w: R.World, +id: Nat) ->
   +error = R.NodeExtension.error(B.extension(w, id))
   +modified = B.store_node(w, id, R.Node.with_modified(node, True{}))
   +user = B.choose(~R.World, B.has(R.Node.status(node), K.STATUS_ERROR()), _ => W.enqueue(modified, id), _ => w)
-  +actualError = B.choose(~R.World, W.is_user(R.Node.kind(node)), _ => user, _ => S.escalate(w, id, S.unwrapStatusError(error), error))
+  +actualError = B.choose(~R.World, W.is_user(R.Node.kind(node)), _ => user, _ => S.escalate(w, id, S.unwrapStatusError(error)))
   +pending = B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => X.joinFuture(w, 0n), _ => w)
   +ordinary = B.choose(~R.World, Bool.and(X.isRender(R.Node.kind(node)), B.has(status, K.STATUS_PENDING())), _ => pending, _ => w)
   Frame.choice(B.has(status, K.STATUS_ERROR()), w, actualError, ordinary,
-    Frame.choice(W.is_user(R.Node.kind(node)), w, user, S.escalate(w, id, S.unwrapStatusError(error), error),
-      Frame.choice(B.has(R.Node.status(node), K.STATUS_ERROR()), w, W.enqueue(modified, id), w, Frame.compose(w, modified, W.enqueue(modified, id), enqueue(modified, id), Frame.modified(w, id, True{})), {==}), escalate(w, id, S.unwrapStatusError(error), error)),
+    Frame.choice(W.is_user(R.Node.kind(node)), w, user, S.escalate(w, id, S.unwrapStatusError(error)),
+      Frame.choice(B.has(R.Node.status(node), K.STATUS_ERROR()), w, W.enqueue(modified, id), w, Frame.compose(w, modified, W.enqueue(modified, id), enqueue(modified, id), Frame.modified(w, id, True{})), {==}), escalate(w, id, S.unwrapStatusError(error))),
     Frame.choice(Bool.and(X.isRender(R.Node.kind(node)), B.has(status, K.STATUS_PENDING())), w, pending, w, Frame.choice(Nat.is_eq(R.World.passLane(w), 0n), w, X.joinFuture(w, 0n), w, Setter.joinFuture(w, 0n), {==}), {==}))
 
 def clear(+w: R.World, +id: Nat, +clearUninitialized: Bool) ->

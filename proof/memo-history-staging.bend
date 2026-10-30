@@ -70,16 +70,16 @@ def step_13(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEv
   +ending = {C.FinishPublication{3n, False{}, False{}, False{}, 0n, 0n} <> rest : List<&2, C.Task>}
   +a = C.passReleases(w, rest, [], GeneralCuts.frame(R.Number{Nat.add(previous, 1n)}), 0n, value, False{}, False{}, False{}, R.Healthy{})
   +b = Cuts.afterRelease(w, rest, [], value)
-  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n)
-  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, 0n)
-  +e = C.publicationCompleted(ending, [], 3n, R.Undefined{}, 0n, False{}, B.Bundle{C.world(M.state_14(tick, previous, input, events, jobs)), True{}})
+  +c = C.afterPass(w, rest, [], 3n, False{}, value, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{})
+  +d = C.publishState(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, 0n, False{})
+  +e = C.publicationCompleted(ending, [], 3n, R.Number{0n}, 0n, False{}, B.Bundle{C.world(M.state_14(tick, previous, input, events, jobs)), True{}})
   Equal.trans(C.Machine, C.step(M.state_13(tick, previous, input, events, jobs)), a, M.state_14(tick, previous, input, events, jobs),
     GeneralCuts.step_from_shape(R.Number{Nat.add(previous, 1n)}, M.state_13(tick, previous, input, events, jobs), w, rest, [], value, {==}, {==}),
     Equal.trans(C.Machine, a, b, M.state_14(tick, previous, input, events, jobs), GeneralCuts.release_empty(R.Number{Nat.add(previous, 1n)}, w, rest, [], value, {==}),
       Equal.trans(C.Machine, b, c, M.state_14(tick, previous, input, events, jobs), Cuts.after_release_identity(w, rest, [], value, {==}, {==}),
         Equal.trans(C.Machine, c, d, M.state_14(tick, previous, input, events, jobs), Cuts.after_pass_live(w, rest, [], value, {==}, {==}, {==}),
           Equal.trans(C.Machine, d, e, M.state_14(tick, previous, input, events, jobs),
-            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(tick, previous, input, events, jobs)), True{}}, {==}, {==}, {==}, M.publication_13(tick, previous, input, events, jobs)),
+            Cuts.default_publish(w, ending, [], 3n, value, False{}, 0n, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, B.Bundle{C.world(M.state_14(tick, previous, input, events, jobs)), True{}}, {==}, {==}, {==}, M.publication_13(tick, previous, input, events, jobs)),
             {==})))))
 
 def step_14(+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> {C.step(M.state_14(tick, previous, input, events, jobs)) == M.state_15(tick, previous, input, events, jobs) : C.Machine}:

@@ -237,7 +237,7 @@ def blank_tree() -> R.TreeNode:
 def blank_extension() -> R.NodeExtension:
   R.NodeExtension{R.FlightEmpty{}, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
-    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Undefined{}}
+    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Null{}, R.FlightUndefined{}}
 
 def stampMatches(stamp: R.Stamp, value: Nat) -> Bool:
   match stamp:
@@ -276,12 +276,12 @@ def blank_asyncObject() -> R.AsyncObject:
   R.AsyncObject{False{}, R.Unresolved{}, [], 0n}
 
 def blank_asyncObserver() -> R.AsyncObserver:
-  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}
+  R.AsyncObserver{0n, 0n, False{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n, 0n}
 
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}, R.FromNone{}}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}, [], False{}, False{}, [], [], False{}}, R.VerdictState{False{}, False{}, False{}, False{}}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], [], [R.DeferredIterator{0n, 0n, 0n, False{}}]}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}, R.FromNone{}}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}, [], False{}, False{}, [], [], False{}, []}, R.VerdictState{False{}, False{}, False{}, False{}, 0n}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], [], [R.DeferredIterator{0n, 0n, 0n, False{}}]}}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())

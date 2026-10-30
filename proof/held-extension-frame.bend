@@ -23,7 +23,7 @@ def eraseRead(+rows: List<&2,R.NodeExtension>,+slot: Nat) -> {B.get(R.NodeExtens
 
 def transactionClean(+record: R.NodeExtension) -> {R.NodeExtension.transaction(Stash.clean(record)) == R.NodeExtension.transaction(record) : Nat}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
 
 def at(+w: R.World,slot: Nat) -> R.NodeExtension:
   B.get(R.NodeExtension,R.World.extensions(w),slot,B.blank_extension())

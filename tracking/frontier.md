@@ -8,8 +8,9 @@ belong in [session notes](session-2026-10-28.md) and [progress.md](progress.md).
 The [previous accumulated frontier](reviews/frontier-through-388cfefc.md) is an
 exact historical snapshot; its earlier omissions and next steps may be superseded.
 
-Solid is pinned to `178605cf` (rc.19). The [source review](reviews/solid-178605cf.md)
-records the integrated optimistic borrowing, verdict/flight and mark-release fixes. The Bend2.0.37 frontend/vendor
+Solid is pinned to `5e68925c` (rc.20). The [source review](reviews/solid-5e68925c.md)
+records the integrated parked-flight, verdict/hold-work, shown-error recovery
+and revelation-delay changes. The Bend2.0.37 frontend/vendor
 and fully Lean-checked congruence checker profile/fuel remain unchanged. No
 semantic deviation is active. This is an incremental production, non-store port
 with an explicit callback/host grammar, not the whole package. See the

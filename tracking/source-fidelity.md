@@ -7,8 +7,8 @@ optimizations. Formal TS/Bend equivalence is outside the project objectives.
 Reviewed correspondence, differential tests and scoped adapter contracts support
 fidelity; neither a passing proof nor a test closes an unreviewed source branch.
 
-Current pin: Solid `178605cfcbfaf4243d157600095a63111047b164`, rc.19. The latest
-[source review](reviews/solid-178605cf.md) records the verbatim inputs and checks.
+Current translated pin: Solid `5e68925cc2fd216a9fb06345019e66d5da5c523c`, rc.20. The latest
+[source review](reviews/solid-5e68925c.md) records the verbatim inputs and checks.
 Merged fixes through this pin are integrated where their admitted branches run;
 #4231 synchronous-error retirement, #4232 stream wrapping and #4233 late
 subscription unsubscribe are no longer blanket omissions. No candidate patch or

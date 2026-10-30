@@ -12,7 +12,7 @@ import ../representation/records.bend as R
 
 # Previous value is arbitrary; source frame flags and all other fields stay fixed.
 def frame(previous: R.Value) -> C.PassFrame:
-  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, previous, False{}, R.Undefined{}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}}}
+  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, previous, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}}}
 
 def step_release(+previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, C.PassReleases{frame(previous), 0n, value, False{}, False{}, False{}, R.Healthy{}} <> rest, stack})

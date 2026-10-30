@@ -1,3 +1,5 @@
+import ./proof/heap-entry-count.bend as HeapEntryHeapEntryCount
+import ./proof/action-retirement-count.bend as HeapEntryActionRetirementCount
 import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
 import ./proof/core-prefix-compose.bend as HeapEntryCorePrefixCompose
 import ./proof/joined-body-heap-entry.bend as HeapEntryJoinedBodyHeapEntry
@@ -843,13 +845,13 @@ law unowned_read_does_not_join:
   for slow: Bool
   {Transactions.enterRead(w, 0n, id, slow) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
 
-law unowned_selected_read:
+law zero_posture_selected_read_preserves_faults:
   for +w: R.World
   for +tasks: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +id: Nat
   {Core.serveSelected(w, tasks, stack, id, 0n, R.Empty{})
-    == Core.served(w, tasks, stack, 0n, id, R.Node.value(B.node(w, id))) : Core.Machine}
+    == B.choose(~Core.Machine,Bool.not(B.ok(w)),_=>Core.Machine{w,tasks,stack},_=>Core.served(w,tasks,stack,B.parentComputed(w,R.World.context(w)),id,R.Node.value(B.node(w,id)))) : Core.Machine}
 
 law unflushed_value_is_selected:
   for +w: R.World
@@ -859,7 +861,7 @@ law unflushed_value_is_selected:
   for +reader: Nat
   for +value: R.Value
   {Core.serveSelected(w, tasks, stack, id, reader, R.Present{value})
-    == Core.served(ReadState.markLateLinker(w, reader), tasks, stack, reader, id, value) : Core.Machine}
+    == Core.served(ReadState.markLateLinker(w, reader), tasks, stack, B.parentComputed(ReadState.markLateLinker(w,reader),R.World.context(ReadState.markLateLinker(w,reader))), id, value) : Core.Machine}
 
 law empty_pending_publication_is_identity:
   for +w: R.World
@@ -1701,11 +1703,11 @@ law open_transaction_blocks_and_restores_judge:
   for +count: Nat
   {LaneJudgment.blocked(LaneBlockers.openScope(w, tx, rest, count), 1n) == B.Bundle{LaneBlockers.openScope(w, tx, rest, count), True{}} : B.Bundle<R.World, Bool>}
 
-law empty_mainline_transaction_is_unblocked:
+law empty_mainline_transaction_reports_its_revelation_delay:
   for +w: R.World
   for +tx: R.Transaction
   for +rest: List<&2, R.Transaction>
-  {LaneJudgment.blocked(LaneBlockers.emptyScope(w, tx, rest), 1n) == B.Bundle{LaneBlockers.emptyScope(w, tx, rest), False{}} : B.Bundle<R.World, Bool>}
+  {LaneJudgment.blocked(LaneBlockers.emptyScope(w, tx, rest), 1n) == B.Bundle{LaneBlockers.emptyScope(w, tx, rest), EmptyBlocker.delay(w,1n)} : B.Bundle<R.World, Bool>}
 
 law linked_peer_open_count_blocks:
   for +w: R.World
@@ -2011,18 +2013,18 @@ law lane_guess_unstamped_write_allocates_exact_question:
   for +value: R.Value
   {Lanes.pushGuess(R.World.with_question(w, R.QuestionZero{}), id, value) == B.schedule(GuessLaws.pushed(R.World.with_questions(R.World.with_question(w, R.QuestionZero{}), Q.increment(R.World.questions(w))), id, value, Q.increment(R.World.questions(w)))) : R.World}
 
-law lane_guess_null_leaks_still_reveal_prefix:
+law lane_guess_null_parent_clears_delay_and_enters_scan:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  {Core.laneSeams(w, rest, stack, R.NoIds{}) == Core.Machine{w, Core.LaneLeakLoop{[], 0n, []} <> rest, stack} : Core.Machine}
+  {Core.laneSeams(w, rest, stack, 0n) == Core.Machine{Lanes.clearRevealing(w), Core.LaneLeakLoop{[], 0n, [],0n} <> rest, stack} : Core.Machine}
 
-law lane_guess_reveals_are_capped_to_current_prefix:
+law lane_guess_scan_starts_at_current_live_length:
   for +w: R.World
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +leaked: List<&2, Nat>
-  {Core.laneLeakLoop(w, rest, stack, [], 0n, leaked) == Core.Machine{w, Core.LaneRevealLoop{leaked, Nat.min(R.LaneState.judged(R.World.laneState(w)), B.length(Nat, R.LaneState.live(R.World.laneState(w))))} <> rest, stack} : Core.Machine}
+  {Core.laneLeakLoop(w, rest, stack, [], 0n, leaked,0n) == Core.Machine{w, Core.LaneRevealLoop{leaked, B.length(Nat, R.LaneState.live(R.World.laneState(w)))} <> rest, stack} : Core.Machine}
 
 law lane_guess_zero_reveals_continue_entered_reader_drain:
   for +w: R.World
@@ -2089,14 +2091,14 @@ law lane_pass_without_mount_joins_only_held_reads:
   for +id: Nat
   for +previous: Nat
   for +old: R.LaneMount
-  {Core.joinedPass(w, id, Core.LanePass{previous, old, R.MountFalse{}}) == B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED()) : Bool}
+  {Core.joinedPass(w, id, Core.LanePass{previous, old, R.MountFalse{}, False{}}) == B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_JOINED()) : Bool}
 
 law lane_pass_restores_captured_mount:
   for +w: R.World
   for +previous: Nat
   for +old: R.LaneMount
   for +mount: R.LaneMount
-  {Core.restoreMount(w, Core.LanePass{previous, old, mount}) == R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), old)) : R.World}
+  {Core.restoreMount(w, Core.LanePass{previous, old, mount, False{}}) == R.World.with_laneState(w, R.LaneState.with_root(R.World.laneState(w), old)) : R.World}
 
 law lane_pass_accepted_truth_skips_ordinary_store:
   for +w: R.World
@@ -3284,7 +3286,7 @@ law settled_action_wait_history_rejects_duplicate:
   {Core.asyncActionDelivery(R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack, id, rejected, value, Action.find(WaitSettlement.run(events, Action.settleWait(waits, id)), id)) == Core.Machine{R.World.with_actionWaits(w, WaitSettlement.run(events, Action.settleWait(waits, id))), rest, stack} : Core.Machine}
 
 
-law empty_ordinary_transaction_is_eligible:
+law empty_ordinary_transaction_reports_revelation_delay:
   for w: R.World
   for tx: Nat
   for healthy: {B.ok(w) == True{} : Bool}
@@ -3292,11 +3294,11 @@ law empty_ordinary_transaction_is_eligible:
   for empty: {R.Transaction.nodes(B.transaction(w, tx)) == [] : List<&2, Nat>}
   for ordinary: {R.Transaction.lane(B.transaction(w, tx)) == False{} : Bool}
   for noLanes: {R.LaneState.live(R.World.laneState(w)) == [] : List<&2, Nat>}
-  {Transactions.blocked(w, tx) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
+  {Transactions.blocked(w, tx) == EmptyBlocker.answer(w, tx) : B.Bundle<R.World, Bool>}
 
 # Successful prefixes do not execute generator slices or create owned flights.
 # The no-live-lanes and healthy initial state premises remain explicit.
-law constructed_completed_pair_is_eligible:
+law constructed_completed_pair_has_exact_blocking_judgment:
   for w: R.World
   for before: List<&2, R.Transaction>
   for cells: List<&2, R.ActionState>
@@ -5126,7 +5128,7 @@ law actual_action_wait_constructs_observer_capture:
   for +action: Nat
   for +result: Nat
   for +kind: U32
-  {B.asyncObserver(WaitAllocation.after(w,action,result,kind),WaitAllocation.index(w)) == R.AsyncObserver{0n,result,True{},False{},False{},R.Undefined{},R.Undefined{},0n} : R.AsyncObserver}
+  {B.asyncObserver(WaitAllocation.after(w,action,result,kind),WaitAllocation.index(w)) == R.AsyncObserver{0n,result,True{},False{},False{},R.Undefined{},R.Undefined{},0n, 0n} : R.AsyncObserver}
 
 
 law actual_action_wait_subscribes_existing_result:
@@ -7965,3 +7967,35 @@ law constructed_joined_body_executes_round_and_enters_the_heap:
   for +incoming: HeapEntryRecords.Value
   for +rejected: Bool
   {HeapEntryPendingStackHistory.iterate(HeapEntryJoinedBodyHeapEntry.cost(value,values,answer,other,reverse,second,rest,stack,incoming,rejected),HeapEntryJoinedBodyHeapEntry.start(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)) == HeapEntryJoinedBodyHeapEntry.target(value,values,answer,other,reverse,second,rest,stack,incoming,rejected) : HeapEntryCore.Machine}
+
+
+law certified_joined_heap_entry_retains_one_action_obligation:
+  for +seed: HeapEntryRecords.World
+  for +id: Nat
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  for +ready: HeapEntryHeldFirstReady.Ready<seed,id,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,id,answer),other,second)>
+  for +known: {HeapEntryActionControlFlags.observe(seed) == HeapEntryActionControlFlags.Flags{0n,False{},False{}} : HeapEntryActionControlFlags.View}
+  for initial: {HeapEntrySweepInputFrame.observe(seed) == HeapEntrySweepInputFrame.Lists{[],[]} : HeapEntrySweepInputFrame.View}
+  {HeapEntryActionRetirementCount.count(HeapEntryCore.world(HeapEntryPendingStackHistory.iterate(HeapEntryJoinedRoundHeapEntry.cost(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known),HeapEntryHeldResumeRetirement.start(HeapEntryHeldPairGenericBody.world(seed,id,values,answer,other,reverse,second),HeapEntryHeldPairGenericContext.actor(second),rest,stack,incoming,rejected))),1n+HeapEntryTransactionPair.targetPred([],[],reverse)) == 1n : Nat}
+
+
+law constructed_joined_heap_entry_retains_one_action_obligation:
+  for +value: HeapEntryRecords.Value
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  {HeapEntryActionRetirementCount.count(HeapEntryCore.world(HeapEntryPendingStackHistory.iterate(HeapEntryJoinedRoundHeapEntry.cost(HeapEntryJoinedRoundSweepInput.seed(value,values,answer,other,second),HeapEntryOrdinaryGraphData.source(value),values,answer,other,reverse,second,rest,stack,incoming,rejected,HeapEntryHeldFirstReadyConstruction.constructed(value,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,HeapEntryOrdinaryGraphData.source(value),answer),other,second)),HeapEntryActionControlFlags.raw(value,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,HeapEntryOrdinaryGraphData.source(value),answer),other,second))),HeapEntryHeldResumeRetirement.start(HeapEntryHeldPairGenericBody.world(HeapEntryJoinedRoundSweepInput.seed(value,values,answer,other,second),HeapEntryOrdinaryGraphData.source(value),values,answer,other,reverse,second),HeapEntryHeldPairGenericContext.actor(second),rest,stack,incoming,rejected))),1n+HeapEntryTransactionPair.targetPred([],[],reverse)) == 1n : Nat}

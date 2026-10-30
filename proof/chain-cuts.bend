@@ -12,7 +12,7 @@ import ../representation/records.bend as R
 
 # Successful recompute frame, parameterized by node, height and previous value.
 def frame(id: Nat, height: Nat, previous: R.Value) -> C.PassFrame:
-  C.PassFrame{id, False{}, 0n, False{}, height, False{}, previous, False{}, R.Undefined{}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}}}
+  C.PassFrame{id, False{}, 0n, False{}, height, False{}, previous, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}}}
 
 def step_release(+id: Nat, +height: Nat, +previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, C.PassReleases{frame(id, height, previous), 0n, value, False{}, False{}, False{}, R.Healthy{}} <> rest, stack})
@@ -30,7 +30,7 @@ def step_from_shape(+id: Nat, +height: Nat, +previous: R.Value, -m: C.Machine, +
 
 def resumeAt(+id: Nat, +height: Nat, +previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, value: R.Value) -> C.Machine:
   B.choose(~C.Machine, B.ok(w),
-    _ => C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n),
+    _ => C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{}),
     _ => C.Machine{w, rest, stack})
 
 def afterRelease(+id: Nat, +height: Nat, +previous: R.Value, w: R.World, rest: List<&2, C.Task>, stack: List<&2, R.Value>, value: R.Value) -> C.Machine:
@@ -51,16 +51,16 @@ def release_empty(+id: Nat, +height: Nat, +previous: R.Value, +w: R.World, +rest
 
 def after_release_identity(+id: Nat, +height: Nat, +previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value,
   tail: {R.World.with_fault(C.passFinallyTail(w, id, False{}), R.Healthy{}) == w : R.World}, ready: {B.ok(w) == True{} : Bool}) ->
-  {afterRelease(id, height, previous, w, rest, stack, value) == C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n) : C.Machine}:
-  Equal.trans(C.Machine, afterRelease(id, height, previous, w, rest, stack, value), resumeAt(id, height, previous, w, rest, stack, value), C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n),
+  {afterRelease(id, height, previous, w, rest, stack, value) == C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{}) : C.Machine}:
+  Equal.trans(C.Machine, afterRelease(id, height, previous, w, rest, stack, value), resumeAt(id, height, previous, w, rest, stack, value), C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{}),
     Equal.cong(R.World, C.Machine, state => resumeAt(id, height, previous, state, rest, stack, value), R.World.with_fault(C.passFinallyTail(w, id, False{}), R.Healthy{}), w, tail),
     Equal.cong(Bool, C.Machine, healthy => B.choose(~C.Machine, healthy,
-      _ => C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n), _ => C.Machine{w, rest, stack}), B.ok(w), True{}, ready))
+      _ => C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{}), _ => C.Machine{w, rest, stack}), B.ok(w), True{}, ready))
 
 def after_pass_live(+id: Nat, +height: Nat, +previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value,
   live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DISPOSED()) == False{} : Bool},
   clean: {Bool.or(B.truth(R.NodeExtension.error(B.extension(w, id))), False{}) == False{} : Bool},
   seat: {R.World.passLane(w) == 0n : Nat}) ->
-  {C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, False{}, 0n)
-    == C.publishState(w, C.FinishPublication{id, False{}, False{}, False{}, 0n, 0n} <> rest, stack, id, value, False{}, height, False{}, R.Undefined{}, 0n, False{}, False{}, False{}, 0n) : C.Machine}:
+  {C.afterPass(w, rest, stack, id, False{}, value, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, False{}, 0n, False{})
+    == C.publishState(w, C.FinishPublication{id, False{}, False{}, False{}, 0n, 0n} <> rest, stack, id, value, False{}, height, False{}, R.Number{0n}, 0n, False{}, False{}, False{}, 0n, False{}) : C.Machine}:
   Existing.afterLive(w, rest, stack, id, value, height, live, clean, seat)

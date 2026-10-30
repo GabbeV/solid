@@ -42,10 +42,15 @@ def initial(spec: Spec) -> R.World:
       +w = B.store_transaction(w, 1n, R.Transaction.with_open(B.transaction(w, 1n), parentOpen))
       B.choose(~R.World, verdict, _ => B.store_transaction(w, 1n, R.Transaction.with_verdict(B.transaction(w, 1n), readerLane)), _ => w)
 
+def staged(+w: R.World,rows: R.OptionalIds) -> R.World:
+  match rows:
+    case R.NoIds{}: R.World.with_laneState(w,R.LaneState.with_stagedReaders(R.World.laneState(w),[]))
+    case R.SomeIds{readers}: R.World.with_laneState(w,R.LaneState.with_stagedReaders(R.World.laneState(w),readers))
+
 def execute(spec: Spec, w: R.World) -> C.Machine:
   match spec:
-    case Spec{base, mode, fresh, readerLane, readerFlags, readerConfig, parentOpen, verdict, entered}:
-      C.run(8192n, C.laneSeams(w, [], [R.Number{71n}], leaks(mode)))
+    case Spec{base, +mode, fresh, readerLane, readerFlags, readerConfig, parentOpen, verdict, entered}:
+      C.run(8192n,C.laneSeams(staged(w,leaks(mode)),[],[R.Number{71n}],B.choose(~Nat,U32.is_eq(mode,0),_=>0n,_=>1n)))
 
 def fixture(+spec: Spec) -> C.Machine:
   execute(spec, initial(spec))

@@ -4,7 +4,8 @@ These are properties of the shared executable Bend runtime. They are distinct
 from reviewed TS correspondence, differential evidence and admitted environment
 contracts. [LAWS.bend](../LAWS.bend) and [PROOF.bend](../PROOF.bend) are the active
 roots; an archived or generated candidate is not proved merely because it exists.
-The runtime and checker were not changed for the current invariant work.
+The runtime follows the selected Solid pin; source migrations require a fresh
+whole-book verdict. The independent checker/profile/fuel remain unchanged.
 
 ## Current proof coverage
 
@@ -598,3 +599,21 @@ and committed storage. Generic operation contracts handle arbitrary callback
 arrays and preserve all non-queue group metadata. Seven roots require a fresh805-
 root composed verdict. Initial heap-derived admission/public reachability and
 branching action/flight/publication invariants remain open.
+
+
+## rc.20 source migration
+
+The generic empty ordinary transaction classification now reports its exact
+membership in the source revelation-delay list, retaining the arbitrary World
+domain. Zero action debt and no live lanes alone no longer imply unblocked.
+The completed joined-pair classification transports this exact result rather
+than adding an assumed absent-delay premise. Settlement metadata explicitly
+clears latestOpened and revelation delay at their source boundaries. Those
+stores preserve the existing committed-content/ledger observations, not the
+complete incoming World.
+
+Scalar publication cut helpers select the explicit no-replaced-error local
+branch and mainline lane. The generic outgoing-error cut retains its arbitrary
+represented error through the actual publication store helper, including shown
+error preservation; its scalar no-error callers supply the source numeric-zero
+capture. No full reactive-history theorem follows from those operation contracts.

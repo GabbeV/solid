@@ -144,7 +144,7 @@ def rawExtension(+w: R.World, +id: Nat, +tx: Nat, +before: List<&2, R.NodeExtens
 def ownerSet(+record: R.NodeExtension, +tx: Nat) ->
   {R.NodeExtension.transaction(R.NodeExtension.with_transaction(record, tx)) == tx : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError}: {==}
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}: {==}
 
 def nodesSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
   {R.Transaction.nodes(R.Transaction.with_nodes(record, nodes)) == nodes : List<&2, Nat>}:

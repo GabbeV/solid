@@ -1,3 +1,5 @@
+import ./proof/heap-entry-count.bend as HeapEntryHeapEntryCount
+import ./proof/action-retirement-count.bend as HeapEntryActionRetirementCount
 import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
 import ./proof/core-prefix-compose.bend as HeapEntryCorePrefixCompose
 import ./proof/joined-body-heap-entry.bend as HeapEntryJoinedBodyHeapEntry
@@ -703,8 +705,8 @@ def Laws.unowned_fast_read_committed(w, arena, tasks, stack, id):
 def Laws.unowned_read_does_not_join(w, id, slow):
   ReadPolicy.unowned_read_does_not_join(w, id, slow)
 
-def Laws.unowned_selected_read(w, tasks, stack, id):
-  ReadPolicy.unowned_selected_read(w, tasks, stack, id)
+def Laws.zero_posture_selected_read_preserves_faults(w, tasks, stack, id):
+  ReadPolicy.zero_posture_selected_read_preserves_faults(w, tasks, stack, id)
 
 def Laws.unflushed_value_is_selected(w, tasks, stack, id, reader, value):
   ReadPolicy.unflushed_value_is_selected(w, tasks, stack, id, reader, value)
@@ -1068,8 +1070,8 @@ def Laws.held_latest_preserves_raw_staged_error(w, node, nodes, error, reader):
 def Laws.open_transaction_blocks_and_restores_judge(w, tx, rest, count):
   LaneBlockers.openRestoresJudge(w, tx, rest, count)
 
-def Laws.empty_mainline_transaction_is_unblocked(w, tx, rest):
-  LaneBlockers.emptyUnblocked(w, tx, rest)
+def Laws.empty_mainline_transaction_reports_its_revelation_delay(w, tx, rest):
+  LaneBlockers.emptyBlocking(w, tx, rest)
 
 def Laws.linked_peer_open_count_blocks(w, a, b, rest, count):
   LaneBlockers.peerOpenBlocks(w, a, b, rest, count)
@@ -1197,10 +1199,10 @@ def Laws.lane_guess_equal_guess_write_renews_question(w, rest, stack, id, value,
 def Laws.lane_guess_unstamped_write_allocates_exact_question(w, id, value):
   GuessLaws.unstampedPush(w, id, value)
 
-def Laws.lane_guess_null_leaks_still_reveal_prefix(w, rest, stack):
+def Laws.lane_guess_null_parent_clears_delay_and_enters_scan(w, rest, stack):
   GuessLaws.nullSeams(w, rest, stack)
 
-def Laws.lane_guess_reveals_are_capped_to_current_prefix(w, rest, stack, leaked):
+def Laws.lane_guess_scan_starts_at_current_live_length(w, rest, stack, leaked):
   GuessLaws.emptyLeaks(w, rest, stack, leaked)
 
 def Laws.lane_guess_zero_reveals_continue_entered_reader_drain(w, rest, stack, leaked):
@@ -1740,10 +1742,10 @@ def Laws.settled_action_wait_history_rejects_duplicate(w, rest, stack, events, w
   WaitSettlement.duplicateHistory(w, rest, stack, events, waits, id, action, settled, rejected, value, found)
 
 
-def Laws.empty_ordinary_transaction_is_eligible(w, tx, healthy, zero, empty, ordinary, noLanes):
+def Laws.empty_ordinary_transaction_reports_revelation_delay(w, tx, healthy, zero, empty, ordinary, noLanes):
   EmptyBlocker.public(w, tx, healthy, zero, empty, ordinary, noLanes)
 
-def Laws.constructed_completed_pair_is_eligible(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes):
+def Laws.constructed_completed_pair_has_exact_blocking_judgment(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes):
   PairEligibility.constructed(w, before, cells, first, other, reverse, second, initial, middle, final, healthy, noLanes)
 
 
@@ -3291,3 +3293,11 @@ def Laws.certified_joined_body_executes_round_with_initial_sweep_premises(seed,i
 
 def Laws.constructed_joined_body_executes_round_and_enters_the_heap(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
   HeapEntryJoinedBodyHeapEntry.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.certified_joined_heap_entry_retains_one_action_obligation(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known,initial):
+  HeapEntryHeapEntryCount.generic(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known,initial)
+
+
+def Laws.constructed_joined_heap_entry_retains_one_action_obligation(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  HeapEntryHeapEntryCount.constructed(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)

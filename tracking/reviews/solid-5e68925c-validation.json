@@ -1,0 +1,62 @@
+{
+  "source": {
+    "before": "178605cfcbfaf4243d157600095a63111047b164",
+    "after": "5e68925cc2fd216a9fb06345019e66d5da5c523c",
+    "version": "2.0.0-rc.20",
+    "selectedInputs": 78,
+    "changedSelectedInputs": 15,
+    "changedSourceFiles": 10,
+    "changedSourceUnits": 50
+  },
+  "native": {
+    "jsBuildTiers": [
+      "production",
+      "development",
+      "observe"
+    ],
+    "declarations": true,
+    "filesPassed": 393,
+    "testsPassed": 5994,
+    "expectedFailures": 7,
+    "skipped": 2,
+    "logs": {
+      "next-native-build.log": "b636de500c2de3fe0c10d72ac45cc80afa4c202b6b71fb4d746fb415597fd30a",
+      "next-native-types.log": "24c42b76aecef2c39c8a5639a3536efb936b03bdac9a8f8be50c0e71ffbc7af8",
+      "next-native-tests.log": "e7e5cf768aa526ca71c2ad88ca8a631821edd72cb4235863f0b95ecd6595736c"
+    }
+  },
+  "frozenChecks": "solid-5e68925c-frozen-tests.json",
+  "proofOnlyFollowup": {
+    "description": "Replace one oversized step58 reflection with separately checked wrapping/registration/iterator/attachment equations and generic source transports. Same118 steps and ordinary input domain; runtime unchanged. No new arbitrary async-history claim.",
+    "genericTransportSeconds": 2.489964302,
+    "wholeProgramModuleSeconds": 30.670995437,
+    "affectedFiniteControls": 196,
+    "prefixesEach": 118
+  },
+  "independentCombinedCandidate": {
+    "composedRoots": 816,
+    "seconds": 655.7092251079999,
+    "kernelProfile": "same-head-congruence-v1",
+    "fuel": 400000000,
+    "verdict": "ALL PROOFS CHECK",
+    "note": "Unsealed candidate verdict; the accepted checkpoint additionally requires the complete tracked-input seal in tracking/checked.json.",
+    "candidateSourceAndProofBytesEqualCheckedTrialAtPromotion": true,
+    "subsequentFormattingOnlyDelta": "Remove one redundant trailing blank line in subscriber-insertion.bend before final tracked-input verification."
+  },
+  "negativeEvidence": {
+    "configured": 764,
+    "finiteConfigured": 520,
+    "kernelConfigured": 244,
+    "targetedNewVariantsRejected": 10,
+    "freshWhole764SweepCompleted": false,
+    "latestCompleteFrozenScope": "275c89e8aeb7c72e9fb795685debd34385baa6c2 / rc.19,754 variants; complete-754-negative.json"
+  },
+  "portCorrections": [
+    "missing-lane sentinel encodes absence",
+    "empty-lane fusion retains revelation-list reset",
+    "internal serve preceding throw records no completed read",
+    "nullable extension observation respects absence"
+  ],
+  "newUpstreamBugs": [],
+  "activeSemanticDeviations": []
+}

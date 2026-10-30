@@ -67,7 +67,7 @@ def stagedRead(+w: R.World, +reader: Nat, source: Nat) -> R.World:
   B.choose(~R.World, B.has(R.Node.status(B.node(w, source)), K.STATUS_UNINITIALIZED()), _ => w,
     _ =>
       +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_STAGED_READ())))
-      B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => w,
+      B.choose(~R.World, Bool.and(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(Bool.and(B.effect(R.Node.kind(B.node(w,reader))),B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT())))), _ => w,
         _ =>
           +state = R.World.laneState(w)
           R.World.with_laneState(w, R.LaneState.with_stagedReaders(state, B.append(Nat, R.LaneState.stagedReaders(state), [reader])))))

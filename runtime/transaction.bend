@@ -6,7 +6,9 @@ import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./extension.bend as E
 import ./constants.bend as K
+import ./lane-served.bend as Served
 import ./pending-state.bend as P
+import ./subscriber-insertion.bend as Insert
 
 def newTransaction(+w: R.World, +lane: Bool, parent: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.Transaction, R.World.txArena(w))
@@ -157,17 +159,21 @@ def frameRead(+w: R.World, +reader: Nat, +id: Nat) -> B.Bundle<R.World, Bool>:
           +pair = bornInto(w, reader, t)
           +w = B.first(R.World, Bool, pair)
           B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, False{}},
-            _ => B.Bundle{staleReader(w, reader, t), True{}})))
+            _ => B.Bundle{B.choose(~R.World,Bool.or(lane,verdict),_=>Served.served(staleReader(w,reader,t),reader,id),_=>staleReader(w,reader,t)), True{}})))
 
-def stagedScreen(+w: R.World, +reader: Nat) -> B.Bundle<R.World, Bool>:
+def stagedScreen(+w: R.World,+reader: Nat) -> B.Bundle<R.World,Bool>:
   +t = R.World.flushTransaction(w)
-  B.choose(~B.Bundle<R.World, Bool>, Nat.is_eq(t, 0n), _ => B.Bundle{w, False{}},
-    _ =>
-      +pair = bornInto(w, reader, t)
-      +w = B.first(R.World, Bool, pair)
-      B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, False{}}, _ => B.Bundle{staleReader(w, reader, t), True{}}))
+  B.choose(~B.Bundle<R.World,Bool>,Nat.is_eq(t,0n),_=>B.Bundle{w,False{}},
+    _=>
+      +pair = bornInto(w,reader,t)
+      +w = B.first(R.World,Bool,pair)
+      B.choose(~B.Bundle<R.World,Bool>,B.second(R.World,Bool,pair),_=>B.Bundle{w,False{}},
+        _=>B.choose(~B.Bundle<R.World,Bool>,Bool.and(Nat.is_eq(t,R.VerdictState.latestOpened(R.World.verdictState(w))),Bool.and(Nat.is_eq(R.World.passLane(w),0n),Bool.and(B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()),Bool.not(B.has(R.Node.status(B.node(w,reader)),K.STATUS_UNINITIALIZED()))))),
+          _=>
+            +state = R.World.laneState(w)
+            B.Bundle{R.World.with_laneState(w,R.LaneState.with_stagedReaders(state,B.append(Nat,R.LaneState.stagedReaders(state),[reader]))),False{}},
+          _=>B.Bundle{staleReader(w,reader,t),True{}})))
 
-# core/core.ts:joinPass (freshHook is not installed in the admitted profile).
 def joinPass(+w: R.World, +reader: Nat, +id: Nat) -> R.World:
   +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_JOINED())))
   +n = B.node(w, reader)
@@ -380,14 +386,16 @@ def blockStep(+w: R.World, work: List<&2, BlockTask>, +result: Bool) -> BlockFra
     case ContinueLinked{lane, group, index} <> +rest:
       B.choose(~BlockFrame, result, _ => BlockFrame{w, rest, True{}}, _ => BlockFrame{w, LinkedMembers{lane, group, 1n+index} <> rest, False{}})
     case NestedMembers{+tx, +index} <> +rest:
-      B.choose(~BlockFrame, Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}},
-        _ =>
-          +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
-          +pair = resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
-          +w = B.first(R.World, Nat, pair)
-          B.choose(~BlockFrame, Nat.is_ne(B.second(R.World, Nat, pair), tx),
-            _ => BlockFrame{w, NestedMembers{tx, 1n+index} <> rest, False{}},
-            _ => BlockFrame{w, JudgeTx{lane} <> ContinueNested{tx, index, lane} <> rest, False{}}))
+      B.choose(~BlockFrame,Bool.and(Nat.is_eq(index,0n),B.contains(R.LaneState.revealing(R.World.laneState(w)),tx)),_=>BlockFrame{w,rest,True{}},
+        _=>
+          B.choose(~BlockFrame, Nat.is_ge(index, B.length(Nat, R.LaneState.live(R.World.laneState(w)))), _ => BlockFrame{w, rest, False{}},
+            _ =>
+              +lane = B.get(Nat, R.LaneState.live(R.World.laneState(w)), index, 0n)
+              +pair = resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+              +w = B.first(R.World, Nat, pair)
+              B.choose(~BlockFrame, Nat.is_ne(B.second(R.World, Nat, pair), tx),
+                _ => BlockFrame{w, NestedMembers{tx, 1n+index} <> rest, False{}},
+                _ => BlockFrame{w, JudgeTx{lane} <> ContinueNested{tx, index, lane} <> rest, False{}})))
     case ContinueNested{tx, index, lane} <> +rest:
       B.choose(~BlockFrame, result, _ => BlockFrame{w, rest, True{}},
         _ =>
@@ -525,6 +533,7 @@ def reenterHeld(+w: R.World, +id: Nat) -> R.World:
       _ => joinPassTx(w, t, False{}),
       _ => B.choose(~R.World, Bool.and(Nat.is_ne(t, R.World.flushTransaction(w)), Bool.not(Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), B.has(R.Node.config(n), K.CONFIG_HELD_FRAME())))),
         _ =>
-          +w = B.store_node(w, id, R.Node.with_pending(n, R.Empty{}))
+          +w = B.choose(~R.World,B.present(R.Node.pending(n)),_=>Insert.insertSubs(w,id),_=>w)
+          +w = B.store_node(w,id,R.Node.with_pending(B.node(w,id),R.Empty{}))
           B.store_node(w, id, R.Node.with_config(B.node(w, id), B.clear(R.Node.config(B.node(w, id)), K.CONFIG_HELD()))),
         _ => w)))

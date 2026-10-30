@@ -20,19 +20,28 @@ def newThenable(+w: R.World, immediate: Bool, state: R.AsyncSettlement) -> B.Bun
 
 def newObserver(+w: R.World, +node: Nat, +result: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.AsyncObserver, R.World.asyncObservers(w))
-  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{node, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n}]))
+  +w = R.World.with_asyncObservers(w, B.append(R.AsyncObserver, R.World.asyncObservers(w), [R.AsyncObserver{node, result, True{}, False{}, False{}, R.Undefined{}, R.Undefined{}, 0n, 0n}]))
   B.Bundle{w, id}
 
 # Before .then(): result identity, question provenance and fresh own-flight set.
 def recordFlight(+w: R.World, +id: Nat, result: Nat) -> R.World:
   +w = E.ext(w, id)
-  B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightActive{result}))
+  +w = B.store_extension(w,id,R.NodeExtension.with_inFlight(B.extension(w,id),R.FlightActive{result}))
+  B.choose(~R.World,B.has(R.Node.flags(B.node(w,id)),K.REACTIVE_WINDOW()),_=>w,_=>B.store_node(w,id,R.Node.with_config(B.node(w,id),B.set(R.Node.config(B.node(w,id)),K.CONFIG_ASYNC()))))
 
 def recordQuestion(+w: R.World, +id: Nat) -> R.World:
   B.store_extension(w, id, R.NodeExtension.with_q(B.extension(w, id), B.choose(~R.Question, J.isZero(R.World.question(w)), _ => J.mainline(), _ => R.World.question(w))))
 
 def startFlight(w: R.World, +id: Nat, result: Nat) -> R.World:
   P.clearPendingSources(recordQuestion(recordFlight(w, id, result), id), id)
+
+# The admitted synchronous no-handler .then returns undefined. Keep a no-op
+# receipt in the existing observer arena, as for other logical registrations.
+def calledThen(+w: R.World,+result: Nat) -> R.World:
+  +pair = newObserver(w,0n,result)
+  +w = B.first(R.World,Nat,pair)
+  +object = B.asyncObject(w,result)
+  B.store_asyncObject(w,result,R.AsyncObject.with_observers(object,B.append(Nat,R.AsyncObject.observers(object),[B.second(R.World,Nat,pair)])))
 
 def addObserver(+w: R.World, +result: Nat, observer: Nat) -> R.World:
   +object = B.asyncObject(w, result)
@@ -163,3 +172,23 @@ def thenResult(+w: R.World, +observer: Nat) -> B.Bundle<R.World, R.Value>:
       +w = handleError(w, id, R.AsyncObserver.result(o), R.AsyncObserver.syncError(o))
       B.Bundle{B.choose(~R.World, B.ok(w), _ => R.World.with_fault(w, R.CallbackThrown{R.AsyncObserver.syncError(o)}), _ => w), R.Undefined{}},
     _ => thenValue(w, observer))
+
+# Native no-handler .then(): fresh identity plus an ordered external reaction.
+# Its delivery uses the ordinary callback outbox, so later subscriptions cannot
+# overtake this mirror. Source/target values remain external Promise IO.
+def mirrorState(w: R.World,observer: Nat,state: R.AsyncSettlement) -> R.World:
+  match state:
+    case R.Unresolved{}: w
+    case R.Fulfilled{value}: enqueueDelivery(w,observer,False{},value)
+    case R.Rejected{error}: enqueueDelivery(w,observer,True{},error)
+
+def mirror(+w: R.World,+source: Nat) -> B.Bundle<R.World,Nat>:
+  +pair = newThenable(w,False{},R.Unresolved{})
+  +w = B.first(R.World,Nat,pair)
+  +target = B.second(R.World,Nat,pair)
+  +pair = newObserver(w,0n,source)
+  +w = B.first(R.World,Nat,pair)
+  +observer = B.second(R.World,Nat,pair)
+  +w = B.store_asyncObserver(w,observer,R.AsyncObserver.with_mirrorTarget(R.AsyncObserver.with_isSync(B.asyncObserver(w,observer),False{}),target))
+  +w = addObserver(w,source,observer)
+  B.Bundle{mirrorState(w,observer,R.AsyncObject.state(B.asyncObject(w,source))),target}

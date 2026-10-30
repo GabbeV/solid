@@ -75,3 +75,10 @@ frontend diagnostics alone, resource-stopped attempts, and finite native control
 are not proof credit. Checker profile, 400M fuel and runtime/source pin are
 unchanged. This work introduces no runtime change, upstream bug claim or active
 deviation.
+
+
+`heap-entry-count.bend` additionally composes the actual entry equality with
+source retirement and Round field frames: the generic certified seed and raw
+constructed corollary both retain exactly one action obligation after entering
+HeapLoop. No intermediate count or health premise is supplied. These two roots
+do not claim the heap is drained or the rendered observer has been parked.

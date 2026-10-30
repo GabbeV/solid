@@ -49,7 +49,7 @@ def addObserver(+w: R.World,+result: Nat,+id: Nat) -> {erase(F.addObserver(w,res
   objectStore(w,result,R.AsyncObject.with_observers(B.asyncObject(w,result),B.append(Nat,R.AsyncObject.observers(B.asyncObject(w,result)),[id])))
 
 def allocated(+w: R.World,+node: Nat,+result: Nat) -> {erase(B.first(R.World,Nat,F.newObserver(w,node,result))) == erase(w) : R.World}:
-  observers(w,B.append(R.AsyncObserver,R.World.asyncObservers(w),[R.AsyncObserver{node,result,True{},False{},False{},R.Undefined{},R.Undefined{},0n}]))
+  observers(w,B.append(R.AsyncObserver,R.World.asyncObservers(w),[R.AsyncObserver{node,result,True{},False{},False{},R.Undefined{},R.Undefined{},0n, 0n}]))
 
 def registered(+w: R.World,+action: Nat,+result: Nat,+kind: U32) -> {erase(Allocation.after(w,action,result,kind)) == erase(w) : R.World}:
   +first = B.first(R.World,Nat,F.newObserver(w,0n,result))
