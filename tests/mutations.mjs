@@ -5,6 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["round entry kernel omits companion resynchronization", "runtime/core.bend", "+w = V.resyncUnflushedCompanions(w)", "+w = w", "tests/proof-properties.mjs", "round", "round-entry"],
+  ["round entry kernel retains a previous pass transaction", "runtime/core.bend", "R.World.with_passTx(R.World.with_passLane(w, 0n), 0n)", "R.World.with_passLane(w, 0n)", "tests/proof-properties.mjs", "round", "round-entry"],
+  ["round entry kernel loses the finally continuation", "runtime/core.bend", "RoundAfterSweep{} <> FlushFinally{} <> RoundEnd{} <> rest", "RoundAfterSweep{} <> RoundEnd{} <> rest", "tests/proof-properties.mjs", "round", "round-entry"],
+  ["round entry kernel retains the old heap cursor", "runtime/core.bend", "R.World.with_minimum(R.World.with_marked(w, False{}), 0n)", "R.World.with_marked(w, False{})", "tests/proof-properties.mjs", "dispatch", "round-entry"],
+  ["empty heap kernel does not advance its empty bucket", "runtime/core.bend", "R.World.with_minimum(w, 1n+R.World.minimum(w))", "w", "tests/proof-properties.mjs", "heapLoopMode", "heap-entry-negative-probes"],
+  ["empty heap seam kernel loses post settlement work", "runtime/core.bend", "Machine{w, Settle{} <> AfterSettle{} <> rest, stack}", "Machine{w, Settle{} <> rest, stack}", "tests/proof-properties.mjs", "dispatch", "heap-entry-negative-probes"],
+
   ["parked round control discards the prior user callback prefix", "runtime/core.bend", "B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, live)), users)", "users", "tests/queued-round-controls.mjs", "completeSettle"],
   ["parked round control omits captured render callbacks", "runtime/core.bend", "B.append(Nat, R.Transaction.renderQueue(B.transaction(w, live)), renders)", "R.Transaction.renderQueue(B.transaction(w, live))", "tests/queued-round-controls.mjs", "completeSettle"],
   ["parked round control executes its own callbacks while held", "runtime/core.bend", "B.choose(~List<&2, A>, parked, _ => landing, _ => B.append(A, own, landing))", "B.append(A, own, landing)", "tests/queued-round-controls.mjs", "orderedRuns"],

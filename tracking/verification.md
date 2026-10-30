@@ -724,3 +724,12 @@ and six targeted compiled semantic rejections. Its first run-own-queue fault
 was accepted by silent callback placeholders; observable markers now detect it.
 The configured total748 and focused checks remain distinct from frozen727.
 Seven new roots require the fresh805-root official full verdict/input seal.
+
+The 805-root round-return checkpoint completed at 5b04774a956b5d70c36007a928e45e5844650789
+with 1349 exact tracked inputs and 560.738987403s independent check; its normal
+feature push was verified. The recovered frozen 748 sweep stopped after 482
+rejections at a lane-stage oracle gap. After repair, the targeted 266 tail passes;
+[the receipt](reviews/round-heap-mutation-gap.json) explicitly does not combine
+them into an unchanged full sweep. New entry/heap checks bring the configured
+total to 754; targeted checks and resource-stopped attempts remain separate.
+[Round/heap contracts](round-heap-entry.md) require a fresh whole-book verdict.

@@ -77,6 +77,10 @@ def command(+w: R.World, op: U32, +left: Nat, +right: Nat, +bits: U32) -> B.Bund
       B.Bundle{B.store_node(w, left, R.Node.with_pending(B.node(w, left), R.Present{R.Number{right}})), 0n}
     case 23:
       B.Bundle{B.store_node(w, left, R.Node.with_pending(B.node(w, left), R.Present{R.Undefined{}})), 0n}
+    case 25:
+      B.Bundle{R.World.with_flushTransaction(w, left), 0n}
+    case 26:
+      B.Bundle{B.store_node(w, left, R.Node.with_value(B.node(w, left), R.Number{right})), 0n}
     case 24:
       B.Bundle{B.store_transaction(w, left, R.Transaction.with_shown(B.transaction(w, left), Nat.is_ne(right, 0n))), 0n}
     case _:

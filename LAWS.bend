@@ -1,3 +1,48 @@
+import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
+import ./proof/core-prefix-compose.bend as HeapEntryCorePrefixCompose
+import ./proof/joined-body-heap-entry.bend as HeapEntryJoinedBodyHeapEntry
+import ./proof/held-pair-constructed-round.bend as HeapEntryHeldPairConstructedRound
+import ./proof/transaction-heap-entry.bend as HeapEntryTransactionHeapEntry
+import ./representation/records.bend as HeapEntryRecords
+import ./representation/base.bend as HeapEntryBase
+import ./runtime/transaction.bend as HeapEntryTransaction
+import ./proof/heap-entry-view.bend as HeapEntryHeapEntryView
+import ./proof/sweep-input-frame.bend as HeapEntrySweepInputFrame
+import ./proof/held-write-outer.bend as HeapEntryHeldWriteOuter
+import ./proof/held-write-history.bend as HeapEntryHeldWriteHistory
+import ./proof/held-cache-body-input.bend as HeapEntryHeldCacheBodyInput
+import ./proof/held-source-cache-rebase.bend as HeapEntryHeldSourceCacheRebase
+import ./proof/action-output-frame.bend as HeapEntryActionOutputFrame
+import ./proof/action-output-delivery-loop.bend as HeapEntryActionOutputDeliveryLoop
+import ./proof/action-output-continuation.bend as HeapEntryActionOutputContinuation
+import ./proof/action-body-retirement.bend as HeapEntryActionBodyRetirement
+import ./runtime/core.bend as HeapEntryCore
+import ./proof/action-heap-entry.bend as HeapEntryActionHeapEntry
+import ./proof/masked-projection.bend as HeapEntryMaskedProjection
+import ./proof/joined-round-heap-frame.bend as HeapEntryJoinedRoundHeapFrame
+import ./proof/held-first-ready.bend as HeapEntryHeldFirstReady
+import ./proof/held-pair-generic-body.bend as HeapEntryHeldPairGenericBody
+import ./proof/held-resume-retirement.bend as HeapEntryHeldResumeRetirement
+import ./proof/action-control-flags.bend as HeapEntryActionControlFlags
+import ./proof/held-pair-generic-round.bend as HeapEntryHeldPairGenericRound
+import ./proof/held-pair-generic-context.bend as HeapEntryHeldPairGenericContext
+import ./proof/held-source-cache-output-queue.bend as HeapEntryHeldSourceCacheOutputQueue
+import ./proof/held-pair-generic-output-queue.bend as HeapEntryHeldPairGenericOutputQueue
+import ./proof/action-body-entry.bend as HeapEntryActionBodyEntry
+import ./proof/joined-round-sweep-input.bend as HeapEntryJoinedRoundSweepInput
+import ./proof/held-first-ready-construction.bend as HeapEntryHeldFirstReadyConstruction
+import ./proof/transaction-pair.bend as HeapEntryTransactionPair
+import ./proof/ordinary-graph-data.bend as HeapEntryOrdinaryGraphData
+import ./proof/held-opened-state.bend as HeapEntryHeldOpenedState
+import ./proof/round-entry.bend as HeapEntryRoundEntry
+import ./runtime/owner.bend as HeapEntryOwner
+import ./runtime/read-state.bend as HeapEntryReadState
+import ./proof/action-body-return.bend as HeapEntryActionBodyReturn
+import ./proof/pending-stack-history.bend as HeapEntryPendingStackHistory
+import ./proof/core-run-prefix.bend as HeapEntryCoreRunPrefix
+import ./proof/committed-storage-frame.bend as HeapEntryCommittedStorageFrame
+import ./proof/empty-heap-seam.bend as HeapEntryEmptyHeapSeam
+import ./runtime/heap.bend as HeapEntryHeap
 import ./proof/settle-entry.bend as ReturnSettleEntry
 import ./representation/records.bend as ReturnRecords
 import ./representation/base.bend as ReturnBase
@@ -7814,3 +7859,109 @@ law actual_mixed_held_settlement_return_retains_the_initial_action_debt:
   for ambient: {List.is_empty(&2,Nat,ReturnRecords.World.ambientMarks(w)) == True{} : Bool}
   for cleanup: {ReturnRecords.World.cleanupError(w) == ReturnRecords.Empty{} : ReturnRecords.Slot}
   {ReturnRecords.Transaction.open(ReturnBase.transaction(ReturnCore.world(ReturnPendingStackHistory.iterate(11n,ReturnMixedSettleEntryScan.start(w,ReturnQuietRoundReturn.work(question,rest),stack))),1n+offset)) == 1n+remaining : Nat}
+
+
+law transaction_resolution_retains_heap_and_sweep_intake:
+  for +fuel: Nat
+  for +w: HeapEntryRecords.World
+  for +id: Nat
+  {HeapEntryHeapEntryView.observe(HeapEntryBase.first(HeapEntryRecords.World,Nat,HeapEntryTransaction.resolveLoop(fuel,w,id))) == HeapEntryHeapEntryView.observe(w) : HeapEntryHeapEntryView.View}
+
+
+law transaction_join_future_retains_heap_and_sweep_intake:
+  for +w: HeapEntryRecords.World
+  for +t: Nat
+  {HeapEntryHeapEntryView.observe(HeapEntryTransaction.joinFuture(w,t)) == HeapEntryHeapEntryView.observe(w) : HeapEntryHeapEntryView.View}
+
+
+law finite_held_setter_bodies_retain_the_initial_sweep_lists:
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +w: HeapEntryRecords.World
+  for +id: Nat
+  for +offset: Nat
+  for input: HeapEntryHeldCacheBodyInput.Input<w,id,offset>
+  {HeapEntrySweepInputFrame.observe(HeapEntryHeldWriteHistory.run(values,w,id)) == HeapEntrySweepInputFrame.observe(w) : HeapEntrySweepInputFrame.View}
+
+
+law joined_body_round_retains_the_actual_write_heap_intake:
+  for +seed: HeapEntryRecords.World
+  for +id: Nat
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  for +ready: HeapEntryHeldFirstReady.Ready<seed,id,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,id,answer),other,second)>
+  for known: {HeapEntryActionControlFlags.observe(seed) == HeapEntryActionControlFlags.Flags{0n,False{},False{}} : HeapEntryActionControlFlags.View}
+  {HeapEntryHeapEntryView.observe(HeapEntryHeldPairGenericRound.world(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known)) == HeapEntryHeapEntryView.observe(HeapEntryJoinedRoundHeapFrame.written(seed,id,values,answer,other,reverse,second)) : HeapEntryHeapEntryView.View}
+
+
+law constructed_joined_body_round_has_no_companion_or_dormant_sweep:
+  for +value: HeapEntryRecords.Value
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  {HeapEntrySweepInputFrame.observe(HeapEntryJoinedRoundSweepInput.world(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)) == HeapEntrySweepInputFrame.Lists{[],[]} : HeapEntrySweepInputFrame.View}
+
+
+law actual_empty_sweep_round_enters_the_heap_with_caller_work:
+  for +w: HeapEntryRecords.World
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for promoted: {HeapEntryRecords.World.promotedWrites(w) == [] : List<&2,Nat>}
+  for dormant: {HeapEntryRecords.World.dormantNodes(w) == [] : List<&2,Nat>}
+  for +healthy: {HeapEntryBase.ok(w) == True{} : Bool}
+  {HeapEntryPendingStackHistory.iterate(2n,HeapEntryCore.Machine{w,HeapEntryCore.Round{} <> rest,stack}) == HeapEntryCore.Machine{HeapEntryRoundEntry.entered(w),HeapEntryCore.HeapLoop{} <> HeapEntryCore.FlushFinally{} <> HeapEntryCore.RoundEnd{} <> rest,stack} : HeapEntryCore.Machine}
+
+
+law actual_trailing_empty_heap_bucket_constructs_settlement:
+  for +w: HeapEntryRecords.World
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for minimum: {HeapEntryRecords.World.minimum(w) == 0n : Nat}
+  for +maximum: {HeapEntryRecords.World.maximum(w) == 0n : Nat}
+  for bucket: {HeapEntryBase.bucket(w,0n) == 0n : Nat}
+  for +healthy: {HeapEntryBase.ok(w) == True{} : Bool}
+  {HeapEntryPendingStackHistory.iterate(3n,HeapEntryCore.Machine{w,HeapEntryCore.HeapLoop{} <> rest,stack}) == HeapEntryCore.Machine{HeapEntryEmptyHeapSeam.ended(w),HeapEntryCore.Settle{} <> HeapEntryCore.AfterSettle{} <> rest,stack} : HeapEntryCore.Machine}
+
+
+law certified_joined_body_executes_round_with_initial_sweep_premises:
+  for +seed: HeapEntryRecords.World
+  for +id: Nat
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  for +ready: HeapEntryHeldFirstReady.Ready<seed,id,HeapEntryHeldPairGenericBody.left(HeapEntryHeldResumeRetirement.methods(values,id,answer),other,second)>
+  for +known: {HeapEntryActionControlFlags.observe(seed) == HeapEntryActionControlFlags.Flags{0n,False{},False{}} : HeapEntryActionControlFlags.View}
+  for initial: {HeapEntrySweepInputFrame.observe(seed) == HeapEntrySweepInputFrame.Lists{[],[]} : HeapEntrySweepInputFrame.View}
+  {HeapEntryPendingStackHistory.iterate(HeapEntryJoinedRoundHeapEntry.cost(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known),HeapEntryHeldResumeRetirement.start(HeapEntryHeldPairGenericBody.world(seed,id,values,answer,other,reverse,second),HeapEntryHeldPairGenericContext.actor(second),rest,stack,incoming,rejected)) == HeapEntryJoinedRoundHeapEntry.target(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known) : HeapEntryCore.Machine}
+
+
+law constructed_joined_body_executes_round_and_enters_the_heap:
+  for +value: HeapEntryRecords.Value
+  for +values: List<&2,HeapEntryRecords.Value>
+  for +answer: HeapEntryRecords.Value
+  for +other: HeapEntryRecords.Expr
+  for +reverse: Bool
+  for +second: Bool
+  for +rest: List<&2,HeapEntryCore.Task>
+  for +stack: List<&2,HeapEntryRecords.Value>
+  for +incoming: HeapEntryRecords.Value
+  for +rejected: Bool
+  {HeapEntryPendingStackHistory.iterate(HeapEntryJoinedBodyHeapEntry.cost(value,values,answer,other,reverse,second,rest,stack,incoming,rejected),HeapEntryJoinedBodyHeapEntry.start(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)) == HeapEntryJoinedBodyHeapEntry.target(value,values,answer,other,reverse,second,rest,stack,incoming,rejected) : HeapEntryCore.Machine}

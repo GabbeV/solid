@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "sourceCommit": "178605cfcbfaf4243d157600095a63111047b164",
+  "scope": "Generic and raw arbitrary finite joined-body prefix through actual Round entry. Public action/host reachability and changed-reader heap-to-settlement construction remain open.",
+  "independentRawComposition": {
+    "profile": "same-head-congruence-v1",
+    "fuel": 400000000,
+    "maxRssBytes": 4294967296,
+    "seconds": 154.01039298799998,
+    "verdict": "ALL PROOFS CHECK",
+    "logSha256": "886c169d3b151f8f4d0bd9a21bb7c6104f5c8757eb8909799402c19c5097c0ee"
+  },
+  "mutationRejections": [
+    "round entry kernel omits companion resynchronization",
+    "round entry kernel retains a previous pass transaction",
+    "round entry kernel loses the finally continuation",
+    "round entry kernel retains the old heap cursor",
+    "empty heap kernel does not advance its empty bucket",
+    "empty heap seam kernel loses post settlement work"
+  ],
+  "mutationLogs": [
+    {
+      "logSha256": "4c9701b43c2a31bf1c1ac694b5e02f24a6e8f43c3ed1a08d92fd462bddfc161a"
+    },
+    {
+      "logSha256": "09ed390c82234914fbbf98fa46adfdebb1bfdf56ac804bc911ec4a5dc1f69d11"
+    }
+  ],
+  "unchangedBaselinesRequired": true,
+  "resourceFailuresCredited": false,
+  "directRawAttempt": "Uncredited: first authoring mismatch and then out of fuel. Refactored using a neutral generic seed without changing statements or checker limits.",
+  "finiteNativeControls": {
+    "laneStage": 1616,
+    "scope": "Private native/Bend helper programs including shown exits during flush, blocked/redirected parent, committed-value observation. Not a reachability proof."
+  },
+  "runtimeChanged": false,
+  "checkerChanged": false,
+  "newDeviation": false,
+  "newUpstreamBug": false,
+  "wholeBookAuthority": "Only the completed official whole-book verdict and exact tracked-input seal establish the checkpoint."
+}

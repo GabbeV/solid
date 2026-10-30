@@ -1,3 +1,48 @@
+import ./proof/joined-round-heap-entry.bend as HeapEntryJoinedRoundHeapEntry
+import ./proof/core-prefix-compose.bend as HeapEntryCorePrefixCompose
+import ./proof/joined-body-heap-entry.bend as HeapEntryJoinedBodyHeapEntry
+import ./proof/held-pair-constructed-round.bend as HeapEntryHeldPairConstructedRound
+import ./proof/transaction-heap-entry.bend as HeapEntryTransactionHeapEntry
+import ./representation/records.bend as HeapEntryRecords
+import ./representation/base.bend as HeapEntryBase
+import ./runtime/transaction.bend as HeapEntryTransaction
+import ./proof/heap-entry-view.bend as HeapEntryHeapEntryView
+import ./proof/sweep-input-frame.bend as HeapEntrySweepInputFrame
+import ./proof/held-write-outer.bend as HeapEntryHeldWriteOuter
+import ./proof/held-write-history.bend as HeapEntryHeldWriteHistory
+import ./proof/held-cache-body-input.bend as HeapEntryHeldCacheBodyInput
+import ./proof/held-source-cache-rebase.bend as HeapEntryHeldSourceCacheRebase
+import ./proof/action-output-frame.bend as HeapEntryActionOutputFrame
+import ./proof/action-output-delivery-loop.bend as HeapEntryActionOutputDeliveryLoop
+import ./proof/action-output-continuation.bend as HeapEntryActionOutputContinuation
+import ./proof/action-body-retirement.bend as HeapEntryActionBodyRetirement
+import ./runtime/core.bend as HeapEntryCore
+import ./proof/action-heap-entry.bend as HeapEntryActionHeapEntry
+import ./proof/masked-projection.bend as HeapEntryMaskedProjection
+import ./proof/joined-round-heap-frame.bend as HeapEntryJoinedRoundHeapFrame
+import ./proof/held-first-ready.bend as HeapEntryHeldFirstReady
+import ./proof/held-pair-generic-body.bend as HeapEntryHeldPairGenericBody
+import ./proof/held-resume-retirement.bend as HeapEntryHeldResumeRetirement
+import ./proof/action-control-flags.bend as HeapEntryActionControlFlags
+import ./proof/held-pair-generic-round.bend as HeapEntryHeldPairGenericRound
+import ./proof/held-pair-generic-context.bend as HeapEntryHeldPairGenericContext
+import ./proof/held-source-cache-output-queue.bend as HeapEntryHeldSourceCacheOutputQueue
+import ./proof/held-pair-generic-output-queue.bend as HeapEntryHeldPairGenericOutputQueue
+import ./proof/action-body-entry.bend as HeapEntryActionBodyEntry
+import ./proof/joined-round-sweep-input.bend as HeapEntryJoinedRoundSweepInput
+import ./proof/held-first-ready-construction.bend as HeapEntryHeldFirstReadyConstruction
+import ./proof/transaction-pair.bend as HeapEntryTransactionPair
+import ./proof/ordinary-graph-data.bend as HeapEntryOrdinaryGraphData
+import ./proof/held-opened-state.bend as HeapEntryHeldOpenedState
+import ./proof/round-entry.bend as HeapEntryRoundEntry
+import ./runtime/owner.bend as HeapEntryOwner
+import ./runtime/read-state.bend as HeapEntryReadState
+import ./proof/action-body-return.bend as HeapEntryActionBodyReturn
+import ./proof/pending-stack-history.bend as HeapEntryPendingStackHistory
+import ./proof/core-run-prefix.bend as HeapEntryCoreRunPrefix
+import ./proof/committed-storage-frame.bend as HeapEntryCommittedStorageFrame
+import ./proof/empty-heap-seam.bend as HeapEntryEmptyHeapSeam
+import ./runtime/heap.bend as HeapEntryHeap
 import ./proof/settle-entry.bend as ReturnSettleEntry
 import ./representation/records.bend as ReturnRecords
 import ./representation/base.bend as ReturnBase
@@ -3210,3 +3255,39 @@ def Laws.actual_mixed_held_settlement_return_preserves_committed_storage(w,sourc
 
 def Laws.actual_mixed_held_settlement_return_retains_the_initial_action_debt(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup):
   ReturnMixedSettleReturn.count(w,source,reader,offset,rest,stack,remaining,ready,capture,lanes,guesses,live,open,question,heap,ambient,cleanup)
+
+
+def Laws.transaction_resolution_retains_heap_and_sweep_intake(fuel,w,id):
+  HeapEntryTransactionHeapEntry.resolve(fuel,w,id)
+
+
+def Laws.transaction_join_future_retains_heap_and_sweep_intake(w,t):
+  HeapEntryTransactionHeapEntry.joinFuture(w,t)
+
+
+def Laws.finite_held_setter_bodies_retain_the_initial_sweep_lists(values,w,id,offset,input):
+  HeapEntrySweepInputFrame.written(values,w,id,offset,input)
+
+
+def Laws.joined_body_round_retains_the_actual_write_heap_intake(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known):
+  HeapEntryJoinedRoundHeapFrame.retained(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known)
+
+
+def Laws.constructed_joined_body_round_has_no_companion_or_dormant_sweep(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  HeapEntryJoinedRoundSweepInput.constructed(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)
+
+
+def Laws.actual_empty_sweep_round_enters_the_heap_with_caller_work(w,rest,stack,promoted,dormant,healthy):
+  HeapEntryRoundEntry.complete(w,rest,stack,promoted,dormant,healthy)
+
+
+def Laws.actual_trailing_empty_heap_bucket_constructs_settlement(w,rest,stack,minimum,maximum,bucket,healthy):
+  HeapEntryEmptyHeapSeam.complete(w,rest,stack,minimum,maximum,bucket,healthy)
+
+
+def Laws.certified_joined_body_executes_round_with_initial_sweep_premises(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known,initial):
+  HeapEntryJoinedRoundHeapEntry.complete(seed,id,values,answer,other,reverse,second,rest,stack,incoming,rejected,ready,known,initial)
+
+
+def Laws.constructed_joined_body_executes_round_and_enters_the_heap(value,values,answer,other,reverse,second,rest,stack,incoming,rejected):
+  HeapEntryJoinedBodyHeapEntry.complete(value,values,answer,other,reverse,second,rest,stack,incoming,rejected)

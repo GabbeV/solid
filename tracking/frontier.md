@@ -68,6 +68,11 @@ The completed dependencies now connect source construction to actual core work:
   [Live-list construction and frames](held-live-list.md) also derive its live
   occurrence and a local scanner-step contract on that constructed snapshot.
   This does not establish that Round reaches the scanner task.
+- [Round and heap entry](round-heap-entry.md) derives companion/dormant sweep
+  inputs from arbitrary finite actual joined bodies, composes the complete raw
+  first body through actual Round/heap entry, and proves the trailing empty-bucket
+  boundary. Changed-reader heap processing
+  and the post-heap settlement certificate remain the next composition.
 - [Quiet held settlement](quiet-held-settlement.md) proves an actual two-step
   settlement/scan segment from certified initial pending-node and empty-hook
   facts. It constructs its scan task and derives the retained positive blocker,
@@ -94,8 +99,9 @@ root or test totals, determine the checked checkpoint.
 
 ## Remaining composition, in working order
 
-1. Execute the queued Round/landing/restoration path using the constructed live
-   group and blocker facts. Transport them through companion resynchronization,
+1. Continue from the constructed actual Round/heap entry through reader heap
+   processing and the landing/restoration path, using the constructed live group
+   and blocker facts. Transport them through companion resynchronization,
    pending-write intake/parking and lane/seam phases before the actual scan; the
    local scan step on the queued snapshot does not establish that reachability.
    Quiet and mixed source/render settlement-to-scan contracts are available,

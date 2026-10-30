@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "frozenCheckpoint": "5b04774a956b5d70c36007a928e45e5844650789",
+  "sourceCommit": "178605cfcbfaf4243d157600095a63111047b164",
+  "scope": "Interrupted frozen748 prefix, then a targeted266 tail after repairing one finite lane-stage oracle. Not a complete unchanged748 sweep.",
+  "configuredAtStart": 748,
+  "mandatoryUnchangedKernelBaselines": 105,
+  "baselineGatePassedBeforeFirstMutation": true,
+  "frozenPrefix": {
+    "compiledAndRejected": 482,
+    "exactOrderedPrefix": true,
+    "logSha256": "8a27133257f90890c2183508149c6fdf0dede895ba5868b30b61f13792e8c60d",
+    "stoppedAt": "lane stage always wakes a shown exit",
+    "reason": "Finite lane-stage oracle accepted always-wake mutation; no shown/inside-flush observation of committed value."
+  },
+  "repairedTail": {
+    "compiledAndRejected": 266,
+    "exactOrderedSuffix": true,
+    "logSha256": "1ef2c16574a0a89fd1669057bde0c2645b43be2fde22f8ac32e6d446f96df489",
+    "control": "1616 unchanged native/Bend lane-stage cases pass; previously accepted mutation now rejected.",
+    "changedInputs": [
+      "tests/lane-stage-alignment.mjs",
+      "tests/probes/lane-stage.bend"
+    ],
+    "controlLogSha256": "32182f69a18c6decfa84ccf2aabdc8519ba2039698465c746d589d92a806edd0"
+  },
+  "compilationOrResourceFailuresCredited": false,
+  "upstreamBugClaim": false,
+  "runtimeOrCheckerChange": false,
+  "freshCompleteSweepStillRequired": true
+}
