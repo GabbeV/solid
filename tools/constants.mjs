@@ -1,4 +1,4 @@
-// Translate only literal numeric declarations; no eval of source code.
+// Translate numeric literals, shifts and previously declared constants; no eval.
 import ts from 'typescript';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,7 +7,9 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const file='upstream/solid/packages/signals/src/core/constants.ts';
 const source=fs.readFileSync(path.join(root,file),'utf8');
 const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true);
+const known=new Map();
 function numeric(n) {
+  if(ts.isIdentifier(n)&&known.has(n.text))return known.get(n.text);
   if(ts.isNumericLiteral(n))return Number(n.text);
   if(ts.isParenthesizedExpression(n))return numeric(n.expression);
   if(ts.isBinaryExpression(n) && n.operatorToken.kind===ts.SyntaxKind.LessThanLessThanToken)return numeric(n.left)<<numeric(n.right);
@@ -20,6 +22,7 @@ for(const statement of ast.statements) {
     const name=decl.name.getText(ast);
     if(!/^(REACTIVE_|CONFIG_|STATUS_|EFFECT_|CAUGHT_)/.test(name))continue;
     const value=numeric(decl.initializer);
+    known.set(name,value);
     const line=1+ast.getLineAndCharacterOfPosition(decl.getStart(ast)).line;
     out+=`# ${file}:${line} — ${decl.initializer.getText(ast)}\ndef ${name}() -> U32:\n  ${value>>>0}\n\n`;
   }

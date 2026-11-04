@@ -20,7 +20,8 @@ def retained(+w: R.World, +predecessor: Nat, +prefix: Graph.Skips<Positive.enter
   capture: {R.NodeExtension.transaction(B.extension(Positive.enter(w, 1n+predecessor), id)) == 1n+predecessor : Nat},
   stopped: {R.Transaction.into(B.transaction(Positive.enter(w, 1n+predecessor), 1n+predecessor)) == 0n : Nat},
   rendered: {X.isRender(R.Node.kind(B.node(Positive.enter(w, 1n+predecessor), id))) == True{} : Bool},
-  live: {B.has(R.Node.flags(B.node(Positive.enter(w, 1n+predecessor), id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}) ->
+  live: {B.has(R.Node.flags(B.node(Positive.enter(w, 1n+predecessor), id)), K.REACTIVE_ZOMBIE()) == False{} : Bool},
+  waits: {Graph.bypass(Positive.enter(w, 1n+predecessor), id, 1n+predecessor) == False{} : Bool}) ->
   {C.landTransactions(w, rest, stack, frame, 1n+index) == C.Machine{w, C.LandTransactions{frame, index} <> rest, stack} : C.Machine}:
   Scan.scan(w, rest, stack, frame, index, 1n+predecessor, lookup,
-    Graph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live))
+    Graph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live, waits))

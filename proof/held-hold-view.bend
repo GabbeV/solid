@@ -84,7 +84,7 @@ def extObserved(+w: R.World,+id: Nat) -> {V.observe(E.ext(w,id)) == ext(V.observ
 
 def intoNodes(record: R.Transaction,members: List<&2,Nat>) -> {R.Transaction.into(R.Transaction.with_nodes(record,members)) == R.Transaction.into(record) : Nat}:
   match record:
-    case R.Transaction{nodes,reruns,renderQueue,userQueue,into,parent,lane,blocked,open,acted,fork,shown,held,marks, +latest}: {==}
+    case R.Transaction{nodes,reruns,renderQueue,userQueue,into,parent,lane,blocked,open,acted,fork,shown,held,marks, +latest, +rebaseOver}: {==}
 
 def intoStore(+rows: List<&2,R.Transaction>,+id: Nat,+nodes: List<&2,Nat>) -> {V.intos(List.set(&2,R.Transaction,rows,id,R.Transaction.with_nodes(B.get(R.Transaction,rows,id,B.blank_transaction()),nodes))) == V.intos(rows) : List<&2,Nat>}:
   match rows id:

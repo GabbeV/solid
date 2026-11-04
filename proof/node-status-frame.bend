@@ -42,7 +42,7 @@ def set(+w: R.World,+set: Nat,+items: List<&2,Nat>) -> {observe(B.store_pendingS
 
 def statusX(+node: R.Node,+value: Nat) -> {R.Node.status(R.Node.with_x(node,value)) == R.Node.status(node) : U32}:
   match node:
-    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, +rebaseOwed}:
       {==}
 
 def ext(+w: R.World,+node: Nat) -> {observe(E.ext(w,node)) == observe(w) : List<&2,U32>}:

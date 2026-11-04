@@ -41,7 +41,7 @@ try{
   for(const [at,q,now]of[[4,c.firstQ,c.firstNow],[5,c.secondQ,c.secondNow]]){S.ext(ns[at])._q=q;ns[at]._time=now?5:4;}
   if(c.graph>=1)S.link(ns[4],n);if(c.graph>=2)S.link(ns[5],n);if(c.graph>=3)S.link(n,ns[3]);
   S.GlobalQueue._truth=S.truthRead;S.probeLatest(c.latest);S.probeResetQueue(ts[c.pass],ts[c.flush]);S.setContextInternal(reader);S.probeTracking(c.tracking);
-  let result,error;try{result=op===0?S.laneRead(reader,n):op===1?S.truthRead(n):op===2?S.probeHeld(n):op===3?S.probeTruth(n):op===4?S.probeStale(n,c.query):op===5?S.probeAnswered(n):S.truthConfirmed(ts[2]);}catch(e){assert.ok(e instanceof S.NotReadyError, String(e)+" "+JSON.stringify(c));error={notReady:true,source:id(e.source)};}
+  let result,error;try{result=op===0?S.laneRead(reader,n):op===1?S.truthRead(n):op===2?!!S.probeHeld(n):op===3?S.probeTruth(n):op===4?S.probeStale(n,c.query):op===5?S.probeAnswered(n):S.truthConfirmed(ts[2]);}catch(e){assert.ok(e instanceof S.NotReadyError, String(e)+" "+JSON.stringify(c));error={notReady:true,source:id(e.source)};}
   if(op===4||op===5)return result;
   return{value:result===K.NOT_PENDING?'TOKEN':result,error,pass:tid(S.probePass),flush:tid(S.probeFlush),serial:error?1:0,staged:S.stagedReaders.map(id),entered:S.probeEntered.map(id),live:S.probeLive.map(tid),tx:ts.slice(1).map(t=>({into:tid(t._into),links:t._links?.map(tid)??[],nodes:t._nodes.map(id),reruns:t._reruns.map(id)})),nodes:ns.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,tx:tid(n._x?._transaction)})),pending:[],scheduled:false,heap:Array.from({length:Math.max(1,S.dirtyQueue._heap.length)},(_,i)=>id(S.dirtyQueue._heap[i])),min:S.dirtyQueue._min,max:S.dirtyQueue._max};
  }

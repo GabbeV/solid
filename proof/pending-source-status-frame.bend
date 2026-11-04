@@ -43,31 +43,30 @@ def notReady(+w: R.World, +source: Nat) ->
   {Frame.observe(B.first(R.World, R.Value, P.notReadyError(w, source))) == Frame.observe(w) : List<&2,U32>}:
   Frame.worldErrorSerial(w, Nat.add(1n, R.World.errorSerial(w)))
 
-def preservedErrorTail(+w: R.World, +id: Nat, +source: Nat) -> R.World:
-  +pair = P.notReadyError(w, source)
-  +w = E.ext(B.first(R.World, R.Value, pair), id)
-  B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), B.second(R.World, R.Value, pair)))
+# A selected retained value is still stored; a replacement increments only
+# the error identity after the extension has been obtained.
+def storeSelected(+w: R.World,+id: Nat,+source: Nat,+current: R.Value,+same: Bool) -> R.World:
+  +pair = B.choose(~B.Bundle<R.World,R.Value>,same,_=>B.Bundle{w,current},_=>P.notReadyError(w,source))
+  +next = B.first(R.World,R.Value,pair)
+  B.store_extension(next,id,R.NodeExtension.with_error(B.extension(next,id),B.second(R.World,R.Value,pair)))
 
-def preservedErrorTailFrame(+w: R.World, +id: Nat, +source: Nat) ->
-  {Frame.observe(preservedErrorTail(w, id, source)) == Frame.observe(w) : List<&2,U32>}:
-  +pair = P.notReadyError(w, source)
-  +first = B.first(R.World, R.Value, pair)
-  +second = E.ext(first, id)
-  +record = R.NodeExtension.with_error(B.extension(second, id), B.second(R.World, R.Value, pair))
-  Frame.compose(w, first, preservedErrorTail(w, id, source), Frame.compose(first, second, preservedErrorTail(w, id, source), Frame.storeExtension(second, id, record), ext(first, id)), notReady(w, source))
+def storeSelectedFrame(+w: R.World,+id: Nat,+source: Nat,+current: R.Value,same: Bool) ->
+  {Frame.observe(storeSelected(w,id,source,current,same)) == Frame.observe(w) : List<&2,U32>}:
+  match same:
+    case True{}: Frame.storeExtension(w,id,R.NodeExtension.with_error(B.extension(w,id),current))
+    case False{}:
+      +pair = P.notReadyError(w,source)
+      +next = B.first(R.World,R.Value,pair)
+      Frame.compose(w,next,storeSelected(w,id,source,current,False{}),Frame.storeExtension(next,id,R.NodeExtension.with_error(B.extension(next,id),B.second(R.World,R.Value,pair))),notReady(w,source))
 
-def preserveError(+w: R.World, +id: Nat, +source: Nat, +current: R.Value) ->
-  {Frame.observe(P.preserveOrCreate(w, id, source, current)) == Frame.observe(w) : List<&2,U32>}:
-  Frame.choice(Bool.and(P.isNotReady(current), Nat.is_eq(P.notReadySource(current), source)), w, w, preservedErrorTail(w, id, source), {==}, preservedErrorTailFrame(w, id, source))
+def preserveError(+w: R.World,+id: Nat,+source: Nat,+current: R.Value) ->
+  {Frame.observe(P.preserveOrCreate(w,id,source,current)) == Frame.observe(w) : List<&2,U32>}:
+  +next = E.ext(w,id)
+  Frame.compose(w,next,P.preserveOrCreate(w,id,source,current),storeSelectedFrame(next,id,source,current,Bool.and(P.isNotReady(current),Nat.is_eq(P.notReadySource(current),source))),ext(w,id))
 
-def setError(+w: R.World, +id: Nat, +source: Nat, +error: R.Value) ->
-  {Frame.observe(P.setPendingError(w, id, source, error)) == Frame.observe(w) : List<&2,U32>}:
-  +nullRecord = R.NodeExtension.with_error(B.extension(w, id), R.Null{})
-  +clear = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n), _ => B.store_extension(w, id, nullRecord), _ => w)
-  +next = E.ext(w, id)
-  +errorRecord = R.NodeExtension.with_error(B.extension(next, id), error)
-  +preserved = B.choose(~R.World, Bool.and(P.isNotReady(error), Nat.is_eq(P.notReadySource(error), source)), _ => B.store_extension(next, id, errorRecord), _ => P.preserveOrCreate(w, id, source, R.NodeExtension.error(B.extension(w, id))))
-  Frame.choice(Nat.is_eq(source, 0n), w, clear, preserved,
-    Frame.choice(Nat.is_ne(R.Node.x(B.node(w, id)), 0n), w, B.store_extension(w, id, nullRecord), w, Frame.storeExtension(w, id, nullRecord), {==}),
-    Frame.choice(Bool.and(P.isNotReady(error), Nat.is_eq(P.notReadySource(error), source)), w, B.store_extension(next, id, errorRecord), P.preserveOrCreate(w, id, source, R.NodeExtension.error(B.extension(w, id))),
-      Frame.compose(w, next, B.store_extension(next, id, errorRecord), Frame.storeExtension(next, id, errorRecord), ext(w, id)), preserveError(w, id, source, R.NodeExtension.error(B.extension(w, id)))))
+def setError(+w: R.World,+id: Nat,+source: Nat,+error: R.Value) ->
+  {Frame.observe(P.setPendingError(w,id,source,error)) == Frame.observe(w) : List<&2,U32>}:
+  +nullRecord = R.NodeExtension.with_error(B.extension(w,id),R.Null{})
+  +clear = B.choose(~R.World,Nat.is_ne(R.Node.x(B.node(w,id)),0n),_=>B.store_extension(w,id,nullRecord),_=>w)
+  +current = B.choose(~R.Value,Bool.and(P.isNotReady(error),Nat.is_eq(P.notReadySource(error),source)),_=>error,_=>R.NodeExtension.error(B.extension(w,id)))
+  Frame.choice(Nat.is_eq(source,0n),w,clear,P.preserveOrCreate(w,id,source,current),Frame.choice(Nat.is_ne(R.Node.x(B.node(w,id)),0n),w,B.store_extension(w,id,nullRecord),w,Frame.storeExtension(w,id,nullRecord),{==}),preserveError(w,id,source,current))

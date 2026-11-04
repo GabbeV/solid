@@ -10,14 +10,15 @@ import {
   CONFIG_STAGED_ERROR,
   CONFIG_SYNC,
   CONFIG_VERDICT,
-  EFFECT_TRACKED,
   EFFECT_USER,
   NOT_PENDING,
   REACTIVE_DIRTY,
   REACTIVE_WINDOW,
   REACTIVE_DISPOSED,
+  REACTIVE_IN_HEAP,
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_REASK,
+  REACTIVE_RELEASE_AFTER,
   REACTIVE_STAGED_READ,
   REACTIVE_ZOMBIE,
   STATUS_ERROR,
@@ -29,7 +30,12 @@ import {
 import { attrHooks } from "./attribution-hooks.js";
 import { context, setSignal, untrack, ext, statusNotifierOf } from "./core.js";
 import { devTrackHeldPending } from "./invariants.js";
-import { emitDiagnostic, reportDiagnostic, watchAsyncTail } from "./dev.js";
+import {
+  caughtReadFlightSettled,
+  emitDiagnostic,
+  reportDiagnostic,
+  watchAsyncTail
+} from "./dev.js";
 import { NotReadyError, StatusError } from "./error.js";
 import { trimStaleDeps, unobserved } from "./graph.js";
 import { enqueueSub } from "./heap.js";
@@ -48,6 +54,7 @@ import {
   txOf,
   freshHook,
   holdWorkHook,
+  stageMarkHook,
   guessing,
   laneStageHook,
   storeParkHook
@@ -72,6 +79,12 @@ export function removePendingSource(el: Computed<any>, source: Computed<any>): b
   return true;
 }
 
+// Drops a node's flight reference without touching anything else: the one
+// form shared by the disposal and loading-window sites.
+export function clearInFlight(el: Computed<any>): void {
+  if (el._x !== null) el._x._inFlight = null;
+}
+
 function clearPendingSources(el: Computed<any>): void {
   // This set is node-owned and never shared; dropping the sole reference
   // releases the set and every entry without a redundant clear() walk.
@@ -83,7 +96,7 @@ function clearPendingSources(el: Computed<any>): void {
 // edge: a dep that IS the source, or one whose own pending chain carries it
 // (pending sources propagate the origin node, so this covers any depth).
 // Also guards branch-local recovery: another dependency may still need the source.
-function retryReaches(el: Computed<any>, source: any): boolean {
+export function retryReaches(el: Computed<any>, source: any): boolean {
   for (let d = el._deps; d; d = d._nextDep) {
     const dep = d._dep as Computed<any>;
     if (dep === source || dep._x?._pendingSources?.has(source)) return true;
@@ -113,14 +126,13 @@ export function setPendingError(el: Computed<any>, source?: Computed<any>, error
     if (el._x !== null) el._x._error = null;
     return;
   }
-  if (error instanceof NotReadyError && error.source === source) {
-    ext(el)._error = error;
-    return;
-  }
-  const current = el._x?._error;
-  if (!(current instanceof NotReadyError) || current.source !== source) {
-    ext(el)._error = new NotReadyError(source);
-  }
+  // The given error when it names this source, else the current one when it
+  // does (rewritten unchanged), else a fresh one.
+  const current = error instanceof NotReadyError && error.source === source ? error : el._x?._error;
+  ext(el)._error =
+    current instanceof NotReadyError && current.source === source
+      ? current
+      : new NotReadyError(source);
 }
 
 export function forEachDependent(
@@ -128,6 +140,25 @@ export function forEachDependent(
   fn: (node: Computed<any>, link: Link) => void
 ): void {
   for (let s = el._subs; s !== null; s = s._nextSub) fn(s._sub, s);
+}
+
+/** Each dependent reachable from `el`, depth first. `fn` sees every arrival,
+ * `seen` when an earlier branch already walked the node (a diamond); the
+ * node's dependents are walked once, on its first arrival unless `fn`
+ * returns false (then it stays unmarked: a later branch may walk it). */
+function walkDependents(
+  el: Computed<any>,
+  fn: (node: Computed<any>, seen: boolean) => unknown
+): void {
+  const visited = new NewSet<Computed<any>>();
+  const visit = (node: Computed<any>) => {
+    const seen = visited.has(node);
+    if (fn(node, seen) !== false && !seen) {
+      visited.add(node);
+      forEachDependent(node, visit);
+    }
+  };
+  forEachDependent(el, visit);
 }
 
 // Queue a node to re-run on the next flush (used both when a pending source
@@ -141,13 +172,19 @@ export function forEachDependent(
 // forever with zero subscribers (#2934). The node's own promise/iterator
 // callbacks handle their own release (settleAutodispose in handleAsync); this
 // covers derivatively-pending dependents, which have no callbacks of their own.
+// A node whose pass is already queued (the settle walk re-enqueued a
+// `_blocked` reader) is released at that pass's tail, not before it: the
+// release would pull the pass back out of the heap, and the node would wake
+// later with no value for the landing it missed (D-22, #4474).
 export function releaseIfSettledUnobserved(node: Computed<any>): void {
-  (node as any)._fn &&
+  if (
+    (node as any)._fn &&
     node._config & CONFIG_AUTO_DISPOSE &&
     !node._subs &&
     !(node._flags & REACTIVE_ZOMBIE) &&
-    !(node._statusFlags & STATUS_PENDING) &&
-    unobserved(node);
+    !(node._statusFlags & STATUS_PENDING)
+  )
+    node._flags & REACTIVE_IN_HEAP ? (node._flags |= REACTIVE_RELEASE_AFTER) : unobserved(node);
 }
 
 // Error-path sweep: notifyStatus(STATUS_ERROR) clears dependents' pending
@@ -156,14 +193,9 @@ export function releaseIfSettledUnobserved(node: Computed<any>): void {
 // Collect-then-release so unobserved() never unlinks under the walk.
 export function releaseSettledDependents(el: Computed<any>): void {
   let candidates: Computed<any>[] | undefined;
-  const visited = new NewSet<Computed<any>>();
-  const visit = (node: Computed<any>) => {
-    if (visited.has(node)) return;
-    visited.add(node);
-    if (!node._subs && node._config & CONFIG_AUTO_DISPOSE) (candidates ??= []).push(node);
-    forEachDependent(node, visit);
-  };
-  forEachDependent(el, visit);
+  walkDependents(el, (node, seen) => {
+    if (!seen && !node._subs && node._config & CONFIG_AUTO_DISPOSE) (candidates ??= []).push(node);
+  });
   if (candidates) for (const node of candidates) releaseIfSettledUnobserved(node);
 }
 
@@ -202,7 +234,7 @@ export function stageError(el: Computed<any>, error: any, inPass?: boolean): boo
   if (
     !(
       el._config & CONFIG_HELD ||
-      (inPass && el._flags & REACTIVE_STAGED_READ && globalQueue._running && !(el as any).fam)
+      (inPass && el._flags & REACTIVE_STAGED_READ && globalQueue._running && !(el as any)._fam)
     ) ||
     passLane
   )
@@ -223,45 +255,14 @@ export function stageError(el: Computed<any>, error: any, inPass?: boolean): boo
   return true;
 }
 
-/** D-41: a derivation of a staged error carries it, staged with the same
- * frame — marked, not re-run, as a published error marks it (a re-run would
- * replace the frame its content owns) — and its own verdict readers
- * re-derive (the settle walk). Only a verdict reads a derivation's staging
- * before its commit, so only the verdict engine marks. Not a boundary's
- * output, an async memo, an effect or a boundary's tree (`EFFECT_TRACKED <<
- * 23` spans CONFIG_FRAME and every effect type), nor one already carrying a
- * staged error: the commit's publish reaches them. A pending mark supersedes
- * the staging (`propagateStatus`). */
-function stageMark(node: Computed<any>, el: Computed<any>): void {
-  if (
-    !(
-      node._config &
-      (CONFIG_REDERIVE | CONFIG_STAGED_ERROR | CONFIG_ASYNC | (EFFECT_TRACKED << 23))
-    )
-  ) {
-    node._pendingValue = el._pendingValue;
-    node._config |= CONFIG_STAGED_ERROR;
-    queuePendingNode(node);
-    // A derived store's readers are its family's (store/projection.ts): they
-    // re-derive from the staging, as from the derive's status (#4189).
-    (node as any).fam?.st(STATUS_ERROR);
-    settlePendingSource(node);
-  }
-}
-
 export function settleErroredDependents(el: Computed<any>, error: any): void {
   let scheduled = false;
-  const visited = new NewSet<Computed<any>>();
-  const visit = (node: Computed<any>) => {
-    if (visited.has(node)) return;
-    visited.add(node);
-    if (node._x?._error === error) {
+  walkDependents(el, (node, seen) => {
+    if (!seen && node._x?._error === error) {
       enqueueSub(node);
       scheduled = true;
     }
-    forEachDependent(node, visit);
-  };
-  forEachDependent(el, visit);
+  });
   if (scheduled) schedule();
 }
 
@@ -329,10 +330,12 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
   removePendingSource(el, source);
   let scheduled = false;
   let released: Computed<any>[] | undefined;
-  const visited = new NewSet<Computed<any>>();
-  const settle = (node: Computed<any>) => {
+  walkDependents(el, (node, seen) => {
     if (
-      visited.has(node) ||
+      // A node an earlier branch settled (a diamond) takes only this early
+      // return's verdict re-run / staged-error mark, as the walk did before
+      // it was shared.
+      seen ||
       // A conditional dropped this source, but another dependency can still
       // carry it. Only retire pending state inherited through the recovered
       // branch. Deliberately NOT marked visited on this early return: the
@@ -347,14 +350,12 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // equal to the committed value notifies nobody — the source settling
       // is its verdict changing: it runs again. (Verdict readers exist only
       // with the verdict engine installed.)
-      // D-41: a derivation of a staged error carries it (`stageMark`).
+      // D-41: a derivation of a staged error carries it (verdict.ts `stageMark`).
       return (
         holdWorkHook &&
-        (node._config & CONFIG_VERDICT
-          ? enqueueSub(node)
-          : el._config & CONFIG_STAGED_ERROR && stageMark(node, el))
+          (node._config & CONFIG_VERDICT ? enqueueSub(node) : stageMarkHook!(node, el)),
+        false
       );
-    visited.add(node);
     node._time = clock;
     const remaining = node._x?._pendingSources?.values().next().value;
     // STATUS_ERROR + pending sources only coexist via an errored loading
@@ -382,20 +383,23 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // its readers wait on the derive itself, not on this source, so they
       // settle with it, as a memo's would through its dependents (F-9, A9).
       // Only a store build has one (`storeParkHook`).
-      else if (storeParkHook) (node as any).fam?.st();
+      else if (storeParkHook) (node as any)._fam?.st();
       if (node._x !== null) node._x._blocked = false;
       // Fully settled with nobody watching: release candidate (#2934). Checked
       // again at release time — deferred so unobserved() can't unlink subs
       // lists this walk is still iterating.
       if (!node._subs && node._config & CONFIG_AUTO_DISPOSE) (released ??= []).push(node);
+      // D-41: and a node fully settled here carries the staging as well — a
+      // chain's single arrival marks what a diamond's second arrival does
+      // (F-9, F-2: graph shape is not observable, #4562).
+      stageMarkHook?.(node, el);
     }
-    forEachDependent(node, settle);
-  };
+  });
 
-  forEachDependent(el, settle);
-
-  // Release before the flush schedule below: unobserved() pulls the node back
-  // out of the heap, so the enqueueSub above never recomputes a released node.
+  // A node the enqueueSub above queued is released at that pass's tail
+  // (`releaseIfSettledUnobserved`, REACTIVE_RELEASE_AFTER): the landing's
+  // pass is its — released first, it woke later with no value for it
+  // (#4474).
   if (released) for (const node of released) releaseIfSettledUnobserved(node);
 
   if (scheduled) schedule();
@@ -534,6 +538,8 @@ export function handleAsync<T>(
 
   const handleError = (error: any) => {
     if (el._x?._inFlight !== result) return;
+    // D-42 (dev): a rejection is the read's throw continuing, not a catch.
+    if (__DEV__) caughtReadFlightSettled(el, result as object, false);
     // NotReadyError from rejected promises should be treated as pending, not error
     let stillPending = error instanceof NotReadyError;
     // Dev-only authorship diagnostic (#2987): no edge means a post-`await`
@@ -558,7 +564,7 @@ export function handleAsync<T>(
       // serving commit #0 — same parking as recompute's catch for sync
       // dependency throws. The dead flight is released so the clock-gated
       // error-retry pull (updateIfNecessary) can also re-ask.
-      if (el._x !== null) el._x._inFlight = null;
+      clearInFlight(el);
       parkLoadingWindow(el, error);
       el._time = clock;
       return;
@@ -588,6 +594,9 @@ export function handleAsync<T>(
 
   const asyncWrite = (value: T, then?: () => void) => {
     if (el._x?._inFlight !== result) return;
+    // D-42 (dev): the flight landed a value after a read threw into the pass
+    // that started it — the body caught the throw (CAUGHT_REACTIVE_READ).
+    if (__DEV__) caughtReadFlightSettled(el, result as object, true);
     // If the node was dirtied by a newer write (optimistic override or regular),
     // skip this stale async result — the upcoming flush will recompute the node
     // with the new value, creating a fresh Promise that supersedes this one.
@@ -918,6 +927,9 @@ export function handleAsync<T>(
     el._loading = false;
   }
 
+  // D-42 (dev): a flight that answered synchronously (a sync-settled
+  // thenable, a live first yield) landed a value like asyncWrite's.
+  if (__DEV__) caughtReadFlightSettled(el, result as object, true);
   return syncValue!;
 }
 
@@ -977,34 +989,27 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
   const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   // (CARVE 2: the lane assignment went with the engine.)
 
-  if (status === STATUS_PENDING && pendingSource) {
+  if (pendingSource) {
     // D-41: a re-ask of a shown error keeps it the display (`_shownError`).
     if (el._statusFlags & STATUS_ERROR) el._x!._shownError = el._x!._error;
     addPendingSource(el, pendingSource);
-    // A re-ask of an error that answered the first read: still no value.
-    el._statusFlags =
-      STATUS_PENDING |
-      (el._statusFlags & STATUS_NO_VALUE
+  } else clearPendingSources(el);
+  // An error answering a node with no value marks it so; a re-ask of it
+  // (pending, from a source or not) is uninitialized again — still no
+  // value; a write (STATUS_NONE) gives it one.
+  el._statusFlags =
+    status |
+    (status === STATUS_ERROR
+      ? el._statusFlags & (STATUS_UNINITIALIZED | STATUS_NO_VALUE)
+        ? STATUS_NO_VALUE
+        : 0
+      : status === STATUS_PENDING && el._statusFlags & STATUS_NO_VALUE
         ? STATUS_UNINITIALIZED
         : el._statusFlags & STATUS_UNINITIALIZED);
-    // Preserve the current source on this propagation so readers park on
-    // the distinct pending source.
-    setPendingError(el, pendingSource, error);
-  } else {
-    clearPendingSources(el);
-    // An error answering a node with no value marks it so; a re-ask of it
-    // (pending) is uninitialized again; a write (STATUS_NONE) gives it one.
-    el._statusFlags =
-      status |
-      (status === STATUS_ERROR
-        ? el._statusFlags & (STATUS_UNINITIALIZED | STATUS_NO_VALUE)
-          ? STATUS_NO_VALUE
-          : 0
-        : status === STATUS_PENDING && el._statusFlags & STATUS_NO_VALUE
-          ? STATUS_UNINITIALIZED
-          : el._statusFlags & STATUS_UNINITIALIZED);
-    ext(el)._error = error;
-  }
+  // A propagated pending keeps its current source so readers park on the
+  // distinct pending source.
+  if (pendingSource) setPendingError(el, pendingSource, error);
+  else ext(el)._error = error;
 
   // Lanes: a written guess is an optimistic boundary (A17 — "the optimistic
   // future value until we know otherwise"). Its own source in flight is its
@@ -1074,6 +1079,16 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
         !(pendingSource && holdWorkHook(sub, el))) ||
       (status === STATUS_PENDING && link._gen !== sub._depGen)
     ) {
+      // A source that settled (an error, a sync value) is one the re-derived
+      // pass no longer waits on: retire it from the subscriber's pending
+      // sources here, as the marked path does through `notifyStatus` and a
+      // landing does through the settle walk. Left in place, the entry
+      // outlives the pass — a re-park on a second source keeps it (the
+      // re-park sweep in `recompute` sees the dep it still reads) — and that
+      // source's landing finds it as `remaining`: the subscriber stays
+      // pending on a source that will never settle, and its boundary never
+      // releases (found while shadowing the seat table).
+      if (status !== STATUS_PENDING) removePendingSource(sub, el);
       enqueueSub(sub);
       schedule();
       return;
@@ -1085,7 +1100,7 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
     // frame still passes through — its pass is the frame's (#3372, compiled
     // shape: the unmount it stages makes the observer a zombie whose say is
     // moot for this transaction, A15 #3463).
-    if (status === STATUS_PENDING && pendingSource && sub._x?._pendingSources?.has(pendingSource)) {
+    if (pendingSource && sub._x?._pendingSources?.has(pendingSource)) {
       if (
         passLane === null &&
         (sub._config & (CONFIG_HELD | CONFIG_OVERRIDE)) === CONFIG_HELD &&
@@ -1096,7 +1111,7 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
       return;
     }
     if (
-      (status === STATUS_PENDING && pendingSource) ||
+      pendingSource ||
       (status !== STATUS_PENDING && (sub._x?._error !== error || sub._x?._pendingSources))
     ) {
       // The marked subscriber is queued for the commit sweep so its status
@@ -1122,7 +1137,7 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
       notifyStatus(sub, status, error);
       // A derived store's derive (store/projection.ts): marked, not re-run —
       // its leaves' readers are not its dependents, so the family walks them.
-      (sub as any).fam?.st(status, error);
+      (sub as any)._fam?.st(status, error);
     }
   });
 }

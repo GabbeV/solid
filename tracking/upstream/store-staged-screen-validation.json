@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "classification": "confirmed-upstream-regression",
+  "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+  "introducedBy": "343f007fa7e810feffbcb737b17d58dcb16d7e9d",
+  "passingParent": "b2442611c32496aa9d72c4f1ea16815033e48be8",
+  "sourceUnchanged": true,
+  "native": {
+    "parent": {
+      "expectCrash": false,
+      "rows": [
+        {
+          "variant": "latest-untracked",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "result": [
+            0,
+            0
+          ],
+          "halted": false
+        },
+        {
+          "variant": "latest-tracked",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "result": [
+            0,
+            0
+          ],
+          "halted": false
+        },
+        {
+          "variant": "pending-untracked",
+          "seen": [
+            [
+              false,
+              0
+            ],
+            [
+              true,
+              1
+            ]
+          ],
+          "result": [
+            true,
+            1
+          ],
+          "halted": false
+        },
+        {
+          "variant": "no-flight",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "result": [
+            1,
+            1
+          ],
+          "halted": false
+        }
+      ]
+    },
+    "introducer": {
+      "expectCrash": true,
+      "rows": [
+        {
+          "variant": "latest-untracked",
+          "seen": [
+            [
+              0,
+              0
+            ]
+          ],
+          "error": "Cannot read properties of undefined (reading '_x')",
+          "halted": true
+        },
+        {
+          "variant": "latest-tracked",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "result": [
+            0,
+            0
+          ],
+          "halted": false
+        },
+        {
+          "variant": "pending-untracked",
+          "seen": [
+            [
+              false,
+              0
+            ],
+            [
+              true,
+              1
+            ]
+          ],
+          "result": [
+            true,
+            1
+          ],
+          "halted": false
+        },
+        {
+          "variant": "no-flight",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "result": [
+            1,
+            1
+          ],
+          "halted": false
+        }
+      ]
+    },
+    "current": {
+      "expectCrash": true,
+      "rows": [
+        {
+          "variant": "latest-untracked",
+          "seen": [
+            [
+              0,
+              0
+            ]
+          ],
+          "error": "Cannot read properties of undefined (reading '_x')",
+          "halted": true
+        },
+        {
+          "variant": "latest-tracked",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "result": [
+            0,
+            0
+          ],
+          "halted": false
+        },
+        {
+          "variant": "pending-untracked",
+          "seen": [
+            [
+              false,
+              0
+            ],
+            [
+              true,
+              1
+            ]
+          ],
+          "result": [
+            true,
+            1
+          ],
+          "halted": false
+        },
+        {
+          "variant": "no-flight",
+          "seen": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "result": [
+            1,
+            1
+          ],
+          "halted": false
+        }
+      ]
+    }
+  },
+  "browser": {
+    "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+    "sourceTreeClean": true,
+    "browser": "154.0.8037.57",
+    "reproducer": "store-staged-screen.tsx",
+    "control": "Only untrack(() => state.count) becomes state.count.",
+    "rows": [
+      {
+        "name": "production-untracked",
+        "tier": "production",
+        "control": false,
+        "text": "0 / 0",
+        "errors": [
+          "Cannot read properties of undefined (reading '_x')",
+          "Cannot read properties of undefined (reading '_x')"
+        ],
+        "reports": [
+          "[REACTIVITY_HALTED]",
+          "[REACTIVITY_HALTED]"
+        ]
+      },
+      {
+        "name": "production-tracked",
+        "tier": "production",
+        "control": true,
+        "text": "1 / 1",
+        "errors": [],
+        "reports": []
+      },
+      {
+        "name": "development-untracked",
+        "tier": "development",
+        "control": false,
+        "text": "0 / 0",
+        "errors": [
+          "Cannot read properties of undefined (reading '_x')",
+          "Cannot read properties of undefined (reading '_x')"
+        ],
+        "reports": [
+          "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> \u203a effect",
+          "[REACTIVITY_HALTED] Update ignored: the reactive system was halted by an earlier uncaught error.\n  in <App> \u203a effect"
+        ]
+      },
+      {
+        "name": "development-tracked",
+        "tier": "development",
+        "control": true,
+        "text": "1 / 1",
+        "errors": [],
+        "reports": []
+      },
+      {
+        "name": "observe-untracked",
+        "tier": "observe",
+        "control": false,
+        "text": "0 / 0",
+        "errors": [
+          "Cannot read properties of undefined (reading '_x')",
+          "Cannot read properties of undefined (reading '_x')"
+        ],
+        "reports": [
+          "[REACTIVITY_HALTED]",
+          "[REACTIVITY_HALTED]"
+        ]
+      },
+      {
+        "name": "observe-tracked",
+        "tier": "observe",
+        "control": true,
+        "text": "1 / 1",
+        "errors": [],
+        "reports": []
+      }
+    ]
+  },
+  "reproducerHashes": {
+    "repros/solid-signals/store-staged-screen.mjs": "6ecbd978636d4612c28936fe19c59cc688d2576795d89c903e1598ef8beb4e4f",
+    "repros/playground/store-staged-screen.tsx": "683980b136003a49ce40dad8d627be28ad7a0f967e2824500b74fa7453fa55d6",
+    "repros/playground/verify-store-staged-screen.mjs": "b03a6739c756ba0f5ff4515a281f99ea157c28830558e6773a65f3b0b38816a4"
+  },
+  "upstreamSearch": {
+    "date": "2026-11-04",
+    "latestNextStillMatchesPin": true,
+    "openPRsChecked": [
+      4531,
+      4520,
+      4497,
+      3391,
+      3358,
+      3231
+    ],
+    "queries": [
+      "stagedScreen",
+      "holdStaging",
+      "store latest untrack",
+      "Cannot read properties of undefined _x"
+    ],
+    "matchingReportFound": false,
+    "matchingOpenFixFound": false,
+    "relatedIntroductionPR": 4625
+  },
+  "scope": "Source-only store branch outside admitted Bend grammar; no candidate patch or active workaround. Assertions explicitly expect the known source failure, not correct store behavior."
+}

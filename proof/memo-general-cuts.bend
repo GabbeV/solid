@@ -1,4 +1,5 @@
 import Base
+import ./empty-recompute-tail.bend as EmptyTail
 import ./memo-cuts.bend as Existing
 import ../runtime/equality.bend as EQ
 import ../runtime/api.bend as A
@@ -12,7 +13,7 @@ import ../representation/records.bend as R
 
 # Previous value is arbitrary; source frame flags and all other fields stay fixed.
 def frame(previous: R.Value) -> C.PassFrame:
-  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, previous, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}}}
+  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, previous, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}, R.Empty{}, False{}}}
 
 def step_release(+previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, C.PassReleases{frame(previous), 0n, value, False{}, False{}, False{}, R.Healthy{}} <> rest, stack})
@@ -30,7 +31,7 @@ def step_from_shape(+previous: R.Value, -m: C.Machine, +w: R.World, +rest: List<
 
 def releaseLoaded(+previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, +nodes: List<&2, Nat>) -> C.Machine:
   B.choose(~C.Machine, Nat.is_ge(0n, B.length(Nat, nodes)),
-    _ => Existing.afterRelease(w, rest, stack, value),
+    _ => EmptyTail.resume(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value),
     _ =>
       +node = B.get(Nat, nodes, 0n, 0n)
       +ending = {C.PassReleases{frame(previous), 1n, value, False{}, False{}, False{}, R.Healthy{}} <> rest : List<&2, C.Task>}
@@ -39,4 +40,6 @@ def releaseLoaded(+previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +sta
 def release_empty(+previous: R.Value, +w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value,
   empty: {B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []) == [] : List<&2, Nat>}) ->
   {C.passReleases(w, rest, stack, frame(previous), 0n, value, False{}, False{}, False{}, R.Healthy{}) == Existing.afterRelease(w, rest, stack, value) : C.Machine}:
-  Equal.cong(List<&2, Nat>, C.Machine, nodes => releaseLoaded(previous, w, rest, stack, value, nodes), B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []), [], empty)
+  Equal.trans(C.Machine, C.passReleases(w, rest, stack, frame(previous), 0n, value, False{}, False{}, False{}, R.Healthy{}), EmptyTail.resume(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value), Existing.afterRelease(w, rest, stack, value),
+    Equal.cong(List<&2, Nat>, C.Machine, nodes => releaseLoaded(previous, w, rest, stack, value, nodes), B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []), [], empty),
+    EmptyTail.collapsed(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value))

@@ -50,7 +50,7 @@ def node(+w: R.World,+id: Nat,+offset: Nat,+valid: {Nat.is_lt(id,B.length(R.Node
 
 def childX(+entry: R.Node,index: Nat) -> {R.Node.firstChild(R.Node.with_x(entry,index)) == R.Node.firstChild(entry) : Nat}:
   match entry:
-    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram, +rebaseOwed}: {==}
 
 def child(+w: R.World,+id: Nat,+offset: Nat,+valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool},+fresh: {R.Node.x(B.node(w,id)) == 0n : Nat},empty: {R.Node.firstChild(B.node(w,id)) == 0n : Nat}) -> {R.Node.firstChild(B.node(X.holdNode(w,id,1n+offset),id)) == 0n : Nat}:
   Equal.trans(Nat,R.Node.firstChild(B.node(X.holdNode(w,id,1n+offset),id)),R.Node.firstChild(record(w,id)),0n,Equal.cong(R.Node,Nat,n=>R.Node.firstChild(n),B.node(X.holdNode(w,id,1n+offset),id),record(w,id),node(w,id,offset,valid,fresh)),Equal.trans(Nat,R.Node.firstChild(record(w,id)),R.Node.firstChild(Listing.record(w,id)),0n,childX(Listing.record(w,id),Ext.index(Listing.configured(w,id))),Equal.trans(Nat,R.Node.firstChild(Listing.record(w,id)),R.Node.firstChild(B.node(w,id)),0n,Listing.configChild(B.node(w,id),B.set(R.Node.config(B.node(w,id)),K.CONFIG_HELD())),empty)))

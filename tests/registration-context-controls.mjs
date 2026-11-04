@@ -32,7 +32,7 @@ try{
   assert.equal(nodes[rootId].kind.$,'Memo');assert.equal(nodes[leafId].kind.$,'Render');assert.equal(x,extCount+1);assert.equal(set,setCount+1);
   assert.deepEqual(list(list(registered.pendingSets)[set]),[rootId]);assert.deepEqual(observed(registered),observed(linked));
   const duplicate=P.addPendingSource(registered,leafId,rootId);assert.equal(duplicate.right,false);assert.deepEqual(duplicate.left,registered);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,14);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,11);assert.equal(certificate.steps+certificate.slack,15);
   const machine={$:'Machine',world:registered,tasks:encodeList([{$:'AsyncWriteAfterTrim',id:rootId},{$:'AsyncWriteSchedule'},...callerWork]),values:stack};
   let returned=machine;for(let step=0;step<certificate.steps;step++)returned=C.step(returned);
   assert.deepEqual(returned,{$:'Machine',world:certificate.world,tasks:rest,values:stack});assert.deepEqual(observed(returned.world),observed(linked));assert.equal(returned.world.fault.$,'Healthy');
@@ -40,5 +40,5 @@ try{
   for(const remaining of [0,1,7]){assert.deepEqual(C.run(certificate.steps+remaining,machine),C.run(remaining,returned));driverSplits++;}
   cases++;
  }
- console.log(JSON.stringify({typedConstructedRegistrationCases:cases,actualTenStepReturns:cases,actualDriverSplits:driverSplits,jsSuppliesEqualityEvidence:false,scope:'actual variable-ID default memo/render construction supplies fresh registration context/member/graph and bounded actual return; initial equality facts checked in Bend, no callback evaluation or full flight controller/reveal claim'}));
+ console.log(JSON.stringify({typedConstructedRegistrationCases:cases,actualElevenStepReturns:cases,actualDriverSplits:driverSplits,jsSuppliesEqualityEvidence:false,scope:'actual variable-ID default memo/render construction supplies fresh registration context/member/graph and bounded actual return; initial equality facts checked in Bend, no callback evaluation or full flight controller/reveal claim'}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

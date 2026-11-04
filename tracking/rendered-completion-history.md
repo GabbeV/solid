@@ -1,5 +1,12 @@
 # Pending rendered graphs survive completion-prefix histories
 
+At the current rc.21 pin, a pending render blocks an ordinary group only when
+it is not AHEAD; lane owners retain blocking. The snapshot certificate records
+this source posture, ownership transport preserves the lane field, and listing
+derives the condition from input config and transaction metadata. The separate
+general eligible-render law covers both blocking and the AHEAD exception. This
+source-required change is detailed in [the migration review](reviews/solid-2105ffb8.md).
+
 This extends `fb61a5bf75ae363c4b57c86c56bce9f5d0133e46` without runtime, host,
 representation, source, toolchain, kernel-limit or deviation changes.
 

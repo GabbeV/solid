@@ -73,7 +73,12 @@ def fixture(spec: Spec) -> B.Bundle<R.World, Bool>:
                 _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 5), _ => B.Bundle{V.provisionalVerdict(w, 3n, notFinal), False{}},
                   _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 6), _ => B.Bundle{V.pendingVerdict(w, B.choose(~Nat, U32.is_eq(sequence, 1), _ => 0n, _ => 3n), 2n), False{}},
                     _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 7), _ => V.observeFlight(w, 3n, 2n),
-                      _ => B.Bundle{V.witnessMark(w), False{}}))))))))
+                      _ => B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(op, 8), _ => B.Bundle{V.witnessMark(w), False{}},
+                        _ =>
+                          +w = V.pendingVerdict(w, 3n, 2n)
+                          +w = V.pendingVerdict(w, 3n, 2n)
+                          V.observeFlight(w, 3n, 2n))))))))))
+
 
 def heldLatest(config: U32, running: Bool, +reader: Nat, pending: R.Slot, flushed: R.Slot, stamp: Nat) -> B.Bundle<R.World, R.Value>:
   +w = N.signal(B.empty(), R.Number{7n}, N.defaults())

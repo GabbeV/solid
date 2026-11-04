@@ -89,10 +89,13 @@ try{
   for(let op=0;op<21;op++)for(const running of [false,true])for(const own of [false,true])for(const config of [0,K.CONFIG_HELD,K.CONFIG_HELD|K.CONFIG_HELD_FRAME,K.CONFIG_HELD|K.CONFIG_INPUTS_PUBLISHED,K.CONFIG_HELD|K.CONFIG_LAGS])for(const status of [0,K.STATUS_UNINITIALIZED,K.STATUS_PENDING])for(const extra of [false,true]){
     assert.deepEqual(actual(B.fixture(op,running,own,config,status,extra)),reference(op,running,own,config,status,extra),JSON.stringify({op,running,own,config,status,extra}));count++;
   }
+  // CONFIG_REDERIVE denotes a boundary output. rc.21 hiddenBy now follows
+  // that output through its subscribers; mounted boundary outputs are outside
+  // this fixture's non-boundary grammar. Keep ordinary frame metadata here.
   let seed=0x9e4173,blockCount=0;const rng=n=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return (seed>>>0)%n;};
   for(let index=0;index<4096;index++){
     const args=[index%4,rng(8),[0,K.REACTIVE_DISPOSED,K.REACTIVE_ZOMBIE][rng(3)],[0,K.CONFIG_HELD,K.CONFIG_GUESS][rng(3)],rng(3),rng(8),
-      [0,K.REACTIVE_DISPOSED,K.REACTIVE_ZOMBIE,K.REACTIVE_FRAME_READ,K.REACTIVE_FRAME_READ|K.REACTIVE_ZOMBIE][rng(5)],rng(2)?K.CONFIG_REDERIVE:0,rng(3),!!rng(2),rng(4),!!rng(2),!!rng(2),!!rng(2),rng(4),!!rng(2)];
+      [0,K.REACTIVE_DISPOSED,K.REACTIVE_ZOMBIE,K.REACTIVE_FRAME_READ,K.REACTIVE_FRAME_READ|K.REACTIVE_ZOMBIE][rng(5)],rng(2)?K.CONFIG_FRAME:0,rng(3),!!rng(2),rng(4),!!rng(2),!!rng(2),!!rng(2),rng(4),!!rng(2)];
     const result=B.blockFixture(...args);assert.deepEqual({...actual(result),blockers:list(result.blockers)},referenceBlock(...args),'block '+JSON.stringify(args));blockCount++;
   }
   console.log(`${count} transaction-state and ${blockCount} blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists.`);

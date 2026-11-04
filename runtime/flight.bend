@@ -2,6 +2,7 @@
 # AsyncObject/Observer encode external PromiseLike values and their callback
 # closures. Core continuations provide the source flush() call/return point.
 import Base
+import ./flight-slot.bend as FlightSlot
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./constants.bend as K
@@ -85,7 +86,7 @@ def beginHandleError(+w: R.World, +id: Nat, result: Nat, +error: R.Value) -> B.B
       +pending = P.isNotReady(error)
       B.choose(~B.Bundle<R.World, ErrorPosture>, Bool.and(pending, R.Node.loading(B.node(w, id))),
         _ =>
-          +w = B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{}))
+          +w = FlightSlot.clearInFlight(w,id)
           +w = P.parkLoadingWindow(w, id, error)
           B.Bundle{B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), ErrorDone{}},
         _ => B.Bundle{w, B.choose(~ErrorPosture, pending, _ => ErrorPending{}, _ => ErrorActual{})}))

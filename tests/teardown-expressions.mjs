@@ -78,7 +78,9 @@ for(const immediate of [false,true])for(const children of [1,2])for(const cleanu
     ['memo','source',future('p')],...dependents,['flush'],['resolve','p',8],['tick'],['read','marker'],
     ['resolve','q',7],['tick'],['resetErrorHalt'],['flush'],['dispose'],['resetErrorHalt'],['flush']
   ],(op,args,actual,expected)=>{
-    if(op==='read'&&args[0]==='marker'&&cleanup==='read')assert.deepEqual(expected,['return',7*children]);
+    // rc.21 defers unobserved release until the queued re-derivation has run
+    // (#4474): both the replaced pass and its final release clean up.
+    if(op==='read'&&args[0]==='marker'&&cleanup==='read')assert.deepEqual(expected,['return',14*children]);
   });
 }
 for(const immediate of [false,true])for(const route of ['promise','yield','empty','reject'])for(const cleanup of ['read','throw','pending']){

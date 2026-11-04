@@ -23,7 +23,7 @@ def budget(+w: R.World,+id: Nat) -> {B.budget(notified(w,id)) == B.budget(w) : N
 
 def subsStamp(+node: R.Node,+stamp: R.Stamp) -> {R.Node.subs(R.Node.with_notified(node,stamp)) == R.Node.subs(node) : Nat}:
   match node:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}: {==}
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}: {==}
 
 def head(+w: R.World,+id: Nat,+edge: Nat,valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool},known: {R.Node.subs(B.node(w,id)) == edge : Nat}) -> {R.Node.subs(B.node(notified(w,id),id)) == edge : Nat}:
   Equal.trans(Nat,R.Node.subs(B.node(notified(w,id),id)),R.Node.subs(record(w,id)),edge,Equal.cong(R.Node,Nat,node=>R.Node.subs(node),B.node(notified(w,id),id),record(w,id),Lens.nodeSame(w,id,record(w,id),valid)),Equal.trans(Nat,R.Node.subs(record(w,id)),R.Node.subs(B.node(w,id)),edge,subsStamp(B.node(w,id),R.Stamped{R.World.epoch(w)}),known))

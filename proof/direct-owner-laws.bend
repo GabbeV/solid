@@ -51,7 +51,7 @@ def allocated(+w: R.World, +parent: Nat, transparent: Bool) -> R.World:
   n = {R.Node{R.Root{}, R.Undefined{}, R.Empty{}, True{}, B.choose(~U32, transparent, _ => K.CONFIG_TRANSPARENT(), _ => 0),
     K.REACTIVE_NONE(), 0, 0n, R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     parent, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, B.parentComputed(w, parent), R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
+    0n, B.parentComputed(w, parent), R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n, False{}} : R.Node}
   R.World.with_nodes(w, B.append(R.Node, R.World.nodes(w), [n]))
 
 def owner_selected(+w: R.World, +parent: Nat, transparent: Bool, attached: Bool) -> R.World:

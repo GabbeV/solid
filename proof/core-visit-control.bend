@@ -38,6 +38,16 @@ def stepQueue(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +
   Equal.trans(List<&2, C.Task>, work(C.step(input(w, tail, visited, released, scheduled, id, root, source, rest, stack))), work(C.dispatch(w, C.PendingTasks{Q.Visit{id, root, source} <> tail, visited, released, scheduled} <> rest, stack)), C.PendingTasks{Fields.tasks(Q.advance(w, Q.Visit{id, root, source} <> tail, visited, released, scheduled)), Fields.visits(Q.advance(w, Q.Visit{id, root, source} <> tail, visited, released, scheduled)), Fields.releases(Q.advance(w, Q.Visit{id, root, source} <> tail, visited, released, scheduled)), Fields.scheduled(Q.advance(w, Q.Visit{id, root, source} <> tail, visited, released, scheduled))} <> rest,
     Equal.cong(C.Machine, List<&2, C.Task>, machine => work(machine), C.step(input(w, tail, visited, released, scheduled, id, root, source, rest, stack)), C.dispatch(w, C.PendingTasks{Q.Visit{id, root, source} <> tail, visited, released, scheduled} <> rest, stack), Owner.healthyStep(w, C.PendingTasks{Q.Visit{id, root, source} <> tail, visited, released, scheduled}, rest, stack, healthy)), visitQueue(w, rest, stack, tail, visited, released, scheduled, id, root, source))
 
+def resumeWorld(rest: List<&2,C.Task>,stack: List<&2,R.Value>,+result: Q.Machine) ->
+  {C.world(C.pendingResume(rest,stack,result)) == Fields.world(result) : R.World}:
+  match result:
+    case Q.Machine{world,tasks,visited,released,scheduled}: {==}
+
+def stepWorld(+w: R.World,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+tail: List<&2,Q.Task>,+visited: List<&2,Nat>,+released: List<&2,Nat>,+scheduled: Bool,+id: Nat,+root: Nat,+source: Nat,healthy: {C.healthy(R.World.fault(w)) == True{} : Bool}) ->
+  {C.world(C.step(input(w,tail,visited,released,scheduled,id,root,source,rest,stack))) == Fields.world(Q.advance(w,Q.Visit{id,root,source} <> tail,visited,released,scheduled)) : R.World}:
+  Equal.trans(R.World,C.world(C.step(input(w,tail,visited,released,scheduled,id,root,source,rest,stack))),C.world(C.dispatch(w,C.PendingTasks{Q.Visit{id,root,source} <> tail,visited,released,scheduled} <> rest,stack)),Fields.world(Q.advance(w,Q.Visit{id,root,source} <> tail,visited,released,scheduled)),
+    Equal.cong(C.Machine,R.World,m=>C.world(m),C.step(input(w,tail,visited,released,scheduled,id,root,source,rest,stack)),C.dispatch(w,C.PendingTasks{Q.Visit{id,root,source} <> tail,visited,released,scheduled} <> rest,stack),Owner.healthyStep(w,C.PendingTasks{Q.Visit{id,root,source} <> tail,visited,released,scheduled},rest,stack,healthy)),resumeWorld(rest,stack,Q.advance(w,Q.Visit{id,root,source} <> tail,visited,released,scheduled)))
+
 def queueShape(+result: Q.Machine, +rest: List<&2, C.Task>, +tail: List<&2, Q.Task>, +released: List<&2, Nat>, +shape: {Control.observe(result) == Control.View{tail, released} : Control.View}) ->
   {C.PendingTasks{Fields.tasks(result), Fields.visits(result), Fields.releases(result), Fields.scheduled(result)} <> rest == C.PendingTasks{tail, Fields.visits(result), released, Fields.scheduled(result)} <> rest : List<&2, C.Task>}:
   +tasks = Equal.cong(Control.View, List<&2, Q.Task>, view => observedTasks(view), Control.observe(result), Control.View{tail, released}, shape)

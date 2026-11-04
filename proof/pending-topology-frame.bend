@@ -49,15 +49,32 @@ def stagePrefix(+w: R.World, +id: Nat, +root: Nat) -> {Frame.observe(Q.stageMark
   +marked = B.store_node(staged, id, R.Node.with_config(B.node(staged, id), B.set(R.Node.config(B.node(staged, id)), K.CONFIG_STAGED_ERROR())))
   Frame.compose(w, staged, Q.stageMarkPrefix(w, id, root), Frame.compose(staged, marked, Q.stageMarkPrefix(w, id, root), queue(marked, id), Frame.stageErrorConfig(staged, id)), Frame.pending(w, id, R.Node.pending(B.node(w, root))))
 
+# The new source dep scan changes only failure metadata, even on exhaustion.
+def stagedDependency(+fuel: Nat,+w: R.World,+edge: Nat) ->
+  {Frame.observe(B.first(R.World,Bool,Q.stagedDependencyLoop(fuel,w,edge))) == Frame.observe(w) : Frame.View}:
+  match fuel:
+    case 0n: Frame.worldFault(w,R.Exhausted{})
+    case 1n+p:
+      +test = B.has(R.Node.config(B.node(w,R.Link.dep(B.link(w,edge)))),K.CONFIG_STAGED_ERROR())
+      Frame.firstBoolChoice(Nat.is_eq(edge,0n),w,B.Bundle{w,False{}},B.choose(~B.Bundle<R.World,Bool>,test,_=>B.Bundle{w,True{}},_=>Q.stagedDependencyLoop(p,w,R.Link.nextDep(B.link(w,edge)))),{==},
+        Frame.firstBoolChoice(test,w,B.Bundle{w,True{}},Q.stagedDependencyLoop(p,w,R.Link.nextDep(B.link(w,edge))),{==},stagedDependency(p,w,R.Link.nextDep(B.link(w,edge)))))
+
 def stageMark(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat) -> {Frame.observe(world(Q.stageMark(w, tasks, visited, released, scheduled, id, root))) == Frame.observe(w) : Frame.View}:
-  +prefix = Q.stageMarkPrefix(w, id, root)
+  +dep = Q.stagedDependency(w,id)
+  +scanned = B.first(R.World,Bool,dep)
+  +prefix = Q.stageMarkPrefix(scanned, id, root)
   +next = B.first(R.World, Bool, P.removePendingSource(prefix, id, id))
   +after = {Q.Machine{next, B.append(Q.Task, Q.settlementTasks(next, id, id), Q.RestoreSettlement{visited, released, scheduled} <> tasks), [], [], False{}} : Q.Machine}
-  choice(B.has(R.Node.config(B.node(w, id)), Q.stageMarkMask()), w, Q.Machine{w, tasks, visited, released, scheduled}, after, {==}, Frame.compose(w, prefix, next, Frame.exact(prefix, next, Source.remove(prefix, id, id)), stagePrefix(w, id, root)))
+  +body = B.choose(~Q.Machine,Bool.and(B.ok(scanned),B.second(R.World,Bool,dep)),_=>after,_=>Q.Machine{scanned,tasks,visited,released,scheduled})
+  +bodyFrame = Frame.compose(w,scanned,world(body),
+    choice(Bool.and(B.ok(scanned),B.second(R.World,Bool,dep)),scanned,after,Q.Machine{scanned,tasks,visited,released,scheduled},
+      Frame.compose(scanned,prefix,next,Frame.exact(prefix, next, Source.remove(prefix, id, id)),stagePrefix(scanned,id,root)),{==}),
+    stagedDependency(B.budget(w),w,R.Node.deps(B.node(w,id))))
+  choice(Bool.and(B.has(R.Node.config(B.node(w,root)),K.CONFIG_STAGED_ERROR()),Bool.not(B.has(R.Node.config(B.node(w,id)),Q.stageMarkMask()))),w,body,Q.Machine{w,tasks,visited,released,scheduled},bodyFrame,{==})
 
 def skip(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat) ->
   {Frame.observe(world(Q.skip(w, tasks, visited, released, scheduled, id, root))) == Frame.observe(w) : Frame.View}:
-  choice(B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()), w, Q.Machine{H.enqueueSub(w, id), tasks, visited, released, scheduled}, B.choose(~Q.Machine, B.has(R.Node.config(B.node(w, root)), K.CONFIG_STAGED_ERROR()), _ => Q.stageMark(w, tasks, visited, released, scheduled, id, root), _ => Q.Machine{w, tasks, visited, released, scheduled}), Frame.exact(w, H.enqueueSub(w, id), Heap.enqueue(w, id)), choice(B.has(R.Node.config(B.node(w, root)), K.CONFIG_STAGED_ERROR()), w, Q.stageMark(w, tasks, visited, released, scheduled, id, root), Q.Machine{w, tasks, visited, released, scheduled}, stageMark(w, tasks, visited, released, scheduled, id, root), {==}))
+  choice(B.has(R.Node.config(B.node(w,id)),K.CONFIG_VERDICT()),w,Q.Machine{H.enqueueSub(w,id),tasks,visited,released,scheduled},Q.stageMark(w,tasks,visited,released,scheduled,id,root),Frame.exact(w, H.enqueueSub(w,id), Heap.enqueue(w,id)),stageMark(w,tasks,visited,released,scheduled,id,root))
 
 # Source settled(): clear the status only for the last carrier, then possibly
 # join the existing transaction. Joining is bookkeeping; it does not publish.
@@ -101,11 +118,24 @@ def actualStatus(+w: R.World, +id: Nat, +remaining: Nat, +errored: Bool) ->
   {Frame.observe(Q.settledStatus(w, id, remaining, errored)) == Frame.observe(w) : Frame.View}:
   Equal.trans(Frame.View, Frame.observe(Q.settledStatus(w, id, remaining, errored)), Frame.observe(status(w, id, remaining, errored)), Frame.observe(w), Equal.cong(R.World, Frame.View, next => Frame.observe(next), Q.settledStatus(w, id, remaining, errored), status(w, id, remaining, errored), statusExact(w, id, remaining, errored)), statusFrame(w, id, remaining, errored))
 
+def tailPrefix(+w: R.World,+tasks: List<&2,Q.Task>,+visited: List<&2,Nat>,+released: List<&2,Nat>,+scheduled: Bool,+id: Nat,+root: Nat,+source: Nat,+last: Bool) ->
+  {Frame.observe(world(Q.settledTailPrefix(w,tasks,visited,released,scheduled,id,root,source,last))) == Frame.observe(w) : Frame.View}:
+  +blocked = Bool.and(last,B.truth(B.selected(R.NodeExtension.blocked(B.extension(w,id)),R.Undefined{})))
+  +queued = B.choose(~R.World,Bool.and(B.ok(w),blocked),_=>H.enqueueSub(w,id),_=>w)
+  Frame.compose(w,queued,unblock(queued,id,last),unblockFrame(queued,id,last),Frame.choice(Bool.and(B.ok(w),blocked),w,H.enqueueSub(w,id),w,Frame.exact(w,H.enqueueSub(w,id),Heap.enqueue(w,id)),{==}))
+
 def tail(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat, +source: Nat, +last: Bool) ->
   {Frame.observe(world(Q.settledTail(w, tasks, visited, released, scheduled, id, root, source, last))) == Frame.observe(w) : Frame.View}:
-  +blocked = Bool.and(last, B.truth(B.selected(R.NodeExtension.blocked(B.extension(w, id)), R.Undefined{})))
-  +next = B.choose(~R.World, Bool.and(B.ok(w), blocked), _ => H.enqueueSub(w, id), _ => w)
-  Frame.compose(w, next, world(Q.settledTail(w, tasks, visited, released, scheduled, id, root, source, last)), unblockFrame(next, id, last), Frame.choice(Bool.and(B.ok(w), blocked), w, H.enqueueSub(w, id), w, Frame.exact(w, H.enqueueSub(w, id), Heap.enqueue(w, id)), {==}))
+  +blocked = Bool.and(last,B.truth(B.selected(R.NodeExtension.blocked(B.extension(w,id)),R.Undefined{})))
+  +queued = B.choose(~R.World,Bool.and(B.ok(w),blocked),_=>H.enqueueSub(w,id),_=>w)
+  +next = unblock(queued,id,last)
+  +newReleased = B.choose(~List<&2,Nat>,Bool.and(B.ok(next),Bool.and(last,Bool.and(Nat.is_eq(R.Node.subs(B.node(next,id)),0n),B.has(R.Node.config(B.node(next,id)),K.CONFIG_AUTO_DISPOSE())))),_=>B.append(Nat,released,[id]),_=>released)
+  +newScheduled = Bool.or(scheduled,blocked)
+  +ending = {Q.Descend{id,root,source} <> tasks : List<&2,Q.Task>}
+  +body = B.choose(~Q.Machine,Bool.and(B.ok(next),last),_=>Q.stageMark(next,ending,visited,newReleased,newScheduled,id,root),_=>Q.Machine{next,ending,visited,newReleased,newScheduled})
+  Frame.compose(w,queued,world(body),
+    Frame.compose(queued,next,world(body),choice(Bool.and(B.ok(next),last),next,Q.stageMark(next,ending,visited,newReleased,newScheduled,id,root),Q.Machine{next,ending,visited,newReleased,newScheduled},stageMark(next,ending,visited,newReleased,newScheduled,id,root),{==}),unblockFrame(queued,id,last)),
+    Frame.choice(Bool.and(B.ok(w),blocked),w,H.enqueueSub(w,id),w,Frame.exact(w, H.enqueueSub(w,id), Heap.enqueue(w,id)),{==}))
 
 def settled(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat, +source: Nat) ->
   {Frame.observe(world(Q.settled(w, tasks, visited, released, scheduled, id, root, source))) == Frame.observe(w) : Frame.View}:
@@ -114,7 +144,7 @@ def settled(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +rel
   +errored = B.has(R.Node.status(B.node(timed, id)), K.STATUS_ERROR())
   +statused = Q.settledStatus(timed, id, remaining, errored)
   Frame.compose(w, timed, world(Q.settled(w, tasks, visited, released, scheduled, id, root, source)),
-    Frame.compose(timed, statused, world(Q.settled(w, tasks, visited, released, scheduled, id, root, source)), tail(statused, tasks, id <> visited, released, scheduled, id, root, source, Nat.is_eq(remaining, 0n)), actualStatus(timed, id, remaining, errored)), Frame.time(w, id, R.World.clock(w)))
+    Frame.compose(timed, statused, world(Q.settled(w, tasks, visited, released, scheduled, id, root, source)), tail(statused, tasks, visited, released, scheduled, id, root, source, Nat.is_eq(remaining, 0n)), actualStatus(timed, id, remaining, errored)), Frame.time(w, id, R.World.clock(w)))
 
 def removed(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat, +source: Nat) ->
   {Frame.observe(world(Q.visitRemoved(w, tasks, visited, released, scheduled, id, root, source))) == Frame.observe(w) : Frame.View}:
@@ -142,6 +172,7 @@ def advance(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +rel
     case Q.Walk{+edge, +root, +source} <> +rest:
       choice(Nat.is_eq(edge, 0n), w, Q.Machine{w, rest, visited, released, scheduled}, Q.Machine{w, Q.Visit{R.Link.sub(B.link(w, edge)), root, source} <> Q.Next{edge, root, source} <> rest, visited, released, scheduled}, {==}, {==})
     case Q.Next{edge, root, source} <> rest: {==}
+    case Q.Descend{id,root,source} <> rest: {==}
     case Q.Collect{+id} <> +rest:
       choice(B.contains(visited, id), w, Q.Machine{w, rest, visited, released, scheduled},
         Q.Machine{w, Q.CollectWalk{R.Node.subs(B.node(w, id))} <> rest, id <> visited, B.choose(~List<&2, Nat>, Bool.and(Nat.is_eq(R.Node.subs(B.node(w, id)), 0n), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE())), _ => B.append(Nat, released, [id]), _ => released), scheduled}, {==}, {==})

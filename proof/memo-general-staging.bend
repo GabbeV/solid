@@ -132,7 +132,7 @@ def readCase(+netted: Bool, +initial: Nat, +input: Nat) -> {readAt(netted, initi
 def step_9(+initial: Nat, +input: Nat) -> {C.step(M.state_9(initial, input)) == M.state_10(initial, input) : C.Machine}:
   +netted = Nat.is_eq(input, initial)
   +answer = B.choose(~R.Value,netted,_=>R.Number{initial},_=>R.Number{input})
-  Equal.trans(C.Machine,C.step(M.state_9(initial, input)),readExpected(netted, initial, input,answer),M.state_10(initial, input),Equal.trans(C.Machine,C.step(M.state_9(initial, input)),readAt(netted, initial, input),readExpected(netted, initial, input,answer),{==},readCase(netted, initial, input)),Equal.cong(R.Value,C.Machine,value=>readExpected(netted, initial, input,value),answer,R.Number{input},Natural.pick(initial,input)))
+  Equal.trans(C.Machine,C.step(M.state_9(initial, input)),readExpected(netted, initial, input,answer),M.state_10(initial, input),Equal.trans(C.Machine,C.step(M.state_9(initial, input)),readAt(netted, initial, input),readExpected(netted, initial, input,answer),ReadCut.squash(C.world(M.at_9(netted, initial, input)),remainder(M.at_9(netted, initial, input)),C.values(M.at_9(netted, initial, input)),2n,netted),readCase(netted, initial, input)),Equal.cong(R.Value,C.Machine,value=>readExpected(netted, initial, input,value),answer,R.Number{input},Natural.pick(initial,input)))
 
 def stepAt_10(+netted: Bool, +initial: Nat, +input: Nat) -> {C.step(M.at_10(netted, initial, input)) == M.at_11(netted, initial, input) : C.Machine}:
   match netted:

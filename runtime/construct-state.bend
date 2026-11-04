@@ -35,7 +35,7 @@ def signal(+w: R.World, value: R.Value, +options: R.NodeOptions) -> R.World:
   n = {R.Node{R.Signal{}, value, R.Empty{}, R.NodeOptions.equals(options), config,
     0, 0, R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     0n, 0n, 0n, 0n, R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n, False{}} : R.Node}
   installUnobserved(EQ.register(append(w, n), id, R.NodeOptions.comparator(options)), id, R.NodeOptions.unobserved(options))
 
 # Shared literal; callback-based roots also allocate through this definition.
@@ -67,7 +67,7 @@ def computed(+w: R.World, expr: R.Expr, +options: R.NodeOptions, +parent: Nat) -
     bit(R.NodeOptions.lazy(options), K.REACTIVE_LAZY()), B.choose(~U32, loading, _ => 0, _ => K.STATUS_UNINITIALIZED()),
     R.World.clock(w), R.Unstamped{}, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     parent, 0n, 0n, 0n, expr, False{}, R.Undefined{}, 0n, loading,
-    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n} : R.Node}
+    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n, False{}} : R.Node}
   +w = installUnobserved(EQ.register(append(w, n), id, R.NodeOptions.comparator(options)), id, R.NodeOptions.unobserved(options))
   setupComputedNode(w, id)
 
@@ -93,6 +93,6 @@ def createEffectNode(+w: R.World, expr: R.Expr, +kind: R.NodeKind, target: Nat, 
     K.REACTIVE_LAZY(), K.STATUS_UNINITIALIZED(), R.World.clock(w), R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, parent, 0n, 0n, 0n,
     expr, False{}, R.Undefined{}, target, False{},
-    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, program, returnedCleanup, 0n} : R.Node}
+    0n, 0n, R.Node.scope(B.node(w, parent)), 0n, R.NoDisposal{}, 0n, program, returnedCleanup, 0n, False{}} : R.Node}
   +w = installUnobserved(append(w, n), id, R.NodeOptions.unobserved(options))
   setupComputedNode(w, id)

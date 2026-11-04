@@ -226,7 +226,7 @@ def blank_node() -> R.Node:
   R.Node{R.Invalid{}, R.Undefined{}, R.Empty{}, True{}, 0, 0, 0, 0n, R.Unstamped{},
     0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n,
     R.Literal{R.Undefined{}}, False{}, R.Undefined{}, 0n, False{},
-    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n}
+    0n, 0n, 0n, 0n, R.NoDisposal{}, 0n, 0n, 0n, 0n, False{}}
 
 def blank_link() -> R.Link:
   R.Link{0n, 0n, 0n, 0n, 0n, 0n}
@@ -237,11 +237,13 @@ def blank_tree() -> R.TreeNode:
 def blank_extension() -> R.NodeExtension:
   R.NodeExtension{R.FlightEmpty{}, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
-    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Null{}, R.FlightUndefined{}, R.Unstamped{}}
+    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Null{}, R.FlightUndefined{}, R.Unstamped{}, R.Unasked{}}
 
 def stampMatches(stamp: R.Stamp, value: Nat) -> Bool:
   match stamp:
     case R.Unstamped{}:
+      False{}
+    case R.LeftShown{}:
       False{}
     case R.Stamped{x}:
       Nat.is_eq(x, value)
@@ -270,7 +272,7 @@ def noDisposal(d: R.Disposal) -> Bool:
       False{}
 
 def blank_transaction() -> R.Transaction:
-  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}}
+  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}, 0n}
 
 def blank_asyncObject() -> R.AsyncObject:
   R.AsyncObject{False{}, R.Unresolved{}, [], 0n}
@@ -281,7 +283,7 @@ def blank_asyncObserver() -> R.AsyncObserver:
 def empty() -> R.World:
   R.World{[blank_node()], [blank_link()], [0n], 0n, 0n, False{},
     [], [], [], [], 0n, False{}, False{}, False{}, 0n, 0n,
-    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}, R.FromNone{}}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}, [], False{}, False{}, [], [], False{}, []}, R.VerdictState{False{}, False{}, False{}, False{}, 0n}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], [], [R.DeferredIterator{0n, 0n, 0n, False{}}]}}
+    [blank_tree(), blank_tree()], [], R.Healthy{}, False{}, [], [blank_extension()], [R.CleanupProgram{[], False{}, 0n}], [], 0n, False{}, False{}, [], 0n, [blank_transaction()], [], 0n, 0n, 0n, 0n, [], R.QuestionZero{}, [[]], [blank_asyncObject()], [blank_asyncObserver()], [], 0n, [R.StreamPlan{[], False{}, R.Empty{}, 0n, 0n, R.Empty{}, R.FromNone{}}], [R.ExternalIterator{0n, 0n, 0n}], [R.StreamState{0n, 0n, 0n, False{}, False{}, False{}, R.Undefined{}, 0n}], [], [R.Awaiter{R.Literal{R.Undefined{}}, False{}, 0n, 0n, 0n, 0n, R.Unresolved{}, False{}, 0n, False{}, False{}, 0n}], False{}, False{}, R.QuestionZero{}, [R.AbortInput{False{}, R.Undefined{}}], [R.ContextKey{R.Undefined{}, R.Empty{}}], [R.ContextRecord{[]}], 0n, [[]], False{}, [R.Literal{R.Undefined{}}], [], [], 0n, [], [], [], [], [], 0n, R.LaneState{[], [[]], [], [], 0n, R.MountUnset{}, [], False{}, False{}, [], [], False{}, [], []}, R.VerdictState{False{}, False{}, False{}, False{}, 0n}, R.Empty{}, [], R.DeferredArena{[R.DeferredBinding{R.DeferredCell{0n, R.Null{}, False{}, False{}}, 0n}], [], [], [R.DeferredIterator{0n, 0n, 0n, False{}}]}}
 
 def node(w: R.World, id: Nat) -> R.Node:
   get(R.Node, R.World.nodes(w), id, blank_node())
@@ -470,3 +472,14 @@ def sameFlight(left: R.Flight, right: R.Flight) -> Bool:
 def flight(+w: R.World, +id: Nat) -> R.Flight:
   choose(~R.Flight, Nat.is_eq(R.Node.x(node(w, id)), 0n),
     _ => R.FlightUndefined{}, _ => R.NodeExtension.inFlight(extension(w, id)))
+
+# _notifiedAt's two negative sentinels are below every nonnegative notify epoch.
+def stampAtMost(stamp: R.Stamp, epoch: Nat) -> Bool:
+  match stamp:
+    case R.Stamped{value}: Nat.is_le(value, epoch)
+    case _: True{}
+
+def stampLeftShown(stamp: R.Stamp) -> Bool:
+  match stamp:
+    case R.LeftShown{}: True{}
+    case _: False{}

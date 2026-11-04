@@ -40,10 +40,10 @@ def build(+w: R.World, +id: Nat, +source: Nat, +root: Nat, +leaf: Nat, +edge: Na
         Equal.trans(Bool, B.has(R.Node.config(B.node(next, leaf)), K.CONFIG_AUTO_DISPOSE()), B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()), False{}, Equal.cong(Topology.Shape, Bool, view => B.has(Shape.config(view), K.CONFIG_AUTO_DISPOSE()), Topology.shape(B.node(next, leaf)), Topology.shape(B.node(w, leaf)), leafSame), noAuto)}
 
 def startReturn(+w: R.World, +id: Nat, +source: Nat, +root: Nat, +leaf: Nat, +edge: Nat, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  Return.Returned<Settlement.start(result(w, id, source), root, rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(result(w, id, source), root, rest, stack), rest, stack, 15n>:
   Shape.startReturn(result(w, id, source), root, leaf, edge, rest, stack, build(w, id, source, root, leaf, edge, shape))
 
 def frame(+w: R.World, +id: Nat, +source: Nat, +root: Nat, +leaf: Nat, +edge: Nat, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, +shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  {Frame.observe(Return.world(Settlement.start(result(w, id, source), root, rest, stack), rest, stack, 14n, startReturn(w, id, source, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(result(w, id, source), root, rest, stack), rest, stack, 15n, startReturn(w, id, source, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
   +next = result(w, id, source)
-  Frame.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 14n, startReturn(w, id, source, root, leaf, edge, rest, stack, shape)), Shape.returnedFrame(next, root, leaf, edge, rest, stack, build(w, id, source, root, leaf, edge, shape)), Preserved.content(w, id, source))
+  Frame.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 15n, startReturn(w, id, source, root, leaf, edge, rest, stack, shape)), Shape.returnedFrame(next, root, leaf, edge, rest, stack, build(w, id, source, root, leaf, edge, shape)), Preserved.content(w, id, source))

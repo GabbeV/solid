@@ -79,7 +79,7 @@ def merge(+w: R.World, +t: Nat, +f: Nat) ->
 def newTransaction(+w: R.World, +lane: Bool, +parent: Nat) ->
   {Frame.observe(B.first(R.World, Nat, X.newTransaction(w, lane, parent))) == Frame.observe(w) : Frame.View}:
   +id = B.length(R.Transaction, R.World.txArena(w))
-  +record = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}} : R.Transaction}
+  +record = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}, 0n} : R.Transaction}
   +arena = B.append(R.Transaction, R.World.txArena(w), [record])
   +next = R.World.with_txArena(w, arena)
   +listed = R.World.with_transactions(next, B.append(Nat, R.World.transactions(next), [id]))

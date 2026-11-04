@@ -22,7 +22,7 @@ import ./pending-removal-footprint.bend as Removal
 
 def statusWritten(+record: R.Node,+status: U32) -> {R.Node.status(R.Node.with_status(record,status)) == status : U32}:
   match record:
-    case R.Node{kind, value, pending, equals, config, flags, oldStatus, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case R.Node{kind, value, pending, equals, config, flags, oldStatus, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, +rebaseOwed}:
       {==}
 
 def selected(+w: R.World,+node: Nat,+errored: Bool,valid: {B.valid(w,node) == True{} : Bool}) -> {R.Node.status(B.node(Q.settledStatus(w,node,0n,errored),node)) == B.clear(R.Node.status(B.node(w,node)),K.STATUS_PENDING()) : U32}:

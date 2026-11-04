@@ -141,12 +141,13 @@ for(const Runtime of [BendRuntime,SolidRuntime]){
   const runtime=new Runtime();runtime.context('missing');runtime.context('value',7);
   assert.throws(()=>runtime.context('value',99),/Context names must be unique/);
   const failures=[];
-  for(const expr of [get('value'),get('value'),get('missing',owner('root'))]){
+  assert.equal(runtime.evaluate(get('value')),7,'production no-owner reads use the context default');
+  for(const expr of [get('missing'),get('missing'),get('missing',owner('root'))]){
     try{runtime.evaluate(expr);assert.fail('context read must throw');}catch(error){
       assert.equal(error.name,'Error');assert.equal(error.message,'');assert(error instanceof Error);failures.push(error);
     }
   }
-  assert.notEqual(failures[0],failures[1],'each missing-owner access allocates a fresh Error');
+  assert.notEqual(failures[0],failures[1],'each missing-context access allocates a fresh Error');
   runtime.root('child',lit(0));
   const record=Runtime===BendRuntime?runtime.nodes()[1].scope:runtime.owner._context;
   runtime.evaluate(put('value',lit(7),owner('root')));

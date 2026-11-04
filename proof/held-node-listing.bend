@@ -19,11 +19,11 @@ def node(+w: R.World,+id: Nat,valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes
 
 def configX(+entry: R.Node,+config: U32) -> {R.Node.x(R.Node.with_config(entry,config)) == R.Node.x(entry) : Nat}:
   match entry:
-    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram, +rebaseOwed}: {==}
 
 def configChild(+entry: R.Node,+config: U32) -> {R.Node.firstChild(R.Node.with_config(entry,config)) == R.Node.firstChild(entry) : Nat}:
   match entry:
-    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+    case R.Node{kind,value,pending,equals,old,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram, +rebaseOwed}: {==}
 
 def pointer(+w: R.World,+id: Nat,+valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool}) -> {R.Node.x(B.node(configured(w,id),id)) == R.Node.x(B.node(w,id)) : Nat}:
   Equal.trans(Nat,R.Node.x(B.node(configured(w,id),id)),R.Node.x(record(w,id)),R.Node.x(B.node(w,id)),Equal.cong(R.Node,Nat,entry=>R.Node.x(entry),B.node(configured(w,id),id),record(w,id),node(w,id,valid)),configX(B.node(w,id),B.set(R.Node.config(B.node(w,id)),K.CONFIG_HELD())))

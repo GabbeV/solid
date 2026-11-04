@@ -54,9 +54,9 @@ def build(+w: R.World, commands: List<&2, Command>, +root: Nat, +leaf: Nat, +edg
   construct(w, commands, w, root, leaf, edge, {==}, shape)
 
 def startReturn(+w: R.World, +commands: List<&2, Command>, +root: Nat, +leaf: Nat, +edge: Nat, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, +shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  Return.Returned<Settlement.start(History.run(w, build(w, commands, root, leaf, edge, shape)), root, rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(History.run(w, build(w, commands, root, leaf, edge, shape)), root, rest, stack), rest, stack, 15n>:
   History.startReturn(w, root, leaf, edge, build(w, commands, root, leaf, edge, shape), rest, stack, shape)
 
 def frame(+w: R.World, +commands: List<&2, Command>, +root: Nat, +leaf: Nat, +edge: Nat, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, +shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  {Frame.observe(Return.world(Settlement.start(History.run(w, build(w, commands, root, leaf, edge, shape)), root, rest, stack), rest, stack, 14n, startReturn(w, commands, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(History.run(w, build(w, commands, root, leaf, edge, shape)), root, rest, stack), rest, stack, 15n, startReturn(w, commands, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
   History.returnedFrame(w, root, leaf, edge, build(w, commands, root, leaf, edge, shape), rest, stack, shape)

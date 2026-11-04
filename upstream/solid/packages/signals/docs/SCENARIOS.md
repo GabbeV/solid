@@ -636,9 +636,9 @@ const save = action(function* () { setX(1); yield gate; });
 | 2   | `gate`, body returns | `1 \| content 1`                                                                                                                                                  |       |
 | ✗   |                      | after 1: `0 \| content 1` (the torn frame #3869 fixed)                                                                                                            |       |
 
-### S-46. The content a display-ahead `Show` opens reads the screen, whoever opened the hold — D-27, D-37
+### S-46. The content a display-ahead `Show` opens reads the screen, whoever opened the hold — D-27
 
-_Ruled 2026-10-30 ("actions aren't special — they are a way to extend the hold"). Pinned: `tests/display-ahead-plain-write-content.test.ts` (signals, passes) and `web/test/display-ahead-plain-write-content-s46.spec.tsx` (through `Show` + `insert`; the plain row is `test.fails` — today the branch attaches with its text hole empty, `selected: ` and nothing, F-2's empty slot and #4417's mechanism). S-31's rule in the plain-write, no-boundary form: a write to `id` is held because an async memo over it is on screen; no action, no `Loading`._
+_Ruled 2026-10-30 ("actions aren't special — they are a way to extend the hold"), reaffirmed 2026-10-31 (A over C: C would re-rule S-31). Pinned: `tests/display-ahead-plain-write-content.test.ts` (signals, passes) and `web/test/display-ahead-plain-write-content-s46.spec.tsx` (through `Show` + `insert`; the plain row is `test.fails` — today the branch attaches with its text hole empty, `selected: ` and nothing, F-2's empty slot and #4417's mechanism). S-31's rule in the plain-write, no-boundary form: a write to `id` is held because an async memo over it is on screen; no action, no `Loading`. Parked 2026-10-31: a fix was attempted and dropped (infinite loop on a generated case, four new findings — D-27 Status); no in-budget mechanism known, #4417 open. Fixed 2026-11-02 (#4417, #4574): a park re-derive that gives back the staging it superseded keeps its held readers and their children (one key, one child), and an insert of a DOM node waits while its subtree holds a child born into the open hold._
 
 ```tsx
 const [id, setId] = createSignal(0);
@@ -697,6 +697,23 @@ _Ruled 2026-10-09, from the read-order brief's sibling case (416). Not D-28: thi
 | 2   | `n0(1)` lands            | sibling `1 \| 1`            |                                                                                   |
 | ✗   |                          | sibling `0`, slot `(empty)` | neither the fallback nor `1` — the boundary waited on `n0`, which it did not read |
 | ✗   |                          | sibling `0 \| loading`      | the same wait, shown as a fallback                                                |
+
+**The verdict form (ruled 2026-10-31, #4569; D-23, #3373):** a fresh `<Loading>` whose content reads only `isPending` of a first load reveals when the verdict exists. `a0 = async(s)`, `a2 = async(await a0())`; `a0:0` lands, `a2` asks `a2:11`; `setS(1)` re-asks `a0` and marks `a2` pending by propagation while `a2:11` is up and `a2` has no value; `a2:11` lands. `a2`'s question changes only when `a2` re-runs, so the answer is current: `a2` is committed and pending on `a0`. Content that reads `a2` holds (F-2: no screen to keep) — the asymmetry is the rule.
+
+```tsx
+<Loading fallback="loading">{isPending(() => a2()) ? "pending" : "settled"}</Loading>
+```
+
+| #   | Action                                   | verdict-only content | control: `{a2()}` — alone or beside the probe | Notes                                                                 |
+| --- | ---------------------------------------- | -------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | mount; `a0:0` lands; `a2` asks `a2:11`   | `loading`            | `loading`                                     | first load                                                            |
+| 2   | `setS(1)` — re-asks `a0:1`               | `loading`            | `loading`                                     | `a2` pending by propagation, no value, own flight still current       |
+| 3   | `a2:11` lands                            | `pending`            | `loading`                                     | `a2` initializes, committed and pending on `a0`; the plain read waits |
+| 4   | `a0:1` lands; `a2` re-runs, asks `a2:20` | `pending`            | `loading`                                     |                                                                       |
+| 5   | `a2:20` lands                            | `settled`            | `21` / `21 settled`                           |                                                                       |
+| ✗   |                                          | after 3: `loading`   |                                               | rejected: a first load kept loading by a supersession no rule has     |
+
+Pinned: `tests/first-load-superseded-answer-4569.test.ts` (also a 3-deep chain and the no-boundary root, which attaches at 3 with `pending`), `packages/web/test/first-load-superseded-answer-4569.spec.tsx`.
 
 ### S-45. A first answer landing in the same tick as an action that writes its input: `latest` shows it, the plain read waits — D-22, F-9 (async generator E9)
 
@@ -892,6 +909,8 @@ const data = createMemo(() => fetchOrFail(count()));     // rejects for every co
 
 `<Errored>` never catches a pending: `ASYNC_OUTSIDE_LOADING_BOUNDARY` is a warning (A6).
 
+Row 1 holds because the errored source itself re-asks. Once it has its new answer, the recovery re-arms the subtree (#4627): the inner `<Loading>`, never shown — or shown before the error — catches what is still pending in the replacement frame, and its fallback shows beside the recovered content. A pending read directly under the `<Errored>` with no `<Loading>` between still keeps the error up, and a recovery held with an action reveals with it (D-41).
+
 ### S-42. A held rejection reveals with its frame — D-41 (#3886)
 
 _Pinned: `tests/error-is-an-answer.test.ts`._
@@ -918,7 +937,7 @@ The hold did not wait on the rejection: step 3 lands as soon as `slow(2)` does, 
 
 ### S-47. `try/catch` around a reactive read: caught on one pass, bypassed on the next — D-42, F-12
 
-_Pinned: `tests/try-catch-reactive-read.test.ts` (the bypass as it is; not a target)._ (S-46 is #4466's.)
+_Pinned: `tests/try-catch-reactive-read.test.ts` (the not-ready bypass as it is; not a target) and `tests/errored-reader-4486.test.ts` (the error twin's ruled screens, `it.fails` today)._ (S-46 is #4466's.)
 
 ```tsx
 const [id, setId] = createSignal(0);
@@ -941,14 +960,14 @@ const guarded = createMemo(() => {
 | 3   | `fetchData(1)` lands | `d1`              | yes           |                                                                                                                                              |
 | ✗   |                      | after 2: `caught` | —             | what the author expected: the catch to run on every pending. It runs only on a pass that happens to execute while the source is pending      |
 
-The error twin, under `<Errored fallback={e => ...}>` with a sync `source` that throws when `mode() === 1`:
+The error twin, under `<Errored fallback={e => ...}>` with a sync `source` that throws when `mode() === 1`. For errors the catch is fully inert (F-12, #4410 amendment, confirmed 2026-10-30 on #4486): a reader of an errored memo is errored with it whether or not it catches — on the change and on a pass that runs over the already-errored source alike. The two halves differ until ruled otherwise: for not-ready the catch is bypassed on the change and masks on the pass.
 
-| #   | Action                          | Screen         | `guarded` ran | Notes                                                                                                                                 |
-| --- | ------------------------------- | -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | mount, `mode = 0`               | `m0`           | yes           |                                                                                                                                       |
-| 1   | `setMode(1); flush()`           | `errored:boom` | **no**        | `source` errors; `guarded` is marked errored, not run; the error reaches `<Errored>` as if the catch were not there                   |
-| 2   | `setMode(2); flush()`           | `m2`           | yes           |                                                                                                                                       |
-| 0′  | mounted with `mode = 1` already | `caught`       | yes           | the same code, the other outcome: the pass ran while the source was already errored, so the catch fired and the boundary never saw it |
+| #   | Action                          | Screen         | `guarded` ran | Notes                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------------- | -------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | mount, `mode = 0`               | `m0`           | yes           |                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 1   | `setMode(1); flush()`           | `errored:boom` | **no**        | `source` errors; `guarded` is marked errored, not run; the error reaches `<Errored>` as if the catch were not there                                                                                                                                                                                                                                                                                        |
+| 2   | `setMode(2); flush()`           | `m2`           | yes           |                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 0′  | mounted with `mode = 1` already | `errored:boom` | yes           | the same code, the same outcome: a reader of an errored memo is errored with it whether or not it catches (#4410, #4486). Deviation today: `caught` at mount and on the first re-run; on the second the boundary errors (a halt, without one) with the memo still reading `caught` — pinned `it.fails`; accepted 2026-10-30 (#4486 closed: reachable only through a catch `CAUGHT_REACTIVE_READ` warns on) |
 
 ### S-43. A held recovery keeps the shown error; recovering to the last good value is a change — D-41, D-39 (#3886)
 

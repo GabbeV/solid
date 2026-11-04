@@ -33,7 +33,7 @@ def startReturn(+w: R.World, +sourceExpr: R.Expr, +effectExpr: R.Expr, +target: 
   +healthy: {B.ok(w) == True{} : Bool}, +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat},
   +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}, +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>},
   +commands: List<&2, Commands.Command>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>) ->
-  Return.Returned<Settlement.start(after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), N.index(w), rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), N.index(w), rest, stack), rest, stack, 15n>:
   Commands.startReturn(Pair.linked(w, sourceExpr, effectExpr, target, program, cleanup), commands, N.index(w), N.index(Pair.memo(w, sourceExpr)), B.length(R.Link, links), rest, stack, Pair.build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena))
 
 
@@ -42,5 +42,5 @@ def frame(+w: R.World, +sourceExpr: R.Expr, +effectExpr: R.Expr, +target: Nat, +
   +healthy: {B.ok(w) == True{} : Bool}, +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat},
   +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}, +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>},
   +commands: List<&2, Commands.Command>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>) ->
-  {Frame.observe(Return.world(Settlement.start(after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), N.index(w), rest, stack), rest, stack, 14n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == Frame.observe(Pair.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), N.index(w), rest, stack), rest, stack, 15n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == Frame.observe(Pair.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : Frame.View}:
   Commands.frame(Pair.linked(w, sourceExpr, effectExpr, target, program, cleanup), commands, N.index(w), N.index(Pair.memo(w, sourceExpr)), B.length(R.Link, links), rest, stack, Pair.build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena))

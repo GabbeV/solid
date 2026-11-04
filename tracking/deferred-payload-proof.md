@@ -1,10 +1,11 @@
 # Deferred data proof over ordinary represented payloads
 
-The original payload generalization is retained across the ecf30116 source
-migration. The source netted-read branch changes an intermediate flag and, for
-opposite signed zeros, the returned payload. The numeric result and 103-step
-sufficient budget remain intact; the ordinary-payload result now states the
-actual source selection rather than silently fixing the pinned signed-zero bug.
+The original payload domain is retained across the rc.21 migration to 2105ffb8.
+The source netted-read branch now requires both strict equality and SameValue,
+integrating #4538. The numeric result and 103-step sufficient budget remain
+intact. The ordinary-payload result states the actual conditional source slot
+selection; opposite signed zeros now select the proposal. Independent checking
+of the complete migrated path is required for current-pin proof credit.
 
 ## Quantified domain
 
@@ -43,9 +44,9 @@ for every admitted initial/proposal pair and every extra natural budget:
 
 - `Core.run(103 + extra, before(initial, next))` equals the exact final Machine,
   including its complete World, empty task list and value stack;
-- the returned value is the committed initial payload when the source strict
-  equality calls initial and proposal equal, otherwise the proposed payload;
-  opposite signed zeros therefore retain the old sign at this pin (#4538);
+- the returned value is the committed initial payload when both source strict equality
+  and SameValue call initial and proposal equal, otherwise the proposed payload;
+  opposite signed zeros therefore select the proposal at this pin (#4538);
 - choosing natural payloads gives exactly the original numeric initial Machine.
 
 For natural payloads, strict equality implies represented value equality, so
@@ -56,7 +57,7 @@ The old numeric theorem remains registered. No closed regression is added to the
 
 `tools/deferred-witness.mjs --payload` builds untrusted canonical states from the
 actual driver and a named algebraic read-gate cut, one suffix for each outcome. The prefix is
-shared through step50. A source-local read cut names the equality result; its
+shared through step50. A source-local read cut names the combined equality result; its
 connection to actual core.step is checked, then both suffixes are proved for all
 ordinary payloads. The final World retains the conditional staged-read flag.
 The numeric module specializes that same path and proves the natural value

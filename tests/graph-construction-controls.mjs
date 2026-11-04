@@ -23,7 +23,7 @@ try{
  for(const value of [undefined,null,false,0,-0,NaN,'cached',{ref:1}])for(const recomputing of [false,true])for(const carrier of [false,true])for(const callerWork of [[],[{$:'AsyncFlush'},{$:'Discard'}]]){
   const encoded=b.encode(value),rest=encodeList(callerWork),stack=encodeList([b.encode('outer'),b.encode({ref:1})]);
   const before=F.initial(encoded,recomputing,carrier),linked=F.linked(encoded,recomputing,carrier),certificate=F.complete(encoded,recomputing,carrier,rest,stack);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,carrier?10:9);assert.equal(certificate.steps+certificate.slack,14); // Nested settlement widens the bound; exact 9/10 steps above stay checked.
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,carrier?11:9);assert.equal(certificate.steps+certificate.slack,15); // Nested settlement widens the bound; exact 9/11 steps above stay checked.
   const nodes=list(linked.nodes),edge=nodes[1].subs;
   assert.equal(edge,1);assert.equal(list(linked.links)[edge].sub,2);assert.equal(list(linked.links)[edge].nextSub,0);
   assert.equal(nodes[2].subs,0);assert.equal(nodes[2].config,0);assert.equal(linked.fault.$,'Healthy');

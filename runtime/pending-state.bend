@@ -85,22 +85,20 @@ def notReadyError(+w: R.World, source: Nat) -> B.Bundle<R.World, R.Value>:
   +serial = Nat.add(1n, R.World.errorSerial(w))
   B.Bundle{R.World.with_errorSerial(w, serial), R.NotReadyFailure{serial, source}}
 
-def preserveOrCreate(+w: R.World, +id: Nat, +source: Nat, +current: R.Value) -> R.World:
-  B.choose(~R.World, Bool.and(isNotReady(current), Nat.is_eq(notReadySource(current), source)), _ => w,
-    _ =>
-      +pair = notReadyError(w, source)
-      +w = E.ext(B.first(R.World, R.Value, pair), id)
-      B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), B.second(R.World, R.Value, pair))))
+# rc.21 ext(el) is evaluated before choosing/allocating the replacement
+# NotReadyError; even a retained error is written back to the live extension.
+def preserveOrCreate(+w: R.World,+id: Nat,+source: Nat,+current: R.Value) -> R.World:
+  +w = E.ext(w,id)
+  +pair = B.choose(~B.Bundle<R.World,R.Value>,Bool.and(isNotReady(current),Nat.is_eq(notReadySource(current),source)),_=>B.Bundle{w,current},_=>notReadyError(w,source))
+  +w = B.first(R.World,R.Value,pair)
+  B.store_extension(w,id,R.NodeExtension.with_error(B.extension(w,id),B.second(R.World,R.Value,pair)))
 
-def setPendingError(+w: R.World, +id: Nat, +source: Nat, +error: R.Value) -> R.World:
-  B.choose(~R.World, Nat.is_eq(source, 0n),
-    _ => B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-      _ => B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), R.Null{})), _ => w),
-    _ => B.choose(~R.World, Bool.and(isNotReady(error), Nat.is_eq(notReadySource(error), source)),
-      _ =>
-        +w = E.ext(w, id)
-        B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error)),
-      _ => preserveOrCreate(w, id, source, R.NodeExtension.error(B.extension(w, id)))))
+def setPendingError(+w: R.World,+id: Nat,+source: Nat,+error: R.Value) -> R.World:
+  B.choose(~R.World,Nat.is_eq(source,0n),
+    _=>B.choose(~R.World,Nat.is_ne(R.Node.x(B.node(w,id)),0n),_=>B.store_extension(w,id,R.NodeExtension.with_error(B.extension(w,id),R.Null{})),_=>w),
+    _=>
+      +current = B.choose(~R.Value,Bool.and(isNotReady(error),Nat.is_eq(notReadySource(error),source)),_=>error,_=>R.NodeExtension.error(B.extension(w,id)))
+      preserveOrCreate(w,id,source,current))
 
 # Loading-window park deliberately takes no status/propagation branch.
 def parkLoadingWindow(+w: R.World, +id: Nat, +error: R.Value) -> R.World:

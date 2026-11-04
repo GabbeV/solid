@@ -44,5 +44,11 @@ try{
  for(const group of groups)for(const member of [1,3,6])for(const pending of [false,true])check([...base,...group,[18,2,member],[15,2,member===1?K.CONFIG_HELD:K.CONFIG_OVERRIDE],[13,2,pending?K.STATUS_PENDING:0],[13,3,K.STATUS_PENDING],[20,1,2]],queriesFor(targets));
  for(const old of [3,4,6,8])for(const current of [3,4,5,6])for(const guess of [false,true])check([...base,[2,3,4],[18,2,old],[18,2,current],[15,2,K.CONFIG_OVERRIDE|(guess?K.CONFIG_GUESS:0)],[21,2,99],[13,2,K.STATUS_PENDING],[13,3,K.STATUS_PENDING]],queriesFor(targets));
  for(const member of [3,4,5,6,7,8])for(const status of [0,K.STATUS_ERROR,K.STATUS_UNINITIALIZED])check([...base,[18,2,member],[15,2,K.CONFIG_OVERRIDE|K.CONFIG_GUESS],[21,2,99],[13,2,status],[13,3,K.STATUS_PENDING]],queriesFor(targets));
+ // rc.21: AHEAD exempts render readers only in ordinary groups. Both a
+ // directly owned render and a memo reached through its subscriber are checked.
+ for(const member of [1,3])for(const ahead of [false,true])for(const throughMemo of [false,true])for(const extraBlock of [0,K.REACTIVE_FRAME_READ]){
+  const owned=throughMemo?2:3;
+  check([...base,[18,owned,member],[13,owned,K.STATUS_PENDING],[13,3,K.STATUS_PENDING],[15,3,ahead?K.CONFIG_AHEAD>>>0:0],[8,3,extraBlock]],queriesFor([member]));
+ }
  console.log(`${programs} lane-blocking helper programs / ${queries} native judgments match nested/group holds, own-versus-guess flights, source ownership, redirects and judge restoration after every call.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

@@ -1,5 +1,12 @@
 # Constructing rendered ownership through the real list operation
 
+At the current rc.21 pin, a pending render blocks an ordinary group only when
+it is not AHEAD; lane owners retain blocking. The snapshot certificate records
+this source posture, ownership transport preserves the lane field, and listing
+derives the condition from input config and transaction metadata. The separate
+general eligible-render law covers both blocking and the AHEAD exception. This
+source-required change is detailed in [the migration review](reviews/solid-2105ffb8.md).
+
 This extends `45e4e8eed76343ab9bb69a872b1dc3de8da7adfb` without changing runtime,
 host, representation, pinned sources, toolchain, kernel limits or deviations.
 

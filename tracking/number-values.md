@@ -1,5 +1,10 @@
 # Signed-zero representation repair
 
+Current rc.21: [#4538's integration](upstream/signed-zero-staged-read.md)
+requires both strict equality and SameValue for netted reads. The signed-zero
+suite now has 13 public histories, including real observed-memo sign assertions,
+and 52 primitive controls. Earlier counts below describe the original codec work.
+
 At c608b3a, the public payload codec accepted JavaScript `-0` but encoded it as
 `Number{0}`. `signal("n", -0); read("n")` therefore returned positive zero;
 `Object.is(read("n"), -0)` was false in Bend and true in pinned Solid. This was a

@@ -3,6 +3,7 @@
 import Base
 import ../runtime/core.bend as C
 import ../runtime/transaction.bend as X
+import ../runtime/read-transaction.bend as ReadTx
 import ../runtime/read-state.bend as V
 import ../representation/base.bend as B
 import ../representation/records.bend as R
@@ -16,21 +17,27 @@ law committed_fast_read:
   for +tasks: List<&2, C.Task>
   for +stack: List<&2, R.Value>
   for +id: Nat
-  {C.readSignalFast(scope(w, arena), tasks, stack, id) == C.Machine{
+  {C.readSignalFast(scope(w, arena), tasks, stack, id) == B.choose(~C.Machine,B.ok(w),_=>C.Machine{
     B.event(scope(w, arena), R.ReadValue{0n, id, R.Node.value(B.node(scope(w, arena), id))}),
-    tasks, R.Node.value(B.node(scope(w, arena), id)) <> stack} : C.Machine}
+    tasks, R.Node.value(B.node(scope(w, arena), id)) <> stack},_=>C.Machine{scope(w,arena),tasks,stack}) : C.Machine}
 
 def committed_fast_read(w, arena, tasks, stack, id):
   match w:
     case R.World{nodes, links, buckets, minimum, maximum, marked, pendingNodes, trims, renderQueue, userQueue, context, tracking, running, scheduled, clock, epoch, tree, events, fault, unflushedStaged, promotedWrites, extensions, cleanupPrograms, dormantNodes, errorSerial, halted, haltNotified, reports, callbackEffect, txArena, transactions, flushTransaction, passTx, passLane, judge, deferredZombies, question, pendingSets, asyncObjects, asyncObservers, hostJobs, syncDepth, streamPlans, iterators, streams, iteratorEvents, awaiters, truthReadHook, truthConfirmedHook, questions, abortInputs, contextKeys, contextRecords, deferredReleases, releaseLists, stale, settledCallbacks, reactions, comparators, actionDepth, actions, actionWaits, arrays, repeats, maps, activeMarks, laneState, verdictState, cleanupError, +w_ambientMarks, +w_deferredArena}:
-      {==}
+      match fault:
+        case R.Healthy{}: {==}
+        case R.Exhausted{}: {==}
+        case R.BadId{}: {==}
+        case R.Unsupported{reason}: {==}
+        case R.TypeError{}: {==}
+        case R.CallbackThrown{cause}: {==}
 
 # A call with no reactive reader cannot join/borrow a held transaction.
 law unowned_read_does_not_join:
   for +w: R.World
   for +id: Nat
   for slow: Bool
-  {X.enterRead(w, 0n, id, slow) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
+  {ReadTx.enterRead(w, 0n, id, slow) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}
 
 def unowned_read_does_not_join(w, id, slow):
   {==}

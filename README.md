@@ -1,9 +1,9 @@
 # Solid 2 signals in Bend 2
 
 An executable **incremental translation of the non-store core** of
-`@solidjs/signals` 2.0.0-rc.20. This is **not yet the complete signals package**.
+`@solidjs/signals` 2.0.0-rc.21. This is **not yet the complete signals package**.
 
-The source is pinned to next@ecf30116. [The latest source review](tracking/reviews/solid-ecf30116.md)
+The source is pinned to next@2105ffb8. [The latest source review](tracking/reviews/solid-2105ffb8.md)
 records first-answer staging, nested error settlement, custom-comparator netting,
 and verdict/lane routing changes. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
@@ -68,15 +68,16 @@ data/thenable profile](tracking/deferred.md) now connects construction, flight
 lifetimes and truth readers, with a [complete ordinary-payload data update proof](tracking/deferred-payload-proof.md)
 for undefined, null, arbitrary booleans/naturals/strings/opaque reference
 identities, NaN and signed zero, including mixed types. At this pin the proof
-states the actual netted slot choice, including the signed-zero behavior reported
-in [#4538](https://github.com/solidjs/solid/pull/4538).
+states the corrected netted slot choice from [#4538](https://github.com/solidjs/solid/pull/4538)
+and its follow-ups: opposite signed zeros remain distinct while an accepted NaN
+remains a proposal.
 Its [first-load streams](tracking/deferred-first-stream.md) now use the ordinary
-iterator engine. The stream refetch wrapper is implemented; from/store/boundary profiles remain unfinished.
+iterator engine. The stream refetch wrapper is implemented; Observable inputs and store/boundary branches remain unfinished.
 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 4,776 public histories, 772 configured mutation
+budget. Current evidence totals 4,776 public histories, 780 configured mutation
 controls (completed sweeps are scoped separately in the verification record) and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -88,7 +89,7 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is `ecf30116` (rc.20). [The source review](tracking/reviews/solid-ecf30116.md)
+The reviewed Solid pin is `2105ffb8` (rc.21). [The source review](tracking/reviews/solid-2105ffb8.md)
 accounts for 79 verbatim inputs and the source-required proof contract changes.
 Active snapshots, stores and hydration remain explicit scope limits. The new
 reader-seat shadow is a test-only source input, outside the production grammar.

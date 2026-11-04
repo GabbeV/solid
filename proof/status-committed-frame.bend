@@ -14,7 +14,7 @@ import ./pending-source-committed-frame.bend as Pending
 import ./setter-committed-frame.bend as Setter
 
 def queue(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
-  B.choose(~R.World, Nat.is_ne(lane, 0n),
+  B.choose(~R.World, Bool.and(Nat.is_ne(lane,0n),R.Transaction.lane(B.transaction(w,lane))),
     _ => B.choose(~R.World, W.userQueue(R.Node.kind(B.node(w, id))),
       _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, lane)), [R.NodeRun{id}]))),
       _ => B.store_transaction(w, lane, R.Transaction.with_renderQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, lane)), [id])))),
@@ -28,7 +28,7 @@ def queueFrame(+w: R.World, +id: Nat, +lane: Nat) ->
   +renderRecord = R.Transaction.with_renderQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, lane)), [id]))
   +userQueue = B.append(R.QueueEntry, R.World.userQueue(w), [R.NodeRun{id}])
   +renderQueue = B.append(Nat, R.World.renderQueue(w), [id])
-  Frame.choice(Nat.is_ne(lane, 0n), w,
+  Frame.choice(Bool.and(Nat.is_ne(lane,0n),R.Transaction.lane(B.transaction(w,lane))), w,
     B.choose(~R.World, W.userQueue(R.Node.kind(B.node(w, id))), _ => B.store_transaction(w, lane, userRecord), _ => B.store_transaction(w, lane, renderRecord)),
     B.choose(~R.World, W.userQueue(R.Node.kind(B.node(w, id))), _ => R.World.with_userQueue(w, userQueue), _ => R.World.with_renderQueue(w, renderQueue)),
     Frame.choice(W.userQueue(R.Node.kind(B.node(w, id))), w, B.store_transaction(w, lane, userRecord), B.store_transaction(w, lane, renderRecord), Frame.storeTransaction(w, lane, userRecord), Frame.storeTransaction(w, lane, renderRecord)),

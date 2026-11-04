@@ -7,7 +7,7 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `ecf30116` (rc.20). The Bend2.0.37 frontend and vendored snapshot
+Solid is pinned to `2105ffb8` (rc.21). The Bend2.0.37 frontend and vendored snapshot
 remain unchanged. The independent checker uses the recorded, fully Lean-checked
 [congruence profile](kernel-congruence.md); Lean4.34.0 and kernel fuel are unchanged. No semantic deviation is active.
 
@@ -18,20 +18,22 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 772 = 525 finite + 247 kernel variants; operation targets are migrated to ecf30116, including source-driven fault replacement; fresh focused execution is separate from frozen sweeps |
+| Configured mutations | 780 = 533 finite + 247 kernel variants; operation targets are migrated to 2105ffb8, including source-driven fault replacement; fresh focused execution is separate from frozen sweeps |
 | Complete negative sweep | Frozen d7cdef988 / 5e68925c: all767 exact ordered variants compiled/rejected after108 unchanged kernel baselines; [receipt](reviews/complete-767-negative.json). The frozen source/proof seal was rechecked before this migration. |
-| Negative-check scope | Complete767 covers the frozen820-root d7cdef988 program, not ecf30116. Earlier754/727/726 and interrupted-prefix receipts retain their own inputs. A migrated target or resource/compilation failure is not a fresh rejection. |
+| Negative-check scope | Complete767 covers the frozen820-root d7cdef988 program, not 2105ffb8. Earlier754/727/726 and interrupted-prefix receipts retain their own inputs. A migrated target or resource/compilation failure is not a fresh rejection. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
 
-The [ecf30116 migration receipt](reviews/solid-ecf30116-validation.json) records
-126 package suites, all 52 operation-alignment suites, the unchanged native
-423-file/6,130-test signals suite, checker integrity controls and 18 fresh targeted
-negative rejections (14 finite, four proof oracles). All 772 mutation anchors are
-current; no complete 772 sweep is claimed. The 822-root whole-book verdict and its
-exact input hashes belong to `checked.json`; frontend diagnostics are not proof
-credit. The source-required contract and sufficient-runtime-bound changes are
-listed separately beside that receipt. Checker profile, fuel and RSS limit stay
-unchanged.
+The [rc.21 migration receipt](reviews/solid-2105ffb8-validation.json) records
+126 package suites, all 53 operation-alignment suites, the unchanged native
+478-file/6,502-test signals suite, checker integrity controls and 19 fresh targeted
+negative rejections (15 finite, four proof oracles). All 780 mutation anchors are
+current; no complete current sweep is claimed. The 823-root whole-book verdict
+and exact input hashes belong only to a matching `checked.json`; frontend
+diagnostics are not proof credit. The [root-contract ledger](reviews/solid-2105ffb8-root-contracts.json)
+records source-required statement, certificate and sufficient-runtime-bound
+changes, including the renamed same-flush frame-read law. Checker profile, fuel
+and RSS limit stay unchanged. The earlier [ecf30116 receipt](reviews/solid-ecf30116-validation.json)
+retains its own source and execution identity.
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
 roots: actual action opening/join establishes a live occurrence, either first
@@ -131,9 +133,10 @@ assumed package-completion measure.
 
 Use focused checks while developing. At a coherent checkpoint run the composed
 kernel and checks appropriate to the actual changes; broaden tests when changes
-or unresolved failures justify it. The latest runtime change only extracts the source settled-node status/tail
-segments; their exact inlining audit and public/alignment reruns are recorded. Frozen complete sweeps and fresh focused checks
-are deliberately distinct evidence.
+or unresolved failures justify it. The rc.21 source review records each migrated operation and its admitted scope.
+The settlement extraction audit retains its historical specimen and checks the
+current source segment separately. Frozen complete sweeps and fresh focused
+checks are distinct evidence.
 
 ## What each layer establishes
 
@@ -757,3 +760,16 @@ record is `tracking/checked.json`. Fresh whole764 mutation coverage is not claim
 The added heap-entry count roots retain one action obligation through the actual
 constructed first body and Round/heap entry; heap execution/publication remains
 the next composition, not an assumed post-state certificate.
+
+
+## 2026-11-04 rc.21 integration
+
+The frozen target advances 98 commits to `2105ffb8`, including signed-zero
+netting, AHEAD/verdict read routing, deferred releases and post-body traversal.
+All 79 selected source files match the target verbatim. The production non-store
+grammar and unchanged checker limits remain explicit; no active deviation is
+introduced. The new unrestricted AHEAD decision law retains the previous domain
+while positive blocker corollaries carry the source wait posture. This preserves
+the proof foundation on the new source; it does not close the missing actual
+heap/read/recompute-to-parking composition or the global publication theorem.
+Only the matching completed independent input seal establishes this checkpoint.

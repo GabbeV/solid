@@ -84,10 +84,10 @@ def graph(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat, +history: History<w>,
   Transport.build(w, run(w, history), root, leaf, edge, topology(w, history), storage(w, history), shape)
 
 def startReturn(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat, +history: History<w>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  Return.Returned<Settlement.start(run(w, history), root, rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(run(w, history), root, rest, stack), rest, stack, 15n>:
   Shape.startReturn(run(w, history), root, leaf, edge, rest, stack, graph(w, root, leaf, edge, history, shape))
 
 def returnedFrame(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat, +history: History<w>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>, +shape: Shape.OneEdge<w, root, leaf, edge>) ->
-  {Content.observe(Return.world(Settlement.start(run(w, history), root, rest, stack), rest, stack, 14n, startReturn(w, root, leaf, edge, history, rest, stack, shape))) == Content.observe(w) : Content.View}:
+  {Content.observe(Return.world(Settlement.start(run(w, history), root, rest, stack), rest, stack, 15n, startReturn(w, root, leaf, edge, history, rest, stack, shape))) == Content.observe(w) : Content.View}:
   +next = run(w, history)
-  Content.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 14n, startReturn(w, root, leaf, edge, history, rest, stack, shape)), Shape.returnedFrame(next, root, leaf, edge, rest, stack, graph(w, root, leaf, edge, history, shape)), content(w, history))
+  Content.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 15n, startReturn(w, root, leaf, edge, history, rest, stack, shape)), Shape.returnedFrame(next, root, leaf, edge, rest, stack, graph(w, root, leaf, edge, history, shape)), content(w, history))

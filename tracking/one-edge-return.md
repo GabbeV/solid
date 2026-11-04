@@ -1,5 +1,12 @@
 # Constructed one-edge settlement return
 
+Current rc.21 migration: descent follows the visit body and may follow nested
+settlement. The sufficient bound is now 15 (trimmed 17), with the simple active
+one-edge return exactly 11 steps and the absent-carrier return still 9. The
+release certificate retains the outer list in RestoreSettlement during a nested
+call rather than claiming it remains the current local list. Earlier numerical
+bounds below describe their historical pins.
+
 The queued actual after-trim / pending traversal / scheduling segment now has a
 constructed return bound from input graph facts, with arbitrary World, source
 identity, leaf identity, payloads, caller tasks and caller value stack:

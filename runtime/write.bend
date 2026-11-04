@@ -28,7 +28,7 @@ def userQueue(+k: R.NodeKind) -> Bool:
 def enqueueIn(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
   B.choose(~R.World, B.effect(R.Node.kind(B.node(w, id))),
     _ =>
-      +w = B.choose(~R.World, Nat.is_ne(lane, 0n),
+      +w = B.choose(~R.World, Bool.and(Nat.is_ne(lane, 0n), R.Transaction.lane(B.transaction(w, lane))),
         _ => B.choose(~R.World, userQueue(R.Node.kind(B.node(w, id))),
           _ => B.store_transaction(w, lane, R.Transaction.with_userQueue(B.transaction(w, lane), B.append(R.QueueEntry, R.Transaction.userQueue(B.transaction(w, lane)), [R.NodeRun{id}]))),
           _ => B.store_transaction(w, lane, R.Transaction.with_renderQueue(B.transaction(w, lane), B.append(Nat, R.Transaction.renderQueue(B.transaction(w, lane)), [id])))),
@@ -40,6 +40,10 @@ def enqueueIn(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
 
 def enqueue(+w: R.World, id: Nat) -> R.World:
   enqueueIn(w, id, R.World.passLane(w))
+
+# scheduler.ts:queueEffectRun uses one stable bound runner per node.
+def queueEffectRun(+w: R.World, +id: Nat) -> R.World:
+  enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id)
 
 def insert_subs(fuel: Nat,w: R.World,edge: Nat) -> R.World:
   Insert.insert_subs(fuel,w,edge)

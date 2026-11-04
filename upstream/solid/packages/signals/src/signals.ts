@@ -27,7 +27,13 @@ import {
   CONFIG_REDERIVE,
   CONFIG_AUTHORITATIVE
 } from "./core/index.js";
-import { emitDiagnostic, registerGraph, reportDiagnostic } from "./core/dev.js";
+import {
+  devGuardOptimisticBeforeLoad,
+  emitDiagnostic,
+  forgetThrownRead,
+  registerGraph,
+  reportDiagnostic
+} from "./core/dev.js";
 import {
   dirtyQueue,
   flushTransaction,
@@ -458,7 +464,9 @@ export function createOptimistic<T>(
     node._config &= ~CONFIG_AUTO_DISPOSE;
     return [
       accessor<T | undefined>(node),
-      optimisticWrite.bind(null, node as any) as Setter<T | undefined>
+      (__DEV__
+        ? (v: any) => (devGuardOptimisticBeforeLoad(node), optimisticWrite(node as any, v))
+        : optimisticWrite.bind(null, node as any)) as Setter<T | undefined>
     ];
   }
   const node = signal<T>(first as any, second as SignalOptions<T>);
@@ -814,6 +822,8 @@ function watch<T>(
       } catch (e) {
         if (e instanceof NotReadyError) throw e;
         // An error is an answer (D-41): delivered by the same frame rule.
+        // (D-42, dev: the runtime's catch, not a user's.)
+        if (__DEV__) forgetThrownRead();
         v = unwrapStatusError(e) as T;
         failed = true;
       }

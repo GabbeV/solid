@@ -35,7 +35,7 @@ def startReturn(+w: R.World, +root: Nat, +leaf: Nat, +first: R.Link, +links: Lis
   healthy: {B.ok(w) == True{} : Bool}, validRoot: {B.valid(w, root) == True{} : Bool}, validLeaf: {B.valid(w, leaf) == True{} : Bool}, different: {Nat.is_eq(leaf, root) == False{} : Bool},
   rootEmpty: {R.Node.subs(B.node(w, root)) == 0n : Nat}, rootTail: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}, deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}, depsTail: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat},
   noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}, noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}, arena: {R.World.links(w) == first <> links : List<&2, R.Link>}) ->
-  Return.Returned<Settlement.start(G.link(w, root, leaf), root, rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(G.link(w, root, leaf), root, rest, stack), rest, stack, 15n>:
   Constructed.startReturn(G.link(w, root, leaf), root, leaf, B.length(R.Link, links), rest, stack, build(w, root, leaf, first, links, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))
 
 
@@ -43,7 +43,7 @@ def frame(+w: R.World, +root: Nat, +leaf: Nat, +first: R.Link, +links: List<&2, 
   +healthy: {B.ok(w) == True{} : Bool}, +validRoot: {B.valid(w, root) == True{} : Bool}, +validLeaf: {B.valid(w, leaf) == True{} : Bool}, +different: {Nat.is_eq(leaf, root) == False{} : Bool},
   +rootEmpty: {R.Node.subs(B.node(w, root)) == 0n : Nat}, +rootTail: {R.Node.subsTail(B.node(w, root)) == 0n : Nat}, +deps: {R.Node.deps(B.node(w, leaf)) == 0n : Nat}, +depsTail: {R.Node.depsTail(B.node(w, leaf)) == 0n : Nat},
   +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}, +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}, +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}) ->
-  {Frame.observe(Return.world(Settlement.start(G.link(w, root, leaf), root, rest, stack), rest, stack, 14n, startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(G.link(w, root, leaf), root, rest, stack), rest, stack, 15n, startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))) == Frame.observe(w) : Frame.View}:
   +next = G.link(w, root, leaf)
   +shape = build(w, root, leaf, first, links, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena)
-  Frame.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 14n, Constructed.startReturn(next, root, leaf, B.length(R.Link, links), rest, stack, shape)), Constructed.returnedFrame(next, root, leaf, B.length(R.Link, links), rest, stack, shape), GraphFrame.linked(w, root, leaf, depsTail, deps, rootTail))
+  Frame.compose(w, next, Return.world(Settlement.start(next, root, rest, stack), rest, stack, 15n, Constructed.startReturn(next, root, leaf, B.length(R.Link, links), rest, stack, shape)), Constructed.returnedFrame(next, root, leaf, B.length(R.Link, links), rest, stack, shape), GraphFrame.linked(w, root, leaf, depsTail, deps, rootTail))

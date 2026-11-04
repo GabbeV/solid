@@ -22,7 +22,7 @@ def written(+w: R.World, +node: R.Node) ->
 
 def parentPrevious(+node: R.Node, +id: Nat) -> {R.Node.parent(R.Node.with_prevHeap(node, id)) == R.Node.parent(node) : Nat}:
   match node:
-    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, +rebaseOwed}:
       {==}
 
 def parent(+w: R.World, +node: R.Node, known: {R.Node.parent(node) == 0n : Nat}) ->

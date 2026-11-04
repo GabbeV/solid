@@ -1,6 +1,7 @@
 # Observer-polymorphic footprint of the actual local pending store, including
 # old-error capture. Runtime source is unchanged.
 import Base
+import ./pending-error-selection.bend as ErrorSelection
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/extension.bend as E
@@ -20,14 +21,12 @@ def prepared(+w: R.World,+node: Nat,source: Nat,show: Bool) -> R.World:
   B.first(R.World,Bool,P.addPendingSource(shown(w,node,show),node,1n+source))
 
 
-def providedBranch(+w: R.World,+node: Nat,+source: Nat,+serial: Nat,+same: Bool) -> R.World:
-  B.choose(~R.World,same,
-    _=>B.store_extension(E.ext(w,node),node,R.NodeExtension.with_error(B.extension(E.ext(w,node),node),N.error(serial,source))),
-    _=>P.preserveOrCreate(w,node,1n+source,R.NodeExtension.error(B.extension(w,node))))
+def providedBranch(w: R.World,node: Nat,source: Nat,serial: Nat,same: Bool) -> R.World:
+  ErrorSelection.givenCurrent(w,node,source,serial,same)
 
 
 def provided(+w: R.World,+node: Nat,+source: Nat,+serial: Nat) -> {P.setPendingError(w,node,1n+source,N.error(serial,source)) == B.store_extension(E.ext(w,node),node,R.NodeExtension.with_error(B.extension(E.ext(w,node),node),N.error(serial,source))) : R.World}:
-  Equal.cong(Bool,R.World,same=>providedBranch(w,node,source,serial,same),Nat.is_eq(1n+source,1n+source),True{},Existing.self(1n+source))
+  ErrorSelection.provided(w,node,source,serial)
 
 def topologyFinish(+w: R.World,+node: Nat,+source: Nat,+serial: Nat) -> {Topology.observe(N.finish(w,node,source,serial)) == Topology.observe(w) : Topology.View}:
   +written = N.statused(w,node)

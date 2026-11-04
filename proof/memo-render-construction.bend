@@ -71,7 +71,7 @@ def startReturn(+w: R.World, +sourceExpr: R.Expr, +effectExpr: R.Expr, +target: 
   +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>,
   healthy: {B.ok(w) == True{} : Bool}, nullComputed: {B.parentComputed(w, 0n) == 0n : Nat},
   arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}, linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}) ->
-  Return.Returned<Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 15n>:
   Shape.startReturn(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), N.index(memo(w, sourceExpr)), B.length(R.Link, links), rest, stack, build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena))
 
 
@@ -80,7 +80,7 @@ def frame(+w: R.World, +sourceExpr: R.Expr, +effectExpr: R.Expr, +target: Nat, +
   +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>,
   +healthy: {B.ok(w) == True{} : Bool}, +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat},
   +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}, +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}) ->
-  {Frame.observe(Return.world(Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 14n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena))) == Frame.observe(allocated(w, sourceExpr, effectExpr, target, program, cleanup)) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 15n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena))) == Frame.observe(allocated(w, sourceExpr, effectExpr, target, program, cleanup)) : Frame.View}:
   +room = Append.zeroRoom(w, first, nodes, arena)
   +m = memo(w, sourceExpr)
   +e = allocated(w, sourceExpr, effectExpr, target, program, cleanup)
@@ -92,7 +92,7 @@ def frame(+w: R.World, +sourceExpr: R.Expr, +effectExpr: R.Expr, +target: Nat, +
   +root = rootNode(w, sourceExpr, effectExpr, target, program, cleanup, room, nullComputed, rootValid)
   +leaf = N.node(m, effectExpr, which, roomM, nullM)
   +built = build(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena)
-  Frame.compose(e, q, Return.world(Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 14n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena)),
+  Frame.compose(e, q, Return.world(Settlement.start(linked(w, sourceExpr, effectExpr, target, program, cleanup), N.index(w), rest, stack), rest, stack, 15n, startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena)),
     Shape.returnedFrame(q, N.index(w), N.index(m), B.length(R.Link, links), rest, stack, built),
     GraphFrame.linked(e, N.index(w), N.index(m),
       Equal.cong(R.Node, Nat, node => R.Node.depsTail(node), B.node(e, N.index(m)), N.record(m, effectExpr, which), leaf),

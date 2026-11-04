@@ -27,7 +27,7 @@ def scheduledRecord(+w: R.World, +id: Nat) ->
 def openSetter(+record: R.Transaction, +count: Nat) ->
   {R.Transaction.open(R.Transaction.with_open(record, count)) == count : Nat}:
   match record:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest, +rebaseOver}: {==}
 
 def leftStoreRead(+w: R.World, +prefix: List<&2, R.Transaction>, +left: R.Transaction, +right: R.Transaction, +value: R.Transaction) ->
   {B.transaction(B.store_transaction(Pair.scope(w, prefix, left, [], right, []), Pair.leftId(prefix), value), Pair.leftId(prefix)) == value : R.Transaction}:

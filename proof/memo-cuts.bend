@@ -1,4 +1,5 @@
 import Base
+import ./empty-recompute-tail.bend as EmptyTail
 import ../runtime/equality.bend as EQ
 import ../runtime/api.bend as A
 import ../proof/paths.bend as P
@@ -11,7 +12,7 @@ import ../representation/records.bend as R
 
 # This fixed frame is the source scalar memo's completed first update.
 def frame() -> C.PassFrame:
-  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, R.Number{1n}, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}}}
+  C.PassFrame{3n, False{}, 0n, False{}, 0n, False{}, R.Number{1n}, False{}, R.Number{0n}, 0n, False{}, R.FlightUndefined{}, [], 0n, False{}, C.LanePass{0n, R.MountUnset{}, R.MountFalse{}, False{}, R.Empty{}, False{}}}
 
 def step_release(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, ready: {B.ok(w) == True{} : Bool}) ->
   {C.step(C.Machine{w, C.PassReleases{frame(), 0n, value, False{}, False{}, False{}, R.Healthy{}} <> rest, stack})
@@ -37,7 +38,7 @@ def afterRelease(w: R.World, rest: List<&2, C.Task>, stack: List<&2, R.Value>, v
 
 def releaseLoaded(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value, +nodes: List<&2, Nat>) -> C.Machine:
   B.choose(~C.Machine, Nat.is_ge(0n, B.length(Nat, nodes)),
-    _ => afterRelease(w, rest, stack, value),
+    _ => EmptyTail.resume(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value),
     _ =>
       +node = B.get(Nat, nodes, 0n, 0n)
       +ending = {C.PassReleases{frame(), 1n, value, False{}, False{}, False{}, R.Healthy{}} <> rest : List<&2, C.Task>}
@@ -46,7 +47,9 @@ def releaseLoaded(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value
 def release_empty(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value,
   empty: {B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []) == [] : List<&2, Nat>}) ->
   {C.passReleases(w, rest, stack, frame(), 0n, value, False{}, False{}, False{}, R.Healthy{}) == afterRelease(w, rest, stack, value) : C.Machine}:
-  Equal.cong(List<&2, Nat>, C.Machine, nodes => releaseLoaded(w, rest, stack, value, nodes), B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []), [], empty)
+  Equal.trans(C.Machine, C.passReleases(w, rest, stack, frame(), 0n, value, False{}, False{}, False{}, R.Healthy{}), EmptyTail.resume(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value), afterRelease(w, rest, stack, value),
+    Equal.cong(List<&2, Nat>, C.Machine, nodes => releaseLoaded(w, rest, stack, value, nodes), B.get(List<&2, Nat>, R.World.releaseLists(w), 0n, []), [], empty),
+    EmptyTail.collapsed(R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}), rest, stack, 3n, 0n, value))
 
 def after_release_identity(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +value: R.Value,
   tail: {R.World.with_fault(C.passFinallyTail(w, 3n, False{}), R.Healthy{}) == w : R.World}, ready: {B.ok(w) == True{} : Bool}) ->
@@ -123,9 +126,9 @@ def selected(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +i
   B.choose(~C.Machine, errored, _ => C.Machine{w, rest, stack},
     _ => B.choose(~C.Machine, Nat.is_eq(callback, 0n),
       _ => C.publishCompared(w, rest, stack, id, value, create, height, outgoing, sources, pendingSource, joined, C.publicationChanged(w, id, value, uninitialized), 0n),
-      _ => B.choose(~C.Machine, Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), uninitialized), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),False{})),
+      _ => B.choose(~C.Machine, Bool.or(Bool.and(Bool.not(B.present(R.Node.pending(B.node(w,id)))),Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), uninitialized)), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),False{})),
         _ => C.publishCompared(w, rest, stack, id, value, create, height, outgoing, sources, pendingSource, joined, True{}, 0n),
-        _ => C.isSame(w, C.PublishCompared{id, value, create, height, uninitialized, outgoing, sources, pendingSource, joined, errored, 0n} <> rest, stack, id, C.passValue(w, id), value))))
+        _ => C.isSame(w, C.PublishCompared{id, value, create, height, Bool.not(B.present(R.Node.pending(B.node(w,id)))), outgoing, sources, pendingSource, joined, errored, 0n} <> rest, stack, id, C.passValue(w, id), value))))
 
 def default_publish(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +value: R.Value, +create: Bool, +height: Nat, +uninitialized: Bool, +outgoing: R.Value, +sources: Nat, +pendingSource: Bool, +joined: Bool, +errored: Bool, +pair: B.Bundle<R.World, Bool>,
   clean: {errored == False{} : Bool},

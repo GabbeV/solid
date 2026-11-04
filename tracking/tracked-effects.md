@@ -1,12 +1,11 @@
 # Tracked effect milestone
 
-Solid remains b0ad1df5 (rc.16), and the semantic deviation register is empty.
-The production `createTrackedEffect` API now executes in the same runtime as
-ordinary signals, memos and two-part effects. This is a new supported primitive,
-not merely more test cases for an existing one. Owned onSettled uses this source
-engine; it is the next consumer to translate. Dev diagnostics, active lane and
-boundary hooks, stores and arbitrary JavaScript closure reflection remain outside
-this port's admitted program grammar.
+The current pin is rc.21 / 2105ffb8; the deviation register is empty.
+Production `createTrackedEffect` and its owned `onSettled` consumer execute in the
+shared runtime. The original milestone below records their source structure and
+its initial evidence. Current regression/independent-proof scope belongs to the
+rc.21 migration receipt and matching completed seal. Dev diagnostics, mounted
+boundaries, stores and arbitrary JavaScript closure reflection remain excluded.
 
 ## Source operations and representation
 
@@ -26,10 +25,21 @@ or fictitious user-effect node.
 
 `core.visitHeap` preserves GlobalQueue._update's ordering: tracked comes before
 the zombie arm; delete from heap, set modified, enqueue `_run` in EFFECT_USER.
-`core.runTracked` checks modified and disposed, clears modified, then recomputes.
+`core.runTracked` checks modified and disposed, captures notifyEpoch, clears the
+per-node owed landing debt and modified flag, then recomputes.
 Its body does not run at construction or in the heap's compute phase. This retains
 #3291's render-write/commit/first-read order. The modified gate is still necessary
 when several heap visits queue the same closure before it runs.
+
+After the run, the source scans the live dependency list. A changed held staging
+owes one stable landing closure in that hold's user queue. A later actual run
+clears the debt; merely invoking a landing whose run is refused does not. An
+ordinary changed staging re-enqueues/schedules only under the source epoch-or-
+computed condition, then stops scanning. Both strict equality and SameValue
+participate in detecting changed staging. Node.trackedOwed and TrackedLanding
+encode that closure's captured mutable cell/identity without a second engine.
+The active-boundary heldRunHook remains excluded; modified/disposed are the
+admitted gates before clearing owed.
 
 `TrackedBody` represents the source computed's `_fn` wrapper, not a public extra
 primitive. It captures and clears the previous cleanup, calls it, calls the user's

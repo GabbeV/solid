@@ -37,10 +37,11 @@ try {
     ...[7,19].map(identity=>[{$:'DataReference',identity},references.get(identity),{$:'Reference',id:identity}])
   ];
   let count=0;
-  for(const [initial,initialValue,initialEncoded] of cases)for(const [next,nextValue,nextEncoded] of cases) {
-    // Preserve the pinned strict-equality netted-read behavior, including #4538.
-    const expected=initialValue===nextValue?initialEncoded:nextEncoded;
-    const expectedValue=initialValue===nextValue?initialValue:nextValue;
+  for(const [initial,initialValue] of cases)for(const [next,nextValue,nextEncoded] of cases) {
+    // rc.21/#4538: every accepted ordinary proposal is delivered, including
+    // opposite signed zeros. Assert that outcome independently of the gate.
+    const expected=nextEncoded;
+    const expectedValue=nextValue;
     const label=JSON.stringify([initial,next]);
     let machine=D.before(initial,next);
     assert.deepEqual(machine,P.state_0(initial,next),label+' initial Machine');

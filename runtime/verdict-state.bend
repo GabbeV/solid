@@ -9,6 +9,7 @@ import ./lanes-state.bend as L
 import ./write.bend as W
 import ./read-state.bend as Read
 import ./creator-reads.bend as Creator
+import ./extension.bend as E
 
 def found(+w: R.World) -> R.World:
   R.World.with_verdictState(w, R.VerdictState.with_probeFound(R.World.verdictState(w), True{}))
@@ -78,6 +79,7 @@ def pendingVerdict(+w: R.World, +reader: Nat, +id: Nat) -> R.World:
           _ => B.choose(~R.World, Bool.and(Nat.is_ne(R.World.flushTransaction(w), 0n), R.Transaction.latest(B.transaction(w, R.World.flushTransaction(w)))),
             _ => route(w, reader, R.World.flushTransaction(w)), _ => provisionalVerdict(w, reader, False{})),
           _ =>
+            +w = B.choose(~R.World,B.has(R.Node.flags(B.node(w,reader)),K.REACTIVE_LANE_READ()),_=>w,_=>R.World.with_laneState(w,R.LaneState.with_ahead(R.World.laneState(w),B.append(Nat,R.LaneState.ahead(R.World.laneState(w)),[reader]))))
             +w = B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), 0n),
               _ =>
                 +w = Tx.joinFuture(w, 0n)
@@ -104,22 +106,42 @@ def markVerdictReader(+w: R.World, window: U32) -> R.World:
       +w = B.choose(~R.World,U32.is_eq(born,0),_=>B.store_node(w,reader,R.Node.with_config(B.node(w,reader),B.set(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()))),_=>w)
       B.store_node(w,reader,R.Node.with_flags(B.node(w,reader),B.set(R.Node.flags(B.node(w,reader)),U32.or(K.REACTIVE_PROBED(),U32.or(K.REACTIVE_WINDOW(),born))))),_=>w)
 
+# Array.splice(indexOf(id) >>> 0,1): missing identity is a no-op, one
+# occurrence only; unlike Set deletion, duplicates in ahead are meaningful.
+def removeFirst(items: List<&2,Nat>,+id: Nat) -> List<&2,Nat>:
+  match items:
+    case Nil{}: []
+    case +head <> +tail:
+      B.choose(~List<&2,Nat>,Nat.is_eq(head,id),_=>tail,_=>head <> removeFirst(tail,id))
+
+def askedIn(+w: R.World,+id: Nat) -> R.World:
+  +w = E.ext(w,id)
+  +pair = B.choose(~B.Bundle<R.World,R.AskedIn>,B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),
+    _=>
+      +pair = Tx.txOf(w,id)
+      B.Bundle{B.first(R.World,Nat,pair),R.AskedTransaction{B.second(R.World,Nat,pair)}},
+    _=>B.Bundle{w,B.choose(~R.AskedIn,Nat.is_ne(R.World.flushTransaction(w),0n),_=>R.AskedTransaction{R.World.flushTransaction(w)},_=>R.AskedClock{R.World.clock(w)})})
+  +w = B.first(R.World,R.AskedIn,pair)
+  B.store_extension(w,id,R.NodeExtension.with_askedIn(B.extension(w,id),B.second(R.World,R.AskedIn,pair)))
+
 def observeAfterBirth(+w: R.World, +reader: Nat, +id: Nat, born: Bool) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, born, _ => B.Bundle{w, False{}},
     _ => B.Bundle{B.choose(~R.World, R.World.running(w),
       _ =>
         +w = Tx.joinFuture(w, 0n)
         +w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), _ => w, _ => W.queuePendingNode(w, id))
+        +w = R.World.with_laneState(w,R.LaneState.with_ahead(R.World.laneState(w),removeFirst(R.LaneState.ahead(R.World.laneState(w)),reader)))
         verdictRead(w, reader, R.World.flushTransaction(w), True{}), _ => w), True{}})
 
 def observeFlight(+w: R.World, +reader: Nat, +id: Nat) -> B.Bundle<R.World, Bool>:
-  B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED()), _ => B.Bundle{w, False{}},
+  B.choose(~B.Bundle<R.World,Bool>,Bool.and(Nat.is_ne(R.World.passLane(w),0n),Bool.and(B.effect(R.Node.kind(B.node(w,reader))),Bool.not(B.has(R.Node.status(B.node(w,reader)),K.STATUS_UNINITIALIZED())))),_=>B.Bundle{w,True{}},
+    _=>B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED()), _ => B.Bundle{w, False{}},
     _ => B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
       _ =>
         +pair = Tx.txOf(w, id)
         +pair = Tx.bornInto(B.first(R.World, Nat, pair), reader, B.second(R.World, Nat, pair))
         observeAfterBirth(B.first(R.World, Bool, pair), reader, id, B.second(R.World, Bool, pair)),
-      _ => observeAfterBirth(w, reader, id, False{})))
+      _ => observeAfterBirth(w, reader, id, False{}))))
 
 # staged/heldLatest carry a real throw as the common driver's Fault. The
 # caller does not receive an invented value on that exceptional path.

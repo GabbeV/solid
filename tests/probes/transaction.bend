@@ -3,6 +3,7 @@ import ../../representation/records.bend as R
 import ../../representation/base.bend as B
 import ../../runtime/construct.bend as N
 import ../../runtime/transaction.bend as T
+import ../../runtime/read-transaction.bend as ReadTx
 import ../../runtime/extension.bend as E
 import ../../runtime/graph.bend as G
 import ../../runtime/constants.bend as K
@@ -78,7 +79,7 @@ def apply(+w: R.World, op: U32, +own: Bool, +extra: Bool) -> ProbeResult:
       boolProbeResult(T.bornInto(w, 3n, 1n))
     case 15:
       w = B.choose(~R.World, extra, _ => R.World.with_flushTransaction(w, 1n), _ => w)
-      boolProbeResult(T.frameRead(w, B.choose(~Nat, own, _ => 4n, _ => 5n), 3n))
+      boolProbeResult(ReadTx.frameRead(w, B.choose(~Nat, own, _ => 4n, _ => 5n), 3n))
     case 16:
       ProbeResult{T.joinPass(w, B.choose(~Nat, own, _ => 4n, _ => 5n), 3n), 0n}
     case 18:

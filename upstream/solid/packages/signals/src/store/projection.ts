@@ -46,7 +46,7 @@ import type { Computed, Signal } from "../core/types.js";
 import type { Refreshable } from "../core/index.js";
 import { optHooks } from "./hooks.js";
 import { reconcileState } from "./reconcile.js";
-import { nameStore, runDirect, storeSetter, wrap } from "./store.js";
+import { nameStore, protoOf, runDirect, storeSetter, wrap } from "./store.js";
 import { setLookup, storeOwners, type StoreFamily, type StoreTarget } from "./target.js";
 import {
   $TARGET,
@@ -122,6 +122,7 @@ function wrapDraft(
         delete inner[prop];
       }),
     ownKeys: () => read(() => Reflect.ownKeys(inner)),
+    getPrototypeOf: () => protoOf(inner),
     getOwnPropertyDescriptor(_, prop) {
       const d = read(() => Reflect.getOwnPropertyDescriptor(inner, prop));
       if (d) d.configurable = true;
@@ -159,10 +160,11 @@ function wakeFamily(fam: StoreFamily): void {
   // retires the derive (`settleFamily`) — reaches the readers parked here. A
   // reader the landing leaves unchanged does not re-run to clear it (#4305).
   const error = new NotReadyError(fw);
-  fam.woke = true;
-  optHooks?.ask(fam);
+  fam._woke = true;
+  // A leaf the optimistic engine keeps off the wake (`ask`).
+  const skip = optHooks?.ask(fam);
   forEachFamilyNode(fam, n => {
-    if (n._subs === null) return;
+    if (n._subs === null || skip?.(n)) return;
     // The leaf carries the derive's pending as a propagated copy, as a memo
     // between them would: a dependent recovering one branch stays pending
     // through a leaf it still reads (core `retryReaches`), and the landing's
@@ -197,8 +199,8 @@ function errorFamily(fam: StoreFamily, error?: unknown): void {
  * settle — core's walk, from each leaf (the leaves are not the derive's
  * dependents, so its own settle walk does not reach them). */
 function settleFamily(fam: StoreFamily): void {
-  if (!fam.woke) return;
-  fam.woke = false;
+  if (!fam._woke) return;
+  fam._woke = false;
   const fw = fam.node!;
   forEachFamilyNode(fam, n => {
     if (n._subs !== null) settlePendingSource(n as unknown as Computed<any>, fw);
@@ -250,7 +252,7 @@ export function runProjectionComputed<T extends object>(
 ): Computed<void | T> {
   const owner = getOwner() as Computed<void | T>;
   const target: StoreTarget = (wrappedStore as any)[$TARGET];
-  const fam = target.fam!;
+  const fam = target._fam!;
   const run = (fam.run = (fam.run || 0) + 1);
   // A verdict reader's pass that is the hold's work reads plainly, as a
   // pending node's is (core `recompute`, #3884, D-25), so the landing it
@@ -263,7 +265,7 @@ export function runProjectionComputed<T extends object>(
   // this pass only: its reads set the posture again at its end, and a window
   // in it re-stamps it (`markVerdictReader`). Only the verdict engine makes
   // a verdict reader (`observeFlightHook`).
-  if (observeFlightHook && (fam.woke || fam.w)) ((fam.w = 0), (owner._config &= ~CONFIG_VERDICT));
+  if (observeFlightHook && (fam._woke || fam.w)) ((fam.w = 0), (owner._config &= ~CONFIG_VERDICT));
   let result: void | T | Promise<void | T> | AsyncIterable<void | T>;
   // Open loading window (seedLoadingValue): the observable store IS commit #0
   // for the whole first flight — the derive works a detached shadow of the
@@ -389,7 +391,7 @@ export function createProjectionInternal<T extends object = {}>(
     node: null,
     live: new Set(),
     st: familyStatus,
-    shallow: !!options?.shallow,
+    _shallow: !!options?.shallow,
     opt,
     // The row key, for a child paired after the adoption (store.ts
     // `adoptChild`, #3712) as the adoption pairs them.
@@ -401,7 +403,7 @@ export function createProjectionInternal<T extends object = {}>(
           : (row: any) => (isWrappable(row) ? row[keyOption] : undefined)
   };
   const store = wrap(seed as any, null, null, fam) as Store<T>;
-  if (fam.shallow) {
+  if (fam._shallow) {
     ((store as any)[$TARGET] as StoreTarget).s = true;
     markRawIngest(seed);
   }
@@ -425,7 +427,7 @@ export function createProjectionInternal<T extends object = {}>(
     // The derive's leaves are not its dependents: a mark's repoll
     // (affects-marks.ts) and a source's status (core `propagateStatus`,
     // `familyStatus`) reach their readers through this.
-    (node as any).fam = fam;
+    (node as any)._fam = fam;
   }
   return store as Refreshable<Store<T>>;
 }

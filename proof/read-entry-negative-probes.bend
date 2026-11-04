@@ -7,6 +7,7 @@ import ../representation/base.bend as B
 import ../runtime/graph-state.bend as G
 import ../runtime/transaction.bend as X
 
+import ../runtime/read-transaction.bend as ReadTx
 def graph() -> R.World:
   +source = R.Node.with_subsTail(R.Node.with_subs(R.Node.with_kind(B.blank_node(),R.Signal{}),1n),1n)
   +reader = R.Node.with_pending(R.Node.with_deps(R.Node.with_flags(R.Node.with_kind(B.blank_node(),R.Render{}),4),1n),R.Present{R.Number{7n}})
@@ -22,5 +23,5 @@ def held() -> R.World:
 def render_join_does_not_open_pass_group() -> {R.World.passTx(X.joinPass(held(),2n,1n)) == 0n : Nat}:
   {==}
 
-def same_flush_read_is_not_forced() -> {B.second(R.World,Bool,X.enterRead(R.World.with_flushTransaction(held(),1n),2n,1n,False{})) == False{} : Bool}:
+def same_flush_read_is_not_forced() -> {B.second(R.World,Bool,ReadTx.enterRead(R.World.with_flushTransaction(held(),1n),2n,1n,False{})) == False{} : Bool}:
   {==}

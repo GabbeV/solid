@@ -1251,11 +1251,11 @@ def Laws.lane_pass_non_effect_never_queues_run(w, id, value, create, changed, la
 def Laws.lane_pass_unchanged_never_queues_run(w, id, value, create, effect, lane):
   PassLaws.unchangedNoRun(w, id, value, create, effect, lane)
 
-def Laws.lane_pass_without_mount_joins_only_held_reads(w, id, previous, old):
-  PassLaws.noMountJoin(w, id, previous, old)
+def Laws.lane_pass_without_mount_joins_only_held_reads(w, id, previous, old, superseded, releaseAfter):
+  PassLaws.noMountJoin(w, id, previous, old, superseded, releaseAfter)
 
-def Laws.lane_pass_restores_captured_mount(w, previous, old, mount):
-  PassLaws.restoreCapturedMount(w, previous, old, mount)
+def Laws.lane_pass_restores_captured_mount(w, previous, old, mount, superseded, releaseAfter):
+  PassLaws.restoreCapturedMount(w, previous, old, mount, superseded, releaseAfter)
 
 def Laws.lane_pass_accepted_truth_skips_ordinary_store(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed):
   PassLaws.handledOutcome(w, rest, stack, id, value, create, height, outgoing, sources, wasSource, joined, changed)
@@ -1770,20 +1770,23 @@ def Laws.terminal_node_membership_preserves_world(w, id, owner, captured, stoppe
   TerminalMembership.terminal(w, id, owner, captured, stopped)
 
 
-def Laws.zero_action_rendered_group_still_blocks(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live):
-  RenderedGraph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live)
+def Laws.eligible_pending_render_reader_decides_ahead_exception(w, id, owner, eligible, rendered, live):
+  RenderedGraph.renderDecision(w, id, owner, eligible, rendered, live)
+
+def Laws.zero_action_rendered_group_still_blocks(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live, waits):
+  RenderedGraph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, nodes, active, capture, stopped, rendered, live, waits)
 
 
 def Laws.live_pending_subscriber_blocks(w, edge, owner, extra, valid, live):
   RenderedGraph.subscriber(w, edge, owner, extra, valid, live)
 
 
-def Laws.current_generation_pending_reader_is_valid(w, edge, reads, generation, alive):
-  RenderedGraph.currentReader(w, edge, reads, generation, alive)
+def Laws.current_generation_pending_reader_is_valid(w, edge, owner, reads, generation, alive):
+  RenderedGraph.currentReader(w, edge, owner, reads, generation, alive)
 
 
-def Laws.rendered_flight_is_retained_by_landing_scan(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live):
-  RenderedLanding.retained(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live)
+def Laws.rendered_flight_is_retained_by_landing_scan(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live, waits):
+  RenderedLanding.retained(w, predecessor, prefix, id, tail, rest, stack, frame, index, lookup, healthy, zero, nodes, active, capture, stopped, rendered, live, waits)
 
 
 def Laws.completion_prefix_preserves_graph(w, id, root, remaining, resolution, positive):
@@ -1814,12 +1817,12 @@ def Laws.fresh_list_captures_and_appends(w, id, predecessor, slot, allocated, un
   ListConstruction.fresh(w, id, predecessor, slot, allocated, unowned)
 
 
-def Laws.fresh_list_constructs_pending_rendered_snapshot(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live):
-  ListConstruction.pending(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live)
+def Laws.fresh_list_constructs_pending_rendered_snapshot(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, waits):
+  ListConstruction.pending(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, waits)
 
 
-def Laws.fresh_list_enters_pending_rendered_history(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, healthy, programme):
-  ListConstruction.beginHistory(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, healthy, programme)
+def Laws.fresh_list_enters_pending_rendered_history(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, waits, healthy, programme):
+  ListConstruction.beginHistory(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, waits, healthy, programme)
 
 
 def Laws.same_capture_list_is_exact_identity(w, id, tx, slot, allocated, capture):
@@ -2082,11 +2085,11 @@ def Laws.callback_free_settlement_history_retains_selected_link(scope, programme
 
 
 def Laws.settled_non_autodisposed_node_retains_prior_release_list(w, tasks, visited, released, scheduled, id, root, source, noAuto):
-  PendingMachine.settledNoReleases(w, tasks, visited, released, scheduled, id, root, source, noAuto)
+  PendingMachine.settledReleaseState(w, tasks, visited, released, scheduled, id, root, source, noAuto)
 
 
 def Laws.settled_leaf_derives_its_actual_pending_machine_shape(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto):
-  PendingMachine.settledLeaf(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto)
+  VisitControl.settled(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto)
 
 
 def Laws.actual_leaf_visit_next_control_is_constructed(w, tasks, visited, released, scheduled, id, root, source, noSubscribers, noAuto):
@@ -3319,7 +3322,7 @@ def Laws.graph_link_retains_all_nonpointer_state(w,source,reader):
 def Laws.initialized_source_render_join_only_marks_the_reader(w,reader,source,rendered,initialized):
   ReadJoin.render(w,reader,source,rendered,initialized)
 
-def Laws.same_flush_ordinary_frame_read_retains_world_and_staging(w,reader,source,root,canonical,stopped,current,ordinary,notVerdict):
+def Laws.same_flush_ordinary_frame_read_joins_without_forcing_screen(w,reader,source,root,canonical,stopped,current,ordinary,notVerdict):
   ReadFrame.actual(w,reader,source,root,canonical,stopped,current,ordinary,notVerdict)
 
 def Laws.same_flush_held_fast_render_read_does_not_charge_another_group(w,offset,source,root,canonical,stopped,current,ordinary,notVerdict,held,children,rendered,initialized):

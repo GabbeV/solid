@@ -1,6 +1,7 @@
 # core/owner.ts production teardown. Tasks preserve recursive return points;
 # the next sibling is read AFTER the child's disposal, never pre-collected.
 import Base
+import ./flight-slot.bend as FlightSlot
 import ./deferred-runtime.bend as Deferred
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -89,8 +90,7 @@ def afterPark(+w: R.World, rest: List<&2, Task>, +id: Nat, +self: Bool, +zombie:
   +w = B.choose(~R.World, self, _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(flags, K.REACTIVE_DISPOSED()))), _ => w)
   +w = B.choose(~R.World, Bool.and(self, B.computed(R.Node.kind(B.node(w, id)))),
     _ =>
-      +w = B.choose(~R.World, Nat.is_ne(R.Node.x(B.node(w, id)), 0n),
-        _ => B.store_extension(w, id, R.NodeExtension.with_inFlight(B.extension(w, id), R.FlightEmpty{})), _ => w)
+      +w = FlightSlot.clearInFlight(w,id)
       B.choose(~R.World, Bool.or(Bool.or(Bool.and(B.has(R.Node.status(B.node(w, id)), K.STATUS_PENDING()),
         Nat.is_ne(R.NodeExtension.transaction(B.extension(w, id)), 0n)), B.has(flags, K.REACTIVE_FRAME_READ())),
         Bool.not(List.is_empty(&2, Nat, R.World.pendingNodes(w)))), _ => B.schedule(w), _ => w),
@@ -328,7 +328,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>) -> Machine:
     case ClearDeps{+id} <> +rest:
       +edge = R.Node.deps(B.node(w, id))
       B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest},
-        _ => Machine{w, UnlinkLoop{edge} <> ClearDepSlots{id} <> rest})
+        _ => Machine{B.store_node(w, id, R.Node.with_depsTail(B.node(w, id), 0n)), TrimDeps{id} <> rest})
     case ClearDepSlots{+id} <> rest:
       Machine{B.store_node(w, id, R.Node.with_depsTail(R.Node.with_deps(B.node(w, id), 0n), 0n)), rest}
     case TrimDeps{+id} <> +rest:

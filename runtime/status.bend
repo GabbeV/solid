@@ -13,6 +13,7 @@ import ./error.bend as V
 import ./cleanup-state.bend as Cleanup
 import ./lanes-state.bend as Lanes
 import ./verdict-work.bend as VerdictWork
+import ./dependent-walk.bend as Walk
 
 def unwrapStatusError(error: R.Value) -> R.Value:
   V.unwrapStatusError(error)
@@ -46,7 +47,7 @@ def notifyEffectStatus(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, B.has(status, K.STATUS_ERROR()),
     _ => B.choose(~R.World, W.is_user(R.Node.kind(n)),
       _ => B.choose(~R.World, B.has(R.Node.status(n), K.STATUS_ERROR()),
-        _ => W.enqueue(B.store_node(w, id, R.Node.with_modified(n, True{})), id), _ => w),
+        _ => W.queueEffectRun(w, id), _ => w),
       _ => escalate(w, id, unwrapStatusError(error))),
     _ => B.choose(~R.World, Bool.and(X.isRender(R.Node.kind(n)), B.has(status, K.STATUS_PENDING())),
       _ => B.choose(~R.World, Nat.is_eq(R.World.passLane(w), 0n), _ => X.joinFuture(w, 0n), _ => w), _ => w))
@@ -73,24 +74,19 @@ def hasSources(sources: R.SourceSet) -> Bool:
 
 # async.ts:notifyStatus's local-node stores, before notifier/propagation.
 def storeStatus(+w: R.World, +id: Nat, +status: U32, +error: R.Value) -> R.World:
-  +source = P.notReadySource(error)
-  B.choose(~R.World, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), Nat.is_ne(source, 0n)),
+  +source = B.choose(~Nat, U32.is_eq(status, K.STATUS_PENDING()), _ => P.notReadySource(error), _ => 0n)
+  +w = B.choose(~R.World, Nat.is_ne(source, 0n),
     _ =>
       +w = B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_ERROR()),
         _ => B.store_extension(w, id, R.NodeExtension.with_shownError(B.extension(w, id), R.NodeExtension.error(B.extension(w, id)))), _ => w)
-      +w = B.first(R.World, Bool, P.addPendingSource(w, id, source))
-      +carried = B.choose(~U32, B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE()),
-        _ => K.STATUS_UNINITIALIZED(), _ => U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()))
-      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(K.STATUS_PENDING(), carried)))
-      P.setPendingError(w, id, source, error),
+      B.first(R.World, Bool, P.addPendingSource(w, id, source)),
+    _ => P.clearPendingSources(w, id))
+  +carried = B.choose(~U32, U32.is_eq(status, K.STATUS_ERROR()),
+    _ => B.choose(~U32, B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE())), _ => K.STATUS_NO_VALUE(), _ => 0),
+    _ => B.choose(~U32, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE())), _ => K.STATUS_UNINITIALIZED(), _ => U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
+  +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), B.set(status, carried)))
+  B.choose(~R.World, Nat.is_ne(source, 0n), _ => P.setPendingError(w, id, source, error),
     _ =>
-      +w = P.clearPendingSources(w, id)
-      +carried = B.choose(~U32, U32.is_eq(status, K.STATUS_ERROR()),
-        _ => B.choose(~U32, B.has(R.Node.status(B.node(w, id)), B.set(K.STATUS_UNINITIALIZED(), K.STATUS_NO_VALUE())), _ => K.STATUS_NO_VALUE(), _ => 0),
-        _ => B.choose(~U32, Bool.and(U32.is_eq(status, K.STATUS_PENDING()), B.has(R.Node.status(B.node(w, id)), K.STATUS_NO_VALUE())),
-          _ => K.STATUS_UNINITIALIZED(), _ => U32.and(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))
-      +flags = B.set(status, carried)
-      +w = B.store_node(w, id, R.Node.with_status(B.node(w, id), flags))
       +w = E.ext(w, id)
       B.store_extension(w, id, R.NodeExtension.with_error(B.extension(w, id), error)))
 
@@ -105,6 +101,12 @@ type Task is Data:
 
 type Machine is Data:
   Machine{world: R.World, tasks: List<&2, Task>, visited: List<&2, Nat>, scheduled: Bool}
+
+# Shared walkDependents marks and reads the live head after the error callback.
+def settledWalk(w: R.World, +tasks: List<&2, Task>, +scheduled: Bool, error: R.Value, result: Walk.After) -> Machine:
+  match result:
+    case Walk.Descend{visited, edge}: Machine{w, SettleWalk{edge, error} <> tasks, visited, scheduled}
+    case Walk.Stopped{visited}: Machine{w, tasks, visited, scheduled}
 
 def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +scheduled: Bool) -> Machine:
   match tasks:
@@ -139,12 +141,19 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
           +pending = U32.is_eq(status, K.STATUS_PENDING())
           +source = B.choose(~Nat, pending, _ => P.notReadySource(error), _ => 0n)
           +next = {PropagateNext{edge, status, error} <> rest : List<&2, Task>}
-          B.choose(~Machine, Bool.or(Bool.or(B.has(R.Node.config(sub),K.CONFIG_REDERIVE()),Bool.and(Bool.or(B.has(R.Node.config(sub),K.CONFIG_VERDICT()),Bool.and(Nat.is_ne(source,0n),B.has(R.Node.config(sub),K.CONFIG_STAGED_ERROR()))),Bool.not(Bool.and(Nat.is_ne(source,0n),VerdictWork.holdWork(w,id,R.Link.dep(B.link(w,edge))))))),
-              Bool.and(pending, Nat.is_ne(R.Link.gen(B.link(w, edge)), R.Node.depGen(sub)))),
-            _ => Machine{B.schedule(H.enqueueSub(w, id)), next, visited, scheduled},
+          +rederive = B.has(R.Node.config(sub), K.CONFIG_REDERIVE())
+          +verdict = Bool.or(B.has(R.Node.config(sub), K.CONFIG_VERDICT()), Bool.and(Nat.is_ne(source, 0n), B.has(R.Node.config(sub), K.CONFIG_STAGED_ERROR())))
+          +hold = B.choose(~B.Bundle<R.World, Bool>, Bool.and(Bool.not(rederive), Bool.and(verdict, Nat.is_ne(source, 0n))),
+            _ => VerdictWork.holdWork(w, id, R.Link.dep(B.link(w, edge))), _ => B.Bundle{w, False{}})
+          +w = B.first(R.World, Bool, hold)
+          B.choose(~Machine, Bool.or(Bool.or(rederive, Bool.and(verdict, Bool.not(B.second(R.World, Bool, hold)))),
+              Bool.and(pending, Nat.is_ne(R.Link.gen(B.link(w, edge)), R.Node.depGen(B.node(w, id))))),
+            _ =>
+              +w = B.choose(~R.World, pending, _ => w, _ => B.first(R.World, Bool, P.removePendingSource(w, id, R.Link.dep(B.link(w, edge)))))
+              Machine{B.schedule(H.enqueueSub(w, id)), next, visited, scheduled},
             _ => B.choose(~Machine, Bool.and(pending, Bool.and(Nat.is_ne(source, 0n), P.hasSource(w, id, source))),
               _ =>
-                w = B.choose(~R.World, Bool.and(Nat.is_eq(R.World.passLane(w), 0n), Bool.and(Bool.and(B.has(R.Node.config(sub), K.CONFIG_HELD()), Bool.not(B.has(R.Node.config(sub), K.CONFIG_OVERRIDE()))), R.World.running(w))),
+                w = B.choose(~R.World, Bool.and(Nat.is_eq(R.World.passLane(w), 0n), Bool.and(Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))), R.World.running(w))),
                   _ => X.joinNode(w, id), _ => w)
                 Machine{w, next, visited, scheduled},
               _ => B.choose(~Machine, Bool.or(Bool.and(pending, Nat.is_ne(source, 0n)), Bool.and(Bool.not(pending),
@@ -154,7 +163,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
                       _ => B.first(R.World, Bool, Lanes.laneStage(w, id, R.World.passLane(w), True{}, Lanes.StagePendingFrom{R.Link.dep(B.link(w, edge))})),
                       _ =>
                         +w = W.queuePendingNode(w, id)
-                        B.choose(~R.World, Bool.and(pending, Bool.and(B.has(R.Node.config(sub), K.CONFIG_HELD()), Bool.and(Bool.not(B.has(R.Node.config(sub), K.CONFIG_OVERRIDE())), Bool.not(B.effect(R.Node.kind(sub)))))),
+                        B.choose(~R.World, Bool.and(pending, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), Bool.and(Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE())), Bool.not(B.effect(R.Node.kind(B.node(w, id))))))),
                           _ => X.joinNode(w, id), _ => w))
                   Machine{w, Notify{id, status, error} <> next, visited, scheduled},
                 _ => Machine{w, next, visited, scheduled}))))
@@ -163,15 +172,14 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
     case SettleVisit{+id, +error} <> +rest:
       B.choose(~Machine, B.contains(visited, id), _ => Machine{w, rest, visited, scheduled},
         _ =>
-          visited = {id <> visited : List<&2, Nat>}
           +same = B.equal(R.NodeExtension.error(B.extension(w, id)), error)
           +w = B.choose(~R.World, same, _ => H.enqueueSub(w, id), _ => w)
-          Machine{w, SettleWalk{R.Node.subs(B.node(w, id)), error} <> rest, visited, Bool.or(scheduled, same)})
+          settledWalk(w, rest, Bool.or(scheduled, same), error, Walk.after(w, visited, id, False{}, False{})))
     case SettleWalk{+edge, +error} <> +rest:
       B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest, visited, scheduled},
         _ => Machine{w, SettleVisit{R.Link.sub(B.link(w, edge)), error} <> SettleNext{edge, error} <> rest, visited, scheduled})
     case SettleNext{+edge, error} <> rest:
-      Machine{w, SettleWalk{R.Link.nextSub(B.link(w, edge)), error} <> rest, visited, scheduled}
+      Machine{w, SettleWalk{Walk.next(w, edge), error} <> rest, visited, scheduled}
     case SettleEnd{} <> rest:
       Machine{B.choose(~R.World, scheduled, _ => B.schedule(w), _ => w), rest, visited, scheduled}
 

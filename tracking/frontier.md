@@ -8,11 +8,12 @@ belong in [session notes](session-2026-10-28.md) and [progress.md](progress.md).
 The [previous accumulated frontier](reviews/frontier-through-388cfefc.md) is an
 exact historical snapshot; its earlier omissions and next steps may be superseded.
 
-Solid is pinned to `ecf30116` (rc.20). The [source review](reviews/solid-ecf30116.md)
-records first-answer staging, nested error settlement, custom-comparator netting
-and verdict/lane routing. The raw-lane early return changes generic join contracts:
-ordinary scheduling requires a nonlane raw capture; unrestricted conditional
-results and concrete constructor-derived facts remain checked separately.
+Solid is pinned to `2105ffb8` (rc.21). The [source review](reviews/solid-2105ffb8.md)
+records verdict staging/asked-in identity, live settlement traversal, captured
+publication locals, deferred releases, tracked-effect landing debt, AHEAD blocking
+and signed-zero netting. Source-required contract changes are explicit: generic
+results retain the exception branches; positive corollaries carry their actual
+source posture and constructors derive preserved metadata.
 The Bend2.0.37 frontend/vendor
 and fully Lean-checked congruence checker profile/fuel remain unchanged. No
 semantic deviation is active. This is an incremental production, non-store port

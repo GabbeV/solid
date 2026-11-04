@@ -79,7 +79,7 @@ def clearedEmpty(+w: R.World,+node: Nat,+empty: EmptyCarrier<w,node>) -> EmptyCa
 
 def statusConfig(+record: R.Node,+flags: U32) -> {R.Node.config(R.Node.with_status(record,flags)) == R.Node.config(record) : U32}:
   match record:
-    case R.Node{kind,value,pending,equals,config,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+    case R.Node{kind,value,pending,equals,config,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram, +rebaseOwed}: {==}
 
 def clearedConfig(+w: R.World,+node: Nat,valid: {B.valid(w,node) == True{} : Bool}) -> {R.Node.config(B.node(cleared(w,node),node)) == R.Node.config(B.node(w,node)) : U32}:
   +next = statused(w,node)

@@ -2,6 +2,7 @@
 # to express recursive recomputes without a Bend module cycle. Active lane,
 # snapshot, store, boundary and attribution scopes remain unfinished.
 import Base
+import ./staged-slot.bend as Slot
 import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -32,13 +33,8 @@ def setSignal(w: R.World, id: Nat, value: R.Value) -> R.World:
   W.setSignal(w, id, value)
 
 # Source n._value = n._pendingValue; n._pendingValue = NOT_PENDING.
-def commitValue(+w: R.World, +id: Nat) -> R.World:
-  +n = B.node(w, id)
-  B.choose(~R.World, B.present(R.Node.pending(n)),
-    _ =>
-      +w = B.store_node(w, id, R.Node.with_value(n, B.current(n)))
-      B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Empty{})),
-    _ => w)
+def commitValue(w: R.World, id: Nat) -> R.World:
+  B.first(R.World, Bool, Slot.applyStaged(w, id))
 
 # commitPendingNode before and after its user-call boundaries. These segments
 # serve both the direct restricted helper facade and core's continuation driver.
@@ -73,7 +69,7 @@ def commitAnswerValue(+w: R.World, +id: Nat) -> R.World:
           +w = B.store_extension(w, id, R.NodeExtension.with_reask(B.extension(w, id), False{}))
           B.store_extension(w, id, R.NodeExtension.with_flushed(B.extension(w, id), R.Empty{})), _ => w)
       B.choose(~R.World, Bool.and(B.effect(R.Node.kind(n)), Bool.not(B.tracked(R.Node.kind(n)))),
-        _ => enqueue(B.store_node(w, id, R.Node.with_modified(B.node(w, id), True{})), id), _ => w),
+        _ => W.queueEffectRun(w, id), _ => w),
     _ => w)
 
 def commitComputedPrefix(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:

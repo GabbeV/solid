@@ -25,5 +25,5 @@ def ready(+values: List<&2, R.Value>, +sourceExpr: R.Expr, +effectExpr: R.Expr, 
   Registration.prepare(input(values, extensions, sets), sourceExpr, effectExpr, 7n, 0n, 0n, B.blank_node(), Initial.nodes(values), B.blank_link(), [], extensions, sets, {==}, {==}, {==}, {==}, {==}, {==})
 
 def complete(+values: List<&2, R.Value>, +sourceExpr: R.Expr, +effectExpr: R.Expr, +extensions: List<&2, R.NodeExtension>, +sets: List<&2, List<&2, Nat>>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>) ->
-  Return.Returned<Settlement.start(registered(values, sourceExpr, effectExpr, extensions, sets), N.index(input(values, extensions, sets)), rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(registered(values, sourceExpr, effectExpr, extensions, sets), N.index(input(values, extensions, sets)), rest, stack), rest, stack, 15n>:
   Registration.startReturn(input(values, extensions, sets), sourceExpr, effectExpr, 7n, 0n, 0n, B.blank_node(), Initial.nodes(values), B.blank_link(), [], extensions, sets, {==}, {==}, {==}, {==}, {==}, {==}, rest, stack)

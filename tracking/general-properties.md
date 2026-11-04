@@ -7,13 +7,14 @@ roots; an archived or generated candidate is not proved merely because it exists
 The runtime follows the selected Solid pin; source migrations require a fresh
 whole-book verdict. The independent checker/profile/fuel remain unchanged.
 
-The ecf30116 source migration retains exact raw-lane join outcomes. Fresh
-ordinary scheduling/resume corollaries state a raw nonlane-capture premise; actual
-ordinary constructors derive it. Pending topology preserves all configuration
-bits except the staged-error bit the source may now set. See the
-[source review](reviews/solid-ecf30116.md) and its root-contract delta. Fulfillment
-continuations include the source's carried-staging choice: an ordinary landing
-may use the queued flush, while a stream continuation forces synchronous flush.
+The rc.21 migration retains the earlier raw-lane conditional joins and adds
+source-required changes to frame-read joins, AHEAD blocking and pending-machine
+return shapes. Generic results cover the new exception branches; positive
+corollaries state the actual source posture. Listing and preserved ownership
+transport the necessary config/lane metadata. See the
+[source review](reviews/solid-2105ffb8.md) and its root-contract delta. Source
+staging still preserves captured locals across raw comparator callbacks; proof
+normal forms connect through local equalities rather than reordering the runtime.
 
 ## Current proof coverage
 
@@ -635,3 +636,21 @@ arbitrary represented payloads and ambient state. The premises describe input
 fields, not successful post-read Worlds. The full tracked read, recompute and
 post-render settlement composition remain open; these are reusable operation
 contracts, not another fixed execution witness or a global publication theorem.
+
+
+## rc.21 source migration
+
+The unrestricted rendered-reader decision now expresses the AHEAD exception on
+the previous input domain: ordinary AHEAD readers can bypass blocking, lane
+readers cannot. Positive blocker/snapshot corollaries carry that source wait
+posture, and actual listing constructs it from input config and the lane record.
+The root-contract ledger records this and other source-driven changes separately
+from unchanged-domain frame laws.
+
+Same-flush ordinary frame reads now perform the actual join before returning
+false. Queued eligible releases mark RELEASE_AFTER while unqueued releases
+schedule owner cleanup. Pre-stage traversal now descends after the visitor body,
+including nested settlement; the corresponding sufficient one-edge runtime bound
+is fifteen steps, or seventeen with trim. These bounds are distinct from checker
+fuel. Arbitrary represented payload domains and caller/task/stack obligations
+remain explicit; no broader held-publication theorem follows from the migration.

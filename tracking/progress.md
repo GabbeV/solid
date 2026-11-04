@@ -1113,3 +1113,20 @@ committed storage and caller preservation are consequences of initial facts.
 and oracle quality. The raw queued Round/heap admission remains the next gap;
 no source/runtime/checker change or new upstream bug/deviation. Seven roots are
 promoted for the fresh805-root composed check.
+
+
+## rc.21 source integration (2026-11-04)
+
+Advanced the source-followable runtime and proof contracts through 98 upstream
+commits to next@2105ffb8. The migration includes the corrected signed-zero rule,
+new AHEAD/verdict metadata, live post-body dependent traversal and deferred
+queued releases. It retains the constructed action/held-body and Round-entry
+contracts instead of discarding those proofs to get the new runtime running.
+The new unrestricted rendered-reader decision exposes the AHEAD exception;
+source-required narrower positive corollaries are recorded explicitly.
+
+Validation and exact proof credit are recorded in the rc.21 receipt and matching
+independent seal, with finite tests and negative controls kept separate. One source-only staged-store regression is reproduced and recorded separately;
+no semantic workaround is introduced. The next semantic
+milestone remains connecting the held read and recompute path to the already
+proved parking/scan/return segment from constructed heap entry.

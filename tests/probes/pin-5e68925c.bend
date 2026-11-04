@@ -9,7 +9,7 @@ import ../../runtime/rerun-state.bend as Rerun
 import ../../runtime/flight.bend as F
 import ../../runtime/transaction.bend as Tx
 
-def hold(w: R.World,n: Nat,s: Nat) -> Bool: Work.holdWork(w,n,s)
+def hold(w: R.World,n: Nat,s: Nat) -> B.Bundle<R.World,Bool>: Work.holdWork(w,n,s)
 def creator(w: R.World,n: Nat,bits: U32) -> B.Bundle<R.World,U32>: Creator.creatorReads(w,n,bits)
 def prepare(w: R.World,t: Nat,n: Nat,frame: Nat) -> B.Bundle<R.World,Nat>: Rerun.prepare(w,t,n,frame)
 def skipped(w: R.World,n: Nat) -> Bool: Rerun.skipped(w,n)

@@ -10,7 +10,7 @@ import ./held-controller-data.bend as Data
 def record(id: Nat) -> R.Transaction:
   Data.group(id)
 
-def arena(+value: R.Value,+methods: R.Expr) -> {R.World.txArena(State.opened(value,methods)) == [R.Transaction{[],[],[],[],0n,0n,False{},0n,0n,False{},0n,False{},False{},R.NoIds{}, False{}},record(Graph.source(value))] : List<&2,R.Transaction>}:
+def arena(+value: R.Value,+methods: R.Expr) -> {R.World.txArena(State.opened(value,methods)) == [R.Transaction{[],[],[],[],0n,0n,False{},0n,0n,False{},0n,False{},False{},R.NoIds{}, False{}, 0n},record(Graph.source(value))] : List<&2,R.Transaction>}:
   {==}
 
 def plain(+value: R.Value,+methods: R.Expr) -> {R.Transaction.lane(B.transaction(State.opened(value,methods),1n)) == False{} : Bool}:

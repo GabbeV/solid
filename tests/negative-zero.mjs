@@ -19,8 +19,17 @@ for(const equals of[true,false])for(const initial of[-0,0]){
  await scenario([['signal','n',initial,equals],['read','n'],['set','n',Object.is(initial,-0)?0:-0],['read','n'],['flush'],['read','n'],['set','n',-0],['flush'],['read','n']],(op,b,s)=>{if(op==='read')assert.equal(Object.is(b.read('n'),-0),Object.is(s.read('n'),-0));});
 }
 for(const equals of[true,false])await scenario([
- ['signal','n',-0,false],['memo','copy',read('n'),{equals}],['memo','add',{add:[read('n'),lit(0)]},{equals}],['memo','mul',{mul:[read('n'),lit(2)]},{equals}],['render','view','copy'],['flush'],['read','copy'],['read','add'],['read','mul'],['set','n',0],['flush'],['read','copy'],['read','add'],['read','mul'],['set','n',-0],['flush'],['read','copy'],['read','mul']
+ ['signal','n',-0,false],['memo','copy',read('n'),{equals}],['memo','add',{add:[read('n'),lit(0)]},{equals}],['memo','mul',{mul:[read('n'),lit(2)]},{equals}],['effect','view',read('copy')],['flush'],['read','copy'],['read','add'],['read','mul'],['set','n',0],['flush'],['read','copy'],['read','add'],['read','mul'],['set','n',-0],['flush'],['read','copy'],['read','mul']
 ]);
+// rc.21/#4538: an observed derived read must preserve the accepted proposal's
+// sign. Disable the memo comparator too: its default strict equality would
+// itself correctly absorb the two zero outputs.
+for(const initial of [-0,0]){
+ const next=Object.is(initial,-0)?0:-0;
+ const S=await import('../build/solid.mjs?netted-zero='+histories),b=new BendRuntime(),s=new SolidRuntime({module:S});
+ try{for(const r of [b,s]){r.signal('n',initial,false);r.memo('copy',read('n'),{equals:false});r.effect('view',read('copy'));r.flush();r.set('n',next);r.flush();assert.ok(Object.is(r.read('copy'),next),'the observed memo publishes the accepted signed zero');}assert.deepEqual(b.trace(),s.trace());histories++;}
+ finally{for(const r of[b,s]){r.attempt('dispose');r.resetErrorHalt();r.attempt('flush');}}
+}
 await scenario([['signal','marker',0,false],['program','cmp',[['setExpr','marker',{argument:0}],['return',lit(false)]]],['signal','n',-0,{equals:{callback:'cmp'}}],['set','n',0],['flush'],['read','marker'],['read','n']]);
 await scenario([['signal','n',0,false],['program','u',[['return',lit(-0)]]],['set','n',{callback:'u'}],['flush'],['read','n']]);
 await scenario([['future','p'],['memo','n',{future:'p'}],['flush'],['fulfill','p',-0],['tick'],['flush'],['read','n']]);

@@ -10,18 +10,31 @@ import ./completion-graph-frame.bend as Frame
 import ./transaction-positive.bend as Positive
 
 type Ownership is Data:
-  Ownership{nodes: List<&2, Nat>, into: Nat}
+  Ownership{nodes: List<&2, Nat>, into: Nat, lane: Bool}
 
 def ownership(+record: R.Transaction) -> Ownership:
-  Ownership{R.Transaction.nodes(record), R.Transaction.into(record)}
+  Ownership{R.Transaction.nodes(record), R.Transaction.into(record), R.Transaction.lane(record)}
 
 def owned(value: Ownership) -> List<&2, Nat>:
   match value:
-    case Ownership{nodes, into}: nodes
+    case Ownership{nodes, into, lane}: nodes
 
 def redirect(value: Ownership) -> Nat:
   match value:
-    case Ownership{nodes, into}: into
+    case Ownership{nodes, into, lane}: into
+
+def lane(value: Ownership) -> Bool:
+  match value:
+    case Ownership{nodes, into, lane}: lane
+
+# The graph frame preserves config; the ownership frame now also preserves lane.
+def bypassSame(+w: R.World, +next: R.World, +id: Nat, +owner: Nat,
+  same: {Frame.graph(next) == Frame.graph(w) : Frame.GraphFrame},
+  core: {ownership(B.transaction(next, owner)) == ownership(B.transaction(w, owner)) : Ownership}) ->
+  {Graph.bypass(next, id, owner) == Graph.bypass(w, id, owner) : Bool}:
+  Equal.trans(Bool, Graph.bypass(next, id, owner), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(B.transaction(next, owner)))), Graph.bypass(w, id, owner),
+    Equal.cong(R.Node, Bool, n => Bool.and(B.has(R.Node.config(n), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(B.transaction(next, owner)))), B.node(next, id), B.node(w, id), Frame.node(w, next, id, same)),
+    Equal.cong(Ownership, Bool, own => Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(lane(own))), ownership(B.transaction(next, owner)), ownership(B.transaction(w, owner)), core))
 
 def guardNode(+n: R.Node) -> Bool:
   Bool.or(Bool.not(B.has(R.Node.status(n), K.STATUS_PENDING())), Bool.or(B.has(R.Node.flags(n), K.REACTIVE_DISPOSED()), B.has(R.Node.config(n), K.CONFIG_GUESS())))
@@ -53,13 +66,14 @@ type Pending<-w: R.World, -owner: Nat> is Data:
     capture: {R.NodeExtension.transaction(B.extension(w, id)) == owner : Nat},
     stopped: {R.Transaction.into(B.transaction(w, owner)) == 0n : Nat},
     rendered: {X.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool},
-    live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}}
+    live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool},
+    waits: {Graph.bypass(w, id, owner) == False{} : Bool}}
 
 def transfer(+w: R.World, +next: R.World, +owner: Nat, snapshot: Pending<w, owner>,
   +same: {Frame.graph(next) == Frame.graph(w) : Frame.GraphFrame},
   +core: {ownership(B.transaction(next, owner)) == ownership(B.transaction(w, owner)) : Ownership}) -> Pending<next, owner>:
   match snapshot:
-    case Pending{+prefix, +id, +tail, owns, active, capture, stopped, rendered, live}:
+    case Pending{+prefix, +id, +tail, owns, active, capture, stopped, rendered, live, waits}:
       +nextPrefix = skips(w, next, owner, prefix, same)
       Pending{nextPrefix, id, tail,
         Equal.trans(List<&2, Nat>, R.Transaction.nodes(B.transaction(next, owner)), R.Transaction.nodes(B.transaction(w, owner)), B.append(Nat, Graph.ids(next, owner, nextPrefix), id <> tail),
@@ -70,7 +84,8 @@ def transfer(+w: R.World, +next: R.World, +owner: Nat, snapshot: Pending<w, owne
         Equal.trans(Nat, R.NodeExtension.transaction(B.extension(next, id)), R.NodeExtension.transaction(B.extension(w, id)), owner, Equal.cong(R.NodeExtension, Nat, record => R.NodeExtension.transaction(record), B.extension(next, id), B.extension(w, id), Frame.extension(w, next, id, same)), capture),
         Equal.trans(Nat, R.Transaction.into(B.transaction(next, owner)), R.Transaction.into(B.transaction(w, owner)), 0n, Equal.cong(Ownership, Nat, value => redirect(value), ownership(B.transaction(next, owner)), ownership(B.transaction(w, owner)), core), stopped),
         Equal.trans(Bool, X.isRender(R.Node.kind(B.node(next, id))), X.isRender(R.Node.kind(B.node(w, id))), True{}, Equal.cong(R.Node, Bool, n => X.isRender(R.Node.kind(n)), B.node(next, id), B.node(w, id), Frame.node(w, next, id, same)), rendered),
-        Equal.trans(Bool, B.has(R.Node.flags(B.node(next, id)), K.REACTIVE_ZOMBIE()), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), False{}, Equal.cong(R.Node, Bool, n => B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()), B.node(next, id), B.node(w, id), Frame.node(w, next, id, same)), live)}
+        Equal.trans(Bool, B.has(R.Node.flags(B.node(next, id)), K.REACTIVE_ZOMBIE()), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), False{}, Equal.cong(R.Node, Bool, n => B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()), B.node(next, id), B.node(w, id), Frame.node(w, next, id, same)), live),
+        Equal.trans(Bool, Graph.bypass(next, id, owner), Graph.bypass(w, id, owner), False{}, bypassSame(w, next, id, owner, same, core), waits)}
 
 def enter(+w: R.World, +owner: Nat, snapshot: Pending<w, owner>) -> Pending<Positive.enter(w, owner), owner>:
   transfer(w, Positive.enter(w, owner), owner, snapshot, Frame.entered(w, owner),
@@ -81,8 +96,8 @@ def zeroEntered(+w: R.World, +predecessor: Nat, snapshot: Pending<Positive.enter
   zero: {R.Transaction.open(B.transaction(w, 1n+predecessor)) == 0n : Nat}) ->
   {X.blocked(w, 1n+predecessor) == B.Bundle{w, True{}} : B.Bundle<R.World, Bool>}:
   match snapshot:
-    case Pending{prefix, id, tail, owns, active, capture, stopped, rendered, live}:
-      Graph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, owns, active, capture, stopped, rendered, live)
+    case Pending{prefix, id, tail, owns, active, capture, stopped, rendered, live, waits}:
+      Graph.renderGroup(w, predecessor, prefix, id, tail, healthy, zero, owns, active, capture, stopped, rendered, live, waits)
 
 def zero(+w: R.World, +predecessor: Nat, snapshot: Pending<w, 1n+predecessor>,
   healthy: {B.ok(w) == True{} : Bool},
@@ -101,4 +116,4 @@ def blocked(+w: R.World, +predecessor: Nat, +count: Nat, snapshot: Pending<w, 1n
 def openOwnership(+record: R.Transaction, count: Nat) ->
   {ownership(R.Transaction.with_open(record, count)) == ownership(record) : Ownership}:
   match record:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest, +rebaseOver}: {==}

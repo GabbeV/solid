@@ -103,17 +103,37 @@ def effectType(kind: R.NodeKind) -> U32:
     case R.Tracked{}: 3
     case _: 0
 
+# lanes.ts:isVerdict for the nullable transaction identities in this profile.
+def isVerdict(+w: R.World, +lane: Nat) -> Bool:
+  Bool.and(Nat.is_ne(lane, 0n), Nat.is_eq(R.Transaction.verdict(B.transaction(w, R.Transaction.parent(B.transaction(w, lane)))), lane))
+
+# enterLane's verdict-only guards after creatorReads refused the parent case.
+def foreignHold(+w: R.World, +lane: Nat, +reader: Nat) -> B.Bundle<R.World, Bool>:
+  +parent = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+  +w = B.first(R.World, Nat, parent)
+  +hold = B.second(R.World, Nat, parent)
+  +mask = B.set(K.CONFIG_HELD(), B.set(K.CONFIG_VERDICT(), B.set(K.CONFIG_FRAME(), B.set(K.CONFIG_LAGS(), K.CONFIG_OVERRIDE()))))
+  +other = B.choose(~B.Bundle<R.World, Bool>, U32.is_eq(U32.and(R.Node.config(B.node(w, reader)), mask), K.CONFIG_HELD()),
+    _ =>
+      +pair = Tx.txOf(w, reader)
+      B.Bundle{B.first(R.World, Nat, pair), Nat.is_ne(B.second(R.World, Nat, pair), hold)},
+    _ => B.Bundle{w, False{}})
+  +w = B.first(R.World, Bool, other)
+  B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, other), _ => B.Bundle{w, True{}},
+    _ => B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, reader)), K.CONFIG_HELD_FRAME()),
+      _ => Tx.bornInto(w, reader, hold), _ => B.Bundle{w, False{}}))
+
 def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
   +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_READ())))
   +p = R.World.passLane(w)
   B.choose(~R.World, Nat.is_eq(p, 0n),
     _ =>
       +flags = R.Node.flags(B.node(w,reader))
-      +verdict = Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,lane)))),lane)
+      +verdict = isVerdict(w, lane)
       +pair = B.choose(~B.Bundle<R.World,U32>,verdict,_=>Creator.creatorReads(w,reader,B.choose(~U32,B.effect(R.Node.kind(B.node(w,reader))),_=>effectType(R.Node.kind(B.node(w,reader))),_=>flags)),_=>B.Bundle{w,0})
       +w = B.first(R.World,U32,pair)
       +creator = B.second(R.World,U32,pair)
-      +pair = B.choose(~B.Bundle<R.World,Bool>,Bool.and(verdict,U32.is_eq(creator,0)),_=>Tx.heldFrameBorn(w,reader,R.Transaction.parent(B.transaction(w,lane))),_=>B.Bundle{w,False{}})
+      +pair = B.choose(~B.Bundle<R.World,Bool>,Bool.and(verdict,U32.is_eq(creator,0)),_=>foreignHold(w,lane,reader),_=>B.Bundle{w,False{}})
       +w = B.first(R.World,Bool,pair)
       B.choose(~R.World,Bool.or(Bool.and(verdict,U32.is_ne(creator,0)),B.second(R.World,Bool,pair)),_=>w,
         _=>
@@ -130,8 +150,32 @@ def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
             B.choose(~R.World, B.second(R.World, Bool, pair), _ => R.World.with_passLane(w, lane),
               _ => R.World.with_passLane(linkLanes(w, p, lane), lane)))))
 
-# scheduler.ts:laneDirty. Called after insertSubs; does not enqueue by itself.
-def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat,+source: Nat) -> R.World:
+# scheduler.ts:laneDirty. Notify once before its live reader walk.
+def reasks(+w: R.World, sources: List<&2, Nat>) -> Bool:
+  match sources:
+    case Nil{}: True{}
+    case source <> rest:
+      B.choose(~Bool, R.NodeExtension.reask(B.extension(w, source)), _ => reasks(w, rest), _ => False{})
+
+def everyReask(+w: R.World, id: Nat, sources: R.SourceSet) -> Bool:
+  match sources:
+    case R.NoSources{}: R.NodeExtension.reask(B.extension(w, id))
+    case R.Sources{items}: reasks(w, items)
+
+def reseatPending(+w: R.World, +reader: Nat, +lane: Nat, +t: Nat) -> B.Bundle<R.World, Nat>:
+  +n = B.node(w, reader)
+  +eligible = Bool.and(Nat.is_ne(t, 0n), Bool.and(Bool.not(B.effect(R.Node.kind(n))), Bool.and(U32.is_eq(U32.and(R.Node.config(n), B.set(K.CONFIG_HELD(), K.CONFIG_OVERRIDE())), K.CONFIG_HELD()), U32.is_eq(U32.and(R.Node.status(n), B.set(K.STATUS_PENDING(), K.STATUS_UNINITIALIZED())), K.STATUS_PENDING()))))
+  B.choose(~B.Bundle<R.World, Nat>, eligible,
+    _ =>
+      +own = Tx.resolveTx(w, t)
+      +w = B.first(R.World, Nat, own)
+      +parent = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, lane)))
+      +w = B.first(R.World, Nat, parent)
+      +allowed = B.choose(~Bool, Nat.is_eq(B.second(R.World, Nat, own), B.second(R.World, Nat, parent)), _ => True{}, _ => everyReask(w, reader, B.pendingSources(w, reader)))
+      B.choose(~B.Bundle<R.World, Nat>, allowed, _ => B.Bundle{Tx.list(w, reader, lane), lane}, _ => B.Bundle{w, t}),
+    _ => B.Bundle{w, t})
+
+def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat, +source: Nat) -> R.World:
   match fuel:
     case 0n:
       B.choose(~R.World, Nat.is_eq(edge, 0n), _ => w, _ => R.World.with_fault(w, R.Exhausted{}))
@@ -139,15 +183,18 @@ def dirtyLoop(fuel: Nat, +w: R.World, +edge: Nat, +lane: Nat,+source: Nat) -> R.
       B.choose(~R.World, Nat.is_eq(edge, 0n), _ => w,
         _ =>
           +reader = R.Link.sub(B.link(w, edge))
-          +t = R.NodeExtension.transaction(B.extension(w, reader))
-          +w = B.choose(~R.World,Bool.and(Tx.isRender(R.Node.kind(B.node(w,reader))),B.has(R.Node.config(B.node(w,source)),K.CONFIG_VERDICT())),
-            _=>B.store_node(w,reader,R.Node.with_flags(R.Node.with_config(B.node(w,reader),B.set(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT())),B.clear(R.Node.flags(B.node(w,reader)),K.REACTIVE_LANE_DIRTY()))),_=>w)
+          +pair = reseatPending(w, reader, lane, R.NodeExtension.transaction(B.extension(w, reader)))
+          +w = B.first(R.World, Nat, pair)
+          +t = B.second(R.World, Nat, pair)
+          +w = B.choose(~R.World, Bool.and(Tx.isRender(R.Node.kind(B.node(w, reader))), B.has(R.Node.config(B.node(w, source)), K.CONFIG_VERDICT())),
+            _ => B.store_node(w, reader, R.Node.with_flags(R.Node.with_config(B.node(w, reader), B.set(R.Node.config(B.node(w, reader)), K.CONFIG_VERDICT())), B.clear(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_DIRTY()))), _ => w)
           +eligible = B.choose(~Bool, R.Transaction.lane(B.transaction(w, t)), _ => sameLane(w, t, lane), _ => B.effect(R.Node.kind(B.node(w, reader))))
           +w = B.choose(~R.World, eligible, _ => B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_DIRTY()))), _ => w)
-          dirtyLoop(p, w, R.Link.nextSub(B.link(w, edge)), lane,source))
+          dirtyLoop(p, w, R.Link.nextSub(B.link(w, edge)), lane, source))
 
-def laneDirty(+w: R.World, +id: Nat, lane: Nat) -> R.World:
-  dirtyLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane,id)
+def laneDirty(+w: R.World, +id: Nat, +lane: Nat) -> R.World:
+  +w = W.insertSubs(w, id)
+  dirtyLoop(B.budget(w), w, R.Node.subs(B.node(w, id)), lane, id)
 
 # lanes.ts:laneStage. Source errored is false, true, or the pending source
 # object; the third case is intentionally not collapsed into true.
@@ -156,8 +203,8 @@ type StageError is Data:
   StageFailed{}
   StagePendingFrom{source: Nat}
 
-def LEFT_SHOWN() -> U32:
-  1048576
+def LEFT_SHOWN() -> R.Stamp:
+  R.LeftShown{}
 
 def stageErrored(error: StageError) -> Bool:
   match error:
@@ -181,14 +228,14 @@ def leaveStage(+w: R.World, +id: Nat) -> B.Bundle<R.World, Bool>:
       +tx = R.NodeExtension.transaction(B.extension(w, id))
       +w = B.choose(~R.World, Bool.and(R.Transaction.lane(B.transaction(w, tx)), R.Transaction.shown(B.transaction(w, tx))),
         _ => B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), 0n),
-          _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN()))),
+          _ => B.store_node(w, id, R.Node.with_notified(B.node(w, id), LEFT_SHOWN())),
           _ =>
             +pair = Tx.resolveTx(w, R.Transaction.parent(B.transaction(w, tx)))
             +pair = Tx.blocked(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair))
             +w = B.first(R.World, Bool, pair)
             B.choose(~R.World, B.second(R.World, Bool, pair),
               _ => B.store_node(w, id, R.Node.with_value(B.node(w, id), display(w, id))),
-              _ => B.store_node(w, id, R.Node.with_flags(B.node(w, id), B.set(R.Node.flags(B.node(w, id)), LEFT_SHOWN()))))), _ => w)
+              _ => B.store_node(w, id, R.Node.with_notified(B.node(w, id), LEFT_SHOWN())))), _ => w)
       leaveStageEnd(w, id, tx))
 
 def hasStageLane(+w: R.World, +id: Nat) -> Bool:
@@ -335,3 +382,19 @@ def enteredPrefix(count: Nat, readers: List<&2, Nat>) -> List<&2, Nat>:
 # state representation; this setter represents the guarded length reset.
 def clearRevealing(+w: R.World) -> R.World:
   R.World.with_laneState(w,R.LaneState.with_revealing(R.World.laneState(w),[]))
+
+# laneSeams' linked-lane rebase exemption. Source Array.some order and
+# liveTx's stores are retained; the raw .over capture is not a resolved parent.
+def linkedOverMembers(members: List<&2,Nat>,+w: R.World,+parent: Nat) -> B.Bundle<R.World,Bool>:
+  match members:
+    case Nil{}: B.Bundle{w,False{}}
+    case member <> +tail:
+      +over = R.Transaction.over(B.transaction(w,member))
+      +pair = B.choose(~B.Bundle<R.World,Nat>,Nat.is_ne(over,0n),_=>Tx.liveTx(w,over),_=>B.Bundle{w,0n})
+      +w = B.first(R.World,Nat,pair)
+      B.choose(~B.Bundle<R.World,Bool>,Bool.and(Nat.is_ne(over,0n),Nat.is_eq(B.second(R.World,Nat,pair),parent)),_=>B.Bundle{w,True{}},_=>linkedOverMembers(tail,w,parent))
+
+def linkedOver(+w: R.World,+lane: Nat,parent: Nat) -> B.Bundle<R.World,Bool>:
+  +group = R.Transaction.links(B.transaction(w,lane))
+  +members = B.choose(~List<&2,Nat>,Nat.is_ne(group,0n),_=>groups(w,group),_=>[lane])
+  linkedOverMembers(members,w,parent)

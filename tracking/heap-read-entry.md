@@ -12,11 +12,13 @@ arbitrary Worlds and IDs, including aliases; it requires no successful result,
 acyclic graph or allocated-slot premise. This is a frame property, not a claim
 that invalid IDs form a meaningful public graph.
 
-`heap-frame-read.bend` proves that actual `frameRead` returns the input World and
-`false` when the input cache already names a terminal current flush group, no lane
-pass is active, and the reader is not a verdict. Both the cold shortcut and the
-transaction lookup branch are covered. `txOf`'s real lookup/store executes; its
-canonical store is proved to be an identity. No post-read equality is assumed.
+`heap-frame-read.bend` now describes rc.21's actual ordinary `frameRead`:
+when the input cache names a terminal current flush group, no lane pass is active,
+and the reader is not a verdict, a healthy input executes `joinPass` and returns
+`false`. A faulted raw input returns the unchanged World and `false`; no healthy
+input premise hides that branch. Both the cold shortcut and transaction lookup
+branch are covered. `txOf`'s real lookup/store executes; its canonical store is
+proved to be an identity. No post-read equality is assumed.
 
 `heap-render-join.bend` proves that `joinPass` on a render and an initialized source
 only adds `REACTIVE_JOINED` to the reader. It performs no transaction join/adoption
@@ -24,7 +26,7 @@ or obligation change. Flags retain the initial source status and reader kind eve
 when IDs alias. `heap-held-read.bend` composes these contracts for actual
 `enterRead(..., false)`: a positive render reader, held initialized source, allowed
 children, ordinary same-flush posture and canonical terminal cache yield exactly
-the marked World and `false`. Arbitrary payloads and ambient arenas are retained;
+the marked World and `false` on healthy input, with the raw fault branch explicit. Arbitrary payloads and ambient arenas are retained;
 this contract introduces no natural-number payload restriction.
 
 The four roots in `LAWS.bend` expose these input facts explicitly. The next caller

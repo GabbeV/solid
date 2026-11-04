@@ -9,7 +9,7 @@ import ../runtime/question.bend as Q
 import ./arena.bend as Arena
 
 def record(open: Nat, acted: Bool) -> R.Transaction:
-  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, open, acted, 0n, False{}, False{}, R.NoIds{}, False{}}
+  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, open, acted, 0n, False{}, False{}, R.NoIds{}, False{}, 0n}
 
 def fresh(+w: R.World, value: R.Transaction) -> R.World:
   R.World.with_transactions(R.World.with_txArena(w, B.append(R.Transaction, R.World.txArena(w), [value])), B.append(Nat, R.World.transactions(w), [B.length(R.Transaction, R.World.txArena(w))]))

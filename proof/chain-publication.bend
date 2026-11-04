@@ -21,26 +21,26 @@ def disabled(+w: R.World, +id: Nat, +a: R.Value, +b: R.Value, off: {R.Node.equal
   {EQ.isSame(w, id, a, b) == False{} : Bool}:
   Equal.cong(Bool, Bool, e => Bool.and(e, B.equal(a, b)), R.Node.equals(B.node(w, id)), False{}, off)
 
-def flags(+effect: Bool, +shown: Bool) ->
-  {Bool.or(Bool.and(Bool.not(effect), False{}), Bool.or(shown, Bool.not(False{}))) == True{} : Bool}:
-  match effect shown:
-    case True{} True{}:
-      {==}
-    case True{} False{}:
-      {==}
-    case False{} True{}:
-      {==}
-    case False{} False{}:
-      {==}
+def flags(+unstaged: Bool, +effect: Bool, +shown: Bool) ->
+  {Bool.or(Bool.and(unstaged,Bool.and(Bool.not(effect), False{})), Bool.or(shown, Bool.not(False{}))) == True{} : Bool}:
+  match unstaged effect shown:
+    case True{} True{} True{}: {==}
+    case True{} True{} False{}: {==}
+    case True{} False{} True{}: {==}
+    case True{} False{} False{}: {==}
+    case False{} True{} True{}: {==}
+    case False{} True{} False{}: {==}
+    case False{} False{} True{}: {==}
+    case False{} False{} False{}: {==}
 
 def selected(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, same: Bool) -> B.Bundle<R.World, Bool>:
-  C.publishValueChanged(w, id, value, False{}, height, False{}, Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{}), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(same))))
+  C.publishValueChanged(w, id, value, False{}, height, False{}, Bool.or(Bool.and(Bool.not(B.present(R.Node.pending(B.node(w,id)))),Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{})), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(same))))
 
 def changed(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, no: {EQ.isSame(w, id, C.passValue(w, id), value) == False{} : Bool}) ->
   {C.publishValue(w, id, value, False{}, height, False{}, False{}) == C.publishValueChanged(w, id, value, False{}, height, False{}, True{}) : B.Bundle<R.World, Bool>}:
   Equal.trans(B.Bundle<R.World, Bool>, C.publishValue(w, id, value, False{}, height, False{}, False{}), selected(w, id, value, height, False{}), C.publishValueChanged(w, id, value, False{}, height, False{}, True{}),
     Equal.cong(Bool, B.Bundle<R.World, Bool>, same => selected(w, id, value, height, same), EQ.isSame(w, id, C.passValue(w, id), value), False{}, no),
-    Equal.cong(Bool, B.Bundle<R.World, Bool>, flag => C.publishValueChanged(w, id, value, False{}, height, False{}, flag), Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{}), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(False{}))), True{}, flags(B.effect(R.Node.kind(B.node(w, id))), B.truth(R.NodeExtension.shownError(B.extension(w, id))))))
+    Equal.cong(Bool, B.Bundle<R.World, Bool>, flag => C.publishValueChanged(w, id, value, False{}, height, False{}, flag), Bool.or(Bool.and(Bool.not(B.present(R.Node.pending(B.node(w,id)))),Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), False{})), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))), Bool.not(False{}))), True{}, flags(Bool.not(B.present(R.Node.pending(B.node(w,id)))),B.effect(R.Node.kind(B.node(w, id))), B.truth(R.NodeExtension.shownError(B.extension(w, id))))))
 
 def notified(+w: R.World, +id: Nat, +value: R.Value, +slotted: R.World, +subs: Nat,
   live: {Nat.is_ne(subs, 0n) == True{} : Bool}, slot: {Stage.staged(w, id, value) == slotted : R.World}) ->

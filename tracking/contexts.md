@@ -16,9 +16,11 @@ order. Node.scope is the inherited record pointer used by roots/computeds; a
 parent's later write does not update existing children. A child override leaves
 its parent and siblings unchanged. Signals' inert owner fields remain unused.
 
-The source rules remain explicit: a missing owner throws before record lookup;
-only undefined falls back to a default (null remains a provided value); a still
-undefined read throws ContextNotFoundError; a write of undefined uses the default.
+The current rc.21 production rules are explicit: a read without an owner uses
+the default, or throws ContextNotFoundError if that is undefined. A write without
+an owner still throws NoOwnerError before record lookup. Only undefined falls
+back to a default (null remains a provided value); a still-undefined read throws
+ContextNotFoundError; a write of undefined uses the default.
 An omitted or explicitly undefined owner parameter resolves to the current owner,
 whereas null means no owner. Set arguments evaluate value before owner. Context
 writes perform no reactive scheduling; user expression reads still track normally.
@@ -46,9 +48,10 @@ overriding the old child with null leaves parent and sibling at 13. They also
 check empty pending work and ambient restoration. These concrete executions do
 not prove a general context/ownership/TS-equivalence theorem. Four compiled
 mutations cover null fallback, in-place records, dropped inheritance and a
-missing-owner read that wrongly succeeds.
+no-owner default read that incorrectly throws (migrated to rc.21 policy).
 
 Local data signal/memo/effect construction now executes; see [locals.md](locals.md).
-High-level component/provider APIs, escaping accessors/setters,
-teardown expression suspension and active boundary/lane/snapshot scopes remain
-unfinished. No semantic deviation or source workaround is active.
+High-level component/provider APIs, arbitrary escaping JS closures and active
+boundary/snapshot scopes remain unfinished. Admitted teardown expressions suspend
+through the shared owner/core driver; canonical accessor/setter tokens and the
+non-store lane crossings follow their own documented scope. No semantic deviation or source workaround is active.

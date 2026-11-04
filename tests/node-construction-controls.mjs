@@ -27,7 +27,7 @@ try{
   const rest=encodeList(callerWork),stack=encodeList([b.encode('outer'),b.encode({ref:1})]);
   const args=[prefix,sourceExpr,effectExpr,7,0,0];
   const initial=F.input(prefix),allocated=F.allocated(...args),linked=F.linked(...args),certificate=F.complete(...args,rest,stack);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,9);assert.equal(certificate.steps+certificate.slack,14);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,9);assert.equal(certificate.steps+certificate.slack,15);
   const nodes=list(linked.nodes),edge=nodes[rootId].subs;
   assert.equal(nodes.length,rootId+2);assert.equal(nodes[rootId].kind.$,'Memo');assert.equal(nodes[leafId].kind.$,'Render');
   assert.equal(nodes[rootId].prevHeap,rootId);assert.equal(nodes[leafId].prevHeap,leafId);

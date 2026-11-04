@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+  "sourceTreeClean": true,
+  "browser": "154.0.8037.57",
+  "reproducer": "store-staged-screen.tsx",
+  "control": "Only untrack(() => state.count) becomes state.count.",
+  "rows": [
+    {
+      "name": "production-untracked",
+      "tier": "production",
+      "control": false,
+      "text": "0 / 0",
+      "errors": [
+        "Cannot read properties of undefined (reading '_x')",
+        "Cannot read properties of undefined (reading '_x')"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]",
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "production-tracked",
+      "tier": "production",
+      "control": true,
+      "text": "1 / 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "development-untracked",
+      "tier": "development",
+      "control": false,
+      "text": "0 / 0",
+      "errors": [
+        "Cannot read properties of undefined (reading '_x')",
+        "Cannot read properties of undefined (reading '_x')"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED] An uncaught error halted the reactive system. No further updates will be processed. Handle errors with <Errored> or treat this as a crash.\n  in <App> › effect",
+        "[REACTIVITY_HALTED] Update ignored: the reactive system was halted by an earlier uncaught error.\n  in <App> › effect"
+      ]
+    },
+    {
+      "name": "development-tracked",
+      "tier": "development",
+      "control": true,
+      "text": "1 / 1",
+      "errors": [],
+      "reports": []
+    },
+    {
+      "name": "observe-untracked",
+      "tier": "observe",
+      "control": false,
+      "text": "0 / 0",
+      "errors": [
+        "Cannot read properties of undefined (reading '_x')",
+        "Cannot read properties of undefined (reading '_x')"
+      ],
+      "reports": [
+        "[REACTIVITY_HALTED]",
+        "[REACTIVITY_HALTED]"
+      ]
+    },
+    {
+      "name": "observe-tracked",
+      "tier": "observe",
+      "control": true,
+      "text": "1 / 1",
+      "errors": [],
+      "reports": []
+    }
+  ]
+}

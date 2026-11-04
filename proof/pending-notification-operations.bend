@@ -31,4 +31,4 @@ def notified(w: R.World,node: Nat,source: Nat,serial: Nat) -> R.World:
 
 def statusField(+record: R.Node,+flags: U32) -> {R.Node.status(R.Node.with_status(record,flags)) == flags : U32}:
   match record:
-    case R.Node{kind,value,pending,equals,config,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram}: {==}
+    case R.Node{kind,value,pending,equals,config,flags,status,time,notified,deps,depsTail,depGen,subs,subsTail,height,nextHeap,prevHeap,parent,firstChild,nextSibling,prevSibling,expr,modified,prevValue,target,loading,x,parentComputed,scope,childCount,disposal,cleanup,effectProgram,returnedCleanup,errorProgram, +rebaseOwed}: {==}

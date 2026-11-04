@@ -85,7 +85,7 @@ do not claim the heap is drained or the rendered observer has been parked.
 
 
 The [read-entry contracts](heap-read-entry.md) now supply the general graph-link
-frame, same-flush frame identity and initialized-render held-entry result needed
+frame, same-flush frame join and initialized-render held-entry result needed
 by the changed-reader arm. Construction from body-produced heap state and
 composition through recompute/parking remain required. Displayed output must be
 observed separately from internal computed-node values and diagnostic events.

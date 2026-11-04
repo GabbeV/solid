@@ -11,10 +11,10 @@ try{
  for(const d of ['runtime','representation','observation'])fs.cpSync(path.join(active,d),path.join(dir,d),{recursive:true});
  fs.mkdirSync(path.join(dir,'tests/probes'),{recursive:true});fs.copyFileSync(path.join(root,'tests/probes/pin-5e68925c.bend'),path.join(dir,'tests/probes/pin-5e68925c.bend'));
  const output=path.join(dir,'probe.mjs'),r=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(dir,'tests/probes/pin-5e68925c.bend'),'-o',output],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});assert.equal(r.status,0,r.stderr);const B=(await import(pathToFileURL(output))).default;
- const source=path.join(root,'upstream/solid/packages/signals/src'),bundle=await build({stdin:{contents:`export * from './index.ts';export * as K from './core/constants.ts';export {computed,ext,creatorReads,setContextInternal} from './core/core.ts';export {probeHoldWork} from './core/verdict.ts';export {probeAdoptParked,probeResetLanes,probeSeams,probeRevealing,probeReveal} from './core/lanes.ts';export {handleAsync} from './core/async.ts';export {reruns as probeReruns,probeResetQueue} from './core/scheduler.ts';`,loader:'ts',resolveDir:source},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'observations-only',setup(b){
+ const source=path.join(root,'upstream/solid/packages/signals/src'),bundle=await build({stdin:{contents:`export * from './index.ts';export * as K from './core/constants.ts';export {computed,ext,creatorReads,setContextInternal} from './core/core.ts';export {probeHoldWork} from './core/verdict.ts';export {probeAdoptParked,probeResetLanes,probeSeams,probeRevealing,probeReveal,probeAhead} from './core/lanes.ts';export {handleAsync} from './core/async.ts';export {reruns as probeReruns,probeResetQueue} from './core/scheduler.ts';`,loader:'ts',resolveDir:source},bundle:true,write:false,platform:'node',format:'esm',define:{__DEV__:'false',__OBSERVE__:'false',__TEST__:'false'},plugins:[{name:'observations-only',setup(b){
  b.onLoad({filter:/[/\\]core[/\\]scheduler\.ts$/},a=>({loader:'ts',contents:fs.readFileSync(a.path,'utf8')+'\nexport function probeResetQueue(){scheduled=false;syncDepth=1;dirtyQueue._heap=[];dirtyQueue._min=dirtyQueue._max=0;dirtyQueue._marked=false;}'}));
  b.onLoad({filter:/[/\\]core[/\\]verdict\.ts$/},a=>({loader:'ts',contents:fs.readFileSync(a.path,'utf8')+'\nexport {holdWork as probeHoldWork};'}));
- b.onLoad({filter:/[/\\]core[/\\]lanes\.ts$/},a=>({loader:'ts',contents:fs.readFileSync(a.path,'utf8')+'\nexport {adoptParked as probeAdoptParked,laneSeams as probeSeams,revealing as probeRevealing};export function probeReveal(t){revealing.push(t);}export function probeResetLanes(){revealing.length=lanes.length=kept.length=entered.length=pendingGuesses.length=0;judged=0;guessed=false;}'}));
+ b.onLoad({filter:/[/\\]core[/\\]lanes\.ts$/},a=>({loader:'ts',contents:fs.readFileSync(a.path,'utf8')+'\nexport {adoptParked as probeAdoptParked,laneSeams as probeSeams,revealing as probeRevealing,ahead as probeAhead};export function probeReveal(t){revealing.push(t);}export function probeResetLanes(){ahead.length=0;revealing.length=lanes.length=kept.length=entered.length=pendingGuesses.length=0;judged=0;guessed=false;}'}));
  }}]});const native=path.join(dir,'solid.mjs');fs.writeFileSync(native,bundle.outputFiles[0].text);const S=await import(pathToFileURL(native)),K=S.K;
  function fixture(){const b=new BendRuntime();b.memo('n',{lit:7},{lazy:true});b.memo('s',{lit:11},{lazy:true});b.memo('p',{lit:13},{lazy:true});b.world=B.storeExt(b.world,2,B.ext(b.world,2));return b;}
  const bn=(b,id,patch)=>{b.world=B.storeNode(b.world,id,{...B.node(b.world,id),...patch});};
@@ -22,10 +22,10 @@ try{
  let holds=0,creators=0,adoptions=0,reruns=0;
  for(const own of [false,true])for(const pending of [false,true])for(const lane of [false,true])for(const reask of [false,true]){
   const b=fixture(),n=S.computed(()=>7,{lazy:true}),s=S.computed(()=>11,{lazy:true});
-  Object.assign(n,{_config:own?K.CONFIG_ASYNC:0,_statusFlags:pending?K.STATUS_PENDING:0});S.ext(n)._transaction=lane?{_lane:true}:null;s._flags=reask?K.REACTIVE_REASK:0;
+  Object.assign(n,{_config:(own?K.CONFIG_ASYNC:0)|K.CONFIG_VERDICT,_statusFlags:pending?K.STATUS_PENDING:0});S.ext(n)._transaction=lane?{_lane:true}:null;s._flags=reask?K.REACTIVE_REASK:0;
   bn(b,2,{config:n._config,status:n._statusFlags});bn(b,3,{flags:s._flags});
   // Transaction identity is represented by the actual arena row, not node ID.
-  const t=B.transaction(b.world,lane);b.world=t.left;bx(b,2,{transaction:lane?t.right:0});assert.equal(B.hold(b.world,2,3),!!S.probeHoldWork(n,s));holds++;
+  const t=B.transaction(b.world,lane);b.world=t.left;bx(b,2,{transaction:lane?t.right:0});const expected=!!S.probeHoldWork(n,s),actual=B.hold(b.world,2,3);assert.equal(actual.right,expected);assert.equal(B.node(actual.left,2).config,n._config>>>0);holds++;
  }
  for(const active of [false,true])for(const outerActive of [false,true])for(const bits of [0,K.REACTIVE_JOINED,K.REACTIVE_STAGED_READ,K.REACTIVE_JOINED|K.REACTIVE_STAGED_READ])for(const outer of [0,K.REACTIVE_JOINED,K.REACTIVE_STAGED_READ]){
   const b=fixture(),n=S.computed(()=>7,{lazy:true}),p=S.computed(()=>13,{lazy:true}),g=S.computed(()=>11,{lazy:true});n._parent=p;p._parent=g;g._parent=null;p._flags=bits|(active?K.REACTIVE_RECOMPUTING_DEPS:0);g._flags=outer|(outerActive?K.REACTIVE_RECOMPUTING_DEPS:0);
@@ -46,6 +46,13 @@ try{
   S.probeResetLanes();const b=fixture(),t=B.transaction(b.world,false);b.world=t.left;
   const ids=Array(count).fill(t.right),encoded=encodeList(ids);b.world={...b.world,laneState:{...b.world.laneState,revealing:encoded}};
   for(let i=0;i<count;i++)S.probeReveal({});S.probeSeams(null);const m=B.finish(b.world);assert.equal(m.world.fault.$,'Healthy');assert.deepEqual(list(m.world.laneState.revealing),S.probeRevealing);
+ }
+ // rc.21 ahead cleanup is part of laneSeams even with no live lanes,
+ // staged readers or entered readers. The empty intake shortcut must not skip it.
+ for(const flags of [0,K.REACTIVE_FRAME_READ])for(const copies of [1,2,3]){
+  S.probeResetLanes();S.setContextInternal(null);const b=fixture(),n=S.computed(()=>7,{lazy:true});n._flags=flags;bn(b,2,{flags});
+  S.probeAhead.push(...Array(copies).fill(n));b.world={...b.world,laneState:{...b.world.laneState,ahead:encodeList(Array(copies).fill(2))}};
+  S.probeSeams(null);const m=B.finish(b.world);assert.equal(m.world.fault.$,'Healthy');assert.deepEqual(list(m.world.laneState.ahead),[]);assert.equal(B.node(m.world,2).flags,n._flags,'empty intake still processes ahead flags');
  }
  for(const throws of [false,true]){
   S.probeResetQueue();S.probeResetLanes();S.setContextInternal(null);const b=fixture(),n=S.computed(()=>7,{lazy:true}),source=b.future('source'),p=Promise.withResolvers();let calls=0;
@@ -82,5 +89,5 @@ try{
   else{assert.equal(b.decode(B.ext(b.world,2).error).cause,S.ext(n)._error.cause);}
   adoptions++;
  }
- console.log(JSON.stringify({holdWorkCases:holds,creatorAncestorCases:creators,rerunErrorCases:reruns,parkedAdoptionCases:adoptions,teardownCases:2,emptySeamResetCases:3,scope:'unchanged native predicates and actual Promise adoption; seeded helper states, not public reachability or arbitrary thenables'}));
+ console.log(JSON.stringify({holdWorkCases:holds,creatorAncestorCases:creators,rerunErrorCases:reruns,parkedAdoptionCases:adoptions,teardownCases:2,emptySeamResetCases:3,aheadIntakeCases:6,scope:'unchanged native predicates and actual Promise adoption; seeded helper states, not public reachability or arbitrary thenables'}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

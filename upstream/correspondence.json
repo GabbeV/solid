@@ -18,9 +18,9 @@
       "restrictions": "Uses the restricted unlinkSubs path."
     },
     "core/graph.ts:clearDeps": {
-      "bend": "runtime/graph.bend:clearDeps; runtime/owner.bend:ClearDeps, UnlinkLoop, ClearDepSlots",
+      "bend": "runtime/graph.bend:clearDeps; runtime/owner.bend:ClearDeps, TrimDeps, UnlinkLoop, TrimDepSlots",
       "status": "restricted",
-      "restrictions": "Uses the restricted unlinkSubs path."
+      "restrictions": "rc.21 clears depsTail before the shared stale-dependency trim. Captured nextDep and source release callbacks retain order; restricted unlinkSubs and store slot-release scope apply."
     },
     "core/heap.ts:enqueueSub": {
       "bend": "runtime/heap.bend:enqueueSub",
@@ -105,7 +105,7 @@
     "core/core.ts:read": {
       "bend": "runtime/core.bend:readNode, readPrepared, readSignalFast, prepareSlow, serve; runtime/core.bend:readStatus, afterServe; runtime/core.bend:readStatus, readPendingStatus, readLaneValue, readLaneDone, prepareComputed, prepareDisposedAt",
       "status": "partial",
-      "restrictions": "Production non-store fast/slow reads, owner preparation, held/frame/committed selection, pending/error throws, untracked retry links, dormant/root forwarding and the shared public verdict/lane windows. Arbitrary JS bodies, store/folded-family, snapshot/spectating and mounted-boundary crossings remain outside scope. ecf30116: raw strict-equality netting precedes the staged-screen hook, optional-source screening and pending-owner verdict-bit carry are retained, and servesStaged is called only at the pending-throw boundary. Test-only seat shadow calls are pinned but excluded from the production translation."
+      "restrictions": "Production non-store fast/slow reads, owner preparation, held/frame/committed selection, pending/error throws, untracked retry links, dormant/root forwarding and the shared public verdict/lane windows. Arbitrary JS bodies, store/folded-family, snapshot/spectating and mounted-boundary crossings remain outside scope. ecf30116: raw strict-equality netting precedes the staged-screen hook, optional-source screening and pending-owner verdict-bit carry are retained, and servesStaged is called only at the pending-throw boundary. Test-only seat shadow calls are pinned but excluded from the production translation. rc.21 netted plain signals require strict equality AND SameValue, keeping accepted NaN a proposal. Memo verdict carry distinguishes pending born/staged hold work from an answered unstaged memo; qualifying render readers mark AHEAD. Verdict observation precedes generic lane finality."
     },
     "core/core.ts:serve": {
       "bend": "runtime/core.bend:serve, serveSelected, served; runtime/read-state.bend:readerSeesCommitted, unflushedValue, markLateLinker",
@@ -115,7 +115,7 @@
     "core/core.ts:setSignal": {
       "bend": "runtime/core.bend:setSignalArgument, resolveSignalArgument, SetSignalArgument, SetSignalResolved; runtime/write.bend:setResolved, setSignal; runtime/owner.bend:writeValue, WriteValue; runtime/api.bend:setValue, updateValue, setSignal, setUpdater; runtime/core.bend:signalUpdater; runtime/core.bend:setPlainResolved, LaneWrite; runtime/core.bend:stageCustom, SetSignalCompared, SetSignalNetted; runtime/write.bend:stageIntake, stageStored",
       "status": "partial",
-      "restrictions": "Captures currentValue before updater evaluation and custom-comparator posture at the first equality gate. After accepted change, actual queue/stash intake precedes the optional second comparison against live committed data. The selected pending value, promotion, live kind/time and notified/epoch checks retain source order. Default/disabled equality keeps the direct path; reentrant admitted callbacks use core continuations. Snapshot capture, store setters, attribution/dev hooks and arbitrary JS closures remain excluded. See tracking/comparators.md; ecf30116 retains the upstream signed-zero netting behavior reported in #4538."
+      "restrictions": "Captures currentValue before updater evaluation and custom-comparator posture at the first equality gate. After accepted change, actual queue/stash intake precedes the optional second comparison against live committed data. The selected pending value, promotion, live kind/time and notified/epoch checks retain source order. Default/disabled equality keeps the direct path; reentrant admitted callbacks use core continuations. Snapshot capture, store setters, attribution/dev hooks and arbitrary JS closures remain excluded. See tracking/comparators.md; rc.21 integrates merged #4538 in read admission; setters retain their own comparator and netting order."
     },
     "core/core.ts:untrack": {
       "bend": "runtime/core.bend:evaluate Untracked, RestoreTracking, unwind",
@@ -350,7 +350,7 @@
     "core/async.ts:setPendingError": {
       "bend": "runtime/pending-state.bend:setPendingError, preserveOrCreate, notReadyError",
       "status": "partial",
-      "restrictions": "No source resets error to null only on existing extension; matching provided/current NotReady source preserves identity, otherwise creates once."
+      "restrictions": "rc.21: no source resets error to null only on an existing extension. With a source, select the matching provided error or existing error, obtain ext before allocating a replacement, then always store the selected error, including the retained-identity branch. Exact identity and errorSerial order retained; typed NotReady values only."
     },
     "core/async.ts:retryReaches": {
       "bend": "runtime/pending-state.bend:retryReaches, retryLoop",
@@ -375,7 +375,7 @@
     "core/async.ts:releaseIfSettledUnobserved": {
       "bend": "runtime/pending.bend:releaseIfSettledUnobserved; runtime/pending.bend:releasable; runtime/core.bend:pendingTasks, passReleases",
       "status": "partial",
-      "restrictions": "Source computed/AUTO/no-subs/non-zombie/non-pending guards before graph/owner teardown; no extra disposed guard. Active release callers run the shared owner/core continuations; callback expressions do not bypass dependency reads."
+      "restrictions": "Source computed/AUTO/no-subs/non-zombie/non-pending guards before graph/owner teardown; no extra disposed guard. Active release callers run the shared owner/core continuations; callback expressions do not bypass dependency reads. rc.21 requires a computed callback; an eligible node still in the heap gets RELEASE_AFTER, consumed at recompute tail after publication. Owner releases may invoke admitted cleanup expressions."
     },
     "core/async.ts:releaseSettledDependents": {
       "bend": "runtime/pending.bend:releaseSettledDependents, Collect, CollectWalk, CollectNext, Release; runtime/pending.bend:beginReleaseSettledDependents, advance; runtime/core.bend:PendingTasks, finishHandleError",
@@ -465,7 +465,7 @@
     "core/scheduler.ts:blockedBy": {
       "bend": "runtime/transaction.bend:blockedBy",
       "status": "partial",
-      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
+      "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes. rc.21 AHEAD render nodes do not block ordinary holds, while lane blockers keep their prior rule."
     },
     "core/scheduler.ts:onScreen": {
       "bend": "runtime/transaction.bend:onScreen",
@@ -478,9 +478,9 @@
       "restrictions": "Source stable transaction identities, field/queue/list mutation order and nullable world context retained. Redirect, held-frame, blocker and source-membership states have direct TS comparisons. Lane/boundary/marks/action hooks and public APIs remain unfinished; inert full-index hooks are exercised only without their scopes."
     },
     "core/core.ts:frameRead": {
-      "bend": "runtime/transaction.bend:frameRead, enterRead",
+      "bend": "runtime/read-transaction.bend:frameReadFlags, frameReadDecision, finishDecision, frameRead, enterReadDecision; runtime/core.bend:readDecision, laneServedNext, ReadEntered",
       "status": "partial",
-      "restrictions": "Render frame reads, bornInto exclusion, own-flush exclusion and stale rerun capture. Verdict/lane/boundary paths outside the admitted context family. Overnight lane-answer integration adds actual override dispatch, lane/verdict stale-frame branches and core token/value return points. Store/folded/fresh-mount hooks and full public engines remain excluded. See tracking/lane-answers.md. #4302 cold-screen guard uses CONFIG_FRAME rather than reader kind; native controls vary both independently. rc.20 call laneServed after frame admission so pending origins served as committed are no longer the pass pending set."
+      "restrictions": "rc.21: captured verdict/lane posture, inherited holdStaging, raw over/liveTx resolution, own-flush and born-held refusals, stale-reader versus joinPass and laneServed order. Actual read continuations settle the captured live Set across admitted cleanup callbacks; direct helper facade is callback-free. Boundary/snapshot/folded-store scopes remain excluded."
     },
     "core/core.ts:bornInto": {
       "bend": "runtime/transaction.bend:bornInto",
@@ -488,7 +488,7 @@
       "restrictions": "Source uninitialized/held-frame, HELD and compressed transaction identity predicate."
     },
     "core/core.ts:joinPass": {
-      "bend": "runtime/transaction.bend:joinPass, enterRead",
+      "bend": "runtime/transaction.bend:joinPass; runtime/read-transaction.bend:enterReadDecision",
       "status": "partial",
       "restrictions": "JOINED flag, render/source-uninitialized decision and joinPassTx ordering; fresh boundary collection unfinished."
     },
@@ -658,9 +658,9 @@
       "restrictions": "Default strict/disabled fast arm plus original named comparator programs at all active source callers. NotReady returns raw undefined; ordinary throws notify status and answer true; notifier throws escape. Registry preserves source extension presence. 134 public histories, 46 actual helper comparisons, four closed executions and five quantified helper laws. Arbitrary closures, dynamic replacement, option getters and active scope engines unfinished. World-only default helper facades explicitly reject a required custom call. See tracking/comparators.md."
     },
     "core/effect.ts:trackedEffect": {
-      "bend": "runtime/core.bend:trackedEffect, trackedBody, runTracked, visitHeap, TrackedAfterCleanup, TrackedCreate, TrackedBody; runtime/api.bend:createTrackedEffect; runtime/write.bend:userQueue",
+      "bend": "runtime/core.bend:trackedEffect, trackedBody, runTracked, visitHeap, TrackedAfterCleanup, TrackedCreate, TrackedBody; runtime/api.bend:createTrackedEffect; runtime/write.bend:userQueue; runtime/core.bend:TrackedAfterRun, TrackedDeps, RunTrackedLanding; representation/records.bend:Node.trackedOwed, TrackedLanding",
       "status": "restricted",
-      "restrictions": "Production default/BaseEffectOptions name/loc only; no active boundary heldRunHook. Actual lazy computed constructor, cleanup/config/modified/type setup, heap-before-user-phase routing, duplicate modified/disposed gate, pre-cleanup clear/call, staleValues(fn), return-valued cleanup assignment and void compute return retained. Data/getter/setter/root/named-program cleanup families use the shared owner/core driver. 47 public histories and 32 actual native _run comparisons cover startup, updates, dependency switching, writes/commits, pending/rejection, errors, cleanup, captures, owner disposal and incoming stale scopes. Arbitrary closures, dev checks, lane/boundary engines and internal NodeOptions comparator/loading extensions remain unfinished."
+      "restrictions": "Production default/BaseEffectOptions name/loc only; no active boundary heldRunHook. Actual lazy computed constructor, cleanup/config/modified/type setup, heap-before-user-phase routing, duplicate modified/disposed gate, pre-cleanup clear/call, staleValues(fn), return-valued cleanup assignment and void compute return retained. Data/getter/setter/root/named-program cleanup families use the shared owner/core driver. 47 public histories and 32 actual native _run comparisons cover startup, updates, dependency switching, writes/commits, pending/rejection, errors, cleanup, captures, owner disposal and incoming stale scopes. Arbitrary closures, dev checks, lane/boundary engines and internal NodeOptions comparator/loading extensions remain unfinished. rc.21 captures notifyEpoch, scans the live dependency list after run, queues one owed landing callback per node under a held dependency, and tests both strict equality and SameValue for a changed staging. Land retains owed until actual run passes its disposed/modified gates."
     },
     "signals.ts:createTrackedEffect": {
       "bend": "runtime/api.bend:createTrackedEffect; runtime/core.bend:TrackedCreate, trackedEffect",
@@ -825,7 +825,7 @@
     "core/scheduler.ts:laneDirty": {
       "bend": "runtime/lanes-state.bend:laneDirty",
       "status": "partial",
-      "restrictions": "Actual subscriber walk, same-group membership and non-lane effect fallback, without enqueuing. Active lane callers remain unfinished."
+      "restrictions": "Actual subscriber walk, same-group membership and non-lane effect fallback, without enqueuing. Active lane callers remain unfinished. rc.21 notifies first, then reseats pending held memo re-asks before marking: parent-resolution equality short circuits before pending-source every-reask scan. Raw holder identity stays captured unless actually reseated."
     },
     "core/truth.ts:laneValueOf": {
       "bend": "runtime/truth-state.bend:laneValueOf",
@@ -925,7 +925,7 @@
     "core/lanes.ts:laneRead": {
       "bend": "runtime/core.bend:laneRead, laneReadReader, laneReadRender, laneReadOutside, laneReadRenderEnd, laneReadEnter, laneReadEntered",
       "status": "restricted",
-      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md. Reviewed ac28157a/#4304: foreign verdict seats leave before another lane; the pending fast token requires a shown lane; verdict readers entering an unjudged non-verdict lane append to the source entered array. New live entered stack is separate from stagedReaders. 178605cf registers FRAME_READ/SCREEN_READ and lane rerun before a never-shown uninitialized pending read throws, so reveal can wake the leaf (#4338)."
+      "restrictions": "Production active non-store core hook; actual node/reader branches and mutation order, including #4275 verdict-lane escape before never-shown pending fallback. Folded-store callbacks and slot-node families remain excluded. See tracking/lane-reads.md. Reviewed ac28157a/#4304: foreign verdict seats leave before another lane; the pending fast token requires a shown lane; verdict readers entering an unjudged non-verdict lane append to the source entered array. New live entered stack is separate from stagedReaders. 178605cf registers FRAME_READ/SCREEN_READ and lane rerun before a never-shown uninitialized pending read throws, so reveal can wake the leaf (#4338). rc.21 held-frame staging branch excludes shown non-verdict lanes."
     },
     "core/lanes.ts:stale": {
       "bend": "runtime/lanes-state.bend:stale; runtime/question.bend:compare, less",
@@ -965,12 +965,12 @@
     "core/lanes.ts:dissolveLane": {
       "bend": "runtime/core.bend:dissolveLane, dissolveNodes, dissolveDerivation, dissolveCommitted, DissolveCompared, DissolveShown, DissolveHidden",
       "status": "restricted",
-      "restrictions": "Live removal/group unlink/nested verdict, captured shown/latest locals, actual commit/owner callback returns and raw comparison; source queue policy. Store covered hook excluded; finite shared machine fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md. rc.20: retain never-valued first loads and their dependent loads, map NOT_PENDING back to absent Slot, then own-error frame reruns; shown errors remain until commit."
+      "restrictions": "Live removal/group unlink/nested verdict, captured shown/latest locals, actual commit/owner callback returns and raw comparison; source queue policy. Store covered hook excluded; finite shared machine fuel explicit. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md. rc.20: retain never-valued first loads and their dependent loads, map NOT_PENDING back to absent Slot, then own-error frame reruns; shown errors remain until commit. rc.21 skips disposed members before any commit/requeue. Store slot rebase branches remain excluded."
     },
     "core/lanes.ts:laneSeam": {
       "bend": "runtime/core.bend:laneSeam, laneSeamNodes, LaneSeamCleared",
       "status": "restricted",
-      "restrictions": "Leaked/blocked short circuit, reruns, LEFT_SHOWN before member guard, nonguess staging, parked-frame disposal, live member continuation and queues. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md. rc.20: capture reruns return and delay its resolved parent through revealing; retain FRAME_READ during lane reveal."
+      "restrictions": "Leaked/blocked short circuit, reruns, LEFT_SHOWN before member guard, nonguess staging, parked-frame disposal, live member continuation and queues. Internal helper only; public active engines remain unfinished. See tracking/lane-lifecycle.md. rc.20: capture reruns return and delay its resolved parent through revealing; retain FRAME_READ during lane reveal. rc.21 waits for blocked(liveTx(over) || lane) after ordinary lane blockers; LEFT_SHOWN is the distinct negative notify stamp (-2), cleared by notification."
     },
     "core/lanes.ts:endLanes": {
       "bend": "runtime/core.bend:endLanes, endKept, endKeptNode, removeKept, restoreKept, EndKept, RestoreKept, endLanesLoop",
@@ -993,9 +993,9 @@
       "restrictions": "Snapshot live lanes, live member scan, parent acted/open/own-flight/guess-flight gates, raw truth comparator and supersede. Production guessed guard sets reverting before comparator and resets only after supersede returns; callback throws preserve the source interrupted state. Original lane is recorded reverted after dissolution, before shown/config/hold stores. Store covered/rebase hooks and instrumentation excluded."
     },
     "core/core.ts:stagedScreen": {
-      "bend": "runtime/transaction.bend:stagedScreenFor, stagedScreen",
-      "status": "restricted",
-      "restrictions": "Exact flush-null/born-into and optional held non-override source short circuits, latest-opened branch and stale-reader updates. Fast/slow core reads pass the actual source ID; the omitted-source wrapper remains for source calls with no el argument. Production non-store verdict/lane profile; mounted boundary/snapshot and store families remain excluded."
+      "bend": "runtime/read-transaction.bend:stagedScreenFor, stagedScreen; runtime/verdict-staging.bend:holdStaging",
+      "status": "partial",
+      "restrictions": "Optional source admission, shown error, same-flush and inherited-verdict staging rules retain source short circuit and passLane mutation. Actual non-store callers supply the source. Store-only omitted-source call is outside the grammar; the new upstream non-null dereference is not silently repaired."
     },
     "core/lanes.ts:pendingGuessOf": {
       "bend": "runtime/lanes-state.bend:pendingGuessOf, pendingGuessLoop",
@@ -1025,7 +1025,7 @@
     "core/lanes.ts:laneSeams": {
       "bend": "runtime/core.bend:laneSeams, laneLeakLoop, laneLeakAdmit, laneRevealLoop, laneEnteredLoop, laneEnteredPop; runtime/lanes-state.bend:enteredPrefix",
       "status": "restricted",
-      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md. Reviewed ac28157a/#4304: after the fixed reverse lane prefix, the live entered array is popped last-to-first; each held reader clears lane-dirty before enqueue. Duplicate/order/store boundaries retained. Existing empty-hook fast path also requires entered empty. 178605cf skips ordinary transaction-held leak readers with neither STAGED_READ nor PROBE_UNANSWERED; lane verdict-parent logic remains a distinct branch (#4349). rc.20: parent identity argument, staged-reader holder fallback, verdict blocked/heldBy guards, parked flights, reverse current-list scan with judged/current-verdict gate and revealing parent collection. ecf30116 uses readsHeld alongside REACTIVE_STAGED_READ when classifying held re-passes; the dependency traversal is live, not replaced by a constant."
+      "restrictions": "Null/list leaks, disposed/verdict/blocked exclusions, effect seating, deduplication and current reverse live prefix; actual laneSeam/owner continuations. Core seating/flush now call these bodies; public construction/windows and store/folded/boundary paths remain excluded. See tracking/lane-guesses.md. Reviewed ac28157a/#4304: after the fixed reverse lane prefix, the live entered array is popped last-to-first; each held reader clears lane-dirty before enqueue. Duplicate/order/store boundaries retained. Existing empty-hook fast path also requires entered empty. 178605cf skips ordinary transaction-held leak readers with neither STAGED_READ nor PROBE_UNANSWERED; lane verdict-parent logic remains a distinct branch (#4349). rc.20: parent identity argument, staged-reader holder fallback, verdict blocked/heldBy guards, parked flights, reverse current-list scan with judged/current-verdict gate and revealing parent collection. ecf30116 uses readsHeld alongside REACTIVE_STAGED_READ when classifying held re-passes; the dependency traversal is live, not replaced by a constant. rc.21 detaches ahead, removes FRAME_READ and the first matching frame rerun before leak judgment; linked raw over captures exempt rebased work from stale re-derivation. over producers remain store-only/excluded."
     },
     "core/core.ts:laneFrameMember": {
       "bend": "runtime/core.bend:laneFrameMember, laneFrameMemberLoop; visitHeapInto",
@@ -1164,8 +1164,8 @@
     },
     "core/lanes.ts:laneServed": {
       "status": "partial",
-      "bend": "runtime/lane-served.bend:laneServed",
-      "restrictions": "Remove source pending origins then the source itself from the reader; empty-set cleanup follows shared removePendingSource. Called after ordinary frame-serving classification. Distinct origin identity retained."
+      "bend": "runtime/lane-served.bend:laneServed; runtime/core.bend:laneServedNext, PendingTasks",
+      "restrictions": "Captured source pending Set and live slot cursor: remove each origin from reader, settle it synchronously if deleted, then continue. Nested cleanup return points remain in Core. Raw facade is callback-free. Allocated empty Sets retain identity; no store-family or boundary producer is implied."
     },
     "core/scheduler.ts:openedByLatest": {
       "status": "partial",
@@ -1175,22 +1175,67 @@
     "core/verdict.ts:holdWork": {
       "status": "partial",
       "bend": "runtime/verdict-work.bend:holdWork",
-      "restrictions": "Both engines installed: ASYNC bit and pending/lane/reask predicates preserve source truthiness as Bool. CONFIG_ASYNC upkeep follows handleAsync, recompute and markVerdictReader; partial engine/tree-shaken entry profiles remain excluded."
+      "restrictions": "Both engines installed: ASYNC bit and pending/lane/reask predicates preserve source truthiness as Bool. CONFIG_ASYNC upkeep follows handleAsync, recompute and markVerdictReader; partial engine/tree-shaken entry profiles remain excluded. rc.21 eligible waits clear CONFIG_VERDICT before returning true; World and Bool are threaded, including short-circuit propagation call sites."
     },
     "core/core.ts:servesStaged": {
       "bend": "runtime/staged-answer.bend:servesStaged, latch; runtime/core.bend:readPendingStatus",
       "status": "restricted",
       "restrictions": "Production non-store verdict engine: first-answer/re-ask staging, reader/owner uninitialized gates, raw optional served stamp, same-pass missed-wake latch, exact optional pending-source Set.delete and source-order extension allocation. Direct deletion retains an emptied set identity. Store slot forwarding, mounted boundaries and arbitrary JS protocol objects remain excluded."
     },
-    "core/async.ts:stageMark": {
-      "bend": "runtime/pending.bend:stageMarkMask, stageMarkPrefix, stageMark, RestoreSettlement; runtime/pending-queue.bend:queuePendingNode",
-      "status": "partial",
-      "restrictions": "Actual staging/config/queue order and nested settle with fresh visited/released/scheduled locals, restored at return. The store-family STATUS_ERROR callback is outside the non-store grammar. Nested traversal and owner-release continuations share the existing source runtime."
-    },
     "core/lanes.ts:readsHeld": {
       "bend": "runtime/core.bend:readsHeldLoop, readsHeld",
       "status": "restricted",
       "restrictions": "Actual dependency-chain walk tests CONFIG_HELD on each dependency. Explicit bounded refusal on malformed/cyclic raw pointers; no false successful answer is credited after exhaustion. Store families and mounted boundaries remain outside scope."
+    },
+    "core/verdict.ts:stageMark": {
+      "bend": "runtime/pending.bend:stageMarkMask, stagedDependencyLoop, stageMarkPrefix, stageMark, RestoreSettlement",
+      "status": "partial",
+      "restrictions": "rc.21: source-staged-error and target rederive/staged/tracked guard, actual dependency scan for a staged error, then staging/config/queue and nested settlement before outer descent. Each nested call has fresh locals and restores the enclosing locals. Store-family notification remains excluded; scan exhaustion is failure, never false successful admission."
+    },
+    "core/async.ts:clearInFlight": {
+      "bend": "runtime/flight-slot.bend:clearInFlight; runtime/owner.bend:afterPark; runtime/flight.bend:beginHandleError; runtime/core.bend:AfterDeadPass",
+      "status": "restricted",
+      "restrictions": "Optional extension guard then null flight store only, shared at the source disposal/loading/disposed-pass sites."
+    },
+    "core/async.ts:walkDependents": {
+      "bend": "runtime/dependent-walk.bend:after, next; runtime/pending.bend:advance, Descend, RestoreSettlement; runtime/status.bend:advance",
+      "status": "partial",
+      "restrictions": "Body called on every arrival, including seen arrivals; only a successful first arrival marks and descends. Live dependent head is read after the body and nested settlement; live next edge follows return. Store-family bridge traversal remains excluded; malformed pointers/insufficient fuel fault, never certify a completed walk."
+    },
+    "core/verdict.ts:keepReaders": {
+      "bend": "runtime/keep-readers.bend:otherHeld, keepOne, keepLoop, keepReaders; runtime/core.bend:RecomputeTail",
+      "status": "partial",
+      "restrictions": "Captured superseded staging and release-after-pass locals survive callbacks. SameValue tail retains held/staged non-effect readers whose other dependencies are not held; delete heap, clear dirty/check/held, queue and notify in source order. Live subscriber cursor; finite valid pointer structure required for successful traversal."
+    },
+    "core/verdict.ts:holdStaging": {
+      "bend": "runtime/verdict-staging.bend:holdStaging, sameClock, sameHold, leaveVerdictLane; runtime/verdict-state.bend:askedIn",
+      "status": "partial",
+      "restrictions": "Own-window/frame/unanswered exclusions, staged sync non-override gate, clock or resolved-transaction askedIn, and verdict-lane departure. Absence, clock zero and transaction identity are distinct. Extension allocation precedes txOf at the ask. No source optional argument is invented for store-only paths."
+    },
+    "core/verdict.ts:bornHeldOpen": {
+      "bend": "runtime/attach-waits.bend:bornChildren, bornHeldOpen",
+      "status": "partial",
+      "restrictions": "Actual owned-tree DFS, disposed exclusion, first held uninitialized render with staging, txOf then nonlane blocker. Hidden boundary hook is excluded; finite valid owner trees required."
+    },
+    "core/verdict.ts:valueInserts": {
+      "bend": "runtime/attach-waits.bend:valueWork, valueInserts",
+      "status": "partial",
+      "restrictions": "Primitive/null versus array recursion and sparse-slot traversal retained. Admitted object/reference atoms lack nodeType. Real DOM payload objects and arbitrary property getters are unported. Worklist fuel explicitly refuses exhaustion, including cyclic/shared-array unfoldings exceeding its bound; no successful false answer is credited after exhaustion."
+    },
+    "core/verdict.ts:attachWaits": {
+      "bend": "runtime/attach-waits.bend:attachDeps, attachWaits; runtime/core.bend:runEffectAt",
+      "status": "partial",
+      "restrictions": "Queued effect hook follows live/modified and hidden-run gates and precedes error/cleanup. Render/verdict-or-lane/value-insertion guard, subtree/dependency scan, and held render queue append retained. Actual DOM insertion values and hidden boundaries remain outside the value/owner grammar."
+    },
+    "core/scheduler.ts:applyStaged": {
+      "bend": "runtime/staged-slot.bend:apply, applyStaged; runtime/scheduler.bend:commitValue; runtime/core.bend:InitialEffect",
+      "status": "restricted",
+      "restrictions": "Pending presence, value assignment then slot reset; Bool encodes the truthiness of the source returned NOT_PENDING token, not payload truthiness. Deferred initial effects apply staging immediately without running."
+    },
+    "core/scheduler.ts:queueEffectRun": {
+      "bend": "runtime/write.bend:queueEffectRun; runtime/status.bend:notifyEffectStatus; runtime/scheduler.bend:commitAnswerValue",
+      "status": "restricted",
+      "restrictions": "Mark modified then enqueue the stable per-node runner in its phase. Ordinary transaction arguments use the global queue; raw lanes use their own queue. Stable node IDs encode bound-run closure identity."
     }
   },
   "policy": "Operation-level source fidelity is required. Formal TS/Bend equivalence is not required. Restricted and partial entries are location mappings, not completed line-by-line alignment. See tracking/source-fidelity.md."

@@ -28,11 +28,11 @@ def shape(+w: R.World,rest: List<&2,C.Task>,stack: List<&2,R.Value>,tx: Nat) -> 
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def ledger(+w: R.World) -> {Ledger.ledger(world(w)) == Ledger.ledger(w) : Ledger.LedgerFrame}:
@@ -41,11 +41,11 @@ def ledger(+w: R.World) -> {Ledger.ledger(world(w)) == Ledger.ledger(w) : Ledger
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def arena(+w: R.World) -> {R.World.txArena(world(w)) == R.World.txArena(w) : List<&2,R.Transaction>}:
@@ -54,11 +54,11 @@ def arena(+w: R.World) -> {R.World.txArena(world(w)) == R.World.txArena(w) : Lis
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def live(+w: R.World) -> {R.World.transactions(world(w)) == R.World.transactions(w) : List<&2,Nat>}:
@@ -67,11 +67,11 @@ def live(+w: R.World) -> {R.World.transactions(world(w)) == R.World.transactions
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def health(+w: R.World) -> {B.ok(world(w)) == B.ok(w) : Bool}:
@@ -80,11 +80,11 @@ def health(+w: R.World) -> {B.ok(world(w)) == B.ok(w) : Bool}:
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def committed(+w: R.World) -> {Committed.observe(world(w)) == Committed.observe(w) : Committed.View}:
@@ -93,11 +93,11 @@ def committed(+w: R.World) -> {Committed.observe(world(w)) == Committed.observe(
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
 
 def source(+w: R.World) -> {Source.observe(world(w)) == Source.observe(w) : Source.View}:
@@ -106,9 +106,9 @@ def source(+w: R.World) -> {Source.observe(world(w)) == Source.observe(w) : Sour
       match trims:
         case Nil{}:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}
         case first <> tail:
           match laneState:
-            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing}:
+            case R.LaneState{+live,+groups,+stagedReaders,+pendingGuesses,+judged,+root,+enteredReaders,+guessing,+guessed,+kept,+reverted,+reverting,+revealing, +rebaseAhead}:
               {==}

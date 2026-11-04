@@ -144,17 +144,34 @@ def rawExtension(+w: R.World, +id: Nat, +tx: Nat, +before: List<&2, R.NodeExtens
 def ownerSet(+record: R.NodeExtension, +tx: Nat) ->
   {R.NodeExtension.transaction(R.NodeExtension.with_transaction(record, tx)) == tx : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight, +served}: {==}
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight, +served, +rebaseAsked}: {==}
 
 def nodesSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
   {R.Transaction.nodes(R.Transaction.with_nodes(record, nodes)) == nodes : List<&2, Nat>}:
   match record:
-    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
+    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest, +rebaseOver}: {==}
 
 def intoSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
   {R.Transaction.into(R.Transaction.with_nodes(record, nodes)) == R.Transaction.into(record) : Nat}:
   match record:
-    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
+    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest, +rebaseOver}: {==}
+
+def laneSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
+  {R.Transaction.lane(R.Transaction.with_nodes(record, nodes)) == R.Transaction.lane(record) : Bool}:
+  match record:
+    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, rebaseOver}: {==}
+
+def rawBypass(+w: R.World, +id: Nat, +before: List<&2, R.Transaction>, +record: R.Transaction, +after: List<&2, R.Transaction>,
+  storage: {R.World.txArena(w) == B.append(R.Transaction, before, record <> after) : List<&2, R.Transaction>}) ->
+  {Graph.bypass(raw(w, id, B.length(R.Transaction, before)), id, B.length(R.Transaction, before)) == Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))) : Bool}:
+  +tx = B.length(R.Transaction, before)
+  +next = raw(w, id, tx)
+  +nextRecord = R.Transaction.with_nodes(record, B.append(Nat, R.Transaction.nodes(record), [id]))
+  Equal.trans(Bool, Graph.bypass(next, id, tx), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(B.transaction(next, tx)))), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))),
+    Equal.cong(R.Node, Bool, n => Bool.and(B.has(R.Node.config(n), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(B.transaction(next, tx)))), B.node(next, id), B.node(w, id), nodeRaw(w, id, tx, id)),
+    Equal.trans(Bool, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(B.transaction(next, tx)))), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(nextRecord))), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))),
+      Equal.cong(R.Transaction, Bool, t => Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(t))), B.transaction(next, tx), nextRecord, rawRecord(w, id, before, record, after, storage)),
+      Equal.cong(Bool, Bool, lane => Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(lane)), R.Transaction.lane(nextRecord), R.Transaction.lane(record), laneSet(record, B.append(Nat, R.Transaction.nodes(record), [id])))))
 
 # Only node storage is needed to transport the excluded prefix. Capturing a
 # transaction intentionally changes an extension, so a whole graph identity
@@ -182,14 +199,15 @@ def prefixIds(+w: R.World, +next: R.World, +owner: Nat, +prefix: Graph.Skips<w, 
 def rawSnapshot(+w: R.World, +id: Nat, +before: List<&2, R.Transaction>, +record: R.Transaction, +after: List<&2, R.Transaction>,
   +extBefore: List<&2, R.NodeExtension>, +extRecord: R.NodeExtension, +extAfter: List<&2, R.NodeExtension>,
   +prefix: Graph.Skips<w, B.length(R.Transaction, before)>,
-  storage: {R.World.txArena(w) == B.append(R.Transaction, before, record <> after) : List<&2, R.Transaction>},
+  +storage: {R.World.txArena(w) == B.append(R.Transaction, before, record <> after) : List<&2, R.Transaction>},
   index: {R.Node.x(B.node(w, id)) == B.length(R.NodeExtension, extBefore) : Nat},
   extStorage: {R.World.extensions(w) == B.append(R.NodeExtension, extBefore, extRecord <> extAfter) : List<&2, R.NodeExtension>},
   owns: {R.Transaction.nodes(record) == Graph.ids(w, B.length(R.Transaction, before), prefix) : List<&2, Nat>},
   active: {Graph.guard(w, id) == False{} : Bool},
   stopped: {R.Transaction.into(record) == 0n : Nat},
   rendered: {X.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool},
-  live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}) ->
+  live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool},
+  waits: {Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))) == False{} : Bool}) ->
   Snapshot.Pending<raw(w, id, B.length(R.Transaction, before)), B.length(R.Transaction, before)>:
   +tx = B.length(R.Transaction, before)
   +next = raw(w, id, tx)
@@ -207,7 +225,8 @@ def rawSnapshot(+w: R.World, +id: Nat, +before: List<&2, R.Transaction>, +record
     Equal.trans(Nat, R.Transaction.into(B.transaction(next, tx)), R.Transaction.into(record), 0n,
       Equal.trans(Nat, R.Transaction.into(B.transaction(next, tx)), R.Transaction.into(nextRecord), R.Transaction.into(record), Equal.cong(R.Transaction, Nat, entry => R.Transaction.into(entry), B.transaction(next, tx), nextRecord, group), intoSet(record, B.append(Nat, R.Transaction.nodes(record), [id]))), stopped),
     Equal.trans(Bool, X.isRender(R.Node.kind(B.node(next, id))), X.isRender(R.Node.kind(B.node(w, id))), True{}, Equal.cong(R.Node, Bool, n => X.isRender(R.Node.kind(n)), B.node(next, id), B.node(w, id), nodeRaw(w, id, tx, id)), rendered),
-    Equal.trans(Bool, B.has(R.Node.flags(B.node(next, id)), K.REACTIVE_ZOMBIE()), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), False{}, Equal.cong(R.Node, Bool, n => B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()), B.node(next, id), B.node(w, id), nodeRaw(w, id, tx, id)), live)}
+    Equal.trans(Bool, B.has(R.Node.flags(B.node(next, id)), K.REACTIVE_ZOMBIE()), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()), False{}, Equal.cong(R.Node, Bool, n => B.has(R.Node.flags(n), K.REACTIVE_ZOMBIE()), B.node(next, id), B.node(w, id), nodeRaw(w, id, tx, id)), live),
+    Equal.trans(Bool, Graph.bypass(next, id, tx), Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))), False{}, rawBypass(w, id, before, record, after, storage), waits)}
 
 def substitute(-a: R.World, -b: R.World, -owner: Nat, same: {a == b : R.World}, snapshot: Snapshot.Pending<a, owner>) -> Snapshot.Pending<b, owner>:
   %same : Snapshot.Pending<_, owner>
@@ -227,13 +246,14 @@ def pending(+w: R.World, +id: Nat, +before: List<&2, R.Transaction>, +record: R.
   active: {Graph.guard(w, id) == False{} : Bool},
   stopped: {R.Transaction.into(record) == 0n : Nat},
   rendered: {X.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool},
-  live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool}) ->
+  live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool},
+  waits: {Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))) == False{} : Bool}) ->
   Snapshot.Pending<X.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before)>:
   +tx = {1n+B.length(R.Transaction, before) : Nat}
   substitute(raw(w, id, tx), X.list(w, id, tx), tx,
     Equal.sym(R.World, X.list(w, id, tx), raw(w, id, tx), fresh(w, id, B.length(R.Transaction, before), B.length(R.NodeExtension, extBefore), index,
       Equal.trans(Nat, R.NodeExtension.transaction(B.extension(w, id)), R.NodeExtension.transaction(extRecord), 0n, Equal.cong(R.NodeExtension, Nat, entry => R.NodeExtension.transaction(entry), B.extension(w, id), extRecord, Slots.extension(w, id, B.blank_extension() <> extBefore, extRecord, extAfter, index, extStorage)), unowned))),
-    rawSnapshot(w, id, B.blank_transaction() <> before, record, after, B.blank_extension() <> extBefore, extRecord, extAfter, prefix, storage, index, extStorage, owns, active, stopped, rendered, live))
+    rawSnapshot(w, id, B.blank_transaction() <> before, record, after, B.blank_extension() <> extBefore, extRecord, extAfter, prefix, storage, index, extStorage, owns, active, stopped, rendered, live, waits))
 
 def listedHealthy(+w: R.World, +id: Nat, +predecessor: Nat, +slot: Nat,
   index: {R.Node.x(B.node(w, id)) == 1n+slot : Nat},
@@ -255,11 +275,12 @@ def beginHistory(+w: R.World, +id: Nat, +before: List<&2, R.Transaction>, +recor
   stopped: {R.Transaction.into(record) == 0n : Nat},
   rendered: {X.isRender(R.Node.kind(B.node(w, id))) == True{} : Bool},
   live: {B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_ZOMBIE()) == False{} : Bool},
+  waits: {Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_AHEAD()), Bool.not(R.Transaction.lane(record))) == False{} : Bool},
   +healthy: {B.ok(w) == True{} : Bool},
   +programme: History.Programme<X.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before)>) ->
   History.Certified<X.list(w, id, 1n+B.length(R.Transaction, before)), 1n+B.length(R.Transaction, before), programme>:
   History.certify(X.list(w, id, 1n+B.length(R.Transaction, before)), B.length(R.Transaction, before), programme,
-    pending(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live),
+    pending(w, id, before, record, after, extBefore, extRecord, extAfter, prefix, storage, index, extStorage, unowned, owns, active, stopped, rendered, live, waits),
     Equal.trans(Bool, B.ok(X.list(w, id, 1n+B.length(R.Transaction, before))), B.ok(w), True{},
       listedHealthy(w, id, B.length(R.Transaction, before), B.length(R.NodeExtension, extBefore), index,
         Equal.trans(Nat, R.NodeExtension.transaction(B.extension(w, id)), R.NodeExtension.transaction(extRecord), 0n,

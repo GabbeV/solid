@@ -49,13 +49,11 @@ def failure(+w: R.World, kind: U32) -> R.World:
 
 
 def getContext(+w: R.World, +id: Nat, +owner: Nat) -> B.Bundle<R.World, R.Value>:
-  B.choose(~B.Bundle<R.World, R.Value>, Nat.is_eq(owner, 0n),
-    _ => B.Bundle{failure(w, 0), R.Undefined{}},
-    _ =>
-      +value = lookup(R.ContextRecord.entries(record(w, R.Node.scope(B.node(w, owner)))), id)
-      +value = B.choose(~R.Value, undefined(value), _ => R.ContextKey.defaultValue(key(w, id)), _ => value)
-      B.choose(~B.Bundle<R.World, R.Value>, undefined(value),
-        _ => B.Bundle{failure(w, 1), R.Undefined{}}, _ => B.Bundle{w, value}))
+  +value = B.choose(~R.Value, Nat.is_eq(owner, 0n), _ => R.Undefined{},
+    _ => lookup(R.ContextRecord.entries(record(w, R.Node.scope(B.node(w, owner)))), id))
+  +value = B.choose(~R.Value, undefined(value), _ => R.ContextKey.defaultValue(key(w, id)), _ => value)
+  B.choose(~B.Bundle<R.World, R.Value>, undefined(value),
+    _ => B.Bundle{failure(w, 1), R.Undefined{}}, _ => B.Bundle{w, value})
 
 
 def setContext(+w: R.World, +id: Nat, +value: R.Value, +owner: Nat) -> R.World:

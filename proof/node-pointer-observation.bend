@@ -69,7 +69,7 @@ def changed(node: R.Node, value: Nat, field: PointerWrite) -> R.Node:
 
 def changedX(+node: R.Node, +value: Nat, +field: PointerWrite) -> {R.Node.x(changed(node, value, field)) == R.Node.x(node) : Nat}:
   match node:
-    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case R.Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, +rebaseOwed}:
       match field:
         case DependencyTail{}: {==}
         case SubscriberTail{}: {==}

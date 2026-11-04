@@ -89,6 +89,12 @@ type Slot is Data:
 type Stamp is Data:
   Unstamped{}
   Stamped{value: Nat}
+  LeftShown{}
+
+type AskedIn is Data:
+  Unasked{}
+  AskedClock{clock: Nat}
+  AskedTransaction{transaction: Nat}
 
 type OptionalIds is Data:
   NoIds{}
@@ -110,6 +116,7 @@ type Snapshot is Data:
 
 type QueueEntry is Data:
   NodeRun{node: Nat}
+  TrackedLanding{node: Nat}
   SettledFire{callback: Nat}
   ReleaseQueues{transaction: Nat}
 
@@ -1738,157 +1745,167 @@ def StreamState.with_close(r: StreamState, v: Nat) -> StreamState:
       StreamState{node, result, iterator, hadValue, completed, initialRead, syncValue, v}
 
 type Transaction is Data:
-  Transaction{nodes: List<&2, Nat>, renderQueue: List<&2, Nat>, userQueue: List<&2, QueueEntry>, reruns: List<&2, Nat>, into: Nat, parent: Nat, lane: Bool, verdict: Nat, open: Nat, acted: Bool, links: Nat, shown: Bool, held: Bool, marks: OptionalIds, latest: Bool}
+  Transaction{nodes: List<&2, Nat>, renderQueue: List<&2, Nat>, userQueue: List<&2, QueueEntry>, reruns: List<&2, Nat>, into: Nat, parent: Nat, lane: Bool, verdict: Nat, open: Nat, acted: Bool, links: Nat, shown: Bool, held: Bool, marks: OptionalIds, latest: Bool, over: Nat}
 
 def Transaction.nodes(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       nodes
 
 def Transaction.with_nodes(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{v, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{v, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.renderQueue(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       renderQueue
 
 def Transaction.with_renderQueue(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, v, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, v, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.userQueue(r: Transaction) -> List<&2, QueueEntry>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       userQueue
 
 def Transaction.with_userQueue(r: Transaction, v: List<&2, QueueEntry>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, v, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, v, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.reruns(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       reruns
 
 def Transaction.with_reruns(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, v, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, v, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.into(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       into
 
 def Transaction.with_into(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, v, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, v, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.parent(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       parent
 
 def Transaction.with_parent(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, v, lane, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, v, lane, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.lane(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       lane
 
 def Transaction.with_lane(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, v, verdict, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, v, verdict, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.verdict(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       verdict
 
 def Transaction.with_verdict(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, v, open, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, v, open, acted, links, shown, held, marks, latest, over}
 
 def Transaction.open(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       open
 
 def Transaction.with_open(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, v, acted, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, v, acted, links, shown, held, marks, latest, over}
 
 def Transaction.acted(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       acted
 
 def Transaction.with_acted(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, v, links, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, v, links, shown, held, marks, latest, over}
 
 def Transaction.links(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       links
 
 def Transaction.with_links(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, v, shown, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, v, shown, held, marks, latest, over}
 
 def Transaction.shown(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       shown
 
 def Transaction.with_shown(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, v, held, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, v, held, marks, latest, over}
 
 def Transaction.held(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       held
 
 def Transaction.with_held(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, v, marks, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, v, marks, latest, over}
 
 def Transaction.marks(r: Transaction) -> OptionalIds:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       marks
 
 def Transaction.with_marks(r: Transaction, v: OptionalIds) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, v, latest}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, v, latest, over}
 
 def Transaction.latest(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
       latest
 
 def Transaction.with_latest(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, v}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, v, over}
+
+def Transaction.over(r: Transaction) -> Nat:
+  match r:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      over
+
+def Transaction.with_over(r: Transaction, v: Nat) -> Transaction:
+  match r:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, over}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest, v}
 
 type ReactionState is Data:
   ReactionState{owner: Nat, arm: Nat, cleanup: Value, body: Expr, errorProgram: Nat, options: NodeOptions, scheduled: Bool, track: Nat}
@@ -2371,550 +2388,570 @@ def NodeOptions.with_comparator(r: NodeOptions, v: Nat) -> NodeOptions:
       NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, extraConfig, loading, unobserved, v}
 
 type NodeExtension is Data:
-  NodeExtension{inFlight: Flight, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value, parkedFlight: Flight, served: Stamp}
+  NodeExtension{inFlight: Flight, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value, parkedFlight: Flight, served: Stamp, askedIn: AskedIn}
 
 def NodeExtension.inFlight(r: NodeExtension) -> Flight:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       inFlight
 
 def NodeExtension.with_inFlight(r: NodeExtension, v: Flight) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{v, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{v, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.flightTeardown(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       flightTeardown
 
 def NodeExtension.with_flightTeardown(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, v, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, v, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.error(r: NodeExtension) -> Value:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       error
 
 def NodeExtension.with_error(r: NodeExtension, v: Value) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, v, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, v, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.blocked(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       blocked
 
 def NodeExtension.with_blocked(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, v, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, v, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.pendingSources(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       pendingSources
 
 def NodeExtension.with_pendingSources(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, v, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, v, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.unobserved(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       unobserved
 
 def NodeExtension.with_unobserved(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, v, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, v, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.snapshotValue(r: NodeExtension) -> Snapshot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       snapshotValue
 
 def NodeExtension.with_snapshotValue(r: NodeExtension, v: Snapshot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, v, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, v, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.pendingFirstChild(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       pendingFirstChild
 
 def NodeExtension.with_pendingFirstChild(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, v, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, v, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.pendingDisposal(r: NodeExtension) -> Disposal:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       pendingDisposal
 
 def NodeExtension.with_pendingDisposal(r: NodeExtension, v: Disposal) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, v, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, v, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.transaction(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       transaction
 
 def NodeExtension.with_transaction(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, v, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, v, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.reask(r: NodeExtension) -> Bool:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       reask
 
 def NodeExtension.with_reask(r: NodeExtension, v: Bool) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, v, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, v, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.flushed(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       flushed
 
 def NodeExtension.with_flushed(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, v, flushedAt, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, v, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.flushedAt(r: NodeExtension) -> Stamp:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       flushedAt
 
 def NodeExtension.with_flushedAt(r: NodeExtension, v: Stamp) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, v, q, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, v, q, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.q(r: NodeExtension) -> Question:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       q
 
 def NodeExtension.with_q(r: NodeExtension, v: Question) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, v, lane, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, v, lane, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.lane(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       lane
 
 def NodeExtension.with_lane(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, v, marks, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, v, marks, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.marks(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       marks
 
 def NodeExtension.with_marks(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, v, shownError, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, v, shownError, parkedFlight, served, askedIn}
 
 def NodeExtension.shownError(r: NodeExtension) -> Value:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       shownError
 
 def NodeExtension.with_shownError(r: NodeExtension, v: Value) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, v, parkedFlight, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, v, parkedFlight, served, askedIn}
 
 def NodeExtension.parkedFlight(r: NodeExtension) -> Flight:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       parkedFlight
 
 def NodeExtension.with_parkedFlight(r: NodeExtension, v: Flight) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, v, served}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, v, served, askedIn}
 
 def NodeExtension.served(r: NodeExtension) -> Stamp:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
       served
 
 def NodeExtension.with_served(r: NodeExtension, v: Stamp) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, v}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, v, askedIn}
+
+def NodeExtension.askedIn(r: NodeExtension) -> AskedIn:
+  match r:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      askedIn
+
+def NodeExtension.with_askedIn(r: NodeExtension, v: AskedIn) -> NodeExtension:
+  match r:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, askedIn}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served, v}
 
 type Node is Data:
-  Node{kind: NodeKind, value: Value, pending: Slot, equals: Bool, config: U32, flags: U32, status: U32, time: Nat, notified: Stamp, deps: Nat, depsTail: Nat, depGen: Nat, subs: Nat, subsTail: Nat, height: Nat, nextHeap: Nat, prevHeap: Nat, parent: Nat, firstChild: Nat, nextSibling: Nat, prevSibling: Nat, expr: Expr, modified: Bool, prevValue: Value, target: Nat, loading: Bool, x: Nat, parentComputed: Nat, scope: Nat, childCount: Nat, disposal: Disposal, cleanup: Nat, effectProgram: Nat, returnedCleanup: Nat, errorProgram: Nat}
+  Node{kind: NodeKind, value: Value, pending: Slot, equals: Bool, config: U32, flags: U32, status: U32, time: Nat, notified: Stamp, deps: Nat, depsTail: Nat, depGen: Nat, subs: Nat, subsTail: Nat, height: Nat, nextHeap: Nat, prevHeap: Nat, parent: Nat, firstChild: Nat, nextSibling: Nat, prevSibling: Nat, expr: Expr, modified: Bool, prevValue: Value, target: Nat, loading: Bool, x: Nat, parentComputed: Nat, scope: Nat, childCount: Nat, disposal: Disposal, cleanup: Nat, effectProgram: Nat, returnedCleanup: Nat, errorProgram: Nat, trackedOwed: Bool}
 
 def Node.kind(r: Node) -> NodeKind:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       kind
 
 def Node.with_kind(r: Node, v: NodeKind) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{v, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{v, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.value(r: Node) -> Value:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       value
 
 def Node.with_value(r: Node, v: Value) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, v, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, v, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.pending(r: Node) -> Slot:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       pending
 
 def Node.with_pending(r: Node, v: Slot) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, v, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, v, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.equals(r: Node) -> Bool:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       equals
 
 def Node.with_equals(r: Node, v: Bool) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, v, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, v, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.config(r: Node) -> U32:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       config
 
 def Node.with_config(r: Node, v: U32) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, v, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, v, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.flags(r: Node) -> U32:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       flags
 
 def Node.with_flags(r: Node, v: U32) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, v, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, v, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.status(r: Node) -> U32:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       status
 
 def Node.with_status(r: Node, v: U32) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, v, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, v, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.time(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       time
 
 def Node.with_time(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, v, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, v, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.notified(r: Node) -> Stamp:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       notified
 
 def Node.with_notified(r: Node, v: Stamp) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, v, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, v, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.deps(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       deps
 
 def Node.with_deps(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, v, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, v, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.depsTail(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       depsTail
 
 def Node.with_depsTail(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, v, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, v, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.depGen(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       depGen
 
 def Node.with_depGen(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, v, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, v, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.subs(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       subs
 
 def Node.with_subs(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, v, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, v, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.subsTail(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       subsTail
 
 def Node.with_subsTail(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, v, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, v, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.height(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       height
 
 def Node.with_height(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, v, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, v, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.nextHeap(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       nextHeap
 
 def Node.with_nextHeap(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, v, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, v, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.prevHeap(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       prevHeap
 
 def Node.with_prevHeap(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, v, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, v, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.parent(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       parent
 
 def Node.with_parent(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, v, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, v, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.firstChild(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       firstChild
 
 def Node.with_firstChild(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, v, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, v, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.nextSibling(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       nextSibling
 
 def Node.with_nextSibling(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, v, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, v, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.prevSibling(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       prevSibling
 
 def Node.with_prevSibling(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, v, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, v, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.expr(r: Node) -> Expr:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       expr
 
 def Node.with_expr(r: Node, v: Expr) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, v, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, v, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.modified(r: Node) -> Bool:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       modified
 
 def Node.with_modified(r: Node, v: Bool) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, v, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, v, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.prevValue(r: Node) -> Value:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       prevValue
 
 def Node.with_prevValue(r: Node, v: Value) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, v, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, v, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.target(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       target
 
 def Node.with_target(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, v, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, v, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.loading(r: Node) -> Bool:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       loading
 
 def Node.with_loading(r: Node, v: Bool) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, v, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, v, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.x(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       x
 
 def Node.with_x(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, v, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, v, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.parentComputed(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       parentComputed
 
 def Node.with_parentComputed(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, v, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, v, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.scope(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       scope
 
 def Node.with_scope(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, v, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, v, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.childCount(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       childCount
 
 def Node.with_childCount(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, v, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, v, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.disposal(r: Node) -> Disposal:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       disposal
 
 def Node.with_disposal(r: Node, v: Disposal) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, v, cleanup, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, v, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.cleanup(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       cleanup
 
 def Node.with_cleanup(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, v, effectProgram, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, v, effectProgram, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.effectProgram(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       effectProgram
 
 def Node.with_effectProgram(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, v, returnedCleanup, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, v, returnedCleanup, errorProgram, trackedOwed}
 
 def Node.returnedCleanup(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       returnedCleanup
 
 def Node.with_returnedCleanup(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, v, errorProgram}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, v, errorProgram, trackedOwed}
 
 def Node.errorProgram(r: Node) -> Nat:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
       errorProgram
 
 def Node.with_errorProgram(r: Node, v: Nat) -> Node:
   match r:
-    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram}:
-      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, v}
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, v, trackedOwed}
+
+def Node.trackedOwed(r: Node) -> Bool:
+  match r:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      trackedOwed
+
+def Node.with_trackedOwed(r: Node, v: Bool) -> Node:
+  match r:
+    case Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, trackedOwed}:
+      Node{kind, value, pending, equals, config, flags, status, time, notified, deps, depsTail, depGen, subs, subsTail, height, nextHeap, prevHeap, parent, firstChild, nextSibling, prevSibling, expr, modified, prevValue, target, loading, x, parentComputed, scope, childCount, disposal, cleanup, effectProgram, returnedCleanup, errorProgram, v}
 
 type Link is Data:
   Link{dep: Nat, sub: Nat, nextDep: Nat, prevSub: Nat, nextSub: Nat, gen: Nat}
@@ -3099,137 +3136,147 @@ def KeptGuess.with_holder(r: KeptGuess, v: Nat) -> KeptGuess:
       KeptGuess{node, value, transaction, question, v}
 
 type LaneState is Data:
-  LaneState{live: List<&2, Nat>, groups: List<&2, List<&2, Nat>>, stagedReaders: List<&2, Nat>, pendingGuesses: List<&2, Guess>, judged: Nat, root: LaneMount, entered: List<&2, Nat>, guessing: Bool, guessed: Bool, kept: List<&2, KeptGuess>, reverted: List<&2, Nat>, reverting: Bool, revealing: List<&2, Nat>}
+  LaneState{live: List<&2, Nat>, groups: List<&2, List<&2, Nat>>, stagedReaders: List<&2, Nat>, pendingGuesses: List<&2, Guess>, judged: Nat, root: LaneMount, entered: List<&2, Nat>, guessing: Bool, guessed: Bool, kept: List<&2, KeptGuess>, reverted: List<&2, Nat>, reverting: Bool, revealing: List<&2, Nat>, ahead: List<&2, Nat>}
 
 def LaneState.live(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       live
 
 def LaneState.with_live(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{v, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{v, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.groups(r: LaneState) -> List<&2, List<&2, Nat>>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       groups
 
 def LaneState.with_groups(r: LaneState, v: List<&2, List<&2, Nat>>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, v, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, v, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.stagedReaders(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       stagedReaders
 
 def LaneState.with_stagedReaders(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, v, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, v, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.pendingGuesses(r: LaneState) -> List<&2, Guess>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       pendingGuesses
 
 def LaneState.with_pendingGuesses(r: LaneState, v: List<&2, Guess>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, v, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, v, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.judged(r: LaneState) -> Nat:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       judged
 
 def LaneState.with_judged(r: LaneState, v: Nat) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, v, root, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, v, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.root(r: LaneState) -> LaneMount:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       root
 
 def LaneState.with_root(r: LaneState, v: LaneMount) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, v, entered, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, v, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.entered(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       entered
 
 def LaneState.with_entered(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, v, guessing, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, v, guessing, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.guessing(r: LaneState) -> Bool:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       guessing
 
 def LaneState.with_guessing(r: LaneState, v: Bool) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, v, guessed, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, v, guessed, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.guessed(r: LaneState) -> Bool:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       guessed
 
 def LaneState.with_guessed(r: LaneState, v: Bool) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, v, kept, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, v, kept, reverted, reverting, revealing, ahead}
 
 def LaneState.kept(r: LaneState) -> List<&2, KeptGuess>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       kept
 
 def LaneState.with_kept(r: LaneState, v: List<&2, KeptGuess>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, v, reverted, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, v, reverted, reverting, revealing, ahead}
 
 def LaneState.reverted(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       reverted
 
 def LaneState.with_reverted(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, v, reverting, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, v, reverting, revealing, ahead}
 
 def LaneState.reverting(r: LaneState) -> Bool:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       reverting
 
 def LaneState.with_reverting(r: LaneState, v: Bool) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, v, revealing}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, v, revealing, ahead}
 
 def LaneState.revealing(r: LaneState) -> List<&2, Nat>:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
       revealing
 
 def LaneState.with_revealing(r: LaneState, v: List<&2, Nat>) -> LaneState:
   match r:
-    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing}:
-      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, v}
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, v, ahead}
+
+def LaneState.ahead(r: LaneState) -> List<&2, Nat>:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      ahead
+
+def LaneState.with_ahead(r: LaneState, v: List<&2, Nat>) -> LaneState:
+  match r:
+    case LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, ahead}:
+      LaneState{live, groups, stagedReaders, pendingGuesses, judged, root, entered, guessing, guessed, kept, reverted, reverting, revealing, v}
 
 type VerdictState is Data:
   VerdictState{latestActive: Bool, probing: Bool, probeFound: Bool, dispatch: Bool, latestOpened: Nat}

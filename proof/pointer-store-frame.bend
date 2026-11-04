@@ -18,7 +18,7 @@ def choice(+flag: Bool,+w: R.World,+yes: R.World,+no: R.World,left: {observe(yes
 
 def nodeFlags(+record: R.Node,value: U32) -> {R.Node.x(R.Node.with_flags(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def flags(+w: R.World,+id: Nat,+value: U32) -> {observe(B.store_node(w,id,R.Node.with_flags(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -26,7 +26,7 @@ def flags(+w: R.World,+id: Nat,+value: U32) -> {observe(B.store_node(w,id,R.Node
 
 def nodeHeight(+record: R.Node,value: Nat) -> {R.Node.x(R.Node.with_height(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def height(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.Node.with_height(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -34,7 +34,7 @@ def height(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.Nod
 
 def nodeNextHeap(+record: R.Node,value: Nat) -> {R.Node.x(R.Node.with_nextHeap(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def nextHeap(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.Node.with_nextHeap(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -42,7 +42,7 @@ def nextHeap(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.N
 
 def nodePrevHeap(+record: R.Node,value: Nat) -> {R.Node.x(R.Node.with_prevHeap(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def prevHeap(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.Node.with_prevHeap(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -50,7 +50,7 @@ def prevHeap(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.N
 
 def nodePending(+record: R.Node,value: R.Slot) -> {R.Node.x(R.Node.with_pending(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def pending(+w: R.World,+id: Nat,+value: R.Slot) -> {observe(B.store_node(w,id,R.Node.with_pending(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -58,7 +58,7 @@ def pending(+w: R.World,+id: Nat,+value: R.Slot) -> {observe(B.store_node(w,id,R
 
 def nodeNotified(+record: R.Node,value: R.Stamp) -> {R.Node.x(R.Node.with_notified(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def notified(+w: R.World,+id: Nat,+value: R.Stamp) -> {observe(B.store_node(w,id,R.Node.with_notified(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:
@@ -66,7 +66,7 @@ def notified(+w: R.World,+id: Nat,+value: R.Stamp) -> {observe(B.store_node(w,id
 
 def nodeTime(+record: R.Node,value: Nat) -> {R.Node.x(R.Node.with_time(record,value)) == R.Node.x(record) : Nat}:
   match record:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}:
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}:
       {==}
 
 def time(+w: R.World,+id: Nat,+value: Nat) -> {observe(B.store_node(w,id,R.Node.with_time(B.node(w,id),value))) == observe(w) : List<&2,Nat>}:

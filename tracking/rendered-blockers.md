@@ -1,5 +1,12 @@
 # Nonempty rendered graph blockers
 
+At the current rc.21 pin, a pending render blocks an ordinary group only when
+it is not AHEAD; lane owners retain blocking. The snapshot certificate records
+this source posture, ownership transport preserves the lane field, and listing
+derives the condition from input config and transaction metadata. The separate
+general eligible-render law covers both blocking and the AHEAD exception. This
+source-required change is detailed in [the migration review](reviews/solid-2105ffb8.md).
+
 This checkpoint extends `085bc0470c80682e91a32ec83be6965dbb226a0a` without
 changing the runtime, host, representation, upstream pin, toolchain or limits.
 

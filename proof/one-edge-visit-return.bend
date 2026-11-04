@@ -2,6 +2,7 @@
 # source queue shapes are constructed by Control.visit; no output World/health
 # or transition result is a premise.
 import Base
+import ./pending-descend-leaf-return.bend as Descend
 import ./pending-nested-leaf-return.bend as Nested
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -41,9 +42,13 @@ def retainedEnd(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C
   Equal.trans(Nat, R.Link.nextSub(B.link(afterWorld(w, edge, root, id, rest, stack), edge)), R.Link.nextSub(B.link(w, edge)), 0n,
     Equal.cong(R.Link, Nat, link => R.Link.nextSub(link), B.link(afterWorld(w, edge, root, id, rest, stack), edge), B.link(w, edge), same), end)
 
+def actualZero(+w: R.World,+edge: Nat,+root: Nat,+id: Nat,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+child: Nat,healthy: {B.ok(w) == True{} : Bool},zero: {R.Node.subs(B.node(Fields.world(outcome(w,edge,root,id)),child)) == 0n : Nat}) ->
+  {R.Node.subs(B.node(afterWorld(w,edge,root,id,rest,stack),child)) == 0n : Nat}:
+  Equal.trans(Nat,R.Node.subs(B.node(afterWorld(w,edge,root,id,rest,stack),child)),R.Node.subs(B.node(Fields.world(outcome(w,edge,root,id)),child)),0n,Equal.cong(R.World,Nat,world=>R.Node.subs(B.node(world,child)),afterWorld(w,edge,root,id,rest,stack),Fields.world(outcome(w,edge,root,id)),Core.stepWorld(w,C.AsyncWriteSchedule{} <> rest,stack,tail(edge,root),[],[],False{},id,root,root,healthy)),zero)
+
 def fromControl(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, +end: {R.Link.nextSub(B.link(w, edge)) == 0n : Nat},
   control: Control.Next<outcome(w, edge, root, id), tail(edge, root), [], root, root>) ->
-  Return.Returned<input(w, edge, root, id, rest, stack), rest, stack, 12n>:
+  Return.Returned<input(w, edge, root, id, rest, stack), rest, stack, 13n>:
   match control:
     case Control.Direct{shape}:
       +result = outcome(w, edge, root, id)
@@ -53,31 +58,33 @@ def fromControl(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
       +middle = Suffix.next(nextWorld, edge, root, visits, scheduled, rest, stack)
       +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, tail(edge, root), [], healthy, shape)
-      Return.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
-    case Control.Leaf{shape}:
+      Return.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 5n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
+    case Control.Leaf{+child,shape,zero}:
       +result = outcome(w, edge, root, id)
       +nextWorld = afterWorld(w, edge, root, id, rest, stack)
       +visits = Fields.visits(result)
       +scheduled = Fields.scheduled(result)
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
-      +middle = Suffix.start(nextWorld, edge, root, visits, scheduled, rest, stack)
-      +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Q.Walk{0n, root, root} <> tail(edge, root), [], healthy, shape)
-      Return.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.complete(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
-    case Control.Nested{+child, +outerVisits, +outerQueued, shape, freshVisits, freshScheduled}:
+      +empty = actualZero(w,edge,root,id,rest,stack,child,healthy,zero)
+      +middle = Descend.input(nextWorld,child,edge,root,visits,scheduled,rest,stack)
+      +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Q.Descend{child,root,root} <> tail(edge, root), [], healthy, shape)
+      Return.widen(input(w, edge, root, id, rest, stack), rest, stack, 9n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 8n, prefix, Descend.complete(nextWorld,child,edge,root,visits,scheduled,rest,stack,lastEdge,empty)))
+    case Control.Nested{+child, +outerVisits, +outerQueued,+after, shape, freshVisits, freshScheduled,zero}:
       +nextWorld = afterWorld(w, edge, root, id, rest, stack)
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
-      +middle = Nested.input(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack)
-      +prefix = Core.resetNormalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Nested.tasks(child, edge, root, outerVisits, outerQueued), healthy, shape, freshVisits, freshScheduled)
-      Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 11n, prefix, Nested.complete(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge))
+      +empty = actualZero(w,edge,root,id,rest,stack,child,healthy,zero)
+      +middle = Nested.input(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack,after)
+      +prefix = Core.resetNormalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Nested.tasks(child, edge, root, outerVisits, outerQueued,after), healthy, shape, freshVisits, freshScheduled)
+      Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 12n, prefix, Nested.complete(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge,after,empty))
 
 def complete(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, healthy: {B.ok(w) == True{} : Bool}, end: {R.Link.nextSub(B.link(w, edge)) == 0n : Nat}, noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}, noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}) ->
-  Return.Returned<input(w, edge, root, id, rest, stack), rest, stack, 12n>:
+  Return.Returned<input(w, edge, root, id, rest, stack), rest, stack, 13n>:
   fromControl(w, edge, root, id, rest, stack, healthy, end, Control.visit(w, tail(edge, root), [], [], False{}, id, root, root, noSubscribers, noAuto))
 
 
 def fromControlFrame(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, +end: {R.Link.nextSub(B.link(w, edge)) == 0n : Nat},
   +control: Control.Next<outcome(w, edge, root, id), tail(edge, root), [], root, root>) ->
-  {Frame.observe(Return.world(input(w, edge, root, id, rest, stack), rest, stack, 12n, fromControl(w, edge, root, id, rest, stack, healthy, end, control))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(input(w, edge, root, id, rest, stack), rest, stack, 13n, fromControl(w, edge, root, id, rest, stack, healthy, end, control))) == Frame.observe(w) : Frame.View}:
   match control:
     case Control.Direct{shape}:
       +result = outcome(w, edge, root, id)
@@ -87,24 +94,26 @@ def fromControlFrame(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
       +middle = Suffix.next(nextWorld, edge, root, visits, scheduled, rest, stack)
       +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, tail(edge, root), [], healthy, shape)
-      FramedReturn.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)), FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Suffix.completeNextFrame(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
-    case Control.Leaf{shape}:
+      FramedReturn.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 5n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)), FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.completeNext(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Suffix.completeNextFrame(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
+    case Control.Leaf{+child,shape,zero}:
       +result = outcome(w, edge, root, id)
       +nextWorld = afterWorld(w, edge, root, id, rest, stack)
       +visits = Fields.visits(result)
       +scheduled = Fields.scheduled(result)
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
-      +middle = Suffix.start(nextWorld, edge, root, visits, scheduled, rest, stack)
-      +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Q.Walk{0n, root, root} <> tail(edge, root), [], healthy, shape)
-      FramedReturn.widen(input(w, edge, root, id, rest, stack), rest, stack, 8n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.complete(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)), FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 7n, prefix, Suffix.complete(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Suffix.completeFrame(nextWorld, edge, root, visits, scheduled, rest, stack, lastEdge)))
+      +empty = actualZero(w,edge,root,id,rest,stack,child,healthy,zero)
+      +middle = Descend.input(nextWorld,child,edge,root,visits,scheduled,rest,stack)
+      +prefix = Core.normalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Q.Descend{child,root,root} <> tail(edge, root), [], healthy, shape)
+      FramedReturn.widen(input(w, edge, root, id, rest, stack), rest, stack, 9n, 4n, Return.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 8n, prefix, Descend.complete(nextWorld,child,edge,root,visits,scheduled,rest,stack,lastEdge,empty)), FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 8n, prefix, Descend.complete(nextWorld,child,edge,root,visits,scheduled,rest,stack,lastEdge,empty), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Descend.frame(nextWorld,child,edge,root,visits,scheduled,rest,stack,lastEdge,empty)))
 
-    case Control.Nested{+child, +outerVisits, +outerQueued, shape, freshVisits, freshScheduled}:
+    case Control.Nested{+child, +outerVisits, +outerQueued,+after, shape, freshVisits, freshScheduled,zero}:
       +nextWorld = afterWorld(w, edge, root, id, rest, stack)
       +lastEdge = retainedEnd(w, edge, root, id, rest, stack, end)
-      +middle = Nested.input(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack)
-      +prefix = Core.resetNormalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Nested.tasks(child, edge, root, outerVisits, outerQueued), healthy, shape, freshVisits, freshScheduled)
-      FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 11n, prefix, Nested.complete(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Nested.frame(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge))
+      +empty = actualZero(w,edge,root,id,rest,stack,child,healthy,zero)
+      +middle = Nested.input(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack,after)
+      +prefix = Core.resetNormalized(w, C.AsyncWriteSchedule{} <> rest, stack, tail(edge, root), [], [], False{}, id, root, root, Nested.tasks(child, edge, root, outerVisits, outerQueued,after), healthy, shape, freshVisits, freshScheduled)
+      FramedReturn.prepend(input(w, edge, root, id, rest, stack), middle, rest, stack, 1n, 12n, prefix, Nested.complete(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge,after,empty), CoreFrame.step(w, C.AsyncWriteSchedule{} <> rest, stack, Q.Visit{id, root, root} <> tail(edge, root), [], [], False{}), Nested.frame(nextWorld, child, edge, root, outerVisits, outerQueued, rest, stack, lastEdge,after,empty))
 
 def frame(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, +end: {R.Link.nextSub(B.link(w, edge)) == 0n : Nat}, noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}, noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}) ->
-  {Frame.observe(Return.world(input(w, edge, root, id, rest, stack), rest, stack, 12n, complete(w, edge, root, id, rest, stack, healthy, end, noSubscribers, noAuto))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(input(w, edge, root, id, rest, stack), rest, stack, 13n, complete(w, edge, root, id, rest, stack, healthy, end, noSubscribers, noAuto))) == Frame.observe(w) : Frame.View}:
   fromControlFrame(w, edge, root, id, rest, stack, healthy, end, Control.visit(w, tail(edge, root), [], [], False{}, id, root, root, noSubscribers, noAuto))

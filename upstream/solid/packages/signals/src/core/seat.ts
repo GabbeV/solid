@@ -508,7 +508,12 @@ export function slot(
    * that netted, no proposal (`read`'s plain arm; #4452, #4485). A window's
    * read of it is the seam's verdict's rows below (`provisionalVerdict`
    * answers it final and routes it as they say). */
-  const netted = staged && !isFn && !laneNode && el._pendingValue === el._value;
+  const netted =
+    staged &&
+    !isFn &&
+    !laneNode &&
+    el._pendingValue === el._value &&
+    Object.is(el._pendingValue, el._value);
   /** The staging as a slot: its value, or the error it stages (D-41). */
   const stagedSlot = stagedError ? SLOT_E : SLOT_P;
   /** The screen as a slot: the committed value, or the error still shown
@@ -751,7 +756,7 @@ export function slot(
     const laneHas = !laneNP(el, guess, staged, uninit) && !flying;
     // A folded lane (D-34): a deriving pass outside the lane reads the
     // hold's world and joins it; lane work and leaves keep the guess.
-    if (l.folded && guess && !inLane && !leaf && (el as any)._host?.fam?.node !== c)
+    if (l.folded && guess && !inLane && !leaf && (el as any)._host?._fam?.node !== c)
       return pred(rowBase + "D4'", staged ? SLOT_P : SLOT_C, RAISE_H, resolveTx(l._parent ?? l));
     if (!tracked) {
       // An untracked read outside lane work: the screen (D4''); inside, the

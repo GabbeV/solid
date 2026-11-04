@@ -24,3 +24,12 @@ def picked(+left: Nat,+right: Nat,+gate: Bool,known: {Nat.is_eq(right,left) == g
 
 def pick(+left: Nat,+right: Nat) -> {B.choose(~R.Value,Nat.is_eq(right,left),_=>R.Number{left},_=>R.Number{right}) == R.Number{right} : R.Value}:
   picked(left,right,Nat.is_eq(right,left),{==})
+
+# rc.21 retains the strict gate and also requires SameValue.
+def both(+gate: Bool) -> {Bool.and(gate,gate) == gate : Bool}:
+  match gate:
+    case True{}: {==}
+    case False{}: {==}
+
+def pickSame(+left: Nat,+right: Nat) -> {B.choose(~R.Value,Bool.and(Nat.is_eq(right,left),Nat.is_eq(right,left)),_=>R.Number{left},_=>R.Number{right}) == R.Number{right} : R.Value}:
+  Equal.trans(R.Value,B.choose(~R.Value,Bool.and(Nat.is_eq(right,left),Nat.is_eq(right,left)),_=>R.Number{left},_=>R.Number{right}),B.choose(~R.Value,Nat.is_eq(right,left),_=>R.Number{left},_=>R.Number{right}),R.Number{right},Equal.cong(Bool,R.Value,gate=>B.choose(~R.Value,gate,_=>R.Number{left},_=>R.Number{right}),Bool.and(Nat.is_eq(right,left),Nat.is_eq(right,left)),Nat.is_eq(right,left),both(Nat.is_eq(right,left))),pick(left,right))

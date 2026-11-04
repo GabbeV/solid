@@ -41,7 +41,7 @@ try{
   for(const [at,q,now]of[[4,c.firstQ,c.firstNow],[5,c.secondQ,c.secondNow]]){S.ext(ns[at])._q=q;ns[at]._time=now?5:4;}
   if(c.graph>=1)S.link(ns[4],n);if(c.graph>=2)S.link(ns[5],n);if(c.graph>=3)S.link(n,ns[3]);
   S.GlobalQueue._truth=S.truthRead;S.probeLatest(c.latest);S.probeResetQueue(ts[c.pass],ts[c.flush]);S.setContextInternal(reader);S.probeTracking(c.tracking);
-  let result,error;try{result=op===0?S.read(n):op===1?S.truthRead(n):op===2?S.probeHeld(n):op===3?S.probeTruth(n):op===4?S.probeStale(n,c.query):op===5?S.probeAnswered(n):S.truthConfirmed(ts[2]);}catch(e){error=e instanceof S.NotReadyError?{notReady:true,source:id(e.source)}:{raw:e};}
+  let result,error;try{result=op===0?S.read(n):op===1?S.truthRead(n):op===2?!!S.probeHeld(n):op===3?S.probeTruth(n):op===4?S.probeStale(n,c.query):op===5?S.probeAnswered(n):S.truthConfirmed(ts[2]);}catch(e){error=e instanceof S.NotReadyError?{notReady:true,source:id(e.source)}:{raw:e};}
   if(op===4||op===5)return result;
   return{value:result===K.NOT_PENDING?'TOKEN':result,error,pass:tid(S.probePass),flush:tid(S.probeFlush),serial:error?.notReady?1:0,staged:S.stagedReaders.map(id),live:S.probeLive.map(tid),tx:ts.slice(1).map(t=>({into:tid(t._into),links:t._links?.map(tid)??[],nodes:t._nodes.map(id),reruns:t._reruns.map(id)})),nodes:ns.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,tx:tid(n._x?._transaction)})),pending:S.probePending.map(id),scheduled:S.probeScheduled,heap:Array.from({length:Math.max(1,S.dirtyQueue._heap.length)},(_,i)=>id(S.dirtyQueue._heap[i])),min:S.dirtyQueue._min,max:S.dirtyQueue._max};
  }

@@ -45,7 +45,7 @@ def effectType(kind: R.NodeKind) -> Nat:
 def prepare(+w: R.World,+tx: Nat,+id: Nat,+frame: Nat) -> B.Bundle<R.World,Nat>:
   +n = B.node(w,id)
   +kind = effectType(R.Node.kind(n))
-  +frame = B.choose(~Nat,Nat.is_eq(frame,0n),_=>B.choose(~Nat,Nat.is_ne(kind,0n),_=>kind,_=>B.choose(~Nat,ownError(w,id),_=>1n,_=>0n)),_=>frame)
+  +frame = B.choose(~Nat,Nat.is_eq(frame,0n),_=>B.choose(~Nat,Nat.is_ne(kind,0n),_=>kind,_=>B.choose(~Nat,Bool.or(ownError(w,id),B.has(R.Node.config(n),K.CONFIG_HELD())),_=>1n,_=>0n)),_=>frame)
   +w = B.choose(~R.World,R.Transaction.lane(B.transaction(w,tx)),_=>w,_=>B.store_node(w,id,R.Node.with_flags(n,B.clear(R.Node.flags(n),K.REACTIVE_FRAME_READ()))))
   +w = B.store_node(w,id,R.Node.with_modified(B.node(w,id),False{}))
   B.Bundle{clearChildRuns(B.budget(w),w,R.Node.firstChild(B.node(w,id))),frame}

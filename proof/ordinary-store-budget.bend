@@ -15,7 +15,7 @@ def valid(+w: R.World,+id: Nat,+record: R.Node,known: {Nat.is_lt(id,B.length(R.N
 
 def pendingSubs(+node: R.Node,+slot: R.Slot) -> {R.Node.subs(R.Node.with_pending(node,slot)) == R.Node.subs(node) : Nat}:
   match node:
-    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram}: {==}
+    case R.Node{+kind,+value,+pending,+equals,+config,+flags,+status,+time,+notified,+deps,+depsTail,+depGen,+subs,+subsTail,+height,+nextHeap,+prevHeap,+parent,+firstChild,+nextSibling,+prevSibling,+expr,+modified,+prevValue,+target,+loading,+x,+parentComputed,+scope,+childCount,+disposal,+cleanup,+effectProgram,+returnedCleanup,+errorProgram, +rebaseOwed}: {==}
 
 def head(+w: R.World,+id: Nat,+value: R.Value,+edge: Nat,room: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool},known: {R.Node.subs(B.node(w,id)) == edge : Nat}) -> {R.Node.subs(B.node(B.store_node(w,id,R.Node.with_pending(B.node(w,id),R.Present{value})),id)) == edge : Nat}:
   +record = R.Node.with_pending(B.node(w,id),R.Present{value})

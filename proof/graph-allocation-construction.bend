@@ -91,13 +91,13 @@ def build(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat,
     Equal.cong(R.Link, Nat, record => R.Link.nextSub(record), B.link(next, 1n+edge), Allocation.record(w, root, leaf), link), subscribers, automatic}
 
 def startReturn(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat, rest: List<&2, C.Task>, stack: List<&2, R.Value>, shape: OneEdge<w, root, leaf, edge>) ->
-  Return.Returned<Settlement.start(w, root, rest, stack), rest, stack, 14n>:
+  Return.Returned<Settlement.start(w, root, rest, stack), rest, stack, 15n>:
   match shape:
     case OneEdgeReady{healthy, validRoot, validLeaf, head, selected, end, noSubscribers, noAuto}:
       Settlement.complete(w, edge, root, leaf, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)
 
 def returnedFrame(+w: R.World, +root: Nat, +leaf: Nat, +edge: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +shape: OneEdge<w, root, leaf, edge>) ->
-  {Frame.observe(Return.world(Settlement.start(w, root, rest, stack), rest, stack, 14n, startReturn(w, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(Settlement.start(w, root, rest, stack), rest, stack, 15n, startReturn(w, root, leaf, edge, rest, stack, shape))) == Frame.observe(w) : Frame.View}:
   match shape:
     case OneEdgeReady{healthy, validRoot, validLeaf, head, selected, end, noSubscribers, noAuto}:
       Settlement.frame(w, edge, root, leaf, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)

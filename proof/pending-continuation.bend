@@ -1,6 +1,7 @@
 # Source core continuations execute the pending traversal. Owner callbacks and
 # AsyncFlush are retained in the queue and are not traversed by these contracts.
 import Base
+import ../runtime/constants.bend as K
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/core.bend as C
@@ -20,10 +21,15 @@ def tasksStack(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, 
     case Q.Release{+index} <> +tail:
       +id = B.get(Nat, released, index, 0n)
       +again = {C.PendingTasks{Q.Release{1n+index} <> tail, visited, released, scheduled} <> rest : List<&2, C.Task>}
-      Prefix.valuesChoice(Nat.is_ge(index, B.length(Nat, released)), stack, C.Machine{w, C.PendingTasks{tail, visited, released, scheduled} <> rest, stack}, C.Machine{w, B.choose(~List<&2, C.Task>, Q.releasable(w, id), _ => C.OwnerTasks{[O.Unobserved{id}]} <> again, _ => again), stack}, {==}, {==})
+      +eligible = Q.releasable(w,id)
+      +queued = B.has(R.Node.flags(B.node(w,id)),K.REACTIVE_IN_HEAP())
+      +flagged = B.store_node(w,id,R.Node.with_flags(B.node(w,id),B.set(R.Node.flags(B.node(w,id)),K.REACTIVE_RELEASE_AFTER())))
+      +next = B.choose(~R.World,Bool.and(eligible,queued),_=>flagged,_=>w)
+      Prefix.valuesChoice(Nat.is_ge(index, B.length(Nat, released)), stack, C.Machine{w, C.PendingTasks{tail, visited, released, scheduled} <> rest, stack}, C.Machine{next, B.choose(~List<&2, C.Task>, Bool.and(eligible,Bool.not(queued)), _ => C.OwnerTasks{[O.Unobserved{id}]} <> again, _ => again), stack}, {==}, {==})
     case Q.Visit{id, root, source} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Visit{id, root, source} <> tail, visited, released, scheduled))
     case Q.Walk{edge, root, source} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Walk{edge, root, source} <> tail, visited, released, scheduled))
     case Q.Next{edge, root, source} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Next{edge, root, source} <> tail, visited, released, scheduled))
+    case Q.Descend{id, root, source} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Descend{id, root, source} <> tail, visited, released, scheduled))
     case Q.Collect{id} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Collect{id} <> tail, visited, released, scheduled))
     case Q.CollectWalk{edge} <> tail: resumeStack(rest, stack, Q.advance(w, Q.CollectWalk{edge} <> tail, visited, released, scheduled))
     case Q.CollectNext{edge} <> tail: resumeStack(rest, stack, Q.advance(w, Q.CollectNext{edge} <> tail, visited, released, scheduled))
@@ -64,7 +70,10 @@ def releaseExact(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>
       _ =>
         +id = B.get(Nat, released, index, 0n)
         +again = {C.PendingTasks{Q.Release{1n+index} <> tail, visited, released, scheduled} <> rest : List<&2, C.Task>}
-        C.Machine{w, B.choose(~List<&2, C.Task>, Q.releasable(w, id), _ => C.OwnerTasks{[O.Unobserved{id}]} <> again, _ => again), stack}) : C.Machine}:
+        +eligible = Q.releasable(w,id)
+        +queued = B.has(R.Node.flags(B.node(w,id)),K.REACTIVE_IN_HEAP())
+        +next = B.choose(~R.World,Bool.and(eligible,queued),_=>B.store_node(w,id,R.Node.with_flags(B.node(w,id),B.set(R.Node.flags(B.node(w,id)),K.REACTIVE_RELEASE_AFTER()))),_=>w)
+        C.Machine{next,B.choose(~List<&2,C.Task>,Bool.and(eligible,Bool.not(queued)),_=>C.OwnerTasks{[O.Unobserved{id}]} <> again,_=>again),stack}) : C.Machine}:
   {==}
 
 def sameChoice(+condition: Bool, +machine: C.Machine) ->

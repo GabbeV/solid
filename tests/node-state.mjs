@@ -30,7 +30,7 @@ export function bendStates(runtime,names){
 export function solidStates(runtime){
   return [...runtime.sourceNames].sort(([,a],[,b])=>a.localeCompare(b)).map(([n,name])=>{
     const x=n._x;
-    return [name,{flags:n._flags,config:n._config,status:n._statusFlags,time:n._time,loading:n._loading,value:runtime.errorShape(runtime.observe(n._value)),pending:n._pendingValue!==runtime.notPending,pendingValue:n._pendingValue===runtime.notPending?undefined:runtime.errorShape(runtime.observe(n._pendingValue)),gen:n._depGen,modified:n._modified??false,previous:runtime.errorShape(runtime.observe(n._prevValue)),disposal:nativeDisposalSize(n._disposal),
+    return [name,{flags:n._flags,config:n._config>>>0,status:n._statusFlags,time:n._time,loading:n._loading,value:runtime.errorShape(runtime.observe(n._value)),pending:n._pendingValue!==runtime.notPending,pendingValue:n._pendingValue===runtime.notPending?undefined:runtime.errorShape(runtime.observe(n._pendingValue)),gen:n._depGen,modified:n._modified??false,previous:runtime.errorShape(runtime.observe(n._prevValue)),disposal:nativeDisposalSize(n._disposal),
       x:x?{flight:flightState(runtime,x._inFlight,Object.entries(runtime.futures).map(([name,record])=>[name,record.object])),flightSlot:x._inFlight===undefined?'undefined':x._inFlight===null?'null':'active',teardown:!!x._flightTeardown,error:runtime.errorShape(x._error),shown:runtime.errorShape(x._shownError),blocked:x._blocked,sources:x._pendingSources?[...x._pendingSources].map(node=>runtime.sourceNames.get(node)):undefined,parkedDisposal:nativeDisposalSize(x._pendingDisposal)}:null}];
   });
 }

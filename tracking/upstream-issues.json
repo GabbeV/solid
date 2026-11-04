@@ -371,6 +371,46 @@
       "fixedCommit": "0dd40b28f04b3091432752ff57c47b13dc9a986d",
       "integratedSourceCommit": "2a0da2fc5c53d97f655b6b713bdbb95c5aec1eb5",
       "integrationReview": "tracking/reviews/solid-2a0da2fc.md"
+    },
+    {
+      "id": "SOLID-SIGNED-ZERO-NETTING-011",
+      "classification": "confirmed-upstream-bug",
+      "status": "fixed-upstream-and-integrated",
+      "sourceCommit": "6bde511b9e1bcdd10f52a3d855bc4f742caaab93",
+      "sourceUnit": "core/core.ts:read / staged netting",
+      "record": "tracking/upstream/signed-zero-staged-read.md",
+      "reproducer": "tests/negative-zero.mjs",
+      "preservesBaseline": false,
+      "activeDeviationId": null,
+      "reportUrl": "https://github.com/solidjs/solid/pull/4538",
+      "fixUrl": "https://github.com/solidjs/solid/pull/4538",
+      "fixMergedCommit": "50dec1b3a6ff9a8429b704669c990f0d6d00a028",
+      "relatedCommits": [
+        "6b2a19eddde751bc38e61d43093bd66052959004",
+        "7d88dd5309d9f1ec265529dd528d740176de9b87"
+      ],
+      "integratedSourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+      "integrationReview": "tracking/reviews/solid-2105ffb8.md",
+      "scope": "Non-store staged reads/verdict netting; snapshot reader replay remains excluded. Current regression suite corrects the old invalid render harness command; that old command is not observed-render evidence."
+    },
+    {
+      "id": "SOLID-STORE-STAGED-SCREEN-012",
+      "classification": "confirmed-upstream-bug",
+      "status": "reproduced-unfiled",
+      "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+      "sourceUnit": "store/store.ts:readSource -> core/core.ts:stagedScreen -> core/verdict.ts:holdStaging",
+      "record": "tracking/upstream/store-staged-screen.md",
+      "reproducer": "repros/solid-signals/store-staged-screen.mjs",
+      "playgroundReproducer": "repros/playground/store-staged-screen.tsx",
+      "validationRecord": "tracking/upstream/store-staged-screen-validation.json",
+      "preservesBaseline": true,
+      "activeDeviationId": null,
+      "reportUrl": null,
+      "fixUrl": null,
+      "introducedBy": "343f007fa7e810feffbcb737b17d58dcb16d7e9d",
+      "relatedFixUrl": "https://github.com/solidjs/solid/pull/4625",
+      "passingParent": "b2442611c32496aa9d72c4f1ea16815033e48be8",
+      "scope": "Source-only store node-less staging; excluded from Bend grammar. No active workaround."
     }
   ]
 }

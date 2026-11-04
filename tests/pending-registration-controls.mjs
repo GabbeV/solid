@@ -36,7 +36,7 @@ try{
   const removal=P.removePendingSource(registered,2,1);assert.equal(removal.right,true);assert.equal(P.hasSource(removal.left,2,1),false);
   assert.equal(list(removal.left.extensions)[x].pendingSources,0);assert.deepEqual(list(list(removal.left.pendingSets)[set]),[0]);
   const removalAgain=P.removePendingSource(removal.left,2,1);assert.equal(removalAgain.right,false);assert.deepEqual(removalAgain.left,removal.left);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,14);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,11);assert.equal(certificate.steps+certificate.slack,15);
   const machine={$:'Machine',world:registered,tasks:encodeList([{$:'AsyncWriteAfterTrim',id:1},{$:'AsyncWriteSchedule'},...callerWork]),values:stack};
   let returned=machine;for(let step=0;step<certificate.steps;step++)returned=C.step(returned);
   assert.deepEqual(returned,{$:'Machine',world:certificate.world,tasks:rest,values:stack});
@@ -46,5 +46,5 @@ try{
   for(const remaining of [0,1,7]){assert.deepEqual(C.run(certificate.steps+remaining,machine),C.run(remaining,returned));driverSplits++;}
   cases++;
  }
- console.log(JSON.stringify({typedFreshRegistrationCases:cases,actualTenStepReturns:cases,actualDriverSplits:driverSplits,duplicateNoOpChecks:cases*3,jsSuppliesEqualityEvidence:false,scope:'private compact graph states with real fresh extension/Set add, variable auxiliary arena sizes and recomputing flags; actual helper retirement and actual Core settlement tested separately; callbacks/public reachability/full flight protocol not claimed'}));
+ console.log(JSON.stringify({typedFreshRegistrationCases:cases,actualElevenStepReturns:cases,actualDriverSplits:driverSplits,duplicateNoOpChecks:cases*3,jsSuppliesEqualityEvidence:false,scope:'private compact graph states with real fresh extension/Set add, variable auxiliary arena sizes and recomputing flags; actual helper retirement and actual Core settlement tested separately; callbacks/public reachability/full flight protocol not claimed'}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}
