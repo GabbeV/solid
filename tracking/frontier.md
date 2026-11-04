@@ -107,6 +107,14 @@ independent verdicts receive credit; resource/authoring failures receive none.
 The latest complete composed verdict and exact tracked-input seal, rather than
 root or test totals, determine the checked checkpoint.
 
+The [actual prepared held-read step](tracked-held-read.md) now connects the
+tracked graph link, held decision, arbitrary-payload slot selection and exact
+caller return. Its group-record frame carries action obligations unchanged
+across that instruction. Its premises describe initial fields; no post-read
+World or early reader-extension allocation is assumed. Constructing those
+initial facts and the ReadPrepared task after the body-produced heap/recompute
+path, then completing recompute/parking, remains the current gap.
+
 ## Remaining composition, in working order
 
 1. Continue from the constructed actual Round/heap entry through reader heap

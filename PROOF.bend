@@ -1,3 +1,4 @@
+import ./proof/tracked-held-read.bend as TrackedHeldRead
 import ./proof/staged-subscriber-frame.bend as StagedSubscriberShape
 import ./runtime/graph-state.bend as ReadTransactionGraph
 import ./proof/graph-link-frame.bend as ReadGraphFrame
@@ -3335,3 +3336,11 @@ def Laws.fresh_captured_join_retains_the_raw_lane_early_return(w,offset,empty,st
 
 def Laws.fresh_captured_alias_join_retains_the_raw_lane_early_return(w,rootOffset,captureOffset,alias,positive,empty):
   HeldAlias0.freshChoice(w,rootOffset,captureOffset,alias,positive,empty)
+
+
+def Laws.prepared_tracked_held_read_selects_value_and_retains_caller(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride):
+  TrackedHeldRead.complete(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride)
+
+
+def Laws.prepared_tracked_held_read_preserves_group_records(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride):
+  TrackedHeldRead.groups(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride)

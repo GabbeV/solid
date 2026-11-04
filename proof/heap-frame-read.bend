@@ -59,8 +59,8 @@ def finishChoice(+w: R.World,+reader: Nat,+id: Nat,ready: Bool) ->
     case True{}: {==}
     case False{}: {==}
 
-def actual(+w: R.World,+reader: Nat,+id: Nat,+root: Nat,+canonical: {R.NodeExtension.transaction(B.extension(w,id)) == root : Nat},+stopped: {R.Transaction.into(B.transaction(w,root)) == 0n : Nat},+current: {R.World.flushTransaction(w) == root : Nat},+ordinary: {R.World.passLane(w) == 0n : Nat},notVerdict: {B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()) == False{} : Bool}) ->
-  {ReadTx.frameRead(w,reader,id) == B.choose(~B.Bundle<R.World,Bool>,B.ok(w),_=>B.Bundle{X.joinPass(w,reader,id),False{}},_=>B.Bundle{w,False{}}) : B.Bundle<R.World,Bool>}:
+def decisionActual(+w: R.World,+reader: Nat,+id: Nat,+root: Nat,+canonical: {R.NodeExtension.transaction(B.extension(w,id)) == root : Nat},+stopped: {R.Transaction.into(B.transaction(w,root)) == 0n : Nat},+current: {R.World.flushTransaction(w) == root : Nat},+ordinary: {R.World.passLane(w) == 0n : Nat},notVerdict: {B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()) == False{} : Bool}) ->
+  {ReadTx.frameReadDecision(w,reader,id) == B.choose(~ReadTx.Decision,B.ok(w),_=>ReadTx.joined(w,reader,id),_=>ReadTx.Decision{w,False{},False{}}) : ReadTx.Decision}:
   +verdict = B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT())
   +lane = Nat.is_ne(R.World.passLane(w),0n)
   +noLane = Equal.cong(Nat,Bool,t=>Nat.is_ne(t,0n),R.World.passLane(w),0n,ordinary)
@@ -68,5 +68,9 @@ def actual(+w: R.World,+reader: Nat,+id: Nat,+root: Nat,+canonical: {R.NodeExten
   +l = Equal.cong(Bool,ReadTx.Decision,flag=>ReadTx.frameReadFlags(w,reader,id,False{},flag),lane,False{},noLane)
   +flags = Equal.trans(ReadTx.Decision,ReadTx.frameReadDecision(w,reader,id),ReadTx.frameReadFlags(w,reader,id,False{},lane),ReadTx.frameReadFlags(w,reader,id,False{},False{}),v,l)
   +known = branch(w,reader,id,cold(w,reader,id),tail(w,reader,id,root,canonical,stopped,current))
-  +decision = Equal.trans(ReadTx.Decision,ReadTx.frameReadDecision(w,reader,id),ordinaryDecision(w,reader,id,B.ok(w)),B.choose(~ReadTx.Decision,B.ok(w),_=>ReadTx.joined(w,reader,id),_=>ReadTx.Decision{w,False{},False{}}),Equal.trans(ReadTx.Decision,ReadTx.frameReadDecision(w,reader,id),ReadTx.frameReadFlags(w,reader,id,False{},False{}),ordinaryDecision(w,reader,id,B.ok(w)),flags,shape(w,reader,id)),readyChoice(w,reader,id,B.ok(w),known))
+  Equal.trans(ReadTx.Decision,ReadTx.frameReadDecision(w,reader,id),ordinaryDecision(w,reader,id,B.ok(w)),B.choose(~ReadTx.Decision,B.ok(w),_=>ReadTx.joined(w,reader,id),_=>ReadTx.Decision{w,False{},False{}}),Equal.trans(ReadTx.Decision,ReadTx.frameReadDecision(w,reader,id),ReadTx.frameReadFlags(w,reader,id,False{},False{}),ordinaryDecision(w,reader,id,B.ok(w)),flags,shape(w,reader,id)),readyChoice(w,reader,id,B.ok(w),known))
+
+def actual(+w: R.World,+reader: Nat,+id: Nat,+root: Nat,+canonical: {R.NodeExtension.transaction(B.extension(w,id)) == root : Nat},+stopped: {R.Transaction.into(B.transaction(w,root)) == 0n : Nat},+current: {R.World.flushTransaction(w) == root : Nat},+ordinary: {R.World.passLane(w) == 0n : Nat},notVerdict: {B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()) == False{} : Bool}) ->
+  {ReadTx.frameRead(w,reader,id) == B.choose(~B.Bundle<R.World,Bool>,B.ok(w),_=>B.Bundle{X.joinPass(w,reader,id),False{}},_=>B.Bundle{w,False{}}) : B.Bundle<R.World,Bool>}:
+  +decision = decisionActual(w,reader,id,root,canonical,stopped,current,ordinary,notVerdict)
   Equal.trans(B.Bundle<R.World,Bool>,ReadTx.frameRead(w,reader,id),ReadTx.finishDecision(B.choose(~ReadTx.Decision,B.ok(w),_=>ReadTx.joined(w,reader,id),_=>ReadTx.Decision{w,False{},False{}}),reader,id),B.choose(~B.Bundle<R.World,Bool>,B.ok(w),_=>B.Bundle{X.joinPass(w,reader,id),False{}},_=>B.Bundle{w,False{}}),Equal.cong(ReadTx.Decision,B.Bundle<R.World,Bool>,d=>ReadTx.finishDecision(d,reader,id),ReadTx.frameReadDecision(w,reader,id),B.choose(~ReadTx.Decision,B.ok(w),_=>ReadTx.joined(w,reader,id),_=>ReadTx.Decision{w,False{},False{}}),decision),finishChoice(w,reader,id,B.ok(w)))

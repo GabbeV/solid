@@ -77,7 +77,7 @@ iterator engine. The stream refetch wrapper is implemented; Observable inputs an
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 4,776 public histories, 780 configured mutation
+budget. Current evidence totals 4,776 public histories, 782 configured mutation
 controls (completed sweeps are scoped separately in the verification record) and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
@@ -383,3 +383,9 @@ release and final publication remain open; see the
 operation. Arbitrary finite registration sequences have an exact ordered outbox
 and retain the reactive state; callback execution and final publication remain
 separate proof obligations.
+
+The [actual tracked held-read contract](tracking/tracked-held-read.md) now
+composes graph linking, held entry and slot selection through one real prepared
+signal-read instruction for arbitrary represented payloads and caller work. It
+also preserves every transaction record. Construction from the body-produced
+heap/recompute path and the later parking/publication connection remain open.

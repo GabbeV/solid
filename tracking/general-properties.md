@@ -654,3 +654,15 @@ including nested settlement; the corresponding sufficient one-edge runtime bound
 is fifteen steps, or seventeen with trim. These bounds are distinct from checker
 fuel. Arbitrary represented payload domains and caller/task/stack obligations
 remain explicit; no broader held-publication theorem follows from the migration.
+
+
+## Actual prepared held read
+
+Two [tracked held-read roots](tracked-held-read.md) quantify over arbitrary
+represented Worlds, payload slots and caller work. One actual Core.step performs
+the tracked link, derives the ordinary same-flush held decision, serves the
+source slot and retains the caller. A second root preserves all transaction
+records, including open action obligations. All intermediate read metadata and
+health facts are derived; the required initial posture/cache facts stay explicit.
+This closes the local prepared-read segment, not its heap/recompute reachability
+or the following parking/publication path.

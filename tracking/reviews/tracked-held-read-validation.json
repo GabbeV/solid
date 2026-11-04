@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "baseCheckpoint": "16ce2a0951658d7d52e6ed8fce81d273c9d9ad4c",
+  "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+  "previousRootCount": 823,
+  "composedRootCount": 825,
+  "newRoots": [
+    "prepared_tracked_held_read_selects_value_and_retains_caller",
+    "prepared_tracked_held_read_preserves_group_records"
+  ],
+  "runtimeAndSourceHashesUnchanged": true,
+  "emittedRuntimeAndReferenceHashesUnchanged": true,
+  "activeDeviationIds": [],
+  "quantification": "Arbitrary represented World/value slots, other arenas, caller tasks and operand stacks, under explicit initial ordinary same-flush initialized-held-signal/render/tracking/fast-branch/health facts. No successful intermediate World premise; no numeric payload restriction.",
+  "result": "One actual ReadPrepared Core.step performs tracked linking and held decision, serves the input source slot, retains exact caller work and preserves every transaction record.",
+  "remaining": "Derive instruction reachability and its initial facts from the body-produced heap/recompute path, then complete recompute/parking/landing and global accounting/publication.",
+  "kernelProfile": "same-head-congruence-v1",
+  "kernelFuel": 400000000,
+  "processGroupRssBytes": 4294967296,
+  "checkerChanged": false,
+  "frontendDiagnosticReceivesIndependentCredit": false,
+  "wholeBookVerdictAndExactInputSeal": "tracking/checked.json",
+  "wholeBookNote": "This receipt records completed focused checks. Only a matching completed independent whole-book seal establishes the 825-root checkpoint.",
+  "focusedChecks": [
+    {
+      "name": "positive-fixture",
+      "status": 0,
+      "seconds": 8.76,
+      "command": [
+        "node",
+        "tests/proof-properties.mjs"
+      ],
+      "environment": {
+        "BEND_PROOF_MODULE": "tracked-read-fixture"
+      },
+      "stdout": "tracked-read-fixture: independent kernel verdict passed.\n",
+      "stderr": ""
+    },
+    {
+      "name": "tracked-read-negatives",
+      "status": 0,
+      "seconds": 10.407,
+      "command": [
+        "node",
+        "tests/mutations.mjs"
+      ],
+      "environment": {
+        "BEND_MUTATION_FILTER": "tracked getter "
+      },
+      "stdout": "Rejected mutation: tracked getter omits graph linking\nRejected mutation: tracked getter forces committed selection\n2 source-changing variants rejected by differential or kernel assertions.\n",
+      "stderr": ""
+    },
+    {
+      "name": "prior-held-entry-negative",
+      "status": 0,
+      "seconds": 4.941,
+      "command": [
+        "node",
+        "tests/mutations.mjs"
+      ],
+      "environment": {
+        "BEND_MUTATION_FROM": "read frame successful held join forces committed output",
+        "BEND_MUTATION_COUNT": "1"
+      },
+      "stdout": "Rejected mutation: read frame successful held join forces committed output\n1 source-changing variants rejected by differential or kernel assertions.\n",
+      "stderr": ""
+    }
+  ],
+  "freshProofOracleRejections": 3,
+  "newProofOracleVariants": 2,
+  "configuredVariants": 782,
+  "finiteVariants": 533,
+  "proofOracleVariants": 249,
+  "completeCurrentSweepClaimed": false,
+  "postFrontendKernelCorruptionRejectionsClaimedHere": false,
+  "discardedAttempt": {
+    "kind": "ill-typed negative-control setup",
+    "detail": "A bare False constructor in a synthesized local binder did not infer its type. The test replacement is explicitly annotated Bool; that failed compilation receives no rejection credit. The corrected variants compile and fail their intended semantic oracle."
+  },
+  "fixtureScope": "Actual constructors/holding/write produce a consistent initial private state; its certificate is checked in Bend, not supplied by JavaScript. The fixture is a non-vacuity/discrimination example, not arbitrary public reachability.",
+  "fileHashes": {
+    "proof/read-entry-metadata.bend": "52ec630c64c52c7193a6d021a594739dc7c456d27a4ce08ec813d96b179d6f12",
+    "proof/tracked-read-input.bend": "97dd338ba8f6c1f4e29ae5317d53ecd3ce74c80ae86ed9fa237553631c3a5b2f",
+    "proof/fast-staged-choice.bend": "6d9cf40305c098e47a54b8f8bd207bdf187a4cf1c096c0c52329a225a452b44b",
+    "proof/tracked-held-read.bend": "ad90c717d3cf9fc1d9e0363200051624480e75b1cf53f4daf63ae3ae3fce0e7b",
+    "proof/tracked-read-data.bend": "86462b7f629e4ed30fb2cfc540c9f962e92f877872785054ce51191f1090924d",
+    "proof/tracked-read-fixture.bend": "d04dc33c876561bcf7bf1a24cf4daa5b718eb00ffe3e7ee40b4f5ae518bc432e",
+    "proof/tracked-read-negative-probes.bend": "97f68b72e1af27a05ed129e65265d821ce5f331790ebc7623ba789e5b9aa79ae",
+    "proof/heap-frame-read.bend": "58fb3b9b3248f324c2e1480608bc6c68e5e93146ecb296643fce9b1289e7ba6c",
+    "tests/proof-properties.mjs": "bc73aa4158fc56f26bc9c3453e758a6d33c24f8458393ebf2228647ab072a3ae",
+    "tests/mutations.mjs": "7545ffb9fa6064bb705f8d008618efd288afaac049e3ae26ae1e6cddc7dce570"
+  },
+  "reusedExecutionEvidence": "tracking/reviews/solid-2105ffb8-validation.json"
+}

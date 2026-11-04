@@ -1130,3 +1130,16 @@ independent seal, with finite tests and negative controls kept separate. One sou
 no semantic workaround is introduced. The next semantic
 milestone remains connecting the held read and recompute path to the already
 proved parking/scan/return segment from constructed heap entry.
+
+
+## Actual tracked held-signal instruction (2026-11-04)
+
+The local read-entry contracts now compose through a real prepared-read Core
+instruction, including actual tracked linking, arbitrary-payload slot selection
+and exact caller return. A group-record frame retains action obligations across
+that step. The proof derives intermediate metadata/health from initial facts; it
+uses no fixed numeric payload programme and changes no runtime behavior.
+
+The next caller construction remains the body-produced heap/recompute path to
+this instruction and its initial conditions, followed by recompute/parking and
+landing. Validation is recorded separately from the completed independent seal.

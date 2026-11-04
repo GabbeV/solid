@@ -1,3 +1,8 @@
+import ./proof/tracked-read-input.bend as TrackedReadInput
+import ./proof/fast-staged-choice.bend as TrackedReadChoice
+import ./proof/read-entry-metadata.bend as TrackedReadMetadata
+import ./proof/heap-render-join.bend as TrackedReadJoin
+import ./runtime/graph-state.bend as TrackedReadGraph
 import ./runtime/read-transaction.bend as ReadTx
 import ./runtime/transaction.bend as ReadTransactionGroup
 import ./proof/staged-subscriber-frame.bend as StagedSubscriberShape
@@ -8117,3 +8122,35 @@ law fresh_captured_alias_join_retains_the_raw_lane_early_return:
   for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   {ReadTransaction.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.laneSelect(w,1n+captureOffset,HeldStage0.scheduled(HeldResume0.flush(w,1n+rootOffset))) : R.World}
+
+
+law prepared_tracked_held_read_selects_value_and_retains_caller:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +offset: Nat
+  for +root: Nat
+  for +input: TrackedReadInput.Input<w,1n+offset,id,root>
+  for context: {B.parentComputed(w,R.World.context(w)) == 1n+offset : Nat}
+  for tracked: {R.World.tracking(w) == True{} : Bool}
+  for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
+  for flushed: {R.World.unflushedStaged(w) == False{} : Bool}
+  for noOverride: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {Core.step(Core.Machine{w,Core.ReadPrepared{id} <> rest,stack}) == TrackedReadChoice.output(TrackedReadJoin.marked(TrackedReadGraph.link(w,id,1n+offset),1n+offset),rest,stack,id,1n+offset,TrackedReadMetadata.node(B.node(w,id))) : Core.Machine}
+
+
+law prepared_tracked_held_read_preserves_group_records:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +id: Nat
+  for +offset: Nat
+  for +root: Nat
+  for +input: TrackedReadInput.Input<w,1n+offset,id,root>
+  for context: {B.parentComputed(w,R.World.context(w)) == 1n+offset : Nat}
+  for tracked: {R.World.tracking(w) == True{} : Bool}
+  for signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind}
+  for flushed: {R.World.unflushedStaged(w) == False{} : Bool}
+  for noOverride: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()) == False{} : Bool}
+  {R.World.txArena(Core.world(Core.step(Core.Machine{w,Core.ReadPrepared{id} <> rest,stack}))) == R.World.txArena(w) : List<&2,R.Transaction>}

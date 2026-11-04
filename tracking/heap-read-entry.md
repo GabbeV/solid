@@ -29,9 +29,11 @@ children, ordinary same-flush posture and canonical terminal cache yield exactly
 the marked World and `false` on healthy input, with the raw fault branch explicit. Arbitrary payloads and ambient arenas are retained;
 this contract introduces no natural-number payload restriction.
 
-The four roots in `LAWS.bend` expose these input facts explicitly. The next caller
-composition must derive the graph/cache/posture facts, execute tracked linking,
-select/serve the staged value and complete recompute before deriving parking.
+The original four roots expose these input facts explicitly. The new
+[actual prepared-read composition](tracked-held-read.md) derives their transport
+through tracked linking, selects/serves the slot and retains the caller and group
+records. Its initial facts and task still must be constructed from actual heap
+and recompute execution, then recompute must complete before deriving parking.
 These helper roots do not establish the full `readSignalFast` result, public graph
 reachability, global group accounting, or eventual reveal.
 

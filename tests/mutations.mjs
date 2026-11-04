@@ -5,6 +5,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["tracked getter omits graph linking", "runtime/core.bend", "Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))", "{False{} : Bool}", "tests/proof-properties.mjs", "readSignalFast", "tracked-read-negative-probes"],
+  ["tracked getter forces committed selection", "runtime/core.bend", "readEntered(w, rest, stack, id, reader, slow, committed)", "readEntered(w, rest, stack, id, reader, slow, True{})", "tests/proof-properties.mjs", "readDecision", "tracked-read-negative-probes"],
   ["rc21 lane exit loses left-shown notify stamp", "runtime/lanes-state.bend", "R.LeftShown{}", "R.Unstamped{}", "tests/lane-stage-alignment.mjs", "LEFT_SHOWN"],
   ["rc21 matching over-owner lane still screens staging", "runtime/read-transaction.bend", "Nat.is_eq(B.second(R.World, Nat, pair), t)", "False{}", "tests/verdict-staging-alignment.mjs", "overAnswer"],
   ["rc21 matching over-owner lane incorrectly joins the hold", "runtime/read-transaction.bend", "B.choose(~Decision, B.second(R.World, Bool, over), _ => Decision{w, False{}, False{}},", "B.choose(~Decision, B.second(R.World, Bool, over), _ => joined(w, reader, id),", "tests/verdict-staging-alignment.mjs", "frameReadFlags"],
