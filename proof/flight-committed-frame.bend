@@ -35,10 +35,20 @@ def landed(+w: R.World, +id: Nat, +clearUninitialized: Bool) ->
     Frame.choice(Nat.is_ne(remaining, 0n), next, remainingTail(next, id, clearUninitialized, remaining), S.clearStatus(next, id, clearUninitialized), remainingFrame(next, id, clearUninitialized, remaining), Status.clear(next, id, clearUninitialized)),
     Frame.choice(S.hasSources(B.pendingSources(w, id)), w, B.first(R.World, Bool, P.removePendingSource(w, id, id)), w, Pending.remove(w, id, id), {==}))
 
-def prepare(+w: R.World, +id: Nat, +result: Nat) ->
-  {Frame.observe(B.first(R.World, Bool, F.prepareAsyncWrite(w, id, result))) == Frame.observe(w) : Frame.View}:
-  +next = Q.landStatus(w, id, False{})
-  Frame.firstBoolChoice(Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())), w, B.Bundle{w, False{}}, B.Bundle{next, B.ok(next)}, {==}, landed(w, id, False{}))
+def preparationBy(+w: R.World,+id: Nat,+ignored: Bool) -> {Frame.observe(F.landingWorld(B.choose(~F.WritePosture,ignored,_=>F.WritePosture{w,False{},False{}},_=>F.WritePosture{Q.landStatus(w,id,False{}),B.ok(Q.landStatus(w,id,False{})),F.carriedStaging(w,R.World.pendingNodes(w))}))) == Frame.observe(w) : Frame.View}:
+  match ignored:
+    case True{}: {==}
+    case False{}: landed(w,id,False{})
+
+def landing(+w: R.World,+id: Nat,+result: Nat) -> {Frame.observe(F.landingWorld(F.prepareAsyncLanding(w,id,result))) == Frame.observe(w) : Frame.View}:
+  preparationBy(w,id,Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w,id))),result),Bool.and(B.has(R.Node.flags(B.node(w,id)),K.REACTIVE_DIRTY()),Bool.not(B.has(R.Node.status(B.node(w,id)),K.STATUS_UNINITIALIZED())))))
+
+def projectedFrame(+posture: F.WritePosture) -> {B.first(R.World,Bool,F.preparedWrite(posture)) == F.landingWorld(posture) : R.World}:
+  match posture:
+    case F.WritePosture{world,accepted,carried}: {==}
+
+def prepare(+w: R.World,+id: Nat,+result: Nat) -> {Frame.observe(B.first(R.World,Bool,F.prepareAsyncWrite(w,id,result))) == Frame.observe(w) : Frame.View}:
+  Equal.trans(Frame.View,Frame.observe(B.first(R.World,Bool,F.prepareAsyncWrite(w,id,result))),Frame.observe(F.landingWorld(F.prepareAsyncLanding(w,id,result))),Frame.observe(w),Equal.cong(R.World,Frame.View,state=>Frame.observe(state),B.first(R.World,Bool,F.prepareAsyncWrite(w,id,result)),F.landingWorld(F.prepareAsyncLanding(w,id,result)),projectedFrame(F.prepareAsyncLanding(w,id,result))),landing(w,id,result))
 
 def write(+w: R.World, +id: Nat, +result: Nat, +value: R.Value) ->
   {Frame.observe(B.first(R.World, Bool, F.beginAsyncWrite(w, id, result, value))) == Frame.observe(w) : Frame.View}:
@@ -49,10 +59,5 @@ def write(+w: R.World, +id: Nat, +result: Nat, +value: R.Value) ->
 
 # Result identity is kept separate from group identity. A stale fulfillment is
 # ignored before status bookkeeping, preserving the exact World, not only View.
-def stale(+w: R.World, +id: Nat, +result: Nat,
-  obsolete: {Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result) == True{} : Bool}) ->
-  {F.prepareAsyncWrite(w, id, result) == B.Bundle{w, False{}} : B.Bundle<R.World, Bool>}:
-  Equal.cong(Bool, B.Bundle<R.World, Bool>, stale => B.choose(~B.Bundle<R.World, Bool>, Bool.or(stale, B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())), _ => B.Bundle{w, False{}},
-    _ =>
-      +next = Q.landStatus(w, id, False{})
-      B.Bundle{next, B.ok(next)}), Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), True{}, obsolete)
+def stale(+w: R.World,+id: Nat,+result: Nat,obsolete: {Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w,id))),result) == True{} : Bool}) -> {F.prepareAsyncWrite(w,id,result) == B.Bundle{w,False{}} : B.Bundle<R.World,Bool>}:
+  Equal.cong(Bool,B.Bundle<R.World,Bool>,stale=>F.preparedWrite(B.choose(~F.WritePosture,Bool.or(stale,Bool.and(B.has(R.Node.flags(B.node(w,id)),K.REACTIVE_DIRTY()),Bool.not(B.has(R.Node.status(B.node(w,id)),K.STATUS_UNINITIALIZED())))),_=>F.WritePosture{w,False{},False{}},_=>F.WritePosture{Q.landStatus(w,id,False{}),B.ok(Q.landStatus(w,id,False{})),F.carriedStaging(w,R.World.pendingNodes(w))})),Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w,id))),result),True{},obsolete)

@@ -7,7 +7,10 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-transaction-probe-'));
 try{
-  const emitted=path.join(dir,'transaction.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','tests/probes/transaction.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+  const active=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):root;
+  for(const folder of ['runtime','representation','observation'])fs.cpSync(path.join(active,folder),path.join(dir,folder),{recursive:true});
+  fs.mkdirSync(path.join(dir,'tests/probes'),{recursive:true});fs.copyFileSync(path.join(root,'tests/probes/transaction.bend'),path.join(dir,'tests/probes/transaction.bend'));
+  const emitted=path.join(dir,'transaction.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(dir,'tests/probes/transaction.bend'),'-o',emitted],{cwd:root,encoding:'utf8'});
   assert.equal(compile.status,0,compile.stderr);const {default:B}=await import(pathToFileURL(emitted));
   const source=path.join(root,'upstream/solid/packages/signals/src');
   const bundle=await build({stdin:{contents:`
@@ -57,6 +60,9 @@ try{
     if(op===15){if(extra)S.probeSetState(running,null,ts[1]);answer=+S.probeFrameRead(own?render:user,a);}
     if(op===16)S.joinPass(own?render:user,a);
     if(op===17){S.merge(ts[1],ts[2]);answer=txid(S.txOf(a));}
+    if(op===18)S.joinFuture(ts[3]);
+    if(op===19){S.merge(ts[3],ts[1]);S.joinFuture(ts[3]);}
+    if(op===20){S.merge(ts[3],ts[2]);S.merge(ts[2],ts[1]);S.joinFuture(ts[3]);}
     if(op===0)ts.push(S.flushTransaction);
     return {answer,nodes:ns.slice(1).map(n=>({config:n._config,flags:n._flags??0,status:n._statusFlags??0,tx:txid(n._x?._transaction),first:id(n._firstChild),next:id(n._nextSibling),prev:id(n._prevSibling)})),
       transactions:ts.slice(1).map(t=>({nodes:t._nodes.map(id),render:t._queues[0].map(cbid),user:t._queues[1].map(cbid),reruns:t._reruns.map(id),into:txid(t._into),parent:txid(t._parent),lane:t._lane,verdict:txid(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,marks:t._marks?.map(id)??null})),
@@ -80,7 +86,7 @@ try{
       live:S.probeTransactions.map(txid),flush:txid(S.flushTransaction),pass:txid(S.passTx),lane:txid(S.passLane),judge:0,scheduled:S.probeScheduled,running:S.globalQueue._running,blockers};
   }
   let count=0;
-  for(let op=0;op<18;op++)for(const running of [false,true])for(const own of [false,true])for(const config of [0,K.CONFIG_HELD,K.CONFIG_HELD|K.CONFIG_HELD_FRAME,K.CONFIG_HELD|K.CONFIG_INPUTS_PUBLISHED,K.CONFIG_HELD|K.CONFIG_LAGS])for(const status of [0,K.STATUS_UNINITIALIZED,K.STATUS_PENDING])for(const extra of [false,true]){
+  for(let op=0;op<21;op++)for(const running of [false,true])for(const own of [false,true])for(const config of [0,K.CONFIG_HELD,K.CONFIG_HELD|K.CONFIG_HELD_FRAME,K.CONFIG_HELD|K.CONFIG_INPUTS_PUBLISHED,K.CONFIG_HELD|K.CONFIG_LAGS])for(const status of [0,K.STATUS_UNINITIALIZED,K.STATUS_PENDING])for(const extra of [false,true]){
     assert.deepEqual(actual(B.fixture(op,running,own,config,status,extra)),reference(op,running,own,config,status,extra),JSON.stringify({op,running,own,config,status,extra}));count++;
   }
   let seed=0x9e4173,blockCount=0;const rng=n=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return (seed>>>0)%n;};

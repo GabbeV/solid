@@ -1,3 +1,4 @@
+import ./proof/staged-subscriber-frame.bend as StagedSubscriberShape
 import ./runtime/graph-state.bend as ReadTransactionGraph
 import ./proof/graph-link-frame.bend as ReadGraphFrame
 import ./proof/heap-frame-read.bend as ReadFrame
@@ -1456,13 +1457,14 @@ law scalar_memo_two_updates_complete:
 # Any finite nonempty sequence in the fixed equals:false signal/memo program.
 # Each tail element carries its own drain budget 40 + extra.
 law scalar_memo_repeatable_public_update:
+  for +prior: Bool
   for +tick: Nat
   for +previous: Nat
   for +input: Nat
   for +events: List<&2, R.TraceEvent>
   for +jobs: List<&2, R.HostJob>
   for +extra: Nat
-  {API.flush(Nat.add(40n, extra), API.setSignal(MemoHistoryStates.origin(tick, previous, events, jobs), 2n, R.Number{input})) == MemoHistoryStates.origin(1n+tick, input, MemoHistory.nextEvents(events, input), MemoHistory.nextJobs(jobs)) : R.World}
+  {API.flush(Nat.add(40n, extra), API.setSignal(MemoHistoryStates.origin(prior, tick, previous, events, jobs), 2n, R.Number{input})) == MemoHistoryStates.origin(Nat.is_eq(input, previous), 1n+tick, input, MemoHistory.nextEvents(events, input), MemoHistory.nextJobs(jobs)) : R.World}
 
 law scalar_memo_finite_history_final_world:
   for +initial: Nat
@@ -1470,7 +1472,7 @@ law scalar_memo_finite_history_final_world:
   for +constructorExtra: Nat
   for +firstExtra: Nat
   for +updates: List<&2, MemoHistory.Update>
-  {MemoHistory.run(updates, API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first}))) == MemoHistory.result(updates, 0n, first, MemoHistory.initialEvents(initial, first), [R.FlushJob{}]) : R.World}
+  {MemoHistory.run(updates, API.flush(Nat.add(40n, firstExtra), API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first}))) == MemoHistory.result(updates, Nat.is_eq(first, initial), 0n, first, MemoHistory.initialEvents(initial, first), [R.FlushJob{}]) : R.World}
 
 law scalar_memo_finite_history_complete:
   for +initial: Nat
@@ -1482,22 +1484,24 @@ law scalar_memo_finite_history_complete:
 
 # Every pending replacement keeps the existing notification and scheduled job.
 law scalar_memo_pending_write_coalesces:
+  for +prior: Bool
   for +tick: Nat
   for +previous: Nat
   for +pending: Nat
   for +input: Nat
   for +events: List<&2, R.TraceEvent>
   for +jobs: List<&2, R.HostJob>
-  {API.setSignal(Core.world(MemoHistoryStates.state_0(tick, previous, pending, events, jobs)), 2n, R.Number{input}) == Core.world(MemoHistoryStates.state_0(tick, previous, input, events, jobs)) : R.World}
+  {API.setSignal(Core.world(MemoHistoryStates.state_0(prior, tick, previous, pending, events, jobs)), 2n, R.Number{input}) == Core.world(MemoHistoryStates.state_0(prior, tick, previous, input, events, jobs)) : R.World}
 
 law scalar_memo_batch_stages_last_proposal:
+  for +prior: Bool
   for +tick: Nat
   for +previous: Nat
   for +first: Nat
   for +rest: List<&2, Nat>
   for +events: List<&2, R.TraceEvent>
   for +jobs: List<&2, R.HostJob>
-  {MemoBatches.writes(rest, API.setSignal(MemoHistoryStates.origin(tick, previous, events, jobs), 2n, R.Number{first})) == Core.world(MemoHistoryStates.state_0(tick, previous, MemoBatches.last(rest, first), events, jobs)) : R.World}
+  {MemoBatches.writes(rest, API.setSignal(MemoHistoryStates.origin(prior, tick, previous, events, jobs), 2n, R.Number{first})) == Core.world(MemoHistoryStates.state_0(prior, tick, previous, MemoBatches.last(rest, first), events, jobs)) : R.World}
 
 law scalar_memo_batched_history_final_world:
   for +initial: Nat
@@ -1506,7 +1510,7 @@ law scalar_memo_batched_history_final_world:
   for +constructorExtra: Nat
   for +firstExtra: Nat
   for +batches: List<&2, MemoBatches.Batch>
-  {MemoBatches.run(batches, API.flush(Nat.add(40n, firstExtra), MemoBatches.writes(rest, API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})))) == MemoBatches.result(batches, 0n, MemoBatches.last(rest, first), MemoHistory.initialEvents(initial, MemoBatches.last(rest, first)), [R.FlushJob{}]) : R.World}
+  {MemoBatches.run(batches, API.flush(Nat.add(40n, firstExtra), MemoBatches.writes(rest, API.setSignal(API.createMemo(Nat.add(14n, constructorExtra), MemoInitialDriver.signal(initial), MemoConstructorCuts.expr(), False{}, False{}, 1n), 2n, R.Number{first})))) == MemoBatches.result(batches, Nat.is_eq(MemoBatches.last(rest, first), initial), 0n, MemoBatches.last(rest, first), MemoHistory.initialEvents(initial, MemoBatches.last(rest, first)), [R.FlushJob{}]) : R.World}
 
 law scalar_memo_batched_history_complete:
   for +initial: Nat
@@ -2542,7 +2546,7 @@ law deferred_payload_result:
   for initial: Payload.Ordinary
   for next: Payload.Ordinary
   for extra: Nat
-  {Core.values(Core.run(Nat.add(103n, extra), DeferredPayloadDriver.before(initial, next))) == [Payload.value(next)] : List<&2, R.Value>}
+  {Core.values(Core.run(Nat.add(103n, extra), DeferredPayloadDriver.before(initial, next))) == [DeferredPayloadProgram.answer(initial, next)] : List<&2, R.Value>}
 
 law deferred_payload_numeric_specialization:
   for initial: Nat
@@ -3666,9 +3670,10 @@ law async_prefix_queues_exact_followup_order:
   for +stack: List<&2, R.Value>
   for +id: Nat
   for +then: List<&2, Core.Task>
-  {Core.asyncWriteAfterValue(w, rest, stack, id, then) == B.choose(~Core.Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
-    _ => Core.Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), Core.OwnerTasks{[RuntimeOwner.TrimDeps{id}]} <> AsyncPrefix.ending(id, then, rest), stack},
-    _ => Core.Machine{w, AsyncPrefix.ending(id, then, rest), stack}) : Core.Machine}
+  for +carried: Bool
+  {Core.asyncWriteAfterValue(w, rest, stack, id, then, carried) == B.choose(~Core.Machine, Bool.not(B.present(R.Node.pending(B.node(w, id)))),
+    _ => Core.Machine{B.store_node(w, id, R.Node.with_loading(B.node(w, id), False{})), Core.OwnerTasks{[RuntimeOwner.TrimDeps{id}]} <> AsyncPrefix.ending(id, then, rest, carried), stack},
+    _ => Core.Machine{w, AsyncPrefix.ending(id, then, rest, carried), stack}) : Core.Machine}
 
 
 law present_source_removal_retains_distinct_target:
@@ -4123,7 +4128,7 @@ law actual_pending_traversal_retains_subscriber_topology:
   for +visited: List<&2, Nat>
   for +released: List<&2, Nat>
   for +scheduled: Bool
-  {SubscriberShape.observe(PendingTopology.world(RuntimePending.advance(w, tasks, visited, released, scheduled))) == SubscriberShape.observe(w) : SubscriberShape.View}
+  {StagedSubscriberShape.observe(PendingTopology.world(RuntimePending.advance(w, tasks, visited, released, scheduled))) == StagedSubscriberShape.observe(w) : StagedSubscriberShape.View}
 
 
 law actual_core_pending_step_retains_subscriber_topology:
@@ -4134,14 +4139,14 @@ law actual_core_pending_step_retains_subscriber_topology:
   for +visited: List<&2, Nat>
   for +released: List<&2, Nat>
   for +scheduled: Bool
-  {SubscriberShape.observe(Core.world(Core.step(Core.Machine{w, Core.PendingTasks{tasks, visited, released, scheduled} <> rest, stack}))) == SubscriberShape.observe(w) : SubscriberShape.View}
+  {StagedSubscriberShape.observe(Core.world(Core.step(Core.Machine{w, Core.PendingTasks{tasks, visited, released, scheduled} <> rest, stack}))) == StagedSubscriberShape.observe(w) : StagedSubscriberShape.View}
 
 
 law callback_free_settlement_history_retains_subscriber_topology:
   for +scope: Core.Machine
   for +programme: PendingHistory.Programme<scope>
   for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
-  {SubscriberShape.observe(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope))) == SubscriberShape.observe(Core.world(scope)) : SubscriberShape.View}
+  {StagedSubscriberShape.observe(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope))) == StagedSubscriberShape.observe(Core.world(scope)) : StagedSubscriberShape.View}
 
 
 law callback_free_settlement_history_retains_selected_subscriber_shape:
@@ -4149,7 +4154,7 @@ law callback_free_settlement_history_retains_selected_subscriber_shape:
   for +programme: PendingHistory.Programme<scope>
   for +allowed: {SettlementHistory.bodyOnly(scope, programme) == True{} : Bool}
   for +id: Nat
-  {SubscriberShape.shape(B.node(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope)), id)) == SubscriberShape.shape(B.node(Core.world(scope), id)) : SubscriberShape.Shape}
+  {StagedSubscriberShape.shape(B.node(Core.world(PendingHistory.iterate(PendingHistory.height(scope, programme), scope)), id)) == StagedSubscriberShape.shape(B.node(Core.world(scope), id)) : StagedSubscriberShape.Shape}
 
 
 law callback_free_settlement_history_retains_selected_link:
@@ -4198,7 +4203,7 @@ law actual_leaf_visit_next_control_is_constructed:
   for +source: Nat
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
-  VisitControl.Next<VisitControl.observe(RuntimePending.advance(w, RuntimePending.Visit{id, root, source} <> tasks, visited, released, scheduled)), tasks, released, root, source>
+  VisitControl.Next<RuntimePending.advance(w, RuntimePending.Visit{id, root, source} <> tasks, visited, released, scheduled), tasks, released, root, source>
 
 
 law one_edge_settlement_bounded_return_is_constructed:
@@ -4214,7 +4219,7 @@ law one_edge_settlement_bounded_return_is_constructed:
   for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
-  BoundedReturn.Returned<OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n>
 
 
 law one_edge_settlement_retains_committed_observation:
@@ -4230,7 +4235,7 @@ law one_edge_settlement_retains_committed_observation:
   for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == CommittedStorage.observe(w) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == CommittedStorage.observe(w) : CommittedStorage.View}
 
 
 law one_edge_settlement_uses_remaining_actual_driver_fuel:
@@ -4247,7 +4252,7 @@ law one_edge_settlement_uses_remaining_actual_driver_fuel:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   for +remaining: Nat
-  {Core.run(Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), remaining), OneEdgeReturn.start(w, root, rest, stack)) == Core.run(remaining, Core.Machine{BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), rest, stack}) : Core.Machine}
+  {Core.run(Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), remaining), OneEdgeReturn.start(w, root, rest, stack)) == Core.run(remaining, Core.Machine{BoundedReturn.world(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), rest, stack}) : Core.Machine}
 
 
 law no_stale_trimmed_one_edge_return_is_constructed:
@@ -4264,7 +4269,7 @@ law no_stale_trimmed_one_edge_return_is_constructed:
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   for +noStale: {OwnerContinuation.staleEdge(w, root) == 0n : Nat}
-  BoundedReturn.Returned<OneEdgeReturn.trimmed(w, root, rest, stack), rest, stack, 12n>
+  BoundedReturn.Returned<OneEdgeReturn.trimmed(w, root, rest, stack), rest, stack, 16n>
 
 
 law one_edge_leaf_suffix_completes_in_seven_healthy_steps:
@@ -4305,7 +4310,7 @@ law one_edge_return_room_is_derived:
   for +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}
   for +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
-  {Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), BoundedReturn.slack(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 10n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == 10n : Nat}
+  {Nat.add(BoundedReturn.steps(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto)), BoundedReturn.slack(OneEdgeReturn.start(w, root, rest, stack), rest, stack, 14n, OneEdgeReturn.complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == 14n : Nat}
 
 
 law existing_slot_node_update_reads_written_record:
@@ -4389,7 +4394,7 @@ law constructed_graph_starts_bounded_settlement_return:
   for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   for +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}
-  BoundedReturn.Returned<OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 14n>
 
 
 law graph_construction_and_settlement_retain_committed_observation:
@@ -4411,7 +4416,7 @@ law graph_construction_and_settlement_retain_committed_observation:
   for +noSubscribers: {R.Node.subs(B.node(w, leaf)) == 0n : Nat}
   for +noAuto: {B.has(R.Node.config(B.node(w, leaf)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}
   for +arena: {R.World.links(w) == first <> links : List<&2, R.Link>}
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 10n, GraphLinked.startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))) == CommittedStorage.observe(w) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(RuntimeGraph.link(w, root, leaf), root, rest, stack), rest, stack, 14n, GraphLinked.startReturn(w, root, leaf, first, links, rest, stack, healthy, validRoot, validLeaf, different, rootEmpty, rootTail, deps, depsTail, noSubscribers, noAuto, arena))) == CommittedStorage.observe(w) : CommittedStorage.View}
 
 
 law fresh_graph_allocation_keeps_allocated_node_ids_valid:
@@ -4505,7 +4510,7 @@ law actual_memo_render_graph_starts_bounded_settlement_return:
   for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
   for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
   for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
-  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 14n>
 
 
 law actual_memo_render_graph_settlement_retains_committed_observation:
@@ -4525,7 +4530,7 @@ law actual_memo_render_graph_settlement_retains_committed_observation:
   for +nullComputed: {B.parentComputed(w, 0n) == 0n : Nat}
   for +arena: {R.World.nodes(w) == first <> nodes : List<&2, R.Node>}
   for +linkArena: {R.World.links(w) == firstLink <> links : List<&2, R.Link>}
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n, MemoRender.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena))) == CommittedStorage.observe(MemoRender.allocated(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 14n, MemoRender.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, rest, stack, healthy, nullComputed, arena, linkArena))) == CommittedStorage.observe(MemoRender.allocated(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
 
 
 law reserved_arena_memo_render_return_requires_no_final_state_premises:
@@ -4537,7 +4542,7 @@ law reserved_arena_memo_render_return_requires_no_final_state_premises:
   for +cleanup: Nat
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(ConstructedFixture.input(values), sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(ConstructedFixture.input(values)), rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(MemoRender.linked(ConstructedFixture.input(values), sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(ConstructedFixture.input(values)), rest, stack), rest, stack, 14n>
 
 
 law actual_source_registration_retains_committed_observation:
@@ -4582,7 +4587,7 @@ law registered_one_edge_graph_constructs_bounded_settlement_return:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
-  BoundedReturn.Returned<OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 14n>
 
 
 law registration_and_settlement_retain_committed_observation:
@@ -4595,7 +4600,7 @@ law registration_and_settlement_retain_committed_observation:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 10n, PendingRegistration.startReturn(w, id, source, root, leaf, edge, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(PendingRegistration.result(w, id, source), root, rest, stack), rest, stack, 14n, PendingRegistration.startReturn(w, id, source, root, leaf, edge, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
 
 
 law allocated_empty_source_set_add_constructs_membership:
@@ -4726,7 +4731,7 @@ law permitted_source_histories_construct_bounded_settlement_return:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
-  BoundedReturn.Returned<OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 14n>
 
 
 law permitted_source_histories_and_settlement_retain_committed_observation:
@@ -4738,7 +4743,7 @@ law permitted_source_histories_and_settlement_retain_committed_observation:
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
   for +shape: GraphAllocated.OneEdge<w, root, leaf, edge>
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 10n, SourceHistory.startReturn(w, root, leaf, edge, history, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(SourceHistory.run(w, history), root, rest, stack), rest, stack, 14n, SourceHistory.startReturn(w, root, leaf, edge, history, rest, stack, shape))) == CommittedStorage.observe(w) : CommittedStorage.View}
 
 
 law selected_source_command_history_validity_is_constructed:
@@ -4769,7 +4774,7 @@ law actual_memo_render_source_commands_construct_bounded_settlement_return:
   for +commands: List<&2, SourceCommands.Command>
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 14n>
 
 
 law actual_memo_render_source_commands_retain_committed_observation:
@@ -4790,7 +4795,7 @@ law actual_memo_render_source_commands_retain_committed_observation:
   for +commands: List<&2, SourceCommands.Command>
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 10n, ConstructedSources.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedSources.after(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands), DefaultNode.index(w), rest, stack), rest, stack, 14n, ConstructedSources.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, healthy, nullComputed, arena, linkArena, commands, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
 
 
 law fresh_graph_allocation_retains_extension_pointers:
@@ -4861,7 +4866,7 @@ law actual_memo_render_registration_constructs_bounded_settlement_return:
   for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n>
+  BoundedReturn.Returned<OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 14n>
 
 
 law actual_memo_render_registration_retains_committed_observation:
@@ -4885,7 +4890,7 @@ law actual_memo_render_registration_retains_committed_observation:
   for +setArena: {R.World.pendingSets(w) == [] <> sets : List<&2, List<&2, Nat>>}
   for +rest: List<&2, Core.Task>
   for +stack: List<&2, R.Value>
-  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 10n, ConstructedRegistration.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
+  {CommittedStorage.observe(BoundedReturn.world(OneEdgeReturn.start(ConstructedRegistration.registered(w, sourceExpr, effectExpr, target, program, cleanup), DefaultNode.index(w), rest, stack), rest, stack, 14n, ConstructedRegistration.startReturn(w, sourceExpr, effectExpr, target, program, cleanup, first, nodes, firstLink, links, extensions, sets, healthy, nullComputed, arena, linkArena, extensionArena, setArena, rest, stack))) == CommittedStorage.observe(MemoRender.linked(w, sourceExpr, effectExpr, target, program, cleanup)) : CommittedStorage.View}
 
 
 law actual_memo_render_registration_then_removal_retires_source:
@@ -6002,7 +6007,8 @@ law canonical_held_source_join_preserves_group_and_only_schedules:
   for canonical: {R.NodeExtension.transaction(B.extension(w,id)) == 1n+offset : Nat}
   for current: {R.World.flushTransaction(w) == 1n+offset : Nat}
   for +stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
-  {Transactions.joinNode(w,id) == HeldStage0.scheduled(w) : R.World}
+  {ReadTransaction.joinNode(w,id) == HeldStage0.selected(w,1n+offset) : R.World}
+
 
 
 law held_snapshot_stash_retains_error_flight_and_control_fields:
@@ -6149,6 +6155,7 @@ law captured_fresh_preparation_retains_the_held_source_observation:
   for captured: {R.ActionState.transaction(Action.get(w,actor)) == 1n+offset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   for stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+offset)) == False{} : Bool}
   {HeldResume1.observe(BodyEntry.prepared(w,actor,tail)) == HeldResume1.observe(HeldResume0.flush(w,1n+offset)) : HeldResume1.View}
 
 
@@ -6208,6 +6215,7 @@ law fresh_group_actual_resume_runs_held_body_and_retires_one_obligation:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+offset)) == False{} : Bool}
   {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
 
 
@@ -6219,7 +6227,8 @@ law certified_captured_alias_joins_its_already_current_canonical_group:
   for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
   for future: {R.World.flushTransaction(w) == 1n+rootOffset : Nat}
   for stopped: {R.Transaction.into(B.transaction(w,1n+rootOffset)) == 0n : Nat}
-  {Transactions.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.scheduled(w) : R.World}
+  {ReadTransaction.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.laneSelect(w,1n+captureOffset,HeldStage0.scheduled(w)) : R.World}
+
 
 
 law certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot:
@@ -6229,6 +6238,7 @@ law certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot:
   for +alias: RejoinHistories.Alias<w,1n+rootOffset>
   for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {Transactions.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.scheduled(HeldResume0.flush(w,1n+rootOffset)) : R.World}
 
 
@@ -6295,6 +6305,7 @@ law captured_alias_fresh_preparation_retains_selected_source_observation:
   for captured: {R.ActionState.transaction(Action.get(w,actor)) == RejoinHistories.identity(w,1n+offset,alias) : Nat}
   for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {HeldResume1.observe(BodyEntry.prepared(w,actor,tail)) == HeldResume1.observe(HeldResume0.flush(w,1n+offset)) : HeldResume1.View}
 
 
@@ -6352,6 +6363,7 @@ law captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
 
 
@@ -6393,6 +6405,7 @@ law captured_alias_fresh_resume_restores_arbitrary_caller_stack:
   for positive: {RejoinHistories.identity(w,1n+offset,alias) == 1n+captureOffset : Nat}
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
 
 
@@ -6491,6 +6504,7 @@ law ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once:
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
   for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {BodyOutput.outer(Core.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(HeldDelivery1.marked(w,observer),actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
 
 
@@ -6514,6 +6528,7 @@ law ordinary_fresh_observer_delivery_restores_caller_stack:
   for empty: {R.World.flushTransaction(w) == 0n : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
   for found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {Core.values(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == stack : List<&2,R.Value>}
 
 
@@ -6542,6 +6557,7 @@ law ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history:
   for +events: List<&2,WaitHistory.WaitEvent>
   for +lateRejected: Bool
   for +lateValue: R.Value
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {Core.asyncActionDelivery(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),HeldDelivery2.tasks(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),Core.values(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events)),observer,lateRejected,lateValue,Action.find(R.World.actionWaits(Core.world(HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events))),observer)) == HeldDelivery2.afterEvents(w,rest,stack,observer,incoming,rejected,values,events) : Core.Machine}
 
 
@@ -6656,7 +6672,8 @@ law ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end:
   for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
   for +found: {Action.find(R.World.actionWaits(w),observer) == Some{R.ActionWait{observer,actor,0,False{}}} : Maybe<&2,R.ActionWait>}
-  {PendingHistory.iterate(ActionOutput0.cost(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)),HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == Core.Machine{ActionOutput0.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)),ActionOutput2.work(w,observer,rest),stack} : Core.Machine}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
+  {PendingHistory.iterate(ActionOutput0.cost(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found,plain)),HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values)) == Core.Machine{ActionOutput0.world(HeldDelivery0.after(w,rest,stack,observer,rejected,incoming,values),ActionOutput2.work(w,observer,rest),stack,ActionOutput2.queue(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found,plain)),ActionOutput2.work(w,observer,rest),stack} : Core.Machine}
 
 
 law nested_action_slice_restores_the_saved_caller_question:
@@ -6856,6 +6873,7 @@ law fresh_group_resume_handles_independent_source_and_capture_aliases:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {BodyOutput.outer(Core.world(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected)))) == BodyOutput.outer(BodyRetire.target(HeldBody3.run(values,BodyEntry.prepared(w,actor,R.ActionEnd{}),id),1n+offset,remaining)) : R.World}
 
 
@@ -6905,6 +6923,7 @@ law fresh_group_source_cache_alias_resume_restores_caller_stack:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {Core.values(PendingHistory.iterate(1n+HeldBody4.cost(values),HeldResume7.start(w,actor,rest,stack,incoming,rejected))) == stack : List<&2,R.Value>}
 
 
@@ -7029,6 +7048,7 @@ law fresh_cached_alias_resume_constructs_its_count_evidence:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   CountEvidence20262.Outcome<HeldResume7.start(w,actor,rest,stack,incoming,rejected),1n+HeldBody4.cost(values),id,offset,remaining>
 
 
@@ -7369,6 +7389,7 @@ law fresh_cached_alias_resume_has_the_exact_post_body_output_machine:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
   {JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected) == HeldBody6.done(BodyEntry.prepared(w,actor,R.ActionEnd{}),values,id,answer,actor,JoinedRound20260.work(w,rest),stack) : Core.Machine}
 
 
@@ -7418,7 +7439,8 @@ law fresh_cached_alias_resume_constructs_a_finite_exact_output_drain:
   for +empty: {R.World.flushTransaction(w) == 0n : Nat}
   for +open: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}
   for +known: {R.ActionState.methods(Action.get(w,actor)) == HeldResume7.methods(values,id,answer) : R.Expr}
-  {PendingHistory.iterate(ActionOutput0.cost(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)),JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected)) == Core.Machine{ActionOutput0.world(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)),JoinedRound20260.work(w,rest),stack} : Core.Machine}
+  for +plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}
+  {PendingHistory.iterate(ActionOutput0.cost(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)),JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected)) == Core.Machine{ActionOutput0.world(JoinedRound20260.after(w,actor,values,rest,stack,incoming,rejected),JoinedRound20260.work(w,rest),stack,JoinedRound20260.freshQueue(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)),JoinedRound20260.work(w,rest),stack} : Core.Machine}
 
 
 law actual_output_observer_drain_preserves_derived_body_obligation_count:
@@ -8053,3 +8075,21 @@ law same_flush_held_fast_render_read_does_not_charge_another_group:
   for rendered: {ReadRecords.Node.kind(ReadBase.node(w,1n+offset)) == ReadRecords.Render{} : ReadRecords.NodeKind}
   for initialized: {ReadBase.has(ReadRecords.Node.status(ReadBase.node(w,source)),ReadConstants.STATUS_UNINITIALIZED()) == False{} : Bool}
   {ReadTransaction.enterRead(w,1n+offset,source,False{}) == ReadBase.Bundle{ReadJoin.marked(w,1n+offset),False{}} : ReadBase.Bundle<ReadRecords.World,Bool>}
+
+
+law fresh_captured_join_retains_the_raw_lane_early_return:
+  for +w: R.World
+  for +offset: Nat
+  for +empty: {R.World.flushTransaction(w) == 0n : Nat}
+  for +stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}
+  {ReadTransaction.joinFuture(w,1n+offset) == HeldStage0.laneSelect(w,1n+offset,HeldStage0.scheduled(HeldResume0.flush(w,1n+offset))) : R.World}
+
+
+law fresh_captured_alias_join_retains_the_raw_lane_early_return:
+  for +w: R.World
+  for +rootOffset: Nat
+  for +captureOffset: Nat
+  for +alias: RejoinHistories.Alias<w,1n+rootOffset>
+  for +positive: {RejoinHistories.identity(w,1n+rootOffset,alias) == 1n+captureOffset : Nat}
+  for empty: {R.World.flushTransaction(w) == 0n : Nat}
+  {ReadTransaction.joinFuture(w,RejoinHistories.identity(w,1n+rootOffset,alias)) == HeldStage0.laneSelect(w,1n+captureOffset,HeldStage0.scheduled(HeldResume0.flush(w,1n+rootOffset))) : R.World}

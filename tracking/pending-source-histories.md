@@ -10,7 +10,7 @@ World advances through those actual operations.
 Induction proves committed values/tree/trace, subscriber shape/all links, node
 count and fault unchanged through the whole history. A constructor-supplied
 one-edge certificate survives, then supplies the existing bounded settlement
-return and complete content frame. The bound is ten Core tasks **after** the
+return and complete content frame. The current bound is fourteen Core tasks **after** the
 history. It is not a constant-time bound for the history, Set scans or World size.
 The returned World is the one computed by the actual operations/Core steps; a
 fault or absent-carrier early return remains a permitted alternative.

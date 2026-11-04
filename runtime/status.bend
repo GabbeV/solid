@@ -139,7 +139,7 @@ def dispatch(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +sched
           +pending = U32.is_eq(status, K.STATUS_PENDING())
           +source = B.choose(~Nat, pending, _ => P.notReadySource(error), _ => 0n)
           +next = {PropagateNext{edge, status, error} <> rest : List<&2, Task>}
-          B.choose(~Machine, Bool.or(Bool.or(B.has(R.Node.config(sub),K.CONFIG_REDERIVE()),Bool.and(B.has(R.Node.config(sub),K.CONFIG_VERDICT()),Bool.not(Bool.and(Nat.is_ne(source,0n),VerdictWork.holdWork(w,id,R.Link.dep(B.link(w,edge))))))),
+          B.choose(~Machine, Bool.or(Bool.or(B.has(R.Node.config(sub),K.CONFIG_REDERIVE()),Bool.and(Bool.or(B.has(R.Node.config(sub),K.CONFIG_VERDICT()),Bool.and(Nat.is_ne(source,0n),B.has(R.Node.config(sub),K.CONFIG_STAGED_ERROR()))),Bool.not(Bool.and(Nat.is_ne(source,0n),VerdictWork.holdWork(w,id,R.Link.dep(B.link(w,edge))))))),
               Bool.and(pending, Nat.is_ne(R.Link.gen(B.link(w, edge)), R.Node.depGen(sub)))),
             _ => Machine{B.schedule(H.enqueueSub(w, id)), next, visited, scheduled},
             _ => B.choose(~Machine, Bool.and(pending, Bool.and(Nat.is_ne(source, 0n), P.hasSource(w, id, source))),

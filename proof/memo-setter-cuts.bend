@@ -8,6 +8,7 @@ import ../runtime/constants.bend as K
 import ../runtime/read-state.bend as V
 import ../runtime/core.bend as C
 import ../runtime/api.bend as A
+import ./staging-live-locals.bend as Live
 
 def selected(+w: R.World, +id: Nat, +value: R.Value, skip: Bool, +custom: Bool, +same: Bool) -> R.World:
   B.choose(~R.World, skip, _ => W.stageResolved(w, id, value),
@@ -54,7 +55,7 @@ def noSlot(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
 
 def shape(+w: R.World, +id: Nat, +value: R.Value) ->
   {W.stageResolved(w, id, value) == tail(intake(w, id, value, B.node(w, id), B.present(R.Node.pending(B.node(w, id)))), id, B.node(w, id), B.present(R.Node.pending(B.node(w, id)))) : R.World}:
-  {==}
+  Live.resolved(w,W.stageIntake(w,id,B.present(R.Node.pending(B.node(w,id)))),id,value,{==},Live.intakeNodes(w,id,B.present(R.Node.pending(B.node(w,id)))))
 
 def noExisting(+w: R.World, +id: Nat, +value: R.Value,
   absent: {B.present(R.Node.pending(B.node(w, id))) == False{} : Bool}) ->
@@ -97,7 +98,7 @@ def coreChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, 
     _ =>
       +w = W.beforeCompare(w, id)
       B.choose(~C.Machine, W.skipCompare(w, id),
-        _ => C.Machine{W.stageResolved(w, id, value), rest, value <> stack},
+        _ => C.stageCustom(w, rest, stack, id, value),
         _ => C.isSame(w, C.SetSignalCompared{id, value} <> rest, stack, id, current, value)))
 
 def coreLaneChoice(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value, lane: Bool) -> C.Machine:

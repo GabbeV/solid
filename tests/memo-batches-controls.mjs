@@ -41,7 +41,7 @@ try{
    let current=seedValue;
    for(let k=0;k<=batches.length;k++){
     const tail=list(batches.slice(0,k)),world=D.program(initial,first,list(firstRest),constructorExtra,firstExtra,tail);
-    assert.deepEqual(world,H.result(tail,0,seedValue,I.initialEvents(initial,seedValue),list([{$:'FlushJob'}])),'exact World including only one scheduling job and one computation per batch');
+    assert.deepEqual(world,H.result(tail,seedValue===initial,0,seedValue,I.initialEvents(initial,seedValue),list([{$:'FlushJob'}])),'exact World including only one scheduling job and one computation per batch');
     assert.deepEqual(V.view(world),V.expected(current));
     assert.deepEqual([read(),derived()],[current,current+1]);
     assert.equal(array(world.events).filter(e=>e.$==='Invoked').length,k+2);

@@ -3,6 +3,7 @@
 # substitute evaluator. Construction is owned; the later event-style write
 # runs outside that owner, as a normal event handler does. Equality is false.
 import Base
+import ./deferred-read-cut.bend as ReadCut
 import ./ordinary-payload.bend as Payload
 import ../representation/base.bend as B
 import ../runtime/write.bend as W
@@ -43,3 +44,14 @@ def stageStamp(+w: R.World) -> R.World:
 
 def stageFlags(+w: R.World) -> R.World:
   B.store_node(w, 4n, R.Node.with_flags(B.node(w, 4n), 8))
+
+# Untrusted witness-data probe at the exact read branch. The actual step50
+# equation is proved in deferred-payload-program; this does not run in the API.
+def branchRead(machine: C.Machine,+gate: Bool) -> C.Machine:
+  match machine:
+    case C.Machine{w,tasks,stack}:
+      match tasks:
+        case C.ReadPrepared{id} <> rest:
+          ReadCut.read(w,rest,stack,id,gate)
+        case other:
+          C.Machine{w,other,stack}

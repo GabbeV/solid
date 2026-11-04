@@ -1,3 +1,4 @@
+import ./proof/staged-subscriber-frame.bend as StagedSubscriberShape
 import ./runtime/graph-state.bend as ReadTransactionGraph
 import ./proof/graph-link-frame.bend as ReadGraphFrame
 import ./proof/heap-frame-read.bend as ReadFrame
@@ -968,8 +969,8 @@ def Laws.scalar_memo_two_updates_final_world(initial, first, input, constructorE
 def Laws.scalar_memo_two_updates_complete(initial, first, input, constructorExtra, firstExtra, secondExtra):
   MemoRepeat.complete(initial, first, input, constructorExtra, firstExtra, secondExtra)
 
-def Laws.scalar_memo_repeatable_public_update(tick, previous, input, events, jobs, extra):
-  MemoHistory.update(tick, previous, input, events, jobs, extra)
+def Laws.scalar_memo_repeatable_public_update(prior, tick, previous, input, events, jobs, extra):
+  MemoHistory.update(prior, tick, previous, input, events, jobs, extra)
 
 def Laws.scalar_memo_finite_history_final_world(initial, first, constructorExtra, firstExtra, updates):
   MemoHistory.world(initial, first, constructorExtra, firstExtra, updates)
@@ -977,11 +978,11 @@ def Laws.scalar_memo_finite_history_final_world(initial, first, constructorExtra
 def Laws.scalar_memo_finite_history_complete(initial, first, constructorExtra, firstExtra, updates):
   MemoHistory.complete(initial, first, constructorExtra, firstExtra, updates)
 
-def Laws.scalar_memo_pending_write_coalesces(tick, previous, pending, input, events, jobs):
-  MemoCoalescing.public_setter(tick, previous, pending, input, events, jobs)
+def Laws.scalar_memo_pending_write_coalesces(prior, tick, previous, pending, input, events, jobs):
+  MemoCoalescing.public_setter(prior, tick, previous, pending, input, events, jobs)
 
-def Laws.scalar_memo_batch_stages_last_proposal(tick, previous, first, rest, events, jobs):
-  MemoBatches.staged(tick, previous, first, rest, events, jobs)
+def Laws.scalar_memo_batch_stages_last_proposal(prior, tick, previous, first, rest, events, jobs):
+  MemoBatches.staged(prior, tick, previous, first, rest, events, jobs)
 
 def Laws.scalar_memo_batched_history_final_world(initial, first, rest, constructorExtra, firstExtra, batches):
   MemoBatches.world(initial, first, rest, constructorExtra, firstExtra, batches)
@@ -1873,8 +1874,8 @@ def Laws.ordinary_async_prefix_preserves_caller_stack(w, rest, values, id, resul
   AsyncPrefix.stack(w, rest, values, id, result, value, then, custom, override)
 
 
-def Laws.async_prefix_queues_exact_followup_order(w, rest, stack, id, then):
-  AsyncPrefix.afterExact(w, rest, stack, id, then)
+def Laws.async_prefix_queues_exact_followup_order(w, rest, stack, id, then, carried):
+  AsyncPrefix.afterExact(w, rest, stack, id, then, carried)
 
 
 def Laws.present_source_removal_retains_distinct_target(xs, removed, kept, removedLocation, keptLocation, different):
@@ -2776,8 +2777,8 @@ def Laws.constructed_owned_source_body_reaches_zero_live_action_debt(initial,val
   HeldBody9.zero(initial,values,answer,rest,stack)
 
 
-def Laws.captured_fresh_preparation_retains_the_held_source_observation(w,actor,offset,tail,captured,empty,stopped):
-  HeldResume0.actual(w,actor,offset,tail,captured,empty,stopped)
+def Laws.captured_fresh_preparation_retains_the_held_source_observation(w,actor,offset,tail,captured,empty,stopped,plain):
+  HeldResume0.actual(w,actor,offset,tail,captured,empty,stopped,plain)
 
 
 def Laws.current_group_preparation_constructs_the_held_body_profile(w,id,actor,offset,tail,initial,captured):
@@ -2792,16 +2793,16 @@ def Laws.current_group_actual_resume_runs_held_body_and_retires_one_obligation(w
   HeldResume7.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,open,known)
 
 
-def Laws.fresh_group_actual_resume_runs_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known):
-  HeldResume7.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known)
+def Laws.fresh_group_actual_resume_runs_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known,plain):
+  HeldResume7.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,remaining,initial,captured,empty,open,known,plain)
 
 
 def Laws.certified_captured_alias_joins_its_already_current_canonical_group(w,rootOffset,captureOffset,alias,positive,future,stopped):
   HeldAlias0.current(w,rootOffset,captureOffset,alias,positive,future,stopped)
 
 
-def Laws.certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot(w,rootOffset,captureOffset,alias,positive,empty):
-  HeldAlias0.fresh(w,rootOffset,captureOffset,alias,positive,empty)
+def Laws.certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot(w,rootOffset,captureOffset,alias,positive,empty,plain):
+  HeldAlias0.fresh(w,rootOffset,captureOffset,alias,positive,empty,plain)
 
 
 def Laws.never_valued_pending_read_returns_token_from_a_shown_lane(w,rest,stack,reader,id,lane,known):
@@ -2824,8 +2825,8 @@ def Laws.captured_alias_current_preparation_retains_source_profile_observation(w
   AliasResume1.current(w,actor,offset,captureOffset,tail,alias,captured,positive,future,stopped)
 
 
-def Laws.captured_alias_fresh_preparation_retains_selected_source_observation(w,actor,offset,captureOffset,tail,alias,captured,positive,empty):
-  AliasResume1.fresh(w,actor,offset,captureOffset,tail,alias,captured,positive,empty)
+def Laws.captured_alias_fresh_preparation_retains_selected_source_observation(w,actor,offset,captureOffset,tail,alias,captured,positive,empty,plain):
+  AliasResume1.fresh(w,actor,offset,captureOffset,tail,alias,captured,positive,empty,plain)
 
 
 def Laws.actual_preparation_retains_the_original_positive_captured_alias(w,actor,offset,captureOffset,tail,alias,captured,positive):
@@ -2836,16 +2837,16 @@ def Laws.captured_alias_current_resume_runs_finite_held_body_and_retires_one_obl
   AliasResume3.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known)
 
 
-def Laws.captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known):
-  AliasResume3.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known)
+def Laws.captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,plain):
+  AliasResume3.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.captured_alias_current_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known):
   AliasResume3.currentStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,known)
 
 
-def Laws.captured_alias_fresh_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known):
-  AliasResume3.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known)
+def Laws.captured_alias_fresh_resume_restores_arbitrary_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,plain):
+  AliasResume3.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,plain)
 
 
 def Laws.ordinary_current_observer_delivery_runs_aliased_held_body_and_retires_once(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found):
@@ -2860,16 +2861,16 @@ def Laws.ordinary_current_observer_delivery_cannot_repeat_after_body_and_wait_hi
   HeldDelivery2.currentDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,open,known,found,events,lateRejected,lateValue)
 
 
-def Laws.ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found):
-  HeldDelivery0.fresh(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found)
+def Laws.ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,plain):
+  HeldDelivery0.fresh(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,plain)
 
 
-def Laws.ordinary_fresh_observer_delivery_restores_caller_stack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found):
-  HeldDelivery0.freshStack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found)
+def Laws.ordinary_fresh_observer_delivery_restores_caller_stack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found,plain):
+  HeldDelivery0.freshStack(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,initial,alias,captured,positive,empty,known,found,plain)
 
 
-def Laws.ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue):
-  HeldDelivery2.freshDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue)
+def Laws.ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue,plain):
+  HeldDelivery2.freshDuplicate(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,events,lateRejected,lateValue,plain)
 
 
 def Laws.actual_hold_source_view_is_computed_from_its_initial_source_view(w,id,t):
@@ -2908,8 +2909,8 @@ def Laws.classified_action_output_prefix_has_a_finite_exact_core_drain(machine,r
   ActionOutput0.drain(machine,rest,stack,form,healthy)
 
 
-def Laws.ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found):
-  ActionOutput2.drain(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found)
+def Laws.ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,plain):
+  ActionOutput2.drain(w,observer,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,alias,captured,positive,empty,open,known,found,plain)
 
 
 def Laws.nested_action_slice_restores_the_saved_caller_question(w,question,rest,stack,offset,healthy,depth):
@@ -2968,16 +2969,16 @@ def Laws.current_group_resume_handles_independent_source_and_capture_aliases(w,a
   CacheResume20262.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
 
 
-def Laws.fresh_group_resume_handles_independent_source_and_capture_aliases(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
-  CacheResume20262.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+def Laws.fresh_group_resume_handles_independent_source_and_capture_aliases(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain):
+  CacheResume20262.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.current_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
   CacheResume20262.currentStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
 
 
-def Laws.fresh_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
-  CacheResume20262.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+def Laws.fresh_group_source_cache_alias_resume_restores_caller_stack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain):
+  CacheResume20262.freshStack(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.certified_transaction_merge_preserves_held_source_heap_facts(w,left,right,source,target):
@@ -3008,8 +3009,8 @@ def Laws.current_cached_alias_resume_constructs_its_count_evidence(w,actor,value
   CountEvidence20261.current(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
 
 
-def Laws.fresh_cached_alias_resume_constructs_its_count_evidence(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
-  CountEvidence20261.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+def Laws.fresh_cached_alias_resume_constructs_its_count_evidence(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain):
+  CountEvidence20261.fresh(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.constructed_body_evidence_proves_actual_remaining_count(before,steps,id,offset,remaining,outcome):
@@ -3100,16 +3101,16 @@ def Laws.current_cached_alias_resume_has_the_exact_post_body_output_machine(w,ac
   JoinedRound20260.currentExact(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
 
 
-def Laws.fresh_cached_alias_resume_has_the_exact_post_body_output_machine(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
-  JoinedRound20260.freshExact(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+def Laws.fresh_cached_alias_resume_has_the_exact_post_body_output_machine(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain):
+  JoinedRound20260.freshExact(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.current_cached_alias_resume_constructs_a_finite_exact_output_drain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known):
   JoinedRound20260.currentDrain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,open,known)
 
 
-def Laws.fresh_cached_alias_resume_constructs_a_finite_exact_output_drain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known):
-  JoinedRound20260.freshDrain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known)
+def Laws.fresh_cached_alias_resume_constructs_a_finite_exact_output_drain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain):
+  JoinedRound20260.freshDrain(w,actor,values,id,answer,rest,stack,incoming,rejected,offset,captureOffset,remaining,initial,sourceAlias,cached,alias,captured,positive,empty,open,known,plain)
 
 
 def Laws.actual_output_observer_drain_preserves_derived_body_obligation_count(before,steps,id,offset,remaining,outcome,rest,stack,form):
@@ -3323,3 +3324,11 @@ def Laws.same_flush_ordinary_frame_read_retains_world_and_staging(w,reader,sourc
 
 def Laws.same_flush_held_fast_render_read_does_not_charge_another_group(w,offset,source,root,canonical,stopped,current,ordinary,notVerdict,held,children,rendered,initialized):
   ReadHeld.actual(w,offset,source,root,canonical,stopped,current,ordinary,notVerdict,held,children,rendered,initialized)
+
+
+def Laws.fresh_captured_join_retains_the_raw_lane_early_return(w,offset,empty,stopped):
+  HeldResume0.freshChoice(w,offset,empty,stopped)
+
+
+def Laws.fresh_captured_alias_join_retains_the_raw_lane_early_return(w,rootOffset,captureOffset,alias,positive,empty):
+  HeldAlias0.freshChoice(w,rootOffset,captureOffset,alias,positive,empty)

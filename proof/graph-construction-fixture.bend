@@ -22,5 +22,5 @@ def linked(value: R.Value, recomputing: Bool, carrier: Bool) -> R.World:
   G.link(initial(value, recomputing, carrier), 1n, 2n)
 
 def complete(+value: R.Value, +recomputing: Bool, +carrier: Bool, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>) ->
-  Return.Returned<Settlement.start(linked(value, recomputing, carrier), 1n, rest, stack), rest, stack, 10n>:
+  Return.Returned<Settlement.start(linked(value, recomputing, carrier), 1n, rest, stack), rest, stack, 14n>:
   Constructed.startReturn(initial(value, recomputing, carrier), 1n, 2n, B.blank_link(), [], rest, stack, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==})

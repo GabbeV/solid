@@ -56,7 +56,7 @@ def storeExtension(+w: R.World,+id: Nat,+record: R.NodeExtension) -> {observe(B.
 
 def recordOpen(record: R.Transaction,members: List<&2,Nat>) -> {R.Transaction.open(R.Transaction.with_nodes(record,members)) == R.Transaction.open(record) : Nat}:
   match record:
-    case R.Transaction{nodes,reruns,renderQueue,userQueue,into,parent,lane,blocked,open,acted,fork,shown,held,marks}: {==}
+    case R.Transaction{nodes,reruns,renderQueue,userQueue,into,parent,lane,blocked,open,acted,fork,shown,held,marks, +latest}: {==}
 
 def storeOpens(+rows: List<&2,R.Transaction>,+id: Nat,+members: List<&2,Nat>) -> {opens(List.set(&2,R.Transaction,rows,id,R.Transaction.with_nodes(B.get(R.Transaction,rows,id,B.blank_transaction()),members))) == opens(rows) : List<&2,Nat>}:
   match rows id:

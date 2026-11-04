@@ -37,7 +37,10 @@ try {
     ...[7,19].map(identity=>[{$:'DataReference',identity},references.get(identity),{$:'Reference',id:identity}])
   ];
   let count=0;
-  for(const [initial,initialValue] of cases)for(const [next,nextValue,expected] of cases) {
+  for(const [initial,initialValue,initialEncoded] of cases)for(const [next,nextValue,nextEncoded] of cases) {
+    // Preserve the pinned strict-equality netted-read behavior, including #4538.
+    const expected=initialValue===nextValue?initialEncoded:nextEncoded;
+    const expectedValue=initialValue===nextValue?initialValue:nextValue;
     const label=JSON.stringify([initial,next]);
     let machine=D.before(initial,next);
     assert.deepEqual(machine,P.state_0(initial,next),label+' initial Machine');
@@ -51,15 +54,17 @@ try {
     assert.equal(machine.world.fault.$,'Healthy',label+' final fault');
 
     const S=await import(pathToFileURL(path.join(root,'build/solid.mjs'))+'?ordinary-deferred='+count);
-    let set,get,dispose;
+    let input,set,get,dispose;
     S.createRoot(stop=>{
       dispose=stop;
-      const [input,update]=S.createSignal(initialValue,{equals:false});
+      const pair=S.createSignal(initialValue,{equals:false});
+      input=pair[0];const update=pair[1];
       set=update;get=S.createDeferred(input,{equals:false});
     });
     assert.ok(Object.is(get(),initialValue),label+' native initial value/identity');
     set(nextValue);S.flush();
-    assert.ok(Object.is(get(),nextValue),label+' native final value/identity');
+    assert.ok(Object.is(input(),nextValue),label+' native source commits proposal');
+    assert.ok(Object.is(get(),expectedValue),label+' native final value/identity');
     dispose();S.flush();count++;
   }
   console.log(`${count} ordinary-payload deferred programs compare all 103 prefixes, exact final Machines at three budgets and native values/identities, including mixed types, aliasing, undefined, NaN and signed zero.`);

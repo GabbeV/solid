@@ -6,7 +6,7 @@ import ../representation/base.bend as B
 import ../runtime/action-state.bend as A
 import ../runtime/flight.bend as F
 import ../runtime/core.bend as Core
-import ./memo-render-fixture.bend as Values
+import ./memo-render-input.bend as Values
 import ./action-wait-allocation.bend as Allocation
 import ./action-wait-range.bend as Range
 import ./action-wait-history.bend as History

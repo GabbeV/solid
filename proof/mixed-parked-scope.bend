@@ -83,7 +83,7 @@ def metadata(+w: R.World,+reader: Nat,+offset: Nat) -> {Meta.observe(world(w,rea
 
 def intoMasked(+tx: R.Transaction) -> {R.Transaction.into(Meta.mask(tx)) == R.Transaction.into(tx) : Nat}:
   match tx:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def terminal(+w: R.World,+source: Nat,+reader: Nat,+offset: Nat,ready: Mixed.Ready<w,source,reader,offset>) -> {R.Transaction.into(B.transaction(world(w,reader,offset),1n+offset)) == 0n : Nat}:
   match ready:

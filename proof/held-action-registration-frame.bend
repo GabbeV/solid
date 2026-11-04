@@ -65,3 +65,8 @@ def registeredProfile(+w: R.World,+actor: Nat,+result: Nat,+kind: U32,+id: Nat,+
 
 def historyProfile(+events: List<&2,History.WaitEvent>,+w: R.World,+id: Nat,+offset: Nat,profile: P.Profile<Source.flush(w,1n+offset),id,offset>) -> P.Profile<Source.flush(History.run(events,w),1n+offset),id,offset>:
   Transfer.transfer(Source.flush(w,1n+offset),Source.flush(History.run(events,w),1n+offset),id,offset,profile,historySource(events,w,1n+offset))
+
+def futureArena(+w: R.World) -> {R.World.txArena(future(w)) == R.World.txArena(w) : List<&2,R.Transaction>}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      {==}

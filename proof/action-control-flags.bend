@@ -139,7 +139,10 @@ def prepared(+w: R.World,+actor: Nat,+offset: Nat,+tail: R.Expr,captured: {R.Act
   +joined = Prepared.joined(w,actor)
   +flushed = Source.flush(asked,1n+offset)
   +scheduled = Join.scheduled(flushed)
-  +same = Equal.trans(View,observe(joined),observe(scheduled),observe(w),Equal.cong(R.World,View,state=>observe(state),joined,scheduled,Source.joined(w,actor,offset,captured,empty,terminal)),Equal.trans(View,observe(scheduled),observe(flushed),observe(w),selected(flushed),Equal.trans(View,observe(flushed),observe(asked),observe(w),future(asked,1n+offset),question(w,R.ActionState.question(A.get(w,actor))))))
+  +guarded = Join.laneSelect(asked,1n+offset,scheduled)
+  +normalFrame = Equal.trans(View,observe(scheduled),observe(flushed),observe(w),selected(flushed),Equal.trans(View,observe(flushed),observe(asked),observe(w),future(asked,1n+offset),question(w,R.ActionState.question(A.get(w,actor)))))
+  +guardFrame = choice(R.Transaction.lane(B.transaction(asked,1n+offset)),w,asked,scheduled,question(w,R.ActionState.question(A.get(w,actor))),normalFrame)
+  +same = Equal.trans(View,observe(joined),observe(guarded),observe(w),Equal.cong(R.World,View,state=>observe(state),joined,guarded,Source.joinedChoice(w,actor,offset,captured,empty,terminal)),guardFrame)
   Equal.trans(View,observe(Prepared.prepared(w,actor,tail)),observe(A.enter(joined)),enter(observe(w)),store(A.enter(joined),actor,R.ActionState.with_methods(A.get(joined,actor),tail)),Equal.trans(View,observe(A.enter(joined)),enter(observe(joined)),enter(observe(w)),entered(joined),Equal.cong(View,View,v=>enter(v),observe(joined),observe(w),same)))
 
 def fromWrites(+w: R.World,+next: R.World,+slot: Nat,same: {Writes.observe(next,slot) == Writes.observe(w,slot) : R.World}) -> {observe(next) == observe(w) : View}:

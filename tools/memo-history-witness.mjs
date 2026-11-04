@@ -7,6 +7,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-memo-history-witness-'));
+const stagedReadBit=Number(fs.readFileSync(path.join(root,'runtime/constants.bend'),'utf8').match(/def REACTIVE_STAGED_READ\(\) -> U32:\s*(\d+)/)?.[1]);
+if(!Number.isSafeInteger(stagedReadBit)||stagedReadBit<=0)throw Error('Missing source staged-read constant');
 try{
 for(const kind of ['pass','setter']){
 const phase='memo-history';
@@ -23,7 +25,7 @@ for(const [file,ns]of[['representation/records.bend','R'],['runtime/core.bend','
   constructors.set(ns+'.'+family+'.'+m[1],{ns,fields:split(m[2]).map(x=>{const i=x.indexOf(':');return[x.slice(0,i).trim(),x.slice(i+1).trim()];})});
  }
 }
-const shared=new Map(),declarations=[];
+const shared=new Map(),declarations=[];let flagMode='prior';
 function qualified(type,ns){
  if(['Nat','Bool','U32','String'].includes(type))return type;
  if(type.startsWith('List<'))return 'List<&2, '+qualified(split(type.slice(5,-1))[1],ns)+'>';
@@ -31,12 +33,12 @@ function qualified(type,ns){
 }
 function intern(body,type){
  const key=type+'#'+body;if(shared.has(key))return shared.get(key);
- const name='data_'+shared.size,variables=['tick','previous','input','events','jobs'].filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
- declarations.push(`def ${name}(${variables.map(v=>'+'+v+': '+({events:'List<&2, R.TraceEvent>',jobs:'List<&2, R.HostJob>'}[v]??'Nat')).join(', ')}) -> ${type}:\n  ${body}\n`);return call;
+ const name='data_'+shared.size,variables=['prior','netted','tick','previous','input','events','jobs'].filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ declarations.push(`def ${name}(${variables.map(v=>'+'+v+': '+({prior:'Bool',netted:'Bool',events:'List<&2, R.TraceEvent>',jobs:'List<&2, R.HostJob>'}[v]??'Nat')).join(', ')}) -> ${type}:\n  ${body}\n`);return call;
 }
-function show(value,type,ns='R'){
+function show(value,type,ns='R',flagControl=false){
  const plain=type.replace(/^\w+\./,'');
- if(plain==='Nat')return value+'n';if(plain==='U32')return String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
+ if(plain==='Nat')return value+'n';if(plain==='U32')return flagControl&&(value&stagedReadBit)?'B.choose(~U32,'+flagMode+',_=>'+(value&~stagedReadBit)+',_=>'+value+')':String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
  if(family==='R.Value'&&value.$==='Number'){
@@ -53,7 +55,7 @@ function show(value,type,ns='R'){
     let term='jobs';while('head'in suffix){term='B.append(R.HostJob, '+term+', ['+show(suffix.head,'R.HostJob')+'])';suffix=suffix.tail;}return term;
    }
    if((family==='R.World'&&['clock','epoch'].includes(name))||(family==='R.Node'&&value.kind.$==='Memo'&&['time','depGen'].includes(name))||(family==='R.Link'&&value.dep!==0&&name==='gen')||(family==='R.Stamp'&&name==='value'))return value[name]===0?'tick':'Nat.add('+value[name]+'n, tick)';
-   return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
+   return show(value[name],t,con.ns,name==='flags'&&((family==='R.Node'&&value.kind.$==='Memo')||(family==='O.Task'&&value.id===3)));}).join(', ')+'}',qualified(type,ns));
 }
 let m,states;
 if(kind==='pass'){
@@ -62,13 +64,32 @@ for(let i=0;i<256&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
 if('head'in m.tasks)throw Error('Driver did not finish');
 const steps=states.length-1;if(steps!==40||m.world.fault.$!=='Healthy')throw Error('The memo witness requires a source review after this runtime change');
 }
-const args='+tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>',call='tick, previous, input, events, jobs';
+const args='+prior: Bool, +tick: Nat, +previous: Nat, +input: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>',call='prior, tick, previous, input, events, jobs';
 let out=`# SHARED_DATA\n# Generalized steady-pass data from actual core.step. Untrusted generation;\n# equations must pass the original independent kernel before use.\nimport Base\nimport ../runtime/api.bend as A\nimport ../runtime/core.bend as C\nimport ../representation/base.bend as B\nimport ../representation/records.bend as R\nimport ../proof/paths.bend as P\nimport ../runtime/owner.bend as O\nimport ../runtime/pending.bend as Q\n\n`;
 if(kind==='pass'){
-out+=`def origin(+tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:\n  ${show(D.base(23,11),'World')}\n\n`;
-for(let i=0;i<states.length;i++)out+=`def state_${i}(${args}) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
-out+=`def finalWorld(${args}) -> R.World:\n  ${show(m.world,'World')}\n\n`;
-out+=`def publication_13(${args}) ->\n  {C.publishValue(C.world(state_13(${call})), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{})\n    == B.Bundle{C.world(state_14(${call})), True{}} : B.Bundle<R.World, Bool>}:\n  {==}\n`;
+out+=`def origin(+prior: Bool, +tick: Nat, +previous: Nat, +events: List<&2, R.TraceEvent>, +jobs: List<&2, R.HostJob>) -> R.World:\n  ${show(D.base(23,11),'World')}\n\n`;
+const plainArgs=args.replace('+prior: Bool, ',''),plainCall='tick, previous, input, events, jobs';
+for(let i=0;i<states.length;i++){
+ flagMode=i<10?'prior':'netted';
+ out+=`def at_${i}(+prior: Bool, +netted: Bool, ${plainArgs}) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\ndef state_${i}(${args}) -> C.Machine:\n  at_${i}(prior, Nat.is_eq(input, previous), ${plainCall})\n\n`;
+}
+flagMode='netted';
+out+=`def finalAt(+prior: Bool, +netted: Bool, ${plainArgs}) -> R.World:\n  ${show(m.world,'World')}\n\ndef finalWorld(${args}) -> R.World:\n  finalAt(prior, Nat.is_eq(input, previous), ${plainCall})\n\n`;
+out+=`def publicationAt_13(+prior: Bool, +netted: Bool, ${plainArgs}) ->
+  {C.publishValue(C.world(at_13(prior, netted, ${plainCall})), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{})
+    == B.Bundle{C.world(at_14(prior, netted, ${plainCall})), True{}} : B.Bundle<R.World, Bool>}:
+  match prior netted:
+    case True{} True{}: {==}
+    case True{} False{}: {==}
+    case False{} True{}: {==}
+    case False{} False{}: {==}
+
+def publication_13(${args}) ->
+  {C.publishValue(C.world(state_13(${call})), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{})
+    == B.Bundle{C.world(state_14(${call})), True{}} : B.Bundle<R.World, Bool>}:
+  publicationAt_13(prior, Nat.is_eq(input, previous), ${plainCall})
+`;
+
 }else{
 for(const name of ['origin','queued','slotted','stamped','inserted','scheduled'])out+=`def ${name}(${['origin','queued'].includes(name)?args.replace('+input: Nat, ',''):args}) -> R.World:\n  ${show(D[name](23,11,17),'World')}\n\n`;
 }

@@ -49,7 +49,7 @@ def writtenFlags(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+pre
   +w = State.registered(value,method,prefix)
   +observer = State.observer(value,method,prefix)
   +next = Prepared.prepared(Mark.marked(w,observer),0n,R.ActionEnd{})
-  +profile = Entry.preparedProfile(w,observer,0n,Graph.source(value),0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix))
+  +profile = Entry.preparedProfile(w,observer,0n,Graph.source(value),0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.plain(value,method,prefix))
   Equal.trans(Flags.View,Flags.observe(written(value,values,answer,prefix)),Flags.observe(next),Flags.Flags{1n,False{},False{}},Flags.fromWrites(next,written(value,values,answer,prefix),R.Node.x(B.node(next,Graph.source(value))),Writes.outer(values,next,Graph.source(value),0n,profile)),preparedFlags(value,method,prefix))
 
 def body(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: List<&2,History.WaitEvent>,rest: List<&2,C.Task>,stack: List<&2,R.Value>,incoming: R.Value,rejected: Bool) -> C.Machine:
@@ -74,7 +74,7 @@ def form(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: Lis
   +method = Resume.methods(values,Graph.source(value),answer)
   +w = State.registered(value,method,prefix)
   +observer = State.observer(value,method,prefix)
-  Entry.queue(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix))
+  Entry.queue(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix),Input.plain(value,method,prefix))
 
 def world(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: List<&2,History.WaitEvent>,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> R.World:
   +method = Resume.methods(values,Graph.source(value),answer)

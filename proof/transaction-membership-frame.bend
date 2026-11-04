@@ -28,7 +28,7 @@ def setRows(+arena: List<&2,R.Transaction>,+id: Nat,+record: R.Transaction,same:
 
 def maskNodes(+record: R.Transaction,nodes: List<&2,Nat>) -> {mask(R.Transaction.with_nodes(record,nodes)) == mask(record) : R.Transaction}:
   match record:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def storeNode(+w: R.World,id: Nat,record: R.Node) -> {observe(B.store_node(w,id,record)) == observe(w) : List<&2,R.Transaction>}:
   match w:
@@ -133,7 +133,7 @@ def read(+w: R.World,+next: R.World,+id: Nat,same: {observe(next) == observe(w) 
 
 def openMasked(+record: R.Transaction) -> {R.Transaction.open(mask(record)) == R.Transaction.open(record) : Nat}:
   match record:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def count(+w: R.World,+next: R.World,+id: Nat,same: {observe(next) == observe(w) : List<&2,R.Transaction>}) -> {R.Transaction.open(B.transaction(next,id)) == R.Transaction.open(B.transaction(w,id)) : Nat}:
   Equal.trans(Nat,R.Transaction.open(B.transaction(next,id)),R.Transaction.open(mask(B.transaction(next,id))),R.Transaction.open(B.transaction(w,id)),Equal.sym(Nat,R.Transaction.open(mask(B.transaction(next,id))),R.Transaction.open(B.transaction(next,id)),openMasked(B.transaction(next,id))),Equal.trans(Nat,R.Transaction.open(mask(B.transaction(next,id))),R.Transaction.open(mask(B.transaction(w,id))),R.Transaction.open(B.transaction(w,id)),Equal.cong(R.Transaction,Nat,record=>R.Transaction.open(record),mask(B.transaction(next,id)),mask(B.transaction(w,id)),read(w,next,id,same)),openMasked(B.transaction(w,id))))

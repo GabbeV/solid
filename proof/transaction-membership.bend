@@ -24,7 +24,7 @@ def extensionSelf(+w: R.World, +id: Nat) ->
 def recordSelf(+record: R.NodeExtension) ->
   {R.NodeExtension.with_transaction(record, R.NodeExtension.transaction(record)) == record : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}: {==}
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight, +served}: {==}
 
 def compressed(+w: R.World, +id: Nat, +owner: Nat,
   captured: {R.NodeExtension.transaction(B.extension(w, id)) == owner : Nat}) ->

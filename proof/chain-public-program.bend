@@ -1,6 +1,7 @@
 # Complete fixed two-memo/render program, arbitrary natural proposals and drain
 # budgets >= 95. The constructor is the actual fixed program in chain.bend.
 import Base
+import ./flush-transport.bend as Transport
 import ../runtime/api.bend as A
 import ../runtime/core.bend as C
 import ../representation/records.bend as R
@@ -22,8 +23,7 @@ def complete(+input: Nat, +extra: Nat) ->
 def flush_completed(+fuel: Nat, +a: R.World, +b: R.World, +end: R.World,
   staged: {a == b : R.World}, reached: {A.flush(fuel, b) == end : R.World}) ->
   {A.flush(fuel, a) == end : R.World}:
-  Equal.trans(R.World, A.flush(fuel, a), A.flush(fuel, b), end,
-    Equal.cong(R.World, R.World, w => A.flush(fuel, w), a, b, staged), reached)
+  Transport.flush_completed(fuel,a,b,end,staged,reached)
 
 def world(+input: Nat, +extra: Nat) ->
   {A.flush(Nat.add(95n, extra), A.setSignal(Chain.initial(), 2n, R.Number{input})) == M.finalWorld(input) : R.World}:

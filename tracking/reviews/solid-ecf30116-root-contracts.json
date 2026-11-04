@@ -1,0 +1,189 @@
+[
+  [
+    "canonical_held_source_join_preserves_group_and_only_schedules",
+    [
+      "held-setter-entry",
+      "actual"
+    ],
+    "lane-aware result"
+  ],
+  [
+    "captured_fresh_preparation_retains_the_held_source_observation",
+    [
+      "held-preparation-source",
+      "actual"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_group_actual_resume_runs_held_body_and_retires_one_obligation",
+    [
+      "held-resume-retirement",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "certified_captured_alias_joins_its_already_current_canonical_group",
+    [
+      "held-preparation-alias-join",
+      "current"
+    ],
+    "lane-aware result"
+  ],
+  [
+    "certified_captured_alias_selects_its_canonical_group_in_a_fresh_flush_slot",
+    [
+      "held-preparation-alias-join",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "captured_alias_fresh_preparation_retains_selected_source_observation",
+    [
+      "held-alias-preparation",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "captured_alias_fresh_resume_runs_finite_held_body_and_retires_one_obligation",
+    [
+      "held-alias-resume-retirement",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "captured_alias_fresh_resume_restores_arbitrary_caller_stack",
+    [
+      "held-alias-resume-retirement",
+      "freshStack"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "ordinary_fresh_observer_delivery_runs_aliased_held_body_and_retires_once",
+    [
+      "held-action-delivery",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "ordinary_fresh_observer_delivery_restores_caller_stack",
+    [
+      "held-action-delivery",
+      "freshStack"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "ordinary_fresh_observer_delivery_cannot_repeat_after_body_and_wait_history",
+    [
+      "held-action-delivery-guard",
+      "freshDuplicate"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "ordinary_fresh_callback_output_prefix_reaches_its_queued_slice_end",
+    [
+      "held-delivery-output-entry",
+      "drain"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_group_resume_handles_independent_source_and_capture_aliases",
+    [
+      "held-source-cache-resume",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_group_source_cache_alias_resume_restores_caller_stack",
+    [
+      "held-source-cache-resume",
+      "freshStack"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_cached_alias_resume_constructs_its_count_evidence",
+    [
+      "held-source-cache-debt",
+      "fresh"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_cached_alias_resume_has_the_exact_post_body_output_machine",
+    [
+      "held-source-cache-output-queue",
+      "freshExact"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "fresh_cached_alias_resume_constructs_a_finite_exact_output_drain",
+    [
+      "held-source-cache-output-queue",
+      "freshDrain"
+    ],
+    "ordinary premise"
+  ],
+  [
+    "deferred_payload_result",
+    [
+      "deferred-payload-program",
+      "result"
+    ],
+    "exact source slot selection, including pinned opposite-signed-zero behavior"
+  ],
+  [
+    "scalar_memo_repeatable_public_update",
+    [
+      "scalar-memo histories"
+    ],
+    "quantifies the carried prior read flag; both previous postures admitted"
+  ],
+  [
+    "scalar_memo_pending_write_coalesces",
+    [
+      "scalar-memo histories"
+    ],
+    "quantifies the carried prior read flag; both previous postures admitted"
+  ],
+  [
+    "scalar_memo_batch_stages_last_proposal",
+    [
+      "scalar-memo histories"
+    ],
+    "quantifies the carried prior read flag; both previous postures admitted"
+  ],
+  [
+    "scalar_memo_finite_history_final_world",
+    [
+      "scalar-memo histories"
+    ],
+    "exact final World derives the initial and each subsequent netted-read flag"
+  ],
+  [
+    "scalar_memo_batched_history_final_world",
+    [
+      "scalar-memo histories"
+    ],
+    "exact final World derives the initial and each subsequent netted-read flag"
+  ],
+  [
+    "actual_leaf_visit_next_control_is_constructed",
+    [
+      "pending-visit-control",
+      "visit"
+    ],
+    "constructs the actual machine branch, including fresh nested-settlement locals"
+  ]
+]

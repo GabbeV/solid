@@ -1,6 +1,7 @@
 # core/async.ts settlePendingSource / releaseSettledDependents. Source live
 # dependent traversal completes before deferred unobserved() release.
 import Base
+import ./pending-queue.bend as Intake
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ./pending-state.bend as P
@@ -18,6 +19,7 @@ type Task is Data:
   CollectWalk{edge: Nat}
   CollectNext{edge: Nat}
   Release{index: Nat}
+  RestoreSettlement{visited: List<&2, Nat>, released: List<&2, Nat>, scheduled: Bool}
   End{}
 
 type Machine is Data:
@@ -30,11 +32,37 @@ def releasable(+w: R.World, +id: Nat) -> Bool:
 def releaseIfSettledUnobserved(+w: R.World, +id: Nat) -> R.World:
   B.choose(~R.World, releasable(w, id), _ => O.unobserved(w, id), _ => w)
 
+# Source nested settlePendingSource owns fresh visited/released/scheduled
+# locals. Its return task restores the enclosing walk's private locals.
+def settlementTasks(w: R.World, +id: Nat, source: Nat) -> List<&2, Task>:
+  [Walk{R.Node.subs(B.node(w, id)), id, source}, Release{0n}, End{}]
+
+def stageMarkMask() -> U32:
+  B.set(B.set(K.CONFIG_REDERIVE(), K.CONFIG_STAGED_ERROR()), B.set(K.CONFIG_ASYNC(), U32.shln(K.EFFECT_TRACKED(), 23n)))
+
+# The three source stores before the nested settle call, kept as one segment.
+def stageMarkPrefix(+w: R.World, +id: Nat, root: Nat) -> R.World:
+  +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Node.pending(B.node(w, root))))
+  +w = B.store_node(w, id, R.Node.with_config(B.node(w, id), B.set(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR())))
+  Intake.queuePendingNode(w, id)
+
+def stageMark(+w: R.World, +tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, root: Nat) -> Machine:
+  +mask = stageMarkMask()
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), mask), _ => Machine{w, tasks, visited, released, scheduled},
+    _ =>
+      +w = stageMarkPrefix(w, id, root)
+      # No store family exists in the admitted non-store grammar.
+      +w = B.first(R.World, Bool, P.removePendingSource(w, id, id))
+      Machine{w, B.append(Task, settlementTasks(w, id, id), RestoreSettlement{visited, released, scheduled} <> tasks), [], [], False{}})
+
 # Early return deliberately does NOT add to visited. A later branch may retire
 # another carrier and must be free to revisit this same converging node.
-def skip(+w: R.World, tasks: List<&2, Task>, visited: List<&2, Nat>, released: List<&2, Nat>, scheduled: Bool, +id: Nat) -> Machine:
-  w = B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()), _ => H.enqueueSub(w, id), _ => w)
-  Machine{w, tasks, visited, released, scheduled}
+def skip(+w: R.World, +tasks: List<&2, Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat) -> Machine:
+  B.choose(~Machine, B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()),
+    _ => Machine{H.enqueueSub(w, id), tasks, visited, released, scheduled},
+    _ => B.choose(~Machine, B.has(R.Node.config(B.node(w, root)), K.CONFIG_STAGED_ERROR()),
+      _ => stageMark(w, tasks, visited, released, scheduled, id, root),
+      _ => Machine{w, tasks, visited, released, scheduled}))
 
 # settlePendingSource's settled-node status block, in source mutation order.
 # These named segments share the original function's locals; no task is added.
@@ -71,7 +99,7 @@ def visitRemoved(+w: R.World, +tasks: List<&2, Task>, +visited: List<&2, Nat>, +
   +w = B.first(R.World, Bool, pair)
   B.choose(~Machine, B.second(R.World, Bool, pair),
     _ => settled(w, tasks, visited, released, scheduled, id, root, source),
-    _ => skip(w, tasks, visited, released, scheduled, id))
+    _ => skip(w, tasks, visited, released, scheduled, id, root))
 
 # Callback-free traversal segments, shared with core's suspending owner driver.
 # Release is intercepted by each caller before entering this dispatcher.
@@ -80,11 +108,11 @@ def advance(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +releas
     case Nil{}:
       Machine{w, [], visited, released, scheduled}
     case Visit{+id, +root, +source} <> +rest:
-      B.choose(~Machine, B.contains(visited, id), _ => skip(w, rest, visited, released, scheduled, id),
+      B.choose(~Machine, B.contains(visited, id), _ => skip(w, rest, visited, released, scheduled, id, root),
         _ =>
           +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(source, root), _ => P.retryReaches(w, id, source), _ => B.Bundle{w, False{}})
           +w = B.first(R.World, Bool, pair)
-          B.choose(~Machine, B.second(R.World, Bool, pair), _ => skip(w, rest, visited, released, scheduled, id),
+          B.choose(~Machine, B.second(R.World, Bool, pair), _ => skip(w, rest, visited, released, scheduled, id, root),
             _ => visitRemoved(w, rest, visited, released, scheduled, id, root, source)))
     case Walk{+edge, +root, +source} <> +rest:
       B.choose(~Machine, Nat.is_eq(edge, 0n), _ => Machine{w, rest, visited, released, scheduled},
@@ -103,6 +131,8 @@ def advance(+w: R.World, tasks: List<&2, Task>, +visited: List<&2, Nat>, +releas
         _ => Machine{w, Collect{R.Link.sub(B.link(w, edge))} <> CollectNext{edge} <> rest, visited, released, scheduled})
     case CollectNext{+edge} <> rest:
       Machine{w, CollectWalk{R.Link.nextSub(B.link(w, edge))} <> rest, visited, released, scheduled}
+    case RestoreSettlement{outerVisited, outerReleased, outerScheduled} <> rest:
+      Machine{w, rest, outerVisited, outerReleased, outerScheduled}
     case End{} <> rest:
       Machine{B.choose(~R.World, scheduled, _ => B.schedule(w), _ => w), rest, visited, released, scheduled}
     case _:
@@ -127,10 +157,16 @@ def run(fuel: Nat, m: Machine) -> R.World:
 
 def beginSettlement(+w: R.World, +id: Nat, +source: Nat) -> Machine:
   +w = B.first(R.World, Bool, P.removePendingSource(w, id, source))
-  Machine{w, [Walk{R.Node.subs(B.node(w, id)), id, source}, Release{0n}, End{}], [], [], False{}}
+  Machine{w, settlementTasks(w, id, source), [], [], False{}}
 
 def settlePendingSource(+w: R.World, +id: Nat, +source: Nat) -> R.World:
-  run(Nat.mul(16n, B.budget(w)), beginSettlement(w, id, source))
+  # Each newly marked node nests at most one walk: STAGED_ERROR closes that
+  # branch before recursion. For callback-free fixed arenas, at most N+1 walks
+  # each visit <=N nodes and <=E live edges. This is runtime traversal fuel,
+  # separate from the unchanged independent type checker's reduction budget.
+  +budget = B.budget(w)
+  fuel = B.choose(~Nat, B.has(R.Node.config(B.node(w, id)), K.CONFIG_STAGED_ERROR()), _ => Nat.mul(16n, Nat.mul(budget, 1n+budget)), _ => Nat.mul(16n, budget))
+  run(fuel, beginSettlement(w, id, source))
 
 def releaseSettledDependents(+w: R.World, +id: Nat) -> R.World:
   run(Nat.mul(16n, B.budget(w)), Machine{w, [CollectWalk{R.Node.subs(B.node(w, id))}, Release{0n}], [], [], False{}})

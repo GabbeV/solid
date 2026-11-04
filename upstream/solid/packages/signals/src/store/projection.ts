@@ -19,6 +19,7 @@
 import { attrHooks } from "../core/attribution-hooks.js";
 import {
   CONFIG_AUTO_DISPOSE,
+  CONFIG_VERDICT,
   STATUS_ERROR,
   STATUS_PENDING,
   STATUS_UNINITIALIZED
@@ -34,7 +35,13 @@ import {
 } from "../core/async.js";
 import { enqueueSub } from "../core/heap.js";
 import { getOwner, isDisposed } from "../core/owner.js";
-import { insertSubs, question, schedule, setQuestion } from "../core/scheduler.js";
+import {
+  insertSubs,
+  observeFlightHook,
+  question,
+  schedule,
+  setQuestion
+} from "../core/scheduler.js";
 import type { Computed, Signal } from "../core/types.js";
 import type { Refreshable } from "../core/index.js";
 import { optHooks } from "./hooks.js";
@@ -170,12 +177,17 @@ function wakeFamily(fam: StoreFamily): void {
 }
 
 /** The derive's flight rejected: every live reader of the family
- * re-derives (its pull throws the derive's error). */
-function errorFamily(fam: StoreFamily): void {
+ * re-derives (its pull throws the derive's error) — but a reader that
+ * already shows this very `error` has had its answer: re-run, its error arm
+ * would see the one error twice (D-41: the arm runs once, at the reveal; as
+ * core `propagateStatus` re-notifies no reader of an error it carries). A
+ * re-run of the derive meets an upstream error again, the same object, when
+ * a reader's pull retries it or a held error's commit dirties it (#4457). */
+function errorFamily(fam: StoreFamily, error?: unknown): void {
   forEachFamilyNode(fam, n => {
     if (n._subs === null) return;
     forEachDependent(n as unknown as Computed<any>, sub => {
-      enqueueSub(sub);
+      (sub._statusFlags & STATUS_ERROR && sub._x!._error === error) || enqueueSub(sub);
     });
   });
   schedule();
@@ -200,9 +212,17 @@ function settleFamily(fam: StoreFamily): void {
 /** A source's status reached the derive by propagation (core
  * `propagateStatus`), its pass not re-run: the family learns it as from the
  * pass's own throw. */
-function familyStatus(this: StoreFamily, status: number): void {
+function familyStatus(this: StoreFamily, status: number, error?: unknown): void {
   if (status & STATUS_PENDING) wakeFamily(this);
-  else if (status & STATUS_ERROR) errorFamily(this);
+  // No status: the source's settle walk retired the derive's pending, its
+  // pass not re-run (core `settlePendingSource`) — the readers waiting on the
+  // derive settle with it (F-9). A re-run would ask again: an async derive's
+  // new flight is a second wait, and would run ahead of a staged rejection's
+  // publish, which reaches the derive at the commit (F-12, D-41).
+  else if (!status) settleFamily(this);
+  // The error rides along: a reader the derive's own pass already handed it
+  // (a sync derive re-run in the same flush) is not handed it again.
+  else if (status & STATUS_ERROR) errorFamily(this, error);
 }
 
 function forEachFamilyNode(fam: StoreFamily, fn: (n: Signal<any>) => void): void {
@@ -232,6 +252,18 @@ export function runProjectionComputed<T extends object>(
   const target: StoreTarget = (wrappedStore as any)[$TARGET];
   const fam = target.fam!;
   const run = (fam.run = (fam.run || 0) + 1);
+  // A verdict reader's pass that is the hold's work reads plainly, as a
+  // pending node's is (core `recompute`, #3884, D-25), so the landing it
+  // computes is the one a reader held on it shows, not the screen a frame
+  // reader is served (#4491; D-30, F-2): its pending is on its leaves'
+  // readers (`wakeFamily`) with no landing to settle them yet — the settle
+  // walk clears the derive's own pending before the landing re-runs it — or
+  // a reader of the leaves reads a flight it was served the committed value
+  // of (`fam.w`, store.ts `pullFamily`; this pass consumes the mark). For
+  // this pass only: its reads set the posture again at its end, and a window
+  // in it re-stamps it (`markVerdictReader`). Only the verdict engine makes
+  // a verdict reader (`observeFlightHook`).
+  if (observeFlightHook && (fam.woke || fam.w)) ((fam.w = 0), (owner._config &= ~CONFIG_VERDICT));
   let result: void | T | Promise<void | T> | AsyncIterable<void | T>;
   // Open loading window (seedLoadingValue): the observable store IS commit #0
   // for the whole first flight — the derive works a detached shadow of the
@@ -300,10 +332,14 @@ export function runProjectionComputed<T extends object>(
           // rejection): the wake, as for the pass. Errored: every live
           // reader re-derives and meets the error at its pull (memo parity,
           // #2897) — and the flush that runs them advances the clock, so a
-          // later tracked re-read may retry (core `read`).
+          // later tracked re-read may retry (core `read`). A held derive's
+          // error is staged (D-41, #4489): a reader in the hold derives from
+          // the staging and stages its own error with the frame; one served
+          // the screen (an untracked read included) reads the committed
+          // leaves until the frame reveals.
           if (first && owner._statusFlags & STATUS_UNINITIALIZED) return;
           if (pending) wakeFamily(fam);
-          else errorFamily(fam);
+          else errorFamily(fam, error);
         });
         // (The status is the one before this pass: `recompute` sets it after.)
         if (!owner._loading)
@@ -319,7 +355,7 @@ export function runProjectionComputed<T extends object>(
     // they do not subscribe to the derive.
     // A synchronous error the same way (#3956: a rerun that finds the
     // entry failed throws): every live reader re-derives and meets it.
-    if (!first) e instanceof NotReadyError ? wakeFamily(fam) : errorFamily(fam);
+    if (!first) e instanceof NotReadyError ? wakeFamily(fam) : errorFamily(fam, e);
     throw e;
   }
   // A pass that returned with a flight up (an iterator's sync first yield):
@@ -336,10 +372,13 @@ export function runProjectionComputed<T extends object>(
   return owner;
 }
 
-function createProjectionInternal<T extends object = {}>(
-  fn: (draft: T) => void | T | Promise<void | T> | AsyncIterable<void | T>,
+/** A derived store's family and root (`opt`: an optimistic store's, its
+ * derive `fn` optional — the plain form has none). */
+export function createProjectionInternal<T extends object = {}>(
+  fn: ((draft: T) => void | T | Promise<void | T> | AsyncIterable<void | T>) | null,
   seed: T | null | undefined,
-  options?: ProjectionOptions
+  options?: ProjectionOptions,
+  opt?: true
 ) {
   // Seedless (`fn` takes no draft): the root starts as an empty record. It is
   // a draft like any seed, never observable before the first landing (A25).
@@ -351,6 +390,7 @@ function createProjectionInternal<T extends object = {}>(
     live: new Set(),
     st: familyStatus,
     shallow: !!options?.shallow,
+    opt,
     // The row key, for a child paired after the adoption (store.ts
     // `adoptChild`, #3712) as the adoption pairs them.
     key:
@@ -375,16 +415,19 @@ function createProjectionInternal<T extends object = {}>(
     nodeOptions = { ...nodeOptions, name: options.name, loc: options.loc };
     nameStore(store, options.name, options.loc);
   }
-  const node = computed(() => {
-    if (!fam.node) fam.node = getOwner() as Computed<any>;
-    runProjectionComputed(store, fn, keyOption);
-  }, nodeOptions);
-  node._config &= ~CONFIG_AUTO_DISPOSE;
-  fam.node = node;
-  // The derive's leaves are not its dependents: a mark's repoll
-  // (affects-marks.ts) reaches their readers through this.
-  (node as any).fam = fam;
-  return { store, node } as { store: Refreshable<Store<T>>; node: Computed<void | T> };
+  if (fn) {
+    const node = computed(() => {
+      if (!fam.node) fam.node = getOwner() as Computed<any>;
+      runProjectionComputed(store, fn, keyOption);
+    }, nodeOptions);
+    node._config &= ~CONFIG_AUTO_DISPOSE;
+    fam.node = node;
+    // The derive's leaves are not its dependents: a mark's repoll
+    // (affects-marks.ts) and a source's status (core `propagateStatus`,
+    // `familyStatus`) reach their readers through this.
+    (node as any).fam = fam;
+  }
+  return store as Refreshable<Store<T>>;
 }
 
 /**
@@ -408,7 +451,7 @@ export function createProjection<T extends object = {}>(
   seed?: T | null,
   options?: ProjectionOptions
 ): Refreshable<Store<T>> {
-  return createProjectionInternal(fn, seed, options).store;
+  return createProjectionInternal(fn, seed, options);
 }
 
 /** `createStore(fn, seed, options)`: a projection with a user setter. */
@@ -417,6 +460,6 @@ export function createStoreDerived<T extends object = {}>(
   seed: T | null | undefined,
   options?: ProjectionOptions
 ): [Refreshable<Store<T>>, (f: (draft: T) => T | void) => void] {
-  const { store } = createProjectionInternal(fn, seed, options);
+  const store = createProjectionInternal(fn, seed, options);
   return [store, (f: (draft: T) => T | void): void => storeSetter(store, f)];
 }

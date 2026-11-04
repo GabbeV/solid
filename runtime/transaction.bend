@@ -12,7 +12,7 @@ import ./subscriber-insertion.bend as Insert
 
 def newTransaction(+w: R.World, +lane: Bool, parent: Nat) -> B.Bundle<R.World, Nat>:
   +id = B.length(R.Transaction, R.World.txArena(w))
-  t = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}} : R.Transaction}
+  t = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}} : R.Transaction}
   +w = R.World.with_txArena(w, B.append(R.Transaction, R.World.txArena(w), [t]))
   w = B.choose(~R.World, lane, _ => w,
     _ => R.World.with_transactions(w, B.append(Nat, R.World.transactions(w), [id])))
@@ -88,7 +88,7 @@ def merge(+w: R.World, t: Nat, f: Nat) -> R.World:
   +pair = resolveTx(w, f)
   mergeResolved(B.first(R.World, Nat, pair), t, B.second(R.World, Nat, pair))
 
-def joinFuture(+w: R.World, +t: Nat) -> R.World:
+def joinFutureOrdinary(+w: R.World, +t: Nat) -> R.World:
   +f = R.World.flushTransaction(w)
   +w = B.choose(~R.World, Nat.is_eq(f, 0n),
     _ =>
@@ -96,6 +96,13 @@ def joinFuture(+w: R.World, +t: Nat) -> R.World:
       R.World.with_flushTransaction(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair)),
     _ => B.choose(~R.World, Nat.is_eq(t, 0n), _ => w, _ => merge(w, t, f)))
   B.choose(~R.World, R.World.running(w), _ => w, _ => B.schedule(w))
+
+# Source tests the raw transaction's lane marker before resolving aliases.
+# The full signals index installs laneStageHook in this admitted engine.
+def joinFuture(+w: R.World, +t: Nat) -> R.World:
+  B.choose(~R.World, Bool.and(Nat.is_ne(t, 0n), R.Transaction.lane(B.transaction(w, t))),
+    _ => w, _ => joinFutureOrdinary(w, t))
+
 
 def joinPassTx(+w: R.World, +t: Nat, own: Bool) -> R.World:
   B.choose(~R.World, Bool.or(Bool.and(R.World.running(w), Bool.not(own)), Nat.is_ne(R.World.flushTransaction(w), 0n)),
@@ -136,6 +143,15 @@ def bornInto(+w: R.World, +id: Nat, +t: Nat) -> B.Bundle<R.World, Bool>:
       B.Bundle{B.first(R.World, Nat, pair), Nat.is_eq(B.second(R.World, Nat, pair), t)},
     _ => B.Bundle{w, False{}})
 
+# route/enterLane's guarded bornInto(c, resolveTx(t)) call. The raw parent
+# is resolved only for a held-frame reader, after the caller's earlier gates.
+def heldFrameBorn(+w: R.World, +reader: Nat, tx: Nat) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(B.node(w, reader)), K.CONFIG_HELD_FRAME()),
+    _ =>
+      +pair = resolveTx(w, tx)
+      bornInto(B.first(R.World, Nat, pair), reader, B.second(R.World, Nat, pair)),
+    _ => B.Bundle{w, False{}})
+
 def isRender(kind: R.NodeKind) -> Bool:
   match kind:
     case R.Render{}:
@@ -161,18 +177,22 @@ def frameRead(+w: R.World, +reader: Nat, +id: Nat) -> B.Bundle<R.World, Bool>:
           B.choose(~B.Bundle<R.World, Bool>, B.second(R.World, Bool, pair), _ => B.Bundle{w, False{}},
             _ => B.Bundle{B.choose(~R.World,Bool.or(lane,verdict),_=>Served.served(staleReader(w,reader,t),reader,id),_=>staleReader(w,reader,t)), True{}})))
 
-def stagedScreen(+w: R.World,+reader: Nat) -> B.Bundle<R.World,Bool>:
+def stagedScreenFor(+w: R.World,+reader: Nat,+id: Nat) -> B.Bundle<R.World,Bool>:
   +t = R.World.flushTransaction(w)
   B.choose(~B.Bundle<R.World,Bool>,Nat.is_eq(t,0n),_=>B.Bundle{w,False{}},
     _=>
       +pair = bornInto(w,reader,t)
       +w = B.first(R.World,Bool,pair)
-      B.choose(~B.Bundle<R.World,Bool>,B.second(R.World,Bool,pair),_=>B.Bundle{w,False{}},
+      B.choose(~B.Bundle<R.World,Bool>,Bool.or(B.second(R.World,Bool,pair),Bool.and(Nat.is_ne(id,0n),U32.is_eq(U32.and(R.Node.config(B.node(w,id)),B.set(K.CONFIG_HELD(),K.CONFIG_OVERRIDE())),K.CONFIG_HELD()))),_=>B.Bundle{w,False{}},
         _=>B.choose(~B.Bundle<R.World,Bool>,Bool.and(Nat.is_eq(t,R.VerdictState.latestOpened(R.World.verdictState(w))),Bool.and(Nat.is_eq(R.World.passLane(w),0n),Bool.and(B.has(R.Node.config(B.node(w,reader)),K.CONFIG_VERDICT()),Bool.not(B.has(R.Node.status(B.node(w,reader)),K.STATUS_UNINITIALIZED()))))),
           _=>
             +state = R.World.laneState(w)
             B.Bundle{R.World.with_laneState(w,R.LaneState.with_stagedReaders(state,B.append(Nat,R.LaneState.stagedReaders(state),[reader]))),False{}},
           _=>B.Bundle{staleReader(w,reader,t),True{}})))
+
+# The omitted optional source argument in TS is represented by identity zero.
+def stagedScreen(w: R.World,reader: Nat) -> B.Bundle<R.World,Bool>:
+  stagedScreenFor(w,reader,0n)
 
 def joinPass(+w: R.World, +reader: Nat, +id: Nat) -> R.World:
   +w = B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_JOINED())))
@@ -529,7 +549,12 @@ def reenterHeld(+w: R.World, +id: Nat) -> R.World:
   +t = B.second(R.World, Nat, pair)
   +n = B.node(w, id)
   B.choose(~R.World, Bool.or(R.Transaction.lane(B.transaction(w, t)), B.has(R.Node.config(n), K.CONFIG_LAGS())), _ => w,
-    _ => B.choose(~R.World, Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_VERDICT(), K.CONFIG_FRAME()))),
+    _ =>
+      +pair = B.choose(~B.Bundle<R.World, Bool>, Bool.not(B.has(R.Node.config(n), B.set(K.CONFIG_VERDICT(), K.CONFIG_FRAME()))),
+        _ => B.Bundle{w, True{}},
+        _ => B.choose(~B.Bundle<R.World, Bool>, B.has(R.Node.config(n), K.CONFIG_FRAME()), _ => B.Bundle{w, False{}}, _ => bornInto(w, id, t)))
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~R.World, B.second(R.World, Bool, pair),
       _ => joinPassTx(w, t, False{}),
       _ => B.choose(~R.World, Bool.and(Nat.is_ne(t, R.World.flushTransaction(w)), Bool.not(Bool.or(B.has(R.Node.status(n), K.STATUS_UNINITIALIZED()), B.has(R.Node.config(n), K.CONFIG_HELD_FRAME())))),
         _ =>

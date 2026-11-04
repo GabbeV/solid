@@ -44,8 +44,14 @@ def profile(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> P.P
 def start(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,incoming: R.Value,rejected: Bool) -> C.Machine:
   C.actionResume(opened(initial,values,answer),rest,stack,actor(initial,values,answer),incoming,rejected)
 
+# Keep the resume theorem's World conversion abstract. Comparing its entire
+# concrete construction while reducing actionResume needlessly duplicates work.
+def resumeTo(+w: R.World,+next: R.World,+actor: Nat,+values: List<&2,R.Value>,+id: Nat,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool,known: {R.ActionState.methods(A.get(w,actor)) == First.expression(Entry.method(values,id,answer,R.ActionEnd{})) : R.Expr},prepared: {Prepared.prepared(w,actor,R.ActionEnd{}) == next : R.World}) -> {C.actionResume(w,rest,stack,actor,incoming,rejected) == Body.start(next,values,id,answer,actor,C.ActionSliceEnd{R.World.question(w)} <> rest,stack) : C.Machine}:
+  +work = {C.ActionSliceEnd{R.World.question(w)} <> rest : List<&2,C.Task>}
+  Equal.trans(C.Machine,C.actionResume(w,rest,stack,actor,incoming,rejected),Body.start(Prepared.prepared(w,actor,R.ActionEnd{}),values,id,answer,actor,work,stack),Body.start(next,values,id,answer,actor,work,stack),Entry.resume(w,rest,stack,actor,incoming,rejected,values,id,answer,R.ActionEnd{},known),Equal.cong(R.World,C.Machine,state=>Body.start(state,values,id,answer,actor,work,stack),Prepared.prepared(w,actor,R.ActionEnd{}),next,prepared))
+
 def first(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> {start(initial,values,answer,rest,stack,incoming,rejected) == Body.start(ready(initial,values,answer),values,Graph.source(initial),answer,actor(initial,values,answer),C.ActionSliceEnd{R.World.question(opened(initial,values,answer))} <> rest,stack) : C.Machine}:
-  Entry.resume(opened(initial,values,answer),rest,stack,actor(initial,values,answer),incoming,rejected,values,Graph.source(initial),answer,R.ActionEnd{},{==})
+  resumeTo(opened(initial,values,answer),ready(initial,values,answer),actor(initial,values,answer),values,Graph.source(initial),answer,rest,stack,incoming,rejected,Normal.methodKnown(initial,values,answer),{==})
 
 def stopped(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> {R.Transaction.into(B.transaction(ready(initial,values,answer),1n)) == 0n : Nat}:
   Equal.trans(Nat,R.Transaction.into(B.transaction(ready(initial,values,answer),1n)),R.Transaction.into(B.transaction(Normal.normalized(Graph.linked(initial)),1n)),0n,Equal.cong(R.World,Nat,state=>R.Transaction.into(B.transaction(state,1n)),ready(initial,values,answer),Normal.normalized(Graph.linked(initial)),Normal.normalizedExact(initial,values,answer)),Normal.stopped(initial))

@@ -23,5 +23,5 @@ def after(+values: List<&2, R.Value>, +sourceExpr: R.Expr, +effectExpr: R.Expr, 
   History.run(initial(values, sourceExpr, effectExpr), programme(values, sourceExpr, effectExpr, commands))
 
 def complete(+values: List<&2, R.Value>, +sourceExpr: R.Expr, +effectExpr: R.Expr, +commands: List<&2, Commands.Command>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>) ->
-  Return.Returned<Settlement.start(after(values, sourceExpr, effectExpr, commands), N.index(Initial.input(values)), rest, stack), rest, stack, 10n>:
+  Return.Returned<Settlement.start(after(values, sourceExpr, effectExpr, commands), N.index(Initial.input(values)), rest, stack), rest, stack, 14n>:
   Constructed.startReturn(Initial.input(values), sourceExpr, effectExpr, 7n, 0n, 0n, B.blank_node(), Initial.nodes(values), B.blank_link(), [], {==}, {==}, {==}, {==}, commands, rest, stack)

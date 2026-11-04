@@ -112,7 +112,10 @@ def enterLane(+w: R.World, +lane: Nat, +reader: Nat) -> R.World:
       +verdict = Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,lane)))),lane)
       +pair = B.choose(~B.Bundle<R.World,U32>,verdict,_=>Creator.creatorReads(w,reader,B.choose(~U32,B.effect(R.Node.kind(B.node(w,reader))),_=>effectType(R.Node.kind(B.node(w,reader))),_=>flags)),_=>B.Bundle{w,0})
       +w = B.first(R.World,U32,pair)
-      B.choose(~R.World,Bool.and(verdict,U32.is_ne(B.second(R.World,U32,pair),0)),_=>w,
+      +creator = B.second(R.World,U32,pair)
+      +pair = B.choose(~B.Bundle<R.World,Bool>,Bool.and(verdict,U32.is_eq(creator,0)),_=>Tx.heldFrameBorn(w,reader,R.Transaction.parent(B.transaction(w,lane))),_=>B.Bundle{w,False{}})
+      +w = B.first(R.World,Bool,pair)
+      B.choose(~R.World,Bool.or(Bool.and(verdict,U32.is_ne(creator,0)),B.second(R.World,Bool,pair)),_=>w,
         _=>
           +w = R.World.with_passLane(w,lane)
           B.choose(~R.World,Bool.and(B.has(flags,K.REACTIVE_STAGED_READ()),Bool.or(R.LaneState.guessed(R.World.laneState(w)),Bool.or(verdict,B.has(flags,K.REACTIVE_JOINED())))),_=>V.stagedRead(w,reader,0n),_=>w)),

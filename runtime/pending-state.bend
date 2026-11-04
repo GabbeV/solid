@@ -43,6 +43,15 @@ def removeSlot(xs: List<&2, Nat>, +source: Nat) -> List<&2, Nat>:
     case +id <> +rest:
       B.choose(~List<&2, Nat>, Nat.is_eq(id, source), _ => 0n <> rest, _ => id <> removeSlot(rest, source))
 
+# Direct optional Set.delete, as used by servesStaged. Unlike the owning
+# removePendingSource helper, an emptied set keeps its identity and presence.
+def deletePendingSourceSlot(+w: R.World, +id: Nat, +source: Nat) -> B.Bundle<R.World, Bool>:
+  B.choose(~B.Bundle<R.World, Bool>, hasSource(w, id, source),
+    _ =>
+      +set = R.NodeExtension.pendingSources(B.extension(w, id))
+      B.Bundle{B.store_pendingSet(w, set, removeSlot(B.pendingSlots(w, set), source)), True{}},
+    _ => B.Bundle{w, False{}})
+
 def removePendingSource(+w: R.World, +id: Nat, +source: Nat) -> B.Bundle<R.World, Bool>:
   B.choose(~B.Bundle<R.World, Bool>, hasSource(w, id, source),
     _ =>

@@ -1738,147 +1738,157 @@ def StreamState.with_close(r: StreamState, v: Nat) -> StreamState:
       StreamState{node, result, iterator, hadValue, completed, initialRead, syncValue, v}
 
 type Transaction is Data:
-  Transaction{nodes: List<&2, Nat>, renderQueue: List<&2, Nat>, userQueue: List<&2, QueueEntry>, reruns: List<&2, Nat>, into: Nat, parent: Nat, lane: Bool, verdict: Nat, open: Nat, acted: Bool, links: Nat, shown: Bool, held: Bool, marks: OptionalIds}
+  Transaction{nodes: List<&2, Nat>, renderQueue: List<&2, Nat>, userQueue: List<&2, QueueEntry>, reruns: List<&2, Nat>, into: Nat, parent: Nat, lane: Bool, verdict: Nat, open: Nat, acted: Bool, links: Nat, shown: Bool, held: Bool, marks: OptionalIds, latest: Bool}
 
 def Transaction.nodes(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       nodes
 
 def Transaction.with_nodes(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{v, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{v, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.renderQueue(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       renderQueue
 
 def Transaction.with_renderQueue(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, v, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, v, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.userQueue(r: Transaction) -> List<&2, QueueEntry>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       userQueue
 
 def Transaction.with_userQueue(r: Transaction, v: List<&2, QueueEntry>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, v, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, v, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.reruns(r: Transaction) -> List<&2, Nat>:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       reruns
 
 def Transaction.with_reruns(r: Transaction, v: List<&2, Nat>) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, v, into, parent, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, v, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.into(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       into
 
 def Transaction.with_into(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, v, parent, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, v, parent, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.parent(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       parent
 
 def Transaction.with_parent(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, v, lane, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, v, lane, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.lane(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       lane
 
 def Transaction.with_lane(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, v, verdict, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, v, verdict, open, acted, links, shown, held, marks, latest}
 
 def Transaction.verdict(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       verdict
 
 def Transaction.with_verdict(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, v, open, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, v, open, acted, links, shown, held, marks, latest}
 
 def Transaction.open(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       open
 
 def Transaction.with_open(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, v, acted, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, v, acted, links, shown, held, marks, latest}
 
 def Transaction.acted(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       acted
 
 def Transaction.with_acted(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, v, links, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, v, links, shown, held, marks, latest}
 
 def Transaction.links(r: Transaction) -> Nat:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       links
 
 def Transaction.with_links(r: Transaction, v: Nat) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, v, shown, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, v, shown, held, marks, latest}
 
 def Transaction.shown(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       shown
 
 def Transaction.with_shown(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, v, held, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, v, held, marks, latest}
 
 def Transaction.held(r: Transaction) -> Bool:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       held
 
 def Transaction.with_held(r: Transaction, v: Bool) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, v, marks}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, v, marks, latest}
 
 def Transaction.marks(r: Transaction) -> OptionalIds:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
       marks
 
 def Transaction.with_marks(r: Transaction, v: OptionalIds) -> Transaction:
   match r:
-    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}:
-      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, v}
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, v, latest}
+
+def Transaction.latest(r: Transaction) -> Bool:
+  match r:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      latest
+
+def Transaction.with_latest(r: Transaction, v: Bool) -> Transaction:
+  match r:
+    case Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, latest}:
+      Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, v}
 
 type ReactionState is Data:
   ReactionState{owner: Nat, arm: Nat, cleanup: Value, body: Expr, errorProgram: Nat, options: NodeOptions, scheduled: Bool, track: Nat}
@@ -2361,187 +2371,197 @@ def NodeOptions.with_comparator(r: NodeOptions, v: Nat) -> NodeOptions:
       NodeOptions{equals, transparent, ownedWrite, lazy, sync, noSnapshot, extraConfig, loading, unobserved, v}
 
 type NodeExtension is Data:
-  NodeExtension{inFlight: Flight, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value, parkedFlight: Flight}
+  NodeExtension{inFlight: Flight, flightTeardown: Nat, error: Value, blocked: Slot, pendingSources: Nat, unobserved: Nat, snapshotValue: Snapshot, pendingFirstChild: Nat, pendingDisposal: Disposal, transaction: Nat, reask: Bool, flushed: Slot, flushedAt: Stamp, q: Question, lane: Slot, marks: Nat, shownError: Value, parkedFlight: Flight, served: Stamp}
 
 def NodeExtension.inFlight(r: NodeExtension) -> Flight:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       inFlight
 
 def NodeExtension.with_inFlight(r: NodeExtension, v: Flight) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{v, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{v, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.flightTeardown(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       flightTeardown
 
 def NodeExtension.with_flightTeardown(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, v, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, v, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.error(r: NodeExtension) -> Value:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       error
 
 def NodeExtension.with_error(r: NodeExtension, v: Value) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, v, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, v, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.blocked(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       blocked
 
 def NodeExtension.with_blocked(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, v, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, v, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.pendingSources(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       pendingSources
 
 def NodeExtension.with_pendingSources(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, v, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, v, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.unobserved(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       unobserved
 
 def NodeExtension.with_unobserved(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, v, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, v, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.snapshotValue(r: NodeExtension) -> Snapshot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       snapshotValue
 
 def NodeExtension.with_snapshotValue(r: NodeExtension, v: Snapshot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, v, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, v, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.pendingFirstChild(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       pendingFirstChild
 
 def NodeExtension.with_pendingFirstChild(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, v, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, v, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.pendingDisposal(r: NodeExtension) -> Disposal:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       pendingDisposal
 
 def NodeExtension.with_pendingDisposal(r: NodeExtension, v: Disposal) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, v, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, v, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.transaction(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       transaction
 
 def NodeExtension.with_transaction(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, v, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, v, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.reask(r: NodeExtension) -> Bool:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       reask
 
 def NodeExtension.with_reask(r: NodeExtension, v: Bool) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, v, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, v, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.flushed(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       flushed
 
 def NodeExtension.with_flushed(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, v, flushedAt, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, v, flushedAt, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.flushedAt(r: NodeExtension) -> Stamp:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       flushedAt
 
 def NodeExtension.with_flushedAt(r: NodeExtension, v: Stamp) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, v, q, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, v, q, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.q(r: NodeExtension) -> Question:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       q
 
 def NodeExtension.with_q(r: NodeExtension, v: Question) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, v, lane, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, v, lane, marks, shownError, parkedFlight, served}
 
 def NodeExtension.lane(r: NodeExtension) -> Slot:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       lane
 
 def NodeExtension.with_lane(r: NodeExtension, v: Slot) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, v, marks, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, v, marks, shownError, parkedFlight, served}
 
 def NodeExtension.marks(r: NodeExtension) -> Nat:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       marks
 
 def NodeExtension.with_marks(r: NodeExtension, v: Nat) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, v, shownError, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, v, shownError, parkedFlight, served}
 
 def NodeExtension.shownError(r: NodeExtension) -> Value:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       shownError
 
 def NodeExtension.with_shownError(r: NodeExtension, v: Value) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, v, parkedFlight}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, v, parkedFlight, served}
 
 def NodeExtension.parkedFlight(r: NodeExtension) -> Flight:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
       parkedFlight
 
 def NodeExtension.with_parkedFlight(r: NodeExtension, v: Flight) -> NodeExtension:
   match r:
-    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight}:
-      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, v}
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, v, served}
+
+def NodeExtension.served(r: NodeExtension) -> Stamp:
+  match r:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      served
+
+def NodeExtension.with_served(r: NodeExtension, v: Stamp) -> NodeExtension:
+  match r:
+    case NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, served}:
+      NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, parkedFlight, v}
 
 type Node is Data:
   Node{kind: NodeKind, value: Value, pending: Slot, equals: Bool, config: U32, flags: U32, status: U32, time: Nat, notified: Stamp, deps: Nat, depsTail: Nat, depGen: Nat, subs: Nat, subsTail: Nat, height: Nat, nextHeap: Nat, prevHeap: Nat, parent: Nat, firstChild: Nat, nextSibling: Nat, prevSibling: Nat, expr: Expr, modified: Bool, prevValue: Value, target: Nat, loading: Bool, x: Nat, parentComputed: Nat, scope: Nat, childCount: Nat, disposal: Disposal, cleanup: Nat, effectProgram: Nat, returnedCleanup: Nat, errorProgram: Nat}

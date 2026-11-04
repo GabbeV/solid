@@ -24,7 +24,7 @@ async function scenario(name,commands){
       else if(op==='microtick')await Promise.resolve();
       else {
         const actual=b.attempt(op,...args),expected=s.attempt(op,...args);
-        if(actual[0]==='return'&&expected[0]==='return'&&!['read','set','update','screen','future'].includes(op))actual[1]=expected[1]=undefined;
+        if(actual[0]==='return'&&expected[0]==='return'&&!['read','set','update','screen','future','evaluate'].includes(op))actual[1]=expected[1]=undefined;
         assert.deepEqual(actual,expected,`${name}: ${op} result`);
       }
       compare(op);
@@ -116,5 +116,19 @@ for(const immediate of [false,true]){
     ['program','bad',[['emit',71],['throw',99]]],['future','p',{immediate}],['effect','user',future('p'),{user:true,program:'bad'}],
     ['flush'],['resolve','p',7],['tick']
   ]);
+}
+// First answer plus re-ask in one tick, with ordinary async delivery and
+// synchronous-thenable controls. Native source supplies every expected state.
+for(const immediate of [false,true])for(const resolveFirst of [false,true])for(const depth of [1,2])for(const seeded of [false,true]){
+ const delivery=['resolve','first',11],rewrite=['set','selection',1];
+ await scenario(`ecf first answer/reask ${JSON.stringify({immediate,resolveFirst,depth,seeded})}`,[
+  ['signal','selection',0],['future','first',{immediate}],['future','second',{immediate}],
+  ['memo','request',select(read('selection'),future('second'),future('first')),seeded?{loadingValue:0}:{}],
+  ['memo','copy',read('request')],...(depth===2?[['memo','result',read('copy')]]:[]),
+  ['effect','view',read(depth===2?'result':'copy')],['tick'],
+  ...(resolveFirst?[delivery,rewrite]:[rewrite,delivery]),['tick'],
+  ['evaluate',{latest:read(depth===2?'result':'copy')}],['evaluate',{isPending:read(depth===2?'result':'copy')}],
+  ['resolve','second',22],['tick'],['read',depth===2?'result':'copy']
+ ]);
 }
 console.log(`${count} promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation.`);

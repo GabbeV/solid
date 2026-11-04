@@ -34,29 +34,29 @@ def future(+w: R.World,+id: Nat,+root: Nat) -> {R.World.flushTransaction(canonic
 def txOf(+w: R.World,+id: Nat,+root: Nat,+alias: Alias.Alias<w,root>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,root,alias) : Nat}) -> {X.txOf(w,id) == B.Bundle{canonical(w,id,root),root} : B.Bundle<R.World,Nat>}:
   Equal.cong(B.Bundle<R.World,Nat>,B.Bundle<R.World,Nat>,pair=>Entry.unpack(pair,id),X.resolveTx(w,R.NodeExtension.transaction(B.extension(w,id))),B.Bundle{w,root},Equal.trans(B.Bundle<R.World,Nat>,X.resolveTx(w,R.NodeExtension.transaction(B.extension(w,id))),X.resolveTx(w,Alias.identity(w,root,alias)),B.Bundle{w,root},Equal.cong(Nat,B.Bundle<R.World,Nat>,n=>X.resolveTx(w,n),R.NodeExtension.transaction(B.extension(w,id)),Alias.identity(w,root,alias),cached),Alias.resolution(w,root,alias)))
 
-def join(+w: R.World,+id: Nat,+offset: Nat,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {X.joinNode(w,id) == Entry.scheduled(canonical(w,id,1n+offset)) : R.World}:
+def join(+w: R.World,+id: Nat,+offset: Nat,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {X.joinNode(w,id) == Entry.selected(canonical(w,id,1n+offset),1n+offset) : R.World}:
   +root = {1n+offset : Nat}
   +next = canonical(w,id,root)
-  Equal.trans(R.World,X.joinNode(w,id),X.joinFuture(next,root),Entry.scheduled(next),Equal.cong(B.Bundle<R.World,Nat>,R.World,pair=>X.joinFuture(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair)),X.txOf(w,id),B.Bundle{next,root},txOf(w,id,root,alias,cached)),Entry.joinFuture(next,offset,P.future(next,id,offset,profile),P.terminal(next,id,offset,profile)))
+  Equal.trans(R.World,X.joinNode(w,id),X.joinFuture(next,root),Entry.selected(next,1n+offset),Equal.cong(B.Bundle<R.World,Nat>,R.World,pair=>X.joinFuture(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair)),X.txOf(w,id),B.Bundle{next,root},txOf(w,id,root,alias,cached)),Entry.joinFuture(next,offset,P.future(next,id,offset,profile),P.terminal(next,id,offset,profile)))
 
 def held(-w: R.World,-id: Nat,-offset: Nat,profile: P.Profile<w,id,offset>) -> {B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()) == True{} : Bool}:
   match profile:
     case P.HeldAt{path,extra,health,unmarked,valid,head,room,context,signal,held,override,custom,existing,extensionRoom,canonical,future,terminal,groupRoom}: held
 
-def before(+w: R.World,+id: Nat,+offset: Nat,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {W.beforeCompare(w,id) == Entry.scheduled(canonical(w,id,1n+offset)) : R.World}:
+def before(+w: R.World,+id: Nat,+offset: Nat,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {W.beforeCompare(w,id) == Entry.selected(canonical(w,id,1n+offset),1n+offset) : R.World}:
   +next = canonical(w,id,1n+offset)
   +heldInitial = Equal.trans(Bool,B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),B.has(R.Node.config(B.node(next,id)),K.CONFIG_HELD()),True{},Equal.cong(R.Node,Bool,n=>B.has(R.Node.config(n),K.CONFIG_HELD()),B.node(w,id),B.node(next,id),Equal.sym(R.Node,B.node(next,id),B.node(w,id),node(w,id,1n+offset,id))),held(next,id,offset,profile))
-  Equal.trans(R.World,W.beforeCompare(w,id),X.joinNode(w,id),Entry.scheduled(next),Equal.cong(Bool,R.World,flag=>B.choose(~R.World,flag,_=>X.joinNode(w,id),_=>w),B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),True{},heldInitial),join(w,id,offset,alias,cached,profile))
+  Equal.trans(R.World,W.beforeCompare(w,id),X.joinNode(w,id),Entry.selected(next,1n+offset),Equal.cong(Bool,R.World,flag=>B.choose(~R.World,flag,_=>X.joinNode(w,id),_=>w),B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),True{},heldInitial),join(w,id,offset,alias,cached,profile))
 
 def setter(+w: R.World,+id: Nat,+offset: Nat,+value: R.Value,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {W.setSignal(w,id,value) == W.setSignal(canonical(w,id,1n+offset),id,value) : R.World}:
   +next = canonical(w,id,1n+offset)
-  +scheduled = Entry.scheduled(next)
+  +scheduled = Entry.selected(next,1n+offset)
   +current = B.current(B.node(w,id))
   Equal.trans(R.World,W.setSignal(w,id,value),Compare.compared(scheduled,id,current,value),W.setSignal(next,id,value),Equal.cong(R.World,R.World,state=>Compare.compared(state,id,current,value),W.beforeCompare(w,id),scheduled,before(w,id,offset,alias,cached,profile)),Equal.trans(R.World,Compare.compared(scheduled,id,current,value),Compare.compared(scheduled,id,B.current(B.node(next,id)),value),W.setSignal(next,id,value),Equal.cong(R.Node,R.World,n=>Compare.compared(scheduled,id,B.current(n),value),B.node(w,id),B.node(next,id),Equal.sym(R.Node,B.node(next,id),B.node(w,id),node(w,id,1n+offset,id))),Equal.sym(R.World,W.setSignal(next,id,value),Compare.compared(scheduled,id,B.current(B.node(next,id)),value),Equal.cong(R.World,R.World,state=>Compare.compared(state,id,B.current(B.node(next,id)),value),W.beforeCompare(next,id),scheduled,Setter.beforeExact(next,id,offset,profile)))))
 
 def resolved(+w: R.World,+id: Nat,+offset: Nat,+current: R.Value,+value: R.Value,+alias: Alias.Alias<w,1n+offset>,cached: {R.NodeExtension.transaction(B.extension(w,id)) == Alias.identity(w,1n+offset,alias) : Nat},+profile: P.Profile<canonical(w,id,1n+offset),id,offset>) -> {W.setResolved(w,id,current,value) == W.setResolved(canonical(w,id,1n+offset),id,current,value) : R.World}:
   +next = canonical(w,id,1n+offset)
-  +scheduled = Entry.scheduled(next)
+  +scheduled = Entry.selected(next,1n+offset)
   Equal.trans(R.World,W.setResolved(w,id,current,value),Compare.compared(scheduled,id,current,value),W.setResolved(next,id,current,value),Equal.cong(R.World,R.World,state=>Compare.compared(state,id,current,value),W.beforeCompare(w,id),scheduled,before(w,id,offset,alias,cached,profile)),Equal.sym(R.World,W.setResolved(next,id,current,value),Compare.compared(scheduled,id,current,value),Equal.cong(R.World,R.World,state=>Compare.compared(state,id,current,value),W.beforeCompare(next,id),scheduled,Setter.beforeExact(next,id,offset,profile))))
 
 def substitute(-a: R.World,-b: R.World,-id: Nat,-offset: Nat,same: {a == b : R.World},profile: P.Profile<a,id,offset>) -> P.Profile<b,id,offset>:

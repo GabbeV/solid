@@ -68,3 +68,6 @@ def methods(+w: R.World,+observer: Nat,+actor: Nat,+method: R.Expr,known: {R.Act
 
 def open(+w: R.World,+observer: Nat,+offset: Nat,+remaining: Nat,known: {R.Transaction.open(B.transaction(w,1n+offset)) == 1n+remaining : Nat}) -> {R.Transaction.open(B.transaction(marked(w,observer),1n+offset)) == 1n+remaining : Nat}:
   Equal.trans(Nat,R.Transaction.open(B.transaction(marked(w,observer),1n+offset)),R.Transaction.open(B.transaction(w,1n+offset)),1n+remaining,Equal.cong(List<&2,R.Transaction>,Nat,rows=>R.Transaction.open(B.get(R.Transaction,rows,1n+offset,B.blank_transaction())),R.World.txArena(marked(w,observer)),R.World.txArena(w),arena(w,observer)),known)
+
+def plain(+w: R.World,+observer: Nat,+captureOffset: Nat,known: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}) -> {R.Transaction.lane(B.transaction(marked(w,observer),1n+captureOffset)) == False{} : Bool}:
+  Equal.trans(Bool,R.Transaction.lane(B.transaction(marked(w,observer),1n+captureOffset)),R.Transaction.lane(B.transaction(w,1n+captureOffset)),False{},Equal.cong(List<&2,R.Transaction>,Bool,rows=>R.Transaction.lane(B.get(R.Transaction,rows,1n+captureOffset,B.blank_transaction())),R.World.txArena(marked(w,observer)),R.World.txArena(w),arena(w,observer)),known)

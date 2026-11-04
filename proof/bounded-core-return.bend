@@ -59,3 +59,14 @@ def bounded(-before: C.Machine, -rest: List<&2, C.Task>, -stack: List<&2, R.Valu
   {Nat.add(steps(before, rest, stack, maximum, result), slack(before, rest, stack, maximum, result)) == maximum : Nat}:
   match result:
     case ReturnedAt{used, left, after, room, exact}: room
+
+# A larger proved upper bound adds only certificate slack, never runtime or
+# checker fuel. Used when upstream adds a real nested settlement call.
+def widen(+before: C.Machine,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+maximum: Nat,+extra: Nat,result: Returned<before,rest,stack,maximum>) -> Returned<before,rest,stack,Nat.add(maximum,extra)>:
+  match result:
+    case ReturnedAt{+used,+left,+after,room,exact}:
+      ReturnedAt{used,Nat.add(left,extra),after,Equal.trans(Nat,Nat.add(used,Nat.add(left,extra)),Nat.add(Nat.add(used,left),extra),Nat.add(maximum,extra),Equal.sym(Nat,Nat.add(Nat.add(used,left),extra),Nat.add(used,Nat.add(left,extra)),addAssociate(used,left,extra)),Equal.cong(Nat,Nat,value=>Nat.add(value,extra),Nat.add(used,left),maximum,room)),exact}
+
+def widenWorld(+before: C.Machine,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+maximum: Nat,+extra: Nat,+result: Returned<before,rest,stack,maximum>) -> {world(before,rest,stack,Nat.add(maximum,extra),widen(before,rest,stack,maximum,extra,result)) == world(before,rest,stack,maximum,result) : R.World}:
+  match result:
+    case ReturnedAt{used,left,after,room,exact}: {==}

@@ -40,7 +40,7 @@ try{
   const captured=list(after.pendingSets).slice(1).map(list);
   captured.forEach((slots,i)=>assert.deepEqual(slots,active&&i===captured.length-1?[rootId]:[0],'retired Set identities keep tombstones through re-registration'));
   assert.deepEqual(observed(after),observed(initial));
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,active?10:9);assert.equal(certificate.steps+certificate.slack,10);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,active?10:9);assert.equal(certificate.steps+certificate.slack,14);
   const machine={$:'Machine',world:after,tasks:encodeList([{$:'AsyncWriteAfterTrim',id:rootId},{$:'AsyncWriteSchedule'},...callerWork]),values:stack};
   let returned=machine;for(let step=0;step<certificate.steps;step++)returned=C.step(returned);
   assert.deepEqual(returned,{$:'Machine',world:certificate.world,tasks:rest,values:stack});assert.deepEqual(observed(returned.world),observed(initial));assert.equal(returned.world.fault.$,'Healthy');

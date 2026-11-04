@@ -73,3 +73,33 @@ def carryPendingMask(+flags: U32) -> {U32.and(U32.or(1,U32.and(flags,4)),1) == 1
 
 def carryErrorMask(+flags: U32) -> {U32.and(U32.or(1,U32.and(flags,4)),2) == 0 : U32}:
   Equal.trans(U32,U32.and(U32.or(1,U32.and(flags,4)),2),U32.or(0,U32.and(U32.and(flags,4),2)),0,u32AndOr(1,U32.and(flags,4),2),Equal.cong(U32,U32,mask=>U32.or(0,mask),U32.and(U32.and(flags,4),2),0,Equal.trans(U32,U32.and(U32.and(flags,4),2),U32.and(flags,U32.and(4,2)),0,u32AndAssoc(flags,4,2),u32AndZero(flags))))
+
+# Right zero is not definitional for an arbitrary symbolic first Boolean.
+def orZeroBool(+a: Bool) -> {Bool.or(a,False{}) == a : Bool}:
+  match a:
+    case False{}: {==}
+    case True{}: {==}
+
+def orZero(+n: Nat,+a: Word(n)) -> {Word.or(n,a,Word.zero(n)) == a : Word(n)}:
+  match n:
+    case 0n:
+      match a:
+        case WNil{}: {==}
+    case 1n+p:
+      match a:
+        case WCon{+head,+tail}:
+          Equal.trans(Word(1n+p),Word.or(1n+p,WCon{head,tail},Word.zero(1n+p)),WCon{head,Word.or(p,tail,Word.zero(p))},WCon{head,tail},Equal.cong(Bool,Word(1n+p),bit=>WCon{bit,Word.or(p,tail,Word.zero(p))},Bool.or(head,False{}),head,orZeroBool(head)),Equal.cong(Word(p),Word(1n+p),word=>WCon{head,word},Word.or(p,tail,Word.zero(p)),tail,orZero(p,tail)))
+
+def u32OrZero(+a: U32) -> {U32.or(a,0) == a : U32}:
+  match a:
+    case U32{+word}: Equal.cong(Word(32n),U32,w=>U32{w},Word.or(32n,word,Word.zero(32n)),word,orZero(32n,word))
+
+# Literal masks are the upstream CONFIG_STAGED_ERROR and CONFIG_AUTO_DISPOSE.
+# No configuration-word restriction is assumed.
+def clearStagedSet(+flags: U32) -> {B.clear(B.set(flags,2097152),2097152) == B.clear(flags,2097152) : U32}:
+  Equal.trans(U32,B.clear(B.set(flags,2097152),2097152),U32.or(B.clear(flags,2097152),0),B.clear(flags,2097152),u32AndOr(flags,2097152,U32.not(2097152)),u32OrZero(B.clear(flags,2097152)))
+
+
+# CONFIG_AUTO_DISPOSE is unaffected by clearing the staged-error bit.
+def autoAfterStagedClear(+flags: U32) -> {B.has(B.clear(flags,2097152),32) == B.has(flags,32) : Bool}:
+  Equal.cong(U32,Bool,word=>U32.is_ne(word,0),U32.and(B.clear(flags,2097152),32),U32.and(flags,32),u32AndAssoc(flags,U32.not(2097152),32))

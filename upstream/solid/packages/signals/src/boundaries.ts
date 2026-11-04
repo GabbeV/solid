@@ -60,6 +60,7 @@ import {
 } from "./core/constants.js";
 import { computed, read, recompute, runWithOwner, setSignal, signal } from "./core/core.js";
 import { emitDiagnostic, reportDiagnostic } from "./core/dev.js";
+import { shadowSeatRestore, shadowSeatSave, shadowSwapSeat } from "./core/seat.js";
 import { NotReadyError, unwrapStatusError } from "./core/error.js";
 import { reportClientError } from "./core/error-hooks.js";
 import { link } from "./core/graph.js";
@@ -405,8 +406,13 @@ function boundarySeam(): void {
     // (D-16, U-9): the content is ready when that hold commits (D-15). Not
     // only at the re-arm's own seam: readers pending then land, held, a
     // flush later (#4379 — the staged fallback otherwise commits with the
-    // hold, and a quiet refresh then caught keeps it up, F-9).
+    // hold, and a quiet refresh then caught keeps it up, F-9). A loading
+    // fallback only: what an error boundary still waits on after `prune` is
+    // an error, staged into that hold (D-41) — the fallback is the hold's
+    // content and reveals with it; folding back re-derived the output into
+    // the error again every round (#4480).
     if (
+      b._type & STATUS_PENDING &&
       !b._initialized &&
       o._config & CONFIG_HELD &&
       [...b._readers].every(
@@ -815,6 +821,7 @@ function fallback<T>(b: Boundary): T {
   // lane read by construction (REACTIVE_LANE_READ: `recompute`'s tail keeps
   // the pass in the lane).
   if (b._lane !== null) {
+    if (__TEST__) shadowSwapSeat(out, b._lane);
     setPassLane(b._lane);
     out._flags |= REACTIVE_LANE_READ;
     b._lane = null;
@@ -844,16 +851,27 @@ function fallback<T>(b: Boundary): T {
   // outside the boundary, as the output is: its errors and runs are the
   // enclosing boundary's — with the output's id, so what it builds gets the
   // ids a build under the output would; disposed once content is on screen.
+  // Lazy (`1`: a byte under `true`), so its first pass runs in the output's
+  // read below: the pass that creates it is the output's, and born held asks
+  // the output — what it read — not the owner the fallback lives in (D-27;
+  // #4428: an enclosing pass that joined a hold, while the output read nothing
+  // held). (Lazy also releases it when its one reader, the output, stops
+  // reading it: where `drop` below disposes it, or with the commit of a held
+  // swap.)
   if (b._fb === null)
-    b._fb = runWithOwner(out._parent, () => computed(() => b._show(b), { id: out.id }))!;
+    b._fb = runWithOwner(out._parent, () =>
+      computed(() => b._show(b), { id: out.id, lazy: 1 as any })
+    )!;
   // The swap is structure (#3540): what the fallback reads ahead — a
   // verdict (`latest()`), a lane — is the fallback's display-ahead, not the
   // swap's: the output's pass stays where it was (F-6 stays inside the
   // fallback, #4337).
   const p = passLane;
   const f = out._flags;
+  const saved = __TEST__ ? shadowSeatSave(out) : null;
   const v = read(b._fb) as T;
   setPassLane(p);
+  if (__TEST__) shadowSeatRestore(out, saved);
   out._flags ^= (out._flags ^ f) & (REACTIVE_PROBED | REACTIVE_LANE_READ);
   return v;
 }

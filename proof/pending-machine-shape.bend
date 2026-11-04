@@ -6,7 +6,7 @@ import ../representation/base.bend as B
 import ../runtime/pending.bend as Q
 import ../runtime/pending-state.bend as P
 import ../runtime/constants.bend as K
-import ./subscriber-topology-frame.bend as Shape
+import ./staged-subscriber-frame.bend as Shape
 import ./pending-topology-frame.bend as Topology
 
 def world(machine: Q.Machine) -> R.World:
@@ -74,7 +74,7 @@ def settledNoReleases(+w: R.World, +tail: List<&2, Q.Task>, +visited: List<&2, N
   +next = world(result)
   +topology = Topology.settled(w, tail, visited, released, queued, id, root, source)
   +same = Shape.read(w, next, id, topology)
-  +no = Equal.trans(Bool, B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), False{}, Equal.cong(Shape.Shape, Bool, shape => B.has(config(shape), K.CONFIG_AUTO_DISPOSE()), Shape.shape(B.node(next, id)), Shape.shape(B.node(w, id)), same), noAuto)
+  +no = Equal.trans(Bool, B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), False{}, Shape.autoRead(w, next, id, topology), noAuto)
   +guard = falseRight(B.ok(next), Bool.and(lastOf(w, id), Bool.and(Nat.is_eq(R.Node.subs(B.node(next, id)), 0n), B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()))), falseRight(lastOf(w, id), Bool.and(Nat.is_eq(R.Node.subs(B.node(next, id)), 0n), B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE())), falseRight(Nat.is_eq(R.Node.subs(B.node(next, id)), 0n), B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()), no)))
   Equal.trans(List<&2, Nat>, releases(result), B.choose(~List<&2, Nat>, Bool.and(B.ok(next), Bool.and(lastOf(w, id), Bool.and(Nat.is_eq(R.Node.subs(B.node(next, id)), 0n), B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE())))), _ => B.append(Nat, released, [id]), _ => released), released,
     settledReleases(w, tail, visited, released, queued, id, root, source), Equal.cong(Bool, List<&2, Nat>, condition => B.choose(~List<&2, Nat>, condition, _ => B.append(Nat, released, [id]), _ => released), Bool.and(B.ok(next), Bool.and(lastOf(w, id), Bool.and(Nat.is_eq(R.Node.subs(B.node(next, id)), 0n), B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE())))), False{}, guard))

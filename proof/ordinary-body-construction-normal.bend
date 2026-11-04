@@ -10,6 +10,8 @@ import ./ordinary-write-constructed.bend as Graph
 import ./ordinary-body-entry.bend as Entry
 import ./action-body-entry.bend as Prepared
 import ./action-first-frame.bend as First
+import ./held-body-opened-normal.bend as Opened
+import ./held-opened-facts.bend as Facts
 
 def created(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> B.Bundle<R.World,Nat>:
   Data.created(initial,First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})))
@@ -84,3 +86,13 @@ def capturedZero(+w: R.World) -> {R.ActionState.transaction(A.get(normalized(w),
   match w:
     case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
       {==}
+
+# Prove the constructor lookup with an abstract method expression, then
+# specialize it. Do not normalize the recursive setter body during lookup.
+def openedMethods(+initial: R.Value,+methods: R.Expr) -> {R.ActionState.methods(A.get(Data.opened(initial,methods),0n)) == methods : R.Expr}:
+  +next = Opened.openedNormalized(Graph.linked(initial),methods)
+  Equal.trans(R.Expr,R.ActionState.methods(A.get(Data.opened(initial,methods),0n)),R.ActionState.methods(A.get(next,0n)),methods,Equal.cong(R.World,R.Expr,w=>R.ActionState.methods(A.get(w,0n)),Data.opened(initial,methods),next,Opened.openedExact(initial,methods)),Facts.methodsGeneric(Graph.linked(initial),methods))
+
+def methodKnown(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> {R.ActionState.methods(A.get(opened(initial,values,answer),actor(initial,values,answer))) == First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{})) : R.Expr}:
+  +methods = First.expression(Entry.method(values,Graph.source(initial),answer,R.ActionEnd{}))
+  Equal.trans(R.Expr,R.ActionState.methods(A.get(opened(initial,values,answer),actor(initial,values,answer))),R.ActionState.methods(A.get(opened(initial,values,answer),0n)),methods,Equal.cong(Nat,R.Expr,id=>R.ActionState.methods(A.get(opened(initial,values,answer),id)),actor(initial,values,answer),0n,actorZero(initial,values,answer)),openedMethods(initial,methods))

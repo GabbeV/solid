@@ -144,17 +144,17 @@ def rawExtension(+w: R.World, +id: Nat, +tx: Nat, +before: List<&2, R.NodeExtens
 def ownerSet(+record: R.NodeExtension, +tx: Nat) ->
   {R.NodeExtension.transaction(R.NodeExtension.with_transaction(record, tx)) == tx : Nat}:
   match record:
-    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight}: {==}
+    case R.NodeExtension{inFlight, flightTeardown, error, blocked, pendingSources, unobserved, snapshotValue, pendingFirstChild, pendingDisposal, transaction, reask, flushed, flushedAt, q, lane, marks, shownError, +parkedFlight, +served}: {==}
 
 def nodesSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
   {R.Transaction.nodes(R.Transaction.with_nodes(record, nodes)) == nodes : List<&2, Nat>}:
   match record:
-    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def intoSet(+record: R.Transaction, +nodes: List<&2, Nat>) ->
   {R.Transaction.into(R.Transaction.with_nodes(record, nodes)) == R.Transaction.into(record) : Nat}:
   match record:
-    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{old, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 # Only node storage is needed to transport the excluded prefix. Capturing a
 # transaction intentionally changes an extension, so a whole graph identity

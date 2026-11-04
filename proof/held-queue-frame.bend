@@ -23,11 +23,11 @@ def store(+w: R.World,+id: Nat,+record: R.Transaction,same: {mask(record) == mas
 
 def render(+entry: R.Transaction,values: List<&2,Nat>) -> {mask(R.Transaction.with_renderQueue(entry,values)) == mask(entry) : R.Transaction}:
   match entry:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def user(+entry: R.Transaction,values: List<&2,R.QueueEntry>) -> {mask(R.Transaction.with_userQueue(entry,values)) == mask(entry) : R.Transaction}:
   match entry:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def stored(+w: R.World,+tx: Nat,+renders: List<&2,Nat>,+users: List<&2,R.QueueEntry>) -> {groups(Park.stored(w,tx,renders,users)) == groups(w) : List<&2,R.Transaction>}:
   +first = B.store_transaction(w,tx,R.Transaction.with_renderQueue(B.transaction(w,tx),B.append(Nat,R.Transaction.renderQueue(B.transaction(w,tx)),renders)))
@@ -54,7 +54,7 @@ def read(+w: R.World,+tx: Nat,+renders: List<&2,Nat>,+users: List<&2,R.QueueEntr
 
 def open(+entry: R.Transaction) -> {R.Transaction.open(mask(entry)) == R.Transaction.open(entry) : Nat}:
   match entry:
-    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks}: {==}
+    case R.Transaction{nodes,renders,users,reruns,into,parent,lane,links,open,acted,frame,shown,held,marks, +latest}: {==}
 
 def count(+w: R.World,+tx: Nat,+renders: List<&2,Nat>,+users: List<&2,R.QueueEntry>,+id: Nat) -> {R.Transaction.open(B.transaction(Park.world(w,tx,renders,users),id)) == R.Transaction.open(B.transaction(w,id)) : Nat}:
   +next = Park.world(w,tx,renders,users)

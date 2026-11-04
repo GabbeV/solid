@@ -93,6 +93,9 @@ import {
   insertSubs,
   joinFuture,
   joinPassTx,
+  list,
+  laneStageHook,
+  observeFlightHook,
   passLane,
   queuePendingNode,
   schedule,
@@ -283,14 +286,18 @@ export function sameKey(a: any, b: any): boolean {
  * revert against it by row identity — by key when the family has one
  * (the server's object for a guessed row is the same row). */
 export class LaneView {
+  /** The rows the setter wrote, kept across re-bases: each composes from
+   * them over the latest truth (optimistic.ts `_laneRebase`, #4441). */
+  declare g?: any[];
   constructor(
     public rows: Record<PropertyKey, any>,
     /** The backing the guess is shown over: the committed one at the
      * guess, the composed arrangement after a re-base (optimistic.ts). */
     public base: Record<PropertyKey, any>,
-    /** Keys the setter REMOVED from the view it saw (a deliberate delete,
-     * not a row the truth has yet to show): a re-base does not restore
-     * them. `null` when none. */
+    /** A keyed list's guess: the keys of the view the setter saw that are
+     * not the guess's own rows — removed by it, or only carried over from
+     * the truth beneath. A re-base takes them from the new truth
+     * (optimistic.ts). `null` when not keyed. */
     public removed: Set<unknown> | null = null
   ) {}
 }
@@ -1866,7 +1873,38 @@ function pullFamily(target: StoreTarget): void {
     // (optimistic.ts `stands`, #4336).
     if (verdict === null && fw._statusFlags & STATUS_PENDING && optHooks?.stands(target)) return;
     readNode(fw);
-  } else untrack(() => readNode(fw));
+  } else {
+    untrack(() => readNode(fw));
+    // #4491: a derive that is a verdict reader only through what it reads (a
+    // verdict memo's value, D-25 / F-6; no window of its own) is served the
+    // committed value of a flight it reads (`observeFlight`, A15's stale
+    // reader) and settles over it: its leaves are the screen, not the
+    // flight's answer. A derived store reads like its memo (D-30): a tracked
+    // reader of the leaves reads that flight as the memo's reader would, so
+    // one that mounts mid-flight consumes unanswered async and is held (F-2)
+    // instead of shown the old question's answer. The derive is that hold's
+    // work until it answers (D-25): the read marks its next pass, which reads
+    // plainly (`fam.w`, projection.ts), so the landing it computes is the one
+    // the held reader shows. The mark is all it writes — the derive's posture
+    // stays its passes' own (core `recompute`) — and a read that finds no
+    // flight up clears it: a landing equal to the screen re-runs nothing, and
+    // the mark does not outlive the flight. Only the verdict engine makes a
+    // verdict reader (`observeFlightHook`: without it the branch folds away).
+    // (The window flag is REACTIVE_WINDOW, spelled from EFFECT_RENDER: an
+    // import of it keeps a dead copy in bundles without the store.)
+    if (
+      observeFlightHook &&
+      fw._config & CONFIG_VERDICT &&
+      !(fw._flags & (EFFECT_RENDER << 21)) &&
+      tracking
+    ) {
+      const fam = target.fam!;
+      fam.w = 0;
+      for (let l = fw._deps; l; l = l._nextDep)
+        if ((l._dep as Computed<any>)._statusFlags & STATUS_PENDING)
+          ((fam.w = 1), readNode(l._dep));
+    }
+  }
 }
 
 /** A projection's writes are its derive's: a staging made while the derive
@@ -1877,6 +1915,21 @@ function pullFamily(target: StoreTarget): void {
  * classification, as core reads it — `heldNotFinal`). */
 function holdWithDerive(target: StoreTarget, node: Signal<any>): void {
   const fw = target.fam?.node;
+  // A pass that is a lane's work (a display-ahead read, F-6): its write is
+  // the lane's derivation, as a memo's value would be (D-25).
+  if (
+    laneStageHook &&
+    passLane !== null &&
+    !userWrite &&
+    node._pendingValue !== NOT_PENDING &&
+    !(node._config & CONFIG_OVERRIDE)
+  ) {
+    list(node, passLane);
+    node._x!._lane = node._pendingValue;
+    node._pendingValue = NOT_PENDING;
+    node._config |= CONFIG_OVERRIDE;
+    return;
+  }
   if (
     fw !== undefined &&
     fw !== null &&
@@ -2414,6 +2467,15 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
   writeScopes.add(scopeKey(target));
   const prevUser = userWrite;
   userWrite = guard;
+  // An outermost setter's exit notifies the targets it wrote. A
+  // write-override write (a derive's continuation after an `await`, no
+  // setter open) is notified at once by its trap but stays listed (its keys
+  // share one written set while the continuation writes): dropped here, or
+  // this setter's exit would notify the derive's staging as its own — a
+  // user's, on an optimistic family, as guesses (#4484). Read before the
+  // clear: the list is empty here but for those, and clearing an empty set
+  // allocates.
+  if (writing === 0 && pendingNotify.size) pendingNotify.clear();
   writing++;
   let result: any;
   try {

@@ -12,5 +12,5 @@ def seed(initial: Nat, first: Nat, constructorExtra: Nat, firstExtra: Nat) -> R.
 def program(initial: Nat, first: Nat, constructorExtra: Nat, firstExtra: Nat, updates: List<&2, H.Update>) -> R.World:
   H.run(updates, seed(initial, first, constructorExtra, firstExtra))
 
-def update(tick: Nat, previous: Nat, input: Nat, events: List<&2, R.TraceEvent>, jobs: List<&2, R.HostJob>, extra: Nat) -> R.World:
-  A.flush(Nat.add(40n, extra), A.setSignal(M.origin(tick, previous, events, jobs), 2n, R.Number{input}))
+def update(+prior: Bool, tick: Nat, previous: Nat, input: Nat, events: List<&2, R.TraceEvent>, jobs: List<&2, R.HostJob>, extra: Nat) -> R.World:
+  A.flush(Nat.add(40n, extra), A.setSignal(M.origin(prior, tick, previous, events, jobs), 2n, R.Number{input}))

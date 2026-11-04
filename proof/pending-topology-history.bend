@@ -1,10 +1,10 @@
-# Actual pending-body prefixes preserve subscriber kind/config/head and links.
+# Actual pending-body prefixes preserve subscriber kind/head/links and every config bit except staged error.
 # The same body classifier/certificates are used by committed-content safety.
 import Base
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/core.bend as C
-import ./subscriber-topology-frame.bend as Frame
+import ./staged-subscriber-frame.bend as Frame
 import ./core-pending-topology.bend as CoreFrame
 import ./pending-stack-history.bend as Steps
 import ./pending-committed-history.bend as Domain

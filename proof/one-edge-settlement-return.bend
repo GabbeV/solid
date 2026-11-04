@@ -53,28 +53,28 @@ def prefix(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task
   Driver.appendStep(1n, start(w, root, rest, stack), walking(next, 1n+edge, root, rest, stack), Visit.input(next, 1n+edge, root, id, rest, stack), begins(w, edge, root, rest, stack, healthy, head), walks(next, edge, root, id, rest, stack, afterHealthy(w, root, healthy), selectedAfter))
 
 def complete(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}, selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}, end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}, noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}, noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}) ->
-  Return.Returned<start(w, root, rest, stack), rest, stack, 10n>:
+  Return.Returned<start(w, root, rest, stack), rest, stack, 14n>:
   +next = after(w, root)
   +leaf = Removal.node(w, root, root, id)
   +subscribers = Equal.trans(Nat, R.Node.subs(B.node(next, id)), R.Node.subs(B.node(w, id)), 0n, Equal.cong(R.Node, Nat, node => R.Node.subs(node), B.node(next, id), B.node(w, id), leaf), noSubscribers)
   +automatic = Equal.trans(Bool, B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), False{}, Equal.cong(R.Node, Bool, node => B.has(R.Node.config(node), K.CONFIG_AUTO_DISPOSE()), B.node(next, id), B.node(w, id), leaf), noAuto)
   +ending = Equal.trans(Nat, R.Link.nextSub(B.link(next, 1n+edge)), R.Link.nextSub(B.link(w, 1n+edge)), 0n, Equal.cong(R.Link, Nat, link => R.Link.nextSub(link), B.link(next, 1n+edge), B.link(w, 1n+edge), rootLink(w, root, 1n+edge)), end)
-  Return.prepend(start(w, root, rest, stack), Visit.input(next, 1n+edge, root, id, rest, stack), rest, stack, 2n, 8n, prefix(w, edge, root, id, rest, stack, healthy, head, selected), Visit.complete(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic))
+  Return.prepend(start(w, root, rest, stack), Visit.input(next, 1n+edge, root, id, rest, stack), rest, stack, 2n, 12n, prefix(w, edge, root, id, rest, stack, healthy, head, selected), Visit.complete(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic))
 
 
 def frame(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, +head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}, +selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}, +end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}, +noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}, +noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}) ->
-  {Frame.observe(Return.world(start(w, root, rest, stack), rest, stack, 10n, complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == Frame.observe(w) : Frame.View}:
+  {Frame.observe(Return.world(start(w, root, rest, stack), rest, stack, 14n, complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))) == Frame.observe(w) : Frame.View}:
   +next = after(w, root)
   +leaf = Removal.node(w, root, root, id)
   +subscribers = Equal.trans(Nat, R.Node.subs(B.node(next, id)), R.Node.subs(B.node(w, id)), 0n, Equal.cong(R.Node, Nat, node => R.Node.subs(node), B.node(next, id), B.node(w, id), leaf), noSubscribers)
   +automatic = Equal.trans(Bool, B.has(R.Node.config(B.node(next, id)), K.CONFIG_AUTO_DISPOSE()), B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()), False{}, Equal.cong(R.Node, Bool, node => B.has(R.Node.config(node), K.CONFIG_AUTO_DISPOSE()), B.node(next, id), B.node(w, id), leaf), noAuto)
   +ending = Equal.trans(Nat, R.Link.nextSub(B.link(next, 1n+edge)), R.Link.nextSub(B.link(w, 1n+edge)), 0n, Equal.cong(R.Link, Nat, link => R.Link.nextSub(link), B.link(next, 1n+edge), B.link(w, 1n+edge), rootLink(w, root, 1n+edge)), end)
-  FramedReturn.prepend(start(w, root, rest, stack), Visit.input(next, 1n+edge, root, id, rest, stack), rest, stack, 2n, 8n, prefix(w, edge, root, id, rest, stack, healthy, head, selected), Visit.complete(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic), SourceFrame.remove(w, root, root), Visit.frame(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic))
+  FramedReturn.prepend(start(w, root, rest, stack), Visit.input(next, 1n+edge, root, id, rest, stack), rest, stack, 2n, 12n, prefix(w, edge, root, id, rest, stack, healthy, head, selected), Visit.complete(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic), SourceFrame.remove(w, root, root), Visit.frame(next, 1n+edge, root, id, rest, stack, afterHealthy(w, root, healthy), ending, subscribers, automatic))
 
 
 def trimmed(w: R.World, +root: Nat, rest: List<&2, C.Task>, stack: List<&2, R.Value>) -> C.Machine:
   C.Machine{w, C.OwnerTasks{[O.TrimDeps{root}]} <> C.AsyncWriteAfterTrim{root} <> C.AsyncWriteSchedule{} <> rest, stack}
 
 def completeTrimmed(+w: R.World, +edge: Nat, +root: Nat, +id: Nat, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +healthy: {B.ok(w) == True{} : Bool}, head: {R.Node.subs(B.node(w, root)) == 1n+edge : Nat}, selected: {R.Link.sub(B.link(w, 1n+edge)) == id : Nat}, end: {R.Link.nextSub(B.link(w, 1n+edge)) == 0n : Nat}, noSubscribers: {R.Node.subs(B.node(w, id)) == 0n : Nat}, noAuto: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_AUTO_DISPOSE()) == False{} : Bool}, noStale: {Owner.staleEdge(w, root) == 0n : Nat}) ->
-  Return.Returned<trimmed(w, root, rest, stack), rest, stack, 12n>:
-  Return.prepend(trimmed(w, root, rest, stack), start(w, root, rest, stack), rest, stack, 2n, 10n, Owner.trimComplete(w, C.AsyncWriteAfterTrim{root} <> C.AsyncWriteSchedule{} <> rest, stack, root, noStale, healthy), complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))
+  Return.Returned<trimmed(w, root, rest, stack), rest, stack, 16n>:
+  Return.prepend(trimmed(w, root, rest, stack), start(w, root, rest, stack), rest, stack, 2n, 14n, Owner.trimComplete(w, C.AsyncWriteAfterTrim{root} <> C.AsyncWriteSchedule{} <> rest, stack, root, noStale, healthy), complete(w, edge, root, id, rest, stack, healthy, head, selected, end, noSubscribers, noAuto))

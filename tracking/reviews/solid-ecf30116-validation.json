@@ -1,0 +1,1498 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "checkpointBase": "620c171217d3534738ffbf84b515d8a5e0e4998f",
+  "previousSourceCommit": "5e68925cc2fd216a9fb06345019e66d5da5c523c",
+  "sourceCommit": "ecf301169c863579a431b9e7cbb3956c01f40072",
+  "sourceTargetFrozen": true,
+  "newerNextMigrationIncluded": false,
+  "sourceFilesComparedVerbatim": 79,
+  "activeDeviationIds": [],
+  "proofs": {
+    "composedRoots": 822,
+    "previousComposedRoots": 820,
+    "newUnrestrictedRawLaneRoots": 2,
+    "contractChanges": "tracking/reviews/solid-ecf30116-root-contracts.json",
+    "changedRootContractEntries": 24,
+    "runtimeReturnBoundChanges": "tracking/reviews/solid-ecf30116-return-bounds.json",
+    "changedSufficientBoundEntries": 18,
+    "kernelProfile": "same-head-congruence-v1",
+    "kernelFuel": 400000000,
+    "processGroupRssBytes": 4294967296,
+    "frontendDiagnosticIsIndependentProofCredit": false,
+    "completeVerdictAndExactInputSeal": "tracking/checked.json",
+    "note": "This receipt records completed execution/negative preflight checks. Only a matching completed independent whole-book seal establishes the 822-root proof verdict. Scalar histories retain arbitrary finite natural writes/batches and actual carried Worlds with conditional read metadata. Payload programs retain the pinned signed-zero behavior; raw-lane scheduling conclusions follow the source conditional or require its explicit nonlane premise.",
+    "generatedWitnessNormalization": {
+      "files": [
+        "proof/deferred-stream-program.bend",
+        "proof/from-program.bend",
+        "proof/from-iterable-program.bend",
+        "proof/from-value-program.bend",
+        "proof/from-iterable-value-program.bend",
+        "proof/memo-setter-data.bend",
+        "proof/memo-general-setter-data.bend"
+      ],
+      "change": "Only inline Unstamped fields become references to the existing data_3 Unstamped definition; no state, transition, result, bound or contract changes."
+    },
+    "ordinaryConstructedResourceRepair": {
+      "stoppedDefinition": "ordinary-body-constructed.first",
+      "stoppedFullBookLogSha256": "a2df6bbec0c32327ca50526dd3137b27393989c704bf2a016a8301da2d8449a0",
+      "stoppedAttemptReceivesProofCredit": false,
+      "change": "Recover the constructor method via an abstract method lemma; separate actual resume from conversion of its prepared World using a generic equality bridge. The first theorem statement, all domains, runtime, root count, and checker limits are unchanged.",
+      "isolatedIndependentVerdict": {
+        "status": 0,
+        "seconds": 165.069,
+        "stdout": "ordinary-body-constructed: independent kernel verdict passed.\n",
+        "stderr": ""
+      },
+      "isolatedLogSha256": "a2e4c3eba153718450e1e3ab349cc79a5fa8819deb84ba4b9acf5d4e0bc2d1b5"
+    }
+  },
+  "execution": {
+    "packageSuitesPassed": 126,
+    "alignmentSuitesPassed": 52,
+    "additionalFinalJoinObservationCheck": 1,
+    "publicDifferentialHistories": 4776,
+    "closedRegressions": 73,
+    "package": [
+      {
+        "name": "tests/list-abi.mjs",
+        "seconds": 0.096,
+        "status": 0,
+        "logSha256": "e53291b25654bf7d450f3036bf5f1a836cc5a13761c5dbd5b9bc7046d7f636ff",
+        "result": "Emitted list ABI round-trip and malformed-tag controls pass."
+      },
+      {
+        "name": "tests/mixed-parking-controls.mjs",
+        "seconds": 2.743,
+        "status": 0,
+        "logSha256": "68b03f08393ee31c438a4eef401a6d1022107a7b040d8a202888373f4dd0c2a3",
+        "result": "320 paired native/Bend complete-settle controls preserve fresh/existing extension ownership, empty/falsy pending slots, render-versus-memo loading gates, staging, exact retained action debt and member order. Private seeded states, not public reachability."
+      },
+      {
+        "name": "tests/queued-round-controls.mjs",
+        "seconds": 2.626,
+        "status": 0,
+        "logSha256": "ad96de9f5a82c76964a4503800988338b600f26993200f568359ca8bf8fccc8f",
+        "result": "640 paired native/Bend whole-round controls preserve fresh/existing extension ownership, empty/falsy pending slots, render-versus-memo loading gates, staging, exact retained action debt, callback-prefix order, clock/finally state and caller restoration. Callbacks remain unexecuted. Private seeded states, not public reachability."
+      },
+      {
+        "name": "tests/action-wait-construction-controls.mjs",
+        "seconds": 12.651,
+        "status": 0,
+        "logSha256": "9c30b641e0a4f892e2cf40f4bf2c0a28a46c5da68ffa5d2375804219197c8447",
+        "result": "{\"typedHistories\":368,\"enumeratedPrefixEventOrdersThroughLength\":5,\"longestHistory\":64,\"duplicateFulfillRejectChecks\":736,\"postCallbackThrowChecks\":368,\"nativeRepeatedYieldSequences\":6,\"nativeStaleCallbackInvocations\":70,\"scope\":\"actual registration/observer allocation/mark histories and exact current-World duplicate yield guards; not complete generator/debt or rendered publication\"}"
+      },
+      {
+        "name": "tests/action-observer-history-controls.mjs",
+        "seconds": 16.528,
+        "status": 0,
+        "logSha256": "a592ffb0d9f3b0773497a1f6618732f51f990d16ddc634fda21bb9e3efa58ee3",
+        "result": "{\"typedHistories\":408,\"actualClientCases\":12,\"enumeratedPrefixEventOrdersThroughLength\":3,\"helperKinds\":7,\"longestHistory\":64,\"duplicateFulfillRejectChecks\":816,\"postCallbackThrowChecks\":408,\"scope\":\"actual old helper transitions plus synchronous captures, stream-step allocation and ignored-return subscription; reserved stream-zero fallback controls do not assert public stream reachability or full protocol correctness\"}"
+      },
+      {
+        "name": "tests/held-stage-controls.mjs",
+        "seconds": 15.657,
+        "status": 0,
+        "logSha256": "43e9930ff963091bcfe8cc6fbd3970f884c0ea838e3cc7d1e1d53e705ef21352",
+        "result": "{\"heldHelperCases\":1352,\"savedSnapshots\":676,\"cachedSnapshots\":676,\"publicJoinedActionCases\":32,\"heldResumeWrites\":336,\"scope\":\"finite held helper frames and independent native/port joined generators; formal public construction, once-only flight ledger and publication are separate\"}"
+      },
+      {
+        "name": "tests/ordinary-write-body-controls.mjs",
+        "seconds": 24.574,
+        "status": 0,
+        "logSha256": "5ffb52feed03ec5c1d5ba49e0ab6e9f9e0e3f866c4cc96ba0b2327b72bd519ae",
+        "result": "eCacheAliasCases\":288,\"distinctCacheCaptureCases\":144,\"constructedRedirectLengths\":[1,3,8],\"actualSetterExpressions\":33876,\"callerStackChecks\":3120,\"longestBodyWrites\":64,\"nativeGeneratorPortCases\":32,\"pendingReturnAdoptions\":16,\"scope\":\"actual ordinary and fresh/current-group already-held finite setter bodies, including captured and source-cache redirect chains, and terminal return before queued slice-end; finite held-entry commutation is not a general proof; independently authored public generators check atomic sync memo/render updates after input settlement, with output adoption separate\"}"
+      },
+      {
+        "name": "tests/held-pair-controller-controls.mjs",
+        "seconds": 14.599,
+        "status": 0,
+        "logSha256": "2acacc8501fd7ed2af7c6fef037414d2b77ac69ca70abb69e52a15266d39e8d9",
+        "result": "{\"constructedPairs\":640,\"actualResumeBodies\":1280,\"joinDirections\":2,\"completionOrders\":2,\"fulfilledAndCaughtRejected\":true,\"sourceCacheRetained\":200,\"sourceCacheResolved\":1080,\"scope\":\"finite consecutive internal resume prefixes on actual create/open/hold/create/open/join state, with body evaluation, both captured identities, exact positive and zero live debt, saved caller stack and retained committed content; output/slice/Round tails and public host admission remain separate\"}"
+      },
+      {
+        "name": "tests/held-pair-public-controls.mjs",
+        "seconds": 0.499,
+        "status": 0,
+        "logSha256": "b985b344206199451f2f97753bab29348000de0cfca417c319ef6058071bcc3c",
+        "result": "{\"publicNativePortPairs\":64,\"completionOrders\":2,\"fulfilledAndCaughtRejected\":true,\"liveDebtSequence\":[2,1,0],\"firstCompletionRetainsRenderedZero\":true,\"finalRevealMatchesNative\":true,\"scope\":\"finite actual public generator/memo/render histories; no equivalence theorem or arbitrary host-history claim\"}"
+      },
+      {
+        "name": "tests/held-action-delivery-controls.mjs",
+        "seconds": 10.785,
+        "status": 0,
+        "logSha256": "24add4bfd700ecfb55477e0bae5de4fa9b07bfd502ab8e5b13918b5b2538a6e3",
+        "result": "{\"ordinaryObserverBodies\":1008,\"helperPrefixModes\":3,\"bodyToQueuedRoundCases\":1008,\"actualOuterTaskEntries\":1008,\"duplicateCurrentLookups\":8064,\"outerDuplicateLookups\":8064,\"capturedRedirectLengths\":[0,1,3,8],\"scope\":\"actual ordinary observer lookup and settled marking, fresh/current held bodies, original capture, positive debt retirement, saved tasks/stack and duplicate Machine equality after permitted wait histories; mixed interception, host transport and public flush are separate\"}"
+      },
+      {
+        "name": "tests/action-output-continuation-controls.mjs",
+        "seconds": 5.619,
+        "status": 0,
+        "logSha256": "91ee50aaadfe0b2e26ef6d2389a30e39decaa39448738a3cc4be925be0eddfe9",
+        "result": "{\"outputCases\":336,\"actualObserverPrefixSteps\":520,\"pendingOutputAdoptions\":8,\"sliceGuardCases\":24,\"observerLengths\":[0,1,3,12],\"scope\":\"actual output states/fulfillment/rejection/adoption, callback registration order, host request outbox, exact caller work/values and nested/outer slice guards; Round execution and host callback delivery remain separate\"}"
+      },
+      {
+        "name": "tests/action-body-controls.mjs",
+        "seconds": 32.082,
+        "status": 0,
+        "logSha256": "1e64fa7c2277d7110a20ec292f873a9754eb05560e339816a01e250488ff97bd",
+        "result": "{\"helperPrefixOrders\":65,\"actualBodyReturns\":1950,\"exactStaleMachineChecks\":3900,\"pendingOutputAdoptions\":130,\"nativeGeneratorAndPortCases\":16,\"scope\":\"literal terminal generator results after private helper prefixes; actual public source settlement and returned-Promise controls; queued publication is separate\"}"
+      },
+      {
+        "name": "tests/action-method-first-controls.mjs",
+        "seconds": 21.799,
+        "status": 0,
+        "logSha256": "96c91020689f33e53b30d40e328ce77206a7fcce2ce970e56bc8f8180f91938e",
+        "result": "{\"prefixOrders\":408,\"admittedMethodCases\":3,\"helperKinds\":7,\"longestPrefix\":64,\"actualFirstCallbacks\":2448,\"exactCurrentMachineDuplicates\":4896,\"finiteTerminalReturnControls\":816,\"scope\":\"all assertions on actual first delivery after sampled helper prefixes; source-terminal-return checks remain finite controls, reserved stream-zero helper cases do not claim public stream reachability\"}"
+      },
+      {
+        "name": "tests/action-first-controls.mjs",
+        "seconds": 19.058,
+        "status": 0,
+        "logSha256": "75b05d520d6cf741f1161e91cff996a8635ca827ca17256a69c17b5e8bf6e938",
+        "result": "{\"actualFirstAndRetirementCases\":66,\"duplicateCurrentMachineChecks\":396,\"badUnallocatedAliasControls\":33,\"nativeTerminalGeneratorCases\":22,\"scope\":\"actual first callback and terminal ActionStepReturn before observer drain/public flush; action identity derived from create, raw rejection including thenable data, legacy alias trap explicit\"}"
+      },
+      {
+        "name": "tests/pending-notification-controls.mjs",
+        "seconds": 48.201,
+        "status": 0,
+        "logSha256": "83aa10c149fdcf0bb0345236e277a0687e60ac5e80a6bcf016e8eef211c621b7",
+        "result": "120 typed actual memo/render construction and local pending-notification cases preserve committed content, exact error identity and singleton source membership; paired native leaf-memo notifications match the status/error/source result. No propagation/flush or callback-evaluation theorem is claimed."
+      },
+      {
+        "name": "tests/source-status-frame-controls.mjs",
+        "seconds": 48.066,
+        "status": 0,
+        "logSha256": "46ad284f64e02e885e79c97a1f64ff59b4c63ce85df11553799e774134b71c8a",
+        "result": "108 source-registration status-frame controls preserve all represented node status words across fresh/allocated/duplicate/other-source branches, matching native selected status and insertion results. The generalized frame is kernel checked separately."
+      },
+      {
+        "name": "tests/pending-status-classification-controls.mjs",
+        "seconds": 48.188,
+        "status": 0,
+        "logSha256": "77aa67aa6317e1406a2dbfdf10e7c3013ecb0f2713666914c82f2565f47ed72a",
+        "result": "240 paired native/local pending-status controls cover every low status-bit combination, high bits, fresh/allocated/duplicate/other-source arenas and cached payloads. Only node validity is required by the generalized status-selection proof; these manually prepared private states do not establish public reachability or accessor readiness."
+      },
+      {
+        "name": "tests/leaf-notification-controls.mjs",
+        "seconds": 49.011,
+        "status": 0,
+        "logSha256": "add74331e39b8d2ec29a5fefe9f3ec51b5b58162972bee6811f85a1fe89cf6de",
+        "result": "162 actual raw memo-construction/notifier controls match local stores and native leaf notification, including retained shown-error identity; two real dispatcher steps preserve visited/scheduled locals, and one-step exhaustion remains explicit. Public callback reachability and general propagation are separate."
+      },
+      {
+        "name": "tests/pending-retirement-controls.mjs",
+        "seconds": 52.624,
+        "status": 0,
+        "logSha256": "808f8fe2aca9dd94f6af69bd98a40d1c8d1f14e31e65f69070c39d71d9b55247",
+        "result": "192 paired native/full Bend source settlements and direct dependent controllers agree on status, clock, membership, blocking, scheduling and retained errors; direct continuations and committed content are checked. Private seeded states, not public callback reachability or general flush."
+      },
+      {
+        "name": "tests/graph-construction-controls.mjs",
+        "seconds": 45.274,
+        "status": 0,
+        "logSha256": "d325d5fae56706464db45d2cf8ae50651ad9072517630314b1364ececb769799",
+        "result": "{\"typedConstructorCases\":64,\"actualDriverSplits\":192,\"arbitraryPayloadProofCheckedSeparately\":true,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"private compact graph states, both recomputing flags, carrier present/absent, empty/nonempty callers; no public reachability or compiler correctness claim\"}"
+      },
+      {
+        "name": "tests/node-construction-controls.mjs",
+        "seconds": 45.982,
+        "status": 0,
+        "logSha256": "96d96eb13d87df222070f8f2c48eabdcb270ba5cda12918d18647237d28754b4",
+        "result": "{\"typedRawConstructorCases\":48,\"actualDriverSplits\":144,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"actual memo/render allocation/setup/link from reserved arenas with variable existing nodes; callbacks and pending flight registration are not executed, so these cases take the absent-carrier nine-step alternative\"}"
+      },
+      {
+        "name": "tests/pending-registration-controls.mjs",
+        "seconds": 47.605,
+        "status": 0,
+        "logSha256": "ccdafc338261fb0a36c374c26ac43baaf094881368a748e22e9afa81c37852f4",
+        "result": "{\"typedFreshRegistrationCases\":128,\"actualTenStepReturns\":128,\"actualDriverSplits\":384,\"duplicateNoOpChecks\":384,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"private compact graph states with real fresh extension/Set add, variable auxiliary arena sizes and recomputing flags; actual helper retirement and actual Core settlement tested separately; callbacks/public reachability/full flight protocol not claimed\"}"
+      },
+      {
+        "name": "tests/pending-source-history-controls.mjs",
+        "seconds": 51.629,
+        "status": 0,
+        "logSha256": "0e3bdac65fda2716ce126f23c914b06bdbee4e5cc60f926d3c868f4168e85497",
+        "result": "{\"typedConstructedHistories\":131,\"allBinaryOrdersThroughLength\":6,\"longestHistory\":64,\"actualDriverSplits\":393,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"actual variable-ID memo/render construction, source Set add/remove history and bounded actual Core return; finite membership/tombstone checks supplement general frame/validity/return proofs; callback/flight-controller reachability and final reveal not claimed\"}"
+      },
+      {
+        "name": "tests/registration-context-controls.mjs",
+        "seconds": 48.15,
+        "status": 0,
+        "logSha256": "deb8c5b4bc2bb2cc82be47d1b8957e1d697c85e707e8227e68cfe1eda05d6abc",
+        "result": "{\"typedConstructedRegistrationCases\":144,\"actualTenStepReturns\":144,\"actualDriverSplits\":432,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"actual variable-ID default memo/render construction supplies fresh registration context/member/graph and bounded actual return; initial equality facts checked in Bend, no callback evaluation or full flight controller/reveal claim\"}"
+      },
+      {
+        "name": "tests/pending-carrier-cycle-controls.mjs",
+        "seconds": 46.599,
+        "status": 0,
+        "logSha256": "f06c1f0822afd7aa6eddb2dbe7395d3d9ee5ffdfcd6ccc78dabe2c9213cd2972",
+        "result": "{\"typedCarrierCycleHistories\":131,\"allBinaryOrdersThroughLength\":6,\"longestHistory\":64,\"duplicateWholeWorldNoOps\":449,\"jsSuppliesEqualityEvidence\":false,\"scope\":\"general single-source membership/representation invariant from actual default node construction, arbitrary finite add/remove commands, direct actual-helper world agreement; no status/readiness/full flight-controller/final-reveal claim\"}"
+      },
+      {
+        "name": "tests/transaction-resolution-controls.mjs",
+        "seconds": 5.792,
+        "status": 0,
+        "logSha256": "060fec2c7ea476cb446b7cb137afbe7fcbfe7a3dab802b61e99c327383afe867",
+        "result": "{\"fixtures\":28,\"queries\":2268,\"rejoins\":252,\"positiveCompletionPrefixes\":84,\"cyclicExhaustionControls\":1,\"kind\":\"private helpers; not public histories or a proof\"}"
+      },
+      {
+        "name": "tests/transaction-join-controls.mjs",
+        "seconds": 8.064,
+        "status": 0,
+        "logSha256": "deab85db0f7c1b6be075f9a5b0ce5ba75ac94986c6ffb368f93b0cac54cfed18",
+        "result": "{\"privateJoinFixtures\":288,\"exactRejoins\":1152,\"resolverQueries\":576,\"bendOpeningFrameControls\":32,\"positiveBlockerControls\":320,\"emptyBlockerControls\":48,\"heldScanControls\":288,\"eligibleScanControls\":48,\"liveRetentionControls\":14,\"absentSourceControls\":2,\"publicHistories\":false}"
+      },
+      {
+        "name": "tests/transaction-list-controls.mjs",
+        "seconds": 4.005,
+        "status": 0,
+        "logSha256": "72714ff37e54639937ce9dd29074501a47c800cbbb4313a7eb1ff57d87f4009a",
+        "result": "{\"privateListConstructionFixtures\":54,\"exactRelistings\":162,\"publicHistories\":false,\"scope\":\"actual allocated extension/group/node slots, fresh membership/list construction, zero-debt pending render blocker and exact same-group no-op; pending status installed explicitly\"}"
+      },
+      {
+        "name": "tests/joined-action-history.mjs",
+        "seconds": 1.577,
+        "status": 0,
+        "logSha256": "60111707deeb4d935ae2d77f36c415aa5de3de470623299519a43d2ec3680b95",
+        "result": "{\"publicHistories\":48,\"observedPrefixes\":408,\"nativeGeneratorControls\":48,\"scope\":\"two joined held actions, both creation/completion orders, opaque/text/nullable payloads, independent publication and optional final writes; finite evidence, not a general proof\"}"
+      },
+      {
+        "name": "tests/joined-action-flight-history.mjs",
+        "seconds": 14.993,
+        "status": 0,
+        "logSha256": "bbac430808bf870d2e50b2e8d9f7b4f85b15de5472be781421cc42e35d403bbc",
+        "result": "mentReleaseBoundaries\":0,\"settlementFlushBoundaries\":160,\"ownerTrimCompleteControls\":40,\"structuralOwnerSteps\":80,\"callbackStartBoundaries\":0,\"independentApplyControls\":80,\"selectedUiChecks\":2280,\"emptySettlementSixStepControls\":80,\"trimmedEmptyEightStepControls\":0,\"emptyDriverSplitControls\":240,\"emptyDriverExhaustionControls\":80,\"scope\":\"two joined held actions and a rendered flight, all completion/flight orders, successful opaque/text/nullable values and text-only rejection of either action, independent publication, direct render or memo-backed render; finite evidence, not a general proof\"}"
+      },
+      {
+        "name": "tests/from-value-proof-controls.mjs",
+        "seconds": 18.73,
+        "status": 0,
+        "logSha256": "d3aa5bf7d4a0c60348dc97b938da06bfb683c7bce45d01b0575b1633753262d7",
+        "result": "36 arbitrary-value from lifecycle controls compare 3708 actual prefixes, three budgets, native value identities, function-as-data preservation and once-only cleanup/cancellation. Kernel quantification is over every R.Value; arbitrary arena-token validity and arbitrary async histories are separate."
+      },
+      {
+        "name": "tests/from-iterables.mjs",
+        "seconds": 3.283,
+        "status": 0,
+        "logSha256": "762d7eccbeaa90fe997999e50782c004321a22872e3deed6cccf11300e5facc7",
+        "result": "204 from AsyncIterable histories compare every value/error/flight/iterator/cleanup prefix, including bare and promised steps, argument forwarding, cancellation, nested wrappers and preserved protocol errors."
+      },
+      {
+        "name": "tests/from-iterable-proof-controls.mjs",
+        "seconds": 8.964,
+        "status": 0,
+        "logSha256": "edc93b84ad0a9c5cc9da07fccf22521d704b92e462d9d3ed49253b8ca2f50840",
+        "result": "14 ordinary-payload wrapped from lifecycles compare all 84 prefixes, exact final Machines at three budgets, and native values/identities/pending-pull cancellation and once-only inner return."
+      },
+      {
+        "name": "tests/from-subscriptions.mjs",
+        "seconds": 3.785,
+        "status": 0,
+        "logSha256": "d786e8d37b82af5fc8546163fbb52b10cd20935d82dcb859e72fbaa41966aa38",
+        "result": "282 direct from subscription histories compare values, pending/error states, synchronous coalescing, late teardown, cleanup, supersession, original callback aliases and callback order."
+      },
+      {
+        "name": "tests/from-proof-controls.mjs",
+        "seconds": 9.286,
+        "status": 0,
+        "logSha256": "76a9c6f3a927741a51d32799b4850019e37c673548a40a0585a463af0de52693",
+        "result": "14 ordinary-payload from lifecycles compare all 120 prefixes, exact final Machines at three budgets, and native values/identities/once-only cleanup."
+      },
+      {
+        "name": "tests/pin-4ea2f498.mjs",
+        "seconds": 1.654,
+        "status": 0,
+        "logSha256": "e43ab165c3e593527580fc374ea031896ea50dd0198c1e4d96922f4d237e134d",
+        "result": "64 idle-disposal scheduling guard cases match pinned native Solid, including empty queue/non-computed/non-self controls. GC itself is outside the represented heap model."
+      },
+      {
+        "name": "tests/pin-ac28157a.mjs",
+        "seconds": 0.436,
+        "status": 0,
+        "logSha256": "07b063a273e6fb6b7f1a97c88204bc374faf83fafe68f5e6e53e433cc40dce99",
+        "result": "9 source-backed render-grouping histories retain ordinary committed values beside latest(), hold optimistic derivations until landing and complete their actions."
+      },
+      {
+        "name": "tests/pin-178605cf.mjs",
+        "seconds": 3.299,
+        "status": 0,
+        "logSha256": "4857f6c8911254b7c07080caf647a5c7ccbc08523b6fae5a45f5b4ac6dad1287",
+        "result": "720 native borrowed-guess controls match staging, take/detach, ordered snapshots, error forms, correction/confirmation, raw holder identity, moved-owner refusal, restoration and subscriber reruns; 12 transaction mark/flight release controls, 12 pending-guess join controls and 144 verdict-ancestor controls pass."
+      },
+      {
+        "name": "tests/pin-178605cf-public.mjs",
+        "seconds": 0.753,
+        "status": 0,
+        "logSha256": "3b704de20cdf0f50b196c885354949a64c96b0b4c1ae96538aefd4077cd5762f",
+        "result": "20 native/Bend public question-change and borrowed-guess restoration histories pass, including saved undefined, zero, false and null values."
+      },
+      {
+        "name": "tests/pin-5e68925c.mjs",
+        "seconds": 2.8,
+        "status": 0,
+        "logSha256": "b1b2b30365a9cb09dcd4fa10b812728065bf85046f1d355d818c6516719efdf1",
+        "result": "{\"holdWorkCases\":16,\"creatorAncestorCases\":48,\"rerunErrorCases\":160,\"parkedAdoptionCases\":16,\"teardownCases\":2,\"emptySeamResetCases\":3,\"scope\":\"unchanged native predicates and actual Promise adoption; seeded helper states, not public reachability or arbitrary thenables\"}"
+      },
+      {
+        "name": "tests/pin-2a0da2fc.mjs",
+        "seconds": 0.546,
+        "status": 0,
+        "logSha256": "a5497bad8cbe216c013aded3c095c203acca592d65708369ec9ca576f9a71979",
+        "result": "24 merged first-error re-ask histories distinguish no value from successful undefined, loading seeds, sync/async errors, plain/user observers, latest/pending and final recovery."
+      },
+      {
+        "name": "tests/pin-b9b6f333.mjs",
+        "seconds": 0.769,
+        "status": 0,
+        "logSha256": "2367d9a2df795f4c5426ede8c3ada9031ae8206ff5af7c59ddd89b2713790f6a",
+        "result": "32 merged deferred synchronous-error histories cover seeds, current error identity, immediate/native obsolete flights, until/refresh, stale success/rejection, application error handling and later recovery."
+      },
+      {
+        "name": "tests/pin-3cbfaf1a.mjs",
+        "seconds": 0.507,
+        "status": 0,
+        "logSha256": "ef54c7cc04e15e534231b547b126688ba0d9eb310110d1004b1896c8b5193d78",
+        "result": "16 async replacement cleanup histories compare rejected/successful answers, never-committed supersession, child-first cleanup, later replacement and native/immediate delivery."
+      },
+      {
+        "name": "tests/deferred-first-stream.mjs",
+        "seconds": 1.459,
+        "status": 0,
+        "logSha256": "607669e07c9d7375aa234b75c8a6358f3970f431f4516307ca62b0f23292032a",
+        "result": "108 first-load deferred stream histories compare iterator calls/results, initial drains, promise gaps, empty/rejected completion, seeds, laziness, cancellation and first-load flattening."
+      },
+      {
+        "name": "tests/deferred-refetch-stream.mjs",
+        "seconds": 3.24,
+        "status": 0,
+        "logSha256": "b7d87f9cf05083684add2445c2b61b30f683d4f5a706c16b73bbd8fbe221fa88",
+        "result": "184 deferred refetch stream histories compare values, verdicts, callback counts, iterator calls, replacement/held identities, flattening, cleanup and merged protocol-error flight retirement."
+      },
+      {
+        "name": "tests/deferred-stream-proof-controls.mjs",
+        "seconds": 13.631,
+        "status": 0,
+        "logSha256": "9ffab73a24111d0a39b211d7caed14018d70ab70dcc8e4c13693be452a355557",
+        "result": "196 ordinary-payload deferred stream programs compare all 118 prefixes, exact final Machines at three budgets and native values/identities, including mixed types, aliasing, undefined, NaN and signed zero."
+      },
+      {
+        "name": "tests/deferred-multiple.mjs",
+        "seconds": 0.906,
+        "status": 0,
+        "logSha256": "6d3fa15f07cb8ca7b10a7b618e35c2c845687b97cf70be58038716737f9af4f6",
+        "result": "32 multiple-deferred histories retain the shared lagging Set, independent flight/callback identities, truth waiters, both landing orders and disposal."
+      },
+      {
+        "name": "tests/pin-cdd95616.mjs",
+        "seconds": 0.403,
+        "status": 0,
+        "logSha256": "4cc89e546580cfa3ccef4c1cc0622c456a89f219bfc6e774da1641e5dc91fe66",
+        "result": "8 cdd95616 histories compare the landed-frame re-derivation barrier, retained render order and no-supersession controls."
+      },
+      {
+        "name": "tests/deferred.mjs",
+        "seconds": 2.529,
+        "status": 0,
+        "logSha256": "9dc2dc7844744deb1e150dfe0e61711fbb1245c9d80a6b315aaaf8d855694686",
+        "result": "162 deferred data/thenable histories match public construction, state, complete traces, cleanup and promise-observer order."
+      },
+      {
+        "name": "tests/deferred-proof-controls.mjs",
+        "seconds": 7.827,
+        "status": 0,
+        "logSha256": "5112e009b54cf05e5d425abf08c7b0dc446e5fe0a84121040f62973427330a27",
+        "result": "32 deferred complete-program/native controls compare 103 canonical transitions and exact final Machines at three sufficient budgets; the all-natural theorem is independently kernel checked."
+      },
+      {
+        "name": "tests/deferred-payload-controls.mjs",
+        "seconds": 10.173,
+        "status": 0,
+        "logSha256": "75a3d0494b15bf7b635054777234b0f40ecfd9b1951bea69e11bffc0b8401226",
+        "result": "196 ordinary-payload deferred programs compare all 103 prefixes, exact final Machines at three budgets and native values/identities, including mixed types, aliasing, undefined, NaN and signed zero."
+      },
+      {
+        "name": "tests/affects.mjs",
+        "seconds": 1.428,
+        "status": 0,
+        "logSha256": "a383e3239329854de4398732e4fcd686662041ad6a5ea18d53c10838a3c1f92b",
+        "result": "73 public non-store affects histories compare declaration counts, pending readers, ambient/transaction release, quiet reloads, merges and argument order with pinned Solid."
+      },
+      {
+        "name": "tests/affects-proof-controls.mjs",
+        "seconds": 5.42,
+        "status": 0,
+        "logSha256": "179b87857044f800d2e26556f58900b91abc9d4ca211569849434144527a15b0",
+        "result": "16 affects complete-program/native controls compare 51 canonical transitions and exact final Machines at three sufficient budgets; the all-natural theorem is independently kernel checked."
+      },
+      {
+        "name": "tests/verdict-windows.mjs",
+        "seconds": 1.604,
+        "status": 0,
+        "logSha256": "c37e3764233c821048049b567bd05bb183ca518b567949deb22ee5acc40d527d",
+        "result": "104 public verdict-window histories compare actual latest/isPending reads, pulls, throws, nested restoration, loading/held states and optimistic lanes with pinned Solid."
+      },
+      {
+        "name": "tests/verdict-proof-controls.mjs",
+        "seconds": 6.239,
+        "status": 0,
+        "logSha256": "636a29bbfa55fa5dedc23f687b11135a90091fa0bf3d08c6ba2673b66107ed31",
+        "result": "16 verdict complete-program/native controls compare 53 canonical transitions and exact final Machines at three sufficient budgets; the all-natural theorem is independently kernel checked."
+      },
+      {
+        "name": "tests/optimistic.mjs",
+        "seconds": 1.17,
+        "status": 0,
+        "logSha256": "7ebe1722fe6ac68e9d3798abea20ad1aac62abb5409c339be754afc64fea639e",
+        "result": "64 public optimistic histories compare real constructors, bound setters, guess composition, original derivations, cleanup and held landings with pinned Solid."
+      },
+      {
+        "name": "tests/optimistic-proof-controls.mjs",
+        "seconds": 5.742,
+        "status": 0,
+        "logSha256": "0e2d9194d7763b754f31fb5cc2ea6574ce85541908628655c5cf18b3411ba9dc",
+        "result": "16 optimistic complete-program/native controls compare 56 canonical transitions and exact final Machines at three sufficient budgets; the all-natural theorem is independently kernel checked."
+      },
+      {
+        "name": "tests/negative-zero.mjs",
+        "seconds": 0.255,
+        "status": 0,
+        "logSha256": "1cfe6be3715f521af4224f53ad285a4bb1d0fe6f4079bcae49439b0679e7415a",
+        "result": "11 public signed-zero histories and 52 primitive controls preserve storage/returns, strict equality, arithmetic signs, falseyness, comparator arguments, async data, error causes/messages and cleanup throws."
+      },
+      {
+        "name": "tests/cleanup-policy.mjs",
+        "seconds": 0.478,
+        "status": 0,
+        "logSha256": "0e552be87a1aca4f8b82ddc3c5c67f63e38c2052f288cfa9bcdaa9546399965f",
+        "result": "36 public cleanup-policy histories match native complete child/LIFO teardown, first-error identity (including undefined), callback abort, once-only rethrow, flush completion and continued reactivity."
+      },
+      {
+        "name": "tests/lane-group-proof-controls.mjs",
+        "seconds": 1.541,
+        "status": 0,
+        "logSha256": "6571b13d3635fc46059d3036c269848869910f42b3c50ae87b3cd70171f8f967",
+        "result": "71 canonical/native group controls match complete Bend Worlds, exact source unlink/link aliasing, repeated/absent entries, cached groups and fresh self allocation; quantified proofs are checked separately."
+      },
+      {
+        "name": "tests/flatten.mjs",
+        "seconds": 0.648,
+        "status": 0,
+        "logSha256": "1e06e6bcdce8263d8331f070e5b4ae61e2c07f1ef5dc1154abc740412753d52c",
+        "result": "66 flatten histories match native scalar/array/accessor resolution, formal arity, option handling, deferred closures, pending collection, error order and lexical capture. Direct native getter read traces are explicitly excluded in five cases."
+      },
+      {
+        "name": "tests/map-keys.mjs",
+        "seconds": 1.636,
+        "status": 0,
+        "logSha256": "a32f7d01c0d113215eded748504772a61c5e4d1f223159e88502e857aaca6325",
+        "result": "53 extracted-key mapArray histories match actual Solid item/index accessors, duplicate/falsy keys, exact key-call traces, cached removal keys, stateful writes, key errors/pending retries and captured key functions."
+      },
+      {
+        "name": "tests/map-indices.mjs",
+        "seconds": 1.191,
+        "status": 0,
+        "logSha256": "1096078e2cf588578b3c3a2f6ffdfd9f2e02b9641ff34f7eaed9520a290d160d",
+        "result": "27 formal-arity/index-accessor histories match native Function.length, source mode selection, index identity/updates, nested memos, pending stages, cleanup errors and wide keyed updates."
+      },
+      {
+        "name": "tests/map-keyed.mjs",
+        "seconds": 2.967,
+        "status": 0,
+        "logSha256": "f7ac9d3b775bc0dc4ea4daf8730ad1a8bf341065f27d8f552881278fe4c01f61",
+        "result": "62 plain keyed mapArray histories match actual Solid occurrence matching, prefix/suffix identity, pure removals, growing/shrinking window commits, NaN/duplicate keys, mapper abort/retry and cleanup errors."
+      },
+      {
+        "name": "tests/map-index.mjs",
+        "seconds": 1.143,
+        "status": 0,
+        "logSha256": "2cf1c3aad2e3e0aec3820e95258d3e103ba2b4fa70267d32aeeb7d1dfb2cb498",
+        "result": "57 index-mode mapArray histories match native Solid values/row accessors, retained identity, row-signal state, owner trees, cleanup order, staged abort, pending retry, partial throws and successful falsy fallback retention."
+      },
+      {
+        "name": "tests/arrays.mjs",
+        "seconds": 0.289,
+        "status": 0,
+        "logSha256": "abc4e1bf45edcac63ccaec7a43b9cf968df8c58e6f73199c6961c5ac18e3f4f8",
+        "result": "22 typed-array histories match pinned TS values, identities, evaluation order, callback/local captures, staged reads and signal equality. External mutation, arbitrary input arrays and array StatusError coercion remain outside this profile."
+      },
+      {
+        "name": "tests/repeat.mjs",
+        "seconds": 1.096,
+        "status": 0,
+        "logSha256": "f5d6b2f995498c4d81a427c328fe380707dba552aec21eb992844cf9be8f7ed3",
+        "result": "54 repeat histories match pinned TS count/offset windows, values/array identity, owner trees, retained rows, cleanup order, staged abort/retry, pending/error recovery and the successful falsy fallback retention."
+      },
+      {
+        "name": "tests/differential.mjs",
+        "seconds": 1.291,
+        "status": 0,
+        "logSha256": "382c40ef3b0046b00af7562046d1399b2165108d6d1decb0375ee9c1be1e023b",
+        "result": "203 differential scenarios passed, including generated histories and graph invariants."
+      },
+      {
+        "name": "tests/errors.mjs",
+        "seconds": 0.234,
+        "status": 0,
+        "logSha256": "a59ec1cedd64175d67d8663d171de0866255ea2a65cf73f7fc1fe7be045bc473",
+        "result": "18 synchronous error histories match pinned TS throws, wrapper identity, propagation/recovery, effect error arms/cleanup, reports, halts and finally restoration."
+      },
+      {
+        "name": "tests/callbacks.mjs",
+        "seconds": 1.118,
+        "status": 0,
+        "logSha256": "34006d3ff2e60f8d420b8fa3665571073be052e8dc2e3d25dcf213d419c69962",
+        "result": "74 callback histories match pinned TS statement order, returns, reads, writes, suspension and exceptions."
+      },
+      {
+        "name": "tests/teardown-expressions.mjs",
+        "seconds": 1.262,
+        "status": 0,
+        "logSha256": "7457dc4434f1c4436bb1965cdb0bf3f696dec3bb27c7c618ba8d575568126319",
+        "result": "82 public teardown-expression histories match actual pinned Solid reads, async release, error/catch/finally ordering and ignored returns."
+      },
+      {
+        "name": "tests/ownership.mjs",
+        "seconds": 0.988,
+        "status": 0,
+        "logSha256": "2f2ec1cdcde0de81cdc70c149e8620a147f59e5db227efd484c01c0e45792248",
+        "result": "73 ownership histories match pinned TS roots, owner/observer identity, runWithOwner scopes, cleanup attachment and restoration."
+      },
+      {
+        "name": "tests/direct-owners.mjs",
+        "seconds": 0.55,
+        "status": 0,
+        "logSha256": "64734cd01cd152788cf1221d84d91d539aa553baa0b9443006f9a3864c602b92",
+        "result": "25 direct-owner histories preserve ambient context/tracking, root links, inherited records, child-only disposal, reuse and cleanup exceptions."
+      },
+      {
+        "name": "tests/arguments.mjs",
+        "seconds": 0.906,
+        "status": 0,
+        "logSha256": "2b159aca1c3d1e15dd353204bbcf5ada3deb441e8234d66cd3ae40c291b06085",
+        "result": "71 callback-argument histories match pinned TS binding/order, effect/error parameters, callable root disposers and setter function branches."
+      },
+      {
+        "name": "tests/contexts.mjs",
+        "seconds": 0.656,
+        "status": 0,
+        "logSha256": "087488e34cdc0b6e27e261caba93eaccc2d3a25c8f44170a90b0eff4acd34b1d",
+        "result": "52 context histories match pinned TS default/undefined/null rules, copied records, owner targeting, inheritance, errors, argument order and async/function data."
+      },
+      {
+        "name": "tests/cleanup-values.mjs",
+        "seconds": 0.355,
+        "status": 0,
+        "logSha256": "d611d3cde347b50686f08cc40bc7db15d8fb68f6ad705c6ad8011d8c16ce027b",
+        "result": "24 bound-cleanup histories match pinned TS callable return/alias identity, LIFO order, no-owner behavior, pending registration and reentrant/throwing teardown."
+      },
+      {
+        "name": "tests/setter-cleanup.mjs",
+        "seconds": 0.726,
+        "status": 0,
+        "logSha256": "e8e3cb040263a207a3061317c6bf6ec58beef94816f73cf56afc50c87e587b92",
+        "result": "42 setter-cleanup histories match pinned TS callable aliases, no-argument writes, LIFO, pending/held frames, exceptions and reentrant disposal."
+      },
+      {
+        "name": "tests/getter-cleanup.mjs",
+        "seconds": 0.887,
+        "status": 0,
+        "logSha256": "34bb2300f32084a16203c3b28ca1bbde07bb92f126b65e83f61a4eadbace3551",
+        "result": "54 getter-cleanup histories match native aliases, dependencies, lazy pulls, LIFO, returned cleanups, pending/errors and tracking; direct native getter read events are unobserved."
+      },
+      {
+        "name": "tests/tracked-effects.mjs",
+        "seconds": 0.743,
+        "status": 0,
+        "logSha256": "412a8fb651ee3fbda038b8fd4e99e3bde52050c740c77856f28739c0a57be62f",
+        "result": "47 tracked-effect histories match actual Solid heap/user-phase ordering, dependency tracking, cleanup, writes, pending/errors and disposal."
+      },
+      {
+        "name": "tests/settled.mjs",
+        "seconds": 0.761,
+        "status": 0,
+        "logSha256": "4d52b49db9cf1151067c45299c768c32017c706a7146d4a1f7bbecf101c631c6",
+        "result": "54 onSettled histories match actual owned/unowned scheduling, one-shot reads, cleanup, pending, errors and nested callbacks."
+      },
+      {
+        "name": "tests/on-flush.mjs",
+        "seconds": 0.511,
+        "status": 0,
+        "logSha256": "4c0688413a4a945a305679d3515e00a82fb95b18ca52b403104304717bda20b8",
+        "result": "22 public onFlush programs match native Solid on deferral, call/batch order, nested/manual flushes, disposal, ownership, binding, host errors and pending-route independence/overlap. Typed callback grammar; dev warnings and arbitrary host closures are separate."
+      },
+      {
+        "name": "tests/comparators.mjs",
+        "seconds": 1.945,
+        "status": 0,
+        "logSha256": "90c8de3bbb57ff187f7e8d32db97405825e281b04149916292568d9a1b9d309d",
+        "result": "135 custom comparator histories match source callback identity, old/new arguments, verdict truthiness, reads/writes, pending, status errors, async landings and held seams."
+      },
+      {
+        "name": "tests/flush-callbacks.mjs",
+        "seconds": 0.929,
+        "status": 0,
+        "logSha256": "1106007805986c6d0810530ea2e59914e65f28fc51b467f8766c97c3a0540e16",
+        "result": "64 flush callback histories and 8 native microtask-IO controls match nested drains, committed reads, returned values, errors, scheduling recovery and native callbacks."
+      },
+      {
+        "name": "tests/actions.mjs",
+        "seconds": 1.071,
+        "status": 0,
+        "logSha256": "e75b26628221ff45d647e05bf7eb5165b3805bc7ffecc34bf1448e793d9ee91f",
+        "result": "67 action histories compare the shared Bend transaction driver with pinned Solid: held writes, production flush guards, yields/errors, result promises, nesting, overlap and return adoption."
+      },
+      {
+        "name": "tests/actions-native.mjs",
+        "seconds": 0.69,
+        "status": 0,
+        "logSha256": "e2e0607a983ea90ac553ebcaa19706d94783af0f8c0a3affcefd59f384329fbc",
+        "result": "21 native-generator controls validate the action method ABI, held writes, rejection, nested slices, production flush callbacks, native return adoption duplicate yield callbacks and reused wrappers with independent invocation arguments."
+      },
+      {
+        "name": "tests/action-captures.mjs",
+        "seconds": 0.253,
+        "status": 0,
+        "logSha256": "c1f0024533e4069143af451305f1b32f88a36a73b86cbad8bdda3af29811fcf4",
+        "result": "8 lexical action histories preserve captured signal identities, depth/shadowing, error resumes, escaped getters and continuation after the invoking root is disposed."
+      },
+      {
+        "name": "tests/action-functions.mjs",
+        "seconds": 0.73,
+        "status": 0,
+        "logSha256": "cbf44c58e2619ec49d278bdd61af226b15cf6968d3cd537eb9a19c0cf11ff4de",
+        "result": "45 reusable action-function histories preserve actual wrapper identity, fresh invocation Promises, two call arguments, nested parameter capture, overlapping suspensions, factory/resume errors and cleanup invocation."
+      },
+      {
+        "name": "tests/argument-vectors.mjs",
+        "seconds": 0.977,
+        "status": 0,
+        "logSha256": "4fff0553c4effc5f56d899ad78c4ba77949b55daeebbc74729c116fda1601a8c",
+        "result": "70 arbitrary-arity callback/action histories match pinned Solid argument order, capture, aliases, throws and overlapping invocations."
+      },
+      {
+        "name": "tests/argument-vectors-native.mjs",
+        "seconds": 0.218,
+        "status": 0,
+        "logSha256": "544459c4c470b26230890846f7acab202227543ba09f26ac6a9f1a18877b9676",
+        "result": "6 independent native generator/factory controls validate vector forwarding, held writes, resumption and pre-transaction errors."
+      },
+      {
+        "name": "tests/reactions.mjs",
+        "seconds": 1.133,
+        "status": 0,
+        "logSha256": "d1863ab15e0b755a66bc344ee7e95a527127a5f4dfa6ad28f6dabefdd5dbc84b",
+        "result": "66 reaction histories match actual replacement arms, one-shot firing, re-arming, cleanup, pending/errors, owner capture and returned identity."
+      },
+      {
+        "name": "tests/reaction-values.mjs",
+        "seconds": 0.313,
+        "status": 0,
+        "logSha256": "ff674e381485944e7b00522010e2e41323989714b2ab54a7366af08f5c1d27db",
+        "result": "12 original reaction function-value histories preserve native tracker/input identity, results, arm states, ordered dependencies and cleanup."
+      },
+      {
+        "name": "tests/returned-cleanup.mjs",
+        "seconds": 0.761,
+        "status": 0,
+        "logSha256": "42848ff60364eb6c11f0ae67b40d11f36e1e1c62fe2d640636fbca97c0d70d96",
+        "result": "48 dynamic returned-cleanup histories match pinned TS selection, aliases, replacement, pending/error arms and disposal order."
+      },
+      {
+        "name": "tests/nested.mjs",
+        "seconds": 2.08,
+        "status": 0,
+        "logSha256": "bb9c9c1b7fbad59e250e4db7e424f4590163155de8c370be768f73a12d8404ee",
+        "result": "158 nested-construction histories match pinned TS allocation, initial execution, callbacks, lifetime, loading and error behavior."
+      },
+      {
+        "name": "tests/locals.mjs",
+        "seconds": 1.25,
+        "status": 0,
+        "logSha256": "f8e628b8a233a5f3dc252204ee66a93700dcd1ea804ef78718043c941b3bc268",
+        "result": "55 local-signal and captured-body histories match pinned TS allocation, lexical identity, staged writes, callbacks and lifetime.\n40 escaped-accessor histories match pinned TS calls, function identity, setter branching, dependency tracking and lifetime."
+      },
+      {
+        "name": "tests/setters.mjs",
+        "seconds": 0.688,
+        "status": 0,
+        "logSha256": "714fcd56ceab32ea3b43f46249a7adcf182287e5ce2ae5476e6d774ce20dd97c",
+        "result": "11 reentrant-setter histories match pinned TS entry-value capture, nested writes, returns and throws.\n40 escaped-setter histories match pinned TS function binding, arguments, updater invocation, identity, returns and lifetime."
+      },
+      {
+        "name": "tests/computed-accessors.mjs",
+        "seconds": 0.836,
+        "status": 0,
+        "logSha256": "891a0870f26bd561149bfcece082d9ac1727c7e893a3452ca2aa58a1e2a7b2b7",
+        "result": "51 computed-accessor histories match pinned TS construction, lazy pulls, identity, dependencies, pending/errors, raw updaters and lifetime."
+      },
+      {
+        "name": "tests/writable-signals.mjs",
+        "seconds": 1.429,
+        "status": 0,
+        "logSha256": "409e0be11b84dc4daacd2677f0cbf8c2adef78453f74aa3fc6774e0e537d9cdf",
+        "result": "81 writable-signal histories match pinned TS function construction, manual writes, reruns, previous arguments, ownership and async landing."
+      },
+      {
+        "name": "tests/callable-initializers.mjs",
+        "seconds": 1.244,
+        "status": 0,
+        "logSha256": "a0b9c7b62a1d7f2558c538a3d96f228cfbb6dd49800d132da8156f96a66c540c",
+        "result": "46 callable-initializer histories match pinned TS overload dispatch, argument/tracking, pending/error setup, pair identity and lifetime.\n61 total callable-initializer histories, plus 12 direct unwrapped native constructor controls.\n66 complete callable-initializer histories and 12 unwrapped native controls pass."
+      },
+      {
+        "name": "tests/callback-values.mjs",
+        "seconds": 0.964,
+        "status": 0,
+        "logSha256": "0592b2954d369313bdb77ce19a867c1c996a0d5d3eefd7a4182adf94890b30b7",
+        "result": "43 first-class callback histories match pinned TS calls, aliases, arguments, initializers, updates, promise data and imperative cleanup selection.\n47 complete first-class callback histories and native alias/domain controls pass.\n58 final callback-value histories pass.\n63 total first-class callback histories pass.\n64 complete callback-value histories and native controls pass."
+      },
+      {
+        "name": "tests/generated-functions.mjs",
+        "seconds": 1.943,
+        "status": 0,
+        "logSha256": "2b10fbbc898e664bdb6cb8afbdcd67aea6fafd0fbc8f8b6da6712635f1ecca54",
+        "result": "16 seeded public histories match pinned TS across 2560 generated operations plus setup/teardown, function selection, eager derivation, held/manual writes and native settlement."
+      },
+      {
+        "name": "tests/upstream-integration.mjs",
+        "seconds": 1.046,
+        "status": 0,
+        "logSha256": "9b21574ceb8e4af7f65d85a2010cff6a390d6dc205d656999e486fc76eb3096f",
+        "result": "50 upstream-integration histories match actual Solid, with independent lazy-run/release, writable recovery, flight replacement and protocol-error assertions."
+      },
+      {
+        "name": "tests/pin-b0ad1df5.mjs",
+        "seconds": 0.387,
+        "status": 0,
+        "logSha256": "9eb3d4ba4589bc368c7b8566507f92dcef6caa94f71c1e8765887aa4657994fb",
+        "result": "12 pin-update histories match untracked initial suspension, seeded snapshots and later source updates."
+      },
+      {
+        "name": "tests/pin-d682022c.mjs",
+        "seconds": 0.291,
+        "status": 0,
+        "logSha256": "ed757e7b94d80b8bbacf3599ed63a9932ba7d163974d05f378d9b633e984640d",
+        "result": "12 pin-update histories preserve equal-compute effect application/cleanup and memo/custom-comparator suppression in both effect kinds."
+      },
+      {
+        "name": "tests/async.mjs",
+        "seconds": 1.376,
+        "status": 0,
+        "logSha256": "6016be8c8a87dba1d6178bd84fc1141d4af618d47140140e0023c08a4442909e",
+        "result": "84 promise-like histories match pinned TS registration, loading, delivery, rejection, supersession and pending propagation."
+      },
+      {
+        "name": "tests/iterators.mjs",
+        "seconds": 3.825,
+        "status": 0,
+        "logSha256": "ea05bb3e2e7f0d9e10339de85f57cef990d2028f59ca6109e2ba85ae040fa38a",
+        "result": "255 iterator histories match pinned TS initial drains, async gaps, bare steps, empty/rejected completion, cancellation, close and promise flattening."
+      },
+      {
+        "name": "tests/upstream/flatten-empty.mjs",
+        "seconds": 0.213,
+        "status": 0,
+        "logSha256": "75cc8fb4c4bf7f792e1342eea20103ed894a020f297dfae25a886304bf4b3758",
+        "result": "18 source-only empty-flatten controls pass (upstream empty-stream fix); direct/native/one-yield controls settle as expected."
+      },
+      {
+        "name": "tests/waiters.mjs",
+        "seconds": 3.281,
+        "status": 0,
+        "logSha256": "5bfc99f364ee18af29cf9219b3c8e183000f4a9ef24396975eea541e58b7e0c4",
+        "result": "158 public promise-watcher histories match pinned TS eager resolve, deferred/coalesced refresh, pending/error answers, cleanup and delivery timing."
+      },
+      {
+        "name": "tests/held-recovery.mjs",
+        "seconds": 0.536,
+        "status": 0,
+        "logSha256": "d24a97f83872a2b3c80a5ab3cff27ab24207082eab0010c91d040124a93690d0",
+        "result": "16 held-error recovery histories match source state, delivery, reports and the merged held-error recovery fix, with non-render controls."
+      },
+      {
+        "name": "tests/upstream/staged-error-recovery.mjs",
+        "seconds": 0.127,
+        "status": 0,
+        "logSha256": "1862a9a3ee077b4705335b83b269442e1e99f2d09ea937d73e204b83219e214b",
+        "result": "8 source-only staged-error recovery controls pass (upstream recovery fix) for immediate and native delivery."
+      },
+      {
+        "name": "tests/upstream/held-function-value.mjs",
+        "seconds": 0.156,
+        "status": 0,
+        "logSha256": "8e31e87c355457c5b1f155cb29244e8cf2c2955f02bf497ee17b0b4f87cabb3c",
+        "result": "12 source-only held function-value cases pass (upstream function-value fix) with plain-signal/non-held controls."
+      },
+      {
+        "name": "tests/upstream/deferred-release-throw.mjs",
+        "seconds": 0.054,
+        "status": 0,
+        "logSha256": "48d92ef0b8de0f42d07abbc73d85f4e060c07b05a821817c1d854a46168f877f",
+        "result": "2 Source deferred-release throw controls check cleanup restoration."
+      },
+      {
+        "name": "tests/upstream/projection-reject.mjs",
+        "seconds": 0.102,
+        "status": 0,
+        "logSha256": "d835b3d3f52f903495e78a9d1d384c6c97334d03ae96334fd56fe4d54983da44",
+        "result": "2 source-only projection-rejection controls pass the merged in-flush error publication fix; projection/boundary engines remain unported."
+      },
+      {
+        "name": "tests/upstream/unread-pending-mount.mjs",
+        "seconds": 0.075,
+        "status": 0,
+        "logSha256": "e795a26808bbca89588c7177273eee87be5c2a946f43ddbf89abeae8cee404b5",
+        "result": "Source-only verdict-mount pending/settled controls pass; active mount/lane/boundary engines remain unported."
+      },
+      {
+        "name": "tests/upstream/empty-fallback.mjs",
+        "seconds": 0.174,
+        "status": 0,
+        "logSha256": "a2f5f46005ac96d8e9ff41685df1fea98e1b1d88087db5c7934a7600601bcb27",
+        "result": "14 source-only falsy/truthy fallback controls check retention."
+      },
+      {
+        "name": "tests/until.mjs",
+        "seconds": 1.978,
+        "status": 0,
+        "logSha256": "a2fa599daada20dd76c9650b593f2adee67f4232407bddb102cdcdad4af3e348",
+        "result": "136 default until histories match TS truthy/falsy delivery, pending/errors, repeated frames, cleanup, streams and native promise observer order."
+      },
+      {
+        "name": "tests/until-options.mjs",
+        "seconds": 0.82,
+        "status": 0,
+        "logSha256": "375f019f15eff29610ed35746d052007cb08e129fe85638a9717cc74ccd78bca",
+        "result": "60 until option histories match TS timer/listener IO, pre-abort, races, pending/async/error delivery and disposal; native timeout/success controls pass in both runtimes."
+      },
+      {
+        "name": "tests/host-errors.mjs",
+        "seconds": 1.568,
+        "status": 0,
+        "logSha256": "7242e1ae9228259cb9ea8be4aab646000a220b9d9f9dadff7c99f9d89fad72f6",
+        "result": "99 host-error histories match TS captured wrapper messages, native Error/DOMException identity, success versus failure, callback paths and default abort; native identity assertions pass."
+      },
+      {
+        "name": "tests/identity.mjs",
+        "seconds": 0.196,
+        "status": 0,
+        "logSha256": "f88328847d4bde2282f0e48e20368bd45d84b4574b214046f186207f4e001b2d",
+        "result": "Host reference identity matches TS across repeated/aliased reads, writes/updaters, memo values, native promise outcomes, error causes and async-object data tokens."
+      },
+      {
+        "name": "tests/memo-witness-controls.mjs",
+        "seconds": 16.674,
+        "status": 0,
+        "logSha256": "6deaf713983e3dcb1a3f283618f73526c1c4359bcddb9037e42dca9b0edb21b4",
+        "result": "8 fixed-initial constructor/setter, 8 general-initial constructor and 64 general constructor/setter/drain controls match canonical arenas and pinned Solid values; the quantified properties are independently kernel-checked."
+      },
+      {
+        "name": "tests/memo-repeat-controls.mjs",
+        "seconds": 13.086,
+        "status": 0,
+        "logSha256": "e38b74f3d3b310c23e0f0ef15babab4a24742c9d5540e920221c1e500e19d4f4",
+        "result": "512 finite two-update scalar-memo controls match actual public constructors/setters/flushes, canonical final Worlds and native Solid values."
+      },
+      {
+        "name": "tests/memo-history-controls.mjs",
+        "seconds": 23.119,
+        "status": 0,
+        "logSha256": "c6e6b86af79815bb459b90d82bb3a065058fce052c001a92210f0f2eb19b7f6e",
+        "result": "49 finite public scalar-memo programs / 1260 prefixes match complete canonical Worlds and pinned native values; 72 separate steady-pass prefix/counter controls pass. Induction is checked separately by the kernel."
+      },
+      {
+        "name": "tests/memo-batches-controls.mjs",
+        "seconds": 20.331,
+        "status": 0,
+        "logSha256": "1f30a13f973ffa3cd7a2c27b15dfed7294b1d5adbcc28c0b3aa37b60359a2c46",
+        "result": "35 finite batched scalar-memo programs / 182 completed prefixes and 791 writes match pinned native committed reads, one computation per batch, exact canonical Worlds and scheduling-job counts. Induction is checked separately by the kernel."
+      },
+      {
+        "name": "tests/flatten-proof-controls.mjs",
+        "seconds": 2.747,
+        "status": 0,
+        "logSha256": "f2dd9fd634b3ed090b8515a6b4cbdcf312874896592b9dce9442a0a4ae5893d4",
+        "result": "64 finite children-flatten controls match the real public expression, exact canonical machine/World with four sufficient budgets and pinned native values. The arbitrary-natural-payload proof is checked independently by the kernel."
+      },
+      {
+        "name": "tests/chain-witness-controls.mjs",
+        "seconds": 5.635,
+        "status": 0,
+        "logSha256": "9c568b07cf752c5c24062b14aa98d0fca35c6543e678a9ae744b1f3a0dcd4ae3",
+        "result": "8 finite two-memo/render controls match actual constructors/setters, complete canonical Worlds, native traces and exactly one final render application per update; the quantified public program and setter bridge are independently kernel-checked."
+      },
+      {
+        "name": "tests/proof-process.mjs",
+        "seconds": 0.462,
+        "status": 0,
+        "logSha256": "5e1fdfeefd6606396ce52cbd9cc7bbc360f045eb341eab35d16d90b55a49641f",
+        "result": "Proof process success, rejection and infrastructure/resource stops remain distinct."
+      },
+      {
+        "name": "tests/upstream/action-contract.mjs",
+        "seconds": 0.07,
+        "status": 0,
+        "logSha256": "35af7ac334ab25c3a619b92fec9dc9625d79223c3ac2ec7c2f4e510bb81600a0",
+        "result": "4 source-only action controls preserve first/resumed-slice scheduling, production callback-without-drain behavior, held writes, rejection and nested depth; paired Bend action evidence is checked separately."
+      }
+    ],
+    "alignment": [
+      {
+        "name": "transaction-join-final-observation",
+        "seconds": 8.431,
+        "status": 0,
+        "logSha256": "deab85db0f7c1b6be075f9a5b0ce5ba75ac94986c6ffb368f93b0cac54cfed18",
+        "result": "{\"privateJoinFixtures\":288,\"exactRejoins\":1152,\"resolverQueries\":576,\"bendOpeningFrameControls\":32,\"positiveBlockerControls\":320,\"emptyBlockerControls\":48,\"heldScanControls\":288,\"eligibleScanControls\":48,\"liveRetentionControls\":14,\"absentSourceControls\":2,\"publicHistories\":false}"
+      },
+      {
+        "name": "tests/from-wrap-alignment.mjs",
+        "seconds": 5.407,
+        "status": 0,
+        "logSha256": "3342735cfe5c082ed5830189b701b1faa7704bf38de578325b695714c96c21d2",
+        "result": "384 actual from wrapped-iterator method controls compare concurrent pending pulls, cancellation races, repeated/owner close, rejected returns, native Promise outcomes and exact argument vectors. These are private protocol controls, not public histories."
+      },
+      {
+        "name": "tests/from-bind-alignment.mjs",
+        "seconds": 2.769,
+        "status": 0,
+        "logSha256": "641745e84e25eb1ffd88ad7ce488950f97e8ae02647e8127a6ca2148ac73c778",
+        "result": "288 actual from factory/bindToOwner controls preserve fresh/active flight slots, prior hook identity, forbidden cleanup routing, shared finish identity, callback returns and swallowed unsubscribe errors. These are private protocol controls, not public histories."
+      },
+      {
+        "name": "tests/supersede-alignment.mjs",
+        "seconds": 2.72,
+        "status": 0,
+        "logSha256": "e6319c74e73caa386493a5e5809cf802aad8aceba37379d7804ebe3bc7aa1fd7",
+        "result": "3456 actual internal onSupersede controls preserve eligibility, fresh undefined versus null, active identities, closure chaining, order, finally execution and error precedence. These synthetic states are not public histories."
+      },
+      {
+        "name": "tests/deferred-lifecycle-alignment.mjs",
+        "seconds": 3.028,
+        "status": 0,
+        "logSha256": "824570e0c67211d0a87a30bfca11bf07fd972589ecbc597f582f3a946a0af453",
+        "result": "120 actual serve/handleAsync return controls retain held pending slots (including undefined/zero) before the post-handle value.\n1664 actual deferred closure/window controls preserve flight identity, replacement/quiet reasks, marks, first-held-input landing, disposal, sticky answer windows and original source throws. Public data/thenable construction and async registration are checked separately."
+      },
+      {
+        "name": "tests/deferred-lag-alignment.mjs",
+        "seconds": 3.176,
+        "status": 0,
+        "logSha256": "bca6e7bc9b9eb78a88dd9c99174eda463e0bc8a36d8bb7843740e558ef0fe872",
+        "result": "4210 actual deferred lagOf/installed-hook controls preserve first reachable lag identity, membership-before-seen, dependency-prefix cutoffs, cycles, errors and the complete surrounding World. Public data/thenable lifetimes are checked separately."
+      },
+      {
+        "name": "tests/mark-scopes-alignment.mjs",
+        "seconds": 2.811,
+        "status": 0,
+        "logSha256": "2bab7d710b44fcf69e7a747723ccb69e9440405abaa5f8750f36f6924314c1d7",
+        "result": "Source transaction mark lists retain separate sender/recipient values across later merges.\n24 actual declaration controls preserve ambient/transaction routing, redirects and duplicate scopes."
+      },
+      {
+        "name": "tests/verdict-read-alignment.mjs",
+        "seconds": 3.538,
+        "status": 0,
+        "logSha256": "26729dca555f9d6aabec13de549c859c340a3507c7de3c2d97146fc5c6ec5e08",
+        "result": "5322 actual verdictValue programs compare tracked/untracked pulls, raw values/errors, held/latest/probe/lane branches, marks and queue/transaction mutations."
+      },
+      {
+        "name": "tests/verdict-comparators.mjs",
+        "seconds": 2.976,
+        "status": 0,
+        "logSha256": "9cbf11c6697151dca090e583da621a9ccf663e8b15919b8ff02d99ce4769bad0",
+        "result": "44 native verdict-window comparator controls preserve arbitrary return truthiness, arguments, identity, user throws/NotReady and absence of isSame error wrapping across lane/truth/held-finality sites."
+      },
+      {
+        "name": "tests/lane-flush-alignment.mjs",
+        "seconds": 3.366,
+        "status": 0,
+        "logSha256": "a9247d6d34a605302bc10ed0a942567b307281d3967cd170b2a9f289bf995b3b",
+        "result": "538 native full-settle programs retain corrections, queued guesses, lane reveals/end, captured own/lane/landing queue order and parent landing."
+      },
+      {
+        "name": "tests/lane-pass-alignment.mjs",
+        "seconds": 3.457,
+        "status": 0,
+        "logSha256": "91d56da5b0b411115734d828e93eac49961d4c8be94d3c222ba2312dbb6d8f71",
+        "result": "5354 actual recompute/head controls preserve seating, mount restoration, previous slots, lane publication and effect queue routing."
+      },
+      {
+        "name": "tests/lane-frame-alignment.mjs",
+        "seconds": 2.797,
+        "status": 0,
+        "logSha256": "85b801cf1aa0e85100baf11cb8a2b5d303c4b588442ea4ffd356d75e0472bb4f",
+        "result": "1728 native nearest-owner/heap programs preserve parked-lane cancellation, mainline follow-up, zombie deferral and tracked-effect queue precedence."
+      },
+      {
+        "name": "tests/lane-guesses-alignment.mjs",
+        "seconds": 3.19,
+        "status": 0,
+        "logSha256": "be15eed2e790c5a8b7e733cc617bca250df4dcafb22bf84561dd8d2267bba938",
+        "result": "1425 native queued-guess programs retain reverse pending lookup, raw slots, writer visibility, question stamps, re-asks, held/own-flight parents, live application and fresh-lane judgment prefixes."
+      },
+      {
+        "name": "tests/lane-guesses-callbacks.mjs",
+        "seconds": 3.134,
+        "status": 0,
+        "logSha256": "7d74fde78f1e38c974c07e6dfdd0d4202637e674eb0c0404ab950d5e11d61c7f",
+        "result": "58 native comparator/updater controls retain raw returns/throws, one-time updater invocation, pending-guess composition, function/thenable data and live guess application without isSame wrapping."
+      },
+      {
+        "name": "tests/lane-seams-alignment.mjs",
+        "seconds": 3.06,
+        "status": 0,
+        "logSha256": "e97d4edfaffb05451b1b07569f380eaa8db69ce7cdf3b132d18a3161af4ae348",
+        "result": "2080 native lane-seam helper programs retain leak suppression, disposed/verdict-reader gates, effect seating, deduplication and the judged/current-verdict reverse reveal boundary."
+      },
+      {
+        "name": "tests/lane-answers-alignment.mjs",
+        "seconds": 3.111,
+        "status": 0,
+        "logSha256": "ad03527d4d2d20b485c22bc6cb2499c1f133f219e3b84daa61ed0e6e039f9c54",
+        "result": "1704 native lane write/outcome/correction helper programs match question provenance, stale holds, confirmation versus correction, body/own-flight guards, snapshot lanes and live member scans."
+      },
+      {
+        "name": "tests/lane-answers-callbacks.mjs",
+        "seconds": 3.303,
+        "status": 0,
+        "logSha256": "e98597c040fd75436681830ebbe67142ee292c960fe4c81d8cdfae1af1843efa",
+        "result": "66 native raw comparator controls preserve arbitrary return truthiness, arguments, identity, user throws/NotReady and absence of isSame error wrapping at lane write/outcome/correction boundaries."
+      },
+      {
+        "name": "tests/lane-core-read-alignment.mjs",
+        "seconds": 3.357,
+        "status": 0,
+        "logSha256": "3bb4b6fa57c4c65773e58a35fa5105a93c822eae6c8c6e3a825d51c529924c16",
+        "result": "5048 native lane/truth/held-finality helper programs preserve raw values, stale render routing, screen/authoritative reads, error/loading precedence and lane/transaction mutation; 720 exact question-order/provenance controls pass."
+      },
+      {
+        "name": "tests/lane-core-io.mjs",
+        "seconds": 2.923,
+        "status": 0,
+        "logSha256": "4ec2e72a0db5fa1056917ccd2d08e024b49ce44335876ce555756a7d54bc4002",
+        "result": "28 native core read/setter controls retain lane early reads, updater entry values, reentrant corrections, raw updater throws and actual hook dispatch."
+      },
+      {
+        "name": "tests/lane-lifecycle-alignment.mjs",
+        "seconds": 3.21,
+        "status": 0,
+        "logSha256": "c74461c81e18e1ad1a673e439016f10c62b814d7312909ac2715e3a836122824",
+        "result": "3496 native lane lifecycle helper programs match confirmation/correction, commit/revert, reveal, nested teardown, member order, raw slots and queue disposition."
+      },
+      {
+        "name": "tests/lane-lifecycle-callbacks.mjs",
+        "seconds": 3.829,
+        "status": 0,
+        "logSha256": "13f4d4b99c7b72326b75e833d8de47fa8a2c311b7bfbf167d5ad99cae553e8e4",
+        "result": "60 native lifecycle cleanup controls retain LIFO continuation, raw falsey errors, callback reads/writes, final fields and once-only drain rethrow.\n22 native raw comparator controls preserve arbitrary return truthiness, arguments, identity, user throws/NotReady and absence of isSame error wrapping after lane dissolution has already committed its member."
+      },
+      {
+        "name": "tests/lane-read-alignment.mjs",
+        "seconds": 3.547,
+        "status": 0,
+        "logSha256": "3d0440f8d47dfcbfad1bc4bbdf73cc539159b8625c4e2aade454d97c830cce68",
+        "result": "3498 native lane/truth/held-finality helper programs preserve raw values, stale render routing, screen/authoritative reads, error/loading precedence and lane/transaction mutation; 720 exact question-order/provenance controls pass."
+      },
+      {
+        "name": "tests/lane-raw-comparators.mjs",
+        "seconds": 3.331,
+        "status": 0,
+        "logSha256": "b5ba3d4960436ec8afa38a3e4f8983f1338a0d3e904e5708179eba89297fa942",
+        "result": "66 native raw comparator controls preserve arbitrary return truthiness, arguments, identity, user throws/NotReady and absence of isSame error wrapping across lane/truth/held-finality sites."
+      },
+      {
+        "name": "tests/lane-stage-alignment.mjs",
+        "seconds": 3.544,
+        "status": 0,
+        "logSha256": "32182f69a18c6decfa84ccf2aabdc8519ba2039698465c746d589d92a806edd0",
+        "result": "1616 native laneStage helper programs preserve memo/effect entry, three error forms, frame-pending refusal, stale shown exit, raw membership, staging and repeated-call behavior."
+      },
+      {
+        "name": "tests/blockers-alignment.mjs",
+        "seconds": 3.548,
+        "status": 0,
+        "logSha256": "208fee774d14675a043d47bfec78f346b8a426d13a255a42277dfd06e2b9f3cf",
+        "result": "1190 lane-blocking helper programs / 29700 native judgments match nested/group holds, own-versus-guess flights, source ownership, redirects and judge restoration after every call."
+      },
+      {
+        "name": "tests/verdict-state-alignment.mjs",
+        "seconds": 3.159,
+        "status": 0,
+        "logSha256": "b48e19af04ad97ae537b051c430b6b71d1cf2dfe9a7ffb82e7b69e6f382539d1",
+        "result": "960 native held-latest controls preserve flushed stamps, late-linker flags, staged errors and falsy/absent values.\n2356 actual verdict-bookkeeping helper comparisons preserve quiet/loading distinction, reader marks, conditional routing, ordered reruns, provisional seam answers, flight observation and ambient state."
+      },
+      {
+        "name": "tests/lanes-state-alignment.mjs",
+        "seconds": 3.492,
+        "status": 0,
+        "logSha256": "39aa0aabe586e57c5ec3035c158d67da32521aef85f0f9d12e77b3dfa1b071a1",
+        "result": "392 native display/lane-value controls retain guess, staged, shown, absent and falsy-value distinctions.\n1367 lane-identity/routing helper comparisons match pinned TS allocation, cached verdicts, shared group mutation/retired aliases, ancestry, pass routing, staged-reader intake and lane-dirty flags."
+      },
+      {
+        "name": "tests/marks-alignment.mjs",
+        "seconds": 3.017,
+        "status": 0,
+        "logSha256": "1f530c60ff9d0dfc725f2aef76af130e8f9664a6d8492746a9a5388eadb27860",
+        "result": "2682 affects-marks helper comparisons match pinned TS counts, exact heap state/order, current dependency prefixes, errors, cycles, shared seen sets and effect cutoffs."
+      },
+      {
+        "name": "tests/map-alignment.mjs",
+        "seconds": 3.049,
+        "status": 0,
+        "logSha256": "9760137edf39293144d37929ad4c84c68f2c37095d42468214f1d83cc6135130",
+        "result": "34 actual trySmallMove states, 25 core fast-path return points, 24 actual stageRemoval states and 7 actual commitWindow states agree; packing-overflow admission remains explicit."
+      },
+      {
+        "name": "tests/upstream-impact.mjs",
+        "seconds": 1.568,
+        "status": 0,
+        "logSha256": "c7757547adb28735a5d8ee47c6d1a519ccc422e5cb4adb6f66cb2a4fcf88012e",
+        "result": "Upstream impact reporting passed changed-function/constructor/named-closure, file-level, added-unit, shared-store, CLI, and read-only checks."
+      },
+      {
+        "name": "tests/owner-boundaries.mjs",
+        "seconds": 0.092,
+        "status": 0,
+        "logSha256": "5263db18b45d365f443d8c49bd056aecf97cf9c9920edb8e69dd9216288de68a",
+        "result": "Owner-boundary inventory locates 0 remaining core World-helper calls and preserves the migrated scheduler/trim distinction."
+      },
+      {
+        "name": "tests/refresh-alignment.mjs",
+        "seconds": 0.201,
+        "status": 0,
+        "logSha256": "6214063b26d56be58d78b0dbb2330f0c4f7ef3f3ca50cc788f511e2d53289486",
+        "result": "Refresh helper matches pinned TS target/downstream flags, repeated invalidation, pass consumption, and disposed/plain-node refusals."
+      },
+      {
+        "name": "tests/commit-alignment.mjs",
+        "seconds": 2.903,
+        "status": 0,
+        "logSha256": "a4c2f21b01cc9e21c3ac00caa49920c310700b7452dbe2684d746977dd369651",
+        "result": "4608 commit-state comparisons match pinned TS, including undefined staging, signal/computed separation, flight bits, staged effect queues, stale-tail error gates, cold metadata and held/override intake guards. Staged-error commit has a focused wrapper/value regression; held execution is checked separately."
+      },
+      {
+        "name": "tests/read-alignment.mjs",
+        "seconds": 2.998,
+        "status": 0,
+        "logSha256": "980c666a09124c9a8fc467f4e42a7a4ba428ba26f8975efd7e46f4976b6632e5",
+        "result": "768 read-state comparisons match pinned TS signal fast reads and slow serve, including late-linker/staged flags, untrack, frame readers, undefined and promoted writes; promotion/reset and 24 held-stash helper cases match too. 24 verdict-bit carry cases match the memo-only post-pull flags store."
+      },
+      {
+        "name": "tests/construct-alignment.mjs",
+        "seconds": 3.243,
+        "status": 0,
+        "logSha256": "1c26230923c329f2c4614bdfe538bde4563a43978a9cdf10490a1431c0919b84",
+        "result": "10752 constructor comparisons match pinned TS signal/writable-memo/memo/effect/owner defaults and option masks, loading presence, parent/root height setup, links and lazy extension defaults; ext identity is retained."
+      },
+      {
+        "name": "tests/owner-alignment.mjs",
+        "seconds": 2.657,
+        "status": 0,
+        "logSha256": "d0e3a9fb7014c658affd9d2a73f4a8b86f948ae841f10ecded2601ad7d8e428b",
+        "result": "16 owner teardown comparisons match pinned TS live child/sibling state and cleanup order, including parked frames, LIFO callbacks, reentrancy, registration during drain, throws, live next-sibling changes, dead children and queued dependency-free nodes."
+      },
+      {
+        "name": "tests/owner-core-alignment.mjs",
+        "seconds": 4.466,
+        "status": 0,
+        "logSha256": "dd886c28c74cc8f6044074f66bba130260cff8fa2c3d0e781a82fbdfc1ed2dea",
+        "result": "136 direct owner/core continuation probes match actual pinned Solid disposal, callback reads, partial throws, pending and effect cleanup return points. Public teardown-expression histories are checked separately."
+      },
+      {
+        "name": "tests/lifecycle-alignment.mjs",
+        "seconds": 2.615,
+        "status": 0,
+        "logSha256": "a0148dfbb6d14cc87ed1d9f4a19146178a246781d12ef2d17c502396f9c2df1d",
+        "result": "12 lifecycle comparisons match pinned TS recompute/park/commit and cancellation order and cleanup-staged live intake, including unchanged frames, restaging, in-flight commit, cleanup throws and flush finally state."
+      },
+      {
+        "name": "tests/graph-alignment.mjs",
+        "seconds": 2.792,
+        "status": 0,
+        "logSha256": "8012fe7a943a98bfe4e1a3bfd74a55955f8653373c1a68c8927d1f98691d75ec",
+        "result": "144 graph-state comparisons match TS detachment, last-subscriber hooks, dormancy guards, callback writes and partial state after throws."
+      },
+      {
+        "name": "tests/status-alignment.mjs",
+        "seconds": 3.031,
+        "status": 0,
+        "logSha256": "a9a9bcb65e76435b75f8aa7766616bb8f3641c2248e6a60827e7af9e27ef68e5",
+        "result": "6144 status-state comparisons, including all STATUS_NO_VALUE bit combinations, match TS clearStatus/error notification, wrapper sharing, diamond propagation, rederive/verdict branches, effect queues, node-owned forwarding and halt partial states. Tracked effects retain their distinct pending/error notifier branches."
+      },
+      {
+        "name": "tests/tracked-alignment.mjs",
+        "seconds": 3.319,
+        "status": 0,
+        "logSha256": "c751533477566b175ac4f53b13a17ceacc8845c72dfb792ca0f73785742272c1",
+        "result": "32 actual tracked-run closure comparisons preserve duplicate-run gates, disposal, cleanup assignment, values and stale-scope restoration."
+      },
+      {
+        "name": "tests/settled-alignment.mjs",
+        "seconds": 3.809,
+        "status": 0,
+        "logSha256": "ae4799871b2edb1ea3e14c8e0ae512ec7b4b5bc7c168c65abcdd4cdc06255cb3",
+        "result": "48 native onSettled.fire comparisons preserve heap gating, repeated closure identity, node-free allocation and lane queue routing."
+      },
+      {
+        "name": "tests/error-alignment.mjs",
+        "seconds": 1.321,
+        "status": 0,
+        "logSha256": "a545f79f8c6657314336162f42d6b0277c034e2b674001888d50c18552c3e0aa",
+        "result": "50 actual StatusError constructor/unwrap comparisons match captured messages, primitives/numeric bounds, wrappers, NotReady/Timeout errors and native/foreign Error prototype branches."
+      },
+      {
+        "name": "tests/staged-answer-alignment.mjs",
+        "seconds": 3.12,
+        "status": 0,
+        "logSha256": "e9f39736af309124e20d06a5a02c5ced8adfe65c15dbcb38f9051ea6da859f52",
+        "result": "17280 first-answer/reask private fixtures compare three helper calls, served stamps at clocks0/1, optional and allocated-empty Sets, pending deletion, reader kinds and held/error/lane gates against unchanged source."
+      },
+      {
+        "name": "tests/pending-alignment.mjs",
+        "seconds": 3.438,
+        "status": 0,
+        "logSha256": "8e96220cd65c3262744b61bb2ef4fffedf5e423a43088743a3c84d0f80e9df79",
+        "result": "2304 pending-state comparisons and 288 staged-error nested-settlement comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Public promise/transaction execution is checked separately."
+      },
+      {
+        "name": "tests/transaction-alignment.mjs",
+        "seconds": 3.397,
+        "status": 0,
+        "logSha256": "6b473c21ea87fbb86618201c68129e52c7f73c6de5dfb40da5b8c3bb3cd4d87f",
+        "result": "2520 transaction-state and 4096 blocker comparisons match TS merging/joins, held frames, own-source filtering, stale-link/error gates, zombie removal judgments and blocker lists."
+      },
+      {
+        "name": "tests/seam-alignment.mjs",
+        "seconds": 3.19,
+        "status": 0,
+        "logSha256": "89602da3e37a4cc63d565e583c70c01010dff413e0d3be46608966d1c9df3a2e",
+        "result": "2304 seam and 48 deferred-zombie comparisons match TS park/commit/land, blocker judgments, queue ordering, zombie disposal, net-zero writes, live landing rewrites and exceptional partial state."
+      },
+      {
+        "name": "tests/held-alignment.mjs",
+        "seconds": 3.511,
+        "status": 0,
+        "logSha256": "f91f62c9ad2199d960f515a9d5046abbc622fb047d6783598364516f30c085d8",
+        "result": "288 frame-posture comparisons independently vary CONFIG_FRAME and memo/render kind across reads and held re-entry.\n4096 setMemo comparisons match actual TS raw/updater calls, committed-versus-staged previous values, manual writes, held rederivation flags, heaps and schedules.\n4096 held-operation comparisons match TS signal/memo reads and writes, frame/born-held posture, unflushed stashes, pending/error throws, recompute catches and staged error publication."
+      },
+      {
+        "name": "tests/flight-alignment.mjs",
+        "seconds": 3.34,
+        "status": 0,
+        "logSha256": "f839a26c3c6049da63ff61b1dcea40c979c4f989460c03debddde289ba94930f",
+        "result": "4096 flight-state comparisons match TS registration, immediate verdicts, identity/dirty guards, loading parks, rejection/status order, autodisposal and held callback publication."
+      },
+      {
+        "name": "tests/watch-alignment.mjs",
+        "seconds": 2.902,
+        "status": 0,
+        "logSha256": "69d4b49c0b715a2620d270bb0210e2b4caf092a745a2ff1433359a6d0a51437b",
+        "result": "6144 watch-body comparisons match actual TS closure calls: own/foreign transaction delivery gates, redirects, rerun deduplication, status unwrapping and NotReady rethrows."
+      },
+      {
+        "name": "tests/question-alignment.mjs",
+        "seconds": 2.641,
+        "status": 0,
+        "logSha256": "2cfc0d22f3db19cd1f51ef8b671a9b67c2b4f0ca571d883a77ae0c01bb72d302",
+        "result": "4096 source question-counter steps, 5 large counter boundaries and 69 flight provenance cases match TS; exact binary increment/equality also pass 4103 integer vectors, including the mainline identity and large mathematical IDs."
+      },
+      {
+        "name": "tests/until-alignment.mjs",
+        "seconds": 3.275,
+        "status": 0,
+        "logSha256": "8dbc6a7bb8dfc15cfa7658372c19dd6b704da7fec9b3eece51fda9506a35002b",
+        "result": "8192 actual until-closure comparisons match own/foreign delivery gates, truthy in-pass confirmation, open/running guards, redirects/merges, errors and NotReady."
+      },
+      {
+        "name": "tests/comparator-alignment.mjs",
+        "seconds": 0.529,
+        "status": 0,
+        "logSha256": "b48e6cecf9d3756f72dcae88fefbcae39336461e3275caef68073d434f1ae10d",
+        "result": "46 direct native isSame comparisons preserve raw verdicts, callback arguments/identity, status-error routing and NotReady behavior."
+      }
+    ]
+  },
+  "nativePinnedPackage": {
+    "trackedSourceUnmodified": true,
+    "buildTiers": [
+      "production",
+      "development",
+      "observe"
+    ],
+    "sourceDeclarations": true,
+    "testFilesPassed": 423,
+    "testsPassed": 6130,
+    "expectedFailures": 14,
+    "skips": 2,
+    "buildTestTreeDiagnostics": "Rollup reports diagnostics in upstream test files while successfully building all tiers; the separate source declaration command passes.",
+    "commands": [
+      {
+        "name": "native-build",
+        "seconds": 41.334,
+        "status": 0,
+        "logSha256": "ab7ca3ccad0c0c7cf26e85934aedf05c33425c04781fc967a0e44ae18cb64084",
+        "result": "mo-flight-no-reask.test.ts:419:15\n\n\u001b[7m419\u001b[0m       refresh(m0);\n\u001b[7m   \u001b[0m \u001b[91m              ~~\u001b[0m\n\n(!) [plugin typescript] tests/verdict-memo-flight-no-reask.test.ts (725:13): @rollup/plugin-typescript TS2345: Argument of type '() => number' is not assignable to parameter of type 'Refreshable<() => number>'.\n  Type '() => number' is not assignable to type '{ readonly [$REFRESH]: any; }'.\n/workspace/scratch/solid-next-71a6a75b/packages/signals/tests/verdict-memo-flight-no-reask.test.ts:725:13\n\n\u001b[7m725\u001b[0m     refresh(m0);\n\u001b[7m   \u001b[0m \u001b[91m            ~~\u001b[0m\n\n(!) Circular dependencies\nsrc/core/core.ts -> src/core/async.ts -> src/core/core.ts\nsrc/core/core.ts -> src/core/async.ts -> src/core/invariants.ts -> src/core/dev.ts -> src/core/core.ts\nsrc/core/core.ts -> src/core/async.ts -> src/core/graph.ts -> src/core/heap.ts -> src/core/core.ts\n...and 8 more\ncreated dist/observe in 11.2s"
+      },
+      {
+        "name": "native-types",
+        "seconds": 3.133,
+        "status": 0,
+        "logSha256": "0a43908f2fcadeac272e13fb34adec3abe212fdb535dfec88a8d01638245dc9e",
+        "result": "> @solidjs/signals@2.0.0-rc.20 types\n> tsc -p tsconfig.build.json"
+      },
+      {
+        "name": "native-tests",
+        "seconds": 65.576,
+        "status": 0,
+        "logSha256": "c46c249a51c447b1636253b9d0ba9360c348ec34b5a403ff7eb2e252d5c6c466",
+        "result": "RUN  v4.1.6 /workspace/scratch/solid-next-71a6a75b/packages/signals\n\n\n Test Files  423 passed (423)\n      Tests  6130 passed | 14 expected fail | 2 skipped (6146)\n   Start at  01:22:34\n   Duration  65.06s (transform 5.37s, setup 0ms, import 33.06s, tests 46.28s, environment 655ms)"
+      }
+    ]
+  },
+  "checkerIntegrity": [
+    {
+      "name": "kernel",
+      "seconds": 1.016,
+      "status": 0,
+      "logSha256": "3ec0c3722028faeb3b79399914daa472a6194b7ca33118e6c8f0430184bbebb9",
+      "result": "{\"profile\":\"same-head-congruence-v1\",\"allLeanTheoremsChecked\":true,\"positiveCases\":6,\"rawKernelCounterexamples\":3,\"fuel\":400000000,\"timings\":[{\"case\":\"shared-call-depth18\",\"seconds\":0.007268113},{\"case\":\"false-argument-depth0\",\"seconds\":0.003993477999999982},{\"case\":\"false-argument-depth1\",\"seconds\":0.004389771999999993},{\"case\":\"false-argument-depth3\",\"seconds\":0.003854863000000023},{\"case\":\"fallback-heads-and-arguments\",\"seconds\":0.0068858089999999945}]}"
+    }
+  ],
+  "negativeChecks": {
+    "configured": 772,
+    "finiteConfigured": 525,
+    "kernelConfigured": 247,
+    "allOperationAnchorsValidated": true,
+    "freshFiniteRejections": 14,
+    "freshProofOracleRejections": 4,
+    "newFiniteFaults": [
+      "ecf first answer loses its served clock",
+      "ecf first answer retires instead of deleting its pending source",
+      "ecf nested staged error loses the inherited payload",
+      "ecf raw captured lane joins the ordinary flush",
+      "ecf custom staged rewrite omits its committed comparison"
+    ],
+    "migratedFaults": [
+      "ordinary body kernel introduces fault during subscriber scheduling",
+      "ordinary body kernel spends action debt while staging a signal",
+      "ordinary body kernel makes the next setter held",
+      "async prefix kernel drops its queued flush",
+      "staging flight control commits proposal before landing",
+      "window verdict pull applies plain read verdict carry",
+      "optimistic async landing skips lane write",
+      "lane answer staged verdict reader sees proposal",
+      "verdict ignores pending source quietness",
+      "public memo setter omits subscriber intake",
+      "async landing bypasses custom comparator",
+      "custom setter drops proposal return",
+      "stale flight writes"
+    ],
+    "unchangedOracleBaselines": "Full package/alignment baselines pass; proof-oracle runner independently checks each unchanged selected module before mutation. Each mutant backend compiles. Resource/parser/backend-compilation failures are excluded. Proof-oracle rejection is not automatically classified as a raw independent-kernel counterexample.",
+    "newResults": [
+      {
+        "name": "ecf-negatives",
+        "seconds": 25.187,
+        "status": 0,
+        "logSha256": "ad530254c65cc40808102dd1a4350c741b7ca1ffa658536f3ba0af064a6a01fb",
+        "result": "Rejected mutation: ecf first answer loses its served clock\nRejected mutation: ecf first answer retires instead of deleting its pending source\nRejected mutation: ecf nested staged error loses the inherited payload\nRejected mutation: ecf raw captured lane joins the ordinary flush\nRejected mutation: ecf custom staged rewrite omits its committed comparison\n5 source-changing variants rejected by differential or kernel assertions."
+      }
+    ],
+    "migratedResults": [
+      {
+        "name": "migrated-negative-01",
+        "seconds": 5.534,
+        "status": 0,
+        "logSha256": "764a38eade7b823e4c5d5c0c42b1187531e56b5791a4f5bf82b8af8a8460be40",
+        "result": "Rejected mutation: ordinary body kernel introduces fault during subscriber scheduling\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-02",
+        "seconds": 5.438,
+        "status": 0,
+        "logSha256": "1d439791462752d013acf4166268f2dd0e07d7d8315ee853c574374f43c58a26",
+        "result": "Rejected mutation: ordinary body kernel spends action debt while staging a signal\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-03",
+        "seconds": 5.573,
+        "status": 0,
+        "logSha256": "30bc7d2c10409c36166f9fcf4e21403650c4ac2e1f031878d49740b7fc5abde1",
+        "result": "Rejected mutation: ordinary body kernel makes the next setter held\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-04",
+        "seconds": 8.433,
+        "status": 0,
+        "logSha256": "018b76332285e9e0b486dc5cfe922139f9d8c5d652c79aef754af5f39cb92d7c",
+        "result": "Rejected mutation: async prefix kernel drops its queued flush\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-05",
+        "seconds": 6.892,
+        "status": 0,
+        "logSha256": "c58b8948f8c7b51d5be203e210ac6b85b31ad4c93af0b2842ecfd147ba94aaca",
+        "result": "Rejected mutation: staging flight control commits proposal before landing\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-06",
+        "seconds": 6.044,
+        "status": 0,
+        "logSha256": "f902dda74303e74bd5c85466457cf3a4fd31f49023c413a35d7ead3bab08e0a0",
+        "result": "Rejected mutation: window verdict pull applies plain read verdict carry\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-07",
+        "seconds": 3.222,
+        "status": 0,
+        "logSha256": "17fd80976296a023081c851f23d5a230235ee5ff91b1d867176d830f5101d43c",
+        "result": "Rejected mutation: optimistic async landing skips lane write\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-08",
+        "seconds": 5.968,
+        "status": 0,
+        "logSha256": "32ad05ceb5466cb29d326978b07922d3ea244d92ff2cdfedc3d901603e99388a",
+        "result": "Rejected mutation: lane answer staged verdict reader sees proposal\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-09",
+        "seconds": 5.35,
+        "status": 0,
+        "logSha256": "3d8b1d199b869a8a1d6dd715f262305a2542a5faa126c0a5959b54efcc6ba858",
+        "result": "Rejected mutation: verdict ignores pending source quietness\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-10",
+        "seconds": 18.231,
+        "status": 0,
+        "logSha256": "ba3ad2748af5519c5393ff5b5780c70120fbd68916a249569890a7fc8a2d0153",
+        "result": "Rejected mutation: public memo setter omits subscriber intake\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-11",
+        "seconds": 4.55,
+        "status": 0,
+        "logSha256": "2d54b9ea5441eac9773e3ea1e994e35cd2c2c5be3908526753204e8b6cd74975",
+        "result": "Rejected mutation: async landing bypasses custom comparator\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-12",
+        "seconds": 3.255,
+        "status": 0,
+        "logSha256": "86a6d8e5e436cc2834e98f8120a894d96158a391858d4396eb1b9d298b29768c",
+        "result": "Rejected mutation: custom setter drops proposal return\n1 source-changing variants rejected by differential or kernel assertions."
+      },
+      {
+        "name": "migrated-negative-13",
+        "seconds": 3.636,
+        "status": 0,
+        "logSha256": "1f67157741886172484354342ea452097449e03cd79a7d1d78b786cb1edd4277",
+        "result": "Rejected mutation: stale flight writes\n1 source-changing variants rejected by differential or kernel assertions."
+      }
+    ],
+    "completeSweepAtCurrentPin": false,
+    "historicalCompleteSweep": "tracking/reviews/complete-767-negative.json",
+    "historicalScope": "Frozen d7cdef988 / 5e68925c, 820 composed roots; not the ecf30116 runtime."
+  },
+  "scope": "Source-followable incremental non-store translation and scoped semantic contracts, not formal TS/Bend equivalence or full-package correctness. General branching held-action publication remains open; source exclusions are retained in the fidelity ledger. No new upstream bug or semantic workaround was introduced in this rebase."
+}

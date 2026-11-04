@@ -44,17 +44,17 @@ def memoEnters(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +tx: R.T
               match node:
                 case R.Node{+node_kind, +node_value, +node_pending, +node_equals, +node_config, +node_flags, +node_status, +node_time, +node_notified, +node_deps, +node_depsTail, +node_depGen, +node_subs, +node_subsTail, +node_height, +node_nextHeap, +node_prevHeap, +node_parent, +node_firstChild, +node_nextSibling, +node_prevSibling, +node_expr, +node_modified, +node_prevValue, +node_target, +node_loading, +node_x, +node_parentComputed, +node_scope, +node_childCount, +node_disposal, +node_cleanup, +node_effectProgram, +node_returnedCleanup, +node_errorProgram}:
                   match extension:
-                    case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight}:
+                    case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight, +served}:
                       match tx:
-                        case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks}:
+                        case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks, +latest}:
                           {==}
             case True{}:
               match node:
                 case R.Node{+node_kind, +node_value, +node_pending, +node_equals, +node_config, +node_flags, +node_status, +node_time, +node_notified, +node_deps, +node_depsTail, +node_depGen, +node_subs, +node_subsTail, +node_height, +node_nextHeap, +node_prevHeap, +node_parent, +node_firstChild, +node_nextSibling, +node_prevSibling, +node_expr, +node_modified, +node_prevValue, +node_target, +node_loading, +node_x, +node_parentComputed, +node_scope, +node_childCount, +node_disposal, +node_cleanup, +node_effectProgram, +node_returnedCleanup, +node_errorProgram}:
                   match extension:
-                    case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight}:
+                    case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight, +served}:
                       match tx:
-                        case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks}:
+                        case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks, +latest}:
                           {==}
 
 def failedEffectEnters(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +tx: R.Transaction, +nodes: List<&2, R.Node>, +extensions: List<&2, R.NodeExtension>, +txs: List<&2, R.Transaction>) ->
@@ -64,9 +64,9 @@ def failedEffectEnters(+w: R.World, +node: R.Node, +extension: R.NodeExtension, 
       match node:
         case R.Node{+node_kind, +node_value, +node_pending, +node_equals, +node_config, +node_flags, +node_status, +node_time, +node_notified, +node_deps, +node_depsTail, +node_depGen, +node_subs, +node_subsTail, +node_height, +node_nextHeap, +node_prevHeap, +node_parent, +node_firstChild, +node_nextSibling, +node_prevSibling, +node_expr, +node_modified, +node_prevValue, +node_target, +node_loading, +node_x, +node_parentComputed, +node_scope, +node_childCount, +node_disposal, +node_cleanup, +node_effectProgram, +node_returnedCleanup, +node_errorProgram}:
           match extension:
-            case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight}:
+            case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight, +served}:
               match tx:
-                case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks}:
+                case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks, +latest}:
                   {==}
 
 def frameScope(w: R.World, node: R.Node, source: R.Node, nodes: List<&2, R.Node>) -> R.World:

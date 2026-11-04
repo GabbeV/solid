@@ -98,9 +98,27 @@ def tailFrame(+w: R.World, +id: Nat, +value: R.Value, +node: R.Node, +staged: Bo
         Frame.choice(B.computed(R.Node.kind(node)), noted, B.store_node(noted, id, R.Node.with_time(B.node(noted, id), R.World.clock(noted))), noted, Frame.time(noted, id, R.World.clock(noted)), {==})),
       Frame.choice(Nat.is_ne(R.World.context(pending), 0n), pending, V.notePromotedWrite(pending, id), pending, promoted(pending, id), {==})), Frame.pending(w, id, R.Present{value}))
 
+# The new source tail reloads kind/notified from the live node after intake.
+# Keep the earlier cached-node helper above for its existing local contracts;
+# connect the actual setter through this unrestricted live-tail frame instead.
+def storedFrame(+w: R.World, +id: Nat, +value: R.Value, +staged: Bool) ->
+  {Frame.observe(W.stageStored(w, id, value, staged)) == Frame.observe(w) : Frame.View}:
+  +pending = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
+  +noted = B.choose(~R.World, Nat.is_ne(R.World.context(pending), 0n), _ => V.notePromotedWrite(pending, id), _ => pending)
+  +computed = B.computed(R.Node.kind(B.node(noted, id)))
+  +timed = B.choose(~R.World, computed, _ => B.store_node(noted, id, R.Node.with_time(B.node(noted, id), R.World.clock(noted))), _ => noted)
+  +repeated = Bool.and(staged, B.stampMatches(R.Node.notified(B.node(timed, id)), R.World.epoch(timed)))
+  Frame.compose(w, pending, W.stageStored(w, id, value, staged),
+    Frame.compose(pending, noted, W.stageStored(w, id, value, staged),
+      Frame.compose(noted, timed, W.stageStored(w, id, value, staged),
+        Frame.choice(repeated, timed, timed, B.schedule(W.insertSubs(timed, id)), {==},
+          Frame.compose(timed, W.insertSubs(timed, id), B.schedule(W.insertSubs(timed, id)), Frame.schedule(W.insertSubs(timed, id)), insertSubs(timed, id))),
+        Frame.choice(computed, noted, B.store_node(noted, id, R.Node.with_time(B.node(noted, id), R.World.clock(noted))), noted, Frame.time(noted, id, R.World.clock(noted)), {==})),
+      Frame.choice(Nat.is_ne(R.World.context(pending), 0n), pending, V.notePromotedWrite(pending, id), pending, promoted(pending, id), {==})), Frame.pending(w, id, R.Present{value}))
+
 def stages(+w: R.World, +id: Nat, +value: R.Value) ->
   {Frame.observe(W.stageResolved(w, id, value)) == Frame.observe(w) : Frame.View}:
   +node = B.node(w, id)
   +staged = B.present(R.Node.pending(node))
-  +next = intake(w, id, node, staged)
-  Frame.compose(w, next, W.stageResolved(w, id, value), tailFrame(next, id, value, node, staged), intakeFrame(w, id, node, staged))
+  +next = W.stageIntake(w, id, staged)
+  Frame.compose(w, next, W.stageResolved(w, id, value), storedFrame(next, id, value, staged), intakeFrame(w, id, node, staged))

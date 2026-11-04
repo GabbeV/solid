@@ -96,3 +96,17 @@ def length(+seed: R.World,+id: Nat,+first: R.Expr,+second: R.Expr,+reverse: Bool
   +next = State.joined(seed,second,reverse)
   +after = Pair.after(w,[],Data.group(id),[],Opening.record(1n,True{}),[],reverse)
   Equal.trans(Nat,B.length(R.Transaction,R.World.txArena(next)),B.length(R.Transaction,R.World.txArena(after)),3n,Equal.cong(R.World,Nat,state=>B.length(R.Transaction,R.World.txArena(state)),next,after,Joined.exact(seed,id,first,second,reverse,ready)),lengthAfter(w,id,reverse))
+
+def plainAfter(+w: R.World,+id: Nat,+reverse: Bool,+secondActor: Bool) -> {R.Transaction.lane(B.transaction(Pair.after(w,[],Data.group(id),[],Opening.record(1n,True{}),[],reverse),1n+actor(secondActor))) == False{} : Bool}:
+  match w:
+    case R.World{+nodes, +links, +buckets, +minimum, +maximum, +marked, +pendingNodes, +trims, +renderQueue, +userQueue, +context, +tracking, +running, +scheduled, +clock, +epoch, +tree, +events, +fault, +unflushedStaged, +promotedWrites, +extensions, +cleanupPrograms, +dormantNodes, +errorSerial, +halted, +haltNotified, +reports, +callbackEffect, +txArena, +transactions, +flushTransaction, +passTx, +passLane, +judge, +deferredZombies, +question, +pendingSets, +asyncObjects, +asyncObservers, +hostJobs, +syncDepth, +streamPlans, +iterators, +streams, +iteratorEvents, +awaiters, +truthReadHook, +truthConfirmedHook, +questions, +abortInputs, +contextKeys, +contextRecords, +deferredReleases, +releaseLists, +stale, +settledCallbacks, +reactions, +comparators, +actionDepth, +actions, +actionWaits, +arrays, +repeats, +maps, +activeMarks, +laneState, +verdictState, +cleanupError, +ambientMarks, +deferredArena}:
+      match reverse secondActor:
+        case False{} False{}: {==}
+        case False{} True{}: {==}
+        case True{} False{}: {==}
+        case True{} True{}: {==}
+
+def plain(+seed: R.World,+id: Nat,+first: R.Expr,+second: R.Expr,+reverse: Bool,+secondActor: Bool,ready: Ready.Ready<seed,id,first>) -> {R.Transaction.lane(B.transaction(State.joined(seed,second,reverse),1n+actor(secondActor))) == False{} : Bool}:
+  +w = State.opened(seed,second)
+  +after = Pair.after(w,[],Data.group(id),[],Opening.record(1n,True{}),[],reverse)
+  Equal.trans(Bool,R.Transaction.lane(B.transaction(State.joined(seed,second,reverse),1n+actor(secondActor))),R.Transaction.lane(B.transaction(after,1n+actor(secondActor))),False{},Equal.cong(R.World,Bool,state=>R.Transaction.lane(B.transaction(state,1n+actor(secondActor))),State.joined(seed,second,reverse),after,Joined.exact(seed,id,first,second,reverse,ready)),plainAfter(w,id,reverse,secondActor))

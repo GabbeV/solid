@@ -12,7 +12,7 @@ import ./transaction-resolution.bend as Routes
 
 def resetTransaction(+record: R.NodeExtension) -> {R.NodeExtension.with_transaction(record,R.NodeExtension.transaction(record)) == record : R.NodeExtension}:
   match record:
-    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight}: {==}
+    case R.NodeExtension{inFlight,flightTeardown,error,blocked,pendingSources,unobserved,snapshotValue,pendingFirstChild,pendingDisposal,transaction,reask,flushed,flushedAt,q,lane,marks,shownError, +parkedFlight, +served}: {==}
 
 def storeRead(+w: R.World,+id: Nat) -> {B.store_extension(w,id,B.extension(w,id)) == w : R.World}:
   match w:
@@ -40,11 +40,24 @@ def initial(+w: R.World,+root: Nat,+future: Nat) -> R.World:
       R.World.with_flushTransaction(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair)),
     _=>B.choose(~R.World,Nat.is_eq(root,0n),_=>w,_=>X.merge(w,root,future)))
 
-def joinFuture(+w: R.World,+offset: Nat,+current: {R.World.flushTransaction(w) == 1n+offset : Nat},+stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}) -> {X.joinFuture(w,1n+offset) == scheduled(w) : R.World}:
+# Raw capture gate. A redirected capture and its resolved root may differ.
+def laneSelect(+w: R.World,+capture: Nat,+ordinary: R.World) -> R.World:
+  B.choose(~R.World,R.Transaction.lane(B.transaction(w,capture)),_=>w,_=>ordinary)
+
+# The raw lane marker is tested before alias resolution. Keep both outcomes;
+# ordinary setter profiles need not acquire a new lane-false assumption.
+def selected(+w: R.World,+root: Nat) -> R.World:
+  B.choose(~R.World,R.Transaction.lane(B.transaction(w,root)),_=>w,_=>scheduled(w))
+
+def joinFutureOrdinary(+w: R.World,+offset: Nat,+current: {R.World.flushTransaction(w) == 1n+offset : Nat},+stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}) -> {X.joinFutureOrdinary(w,1n+offset) == scheduled(w) : R.World}:
   +root = {1n+offset : Nat}
   +resolved = Routes.stopped(w,root,B.length(R.Transaction,R.World.txArena(w)),stopped)
   Equal.cong(R.World,R.World,state=>scheduled(state),initial(w,root,R.World.flushTransaction(w)),w,Equal.trans(R.World,initial(w,root,R.World.flushTransaction(w)),X.merge(w,root,root),w,Equal.cong(Nat,R.World,future=>initial(w,root,future),R.World.flushTransaction(w),root,current),Routes.common(w,root,root,root,resolved,resolved)))
 
-def actual(+w: R.World,+id: Nat,+offset: Nat,canonical: {R.NodeExtension.transaction(B.extension(w,id)) == 1n+offset : Nat},current: {R.World.flushTransaction(w) == 1n+offset : Nat},+stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}) -> {X.joinNode(w,id) == scheduled(w) : R.World}:
+def joinFuture(+w: R.World,+offset: Nat,+current: {R.World.flushTransaction(w) == 1n+offset : Nat},+stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}) -> {X.joinFuture(w,1n+offset) == selected(w,1n+offset) : R.World}:
   +root = {1n+offset : Nat}
-  Equal.trans(R.World,X.joinNode(w,id),X.joinFuture(w,root),scheduled(w),Equal.cong(B.Bundle<R.World,Nat>,R.World,pair=>X.joinFuture(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair)),X.txOf(w,id),B.Bundle{w,root},txOf(w,id,root,canonical,stopped)),joinFuture(w,offset,current,stopped))
+  Equal.cong(R.World,R.World,state=>B.choose(~R.World,R.Transaction.lane(B.transaction(w,root)),_=>w,_=>state),X.joinFutureOrdinary(w,root),scheduled(w),joinFutureOrdinary(w,offset,current,stopped))
+
+def actual(+w: R.World,+id: Nat,+offset: Nat,canonical: {R.NodeExtension.transaction(B.extension(w,id)) == 1n+offset : Nat},current: {R.World.flushTransaction(w) == 1n+offset : Nat},+stopped: {R.Transaction.into(B.transaction(w,1n+offset)) == 0n : Nat}) -> {X.joinNode(w,id) == selected(w,1n+offset) : R.World}:
+  +root = {1n+offset : Nat}
+  Equal.trans(R.World,X.joinNode(w,id),X.joinFuture(w,root),selected(w,1n+offset),Equal.cong(B.Bundle<R.World,Nat>,R.World,pair=>X.joinFuture(B.first(R.World,Nat,pair),B.second(R.World,Nat,pair)),X.txOf(w,id),B.Bundle{w,root},txOf(w,id,root,canonical,stopped)),joinFuture(w,offset,current,stopped))

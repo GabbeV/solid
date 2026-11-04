@@ -26,7 +26,7 @@ The general `GraphLinked.build` certificate derives the new nonzero head, select
 leaf, end cursor, health and validity of both node IDs, and retains the leaf's
 subscriber/configuration facts. Both flag branches go through actual `Graph.link`;
 no non-recomputing premise is imposed. `startReturn` composes directly to the
-existing ten-step-room actual settlement return, including its early/fault
+existing fourteen-step-room actual settlement return, including its early/fault
 alternatives and exact caller work/stack. `frame` retains every committed node
 value, complete tree and full event trace across graph creation and settlement.
 It does not assert a healthy final result, full readiness or publication.

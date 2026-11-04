@@ -36,7 +36,7 @@ def healthy(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: 
   +method = Resume.methods(values,Graph.source(value),answer)
   +w = Input.registered(value,method,prefix)
   +observer = Input.observer(value,method,prefix)
-  Frame.healthy(State.body(value,values,answer,prefix,rest,stack,incoming,rejected),Entry.work(w,observer,rest),stack,State.form(value,values,answer,prefix,rest,stack,incoming,rejected),Entry.healthy(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.openCount(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix)))
+  Frame.healthy(State.body(value,values,answer,prefix,rest,stack,incoming,rejected),Entry.work(w,observer,rest),stack,State.form(value,values,answer,prefix,rest,stack,incoming,rejected),Entry.healthy(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.openCount(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix),Input.plain(value,method,prefix)))
 
 def cost(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: List<&2,History.WaitEvent>,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> Nat:
   +method = Resume.methods(values,Graph.source(value),answer)
@@ -48,7 +48,7 @@ def drain(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: Li
   +method = Resume.methods(values,Graph.source(value),answer)
   +w = Input.registered(value,method,prefix)
   +observer = Input.observer(value,method,prefix)
-  Entry.drain(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.openCount(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix))
+  Entry.drain(w,observer,0n,values,Graph.source(value),answer,rest,stack,incoming,rejected,0n,0n,0n,Input.profile(value,method,prefix),Input.alias(value,method,prefix),Input.capture(value,method,prefix),{==},Input.empty(value,method,prefix),Input.openCount(value,method,prefix),Input.method(value,method,prefix),Input.found(value,method,prefix),Input.plain(value,method,prefix))
 
 def target(+value: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+prefix: List<&2,History.WaitEvent>,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> C.Machine:
   +method = Resume.methods(values,Graph.source(value),answer)

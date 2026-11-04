@@ -17,11 +17,11 @@ def openRestoresJudge(+w: R.World, +tx: R.Transaction, +rest: List<&2, R.Transac
       match w_judge:
         case 0n:
           match tx:
-            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks}:
+            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks, +latest}:
               {==}
         case 1n+previous:
           match tx:
-            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks}:
+            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks, +latest}:
               {==}
 
 
@@ -42,7 +42,7 @@ def emptyBlocking(+w: R.World,+tx: R.Transaction,+rest: List<&2,R.Transaction>) 
       match w_laneState:
         case R.LaneState{+l_live, +l_groups, +l_stagedReaders, +l_pendingGuesses, +l_judged, +l_root, +l_entered, +l_guessing, +l_guessed, +l_kept, +l_reverted, +l_reverting, +revealing}:
           match tx:
-            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks}:
+            case R.Transaction{+t_nodes, +t_renderQueue, +t_userQueue, +t_reruns, +t_into, +t_parent, +t_lane, +t_verdict, +t_open, +t_acted, +t_links, +t_shown, +t_held, +t_marks, +latest}:
               +scope = emptyScope(w,tx,rest)
               Equal.trans(B.Bundle<R.World,Bool>,X.blocked(scope,1n),B.Bundle{scope,Empty.delay(scope,1n)},B.Bundle{scope,Empty.delay(w,1n)},Empty.public(scope,1n,{==},{==},{==},{==},{==}),{==})
 
@@ -60,9 +60,9 @@ def peerOpenBlocks(+w: R.World, +a: R.Transaction, +b: R.Transaction, +rest: Lis
       match w_laneState:
         case R.LaneState{+l_live, +l_groups, +l_stagedReaders, +l_pendingGuesses, +l_judged, +l_root, +l_entered, +l_guessing, +l_guessed, +l_kept, +l_reverted, +l_reverting, +revealing}:
           match a:
-            case R.Transaction{+a_nodes, +a_renderQueue, +a_userQueue, +a_reruns, +a_into, +a_parent, +a_lane, +a_verdict, +a_open, +a_acted, +a_links, +a_shown, +a_held, +a_marks}:
+            case R.Transaction{+a_nodes, +a_renderQueue, +a_userQueue, +a_reruns, +a_into, +a_parent, +a_lane, +a_verdict, +a_open, +a_acted, +a_links, +a_shown, +a_held, +a_marks, +latest}:
               match b:
-                case R.Transaction{+b_nodes, +b_renderQueue, +b_userQueue, +b_reruns, +b_into, +b_parent, +b_lane, +b_verdict, +b_open, +b_acted, +b_links, +b_shown, +b_held, +b_marks}:
+                case R.Transaction{+b_nodes, +b_renderQueue, +b_userQueue, +b_reruns, +b_into, +b_parent, +b_lane, +b_verdict, +b_open, +b_acted, +b_links, +b_shown, +b_held, +b_marks, +latest}:
                   {==}
 
 def guessScope(+w: R.World, node: R.Node, extension: R.NodeExtension, tx: R.Transaction, nodes: List<&2, R.Node>, extensions: List<&2, R.NodeExtension>, rest: List<&2, R.Transaction>) -> R.World:
@@ -79,7 +79,7 @@ def ownGuessFlight(+w: R.World, +node: R.Node, +extension: R.NodeExtension, +tx:
       match node:
         case R.Node{+node_kind, +node_value, +node_pending, +node_equals, +node_config, +node_flags, +node_status, +node_time, +node_notified, +node_deps, +node_depsTail, +node_depGen, +node_subs, +node_subsTail, +node_height, +node_nextHeap, +node_prevHeap, +node_parent, +node_firstChild, +node_nextSibling, +node_prevSibling, +node_expr, +node_modified, +node_prevValue, +node_target, +node_loading, +node_x, +node_parentComputed, +node_scope, +node_childCount, +node_disposal, +node_cleanup, +node_effectProgram, +node_returnedCleanup, +node_errorProgram}:
           match extension:
-            case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight}:
+            case R.NodeExtension{+extension_inFlight, +extension_flightTeardown, +extension_error, +extension_blocked, +extension_pendingSources, +extension_unobserved, +extension_snapshotValue, +extension_pendingFirstChild, +extension_pendingDisposal, +extension_transaction, +extension_reask, +extension_flushed, +extension_flushedAt, +extension_q, +extension_lane, +extension_marks, +extension_shownError, +parkedFlight, +served}:
               match tx:
-                case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks}:
+                case R.Transaction{+tx_nodes, +tx_renderQueue, +tx_userQueue, +tx_reruns, +tx_into, +tx_parent, +tx_lane, +tx_verdict, +tx_open, +tx_acted, +tx_links, +tx_shown, +tx_held, +tx_marks, +latest}:
                   {==}

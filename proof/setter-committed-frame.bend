@@ -87,7 +87,7 @@ def merge(+w: R.World, +t: Nat, +f: Nat) ->
 def newTransaction(+w: R.World, +lane: Bool, +parent: Nat) ->
   {Frame.observe(B.first(R.World, Nat, X.newTransaction(w, lane, parent))) == Frame.observe(w) : Frame.View}:
   +id = B.length(R.Transaction, R.World.txArena(w))
-  +record = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}} : R.Transaction}
+  +record = {R.Transaction{[], [], [], [], 0n, parent, lane, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}} : R.Transaction}
   +arena = B.append(R.Transaction, R.World.txArena(w), [record])
   +next = R.World.with_txArena(w, arena)
   +listed = R.World.with_transactions(next, B.append(Nat, R.World.transactions(next), [id]))
@@ -112,13 +112,16 @@ def freshFutureFrame(+w: R.World, +t: Nat) ->
   Frame.compose(w, next, freshFuture(w, t), Frame.worldFlushTransaction(next, B.second(R.World, Nat, pair)),
     bundleChoice(Nat.is_eq(t, 0n), w, X.newTransaction(w, False{}, 0n), X.resolveTx(w, t), newTransaction(w, False{}, 0n), resolve(w, t)))
 
-def joinFuture(+w: R.World, +t: Nat) ->
-  {Frame.observe(X.joinFuture(w, t)) == Frame.observe(w) : Frame.View}:
+def joinFutureOrdinary(+w: R.World, +t: Nat) ->
+  {Frame.observe(X.joinFutureOrdinary(w, t)) == Frame.observe(w) : Frame.View}:
   +f = R.World.flushTransaction(w)
   +joined = B.choose(~R.World, Nat.is_eq(t, 0n), _ => w, _ => X.merge(w, t, f))
   +next = B.choose(~R.World, Nat.is_eq(f, 0n), _ => freshFuture(w, t), _ => joined)
-  Frame.compose(w, next, X.joinFuture(w, t), Frame.choice(R.World.running(next), next, next, B.schedule(next), {==}, Frame.schedule(next)),
+  Frame.compose(w, next, X.joinFutureOrdinary(w, t), Frame.choice(R.World.running(next), next, next, B.schedule(next), {==}, Frame.schedule(next)),
     Frame.choice(Nat.is_eq(f, 0n), w, freshFuture(w, t), joined, freshFutureFrame(w, t), Frame.choice(Nat.is_eq(t, 0n), w, w, X.merge(w, t, f), {==}, merge(w, t, f))))
+
+def joinFuture(+w: R.World,+t: Nat) -> {Frame.observe(X.joinFuture(w,t)) == Frame.observe(w) : Frame.View}:
+  Frame.choice(Bool.and(Nat.is_ne(t,0n),R.Transaction.lane(B.transaction(w,t))),w,w,X.joinFutureOrdinary(w,t),{==},joinFutureOrdinary(w,t))
 
 def joinNode(+w: R.World, +id: Nat) ->
   {Frame.observe(X.joinNode(w, id)) == Frame.observe(w) : Frame.View}:

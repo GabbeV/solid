@@ -36,7 +36,7 @@ try{
   const removal=P.removePendingSource(registered,2,1);assert.equal(removal.right,true);assert.equal(P.hasSource(removal.left,2,1),false);
   assert.equal(list(removal.left.extensions)[x].pendingSources,0);assert.deepEqual(list(list(removal.left.pendingSets)[set]),[0]);
   const removalAgain=P.removePendingSource(removal.left,2,1);assert.equal(removalAgain.right,false);assert.deepEqual(removalAgain.left,removal.left);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,10);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,14);
   const machine={$:'Machine',world:registered,tasks:encodeList([{$:'AsyncWriteAfterTrim',id:1},{$:'AsyncWriteSchedule'},...callerWork]),values:stack};
   let returned=machine;for(let step=0;step<certificate.steps;step++)returned=C.step(returned);
   assert.deepEqual(returned,{$:'Machine',world:certificate.world,tasks:rest,values:stack});

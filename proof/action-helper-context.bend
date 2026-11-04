@@ -124,3 +124,6 @@ def arenaErased(+w: R.World) -> {R.World.txArena(erase(w)) == R.World.txArena(w)
 def historyArena(+events: List<&2,History.WaitEvent>,+w: R.World) -> {R.World.txArena(History.run(events,w)) == R.World.txArena(w) : List<&2,R.Transaction>}:
   +next = History.run(events,w)
   Equal.trans(List<&2,R.Transaction>,R.World.txArena(next),R.World.txArena(erase(next)),R.World.txArena(w),Equal.sym(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(next),arenaErased(next)),Equal.trans(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(erase(w)),R.World.txArena(w),Equal.cong(R.World,List<&2,R.Transaction>,state=>R.World.txArena(state),erase(next),erase(w),history(events,w)),arenaErased(w)))
+
+def arenaFrame(+w: R.World,+next: R.World,same: {erase(next) == erase(w) : R.World}) -> {R.World.txArena(next) == R.World.txArena(w) : List<&2,R.Transaction>}:
+  Equal.trans(List<&2,R.Transaction>,R.World.txArena(next),R.World.txArena(erase(next)),R.World.txArena(w),Equal.sym(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(next),arenaErased(next)),Equal.trans(List<&2,R.Transaction>,R.World.txArena(erase(next)),R.World.txArena(erase(w)),R.World.txArena(w),Equal.cong(R.World,List<&2,R.Transaction>,state=>R.World.txArena(state),erase(next),erase(w),same),arenaErased(w)))

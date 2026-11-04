@@ -101,4 +101,4 @@ def blocked(+w: R.World, +predecessor: Nat, +count: Nat, snapshot: Pending<w, 1n
 def openOwnership(+record: R.Transaction, count: Nat) ->
   {ownership(R.Transaction.with_open(record, count)) == ownership(record) : Ownership}:
   match record:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}

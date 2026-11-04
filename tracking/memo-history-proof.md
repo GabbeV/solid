@@ -1,5 +1,11 @@
 # Arbitrary finite scalar-memo update histories
 
+The ecf30116 migration carries the source netted-read flag explicitly. The
+steady canonical state admits either prior flag, and each actual update derives
+the next one from equality of its proposal and committed source. Exact World
+results, equal writes and arbitrary finite histories remain covered. Concrete
+seed construction supplies the first flag; no run-time canonical reset is used.
+
 The regular roots now prove this fixed public program for every natural initial
 value and every finite nonempty list of natural proposals:
 

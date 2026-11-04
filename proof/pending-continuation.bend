@@ -27,6 +27,7 @@ def tasksStack(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, 
     case Q.Collect{id} <> tail: resumeStack(rest, stack, Q.advance(w, Q.Collect{id} <> tail, visited, released, scheduled))
     case Q.CollectWalk{edge} <> tail: resumeStack(rest, stack, Q.advance(w, Q.CollectWalk{edge} <> tail, visited, released, scheduled))
     case Q.CollectNext{edge} <> tail: resumeStack(rest, stack, Q.advance(w, Q.CollectNext{edge} <> tail, visited, released, scheduled))
+    case Q.RestoreSettlement{outerVisited, outerReleased, outerScheduled} <> tail: resumeStack(rest, stack, Q.advance(w, Q.RestoreSettlement{outerVisited, outerReleased, outerScheduled} <> tail, visited, released, scheduled))
     case Q.End{} <> tail: resumeStack(rest, stack, Q.advance(w, Q.End{} <> tail, visited, released, scheduled))
 
 def pendingStack(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool) ->

@@ -7,6 +7,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-chain-witness-'));
+const stagedReadBit=Number(fs.readFileSync(path.join(root,'runtime/constants.bend'),'utf8').match(/def REACTIVE_STAGED_READ\(\) -> U32:\s*(\d+)/)?.[1]);
+if(!Number.isSafeInteger(stagedReadBit)||stagedReadBit<=0)throw Error('Missing source staged-read constant');
 try{
 for(const generic of [false]){
 // Fixed initial graph; only its proposed payload is symbolic.
@@ -31,12 +33,12 @@ function qualified(type,ns){
 }
 function intern(body,type){
  const key=type+'#'+body;if(shared.has(key))return shared.get(key);
- const name='data_'+shared.size,variables=(generic?['initial','input']:['input']).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
- declarations.push(`def ${name}(${variables.map(v=>'+'+v+': Nat').join(', ')}) -> ${type}:\n  ${body}\n`);return call;
+ const name='data_'+shared.size,variables=(generic?['netted','initial','input']:['netted','input']).filter(v=>new RegExp('\\b'+v+'\\b').test(body)),call=name+'('+variables.join(', ')+')';shared.set(key,call);
+ declarations.push(`def ${name}(${variables.map(v=>'+'+v+': '+(v==='netted'?'Bool':'Nat')).join(', ')}) -> ${type}:\n  ${body}\n`);return call;
 }
-function show(value,type,ns='R'){
+function show(value,type,ns='R',flagControl=false){
  const plain=type.replace(/^\w+\./,'');
- if(plain==='Nat')return value+'n';if(plain==='U32')return String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
+ if(plain==='Nat')return value+'n';if(plain==='U32')return flagControl&&(value&stagedReadBit)?'B.choose(~U32,netted,_=>'+(value&~stagedReadBit)+',_=>'+value+')':String(value);if(plain==='Bool')return value?'True{}':'False{}';if(plain==='String')return JSON.stringify(value);
  if(type.startsWith('List<')){const elem=split(type.slice(5,-1))[1],items=[];while('head'in value){items.push(show(value.head,elem,ns));value=value.tail;}return intern('['+items.join(', ')+']',qualified(type,ns));}
  const family=type.includes('.')?type:ns+'.'+type;
  if(family==='R.Value'&&value.$==='Number'){
@@ -44,7 +46,7 @@ function show(value,type,ns='R'){
   if(terms[value.n])return intern('R.Number{'+terms[value.n]+'}','R.Value');
  }
  const con=constructors.get(family+'.'+value.$);if(!con)throw Error('Unknown '+type+' '+JSON.stringify(value));
- return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+value.$+'.'+name+' keys '+Object.keys(value));return show(value[name],t,con.ns);}).join(', ')+'}',qualified(type,ns));
+ return intern(con.ns+'.'+value.$+'{'+con.fields.map(([name,t])=>{if(value[name]===undefined)throw Error('Missing '+value.$+'.'+name+' keys '+Object.keys(value));const firstMemo=family==='R.Node'&&value.kind.$==='Memo'&&value.expr.$==='Add'&&value.expr.left?.$==='Read'&&value.expr.left.id===2;return show(value[name],t,con.ns,name==='flags'&&(firstMemo||(family==='O.Task'&&value.id===3)));}).join(', ')+'}',qualified(type,ns));
 }
 let m=generic?D.before(11,17):D.before(17),states=[m];
 for(let i=0;i<256&&'head'in m.tasks;i++){m=D.step(m);states.push(m);}
@@ -52,19 +54,20 @@ if('head'in m.tasks)throw Error('Driver did not finish');
 const steps=states.length-1;if(steps!==95||m.world.fault.$!=='Healthy')throw Error('The chain witness requires a source review after this runtime change');
 let out=`# SHARED_DATA\n# Canonical data from the actual emitted core.step. The equations in\n# chain-staging check it for arbitrary proposals; generation is not trusted.\nimport Base\nimport ../runtime/api.bend as A\nimport ../runtime/core.bend as C\nimport ../representation/base.bend as B\nimport ../representation/records.bend as R\nimport ../proof/paths.bend as P\nimport ./chain-driver.bend as Driver\nimport ../runtime/owner.bend as O\nimport ../runtime/pending.bend as Q\n\n`;
 out+=`def origin(${generic?'+initial: Nat':''}) -> R.World:\n  ${show(D.base(generic?11:undefined),'World')}\n\n`;
-for(let i=0;i<states.length;i++)out+=`def state_${i}(${generic?'+initial: Nat, ':''}+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\n`;
-out+=`def finalWorld(${generic?'+initial: Nat, ':''}+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\n`;
+for(let i=0;i<states.length;i++)out+=`def at_${i}(+netted: Bool,+input: Nat) -> C.Machine:\n  ${show(states[i],'C.Machine')}\n\ndef state_${i}(+input: Nat) -> C.Machine:\n  at_${i}(Nat.is_eq(input,0n),input)\n\n`;
+out+=`def finalAt(+netted: Bool,+input: Nat) -> R.World:\n  ${show(m.world,'World')}\n\ndef finalWorld(+input: Nat) -> R.World:\n  finalAt(Nat.is_eq(input,0n),input)\n\n`;
+console.log('Source-signal read indices: '+states.map((m,i)=>m.tasks.head?.$==='ReadPrepared'&&m.tasks.head.id===2?JSON.stringify([i,m.world.context]):null).filter(Boolean).join(', '));
 for(const [i,id]of [[13,3],[33,4]]){
  const value=states[i].tasks.head.value,slot=D.slot(states[i].world,id,value);
- out+=`def slot_${i}(+input: Nat) -> R.World:\n  ${show(slot,'World')}\n\n`;
- out+=`def notify_${i}(+input: Nat) -> R.World:\n  ${show(D.notify(slot,id),'World')}\n\n`;
+ out+=`def slotAt_${i}(+netted: Bool,+input: Nat) -> R.World:\n  ${show(slot,'World')}\n\ndef slot_${i}(+input: Nat) -> R.World:\n  slotAt_${i}(Nat.is_eq(input,0n),input)\n\n`;
+ out+=`def notifyAt_${i}(+netted: Bool,+input: Nat) -> R.World:\n  ${show(D.notify(slot,id),'World')}\n\ndef notify_${i}(+input: Nat) -> R.World:\n  notifyAt_${i}(Nat.is_eq(input,0n),input)\n\n`;
 }
 const modified=D.modified(states[55].world,5),queued=D.enqueue(modified,5),valued=D.value(queued,5,states[55].tasks.head.value);
-for(const [name,world]of [['modified_55',modified],['queued_55',queued],['value_55',valued]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+for(const [name,world]of [['modified_55',modified],['queued_55',queued],['value_55',valued]])out+=`def at_${name}(+netted: Bool,+input: Nat) -> R.World:\n  ${show(world,'World')}\n\ndef ${name}(+input: Nat) -> R.World:\n  at_${name}(Nat.is_eq(input,0n),input)\n\n`;
 const setterQueued=D.queued(D.base()),setterSlot=D.slot(setterQueued,2,states[0].world.nodes.tail.tail.head.pending.value),setterInserted=D.notify(setterSlot,2),setterScheduled=D.scheduled(setterInserted);
-for(const [name,world]of [['setter_queued',setterQueued],['setter_slot',setterSlot],['setter_inserted',setterInserted],['setter_scheduled',setterScheduled]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+for(const [name,world]of [['setter_queued',setterQueued],['setter_slot',setterSlot],['setter_inserted',setterInserted],['setter_scheduled',setterScheduled]])out+=`def at_${name}(+netted: Bool,+input: Nat) -> R.World:\n  ${show(world,'World')}\n\ndef ${name}(+input: Nat) -> R.World:\n  at_${name}(Nat.is_eq(input,0n),input)\n\n`;
 const stamped=D.stamp(setterSlot,2),enqueued3=D.heap(stamped,3),enqueued5=D.heap(enqueued3,5);
-for(const [name,world]of [['setter_stamped',stamped],['setter_enqueued3',enqueued3],['setter_enqueued5',enqueued5]])out+=`def ${name}(+input: Nat) -> R.World:\n  ${show(world,'World')}\n\n`;
+for(const [name,world]of [['setter_stamped',stamped],['setter_enqueued3',enqueued3],['setter_enqueued5',enqueued5]])out+=`def at_${name}(+netted: Bool,+input: Nat) -> R.World:\n  ${show(world,'World')}\n\ndef ${name}(+input: Nat) -> R.World:\n  at_${name}(Nat.is_eq(input,0n),input)\n\n`;
 out=out.replace('# SHARED_DATA\n','');const index=out.indexOf('def origin(');out=out.slice(0,index)+declarations.join('\n')+'\n'+out.slice(index);const target=path.join(root,'proof/chain-states.bend');
 if(process.argv.includes('--check')){
  if(fs.readFileSync(target,'utf8')!==out)throw Error('Chain witness is stale; regenerate and run the independent kernel');

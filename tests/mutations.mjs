@@ -5,6 +5,12 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["ecf first answer loses its served clock", "runtime/staged-answer.bend", "R.NodeExtension.with_served(B.extension(w, reader), R.Stamped{R.World.clock(w)})", "R.NodeExtension.with_served(B.extension(w, reader), R.Unstamped{})", "tests/staged-answer-alignment.mjs", "latch"],
+  ["ecf first answer retires instead of deleting its pending source", "runtime/staged-answer.bend", "P.deletePendingSourceSlot(w, reader, P.notReadySource(R.NodeExtension.error(B.extension(w, owner))))", "P.removePendingSource(w, reader, P.notReadySource(R.NodeExtension.error(B.extension(w, owner))))", "tests/staged-answer-alignment.mjs", "servesStaged"],
+  ["ecf nested staged error loses the inherited payload", "runtime/pending.bend", "R.Node.with_pending(B.node(w, id), R.Node.pending(B.node(w, root)))", "R.Node.with_pending(B.node(w, id), R.Present{R.Undefined{}})", "tests/pending-alignment.mjs", "stageMarkPrefix"],
+  ["ecf raw captured lane joins the ordinary flush", "runtime/transaction.bend", "Bool.and(Nat.is_ne(t, 0n), R.Transaction.lane(B.transaction(w, t)))", "False{}", "tests/transaction-alignment.mjs", "joinFuture"],
+  ["ecf custom staged rewrite omits its committed comparison", "runtime/core.bend", "Bool.and(staged, Bool.not(W.skipCompare(w, id)))", "False{}", "tests/comparators.mjs", "stageCustom"],
+
   ["read frame graph reuse clears pending data", "runtime/graph-state.bend", "R.Node.with_depsTail(B.node(w, sub), nextDep)", "R.Node.with_pending(B.node(w, sub), R.Empty{})", "tests/proof-properties.mjs", "reuse_or_append", "read-entry-negative-probes"],
   ["read frame render joins unrelated group", "runtime/transaction.bend", "Bool.not(isRender(R.Node.kind(n)))", "True{}", "tests/proof-properties.mjs", "joinPass", "read-entry-negative-probes"],
   ["read frame successful held join forces committed output", "runtime/transaction.bend", "B.Bundle{joinPass(w, reader, id), False{}}", "B.Bundle{joinPass(w, reader, id), True{}}", "tests/proof-properties.mjs", "enterRead", "read-entry-negative-probes"],
@@ -77,9 +83,9 @@ const mutations=[
   ["held stage kernel erases a canonical transaction cache", "runtime/transaction.bend", "R.NodeExtension.with_transaction(B.extension(w, id), tx)", "R.NodeExtension.with_transaction(B.extension(w, id), 0n)", "tests/proof-properties.mjs", "txOf", "held-stage-negative-probes"],
   ["held stage kernel clears the allocated extension during heap insertion", "runtime/heap.bend", "R.Node.with_height(n, height)", "R.Node.with_x(R.Node.with_height(n, height), 0n)", "tests/proof-properties.mjs", "actualInsertIntoHeap", "held-stage-negative-probes"],
 
-  ["ordinary body kernel introduces fault during subscriber scheduling", "runtime/write.bend", "B.schedule(insertSubs(w, id))", "R.World.with_fault(B.schedule(insertSubs(w, id)), R.Exhausted{})", "tests/proof-properties.mjs", "stageResolved", "ordinary-body-negative-probes"],
-  ["ordinary body kernel spends action debt while staging a signal", "runtime/write.bend", "B.schedule(insertSubs(w, id))", "B.store_transaction(B.schedule(insertSubs(w, id)), 1n, R.Transaction.with_open(B.transaction(w, 1n), 0n))", "tests/proof-properties.mjs", "stageResolved", "ordinary-body-negative-probes"],
-  ["ordinary body kernel makes the next setter held", "runtime/write.bend", "R.Node.with_pending(B.node(w, id), R.Present{value})", "R.Node.with_config(R.Node.with_pending(B.node(w, id), R.Present{value}), K.CONFIG_HELD())", "tests/proof-properties.mjs", "stageResolved", "ordinary-body-negative-probes"],
+  ["ordinary body kernel introduces fault during subscriber scheduling", "runtime/write.bend", "B.schedule(insertSubs(w, id))", "R.World.with_fault(B.schedule(insertSubs(w, id)), R.Exhausted{})", "tests/proof-properties.mjs", "stageStored", "ordinary-body-negative-probes"],
+  ["ordinary body kernel spends action debt while staging a signal", "runtime/write.bend", "B.schedule(insertSubs(w, id))", "B.store_transaction(B.schedule(insertSubs(w, id)), 1n, R.Transaction.with_open(B.transaction(w, 1n), 0n))", "tests/proof-properties.mjs", "stageStored", "ordinary-body-negative-probes"],
+  ["ordinary body kernel makes the next setter held", "runtime/write.bend", "R.Node.with_pending(B.node(w, id), R.Present{value})", "R.Node.with_config(R.Node.with_pending(B.node(w, id), R.Present{value}), K.CONFIG_HELD())", "tests/proof-properties.mjs", "stageStored", "ordinary-body-negative-probes"],
   ["ordinary body kernel faults an exhausted already-empty subscriber walk", "runtime/subscriber-insertion.bend", "_ => w, _ => R.World.with_fault(w, R.Exhausted{}))", "_ => R.World.with_fault(w, R.Exhausted{}), _ => R.World.with_fault(w, R.Exhausted{}))", "tests/proof-properties.mjs", "insert_subs", "ordinary-body-negative-probes"],
   ["ordinary body kernel fails to discard a setter result", "runtime/core.bend", "case Discard{} <> rest:\n      match stack:\n        case value <> +tail:\n          Machine{w, rest, tail}", "case Discard{} <> rest:\n      match stack:\n        case value <> +tail:\n          Machine{w, rest, value <> tail}", "tests/proof-properties.mjs", "dispatch", "ordinary-body-negative-probes"],
 
@@ -212,12 +218,12 @@ const mutations=[
   ["live occurrence kernel ignores a present source", "runtime/transaction.bend", "B.contains(xs, id)", "False{}", "tests/proof-properties.mjs", "removeIdentity", "live-membership"],
   ["live occurrence control clears groups during completion", "runtime/action-state.bend", "B.schedule(B.store_transaction(w, t,", "B.schedule(B.store_transaction(R.World.with_transactions(w, []), t,", "tests/joined-action-flight-history.mjs", "done"],
 
-  ["async prefix kernel drops its queued flush", "runtime/core.bend", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> AsyncFlush{} <> B.append(Task, then, rest)", "AsyncWriteAfterTrim{id} <> AsyncWriteSchedule{} <> B.append(Task, then, rest)", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
+  ["async prefix kernel drops its queued flush", "runtime/core.bend", "B.choose(~List<&2, Task>, flush, _ => [AsyncFlush{}], _ => [])", "[]", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
   ["async prefix kernel clears caller stack on staged result", "runtime/core.bend", "_ => Machine{w, ending, stack})", "_ => Machine{w, ending, []})", "tests/proof-properties.mjs", "asyncWriteAfterValue", "async-write-prefix"],
 
   ["staging frame kernel erases committed value during pending store", "representation/records.bend", "      Node{kind, value, v, equals, config, flags,", "      Node{kind, Undefined{}, v, equals, config, flags,", "tests/proof-properties.mjs", "Node.with_pending", "committed-storage-frame"],
   ["heap frame kernel erases committed value during flag store", "representation/records.bend", "      Node{kind, value, pending, equals, config, v,", "      Node{kind, Undefined{}, pending, equals, config, v,", "tests/proof-properties.mjs", "Node.with_flags", "committed-storage-frame"],
-  ["staging flight control commits proposal before landing", "runtime/write.bend", "B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))", "B.store_node(w, id, R.Node.with_value(B.node(w, id), value))", "tests/joined-action-flight-history.mjs", "stageResolved"],
+  ["staging flight control commits proposal before landing", "runtime/write.bend", "B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))", "B.store_node(w, id, R.Node.with_value(B.node(w, id), value))", "tests/joined-action-flight-history.mjs", "stageStored"],
 
   ["fresh list control omits captured membership", "runtime/transaction.bend", "+w = B.store_extension(w, id, R.NodeExtension.with_transaction(B.extension(w, id), t))", "+w = w", "tests/transaction-list-controls.mjs", "list"],
   ["fresh list control omits owned-list insertion", "runtime/transaction.bend", "B.store_transaction(w, t, R.Transaction.with_nodes(B.transaction(w, t), B.append(Nat, R.Transaction.nodes(B.transaction(w, t)), [id]))))", "w)", "tests/transaction-list-controls.mjs", "list"],
@@ -424,7 +430,7 @@ const mutations=[
   ["window latest skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 2)", "+w = w", "tests/verdict-windows.mjs", "latestWindow"],
   ["window probe skips reader marking", "runtime/core.bend", "+w = Verdict.markVerdictReader(w, 1)", "+w = w", "tests/verdict-windows.mjs", "pendingWindow"],
   ["window tracked pull inherits outer window", "runtime/core.bend", "prepareComputed(Verdict.setDispatch(w, False{}),", "prepareComputed(w,", "tests/verdict-read-alignment.mjs", "verdictValue"],
-  ["window verdict pull applies plain read verdict carry", "runtime/core.bend", "VerdictPulled{id, reader, owned, tracked}, False{})", "VerdictPulled{id, reader, owned, tracked}, True{})", "tests/verdict-read-alignment.mjs", "verdictPrepared"],
+  ["window verdict pull applies plain read verdict carry", "runtime/core.bend", "VerdictPulled{id, reader, owned, tracked, probing, latest}, False{})", "VerdictPulled{id, reader, owned, tracked, probing, latest}, True{})", "tests/verdict-read-alignment.mjs", "verdictPrepared"],
   ["window mark hook bypasses active global guard", "runtime/core.bend", "Marks.covered(w, id)", "Marks.marked(w, id, [])", "tests/verdict-read-alignment.mjs", "verdictAfterPull"],
   ["window guess comparison inherits isSame containment", "runtime/core.bend", "rawEquals(w, VerdictGuessCompared{", "isSame(w, VerdictGuessCompared{", "tests/verdict-comparators.mjs", "verdictOverrideSelected"],
   ["window guess read serves held truth", "runtime/core.bend", "B.selected(R.NodeExtension.lane(B.extension(w, id)), R.NotPendingToken{})", "Truth.laneValueOf(w, id)", "tests/verdict-read-alignment.mjs", "verdictGuessValue"],
@@ -445,7 +451,7 @@ const mutations=[
   ["window kernel probe returns captured rather than live found", "runtime/core.bend", "case ProbeEnd{probing, found, dispatch, saved} <> rest:\n      +answer = R.VerdictState.probeFound(R.World.verdictState(w))", "case ProbeEnd{probing, +found, dispatch, saved} <> rest:\n      +answer = found", "tests/proof-properties.mjs", "dispatch", "verdict-windows"],
   ["window kernel nested window loses dispatch", "runtime/core.bend", "Verdict.restoreProbe(w, probing, found, dispatch), rest, R.Boolean{answer} <> saved", "Verdict.restoreProbe(w, probing, found, False{}), rest, R.Boolean{answer} <> saved", "tests/proof-properties.mjs", "dispatch", "verdict-program"],
 
-  ["optimistic async landing skips lane write", "runtime/core.bend", "Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))", "True{}", "tests/optimistic.mjs", "asyncWrite"],
+  ["optimistic async landing skips lane write", "runtime/core.bend", "Bool.not(B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()))", "True{}", "tests/optimistic.mjs", "asyncWritePrepared"],
   ["optimistic bound call uses ordinary setter", "runtime/core.bend", "OptimisticArgument{signal} <> rest", "setterTask(w, signal) <> rest", "tests/optimistic.mjs", "callbackAction"],
   ["optimistic bound call loses raw argument", "runtime/core.bend", "OptimisticArgument{signal} <> rest, first <> stack", "OptimisticArgument{signal} <> rest, R.Undefined{} <> stack", "tests/optimistic.mjs", "callbackAction"],
   ["optimistic function constructor keeps lazy autodisposal", "runtime/core.bend", "_ => B.store_node(w, signal, R.Node.with_config(B.node(w, signal), B.clear(R.Node.config(B.node(w, signal)), K.CONFIG_AUTO_DISPOSE())))", "_ => w", "tests/optimistic.mjs", "dispatch"],
@@ -532,7 +538,7 @@ const mutations=[
   ['lane answer setter skips override dispatch','runtime/core.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE())','False{}','tests/lane-core-io.mjs','setResolved'],
   ['lane answer core read skips override dispatch','runtime/core.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE())','False{}','tests/lane-core-io.mjs','readStatus'],
   ['lane answer ordinary held read ignores lane seat','runtime/transaction.bend','+lane = Nat.is_ne(R.World.passLane(w), 0n)','+lane = {False{} : Bool}','tests/lane-core-read-alignment.mjs','frameRead'],
-  ["lane answer staged verdict reader sees proposal", "runtime/transaction.bend", "B.Bundle{staleReader(w,reader,t),True{}}", "B.Bundle{w, False{}}", "tests/lane-core-read-alignment.mjs", "stagedScreen"],
+  ["lane answer staged verdict reader sees proposal", "runtime/transaction.bend", "B.Bundle{staleReader(w,reader,t),True{}}", "B.Bundle{w, False{}}", "tests/lane-core-read-alignment.mjs", "stagedScreenFor"],
   ['lane leaked seam reveals anyway','runtime/core.bend','leaked, _ => B.Bundle{w, True{}}','False{}, _ => B.Bundle{w, True{}}','tests/lane-lifecycle-alignment.mjs','laneSeam'],
   ['lane committed effect compares a scalar value','runtime/core.bend','B.choose(~Machine, effect, _ => Machine{w, rest, stack}','B.choose(~Machine, False{}, _ => Machine{w, rest, stack}','tests/lane-lifecycle-alignment.mjs','dissolveCommitted'],
   ['lane end skips reverse member scan','runtime/core.bend','B.length(Nat, R.LaneState.live(R.World.laneState(w)))','0n','tests/proof-properties.mjs','endLanes','lane-lifecycle'],
@@ -602,7 +608,7 @@ const mutations=[
   ["verdict reader mark ignores root forwarding", "runtime/verdict-state.bend", "B.parentComputed(w,R.World.context(w))", "R.World.context(w)", "tests/verdict-state-alignment.mjs", "markVerdictReader"],
   ['verdict observes flight beneath published inputs','runtime/verdict-state.bend','B.has(R.Node.config(B.node(w, id)), K.CONFIG_INPUTS_PUBLISHED())','False{}','tests/verdict-state-alignment.mjs','observeFlight'],
   ['verdict latest rewrite loses late-linker wake','runtime/verdict-state.bend','Read.markLateLinker(w, reader)','w','tests/verdict-state-alignment.mjs','heldLatest'],
-  ['verdict treats initial loading as pending','runtime/verdict-state.bend','B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())','False{}','tests/verdict-state-alignment.mjs','pendingVerdict'],
+  ['verdict ignores pending source quietness','runtime/verdict-state.bend','Bool.not(quietPending(w, id))','True{}','tests/verdict-state-alignment.mjs','pendingVerdict'],
   ['lane allocation leaks into mainline transactions','runtime/lanes-state.bend','Tx.newTransaction(w, True{}, parent)','Tx.newTransaction(w, False{}, parent)','tests/proof-properties.mjs','newLane','lane-laws'],
   ['lane verdict cache always allocates','runtime/lanes-state.bend','Nat.is_ne(id, 0n)','False{}','tests/proof-properties.mjs','verdictLane','lane-laws'],
   ['lane shared groups are ignored','runtime/lanes-state.bend','Bool.and(Nat.is_ne(R.Transaction.links(B.transaction(w, a)), 0n), Nat.is_eq(R.Transaction.links(B.transaction(w, a)), R.Transaction.links(B.transaction(w, b))))','False{}','tests/proof-properties.mjs','sameLane','lane-laws'],
@@ -699,7 +705,7 @@ const mutations=[
   ['action wrapper factory loses enclosing callback argument','runtime/callback.bend','R.ActionCreate{bindWith(factory, args), methods}','R.ActionCreate{factory, methods}','tests/action-functions.mjs','bindWith'],
 
   ["memo constructor discards its compute expression","runtime/construct-state.bend","parent, 0n, 0n, 0n, expr, False{}","parent, 0n, 0n, 0n, R.Literal{R.Number{0n}}, False{}","tests/proof-properties.mjs","computed","memo-public-program"],
-  ["public memo setter omits subscriber intake","runtime/write.bend","B.schedule(insertSubs(w, id))","B.schedule(w)","tests/memo-witness-controls.mjs","stageResolved"],
+  ["public memo setter omits subscriber intake","runtime/write.bend","B.schedule(insertSubs(w, id))","B.schedule(w)","tests/memo-witness-controls.mjs","stageStored"],
   ["action omits its acted marker","runtime/action-state.bend","R.Transaction.with_acted(B.transaction(w, t), True{})","R.Transaction.with_acted(B.transaction(w, t), False{})","tests/actions-native.mjs","open"],
   ["action depth entry is omitted", "runtime/action-state.bend", "R.World.with_actionDepth(w, 1n+R.World.actionDepth(w))", "w", "tests/proof-properties.mjs", "enter", "action-laws"],
   ["action yield accepts a superseded callback", "runtime/core.bend", "Bool.and(U32.is_eq(R.ActionWait.kind(entry), 0), R.ActionWait.settled(entry))", "False{}", "tests/actions-native.mjs", "actionDelivery"],
@@ -724,10 +730,10 @@ const mutations=[
   ["custom comparator swaps old and new","runtime/core.bend","R.CallWith{callback, R.Literal{a}, R.Literal{b}}","R.CallWith{callback, R.Literal{b}, R.Literal{a}}","tests/comparator-alignment.mjs","isSame"],
   ["pending comparator suppresses change","runtime/core.bend","Machine{w, rest, R.Undefined{} <> saved}","Machine{w, rest, R.Boolean{True{}} <> saved}","tests/comparators.mjs","equalityCatch"],
   ["comparator error skips status routing","runtime/core.bend","A.notifyStatusWith(w, id, K.STATUS_ERROR(), error)","w","tests/comparators.mjs","equalityCatch"],
-  ["async landing bypasses custom comparator","runtime/core.bend","Nat.is_eq(EQ.custom(w, id), 0n)","True{}","tests/comparators.mjs","asyncWrite"],
+  ["async landing bypasses custom comparator","runtime/core.bend","Nat.is_eq(EQ.custom(w, id), 0n)","True{}","tests/comparators.mjs","asyncWritePrepared"],
   ["held seam compares before parked child guard","runtime/scheduler.bend","Bool.not(O.parked(w, id))","True{}","tests/comparators.mjs","parkCanCompare"],
   ["initial memo calls comparator before skip gate", "runtime/core.bend", "Bool.or(Bool.and(Bool.not(B.effect(R.Node.kind(B.node(w, id)))), wasUninitialized), Bool.or(B.truth(R.NodeExtension.shownError(B.extension(w, id))),replaced))", "False{}", "tests/comparators.mjs", "publishState"],
-  ["custom setter drops proposal return","runtime/core.bend","Machine{B.choose(~R.World, B.truth(equal), _ => w, _ => W.stageResolved(w, id, value)), rest, value <> tail}","Machine{B.choose(~R.World, B.truth(equal), _ => w, _ => W.stageResolved(w, id, value)), rest, R.Undefined{} <> tail}","tests/comparators.mjs","dispatch"],
+  ["custom setter drops proposal return","runtime/core.bend","Machine{W.stageStored(w, id, value, staged), rest, value <> stack}","Machine{W.stageStored(w, id, value, staged), rest, R.Undefined{} <> stack}","tests/comparators.mjs","stageCustom"],
   ["setter cleanup bypasses custom comparator","runtime/core.bend","Machine{w, setterTask(w, id) <> Discard{} <> OwnerTasks{tail} <> rest, R.Undefined{} <> stack}","Machine{O.clearSetter(w, id), OwnerTasks{tail} <> rest, stack}","tests/comparators.mjs","ownerTasks"],
   ["flush callback omits sync depth entry", "runtime/core.bend", "R.World.with_syncDepth(w, 1n+R.World.syncDepth(w))", "w", "tests/flush-callbacks.mjs", "flushCallback"],
   ["flush callback skips its finally drain", "runtime/core.bend", "publicFlush(R.World.with_fault(w, R.Healthy{}), FlushCallbackRestore{prior, values} <> rest, values)", "Machine{R.World.with_fault(w, R.Healthy{}), FlushCallbackRestore{prior, values} <> rest, values}", "tests/flush-callbacks.mjs", "flushCallbackFinally"],
@@ -850,7 +856,7 @@ const mutations=[
   ['watch promise resolves in the pass','runtime/watch-state.bend','[R.WatchDelivery{id, failed, value}]','[R.PromiseOutcome{id, failed, value}]','tests/waiters.mjs'],
   ['post-gap synchronous yield is lost','runtime/core.bend','Bool.and(R.AsyncObserver.isSync(o), R.StreamState.initialRead(s))','R.AsyncObserver.isSync(o)','tests/iterators.mjs','stepFulfilledResult'],
   ['iterator return omitted','runtime/iterator-input.bend','R.StreamPlan.hasReturn(plan)','False{}','tests/iterators.mjs','returnedExternal'],
-  ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has','Bool.or(False{}, B.has','tests/async.mjs'],
+  ['stale flight writes','runtime/flight.bend','Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), Bool.and(B.has','Bool.or(False{}, Bool.and(B.has','tests/async.mjs'],
   ['unresolved promise commits','runtime/flight.bend','R.AsyncObserver.resolved(o)','True{}','tests/async.mjs'],
   ['lost subscriber wake','runtime/write.bend','B.schedule(insertSubs(w, id))','B.schedule(w)'],
   ['leaked staging','runtime/core.bend','          value = B.choose(~R.Value, committed, _ => R.Node.value(n), _ => B.current(n))','          value = B.current(n)'],

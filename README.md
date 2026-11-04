@@ -1,10 +1,11 @@
 # Solid 2 signals in Bend 2
 
 An executable **incremental translation of the non-store core** of
-`@solidjs/signals` 2.0.0-rc.19. This is **not yet the complete signals package**.
+`@solidjs/signals` 2.0.0-rc.20. This is **not yet the complete signals package**.
 
-The source is pinned to next@178605cf. [The latest source review](tracking/reviews/solid-178605cf.md)
-records verdict/lane grouping, entered-reader draining and removal of the supersede parent join. [Stream refetch](tracking/deferred-stream-refetch.md)
+The source is pinned to next@ecf30116. [The latest source review](tracking/reviews/solid-ecf30116.md)
+records first-answer staging, nested error settlement, custom-comparator netting,
+and verdict/lane routing changes. [Stream refetch](tracking/deferred-stream-refetch.md)
 now runs through the existing iterator engine and has an ordinary-payload complete-program proof. The [direct from(fn) subscription branch](tracking/from-subscriptions.md) now runs with a complete fixed ordinary-payload lifecycle proof, including once-only disposal cleanup. The [wrapped AsyncIterable branch](tracking/from-iterables.md) also runs, with a complete pending-pull cancellation proof. Both [from lifecycle proofs](tracking/from-values.md) now quantify over any represented value, including function-valued data. Observable inputs, full-package and arbitrary-async-graph guarantees remain open.
 
 The objective is increasingly general properties of reactive behavior and useful
@@ -66,15 +67,17 @@ walk and an arbitrary-fuel read-only World theorem. The [public deferred
 data/thenable profile](tracking/deferred.md) now connects construction, flight
 lifetimes and truth readers, with a [complete ordinary-payload data update proof](tracking/deferred-payload-proof.md)
 for undefined, null, arbitrary booleans/naturals/strings/opaque reference
-identities, NaN and signed zero, including mixed types.
+identities, NaN and signed zero, including mixed types. At this pin the proof
+states the actual netted slot choice, including the signed-zero behavior reported
+in [#4538](https://github.com/solidjs/solid/pull/4538).
 Its [first-load streams](tracking/deferred-first-stream.md) now use the ordinary
 iterator engine. The stream refetch wrapper is implemented; from/store/boundary profiles remain unfinished.
 
 The [non-store affects API](tracking/affects-scope.md) now retains declarations
 through action/ambient/own-flight windows and releases them at source seams.
 Its complete data program is proved for every natural payload and sufficient
-budget. Current evidence totals 4,759 public histories, 719 configured mutation
-controls and 73 composed closed regressions, plus quantified properties.
+budget. Current evidence totals 4,776 public histories, 772 configured mutation
+controls (completed sweeps are scoped separately in the verification record) and 73 composed closed regressions, plus quantified properties.
 
 The [optimistic constructor](tracking/optimistic.md) now has data/function
 input dispatch and its own bound setter, supported by the lane pass/flush
@@ -85,10 +88,11 @@ pairs. Boundary/store, snapshots and external-source lifetimes remain unfinished
 
 [Progress checkpoints](tracking/progress.md) show concrete implementation and proof gains, with remaining work.
 
-The reviewed Solid pin is `178605cf` (rc.19). [The source review](tracking/reviews/solid-178605cf.md)
-accounts for all77 verbatim inputs and the lane/supersede changes. Active
-snapshots, stores and hydration remain explicit scope limits. No semantic
-workaround is active.
+The reviewed Solid pin is `ecf30116` (rc.20). [The source review](tracking/reviews/solid-ecf30116.md)
+accounts for 79 verbatim inputs and the source-required proof contract changes.
+Active snapshots, stores and hydration remain explicit scope limits. The new
+reader-seat shadow is a test-only source input, outside the production grammar.
+No semantic workaround is active.
 
 The [actual held resume result](tracking/held-resume-retirement.md) now derives
 its body-entry certificate, original capture and count storage, then evaluates
@@ -101,7 +105,7 @@ from these quantified proofs; see [verification](tracking/verification.md).
 ```sh
 node tools/bootstrap.mjs          # npm ci + pinned Lean, Linux x64
 npm run verify                   # build, parity tests, independent kernel
-npm run mutations                # check 719 configured source-changing variants
+npm run mutations                # check configured source-changing variants
 npm run example                  # Number{14n}
 npm run example:list             # children 20, 10, 30; Healthy
 npm run example:pending          # false, true, 41, false, 41; Healthy
@@ -339,7 +343,7 @@ budgets are unchanged. Successful general traversal and final reveal remain open
 
 ## Constructed one-edge return (2026-10-25)
 
-The [one-edge return family](tracking/one-edge-return.md) derives actual control and a ten-step upper room from
+The [one-edge return family](tracking/one-edge-return.md) derives actual control and a fourteen-step upper room from
 Healthy input/one-edge/non-autodisposed-leaf facts, carrying the exact World and
 caller work/stack. A no-stale trim composes to twelve. Early returns and faults
 are explicit alternatives; the complete segment retains committed content and

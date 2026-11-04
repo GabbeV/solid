@@ -1,8 +1,10 @@
 # Pending traversal shape and links
 
 The actual pending traversal now retains a second independent footprint: every
-node's kind, configuration and downstream subscriber head, plus every intrusive
-link record. Status, time, extension allocation, heap flags/queues, transaction
+node's kind, configuration other than CONFIG_STAGED_ERROR, downstream subscriber
+head and every intrusive link record. The ecf30116 source stages inherited
+errors and may set that bit during traversal; the observation masks only that
+bit. Raw subscriber-topology contracts remain for operations that preserve it. Status, time, extension allocation, heap flags/queues, transaction
 records and source sets may change. Payloads and Worlds remain arbitrary. This
 is not a complete graph-validity or source-Set uniqueness invariant.
 
@@ -15,7 +17,7 @@ prefix certificates and body classifier used by content safety are retained.
 `pending-prefix-frame.bend` factors reusable induction over an observer and a
 concrete input-step law; the topology-history entry instantiates that law with
 the checked actual core operations. No desired output frame is a root premise.
-Selected node and link read corollaries recover their original shape at any
+Selected node and link read corollaries recover that masked shape at any
 certified body-prefix boundary.
 
 `pending-machine-shape.bend` derives the actual settled node's control fields.
@@ -28,9 +30,9 @@ Existing prior releases remain; the theorem does not discard callbacks or promis
 that an arbitrary release list is empty. Input health is not required for these
 helper/shape laws, and successful whole-traversal health is not claimed.
 
-Seven roots extend the earlier 493. This checkpoint changes proof/support tests
-only; the runtime, source pin, host, original theorem domains/step budgets and
-checker limits remain unchanged. No semantic deviation is active.
+Seven roots originally extended the earlier 493. The ecf30116 migration updates
+the observation for the source staged-error branch without restricting input
+Worlds or values. Checker limits remain unchanged; no semantic deviation is active.
 
 ## Evidence and next obligation
 

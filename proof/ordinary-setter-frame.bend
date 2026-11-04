@@ -18,7 +18,7 @@ def plainExact(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, 
     _ => C.Machine{W.setResolved(w, id, current, value), rest, value <> stack},
     _ =>
       +w = W.beforeCompare(w, id)
-      B.choose(~C.Machine, W.skipCompare(w, id), _ => C.Machine{W.stageResolved(w, id, value), rest, value <> stack}, _ => C.isSame(w, C.SetSignalCompared{id, value} <> rest, stack, id, current, value))), Equality.custom(w, id), 0n, custom)
+      B.choose(~C.Machine, W.skipCompare(w, id), _ => C.stageCustom(w, rest, stack, id, value), _ => C.isSame(w, C.SetSignalCompared{id, value} <> rest, stack, id, current, value))), Equality.custom(w, id), 0n, custom)
 
 def ordinaryExact(+w: R.World, +rest: List<&2, C.Task>, +stack: List<&2, R.Value>, +id: Nat, +current: R.Value, +value: R.Value,
   override: {B.has(R.Node.config(B.node(w, id)), K.CONFIG_OVERRIDE()) == False{} : Bool},

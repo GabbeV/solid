@@ -37,12 +37,20 @@ def written(+values: List<&2,R.Value>,+w: R.World,+id: Nat,+offset: Nat,input: I
           +other = History.run(head <> tail,canonical,id)
           Equal.trans(Flags.View,Flags.observe(actual),Flags.observe(other),Flags.observe(w),Equal.cong(R.World,Flags.View,state=>Flags.observe(state),actual,other,Cache.history(w,id,offset,head,tail,source,cached,profile)),Equal.trans(Flags.View,Flags.observe(other),Flags.observe(canonical),Flags.observe(w),Flags.fromWrites(canonical,other,R.Node.x(B.node(canonical,id)),History.outer(head <> tail,canonical,id,offset,profile)),virtual(w,id,1n+offset)))
 
+def choice(+flag: Bool,+w: R.World,+left: R.World,+right: R.World,yes: {Flags.observe(left) == Flags.observe(w) : Flags.View},no: {Flags.observe(right) == Flags.observe(w) : Flags.View}) -> {Flags.observe(B.choose(~R.World,flag,_=>left,_=>right)) == Flags.observe(w) : Flags.View}:
+  match flag:
+    case True{}: yes
+    case False{}: no
+
 def preparedFresh(+w: R.World,+actor: Nat,+offset: Nat,+captureOffset: Nat,+tail: R.Expr,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},empty: {R.World.flushTransaction(w) == 0n : Nat}) -> {Flags.observe(Entry.prepared(w,actor,tail)) == Flags.enter(Flags.observe(w)) : Flags.View}:
   +asked = Entry.asked(w,actor)
   +joined = Entry.joined(w,actor)
   +flushed = Source.flush(asked,1n+offset)
   +scheduled = Join.scheduled(flushed)
-  +same = Equal.trans(Flags.View,Flags.observe(joined),Flags.observe(scheduled),Flags.observe(w),Equal.cong(R.World,Flags.View,state=>Flags.observe(state),joined,scheduled,Prepare.joinedFresh(w,actor,offset,captureOffset,alias,captured,positive,empty)),Equal.trans(Flags.View,Flags.observe(scheduled),Flags.observe(flushed),Flags.observe(w),Flags.selected(flushed),Equal.trans(Flags.View,Flags.observe(flushed),Flags.observe(asked),Flags.observe(w),Flags.future(asked,1n+offset),Flags.question(w,R.ActionState.question(A.get(w,actor))))))
+  +guarded = Join.laneSelect(asked,1n+captureOffset,scheduled)
+  +normalFrame = Equal.trans(Flags.View,Flags.observe(scheduled),Flags.observe(flushed),Flags.observe(w),Flags.selected(flushed),Equal.trans(Flags.View,Flags.observe(flushed),Flags.observe(asked),Flags.observe(w),Flags.future(asked,1n+offset),Flags.question(w,R.ActionState.question(A.get(w,actor)))))
+  +guardFrame = choice(R.Transaction.lane(B.transaction(asked,1n+captureOffset)),w,asked,scheduled,Flags.question(w,R.ActionState.question(A.get(w,actor))),normalFrame)
+  +same = Equal.trans(Flags.View,Flags.observe(joined),Flags.observe(guarded),Flags.observe(w),Equal.cong(R.World,Flags.View,state=>Flags.observe(state),joined,guarded,Prepare.joinedFreshChoice(w,actor,offset,captureOffset,alias,captured,positive,empty)),guardFrame)
   Equal.trans(Flags.View,Flags.observe(Entry.prepared(w,actor,tail)),Flags.observe(A.enter(joined)),Flags.enter(Flags.observe(w)),Flags.store(A.enter(joined),actor,R.ActionState.with_methods(A.get(joined,actor),tail)),Equal.trans(Flags.View,Flags.observe(A.enter(joined)),Flags.enter(Flags.observe(joined)),Flags.enter(Flags.observe(w)),Flags.entered(joined),Equal.cong(Flags.View,Flags.View,v=>Flags.enter(v),Flags.observe(joined),Flags.observe(w),same)))
 
 def actual(+written: R.World,+next: R.World,+root: Nat,+remaining: Nat,same: {Output.outer(next) == Output.outer(Exit.target(written,root,remaining)) : R.World}) -> {Flags.observe(next) == Flags.exit(Flags.observe(written)) : Flags.View}:

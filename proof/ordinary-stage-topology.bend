@@ -6,6 +6,7 @@ import ../representation/base.bend as B
 import ../runtime/write.bend as W
 import ../runtime/constants.bend as K
 import ./staging-committed-frame.bend as Stage
+import ./staging-live-locals.bend as Live
 import ./ordinary-stage-intake.bend as Intake
 import ./ordinary-stage-tail.bend as Tail
 import ./ordinary-write-outer.bend as Outer
@@ -29,4 +30,4 @@ def actual(+w: R.World,+id: Nat,+value: R.Value,context: {R.World.context(w) == 
   +node = B.node(w,id)
   +staged = B.present(R.Node.pending(node))
   +next = Intake.simple(w,id,staged)
-  Equal.trans(Frame.View,Frame.observe(W.stageResolved(w,id,value)),Frame.observe(Stage.tail(next,id,value,node,staged)),Frame.observe(w),Equal.cong(R.World,Frame.View,state=>Frame.observe(Stage.tail(state,id,value,node,staged)),Stage.intake(w,id,node,staged),next,Intake.exact(w,id,staged,ordinary)),Frame.compose(w,next,Stage.tail(next,id,value,node,staged),tail(next,id,value,node,staged,Outer.context(w,next,Intake.frame(w,id,staged),context),signal),intake(w,id,staged)))
+  Equal.trans(Frame.View,Frame.observe(W.stageResolved(w,id,value)),Frame.observe(Stage.tail(next,id,value,node,staged)),Frame.observe(w),Equal.cong(R.World,Frame.View,state=>Frame.observe(state),W.stageResolved(w,id,value),Stage.tail(next,id,value,node,staged),Live.resolved(w,next,id,value,Intake.exact(w,id,staged,ordinary),Intake.nodes(w,id,staged))),Frame.compose(w,next,Stage.tail(next,id,value,node,staged),tail(next,id,value,node,staged,Outer.context(w,next,Intake.frame(w,id,staged),context),signal),intake(w,id,staged)))

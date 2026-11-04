@@ -7,16 +7,24 @@ roots; an archived or generated candidate is not proved merely because it exists
 The runtime follows the selected Solid pin; source migrations require a fresh
 whole-book verdict. The independent checker/profile/fuel remain unchanged.
 
+The ecf30116 source migration retains exact raw-lane join outcomes. Fresh
+ordinary scheduling/resume corollaries state a raw nonlane-capture premise; actual
+ordinary constructors derive it. Pending topology preserves all configuration
+bits except the staged-error bit the source may now set. See the
+[source review](reviews/solid-ecf30116.md) and its root-contract delta. Fulfillment
+continuations include the source's carried-staging choice: an ordinary landing
+may use the queued flush, while a stream continuation forces synchronous flush.
+
 ## Current proof coverage
 
 | Family | Quantification and guarantee | Assumptions / limits |
 | --- | --- | --- |
 | Publication, storage, frames and callback boundaries | Arbitrary surrounding Worlds, valid constructed slots, values/lists as stated; exact field changes and preservation | Named helper/continuation boundaries; not a global reachable-state invariant |
 | Committed staging/default setter frame | All represented values, finite node/link storage, Worlds and internal mark fuel: actual staging/heap/notification/held-default setter preserves all stored committed values, tree and event trace; active ordinary core branch/stack bridge; arbitrary finite helper-write histories | A pure observation, not public reads; default core branch excludes overrides/custom callbacks; exhaustion/malformed states retain faults; no full flush, pending-ledger preservation or eventual publication theorem |
-| Fulfillment-prefix frame and continuation | Actual pending/status/fulfillment prefix preserves committed values/tree/trace; stale result exact World no-op; active default core arrival retains stack and exact queued trim/settlement/schedule/flush/then/caller order | Default/no-override core; queued tasks are not executed; full protocol/authority, cleanup/callbacks, complete flush and coordinated reveal remain open |
-| Scalar memo histories and batches | All natural initial/proposed values, arbitrary finite nonempty update histories and nonempty batches; actual constructor/setter/flush, carried World, exact result and coalescing | Fixed scalar graph/comparator and sufficient per-operation budgets; [memo-history-proof.md](memo-history-proof.md) |
+| Fulfillment-prefix frame and continuation | Actual pending/status/fulfillment prefix preserves committed values/tree/trace; stale result exact World no-op; active default core arrival retains stack and exact queued trim/settlement/schedule/conditional-flush/then/caller order | Default/no-override core; queued tasks are not executed; full protocol/authority, cleanup/callbacks, complete flush and coordinated reveal remain open |
+| Scalar memo histories and batches | All natural initial/proposed values, equal writes, arbitrary finite nonempty update histories and nonempty batches; actual constructor/setter/flush, carried exact World including derived netted-read metadata, result and coalescing | Fixed scalar graph/comparator and sufficient per-operation budgets; [memo-history-proof.md](memo-history-proof.md) |
 | Two-memo/render programme | Constructor, setter and drain for arbitrary natural proposal, exact World and renderer result | Fixed graph and admitted callbacks; [chain-proof.md](chain-proof.md) |
-| Deferred data and stream refetch | Complete fixed constructor/write/read/flush or stream lifecycle, ordinary payload families and sufficient fuel | Explicit event bridges; not all settlement orders; [deferred-payload-proof.md](deferred-payload-proof.md), [deferred-stream-refetch.md](deferred-stream-refetch.md) |
+| Deferred data and stream refetch | Complete fixed constructor/write/read/flush or stream lifecycle, ordinary payload families and sufficient fuel; deferred data retains the target strict-equality slot choice, including #4538 | Explicit event bridges; not all settlement orders; [deferred-payload-proof.md](deferred-payload-proof.md), [deferred-stream-refetch.md](deferred-stream-refetch.md) |
 | `from` lifecycles | Complete fixed direct/wrapped lifecycles over every represented `R.Value`, exact payload/cleanup/cancellation; bridges retain ordinary families | Arena-token validity and arbitrary JS protocols are separate; [from-values.md](from-values.md) |
 | Promise and wrapped cancellation | Six arbitrary-World/list preservation roots, masking only Promise objects, host jobs and stream plans | Frame safety, not async progress; [from-promise-frame.md](from-promise-frame.md) |
 | Redirect resolution and rejoin histories | Arbitrary certified finite path and sufficient budget; fresh-root construction; same-component lookup/rejoin histories of arbitrary finite length, exact World and queried representatives | Actual field certificates and explicit public-budget room; no general arena validity/forest-size theorem yet |

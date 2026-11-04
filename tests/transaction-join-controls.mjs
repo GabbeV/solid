@@ -23,7 +23,7 @@ try{
  const nativeFile=path.join(dir,'native.mjs');fs.writeFileSync(nativeFile,bundle.outputFiles[0].text);const S=await import(pathToFileURL(nativeFile));
 
  const asList=encodeList;
- const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
+ const shape=(t,id)=>({into:id(t._into),parent:id(t._parent),lane:t._lane,verdict:id(t._verdict),open:t._open,acted:t._acted,links:0,shown:t._shown,held:t._held,latest:!!t.latest,nodes:t._nodes.map(n=>n.id),renderQueue:t._queues[0].map(f=>f.id),userQueue:t._queues[1].map(f=>({$:'NodeRun',node:f.id})),reruns:t._reruns.map(n=>n.id),marks:t._marks===null?{$:'NoIds'}:{$:'SomeIds',items:asList(t._marks.map(n=>n.id))}});
  const bendShape=t=>{const {$:tag,...fields}=t;return {...fields,nodes:list(t.nodes),renderQueue:list(t.renderQueue),userQueue:list(t.userQueue),reruns:list(t.reruns),marks:t.marks.$==='NoIds'?null:list(t.marks.items)};};
  const vectors=(seed,size)=>Array.from({length:size},(_,i)=>({id:seed+i}));
  let fixtures=0,rejoins=0,queries=0,openingControls=0,positiveBlockerControls=0,emptyBlockerControls=0,heldScanControls=0,eligibleScanControls=0,liveRetentionControls=0,absentSourceControls=0;

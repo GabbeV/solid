@@ -30,7 +30,7 @@ try{
    for(let k=0;k<=tail.length;k++){
     const updates=list(tail.slice(0,k)),expected=k?tail[k-1].value:first;
     const world=D.program(initial,first,constructorExtra,firstExtra,updates);
-    assert.deepEqual(world,H.result(updates,0,first,H.initialEvents(initial,first),list([{$:'FlushJob'}])),'complete canonical World with actual clocks, generations, trace and queued jobs');
+    assert.deepEqual(world,H.result(updates,first===initial,0,first,H.initialEvents(initial,first),list([{$:'FlushJob'}])),'complete canonical World with actual clocks, generations, trace and queued jobs');
     assert.deepEqual(V.view(world),V.expected(expected));
     assert.deepEqual([read(),derived()],[expected,expected+1]);
     assert.deepEqual([V.view(world).source.n,V.view(world).memo.n],[read(),derived()]);
@@ -42,10 +42,10 @@ try{
  }
  // The reusable lemma admits arbitrary existing trace/job prefixes and counters.
  // These are synthetic canonical-state probes, separate from public programs.
- for(const tick of [0,1,2,17,255,65535])for(const previous of [0,17])for(const input of [0,17,65535]){
+ for(const prior of [false,true])for(const tick of [0,1,2,17,255,65535])for(const previous of [0,17])for(const input of [0,17,65535]){
   const events=list([{$:'Invoked',id:99},{$:'ReadValue',reader:71,source:44,value:{$:'Number',n:previous}}]);
   const jobs=list([{$:'FlushJob'},{$:'FlushJob'},{$:'FlushJob'}]);
-  assert.deepEqual(D.update(tick,previous,input,events,jobs,tick%7),M.origin(tick+1,input,H.nextEvents(events,input),H.nextJobs(jobs)));
+  assert.deepEqual(D.update(prior,tick,previous,input,events,jobs,tick%7),M.origin(input===previous,tick+1,input,H.nextEvents(events,input),H.nextJobs(jobs)));
   passes++;
  }
  console.log(`${programs} finite public scalar-memo programs / ${prefixes} prefixes match complete canonical Worlds and pinned native values; ${passes} separate steady-pass prefix/counter controls pass. Induction is checked separately by the kernel.`);

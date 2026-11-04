@@ -237,7 +237,7 @@ def blank_tree() -> R.TreeNode:
 def blank_extension() -> R.NodeExtension:
   R.NodeExtension{R.FlightEmpty{}, 0n, R.Undefined{}, R.Empty{}, 0n, 0n,
     R.NoSnapshotValue{}, 0n, R.NoDisposal{}, 0n, False{}, R.Empty{},
-    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Null{}, R.FlightUndefined{}}
+    R.Unstamped{}, R.QuestionZero{}, R.Empty{}, 0n, R.Null{}, R.FlightUndefined{}, R.Unstamped{}}
 
 def stampMatches(stamp: R.Stamp, value: Nat) -> Bool:
   match stamp:
@@ -270,7 +270,7 @@ def noDisposal(d: R.Disposal) -> Bool:
       False{}
 
 def blank_transaction() -> R.Transaction:
-  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}}
+  R.Transaction{[], [], [], [], 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, R.NoIds{}, False{}}
 
 def blank_asyncObject() -> R.AsyncObject:
   R.AsyncObject{False{}, R.Unresolved{}, [], 0n}

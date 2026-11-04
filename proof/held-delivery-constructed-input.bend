@@ -20,6 +20,8 @@ import ./action-wait-construction.bend as Register
 import ./transaction-resolution.bend as Paths
 import ./transaction-rejoin-history.bend as Alias
 import ./held-preparation-profile.bend as Prep
+import ./held-opened-arena.bend as Arena
+import ./action-helper-context.bend as Context
 
 def initial(+value: R.Value,methods: R.Expr) -> R.World:
   State.initial(value,methods)
@@ -77,3 +79,11 @@ def alias(+value: R.Value,+methods: R.Expr,+prefix: List<&2,History.WaitEvent>) 
   +selected = Source.flush(w,1n)
   +terminal = Equal.trans(Nat,R.Transaction.into(B.transaction(w,1n)),R.Transaction.into(B.transaction(selected,1n)),0n,Equal.sym(Nat,R.Transaction.into(B.transaction(selected,1n)),R.Transaction.into(B.transaction(w,1n)),Prep.originalTerminal(w,1n)),P.terminal(selected,Graph.source(value),0n,profile(value,methods,prefix)))
   Alias.Alias{Paths.Root{1n,terminal},B.length(R.Transaction,R.World.txArena(w)),{==},{==}}
+
+def plain(+value: R.Value,+methods: R.Expr,+prefix: List<&2,History.WaitEvent>) -> {R.Transaction.lane(B.transaction(registered(value,methods,prefix),1n)) == False{} : Bool}:
+  +opened = Input.opened(value,methods)
+  +fresh = initial(value,methods)
+  +before = before(value,methods,prefix)
+  +next = registered(value,methods,prefix)
+  +same = Equal.trans(List<&2,R.Transaction>,R.World.txArena(next),R.World.txArena(before),R.World.txArena(opened),Context.arenaFrame(before,next,Context.registered(before,0n,result(value,methods),0)),Equal.trans(List<&2,R.Transaction>,R.World.txArena(before),R.World.txArena(fresh),R.World.txArena(opened),Context.historyArena(prefix,fresh),Frame.futureArena(opened)))
+  Equal.trans(Bool,R.Transaction.lane(B.transaction(next,1n)),R.Transaction.lane(B.transaction(opened,1n)),False{},Equal.cong(List<&2,R.Transaction>,Bool,rows=>R.Transaction.lane(B.get(R.Transaction,rows,1n,B.blank_transaction())),R.World.txArena(next),R.World.txArena(opened),same),Arena.plain(value,methods))

@@ -7,7 +7,10 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'solid-pending-probe-'));
 try{
-  const emitted=path.join(dir,'pending.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts','tests/probes/pending.bend','-o',emitted],{cwd:root,encoding:'utf8'});
+  const active=process.env.BEND_EMIT_FILE?path.dirname(process.env.BEND_EMIT_FILE):root;
+  for(const folder of ['runtime','representation','observation'])fs.cpSync(path.join(active,folder),path.join(dir,folder),{recursive:true});
+  fs.mkdirSync(path.join(dir,'tests/probes'),{recursive:true});fs.copyFileSync(path.join(root,'tests/probes/pending.bend'),path.join(dir,'tests/probes/pending.bend'));
+  const emitted=path.join(dir,'pending.mjs'),compile=spawnSync(path.join(root,'node_modules/.bin/bun'),['upstream/bend/bend2/main.ts',path.join(dir,'tests/probes/pending.bend'),'-o',emitted],{cwd:root,encoding:'utf8'});
   assert.equal(compile.status,0,compile.stderr);const {default:B}=await import(pathToFileURL(emitted));
   const source=path.join(root,'upstream/solid/packages/signals/src');
   const bundle=await build({stdin:{contents:`
@@ -29,13 +32,13 @@ try{
   function actual(w){const errors=new Map(),extensions=list(w.extensions),decode=v=>{
     if('identity'in v){if(!errors.has(v.identity))errors.set(v.identity,errors.size+1);return {kind:'cause'in v?'error':'pending',identity:errors.get(v.identity),source:v.source,...('cause'in v?{cause:decode(v.cause)}:{})};}
     if('n'in v)return v.n;if('b'in v)return v.b;return v.$==='Null'?null:undefined;
-  };return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,time:n.time,
+  };return {nodes:list(w.nodes).slice(1).map(n=>({flags:n.flags,config:n.config,status:n.status,time:n.time,pending:'value'in n.pending?{present:true,value:decode(n.pending.value)}:{present:false},
       error:decode(extensions[n.x]?.error??{}),shown:n.x?decode(extensions[n.x].shownError):undefined,blocked:'value'in(extensions[n.x]?.blocked??{})?decode(extensions[n.x].blocked.value):undefined,
       sources:extensions[n.x]?.pendingSources?list(list(w.pendingSets)[extensions[n.x].pendingSources]).filter(id=>id!==0):undefined,
       x:!!n.x,next:n.nextHeap,prev:n.prevHeap,first:n.firstChild,nextSibling:n.nextSibling,prevSibling:n.prevSibling,deps:n.deps,tail:n.depsTail,subs:n.subs,subsTail:n.subsTail,disposal:disposal(n.disposal)})),
     links:list(w.links).slice(1).map(l=>({...l,$:undefined})),events:list(w.events).map(e=>[e.callback,e.code]),
     pending:list(w.pendingNodes),buckets:list(w.buckets),min:w.minimum,max:w.maximum,marked:w.marked,scheduled:w.scheduled,exception:'cause'in w.fault?decode(w.fault.cause):undefined};}
-  function reference(op,status,flags,extra,additional,block,config){
+  function reference(op,status,flags,extra,additional,block,config,staged=false){
     S.probeReset();S.setContextInternal(null);const r=S.createOwner();S.setContextInternal(r);
     const ns=[null,r,...[7,11,13,17,19].map(v=>S.computed(()=>v,{lazy:true}))];S.setContextInternal(null);
     const [n,a,b,c,other]=ns.slice(2),id=n=>n?ns.indexOf(n):0,links=[null],events=[];
@@ -45,6 +48,7 @@ try{
     for(const node of [n,a,b,c])Object.assign(S.ext(node),{_error:status&K.STATUS_ERROR?failure:unready,_blocked:true,
       _pendingSources:node===n||op!==0||extra?new Set([source,...(additional?[b]:[])]):undefined});
     for(const node of [n,a,b,c])node._statusFlags=status;
+    if(staged){n._config|=K.CONFIG_STAGED_ERROR;n._pendingValue=77;}
     const cb1=()=>{events.push([1,101]);if(block)throw 42;},cb2=()=>events.push([2,102]);S.ext(a)._unobserved=cb2;S.runWithOwner(c,()=>S.onCleanup(cb1));let exception;
     try{
       if(op===0)S.notifyStatus(n,K.STATUS_PENDING,unready);
@@ -59,7 +63,7 @@ try{
       if(op===6){S.addPendingSource(c,other);S.addPendingSource(c,other);S.probeRemove(c,other);S.setPendingError(c,additional?b:undefined);}
     }catch(e){exception=e;}
     const errors=new Map(),decode=e=>{if(e instanceof S.StatusError||e instanceof S.NotReadyError){if(!errors.has(e))errors.set(e,errors.size+1);return {kind:e instanceof S.StatusError?'error':'pending',identity:errors.get(e),source:id(e.source),...(e instanceof S.StatusError?{cause:decode(e.cause)}:{})};}return e;},edge=e=>e?links.indexOf(e):0;
-    return {nodes:ns.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,error:decode(n._x?._error),shown:decode(n._x?._shownError),blocked:n._x?._blocked,
+    return {nodes:ns.slice(1).map(n=>({flags:n._flags??0,config:n._config,status:n._statusFlags??0,time:n._time??0,pending:!('_pendingValue'in n)||n._pendingValue===K.NOT_PENDING?{present:false}:{present:true,value:decode(n._pendingValue)},error:decode(n._x?._error),shown:decode(n._x?._shownError),blocked:n._x?._blocked,
       sources:n._x?._pendingSources?[...n._x._pendingSources].map(id):undefined,x:!!n._x,next:id(n._nextHeap),prev:id(n._prevHeap),first:id(n._firstChild),nextSibling:id(n._nextSibling),prevSibling:id(n._prevSibling),
       deps:edge(n._deps),tail:edge(n._depsTail),subs:edge(n._subs),subsTail:edge(n._subsTail),disposal:n._disposal?[1]:[]})),
       links:links.slice(1).map(l=>({$:undefined,dep:id(l._dep),sub:id(l._sub),nextDep:edge(l._nextDep),prevSub:edge(l._prevSub),nextSub:edge(l._nextSub),gen:l._gen})),events,
@@ -69,6 +73,10 @@ try{
   for(let op=0;op<10;op++)for(const status of [0,1,3,5])for(const flags of [0,K.REACTIVE_ZOMBIE,K.REACTIVE_DISPOSED])for(const extra of [false,true])for(const additional of [false,true])for(const block of [false,true])for(const config of [0,K.CONFIG_VERDICT,K.CONFIG_REDERIVE]){
     if([0,7,8,9].includes(op)&&block)continue;
     assert.deepEqual(actual(B.fixture(op,status,flags,extra,additional,block,config)),reference(op,status,flags,extra,additional,block,config),JSON.stringify({op,status,flags,extra,additional,block,config}));count++;
+  }
+  let stagedCases=0;
+  for(const status of [0,K.STATUS_PENDING,K.STATUS_PENDING|K.STATUS_UNINITIALIZED,K.STATUS_ERROR])for(const flags of [0,K.REACTIVE_ZOMBIE,K.REACTIVE_DISPOSED])for(const extra of [false,true])for(const additional of [false,true])for(const config of [0,K.CONFIG_VERDICT,K.CONFIG_REDERIVE,K.CONFIG_STAGED_ERROR,K.CONFIG_ASYNC,K.CONFIG_FRAME]){
+    assert.deepEqual(actual(B.stagedFixture(status,flags,extra,additional,config)),reference(1,status,flags,extra,additional,false,config,true),JSON.stringify({staged:true,status,flags,extra,additional,config}));stagedCases++;
   }
   for(let mode=0;mode<9;mode++){
     S.probeReset();S.setContextInternal(null);const r=S.createOwner();S.setContextInternal(r);const nodes=[null,r,...[0,1,2,3,4].map(()=>S.computed(()=>7,{lazy:true}))];S.setContextInternal(null);const n=nodes[2],id=n=>nodes.indexOf(n),seen=[];
@@ -92,5 +100,5 @@ try{
     assert.deepEqual({oldItems:list(result.oldItems),current:'items'in result.current?list(result.current.items):undefined,same:result.same,seen:list(result.seen)},
       {oldItems:[...saved].map(id),current:n._x._pendingSources?[...n._x._pendingSources].map(id):undefined,same:n._x._pendingSources===saved,seen},'captured Set case '+mode);
   }
-  console.log(`${count} pending-state comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Public promise/transaction execution is checked separately.`);
+  console.log(`${count} pending-state comparisons and ${stagedCases} staged-error nested-settlement comparisons match TS source sets, pending propagation, loading parks, self-only landing, settle/retry diamonds, deferred release and cleanup throws. Nine captured-Set alias/iterator cases also match. Public promise/transaction execution is checked separately.`);
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

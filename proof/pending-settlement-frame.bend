@@ -2,6 +2,8 @@
 # storage/tree/trace, not a promise that source status, lists, or queues are fixed.
 # Owner release/callback execution is an explicit separate boundary.
 import Base
+import ../runtime/pending-queue.bend as Intake
+import ../runtime/read-state.bend as Read
 import ../representation/records.bend as R
 import ../representation/base.bend as B
 import ../runtime/pending-state.bend as P
@@ -37,9 +39,25 @@ def retry(+fuel: Nat, +w: R.World, +edge: Nat, +source: Nat) ->
       Frame.firstBoolChoice(Nat.is_eq(edge, 0n), w, B.Bundle{w, False{}}, pair, {==},
         Frame.firstBoolChoice(Bool.or(Nat.is_eq(dep, source), P.hasSource(w, dep, source)), w, B.Bundle{w, True{}}, P.retryLoop(p, w, R.Link.nextDep(B.link(w, edge)), source), {==}, retry(p, w, R.Link.nextDep(B.link(w, edge)), source)))
 
-def skip(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat) ->
-  {Frame.observe(world(Q.skip(w, tasks, visited, released, scheduled, id))) == Frame.observe(w) : Frame.View}:
-  Frame.choice(B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()), w, H.enqueueSub(w, id), w, Heap.enqueue(w, id), {==})
+# queuePendingNode changes neither this observation nor the source graph.
+def queue(+w: R.World, +id: Nat) -> {Frame.observe(Intake.queuePendingNode(w, id)) == Frame.observe(w) : Frame.View}:
+  +next = R.World.with_pendingNodes(w, B.append(Nat, R.World.pendingNodes(w), [id]))
+  Frame.compose(w, next, Intake.queuePendingNode(w, id), Frame.choice(Bool.not(R.World.running(next)), next, Read.markUnflushedStaged(next), next, Frame.worldUnflushedStaged(next, True{}), {==}), Frame.worldPendingNodes(w, B.append(Nat, R.World.pendingNodes(w), [id])))
+
+def stagePrefix(+w: R.World, +id: Nat, +root: Nat) -> {Frame.observe(Q.stageMarkPrefix(w, id, root)) == Frame.observe(w) : Frame.View}:
+  +staged = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Node.pending(B.node(w, root))))
+  +marked = B.store_node(staged, id, R.Node.with_config(B.node(staged, id), B.set(R.Node.config(B.node(staged, id)), K.CONFIG_STAGED_ERROR())))
+  Frame.compose(w, staged, Q.stageMarkPrefix(w, id, root), Frame.compose(staged, marked, Q.stageMarkPrefix(w, id, root), queue(marked, id), Frame.config(staged, id, B.set(R.Node.config(B.node(staged, id)), K.CONFIG_STAGED_ERROR()))), Frame.pending(w, id, R.Node.pending(B.node(w, root))))
+
+def stageMark(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat) -> {Frame.observe(world(Q.stageMark(w, tasks, visited, released, scheduled, id, root))) == Frame.observe(w) : Frame.View}:
+  +prefix = Q.stageMarkPrefix(w, id, root)
+  +next = B.first(R.World, Bool, P.removePendingSource(prefix, id, id))
+  +after = {Q.Machine{next, B.append(Q.Task, Q.settlementTasks(next, id, id), Q.RestoreSettlement{visited, released, scheduled} <> tasks), [], [], False{}} : Q.Machine}
+  choice(B.has(R.Node.config(B.node(w, id)), Q.stageMarkMask()), w, Q.Machine{w, tasks, visited, released, scheduled}, after, {==}, Frame.compose(w, prefix, next, Source.remove(prefix, id, id), stagePrefix(w, id, root)))
+
+def skip(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool, +id: Nat, +root: Nat) ->
+  {Frame.observe(world(Q.skip(w, tasks, visited, released, scheduled, id, root))) == Frame.observe(w) : Frame.View}:
+  choice(B.has(R.Node.config(B.node(w, id)), K.CONFIG_VERDICT()), w, Q.Machine{H.enqueueSub(w, id), tasks, visited, released, scheduled}, B.choose(~Q.Machine, B.has(R.Node.config(B.node(w, root)), K.CONFIG_STAGED_ERROR()), _ => Q.stageMark(w, tasks, visited, released, scheduled, id, root), _ => Q.Machine{w, tasks, visited, released, scheduled}), Heap.enqueue(w, id), choice(B.has(R.Node.config(B.node(w, root)), K.CONFIG_STAGED_ERROR()), w, Q.stageMark(w, tasks, visited, released, scheduled, id, root), Q.Machine{w, tasks, visited, released, scheduled}, stageMark(w, tasks, visited, released, scheduled, id, root), {==}))
 
 # Source settled(): clear the status only for the last carrier, then possibly
 # join the existing transaction. Joining is bookkeeping; it does not publish.
@@ -103,7 +121,7 @@ def removed(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +rel
   +pair = P.removePendingSource(w, id, source)
   +next = B.first(R.World, Bool, pair)
   Frame.compose(w, next, world(Q.visitRemoved(w, tasks, visited, released, scheduled, id, root, source)),
-    choice(B.second(R.World, Bool, pair), next, Q.settled(next, tasks, visited, released, scheduled, id, root, source), Q.skip(next, tasks, visited, released, scheduled, id), settled(next, tasks, visited, released, scheduled, id, root, source), skip(next, tasks, visited, released, scheduled, id)), Source.remove(w, id, source))
+    choice(B.second(R.World, Bool, pair), next, Q.settled(next, tasks, visited, released, scheduled, id, root, source), Q.skip(next, tasks, visited, released, scheduled, id, root), settled(next, tasks, visited, released, scheduled, id, root, source), skip(next, tasks, visited, released, scheduled, id, root)), Source.remove(w, id, source))
 
 # The real dependency retry scan can fault on a malformed/exhausted graph. The
 # observation frame still holds; this root does not assert successful traversal.
@@ -111,9 +129,9 @@ def visit(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +relea
   {Frame.observe(world(Q.advance(w, Q.Visit{id, root, source} <> tasks, visited, released, scheduled))) == Frame.observe(w) : Frame.View}:
   +pair = B.choose(~B.Bundle<R.World, Bool>, Nat.is_ne(source, root), _ => P.retryReaches(w, id, source), _ => B.Bundle{w, False{}})
   +next = B.first(R.World, Bool, pair)
-  +reached = B.choose(~Q.Machine, B.second(R.World, Bool, pair), _ => Q.skip(next, tasks, visited, released, scheduled, id), _ => Q.visitRemoved(next, tasks, visited, released, scheduled, id, root, source))
-  choice(B.contains(visited, id), w, Q.skip(w, tasks, visited, released, scheduled, id), reached, skip(w, tasks, visited, released, scheduled, id),
-    Frame.compose(w, next, world(reached), choice(B.second(R.World, Bool, pair), next, Q.skip(next, tasks, visited, released, scheduled, id), Q.visitRemoved(next, tasks, visited, released, scheduled, id, root, source), skip(next, tasks, visited, released, scheduled, id), removed(next, tasks, visited, released, scheduled, id, root, source)),
+  +reached = B.choose(~Q.Machine, B.second(R.World, Bool, pair), _ => Q.skip(next, tasks, visited, released, scheduled, id, root), _ => Q.visitRemoved(next, tasks, visited, released, scheduled, id, root, source))
+  choice(B.contains(visited, id), w, Q.skip(w, tasks, visited, released, scheduled, id, root), reached, skip(w, tasks, visited, released, scheduled, id, root),
+    Frame.compose(w, next, world(reached), choice(B.second(R.World, Bool, pair), next, Q.skip(next, tasks, visited, released, scheduled, id, root), Q.visitRemoved(next, tasks, visited, released, scheduled, id, root, source), skip(next, tasks, visited, released, scheduled, id, root), removed(next, tasks, visited, released, scheduled, id, root, source)),
       Frame.firstBoolChoice(Nat.is_ne(source, root), w, P.retryReaches(w, id, source), B.Bundle{w, False{}}, retry(B.budget(w), w, R.Node.deps(B.node(w, id)), source), {==})))
 
 def advance(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +released: List<&2, Nat>, +scheduled: Bool) ->
@@ -130,6 +148,7 @@ def advance(+w: R.World, +tasks: List<&2, Q.Task>, +visited: List<&2, Nat>, +rel
     case Q.CollectWalk{+edge} <> +rest:
       choice(Nat.is_eq(edge, 0n), w, Q.Machine{w, rest, visited, released, scheduled}, Q.Machine{w, Q.Collect{R.Link.sub(B.link(w, edge))} <> Q.CollectNext{edge} <> rest, visited, released, scheduled}, {==}, {==})
     case Q.CollectNext{edge} <> rest: {==}
+    case Q.RestoreSettlement{outerVisited, outerReleased, outerScheduled} <> rest: {==}
     case Q.End{} <> rest: Frame.choice(scheduled, w, B.schedule(w), w, Frame.schedule(w), {==})
     case Q.Release{index} <> rest: Frame.worldFault(w, R.TypeError{})
 

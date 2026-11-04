@@ -14,7 +14,7 @@ def verdict(+w: R.World) -> Bool:
   Bool.and(Nat.is_ne(pass,0n),Nat.is_eq(R.Transaction.verdict(B.transaction(w,R.Transaction.parent(B.transaction(w,pass)))),pass))
 
 def after(+w: R.World,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+reader: Nat,+id: Nat,+lane: Nat,+never: Bool,+escape: Bool) -> C.Machine:
-  +next = B.choose(~R.World,Bool.and(Bool.or(never,Nat.is_ne(R.World.passLane(w),lane)),escape),_=>R.World.with_passLane(w,0n),_=>w)
+  +next = B.choose(~R.World,Bool.and(escape,Bool.or(never,Nat.is_ne(R.World.passLane(w),lane))),_=>R.World.with_passLane(w,0n),_=>w)
   B.choose(~C.Machine,Bool.or(Nat.is_eq(R.World.passLane(next),0n),Bool.not(L.sameLane(next,R.World.passLane(next),lane))),_=>C.laneReadOutside(next,rest,stack,reader,id,lane,False{},K.STATUS_PENDING(),never),_=>C.laneReadEnter(next,rest,stack,reader,id,lane,False{},K.STATUS_PENDING()))
 
 def source(+w: R.World,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+reader: Nat,+id: Nat,+lane: Nat) -> {C.laneReadRender(w,rest,stack,reader,id,lane,False{},K.STATUS_PENDING()) == after(w,rest,stack,reader,id,lane,Bool.not(B.present(R.NodeExtension.lane(B.extension(w,id)))),verdict(w)) : C.Machine}:

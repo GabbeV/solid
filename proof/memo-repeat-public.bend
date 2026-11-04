@@ -11,7 +11,7 @@ import ./memo-general-states.bend as FirstStates
 import ./memo-general-staging.bend as FirstDrain
 import ./memo-general-public.bend as FirstPublic
 import ./memo-public-program.bend as FirstSet
-import ./chain-public-program.bend as Transport
+import ./flush-transport.bend as Transport
 import ./memo-repeat-states.bend as M
 import ./memo-repeat-setter.bend as Setter
 import ./memo-repeat-staging.bend as Drain

@@ -118,7 +118,7 @@ def data_36() -> R.Flight:
   R.FlightUndefined{}
 
 def data_37() -> R.NodeExtension:
-  R.NodeExtension{data_32(), 0n, data_1(), data_2(), 0n, 0n, data_33(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_34(), data_2(), 0n, data_35(), data_36()}
+  R.NodeExtension{data_32(), 0n, data_1(), data_2(), 0n, 0n, data_33(), 0n, data_5(), 0n, False{}, data_2(), data_3(), data_34(), data_2(), 0n, data_35(), data_36(), data_3()}
 
 def data_38() -> List<&2, R.NodeExtension>:
   [data_37()]
@@ -139,7 +139,7 @@ def data_43() -> R.OptionalIds:
   R.NoIds{}
 
 def data_44() -> R.Transaction:
-  R.Transaction{data_23(), data_23(), data_24(), data_23(), 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, data_43()}
+  R.Transaction{data_23(), data_23(), data_24(), data_23(), 0n, 0n, False{}, 0n, 0n, False{}, 0n, False{}, False{}, data_43(), False{}}
 
 def data_45() -> List<&2, R.Transaction>:
   [data_44()]

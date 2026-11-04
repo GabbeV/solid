@@ -1,6 +1,7 @@
 # The actual raw create/open/hold constructor supplies fresh resume's facts.
 # No successful intermediate state or final count is supplied by a caller.
 import Base
+import ./held-opened-arena.bend as Arena
 import ./held-preparation-profile.bend as Profile
 import ./held-write-profile.bend as P
 import ./action-retirement-count.bend as Count
@@ -60,14 +61,14 @@ def openCount(+initial: R.Value,+method: R.Expr) -> {R.Transaction.open(B.transa
   Equal.trans(Nat,R.Transaction.open(B.transaction(Input.opened(initial,method),1n)),R.Transaction.open(B.transaction(w,1n)),1n,Control.openCount(w,Input.opened(initial,method),1n,Control.hold(w,Graph.source(initial),1n)),openBefore(initial,method))
 
 def complete(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> {Output.outer(C.world(Steps.iterate(1n+Eval.cost(values),Resume.start(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,rest,stack,incoming,rejected)))) == Output.outer(Exit.target(History.run(values,Prepared.prepared(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,R.ActionEnd{}),Graph.source(initial)),1n,0n)) : R.World}:
-  Resume.fresh(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,values,Graph.source(initial),answer,rest,stack,incoming,rejected,0n,0n,Input.profile(initial,Resume.methods(values,Graph.source(initial),answer)),capture(initial,Resume.methods(values,Graph.source(initial),answer)),empty(initial,Resume.methods(values,Graph.source(initial),answer)),openCount(initial,Resume.methods(values,Graph.source(initial),answer)),methods(initial,Resume.methods(values,Graph.source(initial),answer)))
+  Resume.fresh(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,values,Graph.source(initial),answer,rest,stack,incoming,rejected,0n,0n,Input.profile(initial,Resume.methods(values,Graph.source(initial),answer)),capture(initial,Resume.methods(values,Graph.source(initial),answer)),empty(initial,Resume.methods(values,Graph.source(initial),answer)),openCount(initial,Resume.methods(values,Graph.source(initial),answer)),methods(initial,Resume.methods(values,Graph.source(initial),answer)),Arena.plain(initial,Resume.methods(values,Graph.source(initial),answer)))
 
 def afterValid(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value) -> {Nat.is_lt(1n,B.length(R.Transaction,R.World.txArena(History.run(values,Prepared.prepared(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,R.ActionEnd{}),Graph.source(initial))))) == True{} : Bool}:
   +id = Graph.source(initial)
   +method = Resume.methods(values,id,answer)
   +w = Input.opened(initial,method)
   +next = Prepared.prepared(w,0n,R.ActionEnd{})
-  +profile = Profile.actual(w,id,0n,0n,R.ActionEnd{},Input.profile(initial,method),capture(initial,method),empty(initial,method))
+  +profile = Profile.actual(w,id,0n,0n,R.ActionEnd{},Input.profile(initial,method),capture(initial,method),empty(initial,method),Arena.plain(initial,method))
   P.groupValid(History.run(values,next,id),id,0n,History.invariant(values,next,id,0n,profile))
 
 def zero(+initial: R.Value,+values: List<&2,R.Value>,+answer: R.Value,+rest: List<&2,C.Task>,+stack: List<&2,R.Value>,+incoming: R.Value,+rejected: Bool) -> {Count.count(C.world(Steps.iterate(1n+Eval.cost(values),Resume.start(Input.opened(initial,Resume.methods(values,Graph.source(initial),answer)),0n,rest,stack,incoming,rejected))),1n) == 0n : Nat}:

@@ -34,13 +34,16 @@ def scheduled(+w: R.World,+id: Nat) -> T.Transition<w,Entry.scheduled(w),id>:
   +slot = R.Node.x(B.node(w,id))
   T.Retained{Frame.choice(R.World.running(w),w,w,next,slot,{==},Frame.fromOuter(w,next,slot,Outer.schedule(w))),Shape.choice(R.World.running(w),w,w,next,{==},Shape.schedule(w)),Pointer.choice(R.World.running(w),w,w,next,{==},Pointer.schedule(w))}
 
-def beforeExact(+w: R.World,+id: Nat,+offset: Nat,profile: P.Profile<w,id,offset>) -> {W.beforeCompare(w,id) == Entry.scheduled(w) : R.World}:
+def selected(+w: R.World,+id: Nat,+root: Nat) -> T.Transition<w,Entry.selected(w,root),id>:
+  T.choice(R.Transaction.lane(B.transaction(w,root)),w,w,Entry.scheduled(w),id,T.identity(w,id),scheduled(w,id))
+
+def beforeExact(+w: R.World,+id: Nat,+offset: Nat,profile: P.Profile<w,id,offset>) -> {W.beforeCompare(w,id) == Entry.selected(w,1n+offset) : R.World}:
   match profile:
     case P.HeldAt{path,extra,health,unmarked,valid,head,room,context,signal,held,override,custom,existing,extensionRoom,canonical,future,terminal,groupRoom}:
-      Equal.trans(R.World,W.beforeCompare(w,id),X.joinNode(w,id),Entry.scheduled(w),Equal.cong(Bool,R.World,flag=>B.choose(~R.World,flag,_=>X.joinNode(w,id),_=>w),B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),True{},held),Entry.actual(w,id,offset,canonical,future,terminal))
+      Equal.trans(R.World,W.beforeCompare(w,id),X.joinNode(w,id),Entry.selected(w,1n+offset),Equal.cong(Bool,R.World,flag=>B.choose(~R.World,flag,_=>X.joinNode(w,id),_=>w),B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()),True{},held),Entry.actual(w,id,offset,canonical,future,terminal))
 
 def before(+w: R.World,+id: Nat,+offset: Nat,profile: P.Profile<w,id,offset>) -> T.Transition<w,W.beforeCompare(w,id),id>:
-  T.target(w,Entry.scheduled(w),W.beforeCompare(w,id),id,Equal.sym(R.World,W.beforeCompare(w,id),Entry.scheduled(w),beforeExact(w,id,offset,profile)),scheduled(w,id))
+  T.target(w,Entry.selected(w,1n+offset),W.beforeCompare(w,id),id,Equal.sym(R.World,W.beforeCompare(w,id),Entry.selected(w,1n+offset),beforeExact(w,id,offset,profile)),selected(w,id,1n+offset))
 
 def compared(+w: R.World,+id: Nat,+current: R.Value,+value: R.Value,+offset: Nat,+profile: P.Profile<w,id,offset>) -> T.Transition<w,Source.compared(w,id,current,value),id>:
   +staged = W.stageResolved(w,id,value)

@@ -69,34 +69,96 @@ def memo_complete(+w: R.World, +id: Nat, +value: R.Value, +height: Nat, +slotted
         notified(w, id, value, slotted, R.Node.subs(B.node(w, id)), subs, slot),
         Equal.cong(R.World, B.Bundle<R.World, Bool>, world => B.Bundle{world, True{}}, S.insertSubs(slotted, id), end, notify))))
 
+def at_slot_13(+netted: Bool,+input: Nat) -> {Stage.staged(C.world(M.at_13(netted,input)), 3n, R.Number{Nat.add(input, 1n)}) == M.slotAt_13(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
 def slot_13(+input: Nat) -> {Stage.staged(C.world(M.state_13(input)), 3n, R.Number{Nat.add(input, 1n)}) == M.slot_13(input) : R.World}:
-  {==}
+  at_slot_13(Nat.is_eq(input,0n),input)
+
+def at_notify_13(+netted: Bool,+input: Nat) -> {S.insertSubs(M.slotAt_13(netted,input), 3n) == M.notifyAt_13(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def notify_13(+input: Nat) -> {S.insertSubs(M.slot_13(input), 3n) == M.notify_13(input) : R.World}:
-  {==}
+  at_notify_13(Nat.is_eq(input,0n),input)
+
+def at_final_13(+netted: Bool,+input: Nat) -> {M.notifyAt_13(netted,input) == C.world(M.at_14(netted,input)) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def final_13(+input: Nat) -> {M.notify_13(input) == C.world(M.state_14(input)) : R.World}:
-  {==}
+  at_final_13(Nat.is_eq(input,0n),input)
+
+def at_complete_13(+netted: Bool,+input: Nat) -> {C.publishValue(C.world(M.at_13(netted,input)), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{}) == B.Bundle{C.world(M.at_14(netted,input)), True{}} : B.Bundle<R.World, Bool>}:
+  match netted:
+    case True{}:
+      memo_complete(C.world(M.at_13(True{},input)), 3n, R.Number{Nat.add(input, 1n)}, 0n, M.slotAt_13(True{},input), C.world(M.at_14(True{},input)), {==}, {==}, {==}, at_slot_13(True{},input),
+        notify_end(M.slotAt_13(True{},input), 3n, M.notifyAt_13(True{},input), C.world(M.at_14(True{},input)), at_notify_13(True{},input), at_final_13(True{},input)))
+    case False{}:
+      memo_complete(C.world(M.at_13(False{},input)), 3n, R.Number{Nat.add(input, 1n)}, 0n, M.slotAt_13(False{},input), C.world(M.at_14(False{},input)), {==}, {==}, {==}, at_slot_13(False{},input),
+        notify_end(M.slotAt_13(False{},input), 3n, M.notifyAt_13(False{},input), C.world(M.at_14(False{},input)), at_notify_13(False{},input), at_final_13(False{},input)))
 
 def complete_13(+input: Nat) -> {C.publishValue(C.world(M.state_13(input)), 3n, R.Number{Nat.add(input, 1n)}, False{}, 0n, False{}, False{}) == B.Bundle{C.world(M.state_14(input)), True{}} : B.Bundle<R.World, Bool>}:
-  memo_complete(C.world(M.state_13(input)), 3n, R.Number{Nat.add(input, 1n)}, 0n, M.slot_13(input), C.world(M.state_14(input)), {==}, {==}, {==}, slot_13(input),
-    notify_end(M.slot_13(input), 3n, M.notify_13(input), C.world(M.state_14(input)), notify_13(input), final_13(input)))
+  at_complete_13(Nat.is_eq(input,0n),input)
+
+def at_slot_33(+netted: Bool,+input: Nat) -> {Stage.staged(C.world(M.at_33(netted,input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}) == M.slotAt_33(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def slot_33(+input: Nat) -> {Stage.staged(C.world(M.state_33(input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}) == M.slot_33(input) : R.World}:
-  {==}
+  at_slot_33(Nat.is_eq(input,0n),input)
+
+def at_notify_33(+netted: Bool,+input: Nat) -> {S.insertSubs(M.slotAt_33(netted,input), 4n) == M.notifyAt_33(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def notify_33(+input: Nat) -> {S.insertSubs(M.slot_33(input), 4n) == M.notify_33(input) : R.World}:
-  {==}
+  at_notify_33(Nat.is_eq(input,0n),input)
+
+def at_final_33(+netted: Bool,+input: Nat) -> {M.notifyAt_33(netted,input) == C.world(M.at_34(netted,input)) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def final_33(+input: Nat) -> {M.notify_33(input) == C.world(M.state_34(input)) : R.World}:
-  {==}
+  at_final_33(Nat.is_eq(input,0n),input)
+
+def at_complete_33(+netted: Bool,+input: Nat) -> {C.publishValue(C.world(M.at_33(netted,input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, False{}, 1n, False{}, False{}) == B.Bundle{C.world(M.at_34(netted,input)), True{}} : B.Bundle<R.World, Bool>}:
+  match netted:
+    case True{}:
+      memo_complete(C.world(M.at_33(True{},input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, 1n, M.slotAt_33(True{},input), C.world(M.at_34(True{},input)), {==}, {==}, {==}, at_slot_33(True{},input),
+        notify_end(M.slotAt_33(True{},input), 4n, M.notifyAt_33(True{},input), C.world(M.at_34(True{},input)), at_notify_33(True{},input), at_final_33(True{},input)))
+
+    # The effect branch marks and queues before it writes its value. Its captured
+    # subscriber pointer is still the pre-store one, as in publishValueChanged.
+    case False{}:
+      memo_complete(C.world(M.at_33(False{},input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, 1n, M.slotAt_33(False{},input), C.world(M.at_34(False{},input)), {==}, {==}, {==}, at_slot_33(False{},input),
+        notify_end(M.slotAt_33(False{},input), 4n, M.notifyAt_33(False{},input), C.world(M.at_34(False{},input)), at_notify_33(False{},input), at_final_33(False{},input)))
+
+    # The effect branch marks and queues before it writes its value. Its captured
+    # subscriber pointer is still the pre-store one, as in publishValueChanged.
 
 def complete_33(+input: Nat) -> {C.publishValue(C.world(M.state_33(input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, False{}, 1n, False{}, False{}) == B.Bundle{C.world(M.state_34(input)), True{}} : B.Bundle<R.World, Bool>}:
-  memo_complete(C.world(M.state_33(input)), 4n, R.Number{Nat.mul(Nat.add(input, 1n), 2n)}, 1n, M.slot_33(input), C.world(M.state_34(input)), {==}, {==}, {==}, slot_33(input),
-    notify_end(M.slot_33(input), 4n, M.notify_33(input), C.world(M.state_34(input)), notify_33(input), final_33(input)))
+  at_complete_33(Nat.is_eq(input,0n),input)
 
-# The effect branch marks and queues before it writes its value. Its captured
-# subscriber pointer is still the pre-store one, as in publishValueChanged.
 def mainlineEnqueue(w: R.World, id: Nat) -> R.World:
   W.enqueueIn(w, id, 0n)
 
@@ -177,19 +239,56 @@ def store_end(+w: R.World, +id: Nat, +value: R.Value, +middle: R.World, +end: R.
   {B.store_node(w, id, R.Node.with_value(B.node(w, id), value)) == end : R.World}:
   Equal.trans(R.World, B.store_node(w, id, R.Node.with_value(B.node(w, id), value)), middle, end, a, b)
 
+def at_mark_55(+netted: Bool,+input: Nat) -> {B.store_node(C.world(M.at_55(netted,input)), 5n, R.Node.with_modified(B.node(C.world(M.at_55(netted,input)), 5n), True{})) == M.at_modified_55(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
 def mark_55(+input: Nat) -> {B.store_node(C.world(M.state_55(input)), 5n, R.Node.with_modified(B.node(C.world(M.state_55(input)), 5n), True{})) == M.modified_55(input) : R.World}:
-  {==}
+  at_mark_55(Nat.is_eq(input,0n),input)
+
+def at_queue_55(+netted: Bool,+input: Nat) -> {mainlineEnqueue(M.at_modified_55(netted,input), 5n) == M.at_queued_55(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def queue_55(+input: Nat) -> {mainlineEnqueue(M.modified_55(input), 5n) == M.queued_55(input) : R.World}:
-  {==}
+  at_queue_55(Nat.is_eq(input,0n),input)
+
+def at_value_55(+netted: Bool,+input: Nat) -> {B.store_node(M.at_queued_55(netted,input), 5n, R.Node.with_value(B.node(M.at_queued_55(netted,input), 5n), R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)})) == M.at_value_55(netted,input) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def value_55(+input: Nat) -> {B.store_node(M.queued_55(input), 5n, R.Node.with_value(B.node(M.queued_55(input), 5n), R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)})) == M.value_55(input) : R.World}:
-  {==}
+  at_value_55(Nat.is_eq(input,0n),input)
+
+def at_final_55(+netted: Bool,+input: Nat) -> {M.at_value_55(netted,input) == C.world(M.at_56(netted,input)) : R.World}:
+  match netted:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
 
 def final_55(+input: Nat) -> {M.value_55(input) == C.world(M.state_56(input)) : R.World}:
-  {==}
+  at_final_55(Nat.is_eq(input,0n),input)
+
+def at_complete_55(+netted: Bool,+input: Nat) -> {C.publishValue(C.world(M.at_55(netted,input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, False{}, 2n, False{}, False{}) == B.Bundle{C.world(M.at_56(netted,input)), True{}} : B.Bundle<R.World, Bool>}:
+  match netted:
+    case True{}:
+      effect_complete(C.world(M.at_55(True{},input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, 2n, M.at_queued_55(True{},input), C.world(M.at_56(True{},input)), {==}, {==}, {==}, {==}, {==}, {==},
+        prepare_end(C.world(M.at_55(True{},input)), 5n, M.at_modified_55(True{},input), M.at_queued_55(True{},input), at_mark_55(True{},input), at_queue_55(True{},input)), {==},
+        store_end(M.at_queued_55(True{},input), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, M.at_value_55(True{},input), C.world(M.at_56(True{},input)), at_value_55(True{},input), at_final_55(True{},input)))
+    case False{}:
+      effect_complete(C.world(M.at_55(False{},input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, 2n, M.at_queued_55(False{},input), C.world(M.at_56(False{},input)), {==}, {==}, {==}, {==}, {==}, {==},
+        prepare_end(C.world(M.at_55(False{},input)), 5n, M.at_modified_55(False{},input), M.at_queued_55(False{},input), at_mark_55(False{},input), at_queue_55(False{},input)), {==},
+        store_end(M.at_queued_55(False{},input), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, M.at_value_55(False{},input), C.world(M.at_56(False{},input)), at_value_55(False{},input), at_final_55(False{},input)))
 
 def complete_55(+input: Nat) -> {C.publishValue(C.world(M.state_55(input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, False{}, 2n, False{}, False{}) == B.Bundle{C.world(M.state_56(input)), True{}} : B.Bundle<R.World, Bool>}:
-  effect_complete(C.world(M.state_55(input)), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, 2n, M.queued_55(input), C.world(M.state_56(input)), {==}, {==}, {==}, {==}, {==}, {==},
-    prepare_end(C.world(M.state_55(input)), 5n, M.modified_55(input), M.queued_55(input), mark_55(input), queue_55(input)), {==},
-    store_end(M.queued_55(input), 5n, R.Number{Nat.add(Nat.mul(Nat.add(input, 1n), 2n), input)}, M.value_55(input), C.world(M.state_56(input)), value_55(input), final_55(input)))
+  at_complete_55(Nat.is_eq(input,0n),input)

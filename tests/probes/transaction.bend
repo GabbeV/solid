@@ -81,6 +81,12 @@ def apply(+w: R.World, op: U32, +own: Bool, +extra: Bool) -> ProbeResult:
       boolProbeResult(T.frameRead(w, B.choose(~Nat, own, _ => 4n, _ => 5n), 3n))
     case 16:
       ProbeResult{T.joinPass(w, B.choose(~Nat, own, _ => 4n, _ => 5n), 3n), 0n}
+    case 18:
+      ProbeResult{T.joinFuture(w, 3n), 0n}
+    case 19:
+      ProbeResult{T.joinFuture(T.merge(w, 3n, 1n), 3n), 0n}
+    case 20:
+      ProbeResult{T.joinFuture(T.merge(T.merge(w, 3n, 2n), 2n, 1n), 3n), 0n}
     case _:
       +w = T.merge(w, 1n, 2n)
       +pair = T.txOf(w, 3n)

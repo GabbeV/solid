@@ -31,7 +31,7 @@ def certificate(+value: R.Value, +recomputing: Bool, +extensions: List<&2, R.Nod
   Graph.build(initial(value, recomputing, extensions, sets), 1n, 2n, B.blank_link(), [], {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==}, {==})
 
 def complete(+value: R.Value, +recomputing: Bool, +extensions: List<&2, R.NodeExtension>, +sets: List<&2, List<&2, Nat>>, +rest: List<&2, Core.Task>, +stack: List<&2, R.Value>) ->
-  Return.Returned<Settlement.start(registered(value, recomputing, extensions, sets), 1n, rest, stack), rest, stack, 10n>:
+  Return.Returned<Settlement.start(registered(value, recomputing, extensions, sets), 1n, rest, stack), rest, stack, 14n>:
   Preserved.startReturn(linked(value, recomputing, extensions, sets), 2n, 1n, 1n, 2n, 0n, rest, stack, certificate(value, recomputing, extensions, sets))
 
 def member(+value: R.Value, +recomputing: Bool, +extensions: List<&2, R.NodeExtension>, +sets: List<&2, List<&2, Nat>>) ->

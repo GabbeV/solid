@@ -10,13 +10,15 @@ identity, leaf identity, payloads, caller tasks and caller value stack:
 - The leaf has no downstream subscribers and no auto-dispose configuration.
 
 `one-edge-settlement-return.bend` derives a `BoundedReturn.Returned` certificate
-with ten steps of room. The certificate contains the actual number of steps,
-unused room, actual resulting World, an equation that used plus unused is ten,
+with fourteen steps of room. The certificate contains the actual number of steps,
+unused room, actual resulting World, an equation that used plus unused is fourteen,
 and the exact equation from repeated actual `Core.step` to the unchanged caller
 work/stack. It does not assume a successful visit, an output queue layout or a
-final-machine equation. A no-stale dependency trim composes to twelve steps of
+final-machine equation. A no-stale dependency trim composes to sixteen steps of
 room, using its earlier exact two-step whole-World return. The original direct
-no-subscriber six-step family and all earlier domains/budgets are retained.
+no-subscriber six-step family and all earlier input domains are retained. The ecf30116 staged-error branch can
+nest a leaf settlement before returning to the outer visitor; its four real
+bookkeeping steps account for the bound change. Checker fuel is unchanged.
 
 Initial Healthy fault is not global readiness/no-halt. The visitor may fault on
 malformed transaction state, and that actual fault remains on return. A normal
@@ -27,8 +29,11 @@ presence, healthy final status or successful publication is inferred.
 ## Control abstraction and exact World
 
 `pending-visit-control.bend` proves an intermediate task/release observation:
-actual `Pending.advance` on a non-autodisposed leaf either keeps its queued tail
-or prepends a zero-cursor walk, and preserves the prior release list. It covers
+actual `Pending.advance` on a non-autodisposed leaf keeps its queued tail,
+prepends a zero-cursor walk, or starts the source nested leaf settlement with
+fresh visited/released/scheduled locals and a return task that restores the
+outer locals. The direct and ordinary leaf cases retain the prior release list;
+the nested case restores it on return. It covers
 already-visited, retry, missing-carrier and successful-retirement branches with
 arbitrary identities. The graph footprint derives the needed shape after retry
 and source removal. The core bridge retains the World computed by that exact
@@ -37,9 +42,9 @@ replace that World with an idealized state or require another World equality.
 
 The return suffix separately proves seven healthy bookkeeping steps or two fault
 unwinding steps. An early visitor return omits one healthy step. Generic actual
-prefix composition supplies the ten/twelve bounds. Committed-content composition
+prefix composition supplies the fourteen/sixteen bounds. Committed-content composition
 retains every cached node value, the entire tree and complete event trace through
-the complete ten-step-room segment, including its shorter fault alternative.
+the complete fourteen-step-room segment, including its shorter fault alternative.
 The concrete driver corollary leaves the caller's requested remaining fuel
 unchanged after the actual used steps. Zero remaining fuel with unfinished caller
 work still follows `Core.run`'s Exhausted/empty work/stack policy; no budget or

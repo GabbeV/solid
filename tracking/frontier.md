@@ -8,9 +8,12 @@ belong in [session notes](session-2026-10-28.md) and [progress.md](progress.md).
 The [previous accumulated frontier](reviews/frontier-through-388cfefc.md) is an
 exact historical snapshot; its earlier omissions and next steps may be superseded.
 
-Solid is pinned to `5e68925c` (rc.20). The [source review](reviews/solid-5e68925c.md)
-records the integrated parked-flight, verdict/hold-work, shown-error recovery
-and revelation-delay changes. The Bend2.0.37 frontend/vendor
+Solid is pinned to `ecf30116` (rc.20). The [source review](reviews/solid-ecf30116.md)
+records first-answer staging, nested error settlement, custom-comparator netting
+and verdict/lane routing. The raw-lane early return changes generic join contracts:
+ordinary scheduling requires a nonlane raw capture; unrestricted conditional
+results and concrete constructor-derived facts remain checked separately.
+The Bend2.0.37 frontend/vendor
 and fully Lean-checked congruence checker profile/fuel remain unchanged. No
 semantic deviation is active. This is an incremental production, non-store port
 with an explicit callback/host grammar, not the whole package. See the
@@ -28,7 +31,7 @@ and [verification record](verification.md) for admitted domains and evidence.
 | Deferred and `from` | Data/thenables, typed streams, direct subscriptions and wrapped async iterables with cancellation | Fixed complete deferred/from lifecycles; arbitrary represented from payloads; Promise/cancellation preservation | Observable/interop and object unsubscribe; mutable protocol objects; general async histories |
 | Lists and children | Typed arrays, repeat, positional/keyed/extracted-key mapping, flattening | General array lenses and fixed lifecycle/payload programmes | Full JS values/protocols and arbitrary callback/topology histories |
 
-4,759 public differential histories and 73 closed regressions remain supporting
+4,776 public differential histories and 73 closed regressions remain supporting
 evidence. Configured mutation totals and completed frozen sweeps are distinct in
 [verification.md](verification.md). These counts are not a completion percentage.
 The [fidelity ledger](source-fidelity.md) and [proof catalogue](general-properties.md)

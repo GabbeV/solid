@@ -16,7 +16,7 @@ import ./action-output-frame.bend as Output
 
 def intoSetter(+record: R.Transaction,+remaining: Nat) -> {R.Transaction.into(R.Transaction.with_open(record,remaining)) == R.Transaction.into(record) : Nat}:
   match record:
-    case R.Transaction{nodes,renderQueue,userQueue,reruns,into,parent,lane,verdict,open,acted,links,shown,held,marks}: {==}
+    case R.Transaction{nodes,renderQueue,userQueue,reruns,into,parent,lane,verdict,open,acted,links,shown,held,marks, +latest}: {==}
 
 def intoSet(+rows: List<&2,R.Transaction>,+root: Nat,+remaining: Nat) -> {V.intos(List.set(&2,R.Transaction,rows,root,R.Transaction.with_open(B.get(R.Transaction,rows,root,B.blank_transaction()),remaining))) == V.intos(rows) : List<&2,Nat>}:
   match rows root:

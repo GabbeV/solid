@@ -1,8 +1,10 @@
 # Deferred data proof over ordinary represented payloads
 
-This checkpoint generalizes the existing complete data program without changing
-any runtime, representation, host adapter, source pin, compiler or kernel file.
-The old numeric theorem and its sufficient budget remain intact.
+The original payload generalization is retained across the ecf30116 source
+migration. The source netted-read branch changes an intermediate flag and, for
+opposite signed zeros, the returned payload. The numeric result and 103-step
+sufficient budget remain intact; the ordinary-payload result now states the
+actual source selection rather than silently fixing the pinned signed-zero bug.
 
 ## Quantified domain
 
@@ -41,20 +43,27 @@ for every admitted initial/proposal pair and every extra natural budget:
 
 - `Core.run(103 + extra, before(initial, next))` equals the exact final Machine,
   including its complete World, empty task list and value stack;
-- the returned value is exactly `Payload.value(next)`;
+- the returned value is the committed initial payload when the source strict
+  equality calls initial and proposal equal, otherwise the proposed payload;
+  opposite signed zeros therefore retain the old sign at this pin (#4538);
 - choosing natural payloads gives exactly the original numeric initial Machine.
 
-The last bridge establishes that this is an extension of the same program.
+For natural payloads, strict equality implies represented value equality, so
+the numeric result still returns the proposal. This is proved separately, rather
+than assumed for all JavaScript values. The last bridge retains the same program.
 The old numeric theorem remains registered. No closed regression is added to the
 73-count concrete regression total just for widening a theorem's domain.
 
 `tools/deferred-witness.mjs --payload` builds untrusted canonical states from the
-actual driver. The independent kernel verifies their universal step equations;
-the generator and sample run are not trusted proof engines. Six proof-only case
-splits discharge actual initializer/updater overload and async classification
-branches. They add no runtime task or step. Existing setter/heap equations are
-reused with symbolic ordinary payloads. Deterministic regeneration is checked by
-`npm run check`, alongside the unchanged default numeric generator.
+actual driver and a named algebraic read-gate cut, one suffix for each outcome. The prefix is
+shared through step50. A source-local read cut names the equality result; its
+connection to actual core.step is checked, then both suffixes are proved for all
+ordinary payloads. The final World retains the conditional staged-read flag.
+The numeric module specializes that same path and proves the natural value
+selection lemma. Payload cases discharge initializer/updater and async
+classification branches. They insert no runtime task. All equations, the complete
+path and its result require the independent kernel; samples and generators are
+not trusted proof engines. Deterministic regeneration remains checked.
 
 This does not prove arbitrary graphs, arbitrary derivation functions, default
 comparator policy, disposal or overlapping async histories. A future arbitrary

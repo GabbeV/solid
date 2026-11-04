@@ -7,21 +7,31 @@ helper laws do not automatically establish reachable-state premises.
 
 ## Current evidence
 
-Solid is pinned to `5e68925c` (rc.20). The Bend2.0.37 frontend and vendored snapshot
+Solid is pinned to `ecf30116` (rc.20). The Bend2.0.37 frontend and vendored snapshot
 remain unchanged. The independent checker uses the recorded, fully Lean-checked
 [congruence profile](kernel-congruence.md); Lean4.34.0 and kernel fuel are unchanged. No semantic deviation is active.
 
 | Evidence | Current scope |
 | --- | --- |
-| Public differential corpus | 4,759 histories; restricted admitted callback/value/IO grammar |
+| Public differential corpus | 4,776 histories; restricted admitted callback/value/IO grammar |
 | Closed composed regressions | 73 fixed end-to-end Bend executions; separate from quantified proofs |
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 767 = 520 finite + 247 kernel variants; ten rc.20 targeted faults and three read-entry faults are rejected; a fresh complete 767 sweep remains separate |
-| Complete negative sweep | Frozen275c89e8/rc.19: all754 exact ordered variants compiled/rejected after107 unchanged kernel baselines; all1365 sealed inputs and outputs unchanged; [receipt](reviews/complete-754-negative.json) |
-| Negative-check scope | Complete754 covers frozen814-root275c89e8 at rc.19. The interrupted748 prefix and repaired tail remain separate scopes. Earlier727/726 receipts retain their old commits; no receipt is relabeled as covering later source/proof changes. |
+| Configured mutations | 772 = 525 finite + 247 kernel variants; operation targets are migrated to ecf30116, including source-driven fault replacement; fresh focused execution is separate from frozen sweeps |
+| Complete negative sweep | Frozen d7cdef988 / 5e68925c: all767 exact ordered variants compiled/rejected after108 unchanged kernel baselines; [receipt](reviews/complete-767-negative.json). The frozen source/proof seal was rechecked before this migration. |
+| Negative-check scope | Complete767 covers the frozen820-root d7cdef988 program, not ecf30116. Earlier754/727/726 and interrupted-prefix receipts retain their own inputs. A migrated target or resource/compilation failure is not a fresh rejection. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
+
+The [ecf30116 migration receipt](reviews/solid-ecf30116-validation.json) records
+126 package suites, all 52 operation-alignment suites, the unchanged native
+423-file/6,130-test signals suite, checker integrity controls and 18 fresh targeted
+negative rejections (14 finite, four proof oracles). All 772 mutation anchors are
+current; no complete 772 sweep is claimed. The 822-root whole-book verdict and its
+exact input hashes belong to `checked.json`; frontend diagnostics are not proof
+credit. The source-required contract and sufficient-runtime-bound changes are
+listed separately beside that receipt. Checker profile, fuel and RSS limit stay
+unchanged.
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
 roots: actual action opening/join establishes a live occurrence, either first

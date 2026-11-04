@@ -1,7 +1,9 @@
 # Fulfillment prefix retains committed content and continuation state
 
-This extends `8f26b5eb6b628913eb5f7d98cb1cf024dab7380a` without runtime, host,
-representation, upstream source, toolchain, kernel-limit or deviation changes.
+Originally introduced after `8f26b5eb6b628913eb5f7d98cb1cf024dab7380a`, these
+contracts now follow the ecf30116 source. Landing captures carried staging
+before status/setter mutations. Ordinary carried work retains its queued flush;
+a stream continuation forces the synchronous flush. Checker limits are unchanged.
 
 The [staging observation](committed-staging.md) is now preserved through the
 actual callback-free asynchronous fulfillment prefix, including pending-source
@@ -17,7 +19,7 @@ held/default setter. Seven roots cover:
 - The active core `asyncWrite` default/no-override branch selects its actual fast
   path, preserves the committed observation and caller value stack.
 - Its after-value boundary constructs the exact source task order: optional owner
-  dependency trim, after-trim settlement, scheduling, flush, captured `then` tasks,
+  dependency trim, after-trim settlement, scheduling, the source conditional flush, captured `then` tasks,
   then the caller's remaining work. The whole machine/task-list equality is
   checked separately from the observation projection.
 

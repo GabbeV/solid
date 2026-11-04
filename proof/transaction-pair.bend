@@ -49,11 +49,11 @@ def putRight(+w: R.World, +prefix: List<&2, R.Transaction>, +left: R.Transaction
 
 def rootInto(+t: R.Transaction) -> {R.Transaction.into(Old.root(t)) == 0n : Nat}:
   match t:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def rootLane(+t: R.Transaction) -> {R.Transaction.lane(Old.root(t)) == False{} : Bool}:
   match t:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 # Both source lookups really terminate, within their actual public budgets.
 def leftResolution(+w: R.World, +prefix: List<&2, R.Transaction>, +left: R.Transaction, +gap: List<&2, R.Transaction>, +right: R.Transaction, +suffix: List<&2, R.Transaction>) ->
@@ -157,12 +157,12 @@ def targetAfter(+w: R.World, +prefix: List<&2, R.Transaction>, +left: R.Transact
 def transferInto(+source: R.Transaction, +target: R.Transaction) ->
   {R.Transaction.into(Join.transfer(source, target)) == R.Transaction.into(target) : Nat}:
   match target:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def redirectInto(+source: R.Transaction, +target: Nat) ->
   {R.Transaction.into(R.Transaction.with_into(source, target)) == target : Nat}:
   match source:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def targetStopped(+left: R.Transaction, +right: R.Transaction, +reverse: Bool) ->
   {R.Transaction.into(targetRecord(left, right, reverse)) == 0n : Nat}:
@@ -261,12 +261,12 @@ def targetResolves(+w: R.World, +prefix: List<&2, R.Transaction>, +left: R.Trans
 
 def rootOpen(+t: R.Transaction) -> {R.Transaction.open(Old.root(t)) == R.Transaction.open(t) : Nat}:
   match t:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def transferOpen(+source: R.Transaction, +target: R.Transaction) ->
   {R.Transaction.open(Join.transfer(source, target)) == Nat.add(R.Transaction.open(target), R.Transaction.open(source)) : Nat}:
   match target:
-    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks}: {==}
+    case R.Transaction{nodes, renderQueue, userQueue, reruns, into, parent, lane, verdict, open, acted, links, shown, held, marks, +latest}: {==}
 
 def obligations(+left: R.Transaction, +right: R.Transaction, reverse: Bool) -> Nat:
   B.choose(~Nat, reverse, _ => Nat.add(R.Transaction.open(left), R.Transaction.open(right)), _ => Nat.add(R.Transaction.open(right), R.Transaction.open(left)))
@@ -274,9 +274,9 @@ def obligations(+left: R.Transaction, +right: R.Transaction, reverse: Bool) -> N
 def targetCount(+left: R.Transaction, +right: R.Transaction, +reverse: Bool) ->
   {R.Transaction.open(targetRecord(left, right, reverse)) == obligations(left, right, reverse) : Nat}:
   match left:
-    case R.Transaction{+ln, +lr, +lu, +lrr, +li, +lp, +ll, +lv, +lo, +la, +lk, +ls, +lh, +lm}:
+    case R.Transaction{+ln, +lr, +lu, +lrr, +li, +lp, +ll, +lv, +lo, +la, +lk, +ls, +lh, +lm, +latest}:
       match right:
-        case R.Transaction{+rn, +rr, +ru, +rrr, +ri, +rp, +rl, +rv, +ro, +ra, +rk, +rs, +rh, +rm}:
+        case R.Transaction{+rn, +rr, +ru, +rrr, +ri, +rp, +rl, +rv, +ro, +ra, +rk, +rs, +rh, +rm, +latest}:
           match reverse:
             case False{}: {==}
             case True{}: {==}

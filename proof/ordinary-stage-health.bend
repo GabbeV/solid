@@ -6,6 +6,7 @@ import ../representation/base.bend as B
 import ../runtime/write.bend as W
 import ../runtime/constants.bend as K
 import ./staging-committed-frame.bend as Stage
+import ./staging-live-locals.bend as Live
 import ./ordinary-write-outer.bend as Frame
 import ./ordinary-stage-intake.bend as Intake
 import ./ordinary-stage-tail.bend as Tail
@@ -28,7 +29,7 @@ def actual(+w: R.World,+path: Path.Path<w>,+id: Nat,+value: R.Value,+extra: Nat,
   +nextValid = Equal.trans(Bool,Nat.is_lt(id,B.length(R.Node,R.World.nodes(next))),Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))),True{},Equal.cong(List<&2,R.Node>,Bool,nodes=>Nat.is_lt(id,B.length(R.Node,nodes)),R.World.nodes(next),R.World.nodes(w),Intake.nodes(w,id,staged)),valid)
   +nextHead = Equal.trans(Nat,R.Node.subs(B.node(next,id)),R.Node.subs(B.node(w,id)),Path.origin(w,path),Equal.cong(R.Node,Nat,n=>R.Node.subs(n),B.node(next,id),B.node(w,id),entryNode(w,id)),head)
   +nextRoom = Equal.trans(Nat,B.budget(next),B.budget(w),Nat.add(Path.depth(w,path),extra),entryBudget(w,id),room)
-  Equal.trans(R.World,Frame.observe(W.stageResolved(w,id,value)),Frame.observe(Stage.tail(next,id,value,node,staged)),Frame.observe(w),Equal.cong(R.World,R.World,state=>Frame.observe(Stage.tail(state,id,value,node,staged)),Stage.intake(w,id,node,staged),next,Intake.exact(w,id,staged,ordinary)),Tail.frame(w,path,next,id,value,node,staged,extra,same,unmarked,nextValid,nextHead,nextRoom,Frame.context(w,next,same,context),signal))
+  Equal.trans(R.World,Frame.observe(W.stageResolved(w,id,value)),Frame.observe(Stage.tail(next,id,value,node,staged)),Frame.observe(w),Equal.cong(R.World,R.World,state=>Frame.observe(state),W.stageResolved(w,id,value),Stage.tail(next,id,value,node,staged),Live.resolved(w,next,id,value,Intake.exact(w,id,staged,ordinary),Intake.nodes(w,id,staged))),Tail.frame(w,path,next,id,value,node,staged,extra,same,unmarked,nextValid,nextHead,nextRoom,Frame.context(w,next,same,context),signal))
 
 def healthy(+w: R.World,+path: Path.Path<w>,+id: Nat,+value: R.Value,+extra: Nat,health: {R.World.fault(w) == R.Healthy{} : R.Fault},unmarked: {R.World.marked(w) == False{} : Bool},valid: {Nat.is_lt(id,B.length(R.Node,R.World.nodes(w))) == True{} : Bool},head: {R.Node.subs(B.node(w,id)) == Path.origin(w,path) : Nat},room: {B.budget(w) == Nat.add(Path.depth(w,path),extra) : Nat},context: {R.World.context(w) == 0n : Nat},signal: {R.Node.kind(B.node(w,id)) == R.Signal{} : R.NodeKind},ordinary: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_HELD()) == False{} : Bool}) -> {R.World.fault(W.stageResolved(w,id,value)) == R.Healthy{} : R.Fault}:
   Frame.health(w,W.stageResolved(w,id,value),actual(w,path,id,value,extra,unmarked,valid,head,room,context,signal,ordinary),health)

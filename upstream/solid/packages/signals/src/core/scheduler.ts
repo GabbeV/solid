@@ -288,6 +288,11 @@ export interface Transaction {
    * (scripts/mangle-props.mjs), which costs the floors bytes for a path
    * only optimistic stores reach. */
   folded?: (c: Computed<any> | null, el: Signal<any> | Computed<any>) => unknown;
+  /** Opened by a `latest()` read of an unheld flight (verdict.ts
+   * `pendingVerdict`): it holds nothing of that flight, and a probe in it is
+   * its verdict lane's with no re-run at its landing (F-6, D-23). Unset
+   * until then; not `_`-prefixed, as `folded`. */
+  latest?: 1;
   /** `affects()` marks declared in it (affects.ts): released at the landing.
    * Not nodes — a mark holds nothing (`blocked` never sees one). */
   _marks: Signal<any>[] | null;
@@ -390,6 +395,8 @@ export function resolveTx(t: Transaction): Transaction {
  * went pending with nothing held). Joining a second one merges it into the
  * flush's: the work that touched both entangles them (A15). */
 export function joinFuture(t: Transaction | null): void {
+  // A lane is never the flush's transaction (D-37, #4440).
+  if (laneStageHook && t?._lane) return;
   const f = flushTransaction;
   if (f === null) {
     flushTransaction = t === null ? newTransaction(false) : resolveTx(t);

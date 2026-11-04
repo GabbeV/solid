@@ -113,12 +113,41 @@ def handleError(w: R.World, +id: Nat, result: Nat, +error: R.Value) -> R.World:
 # asyncWrite before the dependency-tail trim. The active core driver retains
 # the return points after trim and pending-source release; the direct helper
 # below composes the same segments for restricted World-only probes.
-def prepareAsyncWrite(+w: R.World, +id: Nat, +result: Nat) -> B.Bundle<R.World, Bool>:
-  B.choose(~B.Bundle<R.World, Bool>, Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY())),
-    _ => B.Bundle{w, False{}},
+type WritePosture is Data:
+  WritePosture{world: R.World, accepted: Bool, carried: Bool}
+
+# Projections of the source locals carried between preparation and setter entry.
+def landingWorld(posture: WritePosture) -> R.World:
+  match posture:
+    case WritePosture{world,accepted,carried}: world
+
+
+def carriedStaging(+w: R.World, ids: List<&2, Nat>) -> Bool:
+  match ids:
+    case Nil{}:
+      False{}
+    case id <> tail:
+      B.choose(~Bool, B.present(R.Node.pending(B.node(w, id))), _ => True{}, _ => carriedStaging(w, tail))
+
+# All first answers survive a dirty mark with the full verdict engine. Capture
+# carried staging before landStatus or the landing's own setSignal writes it.
+def prepareAsyncLanding(+w: R.World, +id: Nat, +result: Nat) -> WritePosture:
+  B.choose(~WritePosture, Bool.or(Nat.is_ne(B.flightId(R.NodeExtension.inFlight(B.extension(w, id))), result), Bool.and(B.has(R.Node.flags(B.node(w, id)), K.REACTIVE_DIRTY()), Bool.not(B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED())))),
+    _ => WritePosture{w, False{}, False{}},
     _ =>
+      +carried = carriedStaging(w, R.World.pendingNodes(w))
       +w = Q.landStatus(w, id, False{})
-      B.Bundle{w, B.ok(w)})
+      WritePosture{w, B.ok(w), carried})
+
+# World-only callers do not execute the host flush boundary. Preserve their
+# projection of the same source preparation; the core driver retains carried.
+def preparedWrite(posture: WritePosture) -> B.Bundle<R.World, Bool>:
+  match posture:
+    case WritePosture{w, accepted, carried}:
+      B.Bundle{w, accepted}
+
+def prepareAsyncWrite(w: R.World, id: Nat, result: Nat) -> B.Bundle<R.World, Bool>:
+  preparedWrite(prepareAsyncLanding(w, id, result))
 
 def beginAsyncWrite(w: R.World, +id: Nat, result: Nat, value: R.Value) -> B.Bundle<R.World, Bool>:
   +pair = prepareAsyncWrite(w, id, result)

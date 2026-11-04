@@ -51,6 +51,13 @@ async function scenario(name,commands,verify,{nativeGetter=false}={}){
 
 const arg=index=>({argument:index}),write=(name,value)=>({invokeWith:{callee:lit({setter:name}),value}});
 const eq={equals:{callback:'cmp'}};
+// A second accepted proposal can compare equal to the committed object after
+// comparing unequal to the pending object. Keep its canonical identity and calls.
+await scenario('canonical reference on netted custom rewrite',[
+ ['program','cmp',[['emit',31],['return',select({same:[arg(1),lit({ref:3})]},lit(false),{same:[arg(0),lit({ref:1})]})]]],
+ ['signal','value',{ref:1},eq],['effect','view',read('value')],['flush'],
+ ['set','value',{ref:3}],['set','value',{ref:2}],['read','value'],['flush'],['read','value']
+]);
 for(const kind of ['signal','memo','writable'])for(const result of [true,false,undefined,null,0,7,'',{ref:8}])for(const seeded of [false,true]){
  const options={...eq,...(seeded?{loadingValue:0}:{})};
  const make=kind==='signal'?['signal','value',0,eq]:kind==='memo'?['memo','value',read('base'),options]:['signal','value',{callback:'init'},options];

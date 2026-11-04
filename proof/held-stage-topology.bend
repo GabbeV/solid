@@ -9,6 +9,7 @@ import ./held-write-outer.bend as Outer
 import ./ordinary-stage-topology.bend as ShapeTail
 import ./ordinary-stage-tail.bend as Tail
 import ./staging-committed-frame.bend as Stage
+import ./staging-live-locals.bend as Live
 import ./subscriber-topology-frame.bend as Shape
 import ./node-pointer-observation.bend as Pointer
 import ./pointer-store-frame.bend as Ptr
@@ -21,7 +22,7 @@ def shape(+w: R.World,+id: Nat,+value: R.Value,context: {R.World.context(w) == 0
   +same = Intake.frame(w,id,existing)
   +slot = R.Node.x(node)
   +nextContext = Equal.trans(Nat,R.World.context(next),R.World.context(w),0n,Outer.sameContext(w,next,slot,same),context)
-  Shape.compose(w,next,W.stageResolved(w,id,value),ShapeTail.tail(next,id,value,node,staged,nextContext,signal),ShapeTail.storage(w,next,Intake.nodes(w,id,existing),Outer.sameLinks(w,next,slot,same)))
+  Equal.trans(Shape.View,Shape.observe(W.stageResolved(w,id,value)),Shape.observe(Stage.tail(next,id,value,node,staged)),Shape.observe(w),Equal.cong(R.World,Shape.View,state=>Shape.observe(state),W.stageResolved(w,id,value),Stage.tail(next,id,value,node,staged),Live.resolved(w,next,id,value,{==},Intake.nodes(w,id,existing))),Shape.compose(w,next,Stage.tail(next,id,value,node,staged),ShapeTail.tail(next,id,value,node,staged,nextContext,signal),ShapeTail.storage(w,next,Intake.nodes(w,id,existing),Outer.sameLinks(w,next,slot,same))))
 
 def last(+w: R.World,+id: Nat,+node: R.Node,+staged: Bool) -> {Pointer.observe(Tail.last(w,id,node,staged)) == Pointer.observe(w) : List<&2,Nat>}:
   Ptr.choice(Bool.and(staged,B.stampMatches(R.Node.notified(node),R.World.epoch(w))),w,w,B.schedule(W.insertSubs(w,id)),{==},Ptr.compose(w,W.insertSubs(w,id),B.schedule(W.insertSubs(w,id)),Ptr.schedule(W.insertSubs(w,id)),Notify.insertSubs(w,id)))
@@ -37,4 +38,4 @@ def pointers(+w: R.World,+id: Nat,+value: R.Value,context: {R.World.context(w) =
   +same = Intake.frame(w,id,existing)
   +slot = R.Node.x(node)
   +nextContext = Equal.trans(Nat,R.World.context(next),R.World.context(w),0n,Outer.sameContext(w,next,slot,same),context)
-  Pointer.compose(w,next,W.stageResolved(w,id,value),tail(next,id,value,node,staged,nextContext,signal),Equal.cong(List<&2,R.Node>,List<&2,Nat>,rows=>Pointer.pointers(rows),R.World.nodes(next),R.World.nodes(w),Intake.nodes(w,id,existing)))
+  Equal.trans(List<&2,Nat>,Pointer.observe(W.stageResolved(w,id,value)),Pointer.observe(Stage.tail(next,id,value,node,staged)),Pointer.observe(w),Equal.cong(R.World,List<&2,Nat>,state=>Pointer.observe(state),W.stageResolved(w,id,value),Stage.tail(next,id,value,node,staged),Live.resolved(w,next,id,value,{==},Intake.nodes(w,id,existing))),Pointer.compose(w,next,Stage.tail(next,id,value,node,staged),tail(next,id,value,node,staged,nextContext,signal),Equal.cong(List<&2,R.Node>,List<&2,Nat>,rows=>Pointer.pointers(rows),R.World.nodes(next),R.World.nodes(w),Intake.nodes(w,id,existing))))

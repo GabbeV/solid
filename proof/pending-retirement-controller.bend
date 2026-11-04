@@ -38,5 +38,5 @@ def settledCleared(+w: R.World,+tasks: List<&2,Q.Task>,+visited: List<&2,Nat>,+r
 def removedCleared(+w: R.World,+tasks: List<&2,Q.Task>,+visited: List<&2,Nat>,+released: List<&2,Nat>,+scheduled: Bool,+node: Nat,+root: Nat,+source: Nat,+single: Single.Single<w,node,source>,valid: {B.valid(w,node) == True{} : Bool}) -> {B.has(R.Node.status(B.node(Tail.world(Q.visitRemoved(w,tasks,visited,released,scheduled,node,root,1n+source)),node)),K.STATUS_PENDING()) == False{} : Bool}:
   +next = State.removeWorld(w,node,source)
   +yes = Q.settled(next,tasks,visited,released,scheduled,node,root,1n+source)
-  +no = Q.skip(next,tasks,visited,released,scheduled,node)
+  +no = Q.skip(next,tasks,visited,released,scheduled,node,root)
   Equal.trans(Bool,B.has(R.Node.status(B.node(Tail.world(Q.visitRemoved(w,tasks,visited,released,scheduled,node,root,1n+source)),node)),K.STATUS_PENDING()),B.has(R.Node.status(B.node(Tail.world(yes),node)),K.STATUS_PENDING()),False{},Equal.cong(Bool,Bool,removed=>B.has(R.Node.status(B.node(Tail.world(B.choose(~Q.Machine,removed,_=>yes,_=>no)),node)),K.STATUS_PENDING()),B.second(R.World,Bool,P.removePendingSource(w,node,1n+source)),True{},Phase.removalReported(w,node,source,single)),settledCleared(next,tasks,visited,released,scheduled,node,root,1n+source,Last.retired(w,node,source,single),Phase.validRemoved(w,node,source,valid)))

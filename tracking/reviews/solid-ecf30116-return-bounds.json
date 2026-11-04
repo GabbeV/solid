@@ -1,0 +1,92 @@
+[
+  {
+    "law": "one_edge_settlement_bounded_return_is_constructed",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "one_edge_settlement_retains_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "one_edge_settlement_uses_remaining_actual_driver_fuel",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "no_stale_trimmed_one_edge_return_is_constructed",
+    "old": "12n",
+    "new": "16n"
+  },
+  {
+    "law": "one_edge_return_room_is_derived",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "constructed_graph_starts_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "graph_construction_and_settlement_retain_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_graph_starts_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_graph_settlement_retains_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "reserved_arena_memo_render_return_requires_no_final_state_premises",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "registered_one_edge_graph_constructs_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "registration_and_settlement_retain_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "permitted_source_histories_construct_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "permitted_source_histories_and_settlement_retain_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_source_commands_construct_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_source_commands_retain_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_registration_constructs_bounded_settlement_return",
+    "old": "10n",
+    "new": "14n"
+  },
+  {
+    "law": "actual_memo_render_registration_retains_committed_observation",
+    "old": "10n",
+    "new": "14n"
+  }
+]

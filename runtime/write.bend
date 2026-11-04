@@ -1,6 +1,7 @@
 # core/core.ts:setSignal and scheduler notify/intake helpers, extracted as a
 # leaf to express the TS core/owner/scheduler call cycle without duplicating it.
 import Base
+import ./pending-queue.bend as Intake
 import ./equality.bend as EQ
 import ../representation/records.bend as R
 import ../representation/base.bend as B
@@ -10,9 +11,8 @@ import ./read-state.bend as V
 import ./transaction.bend as X
 import ./subscriber-insertion.bend as Insert
 
-def queuePendingNode(+w: R.World, id: Nat) -> R.World:
-  +w = R.World.with_pendingNodes(w, B.append(Nat, R.World.pendingNodes(w), [id]))
-  B.choose(~R.World, Bool.not(R.World.running(w)), _ => V.markUnflushedStaged(w), _ => w)
+def queuePendingNode(w: R.World, id: Nat) -> R.World:
+  Intake.queuePendingNode(w, id)
 
 def is_user(k: R.NodeKind) -> Bool:
   match k:
@@ -58,19 +58,24 @@ def beforeCompare(+w: R.World, +id: Nat) -> R.World:
 def skipCompare(+w: R.World, +id: Nat) -> Bool:
   Bool.or(B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()), B.truth(R.NodeExtension.shownError(B.extension(w, id))))
 
-# Source stores after the verdict. Reload live fields here: a comparator can
-# write reentrantly. currentValue remains the setter's separate entry local.
-def stageResolved(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
-  +n = B.node(w, id)
-  +staged = B.present(R.Node.pending(n))
-  +w = B.choose(~R.World, staged,
-    _ => B.choose(~R.World, Bool.and(B.has(R.Node.config(n), K.CONFIG_HELD()), Bool.not(R.World.running(w))), _ => V.stashFlushed(w, id), _ => w),
+# setSignal captures wasStaged, queues/stashes, then may call the custom
+# comparator a second time. Keep the pre-comparator local separate from live
+# node fields that the callback is allowed to change.
+def stageIntake(+w: R.World, +id: Nat, +staged: Bool) -> R.World:
+  B.choose(~R.World, staged,
+    _ => B.choose(~R.World, Bool.and(B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()), Bool.not(R.World.running(w))), _ => V.stashFlushed(w, id), _ => w),
     _ => queuePendingNode(w, id))
+
+def stageStored(+w: R.World, +id: Nat, +value: R.Value, +staged: Bool) -> R.World:
   +w = B.store_node(w, id, R.Node.with_pending(B.node(w, id), R.Present{value}))
   +w = B.choose(~R.World, Nat.is_ne(R.World.context(w), 0n), _ => V.notePromotedWrite(w, id), _ => w)
-  +w = B.choose(~R.World, B.computed(R.Node.kind(n)), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
-  B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(n), R.World.epoch(w))), _ => w,
+  +w = B.choose(~R.World, B.computed(R.Node.kind(B.node(w, id))), _ => B.store_node(w, id, R.Node.with_time(B.node(w, id), R.World.clock(w))), _ => w)
+  B.choose(~R.World, Bool.and(staged, B.stampMatches(R.Node.notified(B.node(w, id)), R.World.epoch(w))), _ => w,
     _ => B.schedule(insertSubs(w, id)))
+
+def stageResolved(+w: R.World, +id: Nat, +value: R.Value) -> R.World:
+  +staged = B.present(R.Node.pending(B.node(w, id)))
+  stageStored(stageIntake(w, id, staged), id, value, staged)
 
 # Restricted direct facade for World-only probes/proof constructors. Active
 # custom functions run in core.setResolved with read-capable continuations.

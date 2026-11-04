@@ -29,3 +29,6 @@ def cached(-w: R.World,-id: Nat,-methods: R.Expr,ready: Ready<w,id,methods>) -> 
 def empty(-w: R.World,-id: Nat,-methods: R.Expr,ready: Ready<w,id,methods>) -> {R.World.flushTransaction(w) == 0n : Nat}:
   match ready:
     case Constructed{arena,actions,profile,cached,empty}: empty
+
+def plain(+w: R.World,+id: Nat,+methods: R.Expr,ready: Ready<w,id,methods>) -> {R.Transaction.lane(B.transaction(w,1n)) == False{} : Bool}:
+  Equal.cong(List<&2,R.Transaction>,Bool,rows=>R.Transaction.lane(B.get(R.Transaction,rows,1n,B.blank_transaction())),R.World.txArena(w),[B.blank_transaction(),Data.group(id)],arena(w,id,methods,ready))

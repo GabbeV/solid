@@ -74,6 +74,13 @@ def apply(+w: R.World, op: U32, +additional: Bool, +block: Bool) -> R.World:
 def fixture(+op: U32, status: U32, flags: U32, extra: Bool, +additional: Bool, +block: Bool, config: U32) -> R.World:
   apply(initial(op, status, flags, extra, additional, block, config), op, additional, block)
 
+# New source staged-error propagation, including a converging dependent that
+# enters a nested settle with its own private visited/released/scheduled locals.
+def stagedFixture(+status: U32,+flags: U32,+extra: Bool,+additional: Bool,+config: U32) -> R.World:
+  +w = initial(1,status,flags,extra,additional,False{},config)
+  +n = R.Node.with_pending(R.Node.with_config(B.node(w,2n),K.CONFIG_STAGED_ERROR()),R.Present{R.Number{77n}})
+  Q.settlePendingSource(B.store_node(w,2n,n),2n,2n)
+
 # A captured Set is a live object, including deletion/reinsertion iteration.
 type AliasProbe is Data:
   AliasProbe{oldItems: List<&2, Nat>, current: R.SourceSet, same: Bool, seen: List<&2, Nat>}

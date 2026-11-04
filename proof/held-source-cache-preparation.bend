@@ -30,11 +30,11 @@ def current(+w: R.World,+id: Nat,+actor: Nat,+offset: Nat,+captureOffset: Nat,+t
   +next = Entry.prepared(w,actor,tail)
   Transfer.transfer(Cache.canonical(w,id,1n+offset),Cache.canonical(next,id,1n+offset),id,offset,initial,View.same(w,next,id,1n+offset,Prepare.current(w,actor,offset,captureOffset,tail,alias,captured,positive,future(w,id,offset,initial),stopped(w,id,offset,initial))))
 
-def fresh(+w: R.World,+id: Nat,+actor: Nat,+offset: Nat,+captureOffset: Nat,+tail: R.Expr,+initial: P.Profile<Source.flush(Cache.canonical(w,id,1n+offset),1n+offset),id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},empty: {R.World.flushTransaction(w) == 0n : Nat}) -> P.Profile<Cache.canonical(Entry.prepared(w,actor,tail),id,1n+offset),id,offset>:
+def fresh(+w: R.World,+id: Nat,+actor: Nat,+offset: Nat,+captureOffset: Nat,+tail: R.Expr,+initial: P.Profile<Source.flush(Cache.canonical(w,id,1n+offset),1n+offset),id,offset>,+alias: Alias.Alias<w,1n+offset>,captured: {R.ActionState.transaction(A.get(w,actor)) == Alias.identity(w,1n+offset,alias) : Nat},positive: {Alias.identity(w,1n+offset,alias) == 1n+captureOffset : Nat},empty: {R.World.flushTransaction(w) == 0n : Nat},+plain: {R.Transaction.lane(B.transaction(w,1n+captureOffset)) == False{} : Bool}) -> P.Profile<Cache.canonical(Entry.prepared(w,actor,tail),id,1n+offset),id,offset>:
   +root = {1n+offset : Nat}
   +selected = Source.flush(w,root)
   +virtual = Source.flush(Cache.canonical(w,id,root),root)
   +next = Entry.prepared(w,actor,tail)
-  +source = View.same(selected,next,id,root,Prepare.fresh(w,actor,offset,captureOffset,tail,alias,captured,positive,empty))
+  +source = View.same(selected,next,id,root,Prepare.fresh(w,actor,offset,captureOffset,tail,alias,captured,positive,empty,plain))
   +equal = Equal.trans(V.View,V.observe(Cache.canonical(next,id,root)),V.observe(Cache.canonical(selected,id,root)),V.observe(virtual),source,Equal.cong(R.World,V.View,state=>V.observe(state),Cache.canonical(selected,id,root),virtual,View.flush(w,id,root,root)))
   Transfer.transfer(virtual,Cache.canonical(next,id,root),id,offset,initial,equal)

@@ -32,7 +32,7 @@ try{
   assert.equal(nodes[rootId].kind.$,'Memo');assert.equal(nodes[leafId].kind.$,'Render');assert.equal(x,extCount+1);assert.equal(set,setCount+1);
   assert.deepEqual(list(list(registered.pendingSets)[set]),[rootId]);assert.deepEqual(observed(registered),observed(linked));
   const duplicate=P.addPendingSource(registered,leafId,rootId);assert.equal(duplicate.right,false);assert.deepEqual(duplicate.left,registered);
-  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,10);
+  assert.equal(certificate.$,'ReturnedAt');assert.equal(certificate.steps,10);assert.equal(certificate.steps+certificate.slack,14);
   const machine={$:'Machine',world:registered,tasks:encodeList([{$:'AsyncWriteAfterTrim',id:rootId},{$:'AsyncWriteSchedule'},...callerWork]),values:stack};
   let returned=machine;for(let step=0;step<certificate.steps;step++)returned=C.step(returned);
   assert.deepEqual(returned,{$:'Machine',world:certificate.world,tasks:rest,values:stack});assert.deepEqual(observed(returned.world),observed(linked));assert.equal(returned.world.fault.$,'Healthy');

@@ -23,7 +23,7 @@ It derives valid distinct IDs, empty dependency/subscriber fields, the render
 node's absent auto-dispose flag, and preserved link storage and health. Actual
 `graph.link` then supplies the one-edge certificate. No final node, edge, head,
 health or caller-return equation is assumed. The result composes to the existing
-ten-step-room settlement return and retains every committed cached value,
+fourteen-step-room settlement return and retains every committed cached value,
 complete tree and full event trace from the post-allocation state through graph
 creation and that return, including the early/fault alternatives.
 

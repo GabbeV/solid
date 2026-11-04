@@ -22,8 +22,12 @@ def watchVerdict(+w: R.World, +reader: Nat, unanswered: Bool) -> R.World:
 def route(+w: R.World, +reader: Nat, +tx: Nat) -> R.World:
   +w = B.choose(~R.World, Bool.and(Nat.is_eq(R.World.passLane(w), 0n), Bool.not(B.has(R.Node.flags(B.node(w, reader)), U32.or(K.REACTIVE_JOINED(), K.REACTIVE_STAGED_READ())))),
     _ =>
-      +pair = L.verdictLane(w, tx)
-      R.World.with_passLane(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair)), _ => w)
+      +pair = Tx.heldFrameBorn(w, reader, tx)
+      +w = B.first(R.World, Bool, pair)
+      B.choose(~R.World, B.second(R.World, Bool, pair), _ => w,
+        _ =>
+          +pair = L.verdictLane(w, tx)
+          R.World.with_passLane(B.first(R.World, Nat, pair), B.second(R.World, Nat, pair))), _ => w)
   B.store_node(w, reader, R.Node.with_flags(B.node(w, reader), B.set(R.Node.flags(B.node(w, reader)), K.REACTIVE_LANE_READ())))
 
 def verdictRead(+w: R.World, +reader: Nat, +tx: Nat, plain: Bool) -> R.World:
@@ -63,17 +67,22 @@ def quietPending(+w: R.World, +id: Nat) -> Bool:
     _ => quietSources(w, B.pendingSources(w, id), id))
 
 def pendingVerdict(+w: R.World, +reader: Nat, +id: Nat) -> R.World:
-  B.choose(~R.World, B.has(R.Node.status(B.node(w, id)), K.STATUS_UNINITIALIZED()), _ => w,
-    _ =>
-      +w = B.choose(~R.World, Bool.and(R.VerdictState.probing(R.World.verdictState(w)), Bool.not(quietPending(w, id))), _ => found(w), _ => w)
-      B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w)),
-        _ => B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+  +w = B.choose(~R.World, Bool.and(R.VerdictState.probing(R.World.verdictState(w)), Bool.not(quietPending(w, id))), _ => found(w), _ => w)
+  B.choose(~R.World, Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w)),
+    _ => B.choose(~R.World, B.has(R.Node.config(B.node(w, id)), K.CONFIG_HELD()),
+      _ =>
+        +pair = Tx.txOf(w, id)
+        verdictRead(B.first(R.World, Nat, pair), reader, B.second(R.World, Nat, pair), False{}),
+      _ => B.choose(~R.World, R.World.running(w),
+        _ => B.choose(~R.World, R.VerdictState.probing(R.World.verdictState(w)),
+          _ => B.choose(~R.World, Bool.and(Nat.is_ne(R.World.flushTransaction(w), 0n), R.Transaction.latest(B.transaction(w, R.World.flushTransaction(w)))),
+            _ => route(w, reader, R.World.flushTransaction(w)), _ => provisionalVerdict(w, reader, False{})),
           _ =>
-            +pair = Tx.txOf(w, id)
-            verdictRead(B.first(R.World, Nat, pair), reader, B.second(R.World, Nat, pair), False{}),
-          _ => B.choose(~R.World, R.World.running(w), _ =>
-            +w = B.choose(~R.World, R.VerdictState.probing(R.World.verdictState(w)), _ => w, _ => Tx.joinFuture(w, 0n))
-            provisionalVerdict(w, reader, False{}), _ => w)), _ => w))
+            +w = B.choose(~R.World, Nat.is_eq(R.World.flushTransaction(w), 0n),
+              _ =>
+                +w = Tx.joinFuture(w, 0n)
+                B.store_transaction(w, R.World.flushTransaction(w), R.Transaction.with_latest(B.transaction(w, R.World.flushTransaction(w)), True{})), _ => w)
+            provisionalVerdict(w, reader, False{})), _ => w)), _ => w)
 
 # creatorPass is the Root._parentComputed forwarding getter in base.bend.
 # Walk only ancestors whose pass is still computing; retain all born bits.
@@ -145,3 +154,9 @@ def restoreProbe(+w: R.World, probing: Bool, found: Bool, dispatch: Bool) -> R.W
 # scheduler.ts:openedByLatest (currently no production call site at this pin).
 def openedByLatest(+w: R.World) -> R.World:
   R.World.with_verdictState(w,R.VerdictState.with_latestOpened(R.World.verdictState(w),R.World.flushTransaction(w)))
+
+# verdictValue's normal return from prepare/pull; no new exception catch.
+def restorePull(+w: R.World, probing: Bool, latest: Bool) -> R.World:
+  +state = R.VerdictState.with_dispatch(R.World.verdictState(w), True{})
+  +state = R.VerdictState.with_latestActive(state, latest)
+  R.World.with_verdictState(w, R.VerdictState.with_probing(state, probing))

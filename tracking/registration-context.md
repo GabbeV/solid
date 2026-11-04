@@ -23,7 +23,8 @@ transition or observation equation is assumed.
 
 Six roots extend 547 to 553. The typed fixture proves its initial equalities in
 Bend and tests 144 variable-ID/auxiliary-size cases, 144 actual ten-step returns
-and 432 driver splits. JavaScript supplies data only. Three focused kernel faults
+and 432 driver splits. The current general return certificate allows fourteen
+steps; this concrete path still takes ten. JavaScript supplies data only. Three focused kernel faults
 reject a changed extension identity or either discarded auxiliary arena.
 [Validation receipt](reviews/registration-context-validation.json).
 
