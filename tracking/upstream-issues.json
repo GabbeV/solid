@@ -396,7 +396,7 @@
     {
       "id": "SOLID-STORE-STAGED-SCREEN-012",
       "classification": "confirmed-upstream-bug",
-      "status": "reproduced-unfiled",
+      "status": "upstream-pr-open",
       "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
       "sourceUnit": "store/store.ts:readSource -> core/core.ts:stagedScreen -> core/verdict.ts:holdStaging",
       "record": "tracking/upstream/store-staged-screen.md",
@@ -405,12 +405,17 @@
       "validationRecord": "tracking/upstream/store-staged-screen-validation.json",
       "preservesBaseline": true,
       "activeDeviationId": null,
-      "reportUrl": null,
-      "fixUrl": null,
+      "reportUrl": "https://github.com/solidjs/solid/pull/4681",
+      "fixUrl": "https://github.com/solidjs/solid/pull/4681",
       "introducedBy": "343f007fa7e810feffbcb737b17d58dcb16d7e9d",
       "relatedFixUrl": "https://github.com/solidjs/solid/pull/4625",
       "passingParent": "b2442611c32496aa9d72c4f1ea16815033e48be8",
-      "scope": "Source-only store node-less staging; excluded from Bend grammar. No active workaround."
+      "scope": "Source-only store node-less staging; excluded from Bend grammar. No active workaround.",
+      "candidateFixBranch": "fix/nodeless-store-staged-screen",
+      "candidatePublishedCommit": "68be911dd8ed6c3c684b586bbfda20072109db33",
+      "playgroundUrl": "https://s.olid.uk/id/Np3dsq-5R2SdiAlscXvcEQ",
+      "playgroundPackageVersion": "2.0.0-rc.21",
+      "playgroundHostedVerification": "repros/playground/store-staged-screen-hosted.json"
     }
   ]
 }

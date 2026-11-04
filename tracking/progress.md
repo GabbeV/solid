@@ -1143,3 +1143,20 @@ uses no fixed numeric payload programme and changes no runtime behavior.
 The next caller construction remains the body-produced heap/recompute path to
 this instruction and its initial conditions, followed by recompute/parking and
 landing. Validation is recorded separately from the completed independent seal.
+
+
+## Prepared render body through an actual held read (2026-11-04)
+
+Two new contracts connect the existing read result backward through real
+recomputation setup, body evaluation and signal admission. The initial caller
+context/tracking can be arbitrary: setup installs the reader and tracking, while
+the exact captured Finish frame retains the caller's original values. Source
+slots are arbitrary represented payloads and every transaction record is retained.
+A disabled-tracking/context-zero constructor fixture checks non-vacuity; three
+compiled faults discriminate lost setup and continuation behavior. Runtime,
+source pin and checker budgets are unchanged. Heap/teardown construction before
+this prefix, and Finish/parking/publication afterward, remain open.
+
+The source-only staged-store finding was submitted as PR #4681. Its rc.21 share
+was reopened, and candidate regression/control/build/browser/size evidence is
+recorded. It is not merged or integrated into the pinned reference.

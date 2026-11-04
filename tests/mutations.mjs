@@ -5,6 +5,10 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const mutations=[
+  ["prepared render body keeps the caller context", "runtime/core.bend", "+w = R.World.with_context(w, id)", "+w = w", "tests/proof-properties.mjs", "recomputePrepared", "recomputed-read-negative-probes"],
+  ["prepared render body leaves tracking disabled", "runtime/core.bend", "w = R.World.with_tracking(B.choose(~R.World, B.tracked(R.Node.kind(n)), _ => w, _ => B.event(w, R.Invoked{id})), True{})", "w = R.World.with_tracking(B.choose(~R.World, B.tracked(R.Node.kind(n)), _ => w, _ => B.event(w, R.Invoked{id})), False{})", "tests/proof-properties.mjs", "recomputePrepared", "recomputed-read-negative-probes"],
+  ["prepared render body drops the Finish continuation", "runtime/core.bend", "Evaluate{R.Node.expr(n), passValue(w, id)} <> Finish{frame} <> rest", "Evaluate{R.Node.expr(n), passValue(w, id)} <> rest", "tests/proof-properties.mjs", "recomputePrepared", "recomputed-read-negative-probes"],
+
   ["tracked getter omits graph linking", "runtime/core.bend", "Bool.and(Nat.is_ne(reader, 0n), R.World.tracking(w))", "{False{} : Bool}", "tests/proof-properties.mjs", "readSignalFast", "tracked-read-negative-probes"],
   ["tracked getter forces committed selection", "runtime/core.bend", "readEntered(w, rest, stack, id, reader, slow, committed)", "readEntered(w, rest, stack, id, reader, slow, True{})", "tests/proof-properties.mjs", "readDecision", "tracked-read-negative-probes"],
   ["rc21 lane exit loses left-shown notify stamp", "runtime/lanes-state.bend", "R.LeftShown{}", "R.Unstamped{}", "tests/lane-stage-alignment.mjs", "LEFT_SHOWN"],

@@ -1,3 +1,4 @@
+import ./proof/recomputed-held-read.bend as RecomputedHeldRead
 import ./proof/tracked-held-read.bend as TrackedHeldRead
 import ./proof/staged-subscriber-frame.bend as StagedSubscriberShape
 import ./runtime/graph-state.bend as ReadTransactionGraph
@@ -3344,3 +3345,11 @@ def Laws.prepared_tracked_held_read_selects_value_and_retains_caller(w,rest,stac
 
 def Laws.prepared_tracked_held_read_preserves_group_records(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride):
   TrackedHeldRead.groups(w,rest,stack,id,offset,root,input,context,tracked,signal,flushed,noOverride)
+
+
+def Laws.prepared_render_body_reads_held_signal_and_retains_finish(w,rest,stack,offset,id,root,create,released,lanePass,input):
+  RecomputedHeldRead.complete(w,rest,stack,offset,id,root,create,released,lanePass,input)
+
+
+def Laws.prepared_render_body_preserves_group_records(w,rest,stack,offset,id,root,create,released,lanePass,input):
+  RecomputedHeldRead.groups(w,rest,stack,offset,id,root,create,released,lanePass,input)

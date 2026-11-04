@@ -666,3 +666,13 @@ records, including open action obligations. All intermediate read metadata and
 health facts are derived; the required initial posture/cache facts stay explicit.
 This closes the local prepared-read segment, not its heap/recompute reachability
 or the following parking/publication path.
+
+
+The [prepared render-body contract](recomputed-held-read.md) adds two quantified
+roots over arbitrary represented Worlds, source payload slots and caller work.
+Actual RecomputePrepared setup installs context/tracking, the body evaluates and
+admits its signal, and the held read returns to its exact Finish frame; every
+group record survives. Initial same-flush/held/render/read-body facts are explicit;
+intermediate readiness and health are constructed. Heap/teardown reachability,
+Finish/parking and global publication remain open. The constructor fixture and
+three closed negative oracles are separate finite discrimination evidence.

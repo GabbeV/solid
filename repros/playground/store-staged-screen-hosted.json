@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-04",
+  "shareUrl": "https://s.olid.uk/id/Np3dsq-5R2SdiAlscXvcEQ",
+  "packageVersion": "2.0.0-rc.21",
+  "reopenedInFreshContext": true,
+  "sourceRoundTrip": true,
+  "baseline": {
+    "initial": "0 / 0",
+    "after": "0 / 0",
+    "errors": [
+      "Cannot read properties of undefined (reading '_x')",
+      "Cannot read properties of undefined (reading '_x')"
+    ]
+  },
+  "control": {
+    "text": "1 / 1",
+    "errors": []
+  },
+  "controlChange": "Only untrack(() => state.count) becomes state.count.",
+  "prUrl": "https://github.com/solidjs/solid/pull/4681",
+  "candidateCommit": "68be911dd8ed6c3c684b586bbfda20072109db33",
+  "pinnedSourceUnchanged": true
+}

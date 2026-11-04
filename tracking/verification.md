@@ -18,7 +18,7 @@ remain unchanged. The independent checker uses the recorded, fully Lean-checked
 | Quantified proofs | General helper/frame/representation laws, arbitrary scalar-memo histories/batches, fixed graph/lifecycle families, and certified redirect/rejoin history safety; see [general-properties.md](general-properties.md) |
 | New join/action controls | 288 private join fixtures /1,152 rejoins /576 queries; 32 opening frames; 48 native-generator public graph histories /408 prefixes; see [scope](transaction-joins.md) |
 | Previous redirect controls | 28 fixtures / 2,268 queries / 252 rejoins; 84 machine completion prefixes; not public histories |
-| Configured mutations | 782 = 533 finite + 249 proof-oracle variants; operation targets are migrated to 2105ffb8, including source-driven fault replacement; fresh focused execution is separate from frozen sweeps |
+| Configured mutations | 785 = 533 finite + 252 proof-oracle variants; operation targets are migrated to 2105ffb8, including source-driven fault replacement; fresh focused execution is separate from frozen sweeps |
 | Complete negative sweep | Frozen d7cdef988 / 5e68925c: all767 exact ordered variants compiled/rejected after108 unchanged kernel baselines; [receipt](reviews/complete-767-negative.json). The frozen source/proof seal was rechecked before this migration. |
 | Negative-check scope | Complete767 covers the frozen820-root d7cdef988 program, not 2105ffb8. Earlier754/727/726 and interrupted-prefix receipts retain their own inputs. A migrated target or resource/compilation failure is not a fresh rejection. |
 | Blocked proof | 170-step late-push programme, finite controls pass, independent kernel out-of-fuel; [unverified archive](../experiments/from-async/README.md) |
@@ -37,10 +37,17 @@ retains its own source and execution identity.
 
 The [tracked held-read receipt](reviews/tracked-held-read-validation.json) adds
 two quantified actual-instruction roots and three focused proof-oracle
-rejections (two new variants and a related existing regression). The current
-whole-book has 825 roots; only a matching completed `checked.json` establishes
-its independent verdict. The configured 782 targets and proof-oracle rejections
+rejections (two new variants and a related existing regression). That checkpoint has 825 roots, with its independent verdict/input seal retained
+at Git commit `604bda302`. The configured 782 targets and proof-oracle rejections
 are not a complete current sweep or post-frontend kernel-integrity counterexamples.
+
+The [prepared render-body receipt](reviews/recomputed-held-read-validation.json)
+adds two actual-prefix roots and three fresh proof-oracle rejections. The current
+composed book has 827 roots; only a matching completed `checked.json` establishes
+its independent verdict. All 785 configured anchors are current; no full current
+negative sweep or new post-frontend kernel-corruption check is claimed. Runtime
+and emitted implementation/reference hashes retain the previous checkpoint's
+identity, so its execution/alignment evidence is reused at that exact identity.
 
 The [live-selection receipt](reviews/live-selection-validation.json) adds seven
 roots: actual action opening/join establishes a live occurrence, either first

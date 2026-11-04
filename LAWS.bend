@@ -1,3 +1,5 @@
+import ./proof/recomputed-held-read.bend as RecomputedHeldRead
+import ./proof/pending-stack-history.bend as RecomputedReadSteps
 import ./proof/tracked-read-input.bend as TrackedReadInput
 import ./proof/fast-staged-choice.bend as TrackedReadChoice
 import ./proof/read-entry-metadata.bend as TrackedReadMetadata
@@ -8154,3 +8156,31 @@ law prepared_tracked_held_read_preserves_group_records:
   for flushed: {R.World.unflushedStaged(w) == False{} : Bool}
   for noOverride: {B.has(R.Node.config(B.node(w,id)),K.CONFIG_OVERRIDE()) == False{} : Bool}
   {R.World.txArena(Core.world(Core.step(Core.Machine{w,Core.ReadPrepared{id} <> rest,stack}))) == R.World.txArena(w) : List<&2,R.Transaction>}
+
+
+law prepared_render_body_reads_held_signal_and_retains_finish:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +offset: Nat
+  for +id: Nat
+  for +root: Nat
+  for +create: Bool
+  for +released: Nat
+  for +lanePass: Core.LanePass
+  for +input: RecomputedHeldRead.Input<w,1n+offset,id,root>
+  {RecomputedReadSteps.iterate(4n,RecomputedHeldRead.start(w,rest,stack,1n+offset,create,released,lanePass)) == RecomputedHeldRead.target(w,rest,stack,1n+offset,id,create,released,lanePass) : Core.Machine}
+
+
+law prepared_render_body_preserves_group_records:
+  for +w: R.World
+  for +rest: List<&2, Core.Task>
+  for +stack: List<&2, R.Value>
+  for +offset: Nat
+  for +id: Nat
+  for +root: Nat
+  for +create: Bool
+  for +released: Nat
+  for +lanePass: Core.LanePass
+  for +input: RecomputedHeldRead.Input<w,1n+offset,id,root>
+  {R.World.txArena(Core.world(RecomputedReadSteps.iterate(4n,RecomputedHeldRead.start(w,rest,stack,1n+offset,create,released,lanePass)))) == R.World.txArena(w) : List<&2,R.Transaction>}

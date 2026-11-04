@@ -1,7 +1,8 @@
 # Untracked staged-store read after latest crashes
 
-Status: reproduced on unchanged current next/rc.21, not filed. No candidate
-patch, upstream branch or Bend workaround is active.
+Status: reported in [PR #4681](https://github.com/solidjs/solid/pull/4681).
+The candidate guard is on `fix/nodeless-store-staged-screen` at `68be911dd`.
+The pinned reference remains unchanged; no Bend workaround is active.
 
 The [one-button component](../../repros/playground/store-staged-screen.tsx)
 starts with an answered memo. Its button starts an async update and changes a
@@ -68,3 +69,22 @@ The crash mechanism is clear. The correct store policy should still be reviewed
 before choosing between guarding the optional call and supplying store metadata.
 The pinned source is preserved. No proof relies on this excluded path succeeding,
 and this finding does not require weakening any theorem or patching the reference.
+
+## Submitted fix and hosted reproduction
+
+The [saved rc.21 playground](https://s.olid.uk/id/Np3dsq-5R2SdiAlscXvcEQ)
+was reopened in a fresh browser context: the original source round-trips, the
+TypeError reproduces and the screen stays at `0 / 0`. Removing only `untrack`
+reaches `1 / 1` without errors. See the [hosted record](../../repros/playground/store-staged-screen-hosted.json).
+
+PR #4681 guards the optional `el` before the signal-specific hook. The existing
+reader-only store call then retains its previous screening logic; calls with a
+real signal retain #4625's exception. Four regression/control tests cover render
+and memo readers, settlement and a second update. Both untracked cases fail on
+the unchanged base, both tracked controls pass; all four pass with the guard.
+The candidate passes 479 files/6,506 signals tests, three-tier builds and source
+declarations, #4625 regressions in three tiers, and six real JSX browser cases.
+Rolldown adds three minified bytes to the verdict scenario; other standard
+scenarios stay unchanged. Timings are inconclusive: a +9% store sample was not
+consistent with the fresh isolated +1.2% repeat. The user submitted the PR; it
+was verified open with the expected head/base. It is not merged or integrated.

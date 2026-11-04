@@ -115,6 +115,14 @@ World or early reader-extension allocation is assumed. Constructing those
 initial facts and the ReadPrepared task after the body-produced heap/recompute
 path, then completing recompute/parking, remains the current gap.
 
+The [prepared render-body prefix](recomputed-held-read.md) extends that read
+backward through actual recomputation setup, expression evaluation and signal
+admission. Context and tracking are now derived from setup, with the caller's
+original context/tracking retained in the real Finish frame. Every transaction
+record is preserved through all four instructions. The remaining earlier cut is
+HeapLoop/visitation/seating/teardown into RecomputePrepared and its initial facts;
+the remaining later cut is Finish/recompute return into parking and landing.
+
 ## Remaining composition, in working order
 
 1. Continue from the constructed actual Round/heap entry through reader heap

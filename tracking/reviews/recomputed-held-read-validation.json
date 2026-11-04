@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "baseCheckpoint": "604bda30283780ff62f31c74f87d450c9e608e09",
+  "sourceCommit": "2105ffb8ca2fced55f5fac0763177fc93f97c2c2",
+  "previousRootCount": 825,
+  "composedRootCount": 827,
+  "newRoots": [
+    "prepared_render_body_reads_held_signal_and_retains_finish",
+    "prepared_render_body_preserves_group_records"
+  ],
+  "kernelProfile": "same-head-congruence-v1",
+  "kernelFuel": 400000000,
+  "processGroupRssBytes": 4294967296,
+  "checkerChanged": false,
+  "frontendDiagnosticReceivesIndependentCredit": false,
+  "runtimeAndSourceHashesUnchanged": true,
+  "emittedRuntimeAndReferenceHashesUnchanged": true,
+  "activeDeviationIds": [],
+  "quantification": "Arbitrary represented Worlds, source payload slots and caller tasks/stacks under explicit initial held/same-flush/render/read-body/source-admission facts. The starting caller context/tracking and captured frame locals are arbitrary; actual setup constructs the read context/tracking and all intermediate readiness/health. No successful intermediate World or numeric payload restriction.",
+  "result": "Four actual Core steps from RecomputePrepared evaluate/admit/read the held signal, select its prescribed slot, retain the exact source Finish frame/caller suffix and preserve every transaction record.",
+  "remaining": "Construct this input/task from body-produced HeapLoop through visitation/seating/teardown, then finish recompute and construct parking/landing/publication/global accounting.",
+  "wholeBookVerdictAndExactInputSeal": "tracking/checked.json",
+  "wholeBookNote": "This receipt records completed focused checks; only a matching completed independent whole-book seal establishes the 827-root checkpoint.",
+  "focusedChecks": [
+    {
+      "name": "positive-generic-fixture",
+      "status": 0,
+      "stdout": "recomputed-read-fixture: independent kernel verdict passed."
+    },
+    {
+      "name": "positive-runtime-only-oracles",
+      "status": 0,
+      "stdout": "recomputed-read-negative-probes: independent kernel verdict passed."
+    },
+    {
+      "name": "compiled-negative-variants",
+      "status": 0,
+      "stdout": "Rejected mutation: prepared render body keeps the caller context\nRejected mutation: prepared render body leaves tracking disabled\nRejected mutation: prepared render body drops the Finish continuation\n3 source-changing variants rejected by differential or kernel assertions."
+    },
+    {
+      "name": "anchor-validation",
+      "status": 0,
+      "stdout": "785 mutation operation targets are current; no semantic test was run."
+    }
+  ],
+  "freshProofOracleRejections": 3,
+  "configuredVariants": 785,
+  "finiteVariants": 533,
+  "proofOracleVariants": 252,
+  "completeCurrentSweepClaimed": false,
+  "postFrontendKernelCorruptionRejectionsClaimedHere": false,
+  "excludedAttempts": [
+    {
+      "kind": "authoring error",
+      "detail": "An unchanged oracle referred to nonexistent generated Core record getters. The explicit pattern projections replace them; the failed positive check receives no proof or rejection credit."
+    }
+  ],
+  "nonVacuity": "Actual existing signal/render/hold/write fixture, then explicit caller context zero and tracking false; Bend checks the initial certificate. Separate closed runtime-only oracles test context, tracking, linkage, value/stack and retained Finish/caller. Not arbitrary public reachability.",
+  "reusedExecutionEvidence": "tracking/reviews/solid-2105ffb8-validation.json",
+  "fileHashes": {
+    "proof/recompute-read-setup.bend": "4c601f3497a5c01cab30e42a00522d9e2174a7e1cff0dbd04d63b884bfd6e3c5",
+    "proof/recompute-read-metadata.bend": "386c454a6cb8fccae15f0f0682e92f2229f29047dc9b2095d5071327d1f52abe",
+    "proof/signal-read-admission.bend": "8d2b22bbec9706bffad55f2cbaa044cd016a275b12fa8cb7ee8b3ce30d660438",
+    "proof/recomputed-held-read.bend": "92b3fdda068921ade38a07e23bc1cf0c728d34c3ea51c51d1933af8df8e694be",
+    "proof/recomputed-read-data.bend": "57be5cdf73be486984bbafed00f17f1cb28b7a28bf845bed39b00c69364d7721",
+    "proof/recomputed-read-fixture.bend": "8876783b33c018bc031d9780b74685a42a6ca12be89d27e3823c88780b8fcfa8",
+    "proof/recomputed-read-negative-probes.bend": "7b78d68baf8f7f4dcae81b16eb3f57cd3c7c3c86123f39f1cd95f5a482284c0e",
+    "tests/proof-properties.mjs": "cc4cdbd800fb7efe7381f31e413901375b98213c76aae4a2786caae9cc7503f6",
+    "tests/mutations.mjs": "597ea0b543626e88a4d1b6a73eee8214ae08f447b59a813a0481fe3bd45756c6",
+    "LAWS.bend": "06957f535477c0a39042663e1e9b08168bf24d94e9d0403cc0fb570358bd30df",
+    "PROOF.bend": "4639a4bd178b7acc4f114c5f27261ec49bacf701290402f2e522d320f8070d53"
+  }
+}
