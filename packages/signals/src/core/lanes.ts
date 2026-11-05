@@ -30,6 +30,7 @@
 // carries none of this.
 
 import {
+  LEGACY_LANES,
   CONFIG_AUTHORITATIVE,
   CONFIG_CHILDREN_FORBIDDEN,
   CONFIG_FRAME,
@@ -888,7 +889,7 @@ function laneSeam(l: Transaction, leaked: boolean): void {
   l._held = false;
   l._shown = true;
   const p = resolveTx(l._parent!),
-    v = p._reruns.filter(r => (r as any)._modified && r._x?._transaction === l);
+    v = [...(p._reruns ?? [])].filter(r => (r as any)._modified && r._x?._transaction === l);
   if (reruns(l)) revealing.push(p);
   // The parent lands this seam and re-derives readers whose runs the lane
   // stashed, voiding them (`reruns`: they are for the frame being replaced).
@@ -1110,16 +1111,19 @@ function heldBy(t: Transaction, r: Computed<any>): boolean {
 export let waiting: Set<unknown> | null = null;
 /** A transaction lands: its lanes end, nested first (`endLanes`). */
 function landing(u: Transaction): void {
-  walk(u);
+  // Shared layers coordinate their own publication. Store imports can still
+  // load this module, but must not install a second frame-waiting policy.
+  if (LEGACY_LANES) walk(u);
   endLanes(u);
 }
 /** Read before the lanes end: a lane's runs are its reveal's (F-6). */
 function walk(u: Transaction): void {
+  const readers = [...(u._reruns ?? [])];
   // As `reruns` judges it: a stale-reader memo re-derives onto a question of
   // its own, and the landing's held runs wait for a re-derivation.
   if (
-    !u._reruns.some(r => !(r as any)._type && r._flags & REACTIVE_FRAME_READ) ||
-    !u._reruns.some(
+    !readers.some(r => !(r as any)._type && r._flags & REACTIVE_FRAME_READ) ||
+    !readers.some(
       r =>
         (r._flags & REACTIVE_FRAME_READ || r._config & CONFIG_VERDICT) &&
         ((r as any)._type || r._config & CONFIG_HELD)

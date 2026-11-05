@@ -1,7 +1,7 @@
 # Scalar experiment entry
 
-Current checkpoint: [rebase onto rc.21 and scalar integration repairs, stage 110](INTEGRATION-110.md).
-Previous checkpoint: [expected-failure audit, stage 109](INTEGRATION-109.md).
+Current checkpoint: [rebase onto next's #4677 repair, stage 111](INTEGRATION-111.md).
+Previous checkpoint: [rebase onto rc.21 and scalar integration repairs, stage 110](INTEGRATION-110.md).
 Public API migration: [normal package integration, stage 105](INTEGRATION-105.md).
 Previous scalar checkpoint: [stage 90](SCALAR-MILESTONES-90.md).
 Historical costs against the old rc.14 baseline and retained simplifications: [exact ownership membership, allocation and performance, stage 104](OWNED-MEMBERSHIP-104.md).
