@@ -14,6 +14,7 @@ import {
   CONFIG_SYNC,
   CONFIG_VERDICT,
   EFFECT_USER,
+  EFFECT_TRACKED,
   NOT_PENDING,
   REACTIVE_DIRTY,
   REACTIVE_WINDOW,
@@ -370,8 +371,9 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // with the verdict engine installed.)
       // D-41: a derivation of a staged error carries it (verdict.ts `stageMark`).
       return (
-        holdWorkHook &&
-          (node._config & CONFIG_VERDICT ? enqueueSub(node) : stageMarkHook!(node, el)),
+        holdWorkHook && node._config & CONFIG_VERDICT
+          ? enqueueSub(node)
+          : stageMarkHook?.(node, el),
         false
       );
     node._time = clock;
@@ -420,6 +422,30 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
   if (released) for (const node of released) releaseIfSettledUnobserved(node);
 
   if (scheduled) schedule();
+}
+
+/** Carry an error proposal through ordinary derivations without running their
+ * bodies or replacing their owned frame. Explicit selectors re-derive instead,
+ * and a higher layer keeps selecting its own inputs, just as for other status. */
+export function carryStagedError(node: Computed<any>, source: Computed<any>): void {
+  if (!(source._config & CONFIG_STAGED_ERROR) || node._config & CONFIG_STAGED_ERROR) return;
+  for (let d = node._deps; d; d = d._nextDep) {
+    const input = d._dep as Computed<any>;
+    if (!(input._config & CONFIG_STAGED_ERROR)) continue;
+    if (layerStatus?.(node, input)) return;
+    layerNotify?.(input, node);
+    if (node._config & CONFIG_REDERIVE) {
+      enqueueSub(node);
+      schedule();
+    } else if (!(node._config & (EFFECT_TRACKED << 23))) {
+      node._pendingValue = input._pendingValue;
+      node._config |= CONFIG_STAGED_ERROR;
+      queuePendingNode(node);
+      (node as any)._fam?.st(STATUS_ERROR);
+      settlePendingSource(node);
+    }
+    return;
+  }
 }
 
 // Object-thenable detection (Promises/A+ shape).
@@ -1102,6 +1128,7 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
     // (#4109, `stageMark`).
     if (
       sub._config & CONFIG_REDERIVE ||
+      (!LEGACY_LANES && pendingSource && sub._config & CONFIG_STAGED_ERROR) ||
       (holdWorkHook &&
         (sub._config & CONFIG_VERDICT || (pendingSource && sub._config & CONFIG_STAGED_ERROR)) &&
         !(pendingSource && holdWorkHook(sub, el))) ||

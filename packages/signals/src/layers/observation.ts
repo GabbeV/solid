@@ -1,4 +1,5 @@
 /** Publication lifecycle shared by source-owned observation outputs. */
+import { carryStagedError } from "../core/async.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
@@ -12,6 +13,7 @@ import {
   inEffectCallback,
   liveTx,
   setEffectCallback,
+  setStagedError,
   txOf,
   type Transaction
 } from "../core/scheduler.js";
@@ -191,3 +193,5 @@ export function selectObservation<T>(layer: Layer<T>): T {
     ? (layer as Observation<T>)._observation._fallback(layer)
     : readOverride(layer);
 }
+
+setStagedError(carryStagedError);

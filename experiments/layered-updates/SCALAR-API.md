@@ -1,10 +1,10 @@
 # Scalar experiment entry
 
-Current checkpoint: [expected-failure audit and remaining reveal bug, stage 109](INTEGRATION-109.md).
-Last retained runtime change: [pending restoration, stage 108](INTEGRATION-108.md).
+Current checkpoint: [rebase onto rc.21 and scalar integration repairs, stage 110](INTEGRATION-110.md).
+Previous checkpoint: [expected-failure audit, stage 109](INTEGRATION-109.md).
 Public API migration: [normal package integration, stage 105](INTEGRATION-105.md).
 Previous scalar checkpoint: [stage 90](SCALAR-MILESTONES-90.md).
-Current costs and retained simplifications: [exact ownership membership, allocation and performance, stage 104](OWNED-MEMBERSHIP-104.md).
+Historical costs against the old rc.14 baseline and retained simplifications: [exact ownership membership, allocation and performance, stage 104](OWNED-MEMBERSHIP-104.md).
 Stage 103’s cache experiment was rejected and removed. Stage 104 removes per-update membership arrays instead; its storage optimization is isolated in a separate patch.
 The selected migration failures are classified and the fresh Loading mount bug
 is fixed. Displayed dependencies retain their publication obligations across
@@ -12,16 +12,19 @@ speculative branch changes; inputs used only by the speculative branch can
 publish independently. Guesses written in derivations belong to the update
 executing the setter, without inheriting an input override's longer lifetime.
 The earlier scoped scalar checkpoints passed their test matrices. The broader
-normal-suite audit now exposes F2 reveal tearing; scalar correctness, active
-optimism costs and feature size remain acceptance gaps.
+normal-suite audit now includes rc.21. Upstream’s F2 reveal repair is integrated
+and the pinned reveal tests pass, but additional scalar failures remain under
+audit. Scalar correctness, active optimism costs and bundle size remain
+acceptance gaps. Earlier performance percentages do not compare to this new
+current-next baseline.
 General input-demand forwarding is removed. Active overrides can release lower
 updates, pending-only observations do not hold initialized input updates, and a
 guessing action still waits for its own pending inputs. Correction uses ordinary
 coherent publication. The current pending self-feedback cancellation/reversal
 behavior is accepted as the working baseline; no suppression exception, tearing
 exception, assertion, or logged diagnostic is installed. Convergence in broader
-feedback graphs still needs validation. Latest/Loading now matches next in the
-navigation matrix. Unchanged-flight transfer fixes duplicate requests in the
+feedback graphs still needs validation. The earlier Latest/Loading navigation matrix passed against pinned rc.14;
+the expanded current-next audit is incomplete. Unchanged-flight transfer fixes duplicate requests in the
 tested scalar chains; owned-subtree reuse remains incomplete. This is not a
 complete scalar or performance/size acceptance result.
 

@@ -29,12 +29,14 @@ import {
 
 type Observation = SharedObservation<boolean> & { _incoming: Computed<any> | undefined };
 
+// A displayed error is an answer too. Recovering to the last good value
+// still differs from that display until the recovery publishes.
 function pendingAnswer(input: Computed<any>, incoming: Computed<any>, value = input._value): boolean {
   return !!(
     (incoming._statusFlags & STATUS_PENDING && !quietPending(incoming)) ||
     (!incoming._x?._reask &&
       incoming._pendingValue !== NOT_PENDING &&
-      (!input._equals || !input._equals(value, incoming._pendingValue)))
+      (!!input._x?._shownError || !input._equals || !input._equals(value, incoming._pendingValue)))
   );
 }
 
@@ -46,7 +48,7 @@ function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolea
     (input._config & CONFIG_HELD &&
       !input._x?._reask &&
       input._pendingValue !== NOT_PENDING &&
-      (!input._equals || !input._equals(input._value, input._pendingValue)))
+      (!!input._x?._shownError || !input._equals || !input._equals(input._value, input._pendingValue)))
   ) return true;
   // Observation outputs retain their input question. Follow only those
   // explicit boundaries, including latest around an optimistic output;

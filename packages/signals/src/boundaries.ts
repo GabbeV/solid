@@ -835,7 +835,7 @@ function createBoundary<T>(
       // re-arm's swap is the change's work (`arm`), until that swap commits
       // (D-13, #3540).
       const self = getOwner() as Computed<any>;
-      if (!b._armed && !(self._config & CONFIG_HELD)) self._config |= CONFIG_FRAME;
+      if (b._initialized && !b._armed && !(self._config & CONFIG_HELD)) self._config |= CONFIG_FRAME;
       // Rearming contributes to this output even when the callback returns
       // no value. Keep that dependency in the graph so a published observation
       // and the fallback it selects propagate within the same update.

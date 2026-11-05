@@ -36,6 +36,7 @@ import {
   onScreen,
   setLayerVisibility,
   flushTransaction,
+  freshHook,
   globalQueue,
   setLayerCommit,
   setLayerReads,
@@ -382,6 +383,9 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
  * inheriting status here would merge the contexts before that selection. */
 function rederiveStatus(reader: Computed<any>, source: Computed<any>): boolean {
   if (!(reader._config & CONFIG_HELD)) return false;
+  // A published error is the current input, not a lower proposal. Propagate
+  // it normally; explicit selectors still choose their own output.
+  if (source._statusFlags & STATUS_ERROR && !(source._config & CONFIG_HELD)) return false;
   const incoming = source._config & CONFIG_HELD ? txOf(source) : flushTransaction;
   const ownPosition = positionOf(txOf(reader)),
     incomingPosition = positionOf(incoming);
@@ -414,6 +418,13 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
     } finally {
       creating = previous;
     }
+    return true;
+  }
+  // A re-armed Loading catches this pass independently of the notifying
+  // flush. Discover and accept its inputs inside that scope, so tentative
+  // peer joins do not pull the re-arm's unrelated writes into the old hold.
+  if (flushTransaction === null && freshHook?.(node)) {
+    recomputeInUpdate(node, null);
     return true;
   }
   const frame = unpublishedFrame(node);

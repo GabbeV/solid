@@ -6,6 +6,7 @@ import {
   cleanup,
   computed,
   CONFIG_AUTO_DISPOSE,
+  CONFIG_HELD,
   CONFIG_CHILDREN_FORBIDDEN,
   createRoot,
   dispose,
@@ -35,13 +36,13 @@ import {
   dirtyQueue,
   flushTransaction,
   globalQueue,
-  passTx,
   resolveTx,
   schedule,
   staleReader,
+  txOf,
   type Transaction
 } from "./core/scheduler.js";
-import { REACTIVE_WRITABLE_COMPUTED, REACTIVE_JOINED, STATUS_ERROR, STATUS_PENDING } from "./core/constants.js";
+import { REACTIVE_WRITABLE_COMPUTED, STATUS_ERROR, STATUS_PENDING } from "./core/constants.js";
 import { unwrapStatusError } from "./core/error.js";
 
 /**
@@ -784,8 +785,10 @@ function watch<T>(
   onError: (e: unknown) => void,
   own: Transaction | null = flushTransaction
 ): void {
+  let generation = 0;
   computed(
     () => {
+      const current = ++generation;
       let v: T,
         failed = false;
       try {
@@ -799,18 +802,18 @@ function watch<T>(
         failed = true;
       }
       const c = getOwner() as Computed<any>;
-      // (Outside a flush a mainline pass joins through `passTx`.)
-      const joined = flushTransaction ?? passTx;
-      if (
-        c._flags & REACTIVE_JOINED &&
-        joined !== null &&
-        (own === null || resolveTx(own) !== resolveTx(joined))
-      ) {
-        staleReader(c, resolveTx(joined));
-        return;
-      }
-      if (failed) return void queueMicrotask(() => onError(v));
-      queueMicrotask(() => onValue(v));
+      // Delivery is imperative, after this pass has accepted its update.
+      // Registering a foreign hold inside the calculation would immediately
+      // re-add this waiter during the coordinator's preparation walk.
+      queueMicrotask(() => {
+        if (current !== generation) return;
+        const holder = c._config & CONFIG_HELD ? txOf(c) : null;
+        if (holder && (own === null || resolveTx(own) !== holder)) {
+          staleReader(c, holder);
+          return;
+        }
+        failed ? onError(v) : onValue(v);
+      });
     }
   )._config |= CONFIG_REDERIVE;
 }

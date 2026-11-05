@@ -236,7 +236,7 @@ function runEffect(node: Effect<any>, type: number): void {
   // current holder decides publication. The compute-error arm above is a
   // separate error notification; it does not publish a proposed value.
   if (node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
-    txOf(node)._queues[type - 1].push((node._boundRunEffect ??= runEffect.bind(null, node)));
+    txOf(node)._queues[(type || node._type) - 1].push((node._boundRunEffect ??= runEffect.bind(null, node)));
     return;
   }
   let prevStrictRead: string | false = false;

@@ -268,6 +268,11 @@ export let holdWorkHook: ((n: Computed<any>, source: Computed<any>) => unknown) 
 /** D-41's staged-error mark (verdict.ts `stageMark`): the settle walk's
  * reached node `n` carries staged error source `el`'s staging. */
 export let stageMarkHook: ((n: Computed<any>, el: Computed<any>) => void) | null = null;
+/** Observation outputs can expose error proposals before their input commits.
+ * Plain imports need only the ordinary error propagation at publication. */
+export function setStagedError(hook: NonNullable<typeof stageMarkHook>): void {
+  stageMarkHook = hook;
+}
 /** #4417 (verdict.ts `keepReaders`); #4574 (verdict.ts `attachWaits`). */
 export let keepReadersHook: ((el: Computed<any>) => void) | null = null;
 export let attachHook: ((node: Computed<any>) => boolean) | null = null;
@@ -818,7 +823,16 @@ export function heldUnder(
 
 /** `n` leaves the hold it was staged in: its next pass publishes mainline. */
 export function unhold(n: Signal<any>): void {
-  n._x!._transaction = null;
+  const x = n._x!;
+  if (!LEGACY_LANES && x._transaction !== null) {
+    const owner = txOf(n);
+    if (x._previousHeld) x._previousHeld._x!._nextHeld = x._nextHeld;
+    else owner._firstHeld = x._nextHeld;
+    if (x._nextHeld) x._nextHeld._x!._previousHeld = x._previousHeld;
+    else owner._lastHeld = x._previousHeld;
+    x._previousHeld = x._nextHeld = null;
+  }
+  x._transaction = null;
   n._config &= ~CONFIG_HELD;
 }
 

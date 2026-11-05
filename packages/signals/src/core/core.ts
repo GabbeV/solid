@@ -1382,14 +1382,15 @@ function readHeld(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
     if (preparingUpdate !== flushTransaction) c._flags |= REACTIVE_JOINED;
     return false;
   }
-  if (frameRead(c, el)) return true;
-  joinPass(c, el);
-  return false;
+  return frameRead(c, el);
 }
 
 function frameRead(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
   if (layerFrameRead?.(c, el)) return true;
-  if ((el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED) return false;
+  if ((el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED) {
+    joinPass(c, el);
+    return false;
+  }
   // Frame readers: a render effect, a verdict reader (CONFIG_VERDICT — it
   // reads the screen like one: `[isPending(x), x()]` never pairs the fresh
   // value with pending, A10, because the reader never sees the fresh value),

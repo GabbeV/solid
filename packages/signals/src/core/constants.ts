@@ -89,6 +89,19 @@ export const REACTIVE_AHEAD = 1 << 20;
  * tail releases the node. Survives the head wipe; the tail consumes it. */
 export const REACTIVE_RELEASE_AFTER = 1 << 22;
 
+/** Experimental layers: the staged result belongs to a replaced context.
+ * Keep it for equality until replacement succeeds; neither reuse it as
+ * callback history nor publish it through an error/loading fallback. */
+export const REACTIVE_PREVIOUS_COMMITTED = 1 << 23;
+/** Optional layer coordinator: this effect was adopted for an output pass. */
+export const REACTIVE_LAYER_EFFECT = 1 << 24;
+/** A writable computation can receive raw values from its setter, including
+ * thenables. An optimistic input must retain its own normalization producer. */
+export const REACTIVE_WRITABLE_COMPUTED = 1 << 25;
+/** Optional layer journal: this computation has a saved published dependency
+ * list. Stable graphs need no WeakMap lookup or deletion at their seams. */
+export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
+
 // Static configuration bits packed into Owner/Computed/Signal _config.
 export const CONFIG_OWNED_WRITE = 1 << 0;
 export const CONFIG_NO_SNAPSHOT = 1 << 1;
@@ -151,12 +164,6 @@ export const CONFIG_STAGED_ERROR = 1 << 21;
  * A sync answer, landed async answer or commit closes the window; an error
  * does not. Kept in the existing flags instead of a field on every memo. */
 export const CONFIG_LOADING = 1 << 24;
-/** Experimental layers: the staged result belongs to a replaced context.
- * Keep it for equality until replacement succeeds; neither reuse it as
- * callback history nor publish it through an error/loading fallback. */
-export const REACTIVE_PREVIOUS_COMMITTED = 1 << 23;
-/** Optional layer coordinator: this effect was adopted for an output pass. */
-export const REACTIVE_LAYER_EFFECT = 1 << 24;
 /** Lanes — the node carries a written guess (`optimisticWrite`): its own
  * source recomputing it, or a plain write landing on it, is the truth
  * (`supersede`). A lane's derived staging is not. */
@@ -209,12 +216,6 @@ export const CONFIG_FRESH_READ = 1 << 16;
  * a write is promoted at that recompute's end: readers in the same block see
  * it. Cleared when the next flush begins; set only on that rare path. */
 export const CONFIG_PROMOTED = 1 << 22;
-/** A writable computation can receive raw values from its setter, including
- * thenables. An optimistic input must retain its own normalization producer. */
-export const REACTIVE_WRITABLE_COMPUTED = 1 << 25;
-/** Optional layer journal: this computation has a saved published dependency
- * list. Stable graphs need no WeakMap lookup or deletion at their seams. */
-export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
 /** Observe tiers only: the node is framework plumbing (the `solid-js/refresh`
  * HMR memo between a component's root and its body) — it has no name, is no
  * segment of any owner path, and the attribution engine records nothing about

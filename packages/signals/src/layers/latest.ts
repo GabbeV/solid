@@ -3,6 +3,7 @@ import { context, prepareComputed, read, unflushedValue } from "../core/core.js"
 import {
   $REFRESH,
   CONFIG_HELD,
+  CONFIG_STAGED_ERROR,
   NOT_PENDING,
   STATUS_ERROR,
   STATUS_PENDING,
@@ -19,7 +20,7 @@ const kind: ObservationKind<any> = {
   _fallback: fallback,
   _sample: record => {
     const source = record._input;
-    if (source._statusFlags & STATUS_ERROR) return NOT_PENDING;
+    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) return NOT_PENDING;
     if (
       !(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
@@ -46,6 +47,7 @@ function fallback(layer: Layer<any>): unknown {
   if (
     (layer as Observation<any>)._retiring ||
     source._statusFlags & (STATUS_ERROR | STATUS_UNINITIALIZED) ||
+    source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
       source._pendingValue === NOT_PENDING)
@@ -53,11 +55,11 @@ function fallback(layer: Layer<any>): unknown {
     // An error is the latest settled proposal. Pulling it through read() can
     // retry the producer in the next tick and replace that error with a new
     // pending request before the observation's consumers ever receive it.
-    if (source._statusFlags & STATUS_ERROR) {
+    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) {
       const output = context as Computed<any>;
       link(source, output);
       if (source._height >= output._height) output._height = source._height + 1;
-      throw source._x!._error;
+      throw source._config & CONFIG_STAGED_ERROR ? source._pendingValue : source._x!._error;
     }
     return read(source);
   }
@@ -86,6 +88,8 @@ function latestOutput(source: Computed<any>): Computed<any> {
   const existing = observations.get(source);
   if (existing) return existing._output;
   const record = createSourceObservation(source, kind);
+  // Preserve distinctions a source can publish, including signed zero.
+  record._output._equals = Object.is;
   if (__OBSERVE__) (record._output as any)._devWindows = 2;
   record._statusInput = source;
   observations.set(source, record);
