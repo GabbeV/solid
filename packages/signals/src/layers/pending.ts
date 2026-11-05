@@ -42,7 +42,8 @@ function pendingAnswer(input: Computed<any>, incoming: Computed<any>, value = in
 
 function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolean {
   if (GlobalQueue._marked?.(input) === true) return true;
-  if (input._statusFlags & STATUS_UNINITIALIZED) return false;
+  if (input._statusFlags & STATUS_UNINITIALIZED &&
+      (!(input._statusFlags & STATUS_PENDING) || input._pendingValue === NOT_PENDING)) return false;
   if (
     (input._statusFlags & STATUS_PENDING && !quietPending(input)) ||
     (input._config & CONFIG_HELD &&
@@ -90,7 +91,9 @@ const kind: ObservationKind<boolean> = {
 function pendingFallback(layer: Layer<boolean>): boolean {
   const source = layer._input;
   if (typeof source._fn === "function") prepareComputed(source, false);
-  if (source._statusFlags & STATUS_UNINITIALIZED) read(source);
+  if (source._statusFlags & STATUS_UNINITIALIZED &&
+      (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING))
+    read(source);
   const output = context as Computed<any>;
   link(source, output);
   if (source._height >= output._height) output._height = source._height + 1;
@@ -174,7 +177,11 @@ function probe(source: Signal<any>, window: { found: boolean }): unknown {
   // joins the request it is probing. The pending output already subscribes
   // to this request and wakes the callback when its answer becomes available.
   const status = (source as Computed<any>)._statusFlags;
-  if (status & STATUS_PENDING && !(status & STATUS_UNINITIALIZED)) return source._value;
+  // The pending output can describe a staged first answer's replacement.
+  // Its callback may use that answer too, without rejoining the input hold.
+  if (status & STATUS_PENDING &&
+      (!(status & STATUS_UNINITIALIZED) || source._pendingValue !== NOT_PENDING))
+    return status & STATUS_UNINITIALIZED ? source._pendingValue : source._value;
   const previous = verdict;
   // The observation above is the user's read. This second read only drives
   // callback control flow; reporting it too duplicates the same diagnostic.

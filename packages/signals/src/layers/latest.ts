@@ -44,9 +44,13 @@ function fallback(layer: Layer<any>): unknown {
   // A staged value is already a proposal, before parking marks it held.
   // Reading it ordinarily here can join downstream work to the input update
   // before latest gets the chance to establish its explicit boundary.
+  // This includes a first answer whose replacement is already pending:
+  // UNINITIALIZED describes publication, not the absence of that proposal.
   if (
     (layer as Observation<any>)._retiring ||
-    source._statusFlags & (STATUS_ERROR | STATUS_UNINITIALIZED) ||
+    source._statusFlags & STATUS_ERROR ||
+    (source._statusFlags & STATUS_UNINITIALIZED &&
+      (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING)) ||
     source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&

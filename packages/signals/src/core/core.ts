@@ -190,6 +190,7 @@ import {
   keepReadersHook,
   laneWriteHook,
   observeFlightHook,
+  stageMarkHook,
   wireExternalSourceHook
 } from "./scheduler.js";
 import type { Transaction } from "./scheduler.js";
@@ -2126,18 +2127,21 @@ export function devRead(el: Signal<any> | Computed<any>): void {
  * re-run is not served — served, it would re-run without end. Not a reader
  * waiting on another source, a render effect (the frame: its plain read
  * throws), lane work
- * or a verdict lane's pass (D-37: the screen plus the lane's own guesses),
- * or a held node (the staging is the hold's). A plain read of such a memo
+ * or a verdict lane's pass (D-37: the screen plus the lane's own guesses).
+ * Legacy lanes exclude held staging. Shared updates can already hold a
+ * first answer here: the read's earlier `readHeld` has selected and joined
+ * its update, so deriving from it does not publish it outside that hold.
+ * A plain read of such a memo
  * throws as one of a memo with no value; only `latest`/`isPending` tell them
- * apart, so it is the verdict engine's (`read` calls it behind
- * `observeFlightHook`, on the path where a pending read throws).
+ * apart, so `read` enables it with observation support (`stageMarkHook`),
+ * on the path where a pending read would throw.
  */
 function servesStaged(c: Computed<any>, el: Signal<any> | Computed<any>, owner: Computed<any>) {
   return (
     passLane === null &&
     c._statusFlags & owner._statusFlags & STATUS_UNINITIALIZED &&
     el._pendingValue !== NOT_PENDING &&
-    !(el._config & (CONFIG_HELD | CONFIG_STAGED_ERROR)) &&
+    !(el._config & (CONFIG_STAGED_ERROR | (LEGACY_LANES ? CONFIG_HELD : 0))) &&
     !(c as any)._type &&
     (c._flags & REACTIVE_MISSED_WAKE ||
       (c._pendingValue === NOT_PENDING &&
@@ -2437,9 +2441,9 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       }
       if (!(c._config & CONFIG_CHILDREN_FORBIDDEN) || owner._statusFlags & STATUS_UNINITIALIZED) {
         // D-22 (amended 2026-10-30), F-9: an answered-then-reasked first
-        // answer (`servesStaged`), the verdict engine's — out of line, so
+        // answer (`servesStaged`), enabled with observations — out of line, so
         // `read` gains a call only where a pending read would throw.
-        if (observeFlightHook && servesStaged(c as Computed<any>, el, owner)) {
+        if (stageMarkHook && servesStaged(c as Computed<any>, el, owner)) {
           if (__TEST__) shadowActual(SLOT_P);
           return el._pendingValue as T;
         }

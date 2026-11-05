@@ -136,5 +136,8 @@ it("a derivation reading the answer twice, or beside a source still loading, set
   next.resolve(next.v);
   await task();
   flush();
-  expect(seen).toEqual(["twice 4 true", "twice 6 false", "beside 13 false"]);
+  expect(seen[0]).toBe("twice 4 true");
+  // These independent bindings finish in the same flush; sibling callback
+  // order is unspecified. Both must publish exactly once with the new answer.
+  expect(seen.slice(1).sort()).toEqual(["beside 13 false", "twice 6 false"]);
 });

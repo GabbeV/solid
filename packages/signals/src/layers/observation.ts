@@ -53,12 +53,18 @@ function prepareObservations(): boolean {
   // probes prepare status changes; latest also prepares staged values, so
   // it never falls behind an input that can publish synchronously.
   for (const record of dirty) {
+    // A first answer can be staged beneath a replacement flight before it
+    // initializes the input. Its observations still have a value to select.
+    // A ready first answer initializes normally; opening a child update for
+    // it here would compete with the initialization that is already landing.
     if (
       record._retiring ||
       record._output._flags & REACTIVE_DISPOSED ||
       (!(record._input._statusFlags & STATUS_PENDING) &&
         (!record._observation._prepareValue || record._input._pendingValue === NOT_PENDING)) ||
-      record._input._statusFlags & STATUS_UNINITIALIZED
+      (record._input._statusFlags & STATUS_UNINITIALIZED &&
+        (!(record._input._statusFlags & STATUS_PENDING) ||
+          record._input._pendingValue === NOT_PENDING))
     ) continue;
     const next = record._observation._sample(record);
     if (!Object.is(record._override, next)) {
@@ -103,9 +109,15 @@ function settleObservations(): void {
   for (const record of dirty) {
     if (
       record._output._flags & REACTIVE_DISPOSED ||
-      record._input._statusFlags & STATUS_UNINITIALIZED
+      (record._input._statusFlags & STATUS_UNINITIALIZED &&
+        (!(record._input._statusFlags & STATUS_PENDING) ||
+          record._input._pendingValue === NOT_PENDING))
     ) {
-      watching.delete(record);
+      // A staged first answer can be ready but not initialized until the
+      // commit below. Keep an existing watch so its pending override retires
+      // after that commit, even when the landing compares equal.
+      if (record._output._flags & REACTIVE_DISPOSED || record._input._pendingValue === NOT_PENDING)
+        watching.delete(record);
       continue;
     }
     if (record._retiring) {

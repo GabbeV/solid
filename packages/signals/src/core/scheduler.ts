@@ -269,7 +269,8 @@ export let holdWorkHook: ((n: Computed<any>, source: Computed<any>) => unknown) 
  * reached node `n` carries staged error source `el`'s staging. */
 export let stageMarkHook: ((n: Computed<any>, el: Computed<any>) => void) | null = null;
 /** Observation outputs can expose error proposals before their input commits.
- * Plain imports need only the ordinary error propagation at publication. */
+ * Installing this hook also enables first-answer replay on the pending read
+ * path. Plain imports need neither observation behavior. */
 export function setStagedError(hook: NonNullable<typeof stageMarkHook>): void {
   stageMarkHook = hook;
 }
