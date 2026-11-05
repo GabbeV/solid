@@ -2076,11 +2076,9 @@ describe("isPending and latest with async upstream and downstream (A8: verdicts 
   });
 
   // Test 2: latest(signal) consumed by async memo.
-  // Re-ruled 2026-07-07c: downstream async consuming the latest view does not
-  // pend the signal's latest form — latest(signal) is never pending (its
-  // self-override exists from the set). The downstream async memo reports its
-  // own fetch; the plain signal form reports the transition hold.
-  it("latest(signal) consumed by async memo - latest form stays settled; downstream async reports itself", async () => {
+  // latest has an ordinary output: its changed value waits for the async
+  // derivation consuming it, and pending reports that unpublished change.
+  it("latest(signal) consumed by async memo - pending tracks the held latest output", async () => {
     const [$id, setId] = createSignal(1);
     let mainAsync: () => number;
     let details: () => string;
@@ -2089,7 +2087,7 @@ describe("isPending and latest with async upstream and downstream (A8: verdicts 
     let detailsInput = 0;
     const pendingPairs: [boolean, number][] = [];
     const detailPairs: [boolean, string][] = [];
-    // Separate isPending effect (independent lane, not merged with latest's lane)
+    // Separate observer of the same source-owned pending output
     const isPendingValues: boolean[] = [];
     // Separate latest effect
     const pendingValues: number[] = [];
@@ -2114,21 +2112,21 @@ describe("isPending and latest with async upstream and downstream (A8: verdicts 
       createRenderEffect(mainAsync, () => {});
       createRenderEffect(details, () => {});
 
-      // Combined effect: held by lane merging when downstream has async
+      // Combined ordinary reader of the pending and latest outputs
       createRenderEffect(
         () => [isPending(() => latest($id)), latest($id)] as [boolean, number],
         ([ip, val]) => {
           pendingPairs.push([ip, val]);
         }
       );
-      // Separate isPending effect: its own lane, no pending async, fires immediately
+      // Pending can publish true while the latest value waits for details
       createRenderEffect(
         () => isPending(() => latest($id)),
         ip => {
           isPendingValues.push(ip);
         }
       );
-      // Separate latest effect: in pendingComputed's lane (which has details' async)
+      // Another reader of latest must agree with the combined reader
       createRenderEffect(
         () => latest($id),
         val => {
@@ -2161,17 +2159,15 @@ describe("isPending and latest with async upstream and downstream (A8: verdicts 
     setId(2);
     flush();
 
-    // The latest form never pends for the signal — the held write is its own
-    // self-override, already displayed. With no verdict change there is no companion
-    // sub-lane firing either: the combined effect stays lane-held on its
-    // pre-write pair (atomic reveal), while a separate verdict effect reads
-    // the settled false.
-    expect(isPendingValues.at(-1)).toBe(false);
-    expect(pendingPairs.at(-1)).toEqual([false, 1]);
+    // The latest output has proposed 2, but details still holds it at 1.
+    // Both pending readers report that same unpublished change.
+    expect(isPendingValues.at(-1)).toBe(true);
+    expect(pendingPairs.at(-1)).toEqual([true, 1]);
+    expect(pendingValues.at(-1)).toBe(1);
+    expect(detailPairs.at(-1)).toEqual([true, "details-1"]);
 
-    // Resolve details (the async consuming latest($id)): the latest lane's
-    // own async is done, so the lane-held effects flush and reveal the fresh
-    // pair — settled, with the new value — while main is still in flight.
+    // Details releases latest's output independently of the main request.
+    // Its new value and settled pending result publish together.
     resolveDetails!();
     await Promise.resolve();
     flush();

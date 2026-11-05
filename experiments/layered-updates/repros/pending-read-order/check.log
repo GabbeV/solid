@@ -1,0 +1,102 @@
+[
+  {
+    "tier": "prod",
+    "order": "id-first",
+    "initial": [
+      "0",
+      "0",
+      "false"
+    ],
+    "during": [
+      "0",
+      "0",
+      "true"
+    ],
+    "after": [
+      "1",
+      "10",
+      "true"
+    ],
+    "later": [
+      "1",
+      "10",
+      "false"
+    ],
+    "errors": []
+  },
+  {
+    "tier": "prod",
+    "order": "pending-first",
+    "initial": [
+      "0",
+      "0",
+      "false"
+    ],
+    "during": [
+      "1",
+      "0",
+      "true"
+    ],
+    "after": [
+      "1",
+      "10",
+      "false"
+    ],
+    "later": [
+      "1",
+      "10",
+      "false"
+    ],
+    "errors": []
+  },
+  {
+    "tier": "dev",
+    "order": "id-first",
+    "initial": [
+      "0",
+      "0",
+      "false"
+    ],
+    "during": [
+      "0",
+      "0",
+      "true"
+    ],
+    "after": [
+      "1",
+      "10",
+      "true"
+    ],
+    "later": [
+      "1",
+      "10",
+      "false"
+    ],
+    "errors": []
+  },
+  {
+    "tier": "dev",
+    "order": "pending-first",
+    "initial": [
+      "0",
+      "0",
+      "false"
+    ],
+    "during": [
+      "1",
+      "0",
+      "true"
+    ],
+    "after": [
+      "1",
+      "10",
+      "false"
+    ],
+    "later": [
+      "1",
+      "10",
+      "false"
+    ],
+    "errors": []
+  }
+]

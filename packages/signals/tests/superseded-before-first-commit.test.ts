@@ -1,20 +1,8 @@
 /**
- * A18 (d) before the node's first commit.
- *
- * An optimistic computed whose FIRST landing was held — a downstream async
- * memo read it, opened a reveal, and never landed — has no committed value
- * (`_value` undefined, STATUS_UNINITIALIZED) when an action later re-asks
- * its source, and its own source lands a differing truth. Found by the
- * visibility oracle.
- *
- * Ruled 2026-11-03 (#4656, RULES-DERIVED D-34): "if it hadn't landed it
- * isn't optimistic, its loading". Nothing has committed, so the screen is
- * still loading, and an override here is a write before load: in DEV the
- * setter throws OPTIMISTIC_WRITE_BEFORE_LOAD and no guess is made. (Before
- * the ruling the guess was written and voided at the correction, as its
- * lane never showed; the reads below were the same.) What stays pinned: the
- * node, never committed, has nothing to serve a direct read (A19 exc. 1:
- * loading, not pending), and `latest` tunnels to the arrived truth (A18 d).
+ * An optimistic input's first answer is held by downstream async. A later
+ * action guesses 3, then receives input 2 while remaining open. Neither the
+ * initial answer nor the guess has published: an outside reader still has
+ * no committed output, and the node is loading rather than pending.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -72,7 +60,7 @@ function graph() {
 }
 
 describe("A18 (d) before the first commit", () => {
-  it("an override before the first commit is OPTIMISTIC_WRITE_BEFORE_LOAD; the arrival is latest's, and isPending reads false", async () => {
+  it("a never-published output is loading, and an imperative latest read has no value to return", async () => {
     const g = graph();
     flush();
     g.fetches.shift()!(); // x's first landing (0) — held by the downstream reveal, which never lands
@@ -94,7 +82,7 @@ describe("A18 (d) before the first commit", () => {
     // Never committed, the node has nothing to serve a direct read (A19
     // exc. 1: loading, not pending); `latest` tunnels to the staged truth.
     expect(() => g.x()).toThrow(NotReadyError);
-    expect(latest(g.x)).toBe(2); // the arrived truth (A18 d)
+    expect(() => latest(g.x)).toThrow(NotReadyError);
     expect(isPending(g.x)).toBe(false); // loading, not pending (A19 exc. 1)
     await g.release();
   });

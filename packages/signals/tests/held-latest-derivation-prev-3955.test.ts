@@ -67,12 +67,15 @@ describe("a derivation reading a held signal through latest()/isPending() keeps 
         setFilter("c");
         expect(() => flush()).not.toThrow();
         await tick();
-        expect(prevs).toEqual([[], [], []]);
+        // A second proposal keeps the source-owned pending output true.
+        // Its equality check suppresses that redundant derivation; latest's
+        // value changes on both proposals. Every actual pass keeps its prev.
+        expect(prevs).toEqual(read === "isPending" ? [[], []] : [[], [], []]);
 
         gates.current.resolve();
         for (let i = 0; i < 4; i++) await Promise.resolve();
         expect(() => flush()).not.toThrow();
-        expect(prevs).toEqual(read === "isPending" ? [[], [], [], []] : [[], [], []]);
+        expect(prevs).toEqual([[], [], []]);
         dispose();
       });
     }

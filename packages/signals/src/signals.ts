@@ -1,20 +1,18 @@
+import { createOptimisticPair } from "./layers/optimistic.js";
+import { refresh as refreshLayerInput } from "./layers/refresh.js";
 import type { Computed, Disposable, Owner, Refreshable } from "./core/index.js";
 import {
   $REFRESH,
   cleanup,
   computed,
-  TimeoutError,
   CONFIG_AUTO_DISPOSE,
   CONFIG_CHILDREN_FORBIDDEN,
-  CONFIG_FRESH_READ,
-  CONFIG_GUESS,
   createRoot,
   dispose,
   effect,
   EFFECT_USER,
   getObserver,
   getOwner,
-  markRefresh,
   NotReadyError,
   read,
   runWithOwner,
@@ -24,8 +22,7 @@ import {
   signal,
   trackedEffect,
   untrack,
-  CONFIG_REDERIVE,
-  CONFIG_AUTHORITATIVE
+  CONFIG_REDERIVE
 } from "./core/index.js";
 import {
   devGuardOptimisticBeforeLoad,
@@ -38,18 +35,14 @@ import {
   dirtyQueue,
   flushTransaction,
   globalQueue,
-  GlobalQueue,
-  joinFuture,
   passTx,
   resolveTx,
   schedule,
   staleReader,
   type Transaction
 } from "./core/scheduler.js";
-import { REACTIVE_JOINED, STATUS_ERROR, STATUS_PENDING } from "./core/constants.js";
+import { REACTIVE_WRITABLE_COMPUTED, REACTIVE_JOINED, STATUS_ERROR, STATUS_PENDING } from "./core/constants.js";
 import { unwrapStatusError } from "./core/error.js";
-import { optimisticWrite } from "./core/lanes.js";
-import { truthConfirmed, truthRead } from "./core/truth.js";
 
 /**
  * Low-level reactive-cleanup primitive. Registers a callback that runs when
@@ -417,6 +410,7 @@ export function createSignal<T>(
   if (typeof first === "function") {
     const node = computed<T>(first as any, second as any);
     node._config &= ~CONFIG_AUTO_DISPOSE;
+    node._flags |= REACTIVE_WRITABLE_COMPUTED;
     return [
       accessor<T | undefined>(node),
       setMemo.bind(null, node as any) as Setter<T | undefined>
@@ -459,19 +453,7 @@ export function createOptimistic<T>(
   first?: T | ComputeFunction<T>,
   second?: SignalOptions<T> & MemoOptions<T>
 ): Signal<T | undefined> {
-  if (typeof first === "function") {
-    const node = computed<T>(first as any, second as any);
-    node._config &= ~CONFIG_AUTO_DISPOSE;
-    return [
-      accessor<T | undefined>(node),
-      (__DEV__
-        ? (v: any) => (devGuardOptimisticBeforeLoad(node), optimisticWrite(node as any, v))
-        : optimisticWrite.bind(null, node as any)) as Setter<T | undefined>
-    ];
-  }
-  const node = signal<T>(first as any, second as SignalOptions<T>);
-  if (__OBSERVE__) registerGraph(node, getOwner());
-  return [accessor<T>(node), optimisticWrite.bind(null, node as any) as Setter<T | undefined>];
+  return createOptimisticPair(first as any, second as any) as Signal<T | undefined>;
 }
 
 /**
@@ -780,15 +762,14 @@ export function createReaction(
   };
 }
 
-/** A promise over a reactive expression (`resolve`, `until`): a pass that
+/** A promise over a reactive expression (`resolve`): a pass that
  * runs the expression and settles on a microtask. Not an effect — an
  * effect's run is the flush's effect phase, and a flush parked by the
  * action that is `yield`ing on this promise stashes its runs with the
  * transaction (#2930); the heap runs a pass parked or not. A pending read
  * re-runs it when the source lands (the pass is pending itself); the
  * expression throwing settles the rejection. */
-/** The promise-delivery readers' pass (`resolve`, `until`, `refresh`'s
- * waiter): delivers what it read on a microtask. By posture (#3482, #3490):
+/** The promise-delivery reader's pass (`resolve`): delivers what it read on a microtask. By posture (#3482, #3490):
  * - the reader of the transaction it was created in (`own`: an action's
  *   body, a `refresh()` called there — the waiter reads its slice's frame on
  *   a later microtask) delivers that frame — the staged landing an action
@@ -801,18 +782,8 @@ function watch<T>(
   fn: () => T,
   onValue: (v: T) => void,
   onError: (e: unknown) => void,
-  config = 0,
-  inPass?: (v: T) => void,
   own: Transaction | null = flushTransaction
 ): void {
-  if (config & CONFIG_AUTHORITATIVE) {
-    GlobalQueue._truth = truthRead;
-    GlobalQueue._confirmed = truthConfirmed;
-  }
-  // `config` is on the node for its first pass too (the pass runs inside
-  // `computed()`): `until`'s predicate is authoritative from its first read,
-  // or an already-displayed guess would satisfy it in a later slice. (REDERIVE
-  // after: the first pass's own error is the promise's rejection.)
   computed(
     () => {
       let v: T,
@@ -828,10 +799,6 @@ function watch<T>(
         failed = true;
       }
       const c = getOwner() as Computed<any>;
-      // A truth reader waits out a `createDeferred` flight its value derives
-      // from, which serves everyone else the stale answer (D-40).
-      const lag = config & CONFIG_AUTHORITATIVE && GlobalQueue._lagging?.(c);
-      if (lag) throw new NotReadyError(lag);
       // (Outside a flush a mainline pass joins through `passTx`.)
       const joined = flushTransaction ?? passTx;
       if (
@@ -843,10 +810,8 @@ function watch<T>(
         return;
       }
       if (failed) return void queueMicrotask(() => onError(v));
-      inPass?.(v);
       queueMicrotask(() => onValue(v));
-    },
-    { _extraConfig: config }
+    }
   )._config |= CONFIG_REDERIVE;
 }
 
@@ -923,84 +888,7 @@ export function resolve<T>(fn: () => T): Promise<T> {
 export function refresh<T>(
   target: Refreshable<T>
 ): Promise<T extends (...args: any) => infer V ? V : T> {
-  const node = (target as any)?.[$REFRESH] as Computed<any> | undefined;
-  if (!node) {
-    if (__DEV__) {
-      const message =
-        "[INVALID_REFRESH_TARGET] refresh() expects a Solid source accessor or refreshable store. " +
-        "Pass the original source target, not a wrapper function or derived property read.";
-      emitDiagnostic({
-        code: "INVALID_REFRESH_TARGET",
-        kind: "write",
-        severity: "error",
-        message
-      });
-      throw new Error(message);
-    }
-    return Promise.resolve(undefined as any);
-  }
-  // Mark now, watch on a microtask. The waiter is resolve()'s machinery with
-  // two extra reader bits, but it must NOT compute at call time (effects
-  // recompute eagerly on creation): same-tick refreshes coalesce into ONE
-  // re-ask only because every mark lands before anything pulls, and eager
-  // per-call pulls turned three refreshes into three fetches. Deferred, the
-  // waiter's first read sees the coalesced state: FRESH_READ pulls the node
-  // through recompute if it is still dirty (self-deduping — a clean node
-  // no-ops, so N waiters cost one pull; this also closes the race where a
-  // waiter reads the PRE-re-ask value as settled and delivers stale), after
-  // which the read either parks on the re-ask's pending window (async — the
-  // settle walk re-runs it on every landing, equal-value included, and a
-  // rejection arrives through the effect's error channel) or serves the sync
-  // answer. resolve()'s own eager compute is untouched: created after a
-  // refresh it still settles stale-while-revalidate (#2930) — its contract is
-  // "first settled value", not "next quiescent state".
-  markRefresh(node);
-  // The transaction `refresh()` is called in (an action's slice): the
-  // waiter, created on the microtask below, is its reader (`watch`).
-  const own = flushTransaction;
-  const promise = new Promise<any>((res, rej) => {
-    queueMicrotask(() => {
-      // The root is load-bearing: an ownerless computed is auto-disposing,
-      // and the settle walk releases an unobserved one instead of re-running
-      // it, so the waiter would never see the refetch land (#3888). Settle
-      // disposes the waiter directly; the capture runs inside the watcher's
-      // own pass, where the ambient owner IS the watcher — exactly what
-      // dispose() takes.
-      let waiter: Computed<unknown> | null = null;
-      const make = () =>
-        watch(
-          () => {
-            if (waiter === null) waiter = getOwner() as Computed<unknown>;
-            // Authoritative: the truth beneath a guess (`until`'s view). A
-            // guessed node's own re-ask is not answered by it (#3895): park
-            // on that flight, or reject with its error.
-            const v = read(node!);
-            if (
-              node!._config & CONFIG_GUESS &&
-              node!._statusFlags & (STATUS_PENDING | STATUS_ERROR)
-            )
-              throw node!._x?._error;
-            return v;
-          },
-          value => {
-            res(typeof target === "function" ? value : target);
-            dispose(waiter!);
-          },
-          err => {
-            rej(err);
-            dispose(waiter!);
-          },
-          CONFIG_FRESH_READ | CONFIG_AUTHORITATIVE,
-          undefined,
-          own
-        );
-      createRoot(make);
-    });
-  });
-  // Fire-and-forget refresh must not turn a failed refetch into an unhandled
-  // rejection; awaiting callers attach their own handlers to `promise`.
-  promise.catch(() => {});
-  return promise;
+  return refreshLayerInput(target);
 }
 
 /** Falsy values a truthy predicate result is narrowed against. */
@@ -1058,60 +946,8 @@ export interface UntilOptions {
  * @param fn a reactive predicate
  * @param options optional `timeout` (ms) and abort `signal`
  */
-export function until<T>(fn: () => T, options?: UntilOptions): Promise<Truthy<T>> {
-  if (__DEV__ && getObserver()) {
-    throw new Error(
-      "Cannot call until inside a reactive scope; await it from an action or another imperative scope."
-    );
-  }
-  return new Promise((res, rej) => {
-    const signal = options?.signal;
-    if (signal?.aborted) return rej(signal.reason);
-    // The awaiting action's transaction, if any (its body runs joined to
-    // it). `until()` is a declaration of relatedness (#3164 follow-up): the
-    // predicate names the condition that confirms the action, so the frame
-    // whose landing flips it truthy is the confirming event by the user's
-    // own definition — it reveals WITH the action's settle, not before
-    // (`saving=true` beside the confirmed `version=1` is a tear no timeline
-    // contains). Updates that do not flip the predicate reveal freely.
-    const t = flushTransaction;
-    createRoot(dispose => {
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      let onAbort: (() => void) | undefined;
-      const settle = (fire: () => void) => {
-        if (timer !== undefined) clearTimeout(timer);
-        if (onAbort !== undefined) signal!.removeEventListener("abort", onAbort);
-        fire();
-        dispose();
-      };
-      // Authoritative: the predicate sees the truth, never the action's own
-      // optimistic guess — a guess cannot satisfy the wait for its own
-      // confirmation.
-      watch(
-        fn,
-        value => {
-          // Falsy is "not yet": keep the subscription live and wait for the
-          // next evaluation. Only a truthy settled value resolves.
-          if (value) settle(() => res(value as Truthy<T>));
-        },
-        err => settle(() => rej(err)),
-        CONFIG_AUTHORITATIVE,
-        value => {
-          // The flip, inside the pass of the flush carrying it: the flush
-          // joins the action's transaction, and what it staged is held and
-          // revealed with the action.
-          if (value && t !== null && globalQueue._running && resolveTx(t)._open !== 0)
-            joinFuture(t);
-        }
-      );
-      if (options?.timeout !== undefined)
-        timer = setTimeout(() => settle(() => rej(new TimeoutError())), options.timeout);
-      if (signal !== undefined) {
-        onAbort = () => settle(() => rej(signal.reason));
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-    });
-  });
+export function until<T>(_fn: () => T, _options?: UntilOptions): Promise<Truthy<T>> {
+  throw new Error("until is deferred while the shared update engine is integrated.");
 }
 
 /**

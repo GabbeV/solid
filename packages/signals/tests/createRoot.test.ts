@@ -41,7 +41,7 @@ it("should dispose of inner computations", () => {
   expect(memo).toHaveBeenCalledTimes(1);
 });
 
-it("should not resurrect a dependency-free computation queued before disposal (#2983)", () => {
+it("should not resurrect a dependency-free computation queued before disposal (#2983)", async () => {
   // Owner disposal must pull queued children out of the scheduler heap even
   // when they have no reactive dependencies. A dependency-free memo queued
   // by refresh() and left in the heap would be recomputed by the next flush,
@@ -61,12 +61,15 @@ it("should not resurrect a dependency-free computation queued before disposal (#
     });
   });
 
-  refresh(read); // queue the dependency-free memo
+  const refreshed = refresh(read); // queue the dependency-free memo
   dispose(); // dispose before the queued flush
   flush();
 
   expect(runs).toBe(1);
   expect(cleanups).toBe(1);
+  // The quiescence waiter must also stop: a dead node can retain its dirty
+  // flag, but it can never run another pass to clear it.
+  expect(await refreshed).toBe(1);
 });
 
 it("should return result", () => {

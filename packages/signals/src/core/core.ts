@@ -13,6 +13,9 @@ import {
   stageError
 } from "./async.js";
 import {
+  REACTIVE_PERSISTENT,
+  CONFIG_LOADING,
+  LEGACY_LANES,
   $REFRESH,
   CONFIG_ASYNC,
   CONFIG_AUTO_DISPOSE,
@@ -32,12 +35,14 @@ import {
   CONFIG_SLOT_NODE,
   CONFIG_OWNED_WRITE,
   CONFIG_PROMOTED,
+  REACTIVE_PREVIOUS_COMMITTED,
   CONFIG_STAGED,
   CONFIG_HELD_FRAME,
   CONFIG_LAGS,
   CAUGHT_REARMED,
   CONFIG_STAGED_ERROR,
   CONFIG_SYNC,
+  CONFIG_REDERIVE,
   CONFIG_TRANSPARENT,
   defaultContext,
   EFFECT_RENDER,
@@ -81,6 +86,7 @@ import {
 import { NotReadyError } from "./error.js";
 import {
   clearDeps,
+  dependencyFrame,
   deferReleases,
   deferredReleases,
   dormantNodes,
@@ -149,7 +155,15 @@ import {
   insertSubs,
   joinFuture,
   passLane,
+  layerCompute,
+  layerRead,
+  layerJoin,
+  layerDetached,
+  layerRecompute,
+  layerFrameRead,
+  preparingUpdate,
   queuePendingNode,
+  pendingNodes,
   schedule,
   setPassLane,
   txOf,
@@ -181,7 +195,6 @@ import {
 import type { Transaction } from "./scheduler.js";
 import type {
   Computed,
-  Link,
   NodeExtension,
   NodeOptions,
   Owner,
@@ -220,7 +233,7 @@ GlobalQueue._update = el => {
   else if (laneStageHook && el._flags & REACTIVE_ZOMBIE && laneFrameMember(el)) {
     deleteFromHeap(el, dirtyQueue);
     el._flags &= ~(REACTIVE_DIRTY | REACTIVE_CHECK | REACTIVE_LANE_DIRTY);
-  } else recompute(el);
+  } else recompute(el, false, true);
 };
 /** The zombie's frame was parked by lane work: the nearest non-zombie owner
  * (the one whose pass parked it) carries a lane's derived value — or, an
@@ -361,7 +374,30 @@ export function clearSnapshots(): void {
   snapshotCaptureActive = false;
 }
 
-export function recompute(el: Computed<any>, create: boolean = false): void {
+/** A returned iterator executes its first tracked body while being normalized.
+ * Keep that synchronous work inside the same calculation context as the body. */
+function normalizeCalculation(el: Computed<any>, result: any, previousFlight: unknown): any {
+  const isAsyncResult = typeof result === "object" && result !== null;
+  // Projection drivers may register their own flight instead of returning it.
+  const selfRegistered = el._x?._inFlight !== previousFlight;
+  if (__DEV__) checkCaughtRead(el, selfRegistered ? el._x!._inFlight : result);
+  const value = selfRegistered || !isAsyncResult ? result : handleAsync(el, result);
+  if (!selfRegistered && !isAsyncResult) {
+    if (el._x !== null) { el._x._inFlight = null; if (holdWorkHook) el._config &= ~CONFIG_ASYNC; }
+    el._config &= ~CONFIG_LOADING;
+  }
+  return value;
+}
+
+export function recompute(el: Computed<any>, create: boolean = false, fromHeap = false): void {
+  if (layerRecompute && (create || el._config & CONFIG_HELD) && layerRecompute(el, create, fromHeap))
+    return;
+  recomputeBody(el, create);
+}
+
+/** A scoped layer pass has already selected its update. Keep routing outside
+ * the calculation body rather than recursively entering that large function. */
+export function recomputeBody(el: Computed<any>, create: boolean): void {
   // §12d: any recompute can clean a marked subscriber — invalidate skips.
   bumpNotifyEpoch();
   const isEffect = (el as any)._type;
@@ -417,7 +453,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   // triggered this run, and the baseline for the engine's subscription diff).
   let devChanged = false;
   if (__OBSERVE__) {
-    (el as any)._devWindows = 0;
+    if (LEGACY_LANES) (el as any)._devWindows = 0;
     if (attrHooks !== null) attrHooks.recomputeStart(el, create);
   }
   // CARVE 2: lane posture resolution (OPTIMISTIC_DIRTY, derived-override
@@ -486,7 +522,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
         !(el._config & (CONFIG_VERDICT | (EFFECT_RENDER << 23))) ||
         (observeFlightHook && !(el._config & (EFFECT_RENDER << 23)) && bornInto(el, tx))
       )
-        joinPassTx(tx, freshHook?.(el, el._statusFlags & STATUS_UNINITIALIZED));
+        { if (flushTransaction !== tx) joinPassTx(tx, freshHook?.(el, el._statusFlags & STATUS_UNINITIALIZED)); }
       else if (
         tx !== flushTransaction &&
         !(el._statusFlags & STATUS_UNINITIALIZED || el._config & CONFIG_HELD_FRAME)
@@ -583,14 +619,15 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   // A settle found this node unobserved while this pass was queued
   // (REACTIVE_RELEASE_AFTER): the release is this pass's tail's (#4474).
   const releaseAfter = el._flags & REACTIVE_RELEASE_AFTER;
-  el._flags = REACTIVE_RECOMPUTING_DEPS | (el._flags & (REACTIVE_ZOMBIE | REACTIVE_REASK));
+  el._flags = REACTIVE_RECOMPUTING_DEPS | (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE | REACTIVE_REASK));
   el._time = clock;
-  // The pass's previous value: its staging, else a lane node's lane value
-  // when it has one (lanes.ts), else the committed one.
+  // Reuse staging only within its update context. A replaced context starts
+  // from committed history; legacy lanes keep their existing previous slot.
   let value =
-    el._pendingValue !== NOT_PENDING
+    el._pendingValue !== NOT_PENDING &&
+    !(el._flags & REACTIVE_PREVIOUS_COMMITTED)
       ? el._pendingValue
-      : el._config & CONFIG_OVERRIDE && el._x!._lane !== NOT_PENDING
+      : LEGACY_LANES && el._config & CONFIG_OVERRIDE && el._x!._lane !== NOT_PENDING
         ? el._x!._lane
         : el._value;
   let oldHeight = el._height;
@@ -615,36 +652,18 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   // this pass's; `checkCaughtRead` below judges this pass's body alone.
   if (__DEV__) clearThrownRead(el);
   try {
-    // (The CONFIG_SYNC fast arm is prod-only: a dev build takes the general
-    // arm for every node, so the D-42 check there sees sync nodes too.)
-    if (!__DEV__ && el._config & CONFIG_SYNC) {
-      value = el._fn(value);
-      if (el._x !== null) el._x._inFlight = null;
-      el._loading = false;
+    // Internal synchronous status selectors forward already selected values,
+    // including literal promises stored in signals. Only user computations
+    // need the dev diagnostic for accidentally returning async work.
+    if (el._config & CONFIG_SYNC && (!__DEV__ || el._config & CONFIG_REDERIVE)) {
+      value = layerCompute ? layerCompute(el, value) : el._fn(value);
+      if (el._x !== null) { el._x._inFlight = null; if (holdWorkHook) el._config &= ~CONFIG_ASYNC; }
+      el._config &= ~CONFIG_LOADING;
     } else {
-      // A projection's body self-registers its flight through handleAsync
-      // (with the commit as setter): its undefined return is not a sync
-      // answer, and the outer handleAsync must not clobber the registration.
-      const prevInFlight = el._x?._inFlight;
-      const fnResult = el._fn(value);
-      const isAsyncResult = typeof fnResult === "object" && fnResult !== null;
-      const selfRegistered = el._x?._inFlight !== prevInFlight;
-      // D-42 (dev): the body returned after a reactive read threw into it —
-      // the catch around that read ran and swallowed (CAUGHT_REACTIVE_READ),
-      // unless what returned is the flight the throw became (async.ts judges
-      // that at its settle). Before handleAsync: a pending flight throws out.
-      if (__DEV__) checkCaughtRead(el, selfRegistered ? el._x!._inFlight : fnResult);
-      value = selfRegistered || !isAsyncResult ? fnResult : handleAsync(el, fnResult);
-      if (!selfRegistered && !isAsyncResult) {
-        if (el._x !== null) {
-          el._x._inFlight = null;
-          if (holdWorkHook) el._config &= ~CONFIG_ASYNC;
-        }
-        // A sync (non-object) return is the first real answer; async-shaped
-        // results clear inside handleAsync at their own landing points, and a
-        // self-registered flight clears when its own handleAsync lands.
-        el._loading = false;
-      }
+      const previousFlight = el._x?._inFlight;
+      value = layerCompute
+        ? layerCompute(el, value, normalizeCalculation)
+        : normalizeCalculation(el, el._fn(value), previousFlight);
     }
     // On a status-free node clearStatus is a guaranteed no-op: every field
     // its body gates on is either _statusFlags or lives in the cold
@@ -653,11 +672,16 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
     if (el._statusFlags !== 0 || el._x !== null) clearStatus(el, create);
   } catch (e) {
     const notReady = e instanceof NotReadyError;
+    // A failed replacement can publish a fallback. The old context's staged
+    // result must not become committed history through that status commit.
+    // While pending, retain it for the eventual answer's equality check: its
+    // old consumers still need invalidating even if that answer equals _value.
+    if (!notReady && el._flags & REACTIVE_PREVIOUS_COMMITTED) el._pendingValue = NOT_PENDING;
     // An error answers, and so does a loading window's unready read (D-25,
     // verdict.ts `holdWork`): no flight is its own. A pass left pending
     // keeps the last answer's. (Kept by the verdict engine alone.)
-    if (holdWorkHook && (!notReady || el._loading)) el._config &= ~CONFIG_ASYNC;
-    if (notReady && el._loading) {
+    if (holdWorkHook && (!notReady || (el._config & CONFIG_LOADING))) el._config &= ~CONFIG_ASYNC;
+    if (notReady && (el._config & CONFIG_LOADING)) {
       // Loading window with an unready sync dependency: register for the
       // source's settle (the settlePendingSource walk runs off
       // _pendingSources + _blocked alone) but take NO read-visible pending
@@ -754,7 +778,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
     // clears it.
     el._flags =
       (el._flags &
-        (REACTIVE_ZOMBIE |
+        (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE |
           REACTIVE_DISPOSED |
           REACTIVE_FRAME_READ |
           REACTIVE_STAGED_READ |
@@ -843,6 +867,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
       !!el._x?._shownError ||
       !!replaced ||
       !isSame(el, compareValue, value);
+    el._flags &= ~REACTIVE_PREVIOUS_COMMITTED;
 
     // A committed derived change becomes a cause for this node's subscribers,
     // chaining their attribution through this node to the root write.
@@ -894,6 +919,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
       laneOutcomeHook &&
       !create &&
       lane === null &&
+      LEGACY_LANES &&
       el._config & CONFIG_GUESS &&
       laneOutcomeHook(el, value, errored)
     ) {
@@ -919,12 +945,6 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
       // after it. An effect still carrying an uncommitted staged value
       // re-stages: the commit applies the latest pass, not the born-held one.
       if (lane !== null) {
-        // Lane work: the lane's value — into the slot while the lane has not
-        // revealed (its reveal shows it), as its staging once it has (the
-        // next reveal promotes it; the screen keeps the revealed value). An
-        // effect's value slot is private: the run the lane holds is what
-        // shows it — unless the effect was born held, whose first run is the
-        // commit's (A29): it re-stages, as below.
         if (isEffect && el._pendingValue === NOT_PENDING) el._value = value;
         else if (isEffect || lane._shown) el._pendingValue = value;
         else el._x!._lane = value;
@@ -932,7 +952,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
         create
           ? !(
               (flushTransaction !== null || passTx !== null) &&
-              (joined || (creatorPass(oldcontext)?._flags as number) & REACTIVE_JOINED)
+              (joined || (!layerDetached?.(el) && ((creatorPass(oldcontext)?._flags as number) & REACTIVE_JOINED)))
             )
           : isEffect && el._pendingValue === NOT_PENDING
       ) {
@@ -1059,6 +1079,7 @@ export function recompute(el: Computed<any>, create: boolean = false): void {
   // children are uncommitted (CONFIG_STAGED) until that commit.
   if (
     el._pendingValue !== NOT_PENDING ||
+    (dependencyFrame && el._statusFlags & STATUS_ERROR) ||
     (el._x !== null && (el._x._pendingFirstChild !== null || el._x._pendingDisposal !== null)) ||
     ((el._statusFlags & (STATUS_PENDING | STATUS_UNINITIALIZED)) !== 0 &&
       (!create || (el._statusFlags & STATUS_PENDING) !== 0))
@@ -1123,7 +1144,7 @@ function updateIfNecessary(el: Computed<unknown>): void {
   // landing lost its re-derivation; the lane reads likewise).
   el._flags =
     el._flags &
-    (REACTIVE_SNAPSHOT_STALE |
+    (REACTIVE_PERSISTENT | REACTIVE_SNAPSHOT_STALE |
       REACTIVE_IN_HEAP |
       REACTIVE_IN_HEAP_HEIGHT |
       REACTIVE_ZOMBIE |
@@ -1162,6 +1183,7 @@ export function computed<T>(
     ? ({
         id: inheritId(options, transparent, context),
         _config:
+          (loading ? CONFIG_LOADING : 0) |
           (transparent ? CONFIG_TRANSPARENT : 0) |
           (options?.ownedWrite ? CONFIG_OWNED_WRITE : 0) |
           (!context || options?.lazy ? CONFIG_AUTO_DISPOSE : 0) |
@@ -1195,7 +1217,6 @@ export function computed<T>(
         _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
-        _loading: loading,
         _x: null,
         // The slot is always present (hidden class); plumbing leaves it
         // unset, which `ownerPath` skips.
@@ -1208,6 +1229,7 @@ export function computed<T>(
     : ({
         id: inheritId(options, transparent, context),
         _config:
+          (loading ? CONFIG_LOADING : 0) |
           (transparent ? CONFIG_TRANSPARENT : 0) |
           (options?.ownedWrite ? CONFIG_OWNED_WRITE : 0) |
           (!context || options?.lazy ? CONFIG_AUTO_DISPOSE : 0) |
@@ -1239,7 +1261,6 @@ export function computed<T>(
         _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
-        _loading: loading,
         // Cold machinery (async slots) lives one hop away in the lazily-allocated extension — the core literal MUST
         // stay under V8's in-object boundary (§12: past ~39 fields every
         // allocation spills to a backing store and creation cost ~4x's).
@@ -1271,11 +1292,10 @@ export function ext(el: { _x: NodeExtension | null }): NodeExtension {
     _reask: false,
     _flushed: NOT_PENDING,
     _flushedAt: -1,
-    _q: 0,
-    _lane: NOT_PENDING,
     _marks: 0,
-    _shownError: null
-  });
+    _shownError: null,
+    ...(LEGACY_LANES ? { _q: 0, _lane: NOT_PENDING } : { _previousHeld: null, _nextHeld: null })
+  } as unknown as NodeExtension);
 }
 
 /** A tracked read of a held node (the reader derives from its transaction's
@@ -1290,7 +1310,12 @@ export function ext(el: { _x: NodeExtension | null }): NodeExtension {
  * the boundary collects it and shows its fallback, and the pass is the
  * boundary's, not the tick's (A29's boundary exemption, #3540). */
 export function joinPass(c: Computed<any>, el: Signal<any> | Computed<any>): void {
-  c._flags |= REACTIVE_JOINED;
+  const holder = txOf(el);
+  // Reading our own proposal cannot discover a different update context.
+  if (flushTransaction !== holder && layerJoin?.(c, el)) return;
+  // A ready context prepares an independent proposal before discovering
+  // whether it must hold. This alone does not defer detached child setup.
+  if (preparingUpdate === null || preparingUpdate !== holder) c._flags |= REACTIVE_JOINED;
   if (__TEST__) shadowExternalRaise(c, RAISE_H);
   // A new memo's first pass is the hold's work (born held) but not the
   // tick's: a render effect that reads it decides — under a boundary that
@@ -1300,11 +1325,21 @@ export function joinPass(c: Computed<any>, el: Signal<any> | Computed<any>): voi
   if (
     (el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED ||
     (c as any)._type !== EFFECT_RENDER
-  )
-    joinPassTx(
-      txOf(el),
-      (!(c as any)._type && c._statusFlags & STATUS_UNINITIALIZED) || freshHook?.(c)
-    );
+  ) {
+    const own =
+      (!(c as any)._type && c._statusFlags & STATUS_UNINITIALIZED) || freshHook?.(c);
+    if (!LEGACY_LANES && !own && (c as any)._type === EFFECT_RENDER &&
+        c._statusFlags & STATUS_UNINITIALIZED) {
+      // The binding's first value is part of its creator's new subtree.
+      // Merely constructing a memo does not consume its proposal, but a
+      // render binding does: do not let an enclosing creation scope return
+      // and publish a half-initialized tree after restoring the outer update.
+      const creator = creatorPass(c._parent);
+      if (creator && creator._flags & REACTIVE_RECOMPUTING_DEPS)
+        creator._flags |= REACTIVE_JOINED;
+    }
+    if (flushTransaction !== holder) joinPassTx(holder, own);
+  }
 }
 
 /** `joinPass` into the hold `t` (a folded guess's: store/optimistic.ts
@@ -1339,7 +1374,22 @@ export function joinPassAt(c: Computed<any>, t: Transaction): void {
  * the parent's flights is still up — needs none of this: the correction
  * dissolves the lane, and the refetching pass is the parent's own, reading
  * the truth as a member (`joinPass`). */
+function readHeld(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
+  // The shared engine has one proposal per update. An exact holder match
+  // needs neither a layer-posture query nor a join/merge. Keep the creation
+  // inheritance mark; a ready preparation deliberately does not set it.
+  if (!LEGACY_LANES && flushTransaction !== null && el._x!._transaction === flushTransaction) {
+    if (preparingUpdate !== flushTransaction) c._flags |= REACTIVE_JOINED;
+    return false;
+  }
+  if (frameRead(c, el)) return true;
+  joinPass(c, el);
+  return false;
+}
+
 function frameRead(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
+  if (layerFrameRead?.(c, el)) return true;
+  if ((el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED) return false;
   // Frame readers: a render effect, a verdict reader (CONFIG_VERDICT — it
   // reads the screen like one: `[isPending(x), x()]` never pairs the fresh
   // value with pending, A10, because the reader never sees the fresh value),
@@ -1497,7 +1547,6 @@ export function createEffectNode<T>(
         _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
-        _loading: false,
         _modified: false,
         _prevValue: undefined as T | undefined,
         _effectFn: effectFn,
@@ -1543,7 +1592,6 @@ export function createEffectNode<T>(
         _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
-        _loading: false,
         _modified: false,
         _prevValue: undefined as T | undefined,
         _effectFn: effectFn,
@@ -1629,7 +1677,6 @@ export function signal<T>(v: T, options?: NodeOptions<T>): Signal<T> {
         _value: v,
         _subs: null,
         _subsTail: null,
-        _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
         _x: null,
@@ -1645,12 +1692,11 @@ export function signal<T>(v: T, options?: NodeOptions<T>): Signal<T> {
         _value: v,
         _subs: null,
         _subsTail: null,
-        _time: clock,
         _pendingValue: NOT_PENDING,
         // Signal-literal diet (§12e): NO _time/_fn/_statusFlags slots. Stores
         // materialize one signal per touched leaf, so signal bytes are store
-        // bytes. _time is write-only on signals (every read site is computed-
-        // typed error-retry gating); _fn/_statusFlags read falsy-identically as
+        // bytes. Computations use _time for retries and async provenance;
+        // signal writes use _notifiedAt. _fn/_statusFlags read falsy-identically as
         // missing properties on the shared paths (undefined masks to 0).
         _notifiedAt: -1,
         _x: null
@@ -1690,7 +1736,6 @@ export function slotSignal<T>(
         _value: v,
         _subs: null,
         _subsTail: null,
-        _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
         _x: null,
@@ -1709,7 +1754,6 @@ export function slotSignal<T>(
         _value: v,
         _subs: null,
         _subsTail: null,
-        _time: clock,
         _pendingValue: NOT_PENDING,
         _notifiedAt: -1,
         _x: null,
@@ -2119,6 +2163,12 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
   // undefined and mask to 0 on every site below.)
   const owner = el as Computed<any>;
 
+  // Node kind is stable across preparation, including dormancy and disposal.
+  // Reuse the classification instead of testing the function's truthiness
+  // again on the signal fast path and the computed-only tails.
+  const isComputed = typeof computed._fn === "function";
+  if (isComputed) prepareComputed(el as Computed<unknown>, false);
+
   // The verdict windows (`latest`, `isPending`; verdict.ts): one cold path,
   // off this one, present only while a window is open. It wakes a lazy or
   // dormant memo itself, outside the window (#4366).
@@ -2136,14 +2186,13 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
     return verdict(el, c as Computed<any> | null) as T;
   }
 
-  if (typeof computed._fn === "function") prepareComputed(el as Computed<unknown>, false);
 
   if (
-    !computed._fn &&
+    !isComputed &&
     el._x?._snapshotValue === undefined &&
     !snapshotCaptureActive &&
     (!unflushedStaged || el._pendingValue === NOT_PENDING) && // A28, see readNodeFast
-    !(el._config & CONFIG_OVERRIDE) && // lanes: the slow path's one arm
+    !(LEGACY_LANES && el._config & CONFIG_OVERRIDE) && // lanes: the slow path's one arm
     (!__DEV__ || !strictRead)
   ) {
     if (__TEST__) shadowExpect(c as Computed<any> | null, el, tracking, 0, spectating, false);
@@ -2160,10 +2209,12 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       // future (REACTIVE_JOINED): a first pass that did is born held (A29),
       // wherever it was created. Lane work sees the screen (`frameRead`).
       if (el._config & CONFIG_HELD && !(c._config & CONFIG_CHILDREN_FORBIDDEN)) {
+        if (LEGACY_LANES) {
         if (frameRead(c as Computed<any>, el)) {
           if (__TEST__) shadowActual(SLOT_C);
           return el._value as T;
         }
+        } else if (readHeld(c as Computed<any>, el)) return el._value as T;
       }
     }
     // Committed visibility for untracked and children-forbidden readers.
@@ -2188,7 +2239,7 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       if (__TEST__) shadowActual(netted ? SLOT_P : SLOT_C);
       return el._value as T;
     }
-    stagedRead(c as Computed<any>);
+    stagedRead(c as Computed<any>, el);
     if (__TEST__) shadowActual(SLOT_P);
     return el._pendingValue as T;
   }
@@ -2272,17 +2323,20 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
           el._x?._snapshotValue !== undefined &&
           !(owner._statusFlags & STATUS_ERROR)
       );
+    if (isComputed) layerRead?.(c as Computed<any>, owner);
     // L2, as in the fast block above (tracked or not). A node born into the
     // future (uninitialized) has no committed value: every reader derives
     // from the future there, a render effect included (A29: a stale reader
     // of it cannot fall back to the committed frame and enters instead).
     if (
       el._config & CONFIG_HELD &&
-      !(el._config & CONFIG_OVERRIDE) &&
+      !(LEGACY_LANES && el._config & CONFIG_OVERRIDE) &&
       !(c._config & CONFIG_CHILDREN_FORBIDDEN)
     ) {
+      if (LEGACY_LANES) {
       if (owner._statusFlags & STATUS_UNINITIALIZED) joinPass(c as Computed<any>, el);
       else committed = frameRead(c as Computed<any>, el);
+      } else committed = readHeld(c as Computed<any>, el);
     }
   } else if (__TEST__) shadowExpect(null, el, tracking, 0, spectating, false);
   // Lanes: a lane's node (after the pull — the node is current). NOT_PENDING
@@ -2402,7 +2456,7 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
   }
   // An errored derive throws for every late reader instead of silently
   // serving node values (memo parity, #2897 ruling).
-  if ((owner as Computed<any>)._fn && (owner as Computed<any>)._statusFlags & STATUS_ERROR) {
+  if (isComputed && (owner as Computed<any>)._statusFlags & STATUS_ERROR) {
     // Only a genuine reactive re-read may retry an errored async source:
     // - tracking: owned/tracked scope only (never events / `untrack` / effect side-effect phase)
     // - owner._time < clock: only on a later cycle than the one the error was found
@@ -2429,7 +2483,7 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
   const value = serve(el, committed ? null : (c as Computed<any> | null)) as T;
   if (
     !c &&
-    typeof computed._fn === "function" &&
+    isComputed &&
     el._config & CONFIG_AUTO_DISPOSE &&
     !(owner._statusFlags & STATUS_PENDING) &&
     !el._subs
@@ -2557,6 +2611,18 @@ function shadowRead<T>(el: Signal<T> | Computed<T>): T {
 export function stagedRead(c: Computed<any>, el?: Signal<any> | Computed<any>): void {
   if (!((el as Computed<any> | undefined)?._statusFlags! & STATUS_UNINITIALIZED)) {
     c._flags |= REACTIVE_STAGED_READ;
+    // A proposal consumed while this flush already belongs to an update
+    // gives owned children that same hold. Record it at the read: a later
+    // child can join a different hold without changing its creator's frame.
+    if (
+      el &&
+      flushTransaction !== null &&
+      preparingUpdate === null &&
+      (LEGACY_LANES ? passLane : null) === null &&
+      !(LEGACY_LANES && c._config & CONFIG_VERDICT)
+    )
+      c._flags |= REACTIVE_JOINED;
+
     if (__TEST__) shadowExternalRaise(c, RAISE_FL);
     // A verdict reader's too when it is an effect, before the frame has a
     // transaction (after, `stagedScreen` serves it the screen): the staging
@@ -2686,9 +2752,55 @@ export function isSame(el: Signal<any>, a: unknown, b: unknown): unknown {
     // D-42 (dev): a comparator's throw is `el`'s (routed here), not a catch
     // in the pass that happens to be running (the creator's, at a mount).
     if (__DEV__) forgetThrownRead();
-    if (!(e instanceof NotReadyError))
+    if (!(e instanceof NotReadyError)) {
+      if ((el as Computed<any>)._flags & REACTIVE_PREVIOUS_COMMITTED)
+        el._pendingValue = NOT_PENDING;
       return (notifyStatus(el as Computed<any>, STATUS_ERROR, e), true);
+    }
   }
+}
+
+// Keep the captured value in a separate function. Defining this closure in
+// stageSelectedValue makes V8 allocate a context even for scalar writes.
+function selectedLiteral(value: unknown): () => unknown {
+  return () => value;
+}
+
+/** An internal selector can stage a guess or forward a settled input using
+ * ordinary signal staging. Its owner and dependency are unchanged; all other
+ * cases retain the complete computation path. Called after context adoption. */
+export function stageSelectedValue(el: Computed<any>, value: unknown, source?: Computed<any>): boolean {
+  const edge = el._deps;
+  if (
+    context !== null || !globalQueue._running ||
+    el._statusFlags ||
+    (el._equals !== isEqual && el._equals !== false) ||
+    el._firstChild !== null || el._disposal !== null ||
+    el._x!._pendingFirstChild !== null || el._x!._pendingDisposal !== null ||
+    !edge || edge !== el._depsTail || edge._nextDep !== null || edge._gen !== el._depGen ||
+    (source && (source._statusFlags || edge._dep !== source ||
+      source._height >= el._height || source._config & CONFIG_HAS_SNAPSHOT)) ||
+    snapshotCaptureActive ||
+    el._config & CONFIG_IN_SNAPSHOT_SCOPE ||
+    (__OBSERVE__ && attrHooks !== null)
+  ) return false;
+  deleteFromHeap(el, dirtyQueue);
+  bumpNotifyEpoch();
+  el._flags = (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE)) |
+    (source && source._pendingValue !== NOT_PENDING ? REACTIVE_STAGED_READ : 0);
+  el._time = clock;
+  el._flags &= ~REACTIVE_PREVIOUS_COMMITTED;
+  const start = pendingNodes.length;
+  setSignal(el, typeof value === "function" ? selectedLiteral(value) : value);
+  if (el._pendingValue !== NOT_PENDING) el._config |= CONFIG_STAGED;
+  // Selection can happen after the seam judged updates. Keep one publication
+  // wake even without subscribers or for an equal guess. An already-held,
+  // childless selector needs no second entry in the ambient parking list.
+  // This also covers transparent forwarding during its producer's pass.
+  if (!start && !pendingNodes.length) queuePendingNode(el);
+  else if (start && pendingNodes.length === start + 1 &&
+      pendingNodes[start] === el && el._config & CONFIG_HELD) pendingNodes.pop();
+  return true;
 }
 
 export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T)): T {
@@ -2786,7 +2898,7 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
 
   // _time is a computed-only slot (§12e): writing it on a signal would fork
   // the lean shape. Every read site is computed-typed.
-  if ((el as any)._fn !== undefined) el._time = clock;
+  if ((el as any)._fn !== undefined) (el as Computed<T>)._time = clock;
   // Staged-rewrite fast path (§12d): a re-write to a node whose subscribers
   // were already walked — and where nothing has recomputed or linked since
   // (epoch) — re-stages the value and stops. The walk is idempotent (subs

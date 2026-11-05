@@ -96,6 +96,7 @@ import {
   releaseQueues,
   reruns,
   liveTx,
+  queueRerun,
   resolveTx,
   sameLane,
   schedule,
@@ -801,7 +802,7 @@ export function laneRead(c: Computed<any> | null, el: Signal<any> | Computed<any
         // and its pending holds its frame until then (#4338).
         if (!(c._flags & REACTIVE_SCREEN_READ)) {
           c._flags |= REACTIVE_FRAME_READ | REACTIVE_SCREEN_READ;
-          l._reruns.push(c);
+          queueRerun(l, c);
         }
         // Nothing on screen yet (uninitialized: `display` is NOT_PENDING).
         const v = display(el);
@@ -1158,7 +1159,7 @@ const laneSeams = (t: Transaction | null): void => {
   // flight's own landing re-derives it, not the frame's.
   for (const c of ahead.splice(0))
     c._flags & REACTIVE_FRAME_READ &&
-      ((c._flags ^= REACTIVE_FRAME_READ), t?._reruns.splice(t._reruns.indexOf(c) >>> 0, 1));
+      ((c._flags ^= REACTIVE_FRAME_READ), t?._reruns?.delete(c));
   const leaked: Transaction[] = [];
   if (t !== null)
     for (let i = 0; i < stagedReaders.length; i++) {

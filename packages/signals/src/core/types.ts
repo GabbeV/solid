@@ -99,6 +99,9 @@ export interface NodeExtension {
   /** L2 — the transaction holding this node while CONFIG_HELD is set
    * (`holdNode`); resolved through merges by `txOf`. */
   _transaction: Transaction | null;
+  /** Scalar ownership list: present only on the cold extension. */
+  _previousHeld: Signal<any> | null;
+  _nextHeld: Signal<any> | null;
   /** The node's current flight re-asks the same question (a `refresh()`,
    * A19 exc. 2 / A24): verdict-quiet — `isPending` reads false for it —
    * through its landing until the commit. */
@@ -156,7 +159,6 @@ export interface RawSignal<T> {
   _owner?: Owner | null;
   _equals: false | ((a: T, b: T) => boolean);
   _config: number;
-  _time: number;
   /** Notify-epoch stamp of the last subscriber walk (§12d). A re-write to an
    * already-staged node whose stamp still equals the global epoch skips the
    * whole walk — marking is idempotent, and the epoch bumps on every
@@ -201,6 +203,8 @@ export interface Owner {
 }
 
 export interface Computed<T> extends RawSignal<T>, Owner {
+  /** Last computation or async landing clock; plain signals use notification epochs. */
+  _time: number;
   _deps: Link | null;
   _depsTail: Link | null;
   /** Recompute-pass counter; bumped when dep revalidation starts. */
@@ -211,18 +215,6 @@ export interface Computed<T> extends RawSignal<T>, Owner {
   _nextHeap: Computed<any> | undefined;
   _prevHeap: Computed<any>;
   _fn: (prev?: T) => T;
-  /**
-   * True while a `loadingValue` node's first real answer hasn't landed: the
-   * node was born committed (commit #0 = the loading value) and `handleAsync`
-   * serves that committed value instead of throwing NotReadyError, so first
-   * flights never suspend readers or trip boundaries. Cleared by the first value landing on any path (sync
-   * return, sync-resolved promise, first iterator yield, async settle); a
-   * real error leaves it set — errors answer reads but don't enter the value
-   * lineage, so a retry serves the loading value again. Once cleared, normal
-   * pending/refetch semantics apply forever. (Stays in CORE: written
-   * unconditionally by recompute and every commit.)
-   */
-  _loading: boolean;
 }
 
 export interface Root extends Owner {

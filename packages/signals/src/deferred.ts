@@ -29,6 +29,7 @@
 import {
   CONFIG_HELD,
   CONFIG_LAGS,
+  CONFIG_LOADING,
   CONFIG_REDERIVE,
   CONFIG_SLOT_NODE,
   NOT_PENDING,
@@ -146,8 +147,8 @@ export function createDeferred<T>(
       // Answered: the node has a real committed answer — not a first load,
       // not a `loadingValue` window still open (both are loading, F-9).
       // Sticky, and read before this wrapper ever opens the window itself.
-      const open = (answered ||= !(node._statusFlags & STATUS_UNINITIALIZED) && !node._loading);
-      if (open) ((node._loading = true), (node._config |= CONFIG_LAGS));
+      const open = (answered ||= !(node._statusFlags & STATUS_UNINITIALIZED) && !(node._config & CONFIG_LOADING));
+      if (open) (node._config |= CONFIG_LOADING | CONFIG_LAGS);
       try {
         const r = fn(prev);
         if (open && typeof r === "object" && r !== null) {

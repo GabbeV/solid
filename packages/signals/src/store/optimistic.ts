@@ -1,3 +1,4 @@
+import { LEGACY_LANES } from "../core/constants.js";
 /**
  * Store — optimistic stores on lanes (plan sec. 31, S4; INTERNALS §3/§7, RUL-3).
  *
@@ -897,6 +898,7 @@ export function createOptimisticStore<T extends object = {}>(
   second?: NoFn<T> | Store<NoFn<T>> | StoreOptions | null,
   third?: ProjectionOptions
 ): [get: Store<T>, set: StoreSetter<T>] {
+  if (!LEGACY_LANES) throw new Error("Optimistic stores are not integrated with the shared update engine yet.");
   const derived = typeof first === "function";
   // A derived store's family (projection.ts): the derive's status reaches
   // its leaves' readers as for `createStore(fn)` (F-12, #4437).

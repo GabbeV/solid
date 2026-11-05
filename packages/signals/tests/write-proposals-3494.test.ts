@@ -9,6 +9,7 @@ import {
   isPending,
   latest
 } from "../src/index.js";
+import { NotReadyError } from "../src/core/error.js";
 
 let now = 0;
 let timers: { at: number; run: () => void }[] = [];
@@ -288,7 +289,9 @@ describe("A34 — a write is a proposal (#3494)", () => {
     await settle();
     await advanceTo(2500);
     setCount(1);
-    latest(copy);
+    // The unobserved copy has no published latest output. An imperative
+    // observation cannot expose its first proposal before publication.
+    expect(() => latest(copy)).toThrow(NotReadyError);
     await settle();
     await advanceTo(3000);
     setShow(true);

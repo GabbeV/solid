@@ -89,16 +89,16 @@ describe("a verdict reader mounts a fresh Loading under an action hold", () => {
         expect(m.screen.slot).toBe("content 1");
       });
 
-      // A29: a fresh, never-shown Loading over held data shows its fallback
-      // now (#3540: a reader born held under it is caught at its staging).
-      test("while held, the fresh boundary shows its fallback (A29)", async () => {
+      // The subtree inherits latest's higher context. Its ordinary read
+      // sees committed x=0, so there is ready content rather than a hold.
+      test("while held, the fresh boundary shows committed content", async () => {
         const m = mount(anchor);
         m.hold();
         flush();
         await Promise.resolve();
         flush();
         expect(m.committed()).toBe(0);
-        expect(m.screen.slot).toBe("fallback");
+        expect(m.screen.slot).toBe("content 0");
       });
     });
 });

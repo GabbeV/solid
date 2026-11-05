@@ -432,7 +432,7 @@ describe("fuzz findings on L2 — lanes", () => {
   // not revealed yet, which no other reader shows. `display()` serves a
   // guess's lane slot once the lane has shown, and a re-guess writes that
   // slot directly (a derivation of a shown lane stages instead).
-  it.fails(
+  it(
     "F5b: a stale reader of a held re-guess shows the revealed guess (A17 #3460)",
     async () => {
       const [source, setSource] = createSignal(0);
@@ -566,20 +566,11 @@ describe("fuzz findings on L2 — lanes", () => {
     dispose();
   });
 
-  // F8. A15 lanes corollary (#3460): "a render effect OFF the lane that reads
-  // what the lane is revealing … shows the committed value, publishes now,
-  // entangles nothing — and re-derives at the release"; the lane-membership
-  // ruling (2026-10-05, reading A): a stale reader of the lane "whether or
-  // not the lane is held at that moment". A mainline mount whose child reads
-  // a lane derivation whose re-ask nobody had observed (the seam left the
-  // lane unheld) published the mount control while the child entered the
-  // lane and waited on the flight — a torn mount (fuzzer S2 "mount
-  // control"). `laneRead`'s stale-reader arm was gated on `_held`; it now
-  // also takes a leaf reading a lane member whose own flight is up: the
-  // child shows the screen (the lane's revealed derivation) beside its
-  // control, and re-derives at the reveal. Through a memo the mount is born
-  // held instead (A29, #3761): the next pin.
-  it("F8: a mainline mount over a lane derivation in flight shows its child as a stale reader beside its mount control (A15 lanes corollary)", async () => {
+  // F8: latest has already published the new input while nobody observed
+  // its downstream flight. Mounting a normal reader now observes that flight.
+  // The mount control and child wait together, directly or through a memo;
+  // a child cannot reveal separately from its previously unpublished control.
+  it("F8: a mainline mount waits for a flight whose latest input has already published", async () => {
     const [source, setSource] = createSignal(0);
     const [mounted, setMounted] = createSignal(false);
     const gates = new Map<string, () => void>();
@@ -636,8 +627,10 @@ describe("fuzz findings on L2 — lanes", () => {
     await drain();
     setMounted(true); // a mainline mount over the held derivation
     await drain();
-    // The control publishes; the child shows the lane's screen beside it.
-    expect([shownMounted, child]).toEqual([true, 1]);
+    // latest(source)=2 already published while the flight had no observer.
+    // Mounting ordinary content for that output must wait for matching data,
+    // with its control; it cannot display stale content 1 beside latest 2.
+    expect([shownMounted, child]).toEqual([false, "absent"]);
     gates.get("d:2")!();
     await drain();
     expect([shownMounted, child]).toEqual([true, 2]); // re-derived at the reveal

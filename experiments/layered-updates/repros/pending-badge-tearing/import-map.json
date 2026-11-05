@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "solid-js": "https://esm.sh/solid-js@2.0.0-rc.20?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "@solidjs/signals": "https://esm.sh/@solidjs/signals@2.0.0-rc.20?dev",
+    "solid-js/web": "https://esm.sh/@solidjs/web@2.0.0-rc.20?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "@solidjs/web": "https://esm.sh/@solidjs/web@2.0.0-rc.20?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "solid-js/store": "https://esm.sh/solid-js@2.0.0-rc.20?dev&external=solid-js,@solidjs/signals,solid-js/internal",
+    "solid-js/internal": "https://esm.sh/solid-js@2.0.0-rc.20/internal?dev&external=solid-js,@solidjs/signals",
+    "solid-deps": "https://esm.sh/solid-deps?external=solid-js,@solidjs/signals,@solidjs/web,solid-js/internal"
+  }
+}

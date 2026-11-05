@@ -1,5 +1,8 @@
 import {
   CONFIG_ASYNC,
+  LEGACY_LANES,
+  CONFIG_LOADING,
+  REACTIVE_PREVIOUS_COMMITTED,
   CONFIG_AUTO_DISPOSE,
   CONFIG_REDERIVE,
   CONFIG_GUESS,
@@ -45,6 +48,8 @@ import {
   flush,
   globalQueue,
   joinFuture,
+  layerStatus,
+  layerNotify,
   MAINLINE_QUESTION,
   passLane,
   pendingNodes,
@@ -57,9 +62,22 @@ import {
   stageMarkHook,
   guessing,
   laneStageHook,
-  storeParkHook
+  storeParkHook,
+  resolveTx
 } from "./scheduler.js";
 import type { Computed, Link, Owner } from "./types.js";
+
+/** A refresh flight is quiet; a dependent is quiet when every flight it
+ * awaits is a refresh. Shared by legacy and layered pending observations. */
+export function quietPending(el: Computed<any>): boolean {
+  const x = el._x;
+  if (x == null) return false;
+  if (x._pendingSources !== undefined) {
+    for (const source of x._pendingSources) if (!source._x?._reask) return false;
+    return true;
+  }
+  return x._reask;
+}
 
 // The lazily-created Set is the ONE container for pending sources. Its
 // predecessor — a singular slot promoted to a Set on the second source —
@@ -372,9 +390,8 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // L2: a landing resumes the transaction waiting on it (maintainer: "it
       // resumes the sync frame") — a held reader's re-pass over the landed
       // value is that transaction's work, and the flush that carries it
-      // parks into it. A lane's held reader is the lane's (D-37): the flush
-      // never takes a lane as its transaction (#4440).
-      if (node._config & CONFIG_HELD) joinFuture(txOf(node));
+      // parks into it.
+      if (node._config & CONFIG_HELD && !layerStatus?.(node, el)) joinFuture(txOf(node));
       if (node._x?._blocked) {
         enqueueSub(node);
         scheduled = true;
@@ -480,7 +497,7 @@ export function handleAsync<T>(
       if (holdWorkHook) el._config &= ~CONFIG_ASYNC;
     }
     // A sync landing is the first real answer for a loadingValue node.
-    el._loading = false;
+    el._config &= ~CONFIG_LOADING;
     return result as T;
   }
 
@@ -520,7 +537,7 @@ export function handleAsync<T>(
   if (holdWorkHook && !(el._flags & REACTIVE_WINDOW)) el._config |= CONFIG_ASYNC;
   // The question this flight answers (A18 provenance, lanes.ts): the action
   // whose slice asked it; mainline is always the current question.
-  el._x!._q = question || MAINLINE_QUESTION;
+  if (LEGACY_LANES) el._x!._q = question || MAINLINE_QUESTION;
   // The run that asked this flight read every input without throwing: an
   // input still in flight was masked for it (an active override, A17), so
   // pending state those inputs propagated onto the node earlier does not
@@ -559,7 +576,7 @@ export function handleAsync<T>(
           "`await` (or restructure so the value is an input)."
       );
     }
-    if (stillPending && el._loading) {
+    if (stillPending && el._config & CONFIG_LOADING) {
       // Loading window: the flight died waiting on an unready source. Keep
       // serving commit #0 — same parking as recompute's catch for sync
       // dependency throws. The dead flight is released so the clock-gated
@@ -569,6 +586,7 @@ export function handleAsync<T>(
       el._time = clock;
       return;
     }
+    if (!stillPending && el._flags & REACTIVE_PREVIOUS_COMMITTED) el._pendingValue = NOT_PENDING;
     // D-41: a held node's error is staged (`stageError`) — a derived
     // store's derive's too: its family publishes it at the commit
     // (store/projection.ts `errorFamily`, #4489).
@@ -650,6 +668,7 @@ export function handleAsync<T>(
       // already held stages its answer into that hold (`setSignal`). Its
       // comparator throw is contained there (`isSame`, A3).
       setSignal(el, () => value);
+      el._flags &= ~REACTIVE_PREVIOUS_COMMITTED;
       // Attribution hook: this path landed through setSignal, whose write
       // hook already saw any committed change — direct=false lets the engine
       // reclassify that write as an async landing iff it actually committed.
@@ -662,7 +681,7 @@ export function handleAsync<T>(
     // the window when the flush commits it, so no one-frame pulse can leak to
     // observers between the landing and its commit (#2990).
     if (el._pendingValue === NOT_PENDING) {
-      el._loading = false;
+      el._config &= ~CONFIG_LOADING;
       // The landing published: the dependency tail the flight's pass left
       // linked goes now (A30, #3410). A staged landing has not replaced the
       // committed frame yet; `commitPendingNode` trims it.
@@ -739,7 +758,7 @@ export function handleAsync<T>(
     // as this flight's error instead of escaping as a rejection (#4112).
     const iterateOrRelease = () => {
       try {
-        if (!settleAutodispose()) iterate();
+        if (!completed && !settleAutodispose()) iterate();
       } catch (e) {
         handleError(e);
       }
@@ -762,6 +781,10 @@ export function handleAsync<T>(
         : { then: onSettle => void onSettle!(step) as any };
       settled.then(
         r => {
+          // Recomputing can reuse the iterable object while opening a new
+          // iterator. Object identity alone cannot reject the closed one's
+          // outstanding next(): cancellation belongs to this iterator.
+          if (completed) return;
           // The sync stash only serves the INITIAL drain (handleAsync's caller
           // consumes syncValue / throws NotReady from it). A sync-settled step
           // after an async gap — seroval buffering values between pulls, a
@@ -791,6 +814,7 @@ export function handleAsync<T>(
           }
         },
         e => {
+          if (completed) return;
           if (isSync && initialRead) {
             syncError = e;
             rejected = true;
@@ -907,7 +931,7 @@ export function handleAsync<T>(
       liveLanded = false;
     } else if (!flattenIfIterable(syncValue!)) {
       // Synchronously-resolved promise: the first real answer landed.
-      el._loading = false;
+      el._config &= ~CONFIG_LOADING;
     }
     // A sync-resolved promise holding an AsyncIterable flattened LIVE (we
     // are still inside the synchronous read): full initial-drain semantics
@@ -918,13 +942,13 @@ export function handleAsync<T>(
 
   if (liveLanded !== null) {
     if (!liveLanded) {
-      // Loading window: serve commit #0 instead of suspending.
-      if (el._loading) return el._value;
+      // Loading window: serve commit #0 (see the promise branch above).
+      if (el._config & CONFIG_LOADING) return el._value;
       throw new NotReadyError(context!);
     }
     // A sync first yield (or immediate empty completion) is the first real
     // answer; async yields clear inside asyncWrite.
-    el._loading = false;
+    el._config &= ~CONFIG_LOADING;
   }
 
   // D-42 (dev): a flight that answered synchronously (a sync-settled
@@ -1010,6 +1034,8 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
   // distinct pending source.
   if (pendingSource) setPendingError(el, pendingSource, error);
   else ext(el)._error = error;
+  if (status === STATUS_PENDING && el._x?._transaction)
+    resolveTx(el._x._transaction)._mayPend = true;
 
   // Lanes: a written guess is an optimistic boundary (A17 — "the optimistic
   // future value until we know otherwise"). Its own source in flight is its
@@ -1043,6 +1069,8 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
 export function propagateStatus(el: Computed<any>, status: number, error: any): void {
   const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   forEachDependent(el, (sub, link) => {
+    if (layerStatus?.(sub, el)) return;
+    layerNotify?.(el, sub);
     sub._time = clock;
     // A pending mark on a kept-tail link re-derives the subscriber instead of
     // marking it (A30, #3494 review; fuzzer latest-1 #2141; #3519 review).

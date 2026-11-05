@@ -289,27 +289,21 @@ export const STATES: State[] = [
       return built;
     },
     expect: {
-      // Ruled 2026-11-03 (#4656, RULES-DERIVED D-34): never committed, the
-      // source is loading, so the override is OPTIMISTIC_WRITE_BEFORE_LOAD
-      // in DEV and no guess is made (`supersede` above). The reads are the
-      // ones the void guess gave before the ruling (lanes 2026-10-01/02:
-      // written in the frame that re-asked its source, its lane blocked and
-      // never displayed, §16): there is no displayed override — direct reads
-      // see the committed value, the truth is staged under the action, a
-      // fresh reader of it is born held.
+      // The selected guess remains while the input update is held. Ordinary
+      // reads retain the committed output; latest observes the selected guess.
       untracked: rule(
         0,
-        "lanes: the never-shown guess is void at the correction; the truth is staged"
+        "the output remains committed while the selected guess is held"
       ),
-      derivesFrom: rule(2, "A18 (b): tracked derivations recompute from the arrived value"),
+      derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(
         HELD,
-        "A18 (c) / A29 (born held): a fresh mainline memo over the superseded node derives from the staged truth and is held with the transaction; the frame keeps the override"
+        "a fresh reader derives from the selected override and waits for its consequences"
       ),
-      preexisting: rule(HELD, "A18 (c): the applied frame keeps the override until commit"),
-      staleForeign: rule(0, "lanes: a stale reader of a void guess sees the committed value"),
-      childrenForbidden: rule(0, "A32 / lanes: the frame — the never-shown guess is void"),
-      latest: rule(2, "A18 (d): latest returns the arrived value"),
+      preexisting: rule(HELD, "the existing reader retains its committed output"),
+      staleForeign: rule(0, "a stale reader sees the committed output"),
+      childrenForbidden: rule(0, "a children-forbidden reader sees the committed output"),
+      latest: rule(3, "latest observes the selected output, not its masked incoming answer"),
       isPending: rule(true, "A18 (d): pending iff the arrival differs from the override"),
       authoritative: rule(2, "A17 carve-out: the authoritative reader sees the staged truth")
     }
@@ -324,21 +318,13 @@ export const STATES: State[] = [
       return built;
     },
     expect: {
-      // Ruled 2026-11-03 (#4656, RULES-DERIVED D-34): never committed, the
-      // source is loading, so the override is OPTIMISTIC_WRITE_BEFORE_LOAD
-      // in DEV and no guess is made (`supersede` above). The reads are the
-      // ones the void guess gave before the ruling (lanes 2026-10-01/02:
-      // written in the frame that re-asked its source, its lane blocked and
-      // never displayed, §16): there is no displayed override — direct reads
-      // see the committed value, the truth is staged under the action, a
-      // fresh reader of it is born held.
-      // Never committed: no value to serve a direct read (A19 exc. 1 —
-      // loading, not pending), `latest` tunnels to the staged truth.
+      // The same held input with no previously published output: ordinary
+      // reads and an imperatively created latest output have nothing to serve.
       untracked: rule(
         "throws:NotReady",
-        "A19 exc. 1 / lanes: never committed and the guess void — nothing to serve"
+        "no output has published yet"
       ),
-      derivesFrom: rule(2, "A18 (b)"),
+      derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(HELD, "A18 (c) / A29 (born held)"),
       preexisting: observed(
         HELD,
@@ -350,12 +336,12 @@ export const STATES: State[] = [
       ),
       childrenForbidden: rule(
         NOT_READY,
-        "A32 / A19 exc. 1 / lanes: the frame — nothing committed, the guess void; loading, not pending, as for the untracked read (was 0 while the old representation committed the superseded first landing)"
+        "no output has published: loading, not pending"
       ),
-      latest: rule(2, "A18 (d)"),
+      latest: rule(NOT_READY, "an imperative latest read has no published output yet; flushed-value outside reads are deferred"),
       isPending: rule(
         false,
-        "A19 exc. 1: a never-committed node is loading, not pending (the guess that was 'the observable value' under `next` is void)"
+        "a never-published node is loading, not pending"
       ),
       authoritative: rule(2, "A17 carve-out")
     }

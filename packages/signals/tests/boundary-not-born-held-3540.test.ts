@@ -306,9 +306,10 @@ const HELD = "1|1|1";
 const EARLY = "1|Loading A|1";
 
 describe("Loading `on` beside a keyed Show around the boundary (#3540)", () => {
-  // A keyed Show remounts on its condition's VALUE: over `latest(count)` the
-  // new boundary shows its fallback ahead of the write; over `count()` the
-  // key lands with the write, so the frame holds. `on` is a dependency list,
+  // A keyed Show remounts on its condition's VALUE. Over `latest(count)` its
+  // new subtree inherits the higher output context and reads committed data;
+  // that ready content needs no fallback. Over `count()` the key lands with
+  // the write, so the frame holds. `on` is a dependency list,
   // not a key: count's write notifies it either way, and the boundary
   // re-arms — releasing its hold now, with the fallback swap FOLLOWING THE
   // FRAME the write belongs to. B — an initialized boundary without `on` —
@@ -325,8 +326,8 @@ describe("Loading `on` beside a keyed Show around the boundary (#3540)", () => {
   // (A zero-arg function child is an accessor — evaluated once, not remounted
   // per key — and is deliberately not pinned here.)
   const matrix: Array<[Form, Key, string]> = [
-    ["static", "latest", EARLY],
-    ["callback", "latest", EARLY],
+    ["static", "latest", HELD],
+    ["callback", "latest", HELD],
     ["on", "latest", EARLY],
     ["static", "committed", HELD],
     ["callback", "committed", HELD],

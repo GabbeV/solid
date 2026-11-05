@@ -125,13 +125,12 @@ describe("latest-mode probe order independence (#3104)", () => {
     await tick(); // used to throw REACTIVE_WRITE_IN_OWNED_SCOPE here
     expect(log[log.length - 1]).toBe("plain=false latestP=false latestPm=false");
 
-    // Refetch in flight: the direct probe reports the held input; the
-    // latest-window probe of the SIGNAL saw the staged value (pairing rule,
-    // #2831); the latest-window probe of the async MEMO stays pending — its
-    // answer is still computing, so there is nothing fresher to see (#3028).
+    // latest observes the pending boolean's output. Both the signal's held
+    // change and the memo's flight report true; wrapping either boolean in
+    // latest does not change which source is being asked about.
     setA(1);
     flush();
-    expect(log[log.length - 1]).toBe("plain=true latestP=false latestPm=true");
+    expect(log[log.length - 1]).toBe("plain=true latestP=true latestPm=true");
 
     resolvers.splice(0).forEach(r => r());
     await tick();

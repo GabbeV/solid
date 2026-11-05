@@ -109,9 +109,9 @@ const LANDED = "Count: 2A: 2B: 2";
 
 describe("Loading `on` beside a keyed Show around the boundary; a boundary is never born held (#3540)", () => {
   // A keyed `Show` remounts on its condition's VALUE: over `latest(count)`
-  // the key changes ahead of the write and the fresh boundary shows its
-  // fallback now (born held exempts boundaries, A29); over `count()` the key
-  // lands with the write, so the frame holds. `on` is a dependency list, not
+  // the key changes ahead of the write. The new higher-layer boundary reads
+  // committed lower content, so A remounts with 1 while count is held. Over
+  // `count()` the key lands with the write, so the frame holds. `on` is a dependency list, not
   // a key: count's write notifies it either way, and the boundary stops
   // waiting on its current content — but the fallback swap FOLLOWS THE FRAME
   // the write belongs to. Here B — an initialized boundary without `on` —
@@ -139,8 +139,8 @@ describe("Loading `on` beside a keyed Show around the boundary; a boundary is ne
   // (A zero-arg function child is an accessor — evaluated once, not remounted
   // per key — and is deliberately not pinned here.)
   const matrix: Array<[Variant, string, [number, number, number], string[]]> = [
-    ["show-static-latest", EARLY, [1, 2, 2], []],
-    ["show-callback-latest", EARLY, [1, 2, 2], []],
+    ["show-static-latest", HELD, [1, 2, 2], []],
+    ["show-callback-latest", HELD, [1, 2, 2], []],
     ["show-static-committed", HELD, [1, 2, 2], []],
     ["show-callback-committed", HELD, [1, 2, 2], []],
     ["on-committed", HELD, [0, 0, 0], ["LOADING_ON_OUTSIDE_HOLD"]],

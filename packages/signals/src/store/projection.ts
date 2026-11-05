@@ -21,6 +21,7 @@ import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_VERDICT,
   STATUS_ERROR,
+  CONFIG_LOADING,
   STATUS_PENDING,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
@@ -271,7 +272,7 @@ export function runProjectionComputed<T extends object>(
   // for the whole first flight — the derive works a detached shadow of the
   // seed so draft writes cannot tear through to readers (#2988). Every
   // commit point reconciles the shadow through the normal commit path.
-  const shadow = owner._loading ? cloneState(target.v as T, target.s) : null;
+  const shadow = owner._config & CONFIG_LOADING ? cloneState(target.v as T, target.s) : null;
   // The question a write of this run answers: inside a slice, the slice's
   // (the sync pass); in a continuation — the flight still registered — the
   // flight's (`handleAsync` stamped it with the action that asked).
@@ -285,7 +286,7 @@ export function runProjectionComputed<T extends object>(
     // A write after the run returned (a continuation, a callback) arms the
     // drain itself when no landing will.
     () => {
-      if (!(owner._statusFlags & STATUS_PENDING) && !owner._loading) schedule();
+      if (!(owner._statusFlags & STATUS_PENDING) && !(owner._config & CONFIG_LOADING)) schedule();
     },
     asking
   );
@@ -343,8 +344,7 @@ export function runProjectionComputed<T extends object>(
           if (pending) wakeFamily(fam);
           else errorFamily(fam, error);
         });
-        // (The status is the one before this pass: `recompute` sets it after.)
-        if (!owner._loading)
+        if (!(owner._config & CONFIG_LOADING))
           commit(sync as void | T, owner._statusFlags & (STATUS_PENDING | STATUS_ERROR));
       },
       false
@@ -367,7 +367,7 @@ export function runProjectionComputed<T extends object>(
   if (
     owner._statusFlags & STATUS_PENDING &&
     owner._x!._inFlight !== null &&
-    !owner._loading &&
+    !(owner._config & CONFIG_LOADING) &&
     !first
   )
     wakeFamily(fam);

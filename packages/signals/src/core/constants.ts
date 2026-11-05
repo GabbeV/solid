@@ -1,3 +1,7 @@
+// The public package uses the shared update engine. This constant temporarily
+// keeps the remaining legacy store paths identifiable during migration.
+export const LEGACY_LANES = false;
+
 export const REACTIVE_NONE = 0;
 export const REACTIVE_CHECK = 1 << 0;
 export const REACTIVE_DIRTY = 1 << 1;
@@ -142,6 +146,17 @@ export const CONFIG_MANUAL_WRITE = 1 << 18;
 /** D-41: the staged value in `_pendingValue` is an error — an
  * answer of the held frame, published at its landing like a value. */
 export const CONFIG_STAGED_ERROR = 1 << 21;
+/** A loadingValue node is serving its committed seed before its first real
+ * answer. Pending work in this window does not suspend readers or boundaries.
+ * A sync answer, landed async answer or commit closes the window; an error
+ * does not. Kept in the existing flags instead of a field on every memo. */
+export const CONFIG_LOADING = 1 << 24;
+/** Experimental layers: the staged result belongs to a replaced context.
+ * Keep it for equality until replacement succeeds; neither reuse it as
+ * callback history nor publish it through an error/loading fallback. */
+export const REACTIVE_PREVIOUS_COMMITTED = 1 << 23;
+/** Optional layer coordinator: this effect was adopted for an output pass. */
+export const REACTIVE_LAYER_EFFECT = 1 << 24;
 /** Lanes — the node carries a written guess (`optimisticWrite`): its own
  * source recomputing it, or a plain write landing on it, is the truth
  * (`supersede`). A lane's derived staging is not. */
@@ -194,6 +209,12 @@ export const CONFIG_FRESH_READ = 1 << 16;
  * a write is promoted at that recompute's end: readers in the same block see
  * it. Cleared when the next flush begins; set only on that rare path. */
 export const CONFIG_PROMOTED = 1 << 22;
+/** A writable computation can receive raw values from its setter, including
+ * thenables. An optimistic input must retain its own normalization producer. */
+export const REACTIVE_WRITABLE_COMPUTED = 1 << 25;
+/** Optional layer journal: this computation has a saved published dependency
+ * list. Stable graphs need no WeakMap lookup or deletion at their seams. */
+export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
 /** Observe tiers only: the node is framework plumbing (the `solid-js/refresh`
  * HMR memo between a component's root and its body) — it has no name, is no
  * segment of any owner path, and the attribution engine records nothing about
@@ -295,3 +316,6 @@ export type Refreshable<T> = T & { readonly [$REFRESH]: any };
  * a construction through a binding carries none. Same constructor, so the
  * same objects. */
 export const NewSet = Set;
+
+/** Persistent feature state shares the existing lifecycle word. */
+export const REACTIVE_PERSISTENT = REACTIVE_PREVIOUS_COMMITTED | REACTIVE_LAYER_EFFECT | REACTIVE_WRITABLE_COMPUTED | REACTIVE_SAVED_DEPENDENCIES;

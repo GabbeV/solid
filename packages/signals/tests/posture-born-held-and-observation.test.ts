@@ -6,10 +6,9 @@
  *     the special case that links one across async, and every write is a
  *     conceptual transition. An action started later in the same tick owns
  *     the ambient writes made before it.
- * C — latest() ENTANGLES (A15): optimistic lanes are transition-bound, so a
- *     latest() read inside another live action merges that action with the
- *     source's — "that doesn't mean optimism for both can't poke through in
- *     the meanwhile": the value is served immediately, the reveal is joint.
+ * C — next entangled latest's caller with the input transaction. The shared
+ *     output is an explicit observation boundary; reading its proposal does
+ *     not consume the lower input update or join its lifetime.
  * B — creation under a transaction ESCAPES the hold (spec O2, recorded as
  *     current behavior, not ruled): a memo + render effect created inside a
  *     live action over a value another action holds direct-commits and
@@ -67,8 +66,8 @@ describe("A — same-tick adoption is by design: transitions are ambient (postur
   });
 });
 
-describe("C — latest() entangles: lanes are transition-bound (A15, ruled 2026-09-15)", () => {
-  it("latest(x) inside another live action serves the held value now and merges that action with x's transaction", async () => {
+describe("C — latest() observes an independent higher output", () => {
+  it("latest(x) inside another live action does not join that action to x's input update", async () => {
     const { x, release } = heldByAction();
     const [y, setY] = createSignal(0);
     let seen: number | undefined;
@@ -81,9 +80,9 @@ describe("C — latest() entangles: lanes are transition-bound (A15, ruled 2026-
     runU();
     flush();
     expect(seen).toBe(1);
-    release(); // … but T alone no longer reveals: U and T settle as one
+    release(); // T can publish while U remains open.
     await tick();
-    expect(x()).toBe(0);
+    expect(x()).toBe(1);
     expect(y()).toBe(0);
     releaseU();
     await tick();

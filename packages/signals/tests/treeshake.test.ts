@@ -506,11 +506,14 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
     expect(result).toBe("ok");
   });
 
-  it("createOptimistic loads the lane engine; the floor ceiling reflects its absence", async () => {
+  it("createOptimistic loads shared coordination without the legacy lane engine", async () => {
     const { retained } = await bundleFixture(
       `export { createSignal, createEffect, createRoot, flush, createOptimistic } from "sigsrc";`
     );
-    expect(retainedFrom(retained, ["core/lanes.ts"])).toEqual(["core/lanes.ts"]);
+    expect(retainedFrom(retained, ["layers/coordination.ts", "layers/optimistic.ts"])).toEqual([
+      "layers/coordination.ts", "layers/optimistic.ts"
+    ]);
+    expect(retainedFrom(retained, ["core/lanes.ts", "core/verdict.ts"])).toEqual([]);
   });
 
   it("createDeferred loads the deferred module and the mark core, and nothing else new", async () => {
@@ -544,21 +547,14 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
     expect(retainedFrom(retained, ["deferred.ts", "affects-marks.ts", "affects.ts"])).toEqual([]);
   });
 
-  it("isPending/latest load the verdict layer and nothing else new", async () => {
+  it("isPending/latest share coordination without pulling in user guesses", async () => {
     const { retained } = await bundleFixture(
       `export { createSignal, createEffect, createRoot, flush, isPending, latest } from "sigsrc";`
     );
-    expect(retainedFrom(retained, ["core/verdict.ts"])).toEqual(["core/verdict.ts"]);
-    // The verdict layer brings the lane engine WITH it, by design (L2, §28:
-    // a verdict read of a held node is the holder's verdict lane's work —
-    // `verdictLane`, `display`, `laneValueOf` are lanes.ts's; a `latest`
-    // reader's pass re-derives at the holder's landing like any lane's
-    // member, which is what lets it escape an incomplete hold's effect
-    // stash (#2887; also #2898/#2912). Asserted POSITIVELY so the cost is
-    // named instead of invisible: an isPending consumer pays verdict +
-    // lanes, and if a future round decouples the verdict lane from the
-    // engine this expectation is the one to flip to an exclusion.
-    expect(retainedFrom(retained, ["core/lanes.ts"])).toEqual(["core/lanes.ts"]);
+    expect(retainedFrom(retained, ["layers/coordination.ts", "layers/observation.ts"])).toEqual([
+      "layers/coordination.ts", "layers/observation.ts"
+    ]);
+    expect(retainedFrom(retained, ["core/verdict.ts", "core/lanes.ts", "layers/optimistic.ts"])).toEqual([]);
     expect(retainedFrom(retained, ["store/", "boundaries.ts", "map.ts", "affects.ts"])).toEqual([]);
   });
 
@@ -611,9 +607,10 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
         fixture.replace("SPEC", "sigdist")
       );
       const { retained: srcRetained } = await bundleFixture(fixture.replace("SPEC", "sigsrc"));
-      // The by-design verdict -> lanes coupling, mirrored from the src test.
-      expect(retainedFrom(distRetained, ["core/verdict.js"])).toEqual(["core/verdict.js"]);
-      expect(retainedFrom(distRetained, ["core/lanes.js"])).toEqual(["core/lanes.js"]);
+      expect(retainedFrom(distRetained, ["layers/coordination.js", "layers/observation.js"])).toEqual([
+        "layers/coordination.js", "layers/observation.js"
+      ]);
+      expect(retainedFrom(distRetained, ["core/verdict.js", "core/lanes.js", "layers/optimistic.js"])).toEqual([]);
       expect(
         retainedFrom(distRetained, ["store/", "boundaries.js", "map.js", "affects.js"])
       ).toEqual([]);

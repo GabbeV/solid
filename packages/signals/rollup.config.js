@@ -52,6 +52,7 @@ const flags = (dev, observe) =>
 
 const ts = outDir =>
   typescript({
+    tsconfig: "./tsconfig.build.json",
     declaration: false,
     outDir,
     module: "esnext",

@@ -5,6 +5,7 @@ import {
   CONFIG_HELD,
   CONFIG_TRANSPARENT,
   defaultContext,
+  EFFECT_RENDER,
   REACTIVE_DISPOSED,
   REACTIVE_FRAME_READ,
   REACTIVE_ZOMBIE,
@@ -32,7 +33,7 @@ import {
 import { clearInFlight } from "./async.js";
 import { clearDeps, unobserved } from "./graph.js";
 import { deleteFromHeap } from "./heap.js";
-import { dirtyQueue, globalQueue, pendingNodes, schedule } from "./scheduler.js";
+import { dirtyQueue, cleanupReruns, layerBlocked, globalQueue, pendingNodes, schedule } from "./scheduler.js";
 import type { Computed, Disposable, Owner, Root } from "./types.js";
 
 // L2 (step 2): the parked frame. A pass parks the previous frame's children
@@ -111,6 +112,7 @@ export function disposeChildren(node: Owner, self: boolean = false, zombie?: boo
     if (__OBSERVE__ && node._parent === null && (node as Root)._root) unregisterRoot(node);
     if (__DEV__) clearSignals(node);
     if ((node as any)._fn) {
+      cleanupReruns?.(node as Computed<any>);
       clearInFlight(node as Computed<unknown>);
       // A death that can unblock the future (L2, `futureBlocked`): a held
       // flight's — a transaction's or a lane's (its `_x._transaction`) — or a
@@ -121,7 +123,8 @@ export function disposeChildren(node: Owner, self: boolean = false, zombie?: boo
         ((node as Computed<unknown>)._statusFlags & STATUS_PENDING &&
           (node as Computed<unknown>)._x?._transaction != null) ||
         flags & REACTIVE_FRAME_READ ||
-        pendingNodes.length
+        pendingNodes.length ||
+        (layerBlocked && (node as any)._type === EFFECT_RENDER)
       )
         schedule();
     }

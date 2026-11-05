@@ -1,13 +1,11 @@
 /**
- * #3851: a mount a verdict reader makes is a mainline mount. An action
+ * #3851: an action
  * holds `x = 1`; `<Show when={latest(x) > 0}>` opens at once (display-ahead)
- * and mounts a `<Loading>` whose content reads `x`. A verdict lane computes
- * the real outcome and its mounts stay mainline (A29's boundary exemption),
- * so the content reads the held `x` as the frame does: it waits behind the
- * fresh boundary's fallback and appears at the action's landing (A29's
- * boundary scope, 2026-10-06). Before, the content's first pass was staged
- * in the verdict lane its creator was in and showed `content 1` beside the
- * committed `x = 0`.
+ * and mounts a `<Loading>` whose content reads `x`. The shared model gives
+ * the subtree its creator's higher context: it reads committed x=0 until
+ * the input update publishes. Next instead gives verdict-created mounts a
+ * mainline context and shows fallback. Both avoid the original bug of
+ * showing ordinary content 1 beside committed x=0.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -84,11 +82,11 @@ async function mountUnderVerdict(contentInMemo: boolean | "async") {
   return screens;
 }
 
-describe("#3851: a verdict reader's mount stays mainline", () => {
-  it("the mounted boundary shows its fallback while the action holds the value", async () => {
+describe("#3851: a latest reader's mount inherits its output context", () => {
+  it("the mounted boundary shows committed content while the action holds the value", async () => {
     expect(await mountUnderVerdict(false)).toEqual([
       [0, "closed"],
-      [0, "fallback"],
+      [0, "content 0"],
       [1, "content 1"]
     ]);
   });
@@ -96,7 +94,7 @@ describe("#3851: a verdict reader's mount stays mainline", () => {
   it("same with the content in a memo", async () => {
     expect(await mountUnderVerdict(true)).toEqual([
       [0, "closed"],
-      [0, "fallback"],
+      [0, "content 0"],
       [1, "content 1"]
     ]);
   });
@@ -104,7 +102,7 @@ describe("#3851: a verdict reader's mount stays mainline", () => {
   it("same with an async content memo", async () => {
     expect(await mountUnderVerdict("async")).toEqual([
       [0, "closed"],
-      [0, "fallback"],
+      [0, "content 0"],
       [1, "content 1"]
     ]);
   });

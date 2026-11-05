@@ -713,14 +713,9 @@ describe("A17 (was C4): an active override is THE value — every reader, until 
     expect(log[log.length - 1]).toBe("20|200");
   });
 
-  // No-tearing is enforced at the EFFECT level, not the read level (ruling
-  // 2026-07-07): async derived FROM the optimistic value holds the lane's
-  // render effects — the rendered view moves as one unit — while direct reads
-  // (ambient included) return the override immediately ("direct read shows
-  // optimistic, effect waits"). The real-world CategoryDisplay/News-Finance
-  // suites in createOptimistic.test.ts pin this extensively; this is the
-  // minimal spec statement.
-  it("downstream async: direct read shows the override immediately, lane effects wait for it", async () => {
+  // A proposal and its async consequences publish together. Ordinary outside
+  // reads use that same committed output; latest is the explicit preview.
+  it("downstream async: direct reads and effects retain the published output until its consequences are ready", async () => {
     const [id, setId] = createSignal(1);
     const dataFetch = deferredFetcher((t: number) => t * 10);
     const derivedFetch = deferredFetcher((t: number) => `derived(${t})`);
@@ -751,9 +746,8 @@ describe("A17 (was C4): an active override is THE value — every reader, until 
     setId(2);
     setData(99);
     flush();
-    // Direct read shows the override immediately...
-    expect(data()).toBe(99);
-    // ...but the lane holds BOTH its effects (value and derived move together).
+    expect(data()).toBe(10);
+    // Both effects wait too: value and derived move together.
     expect(valueLog).toEqual([]);
     expect(derivedLog).toEqual([]);
 
@@ -911,24 +905,15 @@ describe("A17 (was C4): an active override is THE value — every reader, until 
   });
 });
 
-describe("A18 (was B4): an override's lifetime is bound to its own async source, not its transition", () => {
-  // Maintainer ruling (2026-07-07): "overrides clear when their async source
-  // resolves.. otherwise unrelated parts of a transition can get held up
-  // waiting for other async to resolve, especially if the optimistic value
-  // needs correction and triggers further async." The authoritative value
-  // wins the moment it arrives; the correction cascade (and any async it
-  // triggers) must not wait for strangers in a merged transition.
-  // Re-ruled 2026-07-07b and again 2026-09-09 (#3331): own-source resolution
-  // ends the optimism for the GRAPH at once — tracked readers derive from the
-  // arrived truth, and that corrected work belongs to the transaction — while
-  // the override remains the DISPLAYED value (untracked reads, the applied
-  // frame) until the transaction commits. Here `joined` re-derives from the
-  // truth and, doing so, observes the unrelated fetch still pending: the
-  // transaction holds for it (A15), and the correction reveals with it — one
-  // frame, "20|200", never "20|100". (Before, the lane read `mOther`'s
-  // committed value, so the transaction closed at the landing and committed
-  // `other = 2` while the screen still showed mOther(1).)
-  it("entangled: own-source resolution supersedes the override for the graph; display and untracked reads keep it until the merged commit", async () => {
+describe("A18: incoming answers retire through the override's input update", () => {
+  // Shared-update model: an incoming answer retires the override when its
+  // input update is ready. Entangled input work can delay that retirement;
+  // latest continues to observe the selected override in the meantime.
+  // Once retirement starts, correction does not wait for obsolete optimistic
+  // async work. Correction and input consequences publish coherently.
+  // This intentionally replaces A18's immediate graph-only supersession:
+  // there is no second hidden output serving the incoming answer to readers.
+  it("entangled: the selected override remains until the shared input update can retire it", async () => {
     const [id, setId] = createSignal(1);
     const [other, setOther] = createSignal(1);
     const dataFetch = deferredFetcher((t: number) => t * 10);
@@ -959,13 +944,11 @@ describe("A18 (was B4): an override's lifetime is bound to its own async source,
     expect(data()).toBe(99); // override active while own fetch is in flight (A17)
     expect(log).toEqual(["99|100"]);
 
-    // Own source resolves with a DIFFERENT value: the graph moves to it now
-    // (latest() sees it; the verdict says the displayed value is not final),
-    // while the displayed frame and untracked reads keep the override until
-    // the transaction — now holding for the re-derived `joined` — commits.
+    // The different incoming answer remains masked while the shared input
+    // update waits on mOther. latest observes the selected output too.
     dataFetch.resolveAll();
     await settle();
-    expect(latest(data)).toBe(20);
+    expect(latest(data)).toBe(99);
     expect(isPending(data)).toBe(true);
     expect(data()).toBe(99);
     expect(log).toEqual(["99|100"]);
@@ -1078,7 +1061,7 @@ describe("A18 (was B4): an override's lifetime is bound to its own async source,
       // for it (A17: lane effects wait for their downstream async).
       expect(g.flights.map(f => f.n)).toEqual([3]);
       expect(g.log).toEqual([]);
-      expect(g.double()).toBe(3);
+      expect(g.double()).toBe(0);
 
       // The source lands with 2 ≠ 3. The graph moves to 2 NOW: a flight for 2
       // starts without waiting for the 3-flight.
@@ -1121,7 +1104,7 @@ describe("A18 (was B4): an override's lifetime is bound to its own async source,
       // Nothing restarted; the value is simply confirmed.
       expect(g.flights.map(f => f.n)).toEqual([2]);
       expect(latest(g.double)).toBe(2);
-      expect(g.double()).toBe(2);
+      expect(g.double()).toBe(0);
       expect(g.log).toEqual([]); // still held for the downstream flight
 
       g.flights.shift()!.resolve();
@@ -1282,7 +1265,7 @@ describe("A18 (was B4): an override's lifetime is bound to its own async source,
       const b = select(5);
       flush();
       expect(flights.map(f => f.n)).toEqual([3, 5]);
-      expect(double()).toBe(5);
+      expect(double()).toBe(0);
       flights.shift()!.resolve();
       flights.shift()!.resolve();
       await settle();

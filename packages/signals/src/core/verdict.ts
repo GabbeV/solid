@@ -63,7 +63,7 @@ import {
   unflushedValue,
   verdict
 } from "./core.js";
-import { settlePendingSource } from "./async.js";
+import { quietPending, settlePendingSource } from "./async.js";
 import { forgetThrownRead, warnStrictReadUntracked } from "./dev.js";
 import { NotReadyError } from "./error.js";
 import { link } from "./graph.js";
@@ -85,6 +85,7 @@ import {
   setPassLane,
   stagedReaders,
   staleReader,
+  queueRerun,
   txOf,
   type Transaction,
   installVerdictHooks
@@ -192,7 +193,7 @@ let probeFound = false;
 function verdictRead(c: Computed<any>, t: Transaction, plain?: boolean): void {
   route(c, t);
   if (plain) staleReader(c, t);
-  else if (probing && t._reruns[t._reruns.length - 1] !== c) t._reruns.push(c);
+  else if (probing) queueRerun(t, c);
 }
 
 /** A verdict read of a node staged or in flight but not held yet: whether it
@@ -232,19 +233,6 @@ function provisionalVerdict(c: Computed<any>, notFinal: boolean): void {
   // frame's — whole — and re-derives once if the flush parks (unanswered:
   // its membership is the seam's, not the transaction it joins).
   watchVerdict(c, !probing || notFinal);
-}
-
-/** A19 exc. 2 / A24: a flight that re-asks the question already answered
- * (a `refresh()`, a poll) is quiet; a node pending through others is quiet
- * when every flight it waits on is. */
-function quietPending(el: Computed<any>): boolean {
-  const x = el._x;
-  if (!x) return false;
-  if (x._pendingSources) {
-    for (const source of x._pendingSources) if (!source._x?._reask) return false;
-    return true;
-  }
-  return x._reask;
 }
 
 /** `isPending`'s answer for a held node (A19), relative to what the reader

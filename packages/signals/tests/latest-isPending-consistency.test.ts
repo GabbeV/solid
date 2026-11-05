@@ -140,12 +140,10 @@ describe("latest/isPending consistency (#2831)", () => {
     await Promise.resolve();
     await Promise.resolve();
     flush();
-    // Async resolved but action still open. A verdict reader is a frame
-    // reader (L2, A10): render and user effects alike see the screen — the
-    // old value with pending=true — and re-derive at the landing. (Under
-    // `next` a user effect was a "fresh" reader and saw `[false, data-2]`
-    // here.) The invariant is the pairing: [true, data-2] never appears.
-    expect(renderLog).toEqual(["[true, data-1]"]);
+    // The action still holds the value and pending output. Their published
+    // pair is unchanged; resolving the request does not require reapplying
+    // that same pair. In particular, [true, data-2] must never publish.
+    expect(renderLog).toEqual([]);
     for (const entry of userLog) expect(entry).not.toBe("[true, data-2]");
     renderLog.length = 0;
     userLog.length = 0;

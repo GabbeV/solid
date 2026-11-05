@@ -1,4 +1,4 @@
-import { CONFIG_CHILDREN_FORBIDDEN } from "./constants.js";
+import { LEGACY_LANES, CONFIG_CHILDREN_FORBIDDEN } from "./constants.js";
 import { isThenable } from "./async.js";
 import { enterCallback, exitCallback } from "./core.js";
 import { getOwner } from "./owner.js";
@@ -38,12 +38,12 @@ const ACTION_CALLED_IN_OWNED_SCOPE_MESSAGE =
 function inTransaction<T>(t: Transaction, q: number, fn: () => T): T {
   // The slice and its flush ask this action's question (A18 provenance):
   // the guesses it writes and the flights it starts are stamped with it.
-  const prevQ = question;
-  setQuestion(q);
+  const prevQ = LEGACY_LANES ? question : 0;
+  if (LEGACY_LANES) setQuestion(q);
   joinFuture(t);
   const result = fn();
   if (actionDepth === 0) flush();
-  setQuestion(prevQ);
+  if (LEGACY_LANES) setQuestion(prevQ);
   return result;
 }
 
@@ -155,8 +155,8 @@ export function action<Args extends any[], Y, R>(
       // first slice's writes are carried by the tick's scheduled flush.
       const t = newTransaction(false);
       t._open = 1;
-      t._acted = true;
-      const q = nextQuestion();
+      if (LEGACY_LANES) t._acted = true;
+      const q = LEGACY_LANES ? nextQuestion() : 0;
       const done = (v?: R, e?: any, failed = false) => {
         resolveTx(t)._open--;
         schedule();
@@ -236,10 +236,10 @@ export function action<Args extends any[], Y, R>(
       // the slice itself asks the action's question (its guesses are stamped
       // at the write).
       joinFuture(t);
-      const prevQ = question;
-      setQuestion(q);
+      const prevQ = LEGACY_LANES ? question : 0;
+      if (LEGACY_LANES) setQuestion(q);
       step();
-      setQuestion(prevQ);
+      if (LEGACY_LANES) setQuestion(prevQ);
     });
   };
 }

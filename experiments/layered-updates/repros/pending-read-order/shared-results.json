@@ -1,0 +1,32 @@
+{
+  "url": "https://s.olid.uk/id/xPjCzuZER72LbhtpCXTPUQ",
+  "version": "next -> 2.0.0-rc.20",
+  "results": [
+    {
+      "order": "id-first",
+      "initial": [
+        "0",
+        "0",
+        "false"
+      ],
+      "during": [
+        "0",
+        "0",
+        "true"
+      ]
+    },
+    {
+      "order": "pending-first",
+      "initial": [
+        "0",
+        "0",
+        "false"
+      ],
+      "during": [
+        "1",
+        "0",
+        "false"
+      ]
+    }
+  ]
+}

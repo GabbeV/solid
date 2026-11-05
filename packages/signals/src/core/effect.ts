@@ -1,4 +1,4 @@
-import { NOT_PENDING } from "./constants.js";
+import { LEGACY_LANES, NOT_PENDING } from "./constants.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_CHILDREN_FORBIDDEN,
@@ -41,9 +41,9 @@ import {
   haltReactivity,
   haltReactivityAt,
   notifyEpoch,
-  txOf,
   resetUnhandledAsync,
   schedule,
+  txOf,
   setTrackedQueueCallback,
   setEffectCallback,
   heldRunHook,
@@ -232,6 +232,13 @@ function runEffect(node: Effect<any>, type: number): void {
   // Captured before the callback: its own throw errors the node below, but
   // the compute pass that produced `_value` was clean, so its tail still goes.
   const cleanPass = node._x?._error == null;
+  // A queued value callback can outlive the update that enqueued it. Its
+  // current holder decides publication. The compute-error arm above is a
+  // separate error notification; it does not publish a proposed value.
+  if (node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
+    txOf(node)._queues[type - 1].push((node._boundRunEffect ??= runEffect.bind(null, node)));
+    return;
+  }
   let prevStrictRead: string | false = false;
   let prevStrictReadEvent: unknown;
   if (__DEV__) {

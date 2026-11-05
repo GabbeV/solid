@@ -17,6 +17,7 @@ export default defineConfig({
     port: 3000
   },
   test: {
+    setupFiles: ["./test/setup-jest-dom.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],

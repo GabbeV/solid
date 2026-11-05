@@ -89,11 +89,10 @@ describe("#3835 optimistic mount of a nested memo", () => {
 });
 
 describe("#3835 a Loading mounted by an optimistic write over a parent flight", () => {
-  // A29's boundary exemption holds for lane work too: the boundary's first
-  // pass sees the flight pending, held or not, and shows its fallback; it is
-  // not handed the flight's committed value.
+  // The mount inherits its optimistic creator's context. Ordinary reads
+  // select the lower input's committed value until that update publishes.
   for (const order of ["same tick", "after the park"])
-    it(`shows its fallback (${order})`, async () => {
+    it(`shows committed lower data (${order})`, async () => {
       const log: unknown[] = [];
       let run!: () => Promise<void>;
       let finish!: () => void;
@@ -140,17 +139,16 @@ describe("#3835 a Loading mounted by an optimistic write over a parent flight", 
         await tick();
       }
       flush();
-      expect(log).toEqual(["hidden", "fallback"]);
+      expect(log).toEqual(["hidden", "data 1"]);
       lands.forEach(land => land(2));
       await tick();
       flush();
-      expect(log).not.toContain("data 1");
+      expect(log).toEqual(["hidden", "data 1"]);
       finish();
       await p;
       await tick();
       flush();
-      expect(log.at(-1)).toBe("data 2");
-      expect(log).not.toContain("data 1");
+      expect(log).toEqual(["hidden", "data 1", "data 2"]);
       dispose();
     });
 });

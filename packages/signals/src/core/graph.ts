@@ -5,12 +5,22 @@ import {
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_ZOMBIE,
   STATUS_PENDING,
-  NewSet
+  NewSet,
+  STATUS_UNINITIALIZED
 } from "./constants.js";
 import { deleteFromHeap } from "./heap.js";
 import { disposeChildren, runCleanup } from "./owner.js";
 import { bumpNotifyEpoch, dirtyQueue } from "./scheduler.js";
 import type { Computed, Link, Signal } from "./types.js";
+
+// Optional coordination metadata. Reusing an existing edge pays nothing;
+// only structural insertion, publication and disposal visit this seam.
+export let dependencyFrame:
+  | ((node: Computed<any>, phase: "insert" | "commit" | "clear" | "park") => boolean | void)
+  | undefined;
+export function setDependencyFrameHook(hook: typeof dependencyFrame): void {
+  dependencyFrame = hook;
+}
 
 /** The store's shared slot-node release handler (store/store.ts installs it
  * once) — a live binding read directly by the sweep site: no wrapper frame,
@@ -69,6 +79,7 @@ export function trimStaleDeps(el: Computed<any>): void {
     if (depsTail !== null) depsTail._nextDep = null;
     else el._deps = null;
   }
+  dependencyFrame?.(el, "commit");
 }
 
 // Shared by unobserved() and the disposeChildren child loop. The truthy guard
@@ -77,6 +88,7 @@ export function trimStaleDeps(el: Computed<any>): void {
 // null-out below. With `_depsTail` cleared, `trimStaleDeps` unlinks the whole
 // list and nulls `_deps`.
 export function clearDeps(el: Computed<unknown>): void {
+  dependencyFrame?.(el, "clear");
   if (el._deps) {
     el._depsTail = null;
     trimStaleDeps(el);
@@ -184,6 +196,7 @@ export function link(dep: Signal<any> | Computed<any>, sub: Computed<any>) {
 
   if (prevSub !== null) prevSub._nextSub = newLink;
   else dep._subs = newLink;
+  if (dependencyFrame && !(sub._statusFlags & STATUS_UNINITIALIZED)) dependencyFrame(sub, "insert");
 
   // New subscriber edge: staged-rewrite skips (§12d) must not miss it.
   bumpNotifyEpoch();

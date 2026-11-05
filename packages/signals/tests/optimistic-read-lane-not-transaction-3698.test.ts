@@ -23,10 +23,9 @@
  * pass — at once for a lane that is not held, at the release for one that is
  * — and the memo is never the transaction's pending node.
  *
- * Contrast: entry remains for a reader served HELD or SUPERSEDED truth — an
- * optimistic node whose own source landed a different value (A18, #3331) hands
- * its tracked readers the staged truth, and a tick that re-runs such a reader
- * IS held with the transaction (A29).
+ * Shared model: an incoming answer stays masked by the active override until
+ * its input update retires it. An unrelated write can still publish alongside
+ * that selected output. Readers of a held output proposal coordinate normally.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -62,7 +61,7 @@ function reportGraph(opts: { confirm?: boolean; heldLane?: boolean } = {}) {
   let resolveMove!: () => void;
   let resolveDetails!: () => void;
   let gen = 0;
-  createRoot(() => {
+  const dispose = createRoot(dispose => {
     const [src, setSrc] = createSignal(false);
     const [opt, setOptimistic] = createOptimistic(() => src());
     const [d, sd] = createSignal(false);
@@ -96,6 +95,7 @@ function reportGraph(opts: { confirm?: boolean; heldLane?: boolean } = {}) {
         outside.push(v);
       }
     );
+    return dispose;
   });
   flush();
   return {
@@ -104,6 +104,8 @@ function reportGraph(opts: { confirm?: boolean; heldLane?: boolean } = {}) {
     outside,
     drag,
     optimistic,
+    dispose,
+    generations: () => gen,
     setDrag,
     move,
     resolveMove: () => resolveMove(),
@@ -203,7 +205,10 @@ describe("#3698 a read served an active override is lane work, not a transaction
     // The lane is held by `details`' flight: its frame is deferred — the
     // committed view is on screen and the retired children wait.
     expect(g.log).toEqual(["hidden"]);
-    expect(g.cleanups).toEqual([]);
+    // Retrying may dispose speculative children which never displayed.
+    // The committed frame must survive until replacement publication.
+    expect(g.cleanups).not.toContain("cleanup 1");
+    expect(new Set(g.cleanups).size).toBe(g.cleanups.length);
     expect(g.outside.at(-1)).toBe("drag=false opt=false");
 
     // A sync write is never held by a lane: it publishes at once, and the
@@ -217,13 +222,15 @@ describe("#3698 a read served an active override is lane work, not a transaction
     expect(isPending(g.drag)).toBe(false);
     expect(g.outside.at(-1)).toBe("drag=true opt=false");
     expect(g.log).toEqual(["hidden"]);
-    expect(g.cleanups).toEqual(["cleanup 2"]);
+    expect(g.cleanups).not.toContain("cleanup 1");
+    expect(new Set(g.cleanups).size).toBe(g.cleanups.length);
 
     // The release applies the lane's frame: the displayed frame's cleanup
     // runs now, and the outsider re-derives with the revealed view.
     g.resolveDetails();
     await settle();
-    expect(g.cleanups).toEqual(["cleanup 2", "cleanup 1"]);
+    expect(g.cleanups.filter(value => value === "cleanup 1")).toHaveLength(1);
+    expect(new Set(g.cleanups).size).toBe(g.cleanups.length);
     expect(g.outside.at(-1)).toBe("drag=true opt=true");
     // `shown` = opt && !drag = false: still hidden, by value.
     expect(g.log.at(-1)).toBe("hidden");
@@ -233,6 +240,10 @@ describe("#3698 a read served an active override is lane work, not a transaction
     await settle();
     expect(g.drag()).toBe(true);
     expect(isPending(g.drag)).toBe(false);
+    g.dispose();
+    expect([...g.cleanups].sort()).toEqual(
+      Array.from({ length: g.generations() }, (_, i) => `cleanup ${i + 1}`).sort()
+    );
   });
 
   // from #3699 (brenelz): `Show`'s full chain in primitives — the condition
@@ -295,8 +306,8 @@ describe("#3698 a read served an active override is lane work, not a transaction
   });
 });
 
-describe("contrast: a read served SUPERSEDED truth is a staged read and enters (A18 (c), A29)", () => {
-  it("a tracked reader of a superseded node re-derives held, and an unrelated tick that re-runs it is held with the transaction", async () => {
+describe("an incoming answer remains masked until override retirement", () => {
+  it("an unrelated tick can publish with the selected override while the input answer waits", async () => {
     const fetches: Array<(v: number) => void> = [];
     let double!: () => number;
     let setDouble!: (v: number) => void;
@@ -337,26 +348,24 @@ describe("contrast: a read served SUPERSEDED truth is a staged read and enters (
     await settle();
     expect(shown.at(-1)).toBe("3 x"); // the override displays (A17)
 
-    // The node's own source lands 2 ≠ 3 while the action is live: the
-    // override is superseded (A18). The graph derives from the staged truth,
-    // the screen keeps the override until the commit.
+    // The node's input answers 2 while the action is live. Every output
+    // reader still observes the selected 3, including latest.
     fetches.pop()!(0);
     await settle();
-    expect(latest(double)).toBe(2);
+    expect(latest(double)).toBe(3);
     expect(isPending(double)).toBe(true);
     expect(shown.at(-1)).toBe("3 x");
 
-    // The unrelated tick re-runs `panel`, which is served the superseded
-    // node's staged truth: a staged read, so the pass enters and the tick
-    // is held with the transaction (A29). `other` is pending, not published.
+    // The unrelated tick reads the published output, not the masked input
+    // answer. It has no reason to wait for the guessing action.
     setOther("y");
     await settle();
-    expect(other()).toBe("x");
-    expect(isPending(other)).toBe(true);
+    expect(other()).toBe("y");
+    expect(isPending(other)).toBe(false);
     expect(latest(other)).toBe("y");
-    expect(shown.at(-1)).toBe("3 x");
+    expect(shown.at(-1)).toBe("3 y");
 
-    // The commit reveals both.
+    // Retirement corrects the override without disturbing the independent y.
     resolveAction();
     await done;
     await settle();
@@ -364,5 +373,6 @@ describe("contrast: a read served SUPERSEDED truth is a staged read and enters (
     expect(isPending(other)).toBe(false);
     expect(double()).toBe(2);
     expect(shown.at(-1)).toBe("2 y");
+    expect(shown).toEqual(["0 x", "3 x", "3 y", "2 y"]);
   });
 });

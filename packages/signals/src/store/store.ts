@@ -1902,6 +1902,12 @@ function pullFamily(target: StoreTarget): void {
     // supersedes it must reach it (#4527; a tracked read links anyway, #4519).
     if (c && fw._config & CONFIG_STAGED_ERROR) link(fw, c);
     readNode(fw);
+  } else if (verdict !== null) {
+    // A settled projection is normally pulled without subscribing to its
+    // producer. An explicit observation must subscribe to that producer's
+    // observation output: its next flight can change any property, including
+    // one for which no leaf has been allocated yet.
+    readNode(fw);
   } else {
     untrack(() => readNode(fw));
     // #4491: a derive that is a verdict reader only through what it reads (a
