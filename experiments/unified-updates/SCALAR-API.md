@@ -2,7 +2,7 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint and failure inventory: [first-proposal/store transfer audit, stage 133](INTEGRATION-133.md).
+Current runtime checkpoint and failure inventory: [held latest error publication choice, stage 134](INTEGRATION-134.md).
 Previous runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
 Latest accepted lifetime ruling: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
 Ruling evidence: [async pending-badge retirement, stage 126](INTEGRATION-126.md).
