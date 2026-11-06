@@ -13,15 +13,45 @@ import { link } from "../core/graph.js";
 import type { Computed, Signal } from "../core/types.js";
 import { initialObservation, type Layer } from "./coordination.js";
 import { observesSnapshot, withReadWindow } from "./window.js";
-import { createSourceObservation, type Observation, type ObservationKind } from "./observation.js";
+import {
+  createSourceObservation,
+  selectObservation,
+  type Observation,
+  type ObservationKind
+} from "./observation.js";
+
+// A selected throw is distinct from returning an Error as a value.
+class LatestError {
+  constructor(readonly _error: unknown) {}
+}
+
+function selectedError(record: Observation<any>, error: unknown): LatestError {
+  const previous = record._override;
+  return previous instanceof LatestError && previous._error === error
+    ? previous
+    : new LatestError(error);
+}
+
+function selectLatest(layer: Layer<any>): unknown {
+  const value = selectObservation(layer);
+  if (value instanceof LatestError) throw value._error;
+  return value;
+}
 
 const kind: ObservationKind<any> = {
   _prepareValue: true,
   _fallback: fallback,
   _sample: record => {
     const source = record._input;
-    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR)
-      return NOT_PENDING;
+    if (source._config & CONFIG_STAGED_ERROR) return selectedError(record, source._pendingValue);
+    if (source._pendingValue !== NOT_PENDING) return source._pendingValue;
+    // A re-ask has no replacement answer yet. Keep the selected error,
+    // just as the input retains a staged successful value during a re-ask.
+    if (source._statusFlags & STATUS_PENDING) {
+      if (record._override instanceof LatestError) return record._override;
+      if (source._x?._shownError) return selectedError(record, source._x._shownError);
+    }
+    if (source._statusFlags & STATUS_ERROR) return NOT_PENDING;
     if (
       !(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
@@ -31,7 +61,10 @@ const kind: ObservationKind<any> = {
       const value = output._pendingValue !== NOT_PENDING ? output._pendingValue : output._value;
       // A held input may have committed after this output read its old
       // value. Finish that publication before returning to ordinary reads.
-      return Object.is(value, source._value) ? NOT_PENDING : source._value;
+      return !(output._statusFlags & STATUS_ERROR || output._x?._shownError) &&
+        Object.is(value, source._value)
+        ? NOT_PENDING
+        : source._value;
     }
     return source._pendingValue !== NOT_PENDING ? source._pendingValue : source._value;
   },
@@ -41,6 +74,7 @@ const kind: ObservationKind<any> = {
 
 function fallback(layer: Layer<any>): unknown {
   const source = layer._input;
+  const output = context as Computed<any>;
   if (typeof source._fn === "function") prepareComputed(source, false);
   // A staged value is already a proposal, before parking marks it held.
   // Reading it ordinarily here can join downstream work to the input update
@@ -55,22 +89,28 @@ function fallback(layer: Layer<any>): unknown {
     source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
-      source._pendingValue === NOT_PENDING)
+      source._pendingValue === NOT_PENDING &&
+      !(output._statusFlags & STATUS_ERROR || output._x?._shownError))
   ) {
     // An error is the latest settled proposal. Pulling it through read() can
     // retry the producer in the next tick and replace that error with a new
     // pending request before the observation's consumers ever receive it.
     if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) {
-      const output = context as Computed<any>;
       link(source, output);
       if (source._height >= output._height) output._height = source._height + 1;
+      if (
+        source._config & CONFIG_STAGED_ERROR &&
+        !(output._statusFlags & STATUS_UNINITIALIZED) &&
+        !(layer as Observation<any>)._retiring
+      )
+        return output._value;
       throw source._config & CONFIG_STAGED_ERROR ? source._pendingValue : source._x!._error;
     }
     return read(source);
   }
-  const output = context as Computed<any>;
   link(source, output);
   if (source._height >= output._height) output._height = source._height + 1;
+  if (source._x?._shownError && source._pendingValue === NOT_PENDING) throw source._x._shownError;
   // A new output has no published frame to preserve. Initialize it from the
   // latest flushed proposal; ordinary creation and Loading then own any
   // initial async consequence. Existing outputs retain their published value.
@@ -85,6 +125,8 @@ function fallback(layer: Layer<any>): unknown {
           : source._value
     );
   }
+  if (output._statusFlags & STATUS_ERROR) throw output._x!._error;
+  if (output._x?._shownError) throw output._x._shownError;
   return source._value;
 }
 
@@ -92,7 +134,7 @@ const observations = new WeakMap<Signal<any>, Observation<any>>();
 function latestOutput(source: Computed<any>): Computed<any> {
   const existing = observations.get(source);
   if (existing) return existing._output;
-  const record = createSourceObservation(source, kind);
+  const record = createSourceObservation(source, kind, selectLatest);
   // Preserve distinctions a source can publish, including signed zero.
   record._output._equals = Object.is;
   if (__OBSERVE__) (record._output as any)._devWindows = 2;

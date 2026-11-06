@@ -1541,11 +1541,13 @@ export function holdQueuedProposals(update: Transaction, start = 0): void {
       // A34 (2): a tick whose writes net to the committed value made no
       // proposal (`setShow(false); setShow(true)` on a committed true) —
       // not staged, not held, pends nothing; a later write to it is
-      // plain mainline. (A node already held stays held when written
-      // back: A34 (1).)
+      // plain mainline. Recovery from a shown error is a different answer,
+      // even when equal to the last successful value. (A node already held
+      // stays held when written back: A34 (1).)
       if (
         n._pendingValue !== NOT_PENDING &&
         !((n as Computed<any>)._statusFlags & (STATUS_PENDING | STATUS_UNINITIALIZED)) &&
+        !n._x?._shownError &&
         n._x?._pendingFirstChild == null &&
         n._x?._pendingDisposal == null &&
         isSame(n, n._value, n._pendingValue)
@@ -1863,7 +1865,10 @@ export function commitPendingNode(n: Signal<any>): void {
     const e = n._pendingValue;
     n._pendingValue = NOT_PENDING;
     (c as Computed<unknown>)._time = clock + 1;
-    notifyStatus(c as Computed<unknown>, STATUS_ERROR, e);
+    // A carried error already published by this node is the same answer.
+    // Rejoining its input update must not deliver that error a second time.
+    if (!(c._statusFlags! & STATUS_ERROR) || c._x?._error !== e)
+      notifyStatus(c as Computed<unknown>, STATUS_ERROR, e);
   } else if (applyStaged(n)) {
     if (__OBSERVE__ && n._config & CONFIG_REDERIVE)
       GlobalQueue._layerPublished?.(n as Computed<any>, previous);

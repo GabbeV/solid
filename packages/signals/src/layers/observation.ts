@@ -178,7 +178,8 @@ export function initializeObservation<T>(
  * normal reads after allocation retain the user-facing creation diagnostic. */
 export function createSourceObservation<T>(
   source: Computed<any>,
-  kind: ObservationKind<T>
+  kind: ObservationKind<T>,
+  select = selectObservation<T>
 ): Observation<T> {
   const callback = __DEV__ && inEffectCallback;
   if (__DEV__) setEffectCallback(false);
@@ -187,7 +188,7 @@ export function createSourceObservation<T>(
       initializeObservation(
         createLayerBoundary(
           source,
-          selectObservation,
+          select,
           false,
           true,
           __OBSERVE__ ? { name: source._name } : undefined

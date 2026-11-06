@@ -16,8 +16,8 @@
  *   the pass replacing it with the committed value was judged unchanged: the
  *   `latest()` readers that had thrown the staged error kept it (D-41: a
  *   recovery equal to the last good value is a change). The minimized form
- *   (the recovery itself held) holds on next since #4401; it stays as the
- *   guard that the error remains the display until that action lands (D-39).
+ *   (the recovery itself held) holds on next since #4401. Here it pins both
+ *   ordinary held recovery and latest selecting that recovery ahead (D-41).
  * - #4405: the boundary's tree, errored at the landing of the action that
  *   remounted its content, was not re-derived there, so it never linked the
  *   new content whose recovery had to reach it (D-3: structure reads the
@@ -108,34 +108,38 @@ it("#4404: a re-poisoning write batched with a remount settles on the new error 
   }
 });
 
-it("#4403: an action recovering the memo to its last good value keeps the error until it lands (D-39, D-41)", async () => {
-  const [s, set] = createSignal(0);
-  const m = poisoned("m", 2, () => s() + 1);
-  const app = mount(() => show(() => latest(m), "[F]"));
-  let release!: () => void;
-  const act = action(function* (v: number) {
-    set(v);
-    yield new Promise<void>(r => (release = r));
-  });
-  try {
-    flush();
-    expect(app.screen()).toEqual({ span: true });
-    set(1); // m = 2 throws
-    await tick();
-    expect(app.screen()).toBe("[E m:2]");
-    // m = 1 again, the value it had before it threw: a new answer all the
-    // same, held with the action — the error stays the display meanwhile.
-    act(0);
-    flush();
-    expect(app.screen()).toBe("[E m:2]");
-    release();
-    await tick();
-    await tick();
-    expect(app.screen()).toEqual({ span: true });
-  } finally {
-    app.dispose();
+it.each([false, true])(
+  "#4403: same-value recovery follows the selected publication (latest=%s, D-39, D-41)",
+  async ahead => {
+    const [s, set] = createSignal(0);
+    const m = poisoned("m", 2, () => s() + 1);
+    const app = mount(() => show(ahead ? () => latest(m) : m, "[F]"));
+    let release!: () => void;
+    const act = action(function* (v: number) {
+      set(v);
+      yield new Promise<void>(r => (release = r));
+    });
+    try {
+      flush();
+      expect(app.screen()).toEqual({ span: true });
+      set(1); // m = 2 throws
+      await tick();
+      expect(app.screen()).toBe("[E m:2]");
+      // m = 1 again, the value it had before it threw: a new answer all the
+      // same. An ordinary reader waits for the action; latest selects that
+      // answer ahead, just as it would select a differing successful value.
+      act(0);
+      flush();
+      expect(app.screen()).toEqual(ahead ? { span: true } : "[E m:2]");
+      release();
+      await tick();
+      await tick();
+      expect(app.screen()).toEqual({ span: true });
+    } finally {
+      app.dispose();
+    }
   }
-});
+);
 
 it("#4403, the original's script: a held poisoning write, then a second action restoring the committed value (D-41)", async () => {
   const [s, set] = createSignal(0);
@@ -151,10 +155,11 @@ it("#4403, the original's script: a held poisoning write, then a second action r
     act(2);
     flush();
     // A write to the slot the action holds joins it (D-8): m = 2 throws, an
-    // error staged with the hold — the screen keeps its frame (D-41).
+    // error staged with the hold. latest selects it ahead (D-41), just as
+    // it selects a successful proposal from that hold.
     set(1);
     await tick();
-    expect(app.screen()).toEqual({ span: true });
+    expect(app.screen()).toBe("[E m:2]");
     // m = 1, the committed value: the staged error is replaced, and the
     // readers that derived from it (`latest()` throws it) re-derive.
     act(0);

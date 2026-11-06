@@ -80,6 +80,7 @@ import {
   heldUnder,
   joinFuture,
   layerTransaction,
+  layerNotify,
   passLane,
   passTx,
   resolveTx,
@@ -282,7 +283,12 @@ function catchStatus(
           b._readers.delete(node) &&
           !prune(b, 0)
         ) {
-          if (b._fallback) redraw(b);
+          if (b._fallback) {
+            // The recovered reader selects this swap. Carry its update to
+            // the queued output even if its retained tree reads no new value.
+            if (b._output) layerNotify?.(node, b._output);
+            redraw(b);
+          }
           if (revealHooks && b._reveal !== null) revealHooks._changed(b._reveal);
         }
     return false;
@@ -404,6 +410,9 @@ function caughtBelow(b: Boundary, r: Computed<any>, s: Computed<any>): boolean {
  * upstream node is walked once (`seen`), so a shared upstream graph costs its
  * size, not its paths. */
 function reads(n: Computed<any>, s: Computed<any>, seen?: Set<any>): any {
+  // An active override subscribes to its input, but does not consume it.
+  const boundary = layerBoundaries.get(n);
+  if (boundary && boundary._override !== NOT_PENDING) return false;
   for (let l = n._deps, h; l; l = l._nextDep)
     if ((h = l._dep) === s || ((seen ||= new Set()).size < seen.add(h).size && reads(h, s, seen)))
       return 1;
@@ -436,6 +445,18 @@ export function prune(b: Boundary, pass?: boolean | 0): number {
   const mask = b._type | STATUS_PENDING;
   for (const [r, s] of b._readers) {
     if (!((r._flags | s._flags) & REACTIVE_DISPOSED)) {
+      // Reset still targets the original error source. A recovered reader
+      // which no longer consumes that source need not await its lower update.
+      if (
+        b._type === STATUS_ERROR &&
+        r !== s &&
+        !(r._statusFlags & mask) &&
+        !(r._config & CONFIG_STAGED_ERROR) &&
+        !reads(r, s)
+      ) {
+        b._readers.delete(r);
+        continue;
+      }
       // An error staged on its source (D-41, `stageError`) is not settled:
       // it publishes with the commit. A reader that threw it now (a lane
       // pass, a reader of a node born staged) reached the boundary first
