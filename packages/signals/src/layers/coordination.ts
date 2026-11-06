@@ -274,6 +274,35 @@ function committedUsesUpdate(
   return false;
 }
 
+/** A published observation can leave a newly mounted lower reader waiting
+ * on its old frame. Prepare that frame's incoming proposal on demand; waiting
+ * for the consumer first would make its correction depend on its own finish.
+ * Active overrides remain cuts, as in ordinary observation accounting. */
+function pendingConsumer(
+  node: Computed<any>,
+  parent: Transaction,
+  seen = new Set<Computed<any>>()
+): boolean {
+  if (seen.has(node)) return false;
+  seen.add(node);
+  for (let edge = node._subs; edge; edge = edge._nextSub) {
+    const reader = edge._sub;
+    if (reader._flags & REACTIVE_DISPOSED || edge._gen !== reader._depGen) continue;
+    const boundary = boundaries.get(reader);
+    if (boundary?._input === node && boundary._override !== NOT_PENDING) continue;
+    if (
+      (reader as any)._type === EFFECT_RENDER &&
+      reader._statusFlags & STATUS_PENDING &&
+      reader._config & CONFIG_HELD &&
+      txOf(reader) === parent &&
+      onScreen(reader, parent)
+    )
+      return true;
+    if (pendingConsumer(reader, parent, seen)) return true;
+  }
+  return false;
+}
+
 function prepareLayers(): boolean {
   // This round can discover a lower flight after a child already re-ran.
   // Include all its proposals before deciding whether that input is ready.
@@ -290,8 +319,18 @@ function prepareLayers(): boolean {
   // A replay sets changed, so transferred readers are reconsidered before
   // any publication even if their surviving update was already visited.
   for (const parent of rerunHolders) {
-    if (!parent._reruns?.size || blocked(parent)) continue;
+    if (!parent._reruns?.size) continue;
+    const waiting = blocked(parent);
     for (const reader of parent._reruns) {
+      // Only settled publications can be replayed before the input is ready.
+      // Do not supersede an unfinished higher proposal to satisfy this demand.
+      if (
+        waiting &&
+        (reader._config & CONFIG_HELD ||
+          reader._statusFlags & STATUS_PENDING ||
+          !pendingConsumer(reader, parent))
+      )
+        continue;
       const heldAbove =
         reader._config & CONFIG_HELD && positionOf(txOf(reader)) > positionOf(parent);
       const affectsCommitted = heldAbove && committedUsesUpdate(reader, parent);

@@ -2,8 +2,9 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
-Latest accepted ruling and failure audit: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
+Current runtime checkpoint and failure inventory: [held-branch observation replay, stage 130](INTEGRATION-130.md).
+Previous runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
+Latest accepted lifetime ruling: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
 Ruling evidence: [async pending-badge retirement, stage 126](INTEGRATION-126.md).
 Previous runtime repair: [unheld observation restoration, stage 122](INTEGRATION-122.md).
 Previous audit: [held proposals and first publication, stage 121](INTEGRATION-121.md).
