@@ -6,7 +6,7 @@ Nested optimistic boundaries remain part of the model; “layer” describes tho
 boundaries, not the experiment's name.
 
 The branch is `experiment/unified-updates`. Start with [the current scalar API
-and status](SCALAR-API.md) and [the latest failure audit](INTEGRATION-130.md).
+and status](SCALAR-API.md) and [the latest failure audit](INTEGRATION-131.md).
 The implementation runs through the normal Solid packages and test harnesses.
 Experiment-specific scalar tests use the `unified-` filename prefix.
 

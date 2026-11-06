@@ -1,5 +1,6 @@
 import { createOptimisticPair } from "./layers/optimistic.js";
 import { refresh as refreshLayerInput } from "./layers/refresh.js";
+import { RETRY } from "./layers/boundary.js";
 import type { Computed, Disposable, Owner, Refreshable } from "./core/index.js";
 import {
   $REFRESH,
@@ -786,36 +787,41 @@ function watch<T>(
   own: Transaction | null = flushTransaction
 ): void {
   let generation = 0;
-  computed(
-    () => {
-      const current = ++generation;
-      let v: T,
-        failed = false;
-      try {
-        v = fn();
-      } catch (e) {
-        if (e instanceof NotReadyError) throw e;
-        // An error is an answer (D-41): delivered by the same frame rule.
-        // (D-42, dev: the runtime's catch, not a user's.)
-        if (__DEV__) forgetThrownRead();
-        v = unwrapStatusError(e) as T;
-        failed = true;
-      }
-      const c = getOwner() as Computed<any>;
-      // Delivery is imperative, after this pass has accepted its update.
-      // Registering a foreign hold inside the calculation would immediately
-      // re-add this waiter during the coordinator's preparation walk.
-      queueMicrotask(() => {
+  computed(() => {
+    const current = ++generation;
+    let v: T,
+      failed = false;
+    try {
+      v = fn();
+    } catch (e) {
+      if (e === RETRY || e instanceof NotReadyError) throw e;
+      // An error is an answer (D-41): delivered by the same frame rule.
+      // (D-42, dev: the runtime's catch, not a user's.)
+      if (__DEV__) forgetThrownRead();
+      v = unwrapStatusError(e) as T;
+      failed = true;
+    }
+    const c = getOwner() as Computed<any>;
+    const sampled = flushTransaction;
+    // Delivery is imperative, after this pass has accepted its update.
+    // Registering a foreign hold inside the calculation would immediately
+    // re-add this waiter during the coordinator's preparation walk.
+    queueMicrotask(() => {
+      // A settled answer, including an error, is already accepted. Later
+      // refreshes must not turn resolve's first answer into a quiescence wait.
+      // A foreign proposal is different: it still needs publication, and a
+      // replacement may supersede it before that ever happens.
+      if (sampled && (own === null || resolveTx(own) !== resolveTx(sampled))) {
         if (current !== generation) return;
         const holder = c._config & CONFIG_HELD ? txOf(c) : null;
         if (holder && (own === null || resolveTx(own) !== holder)) {
           staleReader(c, holder);
           return;
         }
-        failed ? onError(v) : onValue(v);
-      });
-    }
-  )._config |= CONFIG_REDERIVE;
+      }
+      failed ? onError(v) : onValue(v);
+    });
+  })._config |= CONFIG_REDERIVE;
 }
 
 /**
