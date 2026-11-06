@@ -56,9 +56,14 @@ function setup(kind: Kind, mode: Mode, order: Order = "plain-first") {
     }
     const derived =
       kind === "lane"
-        ? createMemo(() =>
-            x() === 1 ? "x1" : new Promise<string>(r => (resolveDerived = () => r("x" + x())))
-          )
+        ? createMemo(() => {
+            // Capture the question during derivation. A later imperative read
+            // observes the published frame, which can still be the old value.
+            const value = x();
+            return value === 1
+              ? "x1"
+              : new Promise<string>(r => (resolveDerived = () => r("x" + value)));
+          })
         : () => "-";
     attempt = action(function* () {
       set(5);

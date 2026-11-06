@@ -55,9 +55,14 @@ describe("#4284 through a memo: latest(guess) tears beside a lane held on downst
       // Creation order decides which of `L` and `derived` the heap runs
       // first in the action's flush (same height).
       if (lFirst) makeL();
-      const derived = createMemo(() =>
-        x() === 1 ? "x1" : new Promise<string>(r => (resolveDerived = () => r("x" + x())))
-      );
+      const derived = createMemo(() => {
+        // Capture the question during derivation. A later imperative read
+        // observes the published frame, which can still be the old value.
+        const value = x();
+        return value === 1
+          ? "x1"
+          : new Promise<string>(r => (resolveDerived = () => r("x" + value)));
+      });
       if (!lFirst) makeL();
       attempt = action(function* () {
         set(5);

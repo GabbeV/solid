@@ -36,9 +36,14 @@ describe("#4284 through a memo: one hole reading the guess, its async derivation
       const dispose = render(() => {
         const [base] = createSignal(1);
         const [x, set] = createOptimistic(() => base());
-        const derived = createMemo(() =>
-          x() === 1 ? "x1" : new Promise<string>(r => (resolveDerived = () => r("x" + x())))
-        );
+        const derived = createMemo(() => {
+          // Capture the question during derivation. A later imperative read
+          // observes the published frame, which can still be the old value.
+          const value = x();
+          return value === 1
+            ? "x1"
+            : new Promise<string>(r => (resolveDerived = () => r("x" + value)));
+        });
         const L = via === "memo" ? createMemo(() => latest(x)) : () => latest(x);
         attempt = action(function* () {
           set(5);
