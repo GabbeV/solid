@@ -22,7 +22,8 @@ describe("#4355 derived store over latest() of an async memo", () => {
   async function run(
     form: "latest" | "plain",
     reader: "memo" | "store" | "direct",
-    holdSibling = false
+    holdSibling = false,
+    asyncDerive = false
   ) {
     let resolve!: (v: { name: string }) => void;
     const seen: unknown[] = [];
@@ -42,6 +43,7 @@ describe("#4355 derived store over latest() of an async memo", () => {
         draft.value = {
           name: form === "latest" ? latest(() => record().name) : record().name
         };
+        if (asyncDerive) return Promise.resolve();
       }, {});
       if (reader === "memo") {
         const view = createMemo(() => state.value?.name);
@@ -84,7 +86,8 @@ describe("#4355 derived store over latest() of an async memo", () => {
   for (const form of ["latest", "plain"] as const)
     for (const reader of ["memo", "store", "direct"] as const)
       for (const holdSibling of [false, true])
-        it(`${form} derive, ${reader} reader, held sibling ${holdSibling}: the effect commits only the value`, async () => {
-          expect(await run(form, reader, holdSibling)).toEqual(["Hartford"]);
-        });
+        for (const asyncDerive of [false, true])
+          it(`${form} derive, ${reader} reader, held sibling ${holdSibling}, async derive ${asyncDerive}: the effect commits only the value`, async () => {
+            expect(await run(form, reader, holdSibling, asyncDerive)).toEqual(["Hartford"]);
+          });
 });
