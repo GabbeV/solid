@@ -566,7 +566,7 @@ for (const direct of [false, true]) {
     guessEnd.resolve();
     await Promise.all([answering, guessing]);
     await turn();
-    expect(visible).toEqual({ source: 0, view: 3, label: 3 });
+    expect(visible).toEqual({ source: 2, view: 3, label: 3 });
     correction.resolve(2);
     await turn();
     expect(visible).toEqual({ source: 2, view: 2, label: 2 });

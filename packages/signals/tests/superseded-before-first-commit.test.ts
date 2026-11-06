@@ -65,22 +65,17 @@ describe("A18 (d) before the first commit", () => {
     flush();
     g.fetches.shift()!(); // x's first landing (0) — held by the downstream reveal, which never lands
     await settle();
-    let diagnosed: unknown;
     action(function* () {
       g.setValue(1);
-      try {
-        g.setX(3); // a write before load (ruled 2026-11-03): no guess
-      } catch (e) {
-        diagnosed = e;
-      }
+      g.setX(3); // accepted, but its downstream work still holds publication
       yield g.never();
     })();
     flush();
     g.fetches.shift()!(); // own source lands 2 ≠ 3
     await settle();
-    expect(String(diagnosed)).toMatch(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
     // Never committed, the node has nothing to serve a direct read (A19
-    // exc. 1: loading, not pending); `latest` tunnels to the staged truth.
+    // exc. 1: loading, not pending); an imperative `latest` read also has
+    // no published output to return.
     expect(() => g.x()).toThrow(NotReadyError);
     expect(() => latest(g.x)).toThrow(NotReadyError);
     expect(isPending(g.x)).toBe(false); // loading, not pending (A19 exc. 1)

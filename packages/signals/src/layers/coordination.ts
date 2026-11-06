@@ -64,7 +64,11 @@ import {
 } from "../core/scheduler.js";
 import type { Computed, NodeOptions, Signal } from "../core/types.js";
 import { boundaries, RETRY } from "./boundary.js";
-import { committedDependencies, insertedDependencyCount, layerPosition } from "./committed-dependencies.js";
+import {
+  committedDependencies,
+  insertedDependencyCount,
+  layerPosition
+} from "./committed-dependencies.js";
 
 export function inputTime(input: Computed<any>): number {
   return typeof input._fn === "function" ? input._time : input._notifiedAt;
@@ -75,7 +79,7 @@ export type Layer<T> = {
   _output: Computed<T>;
   _override: T | typeof NOT_PENDING;
   _scope: Transaction | null;
-  _inputTime: number;
+  _inputTime?: number;
   _inputStatus?: true;
   _statusInput?: Computed<any>;
   _position?: number;
@@ -101,6 +105,11 @@ export function observed(
   if ((node as any)._type === EFFECT_RENDER) return true;
   for (let edge = node._subs; edge; edge = edge._nextSub) {
     const reader = edge._sub;
+    // An override retains its input subscription to receive future answers,
+    // but does not consume that input. This cut also applies when tracing
+    // demand through otherwise transparent, inactive boundaries.
+    const boundary = boundaries.get(reader);
+    if (boundary?._input === node && boundary._override !== NOT_PENDING) continue;
     const replaces =
       update &&
       !(reader._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
@@ -137,11 +146,13 @@ let retryEvaluation = false;
 let creating: Computed<any> | null = null;
 // Only a new child consuming several distinct holds needs deferred admission.
 // The list lasts for one enclosing calculation, never for an update's lifetime.
-let creationReads: {
-  node: Computed<any>;
-  update: Transaction;
-  reads: Set<Transaction>;
-}[] | null = null;
+let creationReads:
+  | {
+      node: Computed<any>;
+      update: Transaction;
+      reads: Set<Transaction>;
+    }[]
+  | null = null;
 const layerOwn = (node: Signal<any>, update: Transaction) => {
   if (!(node._config & CONFIG_REDERIVE)) return;
   const layer = boundaries.get(node);
@@ -214,22 +225,28 @@ export function inputUpdate(layer: Layer<any>): Transaction | null {
   return boundary?._inputStatus ? inputUpdate(boundary) : null;
 }
 
-/** An input answer or the end of an action retires its override as work of
- * that action. Reading the input below then uses normal derivation joining.
+/** Retire the override in its input update, or in an ordinary flush when the
+ * input is unheld. Reading below then uses normal derivation joining.
  * Published output and owned children stay in the common committed slots. */
-export function resumeInput(layer: Layer<any>, update: Transaction, prepare = false): void {
+export function resumeInput(
+  layer: Layer<any>,
+  update: Transaction | null,
+  prepare = false
+): Transaction | null {
   layer._override = NOT_PENDING;
   // Retiring the cut makes its suspended consequences input work again.
   // Recompute will supersede obsolete flights in that common update.
-  if (layer._output._config & CONFIG_HELD) merge(txOf(layer._output), update);
+  if (layer._output._config & CONFIG_HELD)
+    merge(txOf(layer._output), (update ??= newTransaction(false)));
   // A prepared restoration belongs to its selected input update even when
   // another update triggered the seam. Scoped recomputation keeps unrelated
   // flush work separate; actual reads still perform the usual peer joins.
   if (prepare) recomputeInUpdate(layer._output, update, true);
   else {
-    joinFuture(update);
+    if (update) joinFuture(update);
     enqueueSub(layer._output);
   }
+  return update;
 }
 
 let orderPublication = false;
@@ -251,7 +268,8 @@ function committedUsesUpdate(
     if (
       typeof (input as Computed<any>)._fn === "function" &&
       committedUsesUpdate(input as Computed<any>, update, seen)
-    ) return true;
+    )
+      return true;
   }
   return false;
 }
@@ -316,13 +334,22 @@ function prepareLayers(): boolean {
 
 function mergeLayers(from: Transaction, into: Transaction): void {
   guesses?._merge?.(from, into);
-  const fromPosition = positionOf(from), intoPosition = positionOf(into);
+  const fromPosition = positionOf(from),
+    intoPosition = positionOf(into);
   if (fromPosition !== intoPosition) {
     const higher = fromPosition > intoPosition ? from : into;
-    for (let i = 0, node = LEGACY_LANES ? higher._nodes[0] : higher._firstHeld;
-      node; node = LEGACY_LANES ? higher._nodes[++i] : node._x!._nextHeld)
-      if (node._config & CONFIG_HELD && (!LEGACY_LANES || txOf(node) === higher) && node._pendingValue !== NOT_PENDING)
-        if ((node as Computed<any>)._fn) (node as Computed<any>)._flags |= REACTIVE_PREVIOUS_COMMITTED;
+    for (
+      let i = 0, node = LEGACY_LANES ? higher._nodes[0] : higher._firstHeld;
+      node;
+      node = LEGACY_LANES ? higher._nodes[++i] : node._x!._nextHeld
+    )
+      if (
+        node._config & CONFIG_HELD &&
+        (!LEGACY_LANES || txOf(node) === higher) &&
+        node._pendingValue !== NOT_PENDING
+      )
+        if ((node as Computed<any>)._fn)
+          (node as Computed<any>)._flags |= REACTIVE_PREVIOUS_COMMITTED;
     into._level = Math.min(fromPosition, intoPosition);
   }
 }
@@ -362,11 +389,15 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
     if (uninitialized) throw new NotReadyError(source);
     return true;
   }
-  if (uninitialized) return false;
   if (ownPosition > heldPosition) {
     staleReader(reader, holder);
+    // There is no lower published frame to read yet. Wait for its first
+    // publication instead of repeatedly consuming a proposal that this
+    // higher context cannot use on its retry either.
+    if (uninitialized) throw new NotReadyError(source);
     return true;
   }
+  if (uninitialized) return false;
   if (ownPosition > 0 && heldPosition > 0) return false;
   // Direct bindings already have the common committed-frame read rule.
   // They do not need a speculative derivation or a provisional transaction.
@@ -407,7 +438,8 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
     if (
       (node as any)._type ||
       (evaluation ? detachedOutput(node) : globalQueue._running || flushTransaction)
-    ) return false;
+    )
+      return false;
     const previous = creating;
     creating = node;
     // A scope isolates discovery and staging; it is not itself a transaction.
@@ -525,8 +557,12 @@ export function initialObservation<T>(layer: Layer<T>, value: T): T {
 
 /** Finish context discovery on success or error. Unchanged same-update reads
  * need none of this work; retries must finish before any peer joins occur. */
-function acceptCalculation(node: Computed<any>, incoming: Transaction | null,
-  outer: Computed<any> | null, outerReads: Set<Transaction> | null): Set<Transaction> | null {
+function acceptCalculation(
+  node: Computed<any>,
+  incoming: Transaction | null,
+  outer: Computed<any> | null,
+  outerReads: Set<Transaction> | null
+): Set<Transaction> | null {
   const reads = evaluationReads as Set<Transaction> | null;
   if (reads) {
     const first = resolveTx(reads.values().next().value!);
@@ -561,15 +597,19 @@ function acceptCalculation(node: Computed<any>, incoming: Transaction | null,
         record.update._reruns?.delete(node);
         continue;
       }
-      for (const holder of record.reads)
-        merge(resolveTx(holder), resolveTx(record.update));
+      for (const holder of record.reads) merge(resolveTx(holder), resolveTx(record.update));
     }
   }
   return outerReads;
 }
 
-function retryCalculation(node: Computed<any>, previous: any, result: any,
-  previousPosition: number, normalize?: NormalizeCalculation): any {
+function retryCalculation(
+  node: Computed<any>,
+  previous: any,
+  result: any,
+  previousPosition: number,
+  normalize?: NormalizeCalculation
+): any {
   for (;;) {
     if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
     if (positionOf(flushTransaction) !== previousPosition) {
@@ -598,7 +638,8 @@ function retryCalculation(node: Computed<any>, previous: any, result: any,
 function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeCalculation): any {
   const incoming = flushTransaction;
   const previousPosition = positionOf(incoming);
-  const outer = evaluation, outerRetry = retryEvaluation;
+  const outer = evaluation,
+    outerRetry = retryEvaluation;
   let outerReads = evaluationReads;
   if (!outer) creationReads = null;
   evaluation = node;
@@ -651,7 +692,12 @@ setLayerTransactions(update => {
 
 /** Assign notified work to its output update, preserving the committed frame.
  * Active boundaries and unpublished lower owners remain propagation cuts. */
-function adoptOutput(node: Computed<any>, update: Transaction, origin = false, unchanged = false): boolean {
+function adoptOutput(
+  node: Computed<any>,
+  update: Transaction,
+  origin = false,
+  unchanged = false
+): boolean {
   const effect = node as Computed<any> & {
     _modified?: boolean;
     _boundRunEffect?: (type: number) => void;
@@ -666,8 +712,13 @@ function adoptOutput(node: Computed<any>, update: Transaction, origin = false, u
   // even when that effect assigns its private value directly. Notifications
   // must not remove that mount obligation. A root's initial binding has no
   // such control and can still follow an optimistic first value normally.
-  if (!origin && own && effect._type === EFFECT_RENDER &&
-      node._statusFlags & STATUS_UNINITIALIZED && positionOf(own) < positionOf(update)) {
+  if (
+    !origin &&
+    own &&
+    effect._type === EFFECT_RENDER &&
+    node._statusFlags & STATUS_UNINITIALIZED &&
+    positionOf(own) < positionOf(update)
+  ) {
     for (let owner = node._parent; owner; owner = owner._parent) {
       const parent = owner as Computed<any>;
       if (!(parent._flags & REACTIVE_STAGED_READ)) continue;
@@ -704,10 +755,8 @@ function adoptOutput(node: Computed<any>, update: Transaction, origin = false, u
   const transferredProposal =
     (node._pendingValue !== NOT_PENDING || node._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
     own !== update;
-  if (
-    node._pendingValue !== NOT_PENDING &&
-    positionOf(own) !== positionOf(update)
-  ) node._flags |= REACTIVE_PREVIOUS_COMMITTED;
+  if (node._pendingValue !== NOT_PENDING && positionOf(own) !== positionOf(update))
+    node._flags |= REACTIVE_PREVIOUS_COMMITTED;
   if (effect._modified && effect._boundRunEffect) {
     update._queues[effect._type! - 1].push(effect._boundRunEffect);
   }
@@ -733,7 +782,8 @@ function adoptOutput(node: Computed<any>, update: Transaction, origin = false, u
           if (dependency._gen !== reader._depGen || dependency._dep === node) continue;
           const source = dependency._dep as Computed<any>;
           if (
-            (source._pendingValue !== NOT_PENDING && !Object.is(source._pendingValue, source._value)) ||
+            (source._pendingValue !== NOT_PENDING &&
+              !Object.is(source._pendingValue, source._value)) ||
             source._statusFlags & STATUS_PENDING
           ) {
             preserve = false;
@@ -769,7 +819,9 @@ export function stageLayer(layer: Layer<any>, proposal: unknown, position?: numb
   // dependency cannot promote this existing override or split its peer joins.
   layer._position = position ?? 1 + Math.max(layerPosition(layer._input), positionOf(inputHolder));
   layer._override = proposal;
-  layer._inputTime = inputTime(layer._input);
+  // Input revisions only classify attribution events now; selection and
+  // lifetime coordination do not need to remember them in production.
+  if (__OBSERVE__) layer._inputTime = inputTime(layer._input);
   enableReads();
   // Selecting an equal, settled scalar output has no downstream proposal.
   // In particular a newly allocated pending observation must not replay its
@@ -799,10 +851,12 @@ export function stageLayer(layer: Layer<any>, proposal: unknown, position?: numb
       : newTransaction(false);
   setOutputDepth(layer, update);
   const output = layer._output;
-  const unchanged = selecting && Object.is(
-    output._pendingValue !== NOT_PENDING ? output._pendingValue : output._value,
-    proposal
-  );
+  const unchanged =
+    selecting &&
+    Object.is(
+      output._pendingValue !== NOT_PENDING ? output._pendingValue : output._value,
+      proposal
+    );
   adoptOutput(output, update, true, unchanged);
   if (!guesses?._write?.(layer, update, proposal)) enqueueSub(output);
 }
@@ -839,9 +893,9 @@ export function createLayerBoundary<T>(
   const layer = {
     _input: producer,
     _override: NOT_PENDING,
-    _scope: null,
-    _inputTime: inputTime(producer)
+    _scope: null
   } as Layer<T>;
+  if (__OBSERVE__) layer._inputTime = inputTime(producer);
   // Choose the feature selector once at allocation. Its calls into common
   // selection/publication are direct; no per-evaluation lifecycle dispatch.
   const output = computed<T>(select.bind(null, layer), {
@@ -857,5 +911,3 @@ export function createLayerBoundary<T>(
   boundaries.set(output, layer);
   return layer;
 }
-
-

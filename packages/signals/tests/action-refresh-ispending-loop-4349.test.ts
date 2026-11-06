@@ -162,7 +162,7 @@ describe("refresh(memo) inside an action with an isPending reader settles (#4349
       expect(r.frames).toEqual(declared ? ["v41", "pending", "v42"] : ["v41", "v42"]);
     });
 
-  it("`[isPending(x), x()]` after an action's write holds like `x()` alone (D-23), once", async () => {
+  it("`[isPending(x), x()]` publishes pending beside committed x without restarting its request", async () => {
     // The same loop without a refresh: the action's write lands beneath its
     // memo's new question, and the render effect that probes and reads it
     // parked the frame it opened every round.
@@ -195,10 +195,14 @@ describe("refresh(memo) inside an action with an isPending reader settles (#4349
       })();
       expect(() => flush()).not.toThrow();
       await tick();
-      expect(frames).toEqual(["false:41"]);
+      // Pending is an explicit optimistic output: its higher update reads
+      // x's committed answer while the ordinary update waits for the fetch.
+      expect(frames).toEqual(["false:41", "true:41"]);
+      expect(fetches).toHaveLength(1);
       fetches.shift()!();
       await tick();
-      expect(frames).toEqual(["false:41", "false:42"]);
+      expect(frames).toEqual(["false:41", "true:41", "false:42"]);
+      expect(fetches).toHaveLength(0);
     } finally {
       dispose();
     }

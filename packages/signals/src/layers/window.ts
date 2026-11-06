@@ -1,5 +1,13 @@
 /** Callback observations compose by reading outputs through the outer window. */
-import { context, read, setVerdict, verdict } from "../core/core.js";
+import {
+  context,
+  prepareComputed,
+  read,
+  setVerdict,
+  snapshotCaptureActive,
+  verdict
+} from "../core/core.js";
+import { CONFIG_IN_SNAPSHOT_SCOPE, STATUS_ERROR } from "../core/constants.js";
 import { NotReadyError } from "../core/error.js";
 import { GlobalQueue } from "../core/scheduler.js";
 import { RETRY } from "./boundary.js";
@@ -15,6 +23,20 @@ type ReadWindow = {
   collect: boolean;
 };
 let current: ReadWindow | null = null;
+
+/** A hydration claim observes the captured frame, including its readiness.
+ * Keep this choice on observation reads: the source-owned output is shared
+ * with live readers outside the claim and must not inherit its snapshot. */
+export function observesSnapshot(source: Signal<any>): boolean {
+  if (!snapshotCaptureActive) return false;
+  const reader = (context as Root)?._root
+    ? (context as Root)._parentComputed
+    : (context as Computed<any> | null);
+  if (!reader || !(reader._config & CONFIG_IN_SNAPSHOT_SCOPE)) return false;
+  const input = source as Computed<any>;
+  if (typeof input._fn === "function") prepareComputed(input, false);
+  return source._x?._snapshotValue !== undefined && !(input._statusFlags & STATUS_ERROR);
+}
 
 // An untracked store probe may encounter a declared change before that
 // property has a subscription node. The active pending window owns it.
@@ -54,7 +76,8 @@ export function withReadWindow<T>(fn: () => T, observe: WindowRead, collect = fa
     const value = fn();
     return collect ? window.found : value;
   } catch (error) {
-    if (error === RETRY || !collect || (error instanceof NotReadyError && context !== null)) throw error;
+    if (error === RETRY || !collect || (error instanceof NotReadyError && context !== null))
+      throw error;
     return window.found;
   } finally {
     current = window.parent;

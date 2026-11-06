@@ -32,7 +32,7 @@ afterEach(() => {
   resetErrorHalt();
 });
 
-describe("action-owned layers use derivation entanglement", () => {
+describe("action-owned overrides keep input and output lifetimes separate", () => {
   for (const implementation of ["public API", "explicit layer"] as const) {
     const optimistic = (input: () => number) =>
       implementation === "public API"
@@ -40,7 +40,7 @@ describe("action-owned layers use derivation entanglement", () => {
         : createLayer(input, { lifetime: "action" });
 
     for (const answer of [1, 2]) {
-      it(`${implementation}: incoming ${answer} joins the action; the functional guess is not rebased`, async () => {
+      it(`${implementation}: incoming ${answer} publishes independently; the functional guess is not rebased`, async () => {
         const end = gate<void>();
         const [source, setSource] = createSignal(0);
         const [tick, setTick] = createSignal(0);
@@ -89,7 +89,7 @@ describe("action-owned layers use derivation entanglement", () => {
           })
         );
         flush();
-        expect([sourceShown, viewShown, pair, late, calls]).toEqual([0, 1, [1, 2], 1, 1]);
+        expect([sourceShown, viewShown, pair, late, calls]).toEqual([answer, 1, [1, 2], 1, 1]);
         end.resolve();
         await running;
         await turn();
@@ -135,11 +135,11 @@ describe("action-owned layers use derivation entanglement", () => {
       flush();
       setSource(2);
       flush();
-      expect([sourceShown, viewShown, pair]).toEqual([0, 1, [1, 2]]);
+      expect([sourceShown, viewShown, pair]).toEqual([2, 1, [1, 2]]);
       end.resolve();
       await running;
       await turn();
-      expect([sourceShown, viewShown, pair]).toEqual([0, 1, [1, 2]]);
+      expect([sourceShown, viewShown, pair]).toEqual([2, 1, [1, 2]]);
       result.resolve(4);
       await turn();
       expect([sourceShown, viewShown, pair]).toEqual([2, 2, [2, 4]]);
@@ -255,11 +255,9 @@ describe("action-owned layers use derivation entanglement", () => {
       expect([firstShown, secondShown, pair]).toEqual([1, 3, [1, 3]]);
       next.resolve();
       await turn();
-      // Accepted semantic change without rebasing: legacy lanes correct a child from
-      // a parent guess immediately; the experiment applies the same
-      // entanglement as an ordinary input change. The public API and explicit layer adapter both enforce it;
-      // neither permits the two bindings to disagree with their pair.
-      const pending = [1, 3];
+      // A parent proposal can publish while the child's override remains active.
+      // The functional guess is not rebased; every reader agrees on each output.
+      const pending = [2, 3];
       expect([firstShown, secondShown, pair]).toEqual([pending[0], pending[1], pending]);
       secondEnd.resolve();
       await secondAction;

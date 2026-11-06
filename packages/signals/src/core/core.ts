@@ -384,14 +384,21 @@ function normalizeCalculation(el: Computed<any>, result: any, previousFlight: un
   if (__DEV__) checkCaughtRead(el, selfRegistered ? el._x!._inFlight : result);
   const value = selfRegistered || !isAsyncResult ? result : handleAsync(el, result);
   if (!selfRegistered && !isAsyncResult) {
-    if (el._x !== null) { el._x._inFlight = null; if (holdWorkHook) el._config &= ~CONFIG_ASYNC; }
+    if (el._x !== null) {
+      el._x._inFlight = null;
+      if (holdWorkHook) el._config &= ~CONFIG_ASYNC;
+    }
     el._config &= ~CONFIG_LOADING;
   }
   return value;
 }
 
 export function recompute(el: Computed<any>, create: boolean = false, fromHeap = false): void {
-  if (layerRecompute && (create || el._config & CONFIG_HELD) && layerRecompute(el, create, fromHeap))
+  if (
+    layerRecompute &&
+    (create || el._config & CONFIG_HELD) &&
+    layerRecompute(el, create, fromHeap)
+  )
     return;
   recomputeBody(el, create);
 }
@@ -522,9 +529,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
       } else if (
         !(el._config & (CONFIG_VERDICT | (EFFECT_RENDER << 23))) ||
         (observeFlightHook && !(el._config & (EFFECT_RENDER << 23)) && bornInto(el, tx))
-      )
-        { if (flushTransaction !== tx) joinPassTx(tx, freshHook?.(el, el._statusFlags & STATUS_UNINITIALIZED)); }
-      else if (
+      ) {
+        if (flushTransaction !== tx)
+          joinPassTx(tx, freshHook?.(el, el._statusFlags & STATUS_UNINITIALIZED));
+      } else if (
         tx !== flushTransaction &&
         !(el._statusFlags & STATUS_UNINITIALIZED || el._config & CONFIG_HELD_FRAME)
       ) {
@@ -620,13 +628,14 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   // A settle found this node unobserved while this pass was queued
   // (REACTIVE_RELEASE_AFTER): the release is this pass's tail's (#4474).
   const releaseAfter = el._flags & REACTIVE_RELEASE_AFTER;
-  el._flags = REACTIVE_RECOMPUTING_DEPS | (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE | REACTIVE_REASK));
+  el._flags =
+    REACTIVE_RECOMPUTING_DEPS |
+    (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE | REACTIVE_REASK));
   el._time = clock;
   // Reuse staging only within its update context. A replaced context starts
   // from committed history; legacy lanes keep their existing previous slot.
   let value =
-    el._pendingValue !== NOT_PENDING &&
-    !(el._flags & REACTIVE_PREVIOUS_COMMITTED)
+    el._pendingValue !== NOT_PENDING && !(el._flags & REACTIVE_PREVIOUS_COMMITTED)
       ? el._pendingValue
       : LEGACY_LANES && el._config & CONFIG_OVERRIDE && el._x!._lane !== NOT_PENDING
         ? el._x!._lane
@@ -658,7 +667,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // need the dev diagnostic for accidentally returning async work.
     if (el._config & CONFIG_SYNC && (!__DEV__ || el._config & CONFIG_REDERIVE)) {
       value = layerCompute ? layerCompute(el, value) : el._fn(value);
-      if (el._x !== null) { el._x._inFlight = null; if (holdWorkHook) el._config &= ~CONFIG_ASYNC; }
+      if (el._x !== null) {
+        el._x._inFlight = null;
+        if (holdWorkHook) el._config &= ~CONFIG_ASYNC;
+      }
       el._config &= ~CONFIG_LOADING;
     } else {
       const previousFlight = el._x?._inFlight;
@@ -681,8 +693,8 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // An error answers, and so does a loading window's unready read (D-25,
     // verdict.ts `holdWork`): no flight is its own. A pass left pending
     // keeps the last answer's. (Kept by the verdict engine alone.)
-    if (holdWorkHook && (!notReady || (el._config & CONFIG_LOADING))) el._config &= ~CONFIG_ASYNC;
-    if (notReady && (el._config & CONFIG_LOADING)) {
+    if (holdWorkHook && (!notReady || el._config & CONFIG_LOADING)) el._config &= ~CONFIG_ASYNC;
+    if (notReady && el._config & CONFIG_LOADING) {
       // Loading window with an unready sync dependency: register for the
       // source's settle (the settlePendingSource walk runs off
       // _pendingSources + _blocked alone) but take NO read-visible pending
@@ -779,7 +791,8 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // clears it.
     el._flags =
       (el._flags &
-        (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE |
+        (REACTIVE_PERSISTENT |
+          REACTIVE_ZOMBIE |
           REACTIVE_DISPOSED |
           REACTIVE_FRAME_READ |
           REACTIVE_STAGED_READ |
@@ -953,7 +966,9 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
         create
           ? !(
               (flushTransaction !== null || passTx !== null) &&
-              (joined || (!layerDetached?.(el) && ((creatorPass(oldcontext)?._flags as number) & REACTIVE_JOINED)))
+              (joined ||
+                (!layerDetached?.(el) &&
+                  (creatorPass(oldcontext)?._flags as number) & REACTIVE_JOINED))
             )
           : isEffect && el._pendingValue === NOT_PENDING
       ) {
@@ -991,7 +1006,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
           // #3851): the mount is part of the hold, and the boundary appears
           // at its commit, its fallback never seen (D-13, U-3) — a `<Show>`
           // mounting it over a landing included.
-          freshHook?.(el, !mount && flushTransaction);
+          // With per-computation update contexts, the active hold need not
+          // own the enclosing mount. Let the boundary check its creator:
+          // a newly held binding alone cannot keep that mount unpublished.
+          freshHook?.(el, LEGACY_LANES && !mount && flushTransaction);
         }
         if (__DEV__) devTrackHeldPending(el);
       }
@@ -1145,7 +1163,8 @@ function updateIfNecessary(el: Computed<unknown>): void {
   // landing lost its re-derivation; the lane reads likewise).
   el._flags =
     el._flags &
-    (REACTIVE_PERSISTENT | REACTIVE_SNAPSHOT_STALE |
+    (REACTIVE_PERSISTENT |
+      REACTIVE_SNAPSHOT_STALE |
       REACTIVE_IN_HEAP |
       REACTIVE_IN_HEAP_HEIGHT |
       REACTIVE_ZOMBIE |
@@ -1327,17 +1346,19 @@ export function joinPass(c: Computed<any>, el: Signal<any> | Computed<any>): voi
     (el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED ||
     (c as any)._type !== EFFECT_RENDER
   ) {
-    const own =
-      (!(c as any)._type && c._statusFlags & STATUS_UNINITIALIZED) || freshHook?.(c);
-    if (!LEGACY_LANES && !own && (c as any)._type === EFFECT_RENDER &&
-        c._statusFlags & STATUS_UNINITIALIZED) {
+    const own = (!(c as any)._type && c._statusFlags & STATUS_UNINITIALIZED) || freshHook?.(c);
+    if (
+      !LEGACY_LANES &&
+      !own &&
+      (c as any)._type === EFFECT_RENDER &&
+      c._statusFlags & STATUS_UNINITIALIZED
+    ) {
       // The binding's first value is part of its creator's new subtree.
       // Merely constructing a memo does not consume its proposal, but a
       // render binding does: do not let an enclosing creation scope return
       // and publish a half-initialized tree after restoring the outer update.
       const creator = creatorPass(c._parent);
-      if (creator && creator._flags & REACTIVE_RECOMPUTING_DEPS)
-        creator._flags |= REACTIVE_JOINED;
+      if (creator && creator._flags & REACTIVE_RECOMPUTING_DEPS) creator._flags |= REACTIVE_JOINED;
     }
     if (flushTransaction !== holder) joinPassTx(holder, own);
   }
@@ -2191,7 +2212,6 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
     return verdict(el, c as Computed<any> | null) as T;
   }
 
-
   if (
     !isComputed &&
     el._x?._snapshotValue === undefined &&
@@ -2215,10 +2235,10 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       // wherever it was created. Lane work sees the screen (`frameRead`).
       if (el._config & CONFIG_HELD && !(c._config & CONFIG_CHILDREN_FORBIDDEN)) {
         if (LEGACY_LANES) {
-        if (frameRead(c as Computed<any>, el)) {
-          if (__TEST__) shadowActual(SLOT_C);
-          return el._value as T;
-        }
+          if (frameRead(c as Computed<any>, el)) {
+            if (__TEST__) shadowActual(SLOT_C);
+            return el._value as T;
+          }
         } else if (readHeld(c as Computed<any>, el)) return el._value as T;
       }
     }
@@ -2339,8 +2359,8 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
       !(c._config & CONFIG_CHILDREN_FORBIDDEN)
     ) {
       if (LEGACY_LANES) {
-      if (owner._statusFlags & STATUS_UNINITIALIZED) joinPass(c as Computed<any>, el);
-      else committed = frameRead(c as Computed<any>, el);
+        if (owner._statusFlags & STATUS_UNINITIALIZED) joinPass(c as Computed<any>, el);
+        else committed = frameRead(c as Computed<any>, el);
       } else committed = readHeld(c as Computed<any>, el);
     }
   } else if (__TEST__) shadowExpect(null, el, tracking, 0, spectating, false);
@@ -2774,24 +2794,39 @@ function selectedLiteral(value: unknown): () => unknown {
 /** An internal selector can stage a guess or forward a settled input using
  * ordinary signal staging. Its owner and dependency are unchanged; all other
  * cases retain the complete computation path. Called after context adoption. */
-export function stageSelectedValue(el: Computed<any>, value: unknown, source?: Computed<any>): boolean {
+export function stageSelectedValue(
+  el: Computed<any>,
+  value: unknown,
+  source?: Computed<any>
+): boolean {
   const edge = el._deps;
   if (
-    context !== null || !globalQueue._running ||
+    context !== null ||
+    !globalQueue._running ||
     el._statusFlags ||
     (el._equals !== isEqual && el._equals !== false) ||
-    el._firstChild !== null || el._disposal !== null ||
-    el._x!._pendingFirstChild !== null || el._x!._pendingDisposal !== null ||
-    !edge || edge !== el._depsTail || edge._nextDep !== null || edge._gen !== el._depGen ||
-    (source && (source._statusFlags || edge._dep !== source ||
-      source._height >= el._height || source._config & CONFIG_HAS_SNAPSHOT)) ||
+    el._firstChild !== null ||
+    el._disposal !== null ||
+    el._x!._pendingFirstChild !== null ||
+    el._x!._pendingDisposal !== null ||
+    !edge ||
+    edge !== el._depsTail ||
+    edge._nextDep !== null ||
+    edge._gen !== el._depGen ||
+    (source &&
+      (source._statusFlags ||
+        edge._dep !== source ||
+        source._height >= el._height ||
+        source._config & CONFIG_HAS_SNAPSHOT)) ||
     snapshotCaptureActive ||
     el._config & CONFIG_IN_SNAPSHOT_SCOPE ||
     (__OBSERVE__ && attrHooks !== null)
-  ) return false;
+  )
+    return false;
   deleteFromHeap(el, dirtyQueue);
   bumpNotifyEpoch();
-  el._flags = (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE)) |
+  el._flags =
+    (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE)) |
     (source && source._pendingValue !== NOT_PENDING ? REACTIVE_STAGED_READ : 0);
   el._time = clock;
   el._flags &= ~REACTIVE_PREVIOUS_COMMITTED;
@@ -2803,8 +2838,13 @@ export function stageSelectedValue(el: Computed<any>, value: unknown, source?: C
   // childless selector needs no second entry in the ambient parking list.
   // This also covers transparent forwarding during its producer's pass.
   if (!start && !pendingNodes.length) queuePendingNode(el);
-  else if (start && pendingNodes.length === start + 1 &&
-      pendingNodes[start] === el && el._config & CONFIG_HELD) pendingNodes.pop();
+  else if (
+    start &&
+    pendingNodes.length === start + 1 &&
+    pendingNodes[start] === el &&
+    el._config & CONFIG_HELD
+  )
+    pendingNodes.pop();
   return true;
 }
 
@@ -2847,13 +2887,13 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
   // user comparator must not run against `undefined` (matches recompute).
   // D-41: a write over a shown error is a change whatever the last good
   // value was — the error leaves at its commit (`commitPendingNode`).
-  // `custom`: with the verdict engine, whether `el` carries a comparator of
+  // `custom`: with observation support, whether `el` carries a comparator of
   // its own — `isSame`'s fast-path test, taken once for this gate and D-8's
   // netting below, so the default comparator's `===` runs inline and a
   // rewrite loop pays nothing for the netting (CodSpeed `propagation:
   // avoidable`). Without the engine it is `null`: the gate folds to the
   // plain `isSame` call and the netting away, byte for byte as before.
-  const custom = observeFlightHook ? el._equals !== isEqual : null;
+  const custom = stageMarkHook ? el._equals !== isEqual : null;
   const valueChanged =
     !!((el as Computed<T>)._statusFlags & STATUS_UNINITIALIZED) ||
     !!el._x?._shownError ||
@@ -2883,7 +2923,7 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
   // committed value nets to it; staging the committed value itself lets
   // every netted test (`_pendingValue === _value`) see writes that made no
   // proposal. (Unstaged, the gate above already compared it.)
-  // The netted test reads it only with the verdict engine (`isPending`,
+  // The netted test reads it only with observation support (`isPending`,
   // `latest`): a build without it stages `v` as written. Under the default
   // comparator only the committed object itself is equal, and `v` is already
   // it, so a rewrite loop pays one local test (`custom`, from the gate).

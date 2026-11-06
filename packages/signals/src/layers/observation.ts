@@ -37,7 +37,7 @@ export type Observation<T> = Layer<T> & {
   _observation: ObservationKind<T>;
 };
 export type ObservationKind<T> = {
-  /** Include synchronous staged values when preparing this observation. */
+  /** Include unheld staged values, before the input has a pending verdict. */
   _prepareValue?: true;
   _fallback: (layer: Layer<T>) => T;
   _sample: (record: Observation<T>) => T;
@@ -49,10 +49,13 @@ const dirty = new Set<Observation<any>>();
 const watching = new Set<Observation<any>>();
 function prepareObservations(): boolean {
   let changed = false;
-  // Discover observation proposals before the input publishes. Pending
-  // probes prepare status changes; latest also prepares staged values, so
-  // it never falls behind an input that can publish synchronously.
+  // Prepare both observations of a held synchronous proposal in the same
+  // round. Waiting for settle would publish latest before pending. Latest
+  // also samples unheld proposals; those are not pending merely by staging.
   for (const record of dirty) {
+    // A new input question supersedes a prepared restoration before its
+    // readers run again, not only after the publication sweep.
+    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     // A first answer can be staged beneath a replacement flight before it
     // initializes the input. Its observations still have a value to select.
     // A ready first answer initializes normally; opening a child update for
@@ -61,11 +64,13 @@ function prepareObservations(): boolean {
       record._retiring ||
       record._output._flags & REACTIVE_DISPOSED ||
       (!(record._input._statusFlags & STATUS_PENDING) &&
-        (!record._observation._prepareValue || record._input._pendingValue === NOT_PENDING)) ||
+        (!(record._observation._prepareValue || record._input._config & CONFIG_HELD) ||
+          record._input._pendingValue === NOT_PENDING)) ||
       (record._input._statusFlags & STATUS_UNINITIALIZED &&
         (!(record._input._statusFlags & STATUS_PENDING) ||
           record._input._pendingValue === NOT_PENDING))
-    ) continue;
+    )
+      continue;
     const next = record._observation._sample(record);
     if (!Object.is(record._override, next)) {
       stageLayer(record, next);
@@ -90,7 +95,19 @@ function prepareObservations(): boolean {
         ? txOf(record._input)
         : record._parent;
     const parent = owner && liveTx(owner);
-    if (!parent || record._retiring || blocked(parent)) continue;
+    if (record._retiring) {
+      // A ready, unheld input can acquire a hold from this restoration's
+      // ordinary consequences. Keep the restoration in that newly discovered
+      // update instead of mistaking it for a fresh pending question.
+      record._parent ??= parent;
+      continue;
+    }
+    if (
+      parent
+        ? blocked(parent)
+        : record._observation._active(record, record._observation._sample(record))
+    )
+      continue;
     // Rejoin before publication so new ordinary consequences can hold the
     // input and the observation's restoration together.
     record._retiring = true;
@@ -98,7 +115,7 @@ function prepareObservations(): boolean {
     record._time = inputTime(record._input);
     // Preparation can be triggered by a different, lower update's flush.
     // Restore within the selected input update, without joining that flush.
-    resumeInput(record, parent, true);
+    record._parent = resumeInput(record, parent, true);
     changed = true;
   }
   return changed;
@@ -168,8 +185,13 @@ export function createSourceObservation<T>(
   try {
     return runWithOwner(null, () =>
       initializeObservation(
-        createLayerBoundary(source, selectObservation, false, true,
-          __OBSERVE__ ? { name: source._name } : undefined),
+        createLayerBoundary(
+          source,
+          selectObservation,
+          false,
+          true,
+          __OBSERVE__ ? { name: source._name } : undefined
+        ),
         kind
       )
     );
@@ -187,8 +209,12 @@ export function releaseObservation(record: Observation<any>): void {
   // Dormant observation outputs have no remaining published consumers.
   // Their next use initializes a fresh frame from the current input state,
   // rather than manufacturing a stale frame before starting current work.
-  if (record._output._config & CONFIG_AUTO_DISPOSE)
+  if (record._output._config & CONFIG_AUTO_DISPOSE) {
+    // A discarded first proposal must not satisfy revival's equality check
+    // before this output has ever published a value.
+    record._output._pendingValue = NOT_PENDING;
     record._output._statusFlags |= STATUS_UNINITIALIZED;
+  }
 }
 
 export function markObservation(layer: Layer<any>): void {

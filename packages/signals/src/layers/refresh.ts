@@ -2,6 +2,7 @@ import { computed, markRefresh, read } from "../core/core.js";
 import { NotReadyError, unwrapStatusError } from "../core/error.js";
 import { emitDiagnostic } from "../core/dev.js";
 import { enqueueSub } from "../core/heap.js";
+import { link } from "../core/graph.js";
 import { createRoot, getOwner } from "../core/owner.js";
 import {
   $REFRESH,
@@ -13,7 +14,14 @@ import {
   REACTIVE_DISPOSED,
   STATUS_PENDING
 } from "../core/constants.js";
-import { flushTransaction, resolveTx, schedule, staleReader, txOf } from "../core/scheduler.js";
+import {
+  flushTransaction,
+  GlobalQueue,
+  resolveTx,
+  schedule,
+  staleReader,
+  txOf
+} from "../core/scheduler.js";
 import type { Refreshable } from "../core/constants.js";
 import type { Computed } from "../core/types.js";
 import { refreshInput } from "./boundary.js";
@@ -21,7 +29,9 @@ import { refreshInput } from "./boundary.js";
 /** Re-ask this computation, or an optimistic boundary's immediate input.
  * A caller may receive its own action's staged answer before DOM publication.
  */
-export function refresh<T>(target: Refreshable<T>): Promise<T extends (...args: any) => infer V ? V : T> {
+export function refresh<T>(
+  target: Refreshable<T>
+): Promise<T extends (...args: any) => infer V ? V : T> {
   const output = (target as any)?.[$REFRESH] as Computed<any> | undefined;
   if (!output) {
     if (__DEV__) {
@@ -55,16 +65,29 @@ export function refresh<T>(target: Refreshable<T>): Promise<T extends (...args: 
               failed = true;
               error = unwrapStatusError(caught);
             }
+            // Deferred outputs serve their previous value during a refetch.
+            // This waiter needs the answer, including through equal derivations.
+            const lag = GlobalQueue._lagging?.(waiter);
+            if (lag) {
+              // An unchanged intermediate memo carries no pending status.
+              // Subscribe directly so even an equal, quiet answer wakes us.
+              link(lag, waiter);
+              throw new NotReadyError(lag);
+            }
             queueMicrotask(() => {
               if (current !== generation) return;
-              if (!(source._flags & REACTIVE_DISPOSED) && source._flags & (REACTIVE_DIRTY | REACTIVE_CHECK)) {
+              if (
+                !(source._flags & REACTIVE_DISPOSED) &&
+                source._flags & (REACTIVE_DIRTY | REACTIVE_CHECK)
+              ) {
                 // An equal synchronous replacement may not notify readers.
                 // Explicitly retry when invalidated between read and delivery.
                 enqueueSub(waiter);
                 schedule();
                 return;
               }
-              if (!(source._flags & REACTIVE_DISPOSED) && source._statusFlags & STATUS_PENDING) return;
+              if (!(source._flags & REACTIVE_DISPOSED) && source._statusFlags & STATUS_PENDING)
+                return;
               // Check after the compute pass has accepted its dependencies
               // and joined their updates. Registering inside the pass would
               // repeatedly requeue this waiter during pre-publication replay.

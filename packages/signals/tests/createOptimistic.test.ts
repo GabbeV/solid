@@ -427,9 +427,8 @@ describe("createOptimistic", () => {
         createLoadingBoundary(optimistic, () => "Loading")();
 
         sendMessage = () => {
-          // Before its first landing the source is loading: the write is
-          // OPTIMISTIC_WRITE_BEFORE_LOAD in DEV (ruled 2026-11-03, #4656).
-          expect(() => setOptimistic(() => "Optimistic")).toThrow(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
+          // The split output can accept a guess while its input is loading.
+          expect(() => setOptimistic(() => "Optimistic")).not.toThrow();
           expect(() => refresh(optimistic)).not.toThrow();
         };
       });

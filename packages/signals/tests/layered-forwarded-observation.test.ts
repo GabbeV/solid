@@ -250,7 +250,7 @@ it("a pending-only output publishes true without retaining its input hold", asyn
   expect(shown).toEqual({ source: 1, pending: false });
 });
 
-it("a closed action stops waiting when its last override observer is disposed", async () => {
+it("a closed action retains its own input flight after its last override observer is disposed", async () => {
   const answer = Promise.withResolvers<number>(),
     end = Promise.withResolvers<void>();
   const shown = { source: 0, view: 0 };
@@ -286,7 +286,11 @@ it("a closed action stops waiting when its last override observer is disposed", 
   expect(shown.source).toBe(0);
   hide();
   flush();
-  expect(shown.source).toBe(1);
+  // Removing the reader need not release an existing own-input hold early.
+  // Follow next and the last-observer ruling in PR #3347.
+  expect(shown.source).toBe(0);
   answer.resolve(1);
   await turn();
+  expect(shown.source).toBe(1);
+  expect(shown.view).toBe(3);
 });

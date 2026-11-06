@@ -190,10 +190,20 @@ function expected(extra: Extra, original: boolean): Checkpoint[] {
   const baseline = original ? ORIGINAL : NARROWED;
   if (extra === "tracked latest") {
     // The latest proposal's own derivation keeps it held. Ordinary source
-    // reads in that higher computation use the committed '/' frame.
-    return baseline.map((checkpoint, index) => index === baseline.length - 1
-      ? checkpoint
-      : { ...checkpoint, effect: "/", ...(original ? { latest: "/" } : {}) });
+    // reads in that higher computation use the committed '/' frame. In the
+    // original shape, target combines both peer proposals in a memo: pending
+    // waits with latest. A direct render binding uses their published values
+    // independently. See layered-observation-peer-publication for the same
+    // distinction with explicit optimistic boundaries and no feedback.
+    return baseline.map((checkpoint, index) =>
+      index === baseline.length - 1
+        ? checkpoint
+        : {
+            ...checkpoint,
+            effect: original ? "-" : "/",
+            ...(original ? { latest: "/", isPending: false } : {})
+          }
+    );
   }
   if (extra === "tracked isPending") {
     // Pending=true supersedes the blocking pass with one over committed

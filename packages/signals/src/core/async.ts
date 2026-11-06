@@ -408,11 +408,10 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // again at release time — deferred so unobserved() can't unlink subs
       // lists this walk is still iterating.
       if (!node._subs && node._config & CONFIG_AUTO_DISPOSE) (released ??= []).push(node);
-      // D-41: and a node fully settled here carries the staging as well — a
-      // chain's single arrival marks what a diamond's second arrival does
-      // (F-9, F-2: graph shape is not observable, #4562).
-      stageMarkHook?.(node, el);
     }
+    // An error supersedes downstream work even when that work still has its
+    // own flight. Forward it on every arrival, not only fully settled nodes.
+    stageMarkHook?.(node, el);
   });
 
   // A node the enqueueSub above queued is released at that pass's tail
@@ -434,7 +433,12 @@ export function carryStagedError(node: Computed<any>, source: Computed<any>): vo
     if (!(input._config & CONFIG_STAGED_ERROR)) continue;
     if (layerStatus?.(node, input)) return;
     layerNotify?.(input, node);
-    if (node._config & CONFIG_REDERIVE) {
+    if (
+      node._config & CONFIG_REDERIVE ||
+      (node._x?._inFlight && node._x._pendingSources?.has(node))
+    ) {
+      // A still-running calculation must supersede its own request. Settled
+      // derivations carry the error without repeating their body or children.
       enqueueSub(node);
       schedule();
     } else if (!(node._config & (EFFECT_TRACKED << 23))) {

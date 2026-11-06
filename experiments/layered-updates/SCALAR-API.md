@@ -1,7 +1,18 @@
 # Scalar experiment entry
 
-Current audit: [pending feedback and own-input lifetime question, stage 113](INTEGRATION-113.md).
-Current runtime: [first answers before a replacement flush, stage 112](INTEGRATION-112.md).
+Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
+Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
+Current runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
+Latest accepted ruling and failure audit: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
+Ruling evidence: [async pending-badge retirement, stage 126](INTEGRATION-126.md).
+Previous runtime repair: [unheld observation restoration, stage 122](INTEGRATION-122.md).
+Previous audit: [held proposals and first publication, stage 121](INTEGRATION-121.md).
+Current lifetime model: [independent input and override lifetimes, stage 120](INTEGRATION-120.md).
+Earlier audit: [error recovery and input-lifetime conflict, stage 118](INTEGRATION-118.md).
+Earlier repair: [fresh boundary publication, stage 117](INTEGRATION-117.md).
+Earlier repair: [error supersession, stage 116](INTEGRATION-116.md).
+Recent repairs: [deferred refresh and observation revival, stage 115](INTEGRATION-115.md),
+and [retaining own-input holds after reader removal, stage 114](INTEGRATION-114.md).
 Public API migration: [normal package integration, stage 105](INTEGRATION-105.md).
 Previous scalar checkpoint: [stage 90](SCALAR-MILESTONES-90.md).
 Historical costs against the old rc.14 baseline and retained simplifications: [exact ownership membership, allocation and performance, stage 104](OWNED-MEMBERSHIP-104.md).
@@ -70,10 +81,13 @@ behavior remains unaudited. Guesses use action lifetime or the pending update
 that parks an ambient write's flush. A guess with no pending update does not
 flash. Guesses written during derivations belong to the update executing the setter,
 without inheriting an input override's longer lifetime (stage 90). Functional guesses evaluate
-once and do not rebase. Input answers join the guessing actions but do not
-replace the selected override until their shared lifetime ends. Delayed
-downstream correction is an accepted consequence. The ordinary publication machinery holds consequences
-and publishes a replacement or restoration coherently.
+once and do not rebase. In the stage 120 trial, incoming input updates do not
+join the guessing actions merely by reaching the boundary. The input can publish
+while the selected override stays visible. Overlapping guesses on the same
+output still share their action lifetime; the existing pending-input hold still
+delays retirement until that input has answered. Ending the override resumes an
+ordinary input read, which coordinates correction with its downstream work.
+Delayed downstream correction remains an accepted consequence.
 
 Callback inputs receive a separate input computation. A direct accessor for a
 read-only memo declared `sync: true` can share that memo as its input when no
@@ -100,6 +114,10 @@ holding action can receive its staged answer before publication, permitting
 update waits for publication. The waiter reuses ordinary computations and the
 existing transaction rerun queue; it adds no ordinary-node fields or read hooks.
 
+For deferred values, the waiter uses the existing flight hook to wait for the
+answer rather than returning the displayed old value. It subscribes directly to
+that flight so an equal answer through an unchanged memo also releases it.
+
 For an optimistic target, refresh crosses only that boundary. With an upstream
 override already published as 1 and a downstream override of 10 over
 `createMemo(() => first() * 2)`, refreshing the downstream boundary returns 2.
@@ -110,6 +128,9 @@ refresh's upstream invalidation scope. No authoritative duplicate graph is added
 
 This export accepts scalar source accessors only; refreshable stores remain
 outside this experiment. See [stage 69](REFRESH-69.md) for validation and limits.
+
+Removing the last rendered reader does not release an existing own-input hold
+early; the experiment follows next here (stage 114).
 
 The action body returning does not finish that lifetime while an input in the
 group is still pending. All overrides in the group stay selected until those

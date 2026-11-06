@@ -252,37 +252,40 @@ describe("A25 write-visibility corollary: seed visible on the write path", () =>
     dispose();
   });
 
-  it("optimistic computed: getter throws while uninitialized, the setter throws OPTIMISTIC_WRITE_BEFORE_LOAD", async () => {
+  it("optimistic computed: the first setter receives undefined and can publish before its input", async () => {
     const d = deferred<number>();
     let get!: any, set!: any, dispose!: () => void;
+    const shown: number[] = [];
     createRoot(disp => {
       dispose = disp;
       [get, set] = createOptimistic<number>(async () => d.promise);
       createRenderEffect(
-        () => {
-          try {
-            get();
-          } catch {}
-        },
-        () => {}
+        () => get(),
+        value => {
+          shown.push(value);
+        }
       );
     });
     flush();
 
     expect(() => get()).toThrow(NotReadyError);
     let prevSeen: any = "not-run";
-    // Ruled 2026-11-03 (#4656): before its first landing the source is
-    // loading, not a value to guess over — in DEV the write throws.
+    // An unpublished scalar output has no previous value, but its guess
+    // can initialize it independently of the pending input.
     expect(() =>
       set((prev: any) => {
         prevSeen = prev;
         return 99;
       })
-    ).toThrow(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
-    expect(prevSeen).toBe("not-run");
+    ).not.toThrow();
+    expect(prevSeen).toBeUndefined();
+    flush();
+    expect(shown).toEqual([99]);
+    expect(get()).toBe(99);
 
     d.resolve(1);
     await settle();
+    expect(shown).toEqual([99, 1]);
     dispose();
   });
 

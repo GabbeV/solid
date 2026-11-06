@@ -5,54 +5,93 @@ import { registerGraph } from "../core/dev.js";
 import { getOwner } from "../core/owner.js";
 import { attrHooks } from "../core/attribution-hooks.js";
 import {
-  $REFRESH, CONFIG_AUTO_DISPOSE, CONFIG_HELD, CONFIG_REDERIVE, CONFIG_LOADING, CONFIG_SYNC,
-  REACTIVE_WRITABLE_COMPUTED, NOT_PENDING,
-  REACTIVE_CHECK, REACTIVE_DIRTY, REACTIVE_IN_HEAP, REACTIVE_ZOMBIE,
-  REACTIVE_DISPOSED, REACTIVE_RECOMPUTING_DEPS, STATUS_PENDING
+  $REFRESH,
+  CONFIG_AUTO_DISPOSE,
+  CONFIG_HELD,
+  CONFIG_REDERIVE,
+  CONFIG_LOADING,
+  CONFIG_SYNC,
+  REACTIVE_WRITABLE_COMPUTED,
+  NOT_PENDING,
+  REACTIVE_CHECK,
+  REACTIVE_DIRTY,
+  REACTIVE_IN_HEAP,
+  REACTIVE_ZOMBIE,
+  REACTIVE_DISPOSED,
+  REACTIVE_RECOMPUTING_DEPS,
+  STATUS_PENDING
 } from "../core/constants.js";
 import {
-  blocked, flushTransaction, GlobalQueue, holdNode, joinFuture, liveTx, merge,
-  newTransaction, resolveTx, setLayerBlocked, txOf, inEffectCallback, setEffectCallback, stageValueInUpdate,
+  blocked,
+  flushTransaction,
+  GlobalQueue,
+  holdNode,
+  joinFuture,
+  liveTx,
+  merge,
+  newTransaction,
+  resolveTx,
+  setLayerBlocked,
+  txOf,
+  inEffectCallback,
+  setEffectCallback,
+  stageValueInUpdate,
   type Transaction
 } from "../core/scheduler.js";
 import type { Computed, NodeOptions, Signal, Root } from "../core/types.js";
 import { boundaries } from "./boundary.js";
 import { layerPosition } from "./committed-dependencies.js";
 import {
-  createLayerBoundary, inputTime, inputUpdate, observed, positionOf,
-  resumeInput, readOverride, setGuessLifecycle, stageLayer, wakeLayers, type Layer
+  createLayerBoundary,
+  inputTime,
+  inputUpdate,
+  observed,
+  positionOf,
+  resumeInput,
+  readOverride,
+  setGuessLifecycle,
+  stageLayer,
+  wakeLayers,
+  type Layer
 } from "./coordination.js";
 
 const proposals = new Map<Layer<any>, unknown>();
 const scopes = new Map<Transaction, Set<Layer<any>>>();
-if (__OBSERVE__) GlobalQueue._layerGuesses = update =>
-  Array.from(scopes.get(resolveTx(update)) ?? [], layer => layer._output);
-if (__OBSERVE__) GlobalQueue._layerPublished = (output, previous) => {
-  const layer = boundaries.get(output) as (Layer<any> & { _shownGuess?: boolean }) | undefined;
-  if (!layer?._inputStatus) return;
-  const guessed = layer._override !== NOT_PENDING;
-  if (layer._shownGuess && !guessed && !Object.is(previous, output._value) &&
-      attrHooks !== null && observed(output, null))
-    attrHooks.optimisticReverted(output, previous, output._value,
-      inputTime(layer._input) === layer._inputTime ? "reverted" : "superseded");
-  layer._shownGuess = guessed;
-};
+if (__OBSERVE__)
+  GlobalQueue._layerGuesses = update =>
+    Array.from(scopes.get(resolveTx(update)) ?? [], layer => layer._output);
+if (__OBSERVE__)
+  GlobalQueue._layerPublished = (output, previous) => {
+    const layer = boundaries.get(output) as (Layer<any> & { _shownGuess?: boolean }) | undefined;
+    if (!layer?._inputStatus) return;
+    const guessed = layer._override !== NOT_PENDING;
+    if (
+      layer._shownGuess &&
+      !guessed &&
+      !Object.is(previous, output._value) &&
+      attrHooks !== null &&
+      observed(output, null)
+    )
+      attrHooks.optimisticReverted(
+        output,
+        previous,
+        output._value,
+        inputTime(layer._input) === layer._inputTime ? "reverted" : "superseded"
+      );
+    layer._shownGuess = guessed;
+  };
 // Only valid inside the synchronous retirement loop, which runs no input
 // calculations. Merging invalidates it before admitting any new work.
 let settledInputs: Transaction | null = null;
 
-/** A guessed input's own flight keeps its action alive, as in next. This
- * does not make that input hold a different update merely because the
+/** A guessed input's own flight keeps its action alive even without readers,
+ * as in next. It does not hold a different update merely because the
  * override is displayed. Its eventual correction uses ordinary joining. */
 function pendingScope(update: Transaction): boolean {
   if (update === settledInputs) return false;
   const layers = scopes.get(update);
   if (!layers) return false;
-  for (const layer of layers)
-    if (
-      layer._input._statusFlags & STATUS_PENDING &&
-      observed(layer._output, update)
-    ) return true;
+  for (const layer of layers) if (layer._input._statusFlags & STATUS_PENDING) return true;
   return false;
 }
 
@@ -63,14 +102,27 @@ function retire(layer: Layer<any>): void {
   if (!scope) joinFuture(null);
   resumeInput(layer, scope ?? resolveTx(flushTransaction!));
   removeScope(layer);
-  const input = layer._input, output = layer._output, owner = output._parent as Root | null;
+  const input = layer._input,
+    output = layer._output,
+    owner = output._parent as Root | null;
   // A plain selector of a settled input has no calculation to discover. Keep
   // the correction in its ordinary update; descendants can still suspend it.
   // Held/dirty inputs and unpublished owners retain the complete read path.
-  if (output._x !== null && (!owner || (owner._root && !owner._parentComputed)) &&
-      !(input._config & CONFIG_HELD) && input._pendingValue === NOT_PENDING &&
-      !(input._flags & (REACTIVE_CHECK | REACTIVE_DIRTY | REACTIVE_IN_HEAP |
-        REACTIVE_RECOMPUTING_DEPS | REACTIVE_ZOMBIE | REACTIVE_DISPOSED)))
+  if (
+    output._x !== null &&
+    (!owner || (owner._root && !owner._parentComputed)) &&
+    !(input._config & CONFIG_HELD) &&
+    input._pendingValue === NOT_PENDING &&
+    !(
+      input._flags &
+      (REACTIVE_CHECK |
+        REACTIVE_DIRTY |
+        REACTIVE_IN_HEAP |
+        REACTIVE_RECOMPUTING_DEPS |
+        REACTIVE_ZOMBIE |
+        REACTIVE_DISPOSED)
+    )
+  )
     stageSelectedValue(output, input._value, input);
 }
 
@@ -99,8 +151,8 @@ function prepareGuesses(): boolean {
   // Scope membership follows ordinary merging. Output updates which own
   // no guesses do not scan unrelated lifetimes when checking readiness.
   for (const [scope, layers] of scopes) {
-    // Absence of a flight is stable during retirement. Observedness is not:
-    // never cache a readiness verdict for inputs which are actually pending.
+    // Absence of a flight is stable during retirement; newly merged work
+    // invalidates this shortcut before another readiness check.
     if (!scope._open) {
       settledInputs = scope;
       for (const layer of layers)
@@ -148,7 +200,9 @@ function applyProposal(proposal: unknown, layer: Layer<any>): void {
 
 setGuessLifecycle({
   _write: (layer, update, proposal) =>
-    !!layer._inputStatus && proposal !== NOT_PENDING && layer._output._deps?._dep === layer._input &&
+    !!layer._inputStatus &&
+    proposal !== NOT_PENDING &&
+    layer._output._deps?._dep === layer._input &&
     stageValueInUpdate(layer._output, update, proposal),
   _notify: forwardInput,
   _merge: (from, into) => {
@@ -176,18 +230,25 @@ setGuessLifecycle({
 
 /** Only guesses have a side-effect-free selector. Keep this specialization
  * out of observation-only bundles; both paths still use ordinary staging. */
-function forwardInput(source: Signal<any>, reader: Computed<any>, update: Transaction): boolean | void {
+function forwardInput(
+  source: Signal<any>,
+  reader: Computed<any>,
+  update: Transaction
+): boolean | void {
   if (
     flushTransaction === update &&
-    reader._config & CONFIG_HELD && reader._x!._transaction === update &&
+    reader._config & CONFIG_HELD &&
+    reader._x!._transaction === update &&
     !(reader._flags & (REACTIVE_RECOMPUTING_DEPS | REACTIVE_DISPOSED)) &&
     source._subs!._nextSub === null
   ) {
     const layer = boundaries.get(reader);
     if (layer?._inputStatus && layer._input === source && layer._override === NOT_PENDING)
-      return stageSelectedValue(reader,
+      return stageSelectedValue(
+        reader,
         source._pendingValue !== NOT_PENDING ? source._pendingValue : source._value,
-        source as Computed<any>);
+        source as Computed<any>
+      );
   }
 }
 
@@ -209,10 +270,13 @@ export function createLayer<T>(
   const layer = createBoundary(input, options?.node);
   if (options?.lifetime === "action") layer._automatic = true;
   const pair = layerAccessors(layer);
-  return [...pair, () => {
-    proposals.set(layer, NOT_PENDING);
-    wakeLayers();
-  }] as const;
+  return [
+    ...pair,
+    () => {
+      proposals.set(layer, NOT_PENDING);
+      wakeLayers();
+    }
+  ] as const;
 }
 
 function createBoundary<T>(input: Input<T>, config?: NodeOptions<T>) {
@@ -222,16 +286,27 @@ function createBoundary<T>(input: Input<T>, config?: NodeOptions<T>) {
   // changing its owner or auto-disposal. An async-aware memo can emit raw
   // thenables as stream values, which this input must normalize again. Those
   // memos, writable/optimistic outputs, seeds and configured inputs keep a node.
-  const source = typeof input === "function" && !config
-    ? (input as any)[$REFRESH] as Computed<T> | undefined : undefined;
-  const shared = source && typeof source._fn === "function" &&
+  const source =
+    typeof input === "function" && !config
+      ? ((input as any)[$REFRESH] as Computed<T> | undefined)
+      : undefined;
+  const shared =
+    source &&
+    typeof source._fn === "function" &&
     source._config & CONFIG_SYNC &&
     !(source._config & (CONFIG_REDERIVE | CONFIG_LOADING)) &&
     !(source._flags & REACTIVE_WRITABLE_COMPUTED)
-    ? source : undefined;
-  const producer = shared ?? (typeof input === "function"
-    ? computed<T>(input as (previous?: T) => T, { ...config, equals: false, unobserved: undefined })
-    : signal<T>(input, config)) as Computed<T>;
+      ? source
+      : undefined;
+  const producer =
+    shared ??
+    ((typeof input === "function"
+      ? computed<T>(input as (previous?: T) => T, {
+          ...config,
+          equals: false,
+          unobserved: undefined
+        })
+      : signal<T>(input, config)) as Computed<T>);
   if (__OBSERVE__ && typeof input !== "function") registerGraph(producer, getOwner());
   const layer = createLayerBoundary<T>(producer, selectGuess, !shared, config?.lazy, config);
   if (shared) layer._refreshInput = materializeInput;
@@ -260,32 +335,16 @@ function materializeInput(layer: Layer<any>): void {
 }
 
 function selectGuess<T>(layer: Layer<T>): T {
-  const producer = layer._input;
-  if (
-    layer._scope !== null &&
-    layer._override !== NOT_PENDING &&
-    !(producer._statusFlags & STATUS_PENDING) &&
-    inputTime(producer) !== layer._inputTime
-  ) {
-    // An input answer joins the guessing actions, but the selector stays
-    // overridden until their shared lifetime ends. Intermediate answers
-    // must not start downstream work beneath the selected guess.
-    const scope = liveTx(layer._scope);
-    if (scope) {
-      if (producer._config & CONFIG_HELD) merge(txOf(producer), scope);
-      // A ready input can still be an unparked proposal in this flush.
-      // Couple that input frame, not an independently preparing override.
-      if (!(layer._output._config & CONFIG_HELD) || txOf(layer._output) !== flushTransaction)
-        joinFuture(scope);
-    }
-    // The pre-commit phase releases the group once all its inputs are ready.
-  }
-  return layer._override === NOT_PENDING ? read(producer) : readOverride(layer);
+  // The override selects this boundary's output. Advancing its input does
+  // not join the input update to the guessing action.
+  // Once the override retires, the ordinary read coordinates the correction.
+  return layer._override === NOT_PENDING ? read(layer._input) : readOverride(layer);
 }
 
 function removeScope(layer: Layer<any>): void {
   if (!layer._scope) return;
-  const scope = resolveTx(layer._scope), layers = scopes.get(scope);
+  const scope = resolveTx(layer._scope),
+    layers = scopes.get(scope);
   layers?.delete(layer);
   if (!layers?.size) scopes.delete(scope);
   layer._scope = null;
@@ -307,10 +366,8 @@ function releaseLayer(layer: Layer<any>): void {
 function bindScope(layer: Layer<any>, scope: Transaction): void {
   if (layer._scope) merge(scope, layer._scope);
   layer._scope = resolveTx(scope);
-  // Incoming input proposals share the override's lifetime; the selected
-  // output retains its independent publication update until correction.
-  if (layer._input._config & CONFIG_HELD && !(layer._input._statusFlags & STATUS_PENDING))
-    merge(txOf(layer._input), layer._scope);
+  // Only repeated guesses share this lifetime. Incoming input updates keep
+  // their own publication context while the override is selected.
   const current = resolveTx(layer._scope);
   let layers = scopes.get(current);
   if (!layers) scopes.set(current, (layers = new Set()));
@@ -327,9 +384,9 @@ function layerAccessors<T>(layer: Layer<T>) {
         ? pending
         : layer._override !== NOT_PENDING
           ? layer._override
-          // Without a guess, the pending slot belongs to the input update.
-          // A first guess starts from what this output has published.
-          : output._value;
+          : // Without a guess, the pending slot belongs to the input update.
+            // A first guess starts from what this output has published.
+            output._value;
     const next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
     if (output._flags & REACTIVE_DISPOSED) return next;
     if (__OBSERVE__ && attrHooks !== null) attrHooks.write(output, previous, next);

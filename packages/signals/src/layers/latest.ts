@@ -12,7 +12,7 @@ import {
 import { link } from "../core/graph.js";
 import type { Computed, Signal } from "../core/types.js";
 import { initialObservation, type Layer } from "./coordination.js";
-import { withReadWindow } from "./window.js";
+import { observesSnapshot, withReadWindow } from "./window.js";
 import { createSourceObservation, type Observation, type ObservationKind } from "./observation.js";
 
 const kind: ObservationKind<any> = {
@@ -20,7 +20,8 @@ const kind: ObservationKind<any> = {
   _fallback: fallback,
   _sample: record => {
     const source = record._input;
-    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) return NOT_PENDING;
+    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR)
+      return NOT_PENDING;
     if (
       !(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
@@ -101,10 +102,10 @@ function latestOutput(source: Computed<any>): Computed<any> {
 }
 
 function windowRead(source: Signal<any>): unknown {
-  return read(latestOutput(source as Computed<any>));
+  return read(observesSnapshot(source) ? source : latestOutput(source as Computed<any>));
 }
 
 export function latest<T>(input: () => T): T {
   const source = (input as any)[$REFRESH] as Computed<any> | undefined;
-  return source ? read(latestOutput(source)) : withReadWindow(input, windowRead);
+  return source ? (windowRead(source) as T) : withReadWindow(input, windowRead);
 }

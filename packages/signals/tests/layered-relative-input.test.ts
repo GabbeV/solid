@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 for (const guess of [2, 10]) {
-  it(`an already-proposed conditional input joins the child action (guess=${guess})`, async () => {
+  it(`an already-proposed conditional input can publish during the child action (guess=${guess})`, async () => {
     const endA = Promise.withResolvers<void>(),
       endB = Promise.withResolvers<void>(),
       endC = Promise.withResolvers<void>();
@@ -75,14 +75,14 @@ for (const guess of [2, 10]) {
     await turn();
     flush();
     expect(shown).toEqual({
-      branch: false,
+      branch: true,
       a: 1,
-      b: 1,
-      input: 0,
+      b: 2,
+      input: 2,
       c: guess,
       doubled: guess * 2,
-      pair: guess + 1,
-      holdB: 1
+      pair: guess + 2,
+      holdB: 2
     });
     endC.resolve();
     await c;

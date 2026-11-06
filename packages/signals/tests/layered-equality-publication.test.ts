@@ -114,8 +114,15 @@ for (const slow of [false, true])
           });
           for (const request of requests) request.resolve(request.key);
           await turn();
-          expect({ ...shown }).toEqual({ lower: initial, upper: 20, pair: `${initial}:20` });
-          expect(requests.some(request => request.key === "2:20")).toBe(false);
+          // The ready lower proposal can publish independently of the upper
+          // action lifetime. A still-pending lower proposal remains hidden.
+          const publishedLower = slow ? initial : 2;
+          expect({ ...shown }).toEqual({
+            lower: publishedLower,
+            upper: 20,
+            pair: `${publishedLower}:20`
+          });
+          expect(requests.some(request => request.key === "2:20")).toBe(!slow);
         } finally {
           repeat.resolve();
           lowerAnswer.resolve();

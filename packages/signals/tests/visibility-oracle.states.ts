@@ -90,15 +90,9 @@ export function supersededGraph(initDownstream: boolean) {
     async supersede() {
       const run = action(function* () {
         setValue(1); // new question → refetch
-        // Wrong guess; truth will be 2. Before the first commit (the
-        // `initDownstream: false` state) the screen is still loading: the
-        // write is OPTIMISTIC_WRITE_BEFORE_LOAD in DEV and guesses nothing
-        // (ruled 2026-11-03, #4656, RULES-DERIVED D-34).
-        try {
-          setDouble(3);
-        } catch (e) {
-          if (initDownstream || !/OPTIMISTIC_WRITE_BEFORE_LOAD/.test(String(e))) throw e;
-        }
+        // The split output accepts this guess even before its first commit.
+        // Downstream work still determines when the output can publish.
+        setDouble(3);
         yield never();
       });
       run();
@@ -291,10 +285,7 @@ export const STATES: State[] = [
     expect: {
       // The selected guess remains while the input update is held. Ordinary
       // reads retain the committed output; latest observes the selected guess.
-      untracked: rule(
-        0,
-        "the output remains committed while the selected guess is held"
-      ),
+      untracked: rule(0, "the output remains committed while the selected guess is held"),
       derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(
         HELD,
@@ -320,10 +311,7 @@ export const STATES: State[] = [
     expect: {
       // The same held input with no previously published output: ordinary
       // reads and an imperatively created latest output have nothing to serve.
-      untracked: rule(
-        "throws:NotReady",
-        "no output has published yet"
-      ),
+      untracked: rule("throws:NotReady", "no output has published yet"),
       derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(HELD, "A18 (c) / A29 (born held)"),
       preexisting: observed(
@@ -334,15 +322,12 @@ export const STATES: State[] = [
         HELD,
         "lanes / A29: a fresh stale reader of a never-committed node enters"
       ),
-      childrenForbidden: rule(
+      childrenForbidden: rule(NOT_READY, "no output has published: loading, not pending"),
+      latest: rule(
         NOT_READY,
-        "no output has published: loading, not pending"
+        "an imperative latest read has no published output yet; flushed-value outside reads are deferred"
       ),
-      latest: rule(NOT_READY, "an imperative latest read has no published output yet; flushed-value outside reads are deferred"),
-      isPending: rule(
-        false,
-        "a never-published node is loading, not pending"
-      ),
+      isPending: rule(false, "a never-published node is loading, not pending"),
       authoritative: rule(2, "A17 carve-out")
     }
   },

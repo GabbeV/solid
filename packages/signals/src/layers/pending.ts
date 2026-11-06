@@ -1,6 +1,14 @@
 /** Source-owned pending output using the common layer publication path.
  * Callback queries read those same outputs. No verdict lane or reader flag. */
-import { computed, context, read, prepareComputed, verdict, setVerdict, setStrictRead } from "../core/core.js";
+import {
+  computed,
+  context,
+  read,
+  prepareComputed,
+  verdict,
+  setVerdict,
+  setStrictRead
+} from "../core/core.js";
 import { link } from "../core/graph.js";
 import { NotReadyError } from "../core/error.js";
 import { quietPending } from "../core/async.js";
@@ -13,8 +21,13 @@ import {
   STATUS_PENDING,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
-import { createLayerBoundary, initialObservation, pendingInput, type Layer } from "./coordination.js";
-import { withReadWindow } from "./window.js";
+import {
+  createLayerBoundary,
+  initialObservation,
+  pendingInput,
+  type Layer
+} from "./coordination.js";
+import { observesSnapshot, withReadWindow } from "./window.js";
 import type { Computed, Signal } from "../core/types.js";
 
 import {
@@ -31,7 +44,11 @@ type Observation = SharedObservation<boolean> & { _incoming: Computed<any> | und
 
 // A displayed error is an answer too. Recovering to the last good value
 // still differs from that display until the recovery publishes.
-function pendingAnswer(input: Computed<any>, incoming: Computed<any>, value = input._value): boolean {
+function pendingAnswer(
+  input: Computed<any>,
+  incoming: Computed<any>,
+  value = input._value
+): boolean {
   return !!(
     (incoming._statusFlags & STATUS_PENDING && !quietPending(incoming)) ||
     (!incoming._x?._reask &&
@@ -42,15 +59,21 @@ function pendingAnswer(input: Computed<any>, incoming: Computed<any>, value = in
 
 function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolean {
   if (GlobalQueue._marked?.(input) === true) return true;
-  if (input._statusFlags & STATUS_UNINITIALIZED &&
-      (!(input._statusFlags & STATUS_PENDING) || input._pendingValue === NOT_PENDING)) return false;
+  if (
+    input._statusFlags & STATUS_UNINITIALIZED &&
+    (!(input._statusFlags & STATUS_PENDING) || input._pendingValue === NOT_PENDING)
+  )
+    return false;
   if (
     (input._statusFlags & STATUS_PENDING && !quietPending(input)) ||
     (input._config & CONFIG_HELD &&
       !input._x?._reask &&
       input._pendingValue !== NOT_PENDING &&
-      (!!input._x?._shownError || !input._equals || !input._equals(input._value, input._pendingValue)))
-  ) return true;
+      (!!input._x?._shownError ||
+        !input._equals ||
+        !input._equals(input._value, input._pendingValue)))
+  )
+    return true;
   // Observation outputs retain their input question. Follow only those
   // explicit boundaries, including latest around an optimistic output;
   // ordinary memo dependencies are not traversed or given new metadata.
@@ -75,6 +98,9 @@ const kind: ObservationKind<boolean> = {
   _observe: record => observeInput(record as Observation),
   _parent: record => {
     const input = record._input;
+    // A declared question (deferred/affects) can outlive a ready value's
+    // transaction. That transaction finishing does not restore pending=false.
+    if (GlobalQueue._marked?.(input)) return null;
     const value = input._pendingValue !== NOT_PENDING ? input._pendingValue : input._value;
     let incoming = (record as Observation)._incoming;
     // A ready optimistic/latest output does not finish the pending input
@@ -91,8 +117,10 @@ const kind: ObservationKind<boolean> = {
 function pendingFallback(layer: Layer<boolean>): boolean {
   const source = layer._input;
   if (typeof source._fn === "function") prepareComputed(source, false);
-  if (source._statusFlags & STATUS_UNINITIALIZED &&
-      (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING))
+  if (
+    source._statusFlags & STATUS_UNINITIALIZED &&
+    (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING)
+  )
     read(source);
   const output = context as Computed<any>;
   link(source, output);
@@ -155,6 +183,10 @@ function pendingOutput(source: Computed<any>): Computed<boolean> {
 }
 
 function readPending(source: Computed<any>): boolean {
+  if (observesSnapshot(source)) {
+    read(source);
+    return false;
+  }
   // Probing pending is allowed in component bodies. An uninitialized input
   // still throws NotReady, rather than the strict ordinary-read diagnostic.
   const initializing = !!(source._statusFlags & STATUS_UNINITIALIZED);
@@ -170,6 +202,7 @@ function readPending(source: Computed<any>): boolean {
 // return value is irrelevant, so an equal callback result cannot hide a
 // pending read. Nested computations still perform their ordinary reads.
 function probe(source: Signal<any>, window: { found: boolean }): unknown {
+  if (observesSnapshot(source)) return read(source);
   // The output is an ordinary read, so an outer observation sees this
   // pending boolean. The callback's control flow still reads the source.
   window.found = readPending(source as Computed<any>) || window.found;
@@ -179,8 +212,10 @@ function probe(source: Signal<any>, window: { found: boolean }): unknown {
   const status = (source as Computed<any>)._statusFlags;
   // The pending output can describe a staged first answer's replacement.
   // Its callback may use that answer too, without rejoining the input hold.
-  if (status & STATUS_PENDING &&
-      (!(status & STATUS_UNINITIALIZED) || source._pendingValue !== NOT_PENDING))
+  if (
+    status & STATUS_PENDING &&
+    (!(status & STATUS_UNINITIALIZED) || source._pendingValue !== NOT_PENDING)
+  )
     return status & STATUS_UNINITIALIZED ? source._pendingValue : source._value;
   const previous = verdict;
   // The observation above is the user's read. This second read only drives

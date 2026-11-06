@@ -1,5 +1,8 @@
 # Pending feedback audit and own-input lifetime question
 
+The own-input lifetime question below is resolved in `INTEGRATION-114.md`:
+follow next and retain the pending input after the last reader leaves.
+
 Baseline remains next `4fe75321`; runtime remains stage 112. This checkpoint
 adds four tests and records a rejected/pending trial, not a runtime fix.
 
