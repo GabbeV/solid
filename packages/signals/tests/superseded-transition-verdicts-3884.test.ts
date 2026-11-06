@@ -193,7 +193,7 @@ function expected(extra: Extra, original: boolean): Checkpoint[] {
     // reads in that higher computation use the committed '/' frame. In the
     // original shape, target combines both peer proposals in a memo: pending
     // waits with latest. A direct render binding uses their published values
-    // independently. See layered-observation-peer-publication for the same
+    // independently. See unified-observation-peer-publication for the same
     // distinction with explicit optimistic boundaries and no feedback.
     return baseline.map((checkpoint, index) =>
       index === baseline.length - 1

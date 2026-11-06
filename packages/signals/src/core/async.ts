@@ -69,7 +69,7 @@ import {
 import type { Computed, Link, Owner } from "./types.js";
 
 /** A refresh flight is quiet; a dependent is quiet when every flight it
- * awaits is a refresh. Shared by legacy and layered pending observations. */
+ * awaits is a refresh. Shared by legacy and unified pending observations. */
 export function quietPending(el: Computed<any>): boolean {
   const x = el._x;
   if (x == null) return false;

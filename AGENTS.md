@@ -9,7 +9,7 @@ stages uncommitted. Record known failing tests honestly in checkpoint notes;
 a checkpoint is not a claim that the experiment is ready to merge.
 
 The large generated experiment results are backed up in
-`experiments/layered-updates/checkpoints/`; see its README for restoration.
+`experiments/unified-updates/checkpoints/`; see its README for restoration.
 Include new investigation receipts in subsequent checkpoints, using separate
 per-stage archives for large results rather than replacing the historical one.
 
