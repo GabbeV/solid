@@ -1031,9 +1031,14 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     }
 
     // #3181: a synchronous settle supersedes the old landing callback, so
-    // recompute owns its pending-source sweep. An uninitialized node without
-    // a replacement source still has no truth to reveal and must stay parked.
-    if (wasPendingSource && !(el._statusFlags & (STATUS_PENDING | STATUS_UNINITIALIZED)))
+    // recompute owns its pending-source sweep. A staged first answer is truth
+    // for its held readers even before publication; only a node with neither
+    // an initialized value nor a staged answer must stay parked.
+    if (
+      wasPendingSource &&
+      !(el._statusFlags & STATUS_PENDING) &&
+      (!(el._statusFlags & STATUS_UNINITIALIZED) || el._pendingValue !== NOT_PENDING)
+    )
       settlePendingSource(el);
   }
   // A first pass that went pending where the born-held arm would have held

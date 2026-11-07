@@ -68,6 +68,8 @@ export function setPendingMark(hook: typeof pendingMarkHook): void {
 }
 export let layerSeam: (() => void) | undefined;
 export let layerBeforeCommit: (() => boolean) | undefined;
+let layerCanPublish: ((update: Transaction) => boolean) | undefined;
+let layerHoldsLifetime: ((node: Computed<any>, update: Transaction) => boolean) | undefined;
 export let layerMerge: ((from: Transaction, into: Transaction) => void) | undefined;
 export type NormalizeCalculation = (
   node: Computed<any>,
@@ -106,9 +108,16 @@ let layerVisibility: ((output: Computed<any>, update: Transaction) => boolean) |
 export function setLayerVisibility(visible: typeof layerVisibility): void {
   layerVisibility = visible;
 }
-export function setLayerCommit(before?: () => boolean, seam?: () => void): void {
+export function setLayerCommit(
+  before?: () => boolean,
+  seam?: () => void,
+  canPublish?: typeof layerCanPublish,
+  holdsLifetime?: typeof layerHoldsLifetime
+): void {
   layerBeforeCommit = before;
   layerSeam = seam;
+  layerCanPublish = canPublish;
+  layerHoldsLifetime = holdsLifetime;
 }
 export function setLayerReads(
   own?: (node: Signal<any>, update: Transaction) => void,
@@ -596,16 +605,18 @@ export function merge(t: Transaction, f: Transaction): void {
  * count: one a lane took over since is the lane's to wait on. A guess whose
  * own truth is in flight blocks the lane's parent, not the lane — it stands
  * in for the flight (A17: "visible until its own fetch settles"). */
-export function blocked(t: Transaction): boolean {
+export function blocked(t: Transaction, publication = false): boolean {
   // The transaction being judged (a lane consulted on its behalf judges for
   // it): a zombie whose removal it stages is moot for it alone (`onScreen`).
   const prev = judge;
   judge ??= t;
   // An action still running in it holds it open (action.ts). Its lanes
   // (lanes.ts): a lane under `t` blocks it while blocked itself.
+  // Private optimistic consequences can hold attachment without keeping the
+  // override which produced them alive. Correction then uses ordinary holds.
   const r =
     t._open !== 0 ||
-    (t._mayPend && blockedBy(t)) ||
+    (t._mayPend && blockedBy(t, false, !publication)) ||
     !!layerBlocked?.(t) ||
     !!lanesBlockedHook?.(t);
   judge = prev;
@@ -650,13 +661,15 @@ function ownSource(n: Computed<any>, t: Transaction): boolean {
   }
   return false;
 }
-function blockedBy(owner: Transaction, own = false): boolean {
+function blockedBy(owner: Transaction, own = false, lifetime = false): boolean {
   for (let i = 0, node = LEGACY_LANES ? owner._nodes[0] : owner._firstHeld;
     node; node = LEGACY_LANES ? owner._nodes[++i] : node._x!._nextHeld)
-    if (blockingNode(node as Computed<any>, owner, own)) return true;
+    if (blockingNode(node as Computed<any>, owner, own, lifetime)) return true;
   return false;
 }
-function blockingNode(n: Computed<any>, owner: Transaction, own = false): boolean {
+function blockingNode(
+  n: Computed<any>, owner: Transaction, own = false, lifetime = false
+): boolean {
   if (
     !(n._statusFlags & STATUS_PENDING) ||
     n._flags & REACTIVE_DISPOSED ||
@@ -665,6 +678,7 @@ function blockingNode(n: Computed<any>, owner: Transaction, own = false): boolea
     (LEGACY_LANES && own && !ownSource(n, owner))
   )
     return false;
+  if (lifetime && layerHoldsLifetime && !layerHoldsLifetime(n, owner)) return false;
   // The frame's own pending observer (off screen: this one holds nothing;
   // the next listed node may).
   if ((n as any)._type === EFFECT_RENDER) {
@@ -1238,7 +1252,7 @@ export class GlobalQueue implements IQueue {
     layerOrder?.(transactions);
     for (let k = transactions.length - 1; k >= 0; k--) {
       const u = transactions[k];
-      if (blocked(u) || queuedWork(u)) continue;
+      if (blocked(u, true) || queuedWork(u) || (layerCanPublish && !layerCanPublish(u))) continue;
       transactions.splice(k, 1);
       endLanesHook?.(u);
       land(u);

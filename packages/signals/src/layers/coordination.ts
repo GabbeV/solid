@@ -37,6 +37,7 @@ import {
 } from "../core/constants.js";
 import {
   blocked,
+  cleanupReruns,
   deferZombie,
   removalStagedBy,
   onScreen,
@@ -204,7 +205,7 @@ export function setObservationLifecycle(lifecycle: BoundaryLifecycle): void {
 }
 
 export function wakeLayers(): void {
-  setLayerCommit(prepareLayers, settleLayers);
+  setLayerCommit(prepareLayers, settleLayers, canPublish, holdsLifetime);
   schedule();
 }
 
@@ -266,31 +267,21 @@ let orderPublication = false;
 
 /** A speculative pass can add or drop inputs without replacing the displayed
  * result. Only a change reaching that committed result requires preparation
- * before the lower update publishes. With `observations`, require a path
- * through latest's explicit input relation: a new owned frame reading that
- * observation cannot use a version older than its own input proposal. */
+ * before the lower update publishes. */
 function committedUsesUpdate(
   node: Computed<any>,
   update: Transaction,
-  seen = new Set<Signal<any>>(),
-  observations = false
+  seen = new Set<Signal<any>>()
 ): boolean {
   if (seen.has(node)) return false;
   seen.add(node);
   const boundary = boundaries.get(node);
-  if (boundary && boundary._override !== NOT_PENDING) {
-    const input = observations && boundary._statusInput;
-    return (
-      !!input &&
-      ((input._config & CONFIG_HELD && txOf(input) === update) ||
-        committedUsesUpdate(input, update, seen))
-    );
-  }
+  if (boundary && boundary._override !== NOT_PENDING) return false;
   for (const input of committedDependencies(node)) {
-    if (!observations && input._config & CONFIG_HELD && txOf(input) === update) return true;
+    if (input._config & CONFIG_HELD && txOf(input) === update) return true;
     if (
       typeof (input as Computed<any>)._fn === "function" &&
-      committedUsesUpdate(input as Computed<any>, update, seen, observations)
+      committedUsesUpdate(input as Computed<any>, update, seen)
     )
       return true;
   }
@@ -485,23 +476,18 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean | null {
   const frame = heldPosition > ownPosition && unpublishedFrame(reader);
   if (frame) {
     staleReader(reader, holder);
-    // The reader remains private to its creating update. Consume its input's
-    // ready observation without merging the higher publication into that
-    // input; pending/error reads still take the ordinary status path below.
-    // Structural nodes can replace visible content, so they wait for this
-    // output to publish instead of treating its proposal as a private value.
-    // The first render calculation only initializes the detached child;
-    // CONFIG_FRAME also marks render effects, so exempt that first pass.
-    if (committedUsesUpdate(source as Computed<any>, frame, new Set(), true)) {
-      if (
-        reader._config & CONFIG_FRAME &&
-        !(creating === reader && (reader as any)._type === EFFECT_RENDER)
-      )
-        throw new NotReadyError(source);
-      return null;
-    }
-    if (uninitialized) throw new NotReadyError(source);
-    return true;
+    orderPublication = true;
+    // Private calculations retain the creator's input context. A higher
+    // proposal is not an older published input of that context. Preserve
+    // its dependency and replay obligation without merging the two updates.
+    // Structural readers still wait; only a first render initializes private
+    // DOM here. Pending/error proposals take the ordinary status path.
+    if (
+      reader._config & CONFIG_FRAME &&
+      !(creating === reader && (reader as any)._type === EFFECT_RENDER)
+    )
+      throw new NotReadyError(source);
+    return null;
   }
   if (ownPosition > heldPosition) {
     staleReader(reader, holder);
@@ -865,6 +851,9 @@ function retryCalculation(
 }
 
 function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeCalculation): any {
+  // A private frame has no displayed dependency set to preserve. Replace
+  // its publication waits when it recalculates, including untracked reads.
+  if (cleanupReruns && unpublishedFrame(node)) cleanupReruns(node);
   const incoming = flushTransaction;
   const previousPosition = positionOf(incoming);
   const inheritedReads = creatingReads;
@@ -908,6 +897,46 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
 }
 
 // Transactions, rather than ordinary node creation, activate coordination.
+function holdsLifetime(node: Computed<any>, update: Transaction): boolean {
+  // Judge the requests actually holding this node, not every dependency in
+  // its body. A pending observation beside an ordinary pending read does not
+  // turn that ordinary request into an optimistic consequence.
+  const sources = node._x?._pendingSources;
+  const position = positionOf(update);
+  if (!sources) return sourceHoldsLifetime(node, position);
+  for (const source of sources)
+    if (sourceHoldsLifetime(source, position)) return true;
+  return false;
+}
+
+function sourceHoldsLifetime(source: Computed<any>, position: number): boolean {
+  if (source._config & CONFIG_HELD && positionOf(txOf(source)) > position) {
+    // A ready upper publication can finish this flush before correction.
+    // Waiting for its async work, however, cannot extend the lower lifetime.
+    return !(source._statusFlags & STATUS_PENDING) && !blocked(txOf(source));
+  }
+  return !(
+    unpublishedFrame(source) &&
+    currentPosition(source) > position
+  );
+}
+
+function canPublish(update: Transaction): boolean {
+  // Reuse the pending-reader registry: ownership gates the private frame's
+  // attachment, while the recorded higher read gates its publication. This
+  // relation is one-way and deliberately absent from blocked()'s lifetime
+  // judgment. A higher output may publish while the creating action is open.
+  for (const higher of rerunHolders) {
+    if (!liveTx(higher) || positionOf(higher) <= positionOf(update)) continue;
+    for (const reader of higher._reruns ?? []) {
+      if (reader._flags & REACTIVE_DISPOSED) continue;
+      const frame = unpublishedFrame(reader);
+      if (frame && resolveTx(frame) === update) return false;
+    }
+  }
+  return true;
+}
+
 function orderUpdates(updates: Transaction[]): void {
   // Only a ready output with unpublished lower readers needs a landing order.
   // Independent ready updates and ordinary visible readers impose no order.

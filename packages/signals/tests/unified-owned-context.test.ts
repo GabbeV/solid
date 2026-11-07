@@ -111,22 +111,18 @@ for (const depth of [0, 3])
           expect([shown, host.textContent]).toEqual([{ view: 1, detail: 1, mount: false }, ""]);
           mountEnd.resolve();
         } else if (order === "mount-first") {
-          expect([shown, host.textContent]).toEqual([{ view: 0, detail: 0, mount: true }, "1:1:0"]);
+          // This private frame has calculated the higher proposal. Its
+          // publication waits without joining the optimistic action lifetime.
+          expect([shown, host.textContent]).toEqual([{ view: 0, detail: 0, mount: false }, ""]);
           answer.resolve(1);
         }
         await mounting;
         await turn();
         flush();
         if (asyncChild) {
-          // A visible child holds the optimistic proposal; a still-unpublished
-          // child holds its own mounting frame, not the independent guess.
-          if (order === "mount-first")
-            expect([shown, host.textContent]).toEqual([
-              { view: 0, detail: 0, mount: true },
-              "1:1:0"
-            ]);
-          else
-            expect([shown, host.textContent]).toEqual([{ view: 1, detail: 1, mount: false }, ""]);
+          // The private child holds its mounting frame, not the independent
+          // guess. The guess can publish before this child's async completes.
+          expect([shown, host.textContent]).toEqual([{ view: 1, detail: 1, mount: false }, ""]);
           childAnswer.resolve();
           await turn();
           flush();
@@ -298,7 +294,10 @@ for (const order of ["guess-first", "mount-first", "together"] as const)
           yield mountEnd.promise;
         })();
         flush();
-        expect(completed).toEqual([]);
+        // Ready proposals can initialize private children before their first
+        // publication; an actual pending derivation still suspends them.
+        if (readDetail) expect(completed).toEqual([]);
+        else expect(completed).toEqual([1]);
         if (order !== "mount-first") answer.resolve(1);
         if (order !== "guess-first") mountEnd.resolve();
         await turn();
