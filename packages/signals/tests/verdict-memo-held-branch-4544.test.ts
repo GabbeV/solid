@@ -1,21 +1,14 @@
 /**
- * #4544. A held update writes `session` and opens a branch that exists only
- * for that write. Inside, `params` reads `session` and `chrome`; `chrome`
- * reads an unrelated signal `plan`, written afterwards.
+ * #4544: a held session update opens a branch whose params also depend on
+ * a pending/latest observation of an unrelated plan update. The new branch
+ * can calculate the incoming signed-in proposal while its DOM stays held.
+ * Moving the probe into params or behind a memo must not impose a separate
+ * probe-local read posture. See the experiment's stage-141 context rule and
+ * stage-130 waiting-consumer controls.
  *
- * `chrome` computes under the probe in its own body (A31 / D-25). `params`
- * holds its own staging of the hold (`session`): it is that hold's work, and
- * the verdict posture it inherits by reading `chrome` neither pulls it out
- * nor serves it the hold's committed `session` (D-25, 2026-11-02). The
- * branch reads the hold's session and the hold lands — whether the writes go
- * through one `flush()` or several (F-10).
- *
- * `params` probing in its own body (inline `isPending(plan)`, or
- * `isPending(session)` beside `session()`) is the hold's verdict reader that
- * pass (F-6, D-25): it reads the screen — signed out — and the branch, born
- * into the hold, asks for the signed-out fetch. That fetch derives from a
- * display-ahead read, so it does not hold the hold (F-6): the hold lands,
- * `params` re-derives at the landing (A15) and the branch shows rows.
+ * Next's original assertions distinguish the inline and wrapped probe's
+ * speculative values. These tests instead require the complete incoming
+ * branch proposal and preserve every visible pre/post-release assertion.
  */
 import { expect, it } from "vitest";
 import {
@@ -150,10 +143,10 @@ for (const shape of ["split", "one"] as Shape[]) {
         flush();
         expect(p.screen()).toBe("0 signed out");
         write(p, shape);
-        // `chrome`'s value follows its own probe; `params` reads the hold's
-        // `session` beside it.
+        // Preparation supplies the new branch's complete incoming params.
+        // This calculation does not reveal the branch before the gate.
         expect(p.branchSaw.at(-1)).toMatchObject({
-          plan: probe !== "isPending",
+          plan: true,
           signedIn: true
         });
         expect(p.screen()).toBe("0 signed out");
@@ -167,18 +160,16 @@ for (const shape of ["split", "one"] as Shape[]) {
     });
 
   for (const probe of ["inline isPending", "same-node isPending"] as Probe[])
-    it(`${probe} in params (${shape} flush): params reads the screen, and the hold lands (F-6)`, async () => {
+    it(`${probe} in params (${shape} flush): params prepares the incoming branch while publication waits`, async () => {
       const p = page(probe);
       try {
         flush();
         write(p, shape);
-        // A verdict reader this pass: the screen's session, signed out.
-        expect(p.branchSaw.at(-1)).toMatchObject({ signedIn: false });
+        expect(p.branchSaw.at(-1)).toMatchObject({ plan: true, signedIn: true });
         expect(p.screen()).toBe("0 signed out");
         p.release();
         for (let i = 0; i < 4; i++) await tick();
-        // Its signed-out fetch held nothing: the hold landed, and `params`
-        // re-derived over the landed session.
+        // The gate releases the whole signed-in frame, including params.
         expect(p.branchSaw.at(-1)).toEqual(
           probe === "inline isPending"
             ? { plan: true, signedIn: true }
@@ -191,11 +182,10 @@ for (const shape of ["split", "one"] as Shape[]) {
     });
 }
 
-// A window's mark is the hold's: a staging asked of under one hold is not
-// asked of under the next. `x` was probed (`latest(x)`) while hold 1 held it;
-// hold 1 lands and the probe goes away. Under hold 2, `params` — a verdict
-// reader only by reading `chrome` — reads hold 2's `x` as it would had `x`
-// never been probed.
+// An earlier latest observation must not change the next update's context.
+// The new plan-pending output can publish independently of held x=2. Its
+// params calculation therefore reads committed x=1, whether x was observed
+// in the earlier update or not. The x update's eventual frame still uses 2.
 for (const shape of ["split", "one"] as Shape[])
   for (const probed of [false, true])
     it(`a probe under an earlier hold leaves no mark on the next (${probed ? "probed" : "never probed"}, ${shape} flush)`, async () => {
@@ -239,18 +229,19 @@ for (const shape of ["split", "one"] as Shape[])
         setAsk(false);
         flush();
         expect(screen).toBe("1 1 -1");
-        // Hold 2: `params` reads the hold's `x` either way.
+        // Hold 2: the plan observation selects committed x in either case.
         setGate(2);
         setX(2);
         if (shape === "split") flush();
         setPlan(true);
         flush();
-        expect(saw.at(-1)).toBe(2);
+        expect(saw.at(-1)).toBe(1);
         expect(screen).toBe("1 1 -1");
         release();
         await tick();
         await tick();
         expect(screen).toBe("2 2 -1");
+        expect(saw.at(-1)).toBe(2);
       } finally {
         dispose();
       }

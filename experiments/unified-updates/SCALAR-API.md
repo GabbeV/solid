@@ -9,7 +9,8 @@ Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
 Latest suite counts: [stage 155](INTEGRATION-155.md).
-Latest assertion migration: [observation lifetime, stage 154](INTEGRATION-154.md).
+Latest assertion migration: [held-branch observation contexts, stage 156](INTEGRATION-156.md).
+Previous lifetime migration: [stage 154](INTEGRATION-154.md).
 Latest rejected ownership trials: [stage 153](INTEGRATION-153.md).
 Failure inventory: [error publication and collection audit, stage 150](INTEGRATION-150.md).
 Restored collection coverage: [72 Loading cases, stage 151](INTEGRATION-151.md).

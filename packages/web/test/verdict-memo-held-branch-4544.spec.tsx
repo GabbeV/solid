@@ -2,14 +2,10 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  */
-// #4544 through `Show` + `Loading`. `chrome` owns the probe of an unrelated
-// signal (A31 / D-25). `params`, holding the hold's staging of `session`, is
-// that hold's work: the verdict posture it inherits by reading `chrome` does
-// not serve it the committed `session`. The branch the hold opened reads the
-// hold's session and the hold lands, in one `flush()` or several (F-10).
-// A probe in `params`'s own body makes it the hold's verdict reader (F-6):
-// it reads the screen, signed out; the signed-out fetch the branch then asks
-// for holds nothing, the hold lands and `params` re-derives (A15).
+// #4544 through Show + Loading. A new branch prepares the complete incoming
+// params regardless of whether its observation is inline or memo-wrapped.
+// Its old DOM remains visible until the held gate and new content are ready.
+// The scalar fixture and stage-130 controls cover the corresponding contexts.
 import { expect, test } from "vitest";
 import { render } from "@solidjs/web";
 import { createMemo, createSignal, flush, isPending, latest, Loading, Show } from "solid-js";
@@ -82,7 +78,7 @@ for (const shape of ["split", "one"] as Shape[]) {
     test(`${probe} (${shape} flush): the branch the hold opens reads the hold's session and the hold lands`, async () => {
       const p = await arrive(probe, shape);
       try {
-        expect(p.branchSaw.at(-1)).toMatchObject({ plan: probe !== "isPending", signedIn: true });
+        expect(p.branchSaw.at(-1)).toMatchObject({ plan: true, signedIn: true });
         expect(p.el.textContent).toBe("0signed out");
         p.release();
         await tick();
@@ -94,10 +90,10 @@ for (const shape of ["split", "one"] as Shape[]) {
     });
 
   for (const probe of ["inline isPending", "same-node isPending"] as Probe[])
-    test(`${probe} in params (${shape} flush): params reads the screen, and the hold lands (F-6)`, async () => {
+    test(`${probe} in params (${shape} flush): params prepares the incoming branch while publication waits`, async () => {
       const p = await arrive(probe, shape);
       try {
-        expect(p.branchSaw.at(-1)).toMatchObject({ signedIn: false });
+        expect(p.branchSaw.at(-1)).toMatchObject({ plan: true, signedIn: true });
         expect(p.el.textContent).toBe("0signed out");
         p.release();
         for (let i = 0; i < 4; i++) await tick();
