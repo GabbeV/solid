@@ -2,7 +2,7 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint: [transparent latest and eligible async flights, stage 162](INTEGRATION-162.md).
+Current runtime checkpoint: [remaining async waits and failure triage, stage 164](INTEGRATION-164.md).
 Latest rejected trial: [first held values and derived-store result transfer, stage 163](INTEGRATION-163.md).
 Previous creation-context repair: [stage 159](INTEGRATION-159.md).
 Deferred scheduling investigation: [lifetime readiness before optimistic execution, stage 161](INTEGRATION-161.md).
@@ -14,9 +14,9 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [stage 162](INTEGRATION-162.md).
+Latest suite counts: [stage 164](INTEGRATION-164.md).
 Earlier failure inventory: [stage 157](INTEGRATION-157.md).
-Latest assertion migration: [transparent input and context restarts, stage 162](INTEGRATION-162.md).
+Latest assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
 Previous assertion migration: [first-value read checks, stage 158](INTEGRATION-158.md).
 Previous context migration: [stage 156](INTEGRATION-156.md).
 Previous lifetime migration: [stage 154](INTEGRATION-154.md).

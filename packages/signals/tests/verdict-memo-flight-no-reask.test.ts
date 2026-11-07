@@ -1,14 +1,7 @@
-// A memo that reads a verdict memo is a verdict reader (D-25, #4050) without
-// opening a window of its own. When that verdict memo goes pending, none of
-// what an async one read changed: it waits on it like any derivation (F-9),
-// and a pass its hold re-runs is the hold's work, reading plainly (D-25,
-// #3884, verdict.ts `holdWork`), so it asks its next question once, at the
-// landing. Before: `m1` over
-// `m0 = ask(1 + latest(s) + s())` was re-derived when `m0` re-asked, served
-// `m0`'s committed value (A10) — the one it had already derived `m1:5` from —
-// and asked `m1:5` again; that flight held the verdict lane, `m0`'s landing
-// re-ran it as lane work onto the same committed value (a third `m1:5`), and
-// only the landing's re-derive asked `m1:6`.
+// Async derivations downstream of latest and pending observations
+// (#4050, #4393, #4397). The shared engine keeps one eligible flight per
+// memo: context changes can restart an earlier question. These tests pin
+// those transitions, observable publication, and reader-grouping equivalence.
 import { expect, it } from "vitest";
 import {
   createErrorBoundary,
@@ -58,17 +51,12 @@ function holder(s: () => number) {
 }
 
 const expected = {
-  // m0's pass is the frame's (R5, #4365): it asks the frame's question
-  // (`m0:5`). The flush parks, and m0 re-derives in the verdict lane on
-  // `latest(s)` = 2 beside the screen's `s()` = 1 (`m0:4`), with m1 over it
-  // while `h` holds the write (F-6: async derived from a display-ahead read
-  // is the lane's). The landing adopts the frame's `m0:5` flight instead of
-  // asking it again (F-9) and asks m1 once.
-  "latest held": ["m0:5", "m0:4", "m1:5", "m1:6"],
-  // Unheld too: `m1` never resolved (`m0:3` rejected), so `isPending(m1)` of
-  // the lane node throws NotReady (A19 exc. 1, #4362) and the Loading holds
-  // the write like `h` does.
-  "latest unheld": ["m0:5", "m0:4", "m1:5", "m1:6"],
+  // The independently observed h keeps the input open for m0:4/m1:5.
+  // Correction restarts m0:5: there is one eligible flight per memo.
+  "latest held": ["m0:5", "m0:4", "m1:5", "m0:5", "m1:6"],
+  // m1 previously published an error. Pending-only observation does not
+  // hold this recovery, so latest's inactive input propagates ordinarily.
+  "latest unheld": ["m0:5", "m1:6"],
   "plain held": ["m0:5", "m1:6"],
   "plain unheld": ["m0:5", "m1:6"]
 };
@@ -76,7 +64,7 @@ const expected = {
 for (const useLatest of [true, false])
   for (const heldWrite of [true, false]) {
     const name = `${useLatest ? "latest" : "plain"} ${heldWrite ? "held" : "unheld"}`;
-    it(`${name}: an async memo over a verdict memo asks each question once`, async () => {
+    it(`${name}: recovery follows the input lifetime`, async () => {
       const [s, setS] = createSignal(1);
       const asks: string[] = [];
       const ask = (name: string, v: number) => {
@@ -121,10 +109,8 @@ for (const useLatest of [true, false])
     });
   }
 
-// Settled memos, no boundary hold: m0's frame pass asks `m0:5` (R5), the
-// verdict lane shows `m0:4`/`m1:5`, the write's landing adopts the frame's
-// `m0:5` flight, and `m1` waits on it — pending throughout, its next
-// question asked once.
+// With no independent lifetime, correction supersedes the optimistic
+// flight before its answer. The ordinary m1 derivation publishes only 6.
 for (const reader of ["m1()", "[isPending(m1), m1()]"] as const)
   it(`${reader}: a memo over a re-asking verdict memo waits on it, pending`, async () => {
     const [s, setS] = createSignal(1);
@@ -154,8 +140,8 @@ for (const reader of ["m1()", "[isPending(m1), m1()]"] as const)
     setS(2);
     await settle();
     await settle();
-    expect(asks.slice(2)).toEqual(["m0:5", "m0:4", "m1:5", "m1:6"]);
-    if (reader === "m1()") expect(out).toEqual(["4", "5", "6"]);
+    expect(asks.slice(2)).toEqual(["m0:5", "m0:4", "m0:5", "m1:6"]);
+    if (reader === "m1()") expect(out).toEqual(["4", "6"]);
     else {
       expect(out[0]).toBe("false,4");
       expect(out[out.length - 1]).toBe("false,6");
@@ -164,13 +150,10 @@ for (const reader of ["m1()", "[isPending(m1), m1()]"] as const)
     }
   });
 
-// R5 (#4365): the frame's pass of a `latest()` reader asks the frame's
-// question; when the flush parks, the reader re-derives in the verdict lane,
-// and the transaction's landing adopts the frame's flight instead of asking
-// it again (F-9) — whether that flight landed before the transaction or is
-// still in the air.
+// Vary the abandoned ordinary flight's delay. It must not recover after
+// optimistic selection and correction have replaced it (#4365).
 for (const frameMs of [5, 30, 80])
-  it(`a frame flight of ${frameMs}ms is adopted at the landing, asked once`, async () => {
+  it(`an abandoned ordinary flight of ${frameMs}ms cannot replace correction`, async () => {
     const [s, setS] = createSignal(1);
     const asks: string[] = [];
     const ask = (name: string, v: number) => {
@@ -196,19 +179,14 @@ for (const frameMs of [5, 30, 80])
     await settle();
     setS(2);
     for (let i = 0; i < 3; i++) await settle();
-    expect(asks).toEqual(["m0:3", "m1:4", "m0:5", "m0:4", "m1:5", "m1:6"]);
+    expect(asks).toEqual(["m0:3", "m1:4", "m0:5", "m0:4", "m0:5", "m1:6"]);
     expect(out[0]).toBe("false,4");
     expect(out[out.length - 1]).toBe("false,6");
     expect(out.slice(1, -1).every(v => v.startsWith("true,"))).toBe(true);
   });
 
-// Two verdict memos feeding one async memo (#4397 review): `m1` over
-// `m0 = ask(1 + latest(s) + s())` and `m0b = ask(10 * (latest(t) + t()))`,
-// `setS(2)` then `setT(1)` 12ms later. An async memo that opened no window
-// of its own waits on a verdict source going pending like any derivation
-// (F-9), and its hold's re-run of it reads plainly (D-25, verdict.ts
-// `holdWork`), so no question is asked twice, whether `[isPending(m1), m1()]`
-// is read in one render effect or in two (D-25).
+// Two latest-derived memos feed a shared async consequence. The second
+// input changes while the first input's downstream request remains open.
 async function twoVerdicts(grouped: boolean) {
   const [s, setS] = createSignal(1);
   const [t, setT] = createSignal(0);
@@ -259,12 +237,13 @@ async function twoVerdicts(grouped: boolean) {
   return { asks, shown };
 }
 
-// Before: grouped and split alike asked the t lane's `m1:15` four times
-// (F-9; D-25, verdict.ts `holdWork`).
-it("two verdict memos into one async memo: no question asked twice, grouped or split", async () => {
+// Repeated questions are limited to input/optimistic/correction changes.
+// Grouping pending and value reads does not add more requests.
+it("two verdict memos into one async memo: bounded context restarts, grouped or split", async () => {
   const grouped = await twoVerdicts(true);
   const split = await twoVerdicts(false);
-  for (const { asks } of [grouped, split]) expect(new Set(asks).size).toBe(asks.length);
+  for (const { asks } of [grouped, split])
+    expect(asks).toEqual(["m0:5", "m0:4", "m0:5", "m1:6", "m0b:20", "m0b:10", "m0b:20", "m1:26"]);
   expect(grouped.shown).toEqual({ pending: "false", value: "26" });
   expect(split.shown).toEqual(grouped.shown);
 });
@@ -282,19 +261,14 @@ it("two verdict memos into one async memo: grouped asks the questions split does
   expect(grouped.asks).toEqual(split.asks);
 });
 
-// Grouping never changes the result (F-6: `[isPending(x), x()]` in one
-// render effect holds like `x()` alone). Over a write `h` holds, the grouped
-// reader reads `h` as a stale reader of the transaction (A15) and the
-// verdict lane's reveal re-derives it; the transaction's landing must re-run
-// it (the reveal leaves the frame-read mark to the transaction), and a pass
-// served a held node's committed value does not wait on its flight: a reader
-// that went pending on a `refresh()` of `m0` mid-hold wakes when the re-ask
-// lands, without waiting on `h` too, and shows `m1`'s lane answer. `h` holds
-// until the write's other flights have landed.
+// Compare value-only, grouped pending/value, and split bindings. A
+// separately observed h preserves the input lifetime; h read only by the
+// optimistic consumer loses its observer when that consumer changes context.
 type Hold = { land: (rounds?: number) => Promise<void>; release: () => void };
 async function heldShapes(
   f: (l: number, v: number) => number,
-  script: (setS: (v: number) => void, m0: () => number, hold: Hold) => Promise<void>
+  script: (setS: (v: number) => void, m0: () => number, hold: Hold) => Promise<void>,
+  independent: boolean
 ) {
   const shown: Record<string, string[]> = {};
   const asked: Record<string, string[]> = {};
@@ -315,6 +289,7 @@ async function heldShapes(
       const m1 = createMemo(() => ask("m1", 100 + m0()));
       const hold = holder(s);
       const h = hold.h;
+      if (independent) createRenderEffect(h, () => {});
       release = hold.release;
       createLoadingBoundary(
         () => {
@@ -357,87 +332,98 @@ async function heldShapes(
   return { shown, asked };
 }
 
-// Before: `m1:104` was asked three times (F-9; D-25, verdict.ts
-// `holdWork`).
-it("held write: grouped shows m1's lane answer as a value read does", async () => {
-  const { shown, asked } = await heldShapes(
-    (l, v) => 1 + l + v,
-    async setS => {
-      setS(2);
-      flush();
-    }
-  );
-  expect(shown.value).toEqual(["103", "104", "105"]);
-  expect(shown.pair).toEqual(shown.value);
-  expect(shown.split).toEqual(shown.value);
-  // With `latest()`'s pass the frame's (R5, #4393), the held transaction
-  // asks `m0:5` at the write, before the lane's display-ahead `m0:4`.
-  for (const a of Object.values(asked)) expect(a).toEqual(["m0:5", "m0:4", "m1:104", "m1:105"]);
-});
+// Preserve the original grouping assertions, and also exercise a separate
+// observer of h so its lifetime does not depend on the preview consumer.
+it.each([false, true])(
+  "held write: grouped and split agree (independent=%s)",
+  async independent => {
+    const { shown, asked } = await heldShapes(
+      (l, v) => 1 + l + v,
+      async setS => {
+        setS(2);
+        flush();
+      },
+      independent
+    );
+    expect(shown.value).toEqual(["103", "104", "105"]);
+    expect(shown.pair).toEqual(shown.value);
+    expect(shown.split).toEqual(shown.value);
+    // With `latest()`'s pass the frame's (R5, #4393), the held transaction
+    // asks `m0:5` at the write, before the lane's display-ahead `m0:4`.
+    for (const a of Object.values(asked))
+      expect(a).toEqual(["m0:5", "m0:4", "m1:104", "m0:5", "m1:105"]);
+  }
+);
 
-it("held write landing equal: grouped shows m1's lane answer as a value read does", async () => {
-  const { shown } = await heldShapes(
-    (l, v) => l - v + 3,
-    async setS => {
-      setS(2);
-      flush();
-    }
-  );
-  expect(shown.value).toEqual(["103", "104", "103"]);
-  expect(shown.pair).toEqual(shown.value);
-  expect(shown.split).toEqual(shown.value);
-});
+it.each([false, true])(
+  "held write landing equal: grouped and split agree (independent=%s)",
+  async independent => {
+    const { shown } = await heldShapes(
+      (l, v) => l - v + 3,
+      async setS => {
+        setS(2);
+        flush();
+      },
+      independent
+    );
+    expect(shown.value).toEqual(["103", "104", "103"]);
+    expect(shown.pair).toEqual(shown.value);
+    expect(shown.split).toEqual(shown.value);
+  }
+);
 
-it("held write, refresh after it settles: grouped shows m1's lane answer as a value read does", async () => {
-  const { shown } = await heldShapes(
-    (l, v) => 1 + l + v,
-    async (setS, m0, { land, release }) => {
-      setS(2);
-      flush();
-      await land();
-      release();
-      await land();
-      refresh(m0);
-      flush();
-    }
-  );
-  expect(shown.value).toEqual(["103", "104", "105"]);
-  expect(shown.pair).toEqual(shown.value);
-  expect(shown.split).toEqual(shown.value);
-});
+it.each([false, true])(
+  "held write, refresh after settling: grouped and split agree (independent=%s)",
+  async independent => {
+    const { shown } = await heldShapes(
+      (l, v) => 1 + l + v,
+      async (setS, m0, { land, release }) => {
+        setS(2);
+        flush();
+        await land();
+        release();
+        await land();
+        refresh(m0);
+        flush();
+      },
+      independent
+    );
+    expect(shown.value).toEqual(["103", "104", "105"]);
+    expect(shown.pair).toEqual(shown.value);
+    expect(shown.split).toEqual(shown.value);
+  }
+);
 
 // The refresh comes once `m0:4` has landed, with the lane's `m1:104` up.
 // Before: `m1:104` was asked four times (F-9; D-25, verdict.ts
 // `holdWork`).
-it("held write, refresh mid-hold: every shape shows m1's lane answer", async () => {
-  const { shown, asked } = await heldShapes(
-    (l, v) => 1 + l + v,
-    async (setS, m0, { land }) => {
-      setS(2);
-      flush();
-      await land(1);
-      refresh(m0);
-      flush();
-    }
-  );
-  expect(shown.value).toEqual(["103", "104", "105"]);
-  expect(shown.pair).toEqual(shown.value);
-  expect(shown.split).toEqual(shown.value);
-  // The transaction's `m0:5` at the write first (R5, #4393), then the
-  // refresh re-asks both of `m0`'s questions (A19 exc. 2).
-  for (const a of Object.values(asked))
-    expect(a).toEqual(["m0:5", "m0:4", "m1:104", "m0:4", "m0:5", "m1:105"]);
-});
+it.each([false, true])(
+  "held write, refresh mid-hold: grouped and split agree (independent=%s)",
+  async independent => {
+    const { shown, asked } = await heldShapes(
+      (l, v) => 1 + l + v,
+      async (setS, m0, { land }) => {
+        setS(2);
+        flush();
+        await land(1);
+        refresh(m0);
+        flush();
+      },
+      independent
+    );
+    expect(shown.value).toEqual(["103", "104", "105"]);
+    expect(shown.pair).toEqual(shown.value);
+    expect(shown.split).toEqual(shown.value);
+    // The transaction's `m0:5` at the write first (R5, #4393), then the
+    // refresh re-asks both of `m0`'s questions (A19 exc. 2).
+    for (const a of Object.values(asked))
+      expect(a).toEqual(["m0:5", "m0:4", "m1:104", "m0:4", "m0:5", "m1:105"]);
+  }
+);
 
-// The `latest()` read extracted into a sync memo (D-22): `v` is a verdict
-// memo, and `m1`, an async memo over `v()` and `s()`, reads its value, so it
-// is a verdict reader itself (D-25, #4050), as the inline `latest(s)` makes
-// it. `m1`'s pass at the write is the frame's (R5, #4393): it asks the
-// frame's `m1:220`. The verdict lane asks `m1:120` (`v`'s lane value, the
-// screen's `s()`), revealed ahead of the transaction (F-6: v120 then v220),
-// and the landing adopts the frame's `m1:220` — each once, as inline (F-9: a
-// re-ask of the same question is no new question). A later write before the
-// landing is a new question, asked once.
+// Extracting latest into a memo does not change the calculation context.
+// No independent input hold exists: the optimistic flight is superseded,
+// then a later ordinary write supersedes the correction if it is still up.
 async function extracted(reader: "value" | "pair" | "split", second: boolean, inline = false) {
   // Flights land only when the test lands them, so the later write always
   // comes while the write's flights are up, at any runner speed.
@@ -498,25 +484,19 @@ async function extracted(reader: "value" | "pair" | "split", second: boolean, in
 }
 
 for (const reader of ["value", "pair", "split"] as const)
-  it(`${reader}: an async memo over a latest() memo asks each question once, as inline`, async () => {
+  it(`${reader}: extracted latest has the same eligible flights and publications as inline`, async () => {
     for (const inline of [false, true]) {
       const one = await extracted(reader, false, inline);
-      expect(one.asks).toEqual(["m1:220", "m1:120"]);
-      expect(one.values).toEqual(["v110", "v120", "v220"]);
+      expect(one.asks).toEqual(["m1:220", "m1:120", "m1:220"]);
+      expect(one.values).toEqual(["v110", "v220"]);
       const two = await extracted(reader, true, inline);
-      expect(two.asks).toEqual(["m1:220", "m1:120", "m1:125", "m1:225"]);
-      expect(two.values).toEqual(["v110", "v125", "v225"]);
+      expect(two.asks).toEqual(["m1:220", "m1:120", "m1:220", "m1:225"]);
+      expect(two.values).toEqual(["v110", "v225"]);
     }
   });
 
-// A reader disposed and mounted again while the write's lane answer is in
-// flight: mounted mid-hold, it shows what is on the screen and reveals with
-// the hold (D-26), and grouping `[isPending(m1), m1()]` in one render effect
-// holds like `m1()` alone (F-6): no shape shows a lane answer the screen
-// never showed. m0's pass at the write is the frame's (R5, #4393): it asks
-// `m0:5` first, then re-derives in the verdict lane (`m0:4`). The unmount and
-// the remount come once `m0:4` has landed, with the lane's `m1:5` up; a later
-// write comes right after the remount.
+// Dispose and remount a reader during replacement work, optionally followed
+// by another input write. A remount must not revive an abandoned answer.
 async function remounted(reader: "value" | "pair" | "split", later: boolean) {
   const { land, fly } = inFlight();
   const [s, setS] = createSignal(1);
@@ -572,15 +552,14 @@ async function remounted(reader: "value" | "pair" | "split", later: boolean) {
   return { asks, out };
 }
 
-// No question is asked twice; no shape shows the lane's `m1:5`, which the
-// screen never showed; each ends on the landing.
+// Remounting cannot revive an expired optimistic answer. The original
+// ordinary flight was superseded too; only the final correction may publish.
 for (const later of [false, true])
   it(`remounted mid-flight${later ? ", then a write" : ""}: every shape shows the screen, then the landing`, async () => {
     const last = later ? 11 : 6;
     for (const reader of ["value", "pair", "split"] as const) {
       const { asks, out } = await remounted(reader, later);
-      expect(new Set(asks).size).toBe(asks.length);
-      expect(asks.slice(0, 3)).toEqual(["m0:5", "m0:4", "m1:5"]);
+      expect(asks).toEqual(["m0:5", "m0:4", "m0:5", "m1:6", ...(later ? ["m1:11"] : [])]);
       expect(asks.at(-1)).toBe(`m1:${last}`);
       const values = out
         .map(x => x.slice(x.indexOf(",") + 1).replace(/^[vp]/, ""))
@@ -636,10 +615,9 @@ it("own window: an async pending/latest answer is superseded when its input fini
   expect(out).toEqual(["false:1", "false:2"]);
 });
 
-// `m1`, async, over `latest(m0)` opens a window of its own (D-25): it asks
-// `l1` at the write, `m0`'s flight up, and `l2` once it lands, and
-// `[isPending(m1), m1()]` in one render effect shows the screen, then `l2`'s
-// answer, never pending — `l1`'s answer is the screen's (F-6).
+// An unchanged latest value does not re-ask l1 merely because its input
+// started a request. Once latest publishes 2, m1's new request is pending
+// until l2 answers; its ordinary displayed value stays 1 in the meantime.
 it("own window: an async memo over latest() of an async memo, read with isPending() beside it", async () => {
   const { land, fly } = inFlight();
   const [s, setS] = createSignal(1);
@@ -673,8 +651,8 @@ it("own window: an async memo over latest() of an async memo, read with isPendin
   flush();
   await land();
   dispose();
-  expect(asks).toEqual(["m0:2", "l1", "l2"]);
-  expect(out).toEqual(["false,1", "false,2"]);
+  expect(asks).toEqual(["m0:2", "l2"]);
+  expect(out).toEqual(["false,1", "true,1", "false,2"]);
 });
 
 // An error is an answer (F-1): after `m1` throws on `m0`'s 5, its pass left

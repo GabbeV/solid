@@ -360,6 +360,10 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
     const errored = node._statusFlags & STATUS_ERROR;
     if (remaining) {
       if (!errored) setPendingError(node, remaining);
+      // Adoption can leave a wait inherited from a lower update. Once this
+      // source settles, let the reader judge the remaining dependency in
+      // its current context instead of keeping that obsolete wait alive.
+      layerStatus?.(node, remaining);
     } else {
       node._statusFlags &= ~STATUS_PENDING;
       if (!errored) setPendingError(node);
