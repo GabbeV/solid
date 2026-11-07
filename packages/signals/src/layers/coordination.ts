@@ -5,7 +5,8 @@
  * Updates at every depth use the ordinary scheduler and publication path.
  */
 import { releaseFlightTeardown } from "../core/async.js";
-import { computed } from "../core/core.js";
+import { clearThrownRead } from "../core/dev.js";
+import { computed, tracking } from "../core/core.js";
 import { link } from "../core/graph.js";
 import { NotReadyError } from "../core/error.js";
 import { enqueueSub } from "../core/heap.js";
@@ -47,6 +48,7 @@ import {
   holdNode,
   holdQueuedProposals,
   recomputeInUpdate,
+  setCalculationUpdate,
   hasUnheldProposals,
   insertSubs,
   joinFuture,
@@ -142,6 +144,9 @@ export function positionOf(update: Transaction | null): number {
 let releasingInput: Transaction | null = null;
 let evaluation: Computed<any> | null = null;
 let evaluationReads: Set<Transaction> | null = null;
+// Untracked reads select a calculation context without adding subscriptions.
+// Keep their discovered depth only for this attempt, not on ordinary nodes.
+let evaluationPosition = 0;
 let retryEvaluation = false;
 let creating: Computed<any> | null = null;
 // Only a new child consuming several distinct holds needs deferred admission.
@@ -214,7 +219,7 @@ function enableCoordination(): void {
   setLayerCompute(computeLayer, rerunLayer, readContext, deferJoin, detachedOutput);
 }
 
-function isChildUpdate(update: Transaction): boolean {
+function isChildUpdate(update: Transaction | null): boolean {
   return positionOf(update) > 0;
 }
 
@@ -394,7 +399,10 @@ function mergeLayers(from: Transaction, into: Transaction): void {
 }
 
 function includesBoundary(reader: Computed<any>, holder: Transaction): boolean {
-  return currentPosition(reader) > positionOf(holder);
+  return (
+    Math.max(currentPosition(reader), evaluation === reader ? evaluationPosition : 0) >
+    positionOf(holder)
+  );
 }
 
 /** A new owned frame belongs to its creator's proposal until that creator
@@ -478,7 +486,7 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
       (node as any)._type ||
       (evaluation ? detachedOutput(node) : globalQueue._running || flushTransaction)
     )
-      return false;
+      return scopedCalculation(node, flushTransaction, create, fromHeap);
     const previous = creating;
     creating = node;
     // A scope isolates discovery and staging; it is not itself a transaction.
@@ -510,15 +518,18 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
     return true;
   }
   if ((node as any)._type) {
-    if (!(node._flags & REACTIVE_LAYER_EFFECT)) return false;
+    if (!(node._flags & REACTIVE_LAYER_EFFECT))
+      return scopedCalculation(node, flushTransaction, false, fromHeap);
     node._flags &= ~REACTIVE_LAYER_EFFECT;
   }
-  const own = txOf(node);
-  if (!isChildUpdate(own)) return false;
+  const own = node._config & CONFIG_HELD ? txOf(node) : null;
+  if (!isChildUpdate(own)) return scopedCalculation(node, flushTransaction, false, fromHeap);
   if (!flushTransaction && hasUnheldProposals()) joinFuture(null);
   const incoming = flushTransaction && resolveTx(flushTransaction);
-  if (incoming === own || (incoming && incoming === releasingInput)) return false;
-  if (positionOf(incoming) >= positionOf(own)) return false;
+  if (incoming === own || (incoming && incoming === releasingInput))
+    return scopedCalculation(node, flushTransaction, false, fromHeap);
+  if (positionOf(incoming) >= positionOf(own))
+    return scopedCalculation(node, flushTransaction, false, fromHeap);
   if (incoming) holdQueuedProposals(incoming);
   recomputeInUpdate(node, own, true, false, fromHeap);
   // The displayed frame can still depend on the notifying update even when
@@ -529,6 +540,16 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
   if (incoming && committedUsesUpdate(node, resolveTx(incoming))) {
     queueRerun(incoming, node);
   }
+  return true;
+}
+
+function scopedCalculation(
+  node: Computed<any>,
+  update: Transaction | null,
+  create: boolean,
+  fromHeap: boolean
+): true {
+  recomputeInUpdate(node, update, false, create, fromHeap, true);
   return true;
 }
 
@@ -550,7 +571,14 @@ function currentPosition(node: Signal<any>, seen = new Set<Signal<any>>()): numb
   if (seen.has(node)) return 0;
   seen.add(node);
   const boundary = boundaries.get(node);
-  if (boundary && boundary._override !== NOT_PENDING) return boundary._position ?? 1;
+  // A settled observation can retain its selector (pending=false) without
+  // retaining an update context. Active overrides keep their frozen depth.
+  if (
+    boundary &&
+    boundary._override !== NOT_PENDING &&
+    (node._config & CONFIG_HELD || inputUpdate(boundary))
+  )
+    return boundary._position ?? 1;
   const computed = node as Computed<any>;
   let position = 0;
   for (let edge = computed._deps; edge; edge = edge._nextDep)
@@ -559,8 +587,30 @@ function currentPosition(node: Signal<any>, seen = new Set<Signal<any>>()): numb
   return position;
 }
 
-function readContext(reader: Computed<any>, _source: Computed<any>): void {
-  if (evaluation !== reader || !evaluationReads) return;
+function readContext(reader: Computed<any>, source: Computed<any>): void {
+  if (evaluation !== reader) return;
+  if (!tracking) evaluationPosition = Math.max(evaluationPosition, currentPosition(source));
+  // A read in the update already being executed bypasses deferred joins.
+  // An untracked boundary can still require leaving that update and retrying
+  // the entire body. Publication preparation has explicitly selected the
+  // incoming update instead: it consumes ready inputs beside published outputs.
+  if (
+    evaluationPosition &&
+    evaluationPosition > positionOf(flushTransaction) &&
+    flushTransaction &&
+    resolveTx(flushTransaction) !== (releasingInput && resolveTx(releasingInput)) &&
+    !unpublishedFrame(reader)
+  ) {
+    holdQueuedProposals(resolveTx(flushTransaction));
+    const update = newTransaction(false);
+    update._level = evaluationPosition;
+    if (adoptOutput(reader, update)) {
+      setCalculationUpdate(update);
+      retryEvaluation = true;
+      throw RETRY;
+    }
+  }
+  if (!evaluationReads) return;
   const ownPosition = positionOf(flushTransaction);
   let depth: number | undefined;
   for (const holder of evaluationReads) {
@@ -568,7 +618,7 @@ function readContext(reader: Computed<any>, _source: Computed<any>): void {
     if (flushTransaction && parent === resolveTx(flushTransaction)) continue;
     const heldPosition = positionOf(parent);
     if (ownPosition > 0 && heldPosition >= ownPosition) continue;
-    if ((depth ??= currentPosition(reader)) <= heldPosition) continue;
+    if ((depth ??= Math.max(currentPosition(reader), evaluationPosition)) <= heldPosition) continue;
     staleReader(reader, parent);
     joinFuture(null);
     const update = resolveTx(flushTransaction!);
@@ -661,8 +711,10 @@ function retryCalculation(
     node._depsTail = null;
     node._depGen++;
     evaluationReads = null;
+    evaluationPosition = 0;
     retryEvaluation = false;
     result = undefined;
+    if (__DEV__) clearThrownRead(node);
     try {
       const previousFlight = node._x?._inFlight;
       result = node._fn(previous);
@@ -678,11 +730,13 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
   const incoming = flushTransaction;
   const previousPosition = positionOf(incoming);
   const outer = evaluation,
-    outerRetry = retryEvaluation;
+    outerRetry = retryEvaluation,
+    outerPosition = evaluationPosition;
   let outerReads = evaluationReads;
   if (!outer) creationReads = null;
   evaluation = node;
   evaluationReads = null;
+  evaluationPosition = 0;
   retryEvaluation = false;
   try {
     let result: any;
@@ -703,6 +757,7 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
     } finally {
       evaluation = outer;
       evaluationReads = outerReads;
+      evaluationPosition = outerPosition;
       retryEvaluation = outerRetry;
       if (!outer) creationReads = null;
     }

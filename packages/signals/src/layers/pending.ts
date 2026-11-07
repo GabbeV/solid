@@ -7,8 +7,10 @@ import {
   prepareComputed,
   verdict,
   setVerdict,
-  setStrictRead
+  setStrictRead,
+  untrack
 } from "../core/core.js";
+import { forgetThrownRead } from "../core/dev.js";
 import { link } from "../core/graph.js";
 import { NotReadyError } from "../core/error.js";
 import { quietPending } from "../core/async.js";
@@ -206,32 +208,37 @@ function probe(source: Signal<any>, window: { found: boolean }): unknown {
   // The output is an ordinary read, so an outer observation sees this
   // pending boolean. The callback's control flow still reads the source.
   window.found = readPending(source as Computed<any>) || window.found;
-  // A callback needs the last value for control flow, not a value read that
-  // joins the request it is probing. The pending output already subscribes
-  // to this request and wakes the callback when its answer becomes available.
+  // The output read selects this calculation's update context. Callback
+  // control flow then uses the same ordinary read rules as the whole reader.
   const status = (source as Computed<any>)._statusFlags;
-  // A ready answer can still be held. Its readiness must not switch callback
-  // branches to the proposal before publication, including under untrack.
-  // The pending output can describe a staged first answer's replacement.
-  // Its callback may use that answer too, without rejoining the input hold.
+  // A first answer can be staged beneath its pending replacement. There is
+  // no committed value for an initial observation to use in that case.
   if (
-    (status & STATUS_PENDING || source._config & CONFIG_HELD) &&
-    (!(status & STATUS_UNINITIALIZED) || source._pendingValue !== NOT_PENDING)
+    status & STATUS_UNINITIALIZED &&
+    status & STATUS_PENDING &&
+    source._pendingValue !== NOT_PENDING
   )
-    return status & STATUS_UNINITIALIZED ? source._pendingValue : source._value;
+    return source._pendingValue;
   const previous = verdict;
   // The observation above is the user's read. This second read only drives
   // callback control flow; reporting it too duplicates the same diagnostic.
   const strict = __DEV__ ? setStrictRead(false) : false;
   setVerdict(null);
   try {
-    return read(source);
+    // A pending question supplies its own wakeup. Its callback must not add
+    // value demand to the held input merely to select a branch. Settled reads
+    // remain tracked so changing a branch selector can ask a new question.
+    return source._config & CONFIG_HELD || status & STATUS_PENDING
+      ? untrack(() => read(source))
+      : read(source);
   } catch (error) {
     if (
       error instanceof NotReadyError &&
       !((source as Computed<any>)._statusFlags & STATUS_UNINITIALIZED)
-    )
+    ) {
+      if (__DEV__) forgetThrownRead();
       return source._value;
+    }
     throw error;
   } finally {
     setVerdict(previous);

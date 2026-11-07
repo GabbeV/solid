@@ -394,12 +394,7 @@ function normalizeCalculation(el: Computed<any>, result: any, previousFlight: un
 }
 
 export function recompute(el: Computed<any>, create: boolean = false, fromHeap = false): void {
-  if (
-    layerRecompute &&
-    (create || el._config & CONFIG_HELD) &&
-    layerRecompute(el, create, fromHeap)
-  )
-    return;
+  if (layerRecompute && layerRecompute(el, create, fromHeap)) return;
   recomputeBody(el, create);
 }
 

@@ -65,7 +65,7 @@ for (const form of ["direct", "callback", "memo"] as const)
         expect(frames).toEqual([
           [0, 0, false, "0:false"],
           [0, 0, true, tracked ? "0:true" : "0:false"],
-          [0, 0, true, tracked ? "0:true" : "0:false"],
+          [0, 0, true, "0:true"],
           [1, 1, false, tracked ? "1:false" : "1:true"]
         ]);
       } finally {

@@ -8,7 +8,8 @@ import {
   createRoot,
   createSignal,
   flush,
-  onCleanup
+  onCleanup,
+  untrack
 } from "../src/index.js";
 
 function gate<T>() {
@@ -75,77 +76,87 @@ for (const depth of [2, 5])
   }
 
 for (const reverse of [false, true])
-  for (const asynchronous of [false, true]) {
-    it(`restarts before a completed body sees mixed input versions (reverse=${reverse}, async=${asynchronous})`, async () => {
-      const end = gate<void>(),
-        requests: { key: string; resolve(value: string): void }[] = [];
-      const bodies: number[][] = [],
-        owners: { cleaned: number }[] = [];
-      let setX!: (n: number) => number, guess!: (n: number) => number;
-      const display = document.createElement("span");
-      document.body.append(display);
-      createRoot(dispose => {
-        disposals.push(dispose);
-        const [x, writeX] = createSignal(0),
-          [view, writeView] = createOptimistic(() => 0);
-        setX = writeX;
-        guess = writeView;
-        const calculate = () => {
-          const owner = { cleaned: 0 };
-          owners.push(owner);
-          onCleanup(() => owner.cleaned++);
-          let a: number, b: number;
-          if (reverse) {
-            b = view();
-            a = x();
-          } else {
-            a = x();
-            b = view();
-          }
-          bodies.push([a, b, x()]);
-          if (!a && !b) return "0:0";
-          const request = gate<string>();
-          requests.push({ key: `${a}:${b}`, resolve: request.resolve });
-          return request.promise;
-        };
-        const result = createMemo(asynchronous ? async () => calculate() : calculate);
-        createRenderEffect(
-          result,
-          value => {
-            display.textContent = value;
-          },
-          { schedule: true }
-        );
-      });
-      await turn();
-      flush();
-      const running = action(function* () {
-        setX(1);
-        guess(10);
-        yield end.promise;
-      })();
-      flush();
-      try {
-        for (const request of requests) request.resolve(request.key);
+  for (const asynchronous of [false, true])
+    for (const tracked of [true, false]) {
+      it(`restarts before a completed body sees mixed input versions (reverse=${reverse}, async=${asynchronous})${tracked ? "" : " (untracked override)"}`, async () => {
+        const end = gate<void>(),
+          requests: { key: string; resolve(value: string): void }[] = [];
+        const bodies: number[][] = [],
+          owners: { cleaned: number }[] = [];
+        let setX!: (n: number) => number, guess!: (n: number) => number, rerun!: () => void;
+        const display = document.createElement("span");
+        document.body.append(display);
+        createRoot(dispose => {
+          disposals.push(dispose);
+          const [x, writeX] = createSignal(0),
+            [view, writeView] = createOptimistic(() => 0);
+          const [revision, setRevision] = createSignal(0);
+          rerun = () => setRevision(n => n + 1);
+          setX = writeX;
+          guess = writeView;
+          const calculate = () => {
+            revision();
+            const owner = { cleaned: 0 };
+            owners.push(owner);
+            onCleanup(() => owner.cleaned++);
+            let a: number, b: number;
+            if (reverse) {
+              b = tracked ? view() : untrack(view);
+              a = x();
+            } else {
+              a = x();
+              b = tracked ? view() : untrack(view);
+            }
+            bodies.push([a, b, x()]);
+            if (!a && !b) return "0:0";
+            const request = gate<string>();
+            requests.push({ key: `${a}:${b}`, resolve: request.resolve });
+            return request.promise;
+          };
+          const result = createMemo(asynchronous ? async () => calculate() : calculate);
+          createRenderEffect(
+            result,
+            value => {
+              display.textContent = value;
+            },
+            { schedule: true }
+          );
+        });
         await turn();
         flush();
-        expect(display.textContent).toBe("0:10");
-        expect(bodies.every(([a, , again]) => a === again)).toBe(true);
-        expect(requests.some(request => request.key === "1:10")).toBe(false);
-      } finally {
-        end.resolve();
-        await running;
-        for (let i = 0; i < 4; i++) {
+        const running = action(function* () {
+          setX(1);
+          guess(10);
+          yield end.promise;
+        })();
+        flush();
+        // An untracked snapshot is not notified by the guess. Ask again
+        // after the output has published, while the lower input stays held.
+        if (!tracked) {
+          rerun();
+          flush();
+        }
+        try {
           for (const request of requests) request.resolve(request.key);
           await turn();
           flush();
+          expect(display.textContent).toBe("0:10");
+          expect(bodies.every(([a, , again]) => a === again)).toBe(true);
+          expect(requests.some(request => request.key === "1:10")).toBe(false);
+        } finally {
+          end.resolve();
+          await running;
+          for (let i = 0; i < 4; i++) {
+            for (const request of requests) request.resolve(request.key);
+            await turn();
+            flush();
+          }
+          for (const dispose of disposals.splice(0)) dispose();
+          flush();
         }
-        for (const dispose of disposals.splice(0)) dispose();
-        flush();
-      }
-      expect(owners.every(owner => owner.cleaned === 1)).toBe(true);
-    });
-  }
+        expect(owners.every(owner => owner.cleaned === 1)).toBe(true);
+      });
+    }
 
 it("hidden input discovery preserves the already selected peer request", async () => {
   const enabledGate = gate<boolean>(),

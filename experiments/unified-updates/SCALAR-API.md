@@ -2,7 +2,8 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint and failure inventory: [held latest error publication choice, stage 134](INTEGRATION-134.md).
+Current runtime checkpoint and failure comparison: [common observation context, stage 141](INTEGRATION-141.md).
+Earlier error publication checkpoint: [held latest error publication choice, stage 134](INTEGRATION-134.md).
 Previous runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
 Latest accepted lifetime ruling: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
 Ruling evidence: [async pending-badge retirement, stage 126](INTEGRATION-126.md).
@@ -179,6 +180,14 @@ an output proposal. A repeated guess can be an output proposal; `latest` exposes
 it through its own publication, which ordinary async consequences can hold.
 Direct accessors and wrapped reads share one lazily created output per source.
 The latest output passes through ordinary settled synchronous updates.
+
+Observation reads select the whole calculation's update context, including
+under `untrack`. Discovering a higher output can restart the calculation before
+it mixes ordinary input versions. Pending callbacks use that same context for
+control-flow values, and promise-returning readers have no special replay
+exclusion. `untrack` still suppresses subscriptions: a memo-wrapped snapshot can
+retain its sampled boolean until another dependency causes a rerun. See
+[stage 141](INTEGRATION-141.md) for executable timelines and changed test results.
 
 `isPending(() => latest(x))` describes that latest output, including unresolved
 input work. `latest(() => isPending(x))` observes the pending boolean's proposal.

@@ -1582,34 +1582,48 @@ export function hasUnheldProposals(): boolean {
   return false;
 }
 
+/** Select a retry's context inside recomputeInUpdate's local scope. */
+let calculationForked = false;
+export function setCalculationUpdate(update: Transaction): void {
+  calculationForked = true;
+  flushTransaction = update;
+  globalQueue._queues = update._queues;
+}
+
 /** Recompute within an existing update without merging the notifying update
  * merely because it reached this node. A null scope lets a creation acquire
- * its own hold without joining its caller. Actual proposal reads can merge. */
+ * its own hold without joining its caller. Actual proposal reads can merge.
+ * An inherited scope preserves ordinary scheduling until a read forks its
+ * calculation. Only that fork needs separate queues and per-pass parking. */
 export function recomputeInUpdate(
   node: Computed<any>, update: Transaction | null,
-  prepare = false, create = false, fromHeap = false
+  prepare = false, create = false, fromHeap = false, inherit = false
 ): void {
   const incoming = flushTransaction;
+  const previousFork = calculationForked;
+  calculationForked = false;
   let start = pendingNodes.length;
   const parent = node._parent;
   // Only the heap's own visit may drain subsequent entries. A pull during a
   // calculation or cleanup must return to its caller before other heap work.
   // Root-level peers have no unpublished computed owner to select a different
   // frame. Other owners and ambient updates keep the individual scope path.
-  const batch = !LEGACY_LANES && fromHeap && !create && update !== null && incoming === null &&
+  const batch = !inherit && !LEGACY_LANES && fromHeap && !create && update !== null && incoming === null &&
     (parent === null || ((parent as Root)._root && !(parent as Root)._parentComputed));
   const previousPreparation = preparingUpdate;
   const queues = globalQueue._queues;
   const ownedQueues = incoming !== null && queues === incoming._queues;
   flushTransaction = update;
-  preparingUpdate = prepare && update && !blocked(update) ? update : null;
-  globalQueue._queues = update ? update._queues : queues;
+  if (!inherit) {
+    preparingUpdate = prepare && update && !blocked(update) ? update : null;
+    globalQueue._queues = update ? update._queues : queues;
+  }
   try {
     for (;;) {
       try {
         recomputeBody(node, create);
       } finally {
-        if (flushTransaction) {
+        if (flushTransaction && (!inherit || calculationForked)) {
           // Keep the usual per-calculation parking boundary. Only the scope
           // setup is shared; writes and new children are held before proceeding.
           if (pendingNodes.length === start + 1 && pendingNodes[start] === node &&
@@ -1640,7 +1654,8 @@ export function recomputeInUpdate(
   } finally {
     globalQueue._queues = ownedQueues ? resolveTx(incoming!)._queues : queues;
     preparingUpdate = previousPreparation;
-    flushTransaction = incoming && resolveTx(incoming);
+    if (!inherit || calculationForked) flushTransaction = incoming && resolveTx(incoming);
+    calculationForked = previousFork;
   }
 }
 
