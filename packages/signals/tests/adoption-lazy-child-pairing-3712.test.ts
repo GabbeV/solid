@@ -10,6 +10,7 @@ import {
   flush,
   isPending,
   latest,
+  NotReadyError,
   untrack
 } from "../src/index.js";
 const tick = () => new Promise<void>(r => setTimeout(r, 0));
@@ -133,13 +134,16 @@ describe("#3712 edges", () => {
       createRenderEffect(ver, () => {});
     });
     flush();
-    // Born held (D-2): its plain read throws until the commit; latest sees the staging.
-    expect(() => ver()).toThrow();
-    expect(latest(ver)).toBe(1);
+    // Neither accessor has published a first value. Imperative reads share
+    // the committed-view rule; latest does not expose an unpublished first
+    // proposal merely because a handler asks for it.
+    expect(() => ver()).toThrow(NotReadyError);
+    expect(() => latest(ver)).toThrow(NotReadyError);
     s.gate.resolve();
     await s.p;
     flush();
     expect(ver()).toBe(1);
+    expect(latest(ver)).toBe(1);
     expect(isPending(ver)).toBe(false);
     s.dispose();
   });
