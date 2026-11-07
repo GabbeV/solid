@@ -38,9 +38,10 @@ test("a mainline effect reading a held lane runs at the lane's reveal, with its 
   // B's derivation settles when the test opens it, not on a timer: under CI
   // load a timer could fire before the mount-time assertion below.
   let openB!: () => void;
-  const slowB = createMemo(() =>
-    b() === 0 ? 0 : new Promise<void>(r => (openB = r)).then(() => b())
-  );
+  const slowB = createMemo(() => {
+    const value = b();
+    return value === 0 ? value : new Promise<void>(r => (openB = r)).then(() => value);
+  });
   const log: [string, number, string][] = [];
   function Child() {
     createRenderEffect(
@@ -80,12 +81,16 @@ test("a mainline effect reading a held lane runs at the lane's reveal, with its 
   openB();
   await wait(5);
   flush();
-  // The reveal: the lane's runs, with the screen that shows `1`.
-  expect(log).toEqual([
-    ["render", 0, "<p>0</p>"],
-    ["user", 1, "<p>1</p><i>c0</i>"],
-    ["render", 1, "<p>1</p><i>c0</i>"]
+  // The reveal: user callbacks follow the complete render publication.
+  // Sibling render callbacks have no ordering guarantee, so their reads of
+  // root.innerHTML do not pin the order of the compiler's DOM bindings.
+  expect(log.map(([kind, value]) => [kind, value])).toEqual([
+    ["render", 0],
+    ["render", 1],
+    ["user", 1]
   ]);
+  expect(log.filter(([kind]) => kind === "user")).toEqual([["user", 1, "<p>1</p><i>c1</i>"]]);
+  expect(strip(root.innerHTML)).toBe("<p>1</p><i>c1</i>");
   gate();
   await wait(5);
   flush();

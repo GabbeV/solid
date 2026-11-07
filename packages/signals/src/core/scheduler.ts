@@ -1454,23 +1454,33 @@ function land(u: Transaction): void {
   // Old children die in the commits (cleanups first), then the stashed
   // effects run ahead of this flush's own. A node a lane took over since
   // (a guess written over the staged truth) is the lane's to land.
-  if (LEGACY_LANES) {
-    for (let i = 0; i < u._nodes.length; i++) {
-      const n = u._nodes[i];
-      if (n._x!._transaction === null || txOf(n) !== u) continue;
-      n._x!._transaction = null;
-      commitPendingNode(n);
+  // If stale readers still need a pass, callbacks queued by these commits
+  // wait with the callbacks already held by the update. Both belong to the
+  // same publication; releasing only the old queue can run a new user effect
+  // before its subtree's attachment and render callbacks.
+  const queues = globalQueue._queues;
+  if (frame) globalQueue._queues = u._queues;
+  try {
+    if (LEGACY_LANES) {
+      for (let i = 0; i < u._nodes.length; i++) {
+        const n = u._nodes[i];
+        if (n._x!._transaction === null || txOf(n) !== u) continue;
+        n._x!._transaction = null;
+        commitPendingNode(n);
+      }
+    } else while (u._firstHeld) {
+      const node = u._firstHeld;
+      // Detach before cleanup can transfer, merge, or append more owned work.
+      const x = node._x!, next = x._nextHeld;
+      u._firstHeld = next;
+      if (next) next._x!._previousHeld = null;
+      else u._lastHeld = null;
+      x._nextHeld = null;
+      x._transaction = null;
+      commitPendingNode(node);
     }
-  } else while (u._firstHeld) {
-    const node = u._firstHeld;
-    // Detach before cleanup can transfer, merge, or append more owned work.
-    const x = node._x!, next = x._nextHeld;
-    u._firstHeld = next;
-    if (next) next._x!._previousHeld = null;
-    else u._lastHeld = null;
-    x._nextHeld = null;
-    x._transaction = null;
-    commitPendingNode(node);
+  } finally {
+    globalQueue._queues = queues;
   }
   // A cleanup those commits ran that wrote a node `u` still held joined
   // `u`, which has left `transactions`: the write is this landing's, and
