@@ -1878,7 +1878,7 @@ export function commitPendingNode(n: Signal<any>): void {
   const previous = __OBSERVE__ ? n._value : undefined;
   const err = n._config & CONFIG_STAGED_ERROR;
   // An answer commits: the error it replaces leaves the display (D-41).
-  if (!inFlight && c._x) c._x._shownError = null;
+  if (!inFlight && !err && c._x) c._x._shownError = null;
   n._config = inFlight
     ? (n._config & ~(CONFIG_HELD | CONFIG_HELD_FRAME)) | CONFIG_INPUTS_PUBLISHED
     : n._config &
@@ -1901,6 +1901,7 @@ export function commitPendingNode(n: Signal<any>): void {
     // Rejoining its input update must not deliver that error a second time.
     if (!(c._statusFlags! & STATUS_ERROR) || c._x?._error !== e)
       notifyStatus(c as Computed<unknown>, STATUS_ERROR, e);
+    if (c._x) c._x._shownError = null;
   } else if (applyStaged(n)) {
     if (__OBSERVE__ && n._config & CONFIG_REDERIVE)
       GlobalQueue._layerPublished?.(n as Computed<any>, previous);

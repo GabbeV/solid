@@ -132,7 +132,10 @@ function notifyEffectStatus(this: Effect<any>): void {
       // and the runner dispatches on them, so a recovery before the effect
       // phase takes the success arm instead. (Re-read: the boundary
       // notify above can run a redraw.)
-      if (this._statusFlags & STATUS_ERROR) queueEffectRun(this);
+      // Re-reading the still-displayed error during a retry restores its
+      // status, but does not publish a different answer to the error arm.
+      if (this._statusFlags & STATUS_ERROR && this._x?._shownError !== actualError)
+        queueEffectRun(this);
       return;
     }
     // Dev locates the halt at the node that threw: the StatusError's
@@ -236,7 +239,9 @@ function runEffect(node: Effect<any>, type: number): void {
   // current holder decides publication. The compute-error arm above is a
   // separate error notification; it does not publish a proposed value.
   if (node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
-    txOf(node)._queues[(type || node._type) - 1].push((node._boundRunEffect ??= runEffect.bind(null, node)));
+    txOf(node)._queues[(type || node._type) - 1].push(
+      (node._boundRunEffect ??= runEffect.bind(null, node))
+    );
     return;
   }
   let prevStrictRead: string | false = false;
