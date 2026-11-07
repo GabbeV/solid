@@ -7,7 +7,7 @@
 import { releaseFlightTeardown } from "../core/async.js";
 import { clearThrownRead } from "../core/dev.js";
 import { computed, tracking } from "../core/core.js";
-import { link } from "../core/graph.js";
+import { link, deferRetryDisposal } from "../core/graph.js";
 import { NotReadyError } from "../core/error.js";
 import { enqueueSub } from "../core/heap.js";
 import { disposeChildren } from "../core/owner.js";
@@ -18,6 +18,7 @@ import {
   CONFIG_HELD,
   REACTIVE_LAYER_EFFECT,
   REACTIVE_PREVIOUS_COMMITTED,
+  REACTIVE_RETRIED_OWNER,
   CONFIG_REDERIVE,
   CONFIG_STAGED,
   EFFECT_RENDER,
@@ -154,6 +155,8 @@ let evaluationReads: Set<Transaction> | null = null;
 // Keep their discovered depth only for this attempt, not on ordinary nodes.
 let evaluationPosition = 0;
 let retryEvaluation = false;
+let retryOwner: Computed<any> | null = null;
+let retryOwnerUpdate: Transaction | null = null;
 let creating: Computed<any> | null = null;
 // First render calculations inherit proposals their still-running creators
 // have consumed, even before those tentative peer joins are accepted.
@@ -363,7 +366,22 @@ function prepareLayers(): boolean {
       ) {
         // A lower input used only by an unpublished upper branch can commit
         // independently. Its ordinary post-commit rerun refreshes that branch.
-        if (heldAbove && !affectsCommitted) continue;
+        // A creator retry can also make its branch return before reaching the
+        // child which selected optimism. Let that unchanged, childless result
+        // finish; forcing the old lower context here would restart discovery.
+        // This exemption requires an actual creator retry: applying it to any
+        // unchanged higher memo loses updates to its published dependencies.
+        if (
+          heldAbove &&
+          (!affectsCommitted ||
+            (reader._flags & REACTIVE_RETRIED_OWNER &&
+              reader._firstChild === null &&
+              !(reader._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
+              (reader._pendingValue === NOT_PENDING ||
+                Object.is(reader._pendingValue, reader._value)) &&
+              currentPosition(reader) < positionOf(txOf(reader))))
+        )
+          continue;
         const frame = unpublishedFrame(reader);
         if (frame && positionOf(frame) < positionOf(parent)) {
           orderPublication = true;
@@ -690,6 +708,53 @@ function currentPosition(node: Signal<any>, seen = new Set<Signal<any>>()): numb
   return position;
 }
 
+/** A child cannot repair values captured by a still-private creator. Unwind
+ * the creating calls before accepting any of their tentative peer joins.
+ * Published (parked) children keep their own existing frame instead. */
+function retryCreator(
+  reader: Computed<any>,
+  update: Transaction,
+  previousPosition = positionOf(flushTransaction)
+): void {
+  let target = reader,
+    child = reader;
+  const position = positionOf(update);
+  for (let owner = reader._parent; owner; child = owner as Computed<any>, owner = owner._parent) {
+    if (child._flags & REACTIVE_ZOMBIE) break;
+    const parent = owner as Computed<any>;
+    if (typeof parent._fn !== "function") continue;
+    const active = parent._flags & REACTIVE_RECOMPUTING_DEPS;
+    if (!(active || parent._config & CONFIG_STAGED)) break;
+    if (
+      ((active && parent._flags & (REACTIVE_JOINED | REACTIVE_STAGED_READ)) ||
+        (parent._config & CONFIG_STAGED && parent._config & CONFIG_HELD)) &&
+      (active ? previousPosition : positionOf(txOf(parent))) < position
+    )
+      target = parent;
+  }
+  if (target !== reader) {
+    deferRetryDisposal();
+    if (!(target._flags & REACTIVE_RECOMPUTING_DEPS)) {
+      adoptOutput(target, update, true);
+      enqueueSub(target);
+      throw new NotReadyError(target);
+    }
+    retryOwner = target;
+    retryOwnerUpdate = update;
+    throw RETRY;
+  }
+}
+
+function receiveOwnerRetry(node: Computed<any>): void {
+  if (retryOwner !== node) return;
+  const update = retryOwnerUpdate!;
+  retryOwner = retryOwnerUpdate = null;
+  adoptOutput(node, update, true);
+  node._flags |= REACTIVE_RETRIED_OWNER;
+  setCalculationUpdate(update);
+  retryEvaluation = true;
+}
+
 function readContext(reader: Computed<any>, source: Computed<any>): void {
   if (evaluation !== reader) return;
   // Selecting an existing observation can move a running binding into its
@@ -704,6 +769,7 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
     const selected = txOf(reader);
     if (positionOf(selected) > positionOf(flushTransaction)) {
       holdQueuedProposals(resolveTx(flushTransaction));
+      retryCreator(reader, selected);
       setCalculationUpdate(selected);
       retryEvaluation = true;
       throw RETRY;
@@ -712,7 +778,10 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
   if (!tracking) evaluationPosition = Math.max(evaluationPosition, currentPosition(source));
   // A tracked proposal also selects the whole calculation before its next
   // ordinary read. Direct bindings retain their committed-frame read rule.
-  else if ((reader as any)._type !== EFFECT_RENDER && source._config & CONFIG_HELD)
+  else if (
+    ((reader as any)._type !== EFFECT_RENDER || unpublishedFrame(reader)) &&
+    source._config & CONFIG_HELD
+  )
     evaluationPosition = Math.max(evaluationPosition, positionOf(txOf(source)));
   // A read in the update already being executed bypasses deferred joins.
   // An untracked boundary can still require leaving that update and retrying
@@ -722,12 +791,12 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
     evaluationPosition &&
     evaluationPosition > positionOf(flushTransaction) &&
     flushTransaction &&
-    resolveTx(flushTransaction) !== (releasingInput && resolveTx(releasingInput)) &&
-    !unpublishedFrame(reader)
+    resolveTx(flushTransaction) !== (releasingInput && resolveTx(releasingInput))
   ) {
     holdQueuedProposals(resolveTx(flushTransaction));
     const update = newTransaction(false);
     update._level = evaluationPosition;
+    retryCreator(reader, update);
     if (adoptOutput(reader, update)) {
       setCalculationUpdate(update);
       retryEvaluation = true;
@@ -746,7 +815,9 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
     staleReader(reader, parent);
     joinFuture(null);
     const update = resolveTx(flushTransaction!);
-    update._level = Math.max(positionOf(update), depth);
+    const previousPosition = positionOf(update);
+    update._level = Math.max(previousPosition, depth);
+    retryCreator(reader, update, previousPosition);
     retryEvaluation = true;
     throw RETRY;
   }
@@ -842,8 +913,16 @@ function retryCalculation(
     try {
       const previousFlight = node._x?._inFlight;
       result = node._fn(previous);
+      // An async body turns the retry throw into a rejected promise. A user
+      // catch may also consume it. The creator still has to unwind before
+      // this attempt can normalize or accept any tentative dependencies.
+      if (retryOwner) {
+        if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+        throw RETRY;
+      }
       if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
     } catch (error) {
+      receiveOwnerRetry(node);
       if (!retryEvaluation) throw error;
     }
     if (!retryEvaluation) return result;
@@ -874,8 +953,16 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
     try {
       const previousFlight = node._x?._inFlight;
       result = node._fn(previous);
+      // An async body turns the retry throw into a rejected promise. A user
+      // catch may also consume it. The creator still has to unwind before
+      // this attempt can normalize or accept any tentative dependencies.
+      if (retryOwner) {
+        if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+        throw RETRY;
+      }
       if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
     } catch (error) {
+      receiveOwnerRetry(node);
       if (!retryEvaluation) throw error;
     }
     return retryEvaluation
@@ -883,7 +970,7 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
       : result;
   } finally {
     try {
-      if (!retryEvaluation && (evaluationReads || (!outer && creationReads)))
+      if (!retryOwner && !retryEvaluation && (evaluationReads || (!outer && creationReads)))
         outerReads = acceptCalculation(node, incoming, outer, outerReads);
     } finally {
       evaluation = outer;
@@ -904,8 +991,7 @@ function holdsLifetime(node: Computed<any>, update: Transaction): boolean {
   const sources = node._x?._pendingSources;
   const position = positionOf(update);
   if (!sources) return sourceHoldsLifetime(node, position);
-  for (const source of sources)
-    if (sourceHoldsLifetime(source, position)) return true;
+  for (const source of sources) if (sourceHoldsLifetime(source, position)) return true;
   return false;
 }
 
@@ -915,10 +1001,7 @@ function sourceHoldsLifetime(source: Computed<any>, position: number): boolean {
     // Waiting for its async work, however, cannot extend the lower lifetime.
     return !(source._statusFlags & STATUS_PENDING) && !blocked(txOf(source));
   }
-  return !(
-    unpublishedFrame(source) &&
-    currentPosition(source) > position
-  );
+  return !(unpublishedFrame(source) && currentPosition(source) > position);
 }
 
 function canPublish(update: Transaction): boolean {

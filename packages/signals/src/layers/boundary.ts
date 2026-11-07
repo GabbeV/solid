@@ -3,7 +3,7 @@ import type { Layer } from "./coordination.js";
 
 // A context change stops the current calculation before any later reads.
 // Observation windows must not interpret this control signal as a user error.
-export const RETRY = /* @__PURE__ */ Symbol("retry layer calculation");
+export { CONTEXT_RETRY as RETRY } from "../core/constants.js";
 
 // The registry is separate from coordination so refreshing an ordinary memo
 // does not require the optimistic engine in the application bundle.

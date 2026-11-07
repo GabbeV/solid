@@ -102,6 +102,9 @@ export const REACTIVE_WRITABLE_COMPUTED = 1 << 25;
  * list. Stable graphs need no WeakMap lookup or deletion at their seams. */
 export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
 
+/** This pass retried a creator after a child selected another context. */
+export const REACTIVE_RETRIED_OWNER = 1 << 27;
+
 // Static configuration bits packed into Owner/Computed/Signal _config.
 export const CONFIG_OWNED_WRITE = 1 << 0;
 export const CONFIG_NO_SNAPSHOT = 1 << 1;
@@ -287,6 +290,8 @@ export const EFFECT_USER = 2;
 export const EFFECT_TRACKED = 3;
 
 export const NOT_PENDING = {};
+/** Internal control flow: retry a creating computation in another update. */
+export const CONTEXT_RETRY = /* @__PURE__ */ Symbol("retry update calculation");
 export const NO_SNAPSHOT = {};
 
 export const SUPPORTS_PROXY = typeof Proxy === "function";

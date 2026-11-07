@@ -107,7 +107,23 @@ export function clearDeps(el: Computed<unknown>): void {
 export let deferredReleases: Computed<any>[] | null = null;
 export const deferReleases = (list: Computed<any>[] | null) => (deferredReleases = list);
 
+// A creator retry can temporarily remove every observer while its replacement
+// branch is being prepared. Keep observation-lifecycle nodes until that flush
+// finishes rebuilding subscriptions. Explicit disposal strips AUTO_DISPOSE
+// first and remains immediate. This is the existing dormancy queue, not a
+// retained value cache or a second graph.
+let retryDisposalDeferred = false;
+export function deferRetryDisposal(): void {
+  if (retryDisposalDeferred) return;
+  retryDisposalDeferred = true;
+  queueMicrotask(sweepDormant);
+}
+
 export function unobserved(el: Computed<unknown>) {
+  if (retryDisposalDeferred && el._config & CONFIG_AUTO_DISPOSE) {
+    dormantNodes.add(el);
+    return;
+  }
   deleteFromHeap(el, dirtyQueue);
   clearDeps(el);
   disposeChildren(el, true);
@@ -136,6 +152,7 @@ export function unobserved(el: Computed<unknown>) {
 export const dormantNodes = new NewSet<Computed<unknown>>();
 
 export function sweepDormant(): void {
+  retryDisposalDeferred = false;
   if (dormantNodes.size === 0) return;
   for (const el of dormantNodes) {
     // Re-validate at sweep time: the node may have gained a subscriber (its

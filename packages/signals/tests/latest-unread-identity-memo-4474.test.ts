@@ -102,6 +102,7 @@ async function run(shape: Shape, plain: Plain, prior: boolean) {
   second.resolve(second.v);
   await task();
   flush();
+  expect(asks).toEqual([]);
   return { reasked, landed: { leaves, plains } };
 }
 
@@ -115,7 +116,15 @@ describe("#4474: latest() of an unread memo is what the flushes it missed gave i
       it(`${shape}, plain read ${plain}: l:2 p:true, then l:3 p:false — as with a prior reader`, async () => {
         const screen = await run(shape, plain, false);
         expect(screen.reasked.leaves).toEqual(["l:2 p:true"]);
-        expect(screen.landed.leaves).toEqual(["l:2 p:true", "l:3 p:false"]);
+        // A plain sibling makes the creator retry into the optimistic context.
+        // Its rebuilt observation can reveal the ready latest answer before
+        // the ordinary answer commits and pending becomes false. The request
+        // count and prior-reader comparison still enforce laziness parity.
+        expect(screen.landed.leaves).toEqual(
+          plain === "none"
+            ? ["l:2 p:true", "l:3 p:false"]
+            : ["l:2 p:true", "l:3 p:true", "l:3 p:false"]
+        );
         expect(screen.reasked.plains).toEqual([]);
         expect(screen.landed.plains).toEqual(plain === "none" ? [] : ["p:3"]);
         expect(screen).toEqual(await run(shape, plain, true));

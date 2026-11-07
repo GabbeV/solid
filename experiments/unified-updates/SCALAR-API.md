@@ -3,7 +3,8 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Latest adversarial review: [owned-frame defect, publication controls, performance and size, stage 170](INTEGRATION-170.md).
-Current runtime checkpoint: [private calculation, publication and override lifetime, stage 171](INTEGRATION-171.md).
+Current runtime checkpoint: [creator context retries, WIP stage 172](INTEGRATION-172.md).
+Previous runtime checkpoint: [private calculation, publication and override lifetime, stage 171](INTEGRATION-171.md).
 Previous runtime checkpoint: [eager private rendering with coherent inherited reads, stage 169](INTEGRATION-169.md).
 Previous calculation repair: [coherent latest reads in owned frames, stage 168](INTEGRATION-168.md).
 Previous investigation: [owned-frame latest reads and strengthened regression, stage 167](INTEGRATION-167.md).
@@ -19,7 +20,7 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [stage 171](INTEGRATION-171.md).
+Latest suite counts: [stage 172](INTEGRATION-172.md).
 Earlier failure inventory: [stage 157](INTEGRATION-157.md).
 Previous assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
 Previous assertion migration: [first-value read checks, stage 158](INTEGRATION-158.md).

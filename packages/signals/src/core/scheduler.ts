@@ -4,6 +4,7 @@ import {
   LEGACY_LANES,
   CONFIG_LOADING,
   REACTIVE_PREVIOUS_COMMITTED,
+  REACTIVE_RETRIED_OWNER,
   CONFIG_HELD,
   CONFIG_HELD_FRAME,
   CONFIG_IN_SNAPSHOT_SCOPE,
@@ -1888,7 +1889,7 @@ export function commitPendingNode(n: Signal<any>): void {
   const inFlight = (c._statusFlags! & STATUS_PENDING) !== 0 &&
     (n._pendingValue === NOT_PENDING || !!(c._flags! & REACTIVE_PREVIOUS_COMMITTED));
   if (inFlight) n._pendingValue = NOT_PENDING;
-  else c._flags! &= ~REACTIVE_PREVIOUS_COMMITTED;
+  else c._flags! &= ~(REACTIVE_PREVIOUS_COMMITTED | REACTIVE_RETRIED_OWNER);
   n._config &= ~CONFIG_LOADING;
   const previous = __OBSERVE__ ? n._value : undefined;
   const err = n._config & CONFIG_STAGED_ERROR;

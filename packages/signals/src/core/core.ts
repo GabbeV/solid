@@ -13,6 +13,7 @@ import {
 } from "./async.js";
 import {
   REACTIVE_PERSISTENT,
+  CONTEXT_RETRY,
   CONFIG_LOADING,
   LEGACY_LANES,
   $REFRESH,
@@ -35,6 +36,7 @@ import {
   CONFIG_OWNED_WRITE,
   CONFIG_PROMOTED,
   REACTIVE_PREVIOUS_COMMITTED,
+  REACTIVE_RETRIED_OWNER,
   CONFIG_STAGED,
   CONFIG_HELD_FRAME,
   CONFIG_LAGS,
@@ -678,6 +680,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // installer just makes clearStatus a cheap re-verified no-op.)
     if (el._statusFlags !== 0 || el._x !== null) clearStatus(el, create);
   } catch (e) {
+    if (e === CONTEXT_RETRY) throw e;
     const notReady = e instanceof NotReadyError;
     // A failed replacement can publish a fallback. The old context's staged
     // result must not become committed history through that status commit.
@@ -786,6 +789,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     el._flags =
       (el._flags &
         (REACTIVE_PERSISTENT |
+          REACTIVE_RETRIED_OWNER |
           REACTIVE_ZOMBIE |
           REACTIVE_DISPOSED |
           REACTIVE_FRAME_READ |
@@ -1162,6 +1166,7 @@ function updateIfNecessary(el: Computed<unknown>): void {
   el._flags =
     el._flags &
     (REACTIVE_PERSISTENT |
+      REACTIVE_RETRIED_OWNER |
       REACTIVE_SNAPSHOT_STALE |
       REACTIVE_IN_HEAP |
       REACTIVE_IN_HEAP_HEIGHT |
