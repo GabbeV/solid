@@ -230,9 +230,13 @@ for (const asyncDepth of [0, 1, 8]) {
             const value = `${view()}:${y()}`;
             const identity = {};
             const child = createMemo(() => value);
-            createRenderEffect(child, result => {
-              children.set(identity, result);
-            });
+            createRenderEffect(
+              child,
+              result => {
+                children.set(identity, result);
+              },
+              { schedule: true }
+            );
             onCleanup(() => {
               children.delete(identity);
             });

@@ -257,7 +257,8 @@ for (const wrapped of [false, true])
           () => version,
           value => {
             childShown = value;
-          }
+          },
+          { schedule: true }
         );
         return 0;
       });

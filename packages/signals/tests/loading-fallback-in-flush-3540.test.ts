@@ -308,9 +308,15 @@ describe("#3540: a fresh Loading mounted over a held value", () => {
             log.push(v);
           });
           const view = Loading(() => `content ${x()}`, "fallback");
-          createRenderEffect(view, v => {
-            log.push(`view ${v}`);
-          });
+          // Attachment/publication waits; a first unscheduled callback may
+          // already initialize the detached boundary's DOM (D-19).
+          createRenderEffect(
+            view,
+            v => {
+              log.push(`view ${v}`);
+            },
+            { schedule: true }
+          );
           return true;
         },
         v => {

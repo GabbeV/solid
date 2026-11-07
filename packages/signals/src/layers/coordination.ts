@@ -154,6 +154,9 @@ let evaluationReads: Set<Transaction> | null = null;
 let evaluationPosition = 0;
 let retryEvaluation = false;
 let creating: Computed<any> | null = null;
+// First render calculations inherit proposals their still-running creators
+// have consumed, even before those tentative peer joins are accepted.
+let creatingReads: Set<Transaction>[] | null = null;
 // Only a new child consuming several distinct holds needs deferred admission.
 // The list lasts for one enclosing calculation, never for an update's lifetime.
 let creationReads:
@@ -466,6 +469,19 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean | null {
   if (update && holder === resolveTx(update)) return false;
   const ownPosition = positionOf(update),
     heldPosition = positionOf(holder);
+  if (
+    creating === reader &&
+    (reader as any)._type === EFFECT_RENDER &&
+    ownPosition === heldPosition &&
+    creatingReads
+  ) {
+    for (const reads of creatingReads)
+      for (const input of reads)
+        if (resolveTx(input) === holder) {
+          reader._flags |= REACTIVE_JOINED;
+          return null;
+        }
+  }
   const frame = heldPosition > ownPosition && unpublishedFrame(reader);
   if (frame) {
     staleReader(reader, holder);
@@ -474,8 +490,14 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean | null {
     // input; pending/error reads still take the ordinary status path below.
     // Structural nodes can replace visible content, so they wait for this
     // output to publish instead of treating its proposal as a private value.
+    // The first render calculation only initializes the detached child;
+    // CONFIG_FRAME also marks render effects, so exempt that first pass.
     if (committedUsesUpdate(source as Computed<any>, frame, new Set(), true)) {
-      if (reader._config & CONFIG_FRAME) throw new NotReadyError(source);
+      if (
+        reader._config & CONFIG_FRAME &&
+        !(creating === reader && (reader as any)._type === EFFECT_RENDER)
+      )
+        throw new NotReadyError(source);
       return null;
     }
     if (uninitialized) throw new NotReadyError(source);
@@ -543,20 +565,23 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
       !(parent._config & CONFIG_HELD)
     )
       holdNode(parent, resolveTx(flushTransaction));
-    if (
-      (node as any)._type ||
-      (evaluation ? detachedOutput(node) : globalQueue._running || flushTransaction)
-    )
+    const effect = (node as any)._type;
+    if (!effect && (evaluation ? detachedOutput(node) : globalQueue._running || flushTransaction))
       return scopedCalculation(node, flushTransaction, create, fromHeap);
+    const reads = evaluationReads;
+    if (reads) (creatingReads ??= []).push(reads);
     const previous = creating;
     creating = node;
     // A scope isolates discovery and staging; it is not itself a transaction.
     // A held read or async result acquires one through the ordinary join path.
     // An owned child inherits only an update its creator actually entered.
     try {
+      if (effect) return scopedCalculation(node, flushTransaction, create, fromHeap);
       recomputeInUpdate(node, flushTransaction, false, true);
     } finally {
       creating = previous;
+      if (reads) creatingReads!.pop();
+      if (!creatingReads?.length) creatingReads = null;
     }
     return true;
   }
@@ -842,6 +867,10 @@ function retryCalculation(
 function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeCalculation): any {
   const incoming = flushTransaction;
   const previousPosition = positionOf(incoming);
+  const inheritedReads = creatingReads;
+  // Pulling an existing node does not make it a child of the calling pass.
+  // Only synchronous creation carries the caller's tentative input context.
+  if (creating !== node) creatingReads = null;
   const outer = evaluation,
     outerRetry = retryEvaluation,
     outerPosition = evaluationPosition;
@@ -869,6 +898,7 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
         outerReads = acceptCalculation(node, incoming, outer, outerReads);
     } finally {
       evaluation = outer;
+      creatingReads = inheritedReads;
       evaluationReads = outerReads;
       evaluationPosition = outerPosition;
       retryEvaluation = outerRetry;

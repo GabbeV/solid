@@ -390,7 +390,8 @@ describe("pending observations use ordinary output publication", () => {
             value => {
               childShown = value;
               childPublications.push(value);
-            }
+            },
+            { schedule: true }
           );
           if (observe()) return label;
           const value = x();

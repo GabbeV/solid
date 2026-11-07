@@ -30,6 +30,7 @@ for (const equal of [false, true])
     const end = gate();
     const [generation, setGeneration] = createSignal(0);
     let inputShown = 0,
+      privateShown = 0,
       childShown = 0,
       ownerShown = 0;
     const cleaned: number[] = [];
@@ -40,11 +41,20 @@ for (const equal of [false, true])
         onCleanup(() => {
           cleaned.push(value);
         });
+        // The synchronous first callback initializes the detached child.
+        createRenderEffect(
+          () => value,
+          next => {
+            privateShown = next;
+          }
+        );
+        // Scheduled callbacks observe attachment/publication, not preparation.
         createRenderEffect(
           () => value,
           next => {
             childShown = next;
-          }
+          },
+          { schedule: true }
         );
         return equal ? 0 : value;
       });
@@ -61,10 +71,12 @@ for (const equal of [false, true])
       yield end.promise;
     })();
     flush();
+    expect(privateShown).toBe(1);
     expect([inputShown, childShown, ownerShown, cleaned]).toEqual([0, 0, 0, []]);
     end.resolve();
     await running;
     await turn();
+    expect(privateShown).toBe(1);
     expect([inputShown, childShown, ownerShown, cleaned]).toEqual([1, 1, equal ? 0 : 1, [0]]);
   });
 

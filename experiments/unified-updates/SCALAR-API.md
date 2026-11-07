@@ -2,8 +2,9 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint: [pending calculations after input publication, stage 165](INTEGRATION-165.md).
-Latest investigation: [owned-frame latest reads and strengthened regression, stage 167](INTEGRATION-167.md).
+Current runtime checkpoint: [eager private rendering with coherent inherited reads, stage 169](INTEGRATION-169.md).
+Previous calculation repair: [coherent latest reads in owned frames, stage 168](INTEGRATION-168.md).
+Previous investigation: [owned-frame latest reads and strengthened regression, stage 167](INTEGRATION-167.md).
 Previous investigation: [first callbacks in unpublished owned subtrees, stage 166](INTEGRATION-166.md).
 Previous rejected trial: [first held values and derived-store result transfer, stage 163](INTEGRATION-163.md).
 Previous creation-context repair: [stage 159](INTEGRATION-159.md).
@@ -16,9 +17,9 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [stage 165](INTEGRATION-165.md).
+Latest suite counts: [stage 169](INTEGRATION-169.md).
 Earlier failure inventory: [stage 157](INTEGRATION-157.md).
-Latest assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
+Previous assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
 Previous assertion migration: [first-value read checks, stage 158](INTEGRATION-158.md).
 Previous context migration: [stage 156](INTEGRATION-156.md).
 Previous lifetime migration: [stage 154](INTEGRATION-154.md).

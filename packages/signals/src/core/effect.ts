@@ -4,15 +4,19 @@ import {
   CONFIG_CHILDREN_FORBIDDEN,
   CONFIG_HELD,
   CONFIG_OVERRIDE,
+  CONFIG_STAGED_ERROR,
   EFFECT_RENDER,
   EFFECT_TRACKED,
   EFFECT_USER,
   REACTIVE_DISPOSED,
+  REACTIVE_JOINED,
   STATUS_ERROR,
-  STATUS_PENDING
+  STATUS_PENDING,
+  STATUS_UNINITIALIZED
 } from "./constants.js";
 import {
   computed,
+  creatorReads,
   createEffectNode,
   enterCallback,
   exitCallback,
@@ -49,7 +53,8 @@ import {
   heldRunHook,
   attachHook,
   queueEvent,
-  applyStaged
+  applyStaged,
+  layerCompute
 } from "./scheduler.js";
 import type { Computed, NodeOptions, Owner } from "./types.js";
 
@@ -81,18 +86,36 @@ export function effect<T>(
     isUser ? EFFECT_USER : EFFECT_RENDER,
     options
   ) as Effect<T>;
+  // Capture the creator's frame before this child's own reads can join it.
+  // Only a ready first unscheduled render initializes the detached tree.
+  const inherited =
+    !isUser && !options?.schedule && !options?.defer && layerCompute ? creatorReads(node, 0) : 0;
   recompute(node, true);
-  // A first pass that read a staged value was staged itself (recompute: born
-  // staged); the flush's commit replays this effect. Its first run is not this
-  // creation's (A29). A lane's node's run is the lane's: queued, not run
-  // now — into its own pass's lane (its transaction: the creator's lane, or
-  // the one a lane read moved the pass into, F-6/F-7) — and released at the
-  // reveal (lanes.ts). Not a lane's node: the creator's (`enqueue`'s default
-  // for no transaction; the frame for a transaction's).
-  // `defer` skips the first run, whoever owes it. A node born staged
-  // (#4543): its staged first value applies now, so the commit replays
-  // nothing and the next pass gets it as `prev`, as on a plain mount (#4556;
-  // D-13). A lane's node (#4557): it queues none.
+  if (
+    inherited &&
+    node._pendingValue !== NOT_PENDING &&
+    !(node._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
+    !(node._config & CONFIG_STAGED_ERROR)
+  ) {
+    let ready = true;
+    // A staging alone may be an independent mount over a first answer.
+    // Such an answer still waits for publication (A29).
+    if (!(inherited & REACTIVE_JOINED))
+      for (let edge = node._deps; edge; edge = edge._nextDep)
+        if (
+          edge._gen === node._depGen &&
+          (edge._dep as Computed<any>)._statusFlags & STATUS_UNINITIALIZED
+        )
+          ready = false;
+    if (ready) {
+      applyStaged(node);
+      node._statusFlags &= ~STATUS_UNINITIALIZED;
+    }
+  }
+  // Remaining first values that are born held wait for commit (A29).
+  // A ready owned first render above may initialize private DOM now (D-19);
+  // scheduled/user callbacks and subsequent runs still use the holder's queue.
+  // `defer` initializes the previous value but skips the first callback.
   options?.defer
     ? applyStaged(node)
     : node._pendingValue === NOT_PENDING &&
@@ -238,8 +261,8 @@ function runEffect(node: Effect<any>, type: number): void {
   // A queued value callback can outlive the update that enqueued it. Its
   // current holder decides publication. The compute-error arm above is a
   // separate error notification; it does not publish a proposed value.
-  if (node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
-    txOf(node)._queues[(type || node._type) - 1].push(
+  if (type && node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
+    txOf(node)._queues[type - 1].push(
       (node._boundRunEffect ??= runEffect.bind(null, node))
     );
     return;

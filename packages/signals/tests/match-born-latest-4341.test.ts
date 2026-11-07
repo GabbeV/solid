@@ -57,6 +57,7 @@ function setup(read: Read, reader: "memo" | "effect" | "nested memo", opener: "s
   let resolve!: (v: string) => void;
   const screen: Record<string, unknown> = {};
   const seen: string[] = [];
+  const calculated: string[] = [];
   createRoot(() => {
     const zone = createMemo(() => (ready() ? "ready" : "loading"));
     const format = createMemo(() => "ru");
@@ -77,9 +78,14 @@ function setup(read: Read, reader: "memo" | "effect" | "nested memo", opener: "s
       return untrack(() => {
         // The narrowed accessor's guard: is this branch still the selected one?
         const open = () => (untrack(sel) ? "sel" : "stale");
-        if (reader === "effect") show(() => read(zone, format, open));
-        else if (reader === "memo") show(createMemo(() => read(zone, format, open)));
-        else createMemo(() => show(createMemo(() => read(zone, format, open))));
+        const derive = () => {
+          const value = read(zone, format, open);
+          calculated.push(value);
+          return value;
+        };
+        if (reader === "effect") show(derive);
+        else if (reader === "memo") show(createMemo(derive));
+        else createMemo(() => show(createMemo(derive)));
         return "open";
       });
     });
@@ -93,7 +99,7 @@ function setup(read: Read, reader: "memo" | "effect" | "nested memo", opener: "s
     );
   });
   flush();
-  return { screen, seen, setReady, setGate, resolve: (v: string) => resolve(v) };
+  return { screen, seen, calculated, setReady, setGate, resolve: (v: string) => resolve(v) };
 }
 
 describe("a memo born in a newly opened branch reads the world that opened it (#4341)", () => {
@@ -101,7 +107,11 @@ describe("a memo born in a newly opened branch reads the world that opened it (#
     for (const reader of ["memo", "effect", "nested memo"] as const)
       for (const [name, read] of reads)
         it(`${opener}, ${reader}: ${name}`, async () => {
-          const { screen, seen, setReady, setGate, resolve } = setup(read, reader, opener);
+          const { screen, seen, calculated, setReady, setGate, resolve } = setup(
+            read,
+            reader,
+            opener
+          );
           expect(screen).toEqual({ branch: "closed", data: "none" });
           setReady(true);
           flush();
@@ -118,5 +128,8 @@ describe("a memo born in a newly opened branch reads the world that opened it (#
           expect(screen).toEqual({ branch: "open", span: want, data: "data" });
           // No pass of the branch's reader saw its branch closed.
           expect(seen.filter(v => v !== want)).toEqual([]);
+          // A delayed callback must not conceal a completed stale calculation.
+          expect(calculated.length).toBeGreaterThan(0);
+          expect(calculated.filter(v => v !== want)).toEqual([]);
         });
 });

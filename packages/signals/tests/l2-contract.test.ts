@@ -6,8 +6,8 @@
 //   2. the tab test — the old frame keeps reacting until the new one lands;
 //      one atomic swap; the old cleanups run at the swap.
 //   3. O2 under ruling A — children created during a parked pass belong to
-//      the parked frame's owner: they compute, they do not effect until the
-//      swap, they die only by a later pass of their parent or by owner
+//      the parked frame's owner: they compute, their user and scheduled render
+//      callbacks wait for the swap, and they die only by a later parent pass or by owner
 //      disposal from the live graph.
 //   4. transactions — a write that reaches a held node joins its transaction,
 //      a write that does not publishes live; one total landing per
@@ -135,11 +135,12 @@ function tabs() {
         name: `effect${t}`
       });
       // Tab 3 is only ever entered from a parked tab 2 — its pass is born
-      // into a future already known to be pending, so a render effect
-      // created BEFORE the async read must stay cold until the swap (O2/A).
+      // into a future already known to be pending. A scheduled render
+      // callback models publication outside the detached tree (O2/A, D-19).
       if (t === 3)
         createRenderEffect(label, l => void log.push(`tab3:shell:${l}`), {
-          name: "shell3"
+          name: "shell3",
+          schedule: true
         });
       const data = createMemo(() => new Promise<string>(r => (resolvers[t] = r)), {
         name: `data${t}`
@@ -304,8 +305,8 @@ describe("L2 contract 3 — O2 under ruling A (parked-frame ownership)", () => {
     expect(count(t.log, "tab2:cleanup")).toBe(1);
     expect(isDisposed(t.owners[2])).toBe(true);
     expect(t.log.some(e => e.startsWith("tab2:effect:"))).toBe(false);
-    // Born into a known future: the render effect created before the async
-    // read has not run either.
+    // Born into a known future: the scheduled render callback created before
+    // the async read has not run either.
     expect(t.log.some(e => e.startsWith("tab3:shell:"))).toBe(false);
     expect(t.log.some(e => e.startsWith("tab3:effect:"))).toBe(false);
     // The live frame is untouched.
