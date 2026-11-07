@@ -1,0 +1,165 @@
+{
+  "runtime": "4fe75321 (same runtime as next 45648f78)",
+  "total": 11520,
+  "elapsed": 2077,
+  "declarationOrders": 60,
+  "renderOrders": 24,
+  "readOrders": 8,
+  "variants": [
+    {
+      "count": 11520,
+      "order": [
+        "data",
+        "pending",
+        "direct",
+        "wrapped",
+        "async"
+      ],
+      "renderOrder": [
+        "live",
+        "direct",
+        "wrapped",
+        "async"
+      ],
+      "readOrder": 0,
+      "frames": [
+        {
+          "id": "0",
+          "data": "0",
+          "pending": "false",
+          "direct": "0/0/false",
+          "wrapped": "0/0/false",
+          "async": "0/0/false"
+        },
+        {
+          "id": "0",
+          "data": "0",
+          "pending": "true",
+          "direct": "0/0/false",
+          "wrapped": "0/0/false",
+          "async": "0/0/false"
+        },
+        {
+          "id": "0",
+          "data": "0",
+          "pending": "true",
+          "direct": "0/0/false",
+          "wrapped": "0/0/false",
+          "async": "0/0/false"
+        },
+        {
+          "id": "1",
+          "data": "1",
+          "pending": "false",
+          "direct": "1/1/false",
+          "wrapped": "1/0/true",
+          "async": "1/0/false"
+        }
+      ],
+      "history": {
+        "id": [
+          "0",
+          "1"
+        ],
+        "data": [
+          "0",
+          "1"
+        ],
+        "pending": [
+          "false",
+          "true",
+          "false"
+        ],
+        "direct": [
+          "0/0/false",
+          "1/1/false"
+        ],
+        "wrapped": [
+          "0/0/false",
+          "1/0/true"
+        ],
+        "async": [
+          "0/0/false",
+          "1/0/false"
+        ]
+      },
+      "trace": [
+        {
+          "phase": "initial",
+          "name": "data",
+          "result": "0"
+        },
+        {
+          "phase": "initial",
+          "name": "pending",
+          "result": "0/false"
+        },
+        {
+          "phase": "initial",
+          "name": "direct",
+          "result": "0/0/false"
+        },
+        {
+          "phase": "initial",
+          "name": "wrapped",
+          "result": "0/0/false"
+        },
+        {
+          "phase": "initial",
+          "name": "async",
+          "result": "0/0/false"
+        },
+        {
+          "phase": "setId",
+          "name": "data",
+          "result": "promise"
+        },
+        {
+          "phase": "setId",
+          "name": "pending",
+          "result": "0/true"
+        },
+        {
+          "phase": "setId",
+          "name": "direct",
+          "result": "1/1/false"
+        },
+        {
+          "phase": "setId",
+          "name": "wrapped",
+          "result": "1/0/false"
+        },
+        {
+          "phase": "setId",
+          "name": "async",
+          "result": "1/1/false"
+        },
+        {
+          "phase": "revision",
+          "name": "direct",
+          "result": "1/0/false"
+        },
+        {
+          "phase": "revision",
+          "name": "wrapped",
+          "result": "1/0/true"
+        },
+        {
+          "phase": "revision",
+          "name": "async",
+          "result": "1/0/false"
+        },
+        {
+          "phase": "resolve",
+          "name": "pending",
+          "result": "1/false"
+        },
+        {
+          "phase": "resolve",
+          "name": "direct",
+          "result": "1/1/false"
+        }
+      ]
+    }
+  ]
+}
