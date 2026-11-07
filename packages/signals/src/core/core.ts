@@ -2426,6 +2426,10 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
     )
       committed = true;
   }
+  // A pending calculation can survive the release of its hold. The optional
+  // coordinator still selects its published value for a higher update.
+  if (owner._statusFlags & STATUS_PENDING && !committed && c && !(el._config & CONFIG_HELD))
+    committed = !!layerFrameRead?.(c as Computed<any>, el);
   if (owner._statusFlags & STATUS_PENDING && !committed) {
     // A reader landing on a pending node throws; an untracked read of an
     // UNINITIALIZED node has no committed value to serve and throws too. A

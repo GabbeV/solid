@@ -434,6 +434,17 @@ function unpublishedFrame(node: Computed<any>): Transaction | null {
 
 function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
   const update = flushTransaction;
+  // An unobserved lower flight can outlive its input update's publication.
+  // Its initialized value is still the lower frame of a higher calculation;
+  // releasing the update must not make that reader inherit the flight again.
+  // A source still deriving from a peer override is not lower merely because
+  // it lost its holder. Reuse context discovery on this pending-only path.
+  if (!(source._config & CONFIG_HELD))
+    return (
+      positionOf(update) > 0 &&
+      !((source as Computed<any>)._statusFlags & STATUS_UNINITIALIZED) &&
+      positionOf(update) > currentPosition(source)
+    );
   // Most active propagation reads a proposal from this exact update. Merged
   // holders still take the resolving path below.
   if (update && source._x!._transaction === update) return false;
