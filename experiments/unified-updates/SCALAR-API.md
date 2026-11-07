@@ -2,12 +2,13 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
-Current runtime checkpoint: [coherent callback release, stage 148](INTEGRATION-148.md).
+Current runtime checkpoint: [error observations and ordinary recovery, stage 150](INTEGRATION-150.md).
+Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest failure inventory: [callback release and mount coverage, stage 148](INTEGRATION-148.md).
+Latest failure inventory: [error publication and collection audit, stage 150](INTEGRATION-150.md).
 Mount coverage: [committed-frame mounts and DOM coverage, stage 146](INTEGRATION-146.md).
-Latest runtime investigation: [rejected synchronous latest simplification, stage 149](INTEGRATION-149.md).
+Previous runtime investigation: [rejected synchronous latest simplification, stage 149](INTEGRATION-149.md).
 Earlier preparation trials: [early latest, stage 145](INTEGRATION-145.md).
 Accepted branch rule: [ordinary branch consistency, stage 144](INTEGRATION-144.md).
 Earlier error publication checkpoint: [held latest error publication choice, stage 134](INTEGRATION-134.md).

@@ -905,6 +905,10 @@ function createBoundary<T>(
         throw tree._x!._error;
       }
       if (isCollecting(b)) {
+        // Keeping the fallback still observes the content's next status.
+        // A recovery can notify this output before the source finishes;
+        // returning below must not drop the link that delivers its next error.
+        link(tree, self);
         // A29's boundary exemption (#3540): a boundary MOUNTED over a held
         // value (its first pass; a first pass under it that read a hold was
         // collected, `joinPass` — the tree's own, or a render effect's that

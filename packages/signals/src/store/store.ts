@@ -1900,7 +1900,11 @@ function pullFamily(target: StoreTarget): void {
     // untracked too — `handleAsync` asking a returned proxy whether it is a
     // flight: the pass carries the error, and the re-ask or answer that
     // supersedes it must reach it (#4527; a tracked read links anyway, #4519).
-    if (c && fw._config & CONFIG_STAGED_ERROR) link(fw, c);
+    // Observation windows subscribe to the selected output in readNode.
+    // Linking their caller directly to the producer would bypass that cut:
+    // a staged error could then error an isPending reader instead of changing
+    // the boolean it observes. Ordinary throwing reads keep their wake link.
+    if (c && verdict === null && fw._config & CONFIG_STAGED_ERROR) link(fw, c);
     readNode(fw);
   } else if (verdict !== null) {
     // A settled projection is normally pulled without subscribing to its

@@ -218,21 +218,6 @@ export function releaseSettledDependents(el: Computed<any>): void {
   if (candidates) for (const node of candidates) releaseIfSettledUnobserved(node);
 }
 
-// Error-dimension twin of settlePendingSource's blocked re-enqueue (#2949):
-// a node in STATUS_ERROR that recovers by recomputing to an UNCHANGED value
-// fires no value notification — the recovery is completely silent. But a
-// dependent that re-ran during the error window consumed its dirty flag and
-// committed nothing (the fresh sibling values it read were absorbed into an
-// errored run), so its committed value is stale. The propagated error is one
-// object identity down the whole dependent tree, and holding it is exactly
-// the "blocked on this error" marker — re-enqueue those holders so they
-// re-run: fresh values commit and flow, and a dependent with another
-// still-broken source simply re-errors. Pending recovery uses
-// settlePendingSource to clear inherited status and retry blocked readers.
-// Walks the full dependent graph
-// (releaseSettledDependents shape): identity holders can sit below an
-// intermediate whose own error state has since been scrubbed or replaced
-// (e.g. an error boundary's tree node).
 /** D-41: an error a pass of a held node found is an answer of
  * that frame — it ends the wait like a value and shows when a value would.
  * Staged like one: `_pendingValue` carries it (CONFIG_STAGED_ERROR), readers
@@ -248,12 +233,12 @@ export function stageError(el: Computed<any>, error: any, inPass?: boolean): boo
   // Staged whether or not the flush has joined a hold yet: a pass that runs
   // before its async sibling joins is the seam's to decide, like a value
   // (#4109). A flush that parks nothing publishes it at its commit (S-38).
-  // Not a projection's derive: its readers learn its error through the
-  // family, which the commit's publish never reaches (#4189).
+  // Projection readers are queued by their family and consume this same
+  // staged answer; the producer does not publish ahead of its input frame.
   if (
     !(
       el._config & CONFIG_HELD ||
-      (inPass && el._flags & REACTIVE_STAGED_READ && globalQueue._running && !(el as any)._fam)
+      (inPass && el._flags & REACTIVE_STAGED_READ && globalQueue._running)
     ) ||
     passLane
   )
@@ -272,17 +257,6 @@ export function stageError(el: Computed<any>, error: any, inPass?: boolean): boo
   settlePendingSource(el);
   schedule();
   return true;
-}
-
-export function settleErroredDependents(el: Computed<any>, error: any): void {
-  let scheduled = false;
-  walkDependents(el, (node, seen) => {
-    if (!seen && node._x?._error === error) {
-      enqueueSub(node);
-      scheduled = true;
-    }
-  });
-  if (scheduled) schedule();
 }
 
 // Retire `source` from pending state along the dependent graph rooted at `el`.
@@ -435,6 +409,7 @@ export function carryStagedError(node: Computed<any>, source: Computed<any>): vo
     layerNotify?.(input, node);
     if (
       node._config & CONFIG_REDERIVE ||
+      observesError?.(input, node) ||
       (node._x?._inFlight && node._x._pendingSources?.has(node))
     ) {
       // A still-running calculation must supersede its own request. Settled
@@ -1091,6 +1066,11 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
   propagateStatus(el, status, error);
 }
 
+let observesError: ((source: Computed<any>, reader: Computed<any>) => boolean) | undefined;
+export function setErrorObservation(hook: typeof observesError): void {
+  observesError = hook;
+}
+
 /** The dependents' half of `notifyStatus`: `el`'s status reaches each
  * subscriber as a propagated mark (or a re-derive). On its own for a store
  * family's leaves, which are not the derive's dependents — the family
@@ -1132,6 +1112,7 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
     // (#4109, `stageMark`).
     if (
       sub._config & CONFIG_REDERIVE ||
+      (status === STATUS_ERROR && observesError?.(el, sub)) ||
       (!LEGACY_LANES && pendingSource && sub._config & CONFIG_STAGED_ERROR) ||
       (holdWorkHook &&
         (sub._config & CONFIG_VERDICT || (pendingSource && sub._config & CONFIG_STAGED_ERROR)) &&

@@ -8,7 +8,6 @@ import {
   releaseFlightTeardown,
   releaseIfSettledUnobserved,
   retryReaches,
-  settleErroredDependents,
   settlePendingSource,
   stageError
 } from "./async.js";
@@ -868,11 +867,13 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // committed value (D-41: a recovery equal to the last good value is a
     // change): the slot it publishes to held the error, and the readers that
     // derived from it — `latest()` throws it — re-derive (#4403).
+    // A published error is also a different answer from the last good value.
     // A first value already staged this frame is that slot too: a re-pass
     // equal to it changes nothing, though the node stays uninitialized until
     // the commit (#4540).
     const valueChanged =
       (unstaged && wasUninitialized && !isEffect) ||
+      !!outgoingError ||
       !!el._x?._shownError ||
       !!replaced ||
       !isSame(el, compareValue, value);
@@ -1018,13 +1019,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
       for (let s = el._subs; s !== null; s = s._nextSub) insertIntoHeapHeight(s._sub, dirtyQueue);
     }
 
-    // Silent recovery: errored → unchanged value fires no notification, but
-    // dependents still holding the propagated error consumed their dirty flag
-    // in an errored run and may sit on stale commits (#2949). Changed-value
-    // recoveries ride insertSubs above; a comparator throw re-errored the node
-    // (el._x?._error re-set), so this only runs on a genuinely clean recovery.
+    // Recovery from an error is a changed answer, including recovery to the
+    // last successful value. A pending conditional can still drop its source
+    // and return an unchanged value: retire that source from its dependents.
     if (!valueChanged && !el._x?._error) {
-      if (outgoingError) settleErroredDependents(el, outgoingError);
       // Self-registration (this node's own superseded flight) is the #3181
       // sweep's business below — retiring it here too would walk twice.
       if (outgoingPendingSources)

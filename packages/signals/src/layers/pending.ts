@@ -13,7 +13,7 @@ import {
 import { forgetThrownRead } from "../core/dev.js";
 import { link } from "../core/graph.js";
 import { NotReadyError } from "../core/error.js";
-import { quietPending } from "../core/async.js";
+import { quietPending, setErrorObservation } from "../core/async.js";
 import { cleanup } from "../core/owner.js";
 import { GlobalQueue, txOf, setPendingMark } from "../core/scheduler.js";
 import {
@@ -21,6 +21,7 @@ import {
   CONFIG_HELD,
   NOT_PENDING,
   STATUS_PENDING,
+  STATUS_ERROR,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
 import {
@@ -121,6 +122,7 @@ function pendingFallback(layer: Layer<boolean>): boolean {
   if (typeof source._fn === "function") prepareComputed(source, false);
   if (
     source._statusFlags & STATUS_UNINITIALIZED &&
+    !(source._statusFlags & STATUS_ERROR) &&
     (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING)
   )
     read(source);
@@ -160,6 +162,20 @@ export function createPending<T>(input: () => T): () => boolean {
 // ordinary-node fields; the output uses the normal observation lifecycle.
 const observations = new WeakMap<Signal<any>, Observation>();
 
+// Callback control flow subscribes to source values as well as their pending
+// outputs. An error on that value edge is a reason to run the query again,
+// not an error of the boolean query. An ordinary read outside the callback
+// still throws during that pass. Only current-pass edges count: a kept
+// previous frame may have queried pending before its replacement threw.
+// Walk the reader's inputs, avoiding a quadratic scan of a source's fan-out.
+function observesPendingError(source: Computed<any>, reader: Computed<any>): boolean {
+  const output = observations.get(source)?._output;
+  if (!output) return false;
+  for (let edge = reader._deps; edge && edge._gen === reader._depGen; edge = edge._nextDep)
+    if (edge._dep === output) return true;
+  return false;
+}
+
 /** A declared change can alter pending without changing a source's value.
  * Only affects() calls this; ordinary notification keeps its existing path. */
 export function markPending(source: Signal<any>): void {
@@ -181,6 +197,7 @@ function pendingOutput(source: Computed<any>): Computed<boolean> {
   if (__OBSERVE__) (record._output as any)._devWindows = 1;
   record._incoming = pendingInput(source);
   observations.set(source, record);
+  setErrorObservation(observesPendingError);
   return record._output;
 }
 
