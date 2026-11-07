@@ -1,12 +1,11 @@
 /**
- * #4166: #3851 for a nested render effect. An action holds `x = 1`;
- * `<Show when={latest(x) > 0}>` mounts a `<Loading>` whose content creates
- * a DOM render effect reading `x` (`<p>{x()}</p>`). The mount is mainline,
- * so that effect's first read is held like a direct read: the boundary
- * shows its fallback and the effect publishes nothing until the action
- * lands. Before, the effect published `1` beside the committed `x = 0`.
+ * #4166: a latest-opened branch mounts from a complete committed lower frame.
+ * An action holds x=1 over x=0. Both the outside binding and the new child
+ * read 0 until the action completes, then publish 1 together. Next additionally
+ * holds this mount; the shared model uses the accepted natural mount rule.
+ * It must never show a proposed 1 inside beside a committed 0 outside.
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   action,
   createLoadingBoundary,
@@ -18,6 +17,12 @@ import {
   latest,
   untrack
 } from "../src/index.js";
+
+const disposals: (() => void)[] = [];
+afterEach(() => {
+  for (const dispose of disposals.splice(0)) dispose();
+  flush();
+});
 
 const settle = async () => {
   for (let i = 0; i < 3; i++) {
@@ -31,7 +36,8 @@ async function mountUnderVerdict(contentInMemo: boolean) {
   let screenX: unknown;
   let inner: unknown;
   let slot: unknown;
-  createRoot(() => {
+  createRoot(dispose => {
+    disposals.push(dispose);
     // <i>{x()}</i>
     createRenderEffect(x, v => {
       screenX = v;
@@ -81,11 +87,11 @@ async function mountUnderVerdict(contentInMemo: boolean) {
   return screens;
 }
 
-describe("#4166: a verdict-mounted boundary holds a nested render effect's first read", () => {
-  it("the boundary shows its fallback while the action holds the value", async () => {
+describe("#4166: a latest-mounted boundary uses the committed lower frame", () => {
+  it("the boundary shows committed content while the action holds its replacement", async () => {
     expect(await mountUnderVerdict(false)).toEqual([
       [0, "closed", undefined],
-      [0, "pending", undefined],
+      [0, "p", 0],
       [1, "p", 1]
     ]);
   });
@@ -93,7 +99,7 @@ describe("#4166: a verdict-mounted boundary holds a nested render effect's first
   it("same with the render effect inside a memo the content creates", async () => {
     expect(await mountUnderVerdict(true)).toEqual([
       [0, "closed", undefined],
-      [0, "pending", undefined],
+      [0, "p", 0],
       [1, "p", 1]
     ]);
   });

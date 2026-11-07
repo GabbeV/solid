@@ -28,7 +28,9 @@ import { render } from "@solidjs/web";
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const disposals: (() => void)[] = [];
 afterEach(() => {
+  for (const dispose of disposals.splice(0)) dispose();
   resetErrorHalt();
   vi.restoreAllMocks();
 });
@@ -44,10 +46,17 @@ const labels: [string, Label][] = [
 
 type Reader = "memo" | "binding" | "memo in an inner <Show>";
 
-async function run(kind: "switch" | "show", label: Label, reader: Reader) {
+async function run(
+  kind: "switch" | "show",
+  label: Label,
+  reader: Reader,
+  opener: "staged" | "joined" = "staged"
+) {
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const el = document.createElement("div");
   const [ready, setReady] = createSignal(false);
+  const [gate, setGate] = createSignal(opener === "staged");
+  let resolveData!: (value: string) => void;
   const zone = createMemo(() => (ready() ? "ready" : "loading"));
   const format = createMemo(() => "ru");
   function Picker(props: { value: Accessor<string> }) {
@@ -62,20 +71,19 @@ async function run(kind: "switch" | "show", label: Label, reader: Reader) {
   const dispose = render(() => {
     const data = createMemo(async () => {
       if (zone() !== "ready") return "none";
-      await wait(30);
-      return "data";
+      return new Promise<string>(resolve => (resolveData = resolve));
     });
     return (
       <>
         {kind === "switch" ? (
           <Switch>
-            <Match when={zone() === "loading"}>
+            <Match when={!gate() || zone() === "loading"}>
               <i>loading</i>
             </Match>
-            <Match when={zone() === "ready" && "sel"}>{s => <Picker value={s} />}</Match>
+            <Match when={gate() && zone() === "ready" && "sel"}>{s => <Picker value={s} />}</Match>
           </Switch>
         ) : (
-          <Show when={zone() === "ready" && "sel"} fallback={<i>loading</i>}>
+          <Show when={gate() && zone() === "ready" && "sel"} fallback={<i>loading</i>}>
             {s => <Picker value={s} />}
           </Show>
         )}
@@ -85,12 +93,20 @@ async function run(kind: "switch" | "show", label: Label, reader: Reader) {
       </>
     );
   }, el);
+  disposals.push(dispose);
   await wait(5);
   expect(el.textContent).toBe("loadingnone");
   setReady(true);
-  await wait(100);
+  await wait(5);
+  if (opener === "joined") {
+    expect(el.textContent).toBe("loadingnone");
+    setGate(true);
+    await wait(5);
+    expect(el.textContent).toBe("loadingnone");
+  }
+  resolveData("data");
+  await wait(5);
   const text = el.textContent;
-  dispose();
   expect(error).not.toHaveBeenCalled();
   return text;
 }
@@ -100,13 +116,14 @@ describe("a memo born in a newly opened branch may read latest() (#4341)", () =>
     expect(await run("switch", labels[0][1], "memo")).toBe("ru:ready:seldata");
   });
 
-  for (const kind of ["switch", "show"] as const)
-    for (const reader of ["memo", "binding", "memo in an inner <Show>"] as const)
-      for (const [name, label] of labels)
-        test(`${kind}, ${reader}: ${name}`, async () => {
-          const text = await run(kind, label, reader);
-          expect(text).toBe(
-            name.startsWith("latest(format) between") ? "ready:ru:seldata" : "ru:ready:seldata"
-          );
-        });
+  for (const opener of ["staged", "joined"] as const)
+    for (const kind of ["switch", "show"] as const)
+      for (const reader of ["memo", "binding", "memo in an inner <Show>"] as const)
+        for (const [name, label] of labels)
+          test(`${opener}, ${kind}, ${reader}: ${name}`, async () => {
+            const text = await run(kind, label, reader, opener);
+            expect(text).toBe(
+              name.startsWith("latest(format) between") ? "ready:ru:seldata" : "ru:ready:seldata"
+            );
+          });
 });
