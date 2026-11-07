@@ -7,7 +7,8 @@ Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
 Latest failure inventory: [callback release and mount coverage, stage 148](INTEGRATION-148.md).
 Mount coverage: [committed-frame mounts and DOM coverage, stage 146](INTEGRATION-146.md).
-Latest runtime investigation: [rejected early-latest trials, stage 145](INTEGRATION-145.md).
+Latest runtime investigation: [rejected synchronous latest simplification, stage 149](INTEGRATION-149.md).
+Earlier preparation trials: [early latest, stage 145](INTEGRATION-145.md).
 Accepted branch rule: [ordinary branch consistency, stage 144](INTEGRATION-144.md).
 Earlier error publication checkpoint: [held latest error publication choice, stage 134](INTEGRATION-134.md).
 Previous runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
