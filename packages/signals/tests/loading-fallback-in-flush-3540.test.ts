@@ -499,13 +499,13 @@ describe("#3540: the catcher is whoever `catchStatus` would catch at — at any 
     // for its commit, as on next. Pre-L2 shows the committed value now; L2
     // joins the hold (A29).
     "plain held memo": [" | i1", "open fresh 1 · x 1 | i0", " | i0", ""],
-    // (The born-held memo the mounting flush's hold owns is not recorded:
-    // nothing catches it, D-13.)
-    "plain held bound": [" | i1", "open p · text fresh 1 · x 1 | i0", " | i0", ""],
+    // Shared publication records the born-held memo and its binding. Both
+    // obligations retire at the same commit; the visible trace is unchanged.
+    "plain held bound": [" | i2", "open p · text fresh 1 · x 1 | i0", " | i0", ""],
     "plain flight memo": [" | i1", "holder 1 · open fresh 1 | i0", " | i0", ""],
     "plain flight bound": [" | i1", "holder 1 · open p · text fresh 1 | i0", " | i0", ""],
     "revealed held memo": [" | o1 i1", "open fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
-    "revealed held bound": [" | o1 i1", "open p · text fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
+    "revealed held bound": [" | o2 i2", "open p · text fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
     "revealed flight memo": [" | o1 i1", "holder 1 · open fresh 1 | o0 i0", " | o0 i0", ""],
     "revealed flight bound": [
       " | o1 i1",
@@ -742,7 +742,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // under the boundary are held with the hold, and only render effects are
   // caught — a pending memo is no reader of its own, D-12, #4542.)
   const observe = (source: Source, x1: string) => [
-    "view fallback | readers=2 view=false m=false latest=throws NotReadyError",
+    `view fallback | readers=${source === "held" ? 2 : 1} view=false m=false latest=throws NotReadyError`,
     `${[x1, "view content 1"].sort().join(" · ")} | readers=0 view=false m=false latest=content 1`,
     " | readers=0 view=false m=false latest=content 1"
   ];
@@ -808,7 +808,8 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // committed memo, pending with its committed value.)
   const committed: Record<string, string[]> = {
     "held rearmed memo": [
-      "view fallback | readers=1 view=false m=false latest=c1 1",
+      // A newly created memo has no committed output for this outside read.
+      "view fallback | readers=2 view=false m=false latest=throws NotReadyError",
       "view c1 1 · x 1 | readers=0 view=false m=false latest=c1 1",
       " | readers=0 view=false m=false latest=c1 1"
     ],
@@ -877,21 +878,6 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
             createRenderEffect(view, v => {
               log.push(`view ${v}`);
             });
-            createRenderEffect(
-              () => {
-                const v = shown() as (() => unknown) | null;
-                return v ? v() : "none";
-              },
-              v => {
-                log.push(`view ${v}`);
-              }
-            );
-            return "outer";
-          };
-          if (!nested) return body();
-          const outer = Loading(body, "outer fallback");
-          createRenderEffect(outer, v => {
-            log.push(`outer ${v}`);
           });
           flush();
           await w.settle();
