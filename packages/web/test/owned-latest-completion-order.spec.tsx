@@ -66,20 +66,21 @@ for (const wrapped of [false, true])
         await turn();
         show();
         flush();
-        expect(screen()).toEqual(["0", "0", "0", null]);
+        // The independent mount retries using committed input values.
+        expect(screen()).toEqual(["0", "0", "0", "0:0:0"]);
         expect(calculations.length).toBeGreaterThan(0);
         if (inputFirst) {
           end.resolve();
           await turn();
           // Expiring optimism must not keep itself alive. Its ordinary
           // correction still waits for the answer before coherent reveal.
-          expect(screen()).toEqual(["0", "0", "0", null]);
+          expect(screen()).toEqual(["0", "0", "0", "0:0:0"]);
           answer.resolve();
         } else {
           answer.resolve();
           await turn();
           // The upper output is independent of the still-open input action.
-          expect(screen()).toEqual(["0", "1", "1", null]);
+          expect(screen()).toEqual(["0", "1", "1", "0:0:1"]);
           end.resolve();
         }
         await running;

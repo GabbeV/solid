@@ -59,9 +59,14 @@ for (const wrapped of [false, true])
       await turn();
       show();
       flush();
-      expect(host.textContent).toBe("0");
+      // Creator retry makes the independent mount use committed id.
+      expect(host.textContent).toBe("00:0:0");
       expect(calculations.length).toBeGreaterThan(0);
-      expect(calculations.filter(([, ordinary, proposed]) => proposed < ordinary)).toEqual([]);
+      expect(
+        calculations.filter(
+          ([captured, ordinary, proposed]) => captured !== ordinary || proposed < ordinary
+        )
+      ).toEqual([]);
       answer.resolve();
       end.resolve();
       await running;

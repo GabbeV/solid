@@ -6,7 +6,8 @@ import {
   createRoot,
   createSignal,
   flush,
-  latest
+  latest,
+  onCleanup
 } from "../src/index.js";
 
 for (const wrapped of [false, true])
@@ -16,13 +17,16 @@ for (const wrapped of [false, true])
         const end = Promise.withResolvers<void>();
         const next = Promise.withResolvers<void>();
         const calculations: number[][] = [];
-        let shown: { text?: string } | undefined;
+        const frames: { text?: string; cleaned: number }[] = [];
+        let shown: { text?: string; cleaned: number } | undefined;
         const app = createRoot(dispose => {
           const [id, setId] = createSignal(0);
           const observed = wrapped ? createMemo(() => latest(id)) : () => latest(id);
           const page = createMemo(() => {
             const captured = id();
-            const element: { text?: string } = {};
+            const element = { text: undefined as string | undefined, cleaned: 0 };
+            frames.push(element);
+            onCleanup(() => element.cleaned++);
             const bind = (remaining: number): void => {
               if (remaining) {
                 createMemo(() => bind(remaining - 1));
@@ -62,10 +66,13 @@ for (const wrapped of [false, true])
             yield end.promise;
           })();
           flush();
-          expect(shown).toBe(initial);
+          // Discovering latest retries the creator on committed id. Its
+          // coherent replacement may publish while the lower action is open.
+          expect(shown).not.toBe(initial);
+          expect(initial?.cleaned).toBe(1);
           expect(shown?.text).toBe("0:0");
-          // Old-frame bindings may observe latest independently. A binding
-          // created from the ordinary proposal belongs to its new frame.
+          // A completed child must agree with its creator, including when
+          // the creator retried after the child discovered optimism.
           expect(
             calculations.filter(([captured]) => captured === 1).every(([, id]) => id === 1)
           ).toBe(true);
@@ -90,5 +97,6 @@ for (const wrapped of [false, true])
           await running;
           app.dispose();
           flush();
+          expect(frames.every(frame => frame.cleaned === 1)).toBe(true);
         }
       });

@@ -174,6 +174,9 @@ it("a held branch's verdict reader of the flight waits with its frame", async ()
     setK("b");
     setX(1);
     flush();
+    // Both are ordinary readers of x. The observation boundary cannot
+    // leave a published binding behind an independently committed x.
+    expect((screen.binding as unknown[])[2]).toBe(screen.x);
     expect(screen).toEqual({ branch: "a", binding: ["a", "a", 0, true, 0], x: 0 });
     setX(2);
     flush();

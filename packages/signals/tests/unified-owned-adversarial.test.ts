@@ -17,13 +17,14 @@ const turn = async () => {
 };
 
 // The oracle concerns complete calculations, not the order of sibling effects.
-// A private child reading its creator's proposal must never pair it with an
-// older latest value, even before that creator accepts its tentative joins.
+// Discovering an optimistic context retries the creator as well as its child.
+// Complete calculations must agree with captured peer inputs, and latest must
+// never be older than the corresponding ordinary read.
 for (const wrapped of [false, true])
   for (const observationFirst of [false, true])
     for (const roots of [0, 2])
       for (const untracked of [false, true])
-        it(`a private frame inherits tentative peer inputs coherently (memo=${wrapped}, latest first=${observationFirst}, roots=${roots}, untracked=${untracked})`, async () => {
+        it(`a private frame retries tentative peer inputs coherently (memo=${wrapped}, latest first=${observationFirst}, roots=${roots}, untracked=${untracked})`, async () => {
           const aEnd = Promise.withResolvers<void>();
           const bEnd = Promise.withResolvers<void>();
           const answer = Promise.withResolvers<void>();
@@ -101,18 +102,20 @@ for (const wrapped of [false, true])
             expect(latestShown).toBe(0);
             app.setOpen(true);
             flush();
-            expect(shown).toBeUndefined();
+            // Neither peer join was accepted before the retry. The new frame
+            // can publish committed inputs while both actions remain open.
+            expect(shown).toMatchObject({ value: 0, text: "0:0", cleaned: 0 });
             expect(calculations.length).toBeGreaterThan(0);
             expect(calculations.filter(([sum, a, b, ahead]) => sum !== a + b || ahead < a)).toEqual(
               []
             );
-            expect(calculations).toContainEqual([3, 1, 2, 1]);
+            expect(calculations).toContainEqual([0, 0, 0, 0]);
             answer.resolve();
             await turn();
             aEnd.resolve();
             await aRunning;
             await turn();
-            expect(shown).toBeUndefined();
+            expect(shown).toMatchObject({ value: 0, text: "0:0", cleaned: 0 });
             bEnd.resolve();
             await bRunning;
             await turn();

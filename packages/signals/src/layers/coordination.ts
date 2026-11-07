@@ -339,6 +339,10 @@ function prepareLayers(): boolean {
     if (!parent._reruns?.size) continue;
     const waiting = blocked(parent);
     for (const reader of parent._reruns) {
+      // This update already replaces the owner's frame. Its parked children
+      // still serve other updates, but must not derive the replacing input
+      // beside values captured from the frame being removed.
+      if (reader._flags & REACTIVE_ZOMBIE && removalStagedBy(reader, parent)) continue;
       // Only settled publications can be replayed before the input is ready.
       // Do not supersede an unfinished higher proposal to satisfy this demand.
       if (

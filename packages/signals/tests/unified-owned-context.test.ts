@@ -138,7 +138,7 @@ for (const depth of [0, 3])
       });
 
 for (const supersede of [false, true])
-  it(`updates a parked visible child without adopting its proposed replacement (supersede=${supersede})`, async () => {
+  it(`retries a proposed owner using its still-visible input (supersede=${supersede})`, async () => {
     const guessEnd = gate(),
       ownerEnd = gate(),
       answer = gate<number>();
@@ -208,8 +208,11 @@ for (const supersede of [false, true])
     await turn();
     flush();
     expect([shown, host.textContent]).toEqual([1, "1:1:1"]);
-    expect(host.firstChild).toBe(original);
-    expect(frames.find(frame => frame.generation === 1)!.cleaned).toBe(0);
+    // The new child discovers the higher guess and retries its creator
+    // against committed generation=1. It replaces the old frame coherently.
+    expect(host.firstChild).not.toBe(original);
+    expect(frames.find(frame => frame.generation === 1)!.cleaned).toBe(1);
+    expect(frames.filter(frame => frame.cleaned === 0).map(frame => frame.generation)).toEqual([1]);
     if (supersede) {
       setGeneration(3);
       flush();
@@ -223,7 +226,7 @@ for (const supersede of [false, true])
     await turn();
     flush();
     expect(host.textContent).toBe(supersede ? "3:3:1" : "2:2:1");
-    expect(bodies.every(([captured, read]) => captured === read)).toBe(true);
+    expect(bodies.filter(([captured, read]) => captured !== read)).toEqual([]);
     disposals.pop()!();
     expect(frames.every(frame => frame.cleaned === 1)).toBe(true);
     guessEnd.resolve();
@@ -294,10 +297,10 @@ for (const order of ["guess-first", "mount-first", "together"] as const)
           yield mountEnd.promise;
         })();
         flush();
-        // Ready proposals can initialize private children before their first
-        // publication; an actual pending derivation still suspends them.
-        if (readDetail) expect(completed).toEqual([]);
-        else expect(completed).toEqual([1]);
+        // Discovering the optimistic context retries the creator. It sees
+        // committed mount=false and removes the speculative child before
+        // the child can complete, even if its proposed input is ready.
+        expect(completed).toEqual([]);
         if (order !== "mount-first") answer.resolve(1);
         if (order !== "guess-first") mountEnd.resolve();
         await turn();
@@ -386,10 +389,12 @@ it("replaces unpublished first-value waiters without retaining their subscriptio
   for (let value = 2; value <= 50; value++) {
     setGeneration(value);
     flush();
-    expect(owners.filter(owner => owner.cleaned === 0)).toHaveLength(1);
+    // Each retry returns to committed generation=0, so no speculative
+    // child remains alive between proposals.
+    expect(owners.filter(owner => owner.cleaned === 0)).toHaveLength(0);
     let subscribers = 0;
     for (let edge = (detail as any)[$REFRESH]._subs; edge; edge = edge._nextSub) subscribers++;
-    expect(subscribers).toBe(2);
+    expect(subscribers).toBe(1);
   }
   expect([shownDetail, shownChild]).toEqual([null, null]);
   answer.resolve(1);
@@ -401,7 +406,9 @@ it("replaces unpublished first-value waiters without retaining their subscriptio
   await turn();
   flush();
   expect([shownDetail, shownChild]).toEqual([1, 1]);
-  expect(owners).toHaveLength(50);
+  // Fifty discarded proposals, followed by the committed frame.
+  expect(owners).toHaveLength(51);
+  expect(owners.filter(owner => owner.cleaned === 0)).toHaveLength(1);
   disposals.pop()!();
   expect(owners.every(owner => owner.cleaned === 1)).toBe(true);
   expect((detail as any)[$REFRESH]._subs).toBeNull();
