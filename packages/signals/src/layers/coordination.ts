@@ -14,6 +14,7 @@ import { disposeChildren } from "../core/owner.js";
 import {
   LEGACY_LANES,
   CONFIG_AUTO_DISPOSE,
+  CONFIG_FRAME,
   CONFIG_HELD,
   REACTIVE_LAYER_EFFECT,
   REACTIVE_PREVIOUS_COMMITTED,
@@ -339,8 +340,12 @@ function prepareLayers(): boolean {
       const heldAbove =
         reader._config & CONFIG_HELD && positionOf(txOf(reader)) > positionOf(parent);
       const affectsCommitted = heldAbove && committedUsesUpdate(reader, parent);
+      // Structural boundary readers use the same post-publication replay as
+      // direct bindings. Preparing them independently for sibling updates
+      // can keep registering each other's already-ready frames forever.
       if (
         !(reader as any)._type &&
+        !(reader._config & CONFIG_FRAME) &&
         (reader._flags & REACTIVE_FRAME_READ || affectsCommitted) &&
         !(reader._flags & REACTIVE_DISPOSED)
       ) {
@@ -589,7 +594,28 @@ function currentPosition(node: Signal<any>, seen = new Set<Signal<any>>()): numb
 
 function readContext(reader: Computed<any>, source: Computed<any>): void {
   if (evaluation !== reader) return;
+  // Selecting an existing observation can move a running binding into its
+  // output update. Retry in that exact update, so direct frame reads do not
+  // mistake its proposals for a different update at the same depth.
+  if (
+    (reader as any)._type === EFFECT_RENDER &&
+    reader._flags & REACTIVE_LAYER_EFFECT &&
+    reader._config & CONFIG_HELD &&
+    flushTransaction
+  ) {
+    const selected = txOf(reader);
+    if (positionOf(selected) > positionOf(flushTransaction)) {
+      holdQueuedProposals(resolveTx(flushTransaction));
+      setCalculationUpdate(selected);
+      retryEvaluation = true;
+      throw RETRY;
+    }
+  }
   if (!tracking) evaluationPosition = Math.max(evaluationPosition, currentPosition(source));
+  // A tracked proposal also selects the whole calculation before its next
+  // ordinary read. Direct bindings retain their committed-frame read rule.
+  else if ((reader as any)._type !== EFFECT_RENDER && source._config & CONFIG_HELD)
+    evaluationPosition = Math.max(evaluationPosition, positionOf(txOf(source)));
   // A read in the update already being executed bypasses deferred joins.
   // An untracked boundary can still require leaving that update and retrying
   // the entire body. Publication preparation has explicitly selected the
