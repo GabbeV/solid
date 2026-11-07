@@ -29,10 +29,11 @@ for (const wrapped of [false, true])
               }
               createRenderEffect(
                 () => {
-                  if (observationFirst) observed();
+                  let ahead: number;
+                  if (observationFirst) ahead = observed();
                   const ordinary = id();
-                  if (!observationFirst) observed();
-                  calculations.push([captured, ordinary]);
+                  if (!observationFirst) ahead = observed();
+                  calculations.push([captured, ordinary, ahead!]);
                   return `${captured}:${ordinary}`;
                 },
                 text => {
@@ -65,13 +66,16 @@ for (const wrapped of [false, true])
           expect(
             calculations.filter(([captured]) => captured === 1).every(([, id]) => id === 1)
           ).toBe(true);
+          // Check the observation too: preserving the captured input alone
+          // must not allow latest to return an older version than id().
+          expect(calculations.every(([, ordinary, ahead]) => ahead >= ordinary)).toBe(true);
           end.resolve();
           await running;
           flush();
           expect(shown).not.toBe(initial);
           expect(shown?.text).toBe("1:1");
-          expect(calculations).toContainEqual([1, 1]);
-          expect(calculations).not.toContainEqual([1, 0]);
+          expect(calculations).toContainEqual([1, 1, 1]);
+          expect(calculations.every(([, ordinary, ahead]) => ahead >= ordinary)).toBe(true);
         } finally {
           end.resolve();
           await running;

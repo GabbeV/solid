@@ -1,5 +1,9 @@
 # First callbacks in unpublished owned subtrees
 
+Follow-up: [stage 167](INTEGRATION-167.md) withdraws the contract question below.
+Eager construction remains required; the mixed latest calculation is an
+implementation bug.
+
 No runtime changes retained. Stage 165 remains the implementation checkpoint,
 with 26 non-deferred signals failures.
 
