@@ -41,11 +41,10 @@
  * S8 — (fixed, 3b step 6c) a derivation's untracked read of a SUPERSEDED
  *      store node derives from the landed truth (A18), not the override —
  *      nodeValue delegates to core's one slow selection, `serve`.
- * S9 — (fixed) a pass whose verdict posture is only inherited is served the
- *      hold's own write (D-25, #4544) from a store key with no node, as from
- *      the signal and from a key with a node: `stagedScreen`'s node-less call
- *      (store.ts `readSource`) used to skip `holdStaging` — first a throw
- *      (#4681), then the screen, which tore the landing frame.
+ * S9 — observation outputs select the same update context through a memo
+ *      as inline (unified updates). A higher pending/latest output reads
+ *      committed lower values, including untracked store keys with no node.
+ *      Parking must include those backings before switching context.
  * Discovery for S4–S7: the matrix's `memoUntracked` / `effectUntracked`
  * reader kinds (an untracked read inside a derivation), added with S5.
  *
@@ -702,15 +701,16 @@ async function s9Trace(source: S9Source, posture: S9Posture) {
   return { trace: trace.join(" ; "), nodes };
 }
 
-describe("S9 — an inherited verdict posture is served the hold's own write, with or without a store node (D-25 #4544, R2) — signal vs store", () => {
-  // `|` is the landing. Mid-hold the inherited pass derives from the hold's
-  // write (`/1`), so the landing frame shows the landed `data` with it.
+describe("S9 — observation contexts agree through memos and across signal/store read paths", () => {
+  // `|` precedes resolving data. Pending can publish above that hold and
+  // sees committed count=0. A memo wrapper does not change the context.
+  // Keep the complete calculation and publication trace, including retries.
   const expected: Record<Exclude<S9Posture, "latest of the same key, through a memo">, string> = {
     "inherited isPending":
-      "pass 0/0 ; screen 0 0/0 ; pass 1/1 ; | ; screen 1 1/1 ; pass 0/1 ; screen 1 0/1",
-    "inherited latest": "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; | ; pass 1/1 ; screen 1 1/1",
-    // F-6: a pass that probes reads the screen and re-derives at the landing.
-    "own latest": "pass 0/0 ; screen 0 0/0 ; pass 0/0 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1"
+      "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 0/1 ; screen 1 0/1",
+    "inherited latest":
+      "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1",
+    "own latest": "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1"
   };
   for (const [posture, trace] of Object.entries(expected) as [keyof typeof expected, string][])
     for (const source of S9_SOURCES)
@@ -723,16 +723,18 @@ describe("S9 — an inherited verdict posture is served the hold's own write, wi
         expect(r.trace).toBe(trace);
       });
 
-  // D-26: `[latest(x), x()]` through a memo stays atomic for every source.
-  // The window's tracked read gives the key a leaf, so the store's read is
-  // never node-less here and `_askedIn` decides on the leaf. Pinned as
-  // parity with the signal; the landing frame itself is not ruled here.
+  // `[latest(x), x()]` through a memo has one context for every source.
+  // Latest explicitly exposes 1 while the ordinary read still selects 0.
+  // Its tracked read gives the store key a leaf; check the full publication
+  // sequence as well as parity with the signal.
   for (const source of S9_SOURCES.slice(1))
     it(`latest of the same key, through a memo: ${source} matches the signal`, async () => {
       const posture = "latest of the same key, through a memo";
       const r = await s9Trace(source, posture);
       expect(r.nodes.leaf).toBe(!source.startsWith("signal"));
       expect(r.trace).toBe((await s9Trace("signal", posture)).trace);
-      expect(r.trace).toContain("pass 1/0 ; |");
+      expect(r.trace).toBe(
+        "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1"
+      );
     });
 });

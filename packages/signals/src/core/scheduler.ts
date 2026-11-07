@@ -1176,7 +1176,6 @@ export class GlobalQueue implements IQueue {
           if (!(node._config & (CONFIG_HELD | CONFIG_OVERRIDE)) && dependencyFrame(node, "park"))
             holdNode(node, t);
       pendingNodes.length = 0;
-      storeParkHook?.(t);
 
       // (This flush's runs are stashed with `t` below — after the landings,
       // so a `t` that lands at this very seam runs them first, ahead of
@@ -1511,7 +1510,15 @@ export const pendingNodes: Signal<any>[] = [];
 /** Park this round's proposals and their owned frames in the common update.
  * A layer can park a prefix before temporarily running another update's pass.
  * The normal seam uses the same loop; `_nodes` may grow as frames are held. */
-export function holdQueuedProposals(update: Transaction, start = 0): void {
+export function holdQueuedProposals(update: Transaction, start?: number): void {
+  // Parking the ambient frame includes stores whose writes have no node yet.
+  // A context switch must freeze those backings before a higher update reads
+  // them, just as it freezes scalar proposals. A scoped suffix parks only its
+  // listed nodes; it must not adopt unrelated ambient store writes.
+  if (start === undefined) {
+    storeParkHook?.(update);
+    start = 0;
+  }
   const count = pendingNodes.length;
   let removed = 0;
   for (let i = start; i < count; i++) {
