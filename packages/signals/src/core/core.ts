@@ -1401,7 +1401,9 @@ function readHeld(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
 }
 
 function frameRead(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
-  if (layerFrameRead?.(c, el)) return true;
+  const selection = layerFrameRead?.(c, el);
+  if (selection === null) return false;
+  if (selection) return true;
   if ((el as Computed<any>)._statusFlags & STATUS_UNINITIALIZED) {
     joinPass(c, el);
     return false;

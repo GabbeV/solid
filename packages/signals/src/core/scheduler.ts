@@ -94,7 +94,8 @@ export let layerOwn: ((node: Signal<any>, update: Transaction) => void) | undefi
 export let layerNotify:
   | ((source: Signal<any>, reader: Computed<any>, value?: boolean) => boolean | void)
   | undefined;
-export let layerFrameRead: ((reader: Computed<any>, source: Signal<any>) => boolean) | undefined;
+// true: committed; false: ordinary joining; null: proposal without joining.
+export let layerFrameRead: ((reader: Computed<any>, source: Signal<any>) => boolean | null) | undefined;
 export let preparingUpdate: Transaction | null = null;
 export let layerStatus: ((reader: Computed<any>, source: Computed<any>) => boolean) | undefined;
 export let layerBlocked: ((update: Transaction) => boolean) | undefined;
@@ -112,7 +113,7 @@ export function setLayerCommit(before?: () => boolean, seam?: () => void): void 
 export function setLayerReads(
   own?: (node: Signal<any>, update: Transaction) => void,
   mergeHook?: (from: Transaction, into: Transaction) => void,
-  frame?: (reader: Computed<any>, source: Signal<any>) => boolean,
+  frame?: typeof layerFrameRead,
   status?: typeof layerStatus,
   notify?: typeof layerNotify
 ): void {
@@ -717,7 +718,7 @@ export function onScreen(r: Computed<any>, t: Transaction | null): boolean {
  * (done, and the commit disposes it; not done, and it stays parked). The
  * staging transaction is the one holding the pass that parked the frame:
  * the nearest non-zombie ancestor. */
-function removalStagedBy(r: Computed<any>, t: Transaction): boolean {
+export function removalStagedBy(r: Computed<any>, t: Transaction): boolean {
   let o: Owner | null = r;
   while ((o as any)?._flags & REACTIVE_ZOMBIE) o = o!._parent;
   return ((o?._config as number) & CONFIG_HELD &&

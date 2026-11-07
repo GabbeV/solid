@@ -45,8 +45,18 @@ export type ObservationKind<T> = {
 };
 const dirty = new Set<Observation<any>>();
 const watching = new Set<Observation<any>>();
+// Selection during a pull is the same propagation work as selection in the
+// preparation loop. Give its consumers a round before retiring the override.
+let selected = false;
+
+export function stageObservation(record: Observation<any>, value: unknown): void {
+  stageLayer(record, value);
+  selected = true;
+}
+
 function prepareObservations(): boolean {
-  let changed = false;
+  let changed = selected;
+  selected = false;
   // Prepare both observations of a held synchronous proposal in the same
   // round. Waiting for settle would publish latest before pending. Unheld
   // proposals propagate through inactive latest outputs ordinarily.

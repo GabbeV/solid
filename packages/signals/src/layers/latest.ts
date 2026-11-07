@@ -22,6 +22,7 @@ import { initialObservation, stageLayer, type Layer } from "./coordination.js";
 import { observesSnapshot, withReadWindow } from "./window.js";
 import {
   createSourceObservation,
+  stageObservation,
   selectObservation,
   type Observation,
   type ObservationKind
@@ -39,7 +40,38 @@ function selectedError(record: Observation<any>, error: unknown): LatestError {
     : new LatestError(error);
 }
 
+function prepareLatest(record: Observation<any>): void {
+  const source = record._input;
+  // A known hold needs its output selected before this reader continues.
+  // Otherwise a previously initialized latest output can supply its old
+  // value beside the input's proposal during the same calculation.
+  // Leave first answers, retirement and not-yet-flushed writes to their
+  // existing initialization and publication paths.
+  if (
+    !record._retiring &&
+    !(record._output._flags & REACTIVE_DISPOSED) &&
+    !(source._statusFlags & STATUS_UNINITIALIZED) &&
+    source._pendingValue !== NOT_PENDING &&
+    unflushedValue(source) === NOT_PENDING
+  ) {
+    const update = flushTransaction && resolveTx(flushTransaction);
+    if (source._config & CONFIG_HELD || update?._open) {
+      if (update) holdQueuedProposals(update);
+      const next = kind._sample(record);
+      if (!Object.is(record._override, next)) {
+        if (context === record._output) stageObservation(record, next);
+        else stageLayer(record, next);
+      }
+    }
+  }
+}
+
 function selectLatest(layer: Layer<any>): unknown {
+  // A memo wrapper can pull this output without calling latest() again.
+  // Select an established hold before that wrapper can cache the old value.
+  // A new output has no old publication and uses initialObservation below.
+  if (!(layer._output._statusFlags & STATUS_UNINITIALIZED))
+    prepareLatest(layer as Observation<any>);
   const value = selectObservation(layer);
   if (value instanceof LatestError) throw value._error;
   return value;
@@ -142,25 +174,7 @@ const observations = new WeakMap<Signal<any>, Observation<any>>();
 function latestOutput(source: Computed<any>): Computed<any> {
   const existing = observations.get(source);
   if (existing) {
-    // A known hold needs its output selected before this reader continues.
-    // Otherwise a previously initialized latest output can supply its old
-    // value beside the input's proposal during the same calculation.
-    // Leave first answers, retirement and not-yet-flushed writes to their
-    // existing initialization and publication paths.
-    if (
-      !existing._retiring &&
-      !(existing._output._flags & REACTIVE_DISPOSED) &&
-      !(source._statusFlags & STATUS_UNINITIALIZED) &&
-      source._pendingValue !== NOT_PENDING &&
-      unflushedValue(source) === NOT_PENDING
-    ) {
-      const update = flushTransaction && resolveTx(flushTransaction);
-      if (source._config & CONFIG_HELD || update?._open) {
-        if (update) holdQueuedProposals(update);
-        const next = kind._sample(existing);
-        if (!Object.is(existing._override, next)) stageLayer(existing, next);
-      }
-    }
+    prepareLatest(existing);
     return existing._output;
   }
   const record = createSourceObservation(source, kind, selectLatest);

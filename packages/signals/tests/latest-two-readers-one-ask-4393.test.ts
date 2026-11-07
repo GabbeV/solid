@@ -206,7 +206,9 @@ describe("#4400: a second write during the hold, distinct encoding", () => {
       flush();
       for (let i = 0; i < 4; i++) await settle();
       dispose();
-      expect(asks).toEqual(["m0:23", "m0:22", "m0:23", "m0:32", "m1:33", "m0:34", "m1:35"]);
+      // The expired optimistic 32 is superseded before its downstream ask.
+      // It cannot extend its own lifetime just to start m1:33.
+      expect(asks).toEqual(["m0:23", "m0:22", "m0:23", "m0:32", "m0:34", "m1:35"]);
       expect(out.at(-1)).toBe(reader === "pair" ? "false,35" : "pfalse");
     }
   );

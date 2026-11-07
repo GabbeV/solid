@@ -31,11 +31,14 @@ import {
   REACTIVE_STAGED_READ,
   REACTIVE_ZOMBIE,
   STATUS_UNINITIALIZED,
+  STATUS_NO_VALUE,
   STATUS_PENDING,
   STATUS_ERROR
 } from "../core/constants.js";
 import {
   blocked,
+  deferZombie,
+  removalStagedBy,
   onScreen,
   setLayerVisibility,
   flushTransaction,
@@ -260,21 +263,31 @@ let orderPublication = false;
 
 /** A speculative pass can add or drop inputs without replacing the displayed
  * result. Only a change reaching that committed result requires preparation
- * before the lower update publishes. */
+ * before the lower update publishes. With `observations`, require a path
+ * through latest's explicit input relation: a new owned frame reading that
+ * observation cannot use a version older than its own input proposal. */
 function committedUsesUpdate(
   node: Computed<any>,
   update: Transaction,
-  seen = new Set<Signal<any>>()
+  seen = new Set<Signal<any>>(),
+  observations = false
 ): boolean {
   if (seen.has(node)) return false;
   seen.add(node);
   const boundary = boundaries.get(node);
-  if (boundary && boundary._override !== NOT_PENDING) return false;
+  if (boundary && boundary._override !== NOT_PENDING) {
+    const input = observations && boundary._statusInput;
+    return (
+      !!input &&
+      ((input._config & CONFIG_HELD && txOf(input) === update) ||
+        committedUsesUpdate(input, update, seen))
+    );
+  }
   for (const input of committedDependencies(node)) {
-    if (input._config & CONFIG_HELD && txOf(input) === update) return true;
+    if (!observations && input._config & CONFIG_HELD && txOf(input) === update) return true;
     if (
       typeof (input as Computed<any>)._fn === "function" &&
-      committedUsesUpdate(input as Computed<any>, update, seen)
+      committedUsesUpdate(input as Computed<any>, update, seen, observations)
     )
       return true;
   }
@@ -432,7 +445,7 @@ function unpublishedFrame(node: Computed<any>): Transaction | null {
   return null;
 }
 
-function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
+function frameRead(reader: Computed<any>, source: Signal<any>): boolean | null {
   const update = flushTransaction;
   // An unobserved lower flight can outlive its input update's publication.
   // Its initialized value is still the lower frame of a higher calculation;
@@ -453,10 +466,18 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
   if (update && holder === resolveTx(update)) return false;
   const ownPosition = positionOf(update),
     heldPosition = positionOf(holder);
-  if (heldPosition > ownPosition && unpublishedFrame(reader)) {
+  const frame = heldPosition > ownPosition && unpublishedFrame(reader);
+  if (frame) {
     staleReader(reader, holder);
-    // This frame can wait for publication without consuming the higher
-    // proposal. With no committed value yet, its read simply suspends.
+    // The reader remains private to its creating update. Consume its input's
+    // ready observation without merging the higher publication into that
+    // input; pending/error reads still take the ordinary status path below.
+    // Structural nodes can replace visible content, so they wait for this
+    // output to publish instead of treating its proposal as a private value.
+    if (committedUsesUpdate(source as Computed<any>, frame, new Set(), true)) {
+      if (reader._config & CONFIG_FRAME) throw new NotReadyError(source);
+      return null;
+    }
     if (uninitialized) throw new NotReadyError(source);
     return true;
   }
@@ -539,11 +560,42 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
     }
     return true;
   }
+  // A notification can precede the parking that makes this node retained.
+  // Decide removal ownership now: only another update may run it ahead.
+  if (
+    fromHeap &&
+    node._flags & REACTIVE_ZOMBIE &&
+    node._config & CONFIG_HELD &&
+    removalStagedBy(node, txOf(node))
+  ) {
+    deferZombie(node);
+    return true;
+  }
   // A re-armed Loading catches this pass independently of the notifying
   // flush. Discover and accept its inputs inside that scope, so tentative
   // peer joins do not pull the re-arm's unrelated writes into the old hold.
   if (flushTransaction === null && freshHook?.(node)) {
     recomputeInUpdate(node, null);
+    return true;
+  }
+  // A retained producer without a first value cannot supply a committed
+  // answer to an optimistic caller. Finish its initialization in its input
+  // context, not in the caller's higher context; that would retry a lower
+  // recovery against the old input and dispose it before it can recover.
+  if (
+    node._flags & REACTIVE_ZOMBIE &&
+    node._statusFlags & (STATUS_UNINITIALIZED | STATUS_NO_VALUE) &&
+    !(node as any)._type &&
+    !(node._config & (CONFIG_HELD | CONFIG_FRAME | CONFIG_REDERIVE)) &&
+    positionOf(flushTransaction) > currentPosition(node)
+  ) {
+    let update: Transaction | null = null;
+    for (let edge = node._deps; edge; edge = edge._nextDep)
+      if (edge._dep._config & CONFIG_HELD) {
+        update = txOf(edge._dep);
+        break;
+      }
+    recomputeInUpdate(node, update);
     return true;
   }
   const frame = unpublishedFrame(node);
@@ -894,7 +946,8 @@ function adoptOutput(
   // A retained child still displays its owner's committed frame. Adoption by
   // an independent output update must bypass the ordinary removal deferral,
   // just as the legacy engine's independently published notifications do.
-  if (node._flags & REACTIVE_ZOMBIE) node._flags |= REACTIVE_LANE_DIRTY;
+  // Remember the notification even if its owner parks it later this round.
+  node._flags |= REACTIVE_LANE_DIRTY;
   // Another input can notify an already-adopted reader in this same pass.
   // With no new dependency links and no callback to transfer, its ownership
   // and publication lists are already complete. Preserve pending detection.
@@ -907,7 +960,10 @@ function adoptOutput(
     if (node._statusFlags & STATUS_PENDING) update._mayPend = true;
     return true;
   }
+  // An executing selector has not produced its replacement yet. Its normal
+  // outcome notification must run before subscribers see that replacement.
   const transferredProposal =
+    !(node._flags & REACTIVE_RECOMPUTING_DEPS) &&
     (node._pendingValue !== NOT_PENDING || node._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
     own !== update;
   if (node._pendingValue !== NOT_PENDING && positionOf(own) !== positionOf(update))
