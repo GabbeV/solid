@@ -724,7 +724,8 @@ describe("S9 — observation contexts agree through memos and across signal/stor
       });
 
   // `[latest(x), x()]` through a memo has one context for every source.
-  // Latest explicitly exposes 1 while the ordinary read still selects 0.
+  // The unheld proposal first propagates as 1/1; once held, latest
+  // explicitly exposes 1 while the ordinary read selects committed 0.
   // Its tracked read gives the store key a leaf; check the full publication
   // sequence as well as parity with the signal.
   for (const source of S9_SOURCES.slice(1))
@@ -734,7 +735,7 @@ describe("S9 — observation contexts agree through memos and across signal/stor
       expect(r.nodes.leaf).toBe(!source.startsWith("signal"));
       expect(r.trace).toBe((await s9Trace("signal", posture)).trace);
       expect(r.trace).toBe(
-        "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1"
+        "pass 0/0 ; screen 0 0/0 ; pass 1/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1"
       );
     });
 });

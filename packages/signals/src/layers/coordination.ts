@@ -24,6 +24,7 @@ import {
   NOT_PENDING,
   REACTIVE_DISPOSED,
   REACTIVE_FRAME_READ,
+  REACTIVE_IN_HEAP,
   REACTIVE_JOINED,
   REACTIVE_LANE_DIRTY,
   REACTIVE_RECOMPUTING_DEPS,
@@ -339,6 +340,10 @@ function prepareLayers(): boolean {
         continue;
       const heldAbove =
         reader._config & CONFIG_HELD && positionOf(txOf(reader)) > positionOf(parent);
+      // A newly selected output has already queued this reader in its
+      // higher context. Run that pass before the input's restoration can
+      // take it back; other ready readers can still prepare this round.
+      if (changed && heldAbove && reader._flags & REACTIVE_IN_HEAP) continue;
       const affectsCommitted = heldAbove && committedUsesUpdate(reader, parent);
       // Structural boundary readers use the same post-publication replay as
       // direct bindings. Preparing them independently for sibling updates

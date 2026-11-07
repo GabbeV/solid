@@ -10,7 +10,12 @@ import {
   STATUS_PENDING,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
-import { flushTransaction, holdQueuedProposals, resolveTx } from "../core/scheduler.js";
+import {
+  flushTransaction,
+  globalQueue,
+  holdQueuedProposals,
+  resolveTx
+} from "../core/scheduler.js";
 import { link } from "../core/graph.js";
 import type { Computed, Signal } from "../core/types.js";
 import { initialObservation, stageLayer, type Layer } from "./coordination.js";
@@ -41,7 +46,6 @@ function selectLatest(layer: Layer<any>): unknown {
 }
 
 const kind: ObservationKind<any> = {
-  _prepareValue: true,
   _fallback: fallback,
   _sample: record => {
     const source = record._input;
@@ -78,11 +82,13 @@ function fallback(layer: Layer<any>): unknown {
   const source = layer._input;
   const output = context as Computed<any>;
   if (typeof source._fn === "function") prepareComputed(source, false);
-  // A staged value is already a proposal, before parking marks it held.
-  // Reading it ordinarily here can join downstream work to the input update
-  // before latest gets the chance to establish its explicit boundary.
-  // This includes a first answer whose replacement is already pending:
-  // UNINITIALIZED describes publication, not the absence of that proposal.
+  // An open action has already established a hold. Register its flushed
+  // proposals before this output chooses its ordinary or optimistic input.
+  // Outside a flush, queued writes must retain their unflushed visibility.
+  if (globalQueue._running && flushTransaction && resolveTx(flushTransaction)._open)
+    holdQueuedProposals(resolveTx(flushTransaction));
+  // Without an established hold, the input propagates normally. A later
+  // suspension can activate an override through observation preparation.
   if (
     (layer as Observation<any>)._retiring ||
     source._statusFlags & STATUS_ERROR ||
@@ -91,7 +97,6 @@ function fallback(layer: Layer<any>): unknown {
     source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
-      source._pendingValue === NOT_PENDING &&
       !(output._statusFlags & STATUS_ERROR || output._x?._shownError))
   ) {
     // An error is the latest settled proposal. Pulling it through read() can
@@ -102,6 +107,7 @@ function fallback(layer: Layer<any>): unknown {
       if (source._height >= output._height) output._height = source._height + 1;
       if (
         source._config & CONFIG_STAGED_ERROR &&
+        source._config & CONFIG_HELD &&
         !(output._statusFlags & STATUS_UNINITIALIZED) &&
         !(layer as Observation<any>)._retiring
       )

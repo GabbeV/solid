@@ -37,8 +37,6 @@ export type Observation<T> = Layer<T> & {
   _observation: ObservationKind<T>;
 };
 export type ObservationKind<T> = {
-  /** Include unheld staged values, before the input has a pending verdict. */
-  _prepareValue?: true;
   _fallback: (layer: Layer<T>) => T;
   _sample: (record: Observation<T>) => T;
   _active: (record: Observation<T>, value: T) => boolean;
@@ -50,8 +48,8 @@ const watching = new Set<Observation<any>>();
 function prepareObservations(): boolean {
   let changed = false;
   // Prepare both observations of a held synchronous proposal in the same
-  // round. Waiting for settle would publish latest before pending. Latest
-  // also samples unheld proposals; those are not pending merely by staging.
+  // round. Waiting for settle would publish latest before pending. Unheld
+  // proposals propagate through inactive latest outputs ordinarily.
   for (const record of dirty) {
     // A new input question supersedes a prepared restoration before its
     // readers run again, not only after the publication sweep.
@@ -64,8 +62,7 @@ function prepareObservations(): boolean {
       record._retiring ||
       record._output._flags & REACTIVE_DISPOSED ||
       (!(record._input._statusFlags & STATUS_PENDING) &&
-        (!(record._observation._prepareValue || record._input._config & CONFIG_HELD) ||
-          record._input._pendingValue === NOT_PENDING)) ||
+        (!(record._input._config & CONFIG_HELD) || record._input._pendingValue === NOT_PENDING)) ||
       (record._input._statusFlags & STATUS_UNINITIALIZED &&
         (!(record._input._statusFlags & STATUS_PENDING) ||
           record._input._pendingValue === NOT_PENDING))

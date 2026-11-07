@@ -300,7 +300,8 @@ describe("#3698 a read served an active override is lane work, not a transaction
     expect(drag()).toBe(true);
     expect(latest(drag)).toBe(true);
     expect(isPending(drag)).toBe(false);
-    expect(log.at(-1)).toBe("drag:true latest:true pending:false");
+    // The two sibling bindings have no callback ordering guarantee.
+    expect(log.filter(l => l.startsWith("drag:"))).toEqual(["drag:true latest:true pending:false"]);
     expect(log.filter(l => l.startsWith("show:"))).toEqual(["show:child", "show:undefined"]);
     dispose();
   });

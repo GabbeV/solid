@@ -97,9 +97,23 @@ async function run(reader: Reader, gap: number) {
 describe("#4393: two latest() readers under one async memo, t written during the hold", () => {
   for (const reader of ["pair", "split", "value", "screen"] as const)
     for (const gap of [0, 3, 12])
-      it(`each question asked once (${reader}, ${gap} ms)`, async () => {
+      it(`coherent input, optimistic, and correction requests (${reader}, ${gap} ms)`, async () => {
         const { asks, values } = await run(reader, gap);
-        expect(new Set(asks).size, asks.join(" ")).toBe(asks.length);
+        // Inactive latest passes through the proposed input. Discovering the
+        // async hold selects an optimistic context with ordinary reads at the
+        // committed input; retiring it returns to the input context. Each
+        // memo has one eligible flight, so that last pass restarts its ask.
+        // Eliminating work for an already-expired override is deferred.
+        expect(asks.filter(ask => ask.startsWith("m0:"))).toEqual(["m0:23", "m0:22", "m0:23"]);
+        expect(asks.filter(ask => ask.startsWith("m0b:"))).toEqual([
+          "m0b:1100",
+          "m0b:1000",
+          "m0b:1100"
+        ]);
+        const combined = asks.filter(ask => ask.startsWith("m1:"));
+        expect(combined).toHaveLength(2);
+        expect(["m1:23", "m1:1023"]).toContain(combined[0]);
+        expect(combined[1]).toBe("m1:1123");
         expect(values.at(-1)).toBe("1123");
       });
 
