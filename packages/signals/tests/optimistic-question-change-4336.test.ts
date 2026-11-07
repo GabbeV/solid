@@ -1,26 +1,21 @@
 /**
- * #4336: a guess made inside a pending action over the answer to one
- * question (`sel()` = 3), then an outside change to the question's input
- * (`setSel(1)`). Ruled 2026-10-28: hold. The guess's node re-asks because an
- * input changed outside the guess's own action, so the input change is held
- * with that action (D-34): the screen keeps `#3: dana | mine (sending)` until
- * the post settles, then shows issue 1's comments. No frame shows the new
- * `sel` beside comments derived from the old one (F-1), however the reads
- * are grouped into render effects (#4284). `isPending` is true while the new
- * question is in flight or held (F-9); `latest()` answers the newest truth
- * (F-6). An input set through its own optimistic write shows at once, in
- * its own lane (F-6, F-11); if that action ends without writing the truth,
- * the post's guess comes back in the revert's frame (D-33).
+ * #4336: changing the input question while a posting override is active.
+ * Next's 2026-10-28 ruling joined the incoming input to the guessing action.
+ * The unified model intentionally separates those lifetimes (stage 120): an
+ * independent selection can commit while the comments output keeps its guess.
+ * This boundary does not rebase the guess onto the new resource identity.
+ * Every ordinary derivation of the comments output must still agree with it.
  *
- * Controls: a `refresh()` re-ask of the same question keeps the guess until
- * the commit (D-34, #4329); the guess's own action changing the question
- * keeps it too; a keyed store whose new question writes another key does not
- * wait for the post.
+ * A lower optimistic selection follows the same rule, including on reversal.
+ * An input write made by the posting action itself still belongs to that action.
+ * Refresh targets the input and preserves the override until correction.
+ * Store forms specify the same contract but remain deferred implementation work.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import {
   action,
   createEffect,
+  createMemo,
   createOptimistic,
   createOptimisticStore,
   createRenderEffect,
@@ -36,7 +31,9 @@ import {
 /** Every gate a test opened: settled after it, so an action a failing test
  * left open does not hold the next test's frames. */
 const gates: Array<() => void> = [];
+const disposals: Array<() => void> = [];
 afterEach(async () => {
+  for (const dispose of disposals.splice(0)) dispose();
   for (let g; (g = gates.pop()); ) g();
   await tick();
   resetErrorHalt();
@@ -72,6 +69,7 @@ type Form = "signal" | "store-draft" | "store-return";
 function setup(form: Form, reader: "render" | "user" | "split" = "render", optimisticSel = false) {
   const asks: Ask[] = [];
   const frames: string[] = [];
+  const outputFrames: [string, string][] = [];
   let server!: ReturnType<typeof defer<unknown>>;
   let setSel!: (v: number) => void;
   let setSelTruth!: (v: number) => void;
@@ -80,7 +78,8 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
   let sel!: () => number;
   let view!: () => string;
   let guess!: (text: string) => void;
-  createRoot(() => {
+  createRoot(dispose => {
+    disposals.push(dispose);
     const [saved, setSaved] = createSignal(3);
     const [s, ss] = optimisticSel ? createOptimistic(() => saved()) : [saved, setSaved];
     sel = s;
@@ -113,6 +112,7 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
           d.push({ id: `tmp-${text}`, text: `${text} (sending)` });
         });
     }
+    const derived = createMemo(() => view().toUpperCase());
     if (reader === "split") {
       // One frame per flush: both effects' latest values, sampled once the
       // flush that applied them is over.
@@ -131,11 +131,21 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
         () => `#${sel()}:`,
         v => ((a = v), sample())
       );
-      createRenderEffect(view, v => ((b = v), sample()));
+      createRenderEffect(
+        () => [view(), derived()] as [string, string],
+        pair => {
+          outputFrames.push(pair);
+          b = pair[0];
+          sample();
+        }
+      );
     } else
       (reader === "user" ? createEffect : createRenderEffect)(
-        () => `#${sel()}: ${view()}`,
-        (v: string) => void frames.push(v)
+        () => [`#${sel()}: ${view()}`, view(), derived()] as const,
+        ([frame, value, consequence]) => {
+          frames.push(frame);
+          outputFrames.push([value, consequence]);
+        }
       );
     post = action(function* (text: string) {
       guess(text);
@@ -150,6 +160,7 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
   return {
     asks,
     frames,
+    outputFrames,
     setSel,
     setSelTruth,
     post,
@@ -167,7 +178,15 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
   };
 }
 
-/** A frame headed by issue 1 that shows issue 3's comments or the guess. */
+function expectCoherentOutput(h: ReturnType<typeof setup>) {
+  expect(h.outputFrames.length).toBeGreaterThan(0);
+  for (const [value, consequence] of h.outputFrames) {
+    expect(value).not.toContain("<hole>");
+    expect(consequence).toBe(value.toUpperCase());
+  }
+}
+
+/** Keyed views and same-action input changes still pair resource identity. */
 const torn = (frames: string[]) =>
   frames.filter(
     f =>
@@ -189,36 +208,35 @@ async function primed(form: Form, reader?: "render" | "user" | "split", optimist
 const forms = ["signal", "store-draft", "store-return"] as const;
 
 for (const form of forms) {
-  describe(`#4336 the question changes under a guess: hold (${form})`, () => {
+  describe(`#4336 the question changes under an independent override (${form})`, () => {
     for (const reader of ["render", "split"] as const)
-      it(`the issue's repro: the input change waits for the post (${reader})`, async () => {
+      it(`the input commits while the post keeps its override (${reader})`, async () => {
         const h = await primed(form, reader);
 
-        // A new question from outside the action: held with the post.
+        // A new question belongs to its own update, outside the posting action.
         h.setSel(1);
         await tick();
         expect(h.asks.at(-1)!.id).toBe(1);
-        expect(h.screen()).toBe("#3: dana | mine (sending)");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
 
-        // Issue 1's answer lands while the post is out: still held.
+        // The new answer commits below the still-active override.
         h.asks.at(-1)!.d.res([]);
         await tick();
-        expect(h.screen()).toBe("#3: dana | mine (sending)");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
 
         // The post settles; its refresh re-asks issue 1; the landing reveals.
         h.server.res({});
         await tick();
-        expect(h.screen()).toBe("#3: dana | mine (sending)");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
         expect(h.asks.at(-1)!.id).toBe(1);
         h.asks.at(-1)!.d.res(["mine"]);
         await tick();
         expect(h.screen()).toBe("#1: mine");
-        expect(torn(h.frames)).toEqual([]);
+        expectCoherentOutput(h);
       });
 
-    // The issue's reader. A user effect is a derivation, not the screen: it
-    // may see the hold's world before the commit (D-34), but never a torn one.
-    it("the issue's repro with a user effect: never torn", async () => {
+    // User effects obey the same output/derivation consistency.
+    it("a user effect observes the independent input and coherent output", async () => {
       const h = await primed(form, "user");
       h.setSel(1);
       await tick();
@@ -229,12 +247,12 @@ for (const form of forms) {
       h.asks.at(-1)!.d.res(["mine"]);
       await tick();
       expect(h.screen()).toBe("#1: mine");
-      expect(torn(h.frames)).toEqual([]);
+      expectCoherentOutput(h);
     });
 
-    it("isPending is true while the new question is in flight or held; latest answers the newest truth (F-9, F-6)", async () => {
+    it("pending follows the input flight; latest observes the selected output", async () => {
       const h = await primed(form);
-      // An optimistic value is verdict-inert.
+      // A ready override alone has no pending input question.
       expect(isPending(h.read)).toBe(false);
 
       h.setSel(1);
@@ -244,26 +262,26 @@ for (const form of forms) {
 
       h.asks.at(-1)!.d.res([]);
       await tick();
-      expect(isPending(h.read)).toBe(true);
-      expect(latest(h.read)).toEqual([]);
+      expect(isPending(h.read)).toBe(false);
+      expect(latest(h.read)).toEqual(["dana", "mine (sending)"]);
       // Untracked reads see the screen (D-34).
       expect(h.read()).toEqual(["dana", "mine (sending)"]);
 
       h.server.res({});
       await tick();
-      expect(isPending(h.read)).toBe(true);
+      // Refresh is a quiet re-ask, and the selected override is still ready.
+      expect(isPending(h.read)).toBe(false);
       h.asks.at(-1)!.d.res(["mine"]);
       await tick();
       expect(isPending(h.read)).toBe(false);
       expect(h.read()).toEqual(["mine"]);
       expect(latest(h.read)).toEqual(["mine"]);
       expect(h.screen()).toBe("#1: mine");
+      expectCoherentOutput(h);
     });
 
-    // The input's own action: `sel`'s guess opens a lane whose work re-asks
-    // the comments. The post's guess was made over issue 3's answer, so it
-    // does not stand in for issue 1's (F-1): the lane waits for its answer
-    // (F-6), shows it, and the post's guess is not on screen beside `#1:`.
+    // The lower optimistic selection can publish without replacing the upper
+    // posting override. Confirming it does not shorten the post's lifetime.
     for (const reader of ["render", "split"] as const)
       it(`an input set through its own optimistic write shows without waiting for the post (F-6, F-11; ${reader})`, async () => {
         const h = await primed(form, reader, true);
@@ -275,32 +293,26 @@ for (const form of forms) {
         })();
         await tick();
         expect(h.asks.at(-1)!.id).toBe(1);
-        // The guess's own lane waits on the comments it derives (F-6).
-        expect(h.screen()).toBe("#3: dana | mine (sending)");
+        // The upper override cuts that input dependency.
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
         h.asks.at(-1)!.d.res([]);
         await tick();
-        expect(h.screen()).toBe("#1: ");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
         go.res();
         await tick();
         for (const a of h.asks) if (a.id === 1) a.d.res([]);
         await tick();
-        expect(h.screen()).toBe("#1: ");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
         h.server.res({});
         await tick();
         h.asks.at(-1)!.d.res(["mine"]);
         await tick();
         expect(h.screen()).toBe("#1: mine");
-        expect(torn(h.frames)).toEqual([]);
+        expectCoherentOutput(h);
       });
 
-    // The input's guess reverts (its action ends without writing the
-    // truth). Its lane took the comments over for issue 1's answer; the
-    // revert throws that world away and re-asks issue 3 as the revert's work
-    // (D-34: the screen keeps `#1: ` until it lands). The post's guess was
-    // only displaced by the lane, and lives as long as the post (D-33): it
-    // comes back in the revert's frame, over issue 3's answer. No frame
-    // shows one issue's comments under the other's number (F-1), however the
-    // reads are grouped into render effects (#4284).
+    // Reversing the lower override also leaves the upper override selected.
+    // The restored selection publishes without waiting for the masked input.
     for (const reader of ["render", "split"] as const) {
       const pureRevert = async () => {
         const h = await primed(form, reader, true);
@@ -312,23 +324,23 @@ for (const form of forms) {
         await tick();
         h.asks.at(-1)!.d.res([]);
         await tick();
-        expect(h.screen()).toBe("#1: ");
+        expect(h.screen()).toBe("#1: dana | mine (sending)");
         const from = h.frames.length;
         go.res();
         await tick();
         expect(h.asks.at(-1)!.id).toBe(3);
-        expect(h.screen()).toBe("#1: ");
+        expect(h.screen()).toBe("#3: dana | mine (sending)");
         h.asks.at(-1)!.d.res(["dana"]);
         await tick();
         return { h, from };
       };
-      it(`an optimistic input that reverts shows the post's guess again (F-11, D-33; ${reader})`, async () => {
+      it(`an optimistic input that reverts preserves the post's guess (F-11, D-33; ${reader})`, async () => {
         const { h, from } = await pureRevert();
         expect(h.screen()).toBe("#3: dana | mine (sending)");
-        // One step from the lane's world to the post's guess: no `#3:` frame
-        // between (no issue 1 answer, no bare issue 3 answer under `#3:`).
+        // Only the selection changes; no unoverridden comments publish.
         expect(new Set(h.frames.slice(from))).toEqual(new Set(["#3: dana | mine (sending)"]));
         expect(h.read()).toEqual(["dana", "mine (sending)"]);
+        expectCoherentOutput(h);
       });
       it(`an optimistic input that reverts: the post still lands as one frame (${reader})`, async () => {
         const { h, from } = await pureRevert();
@@ -342,7 +354,7 @@ for (const form of forms) {
         expect(new Set(h.frames.slice(from))).toEqual(
           new Set(["#3: dana | mine (sending)", "#3: dana | mine"])
         );
-        expect(torn(h.frames)).toEqual([]);
+        expectCoherentOutput(h);
       });
     }
 
@@ -364,6 +376,7 @@ for (const form of forms) {
       await tick();
       expect(h.screen()).toBe("#3: dana | mine");
       expect(h.frames.slice(1)).not.toContain("#3: dana");
+      expectCoherentOutput(h);
     });
 
     it("control: the guess's own action changing the question keeps the guess until its commit (D-34)", async () => {
@@ -394,6 +407,7 @@ for (const form of forms) {
       await tick();
       expect(h.screen()).toBe("#1: ");
       expect(torn(h.frames)).toEqual([]);
+      expectCoherentOutput(h);
     });
   });
 }
@@ -409,7 +423,8 @@ describe("#4336 keyed store: a new question that writes another key", () => {
     let server!: ReturnType<typeof defer<unknown>>;
     let setSel!: (v: number) => void;
     let post!: () => Promise<void>;
-    createRoot(() => {
+    createRoot(dispose => {
+      disposals.push(dispose);
       const [sel, ss] = createSignal(3);
       setSel = ss;
       const [comments, set] = createOptimisticStore<Record<number, string[]>>(async d => {

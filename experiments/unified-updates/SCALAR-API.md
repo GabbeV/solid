@@ -3,7 +3,8 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Current runtime checkpoint and failure comparison: [common observation context, stage 141](INTEGRATION-141.md).
-Latest failure inventory and accepted branch rule: [ordinary branch consistency, stage 144](INTEGRATION-144.md).
+Latest failure inventory: [input-lifetime fixture migration and rejected latest trials, stage 145](INTEGRATION-145.md).
+Accepted branch rule: [ordinary branch consistency, stage 144](INTEGRATION-144.md).
 Earlier error publication checkpoint: [held latest error publication choice, stage 134](INTEGRATION-134.md).
 Previous runtime checkpoint: [snapshot observations and pending migration, stage 125](INTEGRATION-125.md).
 Latest accepted lifetime ruling: [pending lifetime and mount tests, stage 127](INTEGRATION-127.md).
