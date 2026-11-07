@@ -210,10 +210,12 @@ function probe(source: Signal<any>, window: { found: boolean }): unknown {
   // joins the request it is probing. The pending output already subscribes
   // to this request and wakes the callback when its answer becomes available.
   const status = (source as Computed<any>)._statusFlags;
+  // A ready answer can still be held. Its readiness must not switch callback
+  // branches to the proposal before publication, including under untrack.
   // The pending output can describe a staged first answer's replacement.
   // Its callback may use that answer too, without rejoining the input hold.
   if (
-    status & STATUS_PENDING &&
+    (status & STATUS_PENDING || source._config & CONFIG_HELD) &&
     (!(status & STATUS_UNINITIALIZED) || source._pendingValue !== NOT_PENDING)
   )
     return status & STATUS_UNINITIALIZED ? source._pendingValue : source._value;
