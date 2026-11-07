@@ -1,6 +1,6 @@
 I'm looking for clarification of the intended semantics here, rather than assuming this is a bug.
 
-[Reproduction](https://s.olid.uk/id/3qenWXZBQfqql0GeNJ9bLQ), using the current `next` commit **45648f78**, with Tailwind disabled. Click **Run** once and wait 1.5 seconds. No actions or manual flushes are involved.
+[Reproduction](https://s.olid.uk/id/3qenWXZBQfqql0GeNJ9bLQ), using the current `next` commit **45648f78**. Click **Run** once and wait 1.5 seconds.
 
 An ID update is held by an async data memo. After 500 ms, another signal reruns three sample memos during that hold. Their async work finishes, then at 1500 ms the data request resolves and the update publishes.
 
