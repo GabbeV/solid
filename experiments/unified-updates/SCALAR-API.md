@@ -3,7 +3,8 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Current runtime checkpoint: [creation context across nested pulls, stage 159](INTEGRATION-159.md).
-Latest investigation: [inactive latest and request lifetime, stage 160](INTEGRATION-160.md); no runtime changes retained.
+Latest investigation: [lifetime readiness before optimistic execution, stage 161](INTEGRATION-161.md); no runtime changes retained.
+Previous investigation: [inactive latest and request lifetime, stage 160](INTEGRATION-160.md).
 Previous ownership repair: [provisional parent-frame reads, stage 157](INTEGRATION-157.md).
 Previous observation repair: [latest selection and structural replay, stage 155](INTEGRATION-155.md).
 Previous error callback repair: [stage 152](INTEGRATION-152.md).
