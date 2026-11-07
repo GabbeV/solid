@@ -1,10 +1,10 @@
 I'm looking for clarification of the intended semantics here, rather than assuming this is a bug.
 
-[Reproduction](https://s.olid.uk/id/3qenWXZBQfqql0GeNJ9bLQ), using the current `next` commit **45648f78**. Click **Run** once and wait 1.5 seconds.
+[Reproduction](https://s.olid.uk/id/crXRXWwCSyK3ac-Ub6ObEw), using the current `next` commit **45648f78**. Click **Run** once and wait 1.5 seconds.
 
 An ID update is held by an async data memo. After 500 ms, another signal reruns three sample memos during that hold. Their async work finishes, then at 1500 ms the data request resolves and the update publishes.
 
-Each sample reads `id()` normally and reads pending state under `untrack`. The direct forms also capture the ID read inside the `isPending` callback:
+Each sample reads `id()` normally and reads pending state under `untrack`. All three forms capture the ID read inside the `isPending` callback:
 
 ```ts
 const direct = createMemo(() => {
@@ -16,15 +16,19 @@ const direct = createMemo(() => {
 });
 ```
 
-The second form instead reads a memo of pending:
+The second form wraps the observation in a memo. It returns both the callback value and the boolean so the comparison can show which input produced the snapshot:
 
 ```ts
-const pending = createMemo(() => isPending(id));
+const pending = createMemo(() => {
+  let inside;
+  const sampled = isPending(() => (inside = id()));
+  return { inside, sampled };
+});
 const wrapped = createMemo(() => {
   revision();
   const value = id();
-  const sampled = untrack(pending);
-  return `${value} / — / ${sampled}`;
+  const { inside, sampled } = untrack(pending);
+  return `${value} / ${inside} / ${sampled}`;
 });
 ```
 
@@ -35,10 +39,12 @@ After everything settles, the live ID and data are both **1**, and live pending 
 | Reader | Ordinary ID | ID inside callback | Pending sample |
 | --- | --- | --- | --- |
 | Direct, synchronous memo | 1 | 1 | false |
-| Memo-wrapped pending | 1 | — | true |
+| Memo-wrapped pending | 1 | 0 | true |
 | Direct, async memo | 1 | 0 | false |
 
-The last row is specifically a difference in the captured callback value; it isn't an async reader retaining `pending: true`.
+The memo-wrapped sample retains both the callback's old ID and its `true` result. The async sample retains the old ID but reports `false`.
+
+The callback value matters beyond displaying it: in `isPending(() => id() === 0 ? first() : second())`, it selects which dependency is probed and can therefore affect the returned boolean. This is also a question about which values the callback should use, not just whether its enclosing memo reruns.
 
 ### Why I'm asking
 

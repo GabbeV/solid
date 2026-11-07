@@ -8,7 +8,11 @@ function App() {
   const [revision, setRevision] = createSignal(0);
   const answer = Promise.withResolvers<number>();
   const data = createMemo(() => id() === 0 ? 0 : answer.promise);
-  const pending = createMemo(() => isPending(id));
+  const pending = createMemo(() => {
+    let inside: number | undefined;
+    const sampled = isPending(() => (inside = id()));
+    return { inside, sampled };
+  });
 
   const direct = createMemo(() => {
     revision();
@@ -21,8 +25,8 @@ function App() {
   const wrapped = createMemo(() => {
     revision();
     const value = id();
-    const sampled = untrack(pending);
-    return `${value} / — / ${sampled}`;
+    const { inside, sampled } = untrack(pending);
+    return `${value} / ${inside} / ${sampled}`;
   });
 
   const asynchronous = createMemo(() => {
