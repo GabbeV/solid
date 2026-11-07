@@ -1,0 +1,339 @@
+{
+  "samples": [
+    {
+      "at": "initial",
+      "live": "0 / 0 / false",
+      "direct": "0 / 0 / false",
+      "wrapped": "0 / 0 / false",
+      "async": "0 / 0 / false"
+    },
+    {
+      "at": "200ms",
+      "live": "0 / 0 / true",
+      "direct": "0 / 0 / false",
+      "wrapped": "0 / 0 / false",
+      "async": "0 / 0 / false"
+    },
+    {
+      "at": "700ms",
+      "live": "0 / 0 / true",
+      "direct": "0 / 0 / false",
+      "wrapped": "0 / 0 / false",
+      "async": "0 / 0 / false"
+    },
+    {
+      "at": "2200ms",
+      "live": "1 / 1 / false",
+      "direct": "1 / 1 / false",
+      "wrapped": "1 / 0 / true",
+      "async": "1 / 0 / false"
+    }
+  ],
+  "errors": [],
+  "timeline": [
+    {
+      "phase": "mount",
+      "name": "pending wrapper",
+      "run": 1,
+      "event": "start",
+      "time": 47.700000047683716
+    },
+    {
+      "phase": "mount",
+      "name": "pending wrapper",
+      "run": 1,
+      "event": "return",
+      "value": {
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 48.30000001192093
+    },
+    {
+      "phase": "mount",
+      "name": "direct sync",
+      "run": 1,
+      "event": "start",
+      "time": 48.80000001192093
+    },
+    {
+      "phase": "mount",
+      "name": "direct sync",
+      "run": 1,
+      "event": "return",
+      "value": {
+        "value": 0,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 48.90000003576279
+    },
+    {
+      "phase": "mount",
+      "name": "wrapped reader",
+      "run": 1,
+      "event": "start",
+      "time": 48.90000003576279
+    },
+    {
+      "phase": "mount",
+      "name": "wrapped reader",
+      "run": 1,
+      "event": "return",
+      "value": {
+        "value": 0,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 49
+    },
+    {
+      "phase": "mount",
+      "name": "direct async",
+      "run": 1,
+      "event": "start",
+      "time": 49.10000002384186
+    },
+    {
+      "phase": "mount",
+      "name": "direct async",
+      "run": 1,
+      "event": "return",
+      "value": {
+        "value": 0,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 50.90000003576279
+    },
+    {
+      "phase": "mount",
+      "name": "data",
+      "run": 1,
+      "event": "start",
+      "time": 68.60000002384186
+    },
+    {
+      "phase": "mount",
+      "name": "data",
+      "run": 1,
+      "event": "return",
+      "value": 0,
+      "time": 68.60000002384186
+    },
+    {
+      "event": "setId(1)",
+      "time": 641.9000000357628
+    },
+    {
+      "phase": "setId(1)",
+      "name": "pending wrapper",
+      "run": 2,
+      "event": "start",
+      "time": 642.1000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "pending wrapper",
+      "run": 2,
+      "event": "return",
+      "value": {
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 642.1000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "direct sync",
+      "run": 2,
+      "event": "start",
+      "time": 642.1000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "direct sync",
+      "run": 2,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 1,
+        "sampled": false
+      },
+      "time": 642.2000000476837
+    },
+    {
+      "phase": "setId(1)",
+      "name": "wrapped reader",
+      "run": 2,
+      "event": "start",
+      "time": 642.2000000476837
+    },
+    {
+      "phase": "setId(1)",
+      "name": "wrapped reader",
+      "run": 2,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 642.2000000476837
+    },
+    {
+      "phase": "setId(1)",
+      "name": "direct async",
+      "run": 2,
+      "event": "start",
+      "time": 642.2000000476837
+    },
+    {
+      "phase": "setId(1)",
+      "name": "direct async",
+      "run": 2,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 1,
+        "sampled": false
+      },
+      "time": 642.2000000476837
+    },
+    {
+      "phase": "setId(1)",
+      "name": "data",
+      "run": 2,
+      "event": "start",
+      "time": 642.6000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "data",
+      "run": 2,
+      "event": "return",
+      "value": "answer.promise",
+      "time": 642.6000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "pending wrapper",
+      "run": 3,
+      "event": "start",
+      "time": 643.1000000238419
+    },
+    {
+      "phase": "setId(1)",
+      "name": "pending wrapper",
+      "run": 3,
+      "event": "return",
+      "value": {
+        "inside": 0,
+        "sampled": true
+      },
+      "time": 643.1000000238419
+    },
+    {
+      "event": "setRevision(1)",
+      "time": 1142.1000000238419
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "direct sync",
+      "run": 3,
+      "event": "start",
+      "time": 1142.4000000357628
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "direct sync",
+      "run": 3,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 1142.5
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "wrapped reader",
+      "run": 3,
+      "event": "start",
+      "time": 1142.5
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "wrapped reader",
+      "run": 3,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 0,
+        "sampled": true
+      },
+      "time": 1142.6000000238419
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "direct async",
+      "run": 3,
+      "event": "start",
+      "time": 1142.6000000238419
+    },
+    {
+      "phase": "setRevision(1)",
+      "name": "direct async",
+      "run": 3,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 0,
+        "sampled": false
+      },
+      "time": 1142.6000000238419
+    },
+    {
+      "event": "answer.resolve(1)",
+      "time": 2142.5
+    },
+    {
+      "phase": "answer.resolve(1)",
+      "name": "pending wrapper",
+      "run": 4,
+      "event": "start",
+      "time": 2143.300000011921
+    },
+    {
+      "phase": "answer.resolve(1)",
+      "name": "pending wrapper",
+      "run": 4,
+      "event": "return",
+      "value": {
+        "inside": 1,
+        "sampled": false
+      },
+      "time": 2143.300000011921
+    },
+    {
+      "phase": "answer.resolve(1)",
+      "name": "direct sync",
+      "run": 4,
+      "event": "start",
+      "time": 2143.300000011921
+    },
+    {
+      "phase": "answer.resolve(1)",
+      "name": "direct sync",
+      "run": 4,
+      "event": "return",
+      "value": {
+        "value": 1,
+        "inside": 1,
+        "sampled": false
+      },
+      "time": 2143.400000035763
+    }
+  ]
+}
