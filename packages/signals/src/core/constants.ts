@@ -290,8 +290,6 @@ export const EFFECT_USER = 2;
 export const EFFECT_TRACKED = 3;
 
 export const NOT_PENDING = {};
-/** Internal control flow: retry a creating computation in another update. */
-export const CONTEXT_RETRY = /* @__PURE__ */ Symbol("retry update calculation");
 export const NO_SNAPSHOT = {};
 
 export const SUPPORTS_PROXY = typeof Proxy === "function";

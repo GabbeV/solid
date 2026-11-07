@@ -8,7 +8,7 @@ import { releaseFlightTeardown } from "../core/async.js";
 import { clearThrownRead } from "../core/dev.js";
 import { computed, tracking } from "../core/core.js";
 import { link, deferRetryDisposal } from "../core/graph.js";
-import { NotReadyError } from "../core/error.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { enqueueSub } from "../core/heap.js";
 import { disposeChildren } from "../core/owner.js";
 import {
@@ -72,7 +72,7 @@ import {
   type Transaction
 } from "../core/scheduler.js";
 import type { Computed, NodeOptions, Signal } from "../core/types.js";
-import { boundaries, RETRY } from "./boundary.js";
+import { boundaries } from "./boundary.js";
 import {
   committedDependencies,
   insertedDependencyCount,
@@ -741,7 +741,7 @@ function retryCreator(
     }
     retryOwner = target;
     retryOwnerUpdate = update;
-    throw RETRY;
+    throw new ContextRetry(target);
   }
 }
 
@@ -772,7 +772,7 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
       retryCreator(reader, selected);
       setCalculationUpdate(selected);
       retryEvaluation = true;
-      throw RETRY;
+      throw new ContextRetry(reader);
     }
   }
   if (!tracking) evaluationPosition = Math.max(evaluationPosition, currentPosition(source));
@@ -800,7 +800,7 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
     if (adoptOutput(reader, update)) {
       setCalculationUpdate(update);
       retryEvaluation = true;
-      throw RETRY;
+      throw new ContextRetry(reader);
     }
   }
   if (!evaluationReads) return;
@@ -819,7 +819,7 @@ function readContext(reader: Computed<any>, source: Computed<any>): void {
     update._level = Math.max(previousPosition, depth);
     retryCreator(reader, update, previousPosition);
     retryEvaluation = true;
-    throw RETRY;
+    throw new ContextRetry(reader);
   }
 }
 
@@ -918,7 +918,7 @@ function retryCalculation(
       // this attempt can normalize or accept any tentative dependencies.
       if (retryOwner) {
         if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
-        throw RETRY;
+        throw new ContextRetry(retryOwner);
       }
       if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
     } catch (error) {
@@ -958,7 +958,7 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
       // this attempt can normalize or accept any tentative dependencies.
       if (retryOwner) {
         if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
-        throw RETRY;
+        throw new ContextRetry(retryOwner);
       }
       if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
     } catch (error) {

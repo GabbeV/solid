@@ -65,7 +65,7 @@ import {
 import { computed, read, recompute, runWithOwner, setSignal, signal } from "./core/core.js";
 import { emitDiagnostic, forgetThrownRead, reportDiagnostic } from "./core/dev.js";
 import { shadowSeatRestore, shadowSeatSave, shadowSwapSeat } from "./core/seat.js";
-import { NotReadyError, unwrapStatusError } from "./core/error.js";
+import { ContextRetry, NotReadyError, unwrapStatusError } from "./core/error.js";
 import { reportClientError } from "./core/error-hooks.js";
 import { link } from "./core/graph.js";
 import { enqueueSub } from "./core/heap.js";
@@ -817,6 +817,7 @@ function createBoundary<T>(
           const deps = onFn();
           if (__DEV__ && !mounted && typeof deps === "function") reportOnAccessor(b);
         } catch (e) {
+          if (e instanceof ContextRetry) throw e;
           // (D-42, dev: this catch is the re-arm's mechanism, not a user's.)
           if (__DEV__) forgetThrownRead();
           if (!(e instanceof NotReadyError)) {
@@ -934,6 +935,7 @@ function createBoundary<T>(
       try {
         value = read(tree);
       } catch (e) {
+        if (e instanceof ContextRetry) throw e;
         if (e instanceof NotReadyError ? type === STATUS_PENDING : type === STATUS_ERROR) {
           if (isCollecting(b)) {
             // (D-42, dev: the boundary IS the catcher the throw is addressed to.)

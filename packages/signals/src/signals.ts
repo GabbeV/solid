@@ -1,6 +1,5 @@
 import { createOptimisticPair } from "./layers/optimistic.js";
 import { refresh as refreshLayerInput } from "./layers/refresh.js";
-import { RETRY } from "./layers/boundary.js";
 import type { Computed, Disposable, Owner, Refreshable } from "./core/index.js";
 import {
   $REFRESH,
@@ -794,7 +793,7 @@ function watch<T>(
     try {
       v = fn();
     } catch (e) {
-      if (e === RETRY || e instanceof NotReadyError) throw e;
+      if (e instanceof NotReadyError) throw e;
       // An error is an answer (D-41): delivered by the same frame rule.
       // (D-42, dev: the runtime's catch, not a user's.)
       if (__DEV__) forgetThrownRead();

@@ -13,7 +13,6 @@ import {
 } from "./async.js";
 import {
   REACTIVE_PERSISTENT,
-  CONTEXT_RETRY,
   CONFIG_LOADING,
   LEGACY_LANES,
   $REFRESH,
@@ -84,7 +83,7 @@ import {
   type Refreshable,
   NewSet
 } from "./constants.js";
-import { NotReadyError } from "./error.js";
+import { ContextRetry, NotReadyError } from "./error.js";
 import {
   clearDeps,
   dependencyFrame,
@@ -680,7 +679,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // installer just makes clearStatus a cheap re-verified no-op.)
     if (el._statusFlags !== 0 || el._x !== null) clearStatus(el, create);
   } catch (e) {
-    if (e === CONTEXT_RETRY) throw e;
+    if (e instanceof ContextRetry) throw e;
     const notReady = e instanceof NotReadyError;
     // A failed replacement can publish a fallback. The old context's staged
     // result must not become committed history through that status commit.
@@ -2783,6 +2782,7 @@ export function isSame(el: Signal<any>, a: unknown, b: unknown): unknown {
   try {
     return el._equals && el._equals(a, b);
   } catch (e) {
+    if (e instanceof ContextRetry) throw e;
     // D-42 (dev): a comparator's throw is `el`'s (routed here), not a catch
     // in the pass that happens to be running (the creator's, at a mount).
     if (__DEV__) forgetThrownRead();

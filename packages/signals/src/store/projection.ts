@@ -26,7 +26,7 @@ import {
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
 import { computed } from "../core/core.js";
-import { NotReadyError } from "../core/error.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import {
   addPendingSource,
   forEachDependent,
@@ -352,6 +352,7 @@ export function runProjectionComputed<T extends object>(
   try {
     first ? runDirect(pass) : pass();
   } catch (e) {
+    if (e instanceof ContextRetry) throw e;
     // A flight went up (NotReady out of the pass — the derive's own, with
     // the derive as its source): the leaves' readers learn it from here —
     // they do not subscribe to the derive.

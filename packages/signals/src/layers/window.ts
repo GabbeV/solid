@@ -8,10 +8,9 @@ import {
   verdict
 } from "../core/core.js";
 import { CONFIG_IN_SNAPSHOT_SCOPE, STATUS_ERROR } from "../core/constants.js";
-import { NotReadyError } from "../core/error.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { forgetThrownRead } from "../core/dev.js";
 import { GlobalQueue } from "../core/scheduler.js";
-import { RETRY } from "./boundary.js";
 import type { Computed, Root, Signal } from "../core/types.js";
 
 type WindowRead = (source: Signal<any>, window: ReadWindow) => unknown;
@@ -78,7 +77,7 @@ export function withReadWindow<T>(fn: () => T, observe: WindowRead, collect = fa
     return collect ? window.found : value;
   } catch (error) {
     if (
-      error === RETRY ||
+      error instanceof ContextRetry ||
       !collect ||
       (error instanceof NotReadyError && !window.found && context !== null)
     )

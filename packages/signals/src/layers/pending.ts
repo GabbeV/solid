@@ -12,7 +12,7 @@ import {
 } from "../core/core.js";
 import { forgetThrownRead } from "../core/dev.js";
 import { link } from "../core/graph.js";
-import { NotReadyError } from "../core/error.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { quietPending, setErrorObservation } from "../core/async.js";
 import { cleanup } from "../core/owner.js";
 import { GlobalQueue, txOf, setPendingMark } from "../core/scheduler.js";
@@ -251,6 +251,7 @@ function probe(source: Signal<any>, window: { found: boolean }): unknown {
   } catch (error) {
     if (
       error instanceof NotReadyError &&
+      !(error instanceof ContextRetry) &&
       !((source as Computed<any>)._statusFlags & STATUS_UNINITIALIZED)
     ) {
       if (__DEV__) forgetThrownRead();
@@ -272,7 +273,8 @@ export function isPending<T>(input: () => T): boolean {
   } catch (error) {
     // Match the callback window: a first load participates in an owned
     // boundary, while an imperative probe has no loading frame to suspend.
-    if (error instanceof NotReadyError && context === null) return false;
+    if (error instanceof NotReadyError && !(error instanceof ContextRetry) && context === null)
+      return false;
     throw error;
   }
 }

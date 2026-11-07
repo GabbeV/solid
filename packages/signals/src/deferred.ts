@@ -40,6 +40,7 @@ import {
 } from "./core/constants.js";
 import { handleAsync, isThenable } from "./core/async.js";
 import { cleanup, computed, getOwner, NotReadyError } from "./core/index.js";
+import { ContextRetry } from "./core/error.js";
 import { GlobalQueue, holdNode, schedule, txOf } from "./core/scheduler.js";
 import type { Computed } from "./core/types.js";
 import { mark, repoll, unmark } from "./affects-marks.js";
@@ -185,6 +186,7 @@ export function createDeferred<T>(
         land(flight);
         return r;
       } catch (e) {
+        if (e instanceof ContextRetry) throw e;
         // The wrapping form: an unready source parks the node in the window,
         // and the wait is its flight until the source's settle re-runs it.
         if (open && e instanceof NotReadyError) ask(e);
