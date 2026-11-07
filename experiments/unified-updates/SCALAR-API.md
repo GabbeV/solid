@@ -2,6 +2,7 @@
 
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
+Latest adversarial review: [owned-frame defect, publication controls, performance and size, stage 170](INTEGRATION-170.md).
 Current runtime checkpoint: [eager private rendering with coherent inherited reads, stage 169](INTEGRATION-169.md).
 Previous calculation repair: [coherent latest reads in owned frames, stage 168](INTEGRATION-168.md).
 Previous investigation: [owned-frame latest reads and strengthened regression, stage 167](INTEGRATION-167.md).

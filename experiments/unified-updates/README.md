@@ -7,6 +7,8 @@ boundaries, not the experiment's name.
 
 The branch is `experiment/unified-updates`. Start with [the current scalar API
 and status](SCALAR-API.md) and [the latest implementation and failure inventory](INTEGRATION-169.md).
+The [latest adversarial review](INTEGRATION-170.md) found an unresolved owned-frame
+calculation defect and records current performance and size against next.
 The implementation runs through the normal Solid packages and test harnesses.
 Experiment-specific scalar tests use the `unified-` filename prefix.
 
