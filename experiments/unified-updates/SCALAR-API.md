@@ -3,6 +3,7 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Latest adversarial review: [owned-frame defect, publication controls, performance and size, stage 170](INTEGRATION-170.md).
+Current investigation: [held-branch DOM inconsistency and next comparison, stage 175](INTEGRATION-175.md).
 Current runtime checkpoint: [creator-retry audit and removed-child preparation, stage 174](INTEGRATION-174.md).
 Previous runtime checkpoint: [NotReadyError context retries, WIP stage 173](INTEGRATION-173.md).
 Previous runtime checkpoint: [creator context retries, WIP stage 172](INTEGRATION-172.md).

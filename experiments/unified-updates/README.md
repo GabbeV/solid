@@ -7,6 +7,8 @@ boundaries, not the experiment's name.
 
 The branch is `experiment/unified-updates`. Start with [the current scalar API
 and status](SCALAR-API.md) and [the latest implementation and validation](INTEGRATION-174.md).
+The [current investigation](INTEGRATION-175.md) confirms a remaining held-branch
+DOM consistency defect against unmodified next.
 The [adversarial review](INTEGRATION-170.md) exposed an owned-frame calculation
 defect. Stage 172 begins retrying creators when their children discover a different
 optimistic context. Stage 173 gives those retries the public `NotReadyError` category, with an
