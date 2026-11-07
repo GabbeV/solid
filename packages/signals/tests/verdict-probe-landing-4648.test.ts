@@ -1,18 +1,10 @@
 /**
- * #4648 (review of #4667). A pass that is the hold's own work (D-25: it reads
- * the hold's flight) re-runs in the flush that lands it. Its untracked probe
- * of the held write then answers for the landed world: the hold lands at
- * this seam, so the probe reads the staging and the pass is final in the
- * landing frame. The render effect and the user effect both show
- * `{0,0,false}` then `{5,5,false}` — never the stale pass first (F-1).
- *
- * If a node computed later in that flush blocks the hold again (a new
- * flight starts at the landing), the hold is up again: the pass re-runs on
- * the committed value — `inner: 0` while held (ruling on #4662) — and the
- * screen keeps the old frame until the hold that remains lands, with no
- * value shown and then retracted, and no `p: true` beside `v: 5` (D-23).
- *
- * Every case runs in both read orders.
+ * #4648 landing controls under shared observation contexts. An untracked
+ * isPending read still selects the whole calculation's update context. When
+ * a later flight keeps the ordinary update open, that observation can publish
+ * pending=true beside committed data; it must never publish proposed data
+ * beside a stale callback read. Both read orders and sibling depths agree.
+ * A completed update with no remaining hold still lands in one frame.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -37,6 +29,7 @@ const tick = async () => {
 };
 
 const initial = { v: 0, inner: 0, p: false };
+const pending = { v: 0, inner: 0, p: true };
 const landed = { v: 5, inner: 5, p: false };
 
 function probePass(order: Order, cond: () => number, after: () => void, log: Row[]) {
@@ -90,7 +83,7 @@ describe.each(["same pass", "sibling", "deep sibling"] as const)(
   "a later node blocks the hold again in the landing flush (%s)",
   where => {
     describe.each(orders)("%s", order => {
-      it("keeps the old frame, reads the committed value while held, and lands once", async () => {
+      it("publishes pending over committed data while a later flight holds the update", async () => {
         const screen: Row[] = [];
         const effects: Row[] = [];
         const log: Row[] = [];
@@ -132,15 +125,15 @@ describe.each(["same pass", "sibling", "deep sibling"] as const)(
         flush();
         resA(5);
         await tick();
-        // `b`'s new flight holds the change: nothing shown, and the held
-        // pass's last run read the committed value (D-23: final, `p: false`).
-        expect(screen).toEqual([initial]);
-        expect(effects).toEqual([initial]);
-        if (log.length) expect(log.at(-1)).toEqual({ v: 5, inner: 0, p: false });
+        // `b` keeps the ordinary update open. The observation publishes its
+        // own context: all ordinary reads in the pass see committed zero.
+        expect(screen).toEqual([initial, pending]);
+        expect(effects).toEqual([initial, pending]);
+        expect(log.at(-1)).toEqual(pending);
         resB(5);
         await tick();
-        expect(screen).toEqual([initial, landed]);
-        expect(effects).toEqual([initial, landed]);
+        expect(screen).toEqual([initial, pending, landed]);
+        expect(effects).toEqual([initial, pending, landed]);
       });
     });
   }
