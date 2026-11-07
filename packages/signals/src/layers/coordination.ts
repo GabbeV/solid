@@ -454,7 +454,11 @@ function frameRead(reader: Computed<any>, source: Signal<any>): boolean {
   // Direct bindings already have the common committed-frame read rule.
   // They do not need a speculative derivation or a provisional transaction.
   if ((reader as any)._type === EFFECT_RENDER) return false;
-  if (includesBoundary(reader, holder)) {
+  // An unpublished parent's provisional update may not yet be merged with
+  // the peer whose proposal opened it. Its new children still consume that
+  // proposal, even after reading an observation. Higher/lower contexts were
+  // handled above; this preserves the parent's frame without an early merge.
+  if (includesBoundary(reader, holder) && !unpublishedFrame(reader)) {
     staleReader(reader, holder);
     return true;
   }
