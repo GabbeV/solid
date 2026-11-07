@@ -417,8 +417,11 @@ function unpublishedFrame(node: Computed<any>): Transaction | null {
   for (let owner = node._parent; owner; child = owner as Computed<any>, owner = owner._parent) {
     if (child._flags & REACTIVE_ZOMBIE) return null;
     const parent = owner as Computed<any>;
-    if (parent._flags & REACTIVE_RECOMPUTING_DEPS && parent._flags & REACTIVE_JOINED)
-      return flushTransaction;
+    if (
+      parent._flags & REACTIVE_RECOMPUTING_DEPS &&
+      parent._flags & (REACTIVE_JOINED | REACTIVE_STAGED_READ)
+    )
+      return parent._config & CONFIG_HELD ? txOf(parent) : flushTransaction;
     if (parent._config & CONFIG_STAGED && parent._config & CONFIG_HELD) return txOf(parent);
   }
   return null;
@@ -491,6 +494,18 @@ function rederiveStatus(reader: Computed<any>, source: Computed<any>): boolean {
  * Ready input releases explicitly run in the input context instead. */
 function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): boolean {
   if (create) {
+    const parent = node._parent as Computed<any> | null;
+    // A nested pull may temporarily switch the ambient update. Preserve the
+    // creator's actual frame before its child can discover such an output;
+    // this stamps its provisional update without merging consumed peers.
+    if (
+      flushTransaction &&
+      parent &&
+      parent._flags & REACTIVE_RECOMPUTING_DEPS &&
+      parent._flags & (REACTIVE_JOINED | REACTIVE_STAGED_READ) &&
+      !(parent._config & CONFIG_HELD)
+    )
+      holdNode(parent, resolveTx(flushTransaction));
     if (
       (node as any)._type ||
       (evaluation ? detachedOutput(node) : globalQueue._running || flushTransaction)
