@@ -1,5 +1,8 @@
 # Landing-observation triage and the latest branch decision
 
+Follow-up: [stage 144](INTEGRATION-144.md) records the user's decision to reject
+the stale-branch exception and retain the experiment's coherent publication.
+
 No runtime change is retained. Six #4648 landing expectations now follow the
 accepted shared-context rule. A second flight that keeps the ordinary update
 open permits the pending observation to publish `{v:0, inner:0, p:true}`;

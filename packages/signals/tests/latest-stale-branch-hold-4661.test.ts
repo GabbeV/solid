@@ -1,18 +1,9 @@
-// #4661: a memo outside a `<Loading on={f()}>` reads `f()` and, in the branch
-// taken before the switch, `latest(() => list())`. Its last pass asked
-// (`latest`), so its next run is still the hold's verdict reader (D-25, "a
-// verdict posture outlives the pass that asked", 2026-10-28): its read of
-// `f`'s staging is the screen's ("open", A10) — a stale reader of the
-// frame — and it reads `list`'s new flight only inside `latest()`, ahead of
-// it. That stale-reader mark made it a frame reader of the flight too, and
-// the switch was held: the `on` fallback (D-15) never showed.
-//
-// F-6: a display-ahead read never holds the change it reads ahead of. The
-// maintainer's ruling (2026-11-03) on what the memo shows meanwhile: "It
-// should read the committed value, we can't reveal early outside of latest.
-// This is intentional tearing." So the fallback shows at once and the count
-// keeps its committed value (`[3]`) until `list`'s answer lands (`[-1]`).
-// (The issue's table had `[-1]` during the flight.)
+// #4661: an ordinary branch condition must stay consistent with its commit.
+// The shared-update experiment overrides #4663's recorded staleness exception:
+// once f commits "closed", this memo publishes -1 with it. latest applies to
+// the list read, not to the surrounding branch condition. A Loading on switch
+// may release the input update; it does not defer an unrelated sync result.
+// The remaining controls retain plain-read holding and latest-only behavior.
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   createEffect,
@@ -156,18 +147,18 @@ async function run(shape: Shape, reader: "effect" | "view") {
 }
 
 describe("#4661 a memo's latest() posture does not hold a Loading on switch (F-6)", () => {
-  test("latest in the branch, read by an effect: the fallback shows, the count keeps 3", async () => {
+  test("latest in the branch, read by an effect: the fallback and closed branch publish together", async () => {
     expect(await run("latest-branch", "effect")).toEqual({
       before: ["1,2,3", 3],
-      during: ["loading closed", 3],
+      during: ["loading closed", -1],
       after: ["9", -1]
     });
   });
 
-  test("latest in the branch, read by a view outside the boundary: [3]loading closed", async () => {
+  test("latest in the branch, read by a view outside the boundary: [-1]loading closed", async () => {
     expect(await run("latest-branch", "view")).toEqual({
       before: ["[3]1,2,3", undefined],
-      during: ["[3]loading closed", undefined],
+      during: ["[-1]loading closed", undefined],
       after: ["[-1]9", undefined]
     });
   });

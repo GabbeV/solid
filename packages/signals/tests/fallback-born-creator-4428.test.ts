@@ -25,9 +25,10 @@ import {
   createSignal,
   flush,
   getOwner,
+  onCleanup,
   untrack
 } from "../src/index.js";
-import { CONFIG_HELD, STATUS_UNINITIALIZED } from "../src/core/constants.js";
+import { CONFIG_HELD } from "../src/core/constants.js";
 
 const settle = async () => {
   for (let i = 0; i < 4; i++) await Promise.resolve();
@@ -44,15 +45,15 @@ function hold() {
     yield new Promise<void>(r => (release = r));
   })();
   flush();
-  return { x, release: () => release() };
+  return { x, setX, release: () => release() };
 }
 
 describe("#4428: the fallback memo is the output's creation", () => {
-  it("a Loading fallback built while a joined mount's output runs is not born held", async () => {
-    const { x, release } = hold();
-    let fb: any;
+  it("a Loading fallback built inside a held mount reveals and replaces with its owner", async () => {
+    const { x, setX, release } = hold();
+    let cleanups = 0;
     const log: unknown[] = [];
-    createRoot(() => {
+    const dispose = createRoot(dispose => {
       const content = createMemo(async () => {
         await new Promise(() => {});
         return "C";
@@ -65,7 +66,7 @@ describe("#4428: the fallback memo is the output's creation", () => {
           createLoadingBoundary(
             () => content(),
             () => {
-              fb = getOwner();
+              onCleanup(() => cleanups++);
               return "F";
             }
           )
@@ -75,18 +76,24 @@ describe("#4428: the fallback memo is the output's creation", () => {
       createRenderEffect(mount, v => {
         log.push(v);
       });
+      return dispose;
     });
     flush();
     // The mount waits for the hold (born held) ...
     expect(log).toEqual([]);
-    // ... but its fallback memo, created by the output's pass (which read
-    // nothing held), publishes: not held, initialized, its value committed.
-    expect(fb._config & CONFIG_HELD).toBe(0);
-    expect(fb._statusFlags & STATUS_UNINITIALIZED).toBe(0);
-    expect(fb._value).toBe("F");
+    // The fallback's internal holder can be inherited in the shared model.
+    // What matters is complete publication and lifetime with the owning tree.
+    expect(cleanups).toBe(0);
     release();
     await settle();
     expect(log).toEqual(["1:F"]);
+    expect(cleanups).toBe(0);
+    setX(2);
+    flush();
+    expect(log).toEqual(["1:F", "2:F"]);
+    expect(cleanups).toBe(1);
+    dispose();
+    expect(cleanups).toBe(2);
   });
 
   it("a fallback that reads the hold itself is still born held (its own read, D-1)", async () => {

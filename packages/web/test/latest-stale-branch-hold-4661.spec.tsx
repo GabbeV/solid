@@ -3,13 +3,9 @@
  * @vitest-environment jsdom
  */
 
-// #4661: a memo outside `<Loading on={f()}>` whose last run read
-// `latest(() => list())` no longer holds the switch when its new run takes the
-// branch that does not read `list` (F-6: a display-ahead read never holds the
-// change it reads ahead of). The fallback shows at once; the count keeps its
-// committed value until `list`'s answer lands — "It should read the committed
-// value, we can't reveal early outside of latest. This is intentional
-// tearing." (maintainer, 2026-11-03). The issue's table had `[-1]` meanwhile.
+// #4661: the shared-update experiment rejects #4663's stale-branch exception.
+// Once the ordinary filter commits, count's ordinary branch selection commits
+// with it. latest permits an independent list value, not an old filter branch.
 
 import { expect, test } from "vitest";
 import { Loading, createEffect, createMemo, createSignal, flush, latest } from "solid-js";
@@ -22,7 +18,8 @@ async function settle() {
   }
 }
 
-function app(reader: "effect" | "view") {
+function app(reader: "effect" | "view", hold = false) {
+  const blocker = Promise.withResolvers<number>();
   const asks = new Map<string, (v: number[]) => void>();
   const ask = (key: string) => new Promise<number[]>(res => asks.set(key, res));
   let seen: number | undefined;
@@ -32,6 +29,7 @@ function app(reader: "effect" | "view") {
     const [f, set] = createSignal("open");
     setF = set;
     const list = createMemo(() => ask(`list:${f()}`));
+    const blocking = createMemo(() => (hold && f() === "closed" ? blocker.promise : 0));
     const count = createMemo(() => (f() === "open" ? latest(() => list().length) : -1));
     if (reader === "effect")
       createEffect(
@@ -42,6 +40,8 @@ function app(reader: "effect" | "view") {
       );
     return (
       <>
+        <header>{f()}</header>
+        {hold && <em>{blocking()}</em>}
         {reader === "view" ? <span>{`[${count()}]`}</span> : null}
         <Loading fallback={<i>first</i>}>
           <Loading on={f()} fallback={<i>loading {f()}</i>}>
@@ -54,6 +54,7 @@ function app(reader: "effect" | "view") {
   return {
     div,
     dispose,
+    unblock: () => blocker.resolve(1),
     seen: () => seen,
     setF: (v: string) => setF(v),
     land: (key: string, v: number[]) => asks.get(key)!(v)
@@ -65,16 +66,16 @@ test("latest() in the branch taken before the switch, read by an effect (#4661)"
   flush();
   a.land("list:open", [1, 2, 3]);
   await settle();
-  expect(a.div.innerHTML).toBe("<b>1,2,3</b>");
+  expect(a.div.innerHTML).toBe("<header>open</header><b>1,2,3</b>");
   expect(a.seen()).toBe(3);
   a.setF("closed");
   flush();
   await settle();
-  expect(a.div.innerHTML).toBe("<i>loading closed</i>");
-  expect(a.seen()).toBe(3);
+  expect(a.div.innerHTML).toBe("<header>closed</header><i>loading closed</i>");
+  expect(a.seen()).toBe(-1);
   a.land("list:closed", [9]);
   await settle();
-  expect(a.div.innerHTML).toBe("<b>9</b>");
+  expect(a.div.innerHTML).toBe("<header>closed</header><b>9</b>");
   expect(a.seen()).toBe(-1);
   a.dispose();
 });
@@ -84,13 +85,41 @@ test("latest() in the branch taken before the switch, read by a view outside the
   flush();
   a.land("list:open", [1, 2, 3]);
   await settle();
-  expect(a.div.innerHTML).toBe("<span>[3]</span><b>1,2,3</b>");
+  expect(a.div.innerHTML).toBe("<header>open</header><span>[3]</span><b>1,2,3</b>");
   a.setF("closed");
   flush();
   await settle();
-  expect(a.div.innerHTML).toBe("<span>[3]</span><i>loading closed</i>");
+  expect(a.div.innerHTML).toBe("<header>closed</header><span>[-1]</span><i>loading closed</i>");
   a.land("list:closed", [9]);
   await settle();
-  expect(a.div.innerHTML).toBe("<span>[-1]</span><b>9</b>");
+  expect(a.div.innerHTML).toBe("<header>closed</header><span>[-1]</span><b>9</b>");
   a.dispose();
+});
+
+// The converse matters: a separate ordinary observer can still hold the
+// filter. Neither the branch nor Loading's on may publish that proposal early.
+test("a separate ordinary flight holds the filter, branch and Loading on together", async () => {
+  const a = app("view", true);
+  try {
+    flush();
+    a.land("list:open", [1, 2, 3]);
+    await settle();
+    const initial = "<header>open</header><em>0</em><span>[3]</span><b>1,2,3</b>";
+    expect(a.div.innerHTML).toBe(initial);
+    a.setF("closed");
+    flush();
+    await settle();
+    expect(a.div.innerHTML).toBe(initial);
+    a.unblock();
+    await settle();
+    expect(a.div.innerHTML).toBe(
+      "<header>closed</header><em>1</em><span>[-1]</span><i>loading closed</i>"
+    );
+    a.land("list:closed", [9]);
+    await settle();
+    expect(a.div.innerHTML).toBe("<header>closed</header><em>1</em><span>[-1]</span><b>9</b>");
+  } finally {
+    a.unblock();
+    a.dispose();
+  }
 });

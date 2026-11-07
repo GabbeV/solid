@@ -29,6 +29,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  action,
   createEffect,
   createMemo,
   createRenderEffect,
@@ -66,7 +67,8 @@ const between: Record<Between, (m1: () => number) => () => number> = {
   }
 };
 
-async function run(input: Input, shape: Between, made: Made, prior: Prior) {
+async function run(input: Input, shape: Between, made: Made, prior: Prior, held = false) {
+  const lifetime = Promise.withResolvers<void>();
   const log: string[] = [];
   const [s, setS] = createSignal(1);
   const [on, setOn] = createSignal(prior === "render effect");
@@ -96,7 +98,12 @@ async function run(input: Input, shape: Between, made: Made, prior: Prior) {
   );
   flush();
   await tick(150);
-  setS(2);
+  const running = held
+    ? action(function* () {
+        setS(2);
+        yield lifetime.promise;
+      })()
+    : (setS(2), Promise.resolve());
   flush();
   await tick(20);
   if (made === "mid-flight") createRoot(() => (mb = between[shape](m1)));
@@ -104,6 +111,11 @@ async function run(input: Input, shape: Between, made: Made, prior: Prior) {
   flush();
   log.push("--mounted");
   await tick(300);
+  if (held) {
+    lifetime.resolve();
+    await running;
+    await tick(300);
+  }
   return log;
 }
 
@@ -161,25 +173,31 @@ describe("#4504: a memo over a re-asked async memo, first read by a mount mid-fl
       ]);
     });
 
-  // Unchanged by #4504: the memo already had a value and an on-screen reader
-  // when the write re-asked the async memo. With the verdict input that
-  // reader shows the screen of the flight (D-25: the memo is a verdict
-  // reader by what it reads), the verdict lane's reveal of `latest(s) + s()`
-  // over the held write (`3`, D-26), then the commit.
-  it("verdict input, the memo already on screen before the re-ask: unchanged", async () => {
+  // The shared model does not let latest's async consequences extend its
+  // lifetime. With no independent input hold, 3 is superseded before its
+  // async consequence answers. This is the accepted stage-127 lifetime rule.
+  it("an observed latest input supersedes unfinished optimism when the input update completes", async () => {
     expect(await run("verdict", "times10", "before", "render effect")).toEqual([
       "r:20",
       "--mounted",
-      "r:30",
       "r:40"
     ]);
     expect(await run("verdict", "identity", "before", "render effect")).toEqual([
       "r:2",
       "--mounted",
-      "r:3",
       "r:4"
     ]);
   });
+
+  for (const shape of ["identity", "times10"] as const)
+    it(`an independent action lifetime lets latest's async proposal publish (${shape})`, async () => {
+      expect(await run("verdict", shape, "before", "render effect", true)).toEqual([
+        screen(shape, 2),
+        "--mounted",
+        screen(shape, 3),
+        screen(shape, 4)
+      ]);
+    });
   it("plain input, the memo already on screen before the re-ask: unchanged", async () => {
     expect(await run("plain", "times10", "before", "render effect")).toEqual([
       "r:20",
