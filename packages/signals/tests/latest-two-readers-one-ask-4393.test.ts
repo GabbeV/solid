@@ -268,15 +268,13 @@ describe("#4393: a latest() reader's lane answer reaches the screen", () => {
     });
 
   // An async memo over `latest(s)*10 + s()*100`, held only by its own
-  // flight. The verdict lane asks m1:120 (F-6: async derived from a
-  // display-ahead read is the lane's); its answer shows, then the frame's
-  // m1:220 — inline and with `latest(s)` extracted into a memo (Ryan,
-  // 2026-10-29: `latest()` tears beside the held screen whatever the
-  // grouping, #4284). The lane and its parent landed at one seam, and the
-  // parent's landing adopted its frame flight before the lane's reader had
-  // re-run: only v220 showed.
+  // flight. Once latest cuts input demand, its async consequence must not
+  // define that input's lifetime (accepted shared-update rule, stage 127).
+  // Correction supersedes the unfinished mixed-frame answer, inline and
+  // with latest extracted into a memo. Next retains that answer's lifetime
+  // and shows v120 before v220; that extra wait is deliberately not retained.
   for (const form of ["inline", "memo"] as const)
-    it(`async m1 over latest(s) (${form}) shows the display-ahead answer, then the frame's`, async () => {
+    it(`async m1 over latest(s) (${form}) does not keep its input open to finish an optimistic answer`, async () => {
       const [s, setS] = createSignal(1);
       const out: string[] = [];
       const dispose = createRoot(dispose => {
@@ -307,7 +305,7 @@ describe("#4393: a latest() reader's lane answer reaches the screen", () => {
       await settle();
       await settle();
       dispose();
-      expect(out).toEqual(["v120", "v220"]);
+      expect(out).toEqual(["v220"]);
     });
 
   // A sync memo over `latest(s) + s()` under an unrelated hold, read as

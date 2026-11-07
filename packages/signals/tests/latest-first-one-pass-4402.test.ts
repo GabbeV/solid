@@ -125,7 +125,10 @@ describe("#4398: grouping isPending(m1) with m1() shows the same values", () => 
     // The screen before the write (`4`) shows again only in the pair, where
     // `isPending` turns true beside it.
     const { values } = await run(reader, "change");
-    expect(values.filter(v => v !== "4")).toEqual(["5", "8", "10"]);
+    // No independent reader holds s while its observation's async work runs.
+    // The observation's unfinished answer does not extend that input update:
+    // correction supersedes it, consistently in all three reader forms.
+    expect(values.filter(v => v !== "4")).toEqual(["6", "10"]);
   });
 });
 

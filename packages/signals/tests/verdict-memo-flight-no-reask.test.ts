@@ -599,10 +599,10 @@ for (const later of [false, true])
 // reader (D-25), whatever it returns: `m1`, async, over
 // `${isPending(m0)}:${latest(m0)}` asks at the write with `m0`'s flight up
 // (`true:1`), when it lands with the write still pending (`true:2`) and at
-// the landing (`false:2`), and the lane's `true:2` shows ahead of the
-// landing's `false:2` (F-6: async derived from a display-ahead read is the
-// lane's).
-it("own window: an async memo over isPending() and latest() of an async memo shows the lane's answer ahead", async () => {
+// the landing (`false:2`). Under the accepted shared-update lifetime rule,
+// the unfinished `true:2` answer cannot keep its input pending. Correction
+// supersedes it; no ordinary observer or action keeps that input open here.
+it("own window: an async pending/latest answer is superseded when its input finishes", async () => {
   const { land, fly } = inFlight();
   const [s, setS] = createSignal(1);
   const asks: string[] = [];
@@ -633,7 +633,7 @@ it("own window: an async memo over isPending() and latest() of an async memo sho
   await land();
   dispose();
   expect(asks).toEqual(["m0:2", "true:1", "true:2", "false:2"]);
-  expect(out).toEqual(["false:1", "true:2", "false:2"]);
+  expect(out).toEqual(["false:1", "false:2"]);
 });
 
 // `m1`, async, over `latest(m0)` opens a window of its own (D-25): it asks

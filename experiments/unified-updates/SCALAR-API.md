@@ -7,7 +7,8 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [retry validation, stage 152](INTEGRATION-152.md).
+Latest suite counts: [observation lifetime migration, stage 154](INTEGRATION-154.md).
+Latest rejected ownership trials: [stage 153](INTEGRATION-153.md).
 Failure inventory: [error publication and collection audit, stage 150](INTEGRATION-150.md).
 Restored collection coverage: [72 Loading cases, stage 151](INTEGRATION-151.md).
 Mount coverage: [committed-frame mounts and DOM coverage, stage 146](INTEGRATION-146.md).
