@@ -1,27 +1,10 @@
 /**
- * #4648 (replaces #4662). An untracked `isPending()` probe inside a pass the
- * hold runs — the pass read the hold's staging plainly — reads the committed
- * value: "during the hold, reads outside latest() get the committed value"
- * (maintainer ruling on #4662). So `inner: 0` beside `v: 5` in the held pass
- * is correct and pinned here. Two gaps around it:
- *
- * 1. The pass is a stale reader of what its probe was served (A15): it
- *    re-derives at the landing, so the hold ends with one frame on the
- *    landed world (F-1), and its probe never answers `true` beside the fresh
- *    value its plain read saw (D-23). Three shapes: a pass re-run while the
- *    hold is up ("re-run in the hold"; it landed `{ v: 5, inner: 0, p: true }`),
- *    one that first reads the held node in a later flush ("first read in the
- *    hold"; same), and one that probed only in the flush that staged the
- *    write, before the hold existed ("staging flush only"; it landed
- *    `{ v: 5, inner: 0, p: false }` and stayed there). The staging flush is a
- *    normal flush, not the hold (ruled 2026-11-03): an untracked probe there
- *    reads the staging, as its plain read does (F-10, D-24) — with no hold
- *    at all too, where it read the committed value and stayed stale.
- * 2. A probe of a first value staged this flush does what its plain read
- *    does (D-23 exc. 1, F-9): the node has no committed value, only the
- *    staging. It read the empty committed slot (`undefined`).
- *
- * Every case runs in both read orders: the order never changes the result.
+ * #4648 controls migrated to the unified observation-context rule. A pending
+ * probe selects the whole calculation's context, including under untrack:
+ * both ordinary reads use committed values while pending=true is selected.
+ * A later incoming calculation uses the landed values and pending=false.
+ * There is no sync/async replay distinction. Initial values still have no
+ * committed alternative, and all forms are checked in both read orders.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -106,22 +89,22 @@ describe.each(shapes)("an untracked isPending probe of a held write (%s)", shape
       if (shape !== "staging flush only") {
         setOther(1);
         flush();
-        // The ruling: during the hold the probe reads the committed value;
-        // the pass's plain read is the frame's staging. The held pass
-        // answers final, never `true` beside it (D-23).
-        expect(log.at(-1)).toEqual({ v: 5, inner: 0, p: false });
+        // Both reads belong to the context of the pending output. Untrack
+        // removes subscriptions, not the context selected by this read.
+        expect(log.at(-1)).toEqual({ v: 0, inner: 0, p: true });
         for (const r of log.slice(staged)) expect(r.inner).toBe(0);
       } else for (const r of log) expect(r.p).toBe(false);
-      expect(screen).toEqual([first]);
-      expect(effects).toEqual([first]);
+      const held = shape === "staging flush only" ? [first] : [first, { v: 0, inner: 0, p: true }];
+      expect(screen).toEqual(held);
+      expect(effects).toEqual(held);
       release();
       await tick();
       // The pass re-derives at the landing (A15): the probe's value is the
       // landed one, final (F-1, D-23). The hold ends with one frame — the
       // held runs wait for the re-derivation — for render and user effects.
       expect(log.at(-1)).toEqual({ v: 5, inner: 5, p: false });
-      expect(screen).toEqual([first, { v: 5, inner: 5, p: false }]);
-      expect(effects).toEqual([first, { v: 5, inner: 5, p: false }]);
+      expect(screen).toEqual([...held, { v: 5, inner: 5, p: false }]);
+      expect(effects).toEqual([...held, { v: 5, inner: 5, p: false }]);
     });
   });
 });
@@ -159,7 +142,7 @@ describe.each(orders)("an untracked isPending probe with no hold (%s)", order =>
 });
 
 describe.each(orders)("latest() in the same position (%s, control)", order => {
-  it("serves the staging in the held pass (D-22)", async () => {
+  it("selects its proposal beside ordinary committed reads", async () => {
     const { setOpen, setOther, release, log, screen } = setup("latest", order);
     await tick();
     log.length = 0;
@@ -167,10 +150,18 @@ describe.each(orders)("latest() in the same position (%s, control)", order => {
     flush();
     setOther(1);
     flush();
-    expect(log.map(r => r.inner)).toEqual([5, 5]);
+    expect(log.at(-1)).toEqual({ v: 0, inner: 5, p: 5 });
+    expect(screen).toEqual([
+      { v: 0, inner: 0, p: 0 },
+      { v: 0, inner: 5, p: 5 }
+    ]);
     release();
     await tick();
-    expect(screen.at(-1)).toEqual({ v: 5, inner: 5, p: 5 });
+    expect(screen).toEqual([
+      { v: 0, inner: 0, p: 0 },
+      { v: 0, inner: 5, p: 5 },
+      { v: 5, inner: 5, p: 5 }
+    ]);
   });
 });
 
@@ -221,14 +212,15 @@ describe.each(orders)("a probe of a first value staged this flush (%s)", order =
 });
 
 describe.each(orders)("an untracked isPending probe in a held async memo (%s)", order => {
-  it("is not asked again at the landing (F-9)", async () => {
-    // A router-style query: it reads the held navigation plainly, probes it
-    // untracked, and fetches. Re-run during the hold by another write, its
-    // flight answers the hold's question: the landing must not ask it again.
+  it("uses the shared context on the mid-hold rerun and on completion", async () => {
+    // An untracked probe selects the calculation context without adding a
+    // subscription. The independent rerun samples pending=true over committed
+    // 0, and completion computes 5 again. Async readers have no replay waiver.
     const [open, setOpen] = createSignal(0);
     const [other, setOther] = createSignal(0);
     let release = () => {};
-    let flights = 0;
+    const requests: number[] = [],
+      shown: number[] = [];
     createRoot(() => {
       const data = createMemo(() => {
         const o = open();
@@ -241,16 +233,17 @@ describe.each(orders)("an untracked isPending probe in a held async memo (%s)", 
         if (order === "probe before read") untrack(() => isPending(() => cond()));
         v = cond();
         if (order === "probe after read") untrack(() => isPending(() => cond()));
-        flights++;
+        requests.push(v);
         return Promise.resolve(v);
       });
       createRenderEffect(data, () => {});
-      createRenderEffect(query, () => {});
+      createRenderEffect(query, value => void shown.push(value));
     });
     flush();
     release();
     await tick();
-    flights = 0;
+    requests.length = 0;
+    shown.length = 0;
     setOpen(5);
     flush();
     await tick();
@@ -259,6 +252,7 @@ describe.each(orders)("an untracked isPending probe in a held async memo (%s)", 
     await tick();
     release();
     await tick();
-    expect(flights).toBe(2);
+    expect(requests).toEqual([5, 0, 5]);
+    expect(shown).toEqual([0, 5]);
   });
 });

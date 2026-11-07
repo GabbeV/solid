@@ -1,6 +1,6 @@
 /**
- * #3884: untracked diagnostics leave the graph unchanged. A tracked
- * observation is an actual higher output dependency in the shared model:
+ * #3884: untracked observations add no subscription, but still select the
+ * calculation context. A tracked observation also adds an output dependency:
  * its notification can supersede the computation that started the input's
  * work. This feedback is supported without a tearing exception or diagnostic.
  * Pin each resulting publication timeline rather than assuming that adding
@@ -203,6 +203,18 @@ function expected(extra: Extra, original: boolean): Checkpoint[] {
             effect: original ? "-" : "/",
             ...(original ? { latest: "/", isPending: false } : {})
           }
+    );
+  }
+  if (extra === "untracked latest") {
+    // A's initial pass precedes latest's notification, which is untracked.
+    // The ordinary B write reruns data; its latest read now selects the
+    // higher context. Preparation then starts B's incoming request. That
+    // work holds the replacement latest output, so A remains visible until B
+    // completes. The producer's obsolete A answer never reaches the display.
+    return baseline.map((checkpoint, index) =>
+      index === baseline.length - 1
+        ? checkpoint
+        : { ...checkpoint, effect: "/slow1", ...(original ? { latest: "/slow1" } : {}) }
     );
   }
   if (extra === "tracked isPending") {
