@@ -3,7 +3,8 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Current runtime checkpoint: [pending calculations after input publication, stage 165](INTEGRATION-165.md).
-Latest rejected trial: [first held values and derived-store result transfer, stage 163](INTEGRATION-163.md).
+Latest investigation: [first callbacks in unpublished owned subtrees, stage 166](INTEGRATION-166.md).
+Previous rejected trial: [first held values and derived-store result transfer, stage 163](INTEGRATION-163.md).
 Previous creation-context repair: [stage 159](INTEGRATION-159.md).
 Deferred scheduling investigation: [lifetime readiness before optimistic execution, stage 161](INTEGRATION-161.md).
 Previous investigation: [inactive latest and request lifetime, stage 160](INTEGRATION-160.md).
