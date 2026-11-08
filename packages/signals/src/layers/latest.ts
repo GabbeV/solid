@@ -45,12 +45,11 @@ function prepareLatest(record: Observation<any>): void {
   // A known hold needs its output selected before this reader continues.
   // Otherwise a previously initialized latest output can supply its old
   // value beside the input's proposal during the same calculation.
-  // Leave first answers, retirement and not-yet-flushed writes to their
-  // existing initialization and publication paths.
+  // A ready first answer is a proposal too. Retirement and not-yet-flushed
+  // writes still use ordinary initialization and publication.
   if (
     !record._retiring &&
     !(record._output._flags & REACTIVE_DISPOSED) &&
-    !(source._statusFlags & STATUS_UNINITIALIZED) &&
     source._pendingValue !== NOT_PENDING &&
     unflushedValue(source) === NOT_PENDING
   ) {
@@ -68,9 +67,10 @@ function prepareLatest(record: Observation<any>): void {
 
 function selectLatest(layer: Layer<any>): unknown {
   // A memo wrapper can pull this output without calling latest() again.
-  // Select an established hold before that wrapper can cache the old value.
-  // A new output has no old publication and uses initialObservation below.
-  if (!(layer._output._statusFlags & STATUS_UNINITIALIZED))
+  // Select an established hold before that wrapper caches the old value,
+  // including a first answer or a replacement for an unpublished answer.
+  // A brand-new output still initializes through initialObservation below.
+  if (layer._output._config & CONFIG_HELD || !(layer._output._statusFlags & STATUS_UNINITIALIZED))
     prepareLatest(layer as Observation<any>);
   const value = selectObservation(layer);
   if (value instanceof LatestError) throw value._error;
@@ -124,8 +124,7 @@ function fallback(layer: Layer<any>): unknown {
   if (
     (layer as Observation<any>)._retiring ||
     source._statusFlags & STATUS_ERROR ||
-    (source._statusFlags & STATUS_UNINITIALIZED &&
-      (!(source._statusFlags & STATUS_PENDING) || source._pendingValue === NOT_PENDING)) ||
+    (source._statusFlags & STATUS_UNINITIALIZED && source._pendingValue === NOT_PENDING) ||
     source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
@@ -177,6 +176,10 @@ function latestOutput(source: Computed<any>): Computed<any> {
     prepareLatest(existing);
     return existing._output;
   }
+  // An imperative first use has no published observation to read. Do not
+  // initialize one from an unpublished input proposal as a side effect of
+  // that read; reactive consumers select and publish their output normally.
+  if (context === null && source._statusFlags & STATUS_UNINITIALIZED) return source;
   const record = createSourceObservation(source, kind, selectLatest);
   // Preserve distinctions a source can publish, including signed zero.
   record._output._equals = Object.is;
