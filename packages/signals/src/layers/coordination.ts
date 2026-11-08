@@ -360,12 +360,16 @@ function prepareLayers(): boolean {
       // take it back; other ready readers can still prepare this round.
       if (changed && heldAbove && reader._flags & REACTIVE_IN_HEAP) continue;
       const affectsCommitted = heldAbove && committedUsesUpdate(reader, parent);
-      // Structural boundary readers use the same post-publication replay as
-      // direct bindings. Preparing them independently for sibling updates
-      // can keep registering each other's already-ready frames forever.
+      // Structural outputs and independent bindings replay after publication.
+      // A binding already restored into this update must discover its pending
+      // reads first: its optimistic pass may have closed the branch, and an
+      // unchanged pending memo between it and the source need not notify again.
+      // Structural outputs still avoid mutually preparing ready sibling frames.
       if (
-        !(reader as any)._type &&
-        !(reader._config & CONFIG_FRAME) &&
+        ((reader as any)._type
+          ? (reader as any)._type === EFFECT_RENDER &&
+            reader._config & CONFIG_HELD && txOf(reader) === parent
+          : !(reader._config & CONFIG_FRAME)) &&
         (reader._flags & REACTIVE_FRAME_READ || affectsCommitted) &&
         !(reader._flags & REACTIVE_DISPOSED)
       ) {
@@ -392,10 +396,8 @@ function prepareLayers(): boolean {
           orderPublication = true;
           continue;
         }
-        // Derivations of a committed parent frame must discover their next
-        // async work before that parent publishes. A post-commit rerun is
-        // sufficient for a direct binding, but would let a memo lag behind
-        // an already-published input after its boundary dependency changes.
+        // Discover the restored frame's pending work before publishing it.
+        // Independent bindings still use the ordinary post-commit replay.
         prepareReader(reader, parent);
         changed = true;
         // This pass can merge its holder into another update. Its remaining

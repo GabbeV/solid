@@ -37,7 +37,7 @@ import {
   latest,
   resetErrorHalt
 } from "../src/index.js";
-import { $REFRESH, CONFIG_VERDICT, STATUS_PENDING } from "../src/core/constants.js";
+import { $REFRESH, STATUS_PENDING } from "../src/core/constants.js";
 import type { Computed } from "../src/core/types.js";
 
 beforeEach(() => vi.useFakeTimers());
@@ -57,9 +57,11 @@ const storeForms = ["storeKey", "storeKeys", "storeJSON"] as const;
 /** The reader's display of `v`: every form shows the same text. */
 async function run(form: Form, at: "before" | "during" | "duringWrite" | "afterLanding") {
   const log: string[] = [];
+  let dispose!: () => void;
   const [s, setS] = createSignal(1);
   const [on, setOn] = createSignal(at === "before");
-  createRoot(() => {
+  createRoot(d => {
+    dispose = d;
     const m0 = createMemo(() => latest(s) + s());
     const m1 = createMemo(async () => {
       const v = m0();
@@ -112,6 +114,7 @@ async function run(form: Form, at: "before" | "during" | "duringWrite" | "afterL
     log.push("--mounted");
   }
   await tick(300);
+  dispose();
   return log;
 }
 
@@ -140,16 +143,17 @@ describe("a reader mounted mid-flight reads a derived store like its memo (#4491
     });
 });
 
-describe("readers the hold does not reach (#4491)", () => {
+describe("readers already mounted or mounted after landing (#4491)", () => {
   test("memo form, reader on screen at the re-ask; reader mounted after the landing", async () => {
     expect(await run("memo", "before")).toEqual([
       "s:1",
       "r:2",
       "--reask",
       "--plain write",
-      "r:4",
-      "s:3",
-      "r:6"
+      // A superseded optimistic flight does not define its own lifetime.
+      // Its old r:4 is discarded; the restored ordinary question reveals 6.
+      "r:6",
+      "s:3"
     ]);
     expect(await run("memo", "afterLanding")).toEqual([
       "s:1",
@@ -169,25 +173,23 @@ describe("readers the hold does not reach (#4491)", () => {
     });
 });
 
-/** The derive's posture after the held mount. The read that held the reader
- * writes nothing on the derive: it marks the derive's next pass (`fam.w`),
- * a read that finds no flight up clears the mark, and the posture stays the
- * pass's own reads (core `recompute`). A later flight of `m1`, the reader on
- * screen, then shows what a store read from the start and the memo form
- * show — whether the landing changed the leaf (the derive re-ran) or equalled
- * it (it did not). After an equal landing the flight wakes the held derive
- * pending, and that pass reads the pending `m1` plainly: a read of a pending
- * node hands no posture to a pass that is the hold's work (#4504; D-25), as
- * a memo between `m1` and the reader posts none. The posture during the
- * flight is internal; the screen is the rule (D-30).
+/** A mid-flight mount must not permanently alter the derive's later behavior
+ * (#4491, #4504). Changed and equal answers follow the same visible timeline
+ * as an existing reader and the memo form (D-30). The old verdict flag was
+ * lane-engine bookkeeping, not a requirement on the common update engine.
+ * Callback retries are pinned separately from the displayed values.
  */
-describe("the derive's posture after the held mount (#4491)", () => {
+describe("derived store settlement after the held mount (#4491)", () => {
   async function later(form: "memo" | "storeKey", mountMidFlight: boolean, equal: boolean) {
     const log: string[] = [];
+    const screens: (string | undefined)[] = [];
+    let visible: string | undefined;
+    let dispose!: () => void;
     const [s, setS] = createSignal(1);
     const [on, setOn] = createSignal(!mountMidFlight);
     let derive: Computed<any> | null = null;
-    createRoot(() => {
+    createRoot(d => {
+      dispose = d;
       const m0 = createMemo(() => latest(s) + s());
       const m1 = createMemo(async () => {
         const v = m0();
@@ -204,13 +206,16 @@ describe("the derive's posture after the held mount (#4491)", () => {
       }
       createRenderEffect(
         () => (on() ? `r:${read()}` : "r:off"),
-        v => void log.push(v)
+        v => {
+          visible = v;
+          log.push(v);
+        }
       );
     });
     const posture = (tag: string) =>
       log.push(
         derive
-          ? `${tag} verdict=${!!(derive._config & CONFIG_VERDICT)} pending=${!!(derive._statusFlags & STATUS_PENDING)}`
+          ? `${tag} pending=${!!(derive._statusFlags & STATUS_PENDING)}`
           : tag
       );
     flush();
@@ -222,20 +227,39 @@ describe("the derive's posture after the held mount (#4491)", () => {
     flush();
     await tick(300);
     posture("--landed");
+    screens.push(visible);
     setS(3); // a later flight, the reader on screen
     flush();
     posture("--reask");
+    screens.push(visible);
     await tick(300);
-    // From the first landing on.
-    return log.slice(log.findIndex(x => x.startsWith("--landed")) - 1);
+    screens.push(visible);
+    dispose();
+    // From the first landing on; callbacks and visible state are distinct.
+    return { screens, log: log.slice(log.findIndex(x => x.startsWith("--landed")) - 1) };
   }
   const screen = (log: string[]) => log.map(x => x.split(" ")[0]);
 
   for (const equal of [false, true])
     test(`a later flight after ${equal ? "an equal" : "a changed"} landing`, async () => {
       const held = await later("storeKey", true, equal);
-      expect(screen(held)).toEqual(screen(await later("storeKey", false, equal)));
-      expect(screen(held)).toEqual(screen(await later("memo", true, equal)));
-      expect(held).toContain("--landed verdict=true pending=false");
+      const existing = await later("storeKey", false, equal);
+      const memo = await later("memo", true, equal);
+      const expected = equal ? ["r:0", "r:0", "r:0"] : ["r:4", "r:4", "r:6"];
+      expect(held.screens).toEqual(expected);
+      expect(existing.screens).toEqual(expected);
+      expect(memo.screens).toEqual(expected);
+      expect(screen(held.log)).toEqual(screen(existing.log));
+      expect(held.log).toContain("--landed pending=false");
+      expect(held.log).toContain("--reask pending=true");
+      // The direct memo binding retries after suspending in the replacement
+      // context. A render callback has no equality filter. The store's equal
+      // leaf write does suppress that notification; neither changes the screen.
+      expect(screen(held.log)).toEqual(
+        equal ? ["r:0", "--landed", "--reask"] : ["r:4", "--landed", "--reask", "r:6"]
+      );
+      expect(screen(memo.log)).toEqual(
+        equal ? ["r:0", "--landed", "--reask", "r:0"] : ["r:4", "--landed", "--reask", "r:6"]
+      );
     });
 });
