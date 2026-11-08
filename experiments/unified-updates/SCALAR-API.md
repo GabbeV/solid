@@ -3,8 +3,9 @@
 Current accepted API decision: [scalar guesses before the first input answer, stage 124](INTEGRATION-124.md).
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Latest adversarial review: [owned-frame defect, publication controls, performance and size, stage 170](INTEGRATION-170.md).
-Current investigation: [held-branch DOM inconsistency and next comparison, stage 175](INTEGRATION-175.md).
-Current runtime checkpoint: [creator-retry audit and removed-child preparation, stage 174](INTEGRATION-174.md).
+Previous investigation: [held-branch DOM inconsistency and next comparison, stage 175](INTEGRATION-175.md).
+Current runtime checkpoint: [coherent publication when readers are replaced, stage 176](INTEGRATION-176.md).
+Previous runtime checkpoint: [creator-retry audit and removed-child preparation, stage 174](INTEGRATION-174.md).
 Previous runtime checkpoint: [NotReadyError context retries, WIP stage 173](INTEGRATION-173.md).
 Previous runtime checkpoint: [creator context retries, WIP stage 172](INTEGRATION-172.md).
 Previous runtime checkpoint: [private calculation, publication and override lifetime, stage 171](INTEGRATION-171.md).
@@ -23,7 +24,7 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [stage 174](INTEGRATION-174.md).
+Latest suite counts: [stage 176](INTEGRATION-176.md).
 Earlier failure inventory: [stage 157](INTEGRATION-157.md).
 Previous assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
 Previous assertion migration: [first-value read checks, stage 158](INTEGRATION-158.md).

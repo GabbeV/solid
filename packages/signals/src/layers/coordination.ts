@@ -395,15 +395,7 @@ function prepareLayers(): boolean {
         // async work before that parent publishes. A post-commit rerun is
         // sufficient for a direct binding, but would let a memo lag behind
         // an already-published input after its boundary dependency changes.
-        parent._reruns!.delete(reader);
-        reader._flags &= ~REACTIVE_FRAME_READ;
-        const previous = releasingInput;
-        releasingInput = parent;
-        try {
-          recomputeInUpdate(reader, parent);
-        } finally {
-          releasingInput = previous;
-        }
+        prepareReader(reader, parent);
         changed = true;
         // This pass can merge its holder into another update. Its remaining
         // readers moved there; reconsider that holder's readiness on the
@@ -413,6 +405,18 @@ function prepareLayers(): boolean {
     }
   }
   return changed;
+}
+
+function prepareReader(reader: Computed<any>, update: Transaction): void {
+  update._reruns!.delete(reader);
+  reader._flags &= ~REACTIVE_FRAME_READ;
+  const previous = releasingInput;
+  releasingInput = update;
+  try {
+    recomputeInUpdate(reader, update);
+  } finally {
+    releasingInput = previous;
+  }
 }
 
 function mergeLayers(from: Transaction, into: Transaction): void {
@@ -674,6 +678,31 @@ function scopedCalculation(
   create: boolean,
   fromHeap: boolean
 ): true {
+  // A stale creator may await preparation outside the dirty heap. Restore
+  // parent-before-child order before its old child consumes this incoming
+  // update beside values captured from the creator's previous execution.
+  if (fromHeap && update?._reruns?.size) {
+    let creator: Computed<any> | undefined;
+    for (let owner = node._parent; owner; owner = owner._parent) {
+      const parent = owner as Computed<any>;
+      if (parent._flags & REACTIVE_RECOMPUTING_DEPS) break;
+      if (
+        parent._flags & REACTIVE_FRAME_READ &&
+        !(parent._config & CONFIG_FRAME) &&
+        !(parent as any)._type &&
+        update._reruns.has(parent)
+      )
+        creator = parent;
+    }
+    if (creator) {
+      prepareReader(creator, update);
+      if (node._flags & REACTIVE_DISPOSED) return true;
+      if (node._flags & REACTIVE_ZOMBIE && removalStagedBy(node, update)) {
+        deferZombie(node);
+        return true;
+      }
+    }
+  }
   recomputeInUpdate(node, update, false, create, fromHeap, true);
   return true;
 }

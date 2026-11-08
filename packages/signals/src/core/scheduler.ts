@@ -1251,17 +1251,29 @@ export class GlobalQueue implements IQueue {
     }
     this._queues = [[], []];
     layerOrder?.(transactions);
-    for (let k = transactions.length - 1; k >= 0; k--) {
-      const u = transactions[k];
-      if (blocked(u, true) || queuedWork(u) || (layerCanPublish && !layerCanPublish(u))) continue;
-      transactions.splice(k, 1);
-      endLanesHook?.(u);
-      land(u);
-      // A landing's commits can dispose a zombie a transaction judged above
-      // was blocked on (#3463: live "until the commit that disposes it") —
-      // judge them again.
-      k = transactions.length;
-    }
+    let landed: boolean;
+    do {
+      landed = false;
+      // Readiness is judged against the fully prepared graph. A landing
+      // may dispose its observers, but their queued replacements must run
+      // before that loss of observation can release another update.
+      const ready = layerBeforeCommit && transactions.length > 1
+        ? new Set(transactions.filter(readyToPublish)) : null;
+      for (let k = transactions.length - 1; k >= 0; k--) {
+        const u = transactions[k];
+        if (ready && !ready.has(u)) continue;
+        if (!readyToPublish(u)) continue;
+        transactions.splice(k, 1);
+        endLanesHook?.(u);
+        land(u);
+        landed = true;
+        // Cleanup can merge other entries while this landing disposes children.
+        k = Math.min(k, transactions.length);
+      }
+      // Finish already-ready publications, but do not release an update
+      // whose observer disappeared until queued replacement readers run.
+      if (layerBeforeCommit && dirtyQueue._max >= dirtyQueue._min) break;
+    } while (landed);
     // The store folds the pending backings whose container nodes committed
     // — this flush's, or a landing's (store/store.ts installs it).
     storeCommitHook?.();
@@ -1458,6 +1470,10 @@ function queuedWork(update: Transaction): boolean {
       return true;
   }
   return false;
+}
+
+function readyToPublish(update: Transaction): boolean {
+  return !blocked(update, true) && !queuedWork(update) && (!layerCanPublish || layerCanPublish(update));
 }
 
 /** The landing: the held frame becomes the frame. */

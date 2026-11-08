@@ -798,29 +798,34 @@ describe("fuzz findings on L2 — lanes", () => {
     const [mounted, setMounted] = createSignal(true);
     let resume!: () => void;
     let run!: () => Promise<void>;
-    let child: unknown = "absent";
+    type Frame = { value: unknown; cleaned: boolean };
+    const frames: Frame[] = [];
+    let shown: Frame | undefined;
     let dispose!: () => void;
     createRoot(d => {
       dispose = d;
       createRenderEffect(mounted, () => {});
       createRenderEffect(
-        () =>
-          mounted()
-            ? createRoot(dd => {
-                createRenderEffect(
-                  () => latest(source),
-                  v => {
-                    child = v;
-                  }
-                );
-                onCleanup(() => {
-                  child = "absent";
-                });
-                return dd;
-              })
-            : undefined,
-        dd => {
-          if (dd) onCleanup(dd);
+        () => {
+          if (!mounted()) return undefined;
+          const frame = createRoot(() => {
+            const frame: Frame = { value: undefined, cleaned: false };
+            frames.push(frame);
+            createRenderEffect(
+              () => latest(source),
+              value => {
+                frame.value = value;
+              }
+            );
+            onCleanup(() => {
+              frame.cleaned = true;
+            });
+            return frame;
+          });
+          return frame;
+        },
+        frame => {
+          shown = frame;
         }
       );
       run = action(function* () {
@@ -831,7 +836,8 @@ describe("fuzz findings on L2 — lanes", () => {
       });
     });
     flush();
-    expect(child).toBe(0);
+    expect(shown?.value).toBe(0);
+    expect(shown?.cleaned).toBe(false);
     const p = run();
     setMounted(false); // the action's tick: the unmount rides with it (O1)
     await drain();
@@ -840,8 +846,12 @@ describe("fuzz findings on L2 — lanes", () => {
     resume(); // the body ends with the truth: source = 1
     await p;
     await drain(4);
-    expect(child).toBe(1);
+    // A private replacement can initialize before its predecessor's cleanup.
+    // Observe the published frame, so old cleanup cannot overwrite the oracle.
+    expect(shown?.value).toBe(1);
+    expect(shown?.cleaned).toBe(false);
     dispose();
+    expect(frames.every(frame => frame.cleaned)).toBe(true);
   });
 });
 
