@@ -2,6 +2,7 @@
  * Callback queries read those same outputs. No verdict lane or reader flag. */
 import {
   computed,
+  markSnapshotScope,
   context,
   read,
   prepareComputed,
@@ -201,9 +202,19 @@ function pendingOutput(source: Computed<any>): Computed<boolean> {
   return record._output;
 }
 
+/** A server answer is ready in the claim. Subscribe to its source-owned
+ * pending output using the same snapshot/release machinery as value reads. */
+function snapshotPending(source: Computed<any>): unknown {
+  const value = read(source);
+  const output = pendingOutput(source);
+  markSnapshotScope(output, false);
+  read(output);
+  return value;
+}
+
 function readPending(source: Computed<any>): boolean {
   if (observesSnapshot(source)) {
-    read(source);
+    snapshotPending(source);
     return false;
   }
   // Probing pending is allowed in component bodies. An uninitialized input
@@ -221,7 +232,7 @@ function readPending(source: Computed<any>): boolean {
 // return value is irrelevant, so an equal callback result cannot hide a
 // pending read. Nested computations still perform their ordinary reads.
 function probe(source: Signal<any>, window: { found: boolean }): unknown {
-  if (observesSnapshot(source)) return read(source);
+  if (observesSnapshot(source)) return snapshotPending(source as Computed<any>);
   // The output is an ordinary read, so an outer observation sees this
   // pending boolean. The callback's control flow still reads the source.
   window.found = readPending(source as Computed<any>) || window.found;

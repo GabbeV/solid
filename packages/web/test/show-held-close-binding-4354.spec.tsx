@@ -83,3 +83,66 @@ describe("<Show> branch re-run during the hold that closes it (#4354)", () => {
       container.remove();
     });
 });
+
+for (const keyed of [false, true])
+  test(`closing and reopening a held branch keeps attached bindings coherent (keyed=${keyed})`, async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const [open, setOpen] = createSignal<string | false>("a");
+    const [fmt, setFmt] = createSignal("ru");
+    const resolvers: (() => void)[] = [];
+    const dispose = render(() => {
+      const data = createMemo(() => {
+        const selection = open();
+        return new Promise<string>(resolve => resolvers.push(() => resolve(`data-${selection}`)));
+      });
+      return (
+        <>
+          {keyed ? (
+            <Show when={open()} keyed fallback={<i>closed</i>}>
+              {value => <p>{`${fmt()}:${value}`}</p>}
+            </Show>
+          ) : (
+            <Show when={open()} fallback={<i>closed</i>}>
+              {value => <p>{`${fmt()}:${value()}`}</p>}
+            </Show>
+          )}
+          <Loading fallback={<b>wait</b>}>
+            <span>{data()}</span>
+          </Loading>
+        </>
+      );
+    }, container);
+    try {
+      flush();
+      resolvers.shift()!();
+      await settle();
+      const attached = container.querySelector("p");
+      expect(container.textContent).toBe("ru:adata-a");
+      setOpen(false);
+      flush();
+      expect(container.textContent).toBe("ru:adata-a");
+      setFmt("en");
+      flush();
+      expect(container.textContent).toBe("en:adata-a");
+      setOpen("b");
+      flush();
+      expect(container.textContent).toBe("en:adata-a");
+      expect(container.querySelector("p")).toBe(attached);
+      setFmt("fr");
+      flush();
+      expect(container.textContent).toBe("fr:adata-a");
+      expect(container.querySelector("p")).toBe(attached);
+      // An obsolete close must not replace the still attached branch.
+      resolvers.shift()!();
+      await settle();
+      expect(container.textContent).toBe("fr:adata-a");
+      resolvers.shift()!();
+      await settle();
+      expect(container.textContent).toBe("fr:bdata-b");
+    } finally {
+      dispose();
+      container.remove();
+      for (const resolve of resolvers) resolve();
+    }
+  });

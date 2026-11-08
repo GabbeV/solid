@@ -6,10 +6,11 @@ Nested optimistic boundaries remain part of the model; “layer” describes tho
 boundaries, not the experiment's name.
 
 The branch is `experiment/unified-updates`. Start with [the current scalar API
-and status](SCALAR-API.md) and [the current runtime and failure audit](INTEGRATION-181.md).
-Stage 181 prepares restored bindings before publication. Signals and web have
-no remaining non-deferred failures; an additional Solid-package run found two
-non-deferred hydration/Show cases still under investigation.
+and status](SCALAR-API.md) and [the current runtime and failure audit](INTEGRATION-182.md).
+Stage 182 repairs hydration pending subscriptions and completes the known
+non-deferred failure audit across signals, Solid, and web. Optimistic stores
+and `until` remain deferred.
+Stage 181 prepares restored bindings before publication.
 Stage 180 repairs pending mount ownership across local calculation scopes and
 finishes the non-deferred web failure audit.
 Stage 178 fixes reactive `latest` selection of ready first held values and
@@ -23,7 +24,7 @@ The [adversarial review](INTEGRATION-170.md) exposed an owned-frame calculation
 defect. Stage 172 begins retrying creators when their children discover a different
 optimistic context. Stage 173 gives those retries the public `NotReadyError` category, with an
 internal subtype to distinguish them from async waits. Stage 174 reviews the ownership failures and fixes preparation of children
-whose owner is being replaced. The two newly inventoried Solid-package failures remain; stage 171's private-frame mechanisms have not yet been fully replaced.
+whose owner is being replaced. Stage 171's private-frame mechanisms have not yet been fully replaced.
 The implementation runs through the normal Solid packages and test harnesses.
 Experiment-specific scalar tests use the `unified-` filename prefix.
 
