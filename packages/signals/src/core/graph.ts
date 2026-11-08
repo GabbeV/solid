@@ -116,7 +116,10 @@ let retryDisposalDeferred = false;
 export function deferRetryDisposal(): void {
   if (retryDisposalDeferred) return;
   retryDisposalDeferred = true;
-  queueMicrotask(sweepDormant);
+  queueMicrotask(() => {
+    retryDisposalDeferred = false;
+    sweepDormant();
+  });
 }
 
 export function unobserved(el: Computed<unknown>) {
@@ -151,8 +154,11 @@ export function unobserved(el: Computed<unknown>) {
  */
 export const dormantNodes = new NewSet<Computed<unknown>>();
 
+// One public flush can run several internal flush rounds. A creator retry
+// must keep its temporary subscriptions across all of them; the queued
+// microtask above releases anything still unobserved after they finish.
 export function sweepDormant(): void {
-  retryDisposalDeferred = false;
+  if (retryDisposalDeferred) return;
   if (dormantNodes.size === 0) return;
   for (const el of dormantNodes) {
     // Re-validate at sweep time: the node may have gained a subscriber (its

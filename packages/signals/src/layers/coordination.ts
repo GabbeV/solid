@@ -19,6 +19,7 @@ import {
   REACTIVE_LAYER_EFFECT,
   REACTIVE_PREVIOUS_COMMITTED,
   REACTIVE_RETRIED_OWNER,
+  REACTIVE_RETRY_OWNER,
   CONFIG_REDERIVE,
   CONFIG_STAGED,
   EFFECT_RENDER,
@@ -769,6 +770,7 @@ function retryCreator(
     deferRetryDisposal();
     if (!(target._flags & REACTIVE_RECOMPUTING_DEPS)) {
       adoptOutput(target, update, true);
+      target._flags |= REACTIVE_RETRY_OWNER;
       enqueueSub(target);
       throw new NotReadyError(target);
     }
@@ -963,6 +965,10 @@ function retryCalculation(
 }
 
 function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeCalculation): any {
+  // A queued creator retry has the same per-execution marker as an immediate
+  // retry. Do not carry that marker into unrelated later recalculations.
+  if (node._flags & REACTIVE_RETRY_OWNER)
+    node._flags = (node._flags & ~REACTIVE_RETRY_OWNER) | REACTIVE_RETRIED_OWNER;
   // A private frame has no displayed dependency set to preserve. Replace
   // its publication waits when it recalculates, including untracked reads.
   if (cleanupReruns && unpublishedFrame(node)) cleanupReruns(node);

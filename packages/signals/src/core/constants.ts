@@ -104,6 +104,8 @@ export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
 
 /** This pass retried a creator after a child selected another context. */
 export const REACTIVE_RETRIED_OWNER = 1 << 27;
+/** Carry a queued creator retry into its next execution. */
+export const REACTIVE_RETRY_OWNER = 1 << 28;
 
 // Static configuration bits packed into Owner/Computed/Signal _config.
 export const CONFIG_OWNED_WRITE = 1 << 0;
@@ -322,4 +324,4 @@ export type Refreshable<T> = T & { readonly [$REFRESH]: any };
 export const NewSet = Set;
 
 /** Persistent feature state shares the existing lifecycle word. */
-export const REACTIVE_PERSISTENT = REACTIVE_PREVIOUS_COMMITTED | REACTIVE_LAYER_EFFECT | REACTIVE_WRITABLE_COMPUTED | REACTIVE_SAVED_DEPENDENCIES;
+export const REACTIVE_PERSISTENT = REACTIVE_PREVIOUS_COMMITTED | REACTIVE_LAYER_EFFECT | REACTIVE_WRITABLE_COMPUTED | REACTIVE_SAVED_DEPENDENCIES | REACTIVE_RETRY_OWNER;
