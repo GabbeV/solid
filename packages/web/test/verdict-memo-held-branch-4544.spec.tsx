@@ -2,10 +2,10 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  */
-// #4544 through Show + Loading. A new branch prepares the complete incoming
-// params regardless of whether its observation is inline or memo-wrapped.
-// Its old DOM remains visible until the held gate and new content are ready.
-// The scalar fixture and stage-130 controls cover the corresponding contexts.
+// #4544 through Show + Loading. A context retry can close a private branch
+// until ordinary preparation resumes. The old DOM remains visible meanwhile;
+// the published replacement always uses complete incoming params.
+// The scalar fixture covers the corresponding private calculation timeline.
 import { expect, test } from "vitest";
 import { render } from "@solidjs/web";
 import { createMemo, createSignal, flush, isPending, latest, Loading, Show } from "solid-js";
@@ -90,10 +90,16 @@ for (const shape of ["split", "one"] as Shape[]) {
     });
 
   for (const probe of ["inline isPending", "same-node isPending"] as Probe[])
-    test(`${probe} in params (${shape} flush): params prepares the incoming branch while publication waits`, async () => {
+    test(`${probe} in params (${shape} flush): private params stay coherent while publication waits`, async () => {
       const p = await arrive(probe, shape);
       try {
-        expect(p.branchSaw.at(-1)).toMatchObject({ plan: true, signedIn: true });
+        // A same-node pending observation can retry the private creator and
+        // close its branch on committed session. The previous private plan
+        // remains until ordinary preparation resumes; it is never displayed.
+        expect(p.branchSaw.at(-1)).toMatchObject({
+          plan: !(probe === "same-node isPending" && shape === "split"),
+          signedIn: true
+        });
         expect(p.el.textContent).toBe("0signed out");
         p.release();
         for (let i = 0; i < 4; i++) await tick();

@@ -4,6 +4,7 @@ Current accepted API decision: [scalar guesses before the first input answer, st
 Previous failure audit and rejected trials: [stage 123](INTEGRATION-123.md).
 Latest adversarial review: [owned-frame defect, publication controls, performance and size, stage 170](INTEGRATION-170.md).
 Previous investigation: [held-branch DOM inconsistency and next comparison, stage 175](INTEGRATION-175.md).
+Current assertion audit: [ownership assertions after creator retries, stage 179](INTEGRATION-179.md).
 Current runtime checkpoint: [first held values through latest, stage 178](INTEGRATION-178.md).
 Previous runtime checkpoint: [queued creator retries and lazy-node disposal, stage 177](INTEGRATION-177.md).
 Previous runtime checkpoint: [coherent publication when readers are replaced, stage 176](INTEGRATION-176.md).
@@ -26,7 +27,7 @@ Previous runtime repair: [error observations and ordinary recovery, stage 150](I
 Previous callback repair: [coherent callback release, stage 148](INTEGRATION-148.md).
 Previous repair: [store parking at context switches, stage 147](INTEGRATION-147.md).
 Observation context semantics: [common observation context, stage 141](INTEGRATION-141.md).
-Latest suite counts: [stage 178](INTEGRATION-178.md).
+Latest suite counts and remaining inventory: [stage 179](INTEGRATION-179.md).
 Earlier failure inventory: [stage 157](INTEGRATION-157.md).
 Previous assertion migration: [eligible flights and input lifetimes, stage 164](INTEGRATION-164.md).
 Previous assertion migration: [first-value read checks, stage 158](INTEGRATION-158.md).

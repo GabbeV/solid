@@ -1,14 +1,10 @@
 /**
  * #4544: a held session update opens a branch whose params also depend on
- * a pending/latest observation of an unrelated plan update. The new branch
- * can calculate the incoming signed-in proposal while its DOM stays held.
- * Moving the probe into params or behind a memo must not impose a separate
- * probe-local read posture. See the experiment's stage-141 context rule and
- * stage-130 waiting-consumer controls.
- *
- * Next's original assertions distinguish the inline and wrapped probe's
- * speculative values. These tests instead require the complete incoming
- * branch proposal and preserve every visible pre/post-release assertion.
+ * pending/latest observations. The old DOM stays visible while preparation
+ * and creator retries run. A retry can close the private branch on committed
+ * session, so its previous private params need not refresh until preparation
+ * resumes. The final published branch always uses complete incoming params.
+ * See the stage-141 context rule and stage-172 creator-retry rule.
  */
 import { expect, it } from "vitest";
 import {
@@ -160,12 +156,18 @@ for (const shape of ["split", "one"] as Shape[]) {
     });
 
   for (const probe of ["inline isPending", "same-node isPending"] as Probe[])
-    it(`${probe} in params (${shape} flush): params prepares the incoming branch while publication waits`, async () => {
+    it(`${probe} in params (${shape} flush): private params stay coherent while publication waits`, async () => {
       const p = page(probe);
       try {
         flush();
         write(p, shape);
-        expect(p.branchSaw.at(-1)).toMatchObject({ plan: true, signedIn: true });
+        // A same-node pending observation can retry the private creator and
+        // close its branch on committed session. The previous private plan
+        // remains until ordinary preparation resumes; it is never displayed.
+        expect(p.branchSaw.at(-1)).toMatchObject({
+          plan: !(probe === "same-node isPending" && shape === "split"),
+          signedIn: true
+        });
         expect(p.screen()).toBe("0 signed out");
         p.release();
         for (let i = 0; i < 4; i++) await tick();

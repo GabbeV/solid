@@ -85,20 +85,29 @@ for (const read of ["ordinary", "latest", "memo latest"] as const)
         expect(created[0].node.textContent).toBe("10");
         expect(container.textContent).toBe("off");
         expect(scheduled).toEqual([]);
-        expect(cleanups).toBe(cancel ? 1 : 0);
+        // A later latest proposal retries the creator on committed count=0,
+        // removing the private child. Ordinary reads keep their private frame.
+        expect(cleanups).toBe(cancel || read !== "ordinary" ? 1 : 0);
 
         end.resolve();
         await running;
         await turn();
         expect(container.textContent).toBe(cancel ? "off" : "20");
-        expect(container.contains(created[0].node)).toBe(!cancel);
+        const rebuilt = !cancel && read !== "ordinary";
+        expect(created).toHaveLength(rebuilt ? 2 : 1);
+        expect(container.contains(created[0].node)).toBe(!cancel && !rebuilt);
+        if (rebuilt) {
+          expect(created[1].initial).toBe("20");
+          expect(container.contains(created[1].node)).toBe(true);
+        }
         expect(scheduled).toEqual(cancel ? [] : [20]);
-        expect(cleanups).toBe(cancel ? 1 : 0);
+        expect(cleanups).toBe(cancel || rebuilt ? 1 : 0);
       } finally {
         next.resolve();
         end.resolve();
         await running;
         dispose();
         flush();
+        expect(cleanups).toBe(created.length);
       }
     });

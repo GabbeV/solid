@@ -29,7 +29,8 @@ import {
   createStore,
   flush,
   isPending,
-  latest
+  latest,
+  onCleanup
 } from "../src/index.js";
 
 type Via = "inline" | "memo";
@@ -255,19 +256,12 @@ describe("latest() of a first load in flight in a verdict lane throws, never und
     });
 });
 
-// C4: a render effect created by a held pass beside the committed frame's
-// effect, both reading `[s(), L()]`.
-// - The committed frame's effect, a zombie of the parked frame that read a
-//   verdict, re-runs at the park seam as the verdict lane's work and tears
-//   (`v:0 l:1`, D-26). Before, inline, its run waited in a verdict lane born
-//   at that seam, which the seam did not judge (`l:0` through the hold).
-// - The held pass's effect was born into the frame (ruling A, #4010): it has
-//   no screen, its reads are the transaction's — `v:1 l:1`, one run, inline
-//   or through a memo. Before, through a memo once the guess engine had run,
-//   its verdict-memo read broke it out into the verdict lane, which
-//   re-derived it on the screen (`v:0 l:1`, then `v:1 l:1` at the landing).
-// Both with and without an optimistic action having run first (the guess
-// engine installed changes which seat a verdict-memo read takes).
+// C4: a child discovering latest retries its private creator. The replacement
+// creator captures committed s=0 and its child can then read [0, latest=1].
+// The ordinary frame captures s=1 only at the input's publication. Inline and
+// wrapped latest must agree; no completed child mixes its captured value with
+// an ordinary read from a different context. Private first callbacks can run
+// eagerly, but the scheduled outer callback remains held.
 describe("C4: a render effect born in a held pass beside the committed frame's [s(), L()]", () => {
   async function runGuessEngine() {
     let resolve!: () => void;
@@ -290,9 +284,10 @@ describe("C4: a render effect born in a held pass beside the committed frame's [
   }
   for (const engine of [false, true])
     for (const via of ["inline", "memo"] as const)
-      it(`${via}${engine ? ", guess engine installed" : ""}: the committed frame's effect tears, the born one reads its transaction`, async () => {
+      it(`${via}${engine ? ", guess engine installed" : ""}: creator and child retry together before the ordinary frame publishes`, async () => {
         if (engine) await runGuessEngine();
         const log: string[] = [];
+        const frames: { captured: number; cleaned: number }[] = [];
         let done!: () => void;
         let set!: (v: number) => void;
         const dispose = createRoot(d => {
@@ -301,6 +296,9 @@ describe("C4: a render effect born in a held pass beside the committed frame's [
           const L = via === "memo" ? createMemo(() => latest(s)) : () => latest(s);
           const outer = createMemo(() => {
             const v = s();
+            const frame = { captured: v, cleaned: 0 };
+            frames.push(frame);
+            onCleanup(() => frame.cleaned++);
             createRenderEffect(
               () => `born@${v} v:${s()} l:${L()}`,
               x => void log.push(x)
@@ -319,16 +317,17 @@ describe("C4: a render effect born in a held pass beside the committed frame's [
         })();
         flush();
         await tick();
-        expect(log.filter(x => x.startsWith("born@0"))).toEqual(["born@0 v:0 l:1"]);
-        expect(log.filter(x => x.startsWith("born@1"))).toEqual(["born@1 v:1 l:1"]);
+        expect(log).toEqual(["born@0 v:0 l:0", "born@0 v:0 l:1"]);
+        expect(frames.filter(frame => frame.cleaned === 0).map(frame => frame.captured)).toEqual([0]);
         expect(log).not.toContain("o:1");
         log.length = 0;
         done();
         await tick();
-        // The landing disposes the committed frame's effect; the outer
-        // commits; the born effect's values did not change.
-        expect(log).toEqual(["o:1"]);
+        // The final creator and its child now read the same incoming value.
+        expect(log).toEqual(["born@1 v:1 l:1", "o:1"]);
+        expect(frames.filter(frame => frame.cleaned === 0).map(frame => frame.captured)).toEqual([1]);
         dispose();
+        expect(frames.every(frame => frame.cleaned === 1)).toBe(true);
       });
 });
 

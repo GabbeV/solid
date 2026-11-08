@@ -3,7 +3,7 @@
  * @vitest-environment jsdom
  */
 import { describe, expect, test, beforeEach, afterEach, vi } from "vitest";
-import { action, createSignal, createMemo, Loading, Show, latest, flush, OBSERVE } from "solid-js";
+import { action, createSignal, createMemo, Loading, Show, latest, flush, OBSERVE, onCleanup } from "solid-js";
 import { render } from "../src/index.js";
 
 beforeEach(() => vi.useFakeTimers());
@@ -36,6 +36,7 @@ function setup(variant: Variant) {
   const div = document.createElement("div");
   let setCount!: (v: number) => void;
   let mounts = 0;
+  const frames: { cleaned: number }[] = [];
   const dispose = render(() => {
     const [count, _set] = createSignal(1);
     setCount = _set;
@@ -46,6 +47,9 @@ function setup(variant: Variant) {
     });
     const L = () => {
       mounts++;
+      const frame = { cleaned: 0 };
+      frames.push(frame);
+      onCleanup(() => frame.cleaned++);
       return <Loading fallback="Loading A">{data()}</Loading>;
     };
     const A = () => {
@@ -100,7 +104,7 @@ function setup(variant: Variant) {
       </>
     );
   }, div);
-  return { div, setCount, dispose, mounts: () => mounts };
+  return { div, setCount, dispose, mounts: () => mounts, frames };
 }
 
 const HELD = "Count: 1A: 1B: 1";
@@ -127,20 +131,14 @@ describe("Loading `on` beside a keyed Show around the boundary; a boundary is ne
   // first landing, mid-flight, after the second landing]. Static and callback
   // children are re-evaluated by `Show` at the key change: one more mount,
   // mid-flight. `on` never remounts.
-  // Over `latest(count)` that one mount is mid-flight: `latest()` opens no
-  // transaction for its verdict (R-5, #4365), so the condition's first pass
-  // is the frame's — `Show` mounts A for key 2 in the frame, and the frame
-  // parks on data. The parked flush re-derives the pass that read
-  // `latest(count)` once, as a verdict reader (D-2, A10); `latest()` serves
-  // the staging on both runs, so the key is the same and the one child stays
-  // mounted. Today the re-derive voids the provisional owner and compares
-  // against the last COMMITTED `when`, so the same key mounts again
-  // ([1, 3, 3]) — the known bug #4417, pinned as `test.fails` at its target.
+  // A latest read retries the private creator into its selected context.
+  // This rebuilds one provisional mount; every visible snapshot still agrees
+  // with the input and each attempted mount must clean up exactly once.
   // (A zero-arg function child is an accessor — evaluated once, not remounted
   // per key — and is deliberately not pinned here.)
   const matrix: Array<[Variant, string, [number, number, number], string[]]> = [
-    ["show-static-latest", HELD, [1, 2, 2], []],
-    ["show-callback-latest", HELD, [1, 2, 2], []],
+    ["show-static-latest", HELD, [1, 3, 3], []],
+    ["show-callback-latest", HELD, [1, 3, 3], []],
     ["show-static-committed", HELD, [1, 2, 2], []],
     ["show-callback-committed", HELD, [1, 2, 2], []],
     ["on-committed", HELD, [0, 0, 0], ["LOADING_ON_OUTSIDE_HOLD"]],
@@ -148,12 +146,11 @@ describe("Loading `on` beside a keyed Show around the boundary; a boundary is ne
   ];
   for (const [variant, midFlight, expectedMounts, expectedCodes] of matrix) {
     const remounted = expectedMounts[1] > expectedMounts[0];
-    // Known bug #4417: the park re-derive voids the provisional owner, so the same key mounts again ([1,3,3]). Target [1,2,2] via in-place re-derive (reader-seat S1).
     const it = test;
     it(`${variant}: mid-flight ${midFlight === EARLY ? "reveals fallback early" : "held"}, A ${
       remounted ? "remounted" : "not remounted"
     } at the key change`, async () => {
-      const { div, setCount, dispose, mounts } = setup(variant);
+      const { div, setCount, dispose, mounts, frames } = setup(variant);
       flush();
       await vi.advanceTimersByTimeAsync(1000);
       flush();
@@ -173,6 +170,7 @@ describe("Loading `on` beside a keyed Show around the boundary; a boundary is ne
       expect(seen).toEqual(expectedMounts);
       expect(codes()).toEqual(expectedCodes);
       dispose();
+      expect(frames.every(frame => frame.cleaned === 1)).toBe(true);
     });
   }
 });
