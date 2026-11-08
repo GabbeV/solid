@@ -6,7 +6,9 @@ Nested optimistic boundaries remain part of the model; “layer” describes tho
 boundaries, not the experiment's name.
 
 The branch is `experiment/unified-updates`. Start with [the current scalar API
-and status](SCALAR-API.md) and [the current runtime](INTEGRATION-178.md) and [the latest assertion audit](INTEGRATION-179.md).
+and status](SCALAR-API.md) and [the current runtime and failure audit](INTEGRATION-180.md).
+Stage 180 repairs pending mount ownership across local calculation scopes and
+finishes the non-deferred web failure audit.
 Stage 178 fixes reactive `latest` selection of ready first held values and
 superseded first proposals while preserving the outside-read rule.
 Stage 177 fixes queued creator retries and prevents disposal between rounds
@@ -19,7 +21,7 @@ defect. Stage 172 begins retrying creators when their children discover a differ
 optimistic context. Stage 173 gives those retries the public `NotReadyError` category, with an
 internal subtype to distinguish them from async waits. Stage 174 reviews the ownership failures and fixes preparation of children
 whose owner is being replaced. There are six remaining non-deferred signals
-failures and five non-deferred web failures; stage 171's private-frame mechanisms have not yet been fully replaced.
+failures and no non-deferred web failures; stage 171's private-frame mechanisms have not yet been fully replaced.
 The implementation runs through the normal Solid packages and test harnesses.
 Experiment-specific scalar tests use the `unified-` filename prefix.
 

@@ -27,6 +27,7 @@ import {
   REACTIVE_IN_HEAP,
   REACTIVE_LANE_DIRTY,
   REACTIVE_MANUAL_WRITE,
+  REACTIVE_JOINED,
   REACTIVE_MISSED_WAKE,
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_SNAPSHOT_STALE,
@@ -39,6 +40,8 @@ import { attrHooks } from "./attribution-hooks.js";
 import { notifyStatus } from "./async.js";
 import {
   dispatchingEvent,
+  creatorPass,
+  creatorReads,
   ext,
   isSame,
   markUnflushedStaged,
@@ -1379,6 +1382,19 @@ export class GlobalQueue implements IQueue {
         // `blocked(lane)` finds it in the lane's staging ("if further async
         // downstream is hit it holds like its own transition").
         if (passLane === null) joinFuture(null);
+        // An uncaught first binding belongs to its still-running creator's
+        // mount over unpublished inputs. Keep that creator held when its local
+        // calculation scope restores the outer update; otherwise a memo returning detached DOM
+        // can publish the tree with holes. A Loading catch returned above.
+        if (
+          layerCompute &&
+          node._statusFlags & STATUS_UNINITIALIZED &&
+          creatorReads(node, 0)
+        ) {
+          const creator = creatorPass(node._parent);
+          if (creator && creator._flags & REACTIVE_RECOMPUTING_DEPS)
+            creator._flags |= REACTIVE_JOINED;
+        }
       }
       return true;
     }

@@ -530,7 +530,7 @@ describe("Testing Loading", () => {
     localDispose();
   });
 
-  test("isPending falls back only for newly mounted attribute branches", async () => {
+  test("isPending keeps the retained keyed branch coherent until its input publishes", async () => {
     let setPage!: (value: "a" | "b") => void;
     let setVersion!: (value: number) => void;
     const localDiv = document.createElement("div");
@@ -571,43 +571,48 @@ describe("Testing Loading", () => {
       );
     }, localDiv);
 
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("loading");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
+    try {
+      flush();
+      expect(localDiv.firstElementChild!.textContent).toBe("loading");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
 
-    current.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-0");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
+      current.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      flush();
+      expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-0");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
 
-    nextDeferred();
-    setVersion(1);
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-0");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
+      nextDeferred();
+      setVersion(1);
+      flush();
+      expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-0");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
 
-    current.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-1");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
+      current.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      flush();
+      expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-1");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
 
-    nextDeferred();
-    setPage("b");
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("loading");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
+      nextDeferred();
+      setPage("b");
+      flush();
+      // Pending selects an optimistic context. The private keyed creator retries
+      // on committed page=a, preserving the old content with its disabled guard.
+      expect(localDiv.firstElementChild!.textContent).toBe("Page a: value-a-1");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(true);
 
-    current.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    flush();
-    expect(localDiv.firstElementChild!.textContent).toBe("Page b: value-b-1");
-    expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
-    localDispose();
+      current.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      flush();
+      expect(localDiv.firstElementChild!.textContent).toBe("Page b: value-b-1");
+      expect((localDiv.firstElementChild as HTMLButtonElement).disabled).toBe(false);
+    } finally {
+      localDispose();
+    }
   });
 
   test("latest preserves sibling async text in Loading fragments", async () => {
