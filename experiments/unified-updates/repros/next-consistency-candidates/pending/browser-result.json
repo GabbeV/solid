@@ -1,0 +1,35 @@
+{
+  "name": "pending",
+  "title": "Solid 2.0 - Mizulu",
+  "errors": [],
+  "logs": [],
+  "samples": [
+    {
+      "time": 0,
+      "text": "The same pending read, with and without a memo wrapper\nRun\n\nCommitted ID: 0\n\nPending: false\n\nAsync direct read: false\n\nAsync memo-wrapped read: false\n\nThe action stays open. Both async presentations take 500 ms."
+    },
+    {
+      "time": 300,
+      "text": "The same pending read, with and without a memo wrapper\nRun\n\nCommitted ID: 0\n\nPending: false\n\nAsync direct read: false\n\nAsync memo-wrapped read: false\n\nThe action stays open. Both async presentations take 500 ms."
+    },
+    {
+      "time": 800,
+      "text": "The same pending read, with and without a memo wrapper\nRun\n\nCommitted ID: 0\n\nPending: true\n\nAsync direct read: false\n\nAsync memo-wrapped read: true\n\nThe action stays open. Both async presentations take 500 ms."
+    },
+    {
+      "time": 1300,
+      "text": "The same pending read, with and without a memo wrapper\nRun\n\nCommitted ID: 0\n\nPending: true\n\nAsync direct read: false\n\nAsync memo-wrapped read: true\n\nThe action stays open. Both async presentations take 500 ms."
+    },
+    {
+      "time": 2300,
+      "text": "The same pending read, with and without a memo wrapper\nRun\n\nCommitted ID: 0\n\nPending: true\n\nAsync direct read: false\n\nAsync memo-wrapped read: true\n\nThe action stays open. Both async presentations take 500 ms."
+    }
+  ],
+  "verified": true,
+  "buildResponses": {
+    "count": 92,
+    "statuses": [
+      200
+    ]
+  }
+}

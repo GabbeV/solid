@@ -1,0 +1,35 @@
+{
+  "name": "guess",
+  "title": "Solid 2.0 - Mizulu",
+  "errors": [],
+  "logs": [],
+  "samples": [
+    {
+      "time": 0,
+      "text": "Two ordinary readers of the same optimistic value\nRun\n\nValue / async copy: 0 / 0\n\nValue with independent tick: 0 (tick 0)\n\nGuess 1 publishes first. At 500 ms, guess 2 starts an unfinished request. At 1000 ms, only the independent tick changes."
+    },
+    {
+      "time": 300,
+      "text": "Two ordinary readers of the same optimistic value\nRun\n\nValue / async copy: 1 / 1\n\nValue with independent tick: 1 (tick 0)\n\nGuess 1 publishes first. At 500 ms, guess 2 starts an unfinished request. At 1000 ms, only the independent tick changes."
+    },
+    {
+      "time": 800,
+      "text": "Two ordinary readers of the same optimistic value\nRun\n\nValue / async copy: 1 / 1\n\nValue with independent tick: 1 (tick 0)\n\nGuess 1 publishes first. At 500 ms, guess 2 starts an unfinished request. At 1000 ms, only the independent tick changes."
+    },
+    {
+      "time": 1300,
+      "text": "Two ordinary readers of the same optimistic value\nRun\n\nValue / async copy: 1 / 1\n\nValue with independent tick: 2 (tick 1)\n\nGuess 1 publishes first. At 500 ms, guess 2 starts an unfinished request. At 1000 ms, only the independent tick changes."
+    },
+    {
+      "time": 2300,
+      "text": "Two ordinary readers of the same optimistic value\nRun\n\nValue / async copy: 1 / 1\n\nValue with independent tick: 2 (tick 1)\n\nGuess 1 publishes first. At 500 ms, guess 2 starts an unfinished request. At 1000 ms, only the independent tick changes."
+    }
+  ],
+  "verified": true,
+  "buildResponses": {
+    "count": 96,
+    "statuses": [
+      200
+    ]
+  }
+}
