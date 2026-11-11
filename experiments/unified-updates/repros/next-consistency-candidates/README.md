@@ -1,8 +1,11 @@
 # Current-next consistency candidates, 2026-11-11
 
-User review stage only: no issues submitted. Each directory now also includes
-`issue.md`, `issue-fields.json`, and a prefilled GitHub bug-form URL for the
-user to review and submit. These repros use upstream next
+The user submitted these reports as [#4775](https://github.com/solidjs/solid/issues/4775),
+[#4776](https://github.com/solidjs/solid/issues/4776),
+[#4777](https://github.com/solidjs/solid/issues/4777), and
+[#4778](https://github.com/solidjs/solid/issues/4778), respectively for guess,
+latest, read-order, and pending. Each directory retains the original draft and
+prefilled form as receipts. These repros use upstream next
 `bcef1041cb50bf648da5641693b5ebdea1fc5dc2`, served by the playground's
 mizulu/solid2 commit build, development mode. They do not import the experiment.
 All four hosted URLs were run in Chromium; final DOM assertions passed,
