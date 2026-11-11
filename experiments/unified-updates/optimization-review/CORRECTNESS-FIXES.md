@@ -59,6 +59,13 @@ Primary validation of the frozen candidate:
 - Complete signals suite: **5,802 passed, 1,953 failed, 2 skipped**, 588 files.
   Failing test identities exactly match stage182: no new or resolved failures.
   Existing failed suites remain failed; this is not a green full API claim.
+- Complete Solid component suite: **904 passed, 23 existing failures**;
+  complete DOM suite: **1,768 passed, 115 existing failures, 1 skipped**.
+  Both failing-test and failed-file identities match stage182 exactly.
+  DOM tests used the existing rc.21 native compiler through
+  `SOLID_COMPILER_NATIVE`, as the recorded baseline did. The initial run without
+  that selector could not load 222 JSX files and is archived as a loader failure,
+  not counted as runtime validation.
 - Fresh mangled production build: **180 passed** across public observation,
   ownership, error, first-value and retry controls, including the new regressions.
 - Fresh dist artifacts and tree shaking: **61 passed**.
@@ -70,7 +77,6 @@ Instrumented scratch controls additionally exercise
 cycles, initial pending work, explicit owner death and detached-source death.
 These are finite controls, not a proof for every graph or lifetime.
 
-
 ## Shipped size
 
 Same scalar-import bundling harness as stage182. `next` is the reproducible
@@ -78,12 +84,18 @@ baseline **4fe75321d61f9e4f1e1c63edc2087d099a36e9e1**, not an unspecified
 previous experiment. Current-next **bcef1041c** was used separately for semantic
 comparisons. Values are minified / Brotli bytes.
 
-| Import scenario | next baseline | Entry experiment | Corrected experiment |
-| --- | ---: | ---: | ---: |
-| Ordinary core | 19,825 / 7,421 | 21,456 / 8,056 | 21,456 / 8,056 |
-| Optimism | 30,556 / 11,180 | 37,213 / 13,432 | 37,279 / 13,462 |
-| Optimism + observations | 35,643 / 12,920 | 43,434 / 15,330 | 43,741 / 15,426 |
+| Import scenario         |   next baseline | Entry experiment | Corrected experiment |
+| ----------------------- | --------------: | ---------------: | -------------------: |
+| Ordinary core           |  19,825 / 7,421 |   21,456 / 8,056 |       21,456 / 8,056 |
+| Optimism                | 30,556 / 11,180 |  37,213 / 13,432 |      37,279 / 13,462 |
+| Optimism + observations | 35,643 / 12,920 |  43,434 / 15,330 |      43,741 / 15,426 |
 
 Ordinary imports do not retain these repairs. The correction costs 66 minified
 bytes for optimism and 307 for the observed scenario. This does not solve the
 experiment's existing size gap and is not a mergeability or performance claim.
+
+Receipts, runtime hashes, the production alias configuration, rejected patches,
+and deferred lifetime probes are preserved in
+`../checkpoints/correctness-review.tar.xz` under `results/correctness-review/`.
+The retained runtime commit is `d49bcd3f6`; the following documentation checkpoint
+adds no runtime changes.

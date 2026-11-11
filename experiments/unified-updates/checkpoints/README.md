@@ -30,3 +30,11 @@ merge-ready release. See `../INTEGRATION-127.md` for the retained changes and
 Keep this archive immutable. Save future large result sets in separate stage
 archives, updating `SHA256SUMS`, and commit and push them with the corresponding
 implementation or investigation checkpoint.
+
+`correctness-review.tar.xz` preserves the supervised post-stage182 correctness
+pass: source commit `d49bcd3f6`, full signals/Solid/DOM comparisons (no new failure
+identities), 180 production controls, 61 artifact checks, size receipts, rejected
+cleanup trials and instrumented lifecycle probes. It restores
+`results/correctness-review/` under `experiments/unified-updates`. The accepted fixes
+and unresolved producer-reclamation scope are summarized in
+`../optimization-review/CORRECTNESS-FIXES.md`.

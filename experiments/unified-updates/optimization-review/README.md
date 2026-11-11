@@ -52,6 +52,7 @@ not authorization to merge speculative rewrites or change semantics silently.
 ## Deliverables
 
 Each report should be compact (target <= 150 lines):
+
 1. Current mechanism and where work/bytes accumulate, with file:line references.
 2. Best one or two simplifications, separating safe cleanup from redesign.
 3. Which existing mechanism would be deleted or replaced, not merely augmented.
@@ -68,3 +69,12 @@ then writes the combined prioritization. No savings are claimed until measured.
 See [primary decisions and experiment order](DECISIONS.md) and the five numbered
 reports beside the plans. Extracted probes and their receipts are in `probes/`.
 No runtime change or new throughput claim is included in this review.
+
+## Correctness follow-up
+
+The subsequent supervised correctness pass is recorded in
+[CORRECTNESS-FIXES.md](CORRECTNESS-FIXES.md). It fixes three independently reproduced
+observation defects and verifies full-suite failure identities before optimization
+resumes. Broader reclamation trials were rejected/deferred without changing old
+assertions; [CORRECTNESS-quiescence.md](CORRECTNESS-quiescence.md) and
+[CORRECTNESS-revival.md](CORRECTNESS-revival.md) retain the reasoning.
