@@ -58,3 +58,5 @@ adversarial check exposes missing single-setter publication grouping, and the
 deep-observation lifetime decision is pending with the user. The main runtime
 still rejects optimistic stores at this checkpoint. See
 `../STORE-INTEGRATION.md` for the implementation plan and exact status.
+
+`deep-entanglement-review.tar.xz` restores `results/deep-entanglement-review/`: local and remote history, an independently verified ordinary-write control on two next pins, the unimplemented cost comparison, and the complete isolated static-store candidate with setter publication grouping and its test receipts. Main runtime remains unchanged. See `../STORE-INTEGRATION.md` for the compatibility recommendation and limits.

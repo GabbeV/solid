@@ -63,6 +63,12 @@ store control hold both properties. The candidate therefore needs explicit
 writer-publication grouping before integration. This is an implementation gap,
 not an intentional semantic change or a defect in the current main runtime.
 
+A subsequent isolated candidate at `/workspace/scratch/unified-store-groups`
+adds that grouping using the existing output transactions, without merging
+independent action lifetimes. It passes 25 targeted cases, three unchanged
+flat-store controls and two standalone publication controls. It remains
+unintegrated; these results do not establish complete store support.
+
 Primary review corrected an ownership assumption: static stores in next survive
 disposal of their creator and first reader. A direct next probe verifies that;
 output companions therefore must not inherit either reader's lifetime.
@@ -103,10 +109,29 @@ untracked diagnostic reads, snapshots, `until`, or manual microtask loops.
 Both next revisions pass the two store cases and scalar control; the current
 experiment passes the scalar control. No repository expectations were changed.
 
-Recommendation pending user decision: preserve independent per-property
-override lifetimes, with `deep` as an ordinary coherent derivation of selected
-outputs. This changes next's deep-specific lifetime behavior; it does not grant
-permission for torn deep snapshots.
+The follow-up investigation confirms that the witness merges the underlying
+action transactions, not merely override lifetimes: ordinary signal writes in
+A also wait for B. The additional executable control passes on both next pins.
+
+History does not establish an explicit deep-specific maintainer decision.
+The witness was introduced as a notification optimization in #3019, and was
+already armed as an optimistic source before the L2 rewrite (#3774). The
+behavior must not be called a new L2 regression. #2899/#2912 and D-33 explicitly
+preserve disjoint-key ownership and distinguish shared readers from shared
+writes, but do not classify the synthetic deep witness. Older store-wide
+entanglement statements predate those per-key rules.
+
+Revised recommendation after the user's requested cost review: preserve next
+initially to limit scope. Reusing the existing witness with an action-owner
+association can use ordinary scope merging; it need not add a full computed
+node or a parallel coordination system. It still needs ambient-scope handoff
+and witness retention until its owner settles. This is a source-level design,
+not an implemented or measured size win. Independence omits those policy hooks,
+but both choices still need complete deep invalidation and coherent snapshots.
+No clear total size advantage has been established that warrants overruling
+next on implementation cost alone. Revisit with the user if integration makes
+preserving this behavior materially more complex. Neither behavior has yet
+been integrated into main.
 
 ## Other findings, not additional rulings
 
