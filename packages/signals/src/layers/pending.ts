@@ -130,7 +130,9 @@ function pendingFallback(layer: Layer<boolean>): boolean {
   const output = context as Computed<any>;
   link(source, output);
   if (source._height >= output._height) output._height = source._height + 1;
-  if (output._statusFlags & STATUS_UNINITIALIZED)
+  // A dormant companion restored with its input is retiring the same
+  // question, rather than initializing another pending=true selection.
+  if (output._statusFlags & STATUS_UNINITIALIZED && !(layer as Observation)._retiring)
     return initialObservation(layer, proposedPending(source, pendingInput(source)));
   return false;
 }

@@ -1,5 +1,5 @@
 /** One lazily created latest output per source, published by ordinary machinery. */
-import { context, prepareComputed, read, unflushedValue } from "../core/core.js";
+import { context, prepareComputed, read, unflushedValue, untrack } from "../core/core.js";
 import {
   $REFRESH,
   CONFIG_HELD,
@@ -118,7 +118,9 @@ function fallback(layer: Layer<any>): unknown {
   // proposals before this output chooses its ordinary or optimistic input.
   // Outside a flush, queued writes must retain their unflushed visibility.
   if (globalQueue._running && flushTransaction && resolveTx(flushTransaction)._open)
-    holdQueuedProposals(resolveTx(flushTransaction));
+    // Registration may call a user comparator which reads this same output.
+    // Preserve its read context without adding bookkeeping dependencies here.
+    untrack(() => holdQueuedProposals(resolveTx(flushTransaction!)));
   // Without an established hold, the input propagates normally. A later
   // suspension can activate an override through observation preparation.
   if (

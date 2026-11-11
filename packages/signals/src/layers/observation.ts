@@ -54,6 +54,16 @@ export function stageObservation(record: Observation<any>, value: unknown): void
   selected = true;
 }
 
+function deadObservation(record: Observation<any>): boolean {
+  return !!(
+    (record._output._flags & REACTIVE_DISPOSED &&
+      !(record._output._config & CONFIG_AUTO_DISPOSE)) ||
+    (record._input._flags & REACTIVE_DISPOSED &&
+      (!(record._input._config & CONFIG_AUTO_DISPOSE) ||
+        (record._input._parent as Computed<any> | null)?._flags! & REACTIVE_DISPOSED))
+  );
+}
+
 function prepareObservations(): boolean {
   let changed = selected;
   selected = false;
@@ -88,7 +98,8 @@ function prepareObservations(): boolean {
   // Their readers can discover additional holds (including sibling inputs).
   if (changed) return true;
   for (const record of watching) {
-    if (record._output._flags & REACTIVE_DISPOSED) {
+    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
+    if (deadObservation(record)) {
       watching.delete(record);
       dirty.delete(record);
       continue;
@@ -131,6 +142,10 @@ function prepareObservations(): boolean {
 function settleObservations(): void {
   for (const record of watching) dirty.add(record);
   for (const record of dirty) {
+    if (deadObservation(record)) {
+      watching.delete(record);
+      continue;
+    }
     if (
       record._output._flags & REACTIVE_DISPOSED ||
       (record._input._statusFlags & STATUS_UNINITIALIZED &&
@@ -140,7 +155,10 @@ function settleObservations(): void {
       // A staged first answer can be ready but not initialized until the
       // commit below. Keep an existing watch so its pending override retires
       // after that commit, even when the landing compares equal.
-      if (record._output._flags & REACTIVE_DISPOSED || record._input._pendingValue === NOT_PENDING)
+      if (
+        !(record._output._flags & REACTIVE_DISPOSED) &&
+        record._input._pendingValue === NOT_PENDING
+      )
         watching.delete(record);
       continue;
     }
@@ -210,13 +228,19 @@ export function createSourceObservation<T>(
 
 export function releaseObservation(record: Observation<any>): void {
   dirty.delete(record);
-  watching.delete(record);
-  record._parent = null;
-  record._retiring = false;
+  // A dormant output can still have untracked consumers of its selected
+  // context. Keep its input question until normal retirement restores them;
+  // dormancy removes graph demand, not the question's publication obligation.
+  if (!(record._output._config & CONFIG_AUTO_DISPOSE) || deadObservation(record))
+    watching.delete(record);
+  if (!watching.has(record)) {
+    record._parent = null;
+    record._retiring = false;
+  }
   record._override = NOT_PENDING;
-  // Dormant observation outputs have no remaining published consumers.
-  // Their next use initializes a fresh frame from the current input state,
-  // rather than manufacturing a stale frame before starting current work.
+  // Drop the cached output frame once ordinary subscriptions disappear.
+  // A retained input question above still retires through its original update;
+  // other revival initializes a fresh frame from the current input state.
   if (record._output._config & CONFIG_AUTO_DISPOSE) {
     // A discarded first proposal must not satisfy revival's equality check
     // before this output has ever published a value.
@@ -227,6 +251,7 @@ export function releaseObservation(record: Observation<any>): void {
 
 export function markObservation(layer: Layer<any>): void {
   const record = layer as Observation<any>;
+  if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
   record._observation._observe?.(record);
   dirty.add(record);
   record._output._cleanup ??= releaseObservation.bind(null, record);

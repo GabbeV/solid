@@ -1228,7 +1228,20 @@ export function stageLayer(layer: Layer<any>, proposal: unknown, position?: numb
     layer._output._equals &&
     layer._output._equals(layer._output._value, proposal)
   ) {
-    enqueueSub(layer._output);
+    // A settled, unobserved query already initialized its answer and input
+    // edge. Do not schedule selector maintenance that only revives it after
+    // each dormancy sweep. Other outputs may still owe status or owned work.
+    const output = layer._output;
+    if (
+      output._subs ||
+      !(output._config & CONFIG_AUTO_DISPOSE) ||
+      output._statusFlags & (STATUS_ERROR | STATUS_PENDING | STATUS_UNINITIALIZED) ||
+      output._x?._shownError ||
+      output._firstChild ||
+      output._x?._pendingFirstChild ||
+      output._x?._pendingDisposal
+    )
+      enqueueSub(output);
     return;
   }
   // Publication and transaction merging already maintain the output's stamp.
