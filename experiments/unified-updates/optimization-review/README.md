@@ -62,3 +62,9 @@ Each report should be compact (target <= 150 lines):
 Send a <= 300-word checkpoint/final summary. Keep supporting detail in the owned
 report or scratch directory. The primary agent reviews and directs follow-ups,
 then writes the combined prioritization. No savings are claimed until measured.
+
+## Completed review
+
+See [primary decisions and experiment order](DECISIONS.md) and the five numbered
+reports beside the plans. Extracted probes and their receipts are in `probes/`.
+No runtime change or new throughput claim is included in this review.

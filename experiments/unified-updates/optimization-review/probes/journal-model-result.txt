@@ -1,0 +1,4 @@
+D=128, J=1, I=1; (owner checks, membership probes) current/partition/Set: [(2, 128), (1, 128), (1, 128)]
+D=128, J=257, I=1; (owner checks, membership probes) current/partition/Set: [(514, 32896), (257, 128), (257, 128)]
+D=256, J=128, I=128; (owner checks, membership probes) current/partition/Set: [(129, 24640), (128, 24640), (128, 256)]
+2012 interleaved/retained/uninitialized identity and clearing controls passed
