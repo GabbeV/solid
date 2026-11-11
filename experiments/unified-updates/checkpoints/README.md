@@ -49,3 +49,12 @@ invalid and supply no timing evidence. The shared native fixtures are committed
 at `e7776925f`. See `../optimization-review/IMPLEMENTATION-TRIALS.md` for retention
 decisions, limitations and the next investigation targets. This checkpoint does
 not assert that the broader experiment meets its performance or size goals.
+
+`store-integration-start-20261111.tar.xz` restores
+`results/store-integration-start/`. It preserves the verified remaining failure
+inventory, ordinary API audit, clean next/scalar comparisons, and the first
+isolated static-store candidate. That candidate is **not integrated**: an
+adversarial check exposes missing single-setter publication grouping, and the
+deep-observation lifetime decision is pending with the user. The main runtime
+still rejects optimistic stores at this checkpoint. See
+`../STORE-INTEGRATION.md` for the implementation plan and exact status.
