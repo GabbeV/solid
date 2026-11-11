@@ -38,3 +38,14 @@ cleanup trials and instrumented lifecycle probes. It restores
 `results/correctness-review/` under `experiments/unified-updates`. The accepted fixes
 and unresolved producer-reclamation scope are summarized in
 `../optimization-review/CORRECTNESS-FIXES.md`.
+
+`optimization-trials-20261111.tar.xz` preserves the supervised optimization
+trials following that checkpoint. It restores `results/optimization-trials/`:
+isolated candidate patches and agent reviews, full signals failure-identity
+comparison, production controls, artifact hashes, size reports, native benchmark
+rounds and separate CPU profiles. `MANIFEST.json` identifies the retained cold-reset
+variant and the final `pinned-*` timing phase; the initial `screen-*` fixtures were
+invalid and supply no timing evidence. The shared native fixtures are committed
+at `e7776925f`. See `../optimization-review/IMPLEMENTATION-TRIALS.md` for retention
+decisions, limitations and the next investigation targets. This checkpoint does
+not assert that the broader experiment meets its performance or size goals.

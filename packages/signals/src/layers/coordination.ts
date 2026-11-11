@@ -924,46 +924,26 @@ function acceptCalculation(
   return outerReads;
 }
 
-function retryCalculation(
+function resetCalculation(
   node: Computed<any>,
   previous: any,
   result: any,
-  previousPosition: number,
-  normalize?: NormalizeCalculation
+  previousPosition: number
 ): any {
-  for (;;) {
-    if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
-    if (positionOf(flushTransaction) !== previousPosition) {
-      previous = node._value;
-      node._flags |= REACTIVE_PREVIOUS_COMMITTED;
-    }
-    if (node._x !== null) node._x._inFlight = null;
-    releaseFlightTeardown(node);
-    disposeChildren(node);
-    node._depsTail = null;
-    node._depGen++;
-    evaluationReads = null;
-    evaluationPosition = 0;
-    retryEvaluation = false;
-    result = undefined;
-    if (__DEV__) clearThrownRead(node);
-    try {
-      const previousFlight = node._x?._inFlight;
-      result = node._fn(previous);
-      // An async body turns the retry throw into a rejected promise. A user
-      // catch may also consume it. The creator still has to unwind before
-      // this attempt can normalize or accept any tentative dependencies.
-      if (retryOwner) {
-        if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
-        throw new ContextRetry(retryOwner);
-      }
-      if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
-    } catch (error) {
-      receiveOwnerRetry(node);
-      if (!retryEvaluation) throw error;
-    }
-    if (!retryEvaluation) return result;
+  if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+  if (positionOf(flushTransaction) !== previousPosition) {
+    previous = node._value;
+    node._flags |= REACTIVE_PREVIOUS_COMMITTED;
   }
+  if (node._x !== null) node._x._inFlight = null;
+  releaseFlightTeardown(node);
+  disposeChildren(node);
+  node._depsTail = null;
+  node._depGen++;
+  evaluationReads = null;
+  evaluationPosition = 0;
+  retryEvaluation = false;
+  return previous;
 }
 
 function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeCalculation): any {
@@ -991,24 +971,27 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
   retryEvaluation = false;
   try {
     let result: any;
-    try {
-      const previousFlight = node._x?._inFlight;
-      result = node._fn(previous);
-      // An async body turns the retry throw into a rejected promise. A user
-      // catch may also consume it. The creator still has to unwind before
-      // this attempt can normalize or accept any tentative dependencies.
-      if (retryOwner) {
-        if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
-        throw new ContextRetry(retryOwner);
+    for (;;) {
+      try {
+        const previousFlight = node._x?._inFlight;
+        result = node._fn(previous);
+        // An async body turns the retry throw into a rejected promise. A user
+        // catch may also consume it. The creator still has to unwind before
+        // this attempt can normalize or accept any tentative dependencies.
+        if (retryOwner) {
+          if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+          throw new ContextRetry(retryOwner);
+        }
+        if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
+      } catch (error) {
+        receiveOwnerRetry(node);
+        if (!retryEvaluation) throw error;
       }
-      if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
-    } catch (error) {
-      receiveOwnerRetry(node);
-      if (!retryEvaluation) throw error;
+      if (!retryEvaluation) return result;
+      previous = resetCalculation(node, previous, result, previousPosition);
+      result = undefined;
+      if (__DEV__) clearThrownRead(node);
     }
-    return retryEvaluation
-      ? retryCalculation(node, previous, result, previousPosition, normalize)
-      : result;
   } finally {
     try {
       if (!retryOwner && !retryEvaluation && (evaluationReads || (!outer && creationReads)))
