@@ -300,12 +300,12 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
   return out;
 }
 
-function selectedView(t: StoreTarget, source: Record<PropertyKey, any>) {
+function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer = false) {
   const record = records.get(t);
   if (!record) return source;
   // Shape candidates track; leaf values are read without subscribing the
   // enumerator to every field in the record.
-  return compose(t, source);
+  return compose(t, source, writer);
 }
 
 export const staticOptimisticHooks: OptHooks = {
