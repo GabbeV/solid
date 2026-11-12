@@ -189,3 +189,43 @@ primitive error as a fresh sight, while ordinary graph propagation retains
 same-answer suppression. The fix is local to reset, adds no node fields, and
 passes the original reporting and optimistic-error checks (18 tests on main;
 103 related tests on the isolated patch).
+
+## Parent objects and derived input status
+
+The integrated parent-object boundary reads its actual published parent output.
+It applies to whole object properties, nested objects, keyed rows and positional
+rows. Child field inputs take their values from that selected body; the ordinary
+producer continues updating its own inputs. Same-key echoes cannot change the
+body of a still-selected object guess. Descriptor, presence, enumeration and
+nested array reads participate in that selection too.
+
+Derived property companions now own their producer's pending/error input. A
+getter delegates to that output instead of independently checking the producer
+first. Ordinary reads, `latest` and `isPending` therefore observe the same selected
+output. A selected descendant keeps its existing ancestor object reference
+available, but unguessed sibling fields still consume producer status. In
+particular, `isPending(() => store.object)` may be false while a read of an
+unguessed field of that object is pending. This reference-versus-content
+distinction is a choice for review, not a whole-object loading guarantee.
+
+A first guess can also replace an already-errored input. The internal priming
+read retains that error state and allows the proposal; it still rethrows context
+retries and exceptions not recorded as the output's error. All 32 integrated
+error-publication tests pass with no unhandled errors, covering first guesses,
+undefined errors, late readers, observation APIs, correction holds and recovery.
+The error arm compares original errors rather than newly allocated status
+wrappers; successful recovery clears that display so a later recurrence is
+reported again.
+
+Disposal uses existing ownership and release queues: an unobserved companion can
+discard an abandoned pending input after its producer is disposed and its action
+closes. A mere dependency-validation mark does not retain a subscriber-free
+companion; visible association cleanup still uses the stricter idle check. Tests
+retain published held corrections across reader disposal and late mounting, and
+exercise repeated producer disposal without growing subscriptions.
+
+**Still being fixed in this checkpoint:** the complete resize output must avoid
+reading the base length it replaces, whereas a growth floor must keep that input
+dependency. The integration exposes two before-first-length failures and a
+repeated-edit publication failure in this area. Producer reconciliation now uses
+the writer view, preventing an internal pending read during answer adoption.

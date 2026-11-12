@@ -358,6 +358,8 @@ setSlotUnobserved((node: any): void => {
  * is held (#3706: the unit of the hold is the key — a key the batch left
  * unchanged stages nothing and holds no one). */
 function bornStaged(target: StoreTarget, node: Signal<any>, staged: any, key: PropertyKey): void {
+  // An optimistic user's draft is a proposal, never a staged truth input.
+  if (userWrite && target._fam?.opt) return;
   if (node._equals && node._equals(node._value, staged)) return;
   queuePendingNode(node);
   node._pendingValue = staged;
@@ -1867,9 +1869,25 @@ export function linkedTo(c: Computed<any>, n: Signal<any>): boolean {
  * window judges it; a pending source registers the reader for the landing)
  * and the reader's height. The derive's own draft ops are exempt (the write
  * override): the derive is the author. */
-function pullFamily(target: StoreTarget, key?: PropertyKey, presence = false): void {
+function pullFamily(
+  target: StoreTarget,
+  key?: PropertyKey,
+  presence = false,
+  inputSide = false
+): void {
   const fw = target._fam!.node;
-  if (fw === null || writeOverride || inDraft(target)) return;
+  if (fw === null || writeOverride || (inDraft(target) && (!inputSide || !userWrite))) return;
+  // A built-in array method does not read the producer's data. Its own
+  // index/length reads below still pass through the per-key firewall.
+  if (
+    !inputSide &&
+    Array.isArray(target.v) &&
+    typeof key === "string" &&
+    !Object.prototype.hasOwnProperty.call(target.v, key) &&
+    typeof Object.getOwnPropertyDescriptor(Array.prototype, key)?.value === "function"
+  )
+    return;
+  if (!inputSide && optHooks?.ownsFirewall?.(target, key, presence)) return;
   // A settled derive: the pull alone, no link (the barrier). A derive with a
   // flight up (or errored): the reader observes the flight exactly as a
   // reader of a memo would — linked, so it re-runs at the landing (the
@@ -1887,6 +1905,7 @@ function pullFamily(target: StoreTarget, key?: PropertyKey, presence = false): v
     // observing it (`stands`, #4536). Judged first: the hook sees the frame's
     // readers too.
     if (
+      !inputSide &&
       verdict === null &&
       fw._statusFlags & STATUS_PENDING &&
       optHooks?.stands(target, key, presence)
@@ -1959,6 +1978,11 @@ function pullFamily(target: StoreTarget, key?: PropertyKey, presence = false): v
           ((fam.w = 1), readNode(l._dep));
     }
   }
+}
+
+/** Pull a selected output's producer input without consulting that output's guess. */
+export function pullFamilyInput(target: StoreTarget, key?: PropertyKey): void {
+  pullFamily(target, key, false, true);
 }
 
 /** A projection's writes are its derive's: a staging made while the derive
@@ -2155,6 +2179,16 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (target._fam !== null) pullFamily(target, key);
     if (target._fam?.opt && !inDraft(target) && !writeOverride && optHooks?.accessor) {
       const selected = optHooks.accessor(target, key, receiver);
+      if (selected !== undefined) {
+        const value = selected.value;
+        if (target.s) return serveShallow(target, key, value);
+        return isWrappable(value)
+          ? draftServe(target, wrap(value as Record<PropertyKey, any>, target, key))
+          : value;
+      }
+    }
+    if (target._fam?.opt && !inDraft(target) && !writeOverride && optHooks?.rowValue) {
+      const selected = optHooks.rowValue(target, key, receiver);
       if (selected !== undefined) {
         const value = selected.value;
         if (target.s) return serveShallow(target, key, value);

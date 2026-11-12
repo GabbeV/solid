@@ -22,6 +22,8 @@ export interface OptHooks {
   accessor?(t: StoreTarget, key: PropertyKey, receiver: object): { value: unknown } | undefined;
   /** Whether a selected descriptor supersedes a cached accessor flag. */
   accessorKind?(t: StoreTarget, key: PropertyKey): boolean | undefined;
+  /** A selected parent object supplies an unguessed child value. */
+  rowValue?(t: StoreTarget, key: PropertyKey, receiver: object): { value: unknown } | undefined;
   /** Track the selected flat leaves for a deep read. */
   deep?(t: StoreTarget): void;
   /** A user setter's draft on an optimistic family: a clone of the
@@ -69,6 +71,10 @@ export interface OptHooks {
   /** A read of `t` while its family's derive is in flight: the family's
    * guesses stand in for the flight (no suspension). */
   stands(t: StoreTarget, key?: PropertyKey, presence?: boolean): boolean;
+  /** A concrete selected parent body supplies the source for child slots. */
+  inputBody?(t: StoreTarget): Record<PropertyKey, any> | undefined;
+  /** This key's selected output owns the producer input and its status cut. */
+  ownsFirewall?(t: StoreTarget, key?: PropertyKey, presence?: boolean): boolean;
 }
 // Set before any family is optimistic (`fam.opt`): a call site checks the
 // hooks first, so a build that does not import optimistic.ts folds the arm

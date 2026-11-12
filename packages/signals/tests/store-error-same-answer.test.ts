@@ -26,8 +26,10 @@ for (const objects of [false, true])
         let start!: () => unknown,
           finish!: () => void,
           fail!: (bad: boolean) => void,
-          reject!: () => void;
-        createRoot(() => {
+          reject!: () => void,
+          dispose!: () => void;
+        createRoot(d => {
+          dispose = d;
           const [bad, setBad] = createSignal(false);
           fail = setBad;
           let rejected: Promise<any> | undefined;
@@ -56,7 +58,7 @@ for (const objects of [false, true])
               resolve = r;
             });
           });
-          finish = () => resolve();
+          finish = () => resolve?.();
           const read = (index: number) => (objects ? store[index]?.id : store[index]);
           const watch = (fn: () => any, out: unknown[]) =>
             createEffect(fn, {
@@ -71,25 +73,31 @@ for (const objects of [false, true])
           watch(() => read(0), existing);
           if (withLength) watch(() => store.length, []);
         });
-        await settle();
-        start();
-        await settle();
-        fail(true);
-        await settle();
-        reject();
-        await settle();
-        expect(values).toEqual([undefined, 9]);
-        expect(existing).toEqual([1, { error: failure }]);
-        finish();
-        await settle();
-        expect(values).toEqual([undefined, 9, { error: failure }]);
-        expect(existing).toEqual([1, { error: failure }]);
-        fail(false);
-        await settle();
-        expect(values.at(-1)).toBe(undefined);
-        expect(existing.at(-1)).toBe(1);
-        fail(true);
-        await settle();
-        expect(values).toEqual([undefined, 9, { error: failure }, undefined, { error: failure }]);
-        expect(existing).toEqual([1, { error: failure }, 1, { error: failure }]);
+        try {
+          await settle();
+          start();
+          await settle();
+          fail(true);
+          await settle();
+          reject();
+          await settle();
+          expect(values).toEqual([undefined, 9]);
+          expect(existing).toEqual([1, { error: failure }]);
+          finish();
+          await settle();
+          expect(values).toEqual([undefined, 9, { error: failure }]);
+          expect(existing).toEqual([1, { error: failure }]);
+          fail(false);
+          await settle();
+          expect(values.at(-1)).toBe(undefined);
+          expect(existing.at(-1)).toBe(1);
+          fail(true);
+          await settle();
+          expect(values).toEqual([undefined, 9, { error: failure }, undefined, { error: failure }]);
+          expect(existing).toEqual([1, { error: failure }, 1, { error: failure }]);
+        } finally {
+          finish();
+          dispose();
+          flush();
+        }
       });

@@ -1,8 +1,9 @@
 /** Interim shared-engine slice: flat plain records with per-property cuts.
  * Truth slots stay store-owned; only their selected outputs accept guesses. */
 import { computed, read, runWithOwner, untrack } from "../core/core.js";
-import { CONFIG_HELD } from "../core/constants.js";
-import type { Signal } from "../core/types.js";
+import { CONFIG_AUTO_DISPOSE, CONFIG_HELD, REACTIVE_DISPOSED } from "../core/constants.js";
+import type { Computed, Signal } from "../core/types.js";
+import { enqueueSub, markNode } from "../core/heap.js";
 import { dispose, getObserver } from "../core/owner.js";
 import { insertSubs, schedule } from "../core/scheduler.js";
 import {
@@ -15,6 +16,8 @@ import {
   getNode,
   getHasNode,
   getContainerNode,
+  wrap,
+  pullFamilyInput,
   storeSetter,
   committed,
   cloneRaw,
@@ -26,6 +29,7 @@ import {
 import { createProjectionInternal } from "./projection.js";
 import {
   arrayIndex,
+  arrayGrowthStands,
   readArrayLength,
   selectedArrayLength,
   sweepArrays,
@@ -43,13 +47,17 @@ type RecordSlots = {
   presence: Map<PropertyKey, Slot>;
   shape: Map<PropertyKey, Slot>;
   nodes: Map<Signal<any>, Slot>;
+  inputs: Set<Computed<any>>;
   prototype: object | null;
+  parent?: Slot;
   draft?: { previous: Record<PropertyKey, any>; staged: Record<PropertyKey, any> | null };
 };
 const records = new WeakMap<StoreTarget, RecordSlots>();
+const selectedTargets = new Set<StoreTarget>();
 const shapedTargets = new Set<StoreTarget>();
 // Only companions without readers wait for a live guess or correction here.
-const releases = new Map<Slot, () => void>();
+const releases = new Map<Slot, { remove: () => void; target: StoreTarget }>();
+const firewallSlots = new WeakSet<Slot>();
 function recordFor(t: StoreTarget): RecordSlots {
   let record = records.get(t);
   if (!record) {
@@ -58,11 +66,38 @@ function recordFor(t: StoreTarget): RecordSlots {
       presence: new Map(),
       shape: new Map(),
       nodes: new Map(),
+      inputs: new Set(),
       prototype: Object.getPrototypeOf(t.v)
     };
     records.set(t, record);
   }
   return record;
+}
+
+/** A selected parent property supplies the body's publication boundary. */
+function selectedBody(t: StoreTarget, writer = false): Record<PropertyKey, any> | undefined {
+  let slot = records.get(t)?.parent;
+  if (!slot && t.u && t.pk !== null) {
+    const candidate =
+      records.get(t.u)?.slots.get(t.pk) ?? records.get(t.u)?.slots.get(String(t.pk));
+    if (candidate?.activeOwner()) {
+      const value = candidate.writerValue();
+      if (isWrappable(value) && lookupTarget(value, t._fam!) === t) {
+        recordFor(t).parent = slot = candidate;
+        selectedTargets.add(t);
+      }
+    }
+  }
+  if (slot) {
+    const value = writer ? slot.writerValue() : read(slot.output);
+    if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
+  }
+  if (t.u && t.pk !== null) {
+    const parent = selectedBody(t.u, writer);
+    const value = parent?.[t.pk];
+    if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
+  }
+  return undefined;
 }
 
 function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
@@ -75,35 +110,88 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
     // assigned during a read, so it cannot notify a selected output when the
     // inner store changes. Give the companion a tracked input that follows
     // both a replacement of the outer backing and the inner selected key.
-    const input = t.ch
-      ? runWithOwner(null, () =>
-          computed(() => {
-            const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
-            return presence ? key in source : source[key as any];
-          })
-        )
-      : node;
+    const input =
+      t.ch || t.u || t._fam?.node
+        ? runWithOwner(null, () =>
+            computed(() => {
+              const body = selectedBody(t);
+              if (body) {
+                read(node);
+                return presence ? key in body : body[key as any];
+              }
+              const current = !presence && t.v[key as any];
+              const child = isWrappable(current)
+                ? ((wrap(current, t, key) as any)[$TARGET] as StoreTarget)
+                : undefined;
+              if (child && readDescendantOutputs(child)) return read(node);
+              pullFamilyInput(t, key);
+              if (t.ch) {
+                const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
+                return presence ? key in source : source[key as any];
+              }
+              return read(node);
+            })
+          )
+        : node;
+    if (input !== node) input._config &= ~CONFIG_AUTO_DISPOSE;
     const candidate = () => {
-      releases.set(slot!, () => {
-        if (record.nodes.get(node) === slot) record.nodes.delete(node);
-        if (slots.get(key) === slot) slots.delete(key);
-        if (input !== node) dispose(input as any);
+      if (!slot) return;
+      releases.set(slot!, {
+        target: t,
+        remove: () => {
+          if (record.nodes.get(node) === slot) record.nodes.delete(node);
+          if (slots.get(key) === slot) slots.delete(key);
+          if (input !== node) {
+            record.inputs.delete(input as Computed<any>);
+            dispose(input as any);
+          }
+        }
       });
       schedule();
     };
-    slot = createOptimisticSlot(input, candidate, () => {
-      // A first read may have suspended before it could discover this key.
-      const fw = t._fam?.node;
-      if (fw && fw._subs !== null) insertSubs(fw);
-      if (!presence && Array.isArray(t.v) && arrayIndex(key) >= 0) {
-        // A mapped list initially subscribes to $TRACK before this slot
-        // exists. Discover it once the first selected value is staged.
-        const container = t.k;
-        if (container && container._subs !== null) insertSubs(container);
+    const invalidateAncestors = () => {
+      if (t.u) {
+        for (let p: StoreTarget | null = t; p; p = p.u) {
+          if (p.k) insertSubs(p.k);
+          for (const input of records.get(p)?.inputs ?? []) {
+            markNode(input);
+            enqueueSub(input);
+          }
+        }
+        schedule();
       }
-    });
+    };
+    slot = createOptimisticSlot(
+      input,
+      candidate,
+      () => {
+        // First readers may have suspended before discovering this property.
+        const fw = t._fam?.node;
+        if (fw && fw._subs !== null) insertSubs(fw);
+        invalidateAncestors();
+        if (!presence) {
+          const value = slot!.writerValue();
+          const child = isWrappable(value) && lookupTarget(value, t._fam!);
+          if (child) {
+            const childRecord = recordFor(child);
+            childRecord.parent = slot;
+            selectedTargets.add(child);
+            for (const input of childRecord.inputs) enqueueSub(input);
+          }
+        }
+        if (!presence && Array.isArray(t.v) && arrayIndex(key) >= 0) {
+          // A mapped list initially subscribes to $TRACK before this slot
+          // exists. Discover it once the first selected value is staged.
+          const container = t.k;
+          if (container && container._subs !== null) insertSubs(container);
+        }
+      },
+      invalidateAncestors
+    );
+    if (input !== node && t._fam?.node) firewallSlots.add(slot);
     slots.set(key, slot);
     record.nodes.set(node, slot);
+    if (input !== node) record.inputs.add(input as Computed<any>);
     candidate();
   }
   return slot;
@@ -147,14 +235,22 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
   if (slot) return slot;
   const input = runWithOwner(null, () =>
     computed(() => {
+      const body = selectedBody(t);
+      if (body) return shapeMeta(body, key);
+      pullFamilyInput(t, key);
       const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
       return shapeMeta(source, key);
     })
   );
+  input._config &= ~CONFIG_AUTO_DISPOSE;
   const candidate = () => {
-    releases.set(slot!, () => {
-      if (record.shape.get(key) === slot) record.shape.delete(key);
-      dispose(input as any);
+    if (!slot) return;
+    releases.set(slot!, {
+      target: t,
+      remove: () => {
+        if (record.shape.get(key) === slot) record.shape.delete(key);
+        dispose(input as any);
+      }
     });
     schedule();
   };
@@ -184,6 +280,35 @@ function selectedNode(t: StoreTarget, node: Signal<any>): Signal<any> {
   return records.get(t)?.nodes.get(node)?.output ?? node;
 }
 
+function descendantStands(t: StoreTarget, key: PropertyKey): boolean {
+  for (const child of t._fam?.live ?? []) {
+    let p: StoreTarget | null = child;
+    while (p?.u && p.u !== t) p = p.u;
+    if (p?.u !== t || p.pk !== key) continue;
+    if (arrayGrowthStands(child)) return true;
+    const record = records.get(child);
+    if (!record) continue;
+    for (const map of [record.slots, record.presence, record.shape])
+      for (const slot of map.values()) if (slot.activeOwner()) return true;
+  }
+  return false;
+}
+
+function readDescendantOutputs(root: StoreTarget): boolean {
+  let selected = false;
+  for (const target of root._fam?.live ?? []) {
+    let p: StoreTarget | null = target;
+    while (p && p !== root) p = p.u;
+    if (p !== root) continue;
+    const record = records.get(target);
+    if (!record) continue;
+    for (const map of [record.slots, record.presence, record.shape])
+      for (const slot of map.values()) if (slot.activeOwner()) selected = true;
+    if (arrayGrowthStands(target)) selected = true;
+  }
+  return selected;
+}
+
 function readSelected(t: StoreTarget, node: Signal<any>) {
   if (Array.isArray(t.v) && (node as any)._key === "length") {
     const base = t.ch ? (read(getContainerNode(t)) as any[]).length : (read(node) as number);
@@ -209,6 +334,11 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
     slot = slotFor(t, key, t.h?.[key as any] === node);
   }
   if (slot) return read(slot.output);
+  const row = selectedBody(t);
+  if (row && row !== t.v) {
+    const key = (node as any)._key;
+    return t.h?.[key as any] === node ? key in row : row[key as any];
+  }
   if (t.ch) {
     const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
     const key = (node as any)._key;
@@ -223,6 +353,8 @@ function truthValue(t: StoreTarget, key: PropertyKey) {
 }
 
 function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false) {
+  const row = selectedBody(t, writer);
+  if (row && row !== t.v) shape = row;
   if (writer && t.ch) {
     const inner = (shape as any)[$TARGET] as StoreTarget | undefined;
     // A chained setter composes on unflushed guesses from its inner store.
@@ -304,8 +436,9 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
 }
 
 function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer = false) {
+  const body = selectedBody(t, writer);
   const record = records.get(t);
-  if (!record) return source;
+  if (!record) return body ?? source;
   // Shape candidates track; leaf values are read without subscribing the
   // enumerator to every field in the record.
   return compose(t, source, writer);
@@ -313,9 +446,26 @@ function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer =
 
 export const staticOptimisticHooks: OptHooks = {
   node: selectedNode,
+  inputBody: selectedBody,
+  ownsFirewall: (t, key, presence) => {
+    if (selectedBody(t)) return true;
+    if (key === undefined) return false;
+    const record = records.get(t);
+    const slot = (presence ? record?.presence : record?.slots)?.get(key);
+    return !!slot && firewallSlots.has(slot);
+  },
   length: (t, base) =>
-    selectedArrayLength(t, t.ch ? (read(getContainerNode(t)) as any[]).length : base),
+    selectedArrayLength(
+      t,
+      selectedBody(t)?.length ?? (t.ch ? (read(getContainerNode(t)) as any[]).length : base)
+    ),
   read: readSelected,
+  rowValue: (t, key, receiver) => {
+    const row = selectedBody(t);
+    if (!row || row === t.v || (Array.isArray(row) && key === "length")) return undefined;
+    const slot = records.get(t)?.slots.get(key);
+    return { value: slot ? read(slot.output) : Reflect.get(row, key, receiver) };
+  },
   accessor: (t, key, receiver) => {
     const slot = records.get(t)?.shape.get(key);
     if (!slot) return undefined;
@@ -347,21 +497,23 @@ export const staticOptimisticHooks: OptHooks = {
     const selectedShape = records.get(t)?.shape.get(key);
     if (selectedShape && getObserver() !== null) read(selectedShape.output);
     return untrack(() => {
-      const record = records.get(t);
-      if (!record) return undefined;
       const shape = selectedView(t, t.v);
+      const record = records.get(t);
+      if (!record && shape === t.v) return undefined;
       const descriptor = Object.getOwnPropertyDescriptor(shape, key);
-      const slot = record.slots.get(key);
+      const slot = record?.slots.get(key);
       return descriptor
         ? "value" in descriptor
-          ? { ...descriptor, value: slot ? read(slot.output) : truthValue(t, key) }
+          ? { ...descriptor, value: slot ? read(slot.output) : descriptor.value }
           : descriptor
         : null;
     });
   },
   has: (t, key) => {
     const slot = records.get(t)?.presence.get(key);
-    return slot ? !!read(slot.output) : undefined;
+    if (slot) return !!read(slot.output);
+    const row = selectedBody(t);
+    return row && row !== t.v ? key in row : undefined;
   },
   draft: t => {
     const record = recordFor(t);
@@ -466,28 +618,37 @@ export const staticOptimisticHooks: OptHooks = {
   pair: (t, source) => {
     const family = t._fam!;
     const paired = new Set<StoreTarget>();
-    const pair = (child: StoreTarget) => {
+    const pair = (child: StoreTarget, rowSlot?: Slot) => {
       while (child.u !== t) {
         if (!child.u) return;
         child = child.u;
       }
       if (paired.has(child)) return;
       paired.add(child);
+      if (rowSlot) {
+        recordFor(child).parent = rowSlot;
+        selectedTargets.add(child);
+      }
       const key = family.key?.(child.v);
-      const incoming = Array.isArray(source)
-        ? key !== undefined &&
-          source.find(row => isWrappable(row) && sameKey(family.key!(row), key))
-        : source[child.pk!];
+      const incoming =
+        Array.isArray(source) && key !== undefined
+          ? source.find(row => isWrappable(row) && sameKey(family.key!(row), key))
+          : source[child.pk!];
       if (isWrappable(incoming) && !lookupTarget(incoming, family))
         reconcileState(incoming, child.px, family.key, true);
     };
+    // Preserve the identity of an already published row before pairing a
+    // replacement proposal at the same positional slot.
+    for (const child of selectedTargets)
+      if (child.u === t && records.get(child)?.parent && !records.get(child)!.parent!.isIdle())
+        pair(child, records.get(child)!.parent);
     // An index override selects a row identity. Its unguessed fields still
-    // receive same-key answers; explicit leaf overrides remain selected.
+    // receive matching answers; explicit leaf overrides remain selected.
     for (const slot of records.get(t)?.slots.values() ?? []) {
       if (!slot.activeOwner()) continue;
       const value = slot.writerValue();
       const child = isWrappable(value) && lookupTarget(value, family);
-      if (child) pair(child);
+      if (child) pair(child, slot);
     }
     // A guessed leaf can also keep a row that its parent never guessed.
     for (const target of family.live) {
@@ -519,11 +680,23 @@ export const staticOptimisticHooks: OptHooks = {
       // Existing readers unlink on their next real update; no extra rendered
       // callback is necessary just because bookkeeping became idle.
     }
-    for (const [slot, remove] of releases) {
+    for (const [slot, { remove, target }] of releases) {
       if (slot.output._subs !== null) releases.delete(slot);
-      else if (slot.tryRelease()) {
+      else if (slot.tryRelease(!!(target._fam?.node?._flags! & REACTIVE_DISPOSED))) {
         releases.delete(slot);
         remove();
+      }
+    }
+    for (const child of selectedTargets) {
+      const record = records.get(child)!;
+      if (!record.parent?.isIdle() && !(record.parent!.output._flags & REACTIVE_DISPOSED)) continue;
+      record.parent = undefined;
+      selectedTargets.delete(child);
+      for (const target of child._fam!.live) {
+        let ancestor: StoreTarget | null = target;
+        while (ancestor && ancestor !== child) ancestor = ancestor.u;
+        if (ancestor === child)
+          for (const input of records.get(target)?.inputs ?? []) enqueueSub(input);
       }
     }
     sweepArrays();
@@ -534,7 +707,9 @@ export const staticOptimisticHooks: OptHooks = {
     if (key === undefined) return false;
     const record = records.get(t);
     const slot = (presence ? record?.presence : record?.slots)?.get(key);
-    return !!slot?.activeOwner();
+    if (slot?.activeOwner()) return true;
+    if (presence) return false;
+    return (key === "length" && arrayGrowthStands(t)) || descendantStands(t, key);
   }
 };
 

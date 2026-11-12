@@ -1,5 +1,4 @@
 /** User guesses and their action lifetime, published by the common layer core. */
-import { ContextRetry, NotReadyError } from "../core/error.js";
 import { computed, read, signal, runWithOwner, untrack, stageSelectedValue } from "../core/core.js";
 import { enqueueSub } from "../core/heap.js";
 import { registerGraph, forgetThrownRead } from "../core/dev.js";
@@ -20,7 +19,8 @@ import {
   REACTIVE_ZOMBIE,
   REACTIVE_DISPOSED,
   REACTIVE_RECOMPUTING_DEPS,
-  STATUS_PENDING
+  STATUS_PENDING,
+  STATUS_ERROR
 } from "../core/constants.js";
 import {
   blocked,
@@ -41,6 +41,7 @@ import {
 } from "../core/scheduler.js";
 import type { Computed, NodeOptions, Signal, Root } from "../core/types.js";
 import { boundaries } from "./boundary.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { committedDependencies, layerPosition } from "./committed-dependencies.js";
 import {
   createLayerBoundary,
@@ -122,6 +123,7 @@ function retire(layer: Layer<any>): void {
   if (!scope) joinFuture(null);
   resumeInput(layer, scope ?? resolveTx(flushTransaction!));
   removeScope(layer);
+  layer._onRetired?.();
   const input = layer._input,
     output = layer._output,
     owner = output._parent as Root | null;
@@ -156,7 +158,12 @@ function prepareGuesses(): boolean {
       continue;
     }
     if (!layer._automatic || layer._scope) continue;
-    let scope = inputUpdate(layer) ?? (flushTransaction && resolveTx(flushTransaction));
+    // A pending lower input is evidence that an ambient guess can outlive
+    // this flush; its preexisting transaction does not own the new guess's
+    // action lifetime. The layer core coordinates output publication apart
+    // from this scope.
+    let scope = flushTransaction && resolveTx(flushTransaction);
+    if (!scope && !pendingInput(layer)) scope = inputUpdate(layer);
     if (!scope && pendingInput(layer)) {
       // Keep this new lifetime alive until the guess has propagated once;
       // its displayed consumers then determine the ordinary input hold.
@@ -579,7 +586,8 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
 export function createOptimisticSlot<T>(
   input: Signal<T>,
   onUnobserved?: () => void,
-  onSelected?: () => void
+  onSelected?: () => void,
+  onRetired?: () => void
 ) {
   const layer = runWithOwner(null, () =>
     createLayerBoundary<T>(input as Computed<T>, selectGuess, false, false, {
@@ -589,6 +597,7 @@ export function createOptimisticSlot<T>(
   layer._automatic = true;
   layer._inputStatus = true;
   layer._onSelected = onSelected;
+  layer._onRetired = onRetired;
   layer._output._config &= ~CONFIG_AUTO_DISPOSE;
   if (__OBSERVE__ && attrHooks !== null) {
     (layer._output as any)._name = (input as any)._name;
@@ -596,18 +605,25 @@ export function createOptimisticSlot<T>(
   }
   const [, propose] = layerAccessors(layer);
   // Establish the initial published value even when the first operation is a
-  // setter. A pending computed input has no value to publish yet.
-  // No function/thenable normalization: slot contents are raw values.
+  // setter. No function/thenable normalization: slot contents are raw values.
   try {
     untrack(() => read(layer._output));
   } catch (error) {
-    if (!(error instanceof NotReadyError) || error instanceof ContextRetry) throw error;
+    // Pending and failed truth inputs retain their ordinary output status;
+    // an explicit first proposal can still replace that published answer.
+    if (
+      error instanceof ContextRetry ||
+      (!(error instanceof NotReadyError) && !(layer._output._statusFlags & STATUS_ERROR))
+    )
+      throw error;
     if (__DEV__) forgetThrownRead();
   }
-  const isIdle = () => {
+  const isIdle = (unobserved = false) => {
     const output = layer._output;
+    // A subscriber-free CHECK owns no publication: a later reader can rebuild
+    // it. Association cleanup with readers still present uses the strict check.
     const busy =
-      REACTIVE_CHECK |
+      (unobserved ? 0 : REACTIVE_CHECK) |
       REACTIVE_DIRTY |
       REACTIVE_IN_HEAP |
       REACTIVE_RECOMPUTING_DEPS |
@@ -626,6 +642,14 @@ export function createOptimisticSlot<T>(
   return {
     output: layer._output,
     propose: (value: T) => {
+      // A changed proposal can introduce a different child in the same
+      // action. Repeated equal proposals do not need another discovery pass.
+      if (
+        onSelected &&
+        !layer._onSelected &&
+        (layer._scope === null || !Object.is(value, previousProposal(layer)))
+      )
+        layer._onSelected = onSelected;
       const next = propose(() => value);
       if (proposalBatch && !(layer._output._flags & REACTIVE_DISPOSED)) proposalBatch.add(layer);
       return next;
@@ -647,10 +671,14 @@ export function createOptimisticSlot<T>(
     // store first invalidates their discovery node, then retries release.
     isIdle,
     // The store retries only companions whose readers left. A live guess or
-    // an unfinished correction is state, even with no subscribers.
-    tryRelease: () => {
+    // an unfinished correction is state, even with no subscribers. A disposed
+    // producer cannot finish its correction; once its action closes an
+    // unobserved companion may release that abandoned input.
+    tryRelease: (abandoned = false) => {
       const output = layer._output;
-      if (output._subs !== null || !isIdle()) return false;
+      const ownsGuess =
+        (layer._scope !== null && (liveTx(layer._scope)?._open ?? 0) > 0) || proposals.has(layer);
+      if (output._subs !== null || (!isIdle(true) && (!abandoned || ownsGuess))) return false;
       dispose(output as Computed<any>);
       return true;
     }

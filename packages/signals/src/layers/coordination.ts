@@ -96,6 +96,7 @@ export type Layer<T> = {
   _automatic?: true;
   _opening?: true;
   _onSelected?: () => void;
+  _onRetired?: () => void;
   _refreshInput?: (layer: Layer<any>) => void;
 };
 

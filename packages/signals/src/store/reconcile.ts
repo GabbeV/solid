@@ -97,10 +97,13 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
   // a deletion here (#3743: the presence and value diffs both read `old`).
   const old = t.ovl ? materializePB(t) : (t.pb ?? t.v);
   if (incoming === old && !isOwned(old)) return;
+  // Returned producer answers use adoption rather than draft notification.
+  // Pair rows retained by selected guesses before the parent adopts them.
+  if (optHooks && t._fam?.opt === true) optHooks.pair(t, incoming);
   // Q-D: a landing on an optimistic family is reconciled against the VIEW
   // — key matching from the arrangement the guesses made (R28), so a row
   // the guess added keeps its proxy when the server returns it.
-  const prevView = optHooks && t._fam?.opt === true ? optHooks.view(t, old) : old;
+  const prevView = optHooks && t._fam?.opt === true ? optHooks.view(t, old, true) : old;
   const nextArr = Array.isArray(incoming);
   const shallow = t.s === true;
   adoptPB(t, incoming, false);

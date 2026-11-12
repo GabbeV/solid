@@ -1,9 +1,11 @@
 /** Array shape policy for shared optimistic outputs. Index writes carry a
  * minimum length, not a snapshot of other actions' array contents. */
 import { computed, read, runWithOwner, signal } from "../core/core.js";
+import { CONFIG_AUTO_DISPOSE, REACTIVE_DISPOSED } from "../core/constants.js";
 import { flushTransaction, insertSubs, resolveTx, schedule } from "../core/scheduler.js";
 import { createOptimisticSlot, entangleOptimisticSlotRead } from "../layers/optimistic.js";
-import { committed, getNode, getContainerNode } from "./store.js";
+import { committed, getNode, getContainerNode, pullFamilyInput } from "./store.js";
+import { optHooks } from "./hooks.js";
 import { dispose } from "../core/owner.js";
 import type { StoreTarget } from "./target.js";
 
@@ -38,6 +40,12 @@ export function selectedArrayLength(t: StoreTarget, base: number, writer = false
     if (required > n) n = required;
   }
   return n;
+}
+export function arrayGrowthStands(t: StoreTarget): boolean {
+  const r = arrays.get(t);
+  if (!r) return false;
+  for (const floor of r.floors) if (floor.activeOwner()) return true;
+  return !!r.resize?.activeOwner();
 }
 
 export function readArrayLength(t: StoreTarget): void {
@@ -78,11 +86,27 @@ export function writeArray(
       for (const slot of map.values()) entangleOptimisticSlotRead(slot);
     for (const floor of r.floors) entangleOptimisticSlotRead(floor);
     if (!r.resize) {
-      const input = t.ch
-        ? runWithOwner(null, () => computed(() => (read(getContainerNode(t)) as any[]).length))
+      const owned = t.ch || !!t._fam?.node;
+      const input = owned
+        ? runWithOwner(null, () =>
+            computed(() => {
+              const body = optHooks?.inputBody?.(t);
+              if (body) return body.length;
+              pullFamilyInput(t, "length");
+              return t.ch
+                ? (read(getContainerNode(t)) as any[]).length
+                : read(getNode(t, "length"));
+            })
+          )
         : getNode(t, "length");
-      r.resize = createOptimisticSlot(input, undefined, () => discover(t));
-      if (t.ch) ownedInputs.set(r.resize, input as ReturnType<typeof computed>);
+      if (owned) input._config &= ~CONFIG_AUTO_DISPOSE;
+      r.resize = createOptimisticSlot(
+        input,
+        undefined,
+        () => discover(t),
+        () => discover(t)
+      );
+      if (owned) ownedInputs.set(r.resize, input as ReturnType<typeof computed>);
     }
     r.resize.propose(after);
     // The explicit resize supersedes earlier implicit growth requirements.
@@ -99,10 +123,29 @@ export function writeArray(
       }
     }
     if (!floor) {
-      floor = createOptimisticSlot(signal(0), undefined, () => discover(t));
+      const input = t._fam?.node
+        ? runWithOwner(null, () =>
+            computed(() => {
+              const body = optHooks?.inputBody?.(t);
+              if (body) return 0;
+              pullFamilyInput(t, "length");
+              read(getNode(t, "length"));
+              return 0;
+            })
+          )
+        : signal(0);
+      if (t._fam?.node) input._config &= ~CONFIG_AUTO_DISPOSE;
+      floor = createOptimisticSlot(
+        input,
+        undefined,
+        () => discover(t),
+        () => discover(t)
+      );
+      if (t._fam?.node) ownedInputs.set(floor, input as ReturnType<typeof computed>);
       r.floors.add(floor);
     }
-    const required = Math.max(floor.writerValue() as number, index + 1);
+    const previous = floor.writerValue();
+    const required = Math.max(typeof previous === "number" ? previous : 0, index + 1);
     floor.propose(required);
     active.add(t);
   }
@@ -111,19 +154,31 @@ export function writeArray(
 export function sweepArrays(): void {
   for (const t of active) {
     const r = arrays.get(t)!;
+    const abandoned = !!(t._fam?.node?._flags! & REACTIVE_DISPOSED);
     for (const floor of r.floors) {
+      if (abandoned && floor.tryRelease(true)) {
+        r.floors.delete(floor);
+        const input = ownedInputs.get(floor);
+        if (input) dispose(input);
+        continue;
+      }
       const out = floor.output;
       if (floor.isIdle() && out._value === 0) {
         r.floors.delete(floor);
         r.retiring.add(floor);
       }
     }
+    if (r.resize && abandoned && r.resize.tryRelease(true)) {
+      const input = ownedInputs.get(r.resize);
+      if (input) dispose(input);
+      r.resize = undefined;
+    }
     if (r.resize?.isIdle()) {
       r.retiring.add(r.resize);
       r.resize = undefined;
     }
     for (const slot of r.retiring)
-      if (slot.tryRelease()) {
+      if (slot.tryRelease(abandoned)) {
         r.retiring.delete(slot);
         const input = ownedInputs.get(slot);
         if (input) dispose(input);
