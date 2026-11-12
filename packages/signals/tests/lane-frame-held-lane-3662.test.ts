@@ -154,7 +154,9 @@ describe("#3662 the frame a lane pass on an effect replaces", () => {
       // stays on screen, its cleanup has not run.
       void t.move(0, 1);
       flush();
-      expect(t.cards.map(c => c.lane)).toEqual([1, 1]);
+      // Ordinary outside reads share the published frame while its replacement
+      // is held; the experiment defers next's flushed-value read exception.
+      expect(t.cards.map(c => c.lane)).toEqual([0, 1]);
       expect(t.frames.at(-1)).toEqual({ lanes: [[0], [1]], detail: "d0" });
       expect(t.log).toEqual(["pass 1", "run 1", "pass 2"]);
 
@@ -166,6 +168,7 @@ describe("#3662 the frame a lane pass on an effect replaces", () => {
       // frame in that flush.
       t.resolveDetail("d1");
       await settle();
+      expect(t.cards.map(c => c.lane)).toEqual([1, 1]);
       expect(t.frames.at(-1)).toEqual({ lanes: [[], [0, 1]], detail: "d1" });
       const applied = shape === "nested-insert" ? 2 : 3;
       expect(t.log.at(-1)).toBe(`run ${applied}`);

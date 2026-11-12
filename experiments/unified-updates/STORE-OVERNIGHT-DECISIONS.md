@@ -127,3 +127,28 @@ the assertion retained a mutable object which cleanup later changed. Frozen
 snapshots show both saved flags held correctly, and next agrees. The independent
 second action's optimistic value may publish. No runtime change was made for
 that report.
+
+## Parent/child setter publication
+
+**Choice for review:** one setter is a single optimistic boundary with multiple
+outputs, including a parent row and a field of that row. Its outputs publish
+together above their external inputs. An internal dependency between those
+outputs does not add another optimistic depth. Overlapping setter groups are
+unified; a dependency cycle between groups is one publication component. This
+groups publication, not the underlying producer's lifetime with the action.
+
+The common scalar and same-depth setter paths avoid constructing that component
+graph. Mixed groups use their committed dependency graph. A held previous version
+of the same group must not count as another input layer: four superseding guesses
+now retain the same depth, including through a memo, while an external optimistic
+input still adds a depth. Eighteen focused checks cover proposal order, overlapping
+groups, cycles, external inputs, async holds, late readers, retirement and stale
+answers. The integrated 215-test subset passes 209, with six known row-body
+preservation failures remaining. Source type checking passes. This is not a size
+or performance acceptance claim.
+
+Three upstream frame-lifetime failures were outside-read expectation mismatches.
+The tests now expect the displayed card positions during a hold, as already ruled
+for ordinary outside reads, and assert the new positions after publication. All
+eight tests in the two files pass; frame cleanup and side-effect ordering
+assertions remain intact.

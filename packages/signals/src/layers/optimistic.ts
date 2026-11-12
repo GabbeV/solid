@@ -40,7 +40,7 @@ import {
 } from "../core/scheduler.js";
 import type { Computed, NodeOptions, Signal, Root } from "../core/types.js";
 import { boundaries } from "./boundary.js";
-import { layerPosition } from "./committed-dependencies.js";
+import { committedDependencies, layerPosition } from "./committed-dependencies.js";
 import {
   createLayerBoundary,
   inputTime,
@@ -205,8 +205,159 @@ function selectProposal(proposal: unknown, layer: Layer<any>): void {
   layer._position = undefined;
 }
 
-function positionProposal(_proposal: unknown, layer: Layer<any>): void {
-  layer._position = 1 + Math.max(layerPosition(layer._input), positionOf(inputUpdate(layer)));
+/** One setter is one selected-output boundary, even when its members' inputs
+ * pass through other members. Collapse overlapping setters and dependency
+ * cycles before assigning any positions; neither proposal nor group order can
+ * then determine the selected frame. */
+function positionProposals(): Iterable<Set<Layer<any>>> {
+  // The normal store setter has independent truth slots at one depth. Keep
+  // its existing one-pass positioning and group merge without allocating a
+  // component graph. Clear proposals can still hold a correction output, so
+  // include them in this check just as the later merge loop does.
+  for (const layer of proposals.keys())
+    layer._position = 1 + Math.max(layerPosition(layer._input), positionOf(inputUpdate(layer)));
+  if (!proposalGroups.size) return [];
+  let uniform = true;
+  for (const group of proposalGroups) {
+    let position: number | undefined;
+    for (const layer of group) {
+      if (!proposals.has(layer) || layer._output._flags & REACTIVE_DISPOSED) continue;
+      if (position !== undefined && position !== layer._position) {
+        uniform = false;
+        break;
+      }
+      position = layer._position;
+    }
+    if (!uniform) break;
+  }
+  if (uniform) return proposalGroups;
+  const parent = new Map<Layer<any>, Layer<any>>();
+  for (const layer of proposals.keys()) parent.set(layer, layer);
+  const root = (layer: Layer<any>): Layer<any> => {
+    const next = parent.get(layer)!;
+    if (next === layer) return layer;
+    const result = root(next);
+    parent.set(layer, result);
+    return result;
+  };
+  const union = (a: Layer<any>, b: Layer<any>) => {
+    a = root(a);
+    b = root(b);
+    if (a !== b) parent.set(b, a);
+  };
+  for (const group of proposalGroups) {
+    let first: Layer<any> | undefined;
+    for (const layer of group) {
+      if (!parent.has(layer)) continue;
+      if (first) union(first, layer);
+      else first = layer;
+    }
+  }
+  const components = () => {
+    const result = new Map<Layer<any>, Set<Layer<any>>>();
+    for (const layer of parent.keys()) {
+      const representative = root(layer);
+      let members = result.get(representative);
+      if (!members) result.set(representative, (members = new Set()));
+      members.add(layer);
+    }
+    return result;
+  };
+  const edges = (members: ReadonlySet<Layer<any>>) => {
+    const dependencies = new Set<Layer<any>>();
+    const walk = (source: Signal<any>, path: Set<Signal<any>>) => {
+      if (path.has(source) || typeof (source as Computed<any>)._fn !== "function") return;
+      path.add(source);
+      try {
+        const boundary = boundaries.get(source);
+        if (boundary) {
+          if (parent.has(boundary) && proposals.get(boundary) !== NOT_PENDING) {
+            if (members.has(boundary)) walk(boundary._input, path);
+            else dependencies.add(root(boundary));
+          } else if (boundary._override === NOT_PENDING) walk(boundary._input, path);
+        } else {
+          for (const dependency of committedDependencies(source as Computed<any>))
+            walk(dependency, path);
+        }
+      } finally {
+        path.delete(source);
+      }
+    };
+    for (const layer of members) walk(layer._input, new Set());
+    return dependencies;
+  };
+  // A cycle between setter groups is itself one publication boundary. Tarjan
+  // runs only for queued proposals; ordinary reads acquire no graph work.
+  const groups = components();
+  const index = new Map<Layer<any>, number>();
+  const low = new Map<Layer<any>, number>();
+  const stack: Layer<any>[] = [];
+  const onStack = new Set<Layer<any>>();
+  let nextIndex = 0;
+  const visit = (group: Layer<any>) => {
+    index.set(group, nextIndex);
+    low.set(group, nextIndex++);
+    stack.push(group);
+    onStack.add(group);
+    for (const dependency of edges(groups.get(group)!)) {
+      if (!index.has(dependency)) {
+        visit(dependency);
+        low.set(group, Math.min(low.get(group)!, low.get(dependency)!));
+      } else if (onStack.has(dependency))
+        low.set(group, Math.min(low.get(group)!, index.get(dependency)!));
+    }
+    if (low.get(group) !== index.get(group)) return;
+    const members: Layer<any>[] = [];
+    let member: Layer<any>;
+    do {
+      member = stack.pop()!;
+      onStack.delete(member);
+      members.push(member);
+    } while (member !== group);
+    for (let i = 1; i < members.length; i++) union(members[0], members[i]);
+  };
+  for (const group of groups.keys()) if (!index.has(group)) visit(group);
+
+  const merged = components();
+  const positioned = new Set<Layer<any>>();
+  const position = (group: Layer<any>): number => {
+    group = root(group);
+    if (positioned.has(group)) return merged.get(group)!.values().next().value!._position!;
+    const members = merged.get(group)!;
+    for (const dependency of edges(members)) position(dependency);
+    const transparent = new Set<Signal<any>>();
+    for (const layer of members) transparent.add(layer._output);
+    const throughMember = (source: Signal<any>, path = new Set<Signal<any>>()): boolean => {
+      if (transparent.has(source)) return true;
+      if (path.has(source) || typeof (source as Computed<any>)._fn !== "function") return false;
+      path.add(source);
+      try {
+        const boundary = boundaries.get(source);
+        if (boundary)
+          return boundary._override === NOT_PENDING && throughMember(boundary._input, path);
+        for (const dependency of committedDependencies(source as Computed<any>))
+          if (throughMember(dependency, path)) return true;
+        return false;
+      } finally {
+        path.delete(source);
+      }
+    };
+    let depth = 0;
+    for (const layer of members) {
+      depth = Math.max(depth, layerPosition(layer._input, undefined, transparent));
+      // An input update reached through this group's selected output is an
+      // earlier version of the same cut. Count its external graph inputs in
+      // layerPosition above, but do not count its held transaction again on
+      // every supersession. An unheld input returns the action scope instead.
+      if (!(layer._input._config & CONFIG_HELD) || !throughMember(layer._input))
+        depth = Math.max(depth, positionOf(inputUpdate(layer)));
+    }
+    for (const layer of members) layer._position = depth + 1;
+    positioned.add(group);
+    return depth + 1;
+  };
+  for (const group of merged.keys()) position(group);
+  return merged.values();
 }
 
 function applyProposal(proposal: unknown, layer: Layer<any>): void {
@@ -248,9 +399,9 @@ setGuessLifecycle({
     // Freeze the whole batch's selections before assigning contexts. This
     // prevents simultaneous nested guesses from depending on setter order.
     proposals.forEach(selectProposal);
-    proposals.forEach(positionProposal);
+    const groups = positionProposals();
     proposals.forEach(applyProposal);
-    for (const group of proposalGroups) {
+    for (const group of groups) {
       const updates = new Set<Transaction>();
       let position: number | undefined;
       for (const layer of group) {

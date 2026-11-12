@@ -7,7 +7,12 @@
  * snapshot, which repeated proposals keep until publication. No fields are
  * added to ordinary nodes or links.
  */
-import { REACTIVE_SAVED_DEPENDENCIES, NOT_PENDING, STATUS_ERROR, STATUS_UNINITIALIZED } from "../core/constants.js";
+import {
+  REACTIVE_SAVED_DEPENDENCIES,
+  NOT_PENDING,
+  STATUS_ERROR,
+  STATUS_UNINITIALIZED
+} from "../core/constants.js";
 import { setDependencyFrameHook } from "../core/graph.js";
 import type { Computed, Link, Signal } from "../core/types.js";
 import { boundaries } from "./boundary.js";
@@ -52,7 +57,8 @@ setDependencyFrameHook((node, phase) => {
   if (phase === "park") {
     // Stable dependencies need no insertion scan or journal removal. A
     // previously saved frame still lasts until this node actually publishes.
-    let retained = !!(node._flags & REACTIVE_SAVED_DEPENDENCIES), changed = false;
+    let retained = !!(node._flags & REACTIVE_SAVED_DEPENDENCIES),
+      changed = false;
     if (count) {
       if (!retained && !(node._statusFlags & STATUS_UNINITIALIZED)) {
         for (let i = 0; i < count; i++) {
@@ -100,7 +106,11 @@ export function* committedDependencies(node: Computed<any>): Iterable<Signal<any
  * boundaries are transparent; speculative branch reads cannot choose their
  * own context. The recursion stack is per path, so a shared ancestor reached
  * by a longer path still contributes its complete depth. */
-export function layerPosition(source: Signal<any>, path?: Set<Signal<any>>): number {
+export function layerPosition(
+  source: Signal<any>,
+  path?: Set<Signal<any>>,
+  transparent?: ReadonlySet<Signal<any>>
+): number {
   if (typeof (source as Computed<any>)._fn !== "function") return 0;
   const boundary = boundaries.get(source);
   const node = source as Computed<any>;
@@ -108,24 +118,29 @@ export function layerPosition(source: Signal<any>, path?: Set<Signal<any>>): num
   // layer. Check before allocating a recursion stack, including for leaves
   // reached by an existing walk. Saved frames and lazy boundaries are not
   // necessarily represented by the producer's current dependency list.
-  if (!boundary && (node._statusFlags & STATUS_UNINITIALIZED ||
-      (node._deps === null && !(node._flags & REACTIVE_SAVED_DEPENDENCIES)))) return 0;
+  if (
+    !boundary &&
+    (node._statusFlags & STATUS_UNINITIALIZED ||
+      (node._deps === null && !(node._flags & REACTIVE_SAVED_DEPENDENCIES)))
+  )
+    return 0;
   path ??= new Set<Signal<any>>();
   if (path.has(source)) return 0;
   path.add(source);
   try {
     if (boundary)
-      return boundary._override === NOT_PENDING
-        ? layerPosition(boundary._input, path)
-        : (boundary._position ?? 1 + layerPosition(boundary._input, path));
+      return boundary._override === NOT_PENDING || transparent?.has(source)
+        ? layerPosition(boundary._input, path, transparent)
+        : (boundary._position ?? 1 + layerPosition(boundary._input, path, transparent));
     let position = 0;
     const snapshot = node._flags & REACTIVE_SAVED_DEPENDENCIES ? saved.get(node) : undefined;
     if (snapshot) {
       for (const dependency of snapshot)
-        position = Math.max(position, layerPosition(dependency, path));
+        position = Math.max(position, layerPosition(dependency, path, transparent));
     } else {
       for (let edge = node._deps; edge; edge = edge._nextDep)
-        if (!isInserted(edge)) position = Math.max(position, layerPosition(edge._dep, path));
+        if (!isInserted(edge))
+          position = Math.max(position, layerPosition(edge._dep, path, transparent));
     }
     return position;
   } finally {
