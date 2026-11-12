@@ -83,3 +83,19 @@ passes isolated reruns. Raw failures are retained; targeted passes do not rewrit
 the full-suite result. No `until` failures occur in these framework runs.
 
 `store-progress-20261112.tar.xz` restores `store-progress-20261112/` in the extraction directory. It preserves the pre-combination full signals run at `4d891e564`, focused integration checks, and unmerged parent/derived/error trial sources. Trials include known gaps and are not merge candidates without their later review. Built artifacts were still `54a7c3aa7`; the full run is source failure-discovery evidence.
+
+`store-framework-668-20261112.tar.xz` restores `framework-668/`. It preserves
+all four framework suites on source `668d48061`, frozen signals dist and hashes,
+exact failure identities, the shared-signals-bus server qualification, and reviewed
+client/hydration migrations. Solid passes 927/927; original client has 18 failures,
+hydrate 10, server two dependency-resolution failures. All affected client migration
+cases (19 including control) and hydration cases (12) pass targeted checks. These
+receipts are intermediate, not a final rebuilt acceptance run.
+
+`store-integration-review-20261112.tar.xz` restores `store-integration-review/`.
+It preserves full source runs at 668 and 481 plus reviewed test migrations,
+the exact deferred-until classification, root 993-case property/list verification,
+cold/pending investigation receipts, the 23-case list migration root run and the
+11-case explicit-GC run. The latter full run has 7,819 passes, 163 failures and five
+skips; 135 failures depend on deferred until. Cold initialization, pending and array
+correction work remains in progress.
