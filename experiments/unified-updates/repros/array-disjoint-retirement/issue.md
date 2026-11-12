@@ -54,3 +54,5 @@ The [point-of-write ruling recorded in #4724](https://github.com/solidjs/solid/i
 This case exercises expiration of one guess while a disjoint guess remains active, rather than the refresh/error scenarios in #4724 and its follow-ups.
 
 Discovered while exploring [unified update propagation](https://github.com/GabbeV/solid/tree/experiment/unified-updates); the reproduction runs upstream next.
+
+Structural cases to preserve when fixing this: starting from `[]`, action B writes index 1, then action A writes index 0. If B ends first, removing its override must not reset length to 0 and erase A's still-active value. If those structural writes retire independently, the remaining array should be `[1]`; if they intentionally entangle, their updates should settle together. This report deliberately keeps keys and length unchanged and does not require structural writes to become independent.
