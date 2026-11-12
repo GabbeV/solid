@@ -99,3 +99,19 @@ cold/pending investigation receipts, the 23-case list migration root run and the
 11-case explicit-GC run. The latter full run has 7,819 passes, 163 failures and five
 skips; 135 failures depend on deferred until. Cold initialization, pending and array
 correction work remains in progress.
+
+`store-completion-b69738dd2-20261112.tar.xz` restores
+`store-completion-b69738dd2/`: frozen full signals results (7,930 pass, 135 exact
+until-dependent failures, five skips), source/artifact hashes, explicit-GC and
+cold/quiet/native-method controls, the earlier add90 framework receipts, and
+rejected publication-order trials. There are zero other failures in the frozen
+signals run; this is finite validation, not a universal correctness proof.
+
+`framework-final-b69738dd2.tar.xz` restores the final framework and supplementary
+receipt directories. Solid 927, client 1,883, server 2,010 and hydrate 768 pass;
+seven preexisting framework skips remain. Diagnostics/adapters add 385 passing
+tests. All four public type programs and the qualified package import smoke pass.
+Exact commands, environment qualifications and artifact hashes are preserved.
+The #4275 fixture subsequently received a type-correct JSX expression, with its
+two runtime cases and Web type program rerun unchanged. The install-driven
+packaged-types integration suite was not run.
