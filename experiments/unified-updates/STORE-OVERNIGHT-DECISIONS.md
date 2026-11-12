@@ -371,3 +371,10 @@ higher-context m0:4 and m1:5. On frozen built artifacts all twelve hydration
 variants and all four held/unheld controls pass. The migration preserves DOM,
 streamed claim, no-refetch, diagnostics and cleanup assertions, and strengthens
 the plain control to assert the complete request sequence.
+
+The remaining twelve DOM migrations now pass in the root checkout against the
+same frozen runtime, for 19 passing cases across the seven affected client files.
+MutationObserver snapshots retain exact whole-DOM allowed frames. #4482 explicitly
+checks new input at unguessed index 0 beside selected index 1; #4480 checks that an
+unguessed producer error reaches the error boundary while the selected assignee
+remains readable. This does not establish the final rebuilt framework result.

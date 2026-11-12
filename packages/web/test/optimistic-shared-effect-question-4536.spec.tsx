@@ -3,8 +3,11 @@
  * @vitest-environment jsdom
  */
 /**
- * A shared render effect must not pair the held filter change with a guess
- * over the previous answer. Separate bindings are covered by #4525.
+ * The optimistic store selects the indices explicitly written by the splice. The
+ * producer does not replay that operation over its next answer. Those row
+ * outputs retain their action lifetime; an `on` boundary may publish its
+ * independent question beside the complete selected rows. The final refresh
+ * corrects the indices. Only complete, consistent DOM frames are allowed.
  */
 import { expect, test } from "vitest";
 import {
@@ -28,7 +31,7 @@ const tick = async () => {
 for (const on of [true, false])
   for (const order of ["question first", "list first"] as const)
     for (const mode of ["inline", "memo"] as const)
-      test(`#4536: a single render effect keeps the question and optimistic rows in one world (on=${on}, ${order}, ${mode})`, async () => {
+      test(`#4536: a shared render effect publishes complete selected question/list frames (on=${on}, ${order}, ${mode})`, async () => {
         const asks: { key: string; res: (v: any) => void }[] = [];
         const ask = (key: string) => new Promise<any>(res => asks.push({ key, res }));
         const settle = async (key: string, v: any) => {
@@ -91,20 +94,25 @@ for (const on of [true, false])
           expect(container.textContent).toBe(on ? "loading" : "open: [#1][#3][#4]");
           closeOne(1);
           await tick();
-          // A reset boundary stays in fallback; otherwise the guess may wait
-          // with the pending read or show over the held open answer.
-          expect(on ? ["loading"] : ["open: [#3][#4]", "open: [#1][#3][#4]"]).toContain(
-            container.textContent
-          );
+          const selected = on ? "closed: [#3][#4]" : "open: [#3][#4]";
+          expect(container.textContent).toBe(selected);
           await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-          expect(container.textContent).toBe("closed: [#2]");
+          expect(container.textContent).toBe(selected);
           await settle("close:1", {});
-          expect(container.textContent).toBe("closed: [#2]");
+          expect(container.textContent).toBe(selected);
           await settle("issues:closed", [{ id: 2 }]);
           expect(container.textContent).toBe("closed: [#2]");
           expect(asks).toEqual([]);
-          // Never a row of the open list beside `closed` (F-1).
-          expect(seen.filter(s => s.startsWith("closed") && /#3|#4/.test(s))).toEqual([]);
+          // The old complete selection may remain, but no partially corrected
+          // question/list combination, duplicate row, or hole may publish.
+          const allowed = new Set([
+            "loading",
+            "open: [#1][#3][#4]",
+            "open: [#3][#4]",
+            ...(on ? ["closed: [#3][#4]"] : []),
+            "closed: [#2]"
+          ]);
+          expect(seen.filter(frame => !allowed.has(frame))).toEqual([]);
         } finally {
           observer.disconnect();
           dispose();

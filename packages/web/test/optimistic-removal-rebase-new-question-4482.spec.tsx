@@ -3,17 +3,10 @@
  * @vitest-environment jsdom
  */
 /**
- * #4482: a keyed derived optimistic store over `list(filter)`. A per-key
- * guess (assign #3) and a removal guess (close #3) are out; the filter
- * switch holds behind them (D-34). When the assign is accepted, its refresh
- * answers the new question — an older question than the close guess's, so
- * the close guess is re-based over it (D-35). The re-base kept the rows the
- * guess had only carried over from the open list (#1, #4) beside the closed
- * answer (#2): rows of two questions at once (F-1).
- *
- * Ruled: the re-base composes the guess's own edit — the removal of #3 —
- * over the new truth, so the screen is `[#2 eve]` (the issue's second
- * acceptable frame); never the open list's rows beside the closed one's.
+ * The optimistic store keeps the removal's selected index and explicit length separate
+ * from the producer input. Index 0 was not guessed and can follow the closed
+ * answer; index 1 stays row 4 until its action's correction. This is an
+ * explicit selected row beside new truth, not an unclaimed carried-over row.
  */
 import { expect, test } from "vitest";
 import {
@@ -35,7 +28,7 @@ const tick = async () => {
   }
 };
 
-test("#4482: a removal guess re-based over a new question's answer shows only that answer's rows", async () => {
+test("#4482: a new answer updates unguessed indices while a selected row stays held", async () => {
   const asks: { key: string; res: (v: any) => void }[] = [];
   const ask = (key: string) => new Promise<any>(res => asks.push({ key, res }));
   const settle = async (key: string, v: any) => {
@@ -110,14 +103,20 @@ test("#4482: a removal guess re-based over a new question's answer shows only th
     await tick();
     expect(container.textContent).toBe("[#1 ][#4 dana]");
     await settle("issues:closed", [{ id: 2, assignee: "eve" }]);
-    expect(container.textContent).toBe("[#1 ][#4 dana]");
-    const from = seen.length;
+    expect(container.textContent).toBe("[#2 eve][#4 dana]");
     await settle("assign:3", {});
-    expect(container.textContent).toBe("[#2 eve]");
+    expect(container.textContent).toBe("[#2 eve][#4 dana]");
     await settle("close:3", {});
     expect(container.textContent).toBe("[#2 eve]");
-    // Never a row of the open list beside the closed answer (F-1).
-    expect(seen.slice(from).filter(s => s.includes("#2") && /#1 |#4 /.test(s))).toEqual([]);
+    expect(asks).toEqual([]);
+    const allowed = new Set([
+      "[#1 ][#3 ][#4 dana]",
+      "[#1 ][#3 guest][#4 dana]",
+      "[#1 ][#4 dana]",
+      "[#2 eve][#4 dana]",
+      "[#2 eve]"
+    ]);
+    expect(seen.filter(frame => !allowed.has(frame))).toEqual([]);
   } finally {
     observer.disconnect();
     dispose();

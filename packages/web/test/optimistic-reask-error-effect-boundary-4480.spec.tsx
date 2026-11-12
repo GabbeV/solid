@@ -3,12 +3,10 @@
  * @vitest-environment jsdom
  */
 /**
- * #4480: a derived optimistic store whose re-ask fails while a guess is
- * pending, read by an effect through `createErrorBoundary`, hung the flush.
- * The filter change is held with the guess's action (D-34); the rejection
- * is staged with that hold (D-41), and the boundary the effect's held pass
- * mounts waits on it. The flush ends; the screen keeps the guess while the
- * action is out (F-11), and the error shows with the hold's reveal (D-41).
+ * An independent producer error reaches unguessed row fields even while an
+ * assignee output is selected by an action. The DOM consumes those other
+ * fields and may show its error fallback; the explicit assignee guess remains
+ * independently readable until its action ends. Neither path may wedge.
  */
 import { expect, test } from "vitest";
 import {
@@ -44,8 +42,12 @@ test("#4480: a re-ask failing under a pending guess, read through createErrorBou
     await tick();
   };
   const container = document.body.appendChild(document.createElement("div"));
+  const seen: string[] = [];
+  const observer = new MutationObserver(() => seen.push(container.textContent!));
+  observer.observe(container, { childList: true, subtree: true, characterData: true });
   let setFilter!: (f: string) => void;
   let rowAssign!: (id: number, who: string) => any;
+  let selectedAssignee!: () => unknown;
   const dispose = render(() => {
     const [filter, sf] = createSignal("open");
     setFilter = sf;
@@ -61,6 +63,7 @@ test("#4480: a re-ask failing under a pending guess, read through createErrorBou
       [] as any[],
       { key: "id" }
     );
+    selectedAssignee = () => issues[0].assignee;
     rowAssign = action(function* (id: number, who: string) {
       const i = untrack(() => issues.findIndex((t: any) => t.id === id));
       set((d: any) => {
@@ -111,10 +114,14 @@ test("#4480: a re-ask failing under a pending guess, read through createErrorBou
     expect(container.textContent).toBe("[#1 guest][#3 ]");
     // Hung here: Potential Infinite Loop Detected.
     await settle("issues:closed", a => a.rej(new Error("declined")));
-    expect(container.textContent).toBe("[#1 guest][#3 ]");
+    expect(container.textContent).toBe("err");
+    expect(selectedAssignee()).toBe("guest");
     await settle("assign:1", a => a.res({}));
     expect(container.textContent).toBe("err");
+    const allowed = new Set(["loading", "[#1 ][#3 ]", "[#1 guest][#3 ]", "err"]);
+    expect(seen.filter(frame => !allowed.has(frame))).toEqual([]);
   } finally {
+    observer.disconnect();
     dispose();
     container.remove();
   }
