@@ -1953,7 +1953,10 @@ function pullFamily(
     // one for which no leaf has been allocated yet.
     readNode(fw);
   } else {
-    untrack(() => readNode(fw));
+    // Keep a synthetic input linked through its producer's quiet landing; the
+    // following ordinary pass restores the settled per-property barrier.
+    if (inputSide && fw._x?._reask) readNode(fw);
+    else untrack(() => readNode(fw));
     // #4491: a derive that is a verdict reader only through what it reads (a
     // verdict memo's value, D-25 / F-6; no window of its own) is served the
     // committed value of a flight it reads (`observeFlight`, A15's stale

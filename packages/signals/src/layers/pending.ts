@@ -32,6 +32,7 @@ import {
   type Layer
 } from "./coordination.js";
 import { observesSnapshot, withReadWindow } from "./window.js";
+import { boundaries } from "./boundary.js";
 import type { Computed, Signal } from "../core/types.js";
 
 import {
@@ -51,17 +52,19 @@ type Observation = SharedObservation<boolean> & { _incoming: Computed<any> | und
 function pendingAnswer(
   input: Computed<any>,
   incoming: Computed<any>,
-  value = input._value
+  value = input._value,
+  quiet = false
 ): boolean {
   return !!(
     (incoming._statusFlags & STATUS_PENDING && !quietPending(incoming)) ||
-    (!incoming._x?._reask &&
+    (!quiet &&
+      !incoming._x?._reask &&
       incoming._pendingValue !== NOT_PENDING &&
       (!!input._x?._shownError || !input._equals || !input._equals(value, incoming._pendingValue)))
   );
 }
 
-function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolean {
+function proposedPending(input: Computed<any>, incoming?: Computed<any>, quiet = false): boolean {
   if (GlobalQueue._marked?.(input) === true) return true;
   if (
     input._statusFlags & STATUS_UNINITIALIZED &&
@@ -71,6 +74,7 @@ function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolea
   if (
     (input._statusFlags & STATUS_PENDING && !quietPending(input)) ||
     (input._config & CONFIG_HELD &&
+      !quiet &&
       !input._x?._reask &&
       input._pendingValue !== NOT_PENDING &&
       (!!input._x?._shownError ||
@@ -82,7 +86,7 @@ function proposedPending(input: Computed<any>, incoming?: Computed<any>): boolea
   // explicit boundaries, including latest around an optimistic output;
   // ordinary memo dependencies are not traversed or given new metadata.
   for (; incoming; incoming = pendingInput(incoming)) {
-    if (pendingAnswer(input, incoming)) return true;
+    if (pendingAnswer(input, incoming, input._value, quiet)) return true;
   }
   return false;
 }
@@ -103,9 +107,31 @@ function observeInput(record: Observation): void {
   }
 }
 
+// A synthetic input can stage its landing before the producer's quiet re-ask
+// commits. Its current dependency retains that live question through the landing.
+// An explicit proposal or another consumed pending input owns a different answer.
+function quietQuestion(record: Observation): boolean {
+  const boundary = boundaries.get(record._input);
+  if (!boundary?._automatic || boundary._override !== NOT_PENDING) return false;
+  let quiet = false;
+  for (let incoming = record._incoming; incoming; incoming = pendingInput(incoming)) {
+    for (let edge = incoming._deps; edge && edge._gen === incoming._depGen; edge = edge._nextDep) {
+      const source = edge._dep as Computed<any>;
+      if (source._x?._reask) quiet = true;
+      else if (pendingAnswer(source, source)) return false;
+    }
+  }
+  return quiet;
+}
+
 const kind: ObservationKind<boolean> = {
   _fallback: pendingFallback,
-  _sample: record => proposedPending(record._input, (record as Observation)._incoming),
+  _sample: record =>
+    proposedPending(
+      record._input,
+      (record as Observation)._incoming,
+      quietQuestion(record as Observation)
+    ),
   _active: (_record, value) => value,
   _observe: record => observeInput(record as Observation),
   _parent: record => {
