@@ -49,7 +49,11 @@ export interface OptHooks {
   /** An untracked `key in store`: the presence guess, or `undefined`. */
   has(t: StoreTarget, key: PropertyKey): boolean | undefined;
   /** A guessed key's descriptor (`null`: removed; `undefined`: no guess). */
-  descriptor(t: StoreTarget, key: PropertyKey): PropertyDescriptor | null | undefined;
+  descriptor(
+    t: StoreTarget,
+    key: PropertyKey,
+    source: Record<PropertyKey, any>
+  ): PropertyDescriptor | null | undefined;
   /** The flush's commit: targets no lane holds leave `_overlaid`. */
   sweep(): void;
   /** The container comparator's lane arm: an arrangement guess against a

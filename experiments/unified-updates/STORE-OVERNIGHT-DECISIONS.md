@@ -409,3 +409,16 @@ showed suppressed synchronous latest publications. It is explicitly reverted in
 history. The quiet pending pulse remains unresolved; focused checks had missed the
 broader latest obligations. Array descriptor/presence corrections and chained store
 propagation also remain under investigation. This is not the completed milestone.
+
+## Descriptor backing coherence
+
+The descriptor proxy trap already chooses the reader's backing before invoking the
+optimistic hook. The hook incorrectly discarded that choice and composed metadata
+against the old raw backing. On a draft answer this could report an absent index
+while its value was present, leaving a memo stale after the backing folded. Passing
+the existing selected backing into the hook fixes the two reduced callback-level
+reproductions and the affected sparse-correction suite without new scheduling or
+bookkeeping. The root check passes 909 cases, including the original 900-case list
+mutation matrix, both reductions and seven independent unknown-seed controls.
+The isolated broader descriptor/getter/shape run passes 1,025 cases. Typechecking
+passes. Reclamation and array-lifetime checks pass 26/26 with explicit GC enabled.

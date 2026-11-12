@@ -591,16 +591,16 @@ export const staticOptimisticHooks: OptHooks = {
     }
   },
   view: selectedView,
-  descriptor: (t, key) => {
+  descriptor: (t, key, source) => {
     // A presence update can reach a descriptor reader before this key's
     // shape stages. Link the shape output so its own staging corrects that
     // pass, independent of proposal order.
     const selectedShape = records.get(t)?.shape.get(key);
     if (selectedShape && getObserver() !== null) read(selectedShape.output);
     const descriptor = untrack(() => {
-      const shape = selectedView(t, t.v);
+      const shape = selectedView(t, source);
       const record = records.get(t);
-      if (!record && shape === t.v) return undefined;
+      if (!record && shape === source) return undefined;
       return Object.getOwnPropertyDescriptor(shape, key) ?? null;
     });
     const slot =

@@ -2453,7 +2453,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     } else src = readSource(target, key, true);
     let desc: PropertyDescriptor | undefined;
     if (optHooks && !enumerating && optRead(target)) {
-      const guessed = optHooks.descriptor(target, key);
+      const guessed = optHooks.descriptor(target, key, src);
       if (guessed === null) return undefined;
       desc = guessed;
     }
