@@ -1,5 +1,11 @@
 # Store structure and initial-answer review — 2026-11-12
 
+Follow-up: the user rejected the complete-array preservation recommendation below
+because it implicitly vouches for unguessed properties. See
+[STORE-COORDINATION-REVIEW.md](./STORE-COORDINATION-REVIEW.md) for the subsequent
+entanglement exploration, pending diagnosis, and upstream #4810 comparison.
+The original comparisons below remain historical evidence, not current approval.
+
 The user rejected sparse array composition as an acceptable general result:
 ordinary consumers of a dense typed array may not handle newly introduced holes.
 This reopens array semantics. The previous green upstream-test checkpoint does
