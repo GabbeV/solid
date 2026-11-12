@@ -31,10 +31,17 @@ export function arrayIndex(key: PropertyKey): number {
   return Number.isInteger(n) && n >= 0 && n < 4294967295 && String(n) === key ? n : -1;
 }
 
-export function selectedArrayLength(t: StoreTarget, base: number, writer = false): number {
+export function selectedArrayLength(
+  t: StoreTarget,
+  base: number | (() => number),
+  writer = false
+): number {
   const r = arrays.get(t);
-  if (!r) return base;
-  let n = r.resize ? ((writer ? r.resize.writerValue() : read(r.resize.output)) as number) : base;
+  const source = () => (typeof base === "function" ? base() : base);
+  if (!r) return source();
+  let n = r.resize
+    ? ((writer ? r.resize.writerValue() : read(r.resize.output)) as number)
+    : source();
   for (const floor of r.floors) {
     const required = (writer ? floor.writerValue() : read(floor.output)) as number;
     if (required > n) n = required;

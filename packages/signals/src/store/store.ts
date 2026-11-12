@@ -1887,7 +1887,7 @@ function pullFamily(
     typeof Object.getOwnPropertyDescriptor(Array.prototype, key)?.value === "function"
   )
     return;
-  if (!inputSide && optHooks?.ownsFirewall?.(target, key, presence)) return;
+  if (!inputSide && target._fam!.opt && optHooks?.ownsFirewall?.(target, key, presence)) return;
   // A settled derive: the pull alone, no link (the barrier). A derive with a
   // flight up (or errored): the reader observes the flight exactly as a
   // reader of a memo would — linked, so it re-runs at the landing (the
@@ -2217,8 +2217,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     ) {
       // The normal length input still carries authoritative updates. Growth
       // outputs add only the minimum lengths their own guesses require.
-      const input = getNode(target, key);
-      return optHooks.length(target, readNode(input) as number);
+      return optHooks.length(target, () => readNode(getNode(target, key)) as number);
     }
     const node0 = target.n?.[key as any];
     if (writeScopes === null && !writeOverride) {

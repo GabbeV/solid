@@ -229,3 +229,26 @@ reading the base length it replaces, whereas a growth floor must keep that input
 dependency. The integration exposes two before-first-length failures and a
 repeated-edit publication failure in this area. Producer reconciliation now uses
 the writer view, preventing an internal pending read during answer adoption.
+
+
+## Length input routing and discovery context
+
+An explicit resize now reads its own selected output before consulting the
+length it replaces. A growth floor still combines with, and therefore observes,
+the input length. This fixes the before-first-input distinction without letting
+an implicit floor publish an unknown seed length. The producer bypass is gated
+on optimistic families; ordinary derived arrays retain their status check.
+
+Discovery can notify a lower input while an upper update is executing. A
+notification alone does not consume the upper proposal. The lower computation
+now keeps its own unfinished update context until an actual higher dependency
+selects a retry. Without that rule, its ordinary hold join accidentally merged
+the input action with the optimistic output, leaving an existing reader stuck
+while a late reader displayed the guess. Scalar controls reproduce the defect
+without stores. Genuine higher dependency adoption still passes at two depths.
+
+Validation: 62 focused tests pass, plus typechecking. A 123-test projection/status
+run passes 121; the remaining enumerator repeat and untracked store-context cases
+are being investigated. The full discovery run before the ordinary-family gate
+reported 7,663 passes, 268 failures and five skips; it exposed the gate regression
+and is not final acceptance. Full-suite failure counts include deferred `until`.

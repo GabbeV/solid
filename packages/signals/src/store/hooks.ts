@@ -32,7 +32,7 @@ export interface OptHooks {
   /** A user's draft operation, excluding internal copying and comparison. */
   draftRead?(t: StoreTarget, key: PropertyKey | undefined, kind: "value" | "has" | "keys"): void;
   /** Array-only selected length and successful user draft mutations. */
-  length?(t: StoreTarget, base: number): number;
+  length?(t: StoreTarget, base: () => number): number;
   draftWrite?(
     t: StoreTarget,
     key: PropertyKey,

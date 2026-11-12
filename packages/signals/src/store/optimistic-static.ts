@@ -310,10 +310,13 @@ function readDescendantOutputs(root: StoreTarget): boolean {
 }
 
 function readSelected(t: StoreTarget, node: Signal<any>) {
-  if (Array.isArray(t.v) && (node as any)._key === "length") {
-    const base = t.ch ? (read(getContainerNode(t)) as any[]).length : (read(node) as number);
-    return selectedArrayLength(t, base);
-  }
+  if (Array.isArray(t.v) && (node as any)._key === "length")
+    return selectedArrayLength(t, () => {
+      const body = selectedBody(t);
+      if (body) return body.length;
+      pullFamilyInput(t, "length");
+      return t.ch ? (read(getContainerNode(t)) as any[]).length : (read(node) as number);
+    });
   if (node === t.k) {
     const value = read(node);
     selectedShapes(t);
@@ -449,16 +452,20 @@ export const staticOptimisticHooks: OptHooks = {
   inputBody: selectedBody,
   ownsFirewall: (t, key, presence) => {
     if (selectedBody(t)) return true;
+    // A resize supplies the full source; a minimum floor still demands it.
+    if (!presence && key === "length" && Array.isArray(t.v)) return true;
     if (key === undefined) return false;
     const record = records.get(t);
     const slot = (presence ? record?.presence : record?.slots)?.get(key);
     return !!slot && firewallSlots.has(slot);
   },
   length: (t, base) =>
-    selectedArrayLength(
-      t,
-      selectedBody(t)?.length ?? (t.ch ? (read(getContainerNode(t)) as any[]).length : base)
-    ),
+    selectedArrayLength(t, () => {
+      const body = selectedBody(t);
+      if (body) return body.length;
+      pullFamilyInput(t, "length");
+      return t.ch ? (read(getContainerNode(t)) as any[]).length : base();
+    }),
   read: readSelected,
   rowValue: (t, key, receiver) => {
     const row = selectedBody(t);
@@ -709,7 +716,7 @@ export const staticOptimisticHooks: OptHooks = {
     const slot = (presence ? record?.presence : record?.slots)?.get(key);
     if (slot?.activeOwner()) return true;
     if (presence) return false;
-    return (key === "length" && arrayGrowthStands(t)) || descendantStands(t, key);
+    return descendantStands(t, key);
   }
 };
 

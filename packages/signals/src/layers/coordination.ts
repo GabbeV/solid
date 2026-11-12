@@ -658,6 +658,15 @@ function rerunLayer(node: Computed<any>, create: boolean, fromHeap: boolean): bo
     node._flags &= ~REACTIVE_LAYER_EFFECT;
   }
   const own = node._config & CONFIG_HELD ? txOf(node) : null;
+  // A notification has not consumed the notifying update's proposal. Keep
+  // an unfinished lower calculation in its own input context; otherwise its
+  // ordinary held-pass join would merge that input into a ready upper cut.
+  // A changed upper dependency adopts its reader before this point, while
+  // an upper value first discovered by the body can select a retry there.
+  if (own && !(node as any)._type && positionOf(flushTransaction) > positionOf(own)) {
+    recomputeInUpdate(node, own, true, false, fromHeap);
+    return true;
+  }
   if (!isChildUpdate(own)) return scopedCalculation(node, flushTransaction, false, fromHeap);
   if (!flushTransaction && hasUnheldProposals()) joinFuture(null);
   const incoming = flushTransaction && resolveTx(flushTransaction);
