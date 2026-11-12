@@ -32,7 +32,7 @@ test.each([false, true])("#4275 JSX mount (latest first: %s)", async latestFirst
     return (
       <>
         <p>{mounted() ? "on" : "off"}</p>
-        <Show when={mounted()}>{content}</Show>
+        <Show when={mounted()}>{content()}</Show>
       </>
     );
   }
