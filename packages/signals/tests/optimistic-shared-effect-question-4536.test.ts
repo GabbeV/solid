@@ -54,6 +54,9 @@ for (const order of ["question first", "list first"] as const)
         const [issues, set] = createOptimisticStore<Issue[]>(() => ask(`issues:${filter()}`), [], {
           key: "id"
         });
+        // For-like coherence readers also demand container structure. That
+        // ordinary input holder keeps the independent question open until its
+        // answer; the native-map-only DOM fixture has no such extra holder.
         readerChecks.push(selectedListReaders(issues, () => rowsVisible));
         closeOne = action(function* (id: number) {
           set(list => {

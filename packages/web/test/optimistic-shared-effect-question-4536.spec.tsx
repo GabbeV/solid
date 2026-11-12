@@ -95,9 +95,11 @@ for (const on of [true, false])
           expect(container.textContent).toBe(on ? "loading" : "open: [#1][#3][#4]");
           closeOne(1);
           await tick();
-          const selected = on ? "closed: [#3][#4]" : "open: [#3][#4]";
-          expect(container.textContent).toBe(selected);
-          if (!on) expect(seen.filter(frame => frame.startsWith("closed:"))).toEqual([]);
+          // Native map now reads selected length, presence and row outputs.
+          // No ordinary producer reader remains to hold the independent filter
+          // update. Unlike the source For-coherence fixture, this DOM has no
+          // extra container-structure observer. The unanswered input is hidden.
+          expect(container.textContent).toBe("closed: [#3][#4]");
           await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
           expect(container.textContent).toBe("closed: [#3][#4]");
           await settle("close:1", {});
