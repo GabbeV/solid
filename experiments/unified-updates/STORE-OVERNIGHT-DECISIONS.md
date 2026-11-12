@@ -482,3 +482,24 @@ and passes all eight variants. Five separate demand controls and the original
 source bindings pass in the root checkout. This follows the existing no-demand-
 forwarding rule; it does not change conservative retention of an override's own
 pending input or allow unguessed input answers to tear.
+
+## Quiet refresh landing and cold metadata
+
+The quiet refresh correction is local to question classification. A synthetic
+store input retains its producer dependency only while that producer's quiet
+re-ask is live. Pending observation follows current-generation dependencies of
+explicit incoming boundary inputs; a consumed nonquiet pending or staged answer
+vetoes quiet inheritance, as does an explicit override. No global publication
+reordering, per-node provenance field, or settled property-wide subscription was
+added. The two-field settled control still recomputes only the changed field.
+Scalar boundaries and mixed quiet/ordinary inputs are included in the controls.
+
+A separate cold allocation bug hid an already published property behind unknown
+metadata. If a shape companion was first created during a quiet refresh, its
+accessor probe suspended before reaching the property's committed value or held
+proposal. Its output now initializes from metadata of the actual published body;
+an unknown first producer still supplies no seed. The regression verifies the
+complete 10/20 -> held 15/30 -> 15/30 -> held revert -> 10/20 lifecycle and pending
+flags, including an equal input landing during the hold. Root tests pass 52/52,
+including the cold seed controls and explicit garbage collection. Typechecking
+and generated rule-index validation pass. The final full run is still pending.
