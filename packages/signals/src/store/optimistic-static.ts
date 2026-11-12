@@ -1,6 +1,6 @@
 /** Interim shared-engine slice: flat plain records with per-property cuts.
  * Truth slots stay store-owned; only their selected outputs accept guesses. */
-import { computed, read, runWithOwner, untrack } from "../core/core.js";
+import { computed, read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.js";
 import { CONFIG_AUTO_DISPOSE, CONFIG_HELD, REACTIVE_DISPOSED } from "../core/constants.js";
 import type { Computed, Signal } from "../core/types.js";
 import { enqueueSub, markNode } from "../core/heap.js";
@@ -91,7 +91,16 @@ function selectedBody(t: StoreTarget, writer = false): Record<PropertyKey, any> 
     }
   }
   if (slot) {
-    const value = writer ? slot.writerValue() : read(slot.output);
+    // Selecting the body's identity is an ordinary dependency. A query of
+    // a captured child's leaf must not also query the parent's pending mark.
+    const previous = verdict;
+    setVerdict(null);
+    let value;
+    try {
+      value = writer ? slot.writerValue() : read(slot.output);
+    } finally {
+      setVerdict(previous);
+    }
     if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
   }
   if (t.u && t.pk !== null) {
