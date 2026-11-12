@@ -21,7 +21,6 @@ import { runWithOwner } from "../core/core.js";
 import type { Computed } from "../core/types.js";
 import {
   inputTime,
-  pendingInput,
   createLayerBoundary,
   setObservationLifecycle,
   resumeInput,
@@ -65,18 +64,6 @@ function deadObservation(record: Observation<any>): boolean {
   );
 }
 
-// Pending-only consumers do not hold an input update. That update can be
-// ready to publish while its request is still unanswered; its observation
-// must nevertheless keep reporting the request.
-function unansweredInput(record: Observation<any>): boolean {
-  for (let input: Computed<any> | undefined = record._input; input; input = pendingInput(input)) {
-    if (input._statusFlags & STATUS_PENDING) return true;
-    for (const source of input._x?._pendingSources ?? [])
-      if (source._statusFlags & STATUS_PENDING) return true;
-  }
-  return false;
-}
-
 function prepareObservations(): boolean {
   let changed = selected;
   selected = false;
@@ -102,26 +89,6 @@ function prepareObservations(): boolean {
     )
       continue;
     const next = record._observation._sample(record);
-    if (record._observation._active(record, next)) {
-      watching.add(record);
-      const owner = record._observation._parent
-        ? record._observation._parent(record)
-        : record._input._config & CONFIG_HELD
-          ? txOf(record._input)
-          : record._parent;
-      const parent = owner && liveTx(owner);
-      // A ready answer needs no transient child proposal. Restore through
-      // the input context before callbacks can publish that intermediate
-      // selection; a blocked answer still reports pending normally.
-      if (parent && !blocked(parent) && !unansweredInput(record)) {
-        record._retiring = true;
-        record._parent = parent;
-        record._time = inputTime(record._input);
-        record._parent = resumeInput(record, parent, true);
-        changed = true;
-        continue;
-      }
-    }
     if (!Object.is(record._override, next)) {
       stageLayer(record, next);
       changed = true;
@@ -155,7 +122,7 @@ function prepareObservations(): boolean {
     }
     if (
       parent
-        ? blocked(parent) || unansweredInput(record)
+        ? blocked(parent)
         : record._observation._active(record, record._observation._sample(record))
     )
       continue;
