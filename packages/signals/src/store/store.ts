@@ -585,7 +585,41 @@ const lookupGetter = (Object.prototype as any).__lookupGetter__;
 const lookupSetter = (Object.prototype as any).__lookupSetter__;
 const propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
+/** Classify an inherited Array intrinsic without asking a chained store's
+ * reactive descriptor traps. The method itself carries no producer data. */
+function intrinsicArrayMethod(src: Record<PropertyKey, any>, key?: PropertyKey): boolean {
+  if (!Array.isArray(src) || typeof key !== "string") return false;
+  const target: StoreTarget | undefined = src[$TARGET];
+  if (target?.px === src) {
+    // A selected parent body can retain descriptors that truth has replaced.
+    if (target._fam?.opt && optHooks?.inputBody?.(target)) return false;
+    const current = target.v;
+    const previous = committed(target);
+    return (
+      intrinsicArrayMethod(current, key) &&
+      (previous === current || intrinsicArrayMethod(previous, key))
+    );
+  }
+  if (hasOwn.call(src, key)) return false;
+  const intrinsic = Object.getOwnPropertyDescriptor(Array.prototype, key)?.value;
+  if (typeof intrinsic !== "function") return false;
+  for (
+    let prototype = Object.getPrototypeOf(src);
+    prototype;
+    prototype = Object.getPrototypeOf(prototype)
+  ) {
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, key);
+    if (descriptor) return "value" in descriptor && descriptor.value === intrinsic;
+  }
+  return false;
+}
+
 function isOwnAccessor(src: Record<PropertyKey, any>, key: PropertyKey): boolean {
+  if (Array.isArray(src)) {
+    const target: StoreTarget | undefined = src[$TARGET];
+    if (target?.px === src && intrinsicArrayMethod(src, key))
+      return target._fam?.opt ? (optHooks?.accessorKind?.(target, key) ?? false) : false;
+  }
   return (
     hasOwn.call(src, key) &&
     (lookupGetter.call(src, key) !== undefined || lookupSetter.call(src, key) !== undefined)
@@ -1889,8 +1923,10 @@ function pullFamily(
     !inputSide &&
     Array.isArray(target.v) &&
     typeof key === "string" &&
-    !Object.prototype.hasOwnProperty.call(target.v, key) &&
-    typeof Object.getOwnPropertyDescriptor(Array.prototype, key)?.value === "function"
+    (target.ch
+      ? intrinsicArrayMethod(target.v, key)
+      : !hasOwn.call(target.v, key) &&
+        typeof Object.getOwnPropertyDescriptor(Array.prototype, key)?.value === "function")
   )
     return;
   if (!inputSide && target._fam!.opt && optHooks?.ownsFirewall?.(target, key, presence)) return;
@@ -2364,12 +2400,14 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       if (target.s) return serveShallow(target, key, v);
       return isWrappable(v) ? draftServe(target, wrap(v, target, key)) : v;
     }
-    if (
-      typeof v === "function" &&
-      !hasOwn.call(src, key) &&
-      !(viewOvl && hasOwn.call(target.v, key))
-    )
-      return v; // proto method
+    if (typeof v === "function") {
+      const sourceTarget: StoreTarget | undefined = Array.isArray(src) ? src[$TARGET] : undefined;
+      const inherited =
+        sourceTarget?.px === src && intrinsicArrayMethod(src, key)
+          ? v === (Array.prototype as any)[key]
+          : !hasOwn.call(src, key) && !(viewOvl && hasOwn.call(target.v, key));
+      if (inherited) return v; // proto method
+    }
     return serveDataKey(target, key, v, src, node0, accProbe);
   },
 
