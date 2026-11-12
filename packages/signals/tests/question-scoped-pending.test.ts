@@ -1116,6 +1116,7 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     const sourceFetch = deferredFetcher((_: number) => serverValue);
     const derivedFetch = deferredFetcher((v: number) => v * 2);
 
+    const sourcePublished: number[] = [];
     let state!: { data: number };
     let derived!: SourceAccessor<number>;
     let dispose!: () => void;
@@ -1127,6 +1128,12 @@ describe("digestion windows (same-question landings are ordinary changes downstr
           s.data = await sourceFetch.fetch(0);
         },
         { data: 0 }
+      );
+      createRenderEffect(
+        () => state.data,
+        value => {
+          sourcePublished.push(value);
+        }
       );
       derived = createMemo(() => derivedFetch.fetch(state.data));
       createRenderEffect(derived, () => {});
@@ -1150,10 +1157,16 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     sourceFetch.resolveAll();
     await tick();
     expect(isPending(derived)).toBe(true);
+    expect(isPending(() => state.data)).toBe(true);
+    expect(state.data).toBe(10);
+    expect(sourcePublished.at(-1)).toBe(10);
 
     derivedFetch.resolveAll();
     await tick();
     expect(derived()).toBe(30);
+    expect(sourcePublished.at(-1)).toBe(15);
+    expect(state.data).toBe(15);
+    expect(isPending(() => state.data)).toBe(false);
     expect(isPending(derived)).toBe(false);
     dispose();
   });
