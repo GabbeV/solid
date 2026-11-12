@@ -605,6 +605,11 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
     flights.splice(0).forEach(f => f());
     await settle();
     await settle();
+    // The landed truth asks its own downstream flight after the action and
+    // the previous answer finish. Fulfill that request before its publication.
+    expect(flights).toHaveLength(1);
+    flights.shift()!();
+    await settle();
     expect(log).toEqual([2]);
   });
 });

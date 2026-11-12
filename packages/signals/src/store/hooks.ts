@@ -68,7 +68,7 @@ export interface OptHooks {
   park(t: Transaction): void;
   /** A read of `t` while its family's derive is in flight: the family's
    * guesses stand in for the flight (no suspension). */
-  stands(t: StoreTarget): boolean;
+  stands(t: StoreTarget, key?: PropertyKey, presence?: boolean): boolean;
 }
 // Set before any family is optimistic (`fam.opt`): a call site checks the
 // hooks first, so a build that does not import optimistic.ts folds the arm

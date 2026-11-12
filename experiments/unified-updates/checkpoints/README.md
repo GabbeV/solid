@@ -70,3 +70,5 @@ still rejects optimistic stores at this checkpoint. See
 `setter-read-report-20261112.tar.xz` restores `results/setter-read-report/`: controlled read/write ownership probes on next and the experiment, the browser-verified hosted reproduction, and the unsubmitted issue form. Both runtimes currently keep read-a/write-b action lifetimes independent; write-a/write-a controls entangle.
 
 `store-expanded-20261112.tar.xz` restores `results/store-expanded/`: store draft/array/chained/accessor integration receipts, diagnostic full signals failures, focused 70-test checkpoint, and array mutation investigations. The full run was concurrent with edits and is not acceptance evidence; until remains deferred and derived/keyed integration continues.
+
+`store-keyed-20261112.tar.xz` restores `results/store-keyed/`: frozen full-suite classification, direct-key/refetch and keyed-pairing checks, source patch, and before-first-answer probes. Whole-row preservation and derived status integration remain incomplete; see `STORE-OVERNIGHT-DECISIONS.md`.

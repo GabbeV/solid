@@ -3,18 +3,13 @@
  * transaction holds store landings.
  *
  * deep()/snapshot compose from store backings; per-key reads answer through
- * node/backing visibility. #3145 removed the accidental capture (a stranger
- * transaction adopting a landing), but a LEGITIMATE hold — the #3164 fold of
- * a truth landing into the retaining transaction — reopened the seam: the
- * per-key channel masked the held landing (committed + optimism) while
- * deep() composed over the post-mutation pending backing (staged truth +
- * optimism), a frame no timeline contains.
+ * node/backing visibility. A truth landing on unguessed indices must agree
+ * across those reader families while an action retains a different index.
  *
- * Ruling pinned here: deep()/snapshot stay the SPECULATIVE peek channel
- * (they see ordinary pending staging synchronously — the documented
- * divergence from context-free committed reads), but the hold decision is
- * SHARED with per-key reads: held truth is masked from both until the
- * transaction's reveal.
+ * Ruling pinned here: deep()/snapshot and per-key readers compose the same
+ * selected outputs. An independent truth write can publish at indices 0-2
+ * while an action still owns an index-3 guess; deep itself does not merge
+ * those otherwise independent lifetimes.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -34,7 +29,7 @@ const settle = async (n = 3) => {
   }
 };
 
-describe("#3147: reader families agree under a held fold", () => {
+describe("#3147: reader families agree across independent index lifetimes", () => {
   it("deep() composes the same view as per-key reads through the hold and the reveal", async () => {
     let resolveTruth!: () => void;
     const truth = new Promise<void>(r => (resolveTruth = r));
@@ -99,13 +94,12 @@ describe("#3147: reader families agree under a held fold", () => {
     expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
     expect(deepLog.at(-1)).toBe("[1,2,3,1111]");
 
-    // Truth lands mid-action: it folds into the retaining transaction and is
-    // HELD. Per-key readers keep the pre-hold view; deep()/snapshot must
-    // agree — not report the post-mutation [3,2,1,1111].
+    // Truth for indices 0-2 lands independently while the index-3 guess
+    // stays selected. Every reader family observes the same mixed frame.
     resolveTruth();
     await settle();
-    expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
-    expect(deepLog.at(-1)).toBe("[1,2,3,1111]");
+    expect(keyLog.at(-1)).toBe("[3,2,1,1111]");
+    expect(deepLog.at(-1)).toBe("[3,2,1,1111]");
 
     // Settle: atomic reveal, override reverts, landed truth shows — in both.
     resolveGate();

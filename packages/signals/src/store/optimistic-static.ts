@@ -34,7 +34,8 @@ import {
 import type { OptHooks } from "./hooks.js";
 import type { StoreTarget } from "./target.js";
 import { $TARGET, $TRACK, isWrappable } from "./types.js";
-import { $OWNER } from "./target.js";
+import { $OWNER, lookupTarget } from "./target.js";
+import { reconcileState } from "./reconcile.js";
 
 type Slot = ReturnType<typeof createOptimisticSlot<any>>;
 type RecordSlots = {
@@ -194,8 +195,7 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
     if (Array.isArray(t.v)) {
       const record = records.get(t);
       if (record)
-        for (const [key, slot] of record.slots)
-          if (arrayIndex(key) >= 0) read(slot.output);
+        for (const [key, slot] of record.slots) if (arrayIndex(key) >= 0) read(slot.output);
     }
     return value;
   }
@@ -337,8 +337,13 @@ export const staticOptimisticHooks: OptHooks = {
     }
   },
   view: selectedView,
-  descriptor: (t, key) =>
-    untrack(() => {
+  descriptor: (t, key) => {
+    // A presence update can reach a descriptor reader before this key's
+    // shape stages. Link the shape output so its own staging corrects that
+    // pass, independent of proposal order.
+    const selectedShape = records.get(t)?.shape.get(key);
+    if (selectedShape && getObserver() !== null) read(selectedShape.output);
+    return untrack(() => {
       const record = records.get(t);
       if (!record) return undefined;
       const shape = selectedView(t, t.v);
@@ -349,7 +354,8 @@ export const staticOptimisticHooks: OptHooks = {
           ? { ...descriptor, value: slot ? read(slot.output) : truthValue(t, key) }
           : descriptor
         : null;
-    }),
+    });
+  },
   has: (t, key) => {
     const slot = records.get(t)?.presence.get(key);
     return slot ? !!read(slot.output) : undefined;
@@ -454,7 +460,48 @@ export const staticOptimisticHooks: OptHooks = {
   },
   reconcile: reconcileDraft,
   arrangement: () => false,
-  pair: () => {},
+  pair: (t, source) => {
+    const family = t._fam!;
+    const paired = new Set<StoreTarget>();
+    const pair = (child: StoreTarget) => {
+      while (child.u !== t) {
+        if (!child.u) return;
+        child = child.u;
+      }
+      if (paired.has(child)) return;
+      paired.add(child);
+      const key = family.key?.(child.v);
+      const incoming = Array.isArray(source)
+        ? key !== undefined &&
+          source.find(row => isWrappable(row) && sameKey(family.key!(row), key))
+        : source[child.pk!];
+      if (isWrappable(incoming) && !lookupTarget(incoming, family))
+        reconcileState(incoming, child.px, family.key, true);
+    };
+    // An index override selects a row identity. Its unguessed fields still
+    // receive same-key answers; explicit leaf overrides remain selected.
+    for (const slot of records.get(t)?.slots.values() ?? []) {
+      if (!slot.activeOwner()) continue;
+      const value = slot.writerValue();
+      const child = isWrappable(value) && lookupTarget(value, family);
+      if (child) pair(child);
+    }
+    // A guessed leaf can also keep a row that its parent never guessed.
+    for (const target of family.live) {
+      const record = records.get(target);
+      if (!record) continue;
+      for (const slots of [record.slots, record.presence, record.shape]) {
+        let found = false;
+        for (const slot of slots.values())
+          if (slot.activeOwner()) {
+            pair(target);
+            found = true;
+            break;
+          }
+        if (found) break;
+      }
+    }
+  },
   sweep: () => {
     // Once a correction committed, an enumerator no longer needs the extra
     // shape candidate. Wake it through the ordinary discovery node so its
@@ -480,7 +527,12 @@ export const staticOptimisticHooks: OptHooks = {
   },
   ask: () => {},
   park: () => {},
-  stands: () => false
+  stands: (t, key, presence) => {
+    if (key === undefined) return false;
+    const record = records.get(t);
+    const slot = (presence ? record?.presence : record?.slots)?.get(key);
+    return !!slot?.activeOwner();
+  }
 };
 
 export function createStaticOptimisticStore(first: any, second?: any, third?: any) {

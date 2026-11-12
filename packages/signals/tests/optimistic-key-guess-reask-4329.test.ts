@@ -379,16 +379,16 @@ async function reask(h: ReturnType<typeof setup>, rows: Issue[]) {
 for (const mode of ["draft", "return"] as const) {
   describe(`#4329 follow-ups, ${mode === "draft" ? "draft-write" : "returned-rows"} derive`, () => {
     for (const truth of [null, "carl"]) {
-      it(`latest() answers the truth under a shown guess (truth ${truth === null ? "equal to the committed value" : "differs"}) (D-34)`, async () => {
+      it(`latest() observes the selected guess until correction (truth ${truth === null ? "equal to the committed value" : "differs"}) (D-34)`, async () => {
         const h = await primed(mode);
         const save = assign(h, 1, "ann");
         await tick();
         await reask(h, LIST(null, truth));
         expect(h.screen()).toBe("1:null 3:ann");
         expect(h.store[1].assignee).toBe("ann");
-        expect(latest(() => h.store[1].assignee)).toBe(truth);
+        expect(latest(() => h.store[1].assignee)).toBe("ann");
         expect(latest(() => h.store.map(i => `${i.id}:${i.assignee}`).join(" "))).toBe(
-          `1:null 3:${truth}`
+          "1:null 3:ann"
         );
         save.res();
         await tick();

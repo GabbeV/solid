@@ -63,3 +63,44 @@ assertions still to migrate into positive supported-behavior tests.
 - The full diagnostic run captured while sources changed is evidence for failure
   discovery only (7,218 pass / 583 fail / 2 skip), not an acceptance claim.
 - No changes to `until`; derived pending and keyed cases remain in progress.
+
+
+## Derived/keyed checkpoint review
+
+The frozen `1e1b1e07a` checkout, after building its artifacts, ran 7,808 tests:
+7,521 passed, 285 failed, 2 skipped. Source/helper inspection identified 138
+failures dependent on deferred `until`; 147 were still actionable or required
+semantic review. Counts include diagnostics and the artifact runner argument
+limit, not just observable runtime failures.
+
+The next checkpoint implements direct-property pending-input ownership, keyed
+pairing for draft-mutating producer answers, and descriptor readers tracking their
+selected shape. Attribution labels now follow the store output. The artifact
+runner feeds bundled code through stdin rather than exceeding the OS argument
+limit; this changes no bundle-size acceptance threshold.
+
+Accepted test migrations apply existing rulings: `latest` reads the selected
+output; incoming producer answers can update unguessed indices while a different
+index override remains; `deep` does not extend action ownership. Both per-key
+and snapshot/deep channels must agree. A posture fixture now fulfills the actual
+additional downstream request before asserting publication. Its expected visible
+values and earlier holding assertions are unchanged.
+
+Three upstream store tests that used `until` to keep actions open have controlled
+gate counterparts. Their automatic-acknowledgement versions remain executable,
+explicitly deferred tests in `store/deferred-optimistic-until.test.ts`.
+
+**Rejected migration:** a same-key echo must not mutate fields inside a still
+selected whole-row guess. `push({pending:true})`, setting that field in a second
+statement, and an equal redundant assignment expose the distinction. Next keeps
+all three guesses until settlement; the experiment currently corrects two early.
+The tempting Saved/pending-false expectation changes were withdrawn. Added
+regressions intentionally fail until a whole-row boundary preserves that value
+without joining the input's lifetime to the guessing action.
+
+**Unfinished:** derived store pending/error propagation, late-created and nested
+outputs, guesses before the first input answer, and the whole-row case above.
+The scalar first-answer ruling supports investigating store guesses too, but its
+original document explicitly deferred list composition. No old diagnostic was
+restored just to pass its test. No pending/error prototype has been merged solely
+because a narrow example passed.

@@ -99,7 +99,18 @@ function pendingScope(update: Transaction): boolean {
   if (update === settledInputs) return false;
   const layers = scopes.get(update);
   if (!layers) return false;
-  for (const layer of layers) if (layer._input._statusFlags & STATUS_PENDING) return true;
+  for (const layer of layers) if (pendingInput(layer)) return true;
+  return false;
+}
+
+/** A projection leaf is a plain signal: its producer's flight reaches it as
+ * a pending source rather than its own status flag. Both forms justify a
+ * guess made while that question is unanswered. */
+function pendingInput(layer: Layer<any>): boolean {
+  const input = layer._input;
+  if (input._statusFlags & STATUS_PENDING) return true;
+  for (const source of input._x?._pendingSources ?? [])
+    if (source._statusFlags & STATUS_PENDING) return true;
   return false;
 }
 
@@ -145,7 +156,7 @@ function prepareGuesses(): boolean {
     }
     if (!layer._automatic || layer._scope) continue;
     let scope = inputUpdate(layer) ?? (flushTransaction && resolveTx(flushTransaction));
-    if (!scope && layer._input._statusFlags & STATUS_PENDING) {
+    if (!scope && pendingInput(layer)) {
       // Keep this new lifetime alive until the guess has propagated once;
       // its displayed consumers then determine the ordinary input hold.
       scope = newTransaction(false);
@@ -164,7 +175,7 @@ function prepareGuesses(): boolean {
     if (!scope._open) {
       settledInputs = scope;
       for (const layer of layers)
-        if (layer._input._statusFlags & STATUS_PENDING) {
+        if (pendingInput(layer)) {
           settledInputs = null;
           break;
         }
@@ -427,6 +438,10 @@ export function createOptimisticSlot<T>(
   layer._inputStatus = true;
   layer._onSelected = onSelected;
   layer._output._config &= ~CONFIG_AUTO_DISPOSE;
+  if (__OBSERVE__ && attrHooks !== null) {
+    (layer._output as any)._name = (input as any)._name;
+    (layer._output as any)._loc = (input as any)._loc;
+  }
   const [, propose] = layerAccessors(layer);
   // Establish the initial published value even when the first operation is a
   // setter. No function/thenable normalization: slot contents are raw values.

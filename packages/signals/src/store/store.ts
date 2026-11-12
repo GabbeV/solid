@@ -1867,7 +1867,7 @@ export function linkedTo(c: Computed<any>, n: Signal<any>): boolean {
  * window judges it; a pending source registers the reader for the landing)
  * and the reader's height. The derive's own draft ops are exempt (the write
  * override): the derive is the author. */
-function pullFamily(target: StoreTarget): void {
+function pullFamily(target: StoreTarget, key?: PropertyKey, presence = false): void {
   const fw = target._fam!.node;
   if (fw === null || writeOverride || inDraft(target)) return;
   // A settled derive: the pull alone, no link (the barrier). A derive with a
@@ -1886,7 +1886,12 @@ function pullFamily(target: StoreTarget): void {
     // (optimistic.ts `stands`, #4336). A reader observing the flight keeps
     // observing it (`stands`, #4536). Judged first: the hook sees the frame's
     // readers too.
-    if (verdict === null && fw._statusFlags & STATUS_PENDING && optHooks?.stands(target)) return;
+    if (
+      verdict === null &&
+      fw._statusFlags & STATUS_PENDING &&
+      optHooks?.stands(target, key, presence)
+    )
+      return;
     // A render effect outside the flight's own flush is the frame, not a
     // derivation: it keeps what it shows and learns of the landing from the
     // leaves the landing changes (unchanged leaves say nothing — it is not a
@@ -2147,7 +2152,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     // store is witnessed, then the pull throws — loading, declared pending.)
     if (verdict !== null && affectsHooks !== null && getObserver() === null)
       affectsHooks._witness(target, key);
-    if (target._fam !== null) pullFamily(target);
+    if (target._fam !== null) pullFamily(target, key);
     if (target._fam?.opt && !inDraft(target) && !writeOverride && optHooks?.accessor) {
       const selected = optHooks.accessor(target, key, receiver);
       if (selected !== undefined) {
@@ -2334,7 +2339,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     // store is witnessed, then the pull throws — loading, declared pending.)
     if (verdict !== null && affectsHooks !== null && getObserver() === null)
       affectsHooks._witness(target, key);
-    if (target._fam !== null) pullFamily(target);
+    if (target._fam !== null) pullFamily(target, key, true);
     const src = readSource(target, key);
     if (userWrite && target._fam?.opt && inDraft(target)) optHooks?.draftRead?.(target, key, "has");
     // A tracked reader's presence node answers (born from the two frames;
@@ -2378,7 +2383,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     const obs = getObserver();
     if (verdict !== null && affectsHooks !== null && obs === null)
       affectsHooks._witness(target, key);
-    if (target._fam !== null) pullFamily(target);
+    if (target._fam !== null) pullFamily(target, key, true);
     // An enumerator (spread, Object.entries) already holds the container
     // node and reads its frame; a descriptor read on its own tracks
     // presence (R13).

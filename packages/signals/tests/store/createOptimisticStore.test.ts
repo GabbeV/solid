@@ -16,7 +16,6 @@ import {
   mapArray,
   refresh,
   snapshot,
-  until,
   untrack,
   type Refreshable
 } from "../../src/index.js";
@@ -3234,12 +3233,9 @@ describe("createOptimisticStore", () => {
       for (const frame of rendered) expect(frame).not.toContain(undefined as unknown as string);
     });
 
-    // Re-ruled by the #3164 fold: a landing that arrives while an action
-    // retains optimistic edits FOLDS into that transaction — the mid-hold
-    // view keeps the retained optimism (old question + optimistic row), and
-    // the landed truth reveals atomically when the retaining action settles
-    // (optimism dies with its transaction, never with a foreign landing).
-    it("holds optimistic rows across a separate source landing; the reveal clears them at settle (#2719/#3164)", async () => {
+    // A separate source landing owns its answer. The optimistic add retains
+    // its own row until its action settles, while the new issue is visible.
+    it("shows a separate source landing beside a retained optimistic row", async () => {
       type Comment = { id: number; text: string };
       const serverComments = [
         [
@@ -3312,6 +3308,7 @@ describe("createOptimisticStore", () => {
       const add = addComment();
       flush();
       expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
+      const beforeSwitch = rendered.length;
 
       const next = nextIssue();
       flush();
@@ -3319,27 +3316,25 @@ describe("createOptimisticStore", () => {
       await next;
       await settle();
 
-      // Mid-hold: addComment's transaction retains the optimistic row, so
-      // the issue-1 landing stays folded — the view keeps the old question
-      // plus the optimism, with no intermediate flash.
+      // The new source answer publishes independently of addComment.
       expect(comments.length).toBe(3);
-      expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
+      expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B", "Optimistic"]);
+      for (const frame of rendered.slice(beforeSwitch)) {
+        expect(frame[2]).toBe("Optimistic");
+        expect(["Issue 0 A,Issue 0 B", "Issue 1 A,Issue 1 B"]).toContain(frame.slice(0, 2).join(","));
+      }
 
       resolveAdd();
       await add;
       await settle();
-      // Settle: the override reverts and the folded truth reveals in one
-      // frame — the optimistic row is gone, the new question is visible.
+      // The add's own guess reverts at its settle.
       expect(comments.length).toBe(2);
       expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B"]);
     });
 
-    // RUL-2 as re-ruled by the #3164 fold: landings never consume optimism.
-    // While a transaction retains optimistic edits, every landing — equal
-    // poll or contradicting truth alike — folds into that transaction and
-    // reveals atomically at settle. Optimistic edits live exactly as long
-    // as their transaction and die by engine-native revert; the settle
-    // frame composes landed truth without them.
+    // Producer answers do not extend a guessing action. An optimistic edit
+    // keeps its own lifetime while independent producer changes compose
+    // through the view; its guess reverts when its action settles.
     describe("landing folds under retained optimism (#3123/#3164)", () => {
       const settle = async () => {
         await Promise.resolve();
@@ -3506,15 +3501,9 @@ describe("createOptimisticStore", () => {
       });
     });
 
-    // The #3164 fold ruling (supersedes the retained-setter replay model of
-    // the #3123 reopen): optimistic edits are armed node overrides retained
-    // by their transaction — nothing is re-executed, ever. Landings of any
-    // kind (continuation yields, replacing refreshes, echoes) fold into the
-    // retaining transaction while it lives; the visible view keeps the
-    // optimistic composition without a single intermediate frame, and the
-    // settle reveals the folded truth as the overrides revert. Echoed keyed
-    // adds keep their row identity through the reveal (stagedApply's
-    // override adoption pool).
+    // Setter callbacks are never replayed. Keyed producer echoes can reuse
+    // an optimistic row's identity, and producer continuations may publish
+    // while an unrelated optimistic action remains open.
     describe("landings fold across retained optimism (#3123 reopen/#3164)", () => {
       const settle = async () => {
         await Promise.resolve();
@@ -3561,12 +3550,13 @@ describe("createOptimisticStore", () => {
         await settle();
         expect(rendered.at(-1)).toEqual([]);
 
-        // Blind pushes — the keyed satisfaction rule owns echo idempotency.
+        // Keep each action open across both producer confirmations.
+        const releases: Array<() => void> = [];
         const add = action(function* (row: Row) {
           setItems(store => {
             store.push(row);
           });
-          yield until(() => items.some(x => x.id === row.id));
+          yield new Promise<void>(resolve => { releases.push(resolve); });
         });
         const addA = add({ id: 0 });
         flush();
@@ -3588,6 +3578,7 @@ describe("createOptimisticStore", () => {
 
         confirm({ id: 1 });
         await settle();
+        for (const release of releases) release();
         await Promise.all([addA, addB]);
         await settle();
         expect(rendered.at(-1)).toEqual([0, 1]);
@@ -3596,14 +3587,10 @@ describe("createOptimisticStore", () => {
         dispose();
       });
 
-      it("an edit's values outlive its own echo until settle (GabbeV's pending-flag repro)", async () => {
-        // #3123 final ruling: a landing that echoes an open transaction's
-        // keyed add does NOT satisfy the edit early. The echoed row keeps
-        // the landed slot, the replayed edit's VALUE masks it until settle
-        // (structure from the landing, value from the intent). Pins the
-        // updated StackBlitz shape: rows carry pending flags that differ
-        // between the optimistic push (true) and the landing's echo
-        // (false), and the action outlives its confirmation.
+      it("a pushed row's pending value outlives its own echo until settle", async () => {
+        // The keyed row keeps its identity and the selected whole-row guess
+        // keeps pending:true until the add action settles. Producer truth
+        // remains independent and becomes visible after the guess retires.
         type Row = { id: number; pending: boolean };
         let notify!: { promise: Promise<Row>; resolve: (row: Row) => void };
         const reset = () => {
@@ -3641,13 +3628,12 @@ describe("createOptimisticStore", () => {
         await settle();
         expect(rendered.at(-1)).toEqual([]);
 
-        // The action holds past its own confirmation (until + trailing gate).
+        // A controlled gate keeps each action open past its producer echo.
         const holds: (() => void)[] = [];
         const add = action(function* (row: Row) {
           setItems(store => {
             store.push({ ...row, pending: true });
           });
-          yield until(() => items.some(x => x.id === row.id));
           yield new Promise<void>(resolve => {
             holds.push(resolve);
           });
@@ -3659,10 +3645,7 @@ describe("createOptimisticStore", () => {
         flush();
         expect(rendered.at(-1)).toEqual(["0p", "1p"]);
 
-        // A's confirmation echoes A's row with pending:false. The edit is
-        // NOT satisfied early: A's replayed value masks the landed row
-        // while A's transaction is still open. Pre-ruling this rendered
-        // ["0", "1p"] — the pending presentation died mid-action.
+        // A's echo must not mutate the selected pushed row's visible value.
         confirm({ id: 0, pending: false });
         await settle();
         await settle();
@@ -3673,9 +3656,7 @@ describe("createOptimisticStore", () => {
         await settle();
         expect(rendered.at(-1)).toEqual(["0p", "1p"]);
 
-        // Settle is the only reckoning: edits die with their transactions
-        // and the landed truth (pending:false) stands. The two actions
-        // entangled through shared writes, so they settle together.
+        // Settlement retires both guesses and reveals producer truth.
         for (const release of holds) release();
         await Promise.all([addA, addB]);
         await settle();
@@ -3762,7 +3743,7 @@ describe("createOptimisticStore", () => {
       // itself: setters are never re-executed under the fold ruling, so
       // there is no re-run to throw.)
 
-      it("folds a replacing landing and later continuations; settle reveals composed truth without the edit", async () => {
+      it("publishes a continuation after a held replacement beside an open edit", async () => {
         let feed!: (value: number) => void;
         let notify!: { promise: Promise<number>; resolve: (value: number) => void };
         const reset = () => {
@@ -3822,9 +3803,7 @@ describe("createOptimisticStore", () => {
         flush();
         expect(rendered.at(-1)).toEqual([1, 2]);
 
-        // Refresh with foreign change mid-hold: the re-invocation's answer
-        // folds like any landing — the view keeps the optimistic
-        // composition while the action retains it.
+        // The replacement remains held in its producer's own refresh frame.
         serverData = [1, 5];
         setVersion(v => v + 1);
         flush();
@@ -3832,12 +3811,11 @@ describe("createOptimisticStore", () => {
         await settle();
         expect(rendered.at(-1)).toEqual([1, 2]);
 
-        // A continuation on top of the folded refresh composes in the
-        // staged backing — still masked.
+        // A later continuation can publish above that held replacement.
         feed(7);
         await settle();
         await settle();
-        expect(rendered.at(-1)).toEqual([1, 2]);
+        expect(rendered.at(-1)).toEqual([1, 2, 7]);
 
         // Settle: the edit dies with its transaction; the reveal is the
         // full composed truth — refresh + continuation, no resurrected add.
@@ -3850,11 +3828,9 @@ describe("createOptimisticStore", () => {
       });
     });
 
-    // Fold twin of the #2719 re-pin above, through a draft-mutating derive:
-    // the landing's per-op draft writes bind to the retaining transaction
-    // (aroundDraftWrite), so the mid-hold view keeps the optimism and the
-    // reveal clears it at the owning action's settle.
-    it("holds optimistic rows across a draft-mutating projection's landing; settle clears them", async () => {
+    // A draft-mutating producer also publishes its answer independently of
+    // the still-open optimistic add.
+    it("shows a draft-mutating producer's landing beside a retained optimistic row", async () => {
       type Comment = { id: number; text: string };
       const serverComments = [
         [
@@ -3925,6 +3901,7 @@ describe("createOptimisticStore", () => {
       const add = addComment();
       flush();
       expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
+      const beforeSwitch = rendered.length;
 
       const next = nextIssue();
       flush();
@@ -3932,19 +3909,23 @@ describe("createOptimisticStore", () => {
       await next;
       await settle();
 
-      // Mid-hold: the landing folded — old question + optimism, no flash.
+      // The producer answer and the add's guess have separate owners.
       expect(comments.length).toBe(3);
-      expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
+      expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B", "Optimistic"]);
+      for (const frame of rendered.slice(beforeSwitch)) {
+        expect(frame[2]).toBe("Optimistic");
+        expect(["Issue 0 A,Issue 0 B", "Issue 1 A,Issue 1 B"]).toContain(frame.slice(0, 2).join(","));
+      }
 
       resolveAdd();
       await add;
       await settle();
-      // Settle: atomic reveal of the folded question.
+      // Settle clears only the add's optimistic row.
       expect(comments.length).toBe(2);
       expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B"]);
     });
 
-    it("recycles an optimistic row when fresh derived data with the same key lands; value reveals at settle", async () => {
+    it("recycles a keyed row while its pushed title remains selected until settle", async () => {
       type Todo = { id: string; title: string; saved?: boolean };
       let serverTodos: Todo[] = [];
       const fetches: Array<() => void> = [];
@@ -4000,8 +3981,8 @@ describe("createOptimisticStore", () => {
       fetches.shift()!();
       await settle();
 
-      // Mid-hold: the echo folded — the row keeps its identity AND its
-      // optimistic value (the landing's "Saved" stays masked until settle).
+      // The selected pushed row retains both identity and visible title;
+      // the producer's Saved answer is independent truth under the guess.
       expect(todos.length).toBe(1);
       expect(todos[0]).toBe(optimisticRef);
       expect(todos[0].title).toBe("Optimistic");
@@ -4074,7 +4055,7 @@ describe("createOptimisticStore", () => {
 describe("truth-author drafts read the authoritative view (#3108)", () => {
   const tick = () => Promise.resolve();
 
-  it("reporter shape: optimistic push + draft-mutating generator + until neither corrupts nor flickers", async () => {
+  it("reporter shape: optimistic push and draft-mutating generator neither corrupt nor flicker", async () => {
     let resolveGate!: () => void;
     const gate = new Promise<void>(r => (resolveGate = r));
 
@@ -4105,13 +4086,14 @@ describe("truth-author drafts read the authoritative view (#3108)", () => {
     expect(views.at(-1)).toEqual([]);
 
     const order: string[] = [];
+    const ack = Promise.withResolvers<void>();
     const click = action(function* () {
       setItems(s => {
         s.push({ id: 1 });
       });
       order.push("written");
       resolveGate();
-      yield until(() => items.some(item => item.id === 1));
+      yield ack.promise;
       order.push("acked");
     });
     const done = click().then(() => order.push("settled"));
@@ -4124,6 +4106,8 @@ describe("truth-author drafts read the authoritative view (#3108)", () => {
     await tick();
     await tick();
     flush();
+    expect(items.map(i => i.id)).toEqual([1]);
+    ack.resolve();
     await done;
 
     expect(order).toEqual(["written", "acked", "settled"]);

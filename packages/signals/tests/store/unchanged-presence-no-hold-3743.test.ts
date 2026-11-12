@@ -19,10 +19,9 @@
  * deletion (the value-node twin is pinned here too — before, the restoring
  * reconcile skipped the held leaf and it committed the draft's `undefined`).
  *
- * Optimistic twin (S4, last case): with presence diffed, a landing that
- * changes no guessed key's truth reaches the lane only through the
- * container's arrangement guess — judged by every arrangement-changing
- * landing, whether or not anything subscribes to the container.
+ * Optimistic array twin (S4, last case): an independent index write can
+ * publish while another action still owns a different index's guess. The
+ * effect and snapshot channels agree on that mixed frame.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -34,7 +33,8 @@ import {
   createSignal,
   createStore,
   flush,
-  reconcile
+  reconcile,
+  snapshot
 } from "../../src/index.js";
 
 function deferred<T = void>() {
@@ -304,18 +304,9 @@ describe("#3743 unchanged presence under an open action", () => {
     expect(presence.at(-1)).toBe(true);
   });
 
-  // The twin the diff uncovered (S4): a landing on an optimistic family
-  // judges the container's arrangement guess whether or not anything
-  // subscribes to the container. Here a newer question's rows land beneath
-  // an optimistic push whose guessed keys (`2`, `length`, `2 in`) the truth
-  // left as they were, and the reader subscribes to leaves only (index
-  // reads — no `in`, no enumeration). Before, the unconditional presence
-  // write was the one landing that reached the lane; with presence diffed,
-  // only the container's judgement folds the landing into the retaining
-  // action (A18: a differing truth supersedes the guess, held by the parent
-  // for its commit — #2719/#3164's "the view keeps the old question plus the
-  // optimism, the truth reveals at settle").
-  it("a landing that changes no guessed key still judges the container's arrangement guess (leaf-only reader)", async () => {
+  // A newer question replaces indices 0 and 1 while an action retains an
+  // optimistic append at index 2. The reader subscribes to leaves only.
+  it("a landing on other indices publishes beneath an optimistic append (leaf-only reader)", async () => {
     type Comment = { id: number; text: string };
     const serverComments: Comment[][] = [
       [
@@ -386,9 +377,11 @@ describe("#3743 unchanged presence under an open action", () => {
     fetches.find(fetch => fetch.issueId === 1)!.resolve();
     await next;
     await settle();
-    // Mid-hold: the issue-1 truth is held by the retaining action — never
-    // the new rows beside the old optimistic one.
-    expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
+    // Independent truth for indices 0 and 1 lands while the append's index
+    // 2 guess remains. The effect and snapshot show the same mixed frame.
+    const mixed = ["Issue 1 A", "Issue 1 B", "Optimistic"];
+    expect(rendered.at(-1)).toEqual(mixed);
+    expect(snapshot(comments).map(row => row.text)).toEqual(mixed);
 
     gate.resolve();
     await add;
@@ -396,20 +389,9 @@ describe("#3743 unchanged presence under an open action", () => {
     expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B"]);
   });
 
-  // The setter half of the same gate (`notifyWrites`): the derive writes
-  // its draft imperatively — a store setter's exit, not a reconcile of a
-  // returned value. An optimistic swap of rows `0` and `1` guesses those
-  // two leaves and the container's arrangement; the derive then appends a
-  // row at index `2` — `length` and `2` are its written keys, neither of
-  // them guessed (an array index write cannot avoid `length`, so the guess
-  // under test holds no `length`). The reader subscribes to leaves only,
-  // so nothing subscribes to the container; the write is still a landing
-  // on its arrangement guess, and judging it is what folds the newer
-  // question's row into the retaining action (A18: a differing truth
-  // supersedes the guess, held by the parent for its commit; the screen
-  // keeps the guess until then). Were the container gated on subscribers
-  // alone, the new row would publish beneath the swapped pair mid-hold.
-  it("a setter that changes no guessed key still judges the container's arrangement guess (leaf-only reader)", async () => {
+  // A derived setter adds index 2 while an action retains an optimistic swap
+  // of indices 0 and 1. Its new row publishes beside the selected swap.
+  it("a setter on another index publishes beneath an optimistic swap (leaf-only reader)", async () => {
     type Comment = { id: number; text: string };
     const rendered: (string | undefined)[][] = [];
     const settle = async () => {
@@ -467,9 +449,9 @@ describe("#3743 unchanged presence under an open action", () => {
     flush();
     await loading;
     await settle();
-    // Mid-hold: the new row is held by the retaining action — never
-    // beneath the swapped pair.
-    expect(rendered.at(-1)).toEqual(["B", "A"]);
+    // The independent index-2 write lands beneath the swap of 0 and 1.
+    expect(rendered.at(-1)).toEqual(["B", "A", "C"]);
+    expect(snapshot(comments).map(row => row.text)).toEqual(["B", "A", "C"]);
 
     gate.resolve();
     await swapping;
