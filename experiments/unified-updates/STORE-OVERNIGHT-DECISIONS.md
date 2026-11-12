@@ -345,3 +345,29 @@ which the user explicitly left unspecified. Status-context retries can emit one
 identical callback for an equal answer; the tests state that explicitly and still
 check all pending-state and display transitions. The common adoption mechanism is
 retained for effects because excluding them broke legitimate list publication.
+
+## Independent input lifetimes in upstream list and hydration tests
+
+The four #4536/#4559/#4561 signal fixtures now assert the selected positional
+outputs rather than replaying a keyed deletion over an arriving input. All 23
+cases pass in the root checkout. The original primary binding is compared with
+additional direct, memo, indexed and For-like bindings after callback application;
+every queued whole-display frame must be in an explicit allowed set. An ordinary
+input answer must not appear alongside its old question. Action completion and
+request exhaustion remain asserted. A complete explicit row override may appear
+with a newly published input question, because that is the intentional boundary.
+
+Six DOM counterparts likewise retain selected indices until correction, while
+independent unguessed input can publish or show Loading. Region lifetime tests
+now track actual cleanup and forbid mapper execution after disposal instead of
+assuming an old sibling mounting sequence. These are stage-120 migrations, not
+new input/action coupling rules.
+
+All ten failing hydration variants of #4375 were intermediate request expectations.
+The page observes only pending and has no independent holder of the input update;
+its slow boundary does not read that input. Inactive latest therefore reads
+through, requesting m0:5 and m1:6. The existing held counterpart still permits the
+higher-context m0:4 and m1:5. On frozen built artifacts all twelve hydration
+variants and all four held/unheld controls pass. The migration preserves DOM,
+streamed claim, no-refetch, diagnostics and cleanup assertions, and strengthens
+the plain control to assert the complete request sequence.

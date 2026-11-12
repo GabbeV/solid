@@ -2,16 +2,11 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  *
- * #4605 (F-5, D-15; D-34/#4336): a keyed list store asked by `filter()`,
- * under `<Loading on={filter()}>`. An action guesses (removes a row), yields,
- * then `refresh()`es the list. A `filter` write while the action is out is
- * held with it (D-34); the action ends, the refresh lands, everything rests.
- * A second `filter` write with nothing in flight is an `on` change like any
- * other: it arms the boundary, which shows its fallback with that change's
- * frame (F-5, D-15), as it does without the earlier held change. Without
- * `on` the boundary has shown content and forwards (F-5): the change holds,
- * the old list stays, and the new one reveals with its answer.
- * The signals-only twin: `packages/signals/tests/loading-on-held-change-4605.test.ts`.
+ * #4605 under independent input and override lifetimes: an `on` change
+ * may reveal Loading while the guessing action remains open. Its answer
+ * updates index 0; the explicit index-1 guess remains row 4 until correction.
+ * The later refresh stays quiet, and a subsequent independent `on` change
+ * arms the boundary again. Every sampled DOM frame and request stays pinned.
  */
 import { expect, test } from "vitest";
 import {
@@ -103,18 +98,18 @@ function run(useOn: boolean) {
   };
 }
 
-const before = [
+const before = (useOn: boolean) => [
   "loaded: open: [#1][#3][#4]  air",
   "close #3: open: [#1][#4]  air close:3",
-  "filter closed: open: [#1][#4]  air close:3,issues:closed",
-  "closed answered: open: [#1][#4]  air close:3",
-  "close accepted: open: [#1][#4]  air issues:closed",
+  `filter closed: ${useOn ? "loading" : "open: [#1][#4]"}  air close:3,issues:closed`,
+  "closed answered: closed: [#2][#4]  air close:3",
+  "close accepted: closed: [#2][#4]  air issues:closed",
   "refresh answered: closed: [#2][#3]  air"
 ];
 
 test("#4605 with `on`: the change after the held one shows the fallback", async () => {
   expect(await run(true)()).toEqual([
-    ...before,
+    ...before(true),
     "filter open: loading  air issues:open",
     "open answered: open: [#1][#4]  air"
   ]);
@@ -122,7 +117,7 @@ test("#4605 with `on`: the change after the held one shows the fallback", async 
 
 test("#4605 without `on`: the shown boundary forwards, the change holds", async () => {
   expect(await run(false)()).toEqual([
-    ...before,
+    ...before(false),
     "filter open: closed: [#2][#3]  air issues:open",
     "open answered: open: [#1][#4]  air"
   ]);

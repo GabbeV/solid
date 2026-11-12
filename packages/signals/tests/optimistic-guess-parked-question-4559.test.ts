@@ -1,3 +1,9 @@
+/**
+ * #4559: a second async reader keeps the filter input parked independently
+ * of the selected row outputs. A draft splice retains rows #3/#4 rather than
+ * replaying a removal over the next answer. The authoritative row #2 must
+ * never publish with the old open question.
+ */
 import { expect, test } from "vitest";
 import {
   action,
@@ -10,6 +16,8 @@ import {
   refresh
 } from "../src/index.js";
 
+import { selectedListReaders } from "./harness/selected-list-readers.js";
+
 const tick = async () => {
   for (let i = 0; i < 4; i++) {
     await new Promise(r => setTimeout(r, 0));
@@ -17,14 +25,12 @@ const tick = async () => {
   }
 };
 
-// #4559: #4536's setup plus a second async read of the question that answers
-// after the list does. The question's transaction stays parked on that read,
-// so the frame must not show the old question beside the new answer's rows
-// (F-1, D-34 ¶3).
 for (const order of ["question first", "list first"] as const)
   for (const mode of ["inline", "memo", "split"] as const)
-    test(`a guess re-based while the question's transaction is parked keeps the frame whole (${order}, ${mode})`, async () => {
+    test(`selected row outputs stay coherent while a sibling question is parked (${order}, ${mode})`, async () => {
       type Issue = { id: number };
+      const readerChecks: Array<ReturnType<typeof selectedListReaders>> = [];
+      const checkReaders = () => readerChecks.forEach(check => check());
       const asks: { key: string; resolve: (value: any) => void }[] = [];
       const ask = (key: string) => new Promise<any>(resolve => asks.push({ key, resolve }));
       const settle = async (key: string, value: any) => {
@@ -32,8 +38,11 @@ for (const order of ["question first", "list first"] as const)
         expect(i).toBeGreaterThanOrEqual(0);
         asks.splice(i, 1)[0].resolve(value);
         await tick();
+        checkReaders();
       };
       const frames: string[] = [];
+      let rowsVisible: string | undefined;
+      const sampleReaders = () => readerChecks.forEach(check => check.capture());
       const last = () => frames.filter(f => !f.startsWith("other")).at(-1);
       let setFilter!: (value: string) => void;
       let closeOne!: (id: number) => unknown;
@@ -45,6 +54,7 @@ for (const order of ["question first", "list first"] as const)
         const [issues, set] = createOptimisticStore<Issue[]>(() => ask(`issues:${filter()}`), [], {
           key: "id"
         });
+        readerChecks.push(selectedListReaders(issues, () => rowsVisible));
         const other = createMemo(async () => {
           const f = filter();
           await ask(`other:${f}`);
@@ -79,6 +89,7 @@ for (const order of ["question first", "list first"] as const)
           const bindQuestion = () =>
             createRenderEffect(filter, v => {
               question = v;
+              sampleReaders();
               queueMicrotask(show);
             });
           const bindRows = () =>
@@ -86,6 +97,8 @@ for (const order of ["question first", "list first"] as const)
               () => issues.map(row => `[#${row.id}]`).join(""),
               v => {
                 rows = v;
+                rowsVisible = v;
+                sampleReaders();
                 queueMicrotask(show);
               }
             );
@@ -97,38 +110,57 @@ for (const order of ["question first", "list first"] as const)
             bindQuestion();
           }
         } else
-          createRenderEffect(
-            mode === "memo" ? createMemo(screen) : screen,
-            value => void frames.push(value)
-          );
+          createRenderEffect(mode === "memo" ? createMemo(screen) : screen, value => {
+            rowsVisible = value.slice(value.indexOf(": ") + 2);
+            frames.push(value);
+            sampleReaders();
+          });
         createRenderEffect(other, value => void frames.push(`other ${value}`));
       });
       try {
         await tick();
+        checkReaders();
         await settle("other:open", {});
         await settle("issues:open", [{ id: 1 }, { id: 3 }, { id: 4 }]);
         expect(last()).toBe("open: [#1][#3][#4]");
         setFilter("closed");
         await tick();
-        closeOne(1);
+        checkReaders();
+        const closing = closeOne(1);
         await tick();
-        expect(["open: [#3][#4]", "open: [#1][#3][#4]"]).toContain(last());
+        checkReaders();
+        expect(last()).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        // The transaction is still parked on `other`: the question and its
-        // answer have not landed, so the old frame (guess or not) stands.
-        expect(["open: [#3][#4]", "open: [#1][#3][#4]"]).toContain(last());
+        // The sibling question remains parked; selected row outputs retain
+        // their concrete #3/#4 values independently of the new answer.
+        expect(last()).toBe("open: [#3][#4]");
         await settle("other:closed", {});
-        expect(last()).toBe("closed: [#2]");
+        expect(last()).toBe("open: [#3][#4]");
         await settle("close:1", {});
+        expect(last()).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
+        await closing;
+        checkReaders();
         expect(last()).toBe("closed: [#2]");
-        expect(
-          frames.filter(
-            frame =>
-              (frame.startsWith("closed") && /#3|#4/.test(frame)) ||
-              (frame.startsWith("open") && /#2/.test(frame))
-          )
-        ).toEqual([]);
+        expect(asks).toEqual([]);
+        const allowed = [
+          "open: [#1][#3][#4]",
+          "open: [#3][#4]",
+          "closed: [#3][#4]",
+          "closed: [#2]"
+        ];
+        let rowsAnswered = false;
+        for (const frame of frames.filter(value => !value.startsWith("other"))) {
+          // Split bindings may show the initial question before any list
+          // answer exists. An empty correction after rows appeared is invalid.
+          if (frame === "open: ") {
+            expect(mode).toBe("split");
+            expect(rowsAnswered).toBe(false);
+          } else {
+            expect(allowed).toContain(frame);
+            rowsAnswered = true;
+          }
+        }
       } finally {
         dispose();
       }

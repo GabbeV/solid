@@ -2,13 +2,10 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  */
-// #4379 — an action guesses a row of a keyed optimistic store, yields, then
-// `refresh()`es it. A `filter` change made meanwhile (closed, then back to
-// open) holds with the action (D-34). When the action ends, the held change
-// commits while the action's own refresh is still in flight; a refresh is
-// quiet (F-9), so `<Loading on={filter()}>` keeps the list up, as it does
-// without `on` and for the closed-only change. The signals-side pin is
-// `packages/signals/tests/loading-on-held-filter-refresh-4379.test.ts`.
+// #4379 under independent input and override lifetimes: `on` can show its
+// fallback for a filter change while the row's assignee guess stays selected.
+// An input answer can remove the rows; the action's later refresh stays quiet.
+// These DOM frames mirror the signals-side stage-120 pins.
 import { expect, test } from "vitest";
 import {
   Loading,
@@ -32,7 +29,7 @@ type Issue = { id: number; assignee: string | null };
 
 for (const useOn of [true, false])
   for (const toggle of [true, false])
-    test(`on=${useOn} toggle=${toggle}: the action's refresh never shows the fallback`, async () => {
+    test(`on=${useOn} toggle=${toggle}: the independent change and later refresh stay coherent`, async () => {
       const asks: { key: string; res: (v: any) => void }[] = [];
       const ask = (key: string) => new Promise<any>(res => asks.push({ key, res }));
       const land = async (key: string, v: any) => {
@@ -123,5 +120,8 @@ for (const useOn of [true, false])
       dispose();
       container.remove();
       const held = "#1(-)#3(ann)";
-      expect(frames).toEqual(["#1(-)#3(-)", held, held, held, held, toggle ? "#1(-)#3(ann)" : ""]);
+      const afterChange = useOn ? `loading ${toggle ? "open" : "closed"}` : held;
+      const afterInput = toggle ? held : "";
+      expect(frames).toEqual(["#1(-)#3(-)", held, afterChange, afterInput, afterInput, afterInput]);
+      expect(asks).toEqual([]);
     });

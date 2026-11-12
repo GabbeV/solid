@@ -1,3 +1,9 @@
+/**
+ * #4536: a shared binding reads the filter input and selected row outputs.
+ * A splice retains concrete rows #3/#4 until correction, without replaying
+ * a keyed removal over the next answer. Independent inputs may publish
+ * beside selected rows; authoritative row #2 requires the closed question.
+ */
 import { expect, test } from "vitest";
 import {
   action,
@@ -10,6 +16,8 @@ import {
   refresh
 } from "../src/index.js";
 
+import { selectedListReaders } from "./harness/selected-list-readers.js";
+
 const tick = async () => {
   for (let i = 0; i < 4; i++) {
     await new Promise(r => setTimeout(r, 0));
@@ -21,6 +29,8 @@ for (const order of ["question first", "list first"] as const)
   for (const mode of ["inline", "memo"] as const)
     test(`a shared effect keeps the question and its guessed rows consistent (${order}, ${mode})`, async () => {
       type Issue = { id: number };
+      const readerChecks: Array<ReturnType<typeof selectedListReaders>> = [];
+      const checkReaders = () => readerChecks.forEach(check => check());
       const asks: { key: string; resolve: (value: any) => void }[] = [];
       const ask = (key: string) => new Promise<any>(resolve => asks.push({ key, resolve }));
       const settle = async (key: string, value: any) => {
@@ -28,8 +38,11 @@ for (const order of ["question first", "list first"] as const)
         expect(i).toBeGreaterThanOrEqual(0);
         asks.splice(i, 1)[0].resolve(value);
         await tick();
+        checkReaders();
       };
       const frames: string[] = [];
+      let rowsVisible: string | undefined;
+      const sampleReaders = () => readerChecks.forEach(check => check.capture());
       let setFilter!: (value: string) => void;
       let closeOne!: (id: number) => unknown;
       let dispose!: () => void;
@@ -40,6 +53,7 @@ for (const order of ["question first", "list first"] as const)
         const [issues, set] = createOptimisticStore<Issue[]>(() => ask(`issues:${filter()}`), [], {
           key: "id"
         });
+        readerChecks.push(selectedListReaders(issues, () => rowsVisible));
         closeOne = action(function* (id: number) {
           set(list => {
             const i = list.findIndex(row => row.id === id);
@@ -60,36 +74,46 @@ for (const order of ["question first", "list first"] as const)
           }
           return `${question}: ${rows}`;
         };
-        createRenderEffect(
-          mode === "memo" ? createMemo(screen) : screen,
-          value => void frames.push(value)
-        );
+        createRenderEffect(mode === "memo" ? createMemo(screen) : screen, value => {
+          rowsVisible = value.slice(value.indexOf(": ") + 2);
+          frames.push(value);
+          sampleReaders();
+        });
       });
       try {
         await tick();
+        checkReaders();
         await settle("issues:open", [{ id: 1 }, { id: 3 }, { id: 4 }]);
         expect(frames.at(-1)).toBe("open: [#1][#3][#4]");
         setFilter("closed");
         await tick();
+        checkReaders();
         expect(frames.at(-1)).toBe("open: [#1][#3][#4]");
-        closeOne(1);
+        const closing = closeOne(1);
         await tick();
-        // The guess can show over the old answer or wait with the pending read.
-        expect(["open: [#3][#4]", "open: [#1][#3][#4]"]).toContain(frames.at(-1));
+        checkReaders();
+        // A splice selects its resulting row outputs; it is not replayed
+        // as a removal on the producer's next answer.
+        expect(frames.at(-1)).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        expect(frames.at(-1)).toBe("closed: [#2]");
+        expect(frames.at(-1)).toBe("open: [#3][#4]");
         await settle("close:1", {});
+        expect(frames.at(-1)).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
+        await closing;
+        checkReaders();
         expect(frames.at(-1)).toBe("closed: [#2]");
-        // Never the new question beside the old answer's rows, nor the old
-        // question beside the new answer's (F-1).
-        expect(
-          frames.filter(
-            frame =>
-              (frame.startsWith("closed") && /#3|#4/.test(frame)) ||
-              (frame.startsWith("open") && /#2/.test(frame))
-          )
-        ).toEqual([]);
+        // A question may publish beside explicitly selected rows. The
+        // authoritative correction must not appear with the old question.
+        expect(asks).toEqual([]);
+        const allowed = [
+          "open: [#1][#3][#4]",
+          "open: [#3][#4]",
+          "closed: [#3][#4]",
+          "closed: [#2]"
+        ];
+        for (const frame of frames.filter(value => !value.startsWith("other")))
+          expect(allowed).toContain(frame);
       } finally {
         dispose();
       }

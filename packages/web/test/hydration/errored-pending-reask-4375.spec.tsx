@@ -98,17 +98,16 @@ describe("#4375: a served rejection read only through isPending, hydrated", () =
           expect(main().textContent).toBe("false" + tail);
           expect(asks()).toEqual([]);
 
-          // The input changes (mid-hydration for `slow`, streamed): both
-          // memos ask, each question once, and the page stays live. Over
-          // `latest(s)`, m0's frame pass asks the frame's `m0:5` (R5), the
-          // parked flush re-derives it in the verdict lane for the
-          // intermediate `1 + latest(s) + s()` (`m0:4`, `m1:5`), and the
-          // landing adopts the frame's `m0:5` (F-9).
+          // The input changes (mid-hydration for `slow`, streamed). Only
+          // pending is observed: no ordinary value binding holds this recovery.
+          // Inactive latest reads through its input, so both memos ask once.
+          // An independent input holder permits a higher-context m0:4; that
+          // separate lifetime is covered by verdict-memo-flight-no-reask.
+          // The slow boundary keeps hydration open, but does not read this input.
           write(2);
           await settle();
           expect(asks()).not.toContain("m0:3");
-          if (o.latest) expect(asks()).toEqual(["m0:5", "m0:4", "m1:5", "m1:6"]);
-          else expect(asks().slice(-2)).toEqual(["m0:5", "m1:6"]);
+          expect(asks()).toEqual(["m0:5", "m1:6"]);
           for (const c of held) {
             applyChunk(container, c, false);
             await settle();
