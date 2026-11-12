@@ -1241,9 +1241,10 @@ export function stageLayer(layer: Layer<any>, proposal: unknown, position?: numb
   // dependency cannot promote this existing override or split its peer joins.
   layer._position = position ?? 1 + Math.max(layerPosition(layer._input), positionOf(inputHolder));
   layer._override = proposal;
-  // Input revisions only classify attribution events now; selection and
-  // lifetime coordination do not need to remember them in production.
-  if (__OBSERVE__) layer._inputTime = inputTime(layer._input);
+  // Attribution tracks answers, not re-evaluations of unchanged truth.
+  // The existing notification stamp avoids treating companion discovery as
+  // a new input answer. Selection needs no revision field in production.
+  if (__OBSERVE__) layer._inputTime = layer._input._notifiedAt;
   enableReads();
   // Selecting an equal, settled scalar output has no downstream proposal.
   // In particular a newly allocated pending observation must not replay its
@@ -1330,7 +1331,7 @@ export function createLayerBoundary<T>(
     _override: NOT_PENDING,
     _scope: null
   } as Layer<T>;
-  if (__OBSERVE__) layer._inputTime = inputTime(producer);
+  if (__OBSERVE__) layer._inputTime = producer._notifiedAt;
   // Choose the feature selector once at allocation. Its calls into common
   // selection/publication are direct; no per-evaluation lifecycle dispatch.
   const output = computed<T>(select.bind(null, layer), {

@@ -143,7 +143,13 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
             })
           )
         : node;
-    if (input !== node) input._config &= ~CONFIG_AUTO_DISPOSE;
+    if (input !== node) {
+      input._config &= ~CONFIG_AUTO_DISPOSE;
+      if (__OBSERVE__) {
+        (input as any)._name = (node as any)._name;
+        (input as any)._loc = (node as any)._loc;
+      }
+    }
     const candidate = () => {
       if (!slot) return;
       releases.set(slot!, {

@@ -45,7 +45,6 @@ import { ContextRetry, NotReadyError } from "../core/error.js";
 import { committedDependencies, layerPosition } from "./committed-dependencies.js";
 import {
   createLayerBoundary,
-  inputTime,
   inputUpdate,
   observed,
   positionOf,
@@ -86,7 +85,7 @@ if (__OBSERVE__)
         output,
         previous,
         output._value,
-        inputTime(layer._input) === layer._inputTime ? "reverted" : "superseded"
+        layer._input._notifiedAt === layer._inputTime ? "reverted" : "superseded"
       );
     layer._shownGuess = guessed;
   };
