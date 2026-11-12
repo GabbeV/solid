@@ -157,7 +157,11 @@ function notifyEffectStatus(this: Effect<any>): void {
       // notify above can run a redraw.)
       // Re-reading the still-displayed error during a retry restores its
       // status, but does not publish a different answer to the error arm.
-      if (this._statusFlags & STATUS_ERROR && this._x?._shownError !== actualError)
+      if (
+        this._statusFlags & STATUS_ERROR &&
+        (this._x?._shownError == null ||
+          unwrapStatusError(this._x._shownError) !== unwrapStatusError(actualError))
+      )
         queueEffectRun(this);
       return;
     }
@@ -294,6 +298,9 @@ function runEffect(node: Effect<any>, type: number): void {
     }
     // The final cleanup is invoked by disposeChildren at true disposal.
     node._cleanup = nextCleanup as (() => void) | undefined;
+    // A published recovery ends the old error's display. Reusing that error
+    // on a later failure must notify the error arm again.
+    if (cleanPass && node._x) node._x._shownError = null;
   } catch (error) {
     // (D-42, dev: as above — a boundary takes it or the system halts.)
     if (__DEV__) forgetThrownRead();
