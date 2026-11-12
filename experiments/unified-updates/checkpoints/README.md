@@ -68,3 +68,5 @@ still rejects optimistic stores at this checkpoint. See
 `array-retirement-report-20261112.tar.xz` restores `results/array-retirement-report/`: rc.20/rc.21 and exact #4729 boundary results, object-versus-array retirement controls, the simplified browser-verified reproduction, and the unsubmitted issue form. Archived runtime dependencies are omitted; exact versions/commits are recorded in metadata.
 
 `setter-read-report-20261112.tar.xz` restores `results/setter-read-report/`: controlled read/write ownership probes on next and the experiment, the browser-verified hosted reproduction, and the unsubmitted issue form. Both runtimes currently keep read-a/write-b action lifetimes independent; write-a/write-a controls entangle.
+
+`store-expanded-20261112.tar.xz` restores `results/store-expanded/`: store draft/array/chained/accessor integration receipts, diagnostic full signals failures, focused 70-test checkpoint, and array mutation investigations. The full run was concurrent with edits and is not acceptance evidence; until remains deferred and derived/keyed integration continues.

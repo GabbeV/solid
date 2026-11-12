@@ -95,6 +95,7 @@ export type Layer<T> = {
   _position?: number;
   _automatic?: true;
   _opening?: true;
+  _onSelected?: () => void;
   _refreshInput?: (layer: Layer<any>) => void;
 };
 
@@ -368,7 +369,8 @@ function prepareLayers(): boolean {
       if (
         ((reader as any)._type
           ? (reader as any)._type === EFFECT_RENDER &&
-            reader._config & CONFIG_HELD && txOf(reader) === parent
+            reader._config & CONFIG_HELD &&
+            txOf(reader) === parent
           : !(reader._config & CONFIG_FRAME)) &&
         (reader._flags & REACTIVE_FRAME_READ || affectsCommitted) &&
         !(reader._flags & REACTIVE_DISPOSED)

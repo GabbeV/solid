@@ -281,18 +281,47 @@ it("function and Promise leaves remain raw values", async () => {
   }
 });
 
-it("unsupported shapes and accessor drafts reject before partial proposals", () => {
-  expect(() => createOptimisticStore({ nested: { value: 0 } })).toThrow(/flat plain/);
-  expect(() => createOptimisticStore([1, 2])).toThrow(/flat plain/);
-  expect(() => createOptimisticStore(() => ({ value: 0 }))).toThrow(/flat plain/);
-  const [store, set] = createOptimisticStore({ value: 0 });
-  expect(() =>
-    set(d => {
-      d.value = 7;
-      Object.defineProperty(d, "value", { get: () => 1 });
-    })
-  ).toThrow(/flat plain/);
-  expect(store.value).toBe(0);
-  flush();
-  expect(store.value).toBe(0);
+it("supports nested, array, and derived inputs through the common draft path", async () => {
+  const end = Promise.withResolvers<void>();
+  const [nested, guessNested] = createOptimisticStore({ nested: { value: 0 } });
+  const [items, guessItems] = createOptimisticStore([1, 2]);
+  const [derived, guessDerived] = createOptimisticStore(() => ({ value: 0 }));
+  const shown: unknown[] = [];
+  const dispose = createRoot(dispose => {
+    createRenderEffect(
+      () => [nested.nested.value, [...items], derived.value],
+      value => {
+        shown.push(value);
+      }
+    );
+    return dispose;
+  });
+  let running: Promise<unknown> | undefined;
+  try {
+    flush();
+    running = action(function* () {
+      guessNested(d => {
+        d.nested.value = 3;
+      });
+      guessItems(d => {
+        d.push(4);
+      });
+      guessDerived(d => {
+        d.value = 5;
+      });
+      yield end.promise;
+    })();
+    flush();
+    expect(shown.at(-1)).toEqual([3, [1, 2, 4], 5]);
+    end.resolve();
+    await running;
+    await turn();
+    flush();
+    expect(shown.at(-1)).toEqual([0, [1, 2], 0]);
+  } finally {
+    end.resolve();
+    await running;
+    dispose();
+    flush();
+  }
 });

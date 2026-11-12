@@ -1173,8 +1173,11 @@ function notifyWrites(t: StoreTarget): void {
       // The draft is discarded first: the diff reads the target (its nodes
       // are born from the committed frame, not the draft).
       t.pb = null;
-      t.wk = null;
-      t.pb = optHooks.writes(t, pb);
+      try {
+        t.pb = optHooks.writes(t, pb);
+      } finally {
+        t.wk = null;
+      }
       return;
     }
     // The derive's draft: new rows under guessed rows are paired with them
@@ -1819,10 +1822,16 @@ function serveDataKey(
     if (node !== undefined) {
       const nv = nodeValue(node, backingValue, target);
       if (chained) {
-        // The link's committed value follows the inner store's (what a lane
-        // over it covers — its reveal and revert compare against it, S4).
+        // The link's committed value follows the inner store. A shared
+        // optimistic family selects through the companion output, so the
+        // truth node itself has no CONFIG_OVERRIDE bit. When that selected
+        // value differs from the backing the inner store served, it is the
+        // outer guess and must take precedence. Equal values serve the same
+        // result without changing identity.
         node._value = backingValue;
-        if (node._config & CONFIG_OVERRIDE) v = nv;
+        if (target._fam?.opt && optHooks?.read) {
+          if (!isEqual(nv, backingValue) && !targetsEqual(nv, backingValue)) v = nv;
+        } else if (node._config & CONFIG_OVERRIDE) v = nv;
       } else v = nv;
     }
   }
@@ -2018,7 +2027,9 @@ function enumerationSource(target: StoreTarget): Record<PropertyKey, any> {
     // A container's arrangement guess is not a backing: the view composes
     // over the base it is shown over.
     const node = getContainerNode(target);
-    const base = asBacking(target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node));
+    const base = asBacking(
+      target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node)
+    );
     return optHooks && target._fam?.opt === true ? optHooks.view(target, base) : base;
   }
   const src = readSource(target);
@@ -2137,6 +2148,16 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (verdict !== null && affectsHooks !== null && getObserver() === null)
       affectsHooks._witness(target, key);
     if (target._fam !== null) pullFamily(target);
+    if (target._fam?.opt && !inDraft(target) && !writeOverride && optHooks?.accessor) {
+      const selected = optHooks.accessor(target, key, receiver);
+      if (selected !== undefined) {
+        const value = selected.value;
+        if (target.s) return serveShallow(target, key, value);
+        return isWrappable(value)
+          ? draftServe(target, wrap(value as Record<PropertyKey, any>, target, key))
+          : value;
+      }
+    }
     // Hot inline case: existing PLAIN node (non-accessor) read outside any
     // draft — the dbmon/uibench effect re-read shape. Core's `read()` serves
     // it (linking a tracked reader; the hold rules either way). Skips
@@ -2147,13 +2168,28 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     // a chained target's node carrying a GUESS is the value (A17 — the base
     // beneath it, and any hold there, is not this reader's concern; a link
     // without one reads through below).
+    if (
+      key === "length" &&
+      target._fam?.opt &&
+      Array.isArray(target.v) &&
+      !inDraft(target) &&
+      !writeOverride &&
+      optHooks?.length
+    ) {
+      // The normal length input still carries authoritative updates. Growth
+      // outputs add only the minimum lengths their own guesses require.
+      const input = getNode(target, key);
+      return optHooks.length(target, readNode(input) as number);
+    }
     const node0 = target.n?.[key as any];
     if (writeScopes === null && !writeOverride) {
       const nodeH = node0;
       if (
         nodeH !== undefined &&
         (nodeH as any).acc !== true &&
-        (!target.ch || nodeH._config & CONFIG_OVERRIDE)
+        (!target.ch ||
+          nodeH._config & CONFIG_OVERRIDE ||
+          (target._fam?.opt && optHooks?.node && optHooks.node(target, nodeH) !== nodeH))
       ) {
         const nv = nodeValue(nodeH, undefined, target);
         if (nv === null || typeof nv !== "object") return nv;
@@ -2169,6 +2205,8 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       }
     }
     const src = readSource(target, key);
+    if (userWrite && target._fam?.opt && inDraft(target))
+      optHooks?.draftRead?.(target, key, "value");
     // Overlay delete (#3044): a prototype overlay cannot shadow a delete, so
     // deleted keys are tracked aside and read as absent in the pending view.
     if (src === target.pb && target.del?.has(key)) {
@@ -2219,7 +2257,12 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     let accProbe: -1 | 0 | 1 = -1;
     {
       let acc: boolean;
-      if (node0 !== undefined) acc = (node0 as any).acc === true;
+      if (inDraft(target) && target._fam?.opt) acc = isOwnAccessor(src, key);
+      else if (target._fam?.opt && optHooks?.accessorKind) {
+        acc =
+          optHooks.accessorKind(target, key) ??
+          (node0 !== undefined ? (node0 as any).acc === true : isOwnAccessor(src, key));
+      } else if (node0 !== undefined) acc = (node0 as any).acc === true;
       else if (!inDraft(target) && getObserver() !== null) {
         acc = isOwnAccessor(src, key);
         if (src === (target.pb ?? target.v)) accProbe = acc ? 1 : 0;
@@ -2293,6 +2336,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       affectsHooks._witness(target, key);
     if (target._fam !== null) pullFamily(target);
     const src = readSource(target, key);
+    if (userWrite && target._fam?.opt && inDraft(target)) optHooks?.draftRead?.(target, key, "has");
     // A tracked reader's presence node answers (born from the two frames;
     // core decides which it sees); everyone else reads the backing. A
     // chained target's node is a subscription point (§7b): the inner store
@@ -2300,11 +2344,14 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (!inDraft(target) && !writeOverride) {
       if (getObserver() !== null) {
         const node = getHasNode(target, key);
-        const nv = target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
+        const nv =
+          target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
         if (!target.ch || src !== target.v) return !!nv;
         const present = key in src;
         node._value = present; // the link follows the inner store (S4)
-        if (node._config & CONFIG_OVERRIDE) return !!nv;
+        if (target._fam?.opt && optHooks?.read) {
+          if (!!nv !== present) return !!nv;
+        } else if (node._config & CONFIG_OVERRIDE) return !!nv;
         return present;
       } else if (optHooks && optRead(target)) {
         const guessed = optHooks.has(target, key);
@@ -2319,7 +2366,10 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (verdict !== null && affectsHooks !== null && getObserver() === null)
       affectsHooks._witness(target, undefined);
     if (target._fam !== null) pullFamily(target);
-    return visibleKeys(target, enumerationSource(target));
+    const source = enumerationSource(target);
+    if (userWrite && target._fam?.opt && inDraft(target))
+      optHooks?.draftRead?.(target, undefined, "keys");
+    return visibleKeys(target, source);
   },
 
   getOwnPropertyDescriptor(shell, key) {
@@ -2344,9 +2394,17 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       // enumerability, accessor-ness — reads committed for a stale reader,
       // the staging for a member; #3706 contrast).
       const node = getHasNode(target, key);
-      const present = target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
+      const present =
+        target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
       src = readSource(target, key, true);
-      if (!present && (!target.ch || node._config & CONFIG_OVERRIDE || !(key in src)))
+      if (
+        !present &&
+        (!target.ch ||
+          (target._fam?.opt && optHooks?.read
+            ? !!present !== key in src
+            : !!(node._config & CONFIG_OVERRIDE)) ||
+          !(key in src))
+      )
         return undefined;
     } else src = readSource(target, key, true);
     let desc: PropertyDescriptor | undefined;
@@ -2371,6 +2429,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (key === "__proto__") return true; // pollution guard (core R30)
     const uv = target.s ? value : unwrapValue(value);
     const pb = ensurePB(target);
+    const previousLength = Array.isArray(pb) ? pb.length : -1;
     // #4146 (R1: node existence is unobservable; #3706: the hold's unit is
     // the key): a user setter writing a key a HELD container's staging left
     // unchanged would write it into the held staging — read as the hold's
@@ -2401,6 +2460,8 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       });
     } else pb[key as any] = uv;
     target.del?.delete(key);
+    if (userWrite && target._fam?.opt && previousLength >= 0)
+      optHooks?.draftWrite?.(target, key, previousLength, (pb as any[]).length, "set");
     if (unsafe) return true;
     if (target.s && uv !== null && typeof uv === "object") markRawOne(uv);
     if (!draft) notifyWrites(target); // a write-override write
@@ -2418,9 +2479,12 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (desc.get || desc.set) target.a = true;
     if ("value" in desc) desc = { ...desc, value: unwrapValue(desc.value) };
     const pb = ensurePB(target);
+    const previousLength = Array.isArray(pb) ? pb.length : -1;
     if (target.a || !(desc.enumerable && desc.writable && desc.configurable)) target.sc = 1;
     touch(target, key);
     Object.defineProperty(pb, key, desc);
+    if (userWrite && target._fam?.opt && previousLength >= 0)
+      optHooks?.draftWrite?.(target, key, previousLength, (pb as any[]).length, "set");
     target.del?.delete(key);
     if (!draft) notifyWrites(target); // a write-override write
     return true;
@@ -2435,6 +2499,8 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     }
     const pb = ensurePB(target);
     touch(target, key);
+    if (userWrite && target._fam?.opt && Array.isArray(pb))
+      optHooks?.draftWrite?.(target, key, pb.length, pb.length, "delete");
     // The key count (`kc`, the overlay gate and the rebuild cap) follows a
     // delete the way it follows an add: an own key of the draft leaving — a
     // clone's key, or an overlay's own add — is one fewer now. An overlay's

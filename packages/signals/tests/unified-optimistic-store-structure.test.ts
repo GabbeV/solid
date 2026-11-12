@@ -387,7 +387,7 @@ it("enumeration observes later values without taking value dependencies or reviv
   }
 });
 
-it("shared structural outputs entangle action lifetimes even for distinct added keys", async () => {
+it("distinct added keys retain independent action lifetimes through enumeration", async () => {
   const endA = Promise.withResolvers<void>(),
     endB = Promise.withResolvers<void>();
   const [s, set] = createOptimisticStore<Record<string, number>>({});
@@ -424,7 +424,7 @@ it("shared structural outputs entangle action lifetimes even for distinct added 
     await a;
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["a", "b"]);
+    expect(shown.at(-1)).toEqual(["b"]);
     endB.resolve();
     await b;
     await turn();
@@ -501,31 +501,11 @@ it("presence-driven async work holds the entire setter and a superseding deletio
   }
 });
 
-it("validates all descriptor and structural edits before proposing, and detaches returned replacements", async () => {
+// Accessor and immutable-descriptor behavior is covered by
+// unified-optimistic-accessors.test.ts; it no longer uses temporary flat-only guards.
+it("detaches returned replacements from subsequent caller mutations", async () => {
   const gate = Promise.withResolvers<void>();
   const [s, set] = createOptimisticStore<Record<string, number>>({ value: 0 });
-  expect(() =>
-    set(d => {
-      d.added = 1;
-      delete d.value;
-      Object.defineProperty(d, "bad", { get: () => 1 });
-    })
-  ).toThrow(/accessor/);
-  expect(() =>
-    set(d => {
-      d.added = 1;
-      Object.defineProperty(d, "value", { writable: false });
-    })
-  ).toThrow(/immutable/);
-  expect(() =>
-    set(d => {
-      d.added = 1;
-      Object.defineProperty(d, "value", { configurable: false });
-    })
-  ).toThrow(/immutable/);
-  flush();
-  expect(Object.keys(s)).toEqual(["value"]);
-  expect(s.value).toBe(0);
   const replacement = { added: 2 };
   const running = action(function* () {
     set(() => replacement);

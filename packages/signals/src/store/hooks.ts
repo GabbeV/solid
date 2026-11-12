@@ -18,11 +18,26 @@ export interface OptHooks {
   node?(t: StoreTarget, node: Signal<any>): Signal<any>;
   /** Select a store-owned truth slot through its shared optimistic output. */
   read?(t: StoreTarget, node: Signal<any>): unknown;
+  /** A selected accessor descriptor serves through its getter with the proxy receiver. */
+  accessor?(t: StoreTarget, key: PropertyKey, receiver: object): { value: unknown } | undefined;
+  /** Whether a selected descriptor supersedes a cached accessor flag. */
+  accessorKind?(t: StoreTarget, key: PropertyKey): boolean | undefined;
   /** Track the selected flat leaves for a deep read. */
   deep?(t: StoreTarget): void;
   /** A user setter's draft on an optimistic family: a clone of the
    * writer's view (a staging already on the target is set aside). */
   draft(t: StoreTarget): Record<PropertyKey, any>;
+  /** A user's draft operation, excluding internal copying and comparison. */
+  draftRead?(t: StoreTarget, key: PropertyKey | undefined, kind: "value" | "has" | "keys"): void;
+  /** Array-only selected length and successful user draft mutations. */
+  length?(t: StoreTarget, base: number): number;
+  draftWrite?(
+    t: StoreTarget,
+    key: PropertyKey,
+    before: number,
+    after: number,
+    kind: "set" | "delete"
+  ): void;
   /** The setter's exit: the draft becomes guesses; returns the staging the
    * draft set aside (`null`: none). */
   writes(t: StoreTarget, pb: Record<PropertyKey, any>): Record<PropertyKey, any> | null;

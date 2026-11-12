@@ -60,6 +60,10 @@ const proposals = new Map<Layer<any>, unknown>();
 // until their proposals acquire ordinary output transactions; scopes are not
 // members of the group and retain their independent action lifetimes.
 const proposalGroups = new Set<Set<Layer<any>>>();
+// A store setter can discover changed slots across several recursive writes.
+// Each invocation owns its group; nested changed outputs also participate in
+// the enclosing setter's compound publication.
+let proposalBatch: Set<Layer<any>> | null = null;
 const scopes = new Map<Transaction, Set<Layer<any>>>();
 if (__OBSERVE__)
   GlobalQueue._layerGuesses = update =>
@@ -195,10 +199,16 @@ function positionProposal(_proposal: unknown, layer: Layer<any>): void {
 }
 
 function applyProposal(proposal: unknown, layer: Layer<any>): void {
+  const surviving = proposal !== NOT_PENDING && !(layer._output._flags & REACTIVE_DISPOSED);
   if (!(layer._output._flags & REACTIVE_DISPOSED)) stageLayer(layer, proposal, layer._position);
   if (layer._opening) {
     resolveTx(layer._scope!)._open--;
     layer._opening = undefined;
+  }
+  if (surviving && layer._onSelected) {
+    const onSelected = layer._onSelected;
+    layer._onSelected = undefined;
+    onSelected();
   }
 }
 
@@ -403,36 +413,97 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
 
 /** A store-owned truth slot and its ordinary selected output. Like a source
  * observation, the companion is independent of creator and reader owners. */
-export function createOptimisticSlot<T>(input: Signal<T>, onUnobserved?: () => void) {
+export function createOptimisticSlot<T>(
+  input: Signal<T>,
+  onUnobserved?: () => void,
+  onSelected?: () => void
+) {
   const layer = runWithOwner(null, () =>
-    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, false, { unobserved: onUnobserved })
+    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, false, {
+      unobserved: onUnobserved
+    })
   );
   layer._automatic = true;
   layer._inputStatus = true;
+  layer._onSelected = onSelected;
   layer._output._config &= ~CONFIG_AUTO_DISPOSE;
   const [, propose] = layerAccessors(layer);
   // Establish the initial published value even when the first operation is a
   // setter. No function/thenable normalization: slot contents are raw values.
   untrack(() => read(layer._output));
+  const isIdle = () => {
+    const output = layer._output;
+    const busy =
+      REACTIVE_CHECK |
+      REACTIVE_DIRTY |
+      REACTIVE_IN_HEAP |
+      REACTIVE_RECOMPUTING_DEPS |
+      REACTIVE_ZOMBIE;
+    return (
+      layer._scope === null &&
+      !proposals.has(layer) &&
+      layer._override === NOT_PENDING &&
+      !((output._config | input._config) & CONFIG_HELD) &&
+      output._pendingValue === NOT_PENDING &&
+      input._pendingValue === NOT_PENDING &&
+      !((output._statusFlags | layer._input._statusFlags) & STATUS_PENDING) &&
+      !((output._flags | layer._input._flags) & busy)
+    );
+  };
   return {
     output: layer._output,
-    propose: (value: T) => propose(() => value),
+    propose: (value: T) => {
+      const next = propose(() => value);
+      if (proposalBatch && !(layer._output._flags & REACTIVE_DISPOSED)) proposalBatch.add(layer);
+      return next;
+    },
     writerValue: () => previousProposal(layer),
+    // This is the action that owns the selected guess, not the output's
+    // publication transaction. A pending proposal can also be consumed by a
+    // later setter before the selection pass runs.
+    activeOwner: (): Transaction | null => {
+      if (
+        layer._scope === null ||
+        (layer._override === NOT_PENDING &&
+          (!proposals.has(layer) || proposals.get(layer) === NOT_PENDING))
+      )
+        return null;
+      return liveTx(layer._scope);
+    },
+    // A structural candidate can retire before its readers unlink. The
+    // store first invalidates their discovery node, then retries release.
+    isIdle,
     // The store retries only companions whose readers left. A live guess or
     // an unfinished correction is state, even with no subscribers.
     tryRelease: () => {
       const output = layer._output;
-      if (output._subs !== null || layer._scope !== null || proposals.has(layer) ||
-          layer._override !== NOT_PENDING ||
-          (output._config | input._config) & CONFIG_HELD ||
-          output._pendingValue !== NOT_PENDING || input._pendingValue !== NOT_PENDING ||
-          (output._statusFlags | layer._input._statusFlags) & STATUS_PENDING ||
-          output._flags & (REACTIVE_CHECK | REACTIVE_DIRTY | REACTIVE_IN_HEAP |
-            REACTIVE_RECOMPUTING_DEPS | REACTIVE_ZOMBIE)) return false;
+      if (output._subs !== null || !isIdle()) return false;
       dispose(output as Computed<any>);
       return true;
     }
   };
+}
+
+/** An actual store-setter read of another selected guess joins its action.
+ * Output publication alone must not join these independent lifetimes. */
+export function entangleOptimisticSlotRead(slot: ReturnType<typeof createOptimisticSlot>): void {
+  const owner = slot.activeOwner();
+  if (owner && flushTransaction) merge(flushTransaction, owner);
+}
+
+/** Collect every changed slot submitted during one store setter, including
+ * recursive writes. Nested setters also keep their own output groups. */
+export function withOptimisticSlotBatch<T>(setter: () => T): T {
+  const previous = proposalBatch;
+  const group = new Set<Layer<any>>();
+  proposalBatch = group;
+  try {
+    return setter();
+  } finally {
+    proposalBatch = previous;
+    if (previous) for (const layer of group) previous.add(layer);
+    if (group.size > 1) proposalGroups.add(group);
+  }
 }
 
 /** Submit one static-record setter's changes. Scalar proposals and distinct
@@ -452,11 +523,13 @@ export function proposeOptimisticSlots(
 // belong to a held correction, rather than to an earlier user proposal.
 function previousProposal<T>(layer: Layer<T>): T {
   const pending = proposals.get(layer);
-  return (proposals.has(layer) && pending !== NOT_PENDING
-    ? pending
-    : layer._override !== NOT_PENDING
-      ? layer._override
-      : layer._output._value) as T;
+  return (
+    proposals.has(layer) && pending !== NOT_PENDING
+      ? pending
+      : layer._override !== NOT_PENDING
+        ? layer._override
+        : layer._output._value
+  ) as T;
 }
 
 function layerAccessors<T>(layer: Layer<T>) {

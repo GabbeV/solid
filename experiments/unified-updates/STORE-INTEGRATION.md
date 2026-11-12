@@ -6,6 +6,29 @@ pass or be explicitly migrated under the user's rulings. An old test is evidence
 of behavior, not permission to preserve inconsistent publication. Semantic
 decisions stay with the user.
 
+## Expanded shared-store checkpoint (2026-11-12)
+
+The existing draft/trap engine now feeds per-property shared optimistic outputs
+for nested records and arrays. Setter reads join the action owning a consumed
+guess; ordinary cloning does not. Per-key shape outputs replace guessed whole
+container snapshots. Arrays carry independent minimum-length requirements and
+coordinate actual length reads/explicit resizes under the agreed policy.
+
+Chained stores have tracked input bridges, preserve identity on matching
+corrections, and remain transparent without an override. Configurable accessor
+and data descriptor changes use selected shape outputs. Synthetic discovery
+notifications occur only after a proposal survives lifetime selection, avoiding
+extra render callbacks for optimism that expires before publication.
+
+Validation at this checkpoint: 70/70 focused shared-store/core/chained tests;
+967/967 array/list tests including all 900 mutation-matrix cases; source TypeScript
+passes. A diagnostic full signals run during implementation reported 7,218 passed,
+583 failed, 2 skipped. That is not an acceptance result: sources changed during
+execution, and several clusters have since been fixed. Derived producer pending,
+keyed reconciliation, observation/API integration, and the full-suite audit remain.
+`until` remains deliberately deferred. See STORE-OVERNIGHT-DECISIONS.md for semantic
+choices made under the user's overnight authorization.
+
 ## Integrated flat records and reclamation (2026-11-12)
 
 Flat records now support property addition/deletion, present-undefined,
