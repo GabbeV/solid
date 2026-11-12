@@ -371,7 +371,7 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
     h.dispose();
   });
 
-  it("a fresh mainline memo created mid-hold composes one staged world (1,2,3,4 len=4, not 1,2,3,HOLE) and is held", async () => {
+  it("a fresh ordinary memo reads the selected output, then corrects with the action", async () => {
     const h = await buildFold();
     const computed: string[] = [];
     const published: string[] = [];
@@ -388,14 +388,16 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
       return d;
     });
     flush();
-    // #3589 left this torn: the fresh memo is not the fold's owning pass, so
-    // it was served the landed `length` (through the superseded override)
-    // with row 3 still masked to committed.
-    expect(computed).toEqual(["1,2,3,4 len=4"]);
-    expect(latest(m)).toBe("1,2,3,4 len=4");
-    expect(published).toEqual([]);
+    // Stage120: an ordinary derivation consumes the selected store output,
+    // including its active index guess, rather than tunneling to its input.
+    expect(computed).toEqual(["1,2,3 len=3"]);
+    expect(latest(m)).toBe("1,2,3 len=3");
+    expect(published).toEqual(["1,2,3 len=3"]);
+    expect(published.at(-1)).toBe(h.frames.at(-1));
     await h.T.release();
-    expect(published).toEqual(["1,2,3,4 len=4"]);
+    expect(published).toEqual(["1,2,3 len=3", "1,2,3,4 len=4"]);
+    expect(published.at(-1)).toBe(h.frames.at(-1));
+    for (const value of [...computed, ...published]) expect(value).not.toContain("HOLE");
     d();
     h.dispose();
   });

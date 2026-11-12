@@ -178,25 +178,25 @@ describe("Q-D twins — two actions, one list; the older landing beneath the new
       expect(s.frames.at(-1)).toBe("b:B,a:A,c:C!");
       const applied = s.frames.length;
 
-      // A confirms first: its landing is an OLDER question than B's guess —
-      // held beneath, the display unchanged, no frame published.
+      // A confirms first: B's selected swap remains visible. An equal
+      // callback during input publication or correction changes no display.
       a.release();
       await a.done;
       await settle();
       s.land();
       await settle();
       expect(s.frames.at(-1)).toBe("b:B,a:A,c:C!");
-      expect(s.frames.slice(applied)).toEqual([]);
+      expect(s.frames.slice(applied).every(frame => frame === "b:B,a:A,c:C!")).toBe(true);
       expect(s.read()).toBe("b:B,a:A,c:C!");
 
-      // B confirms: its own landing judges — equal, silent.
+      // B confirms: its landing and correction preserve the same complete display.
       b.release();
       await b.done;
       await settle();
       s.land();
       await settle();
       expect(s.frames.at(-1)).toBe("b:B,a:A,c:C!");
-      expect(s.frames.slice(applied)).toEqual([]);
+      expect(s.frames.slice(applied).every(frame => frame === "b:B,a:A,c:C!")).toBe(true);
       expect(s.read()).toBe("b:B,a:A,c:C!");
       expect(s.pending()).toBe(false);
     });

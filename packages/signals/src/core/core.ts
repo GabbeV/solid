@@ -996,7 +996,6 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
           // A first answer is born into the future, with no committed value
           // until the landing. A loadingValue computation already owns commit
           // #0 and keeps serving it while this first calculation is held.
-          // An explicit loadingValue already supplies a committed first frame.
           if (wasUninitialized) el._statusFlags |= STATUS_UNINITIALIZED;
           // A boundary that has not shown content catches it: its fallback
           // waits for the commit (#3540). (The pass's own status clear above
