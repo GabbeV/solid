@@ -282,6 +282,13 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
   const record = recordFor(t);
   let slot = record.shape.get(key);
   if (slot) return slot;
+  // Metadata discovered during a flight still has the displayed body's answer.
+  // Without it an accessor probe can suspend before reaching a held value slot.
+  const body = runWithOwner(null, () => untrack(() => selectedBody(t, false, true)));
+  const published =
+    body || !(t._fam?.node?._statusFlags! & STATUS_UNINITIALIZED)
+      ? { value: shapeMeta(body ?? committed(t), key) }
+      : undefined;
   const input = createOptimisticStoreInput(() => {
     const body = selectedBody(t);
     if (body) return shapeMeta(body, key);
@@ -301,20 +308,26 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
     });
     schedule();
   };
-  slot = createOptimisticSlot(input, candidate, () => {
-    // Equal metadata already on screen needs no structural discovery.
-    // Its selected output still owns the override and observes future edits.
-    const shown = slot!.output._value as ShapeMeta | undefined;
-    if (shown && sameShapeMeta(shown, slot!.writerValue() as ShapeMeta)) return;
-    // A discarded ambient proposal must not wake existing readers at all.
-    // Discover this candidate only once it has a surviving selected update.
-    const container = getContainerNode(t);
-    if (container._subs !== null) insertSubs(container);
-    if (record.structure?.output._subs) insertSubs(record.structure.output);
-    const value = t.n?.[key as any];
-    if (value !== undefined && value._subs !== null) insertSubs(value);
-    schedule();
-  });
+  slot = createOptimisticSlot(
+    input,
+    candidate,
+    () => {
+      // Equal metadata already on screen needs no structural discovery.
+      // Its selected output still owns the override and observes future edits.
+      const shown = slot!.output._value as ShapeMeta | undefined;
+      if (shown && sameShapeMeta(shown, slot!.writerValue() as ShapeMeta)) return;
+      // A discarded ambient proposal must not wake existing readers at all.
+      // Discover this candidate only once it has a surviving selected update.
+      const container = getContainerNode(t);
+      if (container._subs !== null) insertSubs(container);
+      if (record.structure?.output._subs) insertSubs(record.structure.output);
+      const value = t.n?.[key as any];
+      if (value !== undefined && value._subs !== null) insertSubs(value);
+      schedule();
+    },
+    undefined,
+    published
+  );
   slot.output._equals = sameShapeMeta;
   record.shape.set(key, slot);
   shapedTargets.add(t);

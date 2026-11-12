@@ -291,3 +291,79 @@ it("a manual boundary keeps a fresh async question pending beside a quiet input"
     flush();
   }
 });
+
+it("a held store proposal is visible to pending while fresh metadata waits on a quiet producer", async () => {
+  const sourceRequests: ReturnType<typeof Promise.withResolvers<number>>[] = [];
+  const derivedRequests: ReturnType<typeof Promise.withResolvers<number>>[] = [];
+  const end = Promise.withResolvers<void>();
+  const shown: number[] = [];
+  const [state, write, dispose] = createRoot(dispose => {
+    const [state, write] = createOptimisticStore(
+      async draft => {
+        const request = Promise.withResolvers<number>();
+        sourceRequests.push(request);
+        draft.data = await request.promise;
+      },
+      { data: 0 }
+    );
+    const derived = createMemo(() => {
+      const data = state.data;
+      const request = Promise.withResolvers<number>();
+      derivedRequests.push(request);
+      return request.promise.then(() => data * 2);
+    });
+    createRenderEffect(derived, result => {
+      shown.push(result);
+    });
+    return [state, write, dispose] as const;
+  });
+  let running: Promise<unknown> | undefined;
+  try {
+    flush();
+    sourceRequests[0].resolve(10);
+    await turn();
+    derivedRequests[0].resolve(0);
+    await turn();
+    expect(shown).toEqual([20]);
+    void refresh(state);
+    flush();
+    expect(isPending(() => state.data)).toBe(false);
+    running = action(function* () {
+      write(draft => {
+        draft.data = 15;
+      });
+      yield end.promise;
+    })();
+    flush();
+    expect(state.data).toBe(10);
+    expect(isPending(() => state.data)).toBe(true);
+    expect(shown).toEqual([20]);
+    sourceRequests[1].resolve(10);
+    await turn();
+    expect(state.data).toBe(10);
+    expect(isPending(() => state.data)).toBe(true);
+    derivedRequests[1].resolve(0);
+    await turn();
+    expect(state.data).toBe(15);
+    expect(shown.at(-1)).toBe(30);
+    expect(isPending(() => state.data)).toBe(false);
+    expect(sourceRequests).toHaveLength(2);
+    expect(derivedRequests).toHaveLength(2);
+    end.resolve();
+    await running;
+    await turn();
+    expect(isPending(() => state.data)).toBe(true);
+    derivedRequests[2].resolve(0);
+    await turn();
+    expect(state.data).toBe(10);
+    expect(shown.at(-1)).toBe(20);
+    expect(isPending(() => state.data)).toBe(false);
+  } finally {
+    end.resolve();
+    for (const request of sourceRequests) request.resolve(10);
+    for (const request of derivedRequests) request.resolve(0);
+    await running;
+    dispose();
+    flush();
+  }
+});
