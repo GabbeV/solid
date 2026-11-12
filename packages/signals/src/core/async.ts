@@ -40,7 +40,7 @@ import {
   reportDiagnostic,
   watchAsyncTail
 } from "./dev.js";
-import { NotReadyError, StatusError } from "./error.js";
+import { NotReadyError, StatusError, unwrapStatusError } from "./error.js";
 import { trimStaleDeps, unobserved } from "./graph.js";
 import { enqueueSub } from "./heap.js";
 import { cleanup, disposeChildren } from "./owner.js";
@@ -1084,6 +1084,14 @@ export function propagateStatus(el: Computed<any>, status: number, error: any): 
   const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   forEachDependent(el, (sub, link) => {
     if (layerStatus?.(sub, el)) return;
+    // Retrying a producer can throw its already shown error again. It has
+    // no new answer for a subscriber carrying that same error (D-41).
+    if (
+      status === STATUS_ERROR &&
+      sub._statusFlags & STATUS_ERROR &&
+      unwrapStatusError(sub._x?._error) === unwrapStatusError(error)
+    )
+      return;
     layerNotify?.(el, sub);
     sub._time = clock;
     // A pending mark on a kept-tail link re-derives the subscriber instead of
