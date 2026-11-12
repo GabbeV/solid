@@ -1,8 +1,9 @@
 /**
  * #4561: a splice selects positional row outputs; it does not replay a keyed
- * removal over the producer's next answer. Memo, mapArray and For-like
- * consumers must agree while those outputs retain rows #3/#4, and through
- * their eventual correction. The filter input has its own publication life.
+ * removal over the producer's next answer. Ordinary input readers hold the
+ * filter until their requests answer; the selected rows' action does not
+ * extend that hold. Memo, mapArray and For-like consumers agree on the same
+ * selected rows #3/#4 and their eventual correction.
  */
 import { expect, it } from "vitest";
 import {
@@ -142,10 +143,12 @@ for (const shape of ["memo", "mapArray", "for"] as const)
       checkReaders();
       // Complete selected rows can reveal through the re-armed boundary.
       expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      // Only the row outputs retain the action; the answered input is free.
+      expect(screen()).toBe("closed: [#3][#4]");
       await settle("close:1", {});
-      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      expect(screen()).toBe("closed: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       await closing;
       checkReaders();
@@ -255,10 +258,11 @@ for (const chain of ["memo-memo", "memo-memo-memo", "mapArray-memo"] as const)
     checkReaders();
     // The explicit row outputs retain #3/#4; no keyed removal is replayed.
     expect(screen()).toBe("open: [#3][#4]");
+    expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
     await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-    expect(screen()).toBe("open: [#3][#4]");
+    expect(screen()).toBe("closed: [#3][#4]");
     await settle("close:1", {});
-    expect(screen()).toBe("open: [#3][#4]");
+    expect(screen()).toBe("closed: [#3][#4]");
     await settle("issues:closed", [{ id: 2 }]);
     await closing;
     checkReaders();

@@ -5,8 +5,9 @@
 /**
  * The optimistic store selects the indices explicitly written by the splice. The
  * producer does not replay that operation over its next answer. Those row
- * outputs retain their action lifetime; an `on` boundary may publish its
- * independent question beside the complete selected rows. The final refresh
+ * outputs retain their action lifetime. An independent question publishes
+ * beside those rows once its ordinary input readers are ready; an `on`
+ * boundary may reveal the ready selected content earlier. The final refresh
  * corrects the indices. Only complete, consistent DOM frames are allowed.
  */
 import { expect, test } from "vitest";
@@ -77,14 +78,16 @@ for (const on of [true, false])
       expect(container.textContent).toBe("open: [#1][#3][#4]");
       setFilter("closed");
       await tick();
+      expect(container.textContent).toBe(on ? "loading" : "open: [#1][#3][#4]");
       closeOne(1);
       await tick();
       const selected = on ? "closed: [#3][#4]" : "open: [#3][#4]";
       expect(container.textContent).toBe(selected);
+      if (!on) expect(seen.filter(frame => frame.startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      expect(container.textContent).toBe(selected);
+      expect(container.textContent).toBe("closed: [#3][#4]");
       await settle("close:1", {});
-      expect(container.textContent).toBe(selected);
+      expect(container.textContent).toBe("closed: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       expect(container.textContent).toBe("closed: [#2]");
       expect(asks).toEqual([]);
@@ -94,7 +97,7 @@ for (const on of [true, false])
         "loading",
         "open: [#1][#3][#4]",
         "open: [#3][#4]",
-        ...(on ? ["closed: [#3][#4]"] : []),
+        "closed: [#3][#4]",
         "closed: [#2]"
       ]);
       expect(seen.filter(frame => !allowed.has(frame))).toEqual([]);

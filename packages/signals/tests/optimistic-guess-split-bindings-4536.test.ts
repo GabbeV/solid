@@ -1,9 +1,9 @@
 /**
  * #4536: a splice selects positional row outputs independently of the filter
- * input. It does not replay a keyed removal on each producer answer. Rows
- * #3/#4 remain selected through the first closed answer and the action's
- * refresh; their correction finally reveals the authoritative row #2.
- * Every direct, memo and For-like consumer must show the same selected array.
+ * input. Ordinary unanswered readers retain the filter; its completed answer
+ * releases that hold without waiting for the row action. Rows #3/#4 remain
+ * selected through that answer and refresh until correction reveals row #2.
+ * Direct, memo and For-like consumers always show the same selected array.
  */
 import { expect, it } from "vitest";
 import {
@@ -113,10 +113,12 @@ for (const split of [false, true])
       await tick();
       checkReaders();
       expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      // Only the row outputs retain the action; the answered input is free.
+      expect(screen()).toBe("closed: [#3][#4]");
       await settle("close:1", {});
-      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      expect(screen()).toBe("closed: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       await closing;
       checkReaders();

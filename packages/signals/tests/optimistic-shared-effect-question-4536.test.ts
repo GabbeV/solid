@@ -1,8 +1,9 @@
 /**
  * #4536: a shared binding reads the filter input and selected row outputs.
- * A splice retains concrete rows #3/#4 until correction, without replaying
- * a keyed removal over the next answer. Independent inputs may publish
- * beside selected rows; authoritative row #2 requires the closed question.
+ * Ordinary unanswered input readers retain the filter's own hold. When its
+ * answer is ready, the filter publishes while the splice's concrete rows
+ * #3/#4 remain selected until correction. No keyed removal is replayed, and
+ * authoritative row #2 requires the closed question.
  */
 import { expect, test } from "vitest";
 import {
@@ -95,10 +96,12 @@ for (const order of ["question first", "list first"] as const)
         // A splice selects its resulting row outputs; it is not replayed
         // as a removal on the producer's next answer.
         expect(frames.at(-1)).toBe("open: [#3][#4]");
+        expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        expect(frames.at(-1)).toBe("open: [#3][#4]");
+        // The answered input publishes independently of the retained rows.
+        expect(frames.at(-1)).toBe("closed: [#3][#4]");
         await settle("close:1", {});
-        expect(frames.at(-1)).toBe("open: [#3][#4]");
+        expect(frames.at(-1)).toBe("closed: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
         await closing;
         checkReaders();

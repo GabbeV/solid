@@ -1,8 +1,9 @@
 /**
- * #4559: a second async reader keeps the filter input parked independently
- * of the selected row outputs. A draft splice retains rows #3/#4 rather than
- * replaying a removal over the next answer. The authoritative row #2 must
- * never publish with the old open question.
+ * #4559: a second async reader holds the filter input until that reader
+ * answers. The row-input answer alone cannot release it. Once both answer,
+ * the filter publishes while concrete row outputs #3/#4 remain selected.
+ * Their splice is not replayed over the answer, and authoritative row #2
+ * must never publish beside the old open question.
  */
 import { expect, test } from "vitest";
 import {
@@ -126,18 +127,21 @@ for (const order of ["question first", "list first"] as const)
         setFilter("closed");
         await tick();
         checkReaders();
+        expect(last()).toBe("open: [#1][#3][#4]");
         const closing = closeOne(1);
         await tick();
         checkReaders();
         expect(last()).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        // The sibling question remains parked; selected row outputs retain
-        // their concrete #3/#4 values independently of the new answer.
+        // The unanswered sibling still holds the independent input.
+        // Selected rows do not answer that sibling's question.
         expect(last()).toBe("open: [#3][#4]");
+        expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("other:closed", {});
-        expect(last()).toBe("open: [#3][#4]");
+        // All ordinary input readers are ready; the row override keeps its own lifetime.
+        expect(last()).toBe("closed: [#3][#4]");
         await settle("close:1", {});
-        expect(last()).toBe("open: [#3][#4]");
+        expect(last()).toBe("closed: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
         await closing;
         checkReaders();
