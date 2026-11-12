@@ -65,7 +65,7 @@ import {
 import { computed, read, recompute, runWithOwner, setSignal, signal } from "./core/core.js";
 import { emitDiagnostic, forgetThrownRead, reportDiagnostic } from "./core/dev.js";
 import { shadowSeatRestore, shadowSeatSave, shadowSwapSeat } from "./core/seat.js";
-import { ContextRetry, NotReadyError, unwrapStatusError } from "./core/error.js";
+import { ContextRetry, NotReadyError, StatusError, unwrapStatusError } from "./core/error.js";
 import { reportClientError } from "./core/error-hooks.js";
 import { link } from "./core/graph.js";
 import { enqueueSub } from "./core/heap.js";
@@ -726,7 +726,20 @@ function arm(b: Boundary): true | void {
 function reset(b: Boundary): void {
   // A snapshot: a source failing again is caught — and re-added — mid-walk.
   for (const r of new Set(b._readers.values()))
-    if (r._fn !== undefined && !(r._flags & REACTIVE_DISPOSED)) recompute(r);
+    if (r._fn !== undefined && !(r._flags & REACTIVE_DISPOSED)) {
+      const previous = unwrapStatusError(r._x?._error);
+      recompute(r);
+      // An unchanged error need not notify readers again (D-41), but an
+      // explicit reset has observed this failure anew. Object errors are
+      // still reported once by the hook; primitives are reported per sight.
+      const error = r._x?._error;
+      if (r._statusFlags & STATUS_ERROR && unwrapStatusError(error) === previous)
+        reportClientError(
+          unwrapStatusError(error),
+          b._owner,
+          error instanceof StatusError ? error.source : r
+        );
+    }
   schedule();
 }
 
