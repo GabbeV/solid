@@ -993,11 +993,11 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
         // only after the seam parks it.
         if (create) {
           holdNode(el, (flushTransaction ?? passTx)!);
-          // Born into the future: no committed value until the landing
-          // (`commitPendingNode` initializes it) — every reader of it
-          // derives from the future (`read`), an untracked one throws
-          // (A19 exc. 1).
-          el._statusFlags |= STATUS_UNINITIALIZED;
+          // A first answer is born into the future, with no committed value
+          // until the landing. A loadingValue computation already owns commit
+          // #0 and keeps serving it while this first calculation is held.
+          // An explicit loadingValue already supplies a committed first frame.
+          if (wasUninitialized) el._statusFlags |= STATUS_UNINITIALIZED;
           // A boundary that has not shown content catches it: its fallback
           // waits for the commit (#3540). (The pass's own status clear above
           // dropped what the read recorded.) Not when the flush has joined
