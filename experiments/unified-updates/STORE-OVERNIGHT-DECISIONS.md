@@ -432,3 +432,12 @@ Paired scalar/store controls agree; a tracked counterpart follows the correction
 from 0 to 2. This keeps ordinary untrack behavior instead of restoring the old
 store-only routing to a hidden input answer. It is intentionally recorded for
 review because the old S8 test expected 2 from the untracked memo.
+
+The #4336 migration now passes all 37 original forms/timelines, plus both focused
+descriptor correction regressions (39/39 in the root run). Its phase guards allow
+only the exact sparse `[hole, "mine (sending)"]` composition while an independent
+empty input is published. Before that phase and after a restoring or final answer,
+all outputs must be dense. Queued primary, memo, For-like and native-array views
+are compared with keys, `in`, own presence, descriptors and length on every
+publication. Same-action input holding and refresh controls remain intact. This
+records the sparse composition choice above; it does not waive transient tearing.
