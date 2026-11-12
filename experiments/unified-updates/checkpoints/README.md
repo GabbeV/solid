@@ -81,3 +81,5 @@ Solid passes 927/927. Client has 20 newly unmasked store failures; hydrate has
 resolved by a scratch resolution fix and one load-sensitive iterator count which
 passes isolated reruns. Raw failures are retained; targeted passes do not rewrite
 the full-suite result. No `until` failures occur in these framework runs.
+
+`store-progress-20261112.tar.xz` restores `store-progress-20261112/` in the extraction directory. It preserves the pre-combination full signals run at `4d891e564`, focused integration checks, and unmerged parent/derived/error trial sources. Trials include known gaps and are not merge candidates without their later review. Built artifacts were still `54a7c3aa7`; the full run is source failure-discovery evidence.

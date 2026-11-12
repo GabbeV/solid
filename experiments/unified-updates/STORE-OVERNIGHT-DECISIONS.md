@@ -170,3 +170,22 @@ an unknown longer input. The write itself is accepted; it is not the old
 read independently. The focused integration run passes 43 tests, including both
 completion orders and an add/filter/add sequence that previously aborted during
 companion initialization.
+
+The original signals and JSX before-load rejection tests now exercise accepted
+writes and coherent first publication/correction. The signals migration subset
+passes 22 of 23 tests; its remaining unkeyed row correction failure is unchanged
+and belongs to the parent-object work. The updated JSX test awaits validation
+against the final rebuilt package. Generated rule references were refreshed.
+
+The full source-discovery run at `4d891e564` reports 7,611 passes, 232 failures
+and five skips. `until` accounts for many failures; the remaining cases are still
+under review. Artifacts were from `54a7c3aa7`, so this is not final built-package
+acceptance. Raw receipts and unmerged trial snapshots are preserved in
+`checkpoints/store-progress-20261112.tar.xz`.
+
+That run also caught a regression in client error reporting from the common
+same-answer notification fix. Explicit boundary reset now reports an unchanged
+primitive error as a fresh sight, while ordinary graph propagation retains
+same-answer suppression. The fix is local to reset, adds no node fields, and
+passes the original reporting and optimistic-error checks (18 tests on main;
+103 related tests on the isolated patch).

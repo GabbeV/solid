@@ -129,26 +129,30 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
       s.dispose();
     });
 
-  // Ruled 2026-11-03 (#4656): before its first answer the list is loading,
-  // not a value to be optimistic over — in DEV the add throws
-  // OPTIMISTIC_WRITE_BEFORE_LOAD, nothing is guessed, and the first load
-  // shows as it lands.
-  it("an add before the first load lands: OPTIMISTIC_WRITE_BEFORE_LOAD", async () => {
+  // A first guess is accepted while <For> still waits for the input's
+  // length. The empty seed must not replace the loading fallback.
+  it("an add before the first load waits for its length and corrects after saving", async () => {
     const s = todoList();
-    await tick();
-    let error: unknown;
-    await s.step(() => {
-      s.add({ id: 3, title: "jam" }).catch(e => (error = e));
-    });
-    expect(String(error)).toMatch(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
-    expect(s.shown).toBe("loading");
-    await s.step(() => s.land("list"));
-    expect(s.shown).toBe("[milk][eggs]");
-    await s.step(() => s.add({ id: 3, title: "jam" }));
-    expect(s.shown).toBe("[milk][eggs][jam]");
-    await s.drain();
-    expect(s.shown).toBe("[milk][eggs][jam]");
-    s.dispose();
+    try {
+      await tick();
+      let error: unknown;
+      await s.step(() => {
+        s.add({ id: 3, title: "jam" }).catch(e => (error = e));
+      });
+      expect(error).toBeUndefined();
+      expect(s.out.map(o => o.key)).toEqual(["list", "add:3"]);
+      expect(s.shown).toBe("loading");
+      await s.step(() => s.land("list"));
+      expect(s.shown).toBe("[jam][eggs]");
+      await s.step(() => s.land("add:3"));
+      expect(s.out.map(o => o.key)).toEqual(["list"]);
+      await s.step(() => s.land("list"));
+      expect(s.shown).toBe("[milk][eggs][jam]");
+      expect(s.shown).toBe(s.server);
+      expect(error).toBeUndefined();
+    } finally {
+      s.dispose();
+    }
   });
 
   // F-11: a guess shows from the flush that carries it, also while an
