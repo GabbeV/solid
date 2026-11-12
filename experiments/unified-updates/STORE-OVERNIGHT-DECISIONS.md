@@ -378,3 +378,34 @@ MutationObserver snapshots retain exact whole-DOM allowed frames. #4482 explicit
 checks new input at unguessed index 0 beside selected index 1; #4480 checks that an
 unguessed producer error reaches the error boundary while the selected assignee
 remains readable. This does not establish the final rebuilt framework result.
+
+## Cold companion initialization and action independence
+
+Store-owned input and output nodes now initialize outside the action that happens
+to create them. Reading an actual other action's selected value in a setter still
+joins the actions; merely creating an internal property node does not. Flat,
+nested and array controls cover both reader orders and both consumed/unconsumed
+writes. This fixes the nested siblings case: once A and the input answer finish,
+A corrects to 2 while B independently retains 888.
+
+A late property node can inherit an already published value from its raw input
+or selected parent body. A producer that has never published does not authorize
+using its seed. This also handles a parent override published before the producer's
+first answer, without evaluating getters merely to seed a child. Shared boundary
+construction forwards the existing loadingValue option; the generic initialization
+fix remains in its separate earlier commit. Root cold/pending checks pass 54/54,
+and both former cold held-reader failures pass. Isolated broader map and ownership
+checks pass; a full source run exposed additional issues described below.
+
+Removing accidental action coupling also releases independent input answers sooner:
+closed can publish beside explicitly selected rows #3/#4 after its actual input
+holds finish, while the row action remains open. Recently migrated tests retained
+the previous unnecessary hold and are being corrected with strict output-coherence
+checks. This follows the existing separate input/override lifetime ruling; it does
+not let an unanswered input publish through an ordinary reader.
+
+An attempted common observation-readiness repair was rejected after the full suite
+showed suppressed synchronous latest publications. It is explicitly reverted in
+history. The quiet pending pulse remains unresolved; focused checks had missed the
+broader latest obligations. Array descriptor/presence corrections and chained store
+propagation also remain under investigation. This is not the completed milestone.

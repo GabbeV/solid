@@ -1338,6 +1338,7 @@ export function createLayerBoundary<T>(
     name: options?.name,
     equals: options?.equals,
     unobserved: options?.unobserved,
+    ...(options && "loadingValue" in options ? { loadingValue: options.loadingValue } : {}),
     lazy,
     sync: true,
     _extraConfig: CONFIG_REDERIVE

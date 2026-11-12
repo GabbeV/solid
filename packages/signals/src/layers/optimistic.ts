@@ -32,6 +32,7 @@ import {
   merge,
   newTransaction,
   resolveTx,
+  recomputeInUpdate,
   setLayerBlocked,
   txOf,
   inEffectCallback,
@@ -580,16 +581,28 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
   setLayerBlocked(pendingScope);
 }
 
+/** Initialize a store-owned truth input outside the setter action. Its
+ * pending producer must not acquire the lifetime of a new independent guess. */
+export function createOptimisticStoreInput<T>(fn: () => T, options?: NodeOptions<T>) {
+  return runWithOwner(null, () => {
+    const input = computed(fn, { ...options, lazy: true });
+    recomputeInUpdate(input, null, false, true);
+    return input;
+  });
+}
+
 /** A store-owned truth slot and its ordinary selected output. Like a source
  * observation, the companion is independent of creator and reader owners. */
 export function createOptimisticSlot<T>(
   input: Signal<T>,
   onUnobserved?: () => void,
   onSelected?: () => void,
-  onRetired?: () => void
+  onRetired?: () => void,
+  published?: { value: T }
 ) {
   const layer = runWithOwner(null, () =>
-    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, false, {
+    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, true, {
+      ...(published ? { loadingValue: published.value } : {}),
       unobserved: onUnobserved
     })
   );
@@ -602,6 +615,7 @@ export function createOptimisticSlot<T>(
     (layer._output as any)._name = (input as any)._name;
     (layer._output as any)._loc = (input as any)._loc;
   }
+  recomputeInUpdate(layer._output, null, false, true);
   const [, propose] = layerAccessors(layer);
   // Establish the initial published value even when the first operation is a
   // setter. No function/thenable normalization: slot contents are raw values.

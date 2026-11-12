@@ -1,13 +1,20 @@
 /** Interim shared-engine slice: flat plain records with per-property cuts.
  * Truth slots stay store-owned; only their selected outputs accept guesses. */
-import { computed, read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.js";
-import { CONFIG_AUTO_DISPOSE, CONFIG_HELD, REACTIVE_DISPOSED } from "../core/constants.js";
+import { read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.js";
+import {
+  CONFIG_AUTO_DISPOSE,
+  CONFIG_HELD,
+  REACTIVE_DISPOSED,
+  NOT_PENDING,
+  STATUS_UNINITIALIZED
+} from "../core/constants.js";
 import type { Computed, Signal } from "../core/types.js";
 import { enqueueSub, markNode } from "../core/heap.js";
 import { dispose, getObserver } from "../core/owner.js";
 import { insertSubs, schedule } from "../core/scheduler.js";
 import {
   createOptimisticSlot,
+  createOptimisticStoreInput,
   proposeOptimisticSlots,
   entangleOptimisticSlotRead,
   withOptimisticSlotBatch
@@ -77,7 +84,11 @@ function recordFor(t: StoreTarget): RecordSlots {
 }
 
 /** A selected parent property supplies the body's publication boundary. */
-function selectedBody(t: StoreTarget, writer = false): Record<PropertyKey, any> | undefined {
+function selectedBody(
+  t: StoreTarget,
+  writer = false,
+  published = false
+): Record<PropertyKey, any> | undefined {
   let slot = records.get(t)?.parent;
   if (!slot && t.u && t.pk !== null) {
     const candidate =
@@ -97,14 +108,18 @@ function selectedBody(t: StoreTarget, writer = false): Record<PropertyKey, any> 
     setVerdict(null);
     let value;
     try {
-      value = writer ? slot.writerValue() : read(slot.output);
+      value = writer
+        ? slot.writerValue()
+        : published && slot.output._statusFlags & STATUS_UNINITIALIZED
+          ? undefined
+          : read(slot.output);
     } finally {
       setVerdict(previous);
     }
     if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
   }
   if (t.u && t.pk !== null) {
-    const parent = selectedBody(t.u, writer);
+    const parent = selectedBody(t.u, writer, published);
     const value = parent?.[t.pk];
     if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
   }
@@ -117,14 +132,25 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
   let slot = slots.get(key);
   if (!slot) {
     const node = presence ? getHasNode(t, key) : getNode(t, key);
+    const body = runWithOwner(null, () => untrack(() => selectedBody(t, false, true)));
+    const descriptor = body && Object.getOwnPropertyDescriptor(body, key);
+    const bodyValue =
+      body &&
+      (presence
+        ? { value: key in body }
+        : descriptor && "value" in descriptor
+          ? { value: descriptor.value }
+          : !(key in body)
+            ? { value: undefined }
+            : undefined);
     // A chained target's node is only a subscription point. Its `_value` is
     // assigned during a read, so it cannot notify a selected output when the
     // inner store changes. Give the companion a tracked input that follows
     // both a replacement of the outer backing and the inner selected key.
     const input =
       t.ch || t.u || t._fam?.node
-        ? runWithOwner(null, () =>
-            computed(() => {
+        ? createOptimisticStoreInput(
+            () => {
               const body = selectedBody(t);
               if (body) {
                 return presence ? key in body : body[key as any];
@@ -140,7 +166,10 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
                 return presence ? key in source : source[key as any];
               }
               return read(node);
-            })
+            },
+            bodyValue || !(t._fam?.node?._statusFlags! & STATUS_UNINITIALIZED)
+              ? { loadingValue: bodyValue ? bodyValue.value : node._value }
+              : undefined
           )
         : node;
     if (input !== node) {
@@ -202,7 +231,11 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
           if (container && container._subs !== null) insertSubs(container);
         }
       },
-      invalidateAncestors
+      invalidateAncestors,
+      bodyValue ??
+        (node._pendingValue !== NOT_PENDING && !(t._fam?.node?._statusFlags! & STATUS_UNINITIALIZED)
+          ? { value: node._value }
+          : undefined)
     );
     if (input !== node && t._fam?.node) firewallSlots.add(slot);
     slots.set(key, slot);
@@ -249,15 +282,13 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
   const record = recordFor(t);
   let slot = record.shape.get(key);
   if (slot) return slot;
-  const input = runWithOwner(null, () =>
-    computed(() => {
-      const body = selectedBody(t);
-      if (body) return shapeMeta(body, key);
-      pullFamilyInput(t, key);
-      const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
-      return shapeMeta(source, key);
-    })
-  );
+  const input = createOptimisticStoreInput(() => {
+    const body = selectedBody(t);
+    if (body) return shapeMeta(body, key);
+    pullFamilyInput(t, key);
+    const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
+    return shapeMeta(source, key);
+  });
   input._config &= ~CONFIG_AUTO_DISPOSE;
   const candidate = () => {
     if (!slot) return;
@@ -335,14 +366,12 @@ function structureSlot(t: StoreTarget): Slot {
   const record = recordFor(t);
   if (record.structure) return record.structure;
   const node = getContainerNode(t);
-  const input = runWithOwner(null, () =>
-    computed(() => {
-      const body = selectedBody(t);
-      if (body) return body;
-      pullFamilyInput(t);
-      return read(node);
-    })
-  );
+  const input = createOptimisticStoreInput(() => {
+    const body = selectedBody(t);
+    if (body) return body;
+    pullFamilyInput(t);
+    return read(node);
+  });
   input._config &= ~CONFIG_AUTO_DISPOSE;
   let slot: Slot;
   const candidate = () => {

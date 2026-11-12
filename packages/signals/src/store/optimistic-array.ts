@@ -1,9 +1,13 @@
 /** Array shape policy for shared optimistic outputs. Index writes carry a
  * minimum length, not a snapshot of other actions' array contents. */
-import { computed, read, runWithOwner, signal } from "../core/core.js";
+import { computed, read, signal } from "../core/core.js";
 import { CONFIG_AUTO_DISPOSE, REACTIVE_DISPOSED } from "../core/constants.js";
 import { flushTransaction, insertSubs, resolveTx, schedule } from "../core/scheduler.js";
-import { createOptimisticSlot, entangleOptimisticSlotRead } from "../layers/optimistic.js";
+import {
+  createOptimisticSlot,
+  createOptimisticStoreInput,
+  entangleOptimisticSlotRead
+} from "../layers/optimistic.js";
 import { committed, getNode, getContainerNode, pullFamilyInput } from "./store.js";
 import { optHooks } from "./hooks.js";
 import { dispose } from "../core/owner.js";
@@ -102,16 +106,12 @@ export function writeArray(
     if (!r.resize) {
       const owned = t.ch || !!t._fam?.node;
       const input = owned
-        ? runWithOwner(null, () =>
-            computed(() => {
-              const body = optHooks?.inputBody?.(t);
-              if (body) return body.length;
-              pullFamilyInput(t, "length");
-              return t.ch
-                ? (read(getContainerNode(t)) as any[]).length
-                : read(getNode(t, "length"));
-            })
-          )
+        ? createOptimisticStoreInput(() => {
+            const body = optHooks?.inputBody?.(t);
+            if (body) return body.length;
+            pullFamilyInput(t, "length");
+            return t.ch ? (read(getContainerNode(t)) as any[]).length : read(getNode(t, "length"));
+          })
         : getNode(t, "length");
       if (owned) input._config &= ~CONFIG_AUTO_DISPOSE;
       r.resize = createOptimisticSlot(
@@ -138,15 +138,13 @@ export function writeArray(
     }
     if (!floor) {
       const input = t._fam?.node
-        ? runWithOwner(null, () =>
-            computed(() => {
-              const body = optHooks?.inputBody?.(t);
-              if (body) return 0;
-              pullFamilyInput(t, "length");
-              read(getNode(t, "length"));
-              return 0;
-            })
-          )
+        ? createOptimisticStoreInput(() => {
+            const body = optHooks?.inputBody?.(t);
+            if (body) return 0;
+            pullFamilyInput(t, "length");
+            read(getNode(t, "length"));
+            return 0;
+          })
         : signal(0);
       if (t._fam?.node) input._config &= ~CONFIG_AUTO_DISPOSE;
       floor = createOptimisticSlot(
