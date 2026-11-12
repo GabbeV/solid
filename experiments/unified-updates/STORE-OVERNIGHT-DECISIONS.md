@@ -152,3 +152,21 @@ The tests now expect the displayed card positions during a hold, as already rule
 for ordinary outside reads, and assert the new positions after publication. All
 eight tests in the two files pass; frame cleanup and side-effect ordering
 assertions remain intact.
+
+## Guesses before the first producer answer
+
+A property guess can publish before its input has ever answered, matching the
+scalar primitive. It does not expose untouched seed properties. First readers
+may have suspended before subscribing to that property; selecting the guess now
+wakes them so they can discover its output. Initializing a companion tolerates
+an unanswered input, but still propagates context-retry control flow and real
+errors instead of aborting a setter partway through its changes.
+
+**Choice for review:** an implicit array growth floor is not a complete length
+override. Mapping a list before its first input answer still waits for that
+input's length. This avoids pretending the seed is a published answer or hiding
+an unknown longer input. The write itself is accepted; it is not the old
+`OPTIMISTIC_WRITE_BEFORE_LOAD` rejection. Explicitly guessed properties may be
+read independently. The focused integration run passes 43 tests, including both
+completion orders and an add/filter/add sequence that previously aborted during
+companion initialization.

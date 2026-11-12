@@ -1,7 +1,8 @@
 /** User guesses and their action lifetime, published by the common layer core. */
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { computed, read, signal, runWithOwner, untrack, stageSelectedValue } from "../core/core.js";
 import { enqueueSub } from "../core/heap.js";
-import { registerGraph } from "../core/dev.js";
+import { registerGraph, forgetThrownRead } from "../core/dev.js";
 import { dispose, getOwner } from "../core/owner.js";
 import { attrHooks } from "../core/attribution-hooks.js";
 import {
@@ -595,8 +596,14 @@ export function createOptimisticSlot<T>(
   }
   const [, propose] = layerAccessors(layer);
   // Establish the initial published value even when the first operation is a
-  // setter. No function/thenable normalization: slot contents are raw values.
-  untrack(() => read(layer._output));
+  // setter. A pending computed input has no value to publish yet.
+  // No function/thenable normalization: slot contents are raw values.
+  try {
+    untrack(() => read(layer._output));
+  } catch (error) {
+    if (!(error instanceof NotReadyError) || error instanceof ContextRetry) throw error;
+    if (__DEV__) forgetThrownRead();
+  }
   const isIdle = () => {
     const output = layer._output;
     const busy =

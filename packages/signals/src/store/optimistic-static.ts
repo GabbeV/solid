@@ -92,6 +92,9 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
       schedule();
     };
     slot = createOptimisticSlot(input, candidate, () => {
+      // A first read may have suspended before it could discover this key.
+      const fw = t._fam?.node;
+      if (fw && fw._subs !== null) insertSubs(fw);
       if (!presence && Array.isArray(t.v) && arrayIndex(key) >= 0) {
         // A mapped list initially subscribes to $TRACK before this slot
         // exists. Discover it once the first selected value is staged.
