@@ -406,6 +406,12 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
     });
   if (node === t.k) {
     selectedShapes(t);
+    // Discover selected inner outputs before the wrapper's lower structure
+    // can suspend this reader. A chained backing already owns this subscription.
+    if (t.ch) {
+      const source = selectedBody(t) ?? committed(t);
+      if ((source as any)[$TARGET] !== undefined) (source as any)[$TRACK];
+    }
     const value = t._fam?.node ? read(structureSlot(t).output) : read(node);
     // mapArray's item reads run inside an untracked row owner. Its tracked
     // $TRACK read links the selected index outputs that can change a row

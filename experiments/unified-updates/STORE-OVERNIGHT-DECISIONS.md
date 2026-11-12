@@ -441,3 +441,20 @@ all outputs must be dense. Queued primary, memo, For-like and native-array views
 are compared with keys, `in`, own presence, descriptors and length on every
 publication. Same-action input holding and refresh controls remain intact. This
 records the sparse composition choice above; it does not waive transient tearing.
+
+## Chained structural discovery
+
+An outer optimistic store now reads the selected inner store's existing `$TRACK`
+subscription before its own lower structure input can suspend. It uses a selected
+parent body when present, otherwise its committed chained backing. This makes a
+mapped outer view discover an inner ready override in the same way as the base
+view, without joining the actions' lifetimes. Root replacement controls and the
+original mapping case pass (11/12 focused cases; the remaining native-method
+classification case is still under investigation). The five replacement controls
+cover one/two wrappers, independent overrides on both sources, held/unheld swaps,
+and an ordinary completion flag proving A can finish while B remains open.
+
+A deeper producer-held replacement also exposed an independent retry-cleanup bug:
+probing a discarded store result's `then` property can throw a fresh ContextRetry.
+The same program passes exact next bcef1041. That fix is being reviewed separately;
+it is not waived as an invalid replacement case.
