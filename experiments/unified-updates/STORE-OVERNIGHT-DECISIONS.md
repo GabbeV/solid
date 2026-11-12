@@ -422,3 +422,13 @@ bookkeeping. The root check passes 909 cases, including the original 900-case li
 mutation matrix, both reductions and seven independent unknown-seed controls.
 The isolated broader descriptor/getter/shape run passes 1,025 cases. Typechecking
 passes. Reclamation and array-lifetime checks pass 26/26 with explicit GC enabled.
+
+**Choice for review — untracked sampling:** a memo that uses `untrack` samples the
+selected proposal in its calculation context once. If it samples guess 3 while
+an action holds publication, a later input answer 2 does not make that untracked
+memo sample again. It can eventually publish its captured 3 while the tracked
+store corrects to 2. Outside ordinary reads still see committed 0 during the hold.
+Paired scalar/store controls agree; a tracked counterpart follows the correction
+from 0 to 2. This keeps ordinary untrack behavior instead of restoring the old
+store-only routing to a hidden input answer. It is intentionally recorded for
+review because the old S8 test expected 2 from the untracked memo.

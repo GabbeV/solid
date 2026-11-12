@@ -506,3 +506,76 @@ for (const mount of ["before-held", "while-held"] as const)
       flush();
     }
   });
+
+for (const surface of ["keys", "descriptor"] as const)
+  it(`a cold ${surface} observer preserves a published parent while its first producer and replacement are pending`, async () => {
+    type State = {
+      obj: { field: number; stage: number; old?: number; fresh?: number; truth?: number };
+    };
+    const initial = Promise.withResolvers<State>();
+    const next = Promise.withResolvers<void>(),
+      end = Promise.withResolvers<void>(),
+      consequence = Promise.withResolvers<number>();
+    const [store, set, dispose] = createRoot(dispose => {
+      const [store, set] = createOptimisticStore(() => initial.promise, {
+        obj: { field: -1, stage: -1 }
+      });
+      const derived = createMemo(() => (store.obj.stage === 1 ? consequence.promise : 0));
+      createRenderEffect(derived, () => {});
+      return [store, set, dispose] as const;
+    });
+    let running: Promise<unknown> | undefined, disposeReader: (() => void) | undefined;
+    const frames: unknown[] = [];
+    try {
+      flush();
+      running = action(function* () {
+        set(d => {
+          d.obj = { field: 1, stage: 0, old: 11 };
+        });
+        yield next.promise;
+        set(d => {
+          d.obj = { field: 2, stage: 1, fresh: 22 };
+        });
+        yield end.promise;
+      })();
+      flush();
+      const published = store.obj;
+      const read = () =>
+        surface === "keys"
+          ? Object.keys(published)
+          : Object.getOwnPropertyDescriptor(published, "old")?.value;
+      const expected = surface === "keys" ? ["field", "stage", "old"] : 11;
+      expect(read()).toEqual(expected);
+      next.resolve();
+      await settle();
+      expect(read()).toEqual(expected);
+      disposeReader = createRoot(dispose => {
+        const value = createMemo(read);
+        createRenderEffect(value, frame => {
+          frames.push(frame);
+        });
+        return dispose;
+      });
+      flush();
+      expect(read()).toEqual(expected);
+      for (const frame of frames) expect(frame).toEqual(expected);
+      consequence.resolve(20);
+      await settle();
+      initial.resolve({ obj: { field: 10, stage: 0, truth: 33 } });
+      await settle();
+      end.resolve();
+      await running;
+      await settle();
+      expect(Object.keys(store.obj)).toEqual(["field", "stage", "truth"]);
+      expect(Object.getOwnPropertyDescriptor(store.obj, "truth")?.value).toBe(33);
+    } finally {
+      initial.resolve({ obj: { field: 10, stage: 0, truth: 33 } });
+      next.resolve();
+      end.resolve();
+      consequence.resolve(20);
+      await running;
+      disposeReader?.();
+      dispose();
+      flush();
+    }
+  });

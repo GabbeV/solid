@@ -38,9 +38,9 @@
  *      write; #3521 first cut).
  * S7 — (fixed) an optimistic override survives its key becoming unobserved
  *      (the slot release defers to the flush that resolves the override).
- * S8 — (fixed, 3b step 6c) a derivation's untracked read of a SUPERSEDED
- *      store node derives from the landed truth (A18), not the override —
- *      nodeValue delegates to core's one slow selection, `serve`.
+ * S8 — an untracked derivation samples the selected proposal while its
+ *      action remains open. Retirement does not resample that value: the
+ *      callback explicitly opted out of a reactive dependency.
  * S9 — observation outputs select the same update context through a memo
  *      as inline (unified updates). A higher pending/latest output reads
  *      committed lower values, including untracked store keys with no node.
@@ -541,16 +541,12 @@ describe("S7 (structural) — optimistic add/delete survives the only structural
   }
 });
 
-/** S8 (fixed, 3b step 6c): A18 supersession for a store node read UNTRACKED
- * inside a derivation. A derived optimistic store's own truth landed (2)
- * while an action's edit (3) is displayed: the signal serves a deriving
- * reader the staged truth and holds it (A18: truth in the graph now, on
- * screen at commit); the store's untracked node path served the memo the
- * OVERRIDE and let it publish 3 — nodeValue had its own override arm without
- * the supersession routing core read() has (overrideRead). nodeValue now
- * delegates to `serve`, the one slow selection, and inherits the arm. */
-describe("S8 — a derivation's UNTRACKED read of a superseded store node derives from the truth (A18) — signal vs store", () => {
-  it("store: memo → render effect holds, then publishes the landed truth at settle", async () => {
+/** An action keeps its selected proposal until its body ends. A late
+ * untracked memo samples that proposal once; a later correction does not
+ * resample it. See unified-cold-store-companion.test.ts for the paired
+ * scalar/store case and a tracked memo that follows the correction. */
+describe("S8 — an untracked derivation samples the selected proposal once", () => {
+  it("store: the sampled guess publishes after its hold while the store corrects", async () => {
     const [value, setValue] = createSignal(0);
     const fetches: Array<() => void> = [];
     let s!: { n: number };
@@ -586,12 +582,8 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
     flush();
     fetches.shift()!(); // own truth lands {n: 2} ≠ 3
     await settle();
-    // Lanes (2026-10-01/02; the signal oracle's `supersede` state): the guess
-    // was written in the frame that re-asked its source, so its lane was
-    // blocked and the guess never displayed — "a correction while blocked
-    // voids the never-shown guess" (§16). A18 (c)'s "the display keeps the
-    // override" is about a displayed override: direct reads see the
-    // committed value, the truth is staged under the action. (Was 3.)
+    // The proposal has not published because its downstream work is held.
+    // An ordinary outside read still sees the committed value.
     expect(s.n).toBe(0);
     const log: number[] = [];
     createRoot(() => {
@@ -601,7 +593,7 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
       });
     });
     flush();
-    expect(log).toEqual([]); // held with the action: derives from the truth, not the override
+    expect(log).toEqual([]); // the sampled proposal shares its publication hold
     flights.splice(0).forEach(f => f());
     await settle();
     await settle();
@@ -610,7 +602,8 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
     expect(flights).toHaveLength(1);
     flights.shift()!();
     await settle();
-    expect(log).toEqual([2]);
+    expect(log).toEqual([3]);
+    expect(s.n).toBe(2);
   });
 });
 
