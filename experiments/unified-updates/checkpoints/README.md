@@ -72,3 +72,12 @@ still rejects optimistic stores at this checkpoint. See
 `store-expanded-20261112.tar.xz` restores `results/store-expanded/`: store draft/array/chained/accessor integration receipts, diagnostic full signals failures, focused 70-test checkpoint, and array mutation investigations. The full run was concurrent with edits and is not acceptance evidence; until remains deferred and derived/keyed integration continues.
 
 `store-keyed-20261112.tar.xz` restores `results/store-keyed/`: frozen full-suite classification, direct-key/refetch and keyed-pairing checks, source patch, and before-first-answer probes. Whole-row preservation and derived status integration remain incomplete; see `STORE-OVERNIGHT-DECISIONS.md`.
+
+`store-framework-54a-20261112.tar.gz` restores `framework-54a/` in the extraction
+directory. It preserves framework validation against source `54a7c3aa7`, built
+artifact hashes, compiler provenance, exact failures and baseline controls.
+Solid passes 927/927. Client has 20 newly unmasked store failures; hydrate has
+10 preexisting failure identities. Server has two duplicate-signals-bus failures
+resolved by a scratch resolution fix and one load-sensitive iterator count which
+passes isolated reruns. Raw failures are retained; targeted passes do not rewrite
+the full-suite result. No `until` failures occur in these framework runs.

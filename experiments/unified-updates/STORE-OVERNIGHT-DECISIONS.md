@@ -104,3 +104,26 @@ The scalar first-answer ruling supports investigating store guesses too, but its
 original document explicitly deferred list composition. No old diagnostic was
 restored just to pass its test. No pending/error prototype has been merged solely
 because a narrow example passed.
+
+## Framework checkpoint at `54a7c3aa7`
+
+The official Solid suite passes all 927 tests. The web client suite passes 1,863
+with 20 failures and one skipped test. Those 20 store cases were previously
+blocked by missing store support; no previously passing client or Solid test
+identity regressed. Hydration retains 10 preexisting failure identities. Server
+has two confirmed duplicate-package diagnostic-bus failures and one iterator
+count failure seen only under the full parallel run. The scratch resolution fix
+passes the affected 21 server tests. None of these failures depend on `until`.
+Raw receipts and controls are archived in `checkpoints/store-framework-54a-20261112.tar.gz`.
+
+Two proposed shortcuts were rejected during review: choosing a row body from its
+action lifetime loses the published/proposed distinction during correction; and
+linking a stable parent reference directly to a child's output forwards that
+child's error even when the reference never consumes its value. Both mechanisms
+remain outside the main implementation.
+
+A separate reported early ordinary-write publication was a diagnostic mistake:
+the assertion retained a mutable object which cleanup later changed. Frozen
+snapshots show both saved flags held correctly, and next agrees. The independent
+second action's optimistic value may publish. No runtime change was made for
+that report.
