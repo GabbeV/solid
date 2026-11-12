@@ -115,3 +115,10 @@ Exact commands, environment qualifications and artifact hashes are preserved.
 The #4275 fixture subsequently received a type-correct JSX expression, with its
 two runtime cases and Web type program rerun unchanged. The install-driven
 packaged-types integration suite was not run.
+
+`store-final-independent-review-20261112.tar.xz` restores
+`store-final-independent-review/`: independent quiet/shape controls, the inherited
+unknown nested-proxy write restriction on both experiment and next, the rejected
+source-scan trial (not current code), and two supported alternative programs.
+Both alternatives pass again on final main. See STORE-COMPLETION.md for the
+explicit retained limitation; the failing diagnostic is not a rejection contract.

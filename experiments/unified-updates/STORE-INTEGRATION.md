@@ -1,4 +1,7 @@
-# Store integration — implementation resumed
+# Store integration — chronological log
+
+Current status and choices for review: [STORE-COMPLETION.md](STORE-COMPLETION.md).
+The entries below are historical checkpoints, including failures subsequently fixed.
 
 Entry: `743bfbd11`. Performance and size investigations are paused. The goal is
 the complete upstream API and test surface except `until`: remaining tests must

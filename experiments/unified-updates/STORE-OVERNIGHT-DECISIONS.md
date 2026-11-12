@@ -1,5 +1,8 @@
 # Store completion decisions — 2026-11-12
 
+Current summary: [STORE-COMPLETION.md](STORE-COMPLETION.md).
+The entries below retain the investigation history and superseded intermediate results.
+
 The user authorized implementation of setter-read entanglement and the simple
 array policy, then continuing to complete stores without `until`. Further
 semantic choices should be reasonable and recorded here for review. This is
@@ -503,3 +506,20 @@ complete 10/20 -> held 15/30 -> 15/30 -> held revert -> 10/20 lifecycle and pend
 flags, including an equal input landing during the hold. Root tests pass 52/52,
 including the cold seed controls and explicit garbage collection. Typechecking
 and generated rule-index validation pass. The final full run is still pending.
+
+
+## Final upstream-test checkpoint
+
+The frozen `b69738dd2` full signals run passes 7,930 tests; all 135 failures are
+exactly classified `until` dependencies. Five skips remain (three deferred until
+controls, two already skipped upstream). Solid, client, server and hydration all
+pass; diagnostics/adapters, public types and package import smoke pass with the
+recorded environment qualifications. See STORE-COMPLETION.md and the committed
+receipts for counts, commands, hashes and the install-driven packaged-types gap.
+
+Independent review found an inherited pre-first-answer nested foreign-store
+mutation restriction. Exact next rejects the same program without publishing a
+seed. A small bypass trial was unsafe and was discarded. Whole-child replacement
+before the answer and nested mutation after the answer both pass positive
+publication/correction checks. The limitation and choice to retain next behavior
+are explicit in STORE-COMPLETION.md; rejection is not asserted as a new contract.
