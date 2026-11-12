@@ -23,6 +23,12 @@ function state(t: StoreTarget): ArrayState {
 function discover(t: StoreTarget) {
   if (t.k) insertSubs(t.k);
   if (t.n?.length) insertSubs(t.n.length);
+  // A resize replaces the base-length dependency. Readers already using it
+  // still need to discover a new growth floor (or a replacement resize).
+  const r = arrays.get(t);
+  if (r?.resize) insertSubs(r.resize.output);
+  if (r) for (const floor of r.floors) insertSubs(floor.output);
+  if (r) for (const retired of r.retiring) insertSubs(retired.output);
   schedule();
 }
 export function arrayIndex(key: PropertyKey): number {
@@ -39,14 +45,15 @@ export function selectedArrayLength(
   const r = arrays.get(t);
   const source = () => (typeof base === "function" ? base() : base);
   if (!r) return source();
-  let n = r.resize
-    ? ((writer ? r.resize.writerValue() : read(r.resize.output)) as number)
-    : source();
+  let minimum = 0;
   for (const floor of r.floors) {
     const required = (writer ? floor.writerValue() : read(floor.output)) as number;
-    if (required > n) n = required;
+    if (required > minimum) minimum = required;
   }
-  return n;
+  const n = r.resize
+    ? ((writer ? r.resize.writerValue() : read(r.resize.output)) as number)
+    : source();
+  return Math.max(n, minimum);
 }
 export function arrayGrowthStands(t: StoreTarget): boolean {
   const r = arrays.get(t);

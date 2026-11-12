@@ -252,3 +252,26 @@ run passes 121; the remaining enumerator repeat and untracked store-context case
 are being investigated. The full discovery run before the ordinary-family gate
 reported 7,663 passes, 268 failures and five skips; it exposed the gate regression
 and is not final acceptance. Full-suite failure counts include deferred `until`.
+
+## Discovering length proposals before consuming their input
+
+The length derivation now reads active growth outputs before consulting the base
+length. That establishes the optimistic calculation context first; an initialized
+lower input supplies its committed length there. Previously the pending input
+could throw before the reader discovered the growth output, leaving a whole-list
+reader stuck while an index reader displayed the guess. An input that has never
+published still blocks an incomplete length guess. All three original bare-refetch
+regressions now pass without changing their expectations.
+
+Readers of a complete resize no longer depend directly on base length. Discovery
+therefore also wakes readers of current and retiring length outputs when another
+growth proposal appears. A resize-and-later-push regression covers live and retired
+resize outputs. The 900-case upstream mutation matrix now passes 898 cases; the
+two remaining chained-row inverse failures are being fixed separately.
+
+Independent producer errors remain visible through unguessed fields while guessed
+fields retain their own values. Three original error/disposal tests now assert
+that stage-120 behavior explicitly, including the selected guessed index and actual
+region cleanup. They deliberately differ from next's family-wide lifetime hold;
+the comparison ran the original next tests successfully (11/11). Nested value-only
+writes no longer wake ancestor key enumerators: the keys have not changed.
