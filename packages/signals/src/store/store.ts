@@ -2582,12 +2582,27 @@ function observerHoldsContainer(target: StoreTarget, obs: Owner): boolean {
   if (k === null) return false;
   if (target._fam?.opt && optHooks?.node) k = optHooks.node(target, k);
   const l = k._subsTail;
-  return (
+  if (
     l !== null &&
     l._sub === obs &&
     (!((obs as Computed<any>)._flags & REACTIVE_RECOMPUTING_DEPS) ||
       l._gen === (obs as Computed<any>)._depGen)
-  );
+  )
+    return true;
+  // Reusing an existing dependency does not move it to the subscriber tail.
+  // Inspect this reader's validated prefix rather than the container's fanout.
+  const reader = obs as Computed<any>;
+  const tail = reader._depsTail;
+  if (tail === null) return false;
+  for (let dependency = reader._deps; dependency !== null; dependency = dependency._nextDep) {
+    if (
+      dependency._dep === k &&
+      (!(reader._flags & REACTIVE_RECOMPUTING_DEPS) || dependency._gen === reader._depGen)
+    )
+      return true;
+    if (dependency === tail) break;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------

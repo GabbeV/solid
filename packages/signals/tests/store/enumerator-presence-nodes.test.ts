@@ -138,6 +138,39 @@ describe("store enumerators track keys without per-value subscriptions (#3664)",
     });
   }
 
+  it("a reused key-set link still identifies an enumerator before another subscriber", () => {
+    const [store] = createStore<Row>({ a: 1, b: 2 });
+    const [revision, setRevision] = createSignal(0);
+    let dispose!: () => void;
+    createRoot(cleanup => {
+      dispose = cleanup;
+      createRenderEffect(
+        () => {
+          revision();
+          return Object.keys(store).join(",");
+        },
+        () => {}
+      );
+      createRenderEffect(
+        () => Object.keys(store).join(","),
+        () => {}
+      );
+    });
+    try {
+      flush();
+      expect(nodesOf(store).h).toEqual([]);
+      expect(nodesOf(store).kSubs).toBe(2);
+      setRevision(1);
+      flush();
+      expect(nodesOf(store).h).toEqual([]);
+      expect(nodesOf(store).n).toEqual([]);
+      expect(nodesOf(store).kSubs).toBe(2);
+    } finally {
+      dispose();
+      flush();
+    }
+  });
+
   it("value reads that ride the enumeration still get value nodes (spread, entries, stringify)", () => {
     const [s, set] = createStore<Row>(row(3));
     const runs: string[] = [];
