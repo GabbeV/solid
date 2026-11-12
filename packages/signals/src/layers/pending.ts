@@ -91,6 +91,14 @@ function observeInput(record: Observation): void {
   const output = record._output;
   for (let incoming = record._incoming; incoming; incoming = pendingInput(incoming)) {
     link(incoming, output);
+    // A new question can leave the same dependency pending on the same
+    // producer. Observe its actual flights too, so that quiet-to-new change
+    // wakes this boolean even when the intermediate status is unchanged.
+    for (const source of incoming._x?._pendingSources ?? []) {
+      if (source === incoming) continue;
+      link(source, output);
+      if (source._height >= output._height) output._height = source._height + 1;
+    }
     if (incoming._height >= output._height) output._height = incoming._height + 1;
   }
 }
