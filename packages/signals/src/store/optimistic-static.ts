@@ -256,6 +256,10 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
     schedule();
   };
   slot = createOptimisticSlot(input, candidate, () => {
+    // Equal metadata already on screen needs no structural discovery.
+    // Its selected output still owns the override and observes future edits.
+    const shown = slot!.output._value as ShapeMeta | undefined;
+    if (shown && sameShapeMeta(shown, slot!.writerValue() as ShapeMeta)) return;
     // A discarded ambient proposal must not wake existing readers at all.
     // Discover this candidate only once it has a surviving selected update.
     const container = getContainerNode(t);
