@@ -66,3 +66,5 @@ still rejects optimistic stores at this checkpoint. See
 `array-override-for-review-20261112.tar.xz` restores `results/array-override-for-review/`: two next revisions of reverse-order array retirement probes, actual JSX For DOM tests with ordinary sparse controls, and the browser-verified hosted reproduction. No erroneous length reset or new hole on retirement was observed. See `../repros/array-override-lifetime/README.md`.
 
 `array-retirement-report-20261112.tar.xz` restores `results/array-retirement-report/`: rc.20/rc.21 and exact #4729 boundary results, object-versus-array retirement controls, the simplified browser-verified reproduction, and the unsubmitted issue form. Archived runtime dependencies are omitted; exact versions/commits are recorded in metadata.
+
+`setter-read-report-20261112.tar.xz` restores `results/setter-read-report/`: controlled read/write ownership probes on next and the experiment, the browser-verified hosted reproduction, and the unsubmitted issue form. Both runtimes currently keep read-a/write-b action lifetimes independent; write-a/write-a controls entangle.
