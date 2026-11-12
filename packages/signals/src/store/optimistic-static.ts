@@ -152,7 +152,6 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
     const invalidateAncestors = () => {
       if (t.u) {
         for (let p: StoreTarget | null = t; p; p = p.u) {
-          if (p.k) insertSubs(p.k);
           for (const input of records.get(p)?.inputs ?? []) {
             markNode(input);
             enqueueSub(input);
