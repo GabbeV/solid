@@ -14,6 +14,8 @@ import type { StoreFamily, StoreTarget } from "./target.js";
  * only through a family with `opt` set, which only `createOptimisticStore`
  * sets. */
 export interface OptHooks {
+  /** The selected companion, for structural subscription identity. */
+  node?(t: StoreTarget, node: Signal<any>): Signal<any>;
   /** Select a store-owned truth slot through its shared optimistic output. */
   read?(t: StoreTarget, node: Signal<any>): unknown;
   /** Track the selected flat leaves for a deep read. */

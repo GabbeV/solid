@@ -2,7 +2,7 @@
 import { computed, read, signal, runWithOwner, untrack, stageSelectedValue } from "../core/core.js";
 import { enqueueSub } from "../core/heap.js";
 import { registerGraph } from "../core/dev.js";
-import { getOwner } from "../core/owner.js";
+import { dispose, getOwner } from "../core/owner.js";
 import { attrHooks } from "../core/attribution-hooks.js";
 import {
   $REFRESH,
@@ -403,9 +403,9 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
 
 /** A store-owned truth slot and its ordinary selected output. Like a source
  * observation, the companion is independent of creator and reader owners. */
-export function createOptimisticSlot<T>(input: Signal<T>) {
+export function createOptimisticSlot<T>(input: Signal<T>, onUnobserved?: () => void) {
   const layer = runWithOwner(null, () =>
-    createLayerBoundary<T>(input as Computed<T>, selectGuess, false)
+    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, false, { unobserved: onUnobserved })
   );
   layer._automatic = true;
   layer._inputStatus = true;
@@ -417,7 +417,21 @@ export function createOptimisticSlot<T>(input: Signal<T>) {
   return {
     output: layer._output,
     propose: (value: T) => propose(() => value),
-    writerValue: () => previousProposal(layer)
+    writerValue: () => previousProposal(layer),
+    // The store retries only companions whose readers left. A live guess or
+    // an unfinished correction is state, even with no subscribers.
+    tryRelease: () => {
+      const output = layer._output;
+      if (output._subs !== null || layer._scope !== null || proposals.has(layer) ||
+          layer._override !== NOT_PENDING ||
+          (output._config | input._config) & CONFIG_HELD ||
+          output._pendingValue !== NOT_PENDING || input._pendingValue !== NOT_PENDING ||
+          (output._statusFlags | layer._input._statusFlags) & STATUS_PENDING ||
+          output._flags & (REACTIVE_CHECK | REACTIVE_DIRTY | REACTIVE_IN_HEAP |
+            REACTIVE_RECOMPUTING_DEPS | REACTIVE_ZOMBIE)) return false;
+      dispose(output as Computed<any>);
+      return true;
+    }
   };
 }
 

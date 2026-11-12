@@ -2017,7 +2017,8 @@ function enumerationSource(target: StoreTarget): Record<PropertyKey, any> {
   if (!inDraft(target) && !writeOverride && getObserver() !== null) {
     // A container's arrangement guess is not a backing: the view composes
     // over the base it is shown over.
-    const base = asBacking(readNode(getContainerNode(target)));
+    const node = getContainerNode(target);
+    const base = asBacking(target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node));
     return optHooks && target._fam?.opt === true ? optHooks.view(target, base) : base;
   }
   const src = readSource(target);
@@ -2118,7 +2119,9 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       if (key === $TRACK) {
         if (target._fam !== null) pullFamily(target);
         if (!inDraft(target) && getObserver() !== null) {
-          readNode(getContainerNode(target));
+          const node = getContainerNode(target);
+          if (target._fam?.opt && optHooks?.read) optHooks.read(target, node);
+          else readNode(node);
           // Structural chaining (§7b): a chained backing's $TRACK reads
           // through to the INNER store's container — structural
           // notifications land on the source's own node.
@@ -2297,7 +2300,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (!inDraft(target) && !writeOverride) {
       if (getObserver() !== null) {
         const node = getHasNode(target, key);
-        const nv = readNode(node);
+        const nv = target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
         if (!target.ch || src !== target.v) return !!nv;
         const present = key in src;
         node._value = present; // the link follows the inner store (S4)
@@ -2341,7 +2344,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       // enumerability, accessor-ness — reads committed for a stale reader,
       // the staging for a member; #3706 contrast).
       const node = getHasNode(target, key);
-      const present = readNode(node);
+      const present = target._fam?.opt && optHooks?.read ? optHooks.read(target, node) : readNode(node);
       src = readSource(target, key, true);
       if (!present && (!target.ch || node._config & CONFIG_OVERRIDE || !(key in src)))
         return undefined;
@@ -2465,8 +2468,9 @@ TargetShape.prototype = traps;
  * it)? A link left from a previous pass is stale — the reader must subscribe
  * to the key's presence node or a later add never re-runs it. */
 function observerHoldsContainer(target: StoreTarget, obs: Owner): boolean {
-  const k = target.k;
+  let k = target.k;
   if (k === null) return false;
+  if (target._fam?.opt && optHooks?.node) k = optHooks.node(target, k);
   const l = k._subsTail;
   return (
     l !== null &&

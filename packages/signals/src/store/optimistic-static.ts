@@ -1,19 +1,37 @@
-/** Interim shared-engine slice: flat static records, with per-property cuts.
+/** Interim shared-engine slice: flat plain records with per-property cuts.
  * Truth slots stay store-owned; only their selected outputs accept guesses. */
 import { read, untrack, writeHook } from "../core/core.js";
+import type { Signal } from "../core/types.js";
+import { getObserver } from "../core/owner.js";
+import { schedule } from "../core/scheduler.js";
 import { createOptimisticSlot, proposeOptimisticSlots } from "../layers/optimistic.js";
-import { getNode, devGuardStoreSetterWrite, devGuardStoreSetterResult } from "./store.js";
+import {
+  getNode,
+  getHasNode,
+  getContainerNode,
+  devGuardStoreSetterWrite,
+  devGuardStoreSetterResult
+} from "./store.js";
 import { createProjectionInternal } from "./projection.js";
 import type { OptHooks } from "./hooks.js";
 import type { StoreTarget } from "./target.js";
-import { $TARGET, isWrappable } from "./types.js";
+import { $TARGET, $TRACK, isWrappable } from "./types.js";
+import { $OWNER } from "./target.js";
 
 type Slot = ReturnType<typeof createOptimisticSlot>;
-type RecordSlots = { keys: PropertyKey[]; slots: Map<PropertyKey, Slot>; prototype: object | null };
+type RecordSlots = {
+  slots: Map<PropertyKey, Slot>;
+  presence: Map<PropertyKey, Slot>;
+  nodes: Map<Signal<any>, Slot>;
+  container?: Slot;
+  prototype: object | null;
+};
 const records = new WeakMap<StoreTarget, RecordSlots>();
+// Only companions without readers wait for a live guess or correction here.
+const releases = new Map<Slot, () => void>();
 const unsupported = () =>
   new Error(
-    "Shared-engine optimistic stores currently support only static flat plain records with existing data properties; derived, nested, structural and descriptor changes are not integrated yet."
+    "Shared-engine optimistic stores currently support only flat plain records with mutable data properties; derived, nested, array, accessor and immutable descriptor changes are not integrated yet."
   );
 
 function validate(value: any, expected?: RecordSlots): PropertyKey[] {
@@ -25,66 +43,118 @@ function validate(value: any, expected?: RecordSlots): PropertyKey[] {
     (expected && prototype !== expected.prototype)
   )
     throw unsupported();
-  const keys = Reflect.ownKeys(value);
-  if (
-    expected &&
-    (keys.length !== expected.keys.length || keys.some(key => !expected.slots.has(key)))
-  )
-    throw unsupported();
+  const keys = Reflect.ownKeys(value).filter(key => key !== $OWNER);
   for (const key of keys) {
     const d = Object.getOwnPropertyDescriptor(value, key)!;
-    if (!("value" in d) || !d.enumerable || !d.writable || !d.configurable || isWrappable(d.value))
+    if (!("value" in d) || !d.writable || !d.configurable || isWrappable(d.value))
       throw unsupported();
   }
   return keys;
 }
 
+function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
+  const record = records.get(t)!;
+  const slots = presence ? record.presence : record.slots;
+  let slot = key === $TRACK ? record.container : slots.get(key);
+  if (!slot) {
+    const node =
+      key === $TRACK ? getContainerNode(t) : presence ? getHasNode(t, key) : getNode(t, key);
+    const candidate = () => {
+      releases.set(slot!, () => {
+        record.nodes.delete(node);
+        if (key === $TRACK) record.container = undefined;
+        else slots.delete(key);
+      });
+      schedule();
+    };
+    slot = createOptimisticSlot(node, candidate);
+    if (key === $TRACK) record.container = slot;
+    else slots.set(key, slot);
+    record.nodes.set(node, slot);
+    candidate();
+  }
+  return slot;
+}
+
+function selectedNode(t: StoreTarget, node: Signal<any>): Signal<any> {
+  return records.get(t)?.nodes.get(node)?.output ?? node;
+}
+
+function readSelected(t: StoreTarget, node: Signal<any>) {
+  const record = records.get(t);
+  if (!record) return read(node);
+  let slot = record.nodes.get(node);
+  if (!slot && getObserver() !== null) {
+    const key = (node as any)._key;
+    slot = slotFor(t, key, t.h?.[key as any] === node);
+  }
+  return read(slot?.output ?? node);
+}
+
+function truthValue(t: StoreTarget, key: PropertyKey) {
+  const node = t.n?.[key as any];
+  return node ? read(node) : t.v[key as any];
+}
+
+function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false) {
+  const record = records.get(t)!;
+  const out = Object.create(record.prototype);
+  for (const key of Reflect.ownKeys(shape)) {
+    if (key === $OWNER) continue;
+    const descriptor = Object.getOwnPropertyDescriptor(shape, key)!;
+    const slot = record.slots.get(key);
+    Object.defineProperty(out, key, {
+      ...descriptor,
+      value: slot ? (writer ? slot.writerValue() : read(slot.output)) : truthValue(t, key)
+    });
+  }
+  return out;
+}
+
 function selectedView(t: StoreTarget, source: Record<PropertyKey, any>) {
   const record = records.get(t);
   if (!record) return source;
-  // Structural readers subscribe to the container alone. They must not acquire
-  // every property dependency just because enumeration needs a backing.
-  return untrack(() => {
-    let out: Record<PropertyKey, any> | undefined;
-    for (const key of record.keys) {
-      const value = read(record.slots.get(key)!.output);
-      if (!Object.is(value, source[key])) {
-        out ??= Object.create(record.prototype, Object.getOwnPropertyDescriptors(source));
-        Object.defineProperty(out!, key, {
-          value,
-          enumerable: true,
-          configurable: true,
-          writable: true
-        });
-      }
-    }
-    return out ?? source;
-  });
+  // Enumeration depends on structure alone. Suppress leaf subscriptions while
+  // retaining the active calculation's selection context.
+  return untrack(() =>
+    compose(
+      t,
+      record.container ? (read(record.container.output) as Record<PropertyKey, any>) : source
+    )
+  );
 }
 
 export const staticOptimisticHooks: OptHooks = {
-  read: (t, node) => {
-    const slot = records.get(t)?.slots.get((node as any)._key);
-    return read(slot ? slot.output : node);
-  },
+  node: selectedNode,
+  read: readSelected,
+  // Reading outputs discovers coherent publication, without writing a shared
+  // guessed deep witness and merging disjoint action lifetimes.
   deep: t => {
-    for (const slot of records.get(t)?.slots.values() ?? []) read(slot.output);
+    const record = records.get(t);
+    if (!record) return;
+    const shape = record.container ? (read(record.container.output) as object) : t.v;
+    for (const key of Reflect.ownKeys(shape)) {
+      if (key === $OWNER) continue;
+      const slot = getObserver() !== null ? slotFor(t, key) : record.slots.get(key);
+      if (slot) read(slot.output);
+    }
   },
   view: selectedView,
-  descriptor: (t, key) => {
-    const slot = records.get(t)?.slots.get(key);
-    return slot
-      ? {
-          value: untrack(() => read(slot.output)),
-          enumerable: true,
-          configurable: true,
-          writable: true
-        }
-      : undefined;
+  descriptor: (t, key) =>
+    untrack(() => {
+      const record = records.get(t);
+      if (!record) return undefined;
+      const shape = record.container ? (read(record.container.output) as object) : t.v;
+      const descriptor = Object.getOwnPropertyDescriptor(shape, key);
+      const slot = record.slots.get(key);
+      return descriptor
+        ? { ...descriptor, value: slot ? read(slot.output) : truthValue(t, key) }
+        : null;
+    }),
+  has: (t, key) => {
+    const slot = records.get(t)?.presence.get(key);
+    return slot ? !!read(slot.output) : undefined;
   },
-  has: () => undefined,
-  // This slice proposes from an isolated validated draft, so none of the
-  // legacy optimistic drafting or projection hooks is a valid write path.
   draft: () => {
     throw unsupported();
   },
@@ -96,7 +166,15 @@ export const staticOptimisticHooks: OptHooks = {
   },
   arrangement: () => false,
   pair: () => {},
-  sweep: () => {},
+  sweep: () => {
+    for (const [slot, remove] of releases) {
+      if (slot.output._subs !== null) releases.delete(slot);
+      else if (slot.tryRelease()) {
+        releases.delete(slot);
+        remove();
+      }
+    }
+  },
   ask: () => {},
   park: () => {},
   stands: () => false
@@ -104,40 +182,61 @@ export const staticOptimisticHooks: OptHooks = {
 
 export function createStaticOptimisticStore(first: any, second?: any, third?: any) {
   if (typeof first === "function" || third !== undefined || second?.shallow) throw unsupported();
-  const keys = validate(first);
+  validate(first);
   const store = createProjectionInternal(null, first, second, true);
   const target: StoreTarget = (store as any)[$TARGET];
   const record: RecordSlots = {
-    keys,
     slots: new Map(),
+    presence: new Map(),
+    nodes: new Map(),
     prototype: Object.getPrototypeOf(first)
   };
   records.set(target, record);
-  for (const key of keys) record.slots.set(key, createOptimisticSlot(getNode(target, key)));
   const set = (fn: (draft: any) => any) => {
     if (writeHook !== null) writeHook(store as object);
     if (__DEV__) devGuardStoreSetterWrite();
-    // Rejected structural drafts have never touched a slot or truth backing.
-    const draft = Object.create(record.prototype);
-    const previous = new Map<PropertyKey, unknown>();
-    for (const key of keys) {
-      const value = record.slots.get(key)!.writerValue();
-      previous.set(key, value);
-      Object.defineProperty(draft, key, {
-        value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    }
+    // Validate an isolated writer view before submitting any proposal.
+    const previous = untrack(() =>
+      compose(
+        target,
+        (record.container?.writerValue() as Record<PropertyKey, any>) ?? target.v,
+        true
+      )
+    );
+    const draft = Object.create(record.prototype, Object.getOwnPropertyDescriptors(previous));
     const result = fn(draft);
     if (__DEV__) devGuardStoreSetterResult(result);
     const next = result === undefined ? draft : result;
-    validate(next, record);
+    const nextKeys = validate(next, record);
+    const oldKeys = Reflect.ownKeys(previous);
+    const allKeys = new Set([...oldKeys, ...nextKeys]);
     const entries: [Slot, unknown][] = [];
-    for (const key of keys)
-      if (!Object.is(previous.get(key), next[key]))
-        entries.push([record.slots.get(key)!, next[key]]);
+    let structure =
+      oldKeys.length !== nextKeys.length || oldKeys.some((key, i) => key !== nextKeys[i]);
+    for (const key of allKeys) {
+      const old = Object.getOwnPropertyDescriptor(previous, key);
+      const neu = Object.getOwnPropertyDescriptor(next, key);
+      const inherited =
+        key === "__proto__" || key === "prototype" ? undefined : record.prototype?.[key];
+      const before = old ? old.value : inherited;
+      const after = neu ? neu.value : inherited;
+      if (!Object.is(before, after)) entries.push([slotFor(target, key), after]);
+      // Missing and present-undefined are distinct structural states.
+      if (!!old !== !!neu) {
+        const presence = slotFor(target, key, true);
+        const present = neu !== undefined || key in Object.create(record.prototype);
+        if (presence.writerValue() !== present) entries.push([presence, present]);
+      }
+      if (old?.enumerable !== neu?.enumerable) structure = true;
+    }
+    if (structure) {
+      // Clone the validated structure: later mutations of a returned object
+      // must not mutate an already submitted proposal.
+      entries.push([
+        slotFor(target, $TRACK),
+        Object.create(record.prototype, Object.getOwnPropertyDescriptors(next))
+      ]);
+    }
     proposeOptimisticSlots(entries);
   };
   return [store, set] as const;

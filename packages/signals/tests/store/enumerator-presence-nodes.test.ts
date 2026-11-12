@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { optHooks } from "../../src/store/hooks.js";
 import {
   $TARGET,
   $TRACK,
@@ -45,7 +46,8 @@ function nodesOf(proxy: object) {
     n: Object.keys(t.n ?? {}),
     kSubs: (() => {
       let c = 0;
-      for (let l = t.k?._subs ?? null; l !== null; l = l._nextSub) c++;
+      const k = t.k && (t._fam?.opt && optHooks?.node ? optHooks.node(t, t.k) : t.k);
+      for (let l = k?._subs ?? null; l !== null; l = l._nextSub) c++;
       return c;
     })()
   };
@@ -207,12 +209,14 @@ describe("store enumerators subscribe to the key-set node only (#3664)", () => {
     const done = act();
     flush();
     // The writer births presence nodes to carry its overrides (`has`
-    // births them too); the READER did not subscribe to them.
+    // births them too); the READER did not subscribe to their selected
+    // outputs. The shared engine gives each store-owned input a companion.
     expect(runs.at(-1)).toBe("b");
     const t = (s as any)[$TARGET];
     for (const key of Object.keys(t.h ?? {})) {
       let subs = 0;
-      for (let l = t.h[key]._subs; l !== null; l = l._nextSub) subs++;
+      const node = optHooks?.node ? optHooks.node(t, t.h[key]) : t.h[key];
+      for (let l = node._subs; l !== null; l = l._nextSub) subs++;
       expect(subs).toBe(0);
     }
     expect(nodesOf(s).kSubs).toBe(1);

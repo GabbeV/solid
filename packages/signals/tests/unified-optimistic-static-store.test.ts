@@ -281,29 +281,17 @@ it("function and Promise leaves remain raw values", async () => {
   }
 });
 
-it("unsupported shapes and structural drafts reject before partial proposals", () => {
-  expect(() => createOptimisticStore({ nested: { value: 0 } })).toThrow(/static flat/);
-  expect(() => createOptimisticStore([1, 2])).toThrow(/static flat/);
-  expect(() => createOptimisticStore(() => ({ value: 0 }))).toThrow(/static flat/);
+it("unsupported shapes and accessor drafts reject before partial proposals", () => {
+  expect(() => createOptimisticStore({ nested: { value: 0 } })).toThrow(/flat plain/);
+  expect(() => createOptimisticStore([1, 2])).toThrow(/flat plain/);
+  expect(() => createOptimisticStore(() => ({ value: 0 }))).toThrow(/flat plain/);
   const [store, set] = createOptimisticStore({ value: 0 });
-  expect(() =>
-    set(d => {
-      d.value = 5;
-      (d as any).extra = true;
-    })
-  ).toThrow(/static flat/);
-  expect(() =>
-    set(d => {
-      d.value = 6;
-      delete (d as any).value;
-    })
-  ).toThrow(/static flat/);
   expect(() =>
     set(d => {
       d.value = 7;
       Object.defineProperty(d, "value", { get: () => 1 });
     })
-  ).toThrow(/static flat/);
+  ).toThrow(/flat plain/);
   expect(store.value).toBe(0);
   flush();
   expect(store.value).toBe(0);

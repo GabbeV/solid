@@ -6,7 +6,64 @@ pass or be explicitly migrated under the user's rulings. An old test is evidence
 of behavior, not permission to preserve inconsistent publication. Semantic
 decisions stay with the user.
 
-## Integrated static slice (2026-11-12)
+## Integrated flat records and reclamation (2026-11-12)
+
+Flat records now support property addition/deletion, present-undefined,
+presence reads, key-set enumeration, mutable data descriptors, symbols,
+integer ordering and coherent structural setter publication. Store input
+slots feed the same selected outputs as scalar optimism. One setter groups
+its changed output transactions; separate disjoint property actions keep
+their own lifetimes, including with deep readers.
+
+Companions are lazy and source-owned. Active unobserved guesses and unfinished
+corrections survive; settled unused companions dispose through the existing
+graph/store release path. Unchanged setters and inactive untracked reads do
+not allocate companions. Repeated lifecycle tests include 20 cycles, late
+readers, held corrections and a deep-only reader before the first guess.
+The original S7 reclamation assertion passes unchanged.
+
+The structural full run reports **6,272 passed / 1,512 failed / 2 skipped**.
+Compared with the entry baseline, 444 formerly failing tests pass. Remaining
+failures are 1,408 unsupported-store guards, 101 until-dependent cases and
+three generated rules-index checks. The index was then regenerated and its
+checks pass separately. There are no remaining supported-runtime assertion
+failures in this run. The 47 focused integration tests and source TypeScript
+checking pass. These are exercised cases, not a general proof or performance
+claim. Arrays, nested/derived/chained stores and other unsupported store
+forms remain unfinished; only until is a final deliberate deferral.
+
+The enumerator test's internal subscriber counts now inspect selected
+outputs, preserving its zero presence-readers / one key-set-reader assertions.
+Input slots necessarily have their output companions as subscribers. Normal
+behavioral assertions were retained.
+
+## Next slice and pending array question
+
+Reuse the existing `storeSetter` draft/trap pipeline for nested records and
+arrays, rather than extending the temporary isolated flat-record draft into
+a second store engine. Aggregate its per-target notifications into one setter
+publication group. Preserve existing prototype guards, identities and written
+key metadata. Returned keyed arrays/projection reconciliation need their own
+integration review.
+
+An executable next comparison found a lifetime discrepancy for fixed-shape
+array edits: start `[0, 0]`, A guesses index 0 as 1, B later guesses index 1
+as 2. When A ends first, both next pins retain `[1, 2]`. At bcef1041, without
+deep observation, A's ordinary writes publish independently; B's carrier
+nevertheless supplies A's old index 0 value because it stores the whole array
+frame. With deep, the already-investigated witness additionally merges action
+lifetimes. At 4fe75321, even the plain index case joins action lifetimes.
+
+The newer D-33/S-59 wording (#4724) explicitly calls a fixed-shape top-level
+array edit one write per changed index, and says carried rows are not writes.
+The inspected executable pins concern keyed derived row lists, not primitive
+index retirement. No explicit ruling approving whole-frame retention for
+this primitive case was recovered. Per-index selected outputs naturally show
+`[0, 2]` after A ends, preserving one-setter coherence for compound changes.
+This visible difference is pending user confirmation before array integration;
+no array behavior has been adopted yet.
+
+## Earlier static checkpoint
 
 The static flat-record slice is now integrated. Store property inputs feed
 ordinary optimistic outputs; same-setter output transactions publish together,

@@ -60,3 +60,5 @@ still rejects optimistic stores at this checkpoint. See
 `../STORE-INTEGRATION.md` for the implementation plan and exact status.
 
 `deep-entanglement-review.tar.xz` restores `results/deep-entanglement-review/`: local and remote history, an independently verified ordinary-write control on two next pins, the unimplemented cost comparison, and the complete isolated static-store candidate with setter publication grouping and its test receipts. Main runtime remains unchanged. See `../STORE-INTEGRATION.md` for the compatibility recommendation and limits.
+
+`store-flat-integration-20261112.tar.xz` restores `results/store-flat-integration/`: two full signals receipts and exact failure classifications, source snapshots, structural/reclamation implementation trials, adversarial controls and the next array-lifetime comparison. The flat-record runtime is integrated; nested/array/derived store forms remain unfinished. See `../STORE-INTEGRATION.md` for the accepted deep ruling, validation limits and pending array decision.
