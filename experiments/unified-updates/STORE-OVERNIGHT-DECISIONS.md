@@ -458,3 +458,27 @@ A deeper producer-held replacement also exposed an independent retry-cleanup bug
 probing a discarded store result's `then` property can throw a fresh ContextRetry.
 The same program passes exact next bcef1041. That fix is being reviewed separately;
 it is not waived as an invalid replacement case.
+
+## Discarded results and demand in shared DOM bindings
+
+Retry cleanup now inspects discarded thenables without a reactive owner/observer,
+and guards that inspection. Both cleanup sites share the helper. A discarded
+store's unanswered protocol property cannot start a second context retry; native,
+cross-realm and custom promise rejections are still handled, while accepted live
+protocol errors still reach the error boundary. Root tests pass all nine protocol
+controls and both two-wrapper producer-swap regressions. The isolated broader
+context/protocol check passes 109 tests; the black-box swaps also pass exact next.
+
+The rebuilt add90 framework checkpoint passes Solid, server and hydration. Its
+four client failures were the shared native-map fixture's old pre-answer hold
+expectation. The source coherence fixture additionally mounts a For-like reader,
+which consumes container structure and really retains an ordinary input hold.
+Without that extra reader, native map can consume complete selected index/length
+outputs and cut the last ordinary input demand: closed plus selected #3/#4 can
+publish while the independent input request remains unanswered. Scalar full-array
+overrides agree. Explicit producer/For observers retain the hold; existing own-input
+action lifetime controls still pass. The DOM fixture now reflects its actual graph
+and passes all eight variants. Five separate demand controls and the original
+source bindings pass in the root checkout. This follows the existing no-demand-
+forwarding rule; it does not change conservative retention of an override's own
+pending input or allow unguessed input answers to tear.

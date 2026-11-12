@@ -5,8 +5,8 @@
  * Updates at every depth use the ordinary scheduler and publication path.
  */
 import { releaseFlightTeardown } from "../core/async.js";
-import { clearThrownRead } from "../core/dev.js";
-import { computed, tracking } from "../core/core.js";
+import { clearThrownRead, forgetThrownRead } from "../core/dev.js";
+import { computed, tracking, runWithOwner } from "../core/core.js";
 import { link, deferRetryDisposal } from "../core/graph.js";
 import { ContextRetry, NotReadyError } from "../core/error.js";
 import { enqueueSub } from "../core/heap.js";
@@ -969,13 +969,27 @@ function acceptCalculation(
   return outerReads;
 }
 
+/** A discarded attempt can leave an async rejection behind. Protocol
+ * inspection here is cleanup, not another read in the retried calculation. */
+function discardRetryResult(result: any): void {
+  if (!result) return;
+  try {
+    runWithOwner(null, () => {
+      if (typeof result.then === "function") Promise.resolve(result).catch(() => {});
+    });
+  } catch {
+    // A discarded proxy's protocol metadata may itself be unanswered.
+    if (__DEV__) forgetThrownRead();
+  }
+}
+
 function resetCalculation(
   node: Computed<any>,
   previous: any,
   result: any,
   previousPosition: number
 ): any {
-  if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+  discardRetryResult(result);
   if (positionOf(flushTransaction) !== previousPosition) {
     previous = node._value;
     node._flags |= REACTIVE_PREVIOUS_COMMITTED;
@@ -1024,7 +1038,7 @@ function computeLayer(node: Computed<any>, previous: any, normalize?: NormalizeC
         // catch may also consume it. The creator still has to unwind before
         // this attempt can normalize or accept any tentative dependencies.
         if (retryOwner) {
-          if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {});
+          discardRetryResult(result);
           throw new ContextRetry(retryOwner);
         }
         if (!retryEvaluation && normalize) result = normalize(node, result, previousFlight);
