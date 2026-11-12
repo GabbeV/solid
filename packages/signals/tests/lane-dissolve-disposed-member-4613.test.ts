@@ -1,22 +1,13 @@
 /**
- * #4613: a lane member disposed before the lane dissolves never runs again.
- *
- * A filter keys a region (a keyed map over `[filter()]`); in it a list is
- * mapped from an optimistic store under Loading > Errored. An action removes
- * a row (a guess) and `refresh`es the store; the filter changes while the
- * action is out, so that frame is held with it (D-34 ¶3). The action's
- * commit disposes the "open" region, inner list memo included — but that
- * memo was still a member of the action's lane. Dissolving the lane re-queued
- * it, and its pass dropped REACTIVE_DISPOSED at the head wipe: a dead node
- * came back to life in the torn-down region, mapped rows there and stayed
- * subscribed (dev: `RUN_WITH_DISPOSED_OWNER`).
- *
- * Ruled (F-3, D-11): a disposed reader is no reader; it holds nothing, and
- * nothing re-derives it (a dead node freezes, #3024).
+ * #4613 under independent input/override lifetimes (stage 120): a keyed
+ * region may show Loading when it consumes the new producer flight, while
+ * a guessed index stays selected. Disposed regions must never map again.
+ * Track real region cleanup rather than assuming the old family-wide hold.
  */
 import { afterEach, expect, it, vi } from "vitest";
 import {
   action,
+  createEffect,
   createErrorBoundary,
   createLoadingBoundary,
   createOptimisticStore,
@@ -25,6 +16,7 @@ import {
   createSignal,
   flush,
   mapArray,
+  onCleanup,
   refresh
 } from "../src/index.js";
 
@@ -49,6 +41,9 @@ it("#4613: a region disposed while its list is lane work does not run again (F-3
   };
   let shown = "";
   const rows: string[] = [];
+  const regionsCreated: { filter: string; disposed: number }[] = [];
+  const mappedAfterDisposal: string[] = [];
+  const selected: unknown[] = [];
   let setFilter!: (f: string) => void;
   let close!: (id: number) => any;
   const dispose = createRoot(d => {
@@ -67,16 +62,30 @@ it("#4613: a region disposed while its list is lane work does not run again (F-3
       yield ask(`close:${id}`);
       refresh(store);
     });
+    createEffect(() => store[1]?.id, {
+      effect: value => {
+        selected.push(value);
+      },
+      error: error => {
+        selected.push(error);
+      }
+    });
     const regions = mapArray(
       () => [filter()],
-      (f: string) =>
-        createLoadingBoundary(
+      (f: string) => {
+        const region = { filter: f, disposed: 0 };
+        regionsCreated.push(region);
+        onCleanup(() => {
+          region.disposed++;
+        });
+        return createLoadingBoundary(
           () =>
             createErrorBoundary(
               () => {
                 const list = mapArray(
                   () => store,
                   (it: { id: number }) => {
+                    if (region.disposed) mappedAfterDisposal.push(f);
                     rows.push(`${f}:${it.id}`);
                     return `[#${it.id}]`;
                   }
@@ -86,7 +95,8 @@ it("#4613: a region disposed while its list is lane work does not run again (F-3
               e => () => `error ${(e() as Error).message}`
             ),
           () => () => "loading"
-        )
+        );
+      }
     );
     createRenderEffect(
       () =>
@@ -102,26 +112,40 @@ it("#4613: a region disposed while its list is lane work does not run again (F-3
     );
     return d;
   });
-  await tick();
-  await settle("issues:open", [{ id: 1 }, { id: 3 }, { id: 4 }]);
-  expect(shown).toBe("[#1][#3][#4]");
-  close(3);
-  await tick();
-  expect(shown).toBe("[#1][#4]");
-  setFilter("closed");
-  await tick();
-  expect(shown).toBe("[#1][#4]");
-  await settle("issues:closed", [{ id: 2 }]);
-  await settle("close:3", {});
-  rows.length = 0;
-  await settle("issues:closed", [{ id: 2 }, { id: 3 }]);
-  expect(shown).toBe("[#2][#3]");
-  setFilter("open");
-  await tick();
-  await settle("issues:open", [{ id: 1 }, { id: 4 }]);
-  expect(shown).toBe("[#1][#4]");
-  // Only live regions mapped rows: none for the disposed "open" region.
-  expect(rows).toEqual(["closed:2", "closed:3", "open:1", "open:4"]);
-  expect(warn.mock.calls.map(c => String(c[0])).filter(m => m.includes("DISPOSED"))).toEqual([]);
-  dispose();
+  try {
+    await tick();
+    await settle("issues:open", [{ id: 1 }, { id: 3 }, { id: 4 }]);
+    expect(shown).toBe("[#1][#3][#4]");
+    close(3);
+    await tick();
+    expect(shown).toBe("[#1][#4]");
+    expect(selected).toEqual([3, 4]);
+    setFilter("closed");
+    await tick();
+    // The newly keyed region consumes the independent producer flight and
+    // can show Loading. The selected guessed index remains 4.
+    expect(shown).toBe("loading");
+    expect(selected).toEqual([3, 4]);
+    await settle("issues:closed", [{ id: 2 }]);
+    await settle("close:3", {});
+    rows.length = 0;
+    await settle("issues:closed", [{ id: 2 }, { id: 3 }]);
+    expect(shown).toBe("[#2][#3]");
+    expect(regionsCreated[0]).toEqual({ filter: "open", disposed: 1 });
+    expect(mappedAfterDisposal).toEqual([]);
+    setFilter("open");
+    await tick();
+    await settle("issues:open", [{ id: 1 }, { id: 4 }]);
+    expect(shown).toBe("[#1][#4]");
+    // The initial open region was actually disposed before these updates.
+    // Only the newly mounted open region may map the final rows.
+    expect(rows.slice(-2)).toEqual(["open:1", "open:4"]);
+    expect(regionsCreated.map(region => region.disposed)).toEqual([1, 1, 0]);
+    expect(mappedAfterDisposal).toEqual([]);
+    expect(warn.mock.calls.map(c => String(c[0])).filter(m => m.includes("DISPOSED"))).toEqual([]);
+  } finally {
+    dispose();
+    flush();
+  }
+  expect(regionsCreated.map(region => region.disposed)).toEqual([1, 1, 1]);
 });
