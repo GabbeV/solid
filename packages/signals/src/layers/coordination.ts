@@ -556,6 +556,14 @@ function rederiveStatus(reader: Computed<any>, source: Computed<any>): boolean {
   const incoming = source._config & CONFIG_HELD ? txOf(source) : flushTransaction;
   const ownPosition = positionOf(txOf(reader)),
     incomingPosition = positionOf(incoming);
+  // A source can settle in a higher context without changing its value.
+  // Adopt that context as a value notification would, then let the reader
+  // re-derive there instead of resuming its obsolete lower hold here.
+  if (incoming && ownPosition < incomingPosition && adoptOutput(reader, incoming)) {
+    enqueueSub(reader);
+    schedule();
+    return true;
+  }
   if (
     ownPosition <= incomingPosition &&
     !(ownPosition < incomingPosition && unpublishedFrame(reader))

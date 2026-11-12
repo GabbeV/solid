@@ -275,3 +275,22 @@ that stage-120 behavior explicitly, including the selected guessed index and act
 region cleanup. They deliberately differ from next's family-wide lifetime hold;
 the comparison ran the original next tests successfully (11/11). Nested value-only
 writes no longer wake ancestor key enumerators: the keys have not changed.
+
+## Equal-answer status adoption
+
+A pending source can settle in a higher optimistic context without changing its
+value. Its readers must still discover that context. Status settlement now uses
+the same existing adoption path as a changed value, instead of merging the
+reader's obsolete lower hold into the upper update. This fixes filtering an object
+list during refetch and repeated list edits; a small test compares primitive and
+object rows through actual render callbacks. The isolated review passed 113 tests;
+the root review passed 57 with one independently reproduced positional-row failure.
+
+The broader source run at this point reports 7,714 passes, 225 failures and five
+skips. It remains an intermediate receipt, with deferred `until` and store work
+still outstanding. Eight newly failing #4577 assertions came from a test helper:
+it searched for an `other:closed` request that no longer existed, then
+`splice(-1)` delivered its `O-closed` payload to an `other:open` request. The tests
+now assert named requests exist and answer optimistic re-requests for their actual
+keys. All original publication-consistency assertions remain unchanged, and all
+14 cases pass. The remaining four newly failing mount tests are still under review.
