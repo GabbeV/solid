@@ -122,3 +122,5 @@ unknown nested-proxy write restriction on both experiment and next, the rejected
 source-scan trial (not current code), and two supported alternative programs.
 Both alternatives pass again on final main. See STORE-COMPLETION.md for the
 explicit retained limitation; the failing diagnostic is not a rejection contract.
+
+`store-structure-review-20261112.tar.xz` restores `store-structure-review-20261112/`: exact old/current-next and experiment array publication probes, development/production comparisons, local open-PR combination trials, setter-read entanglement verification, pending reference/deep comparisons, ordinary nested-seed diagnostics, and browser-verified playground sources and snapshots. Includes exact source hashes and PR evidence. Sparse-array acceptance is reopened by the user; no runtime changes are included in this checkpoint. The nested-seed issue is prepared but unsubmitted.

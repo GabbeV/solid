@@ -1,5 +1,13 @@
 # Store completion checkpoint
 
+## Reopened array semantics
+
+The user has rejected the sparse-array composition described below. The runtime
+is unchanged pending a replacement policy; the green test checkpoint does not
+establish acceptance for this newly clarified requirement. See
+[STORE-STRUCTURE-REVIEW.md](STORE-STRUCTURE-REVIEW.md) for current-next comparisons,
+reproductions and alternatives.
+
 ## Scope and status
 
 Store implementation is integrated into the real signals core. This checkpoint
