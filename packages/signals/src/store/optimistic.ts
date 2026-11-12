@@ -1,3 +1,4 @@
+import { createStaticOptimisticStore, staticOptimisticHooks } from "./optimistic-static.js";
 import { LEGACY_LANES } from "../core/constants.js";
 /**
  * Store — optimistic stores on lanes (plan sec. 31, S4; INTERNALS §3/§7, RUL-3).
@@ -560,7 +561,7 @@ function pairRows(t: StoreTarget, pb: Record<PropertyKey, any>): void {
   }
 }
 
-installOptHooks({
+installOptHooks(LEGACY_LANES ? {
   pair: pairRows,
   draft: optimisticDraft,
   writes: notifyOptimisticWrites,
@@ -646,7 +647,7 @@ installOptHooks({
           if (n) merge(txOf(n)._parent!, t);
         }
   }
-});
+} : staticOptimisticHooks);
 
 /** A derivation in the frame's hold (scheduler.ts `blockedBy`): one a
  * pending render effect reads, through any chain of pending derivations
@@ -898,7 +899,7 @@ export function createOptimisticStore<T extends object = {}>(
   second?: NoFn<T> | Store<NoFn<T>> | StoreOptions | null,
   third?: ProjectionOptions
 ): [get: Store<T>, set: StoreSetter<T>] {
-  if (!LEGACY_LANES) throw new Error("Optimistic stores are not integrated with the shared update engine yet.");
+  if (!LEGACY_LANES) return createStaticOptimisticStore(first, second, third) as any;
   const derived = typeof first === "function";
   // A derived store's family (projection.ts): the derive's status reaches
   // its leaves' readers as for `createStore(fn)` (F-12, #4437).

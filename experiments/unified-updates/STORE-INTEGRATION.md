@@ -6,6 +6,40 @@ pass or be explicitly migrated under the user's rulings. An old test is evidence
 of behavior, not permission to preserve inconsistent publication. Semantic
 decisions stay with the user.
 
+## Integrated static slice (2026-11-12)
+
+The static flat-record slice is now integrated. Store property inputs feed
+ordinary optimistic outputs; same-setter output transactions publish together,
+while disjoint action lifetimes remain independent. Structural/nested/derived
+stores still reject explicitly at this milestone.
+
+**User ruling:** `deep()` must not itself entangle disjoint action lifetimes.
+The user chose the simpler shared-model behavior after the history review.
+Changing back to next's witness-induced action entanglement requires asking
+the user first; the earlier compatibility recommendation below is superseded.
+Two new publication tests cover independent ordinary action writes and deep
+snapshots during async holds, unrelated reruns and late mounts.
+
+The first full signals run of this slice: **6,204 passed / 1,562 failed /
+2 skipped**, including 11 new tests. Exact identity comparison finds 391
+formerly failing tests passing and zero formerly passing tests failing.
+Remaining failures classify as 1,460 unsupported-store cases, 100 until-related
+cases, one own-output pending expectation and one property-node reclamation
+case. This report predates the two new deep tests and pending migration.
+
+The pending expectation is migrated under the already accepted
+INTEGRATION-106 ruling: a changed optimistic output held by downstream async
+remains pending and shows its published value. Scalar and store counterparts
+agree. The test now also checks that it becomes settled after the guess
+publishes while the action remains open. The reclamation failure is real:
+eager permanent companions keep unused input nodes allocated; lazy creation
+and release are the next lifecycle work. No assertion is removed.
+
+Focused validation: the 25 existing candidate/scalar controls, two new deep
+tests and the migrated pending case pass. Source TypeScript checking passes.
+This is an implementation checkpoint, not complete store support or a measured
+performance/size result.
+
 ## Verified inventory
 
 | Suite receipt | Optimistic-store constructor rejection | Until-dependent | Other observed failures |

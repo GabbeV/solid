@@ -1778,6 +1778,7 @@ function changedBetween(
  * verdict reader, #4355) is served the staging, as for a memo born staged
  * (core `serve`). */
 function nodeValue(node: Signal<any>, backing: any, target: StoreTarget): any {
+  if (target._fam?.opt && optHooks?.read) return optHooks.read(target, node);
   let v;
   if (
     node._pendingValue !== NOT_PENDING &&
@@ -2486,7 +2487,7 @@ const ASYNC_STORE_SETTER_MESSAGE =
 /** A store setter inside an owned scope (a memo body) is the owned-scope
  * write violation — the user guard (`mapArray`'s pattern: the node-level
  * writes carry `ownedWrite`; the setter asks). */
-function devGuardStoreSetterWrite(): void {
+export function devGuardStoreSetterWrite(): void {
   if (context && !(context._config & CONFIG_CHILDREN_FORBIDDEN) && !disposalDepth) {
     emitDiagnostic({
       code: "REACTIVE_WRITE_IN_OWNED_SCOPE",
@@ -2505,7 +2506,7 @@ function devGuardStoreSetterWrite(): void {
  * a thenable can never be that: it is the signature of `setStore(async d =>
  * …)`, where only the writes before the first `await` were in the
  * transaction. Setters are synchronous; async orchestration is `action()`'s. */
-function devGuardStoreSetterResult(result: unknown): void {
+export function devGuardStoreSetterResult(result: unknown): void {
   if (result == null) return;
   if (
     (typeof result === "object" || typeof result === "function") &&
@@ -2728,6 +2729,7 @@ export function deep<T>(value: T): T {
     if (visited.has(src)) return;
     visited.add(src);
     readNode(getDeepNode(t));
+    if (t._fam?.opt) optHooks?.deep?.(t);
     // Through a chain (#3323): every inner record's container AND deep
     // witness — base writes bump the inner witnesses.
     for (let it = t; it.ch; ) {

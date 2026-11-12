@@ -10,9 +10,10 @@
  * - A new question (any tracked input changed value since the last reveal)
  *   pends everything under the source until its answer reveals. Nothing can
  *   silence it — pendingness is monotone.
- * - Optimistic writes are verdict-inert: they neither announce pending on
- *   their own slots nor mask anyone else's (the store-wide mask / A21 is
- *   deleted). To downstream async they are real input changes.
+ * - A published optimistic guess does not pend merely because its action
+ *   remains open, and does not mask anyone else's pending state. A changed
+ *   guess held behind its downstream work is still unpublished and pending,
+ *   like an ordinary output (unified-update ruling, INTEGRATION-106).
  * - `affects(target, key?)` is the only declaration verb: additive pending
  *   on the named slot AND everything derived from it (marks ride the status
  *   rails — see tests/affects-propagation.test.ts), held from declaration to
@@ -1218,11 +1219,20 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     });
     const done = act();
     flush();
-    // Own slot: verdict-inert. Downstream async memo: new question, pending.
-    expect(isPending(() => state.data)).toBe(false);
+    // The guessed output and its consequence still show their committed
+    // values. A changed, unpublished output remains pending (the same rule
+    // as scalar optimism; unified-update ruling recorded in INTEGRATION-106).
+    expect(state.data).toBe(10);
+    expect(isPending(() => state.data)).toBe(true);
     expect(isPending(derived)).toBe(true);
 
     derivedFetch.resolveAll();
+    await tick();
+    expect(state.data).toBe(15);
+    expect(derived()).toBe(30);
+    expect(isPending(() => state.data)).toBe(false);
+    expect(isPending(derived)).toBe(false);
+
     resolveMutation();
     await done;
     await tick();

@@ -14,6 +14,10 @@ import type { StoreFamily, StoreTarget } from "./target.js";
  * only through a family with `opt` set, which only `createOptimisticStore`
  * sets. */
 export interface OptHooks {
+  /** Select a store-owned truth slot through its shared optimistic output. */
+  read?(t: StoreTarget, node: Signal<any>): unknown;
+  /** Track the selected flat leaves for a deep read. */
+  deep?(t: StoreTarget): void;
   /** A user setter's draft on an optimistic family: a clone of the
    * writer's view (a staging already on the target is set aside). */
   draft(t: StoreTarget): Record<PropertyKey, any>;

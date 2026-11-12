@@ -1,5 +1,5 @@
 /** User guesses and their action lifetime, published by the common layer core. */
-import { computed, read, signal, runWithOwner, stageSelectedValue } from "../core/core.js";
+import { computed, read, signal, runWithOwner, untrack, stageSelectedValue } from "../core/core.js";
 import { enqueueSub } from "../core/heap.js";
 import { registerGraph } from "../core/dev.js";
 import { getOwner } from "../core/owner.js";
@@ -56,6 +56,10 @@ import {
 } from "./coordination.js";
 
 const proposals = new Map<Layer<any>, unknown>();
+// One writer's changed outputs publish together. These records last only
+// until their proposals acquire ordinary output transactions; scopes are not
+// members of the group and retain their independent action lifetimes.
+const proposalGroups = new Set<Set<Layer<any>>>();
 const scopes = new Map<Transaction, Set<Layer<any>>>();
 if (__OBSERVE__)
   GlobalQueue._layerGuesses = update =>
@@ -216,12 +220,34 @@ setGuessLifecycle({
   },
   _prepare: prepareGuesses,
   _settle: () => {
-    if (!proposals.size) return false;
+    if (!proposals.size) {
+      proposalGroups.clear();
+      return false;
+    }
     // Freeze the whole batch's selections before assigning contexts. This
     // prevents simultaneous nested guesses from depending on setter order.
     proposals.forEach(selectProposal);
     proposals.forEach(positionProposal);
     proposals.forEach(applyProposal);
+    for (const group of proposalGroups) {
+      const updates = new Set<Transaction>();
+      let position: number | undefined;
+      for (const layer of group) {
+        if (!proposals.has(layer) || !(layer._output._config & CONFIG_HELD)) continue;
+        const update = txOf(layer._output);
+        const depth = positionOf(update);
+        if (position !== undefined && position !== depth)
+          throw new Error("Optimistic store writer groups require outputs at the same depth.");
+        position = depth;
+        updates.add(update);
+      }
+      let first: Transaction | undefined;
+      for (const update of updates) {
+        if (first) merge(update, first);
+        else first = update;
+      }
+    }
+    proposalGroups.clear();
     proposals.clear();
     return true;
   },
@@ -375,18 +401,54 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
   setLayerBlocked(pendingScope);
 }
 
+/** A store-owned truth slot and its ordinary selected output. Like a source
+ * observation, the companion is independent of creator and reader owners. */
+export function createOptimisticSlot<T>(input: Signal<T>) {
+  const layer = runWithOwner(null, () =>
+    createLayerBoundary<T>(input as Computed<T>, selectGuess, false)
+  );
+  layer._automatic = true;
+  layer._inputStatus = true;
+  layer._output._config &= ~CONFIG_AUTO_DISPOSE;
+  const [, propose] = layerAccessors(layer);
+  // Establish the initial published value even when the first operation is a
+  // setter. No function/thenable normalization: slot contents are raw values.
+  untrack(() => read(layer._output));
+  return {
+    output: layer._output,
+    propose: (value: T) => propose(() => value),
+    writerValue: () => previousProposal(layer)
+  };
+}
+
+/** Submit one static-record setter's changes. Scalar proposals and distinct
+ * setters still select their own publication transactions normally. */
+export function proposeOptimisticSlots(
+  entries: readonly (readonly [ReturnType<typeof createOptimisticSlot>, unknown])[]
+): void {
+  const group = new Set<Layer<any>>();
+  for (const [slot, value] of entries) {
+    slot.propose(value);
+    group.add(boundaries.get(slot.output)!);
+  }
+  if (group.size > 1) proposalGroups.add(group);
+}
+
+// A first proposal starts from the published output. Its pending slot can
+// belong to a held correction, rather than to an earlier user proposal.
+function previousProposal<T>(layer: Layer<T>): T {
+  const pending = proposals.get(layer);
+  return (proposals.has(layer) && pending !== NOT_PENDING
+    ? pending
+    : layer._override !== NOT_PENDING
+      ? layer._override
+      : layer._output._value) as T;
+}
+
 function layerAccessors<T>(layer: Layer<T>) {
   const output = layer._output;
   const propose = (value: T | ((previous: T) => T)) => {
-    const pending = proposals.get(layer);
-    const previous =
-      proposals.has(layer) && pending !== NOT_PENDING
-        ? pending
-        : layer._override !== NOT_PENDING
-          ? layer._override
-          : // Without a guess, the pending slot belongs to the input update.
-            // A first guess starts from what this output has published.
-            output._value;
+    const previous = previousProposal(layer);
     const next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
     if (output._flags & REACTIVE_DISPOSED) return next;
     if (__OBSERVE__ && attrHooks !== null) attrHooks.write(output, previous, next);
