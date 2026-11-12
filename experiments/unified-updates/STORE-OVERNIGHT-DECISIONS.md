@@ -294,3 +294,54 @@ it searched for an `other:closed` request that no longer existed, then
 now assert named requests exist and answer optimistic re-requests for their actual
 keys. All original publication-consistency assertions remain unchanged, and all
 14 cases pass. The remaining four newly failing mount tests are still under review.
+
+## Complete property selection and safe list reconciliation
+
+A changed property now selects its presence and descriptor metadata together with
+its value. Otherwise an independent input could delete a property that still had
+a displayed optimistic value. Tests cover a guessed number and a present
+`undefined`, including descriptor values and readers that only use descriptors.
+Internal selection of a parent object's body no longer consumes the hidden raw
+field's pending state. The existing companion owns that raw node's identity until
+it is released, using the existing deferred-release queue rather than a cache or
+an artificial reactive dependency. Tracked data fields on a selected object get
+their own correction notifications; getters retain their proxy receiver.
+
+Enumeration has an ordinary producer-aware input, including pending and errors,
+and composes selected metadata over it. A cold selected output must establish its
+calculation context before a later read can throw on the lower input. Unknown
+initial shape still waits: guessing one property does not publish the seed's
+other keys. Reclamation tests cover disposal during a pending correction.
+
+Optimistic list mapping resolves its selected input snapshot before entering the
+internal row owner and changing retained reconciliation state. Retrying context
+discovery midway through those mutations caused both an infinite retry on sparse
+arrays and wrong retained rows after a delete/add sequence. The successful pass
+reuses the snapshot as the mapper's existing commit copy; it does not allocate a
+second items array. Aborted attempts can allocate this copy earlier than before.
+Ordinary arrays retain their previous path. These are implementation allocation
+counts, not performance measurements.
+
+The combined root check passes 993 tests, including the upstream 900-case mutation
+matrix, both 100-seed #4642 scenarios, sparse output controls, positional/keyed
+parent corrections, errors, descriptors and reclamation. Typechecking also passes.
+This is not full-suite acceptance; cold companions, pending classification and
+remaining test migrations are still under review.
+
+**Choice for review — genuinely sparse composition:** fixed-index overrides do
+not preserve unguessed indices when an independent input removes them. Starting
+with `["A"]`, an action's `push("M")` selects index 1 and a minimum length of 2.
+If the input independently becomes `[]`, the output may be `[hole, "M"]` until
+the action ends. Keys, `in`, descriptors, indexed reads, native iteration, memos and
+all three mapArray modes must agree on that same sparse array. A push that reads
+length supplied by another active override still joins that action, as ruled.
+No length-read heuristic was added to snapshot carried rows, and no operation
+replay/rebasing was introduced. Next instead retains the old dense rows together
+with the independent input's old length in the comparison controls.
+
+The #4491 tests now verify every queued whole-display snapshot and each binding's
+full value sequence. They no longer require an ordering between sibling callbacks,
+which the user explicitly left unspecified. Status-context retries can emit one
+identical callback for an equal answer; the tests state that explicitly and still
+check all pending-state and display transitions. The common adoption mechanism is
+retained for effects because excluding them broke legitimate list publication.

@@ -1,21 +1,8 @@
-/**
- * #4379 (ReactiveScript tracker eval): a keyed `createOptimisticStore` list
- * whose question reads `filter()`, under `<Loading on={filter()}>`, with a
- * render effect per row (as `<For>` binds each row's text). An action
- * guesses a row, yields, then `refresh()`es the list. A plain `filter`
- * write while the action is out is held with it (D-34, #4336), so the
- * boundary's swap is staged into that hold (D-15) and the screen keeps the
- * old list.
- *
- * Once the new question's answer lands, held with the same action, the
- * content is ready inside the hold the fallback was staged into: the seam
- * folds the fallback back (D-16, U-9), as it does when the readers are
- * already landed at the re-arm. When the action ends, its own `refresh()`
- * is quiet (F-9): it must not pull the fallback on screen. On `next` the
- * fold only ran in the re-arm's own flush (`_armed`); the rows' effects
- * survive the answer (same keys) and land a flush later, so the staged
- * fallback committed with the action, and the refresh's pending, caught by
- * a boundary still collecting, showed it until the refresh answered.
+/** Stage 120 keeps an independent filter update separate from the guessing
+ * action. With `on`, its fallback can publish immediately; without `on`,
+ * the content holds until that input answers. Selected property overrides
+ * retain their own action lifetimes and do not rebase onto a new question.
+ * The action's later refresh still publishes a coherent content frame.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -89,7 +76,7 @@ function page(on: boolean) {
               // Frame readers per row, under the boundary (`<For>`'s text
               // holes). The `id` read is not served by the guess: over the
               // new question it is an ordinary pending read (#4336
-              // `stands`), recorded by the boundary, and it lands held.
+              // `stands`), recorded by the boundary and settled by the input answer.
               createRenderEffect(
                 () => i.id,
                 () => {}
@@ -140,48 +127,54 @@ function page(on: boolean) {
 
 const MOUNT = ["loading", "#1(-) #3(-)"];
 
-describe("#4379 a held `on` change whose content lands inside the hold", () => {
+describe("#4379 an independent `on` change during an optimistic action", () => {
   for (const on of [true, false]) {
-    it(`toggled back while held: the action's refresh shows no fallback (on=${on})`, async () => {
+    it(`toggled back during an action: its later refresh stays quiet (on=${on})`, async () => {
       const p = page(on);
       await tick();
       await p.land("fetchIssues:open", OPEN);
       await p.assign(3, "ann");
       await p.setFilter("closed");
       await p.setFilter("open");
-      expect(p.screen()).toBe("#1(-) #3(ann)");
+      expect(p.screen()).toBe(on ? "loading" : "#1(-) #3(ann)");
       await p.land("fetchIssues:closed", []);
       await p.land("fetchIssues:open", OPEN);
       expect(p.screen()).toBe("#1(-) #3(ann)");
       await p.land("assign:3,ann", undefined);
       expect(p.screen()).toBe("#1(-) #3(ann)");
       await p.land("fetchIssues:open", ASSIGNED);
-      expect(p.frames).toEqual([...MOUNT, "#1(-) #3(ann)"]);
+      expect(p.frames).toEqual([
+        ...MOUNT,
+        "#1(-) #3(ann)",
+        ...(on ? ["loading", "#1(-) #3(ann)"] : [])
+      ]);
       expect(p.asks).toEqual([]);
     });
 
-    // The same seam without the toggle: the new question's answer keeps the
-    // rows (same keys), so their effects survive and land held.
-    it(`a new question whose answer keeps the rows: no fallback (on=${on})`, async () => {
+    // The input answer keeps the keys and the selected assignee override.
+    it(`a new question keeps the rows and selected assignee (on=${on})`, async () => {
       const p = page(on);
       await tick();
       await p.land("fetchIssues:open", OPEN);
       await p.assign(3, "ann");
       await p.setFilter("closed");
-      expect(p.screen()).toBe("#1(-) #3(ann)");
+      expect(p.screen()).toBe(on ? "loading" : "#1(-) #3(ann)");
       await p.land("fetchIssues:closed", OPEN);
       expect(p.screen()).toBe("#1(-) #3(ann)");
       await p.land("assign:3,ann", undefined);
       expect(p.screen()).toBe("#1(-) #3(ann)");
       await p.land("fetchIssues:closed", ASSIGNED);
-      expect(p.frames).toEqual([...MOUNT, "#1(-) #3(ann)"]);
+      expect(p.frames).toEqual([
+        ...MOUNT,
+        "#1(-) #3(ann)",
+        ...(on ? ["loading", "#1(-) #3(ann)"] : [])
+      ]);
       expect(p.asks).toEqual([]);
     });
   }
 
-  // Control (passes on `next`): the answer drops the rows, so their effects
-  // die and the boundary's own pass finds nothing left to wait on.
-  it("control: an answer that drops the rows holds the old list to the refresh", async () => {
+  // An independent answer may drop rows before the guessing action ends.
+  it("control: an independent answer drops the rows before refresh", async () => {
     const p = page(true);
     await tick();
     await p.land("fetchIssues:open", OPEN);
@@ -189,9 +182,9 @@ describe("#4379 a held `on` change whose content lands inside the hold", () => {
     await p.setFilter("closed");
     await p.land("fetchIssues:closed", []);
     await p.land("assign:3,ann", undefined);
-    expect(p.screen()).toBe("#1(-) #3(ann)");
+    expect(p.screen()).toBe("");
     await p.land("fetchIssues:closed", []);
-    expect(p.frames).toEqual([...MOUNT, "#1(-) #3(ann)", ""]);
+    expect(p.frames).toEqual([...MOUNT, "#1(-) #3(ann)", "loading", ""]);
   });
 
   // Control: nothing holds the change — the fallback shows with it (D-15).

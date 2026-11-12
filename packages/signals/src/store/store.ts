@@ -346,11 +346,17 @@ function noteNode(target: StoreTarget, node: Signal<any>, key: PropertyKey): voi
 const slotKept = (node: any): any =>
   node._pendingValue !== NOT_PENDING ||
   node._config & CONFIG_OVERRIDE ||
-  node._host.k?._config & CONFIG_HELD;
-setSlotUnobserved((node: any): void => {
+  node._host.k?._config & CONFIG_HELD ||
+  (node._host._fam?.opt && optHooks?.node && optHooks.node(node._host, node) !== node);
+export function releaseUnobservedStoreNode(node: Signal<any>): void {
+  if (node._subs !== null) return;
   if (slotKept(node)) deferredReleases.add(node);
-  else releaseSlot(node);
-});
+  else {
+    deferredReleases.delete(node);
+    releaseSlot(node);
+  }
+}
+setSlotUnobserved(releaseUnobservedStoreNode);
 
 /** A node born while its container has a staging is born from the two
  * frames (A29): committed from the committed backing, the staging from the

@@ -14,6 +14,7 @@ import {
 } from "../layers/optimistic.js";
 import {
   getNode,
+  releaseUnobservedStoreNode,
   getHasNode,
   getContainerNode,
   wrap,
@@ -48,6 +49,7 @@ type RecordSlots = {
   shape: Map<PropertyKey, Slot>;
   nodes: Map<Signal<any>, Slot>;
   inputs: Set<Computed<any>>;
+  structure?: Slot;
   prototype: object | null;
   parent?: Slot;
   draft?: { previous: Record<PropertyKey, any>; staged: Record<PropertyKey, any> | null };
@@ -116,7 +118,6 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
             computed(() => {
               const body = selectedBody(t);
               if (body) {
-                read(node);
                 return presence ? key in body : body[key as any];
               }
               const current = !presence && t.v[key as any];
@@ -145,6 +146,7 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
             record.inputs.delete(input as Computed<any>);
             dispose(input as any);
           }
+          releaseUnobservedStoreNode(node);
         }
       });
       schedule();
@@ -258,6 +260,7 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
     // Discover this candidate only once it has a surviving selected update.
     const container = getContainerNode(t);
     if (container._subs !== null) insertSubs(container);
+    if (record.structure?.output._subs) insertSubs(record.structure.output);
     const value = t.n?.[key as any];
     if (value !== undefined && value._subs !== null) insertSubs(value);
     schedule();
@@ -275,7 +278,6 @@ function selectedShapes(t: StoreTarget): void {
 }
 
 function selectedNode(t: StoreTarget, node: Signal<any>): Signal<any> {
-  if (node === t.k) return node;
   return records.get(t)?.nodes.get(node)?.output ?? node;
 }
 
@@ -308,8 +310,46 @@ function readDescendantOutputs(root: StoreTarget): boolean {
   return selected;
 }
 
+/** Enumeration composes selected metadata over a producer-aware base. A
+ * higher selected frame can keep that base; a first base stays unanswered. */
+function structureSlot(t: StoreTarget): Slot {
+  const record = recordFor(t);
+  if (record.structure) return record.structure;
+  const node = getContainerNode(t);
+  const input = runWithOwner(null, () =>
+    computed(() => {
+      const body = selectedBody(t);
+      if (body) return body;
+      pullFamilyInput(t);
+      return read(node);
+    })
+  );
+  input._config &= ~CONFIG_AUTO_DISPOSE;
+  let slot: Slot;
+  const candidate = () => {
+    if (!slot) return;
+    releases.set(slot, {
+      target: t,
+      remove: () => {
+        if (record.structure === slot) record.structure = undefined;
+        if (record.nodes.get(node) === slot) record.nodes.delete(node);
+        record.inputs.delete(input);
+        dispose(input);
+        releaseUnobservedStoreNode(node);
+      }
+    });
+    schedule();
+  };
+  slot = createOptimisticSlot(input, candidate);
+  record.structure = slot;
+  record.nodes.set(node, slot);
+  record.inputs.add(input);
+  candidate();
+  return slot;
+}
+
 function readSelected(t: StoreTarget, node: Signal<any>) {
-  if (Array.isArray(t.v) && (node as any)._key === "length")
+  if (Array.isArray(t.v) && node === t.n?.length)
     return selectedArrayLength(t, () => {
       const body = selectedBody(t);
       if (body) return body.length;
@@ -317,8 +357,8 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
       return t.ch ? (read(getContainerNode(t)) as any[]).length : (read(node) as number);
     });
   if (node === t.k) {
-    const value = read(node);
     selectedShapes(t);
+    const value = t._fam?.node ? read(structureSlot(t).output) : read(node);
     // mapArray's item reads run inside an untracked row owner. Its tracked
     // $TRACK read links the selected index outputs that can change a row
     // without changing the array's ordinary backing or key set.
@@ -451,6 +491,7 @@ export const staticOptimisticHooks: OptHooks = {
   inputBody: selectedBody,
   ownsFirewall: (t, key, presence) => {
     if (selectedBody(t)) return true;
+    if (key === undefined && records.get(t)?.structure) return true;
     // A resize supplies the full source; a minimum floor still demands it.
     if (!presence && key === "length" && Array.isArray(t.v)) return true;
     if (key === undefined) return false;
@@ -469,7 +510,13 @@ export const staticOptimisticHooks: OptHooks = {
   rowValue: (t, key, receiver) => {
     const row = selectedBody(t);
     if (!row || row === t.v || (Array.isArray(row) && key === "length")) return undefined;
-    const slot = records.get(t)?.slots.get(key);
+    let slot = records.get(t)?.slots.get(key);
+    if (!slot && getObserver() !== null) {
+      // Data fields need their own correction notifications; accessors keep
+      // the proxy receiver used by Reflect.get below.
+      const descriptor = Object.getOwnPropertyDescriptor(row, key);
+      if (descriptor && "value" in descriptor) slot = slotFor(t, key);
+    }
     return { value: slot ? read(slot.output) : Reflect.get(row, key, receiver) };
   },
   accessor: (t, key, receiver) => {
@@ -502,18 +549,19 @@ export const staticOptimisticHooks: OptHooks = {
     // pass, independent of proposal order.
     const selectedShape = records.get(t)?.shape.get(key);
     if (selectedShape && getObserver() !== null) read(selectedShape.output);
-    return untrack(() => {
+    const descriptor = untrack(() => {
       const shape = selectedView(t, t.v);
       const record = records.get(t);
       if (!record && shape === t.v) return undefined;
-      const descriptor = Object.getOwnPropertyDescriptor(shape, key);
-      const slot = record?.slots.get(key);
-      return descriptor
-        ? "value" in descriptor
-          ? { ...descriptor, value: slot ? read(slot.output) : descriptor.value }
-          : descriptor
-        : null;
+      return Object.getOwnPropertyDescriptor(shape, key) ?? null;
     });
+    const slot =
+      descriptor && "value" in descriptor && getObserver() !== null
+        ? slotFor(t, key)
+        : records.get(t)?.slots.get(key);
+    return descriptor && "value" in descriptor && slot
+      ? { ...descriptor, value: read(slot.output) }
+      : descriptor;
   },
   has: (t, key) => {
     const slot = records.get(t)?.presence.get(key);
@@ -606,13 +654,13 @@ export const staticOptimisticHooks: OptHooks = {
         }
       }
       if (changed) entries.push([slotFor(t, key), after]);
-      if (!!old !== !!neu) {
+      if (changed || !!old !== !!neu) {
         const presence = slotFor(t, key, true);
         const present = neu !== undefined || key in Object.create(record.prototype);
-        if (presence.writerValue() !== present) entries.push([presence, present]);
+        if (changed || presence.writerValue() !== present) entries.push([presence, present]);
       }
       if (key !== "length" || !Array.isArray(next)) {
-        if (!sameShape(old, neu) || (reordered && !!old && !!neu))
+        if (changed || !sameShape(old, neu) || (reordered && !!old && !!neu))
           entries.push([shapeSlot(t, key), shapeMeta(next, key)]);
       }
     }

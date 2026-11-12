@@ -349,6 +349,25 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
     expect(s.errors).toEqual([]);
   });
 
+  it("key: null keeps replacement row fields current after the final refresh", async () => {
+    const s = todoList(null);
+    await tick();
+    await s.step(() => s.land("list"));
+    await s.step(() => s.add({ id: 3, title: "jam" }));
+    await s.step(() => s.land("add:3"));
+    await s.step(() => s.remove(3));
+    await s.step(() => s.add({ id: 4, title: "tea" }));
+    await s.step(() => s.land("list"));
+    expect(s.shown).toBe("[milk][eggs][tea]");
+    expect(s.cells.map(cell => cell.id)).toEqual([1, 2, 4]);
+    await s.drain();
+    expect(s.shown).toBe("[milk][eggs][tea]");
+    expect(s.shown).toBe(s.server);
+    expect(s.untracked()).toBe("milk,eggs,tea");
+    expect(s.cells.map(cell => cell.id)).toEqual([1, 2, 4]);
+    expect(s.errors).toEqual([]);
+  });
+
   // Random sequences of add / delete / rename / refresh and landings (some
   // declined), keyed and `key: null`: no row shows twice or empty, nothing
   // throws, and the list settles to the server's, screen and untracked

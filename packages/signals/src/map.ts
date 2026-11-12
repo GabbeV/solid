@@ -151,7 +151,8 @@ function trySmallMove<Item, MappedItem>(
   data: MapData<Item, MappedItem>,
   newItems: Item[],
   newLen: number,
-  start: number
+  start: number,
+  captured?: Item[]
 ): boolean {
   const oldItems = data._items;
   const oldEnd = data._len - 1;
@@ -215,7 +216,7 @@ function trySmallMove<Item, MappedItem>(
     if (dstPos.length === 32) return false;
     dstPos.push(j);
   }
-  return commitSmallMove(data, newItems, newLen, srcPos, dstPos, runs);
+  return commitSmallMove(data, newItems, newLen, srcPos, dstPos, runs, captured);
 }
 
 /** PHASE 2 of the small-move path, in its OWN function so that a pass which
@@ -231,7 +232,8 @@ function commitSmallMove<Item, MappedItem>(
   newLen: number,
   srcPos: number[],
   dstPos: number[],
-  runs: number[]
+  runs: number[],
+  captured?: Item[]
 ): boolean {
   const oldItems = data._items;
   let i: number;
@@ -293,7 +295,7 @@ function commitSmallMove<Item, MappedItem>(
   data._mappings = mappings;
   data._nodes = nodes;
   data._len = newLen;
-  data._items = newItems.slice(0);
+  data._items = captured ?? newItems.slice(0);
   // Dispose unmatched sources LAST (general-path ordering).
   for (i = 0; i < srcPos.length; i++) {
     if (consumed === undefined || !consumed[i]) oldNodes[srcPos[i]].dispose();
@@ -412,8 +414,13 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
   (newItems as any)[$TRACK]; // top level tracking (a store array's container node)
   // A shallow store array diffs its backing: its slots are raw records, and
   // a trap per slot read was most of a one-row write on a 1k-row list.
-  newItems = shallowView?.((newItems as any)[$TARGET]) ?? newItems;
+  const target = (newItems as any)[$TARGET];
+  newItems = shallowView?.(target) ?? newItems;
+  // Resolve the selected slots in the list computation's context before
+  // the internal row owner starts mutating its retained bookkeeping.
   const newLen = newItems.length;
+  const captured = target?._fam?.opt && newLen !== 0 ? newItems.slice(0) : undefined;
+  if (captured) newItems = captured;
 
   runWithOwner(this._owner, () => {
     let i: number,
@@ -495,7 +502,7 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
       this._nodes = nodes;
       rows && (this._rows = rows);
       indexes && (this._indexes = indexes);
-      this._items = newItems.slice(0);
+      this._items = captured ?? newItems.slice(0);
       this._len = newLen;
     } else {
       let start: number,
@@ -560,7 +567,7 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
       // length — the common post-reconcile shape): keep the same mapped
       // array identity so downstream consumers don't re-run at all
       if (start === newLen && this._len === newLen) {
-        this._items = newItems.slice(0);
+        this._items = captured ?? newItems.slice(0);
         return;
       }
 
@@ -587,7 +594,7 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
         const hi = Math.min(end, m + 32);
         let k = Math.max(start, m - 32);
         while (k <= hi && this._items[k] !== probe) k++;
-        if (k <= hi && trySmallMove(this, newItems as Item[], newLen, start)) return;
+        if (k <= hi && trySmallMove(this, newItems as Item[], newLen, start, captured)) return;
       }
 
       const dif = newLen - this._len;
@@ -680,7 +687,7 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
       this._mappings = temp;
       this._len = newLen;
       // save a copy of the mapped items for the next update
-      this._items = newItems.slice(0);
+      this._items = captured ?? newItems.slice(0);
       if (removed) for (i = 0; i < removed.length; i++) removed[i].dispose();
       if (
         __OBSERVE__ &&

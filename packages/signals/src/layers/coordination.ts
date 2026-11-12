@@ -814,6 +814,31 @@ function receiveOwnerRetry(node: Computed<any>): void {
 
 function readContext(reader: Computed<any>, source: Computed<any>): void {
   if (evaluation !== reader) return;
+  // A displayed binding can discover a new selected output before it has
+  // subscribed to that boundary. With no committed output frame, enter its
+  // exact update before any later read consumes the lower pending input.
+  if (
+    (reader as any)._type === EFFECT_RENDER &&
+    !(reader._statusFlags & STATUS_UNINITIALIZED) &&
+    source._statusFlags & STATUS_UNINITIALIZED &&
+    source._config & CONFIG_HELD
+  ) {
+    const boundary = boundaries.get(source);
+    const selected = txOf(source);
+    if (
+      boundary &&
+      boundary._override !== NOT_PENDING &&
+      positionOf(selected) > positionOf(flushTransaction)
+    ) {
+      if (flushTransaction) holdQueuedProposals(resolveTx(flushTransaction));
+      retryCreator(reader, selected);
+      if (adoptOutput(reader, selected)) {
+        setCalculationUpdate(selected);
+        retryEvaluation = true;
+        throw new ContextRetry(reader);
+      }
+    }
+  }
   // Selecting an existing observation can move a running binding into its
   // output update. Retry in that exact update, so direct frame reads do not
   // mistake its proposals for a different update at the same depth.

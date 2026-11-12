@@ -1,12 +1,8 @@
-/**
- * #4605 (ReactiveScript timing fuzzer): a keyed `createOptimisticStore` list
- * asked by `filter()`, under `<Loading on={filter()}>`. An action guesses
- * (removes a row), yields, then `refresh()`es the list. A `filter` write
- * while the action is out is held with it (D-34, #4336); the action ends,
- * the refresh lands, everything rests. A second `filter` write with nothing
- * in flight is an `on` change like any other: it arms the boundary, which
- * shows its fallback with that change's frame (F-5, D-15) — as it does
- * without `on`, and as it does without the earlier held change.
+/** Stage 120 keeps an independent filter update separate from the guessing
+ * action. With `on`, its fallback can publish immediately; without `on`,
+ * the content holds until that input answers. Selected property overrides
+ * retain their own action lifetimes and do not rebase onto a new question.
+ * The action's later refresh still publishes a coherent content frame.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -112,7 +108,7 @@ function page(on: boolean) {
   };
 }
 
-describe("#4605 an `on` change after an earlier change was held by an action", () => {
+describe("#4605 an `on` change after an independent input and action settle", () => {
   for (const on of [true, false]) {
     it(`the later change, with nothing in flight (on=${on})`, async () => {
       const p = page(on);
@@ -122,11 +118,12 @@ describe("#4605 an `on` change after an earlier change was held by an action", (
       await p.closeOne(3);
       expect(p.screen()).toBe("open: #1 #4");
       await p.setFilter("closed");
-      expect(p.screen()).toBe("open: #1 #4");
+      expect(p.screen()).toBe(on ? "loading" : "open: #1 #4");
       await p.land("issues:closed", [{ id: 2 }]);
-      expect(p.screen()).toBe("open: #1 #4");
+      // Index 0 follows the input; the action still selects row 4 at index 1.
+      expect(p.screen()).toBe("closed: #2 #4");
       await p.land("close:3", {});
-      expect(p.screen()).toBe("open: #1 #4");
+      expect(p.screen()).toBe("closed: #2 #4");
       await p.land("issues:closed", [{ id: 2 }, { id: 3 }]);
       expect(p.screen()).toBe("closed: #2 #3");
       expect(p.asks).toEqual([]);
@@ -141,6 +138,8 @@ describe("#4605 an `on` change after an earlier change was held by an action", (
         "loading",
         "open: #1 #3 #4",
         "open: #1 #4",
+        ...(on ? ["loading"] : []),
+        "closed: #2 #4",
         "closed: #2 #3",
         ...(on ? ["loading"] : []),
         "open: #1 #4"
