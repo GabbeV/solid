@@ -1956,7 +1956,8 @@ function serveDataKey(
   // A write-override read (a derive's draft) serves the backing: the derive
   // composes on the truth, never on a lane's or a hold's frame.
   if (!inDraft(target) && !writeOverride) {
-    if (node === undefined && getObserver() !== null) node = getNode(target, key, accKnown);
+    if (node === undefined && (getObserver() !== null || (verdict !== null && target._fam?.opt)))
+      node = getNode(target, key, accKnown);
     if (node !== undefined) {
       const nv = nodeValue(node, backingValue, target);
       if (chained) {

@@ -326,7 +326,7 @@ it("a cold first-input error remains an error when a companion later selects a g
 });
 
 for (const preread of [false, true])
-  it(`a cold latest index reads a held producer answer through its new companion (preread=${preread})`, async () => {
+  it(`a cold latest index respects the selected array structure (preread=${preread})`, async () => {
     const first = Promise.withResolvers<void>(),
       hold = Promise.withResolvers<void>();
     const answers: Array<(rows: number[]) => void> = [];
@@ -368,13 +368,19 @@ for (const preread of [false, true])
       await settle();
       answers.shift()!([1, 2, 3, 4]);
       await settle();
-      expect(latest(() => rows.length)).toBe(4);
-      expect(latest(() => rows[3])).toBe(4);
-      expect(latest(() => rows.join(","))).toBe("1,2,3,4");
+      // A cold property companion cannot expose the lower producer's extra
+      // row ahead of this output's selected structural correction.
+      expect(latest(() => rows.length)).toBe(3);
+      expect(latest(() => rows[3])).toBeUndefined();
+      expect(latest(() => rows.join(","))).toBe("1,2,3");
       hold.resolve();
       await running;
       await settle();
       expect(frames.at(-1)).toBe("1,2,3,4");
+      expect(latest(() => rows.length)).toBe(4);
+      expect(latest(() => rows[3])).toBe(4);
+      expect(latest(() => rows.join(","))).toBe("1,2,3,4");
+      for (const frame of frames) expect(["1,2", "1,2,3", "1,2,3,4"]).toContain(frame);
     } finally {
       first.resolve();
       hold.resolve();

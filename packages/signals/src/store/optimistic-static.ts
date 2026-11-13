@@ -4,8 +4,11 @@ import { read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.j
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
+  CONFIG_STAGED_ERROR,
   REACTIVE_DISPOSED,
   NOT_PENDING,
+  STATUS_PENDING,
+  STATUS_ERROR,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
 import type { Computed, Signal } from "../core/types.js";
@@ -262,7 +265,13 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
       () => {
         // First readers may have suspended before discovering this property.
         const fw = t._fam?.node;
-        if (fw && fw._subs !== null) insertSubs(fw);
+        if (
+          fw &&
+          fw._subs !== null &&
+          (fw._statusFlags & (STATUS_PENDING | STATUS_ERROR | STATUS_UNINITIALIZED) ||
+            fw._config & CONFIG_STAGED_ERROR)
+        )
+          insertSubs(fw);
         invalidateAncestors();
         if (!presence) {
           const value = slot!.writerValue();
@@ -507,7 +516,7 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
   }
   const record = recordFor(t);
   let slot = record.nodes.get(node);
-  if (!slot && getObserver() !== null) {
+  if (!slot && (getObserver() !== null || verdict !== null)) {
     const key = (node as any)._key;
     slot = slotFor(t, key, t.h?.[key as any] === node);
   }

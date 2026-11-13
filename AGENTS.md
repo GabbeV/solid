@@ -35,3 +35,19 @@ per-stage archives for large results rather than replacing the historical one.
 
 Keep unrelated local changes intact. This authorization covers commits and
 pushes to the experiment branch, not opening PRs, posting comments, or merging.
+
+## Investigation and delegation boundaries
+
+The experiment's result may be a demonstrated gap in a requested rule. Do not
+silently implement alternative observable semantics to make tests pass. If a repair
+requires an additional semantic decision, stop with a small program, the competing
+observable timelines, and the implementation evidence; let the user decide before
+implementing the alternative. Recommendations and exploratory questions are not
+rulings. Bound investigations and report an inconclusive result instead of expanding
+into an unreviewed rewrite.
+
+Use lower-effort Sol sub-agents only for well-specified implementations or
+investigations whose evidence the primary agent can cheaply verify. The primary
+agent owns interpretation, semantic reasoning, and review. Do not delegate an
+open-ended search for alternative semantics or spawn agents repeatedly to chase
+unexplained failures.

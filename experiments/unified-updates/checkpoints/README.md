@@ -141,3 +141,9 @@ run (8,006 pass, 174 fail, five skip; 135 exact deferred-until identities), held
 initial-answer integration, stale transaction-list diagnosis, latest every-frame
 checks, active-chain counterexamples, and follow-up test migrations. Known array
 context/shape gaps remain; no completion claim. Source hashes accompany the run.
+
+`abandoned-array-shape-v2-20261114.tar.xz` preserves the unsuccessful isolated
+shape-token rewrite and its diagnostic logs. It was never integrated. It is neither
+an implementation recommendation nor an approved semantic specification. The local
+working copy is explicitly marked abandoned; current work starts from the committed
+runtime and the approved array rule, not this trial.
