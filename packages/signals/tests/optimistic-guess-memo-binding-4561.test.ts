@@ -1,9 +1,8 @@
 /**
- * #4561: a splice selects positional row outputs; it does not replay a keyed
- * removal over the producer's next answer. Ordinary input readers hold the
- * filter until their requests answer; the selected rows' action does not
- * extend that hold. Memo, mapArray and For-like consumers agree on the same
- * selected rows #3/#4 and their eventual correction.
+ * #4561: a splice selects concrete row outputs without replaying a removal.
+ * An incoming membership change joins the open splice action. Memo, mapArray
+ * and For consumers agree through the hold and the eventual correction.
+ * An explicit Loading `on` boundary retains its own reveal behavior.
  */
 import { expect, it } from "vitest";
 import {
@@ -145,10 +144,11 @@ for (const shape of ["memo", "mapArray", "for"] as const)
       expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      // Only the row outputs retain the action; the answered input is free.
-      expect(screen()).toBe("closed: [#3][#4]");
+      // A changed membership joins the incoming question to the open splice action.
+      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("close:1", {});
-      expect(screen()).toBe("closed: [#3][#4]");
+      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       await closing;
       checkReaders();
@@ -260,22 +260,17 @@ for (const chain of ["memo-memo", "memo-memo-memo", "mapArray-memo"] as const)
     expect(screen()).toBe("open: [#3][#4]");
     expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
     await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-    expect(screen()).toBe("closed: [#3][#4]");
+    // Structural membership holds the question through the action refresh.
+    expect(screen()).toBe("open: [#3][#4]");
+    expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
     await settle("close:1", {});
-    expect(screen()).toBe("closed: [#3][#4]");
+    expect(screen()).toBe("open: [#3][#4]");
     await settle("issues:closed", [{ id: 2 }]);
     await closing;
     checkReaders();
     expect(screen()).toBe("closed: [#2]");
     expect(asks).toEqual([]);
     seen.push(screen());
-    const allowed = [
-      undefined,
-      "loading",
-      "open: [#1][#3][#4]",
-      "open: [#3][#4]",
-      "closed: [#3][#4]",
-      "closed: [#2]"
-    ];
+    const allowed = [undefined, "loading", "open: [#1][#3][#4]", "open: [#3][#4]", "closed: [#2]"];
     for (const published of seen) expect(allowed).toContain(published);
   });

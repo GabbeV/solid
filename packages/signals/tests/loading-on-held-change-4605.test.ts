@@ -120,10 +120,10 @@ describe("#4605 an `on` change after an independent input and action settle", ()
       await p.setFilter("closed");
       expect(p.screen()).toBe(on ? "loading" : "open: #1 #4");
       await p.land("issues:closed", [{ id: 2 }]);
-      // Index 0 follows the input; the action still selects row 4 at index 1.
-      expect(p.screen()).toBe("closed: #2 #4");
+      // Removing members is structural: the incoming update waits for the splice action.
+      expect(p.screen()).toBe(on ? "loading" : "open: #1 #4");
       await p.land("close:3", {});
-      expect(p.screen()).toBe("closed: #2 #4");
+      expect(p.screen()).toBe(on ? "loading" : "open: #1 #4");
       await p.land("issues:closed", [{ id: 2 }, { id: 3 }]);
       expect(p.screen()).toBe("closed: #2 #3");
       expect(p.asks).toEqual([]);
@@ -139,7 +139,6 @@ describe("#4605 an `on` change after an independent input and action settle", ()
         "open: #1 #3 #4",
         "open: #1 #4",
         ...(on ? ["loading"] : []),
-        "closed: #2 #4",
         "closed: #2 #3",
         ...(on ? ["loading"] : []),
         "open: #1 #4"

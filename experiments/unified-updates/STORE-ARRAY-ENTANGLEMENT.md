@@ -2,29 +2,30 @@
 
 ## Current user rulings and implementation status
 
-- Writes before the initial answer discard their proposed values but retain
-  update coordination. Immediate discard must not let an incoming answer publish
-  ahead of the writing update. This supersedes the immediate-drop recommendation
-  in STORE-COORDINATION-REVIEW.md. Existing observedness rules remain applicable;
-  this does not require waiting for work with no observers merely to retain a write.
-- Unresolved store derivations follow next's pending rule. Implemented here by
-  removing the descendant-override bypass of the parent input producer. Parent
-  pending remains true while a guessed leaf can publish. Known plain-store changes
-  remain granular; deep can be pending while the unchanged parent reference is not.
-- A more conservative array coordination policy is under consideration, not yet
-  chosen. No array runtime policy was changed by this checkpoint.
+The user approved rule A: existing-index value edits remain independent; structural
+changes join active direct edits on the affected array, and later direct edits join
+that structural update. Incoming structural answers participate too. This is full
+update coordination, not merely extending optimistic overrides. No setter replay or
+implicit endorsement of unguessed values is introduced.
 
-Pending fix: 13 affected suites / 66 tests pass, including three new regression
-cases. Root independently reran those three assertions. Existing consistency
-assertions were not weakened. This is focused validation, not a full-suite result.
+Writes before the initial answer discard their values but retain update coordination.
+The input producer cannot publish its first answer ahead of the writing update.
+Existing observedness rules remain; unobserved work is not a universal lifetime
+blocker. `seedLoadingValue` is an explicit initial commit and a separate case.
 
-Initial-write coordination has a bounded real-core harness trial, not an integrated
-setter implementation. Holding the actual input producer in the writing update
-keeps an early answer hidden, including when the first reader mounts afterward.
-No render-transaction search is needed. Ordinary chained-child writes and optimistic
-root writes need separate entry hooks sharing the coordination operation. Chained
-array methods reading unresolved length before writing still need integration
-coverage. seedLoadingValue is an explicit initial commit, a distinct case.
+Unresolved store derivations follow next's pending rule. The strict input producer
+remains the pending authority. A selected descendant can keep a published parent
+traversable without falsely clearing pending or exposing an uncommitted input error.
+This supersedes the earlier implementation that enforced pending by making published
+child values inaccessible.
+
+Implementation checkpoint: setter/incoming structural coordination, single selected
+length, pending-selector separation, and initial-write integration are implemented.
+Focused receipts are described in STORE-ARRAY-POLICY-A.md. This is unfinished:
+`latest` can still combine a lower incoming removal with an active append and expose
+a hole; an initial-write regression also finds inconsistent imperative reads after
+a held first answer. Neither is an accepted semantic exception. Full acceptance
+and performance/size measurement have not been rerun for this checkpoint.
 
 ## Pinned upstream evidence
 
@@ -94,17 +95,17 @@ guarantee. Actual latest repeats all prior 36 timelines. A robust replacement mu
 establish coordination before input publication, including later mounting and
 chained inputs; copying the current read-dependent seam is insufficient.
 
-## Conservative options still needing a choice
+## Selected policy
 
-One candidate is to keep existing-index writes granular until an array structure
-change occurs, then join that update with all active edits on the affected array.
-Incoming array derivations must also participate when they threaten that structure.
-The simpler, more conservative alternative joins every write to the same array.
-Neither requires pretending a setter guessed untouched values or replaying setters.
-Both are broader than next's actual setter behavior above. Equal writes, pure
-row-field updates, same-question refreshes, and nested/chained topology need explicit
-tests before claiming a finished rule. No performance/size result is claimed.
+Rule A above is broader than next's setter behavior. Same-length key-identity changes
+and permutations are structural; same-key content changes remain leaf edits. Pure
+nested row-field writes remain governed by their object/property dependencies.
+Internal comparison snapshots detect input structure changes; they are never used
+as guesses of untouched values. Structural ownership and selected length use the
+existing update machinery.
 
-Receipts are in the store-array-rules-and-pending checkpoint archive: exact source
-hash, source/test paths, matrices, rendered flags, initial-coordination trial,
-and pending-fix commands/results.
+The previous all-writes-to-one-array alternative was rejected as unnecessarily
+conservative. Changes to these boundaries need a new explicit ruling.
+
+Upstream audit receipts remain in the store-array-rules-and-pending checkpoint;
+implementation receipts are in the subsequent policy-A checkpoint.

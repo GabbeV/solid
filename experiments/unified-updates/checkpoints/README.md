@@ -128,3 +128,10 @@ explicit retained limitation; the failing diagnostic is not a rejection contract
 `store-coordination-review-20261112.tar.xz` restores `store-coordination-review-20261112/`: 36 structural timelines per revision, actual latest-next edeb5db09 comparisons, #4814 assertion, exact parent pending cause and branch ablations (including isolated instrumented source), initial-input joining trials versus baseline, and independent #4810 assertions. Runtime unchanged. See STORE-COORDINATION-REVIEW.md for rejected array snapshot semantics and still-proposed policies.
 
 `store-array-rules-and-pending-20261113.tar.xz` restores `store-array-rules-and-pending-20261113/`: actual next 4de85c2b setter/deep array audit (66 recording probes), 36 repeated incoming timelines, discard-plus-initial-input-coordination harness trials, and the real parent pending fix validation (13 suites/66 tests). Initial-write setter integration and array policy remain unfinished; see STORE-ARRAY-ENTANGLEMENT.md.
+
+`store-array-policy-A-20261113.tar.xz` preserves the approved structural-array
+coordination implementation's focused receipts, discovery full runs, test
+migration evidence, initial-write integration checks, and rejected latest trials.
+This is unfinished: latest selected-array structure and an initial-write read
+regression remain open. See STORE-ARRAY-POLICY-A.md; no final acceptance or
+performance claim is attached to this checkpoint.

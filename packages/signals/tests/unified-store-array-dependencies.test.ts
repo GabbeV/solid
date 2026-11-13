@@ -179,14 +179,15 @@ for (const [name, read] of [
 }
 
 for (const initial of [[], [0, 0]] as number[][]) {
-  it(`keeps disjoint direct index guesses independent from ${JSON.stringify(initial)}`, async () => {
+  it(`${initial.length ? "keeps existing-index guesses independent" : "joins index growth and later hole filling"} from ${JSON.stringify(initial)}`, async () => {
     const endA = Promise.withResolvers<void>();
     const endB = Promise.withResolvers<void>();
     const [store, set] = createOptimisticStore([...initial]);
     const shown: number[][] = [];
     const lengths: number[] = [];
+    const [savedA, saveA] = createSignal(false);
     const [savedB, saveB] = createSignal(false);
-    const saves: boolean[] = [];
+    const saves: boolean[][] = [];
     const dispose = createRoot(dispose => {
       createRenderEffect(
         () => [...store],
@@ -200,9 +201,12 @@ for (const initial of [[], [0, 0]] as number[][]) {
           lengths.push(value);
         }
       );
-      createRenderEffect(savedB, value => {
-        saves.push(value);
-      });
+      createRenderEffect(
+        () => [savedA(), savedB()],
+        value => {
+          saves.push(value);
+        }
+      );
       return dispose;
     });
     let a: Promise<unknown> | undefined;
@@ -218,6 +222,7 @@ for (const initial of [[], [0, 0]] as number[][]) {
       })();
       flush();
       a = action(function* () {
+        saveA(true);
         set(d => {
           d[0] = 1;
         });
@@ -230,16 +235,17 @@ for (const initial of [[], [0, 0]] as number[][]) {
       endB.resolve();
       await b;
       await settle();
-      const afterB = initial.length ? [1, 0] : [1];
+      const afterB = initial.length ? [1, 0] : [1, 2];
       expect([...store]).toEqual(afterB);
       expect(shown.at(-1)).toEqual(afterB);
       expect(lengths.at(-1)).toBe(afterB.length);
-      expect(saves.at(-1)).toBe(true);
+      expect(saves.at(-1)).toEqual(initial.length ? [false, true] : [false, false]);
       endA.resolve();
       await a;
       await settle();
       expect([...store]).toEqual(initial);
       expect(shown.at(-1)).toEqual(initial);
+      expect(saves.at(-1)).toEqual([true, true]);
     } finally {
       endA.resolve();
       endB.resolve();
@@ -250,12 +256,15 @@ for (const initial of [[], [0, 0]] as number[][]) {
   });
 }
 
-it("retains growth after deletion in one action and each live index sets a minimum length", async () => {
+it("retains net growth after deletion and joins later hole filling", async () => {
   const endA = Promise.withResolvers<void>();
   const endB = Promise.withResolvers<void>();
   const [store, set] = createOptimisticStore<number[]>([]);
   const lengths: number[] = [];
   const indices: Array<number | undefined> = [];
+  const [savedA, saveA] = createSignal(false);
+  const [savedB, saveB] = createSignal(false);
+  const saves: boolean[][] = [];
   const dispose = createRoot(dispose => {
     createRenderEffect(
       () => store.length,
@@ -269,6 +278,12 @@ it("retains growth after deletion in one action and each live index sets a minim
         indices.push(value);
       }
     );
+    createRenderEffect(
+      () => [savedA(), savedB()],
+      value => {
+        saves.push(value);
+      }
+    );
     return dispose;
   });
   let a: Promise<unknown> | undefined;
@@ -276,6 +291,7 @@ it("retains growth after deletion in one action and each live index sets a minim
   try {
     flush();
     a = action(function* () {
+      saveA(true);
       set(d => {
         d[2] = 3;
         delete d[2];
@@ -286,6 +302,7 @@ it("retains growth after deletion in one action and each live index sets a minim
     expect([store.length, 2 in store]).toEqual([3, false]);
     expect(lengths.at(-1)).toBe(3);
     b = action(function* () {
+      saveB(true);
       set(d => {
         d[1] = 2;
       });
@@ -297,13 +314,15 @@ it("retains growth after deletion in one action and each live index sets a minim
     endA.resolve();
     await a;
     await settle();
-    expect([store.length, store[1]]).toEqual([2, 2]);
-    expect([lengths.at(-1), indices.at(-1)]).toEqual([2, 2]);
+    expect([store.length, store[1]]).toEqual([3, 2]);
+    expect([lengths.at(-1), indices.at(-1)]).toEqual([3, 2]);
+    expect(saves.at(-1)).toEqual([false, false]);
     endB.resolve();
     await b;
     await settle();
     expect([...store]).toEqual([]);
     expect([lengths.at(-1), indices.at(-1)]).toEqual([0, undefined]);
+    expect(saves.at(-1)).toEqual([true, true]);
   } finally {
     endA.resolve();
     endB.resolve();
@@ -389,14 +408,27 @@ it("a length read and push consume prior growth while push's final length is not
   }
 });
 
-it("push's final no-op length assignment does not coordinate a later disjoint index", async () => {
+it("push growth coordinates a later existing-index edit despite its final no-op length assignment", async () => {
   const endPush = Promise.withResolvers<void>();
   const endIndex = Promise.withResolvers<void>();
   const [store, set] = createOptimisticStore([0, 0]);
+  const [savedPush, savePush] = createSignal(false);
+  const [savedIndex, saveIndex] = createSignal(false);
+  const saves: boolean[][] = [];
+  const dispose = createRoot(dispose => {
+    createRenderEffect(
+      () => [savedPush(), savedIndex()],
+      value => {
+        saves.push(value);
+      }
+    );
+    return dispose;
+  });
   let push: Promise<unknown> | undefined;
   let index: Promise<unknown> | undefined;
   try {
     push = action(function* () {
+      savePush(true);
       set(d => {
         d.push(2);
       });
@@ -404,6 +436,7 @@ it("push's final no-op length assignment does not coordinate a later disjoint in
     })();
     flush();
     index = action(function* () {
+      saveIndex(true);
       set(d => {
         d[0] = 1;
       });
@@ -414,15 +447,18 @@ it("push's final no-op length assignment does not coordinate a later disjoint in
     endPush.resolve();
     await push;
     await settle();
-    expect([...store]).toEqual([1, 0]);
+    expect([...store]).toEqual([1, 0, 2]);
+    expect(saves.at(-1)).toEqual([false, false]);
     endIndex.resolve();
     await index;
     await settle();
     expect([...store]).toEqual([0, 0]);
+    expect(saves.at(-1)).toEqual([true, true]);
   } finally {
     endPush.resolve();
     endIndex.resolve();
     await Promise.all([push, index]);
+    dispose();
     flush();
   }
 });

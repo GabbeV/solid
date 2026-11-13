@@ -81,7 +81,7 @@ for (const mode of ["push-true", "push-false-then-write", "push-true-then-equal-
   });
 }
 
-it("keeps a guessed row selected while an independent sibling from the producer appears", async () => {
+it("holds incoming sibling membership with an active appended row", async () => {
   type Row = { id: number; pending: boolean };
   let server: Row[] = [];
   const fetches: Array<() => void> = [];
@@ -125,10 +125,8 @@ it("keeps a guessed row selected while an independent sibling from the producer 
     flush();
     fetches.shift()!();
     await settle();
-    expect(shown.at(-1)).toEqual([
-      [1, true],
-      [2, false]
-    ]);
+    // The incoming membership change joins the active append.
+    expect(shown.at(-1)).toEqual([[1, true]]);
     expect(rows[0]).toBe(ref);
     gate.resolve();
     await running;
@@ -145,7 +143,11 @@ it("keeps a guessed row selected while an independent sibling from the producer 
   }
 });
 
-for (const [repeated, explicit] of [[false, false], [true, false], [false, true]] as const) {
+for (const [repeated, explicit] of [
+  [false, false],
+  [true, false],
+  [false, true]
+] as const) {
   it(`holds ${explicit ? "a pushed row with an explicit leaf" : repeated ? "a repeated" : "a single"} row proposal through an async correction and unrelated rerun`, async () => {
     type Row = { id: number; pending: boolean };
     let server: Row[] = [];
@@ -237,7 +239,7 @@ for (const [repeated, explicit] of [[false, false], [true, false], [false, true]
   });
 }
 
-it("keeps the first published row while a replacement proposal and producer answer are held", async () => {
+it("keeps the published row while the action is open and retires unpublished replacement work at its end", async () => {
   type Row = { id: number; pending: boolean; tag: string };
   let server: Row[] = [];
   const fetches: Array<() => void> = [];
@@ -249,18 +251,23 @@ it("keeps the first published row while a replacement proposal and producer answ
   const derivedShown: number[] = [];
   const [rows, setRows, dispose] = createRoot(dispose => {
     const [rows, setRows] = createOptimisticStore(
-      () => new Promise<Row[]>(resolve => {
-        fetches.push(() => resolve(structuredClone(server)));
-      }),
+      () =>
+        new Promise<Row[]>(resolve => {
+          fetches.push(() => resolve(structuredClone(server)));
+        }),
       [] as Row[],
       { key: "id" }
     );
     const derived = createMemo(() => (rows[0]?.tag === "second" ? secondAnswer.promise : 0));
     createRenderEffect(
       () => [rows[0]?.tag, tick()] as [string | undefined, number],
-      value => { shown.push(value); }
+      value => {
+        shown.push(value);
+      }
     );
-    createRenderEffect(derived, value => { derivedShown.push(value); });
+    createRenderEffect(derived, value => {
+      derivedShown.push(value);
+    });
     return [rows, setRows, dispose] as const;
   });
   let running: Promise<unknown> | undefined;
@@ -269,35 +276,42 @@ it("keeps the first published row while a replacement proposal and producer answ
     fetches.shift()!();
     await settle();
     running = action(function* () {
-      setRows(d => { d.push({ id: 1, pending: true, tag: "first" }); });
+      setRows(d => {
+        d.push({ id: 1, pending: true, tag: "first" });
+      });
       yield next.promise;
-      setRows(d => { d[0] = { id: 2, pending: true, tag: "second" }; });
+      setRows(d => {
+        d[0] = { id: 2, pending: true, tag: "second" };
+      });
       yield end.promise;
     })();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     next.resolve();
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     server = [{ id: 1, pending: false, tag: "server" }];
     refresh(rows);
     flush();
     fetches.shift()!();
     await settle();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     end.resolve();
     await running;
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    // The unpublished replacement's async derivation does not extend the
+    // action lifetime. The ready producer correction publishes at its end.
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 0], 0]);
     setTick(1);
     flush();
-    expect(shown.at(-1)).toEqual(["first", 1]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 1], 0]);
     secondAnswer.resolve(20);
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["server", 1]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 1], 0]);
+    expect(derivedShown).not.toContain(20);
   } finally {
     next.resolve();
     end.resolve();
@@ -321,7 +335,12 @@ it("keeps a child leaf guess while its setter-read parent row guess remains acti
       [] as Row[],
       { key: "id" }
     );
-    createRenderEffect(() => rows[0]?.title, value => { shown.push(value ?? ""); });
+    createRenderEffect(
+      () => rows[0]?.title,
+      value => {
+        shown.push(value ?? "");
+      }
+    );
     return [rows, setRows, dispose] as const;
   });
   let parentRun: Promise<unknown> | undefined;
@@ -331,13 +350,17 @@ it("keeps a child leaf guess while its setter-read parent row guess remains acti
     fetches.shift()!();
     await settle();
     parentRun = action(function* () {
-      setRows(d => { d.push({ id: 1, title: "A" }); });
+      setRows(d => {
+        d.push({ id: 1, title: "A" });
+      });
       yield parentGate.promise;
     })();
     flush();
     expect(shown.at(-1)).toBe("A");
     childRun = action(function* () {
-      setRows(d => { d[0].title = "B"; });
+      setRows(d => {
+        d[0].title = "B";
+      });
       yield childGate.promise;
     })();
     flush();
@@ -368,7 +391,10 @@ it("keeps a child leaf guess while its setter-read parent row guess remains acti
 
 it("keeps preobserved row leaves under a later index reorder guess", async () => {
   type Row = { id: number; title: string };
-  let server: Row[] = [{ id: 1, title: "one" }, { id: 2, title: "two" }];
+  let server: Row[] = [
+    { id: 1, title: "one" },
+    { id: 2, title: "two" }
+  ];
   const fetches: Array<() => void> = [];
   const gate = Promise.withResolvers<void>();
   const shown: string[] = [];
@@ -378,7 +404,12 @@ it("keeps preobserved row leaves under a later index reorder guess", async () =>
       [] as Row[],
       { key: "id" }
     );
-    createRenderEffect(() => rows.map(row => `${row.id}:${row.title}`).join(" "), value => { shown.push(value); });
+    createRenderEffect(
+      () => rows.map(row => `${row.id}:${row.title}`).join(" "),
+      value => {
+        shown.push(value);
+      }
+    );
     return [rows, setRows, dispose] as const;
   });
   let running: Promise<unknown> | undefined;
@@ -387,15 +418,21 @@ it("keeps preobserved row leaves under a later index reorder guess", async () =>
     fetches.shift()!();
     await settle();
     expect(shown.at(-1)).toBe("1:one 2:two");
-    const first = rows[0], second = rows[1];
+    const first = rows[0],
+      second = rows[1];
     running = action(function* () {
-      setRows(d => { d.reverse(); });
+      setRows(d => {
+        d.reverse();
+      });
       yield gate.promise;
     })();
     flush();
     expect(shown.at(-1)).toBe("2:two 1:one");
     expect([rows[0] === second, rows[1] === first]).toEqual([true, true]);
-    server = [{ id: 1, title: "saved-one" }, { id: 2, title: "saved-two" }];
+    server = [
+      { id: 1, title: "saved-one" },
+      { id: 2, title: "saved-two" }
+    ];
     refresh(rows);
     flush();
     fetches.shift()!();

@@ -108,7 +108,10 @@ for (const kind of ["store", "scalar"] as const)
           held
         );
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        expect(frames.at(-1)).toBe("closed: 3,4");
+        // An unpublished store membership change joins the active splice action.
+        // With native map alone every read is selected, so the filter already
+        // forwarded before this answer; a later proposal cannot retract it.
+        expect(frames.at(-1)).toBe(kind === "store" && held ? "open: 3,4" : "closed: 3,4");
         await settle("close", {});
         await settle("issues:closed", [{ id: 2 }]);
         await closing;

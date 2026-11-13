@@ -598,13 +598,22 @@ export function createOptimisticSlot<T>(
   onUnobserved?: () => void,
   onSelected?: () => void,
   onRetired?: () => void,
-  published?: { value: T }
+  published?: { value: T },
+  selectInput?: () => T
 ) {
   const layer = runWithOwner(null, () =>
-    createLayerBoundary<T>(input as Computed<T>, selectGuess, false, true, {
-      ...(published ? { loadingValue: published.value } : {}),
-      unobserved: onUnobserved
-    })
+    createLayerBoundary<T>(
+      input as Computed<T>,
+      selectInput
+        ? layer => (layer._override === NOT_PENDING ? selectInput() : readOverride(layer))
+        : selectGuess,
+      false,
+      true,
+      {
+        ...(published ? { loadingValue: published.value } : {}),
+        unobserved: onUnobserved
+      }
+    )
   );
   layer._automatic = true;
   layer._inputStatus = true;

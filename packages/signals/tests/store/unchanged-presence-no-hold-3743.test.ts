@@ -19,9 +19,9 @@
  * deletion (the value-node twin is pinned here too — before, the restoring
  * reconcile skipped the held leaf and it committed the draft's `undefined`).
  *
- * Optimistic array twin (S4, last case): an independent index write can
- * publish while another action still owns a different index's guess. The
- * effect and snapshot channels agree on that mixed frame.
+ * Optimistic array twins: append and permutation own array structure.
+ * Incoming landings and later growth join that lifetime; effect and
+ * snapshot channels agree throughout the hold and reveal.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -305,8 +305,8 @@ describe("#3743 unchanged presence under an open action", () => {
   });
 
   // A newer question replaces indices 0 and 1 while an action retains an
-  // optimistic append at index 2. The reader subscribes to leaves only.
-  it("a landing on other indices publishes beneath an optimistic append (leaf-only reader)", async () => {
+  // optimistic append at index 2. Its structural lifetime retains the array.
+  it("an incoming landing joins an optimistic append (leaf reader)", async () => {
     type Comment = { id: number; text: string };
     const serverComments: Comment[][] = [
       [
@@ -377,11 +377,10 @@ describe("#3743 unchanged presence under an open action", () => {
     fetches.find(fetch => fetch.issueId === 1)!.resolve();
     await next;
     await settle();
-    // Independent truth for indices 0 and 1 lands while the append's index
-    // 2 guess remains. The effect and snapshot show the same mixed frame.
-    const mixed = ["Issue 1 A", "Issue 1 B", "Optimistic"];
-    expect(rendered.at(-1)).toEqual(mixed);
-    expect(snapshot(comments).map(row => row.text)).toEqual(mixed);
+    // The active append retains the complete selected array.
+    const held = ["Issue 0 A", "Issue 0 B", "Optimistic"];
+    expect(rendered.at(-1)).toEqual(held);
+    expect(snapshot(comments).map(row => row.text)).toEqual(held);
 
     gate.resolve();
     await add;
@@ -390,8 +389,8 @@ describe("#3743 unchanged presence under an open action", () => {
   });
 
   // A derived setter adds index 2 while an action retains an optimistic swap
-  // of indices 0 and 1. Its new row publishes beside the selected swap.
-  it("a setter on another index publishes beneath an optimistic swap (leaf-only reader)", async () => {
+  // of indices 0 and 1. Both edits change structure and share a lifetime.
+  it("growth on another index joins an optimistic swap (leaf reader)", async () => {
     type Comment = { id: number; text: string };
     const rendered: (string | undefined)[][] = [];
     const settle = async () => {
@@ -449,9 +448,9 @@ describe("#3743 unchanged presence under an open action", () => {
     flush();
     await loading;
     await settle();
-    // The independent index-2 write lands beneath the swap of 0 and 1.
-    expect(rendered.at(-1)).toEqual(["B", "A", "C"]);
-    expect(snapshot(comments).map(row => row.text)).toEqual(["B", "A", "C"]);
+    // Index-2 growth joins the active permutation.
+    expect(rendered.at(-1)).toEqual(["B", "A"]);
+    expect(snapshot(comments).map(row => row.text)).toEqual(["B", "A"]);
 
     gate.resolve();
     await swapping;

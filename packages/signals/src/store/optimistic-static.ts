@@ -21,9 +21,12 @@ import {
 } from "../layers/optimistic.js";
 import {
   getNode,
+  initialWriteProducer,
+  holdInitialWriteProducer,
   releaseUnobservedStoreNode,
   getHasNode,
   getContainerNode,
+  wrap,
   pullFamilyInput,
   storeSetter,
   committed,
@@ -37,10 +40,12 @@ import { createProjectionInternal } from "./projection.js";
 import {
   arrayIndex,
   arrayGrowthStands,
+  arrayStructureChanged,
+  coordinateArrayWrites,
+  joinArrayIncoming,
   readArrayLength,
   selectedArrayLength,
-  sweepArrays,
-  writeArray
+  sweepArrays
 } from "./optimistic-array.js";
 import type { OptHooks } from "./hooks.js";
 import type { StoreTarget } from "./target.js";
@@ -66,6 +71,54 @@ const shapedTargets = new Set<StoreTarget>();
 // Only companions without readers wait for a live guess or correction here.
 const releases = new Map<Slot, { remove: () => void; target: StoreTarget }>();
 const firewallSlots = new WeakSet<Slot>();
+// A direct array edit observes its producer's container intrinsically. This
+// keeps chained inputs coordinated even when no application reader is mounted.
+const arrayInputs = new Map<StoreTarget, Computed<any>>();
+
+function arrayInput(t: StoreTarget): Record<PropertyKey, any> {
+  const visited = new Set<StoreTarget>();
+  let target = t;
+  for (;;) {
+    if (visited.has(target)) return committed(target);
+    visited.add(target);
+    pullFamilyInput(target);
+    const source = read(getContainerNode(target)) as Record<PropertyKey, any>;
+    const inner = source?.[$TARGET] as StoreTarget | undefined;
+    if (!inner) return source;
+    target = inner;
+  }
+}
+
+function rememberArray(source: Record<PropertyKey, any>): Record<PropertyKey, any> {
+  return Object.defineProperties([], Object.getOwnPropertyDescriptors(source));
+}
+
+function watchArrayInput(t: StoreTarget): void {
+  if (arrayInputs.has(t)) return;
+  // An already pending producer can throw before the guard's first tracked
+  // pass returns. Its published raw container still supplies the comparison
+  // base for that first answer, including through a chain of stores.
+  let target = t;
+  let base = committed(target);
+  const visited = new Set<StoreTarget>([target]);
+  for (;;) {
+    const inner = base?.[$TARGET] as StoreTarget | undefined;
+    if (!inner || visited.has(inner)) break;
+    visited.add(inner);
+    base = committed((target = inner));
+  }
+  let previous = Array.isArray(base) ? rememberArray(base) : undefined;
+  const input = createOptimisticStoreInput(() => {
+    const source = arrayInput(t);
+    if (Array.isArray(source)) {
+      if (previous && arrayStructureChanged(t, previous, source))
+        joinArrayIncoming(t, recordFor(t));
+      previous = rememberArray(source);
+    }
+  });
+  input._config &= ~CONFIG_AUTO_DISPOSE;
+  arrayInputs.set(t, input);
+}
 function recordFor(t: StoreTarget): RecordSlots {
   let record = records.get(t);
   if (!record) {
@@ -231,7 +284,19 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
       bodyValue ??
         (node._pendingValue !== NOT_PENDING && !(t._fam?.node?._statusFlags! & STATUS_UNINITIALIZED)
           ? { value: node._value }
-          : undefined)
+          : undefined),
+      () => {
+        // A published descendant keeps its parent traversable, including for
+        // late readers and lower errors. The strict input above remains the
+        // pending authority through the slot's ordinary input-status boundary.
+        if (selectedBody(t)) return read(input);
+        const current = !presence && t.v[key as any];
+        const child = isWrappable(current)
+          ? ((wrap(current, t, key) as any)[$TARGET] as StoreTarget)
+          : undefined;
+        if (child && descendantSelected(child)) return read(node);
+        return read(input);
+      }
     );
     if (input !== node && t._fam?.node) firewallSlots.add(slot);
     slots.set(key, slot);
@@ -350,6 +415,20 @@ function descendantStands(t: StoreTarget, key: PropertyKey): boolean {
     if (!record) continue;
     for (const map of [record.slots, record.presence, record.shape])
       for (const slot of map.values()) if (slot.activeOwner()) return true;
+  }
+  return false;
+}
+
+function descendantSelected(root: StoreTarget): boolean {
+  for (const target of root._fam?.live ?? []) {
+    let parent: StoreTarget | null = target;
+    while (parent && parent !== root) parent = parent.u;
+    if (parent !== root) continue;
+    const record = records.get(target);
+    if (record)
+      for (const slots of [record.slots, record.presence, record.shape])
+        for (const slot of slots.values()) if (slot.activeOwner()) return true;
+    if (arrayGrowthStands(target)) return true;
   }
   return false;
 }
@@ -650,17 +729,16 @@ export const staticOptimisticHooks: OptHooks = {
       if (innerRecord) entangle(innerRecord);
     }
   },
-  draftWrite: (t, key, before, after, kind) => {
-    const record = recordFor(t);
-    writeArray(t, key, before, after, kind, record);
-  },
   writes: (t, next) => {
     const record = recordFor(t);
     const saved = record.draft;
-    const previous = saved?.previous ?? untrack(() => compose(t, committed(t), true));
     record.draft = undefined;
-    if (!saved && Array.isArray(next) && previous.length !== next.length)
-      writeArray(t, "length", previous.length, next.length, "set", record);
+    const initial = initialWriteProducer(t);
+    if (initial) {
+      holdInitialWriteProducer(initial);
+      return saved?.staged ?? null;
+    }
+    const previous = saved?.previous ?? untrack(() => compose(t, committed(t), true));
     const oldKeys = Reflect.ownKeys(previous).filter(key => key !== $OWNER);
     const nextKeys = Reflect.ownKeys(next).filter(key => key !== $OWNER);
     const oldSurvivors = oldKeys.filter(key => nextKeys.includes(key));
@@ -712,12 +790,22 @@ export const staticOptimisticHooks: OptHooks = {
           entries.push([shapeSlot(t, key), shapeMeta(next, key)]);
       }
     }
+    if (Array.isArray(next)) coordinateArrayWrites(t, previous, next, record);
     proposeOptimisticSlots(entries);
+    if (Array.isArray(next) && (entries.length || arrayGrowthStands(t))) watchArrayInput(t);
     return saved?.staged ?? null;
   },
   reconcile: reconcileDraft,
   arrangement: () => false,
   pair: (t, source) => {
+    const previous = committed(t);
+    if (
+      !t.ch &&
+      Array.isArray(previous) &&
+      Array.isArray(source) &&
+      arrayStructureChanged(t, previous, source)
+    )
+      joinArrayIncoming(t, recordFor(t));
     const family = t._fam!;
     const paired = new Set<StoreTarget>();
     const pair = (child: StoreTarget, rowSlot?: Slot) => {
@@ -802,6 +890,16 @@ export const staticOptimisticHooks: OptHooks = {
       }
     }
     sweepArrays();
+    for (const [target, input] of arrayInputs) {
+      const record = records.get(target)!;
+      let live = arrayGrowthStands(target);
+      for (const map of [record.slots, record.presence, record.shape])
+        for (const slot of map.values()) if (!slot.isIdle()) live = true;
+      if (!live) {
+        arrayInputs.delete(target);
+        dispose(input);
+      }
+    }
   },
   ask: () => {},
   park: () => {},

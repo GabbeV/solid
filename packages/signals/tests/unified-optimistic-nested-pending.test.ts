@@ -77,7 +77,7 @@ it("nested guess wakes its branch while unguessed descendants and peers retain p
     expect(store.branch.guessed).toBe(999);
     expect(seen.at(-1)).toBe(999);
     expect(isPending(() => store.branch.unguessed)).toBe(true);
-    expect(isPending(() => store.branch)).toBe(false); // The reference is independently selected.
+    expect(isPending(() => store.branch)).toBe(true); // The unresolved producer still owns the parent answer.
     expect(isPending(() => store.elsewhere)).toBe(true);
     expect(latest(() => store.branch.guessed)).toBe(999);
     setProbe(1);

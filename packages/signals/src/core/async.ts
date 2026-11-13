@@ -659,7 +659,10 @@ export function handleAsync<T>(
         el._x!._shownError = null;
         el._config &= ~CONFIG_INPUTS_PUBLISHED;
       }
-      if (wasUninitialized) landStatus(el, true);
+      // A held store answer has landed but has no committed screen yet.
+      // Its producer remains initial until commit, so a replay or late reader
+      // cannot mistake the seed backing for a published first answer.
+      if (wasUninitialized && !(el._config & CONFIG_HELD)) landStatus(el, true);
       // Attribution hook: this path landed through the setter (derived
       // stores, projections), which does not go through setSignal, so the
       // plain branch's asyncEnd never ran and the flight stayed open — the

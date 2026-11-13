@@ -1,15 +1,8 @@
 /**
  * #3147 — deep()/snapshot readers and per-key readers must agree while a
- * transaction holds store landings.
- *
- * deep()/snapshot compose from store backings; per-key reads answer through
- * node/backing visibility. A truth landing on unguessed indices must agree
- * across those reader families while an action retains a different index.
- *
- * Ruling pinned here: deep()/snapshot and per-key readers compose the same
- * selected outputs. An independent truth write can publish at indices 0-2
- * while an action still owns an index-3 guess; deep itself does not merge
- * those otherwise independent lifetimes.
+ * transaction holds store landings. An optimistic append owns structure;
+ * the incoming array landing joins its lifetime and reveals as one frame.
+ * Reader choice itself does not add coordination.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -29,7 +22,7 @@ const settle = async (n = 3) => {
   }
 };
 
-describe("#3147: reader families agree across independent index lifetimes", () => {
+describe("#3147: reader families agree across a structural array lifetime", () => {
   it("deep() composes the same view as per-key reads through the hold and the reveal", async () => {
     let resolveTruth!: () => void;
     const truth = new Promise<void>(r => (resolveTruth = r));
@@ -94,12 +87,12 @@ describe("#3147: reader families agree across independent index lifetimes", () =
     expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
     expect(deepLog.at(-1)).toBe("[1,2,3,1111]");
 
-    // Truth for indices 0-2 lands independently while the index-3 guess
-    // stays selected. Every reader family observes the same mixed frame.
+    // The append owns array structure, so the incoming landing waits.
+    // Every reader family retains the complete selected optimistic frame.
     resolveTruth();
     await settle();
-    expect(keyLog.at(-1)).toBe("[3,2,1,1111]");
-    expect(deepLog.at(-1)).toBe("[3,2,1,1111]");
+    expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
+    expect(deepLog.at(-1)).toBe("[1,2,3,1111]");
 
     // Settle: atomic reveal, override reverts, landed truth shows — in both.
     resolveGate();

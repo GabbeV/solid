@@ -305,8 +305,9 @@ describe("keyed arrangement guess: a correction folds beneath it (D-34)", () => 
         if (where === "on mainline") {
           h.setSource(truth);
           flush();
-          // Its own unguessed tail can publish while the reversed indices stay selected.
-          expectRows(["b", "a", "s"]);
+          // Incoming growth joins the active permutation. The complete
+          // reversed arrangement remains selected until the action ends.
+          expectRows(["b", "a"]);
         }
         release();
         await p;

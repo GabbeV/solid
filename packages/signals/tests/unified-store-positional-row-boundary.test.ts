@@ -81,7 +81,7 @@ for (const mode of ["push-true", "push-false-then-write", "push-true-then-equal-
   });
 }
 
-it("keeps a guessed row selected while an independent sibling from the producer appears", async () => {
+it("holds incoming sibling membership with an active appended row", async () => {
   type Row = { id: number; pending: boolean };
   let server: Row[] = [];
   const fetches: Array<() => void> = [];
@@ -125,10 +125,8 @@ it("keeps a guessed row selected while an independent sibling from the producer 
     flush();
     fetches.shift()!();
     await settle();
-    expect(shown.at(-1)).toEqual([
-      [1, true],
-      [2, false]
-    ]);
+    // The incoming membership change joins the active append.
+    expect(shown.at(-1)).toEqual([[1, true]]);
     expect(rows[0]).toBe(ref);
     gate.resolve();
     await running;
@@ -241,7 +239,7 @@ for (const [repeated, explicit] of [
   });
 }
 
-it("keeps the first published row while a replacement proposal and producer answer are held", async () => {
+it("keeps the published row while the action is open and retires unpublished replacement work at its end", async () => {
   type Row = { id: number; pending: boolean; tag: string };
   let server: Row[] = [];
   const fetches: Array<() => void> = [];
@@ -288,29 +286,32 @@ it("keeps the first published row while a replacement proposal and producer answ
       yield end.promise;
     })();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     next.resolve();
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     server = [{ id: 1, pending: false, tag: "server" }];
     refresh(rows);
     flush();
     fetches.shift()!();
     await settle();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["first", 0], 0]);
     end.resolve();
     await running;
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["first", 0]);
+    // The unpublished replacement's async derivation does not extend the
+    // action lifetime. The ready producer correction publishes at its end.
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 0], 0]);
     setTick(1);
     flush();
-    expect(shown.at(-1)).toEqual(["first", 1]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 1], 0]);
     secondAnswer.resolve(20);
     await turn();
     flush();
-    expect(shown.at(-1)).toEqual(["server", 1]);
+    expect([shown.at(-1), derivedShown.at(-1)]).toEqual([["server", 1], 0]);
+    expect(derivedShown).not.toContain(20);
   } finally {
     next.resolve();
     end.resolve();

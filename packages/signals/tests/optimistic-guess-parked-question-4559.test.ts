@@ -1,9 +1,7 @@
 /**
- * #4559: a second async reader holds the filter input until that reader
- * answers. The row-input answer alone cannot release it. Once both answer,
- * the filter publishes while concrete row outputs #3/#4 remain selected.
- * Their splice is not replayed over the answer, and authoritative row #2
- * must never publish beside the old open question.
+ * #4559: a sibling async reader holds the filter until it answers. An incoming
+ * membership change also joins the open splice action, so answering both
+ * ordinary readers cannot publish the changed question before correction.
  */
 import { expect, test } from "vitest";
 import {
@@ -138,21 +136,17 @@ for (const order of ["question first", "list first"] as const)
         expect(last()).toBe("open: [#3][#4]");
         expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("other:closed", {});
-        // All ordinary input readers are ready; the row override keeps its own lifetime.
-        expect(last()).toBe("closed: [#3][#4]");
+        // Both ordinary readers answered, but changed membership joins the row action.
+        expect(last()).toBe("open: [#3][#4]");
+        expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("close:1", {});
-        expect(last()).toBe("closed: [#3][#4]");
+        expect(last()).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
         await closing;
         checkReaders();
         expect(last()).toBe("closed: [#2]");
         expect(asks).toEqual([]);
-        const allowed = [
-          "open: [#1][#3][#4]",
-          "open: [#3][#4]",
-          "closed: [#3][#4]",
-          "closed: [#2]"
-        ];
+        const allowed = ["open: [#1][#3][#4]", "open: [#3][#4]", "closed: [#2]"];
         let rowsAnswered = false;
         for (const frame of frames.filter(value => !value.startsWith("other"))) {
           // Split bindings may show the initial question before any list

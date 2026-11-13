@@ -1,37 +1,48 @@
-/** Array shape policy for shared optimistic outputs. Index writes carry a
- * minimum length, not a snapshot of other actions' array contents. */
+/** Array structure owns a publication boundary without guessing array contents. */
 import { computed, read, signal } from "../core/core.js";
 import { CONFIG_AUTO_DISPOSE, REACTIVE_DISPOSED } from "../core/constants.js";
-import { flushTransaction, insertSubs, resolveTx, schedule } from "../core/scheduler.js";
+import { flushTransaction, insertSubs, joinFuture, schedule } from "../core/scheduler.js";
 import {
   createOptimisticSlot,
   createOptimisticStoreInput,
   entangleOptimisticSlotRead
 } from "../layers/optimistic.js";
-import { committed, getNode, getContainerNode, pullFamilyInput } from "./store.js";
+import {
+  getNode,
+  getContainerNode,
+  pullFamilyInput,
+  targetsEqual,
+  sameKey,
+  unwrapValue
+} from "./store.js";
 import { optHooks } from "./hooks.js";
 import { dispose } from "../core/owner.js";
 import type { StoreTarget } from "./target.js";
+import { isWrappable } from "./types.js";
 
 type Slot = ReturnType<typeof createOptimisticSlot<any>>;
-type ArrayState = { floors: Set<Slot>; retiring: Set<Slot>; resize?: Slot };
+type ArraySlots = {
+  slots: Map<PropertyKey, Slot>;
+  presence: Map<PropertyKey, Slot>;
+  shape: Map<PropertyKey, Slot>;
+};
+type ArrayState = { retiring: Set<Slot>; length?: Slot; structure?: Slot };
 const arrays = new WeakMap<StoreTarget, ArrayState>();
 const active = new Set<StoreTarget>();
 const ownedInputs = new WeakMap<Slot, ReturnType<typeof computed>>();
 
 function state(t: StoreTarget): ArrayState {
   let r = arrays.get(t);
-  if (!r) arrays.set(t, (r = { floors: new Set(), retiring: new Set() }));
+  if (!r) arrays.set(t, (r = { retiring: new Set() }));
   return r;
 }
 function discover(t: StoreTarget) {
   if (t.k) insertSubs(t.k);
   if (t.n?.length) insertSubs(t.n.length);
-  // A resize replaces the base-length dependency. Readers already using it
-  // still need to discover a new growth floor (or a replacement resize).
+  // Existing readers must rediscover a newly selected length or unlink a
+  // retired selected length before its companion can be released.
   const r = arrays.get(t);
-  if (r?.resize) insertSubs(r.resize.output);
-  if (r) for (const floor of r.floors) insertSubs(floor.output);
+  if (r?.length) insertSubs(r.length.output);
   if (r) for (const retired of r.retiring) insertSubs(retired.output);
   schedule();
 }
@@ -46,64 +57,145 @@ export function selectedArrayLength(
   base: number | (() => number),
   writer = false
 ): number {
-  const r = arrays.get(t);
-  const source = () => (typeof base === "function" ? base() : base);
-  if (!r) return source();
-  let minimum = 0;
-  for (const floor of r.floors) {
-    const required = (writer ? floor.writerValue() : read(floor.output)) as number;
-    if (required > minimum) minimum = required;
-  }
-  const n = r.resize
-    ? ((writer ? r.resize.writerValue() : read(r.resize.output)) as number)
-    : source();
-  return Math.max(n, minimum);
+  const slot = arrays.get(t)?.length;
+  return slot
+    ? ((writer ? slot.writerValue() : read(slot.output)) as number)
+    : typeof base === "function"
+      ? base()
+      : base;
 }
 export function arrayGrowthStands(t: StoreTarget): boolean {
   const r = arrays.get(t);
-  if (!r) return false;
-  for (const floor of r.floors) if (floor.activeOwner()) return true;
-  return !!r.resize?.activeOwner();
+  return !!(r?.length?.activeOwner() || r?.structure?.activeOwner());
 }
 
 export function readArrayLength(t: StoreTarget): void {
-  const r = arrays.get(t);
-  if (!r) return;
-  let n = r.resize ? (r.resize.writerValue() as number) : (committed(t) as any[]).length;
-  let provider = r.resize;
-  for (const floor of r.floors) {
-    const required = floor.writerValue() as number;
-    if (required > n) {
-      n = required;
-      provider = floor;
-    }
-  }
-  if (provider) entangleOptimisticSlotRead(provider);
+  const slot = arrays.get(t)?.length;
+  if (slot) entangleOptimisticSlotRead(slot);
 }
 
-/** Called after successful JS mutation, with length before and after it. */
-export function writeArray(
+/** Shared net array-shape test; row arrangement can add another boundary. */
+export function arrayStructureChanged(
   t: StoreTarget,
-  key: PropertyKey,
-  before: number,
-  after: number,
-  kind: "set" | "delete",
-  slots: {
-    slots: Map<PropertyKey, Slot>;
-    presence: Map<PropertyKey, Slot>;
-    shape: Map<PropertyKey, Slot>;
+  previous: Record<PropertyKey, any>,
+  next: Record<PropertyKey, any>
+): boolean {
+  if (previous.length !== next.length) return true;
+  for (const key of new Set([...Reflect.ownKeys(previous), ...Reflect.ownKeys(next)])) {
+    if (arrayIndex(key) < 0) continue;
+    const before = Object.getOwnPropertyDescriptor(previous, key);
+    const after = Object.getOwnPropertyDescriptor(next, key);
+    if (
+      !!before !== !!after ||
+      before?.enumerable !== after?.enumerable ||
+      before?.configurable !== after?.configurable ||
+      before?.writable !== after?.writable ||
+      before?.get !== after?.get ||
+      before?.set !== after?.set
+    )
+      return true;
   }
-): void {
-  const index = arrayIndex(key);
+  const keyFn = t._fam?.key;
+  if (keyFn) {
+    for (const key of Reflect.ownKeys(previous)) {
+      if (arrayIndex(key) < 0) continue;
+      const a = unwrapValue(Object.getOwnPropertyDescriptor(previous, key)?.value);
+      const b = unwrapValue(Object.getOwnPropertyDescriptor(next, key)?.value);
+      const before = isWrappable(a) ? keyFn(a) : undefined;
+      const after = isWrappable(b) ? keyFn(b) : undefined;
+      if ((before !== undefined || after !== undefined) && !sameKey(before, after)) return true;
+    }
+  }
+  // A permutation rearranges existing positional identities. Replacing a
+  // value with a new value leaves the multiset different and remains a leaf edit.
+  const counts = new Map<any, number>();
+  const negativeZero = {};
+  const identity = (value: any) => (Object.is(value, -0) ? negativeZero : value);
+  let moved = false;
+  for (const key of Reflect.ownKeys(previous)) {
+    if (arrayIndex(key) < 0) continue;
+    const a = unwrapValue(Object.getOwnPropertyDescriptor(previous, key)?.value);
+    const b = unwrapValue(Object.getOwnPropertyDescriptor(next, key)?.value);
+    moved ||= !Object.is(a, b) && !targetsEqual(a, b);
+    const before = identity(a),
+      after = identity(b);
+    counts.set(before, (counts.get(before) ?? 0) + 1);
+    counts.set(after, (counts.get(after) ?? 0) - 1);
+  }
+  return moved && [...counts.values()].every(count => count === 0);
+}
+
+/** An incoming structural answer joins active direct edits, and retains that
+ * boundary for setters arriving before the structural answer publishes. */
+export function joinArrayIncoming(t: StoreTarget, slots: ArraySlots): void {
   let r = arrays.get(t);
-  if (r?.resize) entangleOptimisticSlotRead(r.resize);
-  if (key === "length" && after !== before) {
+  let selected = false;
+  const join = (slot: Slot) => {
+    const owner = slot.activeOwner();
+    if (owner) {
+      selected = true;
+      joinFuture(owner);
+    }
+  };
+  for (const map of [slots.slots, slots.presence, slots.shape])
+    for (const slot of map.values()) join(slot);
+  if (r) {
+    if (r.length) join(r.length);
+    if (r.structure) join(r.structure);
+  }
+  if (!selected || !flushTransaction) return;
+  r ??= state(t);
+  r.structure ??= createOptimisticSlot(signal(false), undefined, undefined, () => schedule());
+  r.structure.propose(true);
+  active.add(t);
+}
+
+/** Coordinate the final setter diff, after its direct slots have been created.
+ * A structural marker carries ownership only, never an array-value snapshot. */
+export function coordinateArrayWrites(
+  t: StoreTarget,
+  previous: Record<PropertyKey, any>,
+  next: Record<PropertyKey, any>,
+  slots: ArraySlots,
+  rearranged = false
+): void {
+  if (!Array.isArray(next)) return;
+  const keys = new Set([...Reflect.ownKeys(previous), ...Reflect.ownKeys(next)]);
+  const structural = rearranged || arrayStructureChanged(t, previous, next);
+  let changed = structural;
+  for (const key of keys) {
+    if (key === "length") continue;
+    const before = Object.getOwnPropertyDescriptor(previous, key);
+    const after = Object.getOwnPropertyDescriptor(next, key);
+    const presence = !!before !== !!after;
+    const a = unwrapValue(before?.value),
+      b = unwrapValue(after?.value);
+    const value = !Object.is(a, b) && !targetsEqual(a, b);
+    const metadata =
+      before?.enumerable !== after?.enumerable ||
+      before?.configurable !== after?.configurable ||
+      before?.writable !== after?.writable ||
+      before?.get !== after?.get ||
+      before?.set !== after?.set;
+    if (presence || value || metadata) changed = true;
+  }
+  if (!changed) return;
+  let r = arrays.get(t);
+  if (r?.structure) entangleOptimisticSlotRead(r.structure);
+  if (r?.length) entangleOptimisticSlotRead(r.length);
+  if (structural) {
     r ??= state(t);
-    // A genuine resize conflicts with all live edits on this array.
     for (const map of [slots.slots, slots.presence, slots.shape])
       for (const slot of map.values()) entangleOptimisticSlotRead(slot);
-    for (const floor of r.floors) entangleOptimisticSlotRead(floor);
-    if (!r.resize) {
+    if (previous.length === next.length) {
+      r.structure ??= createOptimisticSlot(signal(false), undefined, undefined, () => schedule());
+      r.structure.propose(true);
+    }
+    active.add(t);
+  }
+  if (previous.length !== next.length) {
+    r ??= state(t);
+    if (!r.length) {
       const owned = t.ch || !!t._fam?.node;
       const input = owned
         ? createOptimisticStoreInput(() => {
@@ -114,51 +206,15 @@ export function writeArray(
           })
         : getNode(t, "length");
       if (owned) input._config &= ~CONFIG_AUTO_DISPOSE;
-      r.resize = createOptimisticSlot(
+      r.length = createOptimisticSlot(
         input,
         undefined,
         () => discover(t),
         () => discover(t)
       );
-      if (owned) ownedInputs.set(r.resize, input as ReturnType<typeof computed>);
+      if (owned) ownedInputs.set(r.length, input as ReturnType<typeof computed>);
     }
-    r.resize.propose(after);
-    // The explicit resize supersedes earlier implicit growth requirements.
-    for (const floor of r.floors) floor.propose(0);
-    active.add(t);
-  } else if (index >= 0 && kind === "set") {
-    r ??= state(t);
-    const owner = flushTransaction && resolveTx(flushTransaction);
-    let floor: Slot | undefined;
-    for (const candidate of r.floors) {
-      if (candidate.activeOwner() === owner) {
-        floor = candidate;
-        break;
-      }
-    }
-    if (!floor) {
-      const input = t._fam?.node
-        ? createOptimisticStoreInput(() => {
-            const body = optHooks?.inputBody?.(t);
-            if (body) return 0;
-            pullFamilyInput(t, "length");
-            read(getNode(t, "length"));
-            return 0;
-          })
-        : signal(0);
-      if (t._fam?.node) input._config &= ~CONFIG_AUTO_DISPOSE;
-      floor = createOptimisticSlot(
-        input,
-        undefined,
-        () => discover(t),
-        () => discover(t)
-      );
-      if (t._fam?.node) ownedInputs.set(floor, input as ReturnType<typeof computed>);
-      r.floors.add(floor);
-    }
-    const previous = floor.writerValue();
-    const required = Math.max(typeof previous === "number" ? previous : 0, index + 1);
-    floor.propose(required);
+    r.length.propose(next.length);
     active.add(t);
   }
 }
@@ -167,27 +223,14 @@ export function sweepArrays(): void {
   for (const t of active) {
     const r = arrays.get(t)!;
     const abandoned = !!(t._fam?.node?._flags! & REACTIVE_DISPOSED);
-    for (const floor of r.floors) {
-      if (abandoned && floor.tryRelease(true)) {
-        r.floors.delete(floor);
-        const input = ownedInputs.get(floor);
-        if (input) dispose(input);
-        continue;
-      }
-      const out = floor.output;
-      if (floor.isIdle() && out._value === 0) {
-        r.floors.delete(floor);
-        r.retiring.add(floor);
-      }
-    }
-    if (r.resize && abandoned && r.resize.tryRelease(true)) {
-      const input = ownedInputs.get(r.resize);
+    if (r.length && abandoned && r.length.tryRelease(true)) {
+      const input = ownedInputs.get(r.length);
       if (input) dispose(input);
-      r.resize = undefined;
+      r.length = undefined;
     }
-    if (r.resize?.isIdle()) {
-      r.retiring.add(r.resize);
-      r.resize = undefined;
+    if (r.length?.isIdle()) {
+      r.retiring.add(r.length);
+      r.length = undefined;
     }
     for (const slot of r.retiring)
       if (slot.tryRelease(abandoned)) {
@@ -195,7 +238,8 @@ export function sweepArrays(): void {
         const input = ownedInputs.get(slot);
         if (input) dispose(input);
       }
-    if (!r.floors.size && !r.retiring.size && !r.resize) {
+    if (r.structure?.tryRelease(abandoned)) r.structure = undefined;
+    if (!r.retiring.size && !r.length && !r.structure) {
       active.delete(t);
       arrays.delete(t);
     }

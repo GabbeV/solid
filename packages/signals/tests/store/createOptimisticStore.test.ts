@@ -3233,9 +3233,9 @@ describe("createOptimisticStore", () => {
       for (const frame of rendered) expect(frame).not.toContain(undefined as unknown as string);
     });
 
-    // A separate source landing owns its answer. The optimistic add retains
-    // its own row until its action settles, while the new issue is visible.
-    it("shows a separate source landing beside a retained optimistic row", async () => {
+    // An append owns array structure. Incoming source membership joins its
+    // lifetime, retaining the complete selected array until the action ends.
+    it("holds a separate source landing with an optimistic append", async () => {
       type Comment = { id: number; text: string };
       const serverComments = [
         [
@@ -3316,12 +3316,12 @@ describe("createOptimisticStore", () => {
       await next;
       await settle();
 
-      // The new source answer publishes independently of addComment.
+      // Incoming membership joins the active append.
       expect(comments.length).toBe(3);
-      expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B", "Optimistic"]);
+      expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
       for (const frame of rendered.slice(beforeSwitch)) {
         expect(frame[2]).toBe("Optimistic");
-        expect(["Issue 0 A,Issue 0 B", "Issue 1 A,Issue 1 B"]).toContain(frame.slice(0, 2).join(","));
+        expect(frame.slice(0, 2)).toEqual(["Issue 0 A", "Issue 0 B"]);
       }
 
       resolveAdd();
@@ -3556,7 +3556,9 @@ describe("createOptimisticStore", () => {
           setItems(store => {
             store.push(row);
           });
-          yield new Promise<void>(resolve => { releases.push(resolve); });
+          yield new Promise<void>(resolve => {
+            releases.push(resolve);
+          });
         });
         const addA = add({ id: 0 });
         flush();
@@ -3743,7 +3745,7 @@ describe("createOptimisticStore", () => {
       // itself: setters are never re-executed under the fold ruling, so
       // there is no re-run to throw.)
 
-      it("publishes a continuation after a held replacement beside an open edit", async () => {
+      it("holds structural continuation with a replacement and an open append", async () => {
         let feed!: (value: number) => void;
         let notify!: { promise: Promise<number>; resolve: (value: number) => void };
         const reset = () => {
@@ -3811,11 +3813,11 @@ describe("createOptimisticStore", () => {
         await settle();
         expect(rendered.at(-1)).toEqual([1, 2]);
 
-        // A later continuation can publish above that held replacement.
+        // Later structural growth joins the same open array lifetime.
         feed(7);
         await settle();
         await settle();
-        expect(rendered.at(-1)).toEqual([1, 2, 7]);
+        expect(rendered.at(-1)).toEqual([1, 2]);
 
         // Settle: the edit dies with its transaction; the reveal is the
         // full composed truth — refresh + continuation, no resurrected add.
@@ -3828,9 +3830,8 @@ describe("createOptimisticStore", () => {
       });
     });
 
-    // A draft-mutating producer also publishes its answer independently of
-    // the still-open optimistic add.
-    it("shows a draft-mutating producer's landing beside a retained optimistic row", async () => {
+    // Draft-mutating producer membership joins the still-open append too.
+    it("holds a draft-mutating producer's landing with an optimistic append", async () => {
       type Comment = { id: number; text: string };
       const serverComments = [
         [
@@ -3909,12 +3910,12 @@ describe("createOptimisticStore", () => {
       await next;
       await settle();
 
-      // The producer answer and the add's guess have separate owners.
+      // The producer's membership change joins the append's lifetime.
       expect(comments.length).toBe(3);
-      expect(rendered.at(-1)).toEqual(["Issue 1 A", "Issue 1 B", "Optimistic"]);
+      expect(rendered.at(-1)).toEqual(["Issue 0 A", "Issue 0 B", "Optimistic"]);
       for (const frame of rendered.slice(beforeSwitch)) {
         expect(frame[2]).toBe("Optimistic");
-        expect(["Issue 0 A,Issue 0 B", "Issue 1 A,Issue 1 B"]).toContain(frame.slice(0, 2).join(","));
+        expect(frame.slice(0, 2)).toEqual(["Issue 0 A", "Issue 0 B"]);
       }
 
       resolveAdd();

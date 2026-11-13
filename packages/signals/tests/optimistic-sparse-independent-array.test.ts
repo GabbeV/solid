@@ -1,8 +1,8 @@
 /**
- * Independent fixed-index outputs can compose a real sparse array: removing
- * an unguessed index does not fabricate a retained row or move another guess.
- * Every ordinary view must agree on presence, values and length. A push that
- * consumes another override's length still joins that owner's lifetime.
+ * Array growth, shrink and index presence share a structural lifetime. Direct
+ * growth and push both retain the complete selected array until their joined
+ * updates settle. Every ordinary reader must agree on presence, values and
+ * length; value-only writes to existing indices remain independent.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -40,7 +40,7 @@ describe.each(
   ["index", "identity", "key"].flatMap(mode =>
     [false, true].map(wrapped => [mode, wrapped] as const)
   )
-)("sparse outputs (%s, wrapped=%s)", (mode, wrapped) => {
+)("array structural outputs (%s, wrapped=%s)", (mode, wrapped) => {
   function observe(rows: string[]) {
     const frames: string[] = [];
     const serialize = () =>
@@ -89,17 +89,6 @@ describe.each(
       iteration: values
     });
   }
-  function expectSparse(h: ReturnType<typeof observe>) {
-    expect(h.last()).toEqual({
-      length: 2,
-      keys: ["1"],
-      own: [false, true],
-      has: [false, true],
-      indices: ["<undefined>", "M"],
-      nativeMap: [null, "M"],
-      iteration: ["<undefined>", "M"]
-    });
-  }
   function expectCoherent(h: ReturnType<typeof observe>) {
     for (const [direct, memo, mapped] of h.outputPairs) {
       expect(memo).toBe(direct);
@@ -111,8 +100,51 @@ describe.each(
       expect(frame.has).toEqual(frame.own);
     }
   }
+  it("value-only writes to existing indices settle independently", async () => {
+    const first = gate(),
+      second = gate();
+    const saved: [boolean, boolean][] = [];
+    let runFirst!: () => unknown, runSecond!: () => unknown, h!: ReturnType<typeof observe>;
+    createRoot(dispose => {
+      disposals.push(dispose);
+      const [rows, set] = createOptimisticStore<string[]>(["A", "B"]);
+      h = observe(rows);
+      const [firstSaved, setFirstSaved] = createSignal(false);
+      const [secondSaved, setSecondSaved] = createSignal(false);
+      createRenderEffect(
+        () => [firstSaved(), secondSaved()] as [boolean, boolean],
+        value => void saved.push(value)
+      );
+      runFirst = action(function* () {
+        setFirstSaved(true);
+        set(d => void (d[0] = "X"));
+        yield first.promise;
+      });
+      runSecond = action(function* () {
+        setSecondSaved(true);
+        set(d => void (d[1] = "Y"));
+        yield second.promise;
+      });
+    });
+    await tick();
+    runFirst();
+    await tick();
+    runSecond();
+    await tick();
+    expectDense(h, ["X", "Y"]);
+    expect(saved.at(-1)).toEqual([false, false]);
+    first.resolve();
+    await tick();
+    expectDense(h, ["A", "Y"]);
+    expect(saved.at(-1)).toEqual([true, false]);
+    second.resolve();
+    await tick();
+    expectDense(h, ["A", "B"]);
+    expect(saved.at(-1)).toEqual([true, true]);
+    expectCoherent(h);
+  });
   for (const edit of ["direct", "push", "returned"] as const)
-    it(`independent source shrink removes an unguessed carried index (${edit})`, async () => {
+    it(`source shrink waits for an active structural edit (${edit})`, async () => {
       const done = gate();
       let setTruth!: (value: string[]) => void, run!: () => unknown, h!: ReturnType<typeof observe>;
       createRoot(dispose => {
@@ -137,7 +169,7 @@ describe.each(
       expectDense(h, ["A", "M"]);
       setTruth([]);
       await tick();
-      expectSparse(h);
+      expectDense(h, ["A", "M"]);
       expectCoherent(h);
       done.resolve();
       await tick();
@@ -145,7 +177,7 @@ describe.each(
       expectCoherent(h);
     });
   for (const edit of ["direct", "push"] as const)
-    it(`retiring another index override respects actual setter reads (${edit})`, async () => {
+    it(`direct growth and push join earlier structural edits (${edit})`, async () => {
       const first = gate(),
         second = gate();
       let runFirst!: () => unknown, runSecond!: () => unknown, h!: ReturnType<typeof observe>;
@@ -174,8 +206,7 @@ describe.each(
       expectDense(h, ["A", "M"]);
       first.resolve();
       await tick();
-      if (edit === "push") expectDense(h, ["A", "M"]);
-      else expectSparse(h);
+      expectDense(h, ["A", "M"]);
       expectCoherent(h);
       second.resolve();
       await tick();

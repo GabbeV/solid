@@ -83,6 +83,7 @@ import {
   warnStrictReadUntracked
 } from "../core/dev.js";
 import { signalHook } from "../core/identities.js";
+import { ContextRetry, NotReadyError } from "../core/error.js";
 import { link, setSlotUnobserved } from "../core/graph.js";
 import { getObserver, getOwner } from "../core/owner.js";
 import { checkForeignRead } from "../core/copies.js";
@@ -742,12 +743,78 @@ export function materializePB(target: StoreTarget): Record<PropertyKey, any> {
   return clone;
 }
 
+/** Resolve only the backing chain: the producer that will land this store's
+ * first answer owns an unpublished write, even when an outer store wraps it. */
+export function initialWriteProducer(t: StoreTarget): Computed<any> | null {
+  for (;;) {
+    const node = t._fam?.node;
+    if (
+      node &&
+      node._statusFlags & STATUS_UNINITIALIZED &&
+      (node._statusFlags & STATUS_PENDING || node._config & CONFIG_HELD)
+    )
+      return node;
+    if (!t.ch) return null;
+    const inner = (t.v as any)[$TARGET] as StoreTarget | undefined;
+    if (inner === undefined || inner === t) return null;
+    t = inner;
+  }
+}
+
+/** An unpublished proposal supplies ownership, never a value. Keep the
+ * producer's pending status and the scheduler's existing observedness rules. */
+export function holdInitialWriteProducer(node: Computed<any>): void {
+  if (node._config & CONFIG_HELD) joinFuture(txOf(node));
+  if (flushTransaction === null) joinFuture(null);
+  holdNode(node, resolveTx(flushTransaction!));
+}
+
+// Only live for an unpublished ordinary setter's temporary draft. Existing
+// producer staging belongs to its first answer and must survive that callback.
+const initialDrafts = new WeakMap<
+  StoreTarget,
+  {
+    producer: Computed<any>;
+    pb: StoreTarget["pb"];
+    wk: StoreTarget["wk"];
+    ovl: boolean;
+    del: StoreTarget["del"];
+    kc: number;
+    sc: StoreTarget["sc"];
+    a: boolean;
+  }
+>();
+
 /** The batch's pending backing, created on the first draft write: an overlay
  * of an owned plain-data record above the key threshold, a clone otherwise.
  * Staged on the container node (the scheduler owns its lifetime) and queued
  * for the fold at the flush's commit. */
 function ensurePB(target: StoreTarget): Record<PropertyKey, any> {
   let pb = target.pb;
+  if (userWrite && !target._fam?.opt && !initialDrafts.has(target)) {
+    const producer = initialWriteProducer(target);
+    if (producer && producer === target._fam?.node) {
+      const saved = {
+        producer,
+        pb,
+        wk: target.wk,
+        ovl: target.ovl,
+        del: target.del,
+        kc: target.kc,
+        sc: target.sc,
+        a: target.a
+      };
+      // Clone before installing the temporary state: a chained backing may
+      // still throw its initial NotReady, handled by the ordinary clone path.
+      const draft = cloneRaw(pb ?? target.v, target);
+      initialDrafts.set(target, saved);
+      target.ovl = false;
+      target.del = null;
+      target.wk = null;
+      return (target.pb = draft);
+    }
+  }
+  if (initialDrafts.has(target)) return pb!;
   // An optimistic edit composes on the view the user saw and becomes
   // guesses at the setter's exit: nothing is staged, nothing folds
   // (optimistic.ts).
@@ -764,7 +831,6 @@ function ensurePB(target: StoreTarget): Record<PropertyKey, any> {
     if (k !== null && !(k._config & CONFIG_HELD)) k._pendingValue = pb;
   } else if (pb === null) {
     const v = target.v;
-    if (!directCommit) queueFold(target);
     if (
       !target.ch &&
       !Array.isArray(v) &&
@@ -772,9 +838,23 @@ function ensurePB(target: StoreTarget): Record<PropertyKey, any> {
       target.kc > OVERLAY_MIN_KEYS &&
       isOwned(v)
     ) {
-      pb = target.pb = Object.create(v) as Record<PropertyKey, any>;
+      pb = Object.create(v) as Record<PropertyKey, any>;
       target.ovl = true;
-    } else pb = target.pb = cloneRaw(v, target);
+    } else {
+      try {
+        pb = cloneRaw(v, target);
+      } catch (error) {
+        const producer = userWrite && target.ch && initialWriteProducer(target);
+        if (!(error instanceof NotReadyError) || error instanceof ContextRetry || !producer)
+          throw error;
+        holdInitialWriteProducer(producer);
+        // The trap may complete this mutation, but no backing is installed,
+        // so this child cannot publish the discarded proposal (#4810).
+        return Array.isArray(v) ? [] : {};
+      }
+    }
+    if (!directCommit) queueFold(target);
+    target.pb = pb;
     if (!directCommit) stageOn(target, pb);
   }
   return pb;
@@ -1205,8 +1285,24 @@ function heldDerivation(t: StoreTarget, node: Signal<any> | undefined, key: Prop
  * like signals — holds and lanes engage here on later steps), presence and
  * deep witnesses, and the container when membership changed. */
 function notifyWrites(t: StoreTarget): void {
+  const initial = initialDrafts.get(t);
+  if (initial) {
+    initialDrafts.delete(t);
+    t.pb = initial.pb;
+    t.wk = initial.wk;
+    t.ovl = initial.ovl;
+    t.del = initial.del;
+    t.kc = initial.kc;
+    t.sc = initial.sc;
+    t.a = initial.a;
+    holdInitialWriteProducer(initial.producer);
+    return;
+  }
   let pb = t.pb;
-  if (pb === null) return;
+  if (pb === null) {
+    t.wk = null;
+    return;
+  }
   // Optimistic channel: a user's writes on an optimistic family become
   // guesses on the nodes (lanes); the draft is discarded, the committed
   // backing never touched.
@@ -2525,7 +2621,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     // (1)), and the write stages on it (A28; a write by the holder joins it,
     // A34) — as it would with a reader's leaf. Kept while the container is
     // held (`deferredReleases`).
-    if (userWrite && (target.k as any)?._config & CONFIG_HELD)
+    if (userWrite && (target.k as any)?._config & CONFIG_HELD && !initialWriteProducer(target))
       deferredReleases.add(getNode(target, key));
     if (Array.isArray(pb)) {
       touch(target, key);
@@ -2740,6 +2836,11 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
   // side effects before its invalid-cleanup throw) and before adoption.
   if (__DEV__ && guard) devGuardStoreSetterResult(result);
   if (result !== undefined && result !== proxy && isWrappable(result)) {
+    const initial = guard && initialWriteProducer(target);
+    if (initial) {
+      holdInitialWriteProducer(initial);
+      return;
+    }
     // A returned replacement: on an optimistic family a user's is itself an
     // optimistic edit — diffed against the view as guesses (`next` parity);
     // otherwise it is adopted as the incoming truth.

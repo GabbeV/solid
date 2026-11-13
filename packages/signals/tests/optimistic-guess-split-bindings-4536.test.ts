@@ -1,9 +1,8 @@
 /**
- * #4536: a splice selects positional row outputs independently of the filter
- * input. Ordinary unanswered readers retain the filter; its completed answer
- * releases that hold without waiting for the row action. Rows #3/#4 remain
- * selected through that answer and refresh until correction reveals row #2.
- * Direct, memo and For-like consumers always show the same selected array.
+ * #4536: a splice selects concrete row outputs without replaying a removal.
+ * An incoming membership change joins the open splice action. Split bindings
+ * and ordinary list readers agree through the hold and correction; explicit
+ * Loading `on` boundaries retain their own reveal behavior.
  */
 import { expect, it } from "vitest";
 import {
@@ -115,18 +114,19 @@ for (const split of [false, true])
       expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      // Only the row outputs retain the action; the answered input is free.
-      expect(screen()).toBe("closed: [#3][#4]");
+      // A changed membership joins the incoming question to the open splice action.
+      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
+      if (!on) expect(seen.filter(frame => String(frame).startsWith("closed:"))).toEqual([]);
       await settle("close:1", {});
-      expect(screen()).toBe("closed: [#3][#4]");
+      expect(screen()).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       await closing;
       checkReaders();
       expect(screen()).toBe("closed: [#2]");
       expect(asks).toEqual([]);
       seen.push(screen());
-      // An independent question may publish beside explicitly selected rows.
-      // Authoritative row #2 must never appear with the old question.
+      // An explicit Loading boundary may reveal its question early; the
+      // authoritative correction must never appear with the old question.
       const allowed = [
         undefined,
         "loading",

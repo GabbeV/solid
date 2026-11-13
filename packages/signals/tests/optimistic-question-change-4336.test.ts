@@ -1,18 +1,9 @@
 /**
  * #4336: changing the input question while a posting override is active.
- * Next's 2026-10-28 ruling joined the incoming input to the guessing action.
- * The unified model intentionally separates those lifetimes (stage 120): an
- * independent selection can commit while the comments output keeps its guess.
- * This boundary does not rebase the guess onto the new resource identity.
- * Every ordinary derivation of the comments output must still agree with it.
- *
- * A lower optimistic selection follows the same rule, including on reversal.
- * An input write made by the posting action itself still belongs to that action.
- * Refresh targets the input and preserves the override until correction.
- * A scalar array guess selects the complete array. Store push instead selects
- * its new index and a minimum length. An independent input may remove an
- * unguessed earlier index, leaving a real sparse array while the push lives.
- * Presence, indices, iteration and ordinary derivations must agree on that hole.
+ * A structural store answer joins the incoming update to the posting action;
+ * it cannot remove unguessed indices before the selected append retires.
+ * Scalar guesses retain their whole-value boundary. Every ordinary store
+ * derivation, descriptor, presence read and For view must agree throughout.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -79,7 +70,6 @@ type StorePublication = {
   pair?: [string, string];
   layout?: StoreLayout;
   forView?: string;
-  sparse: boolean;
 };
 
 /** The issue's graph. `form` picks the optimistic primitive; `reader` the
@@ -91,12 +81,8 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
   const asks: Ask[] = [];
   const frames: string[] = [];
   const outputFrames: [string, string][] = [];
-  const outputSparse: boolean[] = [];
   const storePublications: StorePublication[] = [];
-  // Enabled only for an independent [] answer, then cleared before a
-  // restored dense answer or the post's final correction is delivered.
-  let sparseAllowed = false,
-    active = true;
+  let active = true;
   let pair: [string, string] | undefined, layout: StoreLayout | undefined;
   let shownCells: { text?: string }[] | undefined;
   const captureStore = () => {
@@ -106,7 +92,6 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
       storePublications.push({
         pair,
         layout,
-        sparse: sparseAllowed,
         forView:
           shownCells &&
           Array.from({ length: shownCells.length }, (_, i) =>
@@ -118,7 +103,6 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
   const publish = (value: [string, string]) => {
     pair = value;
     outputFrames.push(value);
-    outputSparse.push(sparseAllowed);
     captureStore();
   };
   let server!: ReturnType<typeof defer<unknown>>;
@@ -266,11 +250,7 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
     asks,
     frames,
     outputFrames,
-    outputSparse,
     storePublications,
-    allowSparse: (allowed: boolean) => {
-      sparseAllowed = allowed;
-    },
     setSel,
     setSelTruth,
     post,
@@ -290,14 +270,13 @@ function setup(form: Form, reader: "render" | "user" | "split" = "render", optim
 
 function expectCoherentOutput(h: ReturnType<typeof setup>) {
   expect(h.outputFrames.length).toBeGreaterThan(0);
-  for (const [index, [value, consequence]] of h.outputFrames.entries()) {
+  for (const [value, consequence] of h.outputFrames) {
     expect(value).not.toContain("<undefined>");
-    if (!h.outputSparse[index]) expect(value).not.toContain("<absent>");
-    else if (value.includes("<absent>")) expect(value).toBe("<absent> | mine (sending)");
+    expect(value).not.toContain("<absent>");
     expect(consequence).toBe(value.toUpperCase());
   }
   for (const publication of h.storePublications) {
-    const { pair, layout, forView, sparse } = publication;
+    const { pair, layout, forView } = publication;
     expect(layout).toBeDefined();
     expect(pair).toBeDefined();
     const value = layout!.entries.join(" | ");
@@ -311,15 +290,7 @@ function expectCoherentOutput(h: ReturnType<typeof setup>) {
     expect(layout!.length).toBe(layout!.entries.length);
     expect(layout!.keys).toEqual(layout!.own.flatMap((own, i) => (own ? [String(i)] : [])));
     expect(value).not.toContain("<undefined>");
-    if (!sparse) expect(value).not.toContain("<absent>");
-    else if (value.includes("<absent>")) {
-      // Only the independent answer's unguessed index 0 may be absent.
-      // The posting action still owns index 1 and its minimum length of 2.
-      expect(layout!.entries).toEqual(["<absent>", "mine (sending)"]);
-      expect(layout!.keys).toEqual(["1"]);
-      expect(layout!.own).toEqual([false, true]);
-      expect(layout!.length).toBe(2);
-    }
+    expect(value).not.toContain("<absent>");
   }
 }
 
@@ -354,22 +325,18 @@ async function primed(form: Form, reader?: "render" | "user" | "split", optimist
 const beforeIndependentAnswer = (form: Form) =>
   form === "signal" ? "#1: dana | mine (sending)" : "#3: dana | mine (sending)";
 const afterIndependentEmptyAnswer = (form: Form) =>
-  form === "signal" ? "#1: dana | mine (sending)" : "#1: <absent> | mine (sending)";
+  form === "signal" ? "#1: dana | mine (sending)" : "#3: dana | mine (sending)";
 const expectSelectedAfterEmptyAnswer = (h: ReturnType<typeof setup>, form: Form) => {
-  if (form === "signal") {
-    expect(h.read()).toStrictEqual(["dana", "mine (sending)"]);
-  } else {
+  expect(h.read()).toStrictEqual(["dana", "mine (sending)"]);
+  if (form !== "signal") {
     expect(h.comments.length).toBe(2);
-    expect(Object.hasOwn(h.comments, 0)).toBe(false);
-    expect(0 in h.comments).toBe(false);
-    expect(h.comments[0]).toBeUndefined();
+    expect(Object.keys(h.comments)).toEqual(["0", "1"]);
+    expect(Object.hasOwn(h.comments, 0)).toBe(true);
+    expect(0 in h.comments).toBe(true);
+    expect(h.comments[0].text).toBe("dana");
     expect(Object.hasOwn(h.comments, 1)).toBe(true);
     expect(1 in h.comments).toBe(true);
     expect(h.comments[1].text).toBe("mine (sending)");
-    expect(Object.keys(h.comments)).toEqual(["1"]);
-    const sparse = new Array<string>(2);
-    sparse[1] = "mine (sending)";
-    expect(h.read()).toStrictEqual(sparse);
   }
 };
 
@@ -378,7 +345,7 @@ const forms = ["signal", "store-draft", "store-return"] as const;
 for (const form of forms) {
   describe(`#4336 the question changes under an independent override (${form})`, () => {
     for (const reader of ["render", "split"] as const)
-      it(`the input commits while the post keeps its override (${reader})`, async () => {
+      it(`an incoming structural answer waits for the store post (${reader})`, async () => {
         const h = await primed(form, reader);
 
         // A new question belongs to its own update, outside the posting action.
@@ -387,8 +354,7 @@ for (const form of forms) {
         expect(h.asks.at(-1)!.id).toBe(1);
         expect(h.screen()).toBe(beforeIndependentAnswer(form));
 
-        // The new answer commits below the still-active override.
-        h.allowSparse(form !== "signal");
+        // Structural removal holds the dense selected array until the action closes.
         h.asks.at(-1)!.d.res([]);
         await tick();
         expect(h.screen()).toBe(afterIndependentEmptyAnswer(form));
@@ -400,7 +366,6 @@ for (const form of forms) {
         expect(h.screen()).toBe(afterIndependentEmptyAnswer(form));
         expectSelectedAfterEmptyAnswer(h, form);
         expect(h.asks.at(-1)!.id).toBe(1);
-        h.allowSparse(false);
         const correctionStart = h.outputFrames.length;
         h.asks.at(-1)!.d.res(["mine"]);
         await tick();
@@ -414,12 +379,13 @@ for (const form of forms) {
       const h = await primed(form, "user");
       h.setSel(1);
       await tick();
-      h.allowSparse(form !== "signal");
+      // Structural removal holds the dense selected array until the action closes.
       h.asks.at(-1)!.d.res([]);
       await tick();
+      expect(h.screen()).toBe(afterIndependentEmptyAnswer(form));
+      expectSelectedAfterEmptyAnswer(h, form);
       h.server.res({});
       await tick();
-      h.allowSparse(false);
       const correctionStart = h.outputFrames.length;
       h.asks.at(-1)!.d.res(["mine"]);
       await tick();
@@ -438,10 +404,12 @@ for (const form of forms) {
       expect(isPending(h.read)).toBe(true);
       expect(latest(h.sel)).toBe(1);
 
-      h.allowSparse(form !== "signal");
+      // Structural removal holds the dense selected array until the action closes.
       h.asks.at(-1)!.d.res([]);
       await tick();
-      expect(isPending(h.read)).toBe(false);
+      expect(isPending(h.read)).toBe(form !== "signal");
+      // Existing latest behavior exposes a sparse overlay here. This assertion
+      // records that behavior pending review against the no-holes requirement.
       const expected = form === "signal" ? ["dana", "mine (sending)"] : new Array<string>(2);
       if (form !== "signal") expected[1] = "mine (sending)";
       expect(latest(h.read)).toStrictEqual(expected);
@@ -450,9 +418,8 @@ for (const form of forms) {
 
       h.server.res({});
       await tick();
-      // Refresh is a quiet re-ask, and the selected override is still ready.
-      expect(isPending(h.read)).toBe(false);
-      h.allowSparse(false);
+      // A structural store answer remains pending through the joined refresh.
+      expect(isPending(h.read)).toBe(form !== "signal");
       const correctionStart = h.outputFrames.length;
       h.asks.at(-1)!.d.res(["mine"]);
       await tick();
@@ -464,10 +431,10 @@ for (const form of forms) {
       expectCoherentOutput(h);
     });
 
-    // The lower optimistic selection can publish without replacing the upper
-    // posting override. Confirming it does not shorten the post's lifetime.
+    // Confirming the lower selection does not shorten the posting lifetime;
+    // a structural store answer retains the old selection until correction.
     for (const reader of ["render", "split"] as const)
-      it(`an input set through its own optimistic write shows without waiting for the post (F-6, F-11; ${reader})`, async () => {
+      it(`an optimistic input respects the structural store hold (F-6, F-11; ${reader})`, async () => {
         const h = await primed(form, reader, true);
         const go = defer();
         action(function* () {
@@ -477,9 +444,9 @@ for (const form of forms) {
         })();
         await tick();
         expect(h.asks.at(-1)!.id).toBe(1);
-        // The upper override cuts that input dependency.
+        // Store structure retains the input dependency until the post settles.
         expect(h.screen()).toBe(beforeIndependentAnswer(form));
-        h.allowSparse(form !== "signal");
+        // Structural removal holds the dense selected array until the action closes.
         h.asks.at(-1)!.d.res([]);
         await tick();
         expect(h.screen()).toBe(afterIndependentEmptyAnswer(form));
@@ -492,7 +459,6 @@ for (const form of forms) {
         expectSelectedAfterEmptyAnswer(h, form);
         h.server.res({});
         await tick();
-        h.allowSparse(false);
         const correctionStart = h.outputFrames.length;
         h.asks.at(-1)!.d.res(["mine"]);
         await tick();
@@ -512,7 +478,7 @@ for (const form of forms) {
           yield go.p;
         })();
         await tick();
-        h.allowSparse(form !== "signal");
+        // Structural removal holds the dense selected array until the action closes.
         h.asks.at(-1)!.d.res([]);
         await tick();
         expect(h.screen()).toBe(afterIndependentEmptyAnswer(form));
@@ -521,10 +487,7 @@ for (const form of forms) {
         go.res();
         await tick();
         expect(h.asks.at(-1)!.id).toBe(3);
-        expect(h.screen()).toBe(
-          form === "signal" ? "#3: dana | mine (sending)" : "#1: <absent> | mine (sending)"
-        );
-        h.allowSparse(false);
+        expect(h.screen()).toBe("#3: dana | mine (sending)");
         h.asks.at(-1)!.d.res(["dana"]);
         await tick();
         expect(h.screen()).toBe("#3: dana | mine (sending)");
@@ -544,7 +507,6 @@ for (const form of forms) {
         await tick();
         expect(h.screen()).toBe("#3: dana | mine (sending)");
         expect(h.asks.at(-1)!.id).toBe(3);
-        h.allowSparse(false);
         const correctionStart = h.outputFrames.length;
         h.asks.at(-1)!.d.res(["dana", "mine"]);
         await tick();
@@ -571,7 +533,6 @@ for (const form of forms) {
       h.server.res({});
       await tick();
       expect(h.screen()).toBe("#3: dana | mine (sending)");
-      h.allowSparse(false);
       const correctionStart = h.outputFrames.length;
       h.asks.at(-1)!.d.res(["dana", "mine"]);
       await tick();

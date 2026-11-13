@@ -1,9 +1,7 @@
 /**
- * #4536: a shared binding reads the filter input and selected row outputs.
- * Ordinary unanswered input readers retain the filter's own hold. When its
- * answer is ready, the filter publishes while the splice's concrete rows
- * #3/#4 remain selected until correction. No keyed removal is replayed, and
- * authoritative row #2 requires the closed question.
+ * #4536: shared bindings read the filter and selected row outputs coherently.
+ * An incoming membership change joins the open splice action, retaining the
+ * question and concrete rows until the action's refreshed correction lands.
  */
 import { expect, test } from "vitest";
 import {
@@ -101,23 +99,18 @@ for (const order of ["question first", "list first"] as const)
         expect(frames.at(-1)).toBe("open: [#3][#4]");
         expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-        // The answered input publishes independently of the retained rows.
-        expect(frames.at(-1)).toBe("closed: [#3][#4]");
+        // Changed membership joins the answered input to the retained splice action.
+        expect(frames.at(-1)).toBe("open: [#3][#4]");
+        expect(frames.filter(frame => frame.startsWith("closed:"))).toEqual([]);
         await settle("close:1", {});
-        expect(frames.at(-1)).toBe("closed: [#3][#4]");
+        expect(frames.at(-1)).toBe("open: [#3][#4]");
         await settle("issues:closed", [{ id: 2 }]);
         await closing;
         checkReaders();
         expect(frames.at(-1)).toBe("closed: [#2]");
-        // A question may publish beside explicitly selected rows. The
-        // authoritative correction must not appear with the old question.
+        // The structural correction and its question publish together.
         expect(asks).toEqual([]);
-        const allowed = [
-          "open: [#1][#3][#4]",
-          "open: [#3][#4]",
-          "closed: [#3][#4]",
-          "closed: [#2]"
-        ];
+        const allowed = ["open: [#1][#3][#4]", "open: [#3][#4]", "closed: [#2]"];
         for (const frame of frames.filter(value => !value.startsWith("other")))
           expect(allowed).toContain(frame);
       } finally {

@@ -75,7 +75,7 @@ it("a draft-store correction never publishes a missing row beside its length", a
   }
 });
 
-it("a restored unguessed row and the memo of that selected array publish together", async () => {
+it("a selected array and its memo retain their full layout through a joined shrink", async () => {
   const asks: Array<{ id: number; request: PromiseWithResolvers<string[]> }> = [];
   const finish = Promise.withResolvers<void>(),
     reverse = Promise.withResolvers<void>();
@@ -118,15 +118,18 @@ it("a restored unguessed row and the memo of that selected array publish togethe
     await turn();
     asks.at(-1)!.request.resolve([]);
     await turn();
-    expect(frames.at(-1)).toEqual(["<absent> | mine (sending)", "<ABSENT> | MINE (SENDING)"]);
+    expect(frames.at(-1)).toEqual(["dana | mine (sending)", "DANA | MINE (SENDING)"]);
     reverse.resolve();
     await turn();
     expect(asks.at(-1)!.id).toBe(3);
-    const from = frames.length;
     asks.at(-1)!.request.resolve(["dana"]);
     await turn();
     expect(frames.at(-1)?.[0]).toBe("dana | mine (sending)");
-    for (const [direct, memo] of frames.slice(from)) expect(memo).toBe(direct.toUpperCase());
+    for (const [direct, memo] of frames) {
+      expect(direct).not.toContain("<absent>");
+      expect(direct).not.toContain("<undefined>");
+      expect(memo).toBe(direct.toUpperCase());
+    }
   } finally {
     dispose();
     finish.resolve();

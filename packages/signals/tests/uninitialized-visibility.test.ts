@@ -224,9 +224,9 @@ describe("A25 write-visibility corollary: seed visible on the write path", () =>
     dispose();
   });
 
-  // The seed supplies the write draft; only the explicitly guessed leaf
-  // can publish before the input. Other seed fields remain uninitialized.
-  it("optimistic store: the first setter reads the seed and publishes only its guessed leaf", async () => {
+  // The seed supplies the callback draft, but an unpublished proposal is
+  // discarded while its producer remains coordinated with the writing action.
+  it("optimistic store: the first setter reads the seed and discards while entangling its input", async () => {
     const d = deferred<{ a: number; b: number }>();
     const finish = deferred<void>();
     const shown: number[] = [];
@@ -255,18 +255,18 @@ describe("A25 write-visibility corollary: seed visible on the write path", () =>
     try {
       flush();
       expect(seen).toEqual([0, 2]);
-      expect(shown).toEqual([1]);
-      expect(s.a).toBe(1);
+      expect(shown).toEqual([]);
+      expect(() => s.a).toThrow(NotReadyError);
       expect(() => s.b).toThrow(NotReadyError);
       d.resolve({ a: 7, b: 8 });
       await settle();
-      expect(shown).toEqual([1]);
-      expect(s.a).toBe(1);
-      expect(s.b).toBe(8);
+      expect(shown).toEqual([]);
+      expect(() => s.a).toThrow(NotReadyError);
+      expect(() => s.b).toThrow(NotReadyError);
       finish.resolve();
       await running;
       await settle();
-      expect(shown).toEqual([1, 7]);
+      expect(shown).toEqual([7]);
       expect(s.a).toBe(7);
       expect(s.b).toBe(8);
     } finally {
