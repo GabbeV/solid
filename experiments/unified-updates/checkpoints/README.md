@@ -147,3 +147,8 @@ shape-token rewrite and its diagnostic logs. It was never integrated. It is neit
 an implementation recommendation nor an approved semantic specification. The local
 working copy is explicitly marked abandoned; current work starts from the committed
 runtime and the approved array rule, not this trial.
+
+`array-bounded-retry-20261114.tar.xz` preserves isolated read-surface probes,
+the rejected length/container discovery changes, and validation receipts. The
+eight-case active-chain success did not survive lifecycle/adversarial checks;
+none of that retry's runtime changes is retained. See STORE-ARRAY-STATUS.md.

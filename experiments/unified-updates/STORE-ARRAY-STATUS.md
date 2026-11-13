@@ -21,8 +21,35 @@ The last frozen full run was 8,006 pass / 174 fail / 5 skip; 135 failures match 
 explicitly deferred until identities. Subsequent focused migrations and fixes reduced
 known other failures to nine, but no fresh full-suite result is claimed here.
 
-Next work is bounded to the existing two-layer regression: input [A,B], inner
-index1=I, outer append M, then input=[]. Diagnose the first incorrect publication
-against the approved rule. Do not resume the archived rewrite or widen semantics.
-If a missing ruling is required, present the program and competing observable
-sequences before implementing an alternative.
+## Bounded retry result
+
+The two-layer case (input [A,B], inner index1=I, outer append M, then input=[])
+still fails. No new runtime repair from this retry is retained.
+
+Isolated readers narrow the failure: indexed values and `in` remain coherent in
+the simple probe, while adding a latest descriptor reader can make ordinary
+descriptor reads report missing entries despite length staying two. The descriptor
+trap receives the old backing; composition subsequently reads a proposed empty
+body. This is evidence of inconsistent structural read paths, not a demonstrated
+gap in rule A.
+
+A trial routed length through the existing selected property output while a
+structural marker was active. It passed all eight active-chain tests, but failed
+two existing async structural-lifecycle tests by displaying [] before the guessing
+action ended. The broader 12-file run was 145 pass / 2 fail. Invalidating the
+container output as well did not repair those failures. Both changes were removed;
+restoring the baseline gives 10 pass / 4 known fail across those two files.
+
+The retained regression `unified-array-structural-read-surfaces.test.ts` uses
+separate bindings for each layer and checks length, values, presence, descriptors,
+and keys, including late mount and unrelated rerun. It currently fails, including
+an unhandled composition error: a key returned by enumeration has no descriptor
+when composition subsequently reads it. An earlier eight-case exploratory version
+halted the reactive system on that error, so its later failures are not independent
+evidence; only the single isolated regression is retained.
+
+Next investigation should establish one coherent selection of array structure
+(length, presence and descriptor metadata), with per-property values still selected
+independently. This is a proposed implementation direction, not a proven repair or
+new semantic ruling. In particular, do not turn the structural boundary into a
+guess of untouched values, replay setters, or extend optimistic lifetimes.
