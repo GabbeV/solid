@@ -24,7 +24,6 @@ import {
   releaseUnobservedStoreNode,
   getHasNode,
   getContainerNode,
-  wrap,
   pullFamilyInput,
   storeSetter,
   committed,
@@ -155,11 +154,8 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
               if (body) {
                 return presence ? key in body : body[key as any];
               }
-              const current = !presence && t.v[key as any];
-              const child = isWrappable(current)
-                ? ((wrap(current, t, key) as any)[$TARGET] as StoreTarget)
-                : undefined;
-              if (child && readDescendantOutputs(child)) return read(node);
+              // A selected descendant supplies its displayed value, but an
+              // unresolved producer still owns the parent property's answer.
               pullFamilyInput(t, key);
               if (t.ch) {
                 const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
@@ -356,21 +352,6 @@ function descendantStands(t: StoreTarget, key: PropertyKey): boolean {
       for (const slot of map.values()) if (slot.activeOwner()) return true;
   }
   return false;
-}
-
-function readDescendantOutputs(root: StoreTarget): boolean {
-  let selected = false;
-  for (const target of root._fam?.live ?? []) {
-    let p: StoreTarget | null = target;
-    while (p && p !== root) p = p.u;
-    if (p !== root) continue;
-    const record = records.get(target);
-    if (!record) continue;
-    for (const map of [record.slots, record.presence, record.shape])
-      for (const slot of map.values()) if (slot.activeOwner()) selected = true;
-    if (arrayGrowthStands(target)) selected = true;
-  }
-  return selected;
 }
 
 /** Enumeration composes selected metadata over a producer-aware base. A

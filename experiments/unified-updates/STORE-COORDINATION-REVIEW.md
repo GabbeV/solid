@@ -1,5 +1,11 @@
 # Store coordination follow-up — 2026-11-12
 
+Follow-up ruling, 2026-11-13: initial writes should discard but entangle; immediate
+discard allowing early input publication is rejected. The unresolved-producer
+pending rule is now aligned with next. See STORE-ARRAY-ENTANGLEMENT.md for the
+implementation status and a more precise audit of next's actual whole-action
+array joins versus retained snapshots.
+
 Runtime remains unchanged at the prior checkpoint. This records exploration,
 not an implemented coordination policy or new user approval.
 
