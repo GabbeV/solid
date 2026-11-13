@@ -61,12 +61,14 @@ for (const guessing of ["before-pending", "during-pending"])
       answer.resolve([]);
       await turn();
       expect(raw).toEqual([initial]);
-      expect(shown).toEqual([initial, ["A", "M"]]);
+      // The structural landing establishes the shared selected context. This
+      // fresh-array computation can publish that same complete frame again.
+      expect(shown).toEqual([initial, ["A", "M"], ["A", "M"]]);
       gate.resolve();
       await p;
       await turn();
       expect(raw).toEqual([initial, []]);
-      expect(shown.at(-1)).toEqual([]);
+      expect(shown).toEqual([initial, ["A", "M"], ["A", "M"], []]);
     } finally {
       answer.resolve([]);
       gate.resolve();

@@ -58,10 +58,11 @@ for (const order of ["input-first", "action-first"] as const) {
     dispose();
     flush();
   });
-  it(`store first guess: ${order}`, async () => {
+  it(`store first write discards and entangles: ${order}`, async () => {
     const input = gate<{ a: number }>(),
       finish = gate<void>();
     const shown: number[] = [];
+    let calls = 0;
     const [value, set] = createOptimisticStore(() => input.promise, { a: 0 });
     const dispose = createRoot(d => {
       createRenderEffect(
@@ -78,32 +79,35 @@ for (const order of ["input-first", "action-first"] as const) {
     flush();
     const done = action(function* () {
       set(d => {
+        calls++;
         d.a = 1;
       });
       yield finish.promise;
     })();
     flush();
-    expect(shown).toEqual([1]);
+    expect(shown).toEqual([]);
+    expect(calls).toBe(1);
+    expect(() => value.a).toThrow(NotReadyError);
     if (order === "input-first") {
       input.resolve({ a: 7 });
       await turn();
-      expect(shown).toEqual([1]);
+      expect(shown).toEqual([]);
       finish.resolve();
       await done;
     } else {
       finish.resolve();
       await done;
       await turn();
-      expect(shown).toEqual([1]);
+      expect(shown).toEqual([]);
       input.resolve({ a: 7 });
     }
     await turn();
-    expect(shown).toEqual([1, 7]);
+    expect(shown).toEqual([7]);
     dispose();
     flush();
   });
 }
-it("first-key guess does not expose an untouched seed key", async () => {
+it("discarded first-key write exposes neither written nor untouched seed keys", async () => {
   const input = gate<{ a: number; b: number }>(),
     finish = gate<void>();
   const a: number[] = [];
@@ -128,17 +132,20 @@ it("first-key guess does not expose an untouched seed key", async () => {
     yield finish.promise;
   })();
   flush();
-  expect(a).toEqual([1]);
+  expect(a).toEqual([]);
+  expect(() => value.a).toThrow(NotReadyError);
   expect(() => value.b).toThrow(NotReadyError);
   input.resolve({ a: 7, b: 8 });
   finish.resolve();
   await done;
   await turn();
+  expect(a).toEqual([7]);
+  expect(value.b).toBe(8);
   dispose();
   flush();
 });
 for (const order of ["input-first", "action-first"] as const)
-  it(`mapped guesses wait for the first list length: ${order}`, async () => {
+  it(`discarded initial list writes wait for the first answer: ${order}`, async () => {
     type Row = { id: number; title: string };
     const input = gate<Row[]>(),
       finish = gate<void>();
@@ -174,6 +181,7 @@ for (const order of ["input-first", "action-first"] as const)
         { id: 2, title: "eggs" }
       ]);
       await turn();
+      expect(shown).toEqual([]);
       finish.resolve();
       await done;
     } else {
@@ -187,7 +195,7 @@ for (const order of ["input-first", "action-first"] as const)
       ]);
     }
     await turn();
-    expect(shown.at(-1)).toBe("milk,eggs");
+    expect(shown).toEqual(["milk,eggs"]);
     dispose();
     flush();
   });

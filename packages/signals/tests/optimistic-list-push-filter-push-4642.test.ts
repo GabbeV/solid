@@ -186,10 +186,10 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
       expect(s.shown).toBe(afterAdd);
     });
 
-  // A first guess is accepted, but mapping still needs the first input's
-  // length. The empty seed is not a published list. Once that input lands,
-  // the guessed index and the input's untouched index compose per slot.
-  it("an add before the first load waits for its length and corrects after saving", async () => {
+  // Before initialization the edit is discarded and the action joins the
+  // initial input. Neither the seed nor the first answer publishes while
+  // that action remains open. Initialized push/filter controls above remain.
+  it("an add before the first load discards its guess and holds the answer until saving", async () => {
     const s = todoList();
     await tick();
     let error: unknown;
@@ -202,9 +202,10 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
     expect(s.loaded()).toBe(false);
     expect(s.untracked).toThrow(NotReadyError);
     await s.step(() => s.land("list"));
-    expect(s.shown).toBe("[jam][eggs]");
-    expect(s.untracked()).toBe("jam,eggs");
-    expect(s.cells.map(c => c.id)).toEqual([3, 2]);
+    expect(s.shown).toBe("");
+    expect(s.loaded()).toBe(false);
+    expect(s.untracked).toThrow(NotReadyError);
+    expect(s.cells.map(c => c.id)).toEqual([]);
     await s.step(() => s.land("add:3"));
     expect(s.out.map(o => o.key)).toEqual(["list"]);
     await s.step(() => s.land("list"));

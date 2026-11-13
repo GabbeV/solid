@@ -135,3 +135,9 @@ migration evidence, initial-write integration checks, and rejected latest trials
 This is unfinished: latest selected-array structure and an initial-write read
 regression remain open. See STORE-ARRAY-POLICY-A.md; no final acceptance or
 performance claim is attached to this checkpoint.
+
+`store-array-policy-A-followup-20261113.tar.xz` preserves the frozen source full
+run (8,006 pass, 174 fail, five skip; 135 exact deferred-until identities), held
+initial-answer integration, stale transaction-list diagnosis, latest every-frame
+checks, active-chain counterexamples, and follow-up test migrations. Known array
+context/shape gaps remain; no completion claim. Source hashes accompany the run.

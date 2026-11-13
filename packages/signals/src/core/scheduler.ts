@@ -95,13 +95,17 @@ export function setLayerTransactions(
   layerTransaction = created;
   layerOrder = order;
 }
-export let layerRecompute: ((node: Computed<any>, create: boolean, fromHeap: boolean) => boolean) | undefined;
+export let layerRecompute:
+  | ((node: Computed<any>, create: boolean, fromHeap: boolean) => boolean)
+  | undefined;
 export let layerOwn: ((node: Signal<any>, update: Transaction) => void) | undefined;
 export let layerNotify:
   | ((source: Signal<any>, reader: Computed<any>, value?: boolean) => boolean | void)
   | undefined;
 // true: committed; false: ordinary joining; null: proposal without joining.
-export let layerFrameRead: ((reader: Computed<any>, source: Signal<any>) => boolean | null) | undefined;
+export let layerFrameRead:
+  | ((reader: Computed<any>, source: Signal<any>) => boolean | null)
+  | undefined;
 export let preparingUpdate: Transaction | null = null;
 export let layerStatus: ((reader: Computed<any>, source: Computed<any>) => boolean) | undefined;
 export let layerBlocked: ((update: Transaction) => boolean) | undefined;
@@ -632,8 +636,11 @@ let judge: Transaction | null = null;
  * themselves are not sources). */
 export function blockersOf(t: Transaction): Computed<any>[] {
   const out: Computed<any>[] = [];
-  for (let i = 0, n = (LEGACY_LANES ? t._nodes[0] : t._firstHeld) as Computed<any> | null;
-    n; n = (LEGACY_LANES ? t._nodes[++i] : n._x!._nextHeld) as Computed<any> | null) {
+  for (
+    let i = 0, n = (LEGACY_LANES ? t._nodes[0] : t._firstHeld) as Computed<any> | null;
+    n;
+    n = (LEGACY_LANES ? t._nodes[++i] : n._x!._nextHeld) as Computed<any> | null
+  ) {
     if (
       !(n as any)._type &&
       n._statusFlags & STATUS_PENDING &&
@@ -666,13 +673,19 @@ function ownSource(n: Computed<any>, t: Transaction): boolean {
   return false;
 }
 function blockedBy(owner: Transaction, own = false, lifetime = false): boolean {
-  for (let i = 0, node = LEGACY_LANES ? owner._nodes[0] : owner._firstHeld;
-    node; node = LEGACY_LANES ? owner._nodes[++i] : node._x!._nextHeld)
+  for (
+    let i = 0, node = LEGACY_LANES ? owner._nodes[0] : owner._firstHeld;
+    node;
+    node = LEGACY_LANES ? owner._nodes[++i] : node._x!._nextHeld
+  )
     if (blockingNode(node as Computed<any>, owner, own, lifetime)) return true;
   return false;
 }
 function blockingNode(
-  n: Computed<any>, owner: Transaction, own = false, lifetime = false
+  n: Computed<any>,
+  owner: Transaction,
+  own = false,
+  lifetime = false
 ): boolean {
   if (
     !(n._statusFlags & STATUS_PENDING) ||
@@ -686,7 +699,10 @@ function blockingNode(
   // The frame's own pending observer (off screen: this one holds nothing;
   // the next listed node may).
   if ((n as any)._type === EFFECT_RENDER) {
-    return !(observeFlightHook && n._config & CONFIG_AHEAD && !owner._lane) && onScreen(n, judge ?? owner);
+    return (
+      !(observeFlightHook && n._config & CONFIG_AHEAD && !owner._lane) &&
+      onScreen(n, judge ?? owner)
+    );
   }
   for (let s = n._subs; s !== null; s = s._nextSub) {
     const r = s._sub;
@@ -702,8 +718,9 @@ function blockingNode(
     // shows nothing — a mount the frame has not revealed — and holds
     // nothing.
     if (
-      (((r as any)._type === EFFECT_RENDER && r._statusFlags & STATUS_PENDING &&
-          !(observeFlightHook && r._config & CONFIG_AHEAD && !owner._lane)) ||
+      (((r as any)._type === EFFECT_RENDER &&
+        r._statusFlags & STATUS_PENDING &&
+        !(observeFlightHook && r._config & CONFIG_AHEAD && !owner._lane)) ||
         r._flags & REACTIVE_FRAME_READ ||
         (r._config & CONFIG_REDERIVE &&
           r._statusFlags === STATUS_PENDING &&
@@ -725,10 +742,7 @@ function blockingNode(
  * everything under it, so a reader there is not on screen and holds
  * nothing — boundaries.ts). */
 export function onScreen(r: Computed<any>, t: Transaction | null): boolean {
-  return (
-    !(t && r._flags & REACTIVE_ZOMBIE && removalStagedBy(r, t)) &&
-    !hiddenHook?.(r)
-  );
+  return !(t && r._flags & REACTIVE_ZOMBIE && removalStagedBy(r, t)) && !hiddenHook?.(r);
 }
 /** A15 (#3463): a reader whose removal is staged — a zombie, parked by a
  * pass awaiting its commit — is still on screen and live for every hold,
@@ -775,6 +789,9 @@ export function holdNode(n: Signal<any>, t: Transaction): void {
 /** Each scalar node has one current owner. Transfer its existing links;
  * a re-pass in the same owner adds nothing. Legacy lanes retain their arrays. */
 export function list(n: Signal<any>, t: Transaction): void {
+  // A nested calculation can merge the caller's saved update while this
+  // node is being created. Append only to the surviving landing list.
+  t = resolveTx(t);
   if ((n as Computed<any>)._statusFlags & STATUS_PENDING) t._mayPend = true;
   const x = ext(n);
   if (x._transaction === t) return;
@@ -1260,8 +1277,10 @@ export class GlobalQueue implements IQueue {
       // Readiness is judged against the fully prepared graph. A landing
       // may dispose its observers, but their queued replacements must run
       // before that loss of observation can release another update.
-      const ready = layerBeforeCommit && transactions.length > 1
-        ? new Set(transactions.filter(readyToPublish)) : null;
+      const ready =
+        layerBeforeCommit && transactions.length > 1
+          ? new Set(transactions.filter(readyToPublish))
+          : null;
       for (let k = transactions.length - 1; k >= 0; k--) {
         const u = transactions[k];
         if (ready && !ready.has(u)) continue;
@@ -1386,11 +1405,7 @@ export class GlobalQueue implements IQueue {
         // mount over unpublished inputs. Keep that creator held when its local
         // calculation scope restores the outer update; otherwise a memo returning detached DOM
         // can publish the tree with holes. A Loading catch returned above.
-        if (
-          layerCompute &&
-          node._statusFlags & STATUS_UNINITIALIZED &&
-          creatorReads(node, 0)
-        ) {
+        if (layerCompute && node._statusFlags & STATUS_UNINITIALIZED && creatorReads(node, 0)) {
           const creator = creatorPass(node._parent);
           if (creator && creator._flags & REACTIVE_RECOMPUTING_DEPS)
             creator._flags |= REACTIVE_JOINED;
@@ -1475,8 +1490,11 @@ export function reruns(u: Transaction): unknown {
  * Recheck that work before publishing the frame. This is a publication gate,
  * not a pending-state predicate: queued work must still initialize children. */
 function queuedWork(update: Transaction): boolean {
-  for (let i = 0, node = (LEGACY_LANES ? update._nodes[0] : update._firstHeld) as Computed<any> | null;
-    node; node = (LEGACY_LANES ? update._nodes[++i] : node._x!._nextHeld) as Computed<any> | null) {
+  for (
+    let i = 0, node = (LEGACY_LANES ? update._nodes[0] : update._firstHeld) as Computed<any> | null;
+    node;
+    node = (LEGACY_LANES ? update._nodes[++i] : node._x!._nextHeld) as Computed<any> | null
+  ) {
     if (
       node._flags & REACTIVE_IN_HEAP &&
       !(node._flags & REACTIVE_DISPOSED) &&
@@ -1489,7 +1507,9 @@ function queuedWork(update: Transaction): boolean {
 }
 
 function readyToPublish(update: Transaction): boolean {
-  return !blocked(update, true) && !queuedWork(update) && (!layerCanPublish || layerCanPublish(update));
+  return (
+    !blocked(update, true) && !queuedWork(update) && (!layerCanPublish || layerCanPublish(update))
+  );
 }
 
 /** The landing: the held frame becomes the frame. */
@@ -1516,17 +1536,19 @@ function land(u: Transaction): void {
         n._x!._transaction = null;
         commitPendingNode(n);
       }
-    } else while (u._firstHeld) {
-      const node = u._firstHeld;
-      // Detach before cleanup can transfer, merge, or append more owned work.
-      const x = node._x!, next = x._nextHeld;
-      u._firstHeld = next;
-      if (next) next._x!._previousHeld = null;
-      else u._lastHeld = null;
-      x._nextHeld = null;
-      x._transaction = null;
-      commitPendingNode(node);
-    }
+    } else
+      while (u._firstHeld) {
+        const node = u._firstHeld;
+        // Detach before cleanup can transfer, merge, or append more owned work.
+        const x = node._x!,
+          next = x._nextHeld;
+        u._firstHeld = next;
+        if (next) next._x!._previousHeld = null;
+        else u._lastHeld = null;
+        x._nextHeld = null;
+        x._transaction = null;
+        commitPendingNode(node);
+      }
   } finally {
     globalQueue._queues = queues;
   }
@@ -1661,8 +1683,12 @@ export function setCalculationUpdate(update: Transaction): void {
  * An inherited scope preserves ordinary scheduling until a read forks its
  * calculation. Only that fork needs separate queues and per-pass parking. */
 export function recomputeInUpdate(
-  node: Computed<any>, update: Transaction | null,
-  prepare = false, create = false, fromHeap = false, inherit = false
+  node: Computed<any>,
+  update: Transaction | null,
+  prepare = false,
+  create = false,
+  fromHeap = false,
+  inherit = false
 ): void {
   const incoming = flushTransaction;
   const previousFork = calculationForked;
@@ -1673,7 +1699,13 @@ export function recomputeInUpdate(
   // calculation or cleanup must return to its caller before other heap work.
   // Root-level peers have no unpublished computed owner to select a different
   // frame. Other owners and ambient updates keep the individual scope path.
-  const batch = !inherit && !LEGACY_LANES && fromHeap && !create && update !== null && incoming === null &&
+  const batch =
+    !inherit &&
+    !LEGACY_LANES &&
+    fromHeap &&
+    !create &&
+    update !== null &&
+    incoming === null &&
     (parent === null || ((parent as Root)._root && !(parent as Root)._parentComputed));
   const previousPreparation = preparingUpdate;
   const queues = globalQueue._queues;
@@ -1691,23 +1723,43 @@ export function recomputeInUpdate(
         if (flushTransaction && (!inherit || calculationForked)) {
           // Keep the usual per-calculation parking boundary. Only the scope
           // setup is shared; writes and new children are held before proceeding.
-          if (pendingNodes.length === start + 1 && pendingNodes[start] === node &&
-              node._config & CONFIG_HELD && node._firstChild === null) pendingNodes.pop();
+          if (
+            pendingNodes.length === start + 1 &&
+            pendingNodes[start] === node &&
+            node._config & CONFIG_HELD &&
+            node._firstChild === null
+          )
+            pendingNodes.pop();
           else holdQueuedProposals(resolveTx(flushTransaction), start);
         }
       }
       // Match the next visit's normal router: it must still select this
       // positive-depth update, with no ambient proposals to acquire. A merge
       // can lower the surviving update to depth zero without changing identity.
-      if (!batch || flushTransaction !== update || update!._into || !update!._level || node._flags & REACTIVE_ZOMBIE) break;
+      if (
+        !batch ||
+        flushTransaction !== update ||
+        update!._into ||
+        !update!._level ||
+        node._flags & REACTIVE_ZOMBIE
+      )
+        break;
       // Follow the existing height order, including a lower entry inserted by
       // the calculation. Height-adjustment entries and effects return to runHeap.
       let next = dirtyQueue._heap[dirtyQueue._min];
       while (next === undefined && dirtyQueue._min < dirtyQueue._max)
         next = dirtyQueue._heap[++dirtyQueue._min];
-      if (!next || !(next._flags & REACTIVE_IN_HEAP) || next._flags & (REACTIVE_ZOMBIE | REACTIVE_DISPOSED) ||
-          (next as any)._type || next._parent !== parent || !(next._config & CONFIG_HELD) ||
-          next._x!._transaction !== update || hasUnheldProposals()) break;
+      if (
+        !next ||
+        !(next._flags & REACTIVE_IN_HEAP) ||
+        next._flags & (REACTIVE_ZOMBIE | REACTIVE_DISPOSED) ||
+        (next as any)._type ||
+        next._parent !== parent ||
+        !(next._config & CONFIG_HELD) ||
+        next._x!._transaction !== update ||
+        hasUnheldProposals()
+      )
+        break;
       // Only eligible continuations need the ambient-work scan. The next
       // ordinary visit already performs it when this scope cannot continue.
       node = next;
@@ -1726,7 +1778,11 @@ export function recomputeInUpdate(
 
 /** A selected literal can use the ordinary setter without entering a compute
  * scope. The guarded path runs no user code and creates no owned children. */
-export function stageValueInUpdate(node: Computed<any>, update: Transaction, value: unknown): boolean {
+export function stageValueInUpdate(
+  node: Computed<any>,
+  update: Transaction,
+  value: unknown
+): boolean {
   const incoming = flushTransaction;
   flushTransaction = update;
   try {
@@ -1918,7 +1974,8 @@ export function commitPendingNode(n: Signal<any>): void {
   // Computeds only from here (`_statusFlags` is not a signal field). A
   // commit beneath a flight publishes its inputs (A15 reveal corollary,
   // #3305): a reveal of it must observe, not show the pre-flight value.
-  const inFlight = (c._statusFlags! & STATUS_PENDING) !== 0 &&
+  const inFlight =
+    (c._statusFlags! & STATUS_PENDING) !== 0 &&
     (n._pendingValue === NOT_PENDING || !!(c._flags! & REACTIVE_PREVIOUS_COMMITTED));
   if (inFlight) n._pendingValue = NOT_PENDING;
   else c._flags! &= ~(REACTIVE_PREVIOUS_COMMITTED | REACTIVE_RETRIED_OWNER);

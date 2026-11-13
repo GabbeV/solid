@@ -1,5 +1,5 @@
 /** Array structure owns a publication boundary without guessing array contents. */
-import { computed, read, signal } from "../core/core.js";
+import { computed, read, signal, untrack } from "../core/core.js";
 import { CONFIG_AUTO_DISPOSE, REACTIVE_DISPOSED } from "../core/constants.js";
 import { flushTransaction, insertSubs, joinFuture, schedule } from "../core/scheduler.js";
 import {
@@ -17,6 +17,7 @@ import {
 } from "./store.js";
 import { optHooks } from "./hooks.js";
 import { dispose } from "../core/owner.js";
+import { enqueueSub, markNode } from "../core/heap.js";
 import type { StoreTarget } from "./target.js";
 import { isWrappable } from "./types.js";
 
@@ -35,6 +36,14 @@ function state(t: StoreTarget): ArrayState {
   let r = arrays.get(t);
   if (!r) arrays.set(t, (r = { retiring: new Set() }));
   return r;
+}
+function discoverStructure(slots: ArraySlots): void {
+  for (const map of [slots.slots, slots.presence, slots.shape])
+    for (const slot of map.values()) {
+      markNode(slot.output);
+      enqueueSub(slot.output);
+    }
+  schedule();
 }
 function discover(t: StoreTarget) {
   if (t.k) insertSubs(t.k);
@@ -72,6 +81,21 @@ export function arrayGrowthStands(t: StoreTarget): boolean {
 export function readArrayLength(t: StoreTarget): void {
   const slot = arrays.get(t)?.length;
   if (slot) entangleOptimisticSlotRead(slot);
+}
+
+/** Establish the array's selected context before consulting a lower input,
+ * then track that structural output for subsequent changes. */
+export function readArrayStructure(t: StoreTarget): void {
+  const r = arrays.get(t);
+  const length = r?.length?.activeOwner() ? r.length.output : undefined;
+  const structure = r?.structure?.activeOwner() ? r.structure.output : undefined;
+  if (!length && !structure) return;
+  untrack(() => {
+    if (length) read(length);
+    if (structure) read(structure);
+  });
+  if (length) read(length);
+  if (structure) read(structure);
 }
 
 /** Shared net array-shape test; row arrangement can add another boundary. */
@@ -147,6 +171,7 @@ export function joinArrayIncoming(t: StoreTarget, slots: ArraySlots): void {
   r ??= state(t);
   r.structure ??= createOptimisticSlot(signal(false), undefined, undefined, () => schedule());
   r.structure.propose(true);
+  discoverStructure(slots);
   active.add(t);
 }
 
@@ -217,6 +242,7 @@ export function coordinateArrayWrites(
     r.length.propose(next.length);
     active.add(t);
   }
+  if (structural) discoverStructure(slots);
 }
 
 export function sweepArrays(): void {

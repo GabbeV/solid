@@ -16,7 +16,8 @@ import {
   createRoot,
   createSignal,
   flush,
-  mapArray
+  mapArray,
+  untrack
 } from "../src/index.js";
 
 type Card = { id: string; order: number };
@@ -137,6 +138,7 @@ describe("optimistic store refetched by a write outside the action (router#619)"
     ];
     const [version, setVersion] = createSignal(0);
     const frames: string[] = [];
+    const contexts: string[] = [];
     let stuck!: () => Promise<void>;
     let swap!: () => Promise<void>;
     createRoot(() => {
@@ -176,6 +178,7 @@ describe("optimistic store refetched by a write outside the action (router#619)"
             .join(" "),
         v => {
           frames.push(v);
+          contexts.push(untrack(() => cards.map(row => `${row.id}:${row.order}`).join(" ")));
         }
       );
     });
@@ -190,6 +193,9 @@ describe("optimistic store refetched by a write outside the action (router#619)"
     flush();
     await tick(100);
     flush();
-    expect(frames).toEqual(SWAPPED);
+    // The first leaf edit changes c.order without changing sorted indices;
+    // the structural context still publishes that complete row update.
+    expect(frames).toEqual([SWAPPED[0], ...SWAPPED]);
+    expect(contexts).toEqual(["a:0 b:1 c:2", "a:0 b:1 c:5", "a:1 b:0 c:5"]);
   });
 });

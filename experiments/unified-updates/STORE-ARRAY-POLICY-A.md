@@ -48,3 +48,34 @@ Initial full discovery run: 7,882 pass / 227 fail / 5 skip, before subsequent fi
 and migrations. A comparison checkout had missing built imports, so its 192
 failures are not a valid semantic baseline count. Receipt identities remain useful;
 no failure is waived merely because that baseline also failed.
+
+## Follow-up checkpoint
+
+The initial-write integration now passes 33 tests in both development and production,
+including actual unattached DOM preparation and late binding publication. The old
+preinitial guess expectations have been migrated; scalar first guesses remain
+supported. An unanswered chained array method that reads length before mutating
+still throws, just as next does; callbacks are not replayed.
+
+The late-reader hang was a scheduler invariant violation: a saved transaction had
+merged during computation, but the reader was appended to its obsolete list. The
+list insertion now resolves the surviving owner. This affects the held path only.
+A separate first-answer control-value staging fix and first-screen read gate prevent
+seed/answer leaks. Source typecheck and focused first-mount/error checks pass.
+
+Frozen source full run after those fixes: 8,006 passed, 174 failed, five skipped.
+Exactly 135 failures match the previously inspected deferred-until identities;
+39 need migration or repair. Test-only migrations afterward do not rewrite that
+receipt. The source hashes remained unchanged throughout the full run, and the
+package was rebuilt before it.
+
+The first latest repair passes nine every-publication fixtures, but is NOT final:
+true active chains (inner existing-index override plus outer append) still expose
+holes on incoming shrink, and the structural context dependency regresses a repeated
+error boundary case. Further review is checking whether structural context is
+established too late or too broadly. A proposed migration that makes the internal
+shape watcher retain an otherwise unobserved input flight is not accepted merely
+because the implementation does it; existing observedness rules remain in force.
+
+A passing initial group or a same-length append chain is not store completion.
+No final size/performance claim is made while these correctness gaps remain.

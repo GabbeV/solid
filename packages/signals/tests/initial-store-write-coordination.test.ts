@@ -472,3 +472,123 @@ for (const failAction of [false, true]) {
     }
   });
 }
+
+for (const optimistic of [false, true]) {
+  it(`eagerly calculates held first-answer ${optimistic ? "optimistic" : "ordinary"} content while late bindings wait for publication`, async () => {
+    const answer = Promise.withResolvers<{ a: number; b: number }>();
+    const end = Promise.withResolvers<void>();
+    const calculated: number[] = [];
+    const shown: number[] = [];
+    const late: number[] = [];
+    const [state, setState, dispose] = createRoot(dispose => {
+      const factory = optimistic ? createOptimisticStore : createStore;
+      const [state, setState] = factory(() => answer.promise, { a: 0, b: 2 });
+      createRenderEffect(
+        () => {
+          const value = state.a;
+          calculated.push(value);
+          return value;
+        },
+        value => {
+          shown.push(value);
+        }
+      );
+      return [state, setState, dispose] as const;
+    });
+    let running: Promise<unknown> | undefined;
+    let unmount: (() => void) | undefined;
+    try {
+      flush();
+      running = action(function* () {
+        setState(draft => {
+          draft.a++;
+        });
+        yield end.promise;
+      })();
+      await turn();
+      answer.resolve({ a: 7, b: 8 });
+      await turn();
+      expect(calculated).toContain(7);
+      expect(shown).toEqual([]);
+      expect(() => state.b).toThrow();
+      unmount = createRoot(dispose => {
+        createRenderEffect(
+          () => state.b,
+          value => {
+            late.push(value);
+          }
+        );
+        return dispose;
+      });
+      flush();
+      expect(late).toEqual([]);
+      end.resolve();
+      await running;
+      await turn();
+      expect(shown).toEqual([7]);
+      expect(late).toEqual([8]);
+    } finally {
+      answer.resolve({ a: 7, b: 8 });
+      end.resolve();
+      await Promise.allSettled(running ? [running] : []);
+      unmount?.();
+      dispose();
+      flush();
+    }
+  });
+}
+
+for (const answerBeforeMount of [false, true]) {
+  it(`keeps a late initial array length binding loading (answer before mount: ${answerBeforeMount})`, async () => {
+    const answer = Promise.withResolvers<string[]>();
+    const end = Promise.withResolvers<void>();
+    const shown: number[] = [];
+    const [rows, setRows, dispose] = createRoot(dispose => {
+      const [rows, setRows] = createOptimisticStore(() => answer.promise, []);
+      return [rows, setRows, dispose] as const;
+    });
+    let running: Promise<unknown> | undefined;
+    let unmount: (() => void) | undefined;
+    try {
+      flush();
+      running = action(function* () {
+        setRows(draft => {
+          draft.push("discarded");
+        });
+        yield end.promise;
+      })();
+      await turn();
+      if (answerBeforeMount) {
+        answer.resolve(["answer"]);
+        await turn();
+      }
+      unmount = createRoot(dispose => {
+        createRenderEffect(
+          () => rows.length,
+          value => {
+            shown.push(value);
+          }
+        );
+        return dispose;
+      });
+      flush();
+      expect(shown).toEqual([]);
+      if (!answerBeforeMount) {
+        answer.resolve(["answer"]);
+        await turn();
+      }
+      expect(shown).toEqual([]);
+      end.resolve();
+      await running;
+      await turn();
+      expect(shown).toEqual([1]);
+    } finally {
+      answer.resolve(["answer"]);
+      end.resolve();
+      await Promise.allSettled(running ? [running] : []);
+      unmount?.();
+      dispose();
+      flush();
+    }
+  });
+}

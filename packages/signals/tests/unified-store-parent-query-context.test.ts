@@ -8,7 +8,8 @@ import {
   createSignal,
   flush,
   isPending,
-  latest
+  latest,
+  NotReadyError
 } from "../src/index.js";
 const turn = async () => {
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -54,14 +55,14 @@ for (const initialized of [false, true])
           yield firstEnd.promise;
         })();
         flush();
-        const firstRow = state.row;
-        expect(frames.at(-1)).toBe(9);
-        expect(latest(() => state.row.data)).toBe(9);
-        expect(latest(() => firstRow.data)).toBe(9);
-        expect(isPending(() => firstRow.data)).toBe(false);
+        expect(frames.at(-1)).toBe("loading");
+        expect(() => state.row).toThrow(NotReadyError);
+        expect(() => latest(() => state.row.data)).toThrow(NotReadyError);
+        expect(isPending(() => state.row)).toBe(false);
         initial.resolve({ row: { data: 0 } });
         await turn();
-        expect(latest(() => state.row.data)).toBe(9);
+        expect(frames.at(-1)).toBe("loading");
+        expect(() => state.row).toThrow(NotReadyError);
         firstEnd.resolve();
         await first;
         await turn();

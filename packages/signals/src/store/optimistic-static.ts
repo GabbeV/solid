@@ -44,6 +44,7 @@ import {
   coordinateArrayWrites,
   joinArrayIncoming,
   readArrayLength,
+  readArrayStructure,
   selectedArrayLength,
   sweepArrays
 } from "./optimistic-array.js";
@@ -286,6 +287,7 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
           ? { value: node._value }
           : undefined),
       () => {
+        if (Array.isArray(t.v)) readArrayStructure(t);
         // A published descendant keeps its parent traversable, including for
         // late readers and lower errors. The strict input above remains the
         // pending authority through the slot's ordinary input-status boundary.
@@ -387,7 +389,11 @@ function shapeSlot(t: StoreTarget, key: PropertyKey): Slot {
       schedule();
     },
     undefined,
-    published
+    published,
+    () => {
+      if (Array.isArray(t.v)) readArrayStructure(t);
+      return read(input);
+    }
   );
   slot.output._equals = sameShapeMeta;
   record.shape.set(key, slot);
@@ -461,7 +467,10 @@ function structureSlot(t: StoreTarget): Slot {
     });
     schedule();
   };
-  slot = createOptimisticSlot(input, candidate);
+  slot = createOptimisticSlot(input, candidate, undefined, undefined, undefined, () => {
+    if (Array.isArray(t.v)) readArrayStructure(t);
+    return read(input);
+  });
   record.structure = slot;
   record.nodes.set(node, slot);
   record.inputs.add(input);
@@ -605,6 +614,8 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
 }
 
 function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer = false) {
+  if (!writer && Array.isArray(source) && arrayGrowthStands(t))
+    source = read(structureSlot(t).output);
   const body = selectedBody(t, writer);
   const record = records.get(t);
   if (!record) return body ?? source;

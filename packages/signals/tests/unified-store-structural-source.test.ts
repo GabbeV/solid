@@ -15,7 +15,7 @@ const turn = async () => {
   flush();
 };
 for (const kind of ["keys", "deep"] as const)
-  it(`${kind} waits for an unanswered base shape despite a selected property`, async () => {
+  it(`${kind} discards an initial property proposal and waits for the writing action`, async () => {
     const answer = Promise.withResolvers<{ truth: number; added?: number }>(),
       finish = Promise.withResolvers<void>();
     const shown: string[] = [];
@@ -42,11 +42,13 @@ for (const kind of ["keys", "deep"] as const)
       expect(read).toThrow(NotReadyError);
       answer.resolve({ truth: 1 });
       await turn();
-      expect(shown.at(-1)).toBe(kind === "keys" ? "truth,added" : '{"truth":1,"added":9}');
+      expect(shown).toEqual([]);
+      expect(read).toThrow(NotReadyError);
       finish.resolve();
       await running;
       await turn();
-      expect(shown.at(-1)).toBe(kind === "keys" ? "truth" : '{"truth":1}');
+      expect(shown).toEqual([kind === "keys" ? "truth" : '{"truth":1}']);
+      expect("added" in state).toBe(false);
     } finally {
       answer.resolve({ truth: 1 });
       finish.resolve();

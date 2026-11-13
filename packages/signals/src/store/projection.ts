@@ -19,13 +19,14 @@
 import { attrHooks } from "../core/attribution-hooks.js";
 import {
   CONFIG_AUTO_DISPOSE,
+  CONFIG_HELD,
   CONFIG_VERDICT,
   STATUS_ERROR,
   CONFIG_LOADING,
   STATUS_PENDING,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
-import { computed } from "../core/core.js";
+import { computed, setSignal } from "../core/core.js";
 import { ContextRetry, NotReadyError } from "../core/error.js";
 import {
   addPendingSource,
@@ -317,6 +318,16 @@ export function runProjectionComputed<T extends object>(
             };
             wrapCommit ? wrapCommit(write, v as T) : write();
           }
+          // A first async answer held with a writer stages the same control
+          // value as this driver's successful synchronous pass. Until that
+          // commits, every public key still has no initial screen to serve.
+          if (
+            first &&
+            wake &&
+            owner._statusFlags & STATUS_UNINITIALIZED &&
+            owner._config & CONFIG_HELD
+          )
+            setSignal(owner as Computed<any>, () => owner);
           // A landing (not the sync pass's own commit): the readers held
           // pending on the derive settle.
           if (!first || !(owner._statusFlags & STATUS_UNINITIALIZED)) settleFamily(fam);

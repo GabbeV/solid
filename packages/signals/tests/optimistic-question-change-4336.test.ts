@@ -408,10 +408,9 @@ for (const form of forms) {
       h.asks.at(-1)!.d.res([]);
       await tick();
       expect(isPending(h.read)).toBe(form !== "signal");
-      // Existing latest behavior exposes a sparse overlay here. This assertion
-      // records that behavior pending review against the no-holes requirement.
-      const expected = form === "signal" ? ["dana", "mine (sending)"] : new Array<string>(2);
-      if (form !== "signal") expected[1] = "mine (sending)";
+      // latest observes the selected output layer, whose active append still
+      // requires the coherent dense array while the structural removal waits.
+      const expected = ["dana", "mine (sending)"];
       expect(latest(h.read)).toStrictEqual(expected);
       // Untracked reads see the screen (D-34).
       expectSelectedAfterEmptyAnswer(h, form);
@@ -496,8 +495,12 @@ for (const form of forms) {
       it(`an optimistic input that reverts preserves the post's guess (F-11, D-33; ${reader})`, async () => {
         const { h, from } = await pureRevert();
         expect(h.screen()).toBe("#3: dana | mine (sending)");
-        // The restored answer fills the unguessed index; the post stays selected.
-        expect(new Set(h.frames.slice(from))).toEqual(new Set(["#3: dana | mine (sending)"]));
+        // Store structure held the old selection throughout, so restoring its
+        // question leaves the existing screen intact without another callback.
+        // The scalar selection did publish #1 and must publish #3 on reversal.
+        expect(new Set(h.frames.slice(from))).toEqual(
+          new Set(form === "signal" ? ["#3: dana | mine (sending)"] : [])
+        );
         expect(h.read()).toEqual(["dana", "mine (sending)"]);
         expectCoherentOutput(h);
       });
@@ -513,7 +516,11 @@ for (const form of forms) {
         expectDenseCorrection(h, correctionStart);
         expect(h.screen()).toBe("#3: dana | mine");
         expect(new Set(h.frames.slice(from))).toEqual(
-          new Set(["#3: dana | mine (sending)", "#3: dana | mine"])
+          new Set(
+            form === "signal"
+              ? ["#3: dana | mine (sending)", "#3: dana | mine"]
+              : ["#3: dana | mine"]
+          )
         );
         expectCoherentOutput(h);
       });

@@ -2032,7 +2032,10 @@ function pullFamily(
   // next settled pass pulls without linking and the stale link trims), a
   // verdict reader registered, a tracked pass suspended.
   // A staged error (D-41) throws at the pull, before any leaf would link the reader.
-  if (fw._statusFlags & (STATUS_PENDING | STATUS_ERROR) || fw._config & CONFIG_STAGED_ERROR) {
+  if (
+    fw._statusFlags & (STATUS_PENDING | STATUS_ERROR | STATUS_UNINITIALIZED) ||
+    fw._config & CONFIG_STAGED_ERROR
+  ) {
     // An optimistic family carrying guesses that stand in for the flight
     // (A17): the guesses are the display — a reader is served the leaves
     // (committed plus the guesses) and does not suspend on the derive; a
@@ -2063,6 +2066,7 @@ function pullFamily(
       c !== null &&
       c._type === EFFECT_RENDER &&
       fw._statusFlags & STATUS_PENDING &&
+      !(fw._statusFlags & STATUS_UNINITIALIZED) &&
       fw._config & CONFIG_HELD &&
       flushTransaction !== txOf(fw) &&
       !linkedTo(c, fw)
