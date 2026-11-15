@@ -204,3 +204,30 @@ three variants also fail on the earlier source baseline; no other new failure
 identities remain. Production controls pass 1,039 cases with the same four known
 scope failures; one explicitly development-only assertion is excluded. Source
 typecheck passes. The implementation remains incomplete at this mark-scope gap.
+
+### Affects model clarification (2026-11-15)
+
+The user clarified the intended reference model: affects is an invisible pending
+input to the targeted source, resolving equal when the surrounding update ends.
+It cannot keep that update alive and its resolution must not recalculate values.
+A later real update may arrive upstream with additional async between; pending
+must remain continuous across that handoff. An active optimistic override must
+not hide the declaration: it belongs on the output side in that case.
+
+Non-entanglement is not considered a consistency requirement. Retaining ordinary
+coordination is an option if it simplifies the implementation, but no change to
+entanglement has been implemented. Error behavior should match real incoming
+updates; remove differences only after demonstrating them. A bounded comparison
+with an already-errored memo currently reports false downstream for BOTH a mark
+and a real pending upstream update, so that probe does not establish a difference.
+
+The previous instruction above to preserve declaration-time identity scope is
+no longer an unquestioned acceptance requirement. Source-dependency semantics
+must be worked out for store records and captured children before migrating the
+four scope assertions; they have not been changed or classified as resolved.
+
+Added two passing observable tests in unified-affects-lifetime.test.ts: equal
+mark release does not rerun value computations, and a declaration hands pending
+over continuously to an external upstream update with intermediate async even
+when the declaring action finishes first. These are targeted checks, not a full
+validation of the clarified model. Runtime code is unchanged at this checkpoint.
