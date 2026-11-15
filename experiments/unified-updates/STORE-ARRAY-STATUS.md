@@ -231,3 +231,29 @@ mark release does not rerun value computations, and a declaration hands pending
 over continuously to an external upstream update with intermediate async even
 when the declaring action finishes first. These are targeted checks, not a full
 validation of the clarified model. Runtime code is unchanged at this checkpoint.
+
+### Affects source-scope investigation (2026-11-15)
+
+Compared targeted probes with freshly fetched next 221b5f99f. Active/inactive
+optimistic output declarations remain downstream-only in four probes. New
+captured children report false after a plain insertion or derived-store answer,
+but true after an active optimistic insertion in the experiment. Next reports
+false for all those new captured children. A restored trial marking the root
+store producer fixes the two derived-answer probes (26 focused checks pass),
+but does not solve plain stores without a producer. No runtime change retained.
+
+Shared-object scope needs a ruling before a broader implementation: inserting an
+existing store object into a marked plain collection leaves the object's own
+isPending false. Inserting it before declaring the mark makes it true. Verified
+both experiment and next, with captured row === original proxy. Is the mark a
+dependency solely of the collection output, or does it declare every currently
+reachable shared field affected too? Parent pointers cannot decide this because
+shared raw targets are deduplicated and retain only their first wrapping parent.
+
+Error comparison does not isolate a different inherited-error cutoff: both
+real async and a mark report false on an already-errored memo. Boundary pending
+can differ because real async retries suspend, whereas marks don't recompute
+values. A separate probe exposed final boundary undefined after an equal async
+answer, identically in next and experiment; undiagnosed, not classified as an
+experiment regression or affects bug. Receipts and probes (not acceptance tests)
+are in checkpoints/affects-model-review-20261115.tar.xz.

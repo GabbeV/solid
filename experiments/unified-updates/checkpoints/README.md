@@ -178,3 +178,7 @@ affects-scope failure and three newly added variants remain; no mark-source
 runtime changes are retained. See STORE-ARRAY-STATUS.md for the accepted versus
 rejected changes. Instrumented copies and hypothetical assertion changes in
 scratch are diagnostic evidence only; no existing test assertions were changed.
+
+`affects-model-review-20261115.tar.xz` contains bounded store-source and error
+comparisons against next 221b5f99f, plus a restored root-producer mark trial.
+These are exploratory probes, not accepted assertions or retained fixes.
