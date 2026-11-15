@@ -644,8 +644,9 @@ export const staticOptimisticHooks: OptHooks = {
   ownsFirewall: (t, key, presence) => {
     if (selectedBody(t)) return true;
     if (key === undefined && records.get(t)?.structure) return true;
-    // A resize supplies the full source; a minimum floor still demands it.
-    if (!presence && key === "length" && Array.isArray(t.v)) return true;
+    // Array length and presence use the shared structural output. Its input
+    // observes the producer; subscribing here would bypass that boundary.
+    if (Array.isArray(t.v) && (presence || key === "length")) return true;
     if (key === undefined) return false;
     const record = records.get(t);
     const slot = (presence ? record?.presence : record?.slots)?.get(key);

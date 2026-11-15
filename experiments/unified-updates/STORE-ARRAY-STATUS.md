@@ -54,9 +54,9 @@ independently. This is a proposed implementation direction, not a proven repair 
 new semantic ruling. In particular, do not turn the structural boundary into a
 guess of untouched values, replay setters, or extend optimistic lifetimes.
 
-## Shared structural selection trial (2026-11-15)
+## Shared structural selection checkpoint 736ed636c (2026-11-15)
 
-The current working implementation replaces the separate length and ownership
+That checkpoint replaces the separate length and ownership
 marker with one selected metadata frame: length, keys/presence, and descriptors.
 Data values remain separate per-property outputs. This implements the agreed
 direction; it does not add setter replay, a whole-value guess, or a new lifetime
@@ -96,7 +96,7 @@ Baseline structural-reader errors can halt later tests in that file, so the
 failure-identity difference is not a count of independently fixed bugs. Exact
 reports and comparison are archived in array-structure-frame-20261115.tar.xz.
 
-The five new assertions remain unchanged and unresolved:
+At that checkpoint, five new assertions were unchanged and unresolved:
 
 1. Error recovery shows `#1 #4 p=true` before `#1 #4 p=false`. This is a changed
    pending verdict timeline, not duplicate error delivery. The new length
@@ -112,3 +112,43 @@ are not their cause. The next bounded investigation should trace the structural
 input/output status and invalidation at recovery and reversal. Do not remove the
 callbacks again without the mutation/inverse matrix as a control. No fresh
 performance or bundle-size claims are made for this unfinished trial.
+
+## Follow-up: fix the five introduced regressions (2026-11-15)
+
+Both causes are now corrected, with all original assertions unchanged:
+
+- Array descriptor/presence reads use the structural output, but the store's
+  producer-subscription guard still looked for the old per-property presence
+  slots. `Object.hasOwn` therefore also subscribed the render directly to the
+  family producer. Instrumentation located that exact edge and showed the
+  duplicate callbacks on the restored request's response, not on action closure.
+  Presence reads now use the same subscription boundary as array length. The
+  structural input retains its own producer dependency, including error/status.
+- Pending's incoming-input check counted a ready staged answer as pending even
+  after that input was no longer held. Its direct-output check already required
+  a hold. Applying that same condition to the incoming check removes the spurious
+  recovery frame with pending=true; unfinished async work still reports pending.
+
+Adding equality to the structural input was tested and did not fix any of the
+five assertions; that trial was removed. The structural discovery callbacks
+remain in place. No test expectations or lifetime/entanglement rules changed.
+
+The focused run passes all 968 cases, including the five regressions, nested
+structural/read-surface tests and all 900 mutation-matrix cases. The pending,
+latest and error selection passes 962 tests; its 25 failures were individually
+confirmed on source 736ed636c, so there are no new failure identities in that
+selection. Source typecheck passes. The same 968 focused cases pass in production mode.
+
+Full signals validation: **8,042 pass / 141 fail / 5 skip**. Exactly 135 failing
+identities match the previously reviewed deferred-until list. The remaining six
+also fail against source 736ed636c:
+
+- #3706: a row first read after adoption reports pending where false is expected.
+- `affects`: two scope tests report pending for an added record or a separate key.
+- Shared-question store hold: the test expects `closed: 3,4`, receives `open: 3,4`.
+- #3743: two leaf-reader array cases throw while snapshotting the selected view.
+
+No new non-until failures remain from this follow-up. These six are unresolved,
+not approved test migrations. The experiment as a whole remains unfinished;
+fixing the five introduced regressions is not a completion claim. Receipts and
+source baselines are in `array-regressions-20261115.tar.xz`.

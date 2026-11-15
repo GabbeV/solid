@@ -57,7 +57,10 @@ function pendingAnswer(
 ): boolean {
   return !!(
     (incoming._statusFlags & STATUS_PENDING && !quietPending(incoming)) ||
-    (!quiet &&
+    // A ready staged answer only waits while held, just as the observed
+    // output does. Unheld recovery must retire pending before it publishes.
+    (incoming._config & CONFIG_HELD &&
+      !quiet &&
       !incoming._x?._reask &&
       incoming._pendingValue !== NOT_PENDING &&
       (!!input._x?._shownError || !input._equals || !input._equals(value, incoming._pendingValue)))

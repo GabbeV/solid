@@ -162,3 +162,11 @@ five new callback/pending timeline assertions remain unresolved. See
 STORE-ARRAY-STATUS.md. Scratch diagnosis tests depend on removed instrumentation
 and are evidence, not supported runnable tests. No new semantics or performance
 claims are inferred from this archive.
+
+`array-regressions-20261115.tar.xz` preserves the causal pending and direct-producer
+subscription traces, rejected input-equality trial, baseline source 736ed636c,
+full signals report and exact deferred-until classification, six remaining-failure
+baseline controls, and 968 passing development/production checks. It extracts
+`array-regressions-20261115/`. The five introduced regressions are fixed with their
+assertions unchanged; six prior non-until failures remain. Instrumented scratch
+sources are diagnostic evidence, not part of the retained implementation.
