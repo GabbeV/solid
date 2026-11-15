@@ -46,6 +46,8 @@ export interface OptHooks {
   /** `src` with the lanes' values over it (`writer`: the next write's base
    * — the unflushed guesses too). */
   view(t: StoreTarget, src: Record<PropertyKey, any>, writer?: boolean): Record<PropertyKey, any>;
+  /** Selected array structural keys, without reading data values. */
+  keys?(t: StoreTarget): (string | symbol)[] | undefined;
   /** An untracked `key in store`: the presence guess, or `undefined`. */
   has(t: StoreTarget, key: PropertyKey): boolean | undefined;
   /** A guessed key's descriptor (`null`: removed; `undefined`: no guess). */

@@ -152,3 +152,13 @@ runtime and the approved array rule, not this trial.
 the rejected length/container discovery changes, and validation receipts. The
 eight-case active-chain success did not survive lifecycle/adversarial checks;
 none of that retry's runtime changes is retained. See STORE-ARRAY-STATUS.md.
+
+`array-structure-frame-20261115.tar.xz` preserves the shared structural metadata
+trial, its baseline source at 738fc16b8, broad failure-identity comparisons,
+mutation/inverse ablations and repair, and production controls. It extracts
+`array-structure-frame-20261115/`. The current checkpoint retains the trial as
+unfinished: all 900 mutation-matrix tests and the structural targets pass, but
+five new callback/pending timeline assertions remain unresolved. See
+STORE-ARRAY-STATUS.md. Scratch diagnosis tests depend on removed instrumentation
+and are evidence, not supported runnable tests. No new semantics or performance
+claims are inferred from this archive.

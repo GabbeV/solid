@@ -543,7 +543,10 @@ function notifyContainer(k: Signal<any>, pb: Record<PropertyKey, any>): void {
   // the node; the comparator is the store's, done).
   if (k._config & CONFIG_OVERRIDE) setSignal(k, pb);
   else {
-    if (k._config & CONFIG_HELD) joinFuture(txOf(k));
+    if (k._config & CONFIG_HELD) {
+      joinFuture(txOf(k));
+      k._pendingValue = pb;
+    }
     if (snapshotCaptureActive) captureWriteSnapshot(k, k._value);
     insertSubs(k);
     schedule();
@@ -2552,6 +2555,10 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (verdict !== null && affectsHooks !== null && getObserver() === null)
       affectsHooks._witness(target, undefined);
     if (target._fam !== null) pullFamily(target);
+    if (optHooks?.keys && optRead(target)) {
+      const keys = optHooks.keys(target);
+      if (keys) return keys;
+    }
     const source = enumerationSource(target);
     if (userWrite && target._fam?.opt && inDraft(target))
       optHooks?.draftRead?.(target, undefined, "keys");
@@ -2565,6 +2572,12 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (verdict !== null && affectsHooks !== null && obs === null)
       affectsHooks._witness(target, key);
     if (target._fam !== null) pullFamily(target, key, true);
+    if (Array.isArray(target.v) && optHooks && optRead(target)) {
+      const descriptor = optHooks.descriptor(target, key, target.v);
+      if (!descriptor) return undefined;
+      if (key !== "length") descriptor.configurable = true;
+      return descriptor;
+    }
     // An enumerator (spread, Object.entries) already holds the container
     // node and reads its frame; a descriptor read on its own tracks
     // presence (R13).

@@ -49,6 +49,7 @@ import {
   readArrayLength,
   readArrayStructure,
   selectedArrayLength,
+  selectedArrayShape,
   sweepArrays
 } from "./optimistic-array.js";
 import type { OptHooks } from "./hooks.js";
@@ -488,6 +489,8 @@ function structureSlot(t: StoreTarget): Slot {
 }
 
 function readSelected(t: StoreTarget, node: Signal<any>) {
+  if (Array.isArray(t.v) && t.h?.[(node as any)._key] === node)
+    return (node as any)._key in selectedArrayShape(t);
   if (Array.isArray(t.v) && node === t.n?.length)
     return selectedArrayLength(t, () => {
       const body = selectedBody(t);
@@ -549,6 +552,8 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
     if (inner && records.has(inner)) shape = compose(inner, committed(inner), true);
   }
   const record = recordFor(t);
+  const arrayShape = !writer && Array.isArray(shape) ? selectedArrayShape(t) : undefined;
+  if (arrayShape) shape = arrayShape;
   const out = Array.isArray(shape) ? [] : Object.create(record.prototype);
   const sourceKeys = Reflect.ownKeys(shape);
   const order = new Map<PropertyKey, number>();
@@ -560,7 +565,7 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
       out.length = descriptor.value;
       continue;
     }
-    const slot = record.slots.get(key);
+    const slot = arrayShape ? slotFor(t, key) : record.slots.get(key);
     const value = slot
       ? writer
         ? t.ch && slot.activeOwner() === null && Object.is(slot.writerValue(), slot.output._value)
@@ -581,7 +586,7 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
         : { ...descriptor, configurable: true }
     );
   }
-  for (const [key, slot] of record.shape) {
+  for (const [key, slot] of arrayShape ? [] : record.shape) {
     if (Array.isArray(out) && key === "length") continue;
     const meta = writer ? (slot.writerValue() as ShapeMeta) : (read(slot.output) as ShapeMeta);
     const bits = meta.bits & shapeMask;
@@ -690,7 +695,15 @@ export const staticOptimisticHooks: OptHooks = {
     }
   },
   view: selectedView,
+  keys: t => (Array.isArray(t.v) ? Reflect.ownKeys(selectedArrayShape(t)) : undefined),
   descriptor: (t, key, source) => {
+    if (Array.isArray(t.v)) {
+      const descriptor = Object.getOwnPropertyDescriptor(selectedArrayShape(t), key);
+      if (!descriptor) return null;
+      return key === "length" || !("value" in descriptor)
+        ? descriptor
+        : { ...descriptor, value: read(slotFor(t, key).output) };
+    }
     // A presence update can reach a descriptor reader before this key's
     // shape stages. Link the shape output so its own staging corrects that
     // pass, independent of proposal order.
@@ -711,6 +724,7 @@ export const staticOptimisticHooks: OptHooks = {
       : descriptor;
   },
   has: (t, key) => {
+    if (Array.isArray(t.v)) return key in selectedArrayShape(t);
     const slot = records.get(t)?.presence.get(key);
     if (slot) return !!read(slot.output);
     const row = selectedBody(t);
