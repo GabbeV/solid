@@ -628,8 +628,6 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
 }
 
 function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer = false) {
-  if (!writer && Array.isArray(source) && arrayGrowthStands(t))
-    source = read(structureSlot(t).output);
   const body = selectedBody(t, writer);
   const record = records.get(t);
   if (!record) return body ?? source;

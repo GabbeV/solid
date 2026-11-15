@@ -114,7 +114,7 @@ function structureSlot(t: StoreTarget): Slot {
       const source = read(getContainerNode(t)) as Record<PropertyKey, any>;
       return sourceShape(source);
     },
-    published ? { loadingValue: published } : undefined
+    { equals: sameMetadata, ...(published ? { loadingValue: published } : {}) }
   );
   input._config &= ~CONFIG_AUTO_DISPOSE;
   // Container readers must rediscover the selected structure when its
@@ -298,7 +298,6 @@ export function coordinateArrayWrites(
     // change can coordinate this value-only override.
     structureSlot(t);
   }
-  if (structural) discoverStructure(slots);
 }
 
 export function sweepArrays(): void {

@@ -60,6 +60,7 @@ import {
   read as readNode,
   REACTIVE_WRITE_IN_OWNED_SCOPE_SIGNAL_MESSAGE,
   setSignal,
+  setVerdict,
   writeHook,
   slotSignal,
   snapshotCaptureActive,
@@ -619,6 +620,17 @@ function intrinsicArrayMethod(src: Record<PropertyKey, any>, key?: PropertyKey):
 }
 
 function isOwnAccessor(src: Record<PropertyKey, any>, key: PropertyKey): boolean {
+  // Descriptor discovery is bookkeeping, not another value read by the
+  // caller's observation window. Chained proxies may compose other fields.
+  if (verdict !== null) {
+    const previous = verdict;
+    setVerdict(null);
+    try {
+      return isOwnAccessor(src, key);
+    } finally {
+      setVerdict(previous);
+    }
+  }
   if (Array.isArray(src)) {
     const target: StoreTarget | undefined = src[$TARGET];
     if (target?.px === src && intrinsicArrayMethod(src, key))

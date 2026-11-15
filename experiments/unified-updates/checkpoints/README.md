@@ -170,3 +170,11 @@ baseline controls, and 968 passing development/production checks. It extracts
 `array-regressions-20261115/`. The five introduced regressions are fixed with their
 assertions unchanged; six prior non-until failures remain. Instrumented scratch
 sources are diagnostic evidence, not part of the retained implementation.
+
+`array-six-remaining-20261115.tar.xz` preserves five retained fixes, the rejected
+mark-source/caller-dependency trial, root ablations, scoped agent traces, and full
+validation reports. It extracts `array-six-remaining-20261115/`. One original
+affects-scope failure and three newly added variants remain; no mark-source
+runtime changes are retained. See STORE-ARRAY-STATUS.md for the accepted versus
+rejected changes. Instrumented copies and hypothetical assertion changes in
+scratch are diagnostic evidence only; no existing test assertions were changed.

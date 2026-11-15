@@ -152,3 +152,55 @@ No new non-until failures remain from this follow-up. These six are unresolved,
 not approved test migrations. The experiment as a whole remains unfinished;
 fixing the five introduced regressions is not a completion claim. Receipts and
 source baselines are in `array-regressions-20261115.tar.xz`.
+
+## Follow-up: five of the six remaining cases (2026-11-15)
+
+Five original failures now pass without changing their assertions:
+
+- Two #3743 snapshots no longer instantiate the obsolete whole-array selector
+  mid-hold. Composition already has the shared metadata selection and selected
+  property values; the extra selector had no published value and threw.
+- The shared-question store case no longer merges the guessing action with its
+  pending input. Blanket setter-time invalidation ran held selectors before the
+  new proposals selected their output context. Changed output notifications and
+  structural selection/retirement discovery suffice; incoming-answer discovery
+  remains. The 927-case matrix/structural check passes with this deletion.
+- The #3706 find case uses metadata equality on the structural input as well as
+  its output. A value-only row replacement no longer stages identical metadata
+  and creates an unrelated hold. All 19 adoption controls pass.
+- The keyed affects case excludes internal accessor discovery from observation
+  windows. It no longer probes unrelated fields while determining whether the
+  requested field is an accessor. Actual descriptor/value/snapshot reads retain
+  their observation semantics; composition itself is not suppressed.
+
+One original case remains: a child added after affects(parent) was declared is
+outside the declaration's identity scope, but its selected-body dependency on
+that parent makes isPending(child.field) inherit the parent's mark.
+
+A mark-source trial passed the original test but failed additional controls.
+An explicit store-slot origin plus removal of direct caller dependencies made
+all focused mark controls pass, including later marks on the child and captured
+memo/value/presence/key readers. However, the full suite then exposed two new
+regressions: a Loading fallback stopped appearing, and a concurrent optimistic
+leaf guess failed to display. Both regressions disappear without those changes.
+**The entire mark-source trial is removed from the retained runtime.** No new
+origin fields, mark propagation hooks, or caller-dependency suppression remain.
+
+The five new tests in unified-store-mark-boundaries.test.ts are retained. Two
+alias controls pass; three selected-child memo/read-surface variants expose the
+remaining scope problem. They are not accepted behavior or weakened assertions.
+The next attempt must preserve value subscriptions and demand while making
+explicit marks follow the store identity covered by the declaration. Do not
+solve marks by indiscriminately suppressing parent-selection dependencies.
+
+The prior trial's full receipt (8,051 pass / 137 fail / five skip) is rejected
+validation, not the current result. Exact ablations, agent traces, source trial,
+and retained validation are archived in array-six-remaining-20261115.tar.xz.
+
+Retained validation: **8,049 pass / 139 fail / five skip** in the full signals
+suite. Exactly 135 failures match deferred until. The other four are the one
+original affects-scope test and its three new memo/read-surface variants. Those
+three variants also fail on the earlier source baseline; no other new failure
+identities remain. Production controls pass 1,039 cases with the same four known
+scope failures; one explicitly development-only assertion is excluded. Source
+typecheck passes. The implementation remains incomplete at this mark-scope gap.
