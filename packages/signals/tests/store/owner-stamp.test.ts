@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  $TARGET,
   createEffect,
   createProjection,
   createRoot,
@@ -16,7 +17,7 @@ import {
   flush,
   snapshot
 } from "../../src/index.js";
-import { $OWNER, isOwned, storeLookup } from "../../src/store/target.js";
+import { $OWNER, isOwned } from "../../src/store/target.js";
 
 describe("ownership stamp (#3360)", () => {
   it("stamps the committed backing after a write; the user's object stays clean", () => {
@@ -28,7 +29,7 @@ describe("ownership stamp (#3360)", () => {
       d.nested.x = 2;
     });
     flush();
-    const t = storeLookup.get(src)!;
+    const t = (s as any)[$TARGET];
     expect(t.v).not.toBe(src);
     expect(isOwned(t.v)).toBe(true);
     expect((t.v as any)[$OWNER]).toBe(t);
@@ -98,7 +99,7 @@ describe("ownership stamp (#3360)", () => {
       d.a = 2;
     });
     flush();
-    const t = storeLookup.get(src)!;
+    const t = (s as any)[$TARGET];
     expect(Reflect.ownKeys(t.n!)).toEqual(["a"]);
     expect(t.h === null || !($OWNER in t.h)).toBe(true);
   });
@@ -214,7 +215,7 @@ describe("ownership stamp (#3360)", () => {
       d.item.x = 2;
     });
     flush();
-    const ownedRaw = storeLookup.get(src)!.v.item;
+    const ownedRaw = (s as any)[$TARGET].v.item;
     expect(isOwned(ownedRaw)).toBe(true);
 
     const proj = createRoot(() =>

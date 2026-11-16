@@ -17,9 +17,8 @@
  */
 import type { Computed, Owner, Signal } from "../core/types.js";
 
-/** Projection family (§7b; returns in S3): children wrap into the family's
- * own map (writes land in the projection, never the source family), and the
- * family's node is the firewall every read through it pulls first. */
+/** Each store has its own wrapping scope. A derived store additionally
+ * supplies a producer that its reads pull before serving a value. */
 export interface StoreFamily {
   /** Optimistic family (S4): the setter's writes are guesses. */
   opt?: boolean;
@@ -39,7 +38,7 @@ export interface StoreFamily {
   /** Targets of the family that carry nodes: the derive's pending wakes
    * their readers (A9) — the family's enumerable index, in place of a
    * per-leaf chain; a target leaves it with its last node. */
-  live: Set<StoreTarget>;
+  live: Set<StoreTarget> | null;
   /** A source's status reaching the derive by propagation (`familyStatus`). */
   st?: (status: number, error?: unknown) => void;
   _shallow?: boolean;
@@ -130,7 +129,7 @@ export interface StoreTarget {
   /** Keys deleted in the overlay window (a prototype overlay cannot shadow
    * a delete); null when none. */
   del: Set<PropertyKey> | null;
-  /** Projection family, null for plain stores (§7b). */
+  /** Wrapping scope and optional producer (§7b). */
   _fam: StoreFamily | null;
   /** Shallow store root (values served raw). */
   s: boolean;
@@ -152,23 +151,23 @@ export interface StoreTarget {
  */
 export const $OWNER: unique symbol = Symbol(__DEV__ ? "STORE_OWNER" : 0);
 
-/** raw → target for plain (family-less) stores. Family stores use their own
- * map so one raw can wrap once per family (§7b). */
-export const storeLookup = new WeakMap<object, StoreTarget>();
+/** Diagnostics only: raw marking must not turn an already wrapped object
+ * into a raw value. Reactive identity is local to each store. */
+export const devStoreTargets = __DEV__ ? new WeakMap<object, StoreTarget>() : null;
 
 export function setLookup(raw: object, t: StoreTarget): void {
-  (t._fam?.map ?? storeLookup).set(raw, t);
+  t._fam!.map.set(raw, t);
 }
 
 export function isOwned(raw: object): boolean {
   return (raw as any)[$OWNER] !== undefined;
 }
 
-/** The target wrapping `raw` in `fam` (or the plain lookup). An owned raw
+/** The target wrapping `raw` in `fam`. An owned raw
  * answers from its stamp; a user raw from the map. */
 export function lookupTarget(raw: object, fam: StoreFamily | null): StoreTarget | undefined {
   const owner: StoreTarget | undefined = (raw as any)[$OWNER];
-  return owner !== undefined && owner._fam === fam ? owner : (fam?.map ?? storeLookup).get(raw);
+  return owner !== undefined && owner._fam === fam ? owner : fam?.map.get(raw);
 }
 
 /** Test-tier oracle (INTERNALS §5): no write path ever mutates a

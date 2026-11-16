@@ -230,7 +230,7 @@ function familyStatus(this: StoreFamily, status: number, error?: unknown): void 
 }
 
 function forEachFamilyNode(fam: StoreFamily, fn: (n: Signal<any>) => void): void {
-  for (const t of fam.live) {
+  for (const t of fam.live!) {
     const nodes = t.n;
     if (nodes !== null) for (const key of Reflect.ownKeys(nodes)) fn(nodes[key as any]);
     const has = t.h;

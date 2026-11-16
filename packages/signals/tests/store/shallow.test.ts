@@ -272,28 +272,35 @@ describe("createStore shallow", () => {
     expect(seen).toBe(b);
   });
 
-  test("shallow store nested in a deep store reconciles through the parent", () => {
-    // regression: applyStateChild/descendKey must route STORE_SHALLOW
-    const rows = makeRows(0);
-    const [inner] = createStore(rows, { shallow: true });
-    const [outer, setOuter] = createStore<{ list: any }>({ list: rows });
-    expect(outer.list).toBe(inner);
-    let seen: any;
-    createRoot(() => {
-      createEffect(
-        () => outer.list[0],
-        v => {
-          seen = v;
-        }
-      );
-    });
-    flush();
-    const fresh = makeRows(7);
-    setOuter(reconcile({ list: fresh }, null));
-    flush();
-    expect(inner[0]).toBe(fresh[0]);
-    expect(seen).toBe(fresh[0]);
-  });
+  test.each([false, true])(
+    "a nested shallow store reconciles within the parent wrapper (derived=%s)",
+    derived => {
+      // regression: applyStateChild/descendKey must route STORE_SHALLOW
+      const rows = makeRows(0);
+      const [inner] = createStore(rows, { shallow: true });
+      const [outer, setOuter] = derived
+        ? createStore<{ list: any }>(() => ({ list: inner }))
+        : createStore<{ list: any }>({ list: inner });
+      expect(outer.list).not.toBe(inner);
+      let seen: any;
+      createRoot(() => {
+        createEffect(
+          () => outer.list[0],
+          v => {
+            seen = v;
+          }
+        );
+      });
+      flush();
+      const fresh = makeRows(7);
+      setOuter(reconcile({ list: fresh }, null));
+      flush();
+      expect(inner[0]).toBe(rows[0]);
+      expect(outer.list[0]).not.toBe(fresh[0]);
+      expect(outer.list[0]).toEqual(fresh[0]);
+      expect(seen).toBe(outer.list[0]);
+    }
+  );
 
   test("shallow OBJECT store: per-key nodes, membership, raw values", () => {
     const a = { v: 1 };
@@ -330,7 +337,7 @@ describe("createStore shallow", () => {
   test("ingesting a deep-tracked value into a shallow store throws in dev", () => {
     const child = { v: 1 };
     const [deep] = createStore({ child });
-    // reading through the deep store wraps child into the global lookup
+    // reading through the deep store records child for the raw-ingest diagnostic
     // (creation happens lazily on read)
     void deep.child;
     expect(() => createStore([child], { shallow: true })).toThrow();

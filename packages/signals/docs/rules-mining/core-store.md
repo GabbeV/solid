@@ -10,16 +10,16 @@ Files: **CS** = `tests/store/createStore.test.ts`, **SP** = `tests/store/storePa
 
 - CS "State wrapping > Setting plain object", "Setting plain array". No conflict.
 
-**R2. Raw→proxy resolution is global and deduplicating: wrapping the same raw through two different stores yields the same proxy (`outer.list === inner`).**
+**R2. Raw→proxy resolution is local to each store, including plain stores. Repeated paths within one store share a wrapper; separate stores do not share wrappers merely because their backing object is the same.**
 
-- SH "shallow store nested in a deep store reconciles through the parent".
-- **CONFLICT (mild):** under CoW, once a store privatizes a shared raw, the raw held by the other store diverges — dedupe key (raw identity) and logical node no longer coincide. Ruling needed on what dedupe means once backings diverge.
+- `plain-store-wrapper-scope.test.ts`: shared raw input, repeated paths, cycles, and plain/derived parity.
+- Supersedes the global-deduplication assertion in SH. A plain store containing another store now has the same write isolation as a derived store.
 
 **R3. A store proxy ingested into another store (deep or shallow) is re-wrapped in the ingesting store's own proxy family — never identity-passed, never raw-marked.**
 
 - SPC "each level serves its own proxies…", "set-trap ingest passes through without raw-marking", "seed ingest…".
 
-**R4. Write isolation across a store chain: writing through the last store in a derived chain is visible only there; upstream stores and base objects untouched (shallow or deep middle).**
+**R4. Write isolation across a store chain: writing through the last store in a chain is visible only there; upstream stores and base objects untouched (shallow or deep middle).**
 
 - SPC "write to the last store stays in the last store (shallow middle)", "parity with the shallow:false control".
 

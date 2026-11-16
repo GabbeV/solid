@@ -119,7 +119,7 @@ import {
   lookupTarget,
   markDescendants,
   setLookup,
-  storeLookup,
+  devStoreTargets,
   storeOwners,
   type StoreFamily,
   type StoreTarget,
@@ -204,6 +204,7 @@ function createTarget(
   // Empty: V8 checks trap results against the proxy target's own keys.
   t.px = new Proxy(Array.isArray(value) ? [] : {}, t as ProxyHandler<object>);
   setLookup(value, t);
+  if (__DEV__) devStoreTargets!.set(value, t);
   if (__TEST__ && ingestedRaw && !isOwned(value)) ingestedRaw.add(value);
   return t;
 }
@@ -214,6 +215,7 @@ export function wrap<T extends Record<PropertyKey, any>>(
   parentKey: PropertyKey | null = null,
   fam: StoreFamily | null = parent?._fam ?? null
 ): T {
+  fam ??= { map: new WeakMap(), node: null, live: null };
   // markRaw'd values never wrap through ANY store (R42; sticky raw-marking
   // is one half of the never-both-wrapped-and-raw invariant, RUL-12).
   if (rawValuesUsed && isRawValue(value)) return value;
@@ -221,9 +223,8 @@ export function wrap<T extends Record<PropertyKey, any>>(
   if (existing !== undefined) return existing.px;
   const t: StoreTarget | undefined = (value as any)[$TARGET];
   if (t?.px === value) {
-    // Foreign-family proxies re-wrap into THIS family (writes stay isolated);
-    // same-family and plain-store proxies pass through.
-    if (fam === null || t._fam === fam) return value;
+    // Every store owns its wrappers; only a proxy from this scope passes through.
+    if (t._fam === fam) return value;
     return createTarget(value as any, parent, parentKey, fam).px;
   }
   return createTarget(value, parent, parentKey, fam).px;
@@ -303,12 +304,12 @@ function releaseSlot(node: any): void {
     t.dk === null &&
     (t.h === null || Reflect.ownKeys(t.h).length === 0)
   )
-    t._fam.live.delete(t);
+    t._fam.live?.delete(t);
 }
 
 /** A node was born on `target`: a family target enters the live index. */
 function noteNode(target: StoreTarget, node: Signal<any>, key: PropertyKey): void {
-  if (target._fam !== null) target._fam.live.add(target);
+  target._fam?.live?.add(target);
   markDescendants(target);
   if (affectsHooks !== null) affectsHooks._born(target, node, key);
 }
@@ -963,7 +964,11 @@ installStoreHooks(storePark, () => {
 /** The store half of `affects()` (store/affects.ts) makes its marks' nodes
  * and walks records through these: it never imports the engine. */
 GlobalQueue._storeNode = getNode;
-GlobalQueue._storeWrappable = isWrappable;
+GlobalQueue._storeChild = (t: StoreTarget, key: PropertyKey, value: any) => {
+  if (!isWrappable(value)) return;
+  if (t.ch && value[$TARGET] === undefined) value = resolveChainedRaw(t, key, value);
+  return (wrap(value, t, key) as any)[$TARGET];
+};
 
 /** A projection's creation run commits directly (a memo's first value is
  * its `_value`, not a staging): the draft still writes a clone of the seed,
@@ -1062,7 +1067,7 @@ export function userWriting(): boolean {
   return userWrite;
 }
 function heldDerivation(t: StoreTarget, node: Signal<any> | undefined, key: PropertyKey): boolean {
-  if (t._fam === null || !userWrite) return false;
+  if (t._fam?.node == null || !userWrite) return false;
   if (node !== undefined)
     return (
       (node._config & (CONFIG_HELD | CONFIG_MANUAL_WRITE)) === CONFIG_HELD &&
@@ -1215,7 +1220,9 @@ function notifyWrites(t: StoreTarget): void {
         if (key === $OWNER) continue;
         const nv = pb[key as any];
         const ov = old[key as any];
-        if (nv !== null && typeof nv === "object" ? !targetsEqual(ov, nv) : !isEqual(ov, nv)) {
+        if (
+          nv !== null && typeof nv === "object" ? !targetsEqual(ov, nv, t._fam) : !isEqual(ov, nv)
+        ) {
           bumpDeep(t);
           break;
         }
@@ -1241,7 +1248,7 @@ function notifyWrites(t: StoreTarget): void {
     } else {
       changed =
         Array.isArray(pb) && Array.isArray(old)
-          ? arrayStructureChanged(old as any[], pb as any[])
+          ? arrayStructureChanged(old as any[], pb as any[], t._fam)
           : membershipChanged(old, pb);
     }
     if (changed) notifyContainer(k, pb);
@@ -1261,19 +1268,19 @@ function coveredSet(node: Signal<any>, v: any): void {
 const FORCE: unique symbol = Symbol();
 
 /** Two raws that wrap to the same target are the same logical value. */
-export function targetsEqual(ov: any, nv: any): boolean {
+export function targetsEqual(ov: any, nv: any, fam: StoreFamily | null = null): boolean {
   if (ov === null || typeof ov !== "object" || nv === null || typeof nv !== "object") return false;
-  const ot = lookupTarget(ov, null);
-  return ot !== undefined && ot === lookupTarget(nv, null);
+  const ot = fam === null ? ov[$OWNER] : lookupTarget(ov, fam);
+  return ot !== undefined && ot === (fam === null ? nv[$OWNER] : lookupTarget(nv, fam));
 }
 
 /** Positional identity IS content for arrays (R15). */
-export function arrayStructureChanged(old: any[], neu: any[]): boolean {
+export function arrayStructureChanged(old: any[], neu: any[], fam: StoreFamily | null): boolean {
   if (old.length !== neu.length) return true;
   for (let i = 0; i < neu.length; i++) {
     const ov = old[i];
     const nv = neu[i];
-    if (!isEqual(ov, nv) && !targetsEqual(ov, nv)) return true;
+    if (!isEqual(ov, nv) && !targetsEqual(ov, nv, fam)) return true;
   }
   return false;
 }
@@ -1336,7 +1343,7 @@ export function notifyKeyDiff(
     }
     const ov = od?.value;
     const nv = nd?.value;
-    if (od?.get || od?.set || (!isEqual(ov, nv) && !targetsEqual(ov, nv)))
+    if (od?.get || od?.set || (!isEqual(ov, nv) && !targetsEqual(ov, nv, (node as any)._host._fam)))
       leafSet(node, typeof nv === "function" ? () => nv : (nv as any));
   } else {
     const ov = old[key as any];
@@ -1344,7 +1351,7 @@ export function notifyKeyDiff(
     // A live chained `old` (a store proxy, §7b) already reads the inner
     // store's next frame, not what the node was last told: written, the
     // node's own equality judging it (#4361).
-    if (old[$TARGET] || (!isEqual(ov, nv) && !targetsEqual(ov, nv)))
+    if (old[$TARGET] || (!isEqual(ov, nv) && !targetsEqual(ov, nv, (node as any)._host._fam)))
       leafSet(node, typeof nv === "function" ? () => nv : (nv as any));
   }
 }
@@ -1366,7 +1373,7 @@ export function notifyKeyValue(
     notifyKeyDiff(node, key, old, neu, false);
     return;
   }
-  if (!isEqual(ov, nv) && !targetsEqual(ov, nv))
+  if (!isEqual(ov, nv) && !targetsEqual(ov, nv, (node as any)._host._fam))
     leafSet(node, typeof nv === "function" ? () => nv : (nv as any));
 }
 
@@ -1407,7 +1414,7 @@ export function notifyFoldTail(
     const changed =
       live ||
       (Array.isArray(neu) && Array.isArray(old)
-        ? arrayStructureChanged(old as any[], neu as any[])
+        ? arrayStructureChanged(old as any[], neu as any[], t._fam)
         : membershipChanged(old, neu));
     if (changed) notifyContainer(k, neu);
   }
@@ -1440,10 +1447,7 @@ let writeScopes: Set<any> | null = null;
 const pendingNotify = new Set<StoreTarget>();
 
 function scopeKey(target: StoreTarget): any {
-  if (target._fam !== null) return target._fam;
-  let t = target;
-  while (t.u !== null) t = t.u;
-  return t;
+  return target._fam;
 }
 function inDraft(target: StoreTarget): boolean {
   return writeScopes !== null && writeScopes.has(scopeKey(target));
@@ -1679,7 +1683,11 @@ function adoptChild(target: StoreTarget, key: PropertyKey): boolean {
 
 /** A family target's unheld staging, read with no pass (a handler). */
 function familyAhead(target: StoreTarget): boolean {
-  return target._fam !== null && context === null && !(target.k?._config! & CONFIG_HELD);
+  return (
+    (target.o || target._fam?.node != null) &&
+    context === null &&
+    !(target.k?._config! & CONFIG_HELD)
+  );
 }
 
 /** Did this batch change `key` — value (slot equality), presence, and (for
@@ -1740,8 +1748,8 @@ function nodeValue(node: Signal<any>, backing: any, target: StoreTarget): any {
   if (
     node._pendingValue !== NOT_PENDING &&
     !(node._config & CONFIG_HELD) &&
-    target._fam !== null &&
-    (context === null || target._fam.node?._statusFlags! & STATUS_UNINITIALIZED)
+    (target.o || target._fam?.node != null) &&
+    (context === null || target._fam!.node?._statusFlags! & STATUS_UNINITIALIZED)
   ) {
     // A pass over a derive that has never committed: the staging is its
     // first answer, not a change — linked and served with no verdict (a
@@ -2669,7 +2677,7 @@ export function createStore<T extends Record<PropertyKey, any>>(
   if (shallow && __DEV__) {
     // Never both deep-wrapped and raw (R41/R44): a value already tracked as
     // a DEEP store cannot be ingested shallow.
-    const existing = lookupTarget(initialValue, null);
+    const existing = devStoreTargets!.get(initialValue);
     if (existing !== undefined && !existing.s)
       throw new Error("createStore({ shallow }): value is already tracked as a deep store");
     if ((initialValue as any)[$TARGET])
@@ -2725,7 +2733,7 @@ export function storeIsShallow(proxy: any): boolean {
 /** True when `proxy` belongs to a projection family (S3). */
 export function storeHasFamily(proxy: any): boolean {
   const t: StoreTarget | undefined = proxy?.[$TARGET];
-  return t?._fam != null;
+  return !!t && (t.o || t._fam?.node != null);
 }
 
 /** True when `proxy` belongs to an OPTIMISTIC family (S4). */
@@ -2823,13 +2831,20 @@ export function deep<T>(value: T): T {
   // One pass where the tracked view is the snapshot's backing; else two walks.
   const seen = new Map<object, any>();
   const fast = (t: StoreTarget, raw: object): object | undefined => {
-    if (t._fam !== null || t.ch || t.ovl || (raw !== t.px && lookupTarget(raw, null) !== t)) return;
+    if (
+      t.o ||
+      t._fam?.node != null ||
+      t.ch ||
+      t.ovl ||
+      (raw !== t.px && lookupTarget(raw, t._fam) !== t)
+    )
+      return;
     const src = enumerationSource(t);
     if (src !== snapshotBacking(t) || visited.has(src) || seen.has(src) || !isWrappable(src))
       return;
     // snapshotWalk's resolution must stop at `src` too.
     if (src !== raw) {
-      const st = lookupTarget(src, null);
+      const st = lookupTarget(src, t._fam);
       if (st !== undefined && st !== t) return;
     }
     visited.add(src);
@@ -2882,19 +2897,32 @@ function snapshotBacking(t: StoreTarget): Record<PropertyKey, any> {
   return optRead(t) ? optHooks!.view(t, backing) : backing;
 }
 
-function snapshotWalk(value: any, seen: Map<object, any>, fam: StoreFamily | null): any {
+function snapshotWalk(
+  value: any,
+  seen: Map<object, any>,
+  fam: StoreFamily | null,
+  parent: StoreTarget | null = null,
+  key?: PropertyKey
+): any {
   if (value === null || typeof value !== "object") return value;
+  if (parent?.ch && isWrappable(value)) {
+    // A composed backing contains inner raws; the outer family's targets
+    // are keyed by inner proxies, just as in the get trap and deep walk.
+    if (value[$TARGET] === undefined) value = resolveChainedRaw(parent, key!, value);
+    value = wrap(value, parent, key!);
+  }
   let src = value;
+  let target: StoreTarget | null = null;
   for (let entry = true; ; entry = false) {
     const viaProxy = src?.[$TARGET]?.v !== undefined;
     let t: StoreTarget | undefined = viaProxy ? src[$TARGET] : undefined;
     if (t === undefined && fam !== null) t = lookupTarget(src, fam);
-    if (t === undefined) t = lookupTarget(src, null);
     if (t === undefined) break;
     if (entry && !viaProxy && fam !== null && t._fam !== fam) {
       const outer = fam.map.get(t.px);
       if (outer !== undefined) t = outer;
     }
+    if (entry) target = t;
     if (t._fam !== null) fam = t._fam;
     const backing = snapshotBacking(t);
     if (backing === src) break;
@@ -2902,10 +2930,10 @@ function snapshotWalk(value: any, seen: Map<object, any>, fam: StoreFamily | nul
   }
   if (!isWrappable(src)) return src;
   const cached = seen.get(src);
-  return cached !== undefined ? cached : snapshotRecord(src, seen, fam, null, null);
+  return cached !== undefined ? cached : snapshotRecord(src, seen, fam, target, null);
 }
 
-/** `t`/`step` set: `deep()`'s one pass, which also tracks `t`'s children. */
+/** `t` retains the wrapping scope; `step` also tracks children for deep(). */
 function snapshotRecord(
   src: any,
   seen: Map<object, any>,
@@ -2931,7 +2959,7 @@ function snapshotRecord(
         Object.defineProperty(copy, key, desc);
         continue;
       }
-      const walked = obj ? (step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam)) : cv;
+      const walked = obj ? (step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam, t, key)) : cv;
       if (desc.enumerable && desc.writable && desc.configurable) copy[key] = walked;
       else Object.defineProperty(copy, key, { ...desc, value: walked });
     }
@@ -2949,7 +2977,7 @@ function snapshotRecord(
     }
     const cv = desc.value;
     if (cv === null || typeof cv !== "object") continue;
-    const walked = step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam);
+    const walked = step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam, t, key);
     if (walked !== cv) {
       if (copy === null) {
         copy = Array.isArray(src)

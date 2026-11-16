@@ -14,14 +14,7 @@
  * identity), unkeyed items fall back to position.
  */
 import { isEqual } from "../core/core.js";
-import {
-  $OWNER,
-  isOwned,
-  lookupTarget,
-  storeLookup,
-  type StoreFamily,
-  type StoreTarget
-} from "./target.js";
+import { $OWNER, isOwned, lookupTarget, type StoreFamily, type StoreTarget } from "./target.js";
 import {
   adoptPB,
   bumpDeep,
@@ -79,7 +72,7 @@ export function reconcileState(
       // A different entity at the root: the old backing is disowned (wraps
       // fresh if re-handed) and the new one adopted whole.
       if (isOwned(prev)) delete (prev as any)[$OWNER];
-      else (t._fam?.map ?? storeLookup).delete(prev);
+      else t._fam!.map.delete(prev);
       adoptPB(t, incoming);
       return;
     }
@@ -137,7 +130,9 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
         if (
           deepUsed &&
           !bumped &&
-          !(nv !== null && typeof nv === "object" ? targetsEqual(pvRaw, nv) : isEqual(pvRaw, nv))
+          !(nv !== null && typeof nv === "object"
+            ? targetsEqual(pvRaw, nv, t._fam)
+            : isEqual(pvRaw, nv))
         ) {
           bumpDeep(t);
           bumped = true;
@@ -206,7 +201,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
           deepUsed &&
           !bumped &&
           !(nvP !== null && typeof nvP === "object"
-            ? targetsEqual(prevView[i], nvP)
+            ? targetsEqual(prevView[i], nvP, t._fam)
             : isEqual(prevView[i], nvP))
         ) {
           bumpDeep(t);
@@ -250,7 +245,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       continue;
     }
     if (isObj && !shallow) descend(unwrapValue((prevView as any)[k]), nv, keyFn, proj, t, k);
-    if (deepUsed && !bumped && !(isObj ? targetsEqual(ov, nv) : isEqual(ov, nv))) {
+    if (deepUsed && !bumped && !(isObj ? targetsEqual(ov, nv, t._fam) : isEqual(ov, nv))) {
       bumpDeep(t);
       bumped = true;
     }
@@ -331,7 +326,7 @@ function descend(
       if (nt.u === t) nt.pk = k;
       return;
     }
-    (fam?.map ?? storeLookup).delete(nv);
+    fam!.map.delete(nv);
   }
   if (ct === undefined) return; // nothing proxied below this pair
   if (!isWrappable(nv)) return;

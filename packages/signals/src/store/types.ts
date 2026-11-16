@@ -3,7 +3,7 @@
  * by every store module; carries no reactive machinery of its own.
  */
 import type { Refreshable } from "../core/index.js";
-import { lookupTarget } from "./target.js";
+import { devStoreTargets } from "./target.js";
 
 /** A reactive view of a store's value. Update it through the paired `StoreSetter`. */
 export type Store<T> = T;
@@ -129,7 +129,7 @@ export function markRaw<T>(value: T): T {
 export function markRawOne(v: any): void {
   if (isWrappable(v)) {
     if (v[$TARGET] !== undefined) return;
-    if (__DEV__ && lookupTarget(v, null) !== undefined)
+    if (__DEV__ && devStoreTargets!.has(v))
       throw new Error(
         "shallow store: an ingested record is already tracked as a deep store — one value cannot present both wrapped and raw"
       );

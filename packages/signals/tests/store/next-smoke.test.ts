@@ -6,8 +6,8 @@
  * read-your-writes, transient-node laziness.
  */
 import { describe, expect, it } from "vitest";
-import { createEffect, createRoot, createStore, flush } from "../../src/index.js";
-import { isOwned, storeLookup } from "../../src/store/target.js";
+import { $TARGET, createEffect, createRoot, createStore, flush } from "../../src/index.js";
+import { isOwned } from "../../src/store/target.js";
 
 describe("store-next increment 1", () => {
   it("wraps, tracks per-property, and batches like signals", () => {
@@ -87,11 +87,11 @@ describe("store-next increment 1", () => {
     expect(source.a).toBe(1);
     expect(source.nested.c).toBe(3);
 
-    // Backing privatized (owned), original still resolves to the same proxy.
-    expect(storeLookup.get(source)).toBeDefined();
-    expect(isOwned(storeLookup.get(source)!.v)).toBe(true);
-    expect(storeLookup.get(source)!.v).not.toBe(source);
-    expect(storeLookup.get(source)!.px).toBe(s);
+    // Backing privatized (owned), with the same store proxy.
+    expect((s as any)[$TARGET]).toBeDefined();
+    expect(isOwned((s as any)[$TARGET].v)).toBe(true);
+    expect((s as any)[$TARGET].v).not.toBe(source);
+    expect((s as any)[$TARGET].px).toBe(s);
   });
 
   it("writes outside the setter are silently ignored", () => {
@@ -111,7 +111,7 @@ describe("store-next increment 1", () => {
     flush();
     expect(s.a).toBe(42);
     expect(source.a).toBe(1);
-    const target = storeLookup.get(source)!;
+    const target = (s as any)[$TARGET];
     // Post-flush, the write-created node was swept (no subscribers).
     expect(target.n?.a).toBeUndefined();
     // Committed value lives in owned backing alone (single home).

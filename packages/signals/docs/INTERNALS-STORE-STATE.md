@@ -390,6 +390,18 @@ live path.
 
 ## 7b. Chained backing (cross-store) — spec
 
+Every store, including `createStore(object)`, owns a wrapping scope. The scope
+caches one target per backing identity; it is separate from having a derivation.
+Plain scopes have no producer or live-target index. A nested foreign store is
+wrapped, so upstream writes remain visible while downstream writes stay local.
+Two stores initialized from the same raw object have distinct identities; aliases
+and cycles within one store retain identity.
+
+`affects` declarations are scoped to these wrappers. Coverage can flow from an
+input through a chained view, but never backward into that input merely because
+the view borrows its backing. The subtree is still captured at declaration time.
+
+
 The third backing variant (RUL-6 spec work; shipped contract #2941/#2864).
 A target's backing pointer may aim at **another store's proxy** instead of a
 raw object. Mechanics:

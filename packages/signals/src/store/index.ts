@@ -78,7 +78,9 @@ export type { SourceKind } from "./utils.js";
 /**
  * Create a reactive store: a proxy over plain data with fine-grained
  * subscriptions per read path, written through its setter's draft — or, in
- * the derived form, a projection with a setter.
+ * the derived form, a projection with a setter. Each store owns its nested
+ * wrappers: reads follow an inserted store, while writes stay in this store.
+ * Reusing an input object in another store does not share reactive identity.
  *
  * The derived form comes in two shapes. Seedless, `createStore(fn)`: `fn`
  * takes no draft and every answer is a complete `T` (plain-object roots only;

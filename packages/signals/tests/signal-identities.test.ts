@@ -101,11 +101,11 @@ describe("plain-signal identities", () => {
       },
       { id: "u" }
     );
-    // Created outside any owner; one object made into two stores (one target
-    // under two names); a projection; an optimistic store.
+    // Outside owners, projections and optimistic stores have no plain-source name.
+    // Two stores over one raw now own separate targets and separate names.
     expect(storeName(outside)).toBeUndefined();
-    expect(storeName(r.twice1)).toBeUndefined();
-    expect(storeName(r.twice2)).toBeUndefined();
+    expect(storeName(r.twice1)).toBe("u~0");
+    expect(storeName(r.twice2)).toBe("u~1");
     expect(storeName(r.proj)).toBeUndefined();
     expect(storeName(r.opt)).toBeUndefined();
     // The count still advanced for the two createStore calls.

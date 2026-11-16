@@ -996,7 +996,7 @@ export class GlobalQueue implements IQueue {
    * (store/store.ts `getNode`); a bare registration (birth inheritance); a
    * witnessed mark on an untracked probe (verdict.ts). */
   declare static _storeNode: ((t: any, key: PropertyKey) => Signal<any>) | undefined;
-  declare static _storeWrappable: ((v: unknown) => boolean) | undefined;
+  declare static _storeChild: ((t: any, key: PropertyKey, value: any) => any) | undefined;
   declare static _mark: ((node: Signal<any> | Computed<any>) => void) | undefined;
   declare static _witnessMark: (() => void) | undefined;
   /** A truth landing on a guess (lanes.ts `laneWrite`), `older` when it
