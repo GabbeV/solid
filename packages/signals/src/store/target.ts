@@ -37,7 +37,8 @@ export interface StoreFamily {
   node: Computed<any> | null;
   /** Targets of the family that carry nodes: the derive's pending wakes
    * their readers (A9) — the family's enumerable index, in place of a
-   * per-leaf chain; a target leaves it with its last node. */
+   * per-leaf chain; a target leaves it with its last node. Null only for
+   * plain stores; derived/optimistic scopes retain the set even when empty. */
   live: Set<StoreTarget> | null;
   /** A source's status reaching the derive by propagation (`familyStatus`). */
   st?: (status: number, error?: unknown) => void;
@@ -130,7 +131,7 @@ export interface StoreTarget {
    * a delete); null when none. */
   del: Set<PropertyKey> | null;
   /** Wrapping scope and optional producer (§7b). */
-  _fam: StoreFamily | null;
+  _fam: StoreFamily;
   /** Shallow store root (values served raw). */
   s: boolean;
 }
@@ -156,7 +157,7 @@ export const $OWNER: unique symbol = Symbol(__DEV__ ? "STORE_OWNER" : 0);
 export const devStoreTargets = __DEV__ ? new WeakMap<object, StoreTarget>() : null;
 
 export function setLookup(raw: object, t: StoreTarget): void {
-  t._fam!.map.set(raw, t);
+  t._fam.map.set(raw, t);
 }
 
 export function isOwned(raw: object): boolean {

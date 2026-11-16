@@ -72,7 +72,7 @@ export function reconcileState(
       // A different entity at the root: the old backing is disowned (wraps
       // fresh if re-handed) and the new one adopted whole.
       if (isOwned(prev)) delete (prev as any)[$OWNER];
-      else t._fam!.map.delete(prev);
+      else t._fam.map.delete(prev);
       adoptPB(t, incoming);
       return;
     }

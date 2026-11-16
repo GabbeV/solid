@@ -341,7 +341,7 @@ function carriedVerbatim(
   key: PropertyKey
 ): boolean {
   if (typeof key !== "string" || !INDEX.test(key)) return false;
-  const keyFn = t._fam?.key;
+  const keyFn = t._fam.key;
   if (keyFn === null || keyFn === undefined) return false;
   const row = unwrapValue(pb[key]);
   return isWrappable(row) && row === old[key];
@@ -447,7 +447,7 @@ export function notifyOptimisticWrites(
     // landings judge them. A set (empty or not) marks a keyed arrangement
     // guess (`fold`).
     let removed: Set<unknown> | null = null;
-    const keyFn = t._fam!.key;
+    const keyFn = t._fam.key;
     if (keyFn !== null && keyFn !== undefined) {
       removed = new Set();
       const kept = new Set<unknown>();
@@ -476,7 +476,7 @@ export function notifyOptimisticWrites(
     // older truth instead of folding beneath it (`_laneRebase`, F-1, #4525).
     // A refresh's flight already up (`_reask`, the pass consumed the flag)
     // asks nothing new either (D-34 ¶3, #4656).
-    const d = t._fam!.node;
+    const d = t._fam.node;
     if (removed && d?._statusFlags! & STATUS_PENDING && !reasked(d!)) g.g = null;
   }
   // By value: the draft is the guess as written (a function leaf is a
@@ -631,7 +631,7 @@ GlobalQueue._slotTake = (n, back) => {
     if (kg.indexOf(n) === -1) kg.push(n);
     return n;
   }
-  const d = t?._fam?.node?._x?._transaction;
+  const d = t?._fam.node?._x?._transaction;
   const g = txOf(n);
   if (!d?._lane || sameAction(d, g)) return false;
   // The re-ask takes the target's guess whole (the carrier and the deep
@@ -693,7 +693,7 @@ GlobalQueue._laneRebase = (el: any, truth: unknown, older: boolean) => {
       }
   // An older question's truth, or the #4525 re-base: the guess's edit over it.
   if (!Array.isArray(truth) || !Array.isArray(guess)) return true;
-  const keyFn = t._fam?.key;
+  const keyFn = t._fam.key;
   if (!keyFn) return;
   const byKey = new Map<unknown, any>();
   for (let i = 0; i < truth.length; i++) {
@@ -710,7 +710,7 @@ GlobalQueue._laneRebase = (el: any, truth: unknown, older: boolean) => {
   // The #4525 re-base (`g` null): the lane's rows are the new question's
   // answer now; its work reads that question's hold as the hold's own
   // flush does (core.ts `frameRead`, F-1, #4536).
-  if (el.g === null) txOf(el).over = t._fam!.node!._x!._transaction!;
+  if (el.g === null) txOf(el).over = t._fam.node!._x!._transaction!;
   const guessed: any[] = (el.g ??= guess.map(unwrapValue));
   for (let i = 0; i < guessed.length; i++) {
     const g = guessed[i];
@@ -802,7 +802,7 @@ function foldedRead(c: Computed<any> | null, el: Signal<any> | Computed<any>): u
       passLane !== null ||
       (c as any)._type === EFFECT_RENDER ||
       c._config & CONFIG_CHILDREN_FORBIDDEN ||
-      (el as any)._host?._fam?.node === c
+      (el as any)._host?._fam.node === c
     )
       return NOT_PENDING;
     const l = txOf(el);
