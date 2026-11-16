@@ -257,3 +257,25 @@ values. A separate probe exposed final boundary undefined after an equal async
 answer, identically in next and experiment; undiagnosed, not classified as an
 experiment regression or affects bug. Receipts and probes (not acceptance tests)
 are in checkpoints/affects-model-review-20261115.tar.xz.
+
+### Affects source isolation ruling and capture checks (2026-11-16)
+
+User ruled that affects(list) must not make an independently held person store
+pending merely because list contains it. Reading through list may be pending.
+This supersedes the earlier recommendation to cover all current shared contents;
+that recommendation was not adopted or implemented.
+
+Verified both experiment 94a48bf42 and next 221b5f99f: rederiving a list using a
+returned keyed-row replacement or editing its draft leaves the incoming person
+store unchanged. Its derived row proxy is distinct. No input-mutation bug was
+demonstrated. A genuinely unresolved store derive suspends a new tracked row
+capture before isPending is reached. A mark alone does not suspend that capture
+in either implementation: declared pending currently leaves values readable.
+The earlier plain-store example involved only a mark, not a pending derivation.
+Five controls retained in unified-affects-capture-isolation.test.ts.
+
+Both implementations incorrectly mark person.name pending relative to the new
+ruling when person was already present at declaration. This is a mark-scope leak,
+not a data-mutation leak. New failing exploratory probes are archived separately
+in affects-capture-review-20261116.tar.xz. No runtime changes at this checkpoint;
+the store mark implementation still needs migration to source-local semantics.

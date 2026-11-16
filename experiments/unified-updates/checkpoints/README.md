@@ -182,3 +182,7 @@ scratch are diagnostic evidence only; no existing test assertions were changed.
 `affects-model-review-20261115.tar.xz` contains bounded store-source and error
 comparisons against next 221b5f99f, plus a restored root-producer mark trial.
 These are exploratory probes, not accepted assertions or retained fixes.
+
+`affects-capture-review-20261116.tar.xz` records mark-only versus real-pending
+capture checks and the remaining shared-source mark-scope leak, compared with
+next 221b5f99f. It contains exploratory probes, not a runtime fix.
