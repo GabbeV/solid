@@ -1267,10 +1267,6 @@ const FORCE: unique symbol = Symbol();
 /** Two raws that wrap to the same target are the same logical value. */
 export function targetsEqual(ov: any, nv: any, fam: StoreFamily | null = null): boolean {
   if (ov === null || typeof ov !== "object" || nv === null || typeof nv !== "object") return false;
-  // Keep the plain-store alias optimization scoped to plain stores. An
-  // adoption by a producer still notifies even when it retains row identity:
-  // the notification also coordinates its pending frame (#4862).
-  if (fam && (fam.node !== null || fam.opt)) return false;
   const ot = fam === null ? ov[$OWNER] : lookupTarget(ov, fam);
   return ot !== undefined && ot === (fam === null ? nv[$OWNER] : lookupTarget(nv, fam));
 }
