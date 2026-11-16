@@ -279,3 +279,14 @@ ruling when person was already present at declaration. This is a mark-scope leak
 not a data-mutation leak. New failing exploratory probes are archived separately
 in affects-capture-review-20261116.tar.xz. No runtime changes at this checkpoint;
 the store mark implementation still needs migration to source-local semantics.
+
+Captured-row identity follow-up (2026-11-16): both experiment and next use a
+distinct wrapper for a row read through a derived store. Editing the derived
+draft updates that same captured wrapper without changing the incoming person.
+Returning a replacement row in the tested nested-array shape instead replaces
+the wrapper; the old captured row remains Alice while list.people[0] becomes Bob.
+No universal row-retention guarantee is inferred from matching id alone. An
+actual async producer update makes a previously captured row pending while the
+original person remains not pending; the six capture/isolation controls pass in
+both implementations. This supports separating source identity from the raw
+identity coverage used by affects. No runtime behavior changed.

@@ -117,9 +117,64 @@ for (const draft of [false, true])
       flush();
       expect(app.person.name).toBe("Alice");
       expect(app.list.people[0].name).toBe("Bob");
+      if (draft) {
+        expect(app.list.people[0]).toBe(row);
+        expect(row.name).toBe("Bob");
+      }
       expect(app.frames.at(-1)).toEqual(["Alice", "Bob"]);
     } finally {
       app.dispose();
       flush();
     }
   });
+
+it("a captured derived row observes its producer pending without marking the original store", async () => {
+  const answer = Promise.withResolvers<{ people: { id: number; name: string }[] }>();
+  const end = Promise.withResolvers<void>();
+  const app = createRoot(dispose => {
+    const [person] = createStore({ id: 1, name: "Alice" });
+    const [version, setVersion] = createSignal(0);
+    const [list] = createStore(() => (version() === 0 ? { people: [person] } : answer.promise), {
+      people: []
+    });
+    const row = list.people[0];
+    const names: string[][] = [];
+    const pending: boolean[][] = [];
+    createRenderEffect(
+      () => [person.name, row.name],
+      v => void names.push(v)
+    );
+    createRenderEffect(
+      () => [isPending(() => person.name), isPending(() => row.name)],
+      v => void pending.push(v)
+    );
+    return { person, list, row, setVersion, names, pending, dispose };
+  });
+  flush();
+  expect(app.row).not.toBe(app.person);
+  expect(app.names.at(-1)).toEqual(["Alice", "Alice"]);
+  const running = action(function* () {
+    app.setVersion(1);
+    yield end.promise;
+  })();
+  try {
+    flush();
+    expect(app.pending.at(-1)).toEqual([false, true]);
+    expect(app.names.at(-1)).toEqual(["Alice", "Alice"]);
+    answer.resolve({ people: [{ id: 1, name: "Bob" }] });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    flush();
+    end.resolve();
+    await running;
+    flush();
+    expect(app.list.people[0].name).toBe("Bob");
+    expect(app.person.name).toBe("Alice");
+    expect(app.pending.at(-1)).toEqual([false, false]);
+  } finally {
+    answer.resolve({ people: [{ id: 1, name: "Bob" }] });
+    end.resolve();
+    await running;
+    app.dispose();
+    flush();
+  }
+});
