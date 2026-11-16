@@ -12,6 +12,7 @@ the identical JSX was compiled with the rc.22 compiler and run locally against
 rc.22 browser packages. Tailwind disabled in the playground state.
 
 issue-url.txt opens the GitHub bug template with fields from issue-fields.json.
-Browser opening was queued for user review. The agent has not submitted an issue.
+The user submitted https://github.com/solidjs/solid/issues/4914 after review.
+The agent did not submit the issue.
 The issue text is standalone and contains no reference to the implementation
 experiment. No runtime code was changed for this report.

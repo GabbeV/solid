@@ -47,7 +47,7 @@ for (const chained of [false, true])
   });
 
 for (const read of ["value", "keys", "presence"] as const)
-  it(`a selected child has its own mark scope and wakes existing memo readers (${read})`, async () => {
+  it(`a selected child inherits its source mark and retains it after a child mark ends (${read})`, async () => {
     const parentGate = Promise.withResolvers<void>();
     const childGate = Promise.withResolvers<void>();
     const app = createRoot(dispose => {
@@ -83,17 +83,21 @@ for (const read of ["value", "keys", "presence"] as const)
     let child: Promise<unknown> | undefined;
     try {
       flush();
-      expect(seen).toEqual([false]);
+      expect(seen).toEqual([true]);
       child = action(function* () {
         affects(row);
         yield childGate.promise;
       })();
       flush();
-      expect(seen).toEqual([false, true]);
+      expect(seen).toEqual([true]);
       childGate.resolve();
       await child;
       flush();
-      expect(seen).toEqual([false, true, false]);
+      expect(seen).toEqual([true]);
+      parentGate.resolve();
+      await parent;
+      flush();
+      expect(seen).toEqual([true, false]);
     } finally {
       childGate.resolve();
       await child;

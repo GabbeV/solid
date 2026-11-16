@@ -1,4 +1,40 @@
-# Current array investigation status — 2026-11-15
+# Current store/affects status — 2026-11-16
+
+The source-local derived-store affects fix is implemented. A declaration is
+qualified by its reactive source family; root declarations include future outputs,
+and retained wrappers keep coverage across backing replacement. Late-born nodes
+inherit every independently active covering declaration. No ordinary signal/memo
+fields or read-path traversal were added; extra records are local to affects.
+
+The four prior snapshot-scope failures are migrated to the user's output-source
+rule, with final release assertions retained. Twelve new source-local tests pass.
+One new plain-store test is deliberately still failing pending clarification:
+plain list.people[0] === person, and a plain list setter mutates person directly
+(verified HEAD and next 221b5f99f). Does the source-local ruling also require a
+plain collection mark not to mark that shared child? No such change is retained.
+A trial ancestry exclusion was rejected: it made shared raw child coverage depend
+on which alias was read first. All ancestry-based exclusion code was removed.
+
+Source verification before removing that rejected plain guard: 8,071 pass,
+138 fail, five skip; exactly 135 match deferred until, and three were stale rule
+index checks caused by changed comments. Regenerating the index passes all three.
+After guard removal, focused source verification passes 58 tests with only the
+new plain-store semantic question failing. This is not a claim that the final
+full suite is green. Runtime source types and production/observe purity builds
+pass; generated property mappings and rule citations are updated.
+
+Rebuilt framework checks found Solid 927/927 passing; Web client 1,877 pass,
+six fail, one skip. The six are existing array/Loading cases (#4613, #4605 twice,
+#4525 on=false, #4642 initial add, #4482); none calls affects. They have not yet
+been classified against the previous runtime or current rulings. Server and
+hydration have not been rerun in this pass. Do not claim API completion.
+
+Receipts are in checkpoints/affects-source-local-20261116.tar.xz. Issue #4914
+was filed by the user; no upstream issue or PR was submitted by the agent.
+
+---
+
+# Historical array investigation status — 2026-11-15
 
 Rule A remains the specification: existing-index value-only edits stay granular;
 structural changes coordinate the affected array's active direct edits and later

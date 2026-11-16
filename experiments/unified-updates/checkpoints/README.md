@@ -186,3 +186,8 @@ These are exploratory probes, not accepted assertions or retained fixes.
 `affects-capture-review-20261116.tar.xz` records mark-only versus real-pending
 capture checks and the remaining shared-source mark-scope leak, compared with
 next 221b5f99f. It contains exploratory probes, not a runtime fix.
+
+`affects-source-local-20261116.tar.xz` records the source-local mark implementation,
+full and focused test receipts, builds, and the rejected plain ancestry rule.
+One new plain-store scope question and six Web integration failures remain open;
+the checkpoint is not a claim of complete API validation.

@@ -877,7 +877,7 @@ describe("affects — captured proxies (#2882)", () => {
   // Optimistic stores make in-flight writes readable outside the action, so
   // the two declaration-ordering tests use them (a plain store's writes are
   // transition-held and invisible to outside probes anyway).
-  it("records added after the mark registers are not covered (snapshot at declaration)", async () => {
+  it("new records in a marked optimistic output inherit its pending declaration", async () => {
     const [state, setState] = createOptimisticStore<{ rows: Row[] }>({ rows: seedRows() });
 
     let resolveIt!: () => void;
@@ -894,7 +894,7 @@ describe("affects — captured proxies (#2882)", () => {
     const added = state.rows[2];
     expect(added.name).toBe("c"); // optimistic write is visible…
     expect(isPending(() => state.rows.length)).toBe(true); // …the rows record itself is marked…
-    expect(isPending(() => added.name)).toBe(false); // …but the new record was not in the declared scope
+    expect(isPending(() => added.name)).toBe(true); // the new output belongs to the marked source
 
     resolveIt();
     await done;

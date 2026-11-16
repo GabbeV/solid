@@ -2,18 +2,17 @@
  * Store — the store half of `affects()` (plan sec. 29, plan sec. 37; A24 (4), #2882,
  * #2893, #2904).
  *
- * A mark on a store is a mark on nodes (affects.ts: a count on the node, a
- * dependency walk at probe time): `affects(record, key)` marks the slot's
- * leaf; `affects(record)` marks a carrier (the record's `$AFFECTS` leaf)
- * and every live node in the record's subtree — the edges existing readers
- * subscribed through. Coverage is by RAW IDENTITY, not read path (#2882: a
- * captured row proxy, a derived store sharing the source's raw, never read
- * through the declaration's proxy): the identities reachable at the
- * declaration are the mark's `scope`, so a node born inside the window on
- * a covered record inherits the mark (released with the carrier's last),
- * and an untracked probe through a record with no nodes is witnessed into
- * the verdict. A mark declared on a draft (inside a setter) or over an
- * optimistic family walks the view the writer sees.
+ * A declaration belongs to the targeted reactive source, not to every
+ * store borrowing the same backing object. Keyed marks cover one output
+ * slot. Keyless marks cover the record's own descendants; a derived or
+ * optimistic root also covers future outputs of that source. Captured row
+ * wrappers retain the declaration across backing replacement. An independent
+ * input store remains unaffected, even when its data backs a derived row.
+ *
+ * Raw identities locate descendants that have no nodes yet, qualified by
+ * their source family. Existing proxy identities retain coverage when their
+ * backing changes. Chained views can inherit declarations from their inputs;
+ * declarations on those views never travel in the reverse direction.
  *
  * Imported by `affects()`, which installs it on its first store target
  * (#3891, after #3912): a program with stores that never declares a mark
@@ -34,21 +33,30 @@ type Marked = Signal<any> | Computed<any>;
 /** The keyless mark's carrier key: a leaf of the record no read serves. */
 const $AFFECTS: unique symbol = Symbol(__DEV__ ? "STORE_AFFECTS" : 0);
 
-/** A live mark's scope: the raw identities it covers (keyless: every record
- * reachable at the declaration; keyed: the owning record's), the nodes born
- * inside its window that inherited it, and — keyed — the one key. Dies with
- * the carrier's last registration. */
+/** Source-local coverage and late-born nodes sharing one carrier's lifetime.
+ * The scope dies when the carrier's last registration ends. */
 interface Scope {
   _scope: Set<object>;
   _inherited: Marked[];
   _key: PropertyKey | undefined;
+  _target: StoreTarget;
+  _wholeFamily: boolean;
 }
 const scopes = new Map<Marked, Scope>();
 
-function scopeOf(carrier: Marked, key: PropertyKey | undefined): Scope {
+function scopeOf(carrier: Marked, key: PropertyKey | undefined, target: StoreTarget): Scope {
   let entry = scopes.get(carrier);
   if (entry === undefined)
-    scopes.set(carrier, (entry = { _scope: new Set(), _inherited: [], _key: key }));
+    scopes.set(
+      carrier,
+      (entry = {
+        _scope: new Set(),
+        _inherited: [],
+        _key: key,
+        _target: target,
+        _wholeFamily: key === undefined && target._fam !== null && target.u === null
+      })
+    );
   return entry;
 }
 
@@ -56,9 +64,11 @@ function scopeOf(carrier: Marked, key: PropertyKey | undefined): Scope {
  * registers each). */
 export function storeMarks(t: StoreTarget, key: PropertyKey | undefined): Marked[] {
   const node = GlobalQueue._storeNode!(t, key === undefined ? $AFFECTS : key);
-  const entry = scopeOf(node, key);
+  const entry = scopeOf(node, key, t);
+  entry._scope.add(t.px);
   if (key === undefined) {
     const found: Marked[] = [node];
+    if (entry._wholeFamily && t._fam!.node) found.push(t._fam!.node);
     walk(t.px, entry, found, t._fam, new Set());
     return found;
   }
@@ -67,10 +77,8 @@ export function storeMarks(t: StoreTarget, key: PropertyKey | undefined): Marked
   return [node];
 }
 
-/** The identities reachable from `value` into the scope (the draft's and
- * the committed backing both, when a draft is open; an optimistic family's
- * view), every live node under each record into `found`. Untracked by
- * construction: raws, never traps. */
+/** Register existing output nodes and identities for lazy descendants.
+ * Walk backing data without reading a foreign source through its proxy. */
 function walk(
   value: any,
   entry: Scope,
@@ -79,12 +87,21 @@ function walk(
   visited: Set<object>
 ): void {
   if (!GlobalQueue._storeWrappable!(value)) return;
-  const t: StoreTarget | undefined = value[$TARGET] ?? lookupTarget(value, fam);
+  const supplied: StoreTarget | undefined = value[$TARGET];
+  const t: StoreTarget | undefined =
+    lookupTarget(value, fam) ?? (supplied?._fam === fam ? supplied : undefined);
   let raw: Record<PropertyKey, any> = t !== undefined ? (t.pb ?? t.v) : value;
+  // A derived wrapper may borrow another source's backing. Traverse its
+  // contents without registering that source's nodes as our own outputs.
+  while (raw[$TARGET]) {
+    const inner = raw[$TARGET] as StoreTarget;
+    raw = inner.pb ?? inner.v;
+  }
   if (visited.has(raw)) return;
   visited.add(raw);
   entry._scope.add(raw);
   if (t !== undefined) {
+    entry._scope.add(t.px);
     if (t.pb !== null) entry._scope.add(t.v);
     // The writer's view: the tick's own unflushed guesses are in motion too.
     if (optHooks && t._fam?.opt === true) raw = optHooks.view(t, raw, true);
@@ -98,7 +115,6 @@ function walk(
     if (has !== null) for (const k of Reflect.ownKeys(has)) found.push(has[k as any]);
     if (t.k !== null) found.push(t.k);
     if (t.dk !== null) found.push(t.dk);
-    fam = t._fam ?? fam;
   }
   for (const k of Reflect.ownKeys(raw))
     if (k !== $OWNER) {
@@ -107,22 +123,25 @@ function walk(
     }
 }
 
-/** A live scope covering `t`'s identity (keyed: for `key`). Chained
- * backings (§7b): a view's backing is another store's proxy — marks cover
- * the BASE raw, so every identity along the chain is checked. */
-function covering(t: StoreTarget, key: PropertyKey | undefined, skip?: Marked): Marked | null {
-  for (const [carrier, entry] of scopes) {
-    if (carrier === skip || (entry._key !== undefined && entry._key !== key)) continue;
-    for (let r: any = t.v; ; ) {
-      if (entry._scope.has(r)) return carrier;
-      const inner: StoreTarget | undefined = r?.[$TARGET];
-      if (inner === undefined) break;
-      const backing = inner.pb ?? inner.v;
-      if (backing === r) break;
-      r = backing;
-    }
+/** Match this source or a directed input of a chained view. Shared backing
+ * identity alone never transfers a declaration between source families. */
+function covers(t: StoreTarget, key: PropertyKey | undefined, entry: Scope): boolean {
+  if (entry._key !== undefined && entry._key !== key) return false;
+  for (let source: StoreTarget = t; ; ) {
+    if (
+      source._fam === entry._target._fam &&
+      (entry._wholeFamily ||
+        entry._scope.has(source.px) ||
+        entry._scope.has(source.v) ||
+        (source.pb !== null && entry._scope.has(source.pb)))
+    )
+      return true;
+    const inner: StoreTarget | undefined = source.v?.[$TARGET];
+    if (inner === undefined) break;
+    if (inner === source) break;
+    source = inner;
   }
-  return null;
+  return false;
 }
 
 /** The store's side: node birth and the untracked traps call it (store.ts,
@@ -133,16 +152,22 @@ const hooks: AffectsHooks = {
   // the carrier's last registration).
   _born(t, node, key) {
     if (scopes.size === 0 || key === $AFFECTS) return;
-    const carrier = covering(t, key, node);
-    if (!carrier) return;
-    GlobalQueue._mark!(node);
-    scopes.get(carrier)!._inherited.push(node);
+    for (const [carrier, entry] of scopes) {
+      if (carrier === node || !covers(t, key, entry)) continue;
+      if (t._fam === entry._target._fam) entry._scope.add(t.px);
+      GlobalQueue._mark!(node);
+      entry._inherited.push(node);
+    }
   },
   // An untracked probe (`isPending(() => s.x)` with no observer) reading a
   // record a live mark covers: no node carries the mark for it — the
   // verdict is told directly.
   _witness(t, key) {
-    if (t.n?.[$AFFECTS as any]?._x?._marks || covering(t, key)) GlobalQueue._witnessMark!();
+    for (const entry of scopes.values())
+      if (covers(t, key, entry)) {
+        GlobalQueue._witnessMark!();
+        return;
+      }
   }
 };
 
