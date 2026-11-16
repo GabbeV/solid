@@ -37,6 +37,7 @@ import { enqueueSub } from "../core/heap.js";
 import { getOwner, isDisposed } from "../core/owner.js";
 import {
   insertSubs,
+  laneServedHook,
   observeFlightHook,
   passLane,
   setPassLane,
@@ -202,8 +203,13 @@ function errorFamily(fam: StoreFamily, error?: unknown): void {
  * dependents, so its own settle walk does not reach them). */
 function settleFamily(fam: StoreFamily): void {
   if (!fam._woke) return;
-  fam._woke = false;
   const fw = fam.node!;
+  // An optimistic pass may have used the committed answer of a flight that
+  // is still pending. As in core recompute (#4866), that pass cannot settle
+  // readers waiting for the new answer, even when its store values are equal
+  // and no property notification will make those readers pull again (#4927).
+  if (laneServedHook && fw._statusFlags & STATUS_PENDING && laneServedHook(fw, null, true)) return;
+  fam._woke = false;
   forEachFamilyNode(fam, n => {
     if (n._subs !== null) settlePendingSource(n as unknown as Computed<any>, fw);
   });
