@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0-rc.22",
+  "browser": "154.0.8037.57",
+  "initial": {
+    "person-pending": "false",
+    "list-pending": "false",
+    "same": "false"
+  },
+  "during": {
+    "person-pending": "true",
+    "list-pending": "true",
+    "same": "false"
+  },
+  "after": {
+    "person-pending": "false",
+    "list-pending": "false",
+    "same": "false"
+  },
+  "errors": []
+}

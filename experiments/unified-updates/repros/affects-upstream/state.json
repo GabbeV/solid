@@ -1,0 +1,12 @@
+{
+  "title": "affects on a derived store marks its upstream input pending",
+  "files": {
+    "main.tsx": "import { action, affects, createStore, isPending } from \"solid-js\";\nimport { render } from \"@solidjs/web\";\n\nconst delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));\n\nfunction App() {\n  const [person] = createStore({ name: \"Alice\" });\n  const [list] = createStore(() => ({ people: [person] }), { people: [] });\n\n  const markList = action(function* () {\n    affects(list);\n    yield delay(1000);\n  });\n\n  return (\n    <main style={{ padding: \"16px\", \"font-family\": \"sans-serif\" }}>\n      <h1>affects propagates upstream</h1>\n      <button onClick={() => markList()}>Mark derived list</button>\n      <p>Original person pending: <strong id=\"person-pending\">{String(isPending(() => person.name))}</strong></p>\n      <p>Derived list pending: <strong id=\"list-pending\">{String(isPending(() => list.people[0].name))}</strong></p>\n      <p>list.people[0] === person: <code id=\"same\">{String(list.people[0] === person)}</code></p>\n      <p>Only the derived list should become pending.</p>\n    </main>\n  );\n}\n\nrender(() => <App />, document.getElementById(\"root\")!);\n"
+  },
+  "importMap": "{\"imports\":{\"solid-js\":\"https://esm.sh/solid-js@2.0.0-rc.22?dev&external=@solidjs/signals,@solidjs/web\",\"solid-js/internal\":\"https://esm.sh/solid-js@2.0.0-rc.22/internal?dev&external=@solidjs/signals,@solidjs/web\",\"@solidjs/signals\":\"https://esm.sh/@solidjs/signals@2.0.0-rc.22?dev\",\"@solidjs/web\":\"https://esm.sh/@solidjs/web@2.0.0-rc.22?dev&external=solid-js,@solidjs/signals\"}}",
+  "solidVersion": "2.0.0-rc.22",
+  "activeFile": "main.tsx",
+  "ssrEnabled": false,
+  "tailwindEnabled": false,
+  "devMode": true
+}
