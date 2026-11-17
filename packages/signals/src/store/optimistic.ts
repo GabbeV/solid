@@ -82,7 +82,7 @@ import {
   sameKey,
   serveKeyValue,
   storeSetter,
-  targetsEqual,
+  sameSlotValue,
   unwrapValue
 } from "./store.js";
 import { installOptHooks } from "./hooks.js";
@@ -374,7 +374,7 @@ export function notifyOptimisticWrites(
       // write): the draft's rows are clones of the view's, so a carried row
       // is a new object with the view's contents — the same row, as the
       // server's echo of a guessed one is (`echoes`, #3898).
-      if (!isEqual(ov, nv) && !targetsEqual(ov, nv)) {
+      if (!sameSlotValue(ov, nv)) {
         if (isArr && echoes(ov, nv)) {
           // The frame carries the row the view showed, not the draft's clone
           // of it: the same object wraps as the same proxy (a list keeps its
@@ -500,7 +500,7 @@ function arrangementRow(this: StoreFamily, row: any): any {
 /** Two rows of a keyed list's arrangement, by identity — by key when the
  * family has one. */
 function rowSame(a: any, b: any, fam: StoreFamily): boolean {
-  if (isEqual(a, b) || targetsEqual(a, b)) return true;
+  if (sameSlotValue(a, b)) return true;
   const keyFn = fam.key;
   if (!keyFn || !isWrappable(a) || !isWrappable(b)) return false;
   // A row the store already serves is its proxy's row: a reader (a list)
