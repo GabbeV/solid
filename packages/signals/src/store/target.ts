@@ -130,6 +130,8 @@ export interface StoreTarget {
   /** Keys deleted in the overlay window (a prototype overlay cannot shadow
    * a delete); null when none. */
   del: Set<PropertyKey> | null;
+  /** Only plain roots that wrap another store allocate a private proxy lookup. */
+  map?: WeakMap<object, StoreTarget>;
   /** Projection family, null for plain stores (§7b). */
   _fam: StoreFamily | null;
   /** Shallow store root (values served raw). */
@@ -156,8 +158,20 @@ export const $OWNER: unique symbol = Symbol(__DEV__ ? "STORE_OWNER" : 0);
  * map so one raw can wrap once per family (§7b). */
 export const storeLookup = new WeakMap<object, StoreTarget>();
 
+/** Plain stores share raw inputs, but each root owns its view of an explicit store proxy. */
+export function storeRoot(t: StoreTarget): StoreTarget {
+  while (t.u !== null) t = t.u;
+  return t;
+}
+export function scopeKey(t: StoreTarget): StoreFamily | StoreTarget {
+  return t._fam ?? storeRoot(t);
+}
+export function chainMap(t: StoreTarget): WeakMap<object, StoreTarget> {
+  return (scopeKey(t).map ??= new WeakMap());
+}
+
 export function setLookup(raw: object, t: StoreTarget): void {
-  (t._fam?.map ?? storeLookup).set(raw, t);
+  (t.ch ? chainMap(t) : (t._fam?.map ?? storeLookup)).set(raw, t);
 }
 
 export function isOwned(raw: object): boolean {

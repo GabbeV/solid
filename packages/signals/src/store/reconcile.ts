@@ -17,7 +17,7 @@ import { isEqual } from "../core/core.js";
 import {
   $OWNER,
   isOwned,
-  lookupTarget,
+  chainMap,
   storeLookup,
   type StoreFamily,
   type StoreTarget
@@ -36,6 +36,7 @@ import {
   sameRow,
   targetsEqual,
   unwrapValue,
+  lookupChild,
   userWriting
 } from "./store.js";
 import { optHooks } from "./hooks.js";
@@ -69,7 +70,7 @@ export function reconcileState(
     adoptPB(t, value);
     return;
   }
-  const incoming = unwrapValue(value);
+  const incoming = unwrapValue(value, t);
   if (keyFn) {
     const prev = t.pb ?? t.v;
     const eq = keyFn(prev);
@@ -134,7 +135,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
         const pvRaw = prevView[i];
         if (pvRaw !== nv && !sameRow(pvRaw, nv, keyFn)) break; // misaligned: fall to the keyed remainder below
         if (nv !== null && typeof nv === "object" && (pvRaw !== nv || isOwned(nv)))
-          descend(unwrapValue(pvRaw), nv, keyFn, proj, t, i);
+          descend(pvRaw, nv, keyFn, proj, t, i);
         if (
           deepUsed &&
           !bumped &&
@@ -177,14 +178,14 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
             const m = prevByKey.get(nk);
             if (m === undefined) pv = undefined;
             else if (Array.isArray(m)) {
-              pv = unwrapValue(prevView[m.shift()!]);
+              pv = prevView[m.shift()!];
               if (m.length === 1) prevByKey.set(nk, m[0]);
             } else {
-              pv = unwrapValue(prevView[m]);
+              pv = prevView[m];
               prevByKey.delete(nk);
             }
           } else {
-            pv = unwrapValue(prevView[i]); // keyless item: positional fallback
+            pv = prevView[i]; // keyless item: positional fallback
           }
           descend(pv, nv, keyFn, proj, t, i);
         }
@@ -202,7 +203,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       for (let i = 0; i < nlen; i++) {
         const nvP = incoming[i];
         if (!shallow && i < dlen && nvP !== null && typeof nvP === "object")
-          descend(unwrapValue(prevView[i]), nvP, keyFn, proj, t, i);
+          descend(prevView[i], nvP, keyFn, proj, t, i);
         if (
           deepUsed &&
           !bumped &&
@@ -250,7 +251,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       if (nodes?.[k] !== undefined) nodesHit++;
       continue;
     }
-    if (isObj && !shallow) descend(unwrapValue((prevView as any)[k]), nv, keyFn, proj, t, k);
+    if (isObj && !shallow) descend((prevView as any)[k], nv, keyFn, proj, t, k);
     if (deepUsed && !bumped && !(isObj ? targetsEqual(ov, nv) : isEqual(ov, nv))) {
       bumpDeep(t);
       bumped = true;
@@ -269,7 +270,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
     if (k === $OWNER) continue;
     const nv = (incoming as any)[k];
     if (!shallow && nv !== null && typeof nv === "object")
-      descend(unwrapValue((old as any)[k]), nv, keyFn, proj, t, k);
+      descend((old as any)[k], nv, keyFn, proj, t, k);
     if (nodes !== null) {
       const node = nodes[k as any];
       if (node !== undefined) {
@@ -320,9 +321,10 @@ function descend(
   // `nv` is an object at every call site.
   if (pv === null || typeof pv !== "object") return;
   const fam = t._fam;
-  nv = unwrapValue(nv);
-  let ct = lookupTarget(pv, fam);
-  const nt = lookupTarget(nv, fam);
+  pv = unwrapValue(pv, t);
+  nv = unwrapValue(nv, t);
+  let ct = lookupChild(pv, t);
+  const nt = lookupChild(nv, t);
   if (ct !== undefined && ct.pk !== k) {
     if (ct.pk != k && t.v[ct.pk as any] === ct.v) ct = undefined;
     else if (ct.u === t) ct.pk = k;
@@ -332,7 +334,7 @@ function descend(
       if (nt.u === t) nt.pk = k;
       return;
     }
-    (fam?.map ?? storeLookup).delete(nv);
+    (nv[$TARGET] ? chainMap(t) : (fam?.map ?? storeLookup)).delete(nv);
   }
   if (ct === undefined) return; // nothing proxied below this pair
   if (!isWrappable(nv)) return;

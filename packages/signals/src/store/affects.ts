@@ -26,7 +26,7 @@
 import { GlobalQueue, releaseMarksHook } from "../core/scheduler.js";
 import type { Computed, Signal } from "../core/types.js";
 import { installAffectsHooks, optHooks, type AffectsHooks } from "./hooks.js";
-import { $OWNER, lookupTarget, type StoreFamily, type StoreTarget } from "./target.js";
+import { $OWNER, lookupTarget, scopeKey, type StoreTarget } from "./target.js";
 import { $TARGET } from "./types.js";
 
 type Marked = Signal<any> | Computed<any>;
@@ -40,6 +40,7 @@ const $AFFECTS: unique symbol = Symbol(__DEV__ ? "STORE_AFFECTS" : 0);
  * the carrier's last registration. */
 interface Scope {
   _scope: Set<object>;
+  cold?: Set<object>;
   _inherited: Marked[];
   _key: PropertyKey | undefined;
 }
@@ -59,7 +60,7 @@ export function storeMarks(t: StoreTarget, key: PropertyKey | undefined): Marked
   const entry = scopeOf(node, key);
   if (key === undefined) {
     const found: Marked[] = [node];
-    walk(t.px, entry, found, t._fam, new Set());
+    walk(t.px, entry, found, t, new Set());
     return found;
   }
   entry._scope.add(t.v);
@@ -75,46 +76,48 @@ function walk(
   value: any,
   entry: Scope,
   found: Marked[],
-  fam: StoreFamily | null,
-  visited: Set<object>
+  parent: StoreTarget,
+  visited: Set<object>,
+  input?: StoreTarget
 ): void {
   if (!GlobalQueue._storeWrappable!(value)) return;
-  let t: StoreTarget | undefined = value[$TARGET];
-  // Another store's proxy the record holds (§7b): the mark covers this
-  // store's view of it — the chained target, keyed by that proxy — and never
-  // that store's own records: a derived store's work cannot change its
-  // input's data (#4914). Its children are walked as that store's proxies,
-  // the identities this store's chained children are keyed by.
-  if (t !== undefined && fam !== null && t._fam !== fam && t.px === value) {
-    if (visited.has(value)) return;
-    visited.add(value);
-    entry._scope.add(value);
-    const ct = lookupTarget(value, fam);
-    if (ct !== undefined) nodesOf(ct, found);
-    const raw = t.pb ?? t.v;
-    for (const k of Reflect.ownKeys(raw)) {
-      const v = Object.getOwnPropertyDescriptor(raw, k)!.value;
-      const ot = GlobalQueue._storeWrappable!(v) ? lookupTarget(v, t._fam) : undefined;
-      if (ot !== undefined) walk(ot.px, entry, found, fam, visited);
+  const t: StoreTarget | undefined = value[$TARGET] ?? lookupTarget(value, (input ?? parent)._fam);
+  if (t && t.px === value && scopeKey(t) !== scopeKey(parent)) input = t;
+  let raw = t ? (t.pb ?? t.v) : value;
+  if (input) {
+    // Follow the input's data, marking only this store's view (§7b, #4914).
+    if (t) {
+      if (visited.has(t.px)) return;
+      visited.add(t.px);
+      entry._scope.add(t.px);
+      const view = scopeKey(parent).map?.get(t.px);
+      if (view) {
+        if (view.v !== t.px || view.pb) return walk(view.px, entry, found, parent, visited);
+        nodesOf(view, found);
+      }
+      input = t;
+    } else {
+      // A child first wrapped during the window inherits through this view.
+      const cold = (entry.cold ??= new Set());
+      if (cold.has(raw)) return;
+      cold.add(raw);
     }
-    return;
-  }
-  t ??= lookupTarget(value, fam);
-  let raw: Record<PropertyKey, any> = t !== undefined ? (t.pb ?? t.v) : value;
-  if (visited.has(raw)) return;
-  visited.add(raw);
-  entry._scope.add(raw);
-  if (t !== undefined) {
-    if (t.pb !== null) entry._scope.add(t.v);
-    // The writer's view: the tick's own unflushed guesses are in motion too.
-    if (optHooks !== null && t.o) raw = optHooks.view(t, raw, true);
-    nodesOf(t, found);
-    fam = t._fam ?? fam;
+  } else {
+    if (t && t.ch && raw === t.v && !t.o) return walk(raw, entry, found, t, visited);
+    if (visited.has(raw)) return;
+    visited.add(raw);
+    entry._scope.add(raw);
+    if (t) {
+      if (t.pb !== null) entry._scope.add(t.v);
+      if (optHooks !== null && t.o) raw = optHooks.view(t, raw, true);
+      nodesOf(t, found);
+      parent = t;
+    }
   }
   for (const k of Reflect.ownKeys(raw))
     if (k !== $OWNER) {
       const d = Object.getOwnPropertyDescriptor(raw, k)!;
-      if (d.get === undefined) walk(d.value, entry, found, fam, visited);
+      if (d.get === undefined) walk(d.value, entry, found, parent, visited, input);
     }
 }
 
@@ -138,12 +141,17 @@ function nodesOf(t: StoreTarget, found: Marked[]): void {
 function covering(t: StoreTarget, key: PropertyKey | undefined, skip?: Marked): Marked | null {
   for (const [carrier, entry] of scopes) {
     if (carrier === skip || (entry._key !== undefined && entry._key !== key)) continue;
+    let view = t;
+    let localView = false;
     for (let r: any = t.v; ; ) {
-      if (entry._scope.has(r)) return carrier;
       const inner: StoreTarget | undefined = r?.[$TARGET];
+      if (inner && scopeKey(view) === scopeKey((carrier as any)._host)) localView = true;
+      if ((entry._scope.has(r) && (!inner || localView)) || (localView && entry.cold?.has(r)))
+        return carrier;
       if (inner === undefined) break;
       const backing = inner.pb ?? inner.v;
       if (backing === r) break;
+      view = inner;
       r = backing;
     }
   }
