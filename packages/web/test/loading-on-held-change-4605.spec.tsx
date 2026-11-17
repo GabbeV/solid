@@ -2,11 +2,10 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  *
- * #4605 under independent input and override lifetimes: an `on` change
- * may reveal Loading while the guessing action remains open. Its answer
- * updates index 0; the explicit index-1 guess remains row 4 until correction.
- * The later refresh stays quiet, and a subsequent independent `on` change
- * arms the boundary again. Every sampled DOM frame and request stays pinned.
+ * Closing row 3 selects index 1, but does not guess index 0. A structural
+ * answer for the new filter joins the active edit. With the old key still
+ * visible the list can keep its previous frame. Once `on` shows the new
+ * key, the fallback must cover the unguessed row until its answer publishes.
  */
 import { expect, test } from "vitest";
 import {
@@ -102,8 +101,8 @@ const before = (useOn: boolean) => [
   "loaded: open: [#1][#3][#4]  air",
   "close #3: open: [#1][#4]  air close:3",
   `filter closed: ${useOn ? "loading" : "open: [#1][#4]"}  air close:3,issues:closed`,
-  "closed answered: closed: [#2][#4]  air close:3",
-  "close accepted: closed: [#2][#4]  air issues:closed",
+  `closed answered: ${useOn ? "loading" : "open: [#1][#4]"}  air close:3`,
+  `close accepted: ${useOn ? "loading" : "open: [#1][#4]"}  air issues:closed`,
   "refresh answered: closed: [#2][#3]  air"
 ];
 

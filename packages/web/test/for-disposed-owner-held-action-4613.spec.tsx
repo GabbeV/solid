@@ -93,12 +93,13 @@ it("a disposed keyed region does not map again after its input settles (#4613)",
   expect(container.textContent).toBe("[#1][#4]");
   setFilter("closed");
   await tick();
-  // The new region consumes the independent input; it does not extend the action.
+  // The closed region has no previous content. Its unguessed first index
+  // waits for the new answer, whose shrink joins the active splice.
   expect(container.textContent).toBe("loading closed");
   await settle("issues:closed", [{ id: 2 }]);
-  expect(container.textContent).toBe("[#2][#4]");
+  expect(container.textContent).toBe("loading closed");
   await settle("close:3", {});
-  expect(container.textContent).toBe("[#2][#4]");
+  expect(container.textContent).toBe("loading closed");
   rows.length = 0;
   await settle("issues:closed", [{ id: 2 }, { id: 3 }]);
   expect(container.textContent).toBe("[#2][#3]");

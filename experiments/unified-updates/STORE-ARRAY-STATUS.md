@@ -1,3 +1,25 @@
+# Store integration checkpoint — 2026-11-17
+
+Reran the five Web files with the six previously reported failures. Revised the
+assertions for pre-initial writes and structural input coordination. Four of the
+six failures were obsolete expectations. Retained the final corrections, request
+checks and disposed-owner assertions. The focused group now has 10 pass / 2 fail.
+Both failures expose a real consistency issue: a new keyed region (#4613) or
+armed Loading boundary (#4605) releases to the old unguessed row 1 under the
+closed filter after its incoming structural answer arrived but before it could
+publish. The permitted outcome in those tests is still fallback. No runtime
+repair or full-suite result is claimed at this checkpoint.
+
+A fresh plain-store probe compared upstream 2.0 main bd06aefed, the experiment
+2a0d1d20e, and wrapper proposal a2748e87c. For list = { people: [person] },
+upstream and experiment retain row === person, all three pending reads (person,
+captured row, path through list) go true during affects(list), and setting the
+name through the list writes person. The wrapper proposal isolates the row,
+reports [false, true, true], and setting through the list leaves person unchanged.
+Whether to adopt those plain-write semantics on this branch is pending.
+
+---
+
 # Current store/affects status — 2026-11-16
 
 The source-local derived-store affects fix is implemented. A declaration is

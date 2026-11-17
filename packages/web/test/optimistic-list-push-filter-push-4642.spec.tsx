@@ -129,9 +129,9 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
       s.dispose();
     });
 
-  // A first guess is accepted while <For> still waits for the input's
-  // length. The empty seed must not replace the loading fallback.
-  it("an add before the first load waits for its length and corrects after saving", async () => {
+  // Before the first answer the setter runs against the seed. Its write is
+  // discarded and the first publication waits for the action and its refresh.
+  it("an add before the first load keeps the fallback until the saved list arrives", async () => {
     const s = todoList();
     try {
       await tick();
@@ -143,9 +143,10 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
       expect(s.out.map(o => o.key)).toEqual(["list", "add:3"]);
       expect(s.shown).toBe("loading");
       await s.step(() => s.land("list"));
-      expect(s.shown).toBe("[jam][eggs]");
+      expect(s.shown).toBe("loading");
       await s.step(() => s.land("add:3"));
       expect(s.out.map(o => o.key)).toEqual(["list"]);
+      expect(s.shown).toBe("loading");
       await s.step(() => s.land("list"));
       expect(s.shown).toBe("[milk][eggs][jam]");
       expect(s.shown).toBe(s.server);

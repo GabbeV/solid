@@ -3,12 +3,11 @@
  * @vitest-environment jsdom
  */
 /**
- * The optimistic store selects the indices explicitly written by the splice. The
- * producer does not replay that operation over its next answer. Those row
- * outputs retain their action lifetime. An independent question publishes
- * beside those rows once its ordinary input readers are ready; an `on`
- * boundary may reveal the ready selected content earlier. The final refresh
- * corrects the indices. Only complete, consistent DOM frames are allowed.
+ * Splicing away the first row explicitly selects both remaining indices.
+ * Their guesses can be shown while the new input is pending. When its answer
+ * changes the array structure, its publication joins the splice. Without on,
+ * the filter therefore stays open until the action's refresh publishes. An
+ * armed boundary can already show the new key and the explicitly selected rows.
  */
 import { expect, test } from "vitest";
 import {
@@ -85,9 +84,9 @@ for (const on of [true, false])
       expect(container.textContent).toBe(selected);
       if (!on) expect(seen.filter(frame => frame.startsWith("closed:"))).toEqual([]);
       await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-      expect(container.textContent).toBe("closed: [#3][#4]");
+      expect(container.textContent).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       await settle("close:1", {});
-      expect(container.textContent).toBe("closed: [#3][#4]");
+      expect(container.textContent).toBe(on ? "closed: [#3][#4]" : "open: [#3][#4]");
       await settle("issues:closed", [{ id: 2 }]);
       expect(container.textContent).toBe("closed: [#2]");
       expect(asks).toEqual([]);
@@ -97,7 +96,7 @@ for (const on of [true, false])
         "loading",
         "open: [#1][#3][#4]",
         "open: [#3][#4]",
-        "closed: [#3][#4]",
+        ...(on ? ["closed: [#3][#4]"] : []),
         "closed: [#2]"
       ]);
       expect(seen.filter(frame => !allowed.has(frame))).toEqual([]);
