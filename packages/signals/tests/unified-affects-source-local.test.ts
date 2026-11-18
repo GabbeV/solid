@@ -372,7 +372,7 @@ it("a retained nested derived record keeps its mark for late property and memo r
   }
 });
 
-it("question: should a plain list mark exclude its shared child source?", async () => {
+it("a plain list mark covers its local view of an explicit store proxy", async () => {
   const app = createRoot(dispose => {
     const [person] = createStore({ id: 1, name: "Alice" });
     const [list] = createStore({ people: [person] });
@@ -385,7 +385,7 @@ it("question: should a plain list mark exclude its shared child source?", async 
     return { person, list, row, pending, dispose };
   });
   flush();
-  expect(app.row).toBe(app.person);
+  expect(app.row).not.toBe(app.person);
   expect(app.pending).toEqual([[false, false]]);
   const marked = mark(app.list);
   try {
@@ -395,7 +395,6 @@ it("question: should a plain list mark exclude its shared child source?", async 
       [false, true]
     ]);
     expect(app.list.people[0]).toBe(app.row);
-    expect(app.list.people[0]).toBe(app.person);
     expect(app.person.name).toBe("Alice");
     expect(app.list.people[0].name).toBe("Alice");
     await marked.release();
@@ -404,7 +403,7 @@ it("question: should a plain list mark exclude its shared child source?", async 
       [false, true],
       [false, false]
     ]);
-    expect(app.list.people[0]).toBe(app.person);
+    expect(app.list.people[0]).toBe(app.row);
   } finally {
     await marked.release();
     app.dispose();

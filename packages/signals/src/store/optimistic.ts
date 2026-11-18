@@ -171,7 +171,7 @@ export function notifyOptimisticWrites(
     structural = true;
   }
   if (structural) {
-    const rows = isArr ? (pb as any[]).map(unwrapValue) : shallowKeys(pb);
+    const rows = isArr ? (pb as any[]).map(value => unwrapValue(value)) : shallowKeys(pb);
     // The keys of the view the setter saw that are not the guess's own
     // rows, which a re-base over another truth takes from that truth
     // (`_laneRebase`): the rows the setter removed, which it never brings
@@ -752,7 +752,7 @@ function rebaseChained(t: StoreTarget): void {
     k._value instanceof LaneView &&
     k._notifiedAt !== notifyEpoch
   ) {
-    const rows = Array.isArray(inner) ? untrack(() => (inner as any[]).map(unwrapValue)) : inner;
+    const rows = Array.isArray(inner) ? untrack(() => (inner as any[]).map(value => unwrapValue(value))) : inner;
     if (!arrangementEqual(k._value.rows, rows, t._fam!)) {
       insertSubs(k);
       changed = true;

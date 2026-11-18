@@ -25,7 +25,7 @@
 import { GlobalQueue, releaseMarksHook } from "../core/scheduler.js";
 import type { Computed, Signal } from "../core/types.js";
 import { installAffectsHooks, optHooks, type AffectsHooks } from "./hooks.js";
-import { $OWNER, lookupTarget, type StoreFamily, type StoreTarget } from "./target.js";
+import { $OWNER, lookupTarget, scopeKey, type StoreTarget } from "./target.js";
 import { $TARGET } from "./types.js";
 
 type Marked = Signal<any> | Computed<any>;
@@ -37,6 +37,7 @@ const $AFFECTS: unique symbol = Symbol(__DEV__ ? "STORE_AFFECTS" : 0);
  * The scope dies when the carrier's last registration ends. */
 interface Scope {
   _scope: Set<object>;
+  _inputs?: Set<object>;
   _inherited: Marked[];
   _key: PropertyKey | undefined;
   _target: StoreTarget;
@@ -69,10 +70,10 @@ export function storeMarks(t: StoreTarget, key: PropertyKey | undefined): Marked
   if (key === undefined) {
     const found: Marked[] = [node];
     if (entry._wholeFamily && t._fam!.node) found.push(t._fam!.node);
-    walk(t.px, entry, found, t._fam, new Set());
+    walk(t.px, entry, found, t, new Set());
     return found;
   }
-  entry._scope.add(t.v);
+  if (!t.ch) entry._scope.add(t.v);
   if (t.pb !== null) entry._scope.add(t.pb);
   return [node];
 }
@@ -83,65 +84,89 @@ function walk(
   value: any,
   entry: Scope,
   found: Marked[],
-  fam: StoreFamily | null,
-  visited: Set<object>
+  parent: StoreTarget,
+  visited: Set<object>,
+  input?: StoreTarget
 ): void {
   if (!GlobalQueue._storeWrappable!(value)) return;
-  const supplied: StoreTarget | undefined = value[$TARGET];
-  const t: StoreTarget | undefined =
-    lookupTarget(value, fam) ?? (supplied?._fam === fam ? supplied : undefined);
-  let raw: Record<PropertyKey, any> = t !== undefined ? (t.pb ?? t.v) : value;
-  // A derived wrapper may borrow another source's backing. Traverse its
-  // contents without registering that source's nodes as our own outputs.
-  while (raw[$TARGET]) {
-    const inner = raw[$TARGET] as StoreTarget;
-    raw = inner.pb ?? inner.v;
-  }
-  if (visited.has(raw)) return;
-  visited.add(raw);
-  entry._scope.add(raw);
-  if (t !== undefined) {
-    entry._scope.add(t.px);
-    if (t.pb !== null) entry._scope.add(t.v);
-    // The writer's view: the tick's own unflushed guesses are in motion too.
-    if (optHooks && t._fam?.opt === true) raw = optHooks.view(t, raw, true);
-    const nodes = t.n;
-    if (nodes !== null)
-      for (const k of Reflect.ownKeys(nodes))
-        // Another mark's carrier is its own channel: counting it here would
-        // extend that scope's lifetime to this declaration's.
-        if (k !== $AFFECTS) found.push(nodes[k as any]);
-    const has = t.h;
-    if (has !== null) for (const k of Reflect.ownKeys(has)) found.push(has[k as any]);
-    if (t.k !== null) found.push(t.k);
-    if (t.dk !== null) found.push(t.dk);
+  const t: StoreTarget | undefined = value[$TARGET] ?? lookupTarget(value, (input ?? parent)._fam);
+  if (t && t.px === value && scopeKey(t) !== scopeKey(parent)) input = t;
+  let raw = t ? (t.pb ?? t.v) : value;
+  if (input) {
+    // Follow the input's backing and collect identities for this store's view.
+    const inputs = (entry._inputs ??= new Set());
+    const identity = t?.px ?? raw;
+    if (inputs.has(identity)) return;
+    inputs.add(identity);
+    if (t) {
+      const view = scopeKey(parent).map?.get(t.px);
+      if (view) {
+        if (view.v !== t.px || view.pb !== null)
+          return walk(view.px, entry, found, parent, visited);
+        entry._scope.add(view.px);
+        nodesOf(view, found);
+      }
+      input = t;
+    }
+  } else {
+    if (t) {
+      if (visited.has(t.px)) return;
+      visited.add(t.px);
+      entry._scope.add(t.px);
+      nodesOf(t, found);
+      if (t.ch && raw === t.v && !t._fam?.opt) return walk(raw, entry, found, t, visited);
+      if (!t.ch) entry._scope.add(t.v);
+      if (optHooks && t._fam?.opt === true) raw = optHooks.view(t, raw, true);
+      parent = t;
+    }
+    if (visited.has(raw)) return;
+    visited.add(raw);
+    entry._scope.add(raw);
   }
   for (const k of Reflect.ownKeys(raw))
     if (k !== $OWNER) {
       const d = Object.getOwnPropertyDescriptor(raw, k)!;
-      if (d.get === undefined) walk(d.value, entry, found, fam, visited);
+      if (d.get === undefined) walk(d.value, entry, found, parent, visited, input);
     }
 }
 
-/** Match this source or a directed input of a chained view. Shared backing
- * identity alone never transfers a declaration between source families. */
+function nodesOf(t: StoreTarget, found: Marked[]): void {
+  const nodes = t.n;
+  if (nodes !== null)
+    for (const k of Reflect.ownKeys(nodes))
+      // Another mark's carrier is its own channel: counting it here would
+      // extend that scope's lifetime to this declaration's.
+      if (k !== $AFFECTS) found.push(nodes[k as any]);
+  const has = t.h;
+  if (has !== null) for (const k of Reflect.ownKeys(has)) found.push(has[k as any]);
+  if (t.k !== null) found.push(t.k);
+  if (t.dk !== null) found.push(t.dk);
+}
+
+/** Check the target and the inputs it follows. Foreign backing identities
+ * only identify views within the marked store. */
 function covers(t: StoreTarget, key: PropertyKey | undefined, entry: Scope): boolean {
   if (entry._key !== undefined && entry._key !== key) return false;
+  let localView = false;
   for (let source: StoreTarget = t; ; ) {
+    const inner: StoreTarget | undefined = source.v?.[$TARGET];
     if (
-      source._fam === entry._target._fam &&
-      (entry._wholeFamily ||
-        entry._scope.has(source.px) ||
-        entry._scope.has(source.v) ||
-        (source.pb !== null && entry._scope.has(source.pb)))
+      entry._scope.has(source.px) ||
+      (source._fam === entry._target._fam &&
+        (entry._wholeFamily ||
+          (!inner && entry._scope.has(source.v)) ||
+          (source.pb !== null && entry._scope.has(source.pb))))
     )
       return true;
-    const inner: StoreTarget | undefined = source.v?.[$TARGET];
-    if (inner === undefined) break;
-    if (inner === source) break;
+    if (inner && scopeKey(source) === scopeKey(entry._target)) localView = true;
+    if (
+      localView &&
+      (entry._inputs?.has(source.v) || (source.pb !== null && entry._inputs?.has(source.pb)))
+    )
+      return true;
+    if (inner === undefined || inner === source) return false;
     source = inner;
   }
-  return false;
 }
 
 /** The store's side: node birth and the untracked traps call it (store.ts,
@@ -154,7 +179,7 @@ const hooks: AffectsHooks = {
     if (scopes.size === 0 || key === $AFFECTS) return;
     for (const [carrier, entry] of scopes) {
       if (carrier === node || !covers(t, key, entry)) continue;
-      if (t._fam === entry._target._fam) entry._scope.add(t.px);
+      if (scopeKey(t) === scopeKey(entry._target)) entry._scope.add(t.px);
       GlobalQueue._mark!(node);
       entry._inherited.push(node);
     }
