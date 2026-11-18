@@ -3120,7 +3120,9 @@ function snapshotBacking(t: StoreTarget): Record<PropertyKey, any> {
   if (pb !== null) {
     const k = t.k;
     if (inDraft(t) || writeOverride || k === null || !(k._config & CONFIG_HELD)) backing = pb;
-    else if (stagingReader() !== null) backing = asBacking(untrack(() => readNode(k)));
+    // Adoption swaps t.v eagerly. While the write is held the container
+    // still carries the committed frame, including for a context-free read.
+    else backing = asBacking(stagingReader() === null ? k._value : untrack(() => readNode(k)));
     // materializePB is a no-op (returns pb) without an overlay.
     if (backing === pb) backing = materializePB(t);
   }

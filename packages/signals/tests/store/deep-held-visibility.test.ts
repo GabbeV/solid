@@ -10,8 +10,10 @@ import {
   createOptimisticStore,
   createRenderEffect,
   createRoot,
+  createStore,
   deep,
   flush,
+  reconcile,
   snapshot
 } from "../../src/index.js";
 
@@ -114,3 +116,25 @@ describe("#3147: reader families agree across a structural array lifetime", () =
     flush();
   });
 });
+
+it.each(["plain", "derived"] as const)(
+  "a %s store exposes the committed row to a handler while a replacement is held",
+  async form => {
+    const orig = { name: "Alice" };
+    const [row, edit] = form === "plain" ? createStore(orig) : createStore(() => orig);
+    const end = Promise.withResolvers<void>();
+    const run = action(function* () {
+      edit(reconcile({ name: "Bob" }, null));
+      yield end.promise;
+    })();
+    try {
+      flush();
+      expect([row.name, snapshot(row).name, deep(row).name]).toEqual(["Alice", "Alice", "Alice"]);
+    } finally {
+      end.resolve();
+      await run;
+      flush();
+    }
+    expect([row.name, snapshot(row).name, deep(row).name]).toEqual(["Bob", "Bob", "Bob"]);
+  }
+);
