@@ -706,16 +706,22 @@ function copyOwn(to: object, from: object, key: PropertyKey): void {
 function scanAccessorsOnce(target: StoreTarget): boolean {
   const src = target.v;
   const keys = Reflect.ownKeys(src);
-  let plain = protoOf(src) === Object.prototype;
+  const proto = protoOf(src);
+  let plain = proto === Object.prototype;
+  const shallowArray =
+    target.s && !target.ch && proto === Array.prototype && (!target.pb || target.pb === src);
+  let storeSlots: string[] | undefined;
   for (const key of keys) {
     if (isOwnAccessor(src, key)) {
       target.a = true;
       plain = false;
       break;
     }
+    if (shallowArray && typeof key === "string" && src[key]?.[$TARGET])
+      (storeSlots ??= []).push(key);
     if (plain && !propertyIsEnumerable.call(src, key)) plain = false;
   }
-  target.sc = plain ? 2 : 1;
+  target.sc = plain ? 2 : shallowArray && !target.a ? (storeSlots ?? 3) : 1;
   target.kc = keys.length;
   return !target.a;
 }
@@ -892,10 +898,18 @@ function privatizeCommitted(target: StoreTarget): void {
   target.ch = false;
   if (target.u) {
     privatizeCommitted(target.u);
-    if (__TEST__) devAssertNeverUserMutation(target.u.v);
-    const pv = target.u.v;
-    const slot = parentSlotKey(target, before);
-    if (pv[slot] === before) pv[slot] = target.v;
+    linkToParent(target, before, true);
+  }
+}
+
+/** An explicit store in a shallow slot retains its local proxy after detaching. */
+function linkToParent(child: StoreTarget, previous: object, parentOwned = false): void {
+  const parent = child.u!;
+  const slot = parentSlotKey(child, previous);
+  if (parent.v[slot] === previous) {
+    if (!parentOwned) privatizeCommitted(parent);
+    if (__TEST__) devAssertNeverUserMutation(parent.v);
+    parent.v[slot] = parent.s ? child.px : child.v;
   }
 }
 
@@ -1179,14 +1193,7 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
         else if (k._value instanceof LaneView) k._value.base = t.v;
         else k._value = t.v;
       }
-      if (t.v !== old && t.u) {
-        const slot = parentSlotKey(t, old);
-        if (t.u.v[slot] === old) {
-          privatizeCommitted(t.u);
-          if (__TEST__) devAssertNeverUserMutation(t.u.v);
-          t.u.v[slot] = t.v;
-        }
-      }
+      if (t.v !== old && t.u) linkToParent(t, old);
     }
   }
 }
@@ -2667,7 +2674,13 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (userWrite && target._fam?.opt && previousLength >= 0)
       optHooks?.draftWrite?.(target, key, previousLength, (pb as any[]).length, "set");
     if (unsafe) return true;
-    if (target.s && uv !== null && typeof uv === "object") markRawOne(uv);
+    if (target.s) {
+      if (uv !== null && typeof uv === "object") {
+        if (uv[$TARGET]) target.sc = 0;
+        markRawOne(uv);
+      }
+      if (Array.isArray(target.sc) && target.sc.length > pb.length) target.sc = 0;
+    }
     if (!draft) notifyWrites(target); // a write-override write
     return true;
   },
@@ -2684,7 +2697,8 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if ("value" in desc) desc = { ...desc, value: unwrapValue(desc.value, target) };
     const pb = ensurePB(target);
     const previousLength = Array.isArray(pb) ? pb.length : -1;
-    if (target.a || !(desc.enumerable && desc.writable && desc.configurable)) target.sc = 1;
+    if (target.s) target.sc = 0;
+    else if (target.a || !(desc.enumerable && desc.writable && desc.configurable)) target.sc = 1;
     touch(target, key);
     Object.defineProperty(pb, key, desc);
     if (userWrite && target._fam?.opt && previousLength >= 0)
@@ -2927,16 +2941,22 @@ export function createStore<T extends Record<PropertyKey, any>>(
   return [proxy, setter];
 }
 
-/** The list driver's slot view of a shallow store (types.ts `shallowView`):
- * one `readSource` for the container instead of a trap per slot. A shallow
- * store's slots hold raw records, so the backing the container read serves
- * is what each slot read would — except where a slot's own leaf can answer
- * differently: an optimistic family's guesses, a chained backing, accessor
- * keys, or a read inside a draft or write scope. Those keep the trap. */
+/** Use the selected backing for raw rows and read explicit stores through
+ * their local views before the list driver starts updating retained rows. */
 installShallowView(t => {
-  // Any open write scope keeps the trap (it covers `inDraft`).
-  if (t?.s && !(t.ch || t.a || writeScopes || writeOverride || t._fam?.opt))
-    return (t._fam && pullFamily(t), readSource(t) as any[]);
+  if (!t?.s || t.ch || t.a || writeScopes || writeOverride || t._fam?.opt) return;
+  if (t._fam) pullFamily(t);
+  const src = readSource(t) as any[];
+  if (protoOf(src) !== Array.prototype) return;
+  if (src === t.v && t.sc === 0 && !t.pb) scanAccessorsOnce(t);
+  if (t.a) return;
+  const current = src === t.v || src === t.pb;
+  if (current && t.sc === 3) return src;
+  const slots = current && Array.isArray(t.sc) ? t.sc : Array.prototype.keys.call(src);
+  let rows: any[] | undefined;
+  for (const key of slots)
+    if (src[key as any]?.[$TARGET]) (rows ??= src.slice())[key as any] = t.px[key];
+  return rows ?? src;
 });
 
 /** True when `proxy` is a SHALLOW store (children served verbatim, slots

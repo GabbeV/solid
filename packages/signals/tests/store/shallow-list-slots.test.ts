@@ -1,10 +1,8 @@
 /**
  * `mapArray` over a shallow store diffs the store's backing (types.ts
- * `shallowView`) instead of reading every slot through the proxy. A shallow
- * store's slots are raw records, so the backing the container read serves is
- * what each slot read would serve; these pin that the list sees the same
- * frame either way: plain writes, structure changes, a positional refetch, a
- * write held by an action, and a shallow projection's derive.
+ * `shallowView`) for raw rows and serves explicit store proxies as local views.
+ * These cases compare mapArray with direct indexing across writes, structure
+ * changes, refetches, held writes and a shallow projection's derive.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -53,6 +51,105 @@ function mount(list: () => Row[]) {
 }
 
 describe("mapArray over a shallow store", () => {
+  it("reads the same local store row as direct indexing before and after an edit", () => {
+    const [person, rename] = createStore({ id: 1, label: "Alice" });
+    const [list, edit] = createStore([person], { shallow: true });
+    const row = list[0];
+    const view = mount(() => list);
+    try {
+      expect(view.screen()).toEqual(["Alice"]);
+      rename(draft => {
+        draft.label = "Bea";
+      });
+      flush();
+      expect(list[0]).toBe(row);
+      expect(view.screen()).toEqual(["Bea"]);
+      edit(draft => {
+        draft[0].label = "Bob";
+      });
+      flush();
+      expect(list[0]).toBe(row);
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(person.label).toBe("Bea");
+      rename(draft => {
+        draft.label = "Carla";
+      });
+      flush();
+      expect(list[0]).toBe(row);
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(view.mounts()).toBe(1);
+    } finally {
+      view.dispose();
+    }
+  });
+
+  it.each(["set", "defineProperty", "replace", "reconcile"] as const)(
+    "a raw list keeps an inserted store row local after %s",
+    method => {
+      const [person] = createStore({ id: 2, label: "Alice" });
+      const [list, edit] = createStore(rows(1), { shallow: true });
+      const view = mount(() => list);
+      try {
+        edit(d => {
+          d[0] = { id: 1, label: "raw" };
+        });
+        flush();
+        expect(view.screen()).toEqual(["raw"]);
+
+        if (method === "replace") edit(() => [person]);
+        else if (method === "reconcile") edit(reconcile([person], null));
+        else
+          edit(d => {
+            if (method === "set") d[0] = person;
+            else
+              Object.defineProperty(d, 0, {
+                value: person,
+                writable: true,
+                configurable: true,
+                enumerable: true
+              });
+          });
+        flush();
+        expect(view.screen()).toEqual(["Alice"]);
+        edit(d => {
+          d[0].label = "Bob";
+        });
+        flush();
+        expect([list[0].label, ...view.screen(), person.label]).toEqual(["Bob", "Bob", "Alice"]);
+      } finally {
+        view.dispose();
+      }
+    }
+  );
+
+  it("keeps store rows local when they move and when the list shrinks", () => {
+    const [person] = createStore({ id: 2, label: "Alice" });
+    const [list, edit] = createStore([rows(1)[0], person, { id: 3, label: "last" }], {
+      shallow: true
+    });
+    const view = mount(() => list);
+    try {
+      edit(d => {
+        d[0] = { id: 1, label: "raw" };
+      });
+      flush();
+      edit(d => {
+        d.shift();
+        d.pop();
+      });
+      flush();
+      expect(view.screen()).toEqual(["Alice"]);
+      edit(d => {
+        d[0].label = "Bob";
+      });
+      flush();
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(person.label).toBe("Alice");
+    } finally {
+      view.dispose();
+    }
+  });
+
   it("follows slot writes, structure changes and refetches by key", () => {
     const [s, set] = createStore(rows(3), { shallow: true });
     const view = mount(() => s);
@@ -102,6 +199,40 @@ describe("mapArray over a shallow store", () => {
     flush();
     expect(view.screen()).toEqual(["held", "r1", "new"]);
     view.dispose();
+  });
+
+  it("publishes a held foreign row with the list frame", async () => {
+    const [person] = createStore({ id: 1, label: "Alice" });
+    const [list, edit] = createStore(rows(1), { shallow: true });
+    const view = mount(() => list);
+    const finish = Promise.withResolvers<void>();
+    const done = action(function* () {
+      edit(draft => {
+        draft[0] = person;
+      });
+      yield finish.promise;
+    })();
+    try {
+      flush();
+      expect(view.screen()).toEqual(["r0"]);
+      finish.resolve();
+      await done;
+      flush();
+      expect(view.screen()).toEqual(["Alice"]);
+      const row = list[0];
+      expect(row).not.toBe(person);
+      edit(draft => {
+        draft[0].label = "Bob";
+      });
+      flush();
+      expect(list[0]).toBe(row);
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(person.label).toBe("Alice");
+    } finally {
+      finish.resolve();
+      await done;
+      view.dispose();
+    }
   });
 
   it("reads a shallow projection's derived rows", () => {

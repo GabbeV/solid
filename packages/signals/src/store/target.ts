@@ -108,8 +108,9 @@ export interface StoreTarget {
    * PLAIN DATA — `Object.prototype` with every own key an enumerable data
    * property. Grade 2 unlocks the spread clone (cloneRaw), bare-assignment
    * overlay writes and flatten (#3360); a non-plain defineProperty through
-   * the draft downgrades it to 1. */
-  sc: 0 | 1 | 2;
+   * the draft downgrades it to 1. For shallow arrays, 3 means no explicit
+   * store values and a key list records where explicit stores occur. */
+  sc: 0 | 1 | 2 | 3 | string[];
   /** Own-key count: exact at scan, then bumped by set-trap writes of keys new
    * to the container (never decremented — an estimate for the overlay/clone
    * choice only, #3360). */
