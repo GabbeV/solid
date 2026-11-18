@@ -402,11 +402,8 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
   // vanishing. Set per pass: the first pass runs inside `computed()`, before
   // the node exists to the caller.
   (this._owner as Root)._parentComputed = getOwner() as Root["_parentComputed"];
-  let newItems = this._list() || [];
+  const newItems = this._list() || [];
   (newItems as any)[$TRACK]; // top level tracking (a store array's container node)
-  // A shallow store array diffs its backing: its slots are raw records, and
-  // a trap per slot read was most of a one-row write on a 1k-row list.
-  newItems = shallowView?.((newItems as any)[$TARGET]) ?? newItems;
   const newLen = newItems.length;
 
   runWithOwner(this._owner, (updateKeyedRows<Item, MappedItem>).bind(this, newItems, newLen));
@@ -421,7 +418,7 @@ function updateKeyedRows<Item, MappedItem>(
   newLen: number
 ): void {
   // The next pass's `_items`, taken first: a store list answers each read of a slot through a trap.
-  const newItems = list.slice(0);
+  const newItems = shallowView?.((list as any)[$TARGET]) ?? list.slice(0);
   let i: number,
     j: number,
     // The stage slot a mapper writes its row/index signal into: `j` on the

@@ -53,6 +53,25 @@ function mount(list: () => Row[]) {
 }
 
 describe("mapArray over a shallow store", () => {
+  it("reads the same local store row as direct indexing before and after an edit", () => {
+    const [person] = createStore({ id: 1, label: "Alice" });
+    const [list, edit] = createStore([person], { shallow: true });
+    const row = list[0];
+    const view = mount(() => list);
+    try {
+      expect(view.screen()).toEqual(["Alice"]);
+      edit(draft => {
+        draft[0].label = "Bob";
+      });
+      flush();
+      expect(list[0]).toBe(row);
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(person.label).toBe("Alice");
+    } finally {
+      view.dispose();
+    }
+  });
+
   it("follows slot writes, structure changes and refetches by key", () => {
     const [s, set] = createStore(rows(3), { shallow: true });
     const view = mount(() => s);

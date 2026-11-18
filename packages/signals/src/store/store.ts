@@ -165,15 +165,15 @@ function TargetShape(
   value: Record<PropertyKey, any>,
   parent: StoreTarget | null,
   parentKey: PropertyKey | null,
-  fam: StoreFamily | null
+  fam: StoreFamily | null,
+  source: StoreTarget | undefined
 ) {
   // Direct field assignment in one fixed order (no Object.assign literal
   // copy): every target shares a hidden-class transition chain — createTarget
   // was the #2 store cost in the uibench creation profile.
   this.v = value;
-  // Chained-backing flag (backing IS another store's proxy, §7b) — cached so
-  // the hot read path never does a per-read symbol lookup on the backing.
-  this.ch = (value as any)[$TARGET] !== undefined;
+  // Keep the chained backing (§7b) available without another proxy read.
+  this.ch = source;
   this.pb = null;
   this.n = null;
   this.h = null;
@@ -219,7 +219,7 @@ export function wrap<T extends Record<PropertyKey, any>>(
   if (existing) return existing.px;
   const t: StoreTarget | undefined = value[$TARGET];
   if (t?.px === value && (parent ? scopeKey(parent) : fam) === scopeKey(t)) return value;
-  const target: StoreTarget = new (TargetShape as any)(value, parent, parentKey, fam);
+  const target: StoreTarget = new (TargetShape as any)(value, parent, parentKey, fam, t);
   // Empty: V8 checks trap results against the proxy target's own keys.
   target.px = new Proxy(Array.isArray(value) ? [] : {}, target as ProxyHandler<object>);
   setLookup(value, target);
@@ -751,13 +751,21 @@ function privatizeCommitted(target: StoreTarget): void {
   // Mid-batch (a staging is open on this target) the fold still sees the
   // backing the batch started from: the queue recorded it (`foldOlds`).
   target.v = clone;
-  target.ch = false;
+  target.ch = undefined;
   if (target.u) {
     privatizeCommitted(target.u);
-    if (__TEST__) devAssertNeverUserMutation(target.u.v);
-    const pv = target.u.v;
-    const slot = parentSlotKey(target, before);
-    if (pv[slot] === before) pv[slot] = target.v;
+    linkToParent(target, before, true);
+  }
+}
+
+/** A shallow slot must keep exposing its store proxy after the child detaches. */
+function linkToParent(child: StoreTarget, previous: object, parentOwned = false): void {
+  const parent = child.u!;
+  const slot = parentSlotKey(child, previous);
+  if (parent.v[slot] === previous) {
+    if (!parentOwned) privatizeCommitted(parent);
+    if (__TEST__) devAssertNeverUserMutation(parent.v);
+    parent.v[slot] = parent.s ? child.px : child.v;
   }
 }
 
@@ -835,7 +843,7 @@ export function adoptPB(
     stageOn(target, incoming);
   }
   target.v = incoming;
-  target.ch = (incoming as any)[$TARGET] !== undefined;
+  target.ch = incoming[$TARGET];
   target.ovl = false;
   target.del = null;
   target.sc = 0;
@@ -1016,7 +1024,7 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
           // The clone (or adopted object) becomes the committed backing
           // (path copy below).
           t.v = t.ovl ? materializePB(t) : pb;
-          t.ch = (t.v as any)[$TARGET] !== undefined;
+          t.ch = t.v[$TARGET];
         }
         t.pb = null;
         t.wk = null; // the written-keys window closes with the commit
@@ -1029,14 +1037,7 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
         if (k._subs === null) t.k = null;
         else k._value = t.v;
       }
-      if (t.v !== old && t.u) {
-        const slot = parentSlotKey(t, old);
-        if (t.u.v[slot] === old) {
-          privatizeCommitted(t.u);
-          if (__TEST__) devAssertNeverUserMutation(t.u.v);
-          t.u.v[slot] = t.v;
-        }
-      }
+      if (t.v !== old && t.u) linkToParent(t, old);
     }
   }
 }
@@ -1751,7 +1752,7 @@ function serveDataKey(
   // Read-through (§7b): the inner store's node is the truth; the outer's is
   // a subscription point only (an optimistic target's guesses are served by
   // its carrier before this, #4762).
-  const chained = target.ch && src === target.v;
+  const chained = target.ch !== undefined && src === target.v;
   let v = backingValue;
   // A write-override read (a derive's draft) serves the backing: the derive
   // composes on the truth, never on a lane's or a hold's frame.
@@ -1984,7 +1985,7 @@ function holdWithDerive(
  * raw-keyed one — so the chained targets are the same objects across
  * settled and pending views. */
 export function resolveChainedRaw(target: StoreTarget, key: PropertyKey, v: object): any {
-  const innerT: StoreTarget = (target.v as any)[$TARGET];
+  const innerT = target.ch!;
   if (innerT.ch) {
     const iv = resolveChainedRaw(innerT, key, v);
     return iv === v ? v : wrap(iv, innerT, key);
@@ -2672,16 +2673,14 @@ export function createStore<T extends Record<PropertyKey, any>>(
   return [proxy, setter];
 }
 
-/** The list driver's slot view of a shallow store (types.ts `shallowView`):
- * one `readSource` for the container instead of a trap per slot. A shallow
- * store's slots hold raw records, so the backing the container read serves
- * is what each slot read would — except where a slot's own leaf can answer
- * differently: an optimistic family's guesses, a chained backing, accessor
- * keys, or a read inside a draft or write scope. Those keep the trap. */
 installShallowView(t => {
-  // Any open write scope keeps the trap (it covers `inDraft`).
-  if (t?.s && !(t.ch || t.a || writeScopes || writeOverride || t._fam?.opt))
-    return (t._fam && pullFamily(t), readSource(t) as any[]);
+  if (t?.s && !(t.ch || t.a || writeScopes || writeOverride || t.o)) {
+    const rows = (readSource(t) as any[]).slice();
+    // Raw rows keep their identity. An explicit store has an enclosing-store
+    // view, the same one direct indexing serves.
+    for (let i = 0; i < rows.length; i++) if (rows[i]?.[$TARGET]) rows[i] = t.px[i];
+    return rows;
+  }
 });
 
 /** True when `proxy` is a SHALLOW store (children served verbatim, slots
@@ -2769,8 +2768,7 @@ export function deep<T>(value: T): T {
     readNode(getDeepNode(t));
     // Through a chain (#3323): every inner record's container AND deep
     // witness — base writes bump the inner witnesses.
-    for (let it = t; it.ch; ) {
-      it = (it.v as any)[$TARGET];
+    for (let it = t.ch; it; it = it.ch) {
       readNode(getContainerNode(it));
       readNode(getDeepNode(it));
     }
@@ -2856,8 +2854,9 @@ function snapshotWalk(value: any, seen: Map<object, any>, parent: StoreTarget | 
   let src = value;
   for (let entry = true; ; entry = false) {
     const fam = parent?._fam ?? null;
-    const viaProxy = src?.[$TARGET]?.v !== undefined;
-    let t: StoreTarget | undefined = viaProxy ? src[$TARGET] : undefined;
+    const proxy: StoreTarget | undefined = src[$TARGET];
+    const viaProxy = proxy?.v !== undefined;
+    let t = viaProxy ? proxy : undefined;
     if (t === undefined && fam !== null) t = lookupTarget(src, fam);
     if (t === undefined) t = lookupTarget(src, null);
     if (t === undefined) break;

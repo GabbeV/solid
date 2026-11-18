@@ -67,8 +67,8 @@ export interface StoreTarget {
   /** Pending backing for the current batch (null when settled) — the same
    * object the container node stages (`k._pendingValue`). */
   pb: Record<PropertyKey, any> | null;
-  /** cached: committed backing is another store's proxy (§7b chained). */
-  ch: boolean;
+  /** Target of the committed backing when it is a store proxy (§7b chained). */
+  ch: StoreTarget | undefined;
   /** live value-node count (deleted-key sweep fast-out in the fused walk). */
   nc: number;
   /** Lazy per-property subscription nodes (slot nodes). */

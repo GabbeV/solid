@@ -135,10 +135,13 @@ it("isolates writes through a nested object", () => {
 it("a shallow store isolates an explicitly supplied store", () => {
   const [person] = createStore({ name: "Alice" });
   const [list, edit] = createStore({ first: person, second: person }, { shallow: true });
+  const row = list.first;
   edit(d => {
     d.first.name = "Bob";
   });
   flush();
+  expect(list.first).toBe(row);
+  expect(list.second).toBe(row);
   expect([person.name, list.first.name, list.second.name]).toEqual(["Alice", "Bob", "Bob"]);
 });
 

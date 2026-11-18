@@ -185,11 +185,8 @@ export function setWriteOverride(value: boolean): void {
   writeOverride = value;
 }
 
-/** The list driver's view of a shallow store (map.ts): the backing a read of
- * every slot serves this reader, or `undefined` when the list is no shallow
- * store or a slot read could differ from it. Installed by store.ts's top
- * level, so a `<For>` in an app without stores carries none of it; it lives
- * beside `$TRACK` so map.ts reaches no other store module. */
+/** An eligible shallow store can copy its raw rows directly. The store supplies
+ * the keyed list's snapshot so apps without stores keep a plain array slice. */
 export let shallowView: ((t: any) => any[] | undefined) | null = null;
 export function installShallowView(view: (t: any) => any[] | undefined): void {
   shallowView = view;
