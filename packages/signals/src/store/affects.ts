@@ -179,7 +179,11 @@ const hooks: AffectsHooks = {
     if (scopes.size === 0 || key === $AFFECTS) return;
     for (const [carrier, entry] of scopes) {
       if (carrier === node || !covers(t, key, entry)) continue;
-      if (scopeKey(t) === scopeKey(entry._target)) entry._scope.add(t.px);
+      if (
+        scopeKey(t) === scopeKey(entry._target) ||
+        (!t.ch && t._fam === entry._target._fam && entry._scope.has(t.v))
+      )
+        entry._scope.add(t.px);
       GlobalQueue._mark!(node);
       entry._inherited.push(node);
     }

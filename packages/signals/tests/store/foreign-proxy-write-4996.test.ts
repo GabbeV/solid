@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import {
   action,
   affects,
+  createMemo,
   createRenderEffect,
   createRoot,
   createStore,
@@ -252,6 +253,39 @@ it("marks a nested row first captured during the window without marking its inpu
   } finally {
     hold.resolve();
     await done;
+    flush();
+  }
+});
+
+it("a shared raw child captured during a mark retains it after a write", async () => {
+  const input = { name: "Alice", late: true };
+  const [first] = createStore({ input });
+  const [second, edit] = createStore({ input });
+  const finish = Promise.withResolvers<void>();
+  const done = action(function* () {
+    affects(first);
+    yield finish.promise;
+  })();
+  const child = second.input;
+  let dispose!: () => void;
+  try {
+    const pending = createRoot(d => {
+      dispose = d;
+      return createMemo(() => isPending(() => child.name));
+    });
+    flush();
+    expect(pending()).toBe(true);
+    edit(draft => {
+      draft.input.name = "Bob";
+    });
+    flush();
+    expect(first.input).toBe(child);
+    expect(second.input).toBe(child);
+    expect(isPending(() => child.late)).toBe(true);
+  } finally {
+    finish.resolve();
+    await done;
+    dispose?.();
     flush();
   }
 });
