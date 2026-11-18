@@ -17,9 +17,7 @@ Files: **CS** = `tests/store/createStore.test.ts`, **SP** = `tests/store/storePa
 
 **R3. A derived store, projection or optimistic store wraps an incoming store proxy in its own family. A plain holder shares the proxy, including a proxy inserted later through its setter.**
 
-- [#4996 ruling](https://github.com/solidjs/solid/issues/4996#issuecomment-6973759815) and [#5012](https://github.com/solidjs/solid/pull/5012). A plain holder of a derived row shares the row's view. The derivation still separates that view from its input.
-
-- SPC "each level serves its own proxies…", "set-trap ingest passes through without raw-marking", "seed ingest…".
+- [#4996 ruling](https://github.com/solidjs/solid/issues/4996#issuecomment-6973759815) and [#5012](https://github.com/solidjs/solid/pull/5012). A plain holder of a derived row shares the row's view. The derivation still separates that view from its input. SPC "each level serves its own proxies…", "set-trap ingest passes through without raw-marking", "seed ingest…".
 
 **R4. Write isolation across a store chain: writing through the last store in a derived chain is visible only there; upstream stores and base objects untouched (shallow or deep middle).**
 

@@ -186,3 +186,51 @@ it("plain stores pass through an explicit derived slot supplied by a setter", ()
     "Bob"
   ]);
 });
+
+it.each(["field", "replacement"] as const)(
+  "an unrelated %s copy reads the published source while another action holds a write",
+  async kind => {
+    const [source, edit] = createStore({ n: 0 });
+    const [other, copy] = createStore({ n: -1 });
+    const seen: number[][] = [];
+    const dispose = createRoot(dispose => {
+      createRenderEffect(
+        () => [source.n, other.n],
+        pair => void seen.push(pair)
+      );
+      return dispose;
+    });
+    flush();
+
+    const hold = Promise.withResolvers<void>();
+    const running = action(function* () {
+      edit(draft => {
+        draft.n = 1;
+      });
+      yield hold.promise;
+    })();
+    try {
+      flush();
+      if (kind === "replacement") copy(() => source);
+      else
+        copy(draft => {
+          draft.n = source.n;
+        });
+      flush();
+      expect(seen).toEqual([
+        [0, -1],
+        [0, 0]
+      ]);
+    } finally {
+      hold.resolve();
+      await running;
+      flush();
+      dispose();
+    }
+    expect(seen).toEqual([
+      [0, -1],
+      [0, 0],
+      [1, 0]
+    ]);
+  }
+);

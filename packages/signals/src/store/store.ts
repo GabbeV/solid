@@ -1638,14 +1638,26 @@ export function notifyFold(
 // visibility
 
 let writing = 0;
-/** Families with an open setter (plain stores share null): their draft reads are the
- * writer's (no tracking, pending backing served); every other store reads
- * normally — a derive's external reads are its dependencies (#3037). */
-let writeScopes: Set<StoreTarget["_fam"]> | null = null;
+/** Only a setter's own roots read their drafts. The null entry permits
+ * writes to other plain stores without exposing their staging on a read. */
+let writeScopes: Set<StoreTarget | StoreFamily | null> | null = null;
 const pendingNotify = new Set<StoreTarget>();
 
+function draftRoot(target: StoreTarget) {
+  return target._fam ?? storeRoot(target);
+}
+
 function inDraft(target: StoreTarget): boolean {
-  return writeScopes !== null && writeScopes.has(target._fam);
+  return writeScopes !== null && writeScopes.has(draftRoot(target));
+}
+
+function canWriteDraft(target: StoreTarget): boolean {
+  if (writeScopes === null) return false;
+  if (target._fam === null && writeScopes.has(null)) {
+    writeScopes.add(draftRoot(target));
+    return true;
+  }
+  return inDraft(target);
 }
 
 /** Shallow store: values served verbatim (a nested store proxy still wraps
@@ -1659,7 +1671,7 @@ function serveShallow(target: StoreTarget, key: PropertyKey, v: any): any {
 function draftServe(target: StoreTarget, proxy: any): any {
   if (writeScopes !== null && inDraft(target)) {
     const ct: StoreTarget | undefined = proxy?.[$TARGET];
-    if (ct?.v !== undefined) writeScopes.add(ct._fam);
+    if (ct?.v !== undefined) writeScopes.add(draftRoot(ct));
   }
   return proxy;
 }
@@ -2663,7 +2675,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
 
   set(_, key, value) {
     const target = this;
-    const draft = inDraft(target);
+    const draft = canWriteDraft(target);
     if (!draft && !writeOverride) {
       if (__DEV__) warnWriteOutsideSetter(target, key, "set");
       return true;
@@ -2712,7 +2724,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
 
   defineProperty(_, key, desc) {
     const target = this;
-    const draft = inDraft(target);
+    const draft = canWriteDraft(target);
     if (!draft && !writeOverride) {
       if (__DEV__) warnWriteOutsideSetter(target, key, "defineProperty");
       return true;
@@ -2735,7 +2747,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
 
   deleteProperty(_, key) {
     const target = this;
-    const draft = inDraft(target);
+    const draft = canWriteDraft(target);
     if (!draft && !writeOverride) {
       if (__DEV__) warnWriteOutsideSetter(target, key, "deleteProperty");
       return true;
@@ -2858,8 +2870,8 @@ export function devGuardStoreSetterResult(result: unknown): void {
 function setterReplacement(value: Record<PropertyKey, any>): Record<PropertyKey, any> {
   const source: StoreTarget | undefined = value[$TARGET];
   if (source === undefined) return value;
-  const backing = unwrapValue(value);
-  if (source.px !== value) return backing;
+  if (source.px !== value) return unwrapValue(value);
+  const backing = snapshotBacking(source);
   const descriptors: Record<PropertyKey, PropertyDescriptor> =
     Object.getOwnPropertyDescriptors(backing);
   delete descriptors[$OWNER];
@@ -2883,7 +2895,8 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
   const target: StoreTarget = (proxy as any)[$TARGET];
   const prevScopes = writeScopes;
   writeScopes = new Set();
-  writeScopes.add(target._fam);
+  writeScopes.add(draftRoot(target));
+  if (target._fam === null) writeScopes.add(null);
   const prevUser = userWrite;
   userWrite = guard;
   // An outermost setter's exit notifies the targets it wrote. A
