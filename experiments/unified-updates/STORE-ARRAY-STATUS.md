@@ -1,3 +1,27 @@
+# Ordinary store draft reads — 2026-11-19
+
+The experiment follows the user's ruling on
+[#5046](https://github.com/solidjs/solid/issues/5046). An action stages
+`score = 1`. A later `setState(d => { d.copy = d.score })` sees the 1.
+The later write joins the action that supplied it. The UI goes from 0/0
+directly to 1/1, including when the copy is in another action and either
+action finishes first. A constant write to the other field can still
+publish independently. A plain holder's draft follows the same rule when
+reading a shared child.
+
+The draft records the holds it reads and joins them when it writes. The
+read list is scoped to synchronous setters. An inner setter can use its
+outer setter's reads. A read-only inner setter leaves the outer setter's
+prior reads intact. An external plain accessor still sees the published
+value. Ordinary signal and memo reads do not consult store draft state.
+
+One conservative case awaits a ruling. A property descriptor includes a
+data property's value. `Object.keys(d)` asks the proxy for those descriptors
+to check enumerability. The prototype can therefore hold a write based on
+`Object.keys(d)` when only a field value changed. `Reflect.ownKeys(d)` asks
+only for keys, and `key in d` asks only for presence. Both can remain
+independent of the value change.
+
 # Store ownership checkpoint — 2026-11-19
 
 Ryan's [#4996 ruling](https://github.com/solidjs/solid/issues/4996#issuecomment-6973759815)
@@ -14,14 +38,8 @@ inside a shallow slot preserves its elements' identities. A Chromium check
 of #5027 showed source/view values of Paris/Paris, Paris/Rome, then
 Paris/Paris after the guessing action ended.
 
-An unrelated ordinary setter can copy a published field or return a source
-proxy to copy its root slots. One case still needs a ruling. Suppose
-`card.person === person` and an action holds a change of `person.score`
-from 0 to 1. With an initial `card.copy` of -1, running
-`setCard(d => { d.copy = d.person.score })` reveals 0/1 before the action
-ends on main (`82f71fddb`), PR #4906 (`bfc7b9af3`), and this checkpoint.
-A committed read would give 0/0 followed by 1/0. A draft read that joins
-the holding action would give 0/-1 followed by 1/1.
+The later draft-read ruling above supersedes the open ownership question
+from this checkpoint.
 
 Validation of the runtime at `6f0249fd7` passed all 927 Solid, 1,886 Web
 client, 2,010 server, 768 hydration, and 46 distribution tests that ran.

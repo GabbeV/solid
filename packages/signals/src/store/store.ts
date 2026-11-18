@@ -98,6 +98,7 @@ import {
   insertSubs,
   joinFuture,
   joinPassTx,
+  liveTx,
   list,
   laneStageHook,
   observeFlightHook,
@@ -1643,6 +1644,68 @@ let writing = 0;
 let writeScopes: Set<StoreTarget | StoreFamily | null> | null = null;
 const pendingNotify = new Set<StoreTarget>();
 
+// An imperative draft can consume a proposal before its publication. Only
+// a subsequent write uses that dependency. Nested setters inherit prior
+// reads and discard their own read-only work on return.
+const draftReads: Transaction[] = [];
+
+function rememberDraftRead(owner: Transaction): void {
+  if (owner !== flushTransaction && !draftReads.includes(owner)) draftReads.push(owner);
+}
+
+export function joinDraftReads(): void {
+  if (!userWrite) return;
+  for (const read of draftReads) {
+    const owner = liveTx(read);
+    if (owner && owner !== flushTransaction) joinFuture(owner);
+  }
+}
+
+function noteDraftRead(
+  t: StoreTarget,
+  key: PropertyKey | undefined,
+  kind: "value" | "has" | "keys" | "descriptor"
+): void {
+  if (t._fam?.opt) {
+    if (kind !== "descriptor") optHooks?.draftRead?.(t, key, kind);
+    return;
+  }
+  const container = t.k;
+  const slots = kind === "has" ? t.h : kind === "keys" ? null : t.n;
+  const slot = slots?.[key as any];
+  if (slot) {
+    if (slot._config & CONFIG_HELD) rememberDraftRead(txOf(slot));
+    if (kind !== "descriptor") return;
+  }
+  if (!container || !(container._config & CONFIG_HELD) || container._pendingValue === NOT_PENDING)
+    return;
+  const before = asBacking(container._value);
+  const after = asBacking(container._pendingValue);
+  if (kind === "keys") {
+    const previous = visibleKeys(t, before);
+    const next = visibleKeys(t, after);
+    if (previous.length === next.length && previous.every((k, i) => k === next[i])) return;
+  } else if (kind === "has") {
+    const present = key! in after && !(after === t.pb && t.del?.has(key!));
+    if (present === key! in before) return;
+  } else {
+    const old = visibleDescriptor(t, before, key!);
+    const next = visibleDescriptor(t, after, key!);
+    if (
+      (old || next || protoOf(before) === protoOf(after)) &&
+      old?.get === next?.get &&
+      isEqual(old?.value, next?.value) &&
+      (kind === "value" ||
+        (old?.enumerable === next?.enumerable &&
+          old?.writable === next?.writable &&
+          old?.set === next?.set))
+    )
+      return;
+    if (old && next && sameLogicalSlot(t, old.value, next.value) && kind === "value") return;
+  }
+  rememberDraftRead(txOf(container));
+}
+
 function draftRoot(target: StoreTarget) {
   return target._fam ?? storeRoot(target);
 }
@@ -1735,7 +1798,7 @@ function readSource(
     // from the future (L2: a read of something already held joins it): the
     // derive's whole result reveals with the action (core R31 / #3733:
     // "under the transaction and revealed with it"), not key by key. A
-    // user's setter reading its draft is no pass and joins nothing here.
+    // user's draft records the supplying hold at the trap and joins on write.
     if (writeOverride && !userWrite) {
       const leaf = key !== undefined ? target.n?.[key as any] : undefined;
       if (leaf !== undefined) {
@@ -2272,6 +2335,7 @@ const UNSAFE_KEYS = new Set<PropertyKey>(["__proto__", "prototype", "constructor
  * an earlier setter of the batch opens a set of its own (the notify visits
  * it, D-8) and chains the earlier one behind for the fold's union. */
 function touch(target: StoreTarget, key: PropertyKey): void {
+  if (draftReads.length) joinDraftReads();
   let wk = target.wk;
   if (!pendingNotify.has(target)) {
     pendingNotify.add(target);
@@ -2432,8 +2496,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       }
     }
     const src = readSource(target, key);
-    if (userWrite && target._fam?.opt && inDraft(target))
-      optHooks?.draftRead?.(target, key, "value");
+    if (userWrite && inDraft(target)) noteDraftRead(target, key, "value");
     // Overlay delete (#3044): a prototype overlay cannot shadow a delete, so
     // deleted keys are tracked aside and read as absent in the pending view.
     if (src === target.pb && target.del?.has(key)) {
@@ -2580,7 +2643,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       affectsHooks._witness(target, key);
     if (target._fam !== null) pullFamily(target, key, true);
     const src = readSource(target, key);
-    if (userWrite && target._fam?.opt && inDraft(target)) optHooks?.draftRead?.(target, key, "has");
+    if (userWrite && inDraft(target)) noteDraftRead(target, key, "has");
     // A tracked reader's presence node answers (born from the two frames;
     // core decides which it sees); everyone else reads the backing. A
     // chained target's node is a subscription point (§7b): the inner store
@@ -2615,8 +2678,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       if (keys) return keys;
     }
     const source = enumerationSource(target);
-    if (userWrite && target._fam?.opt && inDraft(target))
-      optHooks?.draftRead?.(target, undefined, "keys");
+    if (userWrite && inDraft(target)) noteDraftRead(target, undefined, "keys");
     return visibleKeys(target, source);
   },
 
@@ -2661,6 +2723,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       )
         return undefined;
     } else src = readSource(target, key, true);
+    if (userWrite && inDraft(target)) noteDraftRead(target, key, "descriptor");
     let desc: PropertyDescriptor | undefined;
     if (optHooks && !enumerating && optRead(target)) {
       const guessed = optHooks.descriptor(target, key, src);
@@ -2893,6 +2956,7 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
   if (writeHook !== null) writeHook(proxy as object);
   if (__DEV__ && guard) devGuardStoreSetterWrite();
   const target: StoreTarget = (proxy as any)[$TARGET];
+  const previousReads = draftReads.length;
   const prevScopes = writeScopes;
   writeScopes = new Set();
   writeScopes.add(draftRoot(target));
@@ -2916,7 +2980,9 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
     // inside a projection derive) must keep tracking — they are the derive's
     // dependencies.
     result = fn(proxy);
+    if (guard && draftReads.length && result !== proxy && isWrappable(result)) joinDraftReads();
   } finally {
+    draftReads.length = previousReads;
     writing--;
     writeScopes = prevScopes;
     // Outermost setter exit: emit write-time notifications (one node write
@@ -3190,7 +3256,18 @@ function snapshotBacking(t: StoreTarget): Record<PropertyKey, any> {
     // still carries the committed frame, including for a context-free read.
     else backing = asBacking(stagingReader() === null ? k._value : untrack(() => readNode(k)));
     // materializePB is a no-op (returns pb) without an overlay.
-    if (backing === pb) backing = materializePB(t);
+    if (backing === pb) {
+      // A snapshot consumes the entire selected backing in one read.
+      if (userWrite && !t._fam?.opt && inDraft(t)) {
+        if (k && k._config & CONFIG_HELD) rememberDraftRead(txOf(k));
+        if (t.n)
+          for (const key of Reflect.ownKeys(t.n)) {
+            const slot = t.n[key as any];
+            if (slot._config & CONFIG_HELD) rememberDraftRead(txOf(slot));
+          }
+      }
+      backing = materializePB(t);
+    }
   }
   return optHooks && optRead(t) ? optHooks.view(t, backing) : backing;
 }

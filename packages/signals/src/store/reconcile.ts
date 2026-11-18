@@ -26,6 +26,7 @@ import {
   adoptPB,
   bumpDeep,
   hasAccessorFlag,
+  joinDraftReads,
   materializePB,
   notifyFold,
   notifyFoldTail,
@@ -51,6 +52,7 @@ export function reconcileState(
   if (state == null) throw new Error(__DEV__ ? "Cannot reconcile null or undefined state" : "");
   const t: StoreTarget = state[$TARGET];
   if (t?.px !== state) throw new Error(__DEV__ ? "reconcile target is not a store proxy" : "");
+  joinDraftReads();
   const keyFn: KeyFn | null =
     key === null ? null : typeof key === "string" ? (item: any) => item?.[key] : (key as KeyFn);
   // A user's reconcile on an optimistic family (S4): not an adoption of
