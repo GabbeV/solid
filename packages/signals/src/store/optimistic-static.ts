@@ -46,6 +46,7 @@ import {
   arrayStructureChanged,
   coordinateArrayWrites,
   joinArrayIncoming,
+  readArrayAnswer,
   readArrayLength,
   readArrayStructure,
   selectedArrayLength,
@@ -307,6 +308,7 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
           ? ((wrap(current, t, key) as any)[$TARGET] as StoreTarget)
           : undefined;
         if (child && descendantSelected(child)) return read(node);
+        readArrayAnswer(t);
         return read(input);
       }
     );

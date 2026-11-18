@@ -1,7 +1,12 @@
 /** Array structure owns a publication boundary without guessing array contents. */
-import { read, untrack } from "../core/core.js";
-import { CONFIG_AUTO_DISPOSE, REACTIVE_DISPOSED, STATUS_UNINITIALIZED } from "../core/constants.js";
-import { flushTransaction, insertSubs, joinFuture, schedule } from "../core/scheduler.js";
+import { read, setSignal, signal, untrack } from "../core/core.js";
+import {
+  CONFIG_INPUTS_PUBLISHED,
+  CONFIG_AUTO_DISPOSE,
+  REACTIVE_DISPOSED,
+  STATUS_UNINITIALIZED
+} from "../core/constants.js";
+import { flushTransaction, holdNode, insertSubs, joinFuture, schedule } from "../core/scheduler.js";
 import {
   createOptimisticSlot,
   createOptimisticStoreInput,
@@ -18,7 +23,8 @@ import {
 import { optHooks } from "./hooks.js";
 import { dispose } from "../core/owner.js";
 import { enqueueSub, markNode } from "../core/heap.js";
-import type { Computed } from "../core/types.js";
+import { NotReadyError } from "../core/error.js";
+import type { Computed, Signal } from "../core/types.js";
 import { $OWNER, type StoreTarget } from "./target.js";
 import { isWrappable, $TARGET } from "./types.js";
 
@@ -29,6 +35,8 @@ type ArraySlots = {
   shape: Map<PropertyKey, Slot>;
 };
 type ArrayState = { structure?: Slot };
+/** Only answers that joined a structural edit after their question published. */
+const pendingAnswers = new Map<StoreTarget, Signal<boolean>>();
 const arrays = new WeakMap<StoreTarget, ArrayState>();
 const active = new Set<StoreTarget>();
 const ownedInputs = new WeakMap<Slot, Computed<any>>();
@@ -137,6 +145,19 @@ function structureSlot(t: StoreTarget): Slot {
   return slot;
 }
 
+/** A higher pass may use its chosen row immediately. For an unguessed row
+ * the old answer belongs to the previous question: suspend until this pass
+ * can consume the new answer. The landing itself can build its rows eagerly. */
+export function readArrayAnswer(t: StoreTarget): void {
+  if (!pendingAnswers.size) return;
+  for (let p: StoreTarget | null = t; p; p = p.u) {
+    const gate = pendingAnswers.get(p);
+    if (gate && !gate._value) {
+      readArrayStructure(p);
+      if (!read(gate)) throw new NotReadyError(gate);
+    }
+  }
+}
 export function selectedArrayShape(t: StoreTarget, writer = false): any[] {
   const slot = structureSlot(t);
   return writer ? slot.writerValue() : read(slot.output);
@@ -246,6 +267,17 @@ export function joinArrayIncoming(t: StoreTarget, slots: ArraySlots): void {
   }
   if (!selected || !flushTransaction) return;
   r ??= state(t);
+  // Loading may have let the filter publish while its list was still in
+  // flight. Receiving the list settles that flight, but the structural
+  // edit we joined can still hold its answer. Stage readiness with the
+  // answer so readers in each update see both become available together.
+  const producer = t._fam?.node;
+  if (producer && producer._config & CONFIG_INPUTS_PUBLISHED && !pendingAnswers.has(t)) {
+    const ready = signal(false);
+    pendingAnswers.set(t, ready);
+    holdNode(ready, flushTransaction);
+    setSignal(ready, true);
+  }
   const slot = structureSlot(t);
   slot.propose(slot.activeOwner() ? slot.writerValue() : slot.output._value);
   discoverStructure(slots);
@@ -301,6 +333,9 @@ export function coordinateArrayWrites(
 }
 
 export function sweepArrays(): void {
+  for (const [t, ready] of pendingAnswers) {
+    if (ready._value || t._fam?.node?._flags! & REACTIVE_DISPOSED) pendingAnswers.delete(t);
+  }
   for (const t of active) {
     const r = arrays.get(t)!;
     const abandoned = !!(t._fam?.node?._flags! & REACTIVE_DISPOSED);
