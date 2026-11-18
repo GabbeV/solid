@@ -1,3 +1,42 @@
+# Store integration checkpoint — 2026-11-18
+
+Both remaining Web regressions (#4605 and #4613) pass with their existing
+assertions. Once a new filter has published, an unguessed row stays behind
+Loading while its incoming array replacement is held with a structural edit.
+An explicitly guessed field can still publish. JSX tests cover release over
+two successive edits and both retained and replaced row keys.
+
+A plain store that receives an explicit store proxy now follows the source
+through a local view. Writing through the receiving store edits that view.
+Calling `affects(list)` covers its captured and newly read rows while leaving
+the independent source clear. Passing the same raw child to two plain stores
+retains the existing shared identity. This checkpoint stays on the deep store
+engine.
+
+A separate regression test covers a held replacement on plain and derived
+stores. Reading a field, calling `deep`, and calling `snapshot` from outside
+the open action all see the committed row until release.
+
+Verification at ba287716b:
+
+| Suite | Passed | Failed | Skipped |
+| --- | ---: | ---: | ---: |
+| Signals source | 8,051 | 135 | 5 |
+| Signals distribution artifacts | 46 | 0 | 0 |
+| Solid | 927 | 0 | 0 |
+| Web client | 1,886 | 0 | 1 |
+| Web server | 2,010 | 0 | 3 |
+| Web hydration | 768 | 0 | 3 |
+
+All 135 signal failures match the deferred `until` inventory by file and full
+test name. Signals build types, the rules index, and the production and observe
+purity checks passed. The local server run resolved the shared diagnostics
+dependency to the same built signals runtime as the renderer. The hydration
+runner allowed Vite to serve this workspace's symlinked dependencies.
+Performance and bundle-size measurements remain pending for this checkpoint.
+
+---
+
 # Store integration checkpoint — 2026-11-17
 
 Reran the five Web files with the six previously reported failures. Revised the
