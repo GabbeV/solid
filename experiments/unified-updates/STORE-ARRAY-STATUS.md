@@ -1,3 +1,36 @@
+# Store ownership checkpoint — 2026-11-19
+
+Ryan's [#4996 ruling](https://github.com/solidjs/solid/issues/4996#issuecomment-6973759815)
+supersedes the plain-holder behavior recorded on November 18. A plain
+holder shares an explicitly supplied store proxy, including one supplied by
+a later setter. A derived or optimistic store has its own view. If a plain
+card captures a derived row, editing through the card changes that row and
+leaves the row's input unchanged.
+
+Coverage includes held keyed reconciliation before the first outside read,
+shallow seeds, captured and newly read rows under `affects`, aliased rows in
+`snapshot` and `deep`, and optimistic edits through accessors. A raw array
+inside a shallow slot preserves its elements' identities. A Chromium check
+of #5027 showed source/view values of Paris/Paris, Paris/Rome, then
+Paris/Paris after the guessing action ended.
+
+An unrelated ordinary setter can copy a published field or return a source
+proxy to copy its root slots. One case still needs a ruling. Suppose
+`card.person === person` and an action holds a change of `person.score`
+from 0 to 1. With an initial `card.copy` of -1, running
+`setCard(d => { d.copy = d.person.score })` reveals 0/1 before the action
+ends on main (`82f71fddb`), PR #4906 (`bfc7b9af3`), and this checkpoint.
+A committed read would give 0/0 followed by 1/0. A draft read that joins
+the holding action would give 0/-1 followed by 1/1.
+
+Validation of the runtime at `6f0249fd7` passed all 927 Solid, 1,886 Web
+client, 2,010 server, 768 hydration, and 46 distribution tests that ran.
+Of the Signals source tests, 8,085 passed in the full run, 135 failures
+matched the deferred `until` inventory, and #4561 exceeded its 50 ms limit
+during the concurrent suites. #4561 passed three successive focused runs
+with the original limit. Build types, bundle purity and the rules index
+passed. This checkpoint includes no benchmark comparison.
+
 # Store integration checkpoint — 2026-11-18
 
 Both remaining Web regressions (#4605 and #4613) pass with their existing
