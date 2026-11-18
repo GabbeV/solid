@@ -72,6 +72,73 @@ describe("mapArray over a shallow store", () => {
     }
   });
 
+  it.each(["set", "defineProperty", "replace", "reconcile"] as const)(
+    "a raw list keeps an inserted store row local after %s",
+    method => {
+      const [person] = createStore({ id: 2, label: "Alice" });
+      const [list, edit] = createStore(rows(1), { shallow: true });
+      const view = mount(() => list);
+      try {
+        edit(d => {
+          d[0] = { id: 1, label: "raw" };
+        });
+        flush();
+        expect(view.screen()).toEqual(["raw"]);
+
+        if (method === "replace") edit(() => [person]);
+        else if (method === "reconcile") edit(reconcile([person], null));
+        else
+          edit(d => {
+            if (method === "set") d[0] = person;
+            else
+              Object.defineProperty(d, 0, {
+                value: person,
+                writable: true,
+                configurable: true,
+                enumerable: true
+              });
+          });
+        flush();
+        expect(view.screen()).toEqual(["Alice"]);
+        edit(d => {
+          d[0].label = "Bob";
+        });
+        flush();
+        expect([list[0].label, ...view.screen(), person.label]).toEqual(["Bob", "Bob", "Alice"]);
+      } finally {
+        view.dispose();
+      }
+    }
+  );
+
+  it("keeps store rows local when they move and when the list shrinks", () => {
+    const [person] = createStore({ id: 2, label: "Alice" });
+    const [list, edit] = createStore([rows(1)[0], person, { id: 3, label: "last" }], {
+      shallow: true
+    });
+    const view = mount(() => list);
+    try {
+      edit(d => {
+        d[0] = { id: 1, label: "raw" };
+      });
+      flush();
+      edit(d => {
+        d.shift();
+        d.pop();
+      });
+      flush();
+      expect(view.screen()).toEqual(["Alice"]);
+      edit(d => {
+        d[0].label = "Bob";
+      });
+      flush();
+      expect(view.screen()).toEqual(["Bob"]);
+      expect(person.label).toBe("Alice");
+    } finally {
+      view.dispose();
+    }
+  });
+
   it("follows slot writes, structure changes and refetches by key", () => {
     const [s, set] = createStore(rows(3), { shallow: true });
     const view = mount(() => s);

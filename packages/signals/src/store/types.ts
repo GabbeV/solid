@@ -3,7 +3,7 @@
  * by every store module; carries no reactive machinery of its own.
  */
 import type { Refreshable } from "../core/index.js";
-import { lookupTarget } from "./target.js";
+import { lookupTarget, type StoreTarget } from "./target.js";
 
 /** A reactive view of a store's value. Update it through the paired `StoreSetter`. */
 export type Store<T> = T;
@@ -126,9 +126,9 @@ export function markRaw<T>(value: T): T {
 
 /** A shallow store's ingested record: raw by contract (values served
  * verbatim, slots replaced by reference). */
-export function markRawOne(v: any): void {
+export function markRawOne(v: any) {
+  if (v?.[$TARGET]) return true;
   if (isWrappable(v)) {
-    if (v[$TARGET] !== undefined) return;
     if (__DEV__ && lookupTarget(v, null) !== undefined)
       throw new Error(
         "shallow store: an ingested record is already tracked as a deep store — one value cannot present both wrapped and raw"
@@ -185,9 +185,10 @@ export function setWriteOverride(value: boolean): void {
   writeOverride = value;
 }
 
-/** An eligible shallow store can copy its raw rows directly. The store supplies
- * the keyed list's snapshot so apps without stores keep a plain array slice. */
-export let shallowView: ((t: any) => any[] | undefined) | null = null;
-export function installShallowView(view: (t: any) => any[] | undefined): void {
+/** Before the diff, a shallow store can supply a backing containing only raw
+ * rows. Otherwise its snapshot resolves store-valued slots under the list owner. */
+type ShallowView = (t: StoreTarget | undefined, snapshot: boolean) => any[] | undefined;
+export let shallowView: ShallowView | null = null;
+export function installShallowView(view: ShallowView): void {
   shallowView = view;
 }
