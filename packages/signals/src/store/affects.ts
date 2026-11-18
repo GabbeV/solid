@@ -25,7 +25,7 @@
 import { GlobalQueue, releaseMarksHook } from "../core/scheduler.js";
 import type { Computed, Signal } from "../core/types.js";
 import { installAffectsHooks, optHooks, type AffectsHooks } from "./hooks.js";
-import { $OWNER, lookupTarget, scopeKey, type StoreTarget } from "./target.js";
+import { $OWNER, lookupTarget, type StoreTarget } from "./target.js";
 import { $TARGET } from "./types.js";
 
 type Marked = Signal<any> | Computed<any>;
@@ -33,11 +33,17 @@ type Marked = Signal<any> | Computed<any>;
 /** The keyless mark's carrier key: a leaf of the record no read serves. */
 const $AFFECTS: unique symbol = Symbol(__DEV__ ? "STORE_AFFECTS" : 0);
 
-/** Source-local coverage and late-born nodes sharing one carrier's lifetime.
- * The scope dies when the carrier's last registration ends. */
+type Family = StoreTarget["_fam"];
+type Identities = Map<Family, Set<object>>;
+function identities(map: Identities, family: Family): Set<object> {
+  let records = map.get(family);
+  if (!records) map.set(family, (records = new Set()));
+  return records;
+}
+/** Source identities and late-born nodes sharing one declaration's lifetime. */
 interface Scope {
-  _scope: Set<object>;
-  _inputs?: Set<object>;
+  _scope: Identities;
+  _inputs?: Identities;
   _inherited: Marked[];
   _key: PropertyKey | undefined;
   _target: StoreTarget;
@@ -51,7 +57,7 @@ function scopeOf(carrier: Marked, key: PropertyKey | undefined, target: StoreTar
     scopes.set(
       carrier,
       (entry = {
-        _scope: new Set(),
+        _scope: new Map(),
         _inherited: [],
         _key: key,
         _target: target,
@@ -66,15 +72,16 @@ function scopeOf(carrier: Marked, key: PropertyKey | undefined, target: StoreTar
 export function storeMarks(t: StoreTarget, key: PropertyKey | undefined): Marked[] {
   const node = GlobalQueue._storeNode!(t, key === undefined ? $AFFECTS : key);
   const entry = scopeOf(node, key, t);
-  entry._scope.add(t.px);
+  const records = identities(entry._scope, t._fam);
+  records.add(t.px);
   if (key === undefined) {
     const found: Marked[] = [node];
     if (entry._wholeFamily && t._fam!.node) found.push(t._fam!.node);
-    walk(t.px, entry, found, t, new Set());
+    walk(t.px, entry, found, t, new Map());
     return found;
   }
-  if (!t.ch) entry._scope.add(t.v);
-  if (t.pb !== null) entry._scope.add(t.pb);
+  if (!t.ch) records.add(t.v);
+  if (t.pb !== null) records.add(t.pb);
   return [node];
 }
 
@@ -85,43 +92,48 @@ function walk(
   entry: Scope,
   found: Marked[],
   parent: StoreTarget,
-  visited: Set<object>,
+  visited: Identities,
   input?: StoreTarget
 ): void {
   if (!GlobalQueue._storeWrappable!(value)) return;
   const t: StoreTarget | undefined = value[$TARGET] ?? lookupTarget(value, (input ?? parent)._fam);
-  if (t && t.px === value && scopeKey(t) !== scopeKey(parent)) input = t;
+  // A plain holder exposes an explicit proxy itself, even a derived view.
+  // A derived holder projects that proxy into its own family.
+  if (t && t.px === value && parent._fam && t._fam !== parent._fam) input = t;
+  const family = input ? parent._fam : t ? t._fam : parent._fam;
+  const records = identities(entry._scope, family);
+  const seen = identities(visited, family);
   let raw = t ? (t.pb ?? t.v) : value;
   if (input) {
     // Follow the input's backing and collect identities for this store's view.
-    const inputs = (entry._inputs ??= new Set());
+    const inputs = identities((entry._inputs ??= new Map()), family);
     const identity = t?.px ?? raw;
     if (inputs.has(identity)) return;
     inputs.add(identity);
     if (t) {
-      const view = scopeKey(parent).map?.get(t.px);
+      const view = family?.map.get(t.px);
       if (view) {
         if (view.v !== t.px || view.pb !== null)
           return walk(view.px, entry, found, parent, visited);
-        entry._scope.add(view.px);
+        records.add(view.px);
         nodesOf(view, found);
       }
       input = t;
     }
   } else {
     if (t) {
-      if (visited.has(t.px)) return;
-      visited.add(t.px);
-      entry._scope.add(t.px);
+      if (seen.has(t.px)) return;
+      seen.add(t.px);
+      records.add(t.px);
       nodesOf(t, found);
       if (t.ch && raw === t.v && !t._fam?.opt) return walk(raw, entry, found, t, visited);
-      if (!t.ch) entry._scope.add(t.v);
+      if (!t.ch) records.add(t.v);
       if (optHooks && t._fam?.opt === true) raw = optHooks.view(t, raw, true);
       parent = t;
     }
-    if (visited.has(raw)) return;
-    visited.add(raw);
-    entry._scope.add(raw);
+    if (seen.has(raw)) return;
+    seen.add(raw);
+    records.add(raw);
   }
   for (const k of Reflect.ownKeys(raw))
     if (k !== $OWNER) {
@@ -145,26 +157,22 @@ function nodesOf(t: StoreTarget, found: Marked[]): void {
 
 /** Check the target and the inputs it follows. Foreign backing identities
  * only identify views within the marked store. */
-function covers(t: StoreTarget, key: PropertyKey | undefined, entry: Scope): boolean {
-  if (entry._key !== undefined && entry._key !== key) return false;
-  let localView = false;
+function coveredSource(
+  t: StoreTarget,
+  key: PropertyKey | undefined,
+  entry: Scope
+): StoreTarget | undefined {
+  if (entry._key !== undefined && entry._key !== key) return;
   for (let source: StoreTarget = t; ; ) {
+    if (entry._wholeFamily && source._fam === entry._target._fam) return source;
+    const records = entry._scope.get(source._fam);
+    if (records?.has(source.px) || records?.has(source.v) || (source.pb && records?.has(source.pb)))
+      return source;
     const inner: StoreTarget | undefined = source.v?.[$TARGET];
-    if (
-      entry._scope.has(source.px) ||
-      (source._fam === entry._target._fam &&
-        (entry._wholeFamily ||
-          (!inner && entry._scope.has(source.v)) ||
-          (source.pb !== null && entry._scope.has(source.pb))))
-    )
-      return true;
-    if (inner && scopeKey(source) === scopeKey(entry._target)) localView = true;
-    if (
-      localView &&
-      (entry._inputs?.has(source.v) || (source.pb !== null && entry._inputs?.has(source.pb)))
-    )
-      return true;
-    if (inner === undefined || inner === source) return false;
+    if (!inner || inner === source) return;
+    const inputs = entry._inputs?.get(source._fam);
+    if (inputs?.has(inner.px) || inputs?.has(inner.v) || (inner.pb && inputs?.has(inner.pb)))
+      return source;
     source = inner;
   }
 }
@@ -178,12 +186,10 @@ const hooks: AffectsHooks = {
   _born(t, node, key) {
     if (scopes.size === 0 || key === $AFFECTS) return;
     for (const [carrier, entry] of scopes) {
-      if (carrier === node || !covers(t, key, entry)) continue;
-      if (
-        scopeKey(t) === scopeKey(entry._target) ||
-        (!t.ch && t._fam === entry._target._fam && entry._scope.has(t.v))
-      )
-        entry._scope.add(t.px);
+      if (carrier === node) continue;
+      const source = coveredSource(t, key, entry);
+      if (!source) continue;
+      identities(entry._scope, source._fam).add(source.px);
       GlobalQueue._mark!(node);
       entry._inherited.push(node);
     }
@@ -193,7 +199,7 @@ const hooks: AffectsHooks = {
   // verdict is told directly.
   _witness(t, key) {
     for (const entry of scopes.values())
-      if (covers(t, key, entry)) {
+      if (coveredSource(t, key, entry)) {
         GlobalQueue._witnessMark!();
         return;
       }

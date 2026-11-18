@@ -1,6 +1,6 @@
 /**
  * `mapArray` over a shallow store diffs the store's backing (types.ts
- * `shallowView`) for raw rows and serves explicit store proxies as local views.
+ * `shallowView`) for raw rows and serves explicit store proxies directly.
  * These cases compare mapArray with direct indexing across writes, structure
  * changes, refetches, held writes and a shallow projection's derive.
  */
@@ -27,56 +27,75 @@ const rows = (n: number, tag = "") =>
 function mount(list: () => Row[]) {
   let mounts = 0;
   let screen: string[] = [];
-  const dispose = createRoot(d => {
+  const { dispose, mapped } = createRoot(dispose => {
     const mapped = createMemo(
       mapArray(
         list,
         (row: () => Row) => {
           mounts++;
-          return () => row().label;
+          return row;
         },
         { keyed: (r: Row) => r.id }
       )
     );
     createRenderEffect(
-      () => mapped().map(read => read()),
+      () => mapped().map(read => read().label),
       v => {
         screen = v;
       }
     );
-    return d;
+    return { dispose, mapped };
   });
   flush();
-  return { screen: () => screen, mounts: () => mounts, dispose };
+  return { screen: () => screen, mounts: () => mounts, row: (i: number) => mapped()[i](), dispose };
 }
 
 describe("mapArray over a shallow store", () => {
-  it("reads the same local store row as direct indexing before and after an edit", () => {
-    const [person, rename] = createStore({ id: 1, label: "Alice" });
-    const [list, edit] = createStore([person], { shallow: true });
-    const row = list[0];
+  it("a derived list's mapped and indexed rows both edit the derived view", () => {
+    const [person] = createStore({ id: 1, label: "Alice" });
+    const [list, edit] = createStore(() => [person], [] as Row[], { shallow: true });
     const view = mount(() => list);
     try {
+      expect(view.row(0)).toBe(list[0]);
+      expect(view.row(0)).not.toBe(person);
+      edit(rows => {
+        rows[0].label = "Bob";
+      });
+      flush();
+      expect([list[0].label, ...view.screen(), person.label]).toEqual(["Bob", "Bob", "Alice"]);
+    } finally {
+      view.dispose();
+    }
+  });
+
+  it("reads the same store proxy as direct indexing before and after an edit", () => {
+    const [person, rename] = createStore({ id: 1, label: "Alice" });
+    const [list, edit] = createStore([person], { shallow: true });
+    const view = mount(() => list);
+    try {
+      expect(list[0]).toBe(person);
+      expect(view.row(0)).toBe(person);
       expect(view.screen()).toEqual(["Alice"]);
       rename(draft => {
         draft.label = "Bea";
       });
       flush();
-      expect(list[0]).toBe(row);
+      expect(list[0]).toBe(person);
       expect(view.screen()).toEqual(["Bea"]);
       edit(draft => {
         draft[0].label = "Bob";
       });
       flush();
-      expect(list[0]).toBe(row);
+      expect(list[0]).toBe(person);
+      expect(view.row(0)).toBe(person);
       expect(view.screen()).toEqual(["Bob"]);
-      expect(person.label).toBe("Bea");
+      expect(person.label).toBe("Bob");
       rename(draft => {
         draft.label = "Carla";
       });
       flush();
-      expect(list[0]).toBe(row);
-      expect(view.screen()).toEqual(["Bob"]);
+      expect(list[0]).toBe(person);
+      expect(view.screen()).toEqual(["Carla"]);
       expect(view.mounts()).toBe(1);
     } finally {
       view.dispose();
@@ -84,7 +103,7 @@ describe("mapArray over a shallow store", () => {
   });
 
   it.each(["set", "defineProperty", "replace", "reconcile"] as const)(
-    "a raw list keeps an inserted store row local after %s",
+    "a raw list shares an explicit store row inserted by %s",
     method => {
       const [person] = createStore({ id: 2, label: "Alice" });
       const [list, edit] = createStore(rows(1), { shallow: true });
@@ -111,18 +130,20 @@ describe("mapArray over a shallow store", () => {
           });
         flush();
         expect(view.screen()).toEqual(["Alice"]);
+        expect(list[0]).toBe(person);
+        expect(view.row(0)).toBe(person);
         edit(d => {
           d[0].label = "Bob";
         });
         flush();
-        expect([list[0].label, ...view.screen(), person.label]).toEqual(["Bob", "Bob", "Alice"]);
+        expect([list[0].label, ...view.screen(), person.label]).toEqual(["Bob", "Bob", "Bob"]);
       } finally {
         view.dispose();
       }
     }
   );
 
-  it("keeps store rows local when they move and when the list shrinks", () => {
+  it("preserves a store row's identity when it moves and the list shrinks", () => {
     const [person] = createStore({ id: 2, label: "Alice" });
     const [list, edit] = createStore([rows(1)[0], person, { id: 3, label: "last" }], {
       shallow: true
@@ -139,12 +160,14 @@ describe("mapArray over a shallow store", () => {
       });
       flush();
       expect(view.screen()).toEqual(["Alice"]);
+      expect(list[0]).toBe(person);
+      expect(view.row(0)).toBe(person);
       edit(d => {
         d[0].label = "Bob";
       });
       flush();
       expect(view.screen()).toEqual(["Bob"]);
-      expect(person.label).toBe("Alice");
+      expect(person.label).toBe("Bob");
     } finally {
       view.dispose();
     }
@@ -215,19 +238,20 @@ describe("mapArray over a shallow store", () => {
     try {
       flush();
       expect(view.screen()).toEqual(["r0"]);
+      expect(list[0].label).toBe("r0");
       finish.resolve();
       await done;
       flush();
       expect(view.screen()).toEqual(["Alice"]);
-      const row = list[0];
-      expect(row).not.toBe(person);
+      expect(list[0]).toBe(person);
+      expect(view.row(0)).toBe(person);
       edit(draft => {
         draft[0].label = "Bob";
       });
       flush();
-      expect(list[0]).toBe(row);
+      expect(list[0]).toBe(person);
       expect(view.screen()).toEqual(["Bob"]);
-      expect(person.label).toBe("Alice");
+      expect(person.label).toBe("Bob");
     } finally {
       finish.resolve();
       await done;

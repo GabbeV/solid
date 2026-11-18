@@ -108,9 +108,8 @@ export interface StoreTarget {
    * PLAIN DATA — `Object.prototype` with every own key an enumerable data
    * property. Grade 2 unlocks the spread clone (cloneRaw), bare-assignment
    * overlay writes and flatten (#3360); a non-plain defineProperty through
-   * the draft downgrades it to 1. For shallow arrays, 3 means no explicit
-   * store values and a key list records where explicit stores occur. */
-  sc: 0 | 1 | 2 | 3 | string[];
+   * the draft downgrades it to 1. */
+  sc: 0 | 1 | 2;
   /** Own-key count: exact at scan, then bumped by set-trap writes of keys new
    * to the container (never decremented — an estimate for the overlay/clone
    * choice only, #3360). */
@@ -127,8 +126,6 @@ export interface StoreTarget {
   /** Keys deleted in the overlay window (a prototype overlay cannot shadow
    * a delete); null when none. */
   del: Set<PropertyKey> | null;
-  /** Only plain roots that wrap another store allocate a private proxy lookup. */
-  map?: WeakMap<object, StoreTarget>;
   /** Projection family, null for plain stores (§7b). */
   _fam: StoreFamily | null;
   /** Shallow store root (values served raw). */
@@ -155,20 +152,8 @@ export const $OWNER: unique symbol = Symbol(__DEV__ ? "STORE_OWNER" : 0);
  * map so one raw can wrap once per family (§7b). */
 export const storeLookup = new WeakMap<object, StoreTarget>();
 
-/** Plain stores share raw inputs, but each root owns its view of an explicit store proxy. */
-export function storeRoot(t: StoreTarget): StoreTarget {
-  while (t.u !== null) t = t.u;
-  return t;
-}
-export function scopeKey(t: StoreTarget): StoreFamily | StoreTarget {
-  return t._fam ?? storeRoot(t);
-}
-export function chainMap(t: StoreTarget): WeakMap<object, StoreTarget> {
-  return (scopeKey(t).map ??= new WeakMap());
-}
-
 export function setLookup(raw: object, t: StoreTarget): void {
-  (t.ch ? chainMap(t) : (t._fam?.map ?? storeLookup)).set(raw, t);
+  (t._fam?.map ?? storeLookup).set(raw, t);
 }
 
 export function isOwned(raw: object): boolean {

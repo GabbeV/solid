@@ -561,93 +561,98 @@ function pairRows(t: StoreTarget, pb: Record<PropertyKey, any>): void {
   }
 }
 
-installOptHooks(LEGACY_LANES ? {
-  pair: pairRows,
-  draft: optimisticDraft,
-  writes: notifyOptimisticWrites,
-  arrangement,
-  reconcile: reconcileDraft,
-  view: (t, src, writer = false) =>
-    writer ? optimisticView(t, src, laneValueOf, true) : optimisticView(t, src),
-  has: optimisticHas,
-  descriptor: optimisticOwnDescriptor,
-  sweep: sweepOverlaid,
-  // A new question (not a `refresh()`) asked over guesses an earlier frame
-  // opened, which answer the old one (D-34, #4336). Stamped on `fam._asked`
-  // with this flush's `clock`, so it lapses when the flush ends: `clock + 1`
-  // from mainline over a live guess — a frame still reading a guess at the
-  // seam shows it beside the new input, so the flush holds with the guess's
-  // action (`park`); `~clock` from a lane with no guess of its own, or with
-  // no live guess left — the lane waits for its answer (F-6), as for a
-  // guessed `createOptimistic` (lanes `laneStage`). The guess's own lane
-  // asks nothing new and stamps nothing.
-  // A `refresh()` re-asks the guesses' own question (D-34 ¶3): a guess
-  // stands in for its flight (A17), so a leaf lane work reads is kept off
-  // the wake — the lane shows its guesses and the flight holds the lane's
-  // parent, not the lane (F-11, #4656).
-  ask: fam => {
-    if (!fam._overlaid?.size) return;
-    if (fam.node!._flags & REACTIVE_REASK) return (n: any) => n._subs._sub._x?._transaction?._lane;
-    // Stamped with the flush (`clock`): it lapses when the flush ends.
-    let a = ~clock;
-    for (const g of fam._overlaid) {
-      const n = laneNodeOf(g);
-      if (n) {
-        if (passLane === null) a = clock + 1;
-        else if (sameAction(txOf(n), passLane)) return;
-      }
-    }
-    if ((fam._asked = a) > 0) joinFuture(null);
-  },
-  // Over a new question the guesses do not answer (`_asked`): from mainline
-  // only a target carrying a guess stands in — a read of one with none is an
-  // ordinary pending read (F-2), so a keyed store's other keys wait for their
-  // answer, not for the guess's action; in a lane with no guess of its own,
-  // or with no live guess left, none does (F-6).
-  // A reader already observing the flight (linked) keeps observing it:
-  // served the guess, a re-run (the guess's own, the seam) would drop its
-  // link and release the hold beside a guess over the previous answer
-  // (F-1, #4536) — the ordinary read serves its committed frame or keeps it
-  // pending. So does a reader in the frame's hold pending on a flight a list
-  // guess was written over (`g` null, the #4525 mark; D-34: the guess does
-  // not answer it): a render effect is read here, as `pullFamily`'s own read
-  // would, since the frame's guard there returns early for an unlinked one.
-  // A derivation a pending render effect reads (#4561), through any chain
-  // of derivations (`held`), keeps observing a held flight as a stale reader
-  // of its hold — linked, re-derived at the landing, so the hold still sees
-  // its frame (`blockedBy`) — and is served the guess like lane work (a
-  // `<For>` keeps showing it, #4525), its every read this pass (D-34 ¶3:
-  // however the reads are grouped); a flight no transaction holds (a
-  // `Loading on` fallback) it reads plainly.
-  stands: t => {
-    const f = t._fam!;
-    const o = f._overlaid;
-    const a = f._asked;
-    const d = f.node!;
-    const c: any = context;
-    if (!o?.size || (a === clock + 1 && passLane === null && !o.has(t)) || a === ~clock)
-      return false;
-    // Linked by this pass's hold (below): its other reads keep the guess.
-    const j = heldC === c && heldAt === clock;
-    if (linkedTo(c, d)) return j && heldV > 1;
-    if ((t.k?._x?._lane as LaneView)?.g === null && c?._statusFlags & STATUS_PENDING)
-      if (c._type === EFFECT_RENDER) readNode(d);
-      else if (j ? heldV : ((heldC = c), (heldAt = clock), (heldV = held(c))))
-        d._x?._transaction ? (link(d, c), staleReader(c, txOf(d)), (heldV = 2)) : readNode(d);
-    return true;
-  },
-  // Mainline hold (`clock + 1`): the flush joins the action of each guess a
-  // reader still reads at the seam; a reader that moved off it (a keyed
-  // store's other key) holds nothing.
-  park: t => {
-    for (const fam of overlaidFamilies)
-      if (fam._asked === clock + 1)
-        for (const g of fam._overlaid!) {
-          const n = laneNodeOf(g, true);
-          if (n) merge(txOf(n)._parent!, t);
+installOptHooks(
+  LEGACY_LANES
+    ? {
+        pair: pairRows,
+        draft: optimisticDraft,
+        writes: notifyOptimisticWrites,
+        arrangement,
+        reconcile: reconcileDraft,
+        view: (t, src, writer = false) =>
+          writer ? optimisticView(t, src, laneValueOf, true) : optimisticView(t, src),
+        has: optimisticHas,
+        descriptor: optimisticOwnDescriptor,
+        sweep: sweepOverlaid,
+        // A new question (not a `refresh()`) asked over guesses an earlier frame
+        // opened, which answer the old one (D-34, #4336). Stamped on `fam._asked`
+        // with this flush's `clock`, so it lapses when the flush ends: `clock + 1`
+        // from mainline over a live guess — a frame still reading a guess at the
+        // seam shows it beside the new input, so the flush holds with the guess's
+        // action (`park`); `~clock` from a lane with no guess of its own, or with
+        // no live guess left — the lane waits for its answer (F-6), as for a
+        // guessed `createOptimistic` (lanes `laneStage`). The guess's own lane
+        // asks nothing new and stamps nothing.
+        // A `refresh()` re-asks the guesses' own question (D-34 ¶3): a guess
+        // stands in for its flight (A17), so a leaf lane work reads is kept off
+        // the wake — the lane shows its guesses and the flight holds the lane's
+        // parent, not the lane (F-11, #4656).
+        ask: fam => {
+          if (!fam._overlaid?.size) return;
+          if (fam.node!._flags & REACTIVE_REASK)
+            return (n: any) => n._subs._sub._x?._transaction?._lane;
+          // Stamped with the flush (`clock`): it lapses when the flush ends.
+          let a = ~clock;
+          for (const g of fam._overlaid) {
+            const n = laneNodeOf(g);
+            if (n) {
+              if (passLane === null) a = clock + 1;
+              else if (sameAction(txOf(n), passLane)) return;
+            }
+          }
+          if ((fam._asked = a) > 0) joinFuture(null);
+        },
+        // Over a new question the guesses do not answer (`_asked`): from mainline
+        // only a target carrying a guess stands in — a read of one with none is an
+        // ordinary pending read (F-2), so a keyed store's other keys wait for their
+        // answer, not for the guess's action; in a lane with no guess of its own,
+        // or with no live guess left, none does (F-6).
+        // A reader already observing the flight (linked) keeps observing it:
+        // served the guess, a re-run (the guess's own, the seam) would drop its
+        // link and release the hold beside a guess over the previous answer
+        // (F-1, #4536) — the ordinary read serves its committed frame or keeps it
+        // pending. So does a reader in the frame's hold pending on a flight a list
+        // guess was written over (`g` null, the #4525 mark; D-34: the guess does
+        // not answer it): a render effect is read here, as `pullFamily`'s own read
+        // would, since the frame's guard there returns early for an unlinked one.
+        // A derivation a pending render effect reads (#4561), through any chain
+        // of derivations (`held`), keeps observing a held flight as a stale reader
+        // of its hold — linked, re-derived at the landing, so the hold still sees
+        // its frame (`blockedBy`) — and is served the guess like lane work (a
+        // `<For>` keeps showing it, #4525), its every read this pass (D-34 ¶3:
+        // however the reads are grouped); a flight no transaction holds (a
+        // `Loading on` fallback) it reads plainly.
+        stands: t => {
+          const f = t._fam!;
+          const o = f._overlaid;
+          const a = f._asked;
+          const d = f.node!;
+          const c: any = context;
+          if (!o?.size || (a === clock + 1 && passLane === null && !o.has(t)) || a === ~clock)
+            return false;
+          // Linked by this pass's hold (below): its other reads keep the guess.
+          const j = heldC === c && heldAt === clock;
+          if (linkedTo(c, d)) return j && heldV > 1;
+          if ((t.k?._x?._lane as LaneView)?.g === null && c?._statusFlags & STATUS_PENDING)
+            if (c._type === EFFECT_RENDER) readNode(d);
+            else if (j ? heldV : ((heldC = c), (heldAt = clock), (heldV = held(c))))
+              d._x?._transaction ? (link(d, c), staleReader(c, txOf(d)), (heldV = 2)) : readNode(d);
+          return true;
+        },
+        // Mainline hold (`clock + 1`): the flush joins the action of each guess a
+        // reader still reads at the seam; a reader that moved off it (a keyed
+        // store's other key) holds nothing.
+        park: t => {
+          for (const fam of overlaidFamilies)
+            if (fam._asked === clock + 1)
+              for (const g of fam._overlaid!) {
+                const n = laneNodeOf(g, true);
+                if (n) merge(txOf(n)._parent!, t);
+              }
         }
-  }
-} : staticOptimisticHooks);
+      }
+    : staticOptimisticHooks
+);
 
 /** A derivation in the frame's hold (scheduler.ts `blockedBy`): one a
  * pending render effect reads, through any chain of pending derivations
@@ -752,7 +757,9 @@ function rebaseChained(t: StoreTarget): void {
     k._value instanceof LaneView &&
     k._notifiedAt !== notifyEpoch
   ) {
-    const rows = Array.isArray(inner) ? untrack(() => (inner as any[]).map(value => unwrapValue(value))) : inner;
+    const rows = Array.isArray(inner)
+      ? untrack(() => (inner as any[]).map(value => unwrapValue(value)))
+      : inner;
     if (!arrangementEqual(k._value.rows, rows, t._fam!)) {
       insertSubs(k);
       changed = true;

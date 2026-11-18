@@ -16,8 +16,8 @@
 import { isEqual } from "../core/core.js";
 import {
   $OWNER,
-  chainMap,
   isOwned,
+  lookupTarget,
   storeLookup,
   type StoreFamily,
   type StoreTarget
@@ -30,7 +30,6 @@ import {
   notifyFold,
   notifyFoldTail,
   notifyKeyDiff,
-  lookupChild,
   notifyKeyValue,
   sameKey,
   sameRow,
@@ -69,7 +68,7 @@ export function reconcileState(
     adoptPB(t, value);
     return;
   }
-  const incoming = unwrapValue(value, t);
+  const incoming = unwrapValue(value, t._fam ?? undefined);
   if (keyFn) {
     const prev = t.pb ?? t.v;
     const eq = keyFn(prev);
@@ -315,10 +314,10 @@ function descend(
   // `nv` is an object at every call site.
   if (pv === null || typeof pv !== "object") return;
   const fam = t._fam;
-  pv = unwrapValue(pv, t);
-  nv = unwrapValue(nv, t);
-  let ct = lookupChild(pv, t);
-  const nt = lookupChild(nv, t);
+  pv = unwrapValue(pv, fam ?? undefined);
+  nv = unwrapValue(nv, fam ?? undefined);
+  let ct = lookupTarget(pv, fam);
+  const nt = lookupTarget(nv, fam);
   if (ct !== undefined && ct.pk !== k) {
     if (ct.pk != k && t.v[ct.pk as any] === ct.v) ct = undefined;
     else if (ct.u === t) ct.pk = k;
@@ -328,7 +327,7 @@ function descend(
       if (nt.u === t) nt.pk = k;
       return;
     }
-    (nv[$TARGET] ? chainMap(t) : (fam?.map ?? storeLookup)).delete(nv);
+    (fam?.map ?? storeLookup).delete(nv);
   }
   if (ct === undefined) return; // nothing proxied below this pair
   if (!isWrappable(nv)) return;

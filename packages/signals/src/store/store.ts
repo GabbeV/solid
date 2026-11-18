@@ -117,9 +117,8 @@ import {
   isOwned,
   lookupTarget,
   markDescendants,
-  scopeKey,
   setLookup,
-  storeRoot,
+  storeLookup,
   storeOwners,
   type StoreFamily,
   type StoreTarget,
@@ -206,13 +205,6 @@ function createTarget(
   return t;
 }
 
-export function lookupChild(value: object, parent: StoreTarget): StoreTarget | undefined {
-  return (
-    lookupTarget(value, parent._fam) ??
-    (!parent._fam && (value as any)[$TARGET] ? storeRoot(parent).map?.get(value) : undefined)
-  );
-}
-
 export function wrap<T extends Record<PropertyKey, any>>(
   value: T,
   parent: StoreTarget | null = null,
@@ -222,24 +214,29 @@ export function wrap<T extends Record<PropertyKey, any>>(
   // markRaw'd values never wrap through ANY store (R42; sticky raw-marking
   // is one half of the never-both-wrapped-and-raw invariant, RUL-12).
   if (rawValuesUsed && isRawValue(value)) return value;
-  const existing = parent ? lookupChild(value, parent) : lookupTarget(value, fam);
-  if (existing) return existing.px;
-  const t: StoreTarget | undefined = value[$TARGET];
-  if (t?.px === value && (parent ? scopeKey(parent) : fam) === scopeKey(t)) return value;
+  const existing = lookupTarget(value, fam);
+  if (existing !== undefined) return existing.px;
+  const t: StoreTarget | undefined = (value as any)[$TARGET];
+  if (t?.px === value) {
+    // Foreign-family proxies re-wrap into THIS family (writes stay isolated);
+    // same-family and plain-store proxies pass through.
+    if (fam === null || t._fam === fam) return value;
+    return createTarget(value as any, parent, parentKey, fam).px;
+  }
   return createTarget(value, parent, parentKey, fam).px;
 }
 
 /** Unwrap our own proxies to their current backing; leave everything else.
+ * A destination family preserves explicit foreign proxies as live links.
+ * A plain destination (`null`) passes through any explicit proxy.
  * A projection draft wrapper is registered as its target's alias
  * (projection.ts `wrapDraft`) — adopted as a backing, it would forward to
  * itself (#3767). */
-export function unwrapValue(v: any, parent?: StoreTarget): any {
+export function unwrapValue(v: any, fam?: StoreFamily | null): any {
   if (v == null || typeof v !== "object") return v;
   const t: StoreTarget | undefined = v[$TARGET];
   if (t !== undefined && (t.px === v || lookupTarget(v, t._fam) === t) && t.v !== undefined) {
-    // A foreign proxy stays live as the local view's backing (§7b, CS-R3, CS-R5,
-    // #4845). Shared raw inputs still deduplicate globally for plain stores (CS-R2).
-    if (parent && (parent.s || (t.px === v && scopeKey(t) !== scopeKey(parent)))) return v;
+    if (fam !== undefined && (fam === null || fam !== t._fam) && t.px === v) return v;
     // A draft escaping into other storage must be a REAL container that
     // becomes this target's committed backing at fold (the shared-raw
     // contract) — a prototype overlay is neither.
@@ -306,8 +303,8 @@ export const containerEquals = function (this: any, a: any, b: any): boolean {
 
 function sameLogicalSlot(target: StoreTarget, a: any, b: any): boolean {
   if (a === null || typeof a !== "object" || b === null || typeof b !== "object") return false;
-  const at = lookupChild(a, target);
-  return at !== undefined && at === lookupChild(b, target);
+  const at = lookupTarget(a, target._fam);
+  return at !== undefined && at === lookupTarget(b, target._fam);
 }
 
 /** Slot nodes whose last subscriber left while they still held a staging:
@@ -561,6 +558,11 @@ function notifyContainer(k: Signal<any>, pb: Record<PropertyKey, any>): void {
 }
 
 // Observe-tier labels and owners (attribution).
+function storeRoot(target: StoreTarget): StoreTarget {
+  let root = target;
+  while (root.u !== null) root = root.u;
+  return root;
+}
 function storeRootOwner(target: StoreTarget): Owner | null | undefined {
   return storeOwners!.get(storeRoot(target));
 }
@@ -668,12 +670,8 @@ export function cloneRaw(
       const d = (descs as any)[key];
       if (key === "length" && Array.isArray(source)) continue;
       d.configurable = true;
-      if (!d.get && !d.set) {
-        d.writable = true;
-        // The descriptor holds the source's raw child. Keep its store view on
-        // detachment, just as the spread and slice clones do.
-        if (t.ch && source === t.v && d.value && typeof d.value === "object") d.value = source[key];
-      } else t.a = true;
+      if (!d.get && !d.set) d.writable = true;
+      else t.a = true;
     }
     // An array subclass keeps its prototype (#4670): the copy is a real
     // array (`Array.isArray`, exotic `length`) re-prototyped to the source's.
@@ -706,22 +704,16 @@ function copyOwn(to: object, from: object, key: PropertyKey): void {
 function scanAccessorsOnce(target: StoreTarget): boolean {
   const src = target.v;
   const keys = Reflect.ownKeys(src);
-  const proto = protoOf(src);
-  let plain = proto === Object.prototype;
-  const shallowArray =
-    target.s && !target.ch && proto === Array.prototype && (!target.pb || target.pb === src);
-  let storeSlots: string[] | undefined;
+  let plain = protoOf(src) === Object.prototype;
   for (const key of keys) {
     if (isOwnAccessor(src, key)) {
       target.a = true;
       plain = false;
       break;
     }
-    if (shallowArray && typeof key === "string" && src[key]?.[$TARGET])
-      (storeSlots ??= []).push(key);
     if (plain && !propertyIsEnumerable.call(src, key)) plain = false;
   }
-  target.sc = plain ? 2 : shallowArray && !target.a ? (storeSlots ?? 3) : 1;
+  target.sc = plain ? 2 : 1;
   target.kc = keys.length;
   return !target.a;
 }
@@ -898,18 +890,10 @@ function privatizeCommitted(target: StoreTarget): void {
   target.ch = false;
   if (target.u) {
     privatizeCommitted(target.u);
-    linkToParent(target, before, true);
-  }
-}
-
-/** An explicit store in a shallow slot retains its local proxy after detaching. */
-function linkToParent(child: StoreTarget, previous: object, parentOwned = false): void {
-  const parent = child.u!;
-  const slot = parentSlotKey(child, previous);
-  if (parent.v[slot] === previous) {
-    if (!parentOwned) privatizeCommitted(parent);
-    if (__TEST__) devAssertNeverUserMutation(parent.v);
-    parent.v[slot] = parent.s ? child.px : child.v;
+    if (__TEST__) devAssertNeverUserMutation(target.u.v);
+    const pv = target.u.v;
+    const slot = parentSlotKey(target, before);
+    if (pv[slot] === before) pv[slot] = target.v;
   }
 }
 
@@ -1193,7 +1177,14 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
         else if (k._value instanceof LaneView) k._value.base = t.v;
         else k._value = t.v;
       }
-      if (t.v !== old && t.u) linkToParent(t, old);
+      if (t.v !== old && t.u) {
+        const slot = parentSlotKey(t, old);
+        if (t.u.v[slot] === old) {
+          privatizeCommitted(t.u);
+          if (__TEST__) devAssertNeverUserMutation(t.u.v);
+          t.u.v[slot] = t.v;
+        }
+      }
     }
   }
 }
@@ -1647,33 +1638,28 @@ export function notifyFold(
 // visibility
 
 let writing = 0;
-/** Roots of the stores with an open setter: reads of THEIR drafts are the
+/** Families with an open setter (plain stores share null): their draft reads are the
  * writer's (no tracking, pending backing served); every other store reads
  * normally — a derive's external reads are its dependencies (#3037). */
-let writeScopes: Set<any> | null = null;
+let writeScopes: Set<StoreTarget["_fam"]> | null = null;
 const pendingNotify = new Set<StoreTarget>();
 
 function inDraft(target: StoreTarget): boolean {
-  return writeScopes !== null && writeScopes.has(scopeKey(target));
+  return writeScopes !== null && writeScopes.has(target._fam);
 }
 
-/** Uncached child read. Even a shallow store wraps an explicit store proxy. */
-function serveChild(target: StoreTarget, key: PropertyKey, v: any): any {
-  if (target.s ? v !== null && typeof v === "object" && v[$TARGET] !== undefined : isWrappable(v))
+/** Shallow store: values served verbatim (a nested store proxy still wraps
+ * into the family so writes stay isolated). */
+function serveShallow(target: StoreTarget, key: PropertyKey, v: any): any {
+  if (v !== null && typeof v === "object" && (v as any)[$TARGET] !== undefined)
     return draftServe(target, wrap(v, target, key as any));
   return v;
-}
-/** Fill the property node's wrapper cache only on an object-valued miss. */
-function cacheChild(node: any, target: StoreTarget, key: PropertyKey, value: object): any {
-  const proxy = wrap(value, target, key);
-  node.pxv = value;
-  return (node.px = proxy);
 }
 /** A child proxy served to a draft joins the draft's scope. */
 function draftServe(target: StoreTarget, proxy: any): any {
   if (writeScopes !== null && inDraft(target)) {
     const ct: StoreTarget | undefined = proxy?.[$TARGET];
-    if (ct?.v !== undefined) writeScopes.add(scopeKey(ct));
+    if (ct?.v !== undefined) writeScopes.add(ct._fam);
   }
   return proxy;
 }
@@ -1869,8 +1855,8 @@ function adoptChild(target: StoreTarget, key: PropertyKey): boolean {
     !isWrappable(ov) ||
     !isWrappable(nv) ||
     Array.isArray(ov) !== Array.isArray(nv) ||
-    lookupChild(ov, target) !== undefined ||
-    lookupChild(nv, target) !== undefined ||
+    lookupTarget(ov, target._fam) !== undefined ||
+    lookupTarget(nv, target._fam) !== undefined ||
     // A raw in both frames (the same objects swapped or reordered) is its
     // own row: pairing it with another would alias the two after the commit.
     rawsOf(old).has(nv) ||
@@ -2000,15 +1986,20 @@ function serveDataKey(
       } else v = nv;
     }
   }
-  if (target.s) return serveChild(target, key, v);
   // A derive's draft wrapper answers `$TARGET` without being a proxy: the
-  // inner store's alias (#3767), resolved like a raw (#3859).
+  // inner store's alias (#3767), resolved like a raw (#3859). A shallow
+  // view's optimistic draft also gets raw backing slots; recover the
+  // source's child proxy before applying the shallow boundary (#5027).
   if (target.ch && !chained && v !== null && typeof v === "object" && v[$TARGET]?.px !== v)
     v = resolveChainedRaw(target, key, v);
+  if (target.s) return serveShallow(target, key, v);
   if (node !== undefined) {
     if ((node as any).pxv === v && v !== undefined) return draftServe(target, (node as any).px);
     if (!isWrappable(v)) return v;
-    return draftServe(target, cacheChild(node, target, key, v));
+    const p = wrap(v, target, key as any);
+    (node as any).px = p;
+    (node as any).pxv = v;
+    return draftServe(target, p);
   }
   if (!isWrappable(v)) return v;
   return draftServe(target, wrap(v, target, key as any));
@@ -2209,11 +2200,28 @@ export function resolveChainedRaw(target: StoreTarget, key: PropertyKey, v: obje
     const iv = resolveChainedRaw(innerT, key, v);
     return iv === v ? v : wrap(iv, innerT, key);
   }
+  // A shallow source's raw slot has no child proxy to recover.
+  if (target.s && innerT.s) return v;
   const owned = lookupTarget(v, innerT._fam);
   if (owned !== undefined) return owned.px;
   if ((innerT.v[key as any] === v || innerT.pb?.[key as any] === v) && isWrappable(v))
     return wrap(v, innerT, key);
   return v;
+}
+
+/** A cloned accessor still uses the draft receiver. Reapply its source's
+ * wrapping to the result without evaluating the accessor again. */
+function resolveChainedAccessor(
+  target: StoreTarget,
+  key: PropertyKey,
+  getter: () => any,
+  value: Record<PropertyKey, any>
+): Record<PropertyKey, any> {
+  const backing = committed(target);
+  if (lookupGetter.call(backing, key) !== getter) return value;
+  const inner: StoreTarget | undefined = backing[$TARGET];
+  if (inner !== undefined) value = resolveChainedAccessor(inner, key, getter, value);
+  return !target.s || value[$TARGET] !== undefined ? wrap(value, target, key) : value;
 }
 
 /** The backing a structural read serves: a tracked reader subscribes to the
@@ -2350,7 +2358,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       const selected = optHooks.accessor(target, key, receiver);
       if (selected !== undefined) {
         const value = selected.value;
-        if (target.s) return serveChild(target, key, value);
+        if (target.s) return serveShallow(target, key, value);
         return isWrappable(value)
           ? draftServe(target, wrap(value as Record<PropertyKey, any>, target, key))
           : value;
@@ -2360,7 +2368,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       const selected = optHooks.rowValue(target, key, receiver);
       if (selected !== undefined) {
         const value = selected.value;
-        if (target.s) return serveChild(target, key, value);
+        if (target.s) return serveShallow(target, key, value);
         return isWrappable(value)
           ? draftServe(target, wrap(value as Record<PropertyKey, any>, target, key))
           : value;
@@ -2400,9 +2408,14 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       ) {
         const nv = nodeValue(nodeH, undefined, target);
         if (nv === null || typeof nv !== "object") return nv;
-        if (target.s) return serveChild(target, key, nv);
+        if (target.s) return serveShallow(target, key, nv);
         if ((nodeH as any).pxv === nv) return (nodeH as any).px;
-        if (isWrappable(nv)) return cacheChild(nodeH, target, key, nv);
+        if (isWrappable(nv)) {
+          const p = wrap(nv, target, key);
+          (nodeH as any).px = p;
+          (nodeH as any).pxv = nv;
+          return p;
+        }
         return nv;
       }
     }
@@ -2472,8 +2485,24 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       if (acc) {
         if (!inDraft(target) && getObserver() !== null)
           readNode(node0 ?? getNode(target, key, accProbe));
-        const v = Reflect.get(src, key, receiver);
-        return serveChild(target, key, v);
+        let v = Reflect.get(src, key, receiver);
+        if (target.s) {
+          if (
+            target.ch &&
+            src !== target.v &&
+            userWrite &&
+            inDraft(target) &&
+            !target.wk?.has(key) &&
+            isWrappable(v) &&
+            v[$TARGET] === undefined
+          ) {
+            const getter = lookupGetter.call(src, key);
+            if (getter !== undefined)
+              v = untrack(() => resolveChainedAccessor(target.v[$TARGET], key, getter, v));
+          }
+          return serveShallow(target, key, v);
+        }
+        return isWrappable(v) ? draftServe(target, wrap(v, target, key)) : v;
       }
     }
     // Plain-data fast path: no descriptor allocation per read. Inherited
@@ -2511,10 +2540,12 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
         const node = target.n?.[key];
         if (node) {
           const nv = nodeValue(node, undefined, target);
-          return serveChild(target, key, nv);
+          if (target.s) return serveShallow(target, key, nv);
+          return isWrappable(nv) ? draftServe(target, wrap(nv, target, key)) : nv;
         }
       }
-      return serveChild(target, key, v);
+      if (target.s) return serveShallow(target, key, v);
+      return isWrappable(v) ? draftServe(target, wrap(v, target, key)) : v;
     }
     if (typeof v === "function") {
       const sourceTarget: StoreTarget | undefined = Array.isArray(src) ? src[$TARGET] : undefined;
@@ -2638,7 +2669,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
       return true;
     }
     if (key === "__proto__") return true; // pollution guard (core R30)
-    const uv = unwrapValue(value, target);
+    const uv = target.s ? value : unwrapValue(value, target._fam);
     const pb = ensurePB(target);
     const previousLength = Array.isArray(pb) ? pb.length : -1;
     // #4146 (R1: node existence is unobservable; #3706: the hold's unit is
@@ -2674,13 +2705,7 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (userWrite && target._fam?.opt && previousLength >= 0)
       optHooks?.draftWrite?.(target, key, previousLength, (pb as any[]).length, "set");
     if (unsafe) return true;
-    if (target.s) {
-      if (uv !== null && typeof uv === "object") {
-        if (uv[$TARGET]) target.sc = 0;
-        markRawOne(uv);
-      }
-      if (Array.isArray(target.sc) && target.sc.length > pb.length) target.sc = 0;
-    }
+    if (target.s && uv !== null && typeof uv === "object") markRawOne(uv);
     if (!draft) notifyWrites(target); // a write-override write
     return true;
   },
@@ -2694,11 +2719,11 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     }
     if (key === "__proto__") return true;
     if (desc.get || desc.set) target.a = true;
-    if ("value" in desc) desc = { ...desc, value: unwrapValue(desc.value, target) };
+    if ("value" in desc && !target.s)
+      desc = { ...desc, value: unwrapValue(desc.value, target._fam) };
     const pb = ensurePB(target);
     const previousLength = Array.isArray(pb) ? pb.length : -1;
-    if (target.s) target.sc = 0;
-    else if (target.a || !(desc.enumerable && desc.writable && desc.configurable)) target.sc = 1;
+    if (target.a || !(desc.enumerable && desc.writable && desc.configurable)) target.sc = 1;
     touch(target, key);
     Object.defineProperty(pb, key, desc);
     if (userWrite && target._fam?.opt && previousLength >= 0)
@@ -2828,13 +2853,37 @@ export function devGuardStoreSetterResult(result: unknown): void {
   }
 }
 
+/** A returned store proxy supplies top-level slots to the destination.
+ * Keep explicit store children live without adopting the source root's backing. */
+function setterReplacement(value: Record<PropertyKey, any>): Record<PropertyKey, any> {
+  const source: StoreTarget | undefined = value[$TARGET];
+  if (source === undefined) return value;
+  const backing = unwrapValue(value);
+  if (source.px !== value) return backing;
+  const descriptors: Record<PropertyKey, PropertyDescriptor> =
+    Object.getOwnPropertyDescriptors(backing);
+  delete descriptors[$OWNER];
+  for (const key of Reflect.ownKeys(descriptors)) {
+    const descriptor = descriptors[key];
+    let child = descriptor.value;
+    if (child === null || typeof child !== "object" || !isWrappable(child)) continue;
+    if (source.ch && child[$TARGET] === undefined) child = resolveChainedRaw(source, key, child);
+    if (!source.s || child[$TARGET] !== undefined) descriptor.value = wrap(child, source, key);
+  }
+  const prototype = protoOf(backing);
+  return Object.defineProperties(
+    Array.isArray(backing) ? setProto([], prototype) : Object.create(prototype),
+    descriptors
+  );
+}
+
 export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = true): void {
   if (writeHook !== null) writeHook(proxy as object);
   if (__DEV__ && guard) devGuardStoreSetterWrite();
   const target: StoreTarget = (proxy as any)[$TARGET];
   const prevScopes = writeScopes;
   writeScopes = new Set();
-  writeScopes.add(scopeKey(target));
+  writeScopes.add(target._fam);
   const prevUser = userWrite;
   userWrite = guard;
   // An outermost setter's exit notifies the targets it wrote. A
@@ -2878,12 +2927,12 @@ export function storeSetter<T>(proxy: T, fn: (draft: T) => T | void, guard = tru
       holdInitialWriteProducer(initial);
       return;
     }
-    // A returned replacement from a user setter is an optimistic edit for an
-    // optimistic family. Other replacements are adopted as incoming truth.
-    const incoming = unwrapValue(result, target);
+    // A returned replacement: on an optimistic family a user's is itself an
+    // optimistic edit — diffed against the view as guesses (`next` parity);
+    // otherwise it is adopted as the incoming truth.
     if (optHooks && guard && target._fam?.opt === true && !writeOverride)
-      optHooks.writes(target, incoming);
-    else adoptPB(target, incoming);
+      optHooks.writes(target, unwrapValue(result));
+    else adoptPB(target, setterReplacement(result));
   }
   // A34 (3), #3612 — the derived store's twin of `setMemo`: a user write to
   // a derivation another transaction holds is nobody's proposal; it becomes
@@ -2941,22 +2990,29 @@ export function createStore<T extends Record<PropertyKey, any>>(
   return [proxy, setter];
 }
 
-/** Use the selected backing for raw rows and read explicit stores through
- * their local views before the list driver starts updating retained rows. */
+/** Plain shallow lists serve their backing's slots directly. Derived lists
+ * can project an explicit store into a different row. Capture their public
+ * slots in the list computation before the internal row owner takes over. */
 installShallowView(t => {
   if (!t?.s || t.ch || t.a || writeScopes || writeOverride || t._fam?.opt) return;
-  if (t._fam) pullFamily(t);
+  if (!t._fam) return readSource(t) as any[];
+  pullFamily(t);
   const src = readSource(t) as any[];
-  if (protoOf(src) !== Array.prototype) return;
-  if (src === t.v && t.sc === 0 && !t.pb) scanAccessorsOnce(t);
-  if (t.a) return;
-  const current = src === t.v || src === t.pb;
-  if (current && t.sc === 3) return src;
-  const slots = current && Array.isArray(t.sc) ? t.sc : Array.prototype.keys.call(src);
-  let rows: any[] | undefined;
-  for (const key of slots)
-    if (src[key as any]?.[$TARGET]) (rows ??= src.slice())[key as any] = t.px[key];
-  return rows ?? src;
+  if (
+    src === t.v &&
+    !t.pb &&
+    protoOf(src) === Array.prototype &&
+    (t.sc !== 0 || scanAccessorsOnce(t)) &&
+    !t.a
+  ) {
+    // Most shallow lists contain only raw rows. Resolve just the explicit
+    // proxies, with no array allocation for an all-raw list.
+    let rows: any[] | undefined;
+    for (let i = 0; i < src.length; i++)
+      if (src[i]?.[$TARGET]) (rows ??= Array.prototype.slice.call(src))[i] = t.px[i];
+    return rows ?? src;
+  }
+  return Array.prototype.slice.call(t.px);
 });
 
 /** True when `proxy` is a SHALLOW store (children served verbatim, slots
@@ -3029,12 +3085,9 @@ export function deep<T>(value: T): T {
     child: object,
     key: PropertyKey
   ): StoreTarget | undefined => {
-    let ct = lookupChild(child, t);
-    if (ct === undefined) {
-      if (!isWrappable(child)) return undefined;
-      ct = wrap(child, t, key)[$TARGET];
-    }
-    return ct;
+    return (
+      lookupTarget(child, t._fam) ?? (isWrappable(child) ? wrap(child, t, key)[$TARGET] : undefined)
+    );
   };
   const walkT = (t: StoreTarget): void => {
     if (t._fam !== null) pullFamily(t);
@@ -3084,13 +3137,13 @@ export function deep<T>(value: T): T {
   const step: DeepStep = (t, cv, key, trackOnly) => {
     const ct = childTarget(t, cv, key);
     const src = ct && !trackOnly ? fast(ct, cv) : undefined;
-    if (src) return snapshotRecord(src, seen, ct!, step);
+    if (src) return snapshotRecord(src, seen, null, ct!, step);
     if (ct) walkT(ct);
-    if (!trackOnly) return snapshotWalk(cv, seen, t);
+    if (!trackOnly) return snapshotWalk(cv, seen, null);
   };
   try {
     const src = fast(t0, value as object);
-    if (src) return snapshotRecord(src, seen, t0, step);
+    if (src) return snapshotRecord(src, seen, null, t0, step);
   } catch (e) {
     // A snapshot read threw mid-pass: subscribe the rest, as the two walks did.
     visited.clear();
@@ -3098,7 +3151,7 @@ export function deep<T>(value: T): T {
     throw e;
   }
   walkT(t0);
-  return snapshotWalk(value, seen, t0);
+  return snapshotWalk(value, seen, t0._fam);
 }
 
 type DeepStep = (t: StoreTarget, cv: object, key: PropertyKey, trackOnly?: boolean) => any;
@@ -3108,7 +3161,7 @@ type DeepStep = (t: StoreTarget, cv: object, key: PropertyKey, trackOnly?: boole
  * source). Sees the pending backing (R27). */
 export function snapshot<T>(value: T): T {
   const t: StoreTarget | undefined = (value as any)?.[$TARGET];
-  return snapshotWalk(value, new Map(), t ?? null);
+  return snapshotWalk(value, new Map(), t?._fam ?? null);
 }
 
 /** R27: a snapshot sees the batch's pending backing — a held one (another
@@ -3129,35 +3182,32 @@ function snapshotBacking(t: StoreTarget): Record<PropertyKey, any> {
   return optHooks && optRead(t) ? optHooks.view(t, backing) : backing;
 }
 
-function snapshotWalk(value: any, seen: Map<object, any>, parent: StoreTarget | null): any {
+function snapshotWalk(value: any, seen: Map<object, any>, fam: StoreFamily | null): any {
   if (value === null || typeof value !== "object") return value;
   let src = value;
   for (let entry = true; ; entry = false) {
-    const fam = parent?._fam ?? null;
-    const supplied: StoreTarget | undefined = src[$TARGET];
-    const viaProxy = supplied?.v !== undefined;
-    let t = viaProxy ? supplied : undefined;
-    if (t === undefined && fam !== null) t = lookupTarget(src, fam);
-    if (t === undefined) t = lookupTarget(src, null);
+    const proxyTarget: StoreTarget | undefined = src[$TARGET];
+    const viaProxy = proxyTarget?.v !== undefined;
+    let t = viaProxy ? proxyTarget : ((fam && lookupTarget(src, fam)) ?? lookupTarget(src, null));
     if (t === undefined) break;
-    if (entry && parent && (viaProxy || (fam && t._fam !== fam)))
-      t = scopeKey(parent).map?.get(t.px) ?? t;
-    if (entry || t._fam !== null) parent = t;
+    // An explicit proxy in a derived slot can have a capturing view. Once
+    // following a view's backing, resolve its source proxy directly.
+    if (entry && fam !== null && (viaProxy || t._fam !== fam)) t = fam.map.get(t.px) ?? t;
+    if (t._fam !== null) fam = t._fam;
     const backing = snapshotBacking(t);
-    // The local view can follow the proxy being walked. Resolve that proxy
-    // on the next pass even though its identity has not changed yet.
-    if (backing === src && !(entry && viaProxy && t !== supplied)) break;
+    if (backing === src && !(entry && viaProxy && t !== proxyTarget)) break;
     src = backing;
   }
   if (!isWrappable(src)) return src;
   const cached = seen.get(src);
-  return cached !== undefined ? cached : snapshotRecord(src, seen, parent, null);
+  return cached !== undefined ? cached : snapshotRecord(src, seen, fam, null, null);
 }
 
 /** `t`/`step` set: `deep()`'s one pass, which also tracks `t`'s children. */
 function snapshotRecord(
   src: any,
   seen: Map<object, any>,
+  fam: StoreFamily | null,
   t: StoreTarget | null,
   step: DeepStep | null
 ): any {
@@ -3175,11 +3225,11 @@ function snapshotRecord(
         continue;
       }
       if (desc.get || desc.set) {
-        if (step) t!.a = true;
+        if (t) t.a = true;
         Object.defineProperty(copy, key, desc);
         continue;
       }
-      const walked = obj ? (step ? step(t!, cv, key) : snapshotWalk(cv, seen, t)) : cv;
+      const walked = obj ? (step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam)) : cv;
       if (desc.enumerable && desc.writable && desc.configurable) copy[key] = walked;
       else Object.defineProperty(copy, key, { ...desc, value: walked });
     }
@@ -3192,12 +3242,12 @@ function snapshotRecord(
     const desc = Object.getOwnPropertyDescriptor(src, key);
     if (!desc) continue;
     if (desc.get || desc.set) {
-      if (step) t!.a = true;
+      if (t) t.a = true;
       continue;
     }
     const cv = desc.value;
     if (cv === null || typeof cv !== "object") continue;
-    const walked = step ? step(t!, cv, key) : snapshotWalk(cv, seen, t);
+    const walked = step ? step(t!, cv, key) : snapshotWalk(cv, seen, fam);
     if (walked !== cv) {
       if (copy === null) {
         copy = Array.isArray(src)

@@ -372,44 +372,51 @@ it("a retained nested derived record keeps its mark for late property and memo r
   }
 });
 
-it("a plain list mark covers its local view of an explicit store proxy", async () => {
-  const app = createRoot(dispose => {
-    const [person] = createStore({ id: 1, name: "Alice" });
-    const [list] = createStore({ people: [person] });
-    const row = list.people[0];
-    const pending: boolean[][] = [];
-    createRenderEffect(
-      () => [isPending(() => person.name), isPending(() => list.people[0].name)],
-      value => void pending.push([...value])
-    );
-    return { person, list, row, pending, dispose };
-  });
-  flush();
-  expect(app.row).not.toBe(app.person);
-  expect(app.pending).toEqual([[false, false]]);
-  const marked = mark(app.list);
-  try {
+it.each(["plain", "derived"] as const)(
+  "a plain list mark covers every alias of a %s source",
+  async kind => {
+    const app = createRoot(dispose => {
+      const [input] = createStore({ id: 1, name: "Alice" });
+      const [person] = kind === "plain" ? createStore(input) : createStore(() => input);
+      const [list] = createStore({ people: [person] });
+      const [other] = createStore({ people: [person] });
+      const row = list.people[0];
+      const sibling = other.people[0];
+      const pending: boolean[][] = [];
+      createRenderEffect(
+        () => [
+          isPending(() => person.name),
+          isPending(() => row.name),
+          isPending(() => sibling.name),
+          isPending(() => input.name)
+        ],
+        value => void pending.push([...value])
+      );
+      return { person, list, row, sibling, pending, dispose };
+    });
     flush();
-    expect(app.pending).toEqual([
-      [false, false],
-      [false, true]
-    ]);
-    expect(app.list.people[0]).toBe(app.row);
-    expect(app.person.name).toBe("Alice");
-    expect(app.list.people[0].name).toBe("Alice");
-    await marked.release();
-    expect(app.pending).toEqual([
-      [false, false],
-      [false, true],
-      [false, false]
-    ]);
-    expect(app.list.people[0]).toBe(app.row);
-  } finally {
-    await marked.release();
-    app.dispose();
-    flush();
+    expect(app.row).toBe(app.person);
+    expect(app.sibling).toBe(app.person);
+    const settled = [false, false, false, false];
+    const held = [true, true, true, kind === "plain"];
+    expect(app.pending).toEqual([settled]);
+    const marked = mark(app.list);
+    try {
+      flush();
+      expect(app.pending).toEqual([settled, held]);
+      expect(app.list.people[0]).toBe(app.row);
+      expect(app.person.name).toBe("Alice");
+      expect(app.list.people[0].name).toBe("Alice");
+      await marked.release();
+      expect(app.pending).toEqual([settled, held, settled]);
+      expect(app.list.people[0]).toBe(app.row);
+    } finally {
+      await marked.release();
+      app.dispose();
+      flush();
+    }
   }
-});
+);
 
 it("a property memo born under independent root and nested row marks stays pending until both release", async () => {
   const app = createRoot(dispose => {
