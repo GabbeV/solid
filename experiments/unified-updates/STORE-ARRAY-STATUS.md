@@ -22,6 +22,14 @@ to check enumerability. The prototype can therefore hold a write based on
 only for keys, and `key in d` asks only for presence. Both can remain
 independent of the value change.
 
+Validation of the draft-read change at `95f13afb7` covered 19 new tests.
+The full Signals run passed 8,151 tests (including 46 distribution tests).
+All 135 failures matched the deferred `until` inventory by name. Solid
+passed 927 tests, Web client 1,886, server 2,010, and hydration 768. The
+signals type check, bundle purity checks, and rules index passed. A
+Chromium mutation observer recorded the #5046 repro on the built branch
+as 0/0 followed by 1/1. This pass did not measure bundle size or speed.
+
 # Store ownership checkpoint — 2026-11-19
 
 Ryan's [#4996 ruling](https://github.com/solidjs/solid/issues/4996#issuecomment-6973759815)
