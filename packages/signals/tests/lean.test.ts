@@ -1,6 +1,6 @@
 // Bug repros from the author of the reactive core (2026-11-15), run against
 // `next` after rc.22. Each test's trailing comment gives the result `next`
-// had before the fix. `it.fails` pins what is still open: E2 and K2 (a first
+// had before the fix. `it.fails` pins what is still open: K2 (a first
 // load's frame), T3 (S-44, ruled-not-built) and S5 (the #3469 trade-off: an
 // unchanged pass keeps its stale tail until the flush's verdict).
 import { afterEach, describe, expect, it } from "vitest";
@@ -393,7 +393,7 @@ describe("async", () => {
     expect(await errorShown("L>E", false)).toEqual({ A: "X2", s: 5 }); // s: 1
   });
 
-  it.fails(
+  it(
     "E2 a first load's rejection waits for its mount frame as its value does (D-41)",
     async () => {
       const run = async (ok: boolean) => {
@@ -404,9 +404,12 @@ describe("async", () => {
           w.show("B", w.errored(w.fetcher("B", s)));
         });
         await w.land("A", 0, ok); // B's first load is still out
-        return w.shown.A;
+        expect(w.shown).toEqual({});
+        await w.land("B", 0);
+        return w.shown;
       };
-      expect(await run(false)).toBe(await run(true)); // "X1" at once vs nothing shown yet
+      expect(await run(false)).toEqual({ A: "X1", B: 1 });
+      expect(await run(true)).toEqual({ A: 1, B: 1 });
     }
   );
 });

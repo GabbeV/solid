@@ -41,7 +41,7 @@ describe("isPending whose thunk throws, in the pass a second write re-runs", () 
   async function run(throws: boolean) {
     const log: string[] = [];
     const asks: string[] = [];
-    const gates: Record<string, (v: string) => void> = {};
+    const requests: { key: string; resolve: (v: string) => void }[] = [];
     const [source, setSource] = createSignal("/");
     const dispose = createRoot(dispose => {
       const data = createMemo(() => {
@@ -53,7 +53,7 @@ describe("isPending whose thunk throws, in the pass a second write re-runs", () 
         const k = `${v}|${p}`;
         if (!v.startsWith("/slow")) return k;
         asks.push(k);
-        return new Promise<string>(r => (gates[k] = r));
+        return new Promise<string>(resolve => requests.push({ key: k, resolve }));
       });
       createRenderEffect(
         data,
@@ -71,7 +71,11 @@ describe("isPending whose thunk throws, in the pass a second write re-runs", () 
     setSource("/slow2"); // supersedes the question the hold waits on
     flush();
     await tick();
-    for (const k in gates) gates[k]("=" + k);
+    const current = requests.pop()!;
+    for (const request of requests) request.resolve("obsolete " + request.key);
+    await tick();
+    expect(log.some(entry => entry.startsWith("data: obsolete") || entry.startsWith("src:"))).toBe(false);
+    current.resolve("=" + current.key);
     await tick();
     dispose();
     return { log, asks };
@@ -82,8 +86,9 @@ describe("isPending whose thunk throws, in the pass a second write re-runs", () 
     const thrown = await run(true);
     expect(thrown).toEqual(plain);
     expect(thrown.log.filter(x => x.startsWith("error"))).toEqual([]);
-    // Each write's question once, and the write only beside its answer.
-    expect(thrown.asks).toEqual(["/slow1|false", "/slow2|false"]);
+    // The synchronous pending preview supersedes each initial request.
+    // Restoring the ordinary input starts a fresh request for the same key.
+    expect(thrown.asks).toEqual(["/slow1|false", "/slow1|false", "/slow2|false", "/slow2|false"]);
     expect(thrown.log.filter(x => !x.startsWith("data: /"))).toEqual([
       "data: =/slow2|false",
       "src: /slow2"
@@ -180,3 +185,32 @@ describe("a sync memo over a sync verdict memo (D-22)", () => {
     });
   }
 });
+
+for (const observation of ["latest", "isPending"] as const)
+  test(`a ready ${observation} preview publishes before its own request is restored`, async () => {
+    const [id, setId] = createSignal(0);
+    const requests: Array<(value: string) => void> = [];
+    const shown: string[] = [];
+    const dispose = createRoot(dispose => {
+      const page = createMemo(() => {
+        const key = id();
+        const navigating = observation === "latest" ? latest(id) !== key : isPending(id);
+        if (key === 0) return navigating ? "Loading" : "Home";
+        return new Promise<string>(resolve => requests.push(resolve));
+      });
+      createRenderEffect(page, value => void shown.push(value));
+      return dispose;
+    });
+    try {
+      flush();
+      setId(1);
+      flush();
+      const beforeAnswer = [...shown];
+      for (const resolve of requests) resolve("Result");
+      await tick();
+      expect(beforeAnswer).toEqual(["Home", "Loading"]);
+      expect(shown).toEqual(["Home", "Loading", "Result"]);
+    } finally {
+      dispose();
+    }
+  });

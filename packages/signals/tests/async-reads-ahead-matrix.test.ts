@@ -58,6 +58,8 @@ async function run(shape: Shape, kind: Kind, hold: Hold, sib: boolean, lifo: boo
   const screen: { id?: number; m?: string } = {};
   const frames: string[] = [];
   const reqs: Array<() => void> = [];
+  let request = 0;
+  const deliveredObsolete: string[] = [];
   let go!: () => unknown;
   let done: () => void = () => {};
   const dispose = createRoot(dispose => {
@@ -87,12 +89,18 @@ async function run(shape: Shape, kind: Kind, hold: Hold, sib: boolean, lifo: boo
         k = `${id()}/${a}`;
       }
       asks.push(k);
-      return new Promise<string>(r => reqs.push(() => r(k)));
+      const instance = ++request;
+      return new Promise<{ key: string; instance: number }>(resolve => {
+        reqs.push(() => resolve({ key: k, instance }));
+      });
     });
     createRenderEffect(id, v => void (screen.id = v));
     // A sync reader of the same read ahead beside it changes nothing.
     if (sib) createRenderEffect(ahead, () => {});
-    createRenderEffect(m, v => void (screen.m = v));
+    createRenderEffect(m, answer => {
+      if (answer.instance !== request) deliveredObsolete.push(answer.key);
+      screen.m = answer.key;
+    });
     if (hold === "holderLast") holder();
     go =
       hold === "action"
@@ -138,7 +146,7 @@ async function run(shape: Shape, kind: Kind, hold: Hold, sib: boolean, lifo: boo
   snap();
   await landAll();
   dispose();
-  return { asks, frames, torn };
+  return { asks, frames, torn, deliveredObsolete };
 }
 
 for (const shape of shapes)
@@ -157,6 +165,7 @@ for (const shape of shapes)
               const r = await run(shape, kind, hold, sib, lifo);
               // F-1, F-2: the write never shows beside another question's answer.
               expect(r.torn).toBe("");
+              expect(r.deliveredObsolete).toEqual([]);
               // A separate hold can keep the read-ahead answer on screen.
               // When this memo alone opened the hold, changing context
               // superseded its first request. Its optimistic request cannot
@@ -171,17 +180,11 @@ for (const shape of shapes)
               // The requests.
               let asks: string[];
               if (only) asks = kind === "latest" ? [frame] : self ? [] : [screens, frame];
-              else if (self) asks = [frame, screens, frame];
-              else if (hold === "holderLast") {
-                // `m`'s pass opened the hold (or ran before the holder's):
-                // the frame's question first, adopted at the landing.
-                asks = [frame, screens];
-                // Today's cost (not ruled): a plain read mixed with the
-                // extracted read ahead, run after another pass's pending
-                // opened the hold, asks the screen's question a second time
-                // — and never the frame's until the landing.
-                if (shape === "plainPlusMemo" || shape === "memoPlusPlain")
-                  asks = [kind === "latest" ? screens : start, screens, frame];
+              else if (self || hold === "holderLast") {
+                // The ordinary pass has already started its request. The
+                // preview supersedes it, and restoration asks again, even
+                // when the restored key matches that obsolete request.
+                asks = [frame, screens, frame];
               } else asks = [screens, frame];
               expect(r.asks).toEqual(asks);
             });
