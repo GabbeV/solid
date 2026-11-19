@@ -57,10 +57,12 @@ const watching = new Set<Observation<any>>();
 let selected = false;
 // Hold lower publication and replay only for this sweep. The child may land
 // while its input is still held, then the next round prepares the revert.
+const awaitingDelivery = new WeakMap<Transaction, Transaction>();
 let previews: Map<Transaction, Observation<any>> | undefined;
 
 function awaitingPreview(update: Transaction): boolean {
-  return !!previews?.has(update);
+  const output = awaitingDelivery.get(update);
+  return !!previews?.has(update) || !!(output && !liveTx(output));
 }
 
 export function stageObservation(record: Observation<any>, value: unknown): void {
@@ -139,7 +141,21 @@ function prepareObservationPreview(record: Observation<any>): void {
     const ready = readyToPublish(output);
     if (!ready && record._observation._restoresInputValue) return;
     watching.add(record);
-    if (ready) (previews ??= new Map()).set(parent, record);
+    if (ready) {
+      (previews ??= new Map()).set(parent, record);
+      // A landing can defer its render queue until a stale binding has rerun.
+      // Its input can resume after that queue has had its turn. While the
+      // output is still live, ordinary readiness continues to govern expiry.
+      if (awaitingDelivery.get(parent) !== output) {
+        awaitingDelivery.set(parent, output);
+        output._queues[0].push(() => {
+          if (awaitingDelivery.get(parent) === output) {
+            awaitingDelivery.delete(parent);
+            wakeLayers();
+          }
+        });
+      }
+    }
     break;
   }
 }
