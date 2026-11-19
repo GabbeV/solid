@@ -134,11 +134,10 @@ describe("#3712 edges", () => {
       createRenderEffect(ver, () => {});
     });
     flush();
-    // Neither accessor has published a first value. Imperative reads share
-    // the committed-view rule; latest does not expose an unpublished first
-    // proposal merely because a handler asks for it.
+    // The leaf has produced 1. Its ordinary value is held, while a latest
+    // output without any downstream work can publish that first answer.
     expect(() => ver()).toThrow(NotReadyError);
-    expect(() => latest(ver)).toThrow(NotReadyError);
+    expect(latest(ver)).toBe(1);
     s.gate.resolve();
     await s.p;
     flush();

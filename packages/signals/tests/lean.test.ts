@@ -284,21 +284,24 @@ describe("async", () => {
     expect({ pB, pS }).toEqual({ pB, pS: pB }); // pB true, pS false
   });
 
-  it("K3 latest() of a never-committed node keeps a held answer when re-asked (D-22)", async () => {
-    const w = world();
-    const { A, setS } = await w.mount(() => {
-      const [s, setS] = createSignal(0);
-      const A = w.fetcher("A", s);
-      const B = w.fetcher("B", A);
-      w.show("s", s);
-      w.show("B", B);
-      return { A, setS };
-    });
-    await w.land("A", 0); // held for B's first load
-    expect(tryLatest(A)).toBe(1);
-    await w.write(setS, 1);
-    expect(tryLatest(A)).toBe(1); // throws NotReadyError
-  });
+  it.each([true, false])(
+    "K3 a held first answer survives a re-ask (latest read before re-ask: %s)",
+    async readEarly => {
+      const w = world();
+      const { A, setS } = await w.mount(() => {
+        const [s, setS] = createSignal(0);
+        const A = w.fetcher("A", s);
+        const B = w.fetcher("B", A);
+        w.show("s", s);
+        w.show("B", B);
+        return { A, setS };
+      });
+      await w.land("A", 0); // held for B's first load
+      if (readEarly) expect(tryLatest(A)).toBe(1);
+      await w.write(setS, 1);
+      expect(tryLatest(A)).toBe(1); // throws NotReadyError
+    }
+  );
 
   it("K4 refresh() of a node whose new answer is held does not launder its verdict (A19 (iii))", async () => {
     const w = world();

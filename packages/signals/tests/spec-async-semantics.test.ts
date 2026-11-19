@@ -1292,7 +1292,7 @@ describe("A18: incoming answers retire through the override's input update", () 
       resolveUp.shift()!(6);
       await settle();
       expect(flights.map(f => f.n)).toEqual([6]);
-      expect(latest(double)).toBe(5); // the displayed guess, until the commit (D-34, #4689)
+      expect(latest(double)).toBe(6); // The correction is ready on the latest output.
       expect(double()).toBe(5);
       expect(log).toEqual([]);
 
@@ -1382,7 +1382,7 @@ describe("A18: incoming answers retire through the override's input update", () 
       resolveUp.shift()!(6);
       await settle();
       expect(flights.map(f => f.n)).toEqual([6]);
-      expect(latest(double)).toBe(5); // the displayed guess, until the commit (D-34, #4689)
+      expect(latest(double)).toBe(6); // The correction is ready on the latest output.
       flights.shift()!.resolve();
       await a;
       await b;

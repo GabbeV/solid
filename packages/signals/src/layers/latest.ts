@@ -178,10 +178,14 @@ function latestOutput(source: Computed<any>): Computed<any> {
     prepareLatest(existing);
     return existing._output;
   }
-  // An imperative first use has no published observation to read. Do not
-  // initialize one from an unpublished input proposal as a side effect of
-  // that read; reactive consumers select and publish their output normally.
-  if (context === null && source._statusFlags & STATUS_UNINITIALIZED) return source;
+  // A cold imperative read may use a flushed first answer just as an
+  // already-created companion would. A still-unanswered source suspends.
+  if (
+    context === null &&
+    source._statusFlags & STATUS_UNINITIALIZED &&
+    source._pendingValue === NOT_PENDING
+  )
+    return source;
   const record = createSourceObservation(source, kind, selectLatest);
   // Preserve distinctions a source can publish, including signed zero.
   record._output._equals = Object.is;

@@ -60,7 +60,7 @@ function graph() {
 }
 
 describe("A18 (d) before the first commit", () => {
-  it("a never-published output is loading, and an imperative latest read has no value to return", async () => {
+  it("a never-published output is loading while latest selects its flushed guess", async () => {
     const g = graph();
     flush();
     g.fetches.shift()!(); // x's first landing (0) — held by the downstream reveal, which never lands
@@ -73,11 +73,9 @@ describe("A18 (d) before the first commit", () => {
     flush();
     g.fetches.shift()!(); // own source lands 2 ≠ 3
     await settle();
-    // Never committed, the node has nothing to serve a direct read (A19
-    // exc. 1: loading, not pending); an imperative `latest` read also has
-    // no published output to return.
+    // The active override remains selected while its input update is held.
     expect(() => g.x()).toThrow(NotReadyError);
-    expect(() => latest(g.x)).toThrow(NotReadyError);
+    expect(latest(g.x)).toBe(3);
     expect(isPending(g.x)).toBe(false); // loading, not pending (A19 exc. 1)
     await g.release();
   });
