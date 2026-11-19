@@ -87,7 +87,7 @@ describe("plain store draft reads from a held action", () => {
     }
   );
 
-  it.each(["field", "descriptor", "snapshot", "replacement", "reconcile"] as const)(
+  it.each(["field", "snapshot", "replacement", "reconcile"] as const)(
     "a %s copy joins even when nobody previously read the held score",
     async method => {
       const [state, setState] = createStore({ score: 0, copy: -1 });
@@ -100,12 +100,7 @@ describe("plain store draft reads from a held action", () => {
       );
       try {
         setState(d => {
-          const score =
-            method === "snapshot"
-              ? snapshot(d).score
-              : method === "descriptor"
-                ? Object.getOwnPropertyDescriptor(d, "score")!.value
-                : d.score;
+          const score = method === "snapshot" ? snapshot(d).score : d.score;
           expect(score).toBe(1);
           if (method === "replacement") return { score, copy: score };
           if (method === "reconcile") reconcile({ score, copy: score })(d);
@@ -248,6 +243,10 @@ describe("plain store draft reads from a held action", () => {
 
   it.each([
     ["presence", (draft: { score?: number }) => "score" in draft],
+    [
+      "descriptor",
+      (draft: { score?: number }) => !!Object.getOwnPropertyDescriptor(draft, "score")
+    ],
     ["enumeration", (draft: { score?: number }) => Object.keys(draft).includes("score")]
   ] as const)("holds a copy of a staged key removal observed through %s", async (_, hasScore) => {
     const [state, setState] = createStore<{ score?: number; copy: boolean }>({
@@ -283,6 +282,34 @@ describe("plain store draft reads from a held action", () => {
     }
   });
 
+  it("Object.keys in a draft consumes a held change of enumerability", async () => {
+    const [state, set] = createStore({ score: 1, copy: true });
+    const read = () => state.copy;
+    const { frames, dispose } = observe(read);
+    const release = hold(() =>
+      set(d => {
+        Object.defineProperty(d, "score", {
+          value: 1,
+          writable: true,
+          configurable: true,
+          enumerable: false
+        });
+      })
+    );
+    try {
+      set(d => {
+        d.copy = Object.keys(d).includes("score");
+      });
+      flush();
+      expectVisible(read, true);
+      await release();
+      expect(frames).toEqual([true, false]);
+    } finally {
+      await release();
+      dispose();
+    }
+  });
+
   it.each([
     [
       "a constant",
@@ -296,6 +323,20 @@ describe("plain store draft reads from a held action", () => {
       setState =>
         setState(d => {
           d.copy = d.other;
+        })
+    ],
+    [
+      "an untracked descriptor value",
+      setState =>
+        setState(d => {
+          d.copy = Object.getOwnPropertyDescriptor(d, "score")!.value;
+        })
+    ],
+    [
+      "an unchanged enumerable key list",
+      setState =>
+        setState(d => {
+          d.copy = Number(Object.keys(d).includes("score"));
         })
     ],
     [

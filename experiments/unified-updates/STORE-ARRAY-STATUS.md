@@ -15,12 +15,14 @@ outer setter's reads. A read-only inner setter leaves the outer setter's
 prior reads intact. An external plain accessor still sees the published
 value. Ordinary signal and memo reads do not consult store draft state.
 
-One conservative case awaits a ruling. A property descriptor includes a
-data property's value. `Object.keys(d)` asks the proxy for those descriptors
-to check enumerability. The prototype can therefore hold a write based on
-`Object.keys(d)` when only a field value changed. `Reflect.ownKeys(d)` asks
-only for keys, and `key in d` asks only for presence. Both can remain
-independent of the value change.
+A descriptor's `.value` is an untracked sample. In a setter,
+`Object.getOwnPropertyDescriptor(d, "score").value` can copy a held 1
+while the published score is still 0. A direct `d.score` read joins the
+supplying update. The descriptor still observes the property's presence
+and metadata. `Object.keys(d)` can depend on an addition, removal, or
+change in enumerability. Changing just the stored value leaves the keys
+independent. A spread reads each enumerable value through the normal
+property getter.
 
 Validation of the draft-read change at `95f13afb7` covered 19 new tests.
 The full Signals run passed 8,151 tests (including 46 distribution tests).

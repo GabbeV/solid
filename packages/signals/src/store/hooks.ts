@@ -30,7 +30,11 @@ export interface OptHooks {
    * writer's view (a staging already on the target is set aside). */
   draft(t: StoreTarget): Record<PropertyKey, any>;
   /** A user's draft operation, excluding internal copying and comparison. */
-  draftRead?(t: StoreTarget, key: PropertyKey | undefined, kind: "value" | "has" | "keys"): void;
+  draftRead?(
+    t: StoreTarget,
+    key: PropertyKey | undefined,
+    kind: "value" | "has" | "keys" | "descriptor"
+  ): void;
   /** Array-only selected length and successful user draft mutations. */
   length?(t: StoreTarget, base: () => number): number;
   draftWrite?(

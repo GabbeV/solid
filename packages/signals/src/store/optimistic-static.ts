@@ -1,6 +1,6 @@
 /** Interim shared-engine slice: flat plain records with per-property cuts.
  * Truth slots stay store-owned; only their selected outputs accept guesses. */
-import { read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.js";
+import { pullComputed, read, runWithOwner, untrack, verdict, setVerdict } from "../core/core.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
@@ -69,7 +69,11 @@ type RecordSlots = {
   structure?: Slot;
   prototype: object | null;
   parent?: Slot;
-  draft?: { previous: Record<PropertyKey, any>; staged: Record<PropertyKey, any> | null };
+  draft?: {
+    base: Record<PropertyKey, any>;
+    previous: Record<PropertyKey, any>;
+    staged: Record<PropertyKey, any> | null;
+  };
 };
 const records = new WeakMap<StoreTarget, RecordSlots>();
 const selectedTargets = new Set<StoreTarget>();
@@ -544,15 +548,15 @@ function truthValue(t: StoreTarget, key: PropertyKey) {
   return node ? read(node) : t.v[key as any];
 }
 
+// The frame immediately below this target's own guesses, including an
+// inner store's unflushed guesses when the setter reads through a chain.
+function writerBase(t: StoreTarget, source = committed(t)): Record<PropertyKey, any> {
+  const base = selectedBody(t, true) ?? source;
+  const inner = t.ch && ((base as any)[$TARGET] as StoreTarget | undefined);
+  return inner && records.has(inner) ? compose(inner, writerBase(inner), true) : base;
+}
+
 function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false) {
-  const row = selectedBody(t, writer);
-  if (row && row !== t.v) shape = row;
-  if (writer && t.ch) {
-    const inner = (shape as any)[$TARGET] as StoreTarget | undefined;
-    // A chained setter composes on unflushed guesses from its inner store.
-    // Only the key the callback actually reads entangles ownership below.
-    if (inner && records.has(inner)) shape = compose(inner, committed(inner), true);
-  }
   const record = recordFor(t);
   const arrayShape = !writer && Array.isArray(shape) ? selectedArrayShape(t) : undefined;
   if (arrayShape) shape = arrayShape;
@@ -630,12 +634,20 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
 }
 
 function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer = false) {
-  const body = selectedBody(t, writer);
+  const base = writer ? writerBase(t, source) : (selectedBody(t) ?? source);
   const record = records.get(t);
-  if (!record) return body ?? source;
+  if (!record) return base;
   // Shape candidates track; leaf values are read without subscribing the
   // enumerator to every field in the record.
-  return compose(t, source, writer);
+  return compose(t, base, writer);
+}
+
+// Descriptor data is sampled in the reader's current frame. Pull a dirty
+// output before sampling it without creating a dependency on its value.
+function descriptorValue(slot: Slot) {
+  const reader = getObserver() as Computed<any> | null;
+  if (reader?._fn) pullComputed(slot.output as Computed<any>, reader);
+  return untrack(() => read(slot.output));
 }
 
 export const staticOptimisticHooks: OptHooks = {
@@ -701,9 +713,9 @@ export const staticOptimisticHooks: OptHooks = {
     if (Array.isArray(t.v)) {
       const descriptor = Object.getOwnPropertyDescriptor(selectedArrayShape(t), key);
       if (!descriptor) return null;
-      return key === "length" || !("value" in descriptor)
-        ? descriptor
-        : { ...descriptor, value: read(slotFor(t, key).output) };
+      if (key !== "length" && "value" in descriptor)
+        descriptor.value = descriptorValue(slotFor(t, key));
+      return descriptor;
     }
     // A presence update can reach a descriptor reader before this key's
     // shape stages. Link the shape output so its own staging corrects that
@@ -716,13 +728,9 @@ export const staticOptimisticHooks: OptHooks = {
       if (!record && shape === source) return undefined;
       return Object.getOwnPropertyDescriptor(shape, key) ?? null;
     });
-    const slot =
-      descriptor && "value" in descriptor && getObserver() !== null
-        ? slotFor(t, key)
-        : records.get(t)?.slots.get(key);
-    return descriptor && "value" in descriptor && slot
-      ? { ...descriptor, value: read(slot.output) }
-      : descriptor;
+    const slot = records.get(t)?.slots.get(key);
+    if (slot && descriptor && "value" in descriptor) descriptor.value = descriptorValue(slot);
+    return descriptor;
   },
   has: (t, key) => {
     if (Array.isArray(t.v)) return key in selectedArrayShape(t);
@@ -733,35 +741,57 @@ export const staticOptimisticHooks: OptHooks = {
   },
   draft: t => {
     const record = recordFor(t);
-    const base = committed(t);
+    const base = untrack(() => writerBase(t));
     const previous = untrack(() => compose(t, base, true));
-    record.draft = { previous, staged: t.pb };
+    record.draft = { base, previous, staged: t.pb };
     return cloneRaw(previous, t);
   },
   draftRead: (t, key, kind) => {
-    if (Array.isArray(t.v) && key === "length") {
+    if (kind === "value" && Array.isArray(t.v) && key === "length") {
       readArrayLength(t);
       return;
     }
-    const record = records.get(t);
-    if (!record) return;
     // Values written earlier in this draft no longer consume another guess.
     if (key !== undefined && t.wk?.has(key)) return;
-    const entangle = (r: RecordSlots): boolean => {
+    let consumedKeys: Set<PropertyKey> | undefined;
+    const entangle = (target: StoreTarget, r: RecordSlots): boolean => {
+      // Value guesses also vouch for their key's continued existence. A
+      // setter reading only metadata consumes a guess if removing that
+      // override would change the answer in its draft.
+      const base = () => r.draft?.base ?? writerBase(target);
       if (kind === "keys") {
-        for (const slot of r.shape.values()) entangleOptimisticSlotRead(slot);
-        return r.shape.size > 0;
+        let keys: PropertyKey[] | undefined;
+        for (const [k, slot] of r.shape) {
+          if (consumedKeys?.has(k) || !slot.activeOwner()) continue;
+          keys ??= Reflect.ownKeys(base());
+          if (slot.writerValue().bits >>> 5 === keys.indexOf(k) + 1) continue;
+          entangleOptimisticSlotRead(slot);
+          if (target.ch) (consumedKeys ??= new Set()).add(k);
+        }
+        return false;
       }
-      const slot = kind === "has" ? r.presence.get(key!) : r.slots.get(key!);
-      if (!slot) return false;
+      const slot = (kind === "descriptor" ? r.shape : kind === "has" ? r.presence : r.slots).get(
+        key!
+      );
+      if (!slot?.activeOwner()) return false;
+      if (kind === "descriptor") {
+        const old = Object.getOwnPropertyDescriptor(base(), key!);
+        const meta = slot.writerValue() as ShapeMeta;
+        if (
+          (meta.bits & shapeMask) === shapeBits(old) &&
+          meta.get === old?.get &&
+          meta.set === old?.set
+        )
+          return false;
+      } else if (kind === "has" && slot.writerValue() === key! in base()) return false;
       entangleOptimisticSlotRead(slot);
-      return slot.activeOwner() !== null;
+      return true;
     };
-    if (entangle(record)) return;
-    if (t.ch) {
-      const inner = (t.v as any)[$TARGET] as StoreTarget | undefined;
-      const innerRecord = inner && records.get(inner);
-      if (innerRecord) entangle(innerRecord);
+    let target: StoreTarget | undefined = t;
+    while (target) {
+      const slots = records.get(target);
+      if (slots && entangle(target, slots)) return;
+      target = target.ch ? (target.v as any)[$TARGET] : undefined;
     }
   },
   writes: (t, next) => {
@@ -773,7 +803,7 @@ export const staticOptimisticHooks: OptHooks = {
       holdInitialWriteProducer(initial);
       return saved?.staged ?? null;
     }
-    const previous = saved?.previous ?? untrack(() => compose(t, committed(t), true));
+    const previous = saved?.previous ?? untrack(() => compose(t, writerBase(t), true));
     const oldKeys = Reflect.ownKeys(previous).filter(key => key !== $OWNER);
     const nextKeys = Reflect.ownKeys(next).filter(key => key !== $OWNER);
     const oldSurvivors = oldKeys.filter(key => nextKeys.includes(key));

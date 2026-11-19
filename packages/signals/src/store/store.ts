@@ -1667,11 +1667,11 @@ function noteDraftRead(
   kind: "value" | "has" | "keys" | "descriptor"
 ): void {
   if (t._fam?.opt) {
-    if (kind !== "descriptor") optHooks?.draftRead?.(t, key, kind);
+    optHooks?.draftRead?.(t, key, kind);
     return;
   }
   const container = t.k;
-  const slots = kind === "has" ? t.h : kind === "keys" ? null : t.n;
+  const slots = kind === "keys" ? null : kind === "value" ? t.n : t.h;
   const slot = slots?.[key as any];
   if (slot) {
     if (slot._config & CONFIG_HELD) rememberDraftRead(txOf(slot));
@@ -1691,17 +1691,21 @@ function noteDraftRead(
   } else {
     const old = visibleDescriptor(t, before, key!);
     const next = visibleDescriptor(t, after, key!);
-    if (
+    if (kind === "descriptor") {
+      // Object.keys also asks for descriptors. Only their metadata is tracked.
+      if (
+        old?.enumerable === next?.enumerable &&
+        old?.writable === next?.writable &&
+        old?.get === next?.get &&
+        old?.set === next?.set
+      )
+        return;
+    } else if (
       (old || next || protoOf(before) === protoOf(after)) &&
       old?.get === next?.get &&
-      isEqual(old?.value, next?.value) &&
-      (kind === "value" ||
-        (old?.enumerable === next?.enumerable &&
-          old?.writable === next?.writable &&
-          old?.set === next?.set))
+      (isEqual(old?.value, next?.value) || sameLogicalSlot(t, old?.value, next?.value))
     )
       return;
-    if (old && next && sameLogicalSlot(t, old.value, next.value) && kind === "value") return;
   }
   rememberDraftRead(txOf(container));
 }
