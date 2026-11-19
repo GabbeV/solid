@@ -197,6 +197,7 @@ type BoundaryLifecycle = {
   _write?: (layer: Layer<any>, update: Transaction, proposal: unknown) => boolean;
   _notify?: (source: Signal<any>, reader: Computed<any>, update: Transaction) => boolean | void;
   _prepare: () => boolean;
+  _awaitingPreview?: (update: Transaction) => boolean;
   _preparePublication?: () => boolean;
   _settle: () => boolean | void;
   _active: () => boolean;
@@ -339,7 +340,7 @@ function prepareLayers(): boolean {
   // A replay sets changed, so transferred readers are reconsidered before
   // any publication even if their surviving update was already visited.
   for (const parent of rerunHolders) {
-    if (!parent._reruns?.size) continue;
+    if (!parent._reruns?.size || observations?._awaitingPreview?.(parent)) continue;
     const waiting = blocked(parent);
     for (const reader of parent._reruns) {
       // This update already replaces the owner's frame. Its parked children
@@ -1088,6 +1089,7 @@ function sourceHoldsLifetime(source: Computed<any>, position: number): boolean {
 }
 
 function canPublish(update: Transaction): boolean {
+  if (observations?._awaitingPreview?.(update)) return false;
   // Reuse the pending-reader registry: ownership gates the private frame's
   // attachment, while the recorded higher read gates its publication. This
   // relation is one-way and deliberately absent from blocked()'s lifetime

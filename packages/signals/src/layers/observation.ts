@@ -1,8 +1,11 @@
 /** Publication lifecycle shared by source-owned observation outputs. */
+import { boundaries } from "./boundary.js";
+import { enqueueSub } from "../core/heap.js";
 import { carryStagedError } from "../core/async.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
+  CONFIG_STAGED,
   CONFIG_STAGED_ERROR,
   NOT_PENDING,
   REACTIVE_DISPOSED,
@@ -11,6 +14,7 @@ import {
 } from "../core/constants.js";
 import {
   blocked,
+  readyToPublish,
   inEffectCallback,
   liveTx,
   setEffectCallback,
@@ -41,6 +45,7 @@ export type ObservationKind<T> = {
   _fallback: (layer: Layer<T>) => T;
   _sample: (record: Observation<T>) => T;
   _active: (record: Observation<T>, value: T) => boolean;
+  _preparePreview?: (record: Observation<T>) => void;
   _observe?: (record: Observation<T>) => void;
   _parent?: (record: Observation<T>) => Transaction | null;
 };
@@ -49,6 +54,13 @@ const watching = new Set<Observation<any>>();
 // Selection during a pull is the same propagation work as selection in the
 // preparation loop. Give its consumers a round before retiring the override.
 let selected = false;
+// Hold lower publication and replay only for this sweep. The child may land
+// while its input is still held, then the next round prepares the revert.
+let previews: Map<Transaction, Observation<any>> | undefined;
+
+function awaitingPreview(update: Transaction): boolean {
+  return !!previews?.has(update);
+}
 
 export function stageObservation(record: Observation<any>, value: unknown): void {
   stageLayer(record, value);
@@ -65,7 +77,61 @@ function deadObservation(record: Observation<any>): boolean {
   );
 }
 
+function readsOutput(
+  node: Computed<any>,
+  output: Computed<any>,
+  update: Transaction,
+  seen: Set<Computed<any>>
+): boolean {
+  if (seen.has(node)) return false;
+  seen.add(node);
+  for (let edge = node._deps; edge; edge = edge._nextDep) {
+    if (edge._gen !== node._depGen) continue;
+    const dep = edge._dep as Computed<any>;
+    if (dep === output) return true;
+    if (!(dep._config & CONFIG_HELD) || txOf(dep) !== update || !dep._fn) continue;
+    const layer = boundaries.get(dep);
+    if ((!layer || layer._override === NOT_PENDING) && readsOutput(dep, output, update, seen))
+      return true;
+  }
+  return false;
+}
+
+/**
+ * A higher pass can supersede the last request holding its input. Before
+ * replaying that reader in the input update, restore the pending outputs it
+ * consumed. A ready preview can publish first; an unfinished one expires.
+ */
+export function preparePendingPreview(record: Observation<boolean>): void {
+  if (
+    record._input._pendingValue === NOT_PENDING ||
+    record._override !== true ||
+    !(record._output._config & CONFIG_HELD)
+  )
+    return;
+  const parent = record._observation._parent!(record);
+  if (!parent?._reruns?.size || blocked(parent)) return;
+  const output = txOf(record._output);
+  if (parent === output) return;
+  // A held callback alone has no staged calculation to replace. Follow
+  // current dependencies so a peer sharing the transaction cannot trigger
+  // publication on behalf of a reader that never consumed this observation.
+  for (const reader of parent._reruns) {
+    if (
+      !(reader._config & CONFIG_STAGED) ||
+      !(reader._config & CONFIG_HELD) ||
+      txOf(reader) !== output ||
+      !readsOutput(reader, record._output, output, new Set())
+    )
+      continue;
+    watching.add(record);
+    if (readyToPublish(output)) (previews ??= new Map()).set(parent, record);
+    break;
+  }
+}
+
 function prepareObservations(): boolean {
+  previews = undefined;
   let changed = selected;
   selected = false;
   // Prepare both observations of a held synchronous proposal in the same
@@ -90,6 +156,7 @@ function prepareObservations(): boolean {
     )
       continue;
     const next = record._observation._sample(record);
+    record._observation._preparePreview?.(record);
     if (!Object.is(record._override, next)) {
       stageLayer(record, next);
       changed = true;
@@ -114,6 +181,7 @@ function prepareObservations(): boolean {
         ? txOf(record._input)
         : record._parent;
     const parent = owner && liveTx(owner);
+    if (parent && awaitingPreview(parent)) continue;
     if (record._retiring) {
       // A ready, unheld input can acquire a hold from this restoration's
       // ordinary consequences. Keep the restoration in that newly discovered
@@ -163,6 +231,10 @@ function preparePublication(): boolean {
 }
 
 function settleObservations(): void {
+  if (previews) {
+    for (const record of previews.values()) enqueueSub(record._output);
+    previews = undefined;
+  }
   for (const record of watching) dirty.add(record);
   for (const record of dirty) {
     if (deadObservation(record)) {
@@ -206,6 +278,7 @@ function settleObservations(): void {
 setObservationLifecycle({
   _prepare: prepareObservations,
   _preparePublication: preparePublication,
+  _awaitingPreview: awaitingPreview,
   _settle: settleObservations,
   _active: () => !!(dirty.size || watching.size)
 });

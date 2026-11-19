@@ -217,12 +217,8 @@ function expected(extra: Extra, original: boolean): Checkpoint[] {
         : { ...checkpoint, effect: "/slow1", ...(original ? { latest: "/slow1" } : {}) }
     );
   }
-  if (extra === "tracked isPending") {
-    // Pending=true supersedes the blocking pass with one over committed
-    // source. The input can publish; pending's reversal then starts its
-    // consequence again. The source itself is no longer unpublished.
-    return baseline.map(checkpoint => ({ ...checkpoint, effect: "-", isPending: false }));
-  }
+  // Reading pending in the request can supersede it. The ready preview
+  // publishes, and its correction keeps the source held until data lands.
   return baseline;
 }
 

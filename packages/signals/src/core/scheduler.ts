@@ -1535,7 +1535,7 @@ function queuedWork(update: Transaction): boolean {
   return false;
 }
 
-function readyToPublish(update: Transaction): boolean {
+export function readyToPublish(update: Transaction): boolean {
   return (
     !blocked(update, true) && !queuedWork(update) && (!layerCanPublish || layerCanPublish(update))
   );

@@ -15,3 +15,9 @@ The integration is provisional. Keep the published branch as the recovery point 
 An isolated production probe allocated and read the normal latest companion early, without adding a downstream subscriber. The cold control first read latest at the observation point. For a first async answer 1 held by another reader, the cold path threw NotReady and the early companion returned 1, both before and after a re-ask. The input had retained the answer. The revised first-read guard allows that existing staging to initialize the companion.
 
 In a separate action, an initialized memo with published value 100 produced either 101 or error E1. A new question arrived before publication. Both early and cold companions retained 101 across the re-ask. The producer now retains the flushed E1 during a replacement flight, so both companions throw E1 as upstream main does. The ordinary reader continues showing 100. The held-error T2 tests cover repeated re-asks, a superseded response, a second error and recovery. No performance benchmark was run for this verification.
+
+## Pending preview during navigation
+
+An ordinary pass for id 1 starts a fetch before the update discovers its hold. A pending pass for the displayed id 0 supersedes that fetch and returns "Loading" synchronously. Its page and button can publish together while id stays 0. Lower readers replay after pending starts reverting to false. The correction fetch then holds id 1 and the disabled button's reversal until the page is ready. A pending preview that suspends cannot extend the input's lifetime.
+
+The navigation regression covers a stale first answer and the actual JSX button. The two tracked-isPending traces from #3884 again match upstream's visible behavior across a second write.
