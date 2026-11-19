@@ -107,6 +107,18 @@ export let layerNotify:
 export let layerFrameRead:
   | ((reader: Computed<any>, source: Signal<any>) => boolean | null)
   | undefined;
+export let dispatchedCorrection: Computed<any> | undefined;
+// Only a render calculation preparing a correction needs a deferred delivery.
+const landingValues = new WeakMap<
+  Transaction,
+  Map<Computed<any>, { value: unknown; generation: number }>
+>();
+export function stageDelivery(node: Computed<any>, value: unknown) {
+  const owner = resolveTx(flushTransaction!);
+  let values = landingValues.get(owner);
+  if (!values) landingValues.set(owner, (values = new Map()));
+  values.set(node, { value, generation: node._depGen });
+}
 export let preparingUpdate: Transaction | null = null;
 export let layerStatus: ((reader: Computed<any>, source: Computed<any>) => boolean) | undefined;
 export let layerBlocked: ((update: Transaction) => boolean) | undefined;
@@ -576,6 +588,16 @@ export function merge(t: Transaction, f: Transaction): void {
   t = resolveTx(t);
   f = resolveTx(f);
   if (t === f || (LEGACY_LANES && (t._lane || f._lane))) return;
+  const before = landingValues.get(t);
+  if (before) {
+    const after = landingValues.get(f);
+    if (!after) landingValues.set(f, before);
+    else
+      for (const [node, value] of before)
+        if (!after.has(node) || after.get(node)!.generation < value.generation)
+          after.set(node, value);
+    landingValues.delete(t);
+  }
   layerMerge?.(t, f);
   if (__OBSERVE__ && attrHooks !== null) attrHooks.transitionMerged(f, t);
   t._into = f;
@@ -1578,6 +1600,16 @@ function land(u: Transaction): void {
         x._transaction = null;
         commitPendingNode(node);
       }
+    // Land only the correction this binding still derives from. The owned
+    // subtree may have been disposed while the held nodes above committed.
+    const values = landingValues.get(u);
+    if (values)
+      for (const [node, value] of values) {
+        if (node._flags & REACTIVE_DISPOSED) continue;
+        if (node._depGen !== value.generation) continue;
+        node._value = value.value;
+        queueEffectRun(node);
+      }
   } finally {
     globalQueue._queues = queues;
   }
@@ -1717,7 +1749,8 @@ export function recomputeInUpdate(
   prepare = false,
   create = false,
   fromHeap = false,
-  inherit = false
+  inherit = false,
+  dispatch = false
 ): void {
   const incoming = flushTransaction;
   const previousFork = calculationForked;
@@ -1747,7 +1780,15 @@ export function recomputeInUpdate(
   try {
     for (;;) {
       try {
-        recomputeBody(node, create);
+        if (dispatch) {
+          const before = dispatchedCorrection;
+          dispatchedCorrection = node;
+          try {
+            GlobalQueue._update(node);
+          } finally {
+            dispatchedCorrection = before;
+          }
+        } else recomputeBody(node, create);
       } finally {
         if (flushTransaction && (!inherit || calculationForked)) {
           // Keep the usual per-calculation parking boundary. Only the scope

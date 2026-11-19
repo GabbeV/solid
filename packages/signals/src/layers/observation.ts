@@ -28,7 +28,8 @@ import {
   inputTime,
   createLayerBoundary,
   setObservationLifecycle,
-  resumeInput,
+  stageRestoration,
+  calculateCorrection,
   readOverride,
   stageLayer,
   wakeLayers,
@@ -165,6 +166,7 @@ function prepareObservations(): boolean {
   // New observation proposals must propagate before readiness is judged.
   // Their readers can discover additional holds (including sibling inputs).
   if (changed) return true;
+  let restoring: Observation<any>[] | undefined;
   for (const record of watching) {
     if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     if (deadObservation(record)) {
@@ -202,9 +204,12 @@ function prepareObservations(): boolean {
     record._time = inputTime(record._input);
     // Preparation can be triggered by a different, lower update's flush.
     // Restore within the selected input update, without joining that flush.
-    record._parent = resumeInput(record, parent, true);
+    record._parent = stageRestoration(record, parent);
+    (restoring ??= []).push(record);
     changed = true;
   }
+  if (restoring)
+    for (const record of restoring) calculateCorrection(record._output, record._parent);
   return changed;
 }
 

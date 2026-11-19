@@ -165,6 +165,8 @@ import {
   layerRecompute,
   layerFrameRead,
   preparingUpdate,
+  dispatchedCorrection,
+  stageDelivery,
   queuePendingNode,
   pendingNodes,
   schedule,
@@ -895,7 +897,15 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // its runner — happen here instead. `!create` matches the previous `initialized`
     // gate: the explicit recompute(node, true) inside effect() does not enqueue, so
     // effect() can call its runner synchronously for the first run.
+    const landingDelivery =
+      !create &&
+      isEffect === EFFECT_RENDER &&
+      dispatchedCorrection === el &&
+      flushTransaction !== null &&
+      !errored;
+    if (landingDelivery) stageDelivery(el, value);
     if (
+      !landingDelivery &&
       isEffect &&
       valueChanged &&
       // A stale reader of a lane (REACTIVE_SCREEN_READ) that computed what it
@@ -982,7 +992,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
         // sources commit) must see the fresh value while PLAIN reads stay
         // committed until flush (#3009 purity). The pending round-trip is
         // that separation; it cannot be skipped on any path a pull can reach.
-        el._value = value;
+        if (!landingDelivery) el._value = value;
       } else {
         el._pendingValue = value;
         // D-39: a staged recovery keeps the error it replaces the display

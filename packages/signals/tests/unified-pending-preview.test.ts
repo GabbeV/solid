@@ -14,6 +14,8 @@ it.each(["direct", "memo", "pending first", "render effect"])(
     const [id, setId] = createSignal(0);
     const calls: [number, boolean][] = [];
     const requests: ((page: string) => void)[] = [];
+    const badges: boolean[] = [];
+    const pages: string[] = [];
     const screen = { id: -1, pending: false, page: "" };
     const dispose = createRoot(dispose => {
       const pendingId = kind === "memo" ? createMemo(() => isPending(id)) : () => isPending(id);
@@ -26,13 +28,19 @@ it.each(["direct", "memo", "pending first", "render effect"])(
         if (key === 0) return "Home";
         return new Promise<string>(resolve => requests.push(resolve));
       };
-      const display = (value: string) => void (screen.page = value);
+      const display = (value: string) => {
+        pages.push(value);
+        screen.page = value;
+      };
       if (kind === "render effect") createRenderEffect(calculate, display);
       else createRenderEffect(createMemo(calculate), display);
       createRenderEffect(id, value => void (screen.id = value));
       createRenderEffect(
         () => isPending(id),
-        value => void (screen.pending = value)
+        value => {
+          badges.push(value);
+          screen.pending = value;
+        }
       );
       return dispose;
     });
@@ -49,6 +57,8 @@ it.each(["direct", "memo", "pending first", "render effect"])(
       ]);
       expect(calls).toContainEqual([0, true]);
       expect(requests).toHaveLength(2);
+      expect(badges).toEqual([false, true]);
+      expect(pages).toEqual(["Home", "Loading"]);
       requests[0]("obsolete");
       await Promise.resolve();
       flush();
@@ -56,6 +66,8 @@ it.each(["direct", "memo", "pending first", "render effect"])(
       requests[1]("Page 1");
       await Promise.resolve();
       flush();
+      expect(badges).toEqual([false, true, false]);
+      expect(pages).toEqual(["Home", "Loading", "Page 1"]);
       expect(screen).toEqual({ id: 1, pending: false, page: "Page 1" });
     } finally {
       dispose();

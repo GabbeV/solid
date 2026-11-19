@@ -150,6 +150,34 @@ setLayerVisibility((output, update) => !boundaries.get(output) || observed(outpu
 export function positionOf(update: Transaction | null): number {
   return update ? (resolveTx(update)._level ?? 0) : 0;
 }
+let correctionContext: Transaction | null = null;
+const correctionJobs = new Map<Transaction, Set<Computed<any>>>();
+export function calculateCorrection(
+  node: Computed<any>,
+  update: Transaction | null,
+  dispatch = false
+) {
+  const previous = correctionContext;
+  correctionContext = update;
+  try {
+    recomputeInUpdate(node, update, false, false, false, false, dispatch);
+  } finally {
+    correctionContext = previous;
+  }
+}
+function processCorrections() {
+  if (!correctionJobs.size) return false;
+  const [owner, jobs] = correctionJobs.entries().next().value!;
+  correctionJobs.delete(owner);
+  const update = liveTx(owner);
+  for (const node of jobs) {
+    if (node._flags & REACTIVE_DISPOSED) continue;
+    if (!update || (node._config & CONFIG_HELD && positionOf(txOf(node)) > positionOf(update)))
+      enqueueSub(node);
+    else calculateCorrection(node, update, true);
+  }
+  return true;
+}
 let releasingInput: Transaction | null = null;
 let evaluation: Computed<any> | null = null;
 let evaluationReads: Set<Transaction> | null = null;
@@ -249,24 +277,22 @@ export function inputUpdate(layer: Layer<any>): Transaction | null {
 /** Retire the override in its input update, or in an ordinary flush when the
  * input is unheld. Reading below then uses normal derivation joining.
  * Published output and owned children stay in the common committed slots. */
-export function resumeInput(
+export function resumeInput(layer: Layer<any>, update: Transaction | null): Transaction | null {
+  update = stageRestoration(layer, update);
+  if (update) joinFuture(update);
+  enqueueSub(layer._output);
+  return update;
+}
+
+export function stageRestoration(
   layer: Layer<any>,
-  update: Transaction | null,
-  prepare = false
+  update: Transaction | null
 ): Transaction | null {
   layer._override = NOT_PENDING;
   // Retiring the cut makes its suspended consequences input work again.
   // Recompute will supersede obsolete flights in that common update.
   if (layer._output._config & CONFIG_HELD)
     merge(txOf(layer._output), (update ??= newTransaction(false)));
-  // A prepared restoration belongs to its selected input update even when
-  // another update triggered the seam. Scoped recomputation keeps unrelated
-  // flush work separate; actual reads still perform the usual peer joins.
-  if (prepare) recomputeInUpdate(layer._output, update, true);
-  else {
-    if (update) joinFuture(update);
-    enqueueSub(layer._output);
-  }
   return update;
 }
 
@@ -335,6 +361,10 @@ function prepareLayers(): boolean {
   // obsolete async consequence that the false observation must supersede.
   changed = !!guesses?._prepare();
   changed = !!observations?._prepare() || changed;
+  // First propagate the new source selections. They can replace the question
+  // whose correction would otherwise wake a binding for an obsolete answer.
+  if (correctionJobs.size && changed) return true;
+  if (processCorrections()) return true;
   // Only updates with waiting readers require preparation. The scheduler
   // already indexes these for disposal, and maintains the index on merges.
   // A replay sets changed, so transferred readers are reconsidered before
@@ -1239,6 +1269,16 @@ function adoptOutput(
 /** Transfer context along value and status notifications. An unchanged
  * memo is a propagation stop for optimistic updates just as for ordinary ones. */
 function notifyLayer(source: Signal<any>, reader: Computed<any>, value = false): boolean | void {
+  if (
+    correctionContext &&
+    value &&
+    (!(source._config & CONFIG_HELD) || txOf(source) === resolveTx(correctionContext))
+  ) {
+    let jobs = correctionJobs.get(correctionContext);
+    if (!jobs) correctionJobs.set(correctionContext, (jobs = new Set()));
+    jobs.add(reader);
+    return true;
+  }
   if (!(source._config & CONFIG_HELD)) return;
   const update = txOf(source);
   if (!isChildUpdate(update)) return;
