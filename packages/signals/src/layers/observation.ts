@@ -44,9 +44,9 @@ export type Observation<T> = Layer<T> & {
 };
 export type ObservationKind<T> = {
   _fallback: (layer: Layer<T>) => T;
+  _restoresInputValue?: boolean;
   _sample: (record: Observation<T>) => T;
   _active: (record: Observation<T>, value: T) => boolean;
-  _preparePreview?: (record: Observation<T>) => void;
   _observe?: (record: Observation<T>) => void;
   _parent?: (record: Observation<T>) => Transaction | null;
 };
@@ -103,15 +103,20 @@ function readsOutput(
  * replaying that reader in the input update, restore the pending outputs it
  * consumed. A ready preview can publish first; an unfinished one expires.
  */
-export function preparePendingPreview(record: Observation<boolean>): void {
+function prepareObservationPreview(record: Observation<any>): void {
   if (
     record._input._pendingValue === NOT_PENDING ||
-    record._override !== true ||
+    record._override === NOT_PENDING ||
+    !record._observation._active(record, record._override) ||
     !(record._output._config & CONFIG_HELD)
   )
     return;
-  const parent = record._observation._parent!(record);
-  if (!parent?._reruns?.size || blocked(parent)) return;
+  const parent = record._observation._parent
+    ? record._observation._parent(record)
+    : record._input._config & CONFIG_HELD
+      ? txOf(record._input)
+      : null;
+  if (!parent?._reruns?.size) return;
   const output = txOf(record._output);
   if (parent === output) return;
   // A held callback alone has no staged calculation to replace. Follow
@@ -122,11 +127,19 @@ export function preparePendingPreview(record: Observation<boolean>): void {
       !(reader._config & CONFIG_STAGED) ||
       !(reader._config & CONFIG_HELD) ||
       txOf(reader) !== output ||
+      (record._observation._restoresInputValue &&
+        (reader._x?._supersededGen !== reader._depGen ||
+          reader._x?._inFlight ||
+          reader._statusFlags & STATUS_PENDING)) ||
       !readsOutput(reader, record._output, output, new Set())
     )
       continue;
+    if (record._observation._restoresInputValue && (reader._x?._supersededGen !== reader._depGen || reader._x?._inFlight || reader._statusFlags & STATUS_PENDING)) continue;
+    if (blocked(parent)) return;
+    const ready = readyToPublish(output);
+    if (!ready && record._observation._restoresInputValue) return;
     watching.add(record);
-    if (readyToPublish(output)) (previews ??= new Map()).set(parent, record);
+    if (ready) (previews ??= new Map()).set(parent, record);
     break;
   }
 }
@@ -157,7 +170,7 @@ function prepareObservations(): boolean {
     )
       continue;
     const next = record._observation._sample(record);
-    record._observation._preparePreview?.(record);
+    prepareObservationPreview(record);
     if (!Object.is(record._override, next)) {
       stageLayer(record, next);
       changed = true;

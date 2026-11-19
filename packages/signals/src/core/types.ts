@@ -77,6 +77,8 @@ export interface NodeOptions<T> {
  * hot-path gates — a bit says "consult _x", never the reverse.
  */
 export interface NodeExtension {
+  /** Calculation that synchronously replaced this node's own pending answer. */
+  _supersededGen?: number;
   _inFlight: PromiseLike<any> | AsyncIterable<any> | null;
   /** Cancellation for the CURRENT iterator flight (#3122): closes the
    * iterator (`it.return()`), idempotent. Fired at the sites that release

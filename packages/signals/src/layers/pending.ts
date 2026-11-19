@@ -39,7 +39,6 @@ import {
   initializeObservation,
   createSourceObservation,
   markObservation,
-  preparePendingPreview,
   selectObservation,
   releaseObservation,
   type Observation as SharedObservation,
@@ -130,7 +129,6 @@ function quietQuestion(record: Observation): boolean {
 
 const kind: ObservationKind<boolean> = {
   _fallback: pendingFallback,
-  _preparePreview: preparePendingPreview,
   _sample: record =>
     proposedPending(
       record._input,

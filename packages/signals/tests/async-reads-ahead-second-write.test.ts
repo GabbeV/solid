@@ -128,6 +128,18 @@ describe("a second write supersedes the frame's question (S-51)", () => {
           // The indicator ends off, in that frame.
           expect(log.filter(x => x.startsWith("ind: ")).pop()).toBe("ind: -");
           expect(log.lastIndexOf("ind: -")).toBeLessThan(at("| second answered"));
+          // At each completed flush, the indicator and the synchronous page
+          // preview have both reached the display, in either callback order.
+          if (shape === "cond" && kind === "latest") {
+            for (const [route, checkpoint] of [
+              ["/slow1", "| first write"],
+              ["/slow2", "| second write"]
+            ]) {
+              const before = log.slice(0, at(checkpoint));
+              expect(before.filter(line => line.startsWith("ind: ")).at(-1)).toBe("ind: " + route);
+              expect(before.filter(line => line.startsWith("data: ")).at(-1)).toBe("data: /|" + route);
+            }
+          }
           expect(outside).toEqual({
             "first write": true,
             "second write": true,

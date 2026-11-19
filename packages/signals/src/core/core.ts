@@ -1051,8 +1051,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
       wasPendingSource &&
       !(el._statusFlags & STATUS_PENDING) &&
       (!(el._statusFlags & STATUS_UNINITIALIZED) || el._pendingValue !== NOT_PENDING)
-    )
+    ) {
+      el._x!._supersededGen = el._depGen;
       settlePendingSource(el);
+    }
   }
   // A first pass that went pending where the born-held arm would have held
   // its value (it read a held node, or a verdict lane's mount read a staging,

@@ -79,6 +79,7 @@ function selectLatest(layer: Layer<any>): unknown {
 }
 
 const kind: ObservationKind<any> = {
+  _restoresInputValue: true,
   _fallback: fallback,
   _sample: record => {
     const source = record._input;
