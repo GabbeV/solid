@@ -16,10 +16,8 @@
  *   mixed with a plain read on either side (D-22: a window extracted into a
  *   memo reads as inline; D-25: either read order).
  *
- * The requests are pinned too. The frame's question is asked once: by the
- * pass that opens the hold (its flight is the one the landing adopts), or at
- * the landing when another hold was already up. The screen's question is
- * asked once beside it.
+ * Request traces distinguish a change of context from an additional request
+ * within the same context. A superseded request cannot answer a later pass.
  */
 import { describe, expect, test } from "vitest";
 import {
@@ -159,13 +157,12 @@ for (const shape of shapes)
               const r = await run(shape, kind, hold, sib, lifo);
               // F-1, F-2: the write never shows beside another question's answer.
               expect(r.torn).toBe("");
-              // The display, then the frame. Self-held, the frame's answer
-              // comes first unless the answers arrive in reverse: the hold
-              // lands at once and the screen's question is moot. Without a
-              // plain read of `id` nothing holds the write but `m`'s own
-              // flight, and (`isPending`) nothing asks at all.
+              // A separate hold can keep the read-ahead answer on screen.
+              // When this memo alone opened the hold, changing context
+              // superseded its first request. Its optimistic request cannot
+              // extend its own lifetime, whichever answer arrives first.
               const self = hold === "self";
-              const shows = !(self && (only || !lifo));
+              const shows = !self;
               expect(r.frames).toEqual([
                 `0|${start}`,
                 ...(shows ? [`0|${screens}`] : []),
@@ -174,7 +171,8 @@ for (const shape of shapes)
               // The requests.
               let asks: string[];
               if (only) asks = kind === "latest" ? [frame] : self ? [] : [screens, frame];
-              else if (hold === "holderLast" || self) {
+              else if (self) asks = [frame, screens, frame];
+              else if (hold === "holderLast") {
                 // `m`'s pass opened the hold (or ran before the holder's):
                 // the frame's question first, adopted at the landing.
                 asks = [frame, screens];
@@ -182,7 +180,7 @@ for (const shape of shapes)
                 // extracted read ahead, run after another pass's pending
                 // opened the hold, asks the screen's question a second time
                 // — and never the frame's until the landing.
-                if (!self && (shape === "plainPlusMemo" || shape === "memoPlusPlain"))
+                if (shape === "plainPlusMemo" || shape === "memoPlusPlain")
                   asks = [kind === "latest" ? screens : start, screens, frame];
               } else asks = [screens, frame];
               expect(r.asks).toEqual(asks);

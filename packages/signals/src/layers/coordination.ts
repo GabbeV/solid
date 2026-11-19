@@ -197,6 +197,7 @@ type BoundaryLifecycle = {
   _write?: (layer: Layer<any>, update: Transaction, proposal: unknown) => boolean;
   _notify?: (source: Signal<any>, reader: Computed<any>, update: Transaction) => boolean | void;
   _prepare: () => boolean;
+  _preparePublication?: () => boolean;
   _settle: () => boolean | void;
   _active: () => boolean;
 };
@@ -409,7 +410,7 @@ function prepareLayers(): boolean {
       }
     }
   }
-  return changed;
+  return changed || !!observations?._preparePublication?.();
 }
 
 function prepareReader(reader: Computed<any>, update: Transaction): void {

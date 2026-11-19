@@ -208,9 +208,7 @@ describe("a second async reader over a memo that reads ahead (S-51, D-22)", () =
           dispose();
           // `b20` may show ahead beside `1 a1` (F-6) when it answers first.
           expect(shown).toEqual(d2 < d1 ? ["1 a1 b20", "2 a2 b20"] : ["2 a2 b20"]);
-          expect(new Set(asked)).toEqual(new Set([20]));
-          // The memo form asks once. Inline, declared first, `r2`'s pass
-          // opens the hold and the screen's pass asks the same 20 again.
-          expect(asked.length).toBe(form === "inline" && first === "r2" ? 2 : 1);
+          // Both forms carry the same already-running request for 20.
+          expect(asked).toEqual([20]);
         });
 });

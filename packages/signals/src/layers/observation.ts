@@ -140,6 +140,28 @@ function prepareObservations(): boolean {
   return changed;
 }
 
+// After lower readers have replayed, a transferred flight may be the only
+// outstanding work. Restore its observation before publishing the input.
+function preparePublication(): boolean {
+  let changed = false;
+  for (const record of dirty) {
+    if (
+      !watching.has(record) &&
+      record._input._pendingValue !== NOT_PENDING &&
+      record._override !== NOT_PENDING &&
+      record._input._config & CONFIG_HELD &&
+      record._output._config & CONFIG_HELD &&
+      txOf(record._output) !== txOf(record._input) &&
+      blocked(txOf(record._output), true) &&
+      !blocked(txOf(record._input))
+    ) {
+      watching.add(record);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function settleObservations(): void {
   for (const record of watching) dirty.add(record);
   for (const record of dirty) {
@@ -183,6 +205,7 @@ function settleObservations(): void {
 
 setObservationLifecycle({
   _prepare: prepareObservations,
+  _preparePublication: preparePublication,
   _settle: settleObservations,
   _active: () => !!(dirty.size || watching.size)
 });
