@@ -126,13 +126,11 @@ describe("#3528 isPending consulted from a Loading boundary's `on`", () => {
         // forwards the pending and the frame holds until m2 lands.
         expect(r.log).toEqual(["A=2 0", "count=1"]);
       } else {
-        // The verdict flips and notifies `on`: the re-arm frees the
-        // boundary's reader from the hold (A33) before the verdict, so the
-        // count publishes in this pass; the display-ahead swap is shown
-        // through the companion's lane, and lane effects apply ahead of the
-        // regular queue — the fallback lands in the same pass as the count,
-        // applied before it. The content reveals when m2 lands.
-        expect(r.log).toEqual(["A=Loading", "count=1", "A=2 0"]);
+        // The re-arm releases this reader's hold. Count and fallback can
+        // publish together; their sibling callback order is unspecified.
+        // Preserve each binding's complete history, including the fallback.
+        expect(r.log.filter(value => value.startsWith("A="))).toEqual(["A=Loading", "A=2 0"]);
+        expect(r.log.filter(value => value.startsWith("count="))).toEqual(["count=1"]);
       }
     }
   );

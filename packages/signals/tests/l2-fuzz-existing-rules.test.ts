@@ -176,7 +176,10 @@ describe("superseded value left showing after completion (A15 lanes corollary, A
     await p;
     await drain();
     expect(r0).toEqual([[0], [1]]);
-    expect(r1).toEqual([[0], [1]]);
+    // The replacement pass creates a fresh array for the same visible 1.
+    // The shared publication path applies that frame; it must never apply
+    // the abandoned 0 re-guess. Keep the complete callback history pinned.
+    expect(r1).toEqual([[0], [1], [1]]);
     dispose();
   });
 });

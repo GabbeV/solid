@@ -37,7 +37,7 @@ import {
   latest,
   resetErrorHalt
 } from "../src/index.js";
-import { $REFRESH, CONFIG_VERDICT, STATUS_PENDING } from "../src/core/constants.js";
+import { $REFRESH, STATUS_PENDING } from "../src/core/constants.js";
 import type { Computed } from "../src/core/types.js";
 
 beforeEach(() => vi.useFakeTimers());
@@ -54,37 +54,19 @@ const tick = async (ms: number) => {
 type Form = "memo" | "storeKey" | "storeKeys" | "storeJSON";
 const storeForms = ["storeKey", "storeKeys", "storeJSON"] as const;
 
-/** The screen, frame by frame: the callbacks one synchronous flush ran,
- * sorted — their order inside a flush is the queue's, not the screen's (a
- * landing's held runs follow its own re-passes, and a derived store's
- * reader re-derives a round after a memo's). */
-const frames = (log: string[]): string[] => (log as any).frames;
-
 /** The reader's display of `v`: every form shows the same text. */
 async function run(form: Form, at: "before" | "during" | "duringWrite" | "afterLanding") {
-  const shown: string[][] = [];
-  let open = false;
   const log: string[] = [];
-  const push = log.push.bind(log);
-  // A marker (`--…`) ends the frame; an effect's callback joins the frame
-  // of the flush it runs in.
-  Object.defineProperty(log, "push", {
-    value: (v: string) => {
-      if (v.startsWith("--")) open = false;
-      else if (!open) {
-        open = true;
-        shown.push([]);
-        queueMicrotask(() => (open = false));
-      }
-      if (open) shown.at(-1)!.push(v);
-      else shown.push([v]);
-      return push(v);
-    }
-  });
-  Object.defineProperty(log, "frames", { get: () => shown.map(f => f.sort().join(" ")) });
+  const frames: Array<[string, string | undefined, string | undefined]> = [];
+  const publications: Array<[string | undefined, string | undefined]> = [];
+  let question: string | undefined, answer: string | undefined;
+  const publication = () => queueMicrotask(() => publications.push([question, answer]));
+  const frame = (stage: string) => frames.push([stage, question, answer]);
+  let dispose!: () => void;
   const [s, setS] = createSignal(1);
   const [on, setOn] = createSignal(at === "before");
-  createRoot(() => {
+  createRoot(d => {
+    dispose = d;
     const m0 = createMemo(() => latest(s) + s());
     const m1 = createMemo(async () => {
       const v = m0();
@@ -106,46 +88,121 @@ async function run(form: Form, at: "before" | "during" | "duringWrite" | "afterL
     if (at !== "during")
       createRenderEffect(
         () => `s:${s()}`,
-        v => void log.push(v)
+        v => {
+          question = v;
+          log.push(v);
+          publication();
+        }
       );
     createRenderEffect(
       () => (on() ? `r:${read()}` : "r:off"),
-      v => void log.push(v)
+      v => {
+        answer = v;
+        log.push(v);
+        publication();
+      }
     );
   });
   flush();
+  frame("initial");
   await tick(150);
+  frame("initial landed");
   setS(2); // m1 re-asks
   flush();
+  frame("reask");
   log.push("--reask");
   await tick(20);
   if (at === "during" || at === "duringWrite") {
     setOn(true); // a reader mounts mid-flight; nothing read the store before
     flush();
+    frame("mounted");
     log.push("--mounted");
   }
   if (at !== "during") {
     await tick(10);
     setS(3); // a plain write beside the flight
     flush();
+    frame("plain write");
     log.push("--plain write");
   }
   await tick(300);
+  frame("landed");
   if (at === "afterLanding") {
     setOn(true);
     flush();
+    frame("mounted after landing");
     log.push("--mounted");
   }
   await tick(300);
-  return log;
+  frame("settled");
+  dispose();
+  return { log, frames, publications };
+}
+
+// Sibling callback application order is unspecified. Preserve each binding's
+// complete value sequence, and compare the whole display after every flush.
+const bindings = (log: string[]) => ({
+  question: log.filter(value => value.startsWith("s:")),
+  answer: log.filter(value => value.startsWith("r:")),
+  events: log.filter(value => value.startsWith("--"))
+});
+function expectedFrames(at: "before" | "during" | "duringWrite" | "afterLanding") {
+  const initialQuestion = at === "during" ? undefined : "s:1";
+  const initialAnswer = at === "before" ? undefined : "r:off";
+  const firstAnswer = at === "before" ? "r:2" : "r:off";
+  const askedQuestion = at === "during" ? undefined : at === "before" ? "s:1" : "s:2";
+  const frames: Array<[string, string | undefined, string | undefined]> = [
+    ["initial", initialQuestion, initialAnswer],
+    ["initial landed", initialQuestion, firstAnswer],
+    ["reask", askedQuestion, firstAnswer]
+  ];
+  if (at === "during" || at === "duringWrite") frames.push(["mounted", askedQuestion, firstAnswer]);
+  if (at !== "during")
+    frames.push(["plain write", at === "afterLanding" ? "s:3" : askedQuestion, firstAnswer]);
+  const landedQuestion = at === "during" ? undefined : "s:3";
+  const landedAnswer = at === "afterLanding" ? "r:off" : at === "during" ? "r:4" : "r:6";
+  frames.push(["landed", landedQuestion, landedAnswer]);
+  if (at === "afterLanding") frames.push(["mounted after landing", "s:3", "r:6"]);
+  frames.push(["settled", landedQuestion, at === "afterLanding" ? "r:6" : landedAnswer]);
+  return frames;
+}
+function expectPublications(
+  publications: Array<[string | undefined, string | undefined]>,
+  at: "before" | "during" | "duringWrite" | "afterLanding"
+) {
+  const allowed = expectedFrames(at).map(([, question, answer]) => [question, answer]);
+  expect(publications.length).toBeGreaterThan(0);
+  for (const screen of publications) expect(allowed).toContainEqual(screen);
+}
+async function expectTimeline(
+  form: Form,
+  at: "before" | "during" | "duringWrite" | "afterLanding",
+  expectedLog: string[]
+) {
+  const actual = await run(form, at);
+  expect(actual.frames).toEqual(expectedFrames(at));
+  expectPublications(actual.publications, at);
+  expect(bindings(actual.log)).toEqual(bindings(expectedLog));
+}
+async function expectMemoTimeline(
+  form: Form,
+  at: "before" | "during" | "duringWrite" | "afterLanding"
+) {
+  const actual = await run(form, at),
+    memo = await run("memo", at);
+  expect(actual.frames).toEqual(expectedFrames(at));
+  expect(actual.frames).toEqual(memo.frames);
+  expectPublications(actual.publications, at);
+  expectPublications(memo.publications, at);
+  expect(bindings(actual.log)).toEqual(bindings(memo.log));
 }
 
 describe("a reader mounted mid-flight reads a derived store like its memo (#4491)", () => {
   test("memo form: the mount is held until m1 answers (F-2)", async () => {
-    expect(await run("memo", "during")).toEqual(["r:off", "--reask", "--mounted", "r:4"]);
+    await expectTimeline("memo", "during", ["r:off", "--reask", "--mounted", "r:4"]);
   });
   test("memo form, a plain write beside the flight: held with it, re-asked once", async () => {
-    expect(await run("memo", "duringWrite")).toEqual([
+    await expectTimeline("memo", "duringWrite", [
       "s:1",
       "r:off",
       "s:2",
@@ -158,23 +215,26 @@ describe("a reader mounted mid-flight reads a derived store like its memo (#4491
   });
   for (const form of storeForms)
     test(`${form}: held like the memo form, never the old question's r:2 (D-30)`, async () => {
-      expect(await run(form, "during")).toEqual(await run("memo", "during"));
+      await expectMemoTimeline(form, "during");
       // The write beside the flight shows no answer of a question between
       // the two (`r:5`) either: the memo form's screen, frame for frame.
-      expect(await run(form, "duringWrite")).toEqual(await run("memo", "duringWrite"));
+      await expectMemoTimeline(form, "duringWrite");
     });
 });
 
-describe("readers the hold does not reach (#4491)", () => {
+describe("readers already mounted or mounted after landing (#4491)", () => {
   test("memo form, reader on screen at the re-ask; reader mounted after the landing", async () => {
-    // `r:4` is the lane's answer, shown ahead (F-6): `latest(s)` beside the
-    // screen's `s`. The landing asks `m1` again on the landed world and its
-    // held runs wait with that flight (F-1): `s:3` shows in the frame `r:6`
-    // does, never beside `r:4`.
-    const before = await run("memo", "before");
-    expect(before).toEqual(["s:1", "r:2", "--reask", "--plain write", "r:4", "r:6", "s:3"]);
-    expect(frames(before)).toEqual(["s:1", "r:2", "--reask", "--plain write", "r:4", "r:6 s:3"]);
-    expect(await run("memo", "afterLanding")).toEqual([
+    await expectTimeline("memo", "before", [
+      "s:1",
+      "r:2",
+      "--reask",
+      "--plain write",
+      // A superseded optimistic flight does not define its own lifetime.
+      // Its old r:4 is discarded; the restored ordinary question reveals 6.
+      "r:6",
+      "s:3"
+    ]);
+    await expectTimeline("memo", "afterLanding", [
       "s:1",
       "r:off",
       "s:2",
@@ -187,32 +247,28 @@ describe("readers the hold does not reach (#4491)", () => {
   });
   for (const form of storeForms)
     test(`${form}: as the memo form`, async () => {
-      expect(frames(await run(form, "before"))).toEqual(frames(await run("memo", "before")));
-      expect(frames(await run(form, "afterLanding"))).toEqual(
-        frames(await run("memo", "afterLanding"))
-      );
+      await expectMemoTimeline(form, "before");
+      await expectMemoTimeline(form, "afterLanding");
     });
 });
 
-/** The derive's posture after the held mount. The read that held the reader
- * writes nothing on the derive: it marks the derive's next pass (`fam.w`),
- * a read that finds no flight up clears the mark, and the posture stays the
- * pass's own reads (core `recompute`). A later flight of `m1`, the reader on
- * screen, then shows what a store read from the start and the memo form
- * show — whether the landing changed the leaf (the derive re-ran) or equalled
- * it (it did not). After an equal landing the flight wakes the held derive
- * pending, and that pass reads the pending `m1` plainly: a read of a pending
- * node hands no posture to a pass that is the hold's work (#4504; D-25), as
- * a memo between `m1` and the reader posts none. The posture during the
- * flight is internal; the screen is the rule (D-30).
+/** A mid-flight mount must not permanently alter the derive's later behavior
+ * (#4491, #4504). Changed and equal answers follow the same visible timeline
+ * as an existing reader and the memo form (D-30). The old verdict flag was
+ * lane-engine bookkeeping, not a requirement on the common update engine.
+ * Callback retries are pinned separately from the displayed values.
  */
-describe("the derive's posture after the held mount (#4491)", () => {
+describe("derived store settlement after the held mount (#4491)", () => {
   async function later(form: "memo" | "storeKey", mountMidFlight: boolean, equal: boolean) {
     const log: string[] = [];
+    const screens: (string | undefined)[] = [];
+    let visible: string | undefined;
+    let dispose!: () => void;
     const [s, setS] = createSignal(1);
     const [on, setOn] = createSignal(!mountMidFlight);
     let derive: Computed<any> | null = null;
-    createRoot(() => {
+    createRoot(d => {
+      dispose = d;
       const m0 = createMemo(() => latest(s) + s());
       const m1 = createMemo(async () => {
         const v = m0();
@@ -229,15 +285,14 @@ describe("the derive's posture after the held mount (#4491)", () => {
       }
       createRenderEffect(
         () => (on() ? `r:${read()}` : "r:off"),
-        v => void log.push(v)
+        v => {
+          visible = v;
+          log.push(v);
+        }
       );
     });
     const posture = (tag: string) =>
-      log.push(
-        derive
-          ? `${tag} verdict=${!!(derive._config & CONFIG_VERDICT)} pending=${!!(derive._statusFlags & STATUS_PENDING)}`
-          : tag
-      );
+      log.push(derive ? `${tag} pending=${!!(derive._statusFlags & STATUS_PENDING)}` : tag);
     flush();
     await tick(150);
     setS(2); // m1 re-asks
@@ -247,20 +302,40 @@ describe("the derive's posture after the held mount (#4491)", () => {
     flush();
     await tick(300);
     posture("--landed");
+    screens.push(visible);
     setS(3); // a later flight, the reader on screen
     flush();
     posture("--reask");
+    screens.push(visible);
     await tick(300);
-    // From the first landing on.
-    return log.slice(log.findIndex(x => x.startsWith("--landed")) - 1);
+    screens.push(visible);
+    dispose();
+    // From the first landing on; callbacks and visible state are distinct.
+    return { screens, log: log.slice(log.findIndex(x => x.startsWith("--landed")) - 1) };
   }
   const screen = (log: string[]) => log.map(x => x.split(" ")[0]);
 
   for (const equal of [false, true])
     test(`a later flight after ${equal ? "an equal" : "a changed"} landing`, async () => {
       const held = await later("storeKey", true, equal);
-      expect(screen(held)).toEqual(screen(await later("storeKey", false, equal)));
-      expect(screen(held)).toEqual(screen(await later("memo", true, equal)));
-      expect(held).toContain("--landed verdict=true pending=false");
+      const existing = await later("storeKey", false, equal);
+      const memo = await later("memo", true, equal);
+      const expected = equal ? ["r:0", "r:0", "r:0"] : ["r:4", "r:4", "r:6"];
+      expect(held.screens).toEqual(expected);
+      expect(existing.screens).toEqual(expected);
+      expect(memo.screens).toEqual(expected);
+      expect(screen(held.log)).toEqual(screen(existing.log));
+      expect(held.log).toContain("--landed pending=false");
+      expect(held.log).toContain("--reask pending=true");
+      // Equal-answer status settlement adopts the replacement context before
+      // its old hold resumes. Both forms retry their render binding once;
+      // that callback has no equality filter. The exact screens above stay
+      // unchanged throughout the equal flight.
+      expect(screen(held.log)).toEqual(
+        equal ? ["r:0", "--landed", "--reask", "r:0"] : ["r:4", "--landed", "--reask", "r:6"]
+      );
+      expect(screen(memo.log)).toEqual(
+        equal ? ["r:0", "--landed", "--reask", "r:0"] : ["r:4", "--landed", "--reask", "r:6"]
+      );
     });
 });

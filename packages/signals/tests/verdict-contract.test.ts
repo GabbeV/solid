@@ -231,15 +231,14 @@ describe("verdicts of a guess", () => {
     setOpt(5);
     flush();
     // The lane is blocked on `detail`: the guess does not show (`opt:` keeps
-    // 0), but `latest` shows it and the slot is not final. (The first frame
-    // is the probe re-derived for `truth`'s flight before the seam applies
-    // the guess — A28, the write is visible from the flush's verdict on.)
-    expect(log).toEqual(["probe:0/true", "probe:5/true"]);
+    // 0), but `latest` shows it and the slot is not final. Preparing the
+    // outputs together needs no intermediate publication of 0/true.
+    expect(log).toEqual(["probe:5/true"]);
 
     resolveDetail(50);
     await settled();
     // The lane reveals.
-    expect(log.slice(2).sort()).toEqual(["detail:50", "opt:5"]);
+    expect(log.slice(1).sort(), JSON.stringify(log)).toEqual(["detail:50", "opt:5"]);
 
     resolveTruth(5); // confirm
     await settled();

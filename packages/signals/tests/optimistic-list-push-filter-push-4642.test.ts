@@ -5,6 +5,7 @@ import {
   createRoot,
   flush,
   mapArray,
+  NotReadyError,
   refresh,
   untrack
 } from "../src/index.js";
@@ -185,28 +186,34 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
       expect(s.shown).toBe(afterAdd);
     });
 
-  // An add written while the list's first load is out: before its first
-  // answer the list is loading, not a value to be optimistic over (ruled
-  // 2026-11-03, #4656). In DEV the write throws OPTIMISTIC_WRITE_BEFORE_LOAD
-  // and the action rejects; nothing is guessed, so the first load shows as
-  // it lands and the add works once the list has loaded.
-  it("an add before the first load lands: OPTIMISTIC_WRITE_BEFORE_LOAD", async () => {
+  // Before initialization the edit is discarded and the action joins the
+  // initial input. Neither the seed nor the first answer publishes while
+  // that action remains open. Initialized push/filter controls above remain.
+  it("an add before the first load discards its guess and holds the answer until saving", async () => {
     const s = todoList();
     await tick();
     let error: unknown;
     await s.step(() => {
       s.rawAdd({ id: 3, title: "jam" }).catch(e => (error = e));
     });
-    expect(String(error)).toMatch(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
+    expect(error).toBeUndefined();
+    expect(s.out.map(o => o.key)).toEqual(["list", "add:3"]);
+    expect(s.shown).toBe("");
+    expect(s.loaded()).toBe(false);
+    expect(s.untracked).toThrow(NotReadyError);
+    await s.step(() => s.land("list"));
+    expect(s.shown).toBe("");
+    expect(s.loaded()).toBe(false);
+    expect(s.untracked).toThrow(NotReadyError);
+    expect(s.cells.map(c => c.id)).toEqual([]);
+    await s.step(() => s.land("add:3"));
     expect(s.out.map(o => o.key)).toEqual(["list"]);
     await s.step(() => s.land("list"));
-    expect(s.shown).toBe("[milk][eggs]");
-    expect(s.untracked()).toBe("milk,eggs");
-    await s.step(() => s.add({ id: 3, title: "jam" }));
-    expect(s.shown).toBe("[milk][eggs][jam]");
-    await s.drain();
     expect(s.shown).toBe("[milk][eggs][jam]");
     expect(s.untracked()).toBe("milk,eggs,jam");
+    expect(s.cells.map(c => c.id)).toEqual([1, 2, 3]);
+    expect(error).toBeUndefined();
+    expect(s.errors).toEqual([]);
   });
 
   // D-33/D-35: the declined delete's hold reverts its own write; the add's
@@ -343,10 +350,29 @@ describe("#4642: an optimistic list's guesses compose on the list as it stands",
     expect(s.errors).toEqual([]);
   });
 
+  it("key: null keeps replacement row fields current after the final refresh", async () => {
+    const s = todoList(null);
+    await tick();
+    await s.step(() => s.land("list"));
+    await s.step(() => s.add({ id: 3, title: "jam" }));
+    await s.step(() => s.land("add:3"));
+    await s.step(() => s.remove(3));
+    await s.step(() => s.add({ id: 4, title: "tea" }));
+    await s.step(() => s.land("list"));
+    expect(s.shown).toBe("[milk][eggs][tea]");
+    expect(s.cells.map(cell => cell.id)).toEqual([1, 2, 4]);
+    await s.drain();
+    expect(s.shown).toBe("[milk][eggs][tea]");
+    expect(s.shown).toBe(s.server);
+    expect(s.untracked()).toBe("milk,eggs,tea");
+    expect(s.cells.map(cell => cell.id)).toEqual([1, 2, 4]);
+    expect(s.errors).toEqual([]);
+  });
+
   // Random sequences of add / delete / rename / refresh and landings (some
   // declined), keyed and `key: null`: no row shows twice or empty, nothing
   // throws, and the list settles to the server's, screen and untracked
-  // reads alike. No guess before the first load (OPTIMISTIC_WRITE_BEFORE_LOAD).
+  // reads alike. These sequences wait for a first load before editing.
   for (const key of ["id", null] as const)
     it(`random sequences settle to the server (key: ${key})`, async () => {
       const fails: string[] = [];

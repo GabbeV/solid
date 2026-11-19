@@ -5,6 +5,11 @@
  * scope — the nearest enclosing `<Loading>` boundary catches the throw and
  * renders its fallback until the source resolves.
  *
+ * Also identifies a synchronous context retry: a read of optimistic state,
+ * including `latest` or `isPending`, can require restarting a calculation whose
+ * earlier reads used a different update context. The runtime retries that
+ * calculation instead of treating this as an async wait or a user error.
+ *
  * App code rarely catches this directly; `<Loading>` is the canonical
  * handler. The error type is exposed for advanced cases — e.g. interop layers
  * that bridge Solid's pending-throw protocol to a different async strategy,
@@ -47,6 +52,11 @@ export class NotReadyError extends Error {
     this.source = source;
   }
 }
+
+/** Internal synchronous suspension: abort this attempt and retry in its selected
+ * update context. Applications recognize NotReadyError; the runtime must not
+ * park this attempt on the source as though it were an unfinished async flight. */
+export class ContextRetry extends NotReadyError {}
 
 export class StatusError extends Error {
   declare source: any;

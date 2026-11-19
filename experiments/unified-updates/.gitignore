@@ -1,0 +1,3 @@
+# Generated receipts are backed up in checkpoints/ instead of expanding every
+# checkout by nearly a gigabyte. Archive new stages with their source checkpoint.
+/results/

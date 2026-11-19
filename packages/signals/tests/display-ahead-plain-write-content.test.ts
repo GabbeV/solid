@@ -1,23 +1,12 @@
 /**
- * S-46 (D-27, D-37; ruled 2026-10-30): the content a display-ahead `Show`
- * opens reads the screen, whoever opened the hold.
- *
- * A plain write to `id` is held because an async memo over it is on screen.
- * `<Show when={latest(id)}>` opens at once — `latest` is the read that asks
- * ahead — but a plain `id()` inside the branch is an independent read: it
- * means the same thing as the `<p>{id()}</p>` outside, the committed value.
- * The branch's first pass read the staging under a display-ahead reader, so
- * it is born held (D-27): it does not attach until the landing, and the
- * screen keeps the fallback. `latest(id)` inside shows `1` now; a `Loading`
- * inside shows its fallback now (S-31's form). Never `0` outside beside
- * `selected: 1` inside — two plain reads of one signal disagreeing on one
- * screen.
- *
- * S-31 (`verdict-mount-first-pass-3851`) pins the action + `Loading` form.
- * This is the plain-write, no-boundary form — "actions aren't special; they
- * are a way to extend the hold" — pinned so the rule's reach is explicit.
+ * S-46: a latest-opened branch uses the same committed ordinary values as
+ * existing readers. With id=1 held over id=0, both ordinary bindings show 0;
+ * explicit latest(id) can show 1. A complete committed frame can mount now,
+ * with or without Loading, under the accepted natural mount rule. Next's
+ * additional mount hold is intentionally not retained. No empty value or
+ * proposed ordinary value may appear in the new branch.
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   createLoadingBoundary,
   createMemo,
@@ -28,6 +17,12 @@ import {
   latest,
   untrack
 } from "../src/index.js";
+
+const disposals: (() => void)[] = [];
+afterEach(() => {
+  for (const dispose of disposals.splice(0)) dispose();
+  flush();
+});
 
 const settle = async () => {
   for (let i = 0; i < 3; i++) {
@@ -45,7 +40,8 @@ async function run(content: Content) {
   let screenId: unknown;
   let slot: unknown;
   let screenDetail: unknown;
-  createRoot(() => {
+  createRoot(dispose => {
+    disposals.push(dispose);
     // <p>{id()}</p>
     createRenderEffect(id, v => {
       screenId = v;
@@ -106,10 +102,10 @@ async function run(content: Content) {
 }
 
 describe("S-46: the content a display-ahead Show opens reads the screen (plain-write hold)", () => {
-  it("plain `id()` inside: the branch is born held, the fallback stays until the landing", async () => {
+  it("plain `id()` inside: the branch mounts with the committed value", async () => {
     expect(await run("plain")).toEqual([
       [0, "none", "d0"],
-      [0, "none", "d0"],
+      [0, "selected: 0", "d0"],
       [1, "selected: 1", "d1"]
     ]);
   });
@@ -122,10 +118,10 @@ describe("S-46: the content a display-ahead Show opens reads the screen (plain-w
     ]);
   });
 
-  it("a `Loading` inside: its fallback now, the content at the landing (S-31's form)", async () => {
+  it("a `Loading` inside: complete committed content mounts without fallback", async () => {
     expect(await run("loading")).toEqual([
       [0, "none", "d0"],
-      [0, "fallback", "d0"],
+      [0, "selected: 0", "d0"],
       [1, "selected: 1", "d1"]
     ]);
   });

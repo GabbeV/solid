@@ -19,17 +19,31 @@ describe("#4355 derived store over latest() of an async memo", () => {
     }
   };
 
-  async function run(form: "latest" | "plain", reader: "memo" | "store" | "direct") {
+  async function run(
+    form: "latest" | "plain",
+    reader: "memo" | "store" | "direct",
+    holdSibling = false,
+    asyncDerive = false
+  ) {
     let resolve!: (v: { name: string }) => void;
     const seen: unknown[] = [];
+    const sibling = Promise.withResolvers<void>();
     let dispose!: () => void;
     createRoot(d => {
       dispose = d;
       const record = createMemo(() => new Promise<{ name: string }>(r => (resolve = r)));
+      if (holdSibling) {
+        const details = createMemo(() => {
+          record();
+          return sibling.promise;
+        });
+        createRenderEffect(details, () => {});
+      }
       const [state] = createStore<any>((draft: any) => {
         draft.value = {
           name: form === "latest" ? latest(() => record().name) : record().name
         };
+        if (asyncDerive) return Promise.resolve();
       }, {});
       if (reader === "memo") {
         const view = createMemo(() => state.value?.name);
@@ -60,13 +74,20 @@ describe("#4355 derived store over latest() of an async memo", () => {
     expect(seen).toEqual([]);
     resolve({ name: "Hartford" });
     await settle();
+    // A sibling can keep the input update open after its first answer.
+    // That must never turn the store's uninitialized seed into a value.
+    expect(seen).not.toContain(undefined);
+    sibling.resolve();
+    await settle();
     dispose();
     return seen;
   }
 
   for (const form of ["latest", "plain"] as const)
     for (const reader of ["memo", "store", "direct"] as const)
-      it(`${form} derive, ${reader} reader: the effect commits only the value`, async () => {
-        expect(await run(form, reader)).toEqual(["Hartford"]);
-      });
+      for (const holdSibling of [false, true])
+        for (const asyncDerive of [false, true])
+          it(`${form} derive, ${reader} reader, held sibling ${holdSibling}, async derive ${asyncDerive}: the effect commits only the value`, async () => {
+            expect(await run(form, reader, holdSibling, asyncDerive)).toEqual(["Hartford"]);
+          });
 });

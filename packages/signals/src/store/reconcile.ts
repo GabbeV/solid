@@ -27,6 +27,7 @@ import {
   bumpDeep,
   deepUsed,
   hasAccessorFlag,
+  joinDraftReads,
   materializePB,
   notifyFold,
   notifyFoldTail,
@@ -52,14 +53,15 @@ export function reconcileState(
   if (state == null) throw new Error(__DEV__ ? "Cannot reconcile null or undefined state" : "");
   const t: StoreTarget = state[$TARGET];
   if (t?.px !== state) throw new Error(__DEV__ ? "reconcile target is not a store proxy" : "");
+  joinDraftReads();
   const keyFn: KeyFn | null =
     key === null ? null : typeof key === "string" ? (item: any) => item?.[key] : (key as KeyFn);
   // A user's reconcile on an optimistic family (S4): not an adoption of
   // truth but an optimistic edit — the keyed diff is written into the draft
   // (a matched row keeps its proxy, its changed leaves become its guesses),
   // and the setter's exit turns the draft into guesses like any.
-  if (optHooks !== null && t.o && userWriting()) {
-    optHooks!.reconcile(state, unwrapValue(value), keyFn);
+  if (optHooks && userWriting() && t._fam?.opt === true) {
+    optHooks.reconcile(state, unwrapValue(value), keyFn);
     return;
   }
   // Replace-mode root handed another store's proxy: chain to it (§7b).
@@ -69,7 +71,7 @@ export function reconcileState(
     adoptPB(t, value);
     return;
   }
-  const incoming = unwrapValue(value);
+  const incoming = unwrapValue(value, t._fam ?? undefined);
   if (keyFn) {
     const prev = t.pb ?? t.v;
     const eq = keyFn(prev);
@@ -98,16 +100,13 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
   // a deletion here (#3743: the presence and value diffs both read `old`).
   const old = t.ovl ? materializePB(t) : (t.pb ?? t.v);
   if (incoming === old && !isOwned(old)) return;
+  // Returned producer answers use adoption rather than draft notification.
+  // Pair rows retained by selected guesses before the parent adopts them.
+  if (optHooks && t._fam?.opt === true) optHooks.pair(t, incoming);
   // Q-D: a landing on an optimistic family is reconciled against the VIEW
   // — key matching from the arrangement the guesses made (R28), so a row
   // the guess added keeps its proxy when the server returns it.
-  // A returned landing pairs its new objects with the row targets first, as
-  // the derive's draft does (store.ts `notifyWrites`): a guessed row the view
-  // no longer has (an answer that dropped it) keeps its target when the
-  // answer brings its key back (Q-D, F-11, #4907). A row another store lent
-  // is in the view already, and keeps its slot this store's (#4918).
-  const prevView =
-    optHooks !== null && t.o ? (optHooks.pair(t, incoming, true), optHooks.view(t, old)) : old;
+  const prevView = optHooks && t._fam?.opt === true ? optHooks.view(t, old, true) : old;
   const nextArr = Array.isArray(incoming);
   const shallow = t.s === true;
   adoptPB(t, incoming, false);
@@ -134,7 +133,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
         const pvRaw = prevView[i];
         if (pvRaw !== nv && !sameRow(pvRaw, nv, keyFn)) break; // misaligned: fall to the keyed remainder below
         if (nv !== null && typeof nv === "object" && (pvRaw !== nv || isOwned(nv)))
-          descend(unwrapValue(pvRaw), nv, keyFn, proj, t, i);
+          descend(pvRaw, nv, keyFn, proj, t, i);
         if (
           deepUsed &&
           !bumped &&
@@ -177,14 +176,14 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
             const m = prevByKey.get(nk);
             if (m === undefined) pv = undefined;
             else if (Array.isArray(m)) {
-              pv = unwrapValue(prevView[m.shift()!]);
+              pv = prevView[m.shift()!];
               if (m.length === 1) prevByKey.set(nk, m[0]);
             } else {
-              pv = unwrapValue(prevView[m]);
+              pv = prevView[m];
               prevByKey.delete(nk);
             }
           } else {
-            pv = unwrapValue(prevView[i]); // keyless item: positional fallback
+            pv = prevView[i]; // keyless item: positional fallback
           }
           descend(pv, nv, keyFn, proj, t, i);
         }
@@ -202,7 +201,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       for (let i = 0; i < nlen; i++) {
         const nvP = incoming[i];
         if (!shallow && i < dlen && nvP !== null && typeof nvP === "object")
-          descend(unwrapValue(prevView[i]), nvP, keyFn, proj, t, i);
+          descend(prevView[i], nvP, keyFn, proj, t, i);
         if (
           deepUsed &&
           !bumped &&
@@ -250,7 +249,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       if (nodes?.[k] !== undefined) nodesHit++;
       continue;
     }
-    if (isObj && !shallow) descend(unwrapValue((prevView as any)[k]), nv, keyFn, proj, t, k);
+    if (isObj && !shallow) descend((prevView as any)[k], nv, keyFn, proj, t, k);
     if (deepUsed && !bumped && !(isObj ? targetsEqual(ov, nv) : isEqual(ov, nv))) {
       bumpDeep(t);
       bumped = true;
@@ -269,7 +268,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
     if (k === $OWNER) continue;
     const nv = (incoming as any)[k];
     if (!shallow && nv !== null && typeof nv === "object")
-      descend(unwrapValue((old as any)[k]), nv, keyFn, proj, t, k);
+      descend((old as any)[k], nv, keyFn, proj, t, k);
     if (nodes !== null) {
       const node = nodes[k as any];
       if (node !== undefined) {
@@ -320,7 +319,8 @@ function descend(
   // `nv` is an object at every call site.
   if (pv === null || typeof pv !== "object") return;
   const fam = t._fam;
-  nv = unwrapValue(nv);
+  pv = unwrapValue(pv, fam ?? undefined);
+  nv = unwrapValue(nv, fam ?? undefined);
   let ct = lookupTarget(pv, fam);
   const nt = lookupTarget(nv, fam);
   if (ct !== undefined && ct.pk !== k) {

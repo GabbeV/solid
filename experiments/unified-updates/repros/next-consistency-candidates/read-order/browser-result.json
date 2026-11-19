@@ -1,0 +1,37 @@
+{
+  "name": "read-order",
+  "title": "Solid 2.0 - Mizulu",
+  "errors": [],
+  "logs": [
+    "Request: before=1, latest=1, after=0"
+  ],
+  "samples": [
+    {
+      "time": 0,
+      "text": "Read the same signal twice during one calculation\nRun\n\nCommitted ID: 0\n\nResult: Not requested\n\nRequest arguments captured synchronously:\n\nNo requests yet\n\nThe action stays open. Enable the request after 500 ms, then copy its arguments here after another 500 ms."
+    },
+    {
+      "time": 300,
+      "text": "Read the same signal twice during one calculation\nRun\n\nCommitted ID: 0\n\nResult: Not requested\n\nRequest arguments captured synchronously:\n\nNo requests yet\n\nThe action stays open. Enable the request after 500 ms, then copy its arguments here after another 500 ms."
+    },
+    {
+      "time": 800,
+      "text": "Read the same signal twice during one calculation\nRun\n\nCommitted ID: 0\n\nResult: Not requested\n\nRequest arguments captured synchronously:\n\nNo requests yet\n\nThe action stays open. Enable the request after 500 ms, then copy its arguments here after another 500 ms."
+    },
+    {
+      "time": 1300,
+      "text": "Read the same signal twice during one calculation\nRun\n\nCommitted ID: 0\n\nResult: Not requested\n\nRequest arguments captured synchronously:\n\nbefore=1, latest=1, after=0\n\nThe action stays open. Enable the request after 500 ms, then copy its arguments here after another 500 ms."
+    },
+    {
+      "time": 2300,
+      "text": "Read the same signal twice during one calculation\nRun\n\nCommitted ID: 0\n\nResult: Not requested\n\nRequest arguments captured synchronously:\n\nbefore=1, latest=1, after=0\n\nThe action stays open. Enable the request after 500 ms, then copy its arguments here after another 500 ms."
+    }
+  ],
+  "verified": true,
+  "buildResponses": {
+    "count": 92,
+    "statuses": [
+      200
+    ]
+  }
+}

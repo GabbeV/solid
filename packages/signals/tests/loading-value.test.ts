@@ -1082,11 +1082,8 @@ describe("loading-window landing is one frame for live observers (#2990)", () =>
     createRoot(() => {
       win = createMemo<string>(() => defs[id()].promise as any, { loadingValue: "waiting" });
       createRenderEffect(
-        () => {
-          frames.push(`${isPending(win)}|${win()}`);
-          return undefined;
-        },
-        () => {}
+        () => `${isPending(win)}|${win()}`,
+        value => { frames.push(value); }
       );
     });
     flush();
@@ -1100,12 +1097,11 @@ describe("loading-window landing is one frame for live observers (#2990)", () =>
     flush();
     expect(frames).toEqual(["false|waiting", "false|zero", "true|zero"]);
 
-    // The doubled pending frame at the refetch landing matches windowless
-    // memos exactly (pre-existing behavior, pinned as-is — this control is
-    // about the verdict READING true post-window, not about frame counts).
+    // Assert actual publications, not abandoned compute-phase proposals.
+    // Pending clears together with the newly displayed value.
     defs[1].resolve("one");
     await tick();
     flush();
-    expect(frames).toEqual(["false|waiting", "false|zero", "true|zero", "true|zero", "false|one"]);
+    expect(frames).toEqual(["false|waiting", "false|zero", "true|zero", "false|one"]);
   });
 });

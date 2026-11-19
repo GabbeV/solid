@@ -195,7 +195,8 @@ describe("#3662 a lane frame whose retiring run is deferred", () => {
     // Second move while the lane is still held: a superseding lane pass.
     void t.move(1, 1);
     flush();
-    expect(t.cards.map(c => c.lane)).toEqual([1, 1, 1]);
+    // Outside reads agree with the frame still on screen, not either held guess.
+    expect(t.cards.map(c => c.lane)).toEqual([0, 0, 1]);
     // Frame 2 was never applied: gone on the spot. Frame 1 is still on
     // screen: still parked.
     expect(t.log).toEqual(["E pass 1", "inner run 1", "E pass 2", "cleanup 2", "E pass 3"]);
@@ -206,6 +207,7 @@ describe("#3662 a lane frame whose retiring run is deferred", () => {
     // same flush.
     t.resolveDetail("d1");
     await settle();
+    expect(t.cards.map(c => c.lane)).toEqual([1, 1, 1]);
     expect(t.frames.at(-1)).toEqual({ lanes: [[], [0, 1, 2]], detail: "d1" });
     t.cleanedOnce([1, 2]);
     expect(t.log.indexOf("cleanup 1")).toBeGreaterThanOrEqual(heldUntil);

@@ -1,20 +1,8 @@
 /**
  * #3147 — deep()/snapshot readers and per-key readers must agree while a
- * transaction holds store landings.
- *
- * deep()/snapshot compose from store backings; per-key reads answer through
- * node/backing visibility. #3145 removed the accidental capture (a stranger
- * transaction adopting a landing), but a LEGITIMATE hold — the #3164 fold of
- * a truth landing into the retaining transaction — reopened the seam: the
- * per-key channel masked the held landing (committed + optimism) while
- * deep() composed over the post-mutation pending backing (staged truth +
- * optimism), a frame no timeline contains.
- *
- * Ruling pinned here: deep()/snapshot stay the SPECULATIVE peek channel
- * (they see ordinary pending staging synchronously — the documented
- * divergence from context-free committed reads), but the hold decision is
- * SHARED with per-key reads: held truth is masked from both until the
- * transaction's reveal.
+ * transaction holds store landings. An optimistic append owns structure;
+ * the incoming array landing joins its lifetime and reveals as one frame.
+ * Reader choice itself does not add coordination.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -22,8 +10,10 @@ import {
   createOptimisticStore,
   createRenderEffect,
   createRoot,
+  createStore,
   deep,
   flush,
+  reconcile,
   snapshot
 } from "../../src/index.js";
 
@@ -34,7 +24,7 @@ const settle = async (n = 3) => {
   }
 };
 
-describe("#3147: reader families agree under a held fold", () => {
+describe("#3147: reader families agree across a structural array lifetime", () => {
   it("deep() composes the same view as per-key reads through the hold and the reveal", async () => {
     let resolveTruth!: () => void;
     const truth = new Promise<void>(r => (resolveTruth = r));
@@ -99,9 +89,8 @@ describe("#3147: reader families agree under a held fold", () => {
     expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
     expect(deepLog.at(-1)).toBe("[1,2,3,1111]");
 
-    // Truth lands mid-action: it folds into the retaining transaction and is
-    // HELD. Per-key readers keep the pre-hold view; deep()/snapshot must
-    // agree — not report the post-mutation [3,2,1,1111].
+    // The append owns array structure, so the incoming landing waits.
+    // Every reader family retains the complete selected optimistic frame.
     resolveTruth();
     await settle();
     expect(keyLog.at(-1)).toBe("[1,2,3,1111]");
@@ -127,3 +116,25 @@ describe("#3147: reader families agree under a held fold", () => {
     flush();
   });
 });
+
+it.each(["plain", "derived"] as const)(
+  "a %s store exposes the committed row to a handler while a replacement is held",
+  async form => {
+    const orig = { name: "Alice" };
+    const [row, edit] = form === "plain" ? createStore(orig) : createStore(() => orig);
+    const end = Promise.withResolvers<void>();
+    const run = action(function* () {
+      edit(reconcile({ name: "Bob" }, null));
+      yield end.promise;
+    })();
+    try {
+      flush();
+      expect([row.name, snapshot(row).name, deep(row).name]).toEqual(["Alice", "Alice", "Alice"]);
+    } finally {
+      end.resolve();
+      await run;
+      flush();
+    }
+    expect([row.name, snapshot(row).name, deep(row).name]).toEqual(["Bob", "Bob", "Bob"]);
+  }
+);

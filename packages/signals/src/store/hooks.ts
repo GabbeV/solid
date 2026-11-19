@@ -14,44 +14,63 @@ import type { StoreFamily, StoreTarget } from "./target.js";
  * only through a family with `opt` set, which only `createOptimisticStore`
  * sets. */
 export interface OptHooks {
+  /** The selected companion, for structural subscription identity. */
+  node?(t: StoreTarget, node: Signal<any>): Signal<any>;
+  /** Select a store-owned truth slot through its shared optimistic output. */
+  read?(t: StoreTarget, node: Signal<any>): unknown;
+  /** A selected accessor descriptor serves through its getter with the proxy receiver. */
+  accessor?(t: StoreTarget, key: PropertyKey, receiver: object): { value: unknown } | undefined;
+  /** Whether a selected descriptor supersedes a cached accessor flag. */
+  accessorKind?(t: StoreTarget, key: PropertyKey): boolean | undefined;
+  /** A selected parent object supplies an unguessed child value. */
+  rowValue?(t: StoreTarget, key: PropertyKey, receiver: object): { value: unknown } | undefined;
+  /** Track the selected flat leaves for a deep read. */
+  deep?(t: StoreTarget): void;
   /** A user setter's draft on an optimistic family: a clone of the
    * writer's view (a staging already on the target is set aside). */
   draft(t: StoreTarget): Record<PropertyKey, any>;
+  /** A user's draft operation, excluding internal copying and comparison. */
+  draftRead?(
+    t: StoreTarget,
+    key: PropertyKey | undefined,
+    kind: "value" | "has" | "keys" | "descriptor"
+  ): void;
+  /** Array-only selected length and successful user draft mutations. */
+  length?(t: StoreTarget, base: () => number): number;
+  draftWrite?(
+    t: StoreTarget,
+    key: PropertyKey,
+    before: number,
+    after: number,
+    kind: "set" | "delete"
+  ): void;
   /** The setter's exit: the draft becomes guesses; returns the staging the
    * draft set aside (`null`: none). */
   writes(t: StoreTarget, pb: Record<PropertyKey, any>): Record<PropertyKey, any> | null;
   /** `src` with the lanes' values over it (`writer`: the next write's base
    * — the unflushed guesses too). */
   view(t: StoreTarget, src: Record<PropertyKey, any>, writer?: boolean): Record<PropertyKey, any>;
-  /** The flush's commit: targets no lane holds leave `_overlaid`. */
-  sweep(): void;
-  /** S2 — the carrier arms (optimistic.ts), each a no-op for a target with
-   * no live guess: a key read served through the carrier (`NOT_PENDING`:
-   * none), a presence read (`undefined`: none), a descriptor (`null`: the
-   * key is absent in the guess; `undefined`: none), the frame an
-   * enumeration reads (`NOT_PENDING`: none), whether a landing on `key`
-   * is the carrier's to tell (the key's leaf is silent), and a landing's
-   * truth judged against the live carriers. */
-  read(t: StoreTarget, key: PropertyKey): unknown;
-  /** A setter's draft read `key`: a live guess of it is one a guess written
-   * next derives from (#4788, core lanes.ts `readGuesses`); `shape`: a
-   * presence read of `key`, or enumeration (no key), of the key set (#4812). */
-  drafted(t: StoreTarget, key: PropertyKey | undefined, shape?: boolean): void;
+  /** Selected array structural keys, without reading data values. */
+  keys?(t: StoreTarget): (string | symbol)[] | undefined;
+  /** An untracked `key in store`: the presence guess, or `undefined`. */
   has(t: StoreTarget, key: PropertyKey): boolean | undefined;
+  /** A guessed key's descriptor (`null`: removed; `undefined`: no guess). */
   descriptor(
     t: StoreTarget,
     key: PropertyKey,
-    array: boolean
+    source: Record<PropertyKey, any>
   ): PropertyDescriptor | null | undefined;
-  frame(t: StoreTarget): unknown;
-  covers(t: StoreTarget, key: PropertyKey, shape: boolean): boolean;
-  judge(t: StoreTarget, truth: Record<PropertyKey, any>): void;
+  /** The flush's commit: targets no lane holds leave `_overlaid`. */
+  sweep(): void;
+  /** The container comparator's lane arm: an arrangement guess against a
+   * landing (or another arrangement), by row identity. */
+  arrangement(t: StoreTarget, a: any, b: any): boolean;
   /** A user's `reconcile` on an optimistic family: the keyed diff written
    * into the draft. */
   reconcile(draft: any, incoming: any, keyFn: ((item: any) => any) | null): void;
   /** The derive's draft wrote `pb` on `t`: the new object at a guessed
    * row's slot (by key in a keyed list) is adopted by that row's target. */
-  pair(t: StoreTarget, pb: Record<PropertyKey, any>, viewed?: boolean): void;
+  pair(t: StoreTarget, pb: Record<PropertyKey, any>): void;
   /** The derive of `fam` went in flight (#4336): a new question asked over
    * the family's guesses is judged by its reads (`stands`) and at the seam
    * (`park`). Returns, for a `refresh()`, the leaves its wake skips. */
@@ -61,7 +80,11 @@ export interface OptHooks {
   park(t: Transaction): void;
   /** A read of `t` while its family's derive is in flight: the family's
    * guesses stand in for the flight (no suspension). */
-  stands(t: StoreTarget): boolean;
+  stands(t: StoreTarget, key?: PropertyKey, presence?: boolean): boolean;
+  /** A concrete selected parent body supplies the source for child slots. */
+  inputBody?(t: StoreTarget): Record<PropertyKey, any> | undefined;
+  /** This key's selected output owns the producer input and its status cut. */
+  ownsFirewall?(t: StoreTarget, key?: PropertyKey, presence?: boolean): boolean;
 }
 // Set before any family is optimistic (`fam.opt`): a call site checks the
 // hooks first, so a build that does not import optimistic.ts folds the arm

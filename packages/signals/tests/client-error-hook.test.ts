@@ -115,16 +115,69 @@ describe("caught", () => {
     expect((calls[1].error as Error).message).toBe("second");
   });
 
-  it("a primitive thrown has no identity and is reported per sight", () => {
+  it.each(["token abc", undefined, null, false, 0, NaN])(
+    "a primitive thrown (%s) has no identity and is reported per sight",
+    primitive => {
+      const calls: Call[] = [];
+      configureClientErrors({ onError: hook(calls) });
+      const [fail] = createSignal(true);
+      const view = boundaryOver(fail, () => primitive);
+      expect(calls).toHaveLength(1);
+      view.reset();
+      flush();
+      expect(calls).toHaveLength(2);
+      expect(calls[1].error).toBe(primitive);
+    }
+  );
+
+  it.each(["primitive", "object"])(
+    "reset reports a changed %s error once and can recover",
+    kind => {
+      const calls: Call[] = [];
+      configureClientErrors({ onError: hook(calls) });
+      let fail = true;
+      let boom: unknown = kind === "primitive" ? "first" : new Error("first");
+      const view = boundaryOver(
+        () => fail,
+        () => boom
+      );
+      expect(calls).toHaveLength(1);
+      boom = kind === "primitive" ? "second" : new Error("second");
+      view.reset();
+      flush();
+      expect(view.value()).toBe("fallback");
+      expect(calls).toHaveLength(2);
+      expect(calls[1].error).toBe(boom);
+
+      fail = false;
+      view.reset();
+      flush();
+      expect(view.value()).toBe("content");
+      expect(calls).toHaveLength(2);
+    }
+  );
+
+  it("a primitive thrown directly by boundary content is reported once per reset", () => {
     const calls: Call[] = [];
     configureClientErrors({ onError: hook(calls) });
-    const [fail, setFail] = createSignal(true);
-    const view = boundaryOver(fail, () => "token abc");
+    let reset!: () => void;
+    createRoot(() => {
+      const view = createErrorBoundary(
+        () => {
+          throw "direct";
+        },
+        (_error, retry) => {
+          reset = retry;
+          return "fallback";
+        }
+      );
+      createRenderEffect(view, () => {});
+    });
+    flush();
     expect(calls).toHaveLength(1);
-    view.reset();
+    reset();
     flush();
     expect(calls).toHaveLength(2);
-    expect(calls[1].error).toBe("token abc");
   });
 
   it("carries the owner path where owners are labelled", () => {

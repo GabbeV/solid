@@ -262,16 +262,22 @@ describe("#3672 — chained optimistic store, revert compare against the base's 
       d.pop();
     });
     flush();
+    // The base shrink joins the active append and remains unpublished.
+    expect(base.map(row => row.id)).toEqual(["a", "b"]);
+    expect(memo()).toBe("a,b,c|3");
     confirmed.release();
     await settleTicks();
-    expect(base.length).toBe(1);
-    // the composed view is base [a] + the length guess: slot 1 is a hole now
-    expect(view.length).toBe(2);
-    expect(view[0].id).toBe("a");
+    // Popping the guess selects the complete original arrangement. The
+    // source shrink still waits for the shared structural action lifetime.
+    expect(base.map(row => row.id)).toEqual(["a", "b"]);
+    expect(view.map(row => row.id)).toEqual(["a", "b"]);
+    expect(Object.keys(view)).toEqual(["0", "1"]);
+    expect(memo()).toBe("a,b|2");
 
     gate.release();
     await act;
     await settleTicks();
+    expect(base.map(row => row.id)).toEqual(["a"]);
     expect(view.length).toBe(1);
     expect(memo()).toBe("a|1");
   });

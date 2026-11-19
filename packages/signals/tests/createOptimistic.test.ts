@@ -429,8 +429,7 @@ describe("createOptimistic", () => {
         createRenderEffect(out, v => void (screen = v));
 
         sendMessage = () => {
-          // A guess before the first answer shows in place of the loading
-          // (S-56, ruled 2026-11-07; before, DEV refused it: #4656).
+          // The split output can accept a guess while its input is loading.
           expect(() => setOptimistic(() => "Optimistic")).not.toThrow();
           expect(() => refresh(optimistic)).not.toThrow();
         };
@@ -1602,8 +1601,8 @@ describe("createOptimistic", () => {
       chain.setOptimistic(20); // Correct guess!
       flush();
 
-      // Effect hasn't fired yet - secondAsync needs to resolve with optimistic input
-      expect(chain.optimistic()).toBe(20);
+      // The output and its effect retain 10 until the optimistic consequence resolves.
+      expect(chain.optimistic()).toBe(10);
       expect(chain.effectValues).toEqual([10]);
 
       // Resolve second async first (lane becomes ready!)
@@ -1657,8 +1656,8 @@ describe("createOptimistic", () => {
       chain.setOptimistic(999); // Wrong guess! (correct would be 20)
       flush();
 
-      // Optimistic set but effect hasn't fired - secondAsync still pending
-      expect(chain.optimistic()).toBe(999);
+      // The guess is proposed; ordinary reads retain the published 10.
+      expect(chain.optimistic()).toBe(10);
       expect(chain.effectValues).toEqual([10]);
 
       // Resolve second async (lane ready, flushes with optimistic value 999)
@@ -1823,8 +1822,8 @@ describe("createOptimistic", () => {
       flush();
 
       // First resolved, but the lane's secondAsync still pending
-      // Optimistic is set but lane hasn't flushed yet
-      expect(chain.optimistic()).toBe(20);
+      // The guess has not published; ordinary reads still return 10.
+      expect(chain.optimistic()).toBe(10);
       expect(isPending(chain.secondAsync)).toBe(true);
       expect(chain.effectValues).toEqual([10]);
 
@@ -1884,8 +1883,8 @@ describe("createOptimistic", () => {
       chain.setOptimistic(30); // Guess for 3 * 10
       flush();
 
-      // Effect hasn't updated yet - new secondAsync pending
-      expect(chain.optimistic()).toBe(30);
+      // A second guess retains the already-published 20 until its work resolves.
+      expect(chain.optimistic()).toBe(20);
       expect(chain.effectValues).toEqual([10, 20]);
 
       // Resolve second async - lane ready with new optimistic value
@@ -1973,7 +1972,7 @@ describe("createOptimistic", () => {
 
       // Both asyncs re-fired, transition started
       // Source is held during transition
-      expect(optimistic()).toBe(20);
+      expect(optimistic()).toBe(10);
       expect(sourceValues).toEqual([1]); // Source held, not leaked
       expect(effectValues).toEqual([10]); // Lane async still pending
 
@@ -1985,7 +1984,7 @@ describe("createOptimistic", () => {
       // CRITICAL: Transition must NOT complete here.
       // If it did, source's pending value (2) would leak to sourceEffect.
       expect(sourceValues).toEqual([1]); // Source still held!
-      expect(optimistic()).toBe(20); // Override still in place
+      expect(optimistic()).toBe(10); // Proposal still unpublished
       expect(effectValues).toEqual([10]); // Lane async still pending
 
       // Now resolve DOWNSTREAM async (lane becomes ready)
@@ -2024,7 +2023,7 @@ describe("createOptimistic", () => {
       chain.setOptimistic(20);
       flush();
 
-      expect(chain.optimistic()).toBe(20);
+      expect(chain.optimistic()).toBe(10);
       expect(chain.effectValues).toEqual([10]);
 
       // Resolve second async (lane ready, flushes with optimistic value)
@@ -2055,8 +2054,8 @@ describe("createOptimistic", () => {
       chain.setOptimistic(30);
       flush();
 
-      // Optimistic override should work on the second cycle
-      expect(chain.optimistic()).toBe(30);
+      // The second proposal also preserves its previously published output.
+      expect(chain.optimistic()).toBe(20);
       expect(chain.effectValues).toEqual([10, 20]);
 
       // Resolve second async (lane ready)
@@ -2125,7 +2124,7 @@ describe("createOptimistic", () => {
       chain.setOptimistic(999); // Wrong!
       flush();
 
-      expect(chain.optimistic()).toBe(999);
+      expect(chain.optimistic()).toBe(20);
 
       // Resolve second async (lane ready with wrong value)
       chain.resolveSecond();
@@ -2265,10 +2264,9 @@ describe("createOptimistic", () => {
       chain.setOptimistic(20);
       flush();
 
-      // Optimistic is set and displays, but is verdict-inert (re-ruled
-      // 2026-07-13): source=2 is a new question in flight, so the node reads
-      // pending right through the override.
-      expect(chain.optimistic()).toBe(20);
+      // The proposal waits for secondAsync; the pending output can report
+      // true independently while ordinary value readers retain 10.
+      expect(chain.optimistic()).toBe(10);
       expect(chain.pendingComputes.at(-1)).toBe(true);
 
       // Resolve second async (lane ready)
@@ -2611,17 +2609,17 @@ describe("createOptimistic", () => {
       handleSelect("Finance");
       flush();
 
-      // Direct read shows optimistic value immediately
-      expect(optimisticCategory()).toBe("Finance");
+      // Direct reads agree with the displayed selection until details is ready.
+      expect(optimisticCategory()).toBe("News");
       // Lane effects wait for pendingAsync (categoryData) to resolve
       expect(selectedValues).toEqual(["News"]); // Effect hasn't fired yet
 
       // CRITICAL: isPending should fire IMMEDIATELY when categoryData starts loading
       // (isPending has its own lane that can flush without waiting for categoryData).
-      // The optimistic node itself is masked (2026-07-07c): the decree covers
-      // it, while the downstream fetch reports its own activity.
+      // The optimistic output has a changed unpublished value as well as
+      // downstream work. Its pending output reports that hold.
       expect(pendingComputes.at(-1)).toBe(true);
-      expect(optimisticPendingComputes.at(-1)).toBe(false);
+      expect(optimisticPendingComputes.at(-1)).toBe(true);
 
       // categoryData resolves with Finance data (optimistic path)
       resolveCategoryDetails!(categoryItems["Finance"]);
@@ -2864,7 +2862,7 @@ describe("createOptimistic", () => {
       handleSelect("Finance");
       flush();
 
-      expect(optimisticCategory()).toBe("Finance");
+      expect(optimisticCategory()).toBe("News"); // Details still holds the proposal.
 
       // Resolve category details for Finance (lane becomes ready)
       resolveCategoryDetails!(categoryItems["Finance"]);
@@ -2900,8 +2898,8 @@ describe("createOptimistic", () => {
       handleSelect("Sports");
       flush();
 
-      // Optimistic should show Sports immediately
-      expect(optimisticCategory()).toBe("Sports");
+      // The next proposal retains Finance until its details are ready.
+      expect(optimisticCategory()).toBe("Finance");
 
       // Resolve category details for Sports (lane becomes ready)
       resolveCategoryDetails!(categoryItems["Sports"]);
@@ -3180,7 +3178,7 @@ describe("createOptimistic", () => {
 
       handleSelect("Finance");
       flush();
-      expect(optimistic()).toBe("Finance");
+      expect(optimistic()).toBe("News"); // Details still holds the proposal.
 
       // isPending should be true (details fetching for Finance)
       expect(isPending(details)).toBe(true);
@@ -3198,8 +3196,8 @@ describe("createOptimistic", () => {
       handleSelect("Sports");
       flush();
 
-      // Direct read: optimistic override should show "Sports" immediately
-      expect(optimistic()).toBe("Sports");
+      // Direct reads retain the already-published Finance during this fetch.
+      expect(optimistic()).toBe("Finance");
 
       // isPending should be true again (details fetching for Sports)
       expect(isPending(details)).toBe(true);
@@ -3761,10 +3759,10 @@ describe("createOptimistic", () => {
       handleCountryChange("UK");
       flush();
 
-      // Optimistic values set, both asyncs re-fired
+      // The tax output still has observed work holding its changed proposal.
       expect(optimisticCountry()).toBe("UK");
       expect(optimisticCourier()).toBe("DHL");
-      expect(optimisticTaxScheme()).toBe("UK_VAT");
+      expect(optimisticTaxScheme()).toBe("US_SALES_TAX");
 
       // isPending should show pending for both (async in flight with stale data)
       expect(shippingPendingComputes.at(-1)).toBe(true);
@@ -3783,10 +3781,8 @@ describe("createOptimistic", () => {
 
       // CRITICAL: tax text should update independently
       expect(shown(taxTexts)).toEqual(["US_SALES_TAX", "UK_VAT"]);
-      // Tax's own async slot has resolved even though shipping is still pending.
-      // S-54 (D-23, ruled 2026-11-07): the answer landed but the lane holds on
-      // its sibling — not showable on the plain channel, so still pending;
-      // `latest()` shows it ahead on its own channel (A8).
+      // latest can display the answer, but the ordinary tax output is still
+      // held by the combined total. Its pending result stays true (#4685).
       expect(taxPendingComputes.at(-1)).toBe(true);
 
       // Shipping text should NOT have updated yet
@@ -4160,10 +4156,10 @@ describe("createOptimistic", () => {
       handleCountryChange("UK");
       flush();
 
-      // 3 separate lanes created, all asyncs re-fired
+      // Guesses start work; ordinary readers retain unpublished outputs.
       expect(optimisticCountry()).toBe("UK");
       expect(optimisticCourier()).toBe("DHL");
-      expect(optimisticTaxScheme()).toBe("UK_VAT");
+      expect(optimisticTaxScheme()).toBe("US_SALES_TAX");
       expect(shippingPendingComputes.at(-1)).toBe(true);
       expect(taxPendingComputes.at(-1)).toBe(true);
 
@@ -4176,11 +4172,10 @@ describe("createOptimistic", () => {
       await Promise.resolve();
       flush();
 
-      // optimisticCourier: "DHL" matches config → no change
-      // optimisticTaxScheme: "UK_VAT" ≠ "UK_VAT_FINAL" → corrected, taxInfo re-fetches
+      // The incoming config is ready, but the action still owns the overrides.
+      // The tax guess itself has not published yet; its ordinary read stays old.
       expect(optimisticCourier()).toBe("DHL");
-      // Tax scheme corrected (override overwritten by mismatch)
-      expect(optimisticTaxScheme()).toBe("UK_VAT_FINAL");
+      expect(optimisticTaxScheme()).toBe("US_SALES_TAX");
 
       // --- Shipping resolves (1000ms) ---
       resolveShipping!({ provider: "DHL", price: 25 });
@@ -4189,13 +4184,11 @@ describe("createOptimistic", () => {
 
       // CRITICAL: shipping text should update INDEPENDENTLY
       expect(shown(shippingTexts)).toEqual(["FEDEX", "DHL"]);
-      // Shipping's own async slot has resolved independently.
-      // S-54 (D-23, ruled 2026-11-07): the answer landed but the lane holds on
-      // its sibling — not showable on the plain channel, so still pending;
-      // `latest()` shows it ahead on its own channel (A8).
+      // latest displays shipping, while its ordinary output is still held
+      // by tax through the total. The differing unpublished value is pending.
       expect(shippingPendingComputes.at(-1)).toBe(true);
 
-      // Tax should NOT have updated yet (correction re-fetch still in flight)
+      // Tax should NOT have updated yet (the request from its guess is still in flight)
       expect(shown(taxTexts)).toEqual(["US_SALES_TAX"]);
       expect(taxPendingComputes.at(-1)).toBe(true);
 
@@ -4205,7 +4198,7 @@ describe("createOptimistic", () => {
       // Only the initial value (123) should be present - no intermediate updates.
       expect(totalValues).toEqual([123]);
 
-      // --- Tax correction resolves (new fetch for "UK_VAT_FINAL") ---
+      // --- The tax request returns its final data for the guessed scheme ---
       resolveTax!({ name: "UK_VAT_FINAL", rate: 0.2 });
       await Promise.resolve();
       flush();
@@ -4219,6 +4212,7 @@ describe("createOptimistic", () => {
       // CRITICAL: NOW orderTotal should update - both lanes have resolved
       // 100 + 100*0.20 + 25 = 145
       expect(totalValues).toEqual([123, 145]);
+      expect(optimisticTaxScheme()).toBe("UK_VAT"); // Incoming config still masked.
 
       // --- Complete action + refresh ---
       resolveApiUpdate!();
@@ -4370,12 +4364,12 @@ describe("createOptimistic", () => {
       await Promise.resolve();
       flush();
 
-      // Shipping's own pending slot clears even though the merged total is
-      // still waiting on tax.
-      // S-54 (D-23, ruled 2026-11-07): the answer landed but the lane holds on
-      // its sibling — not showable on the plain channel, so still pending;
-      // `latest()` shows it ahead on its own channel (A8).
+      // Shipping's ready answer differs from the displayed one, so it stays
+      // pending until publication, just as for an ordinary signal update.
+      // Equal answers may still clear pending early (D-23, S-54).
       expect(shippingPendingComputes.at(-1)).toBe(true);
+      expect(shippingPendingValues.at(-1)).toBe(true);
+      expect(taxPendingValues.at(-1)).toBe(true);
       // Tax also still pending
       expect(taxPendingComputes.at(-1)).toBe(true);
       // orderTotal hasn't updated (merged lane still pending)
@@ -4550,7 +4544,7 @@ describe("createOptimistic", () => {
       flush();
 
       expect(optimisticCountry()).toBe("UK");
-      expect(optimisticTaxScheme()).toBe("UK_TAX_WRONG");
+      expect(optimisticTaxScheme()).toBe("US_TAX"); // Guess is not published yet.
       expect(taxPendingComputes.at(-1)).toBe(true);
 
       // Shipping resolves for UK
@@ -4583,17 +4577,20 @@ describe("createOptimistic", () => {
       expect(latest(optimisticTaxScheme)).toBe("UK_TAX_REAL");
 
       // === Action 2 (RAPID): UK → US with WRONG tax guess ===
-      // This reuses the lane — _overrideVersion increments but _laneVersion doesn't
+      // Retain the old request's resolver before the new guess replaces it.
+      const resolveStaleTax = resolveTax!;
       handleCountryChange("US", "FEDEX", "US_TAX_WRONG");
       flush();
 
       expect(optimisticCountry()).toBe("US");
-      expect(optimisticTaxScheme()).toBe("US_TAX_WRONG");
+      expect(optimisticTaxScheme()).toBe("UK_TAX_WRONG"); // New proposal still held.
 
       // Resolve the corrected tax fetch from action 1 (stale, should be skipped)
-      resolveTax!({ name: "UK_TAX_REAL", rate: 0.2 });
+      resolveStaleTax({ name: "UK_TAX_REAL", rate: 0.2 });
       await Promise.resolve();
       flush();
+
+      expect(taxTexts.at(-1)).toBe("UK_TAX_WRONG");
 
       // Resolve shipping + tax for action 2's optimistic values
       resolveShipping!({ provider: "FEDEX", price: 15 });
@@ -4614,9 +4611,9 @@ describe("createOptimistic", () => {
       await Promise.resolve();
       flush();
 
-      // CRITICAL: correction should NOT be blocked by version check.
-      // optimisticTaxScheme should be corrected to the real US tax.
-      expect(optimisticTaxScheme()).toBe("US_TAX_REAL");
+      // The correction starts work, but ordinary reads retain the published
+      // guess until its corrected consequences are ready.
+      expect(optimisticTaxScheme()).toBe("US_TAX_WRONG");
 
       // Resolve the corrected tax fetch
       resolveTax!({ name: "US_TAX_REAL", rate: 0.08 });
@@ -4906,7 +4903,7 @@ describe("createOptimistic", () => {
       handleSelect("Finance");
       flush();
 
-      expect(optimisticCategory()).toBe("Finance");
+      expect(optimisticCategory()).toBe("News"); // Details still holds the proposal.
       expect(isPending(categoryData)).toBe(true);
 
       // Category details resolve for Finance
@@ -4922,7 +4919,7 @@ describe("createOptimistic", () => {
       handleSelect("Sports");
       flush();
 
-      expect(optimisticCategory()).toBe("Sports");
+      expect(optimisticCategory()).toBe("Finance"); // Sports is still proposed.
       expect(isPending(categoryData)).toBe(true);
 
       // Category details resolve for Sports

@@ -57,9 +57,13 @@ async function run(order: "latest-first" | "n0-first") {
           },
           opts
         );
+        return c;
       },
       v => {
-        slot = v;
+        // The function child owns this slot once mounted. Clearing it from
+        // the parent's callback would make this synthetic renderer depend
+        // on callback order; JSX's insert does not clear its child's result.
+        if (typeof v !== "function") slot = v;
       },
       opts
     );

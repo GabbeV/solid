@@ -97,9 +97,23 @@ async function run(reader: Reader, gap: number) {
 describe("#4393: two latest() readers under one async memo, t written during the hold", () => {
   for (const reader of ["pair", "split", "value", "screen"] as const)
     for (const gap of [0, 3, 12])
-      it(`each question asked once (${reader}, ${gap} ms)`, async () => {
+      it(`coherent input, optimistic, and correction requests (${reader}, ${gap} ms)`, async () => {
         const { asks, values } = await run(reader, gap);
-        expect(new Set(asks).size, asks.join(" ")).toBe(asks.length);
+        // Inactive latest passes through the proposed input. Discovering the
+        // async hold selects an optimistic context with ordinary reads at the
+        // committed input; retiring it returns to the input context. Each
+        // memo has one eligible flight, so that last pass restarts its ask.
+        // Eliminating work for an already-expired override is deferred.
+        expect(asks.filter(ask => ask.startsWith("m0:"))).toEqual(["m0:23", "m0:22", "m0:23"]);
+        expect(asks.filter(ask => ask.startsWith("m0b:"))).toEqual([
+          "m0b:1100",
+          "m0b:1000",
+          "m0b:1100"
+        ]);
+        const combined = asks.filter(ask => ask.startsWith("m1:"));
+        expect(combined).toHaveLength(2);
+        expect(["m1:23", "m1:1023"]).toContain(combined[0]);
+        expect(combined[1]).toBe("m1:1123");
         expect(values.at(-1)).toBe("1123");
       });
 
@@ -114,99 +128,90 @@ describe("#4393: two latest() readers under one async memo, t written during the
       ).toEqual([]);
     });
 
-  // m0b's answer to t=1 lands into a transaction parked only by m1's lane
-  // pass (the render effect reading m1): that pass derives from it, and
-  // its answer shows with it.
-  const notReDerived = async (reader: "value" | "beside") => {
-    const { asks, out, values } = await run(reader, 12);
-    expect(new Set(asks).size, asks.join(" ")).toBe(asks.length);
-    expect(asks.slice(-2)).toEqual(["m1:1122", "m1:1123"]);
-    expect(values).toEqual(["1122", "1123"]);
-    if (reader === "beside") {
-      const shown = out.indexOf("c1101");
-      expect(out.indexOf("v1122"), out.join(" ")).toBeLessThan(shown);
-      expect(out.slice(shown).filter(v => v[0] === "v")).toEqual(["v1123"]);
-    }
-  };
-  it("m1's lane pass is not re-derived over a staging that lands with it (value)", () =>
-    notReDerived("value"));
-  // #4408 — F-6 (amended 2026-10-28: the parent waits for the lane's
-  // flights) and D-26: the lane's readers show its answer together, so
-  // `c1101` never shows before `v1122`. `m1` waits on `m0`'s flight as the
-  // hold's work (D-25, verdict.ts `holdWork`): it is not re-derived into the
-  // s lane early, the lane shows, and `m1:22`'s landing holds the frame
-  // `m0b:1100` lands into. Re-derived early (#4397's verdict reader between
-  // its flights), the lane was unshown when `m1:22` landed, nothing held
-  // that frame, and `c1101` showed while `m1:1122` was in flight.
-  it("m1's lane pass is not re-derived over a staging that lands with it (beside, #4408)", () =>
-    notReDerived("beside"));
-
-  // Its lane's own render effect shows m1 (pair): the staging's transaction
-  // lands at the very seam, so the pass read the screen (one run).
-  it("m1's lane pass is not re-derived when the staging's transaction lands at the seam", async () => {
-    const { asks, values } = await run("pair", 12);
-    expect(new Set(asks).size, asks.join(" ")).toBe(asks.length);
-    expect(asks.slice(-2)).toEqual(["m1:1122", "m1:1123"]);
-    expect(values.at(-1)).toBe("1123");
-  });
+  // Neither input has an independent lifetime here. Expired optimistic
+  // flights cannot keep their inputs open to publish 1122. The final
+  // correction publishes 1123; the latest(m2) sibling is an explicit boundary.
+  for (const reader of ["value", "beside", "pair"] as const)
+    it(`expired optimistic answers do not delay correction (${reader})`, async () => {
+      const { asks, out, values } = await run(reader, 12);
+      expect(asks).toEqual([
+        "m0:23",
+        "m0:22",
+        "m0:23",
+        "m1:23",
+        "m0b:1100",
+        "m0b:1000",
+        "m0b:1100",
+        "m1:1123"
+      ]);
+      expect(values).toEqual(reader === "pair" ? ["12", "1123"] : ["1123"]);
+      if (reader === "beside") {
+        const shown = out.indexOf("c1101");
+        expect(shown).toBeGreaterThanOrEqual(0);
+        expect(out.slice(shown).filter(v => v[0] === "v")).toEqual(["v1123"]);
+      }
+    });
 });
 
 describe("#4400: a second write during the hold, distinct encoding", () => {
-  it.each(["pair", "split"] as const)("each question asked once (%s)", async reader => {
-    const [s, setS] = createSignal(1);
-    const asks: string[] = [];
-    const out: string[] = [];
-    const dispose = createRoot(dispose => {
-      const m0 = createMemo(() => {
-        const v = 1 + 10 * latest(s) + s();
-        asks.push(`m0:${v}`);
-        return sleep(v === 23 ? 30 : 10).then(() => v);
+  it.each(["pair", "split"] as const)(
+    "a later write supersedes the eligible flight (%s)",
+    async reader => {
+      const [s, setS] = createSignal(1);
+      const asks: string[] = [];
+      const out: string[] = [];
+      const dispose = createRoot(dispose => {
+        const m0 = createMemo(() => {
+          const v = 1 + 10 * latest(s) + s();
+          asks.push(`m0:${v}`);
+          return sleep(v === 23 ? 30 : 10).then(() => v);
+        });
+        const m1 = createMemo(() => {
+          const v = 1 + m0();
+          asks.push(`m1:${v}`);
+          return sleep(10).then(() => v);
+        });
+        createLoadingBoundary(
+          () => {
+            if (reader === "pair")
+              createRenderEffect(
+                () => `${isPending(m1)},${m1()}`,
+                v => void out.push(v)
+              );
+            else {
+              createRenderEffect(
+                () => `p${isPending(m1)}`,
+                v => void out.push(v)
+              );
+              createRenderEffect(
+                () => `v${m1()}`,
+                v => void out.push(v)
+              );
+            }
+            return null;
+          },
+          () => "L"
+        );
+        return dispose;
       });
-      const m1 = createMemo(() => {
-        const v = 1 + m0();
-        asks.push(`m1:${v}`);
-        return sleep(10).then(() => v);
-      });
-      createLoadingBoundary(
-        () => {
-          if (reader === "pair")
-            createRenderEffect(
-              () => `${isPending(m1)},${m1()}`,
-              v => void out.push(v)
-            );
-          else {
-            createRenderEffect(
-              () => `p${isPending(m1)}`,
-              v => void out.push(v)
-            );
-            createRenderEffect(
-              () => `v${m1()}`,
-              v => void out.push(v)
-            );
-          }
-          return null;
-        },
-        () => "L"
-      );
-      return dispose;
-    });
-    flush();
-    await settle();
-    asks.length = 0;
-    out.length = 0;
-    setS(2);
-    flush();
-    await wait(3);
-    flush();
-    setS(3);
-    flush();
-    for (let i = 0; i < 4; i++) await settle();
-    dispose();
-    // The second write re-asks the frame's question at the write (`m0:34`:
-    // the hold waits on it, not on the superseded `m0:23`), then the lane's.
-    expect(asks).toEqual(["m0:23", "m0:22", "m0:34", "m0:32", "m1:33", "m1:35"]);
-    expect(out.at(-1)).toBe(reader === "pair" ? "false,35" : "pfalse");
-  });
+      flush();
+      await settle();
+      asks.length = 0;
+      out.length = 0;
+      setS(2);
+      flush();
+      await wait(3);
+      flush();
+      setS(3);
+      flush();
+      for (let i = 0; i < 4; i++) await settle();
+      dispose();
+      // The expired optimistic 32 is superseded before its downstream ask.
+      // It cannot extend its own lifetime just to start m1:33.
+      expect(asks).toEqual(["m0:23", "m0:22", "m0:23", "m0:32", "m0:34", "m1:35"]);
+      expect(out.at(-1)).toBe(reader === "pair" ? "false,35" : "pfalse");
+    }
+  );
 });
 
 // F-6: a `latest()` reader shows the held change now, beside the held screen,
@@ -270,15 +275,13 @@ describe("#4393: a latest() reader's lane answer reaches the screen", () => {
     });
 
   // An async memo over `latest(s)*10 + s()*100`, held only by its own
-  // flight. The verdict lane asks m1:120 (F-6: async derived from a
-  // display-ahead read is the lane's); its answer shows, then the frame's
-  // m1:220 — inline and with `latest(s)` extracted into a memo (Ryan,
-  // 2026-10-29: `latest()` tears beside the held screen whatever the
-  // grouping, #4284). The lane and its parent landed at one seam, and the
-  // parent's landing adopted its frame flight before the lane's reader had
-  // re-run: only v220 showed.
+  // flight. Once latest cuts input demand, its async consequence must not
+  // define that input's lifetime (accepted shared-update rule, stage 127).
+  // Correction supersedes the unfinished mixed-frame answer, inline and
+  // with latest extracted into a memo. Next retains that answer's lifetime
+  // and shows v120 before v220; that extra wait is deliberately not retained.
   for (const form of ["inline", "memo"] as const)
-    it(`async m1 over latest(s) (${form}) shows the display-ahead answer, then the frame's`, async () => {
+    it(`async m1 over latest(s) (${form}) does not keep its input open to finish an optimistic answer`, async () => {
       const [s, setS] = createSignal(1);
       const out: string[] = [];
       const dispose = createRoot(dispose => {
@@ -309,7 +312,7 @@ describe("#4393: a latest() reader's lane answer reaches the screen", () => {
       await settle();
       await settle();
       dispose();
-      expect(out).toEqual(["v120", "v220"]);
+      expect(out).toEqual(["v220"]);
     });
 
   // A sync memo over `latest(s) + s()` under an unrelated hold, read as

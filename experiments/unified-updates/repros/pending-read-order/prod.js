@@ -1,0 +1,3067 @@
+// ../layered-baseline/packages/signals/dist/prod/core/error.js
+var NotReadyError = class extends Error {
+  source;
+  constructor(r) {
+    const o = Error;
+    const t = o.stackTraceLimit;
+    if (t !== void 0) o.stackTraceLimit = 0;
+    super();
+    if (t !== void 0) o.stackTraceLimit = t;
+    this.source = r;
+  }
+};
+var StatusError = class extends Error {
+  source;
+  constructor(r, o) {
+    super(o instanceof Error ? o.message : String(o), {
+      cause: o
+    });
+    this.source = r;
+  }
+};
+function unwrapStatusError(r) {
+  return r instanceof StatusError ? r.cause : r;
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/constants.js
+var REACTIVE_NONE = 0;
+var REACTIVE_CHECK = 1 << 0;
+var REACTIVE_DIRTY = 1 << 1;
+var REACTIVE_RECOMPUTING_DEPS = 1 << 2;
+var REACTIVE_IN_HEAP = 1 << 3;
+var REACTIVE_IN_HEAP_HEIGHT = 1 << 4;
+var REACTIVE_ZOMBIE = 1 << 5;
+var REACTIVE_DISPOSED = 1 << 6;
+var REACTIVE_JOINED = 1 << 7;
+var REACTIVE_SNAPSHOT_STALE = 1 << 8;
+var REACTIVE_LAZY = 1 << 9;
+var REACTIVE_MANUAL_WRITE = 1 << 10;
+var REACTIVE_FRAME_READ = 1 << 11;
+var REACTIVE_MISSED_WAKE = 1 << 12;
+var REACTIVE_REASK = 1 << 13;
+var REACTIVE_STAGED_READ = 1 << 14;
+var REACTIVE_PROBED = 1 << 15;
+var REACTIVE_LANE_DIRTY = 1 << 16;
+var REACTIVE_LANE_READ = 1 << 17;
+var REACTIVE_SCREEN_READ = 1 << 18;
+var REACTIVE_PROBE_UNANSWERED = 1 << 19;
+var CONFIG_OWNED_WRITE = 1 << 0;
+var CONFIG_NO_SNAPSHOT = 1 << 1;
+var CONFIG_TRANSPARENT = 1 << 2;
+var CONFIG_IN_SNAPSHOT_SCOPE = 1 << 3;
+var CONFIG_CHILDREN_FORBIDDEN = 1 << 4;
+var CONFIG_AUTO_DISPOSE = 1 << 5;
+var CONFIG_SYNC = 1 << 6;
+var CONFIG_STAGED = 1 << 7;
+var CONFIG_HELD = 1 << 8;
+var CONFIG_INPUTS_PUBLISHED = 1 << 10;
+var CONFIG_OVERRIDE = 1 << 11;
+var CONFIG_SLOT_NODE = 1 << 12;
+var CONFIG_MANUAL_WRITE = 1 << 18;
+var CONFIG_GUESS = 1 << 13;
+var CONFIG_VERDICT = 1 << 14;
+var CONFIG_REDERIVE = 1 << 15;
+var CONFIG_AUTHORITATIVE = 1 << 17;
+var CONFIG_HAS_SNAPSHOT = 1 << 9;
+var CONFIG_FRESH_READ = 1 << 16;
+var CONFIG_PROMOTED = 1 << 22;
+var STATUS_PENDING = 1 << 0;
+var STATUS_ERROR = 1 << 1;
+var STATUS_UNINITIALIZED = 1 << 2;
+var EFFECT_RENDER = 1;
+var EFFECT_USER = 2;
+var EFFECT_TRACKED = 3;
+var NOT_PENDING = {};
+var NO_SNAPSHOT = {};
+var defaultContext = {};
+var $REFRESH = /* @__PURE__ */ Symbol("refresh");
+
+// ../layered-baseline/packages/signals/dist/prod/core/scheduler.js
+var transactions = [];
+function newTransaction(e, n = null) {
+  const t = {
+    ln: [],
+    rn: [[], []],
+    fn: [],
+    dn: null,
+    _parent: n,
+    B: e,
+    He: null,
+    tt: 0,
+    nt: false,
+    nn: null,
+    We: false,
+    sn: false,
+    T: null
+  };
+  if (!e) transactions.push(t);
+  return t;
+}
+var passLane = null;
+function setPassLane(e) {
+  passLane = e;
+}
+var flushTransaction = null;
+var passTx = null;
+function joinPassTx(e, n) {
+  if (globalQueue.X && !n || flushTransaction !== null) return joinFuture(e);
+  if (passTx === null) passTx = resolveTx(e);
+  else merge(resolveTx(e), passTx);
+  schedule();
+}
+function txOf(e) {
+  return e.m.Le = resolveTx(e.m.Le);
+}
+function liveTx(e) {
+  e = resolveTx(e);
+  return transactions.indexOf(e) !== -1 ? e : null;
+}
+function resolveTx(e) {
+  while (e.dn !== null) e = e.dn;
+  return e;
+}
+function joinFuture(e) {
+  const n = flushTransaction;
+  if (n === null) {
+    flushTransaction = e === null ? newTransaction(false) : resolveTx(e);
+  } else if (e !== null) merge(resolveTx(e), n);
+  if (!globalQueue.X) schedule();
+}
+function merge(e, n) {
+  e = resolveTx(e);
+  n = resolveTx(n);
+  if (e === n || e.B || n.B) return;
+  e.dn = n;
+  n.tt += e.tt;
+  n.nt ||= e.nt;
+  append(n.ln, e.ln);
+  append(n.rn[0], e.rn[0]);
+  append(n.rn[1], e.rn[1]);
+  append(n.fn, e.fn);
+  if (e.T !== null) append(n.T ??= [], e.T);
+  transactions.splice(transactions.indexOf(e), 1);
+}
+function blocked(e) {
+  const n = judge;
+  judge ??= e;
+  const t = e.tt !== 0 || blockedBy(e.ln, e) || !!GlobalQueue.On && GlobalQueue.On(e);
+  judge = n;
+  return t;
+}
+var judge = null;
+function ownFlights(e) {
+  return blockedBy(e.ln, e, true);
+}
+function ownSource(e, n) {
+  const t = e.m?.Se;
+  if (t === void 0) return true;
+  for (const e2 of t) {
+    const t2 = e2.m?.Le;
+    if (t2 == null || resolveTx(t2) === n) return true;
+  }
+  return false;
+}
+function blockedBy(e, n, t = false) {
+  for (let l = 0; l < e.length; l++) {
+    const o = e[l];
+    if (!(o.S & STATUS_PENDING) || o.R & REACTIVE_DISPOSED || o.i & CONFIG_GUESS || o.m.Le !== null && txOf(o) !== n || t && !ownSource(o, n)) continue;
+    if (o.u === EFFECT_RENDER) {
+      if (onScreen(o, judge ?? n)) return true;
+      continue;
+    }
+    for (let e2 = o.t; e2 !== null; e2 = e2.o) {
+      const t2 = e2.l;
+      if ((t2.u === EFFECT_RENDER && t2.S & STATUS_PENDING || t2.R & REACTIVE_FRAME_READ || t2.i & CONFIG_REDERIVE && t2.S === STATUS_PENDING) && (e2.Ae === t2.Pe || t2.m?.F != null) && !(t2.R & REACTIVE_DISPOSED) && onScreen(t2, judge ?? n)) return true;
+    }
+  }
+  return false;
+}
+function onScreen(e, n) {
+  return !(e.R & REACTIVE_ZOMBIE && removalStagedBy(e, n)) && !(GlobalQueue.fe && GlobalQueue.fe(e));
+}
+function removalStagedBy(e, n) {
+  let t = e;
+  while (t !== null && t.R & REACTIVE_ZOMBIE) t = t._parent;
+  return t !== null && (t.i & CONFIG_HELD) !== 0 && t.m?.Le != null && txOf(t) === resolveTx(n);
+}
+var heldTrims = [];
+function heldTrim(e) {
+  heldTrims.push(e);
+}
+var deferredZombies = [];
+function deferZombie(e) {
+  deleteFromHeap(e, dirtyQueue);
+  e.R &= -4;
+  deferredZombies.push(e);
+}
+function holdNode(e, n) {
+  e.i |= CONFIG_HELD;
+  list(e, n);
+}
+function list(e, n) {
+  const t = ext(e);
+  if (t.Le === n) return;
+  t.Le = n;
+  n.ln.push(e);
+}
+function holdFrame(e, n) {
+  for (let t = e.he; t !== null; t = t.Ve) {
+    if (t.m?.Le?.B) continue;
+    if (t.ee !== void 0 && !(t.i & CONFIG_HELD)) holdNode(t, n);
+    holdFrame(t, n);
+  }
+}
+var dirtyQueue = {
+  Ht: new Array(2e3).fill(void 0),
+  N: false,
+  ge: 0,
+  ft: 0
+};
+var clock = 0;
+var scheduled = false;
+var halted = false;
+var haltNotified = false;
+var syncDepth = 0;
+var actionDepth = 0;
+var question = 0;
+var MAINLINE_QUESTION = 2147483647;
+function schedule() {
+  if (halted) {
+    notifyHalted();
+    return;
+  }
+  if (scheduled) return;
+  scheduled = true;
+  if (!syncDepth && !globalQueue.X) {
+    queueMicrotask(flush);
+  }
+}
+var ROOT_ERROR_HOOK = /* @__PURE__ */ Symbol.for("solid-js/root-error-hook");
+function haltReactivity(e) {
+  if (halted) return;
+  halted = true;
+  let n = "[REACTIVITY_HALTED]";
+  const t = e !== void 0 && globalThis.reportError;
+  t || e === void 0 ? console.error(n) : console.error(n, e);
+  t && t(e);
+}
+function notifyHalted() {
+  if (haltNotified) return;
+  haltNotified = true;
+  console.error("[REACTIVITY_HALTED]");
+}
+var GlobalQueue = class _GlobalQueue {
+  rn = [[], []];
+  X = false;
+  flush() {
+    if (this.X) return;
+    this.X = true;
+    resyncUnflushedCompanions();
+    passLane = null;
+    passTx = null;
+    try {
+      sweepDormant();
+      runHeap(dirtyQueue, _GlobalQueue.Ce);
+      this.settle();
+      clock++;
+      scheduled = dirtyQueue.ft >= dirtyQueue.ge || pendingNodes.length !== 0;
+      this.run(EFFECT_RENDER);
+      this.run(EFFECT_USER);
+      if (false) ;
+      if (false) ;
+      if (false) ;
+    } finally {
+      this.X = false;
+      passTx = null;
+    }
+  }
+  /** L2 — the seam: end of the pure phase. Commit this flush's staged nodes,
+   * or park them with the transaction the flush joined; then land every
+   * transaction no frame is waiting on. The landing flush is an ordinary
+   * flush: the settle walk (async.ts) re-ran the parked readers in its pure
+   * phase, and here no flight the transaction holds has a frame deriving
+   * from it (`blocked`). */
+  settle() {
+    if (_GlobalQueue.Gn?.()) runHeap(dirtyQueue, _GlobalQueue.Ce);
+    const e = flushTransaction;
+    flushTransaction = null;
+    _GlobalQueue.In?.(e);
+    const n = e !== null && !e.B ? resolveTx(e) : null;
+    if (n !== null) {
+      const e2 = pendingNodes.length;
+      for (let t3 = 0; t3 < e2; t3++) {
+        const e3 = pendingNodes[t3];
+        if (!(e3.i & (CONFIG_HELD | CONFIG_OVERRIDE)) && (e3.m === null || e3.m.Le === null || !e3.m.Le.B)) {
+          if (e3._e === NOT_PENDING && e3.S & STATUS_UNINITIALIZED && e3.u !== EFFECT_RENDER) continue;
+          if (e3._e !== NOT_PENDING && !(e3.S & (STATUS_PENDING | STATUS_UNINITIALIZED)) && e3.ke && e3.ke(e3.Re, e3._e) && e3.m?.Ze == null && e3.m?.Qe == null) {
+            e3._e = NOT_PENDING;
+            e3.i &= ~CONFIG_STAGED;
+            continue;
+          }
+          holdNode(e3, n);
+        }
+        if (e3.i & CONFIG_STAGED) holdFrame(e3, n);
+      }
+      pendingNodes.length = 0;
+      _GlobalQueue.Tn?.(n);
+      const t2 = deferredZombies.splice(0).sort((e3, n2) => e3.Ue - n2.Ue);
+      for (let e3 = 0; e3 < t2.length; e3++) if ((t2[e3].R & (REACTIVE_DISPOSED | REACTIVE_ZOMBIE)) === REACTIVE_ZOMBIE && t2[e3].i & CONFIG_VERDICT) recompute(t2[e3]);
+    } else {
+      commitPendingNodes();
+      for (let e2 = 0; e2 < heldTrims.length; e2++) {
+        const n2 = heldTrims[e2];
+        if (n2.m?.F == null && !n2.pe) trimStaleDeps(n2);
+      }
+    }
+    if (heldTrims.length) heldTrims.length = 0;
+    const t = this.rn;
+    const l = this.rn = [[], []];
+    _GlobalQueue._n?.(n !== null ? stagedReaders : null);
+    if (stagedReaders.length) stagedReaders.length = 0;
+    this.rn = [[], []];
+    for (let e2 = transactions.length - 1; e2 >= 0; e2--) {
+      const n2 = transactions[e2];
+      if (blocked(n2)) continue;
+      transactions.splice(e2, 1);
+      _GlobalQueue.cn?.(n2);
+      land(n2);
+      e2 = transactions.length;
+    }
+    _GlobalQueue.Sn?.();
+    const o = n && liveTx(n);
+    _GlobalQueue.A?.(o);
+    const u = o !== null;
+    for (let e2 = 0; e2 < 2; e2++) {
+      if (u) append(o.rn[e2], t[e2]);
+      this.rn[e2] = u || l[e2].length || this.rn[e2].length ? l[e2].concat(u ? [] : t[e2], this.rn[e2]) : t[e2];
+    }
+    if (deferredZombies.length !== 0) {
+      const e2 = deferredZombies.splice(0).sort((e3, n2) => e3.Ue - n2.Ue);
+      for (let n2 = 0; n2 < e2.length; n2++) {
+        if (!(e2[n2].R & REACTIVE_DISPOSED)) recompute(e2[n2]);
+      }
+    }
+    _GlobalQueue.ce?.();
+  }
+  run(e) {
+    const n = this.rn[e - 1];
+    if (n.length) {
+      this.rn[e - 1] = [];
+      runQueue(n, e);
+    }
+  }
+  enqueue(e, n, t = passLane) {
+    if (e) (t !== null ? t : this).rn[e - 1].push(n);
+    schedule();
+  }
+  /** Status reaching the root: pending is absorbed (the root mount defers —
+   * dev records it for the ASYNC_OUTSIDE_LOADING_BOUNDARY FYI); an error is
+   * unhandled (`false` → the caller halts).
+   *
+   * L2: this is where a transaction is registered. Pending that reaches an
+   * observer (a render effect: the frame) is a frame that cannot show — the
+   * flush parks, and the transaction waits on the flight while a frame
+   * derives from it (`blocked`). Pending nobody observes holds nothing: a
+   * memo in flight that no frame reads is not a frame waiting. (Base: the
+   * queue's `_asyncReporters`, INV-3's one registration site.)
+   *
+   * A boundary between the observer and the root (boundaries.ts) is asked
+   * first: a fallback catches what is not ready under it, and the root
+   * never hears of it. */
+  notify(e, n, t, l) {
+    if (_GlobalQueue.ae && _GlobalQueue.ae(e, t & n, l)) return true;
+    if (n & STATUS_PENDING) {
+      if (t & STATUS_PENDING) {
+        if (passLane === null) joinFuture(null);
+      }
+      return true;
+    }
+    return false;
+  }
+};
+function reruns(e) {
+  for (let n = 0; n < e.fn.length; n++) {
+    const t = e.fn[n];
+    if (t.R & REACTIVE_DISPOSED || t.S & STATUS_ERROR) continue;
+    if (t.R & REACTIVE_FRAME_READ || t.i & CONFIG_VERDICT) {
+      t.R &= ~REACTIVE_FRAME_READ;
+      t.pe = false;
+      for (let e2 = t.he; e2 !== null; e2 = e2.Ve) if (e2.u) e2.pe = false;
+      enqueueSub(t);
+    }
+  }
+  e.fn.length = 0;
+}
+function land(e) {
+  reruns(e);
+  if (e.T !== null) GlobalQueue.k(e.T);
+  for (let n = 0; n < e.ln.length; n++) {
+    const t = e.ln[n];
+    if (t.m.Le === null || txOf(t) !== e) continue;
+    t.m.Le = null;
+    commitPendingNode(t);
+  }
+  releaseQueues(e);
+}
+function releaseQueues(e) {
+  for (let n = 0; n < 2; n++) {
+    append(globalQueue.rn[n], e.rn[n]);
+    e.rn[n] = [];
+  }
+}
+function append(e, n) {
+  for (let t = 0; t < n.length; t++) e.push(n[t]);
+}
+var pendingNodes = [];
+var stagedReaders = [];
+function staleReader(e, n) {
+  if (!(e.R & REACTIVE_FRAME_READ)) {
+    e.R |= REACTIVE_FRAME_READ;
+    n.fn.push(e);
+  }
+}
+function queuePendingNode(e) {
+  pendingNodes.push(e);
+  if (!globalQueue.X) markUnflushedStaged();
+}
+var notifyEpoch = 0;
+function bumpNotifyEpoch() {
+  notifyEpoch++;
+}
+function insertSubs(e) {
+  e.Ke = notifyEpoch;
+  const n = e.i;
+  const t = (n & CONFIG_HAS_SNAPSHOT) !== 0 && e.m?.me !== void 0;
+  for (let n2 = e.t; n2 !== null; n2 = n2.o) {
+    const e2 = n2.l;
+    if (e2.R & REACTIVE_RECOMPUTING_DEPS && n2.Ae === e2.Pe && n2 !== e2.G) e2.R |= REACTIVE_MISSED_WAKE;
+    if (t && e2.i & CONFIG_IN_SNAPSHOT_SCOPE) {
+      e2.R |= REACTIVE_SNAPSHOT_STALE;
+      continue;
+    }
+    enqueueSub(e2);
+  }
+}
+function laneDirty(e, n) {
+  for (let t = e.t; t !== null; t = t.o) {
+    const e2 = t.l.m?.Le;
+    if (e2?.B ? sameLane(e2, n) : t.l.u) t.l.R |= REACTIVE_LANE_DIRTY;
+  }
+}
+function sameLane(e, n) {
+  return e === n || e.nn !== null && e.nn === n.nn;
+}
+function commitPendingNode(e) {
+  const n = e;
+  if (!n.ee) {
+    e.i &= -385;
+    if (e._e !== NOT_PENDING) {
+      e.Re = e._e;
+      e._e = NOT_PENDING;
+    }
+    return;
+  }
+  const t = e._e === NOT_PENDING && (n.S & STATUS_PENDING) !== 0;
+  e.i = t ? e.i & ~CONFIG_HELD | CONFIG_INPUTS_PUBLISHED : e.i & -1409;
+  if (e._e !== NOT_PENDING) {
+    e.Re = e._e;
+    e._e = NOT_PENDING;
+    n.S &= ~STATUS_UNINITIALIZED;
+    if (n.m != null) n.m.xe = false, n.m.Je = NOT_PENDING;
+    if (e.u && e.u !== EFFECT_TRACKED) {
+      e.pe = true;
+      globalQueue.enqueue(e.u, e.Y ??= GlobalQueue.q.bind(null, n));
+    }
+  }
+  n.Te = false;
+  n.R &= ~REACTIVE_MANUAL_WRITE;
+  if (n.m?.F == null) trimStaleDeps(n);
+  if (!(n.S & STATUS_PENDING)) n.S &= ~STATUS_UNINITIALIZED;
+  if (!t && n.m != null && (n.m.Ze !== null || n.m.Qe !== null)) GlobalQueue.Ge(n, false, true);
+}
+function commitPendingNodes() {
+  for (let e = 0; e < pendingNodes.length; e++) {
+    const n = pendingNodes[e];
+    if (!(n.i & (CONFIG_OVERRIDE | CONFIG_HELD))) commitPendingNode(n);
+  }
+  pendingNodes.length = 0;
+}
+var globalQueue = new GlobalQueue();
+function flush(e) {
+  if (actionDepth > 0) {
+    return e ? e() : void 0;
+  }
+  if (e) {
+    syncDepth++;
+    try {
+      return e();
+    } finally {
+      try {
+        flush();
+      } finally {
+        syncDepth--;
+      }
+    }
+  }
+  if (globalQueue.X) {
+    return;
+  }
+  if (halted) return;
+  while (scheduled) {
+    globalQueue.flush();
+  }
+}
+function runQueue(e, n) {
+  for (let t = 0; t < e.length; t++) e[t](n);
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/heap.js
+function enqueueSub(e) {
+  if (dirtyQueue.ge > e.Ue) dirtyQueue.ge = e.Ue;
+  insertIntoHeap(e, dirtyQueue);
+}
+function actualInsertIntoHeap(e, t) {
+  const E = (e._parent?.Xe ? e._parent.$e?.Ue : e._parent?.Ue) ?? -1;
+  if (E >= e.Ue) e.Ue = E + 1;
+  const n = e.Ue;
+  const I = t.Ht[n];
+  if (I === void 0) t.Ht[n] = e;
+  else {
+    const t2 = I.je;
+    t2.Be = e;
+    e.je = t2;
+    I.je = e;
+  }
+  if (n > t.ft) t.ft = n;
+}
+function insertIntoHeap(e, t) {
+  let E = e.R;
+  if (E & (REACTIVE_IN_HEAP | REACTIVE_RECOMPUTING_DEPS)) return;
+  if (E & REACTIVE_CHECK) {
+    e.R = E & -4 | REACTIVE_DIRTY | REACTIVE_IN_HEAP;
+  } else {
+    e.R = E | REACTIVE_IN_HEAP;
+    if (t.N) markNode(e);
+  }
+  if (!(E & REACTIVE_IN_HEAP_HEIGHT)) actualInsertIntoHeap(e, t);
+}
+function insertIntoHeapHeight(e, t) {
+  let E = e.R;
+  if (E & (REACTIVE_IN_HEAP | REACTIVE_RECOMPUTING_DEPS | REACTIVE_IN_HEAP_HEIGHT)) return;
+  e.R = E | REACTIVE_IN_HEAP_HEIGHT;
+  actualInsertIntoHeap(e, t);
+}
+function deleteFromHeap(e, t) {
+  const E = e.R;
+  if (!(E & (REACTIVE_IN_HEAP | REACTIVE_IN_HEAP_HEIGHT))) return;
+  e.R = E & -25;
+  const n = e.Ue;
+  if (e.je === e) t.Ht[n] = void 0;
+  else {
+    const E2 = e.Be;
+    const I = t.Ht[n];
+    const i = E2 ?? I;
+    if (e === I) t.Ht[n] = E2;
+    else e.je.Be = E2;
+    i.je = e.je;
+  }
+  e.je = e;
+  e.Be = void 0;
+}
+function markHeap(e) {
+  if (e.N) return;
+  e.N = true;
+  for (let t = 0; t <= e.ft; t++) {
+    for (let E = e.Ht[t]; E !== void 0; E = E.Be) {
+      if (E.R & REACTIVE_IN_HEAP) markNode(E);
+    }
+  }
+}
+function markNode(e, t = REACTIVE_DIRTY) {
+  const E = e.R;
+  if ((E & (REACTIVE_CHECK | REACTIVE_DIRTY)) >= t) return;
+  e.R = E & -4 | t;
+  for (let t2 = e.t; t2 !== null; t2 = t2.o) {
+    markNode(t2.l, REACTIVE_CHECK);
+  }
+}
+function runHeap(e, t) {
+  e.N = false;
+  for (e.ge = 0; e.ge <= e.ft; e.ge++) {
+    let E = e.Ht[e.ge];
+    while (E !== void 0) {
+      if (E.R & REACTIVE_IN_HEAP) t(E);
+      else adjustHeight(E, e);
+      E = e.Ht[e.ge];
+    }
+  }
+  e.ft = 0;
+}
+function adjustHeight(e, t) {
+  deleteFromHeap(e, t);
+  let E = e.Ue;
+  for (let t2 = e.p; t2; t2 = t2._) {
+    const e2 = t2.I;
+    if (e2.ee && e2.Ue >= E) E = e2.Ue + 1;
+  }
+  if (e.Ue !== E) {
+    e.Ue = E;
+    for (let E2 = e.t; E2 !== null; E2 = E2.o) insertIntoHeapHeight(E2.l, t);
+  }
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/owner.js
+function markDisposal(e) {
+  let n = e.he;
+  while (n) {
+    n.R |= REACTIVE_ZOMBIE;
+    markDisposal(n);
+    n = n.Ve;
+  }
+}
+function disposeChildren(e, n = false, t) {
+  const i = e.R;
+  if (i & REACTIVE_DISPOSED) return;
+  if (n && !t && e.m !== null && (e.m.Ze !== null || e.m.Qe !== null)) disposeChildren(e, false, true);
+  if (n) {
+    e.R = i | REACTIVE_DISPOSED;
+  }
+  if (n && e.ee) {
+    if (e.m !== null) e.m.Ne = null;
+    if (e.S & STATUS_PENDING && e.m?.Le != null || i & REACTIVE_FRAME_READ) schedule();
+  }
+  let l = t ? e.m.Ze : e.he;
+  if (t) e.m.Ze = null;
+  else e.he = null;
+  while (l) {
+    const e2 = l;
+    e2.i &= ~CONFIG_AUTO_DISPOSE;
+    deleteFromHeap(e2, dirtyQueue);
+    clearDeps(e2);
+    l.Ye = l;
+    disposeChildren(l, true);
+    l = l.Ve;
+  }
+  if (!t) e.Me = 0;
+  if (n && !t && !(i & REACTIVE_ZOMBIE) && e._parent !== null && !(e._parent.R & REACTIVE_DISPOSED)) {
+    const n2 = e.Ye;
+    const t2 = e.Ve;
+    if (n2 !== null) n2.Ve = t2;
+    else e._parent.he = t2;
+    if (t2 !== null) t2.Ye = n2;
+    e.Ye = null;
+  }
+  runDisposal(e, t);
+  if (n && e.ut) {
+    const n2 = e.ut;
+    e.ut = void 0;
+    n2();
+  }
+}
+function linkChild(e, n) {
+  const t = e.he;
+  n.Ye = null;
+  n.Ve = t;
+  if (t !== null) t.Ye = n;
+  e.he = n;
+}
+function runDisposal(e, n) {
+  const t = n ? e.m.Qe : e.Oe;
+  if (!t) return;
+  if (n) e.m.Qe = null;
+  else e.Oe = null;
+  if (Array.isArray(t)) {
+    for (let e2 = t.length - 1; e2 >= 0; e2--) {
+      const n2 = t[e2];
+      n2.call(n2);
+    }
+  } else {
+    t.call(t);
+  }
+}
+function childId(e, n) {
+  let t = e;
+  while (t.i & CONFIG_TRANSPARENT && t._parent) t = t._parent;
+  if (t.id != null) return formatId(t.id, n ? t.Me++ : t.Me);
+  throw new Error("");
+}
+function getNextChildId(e) {
+  return childId(e, true);
+}
+function inheritId(e, n, t) {
+  return e?.id ?? (n ? t?.id : t?.id != null ? getNextChildId(t) : void 0);
+}
+function formatId(e, n) {
+  const t = n.toString(36), i = t.length - 1;
+  return e + (i ? String.fromCharCode(64 + i) : "") + t;
+}
+function getOwner() {
+  return context;
+}
+function cleanup(e) {
+  if (!context) return e;
+  if (!context.Oe) context.Oe = e;
+  else if (Array.isArray(context.Oe)) context.Oe.push(e);
+  else context.Oe = [context.Oe, e];
+  return e;
+}
+function disposeRootSelf(e = true) {
+  disposeChildren(this, e);
+}
+function createOwner(e) {
+  const n = context;
+  const t = e?.transparent ?? false;
+  const i = {
+    id: inheritId(e, t, n),
+    i: t ? CONFIG_TRANSPARENT : 0,
+    Xe: true,
+    $e: n?.Xe ? n.$e : n,
+    he: null,
+    Ve: null,
+    Ye: null,
+    Oe: null,
+    D: n?.D || defaultContext,
+    Me: 0,
+    m: null,
+    _parent: n,
+    dispose: disposeRootSelf
+  };
+  if (n) linkChild(n, i);
+  return i;
+}
+function createRoot(e, n) {
+  const t = createOwner(n);
+  return runWithOwner(t, () => e(() => t.dispose()));
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/graph.js
+var slotUnobservedHook;
+function unlinkSubs(e) {
+  const n = e.I;
+  const o = e._;
+  const l = e.o;
+  const t = e.en;
+  if (l !== null) l.en = t;
+  else n.we = t;
+  if (t !== null) t.o = l;
+  else {
+    n.t = l;
+    if (l === null) {
+      if (n.i & CONFIG_SLOT_NODE) slotUnobservedHook(n);
+      else n.m?.qe?.();
+      const e2 = n;
+      e2.ee && e2.i & CONFIG_AUTO_DISPOSE && !(e2.R & REACTIVE_ZOMBIE) && !(e2.S & STATUS_PENDING) && unobserved(e2);
+    }
+  }
+  return o;
+}
+function trimStaleDeps(e) {
+  const n = e.G;
+  let o = n !== null ? n._ : e.p;
+  if (o !== null) {
+    do {
+      o = unlinkSubs(o);
+    } while (o !== null);
+    if (n !== null) n._ = null;
+    else e.p = null;
+  }
+}
+function clearDeps(e) {
+  let n = e.p;
+  if (!n) return;
+  do {
+    n = unlinkSubs(n);
+  } while (n !== null);
+  e.p = null;
+  e.G = null;
+}
+function unobserved(e) {
+  deleteFromHeap(e, dirtyQueue);
+  clearDeps(e);
+  disposeChildren(e, true);
+}
+var dormantNodes = /* @__PURE__ */ new Set();
+function sweepDormant() {
+  if (dormantNodes.size === 0) return;
+  for (const e of dormantNodes) {
+    if (!e.t && e.i & CONFIG_AUTO_DISPOSE && !(e.S & STATUS_PENDING) && !(e.R & (REACTIVE_DISPOSED | REACTIVE_ZOMBIE))) {
+      unobserved(e);
+    }
+  }
+  dormantNodes.clear();
+}
+function link(e, n) {
+  const o = n.G;
+  if (o !== null && o.I === e) return;
+  let l = null;
+  const t = n.R & REACTIVE_RECOMPUTING_DEPS;
+  if (t) {
+    l = o !== null ? o._ : n.p;
+    if (l !== null && l.I === e) {
+      l.Ae = n.Pe;
+      n.G = l;
+      return;
+    }
+  }
+  const s = e.we;
+  if (s !== null && s.l === n && (!t || s.Ae === n.Pe)) return;
+  const u = n.G = e.we = {
+    I: e,
+    l: n,
+    _: l,
+    en: s,
+    o: null,
+    Ae: n.Pe
+  };
+  if (o !== null) o._ = u;
+  else n.p = u;
+  if (s !== null) s.o = u;
+  else e.t = u;
+  bumpNotifyEpoch();
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/async.js
+function addPendingSource(e, t) {
+  if (e.m?.Se?.has(t)) return false;
+  (ext(e).Se ??= /* @__PURE__ */ new Set()).add(t);
+  return true;
+}
+function removePendingSource(e, t) {
+  const n = e.m?.Se;
+  if (!n?.delete(t)) return false;
+  if (!n.size) e.m.Se = void 0;
+  return true;
+}
+function clearPendingSources(e) {
+  if (e.m !== null) e.m.Se = void 0;
+}
+function retryReaches(e, t) {
+  for (let n = e.p; n; n = n._) {
+    const e2 = n.I;
+    if (e2 === t || e2.m?.Se?.has(t)) return true;
+  }
+  return false;
+}
+function parkLoadingWindow(e, t) {
+  ext(e).Ee = true;
+  if (t.source) addPendingSource(e, t.source);
+  if (!(e.S & STATUS_ERROR)) setPendingError(e, t.source, t);
+}
+function setPendingError(e, t, n) {
+  if (!t) {
+    if (e.m !== null) e.m.F = null;
+    return;
+  }
+  if (n instanceof NotReadyError && n.source === t) {
+    ext(e).F = n;
+    return;
+  }
+  const r = e.m?.F;
+  if (!(r instanceof NotReadyError) || r.source !== t) {
+    ext(e).F = new NotReadyError(t);
+  }
+}
+function forEachDependent(e, t) {
+  for (let n = e.t; n !== null; n = n.o) t(n.l, n);
+}
+function releaseIfSettledUnobserved(e) {
+  e.ee && e.i & CONFIG_AUTO_DISPOSE && !e.t && !(e.R & REACTIVE_ZOMBIE) && !(e.S & STATUS_PENDING) && unobserved(e);
+}
+function releaseSettledDependents(e) {
+  let t;
+  const n = /* @__PURE__ */ new Set();
+  const visit = (e2) => {
+    if (n.has(e2)) return;
+    n.add(e2);
+    if (!e2.t && e2.i & CONFIG_AUTO_DISPOSE) (t ??= []).push(e2);
+    forEachDependent(e2, visit);
+  };
+  forEachDependent(e, visit);
+  if (t) for (const e2 of t) releaseIfSettledUnobserved(e2);
+}
+function settleErroredDependents(e, t) {
+  let n = false;
+  const r = /* @__PURE__ */ new Set();
+  const visit = (e2) => {
+    if (r.has(e2)) return;
+    r.add(e2);
+    if (e2.m?.F === t) {
+      enqueueSub(e2);
+      n = true;
+    }
+    forEachDependent(e2, visit);
+  };
+  forEachDependent(e, visit);
+  if (n) schedule();
+}
+function settlePendingSource(e, t = e) {
+  removePendingSource(e, t);
+  let n = false;
+  let r;
+  const o = /* @__PURE__ */ new Set();
+  const settle = (f) => {
+    if (o.has(f) || // A conditional dropped this source, but another dependency can still
+    // carry it. Only retire pending state inherited through the recovered
+    // branch. Deliberately NOT marked visited on this early return: the
+    // carrying dependency may itself be a later branch of this same walk
+    // (two unchanged memos converging), and its visit must be free to
+    // re-examine this node once that branch has retired the source.
+    t !== e && retryReaches(f, t) || !removePendingSource(f, t))
+      return f.i & CONFIG_VERDICT && enqueueSub(f);
+    o.add(f);
+    f.de = clock;
+    const u = f.m?.Se?.values().next().value;
+    const i = f.S & STATUS_ERROR;
+    if (u) {
+      if (!i) setPendingError(f, u);
+    } else {
+      f.S &= ~STATUS_PENDING;
+      if (!i) setPendingError(f);
+      if (f.i & CONFIG_HELD) joinFuture(txOf(f));
+      if (f.m?.Ee) {
+        enqueueSub(f);
+        n = true;
+      }
+      if (f.m !== null) f.m.Ee = false;
+      if (!f.t && f.i & CONFIG_AUTO_DISPOSE) (r ??= []).push(f);
+    }
+    forEachDependent(f, settle);
+  };
+  forEachDependent(e, settle);
+  if (r) for (const e2 of r) releaseIfSettledUnobserved(e2);
+  if (n) schedule();
+}
+function isThenable(e) {
+  return e != null && typeof e === "object" && typeof e.then === "function";
+}
+function releaseFlightTeardown(e) {
+  const t = e.m?.Ie;
+  if (t != null) {
+    e.m.Ie = null;
+    t();
+  }
+}
+function handleAsync(e, t, n, r) {
+  let o = false;
+  let f = false;
+  if (typeof t === "object" && t !== null) {
+    untrack(() => {
+      o = t[Symbol.asyncIterator];
+      f = !o && isThenable(t);
+    });
+  }
+  if (!f && !o) {
+    if (e.m !== null) e.m.Ne = null;
+    e.Te = false;
+    return t;
+  }
+  ext(e).Ne = t;
+  e.m.De = question || MAINLINE_QUESTION;
+  e.m.Se = void 0;
+  let u;
+  const handleError = (n2) => {
+    if (e.m?.Ne !== t) return;
+    let o2 = n2 instanceof NotReadyError;
+    if (o2 && e.Te) {
+      if (e.m !== null) e.m.Ne = null;
+      parkLoadingWindow(e, n2);
+      e.de = clock;
+      return;
+    }
+    notifyStatus(e, o2 ? STATUS_PENDING : STATUS_ERROR, n2);
+    if (o2) settlePendingSource(e);
+    e.de = clock;
+    if (!o2) releaseSettledDependents(e);
+    r?.(n2, o2);
+  };
+  const asyncWrite = (r2, o2) => {
+    if (e.m?.Ne !== t) return;
+    if (e.R & REACTIVE_DIRTY) return;
+    const f2 = !!(e.S & STATUS_UNINITIALIZED);
+    landStatus(e);
+    if (n) {
+      try {
+        n(r2);
+      } catch (e2) {
+        handleError(e2);
+        return;
+      }
+      if (f2) landStatus(e, true);
+    } else {
+      try {
+        setSignal(e, () => r2);
+      } catch (t2) {
+        notifyStatus(e, STATUS_ERROR, t2);
+      }
+    }
+    if (e._e === NOT_PENDING) {
+      e.Te = false;
+      trimStaleDeps(e);
+    }
+    settlePendingSource(e);
+    schedule();
+    flush();
+    o2?.();
+  };
+  const settleAutodispose = () => {
+    if (e.i & CONFIG_AUTO_DISPOSE && !e.t && !(e.S & STATUS_PENDING)) {
+      unobserved(e);
+      return true;
+    }
+    return false;
+  };
+  const consumeIterator = (n2, r2) => {
+    const o2 = n2[Symbol.asyncIterator]();
+    let f2 = false;
+    let i2 = false;
+    let s = !r2;
+    const close = () => {
+      if (i2) return;
+      i2 = true;
+      try {
+        const e2 = o2.return?.();
+        if (isThenable(e2)) e2.then(void 0, () => {
+        });
+      } catch {
+      }
+    };
+    r2 ? r2(close) : cleanup(close);
+    ext(e).Ie = close;
+    const iterateOrRelease = () => {
+      if (!settleAutodispose()) iterate();
+    };
+    const iterate = () => {
+      let n3, r3, l2 = false, a = false, c = true;
+      const S = o2.next();
+      const E = isThenable(S) ? S : {
+        then: (e2) => void e2(S)
+      };
+      E.then((r4) => {
+        if (c && s) {
+          n3 = r4;
+          l2 = true;
+          if (r4.done) i2 = true;
+        } else if (e.m?.Ne !== t) {
+          return;
+        } else if (!r4.done) {
+          f2 = true;
+          asyncWrite(r4.value, iterateOrRelease);
+        } else {
+          i2 = true;
+          if (f2) {
+            schedule();
+            flush();
+          } else {
+            asyncWrite(void 0);
+          }
+          settleAutodispose();
+        }
+      }, (n4) => {
+        if (c && s) {
+          r3 = n4;
+          a = true;
+        } else if (e.m?.Ne === t) {
+          i2 = true;
+          handleError(n4);
+          settleAutodispose();
+        }
+      });
+      c = false;
+      if (a) {
+        i2 = true;
+        handleError(r3);
+        if (s) throw r3;
+        return true;
+      }
+      if (l2 && !n3.done) {
+        u = n3.value;
+        f2 = true;
+        return iterate();
+      }
+      return l2 && n3.done;
+    };
+    const l = iterate();
+    s = false;
+    return f2 || l;
+  };
+  let i = null;
+  const flattenIfIterable = (e2, t2) => {
+    let n2 = false;
+    if (typeof e2 === "object" && e2 !== null) {
+      untrack(() => {
+        n2 = e2[Symbol.asyncIterator];
+      });
+    }
+    if (!n2) return false;
+    const r2 = consumeIterator(e2, t2);
+    if (!t2) i = r2;
+    return true;
+  };
+  if (f) {
+    let n2 = false, r2 = false, o2, f2 = true;
+    const registerDeferredClose = (t2) => {
+      if (!e.Oe) e.Oe = t2;
+      else if (Array.isArray(e.Oe)) e.Oe.push(t2);
+      else e.Oe = [e.Oe, t2];
+    };
+    t.then((r3) => {
+      if (f2) {
+        u = r3;
+        n2 = true;
+      } else if (e.m?.Ne === t && !(e.R & REACTIVE_DISPOSED) && flattenIfIterable(r3, registerDeferredClose)) ;
+      else {
+        asyncWrite(r3);
+        settleAutodispose();
+      }
+    }, (e2) => {
+      if (f2) {
+        o2 = e2;
+        r2 = true;
+      } else {
+        handleError(e2);
+        settleAutodispose();
+      }
+    });
+    f2 = false;
+    if (r2) {
+      handleError(o2);
+      throw o2;
+    } else if (!n2) {
+      if (e.Te) return e.Re;
+      throw new NotReadyError(context);
+    } else if (!flattenIfIterable(u)) {
+      e.Te = false;
+    }
+  }
+  if (o) flattenIfIterable(t);
+  if (i !== null) {
+    if (!i) {
+      if (e.Te) return e.Re;
+      throw new NotReadyError(context);
+    }
+    e.Te = false;
+  }
+  return u;
+}
+function clearStatus(e, t = false) {
+  if (e.m?.Se) clearPendingSources(e);
+  if (e.m?.Ee) {
+    if (e.m !== null) e.m.Ee = false;
+  }
+  e.S = t ? 0 : e.S & STATUS_UNINITIALIZED;
+  if (e.m?.F) setPendingError(e);
+  const n = statusNotifierOf(e);
+  if (n) n.call(e);
+}
+function landStatus(e, t = false) {
+  const n = e.m?.Se;
+  if (n && (n.delete(e), n.size)) {
+    e.m.Ee = false;
+    if (t) e.S = STATUS_PENDING;
+    setPendingError(e, n.values().next().value);
+  } else clearStatus(e, t);
+}
+function notifyStatus(e, t, n, r) {
+  if (t === STATUS_ERROR && !(n instanceof StatusError) && !(n instanceof NotReadyError)) n = new StatusError(e, n);
+  const o = t === STATUS_PENDING && n instanceof NotReadyError ? n.source : void 0;
+  {
+    if (t === STATUS_PENDING && o) {
+      addPendingSource(e, o);
+      e.S = STATUS_PENDING | e.S & STATUS_UNINITIALIZED;
+      setPendingError(e, o, n);
+    } else {
+      clearPendingSources(e);
+      e.S = t | (t !== STATUS_ERROR ? e.S & STATUS_UNINITIALIZED : 0);
+      ext(e).F = n;
+    }
+  }
+  if (t === STATUS_PENDING && e.i & CONFIG_GUESS) {
+    if (passLane === null) joinFuture(null);
+    return;
+  }
+  const f = statusNotifierOf(e);
+  if (f) {
+    {
+      f.call(e);
+    }
+    return;
+  }
+  propagateStatus(e, t, n);
+}
+function propagateStatus(e, t, n, r) {
+  const o = t === STATUS_PENDING && n instanceof NotReadyError ? n.source : void 0;
+  forEachDependent(e, (r2, f) => {
+    r2.de = clock;
+    if (r2.i & (CONFIG_REDERIVE | CONFIG_VERDICT) || t === STATUS_PENDING && f.Ae !== r2.Pe) {
+      enqueueSub(r2);
+      schedule();
+      return;
+    }
+    if (t === STATUS_PENDING && o && r2.m?.Se?.has(o)) {
+      if (passLane === null && (r2.i & (CONFIG_HELD | CONFIG_OVERRIDE)) === CONFIG_HELD && globalQueue.X) joinFuture(txOf(r2));
+      return;
+    }
+    if (t === STATUS_PENDING && o || t !== STATUS_PENDING && (r2.m?.F !== n || r2.m?.Se)) {
+      {
+        if (passLane !== null) GlobalQueue.W(r2, passLane, true, e);
+        else {
+          queuePendingNode(r2);
+          if (t === STATUS_PENDING && (r2.i & (CONFIG_HELD | CONFIG_OVERRIDE)) === CONFIG_HELD && !r2.u) joinFuture(txOf(r2));
+        }
+      }
+      notifyStatus(r2, t, n);
+    }
+  });
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/core.js
+GlobalQueue.Ce = (e) => {
+  if (e.u === EFFECT_TRACKED) {
+    deleteFromHeap(e, dirtyQueue);
+    e.pe = true;
+    globalQueue.enqueue(EFFECT_USER, e.M);
+  } else if (e.R & REACTIVE_ZOMBIE && !(e.R & REACTIVE_LANE_DIRTY)) deferZombie(e);
+  else recompute(e);
+};
+GlobalQueue.Ge = disposeChildren;
+var tracking = false;
+var context = null;
+var snapshotCaptureActive = false;
+var snapshotSources = null;
+function ownerInSnapshotScope(e) {
+  while (e) {
+    if (e.Fe) return true;
+    e = e._parent;
+  }
+  return false;
+}
+function recompute(e, t = false) {
+  bumpNotifyEpoch();
+  const n = e.u;
+  const E = passLane;
+  setPassLane((e.R & REACTIVE_LANE_DIRTY || (e.i & (CONFIG_OVERRIDE | CONFIG_GUESS)) === CONFIG_OVERRIDE) && e.m?.Le?.B ? e.m.Le : (
+    // Loose `!=`: false with no creator lane (undefined == null).
+    t && E?._parent.He != E && (creatorPass(context)?.R ?? 0) & REACTIVE_RECOMPUTING_DEPS ? E : null
+  ));
+  if (!t) {
+    deleteFromHeap(e, dirtyQueue);
+    if (e.m !== null) {
+      e.m.Ne = null;
+      releaseFlightTeardown(e);
+    }
+    if (e.S & STATUS_PENDING) e.i &= ~CONFIG_VERDICT;
+    if (e.i & CONFIG_HELD) {
+      const t2 = txOf(e);
+      if (t2.B) ;
+      else if (n !== EFFECT_RENDER && !(e.i & CONFIG_VERDICT)) joinPassTx(t2);
+      else if (t2 !== flushTransaction && !(e.S & STATUS_UNINITIALIZED)) {
+        e._e = NOT_PENDING;
+        if (n === EFFECT_RENDER) e.i &= ~CONFIG_HELD;
+      }
+    }
+    if (n === EFFECT_TRACKED || e.i & CONFIG_STAGED) disposeChildren(e);
+    else if (e.he !== null || e.Oe !== null) parkChildren(e);
+  }
+  const u = !!(e.S & STATUS_UNINITIALIZED);
+  const l = e.S & STATUS_ERROR ? e.m?.F : void 0;
+  const s = (e.S & STATUS_PENDING) !== 0;
+  const i = s ? e.m?.Se : void 0;
+  const _ = e.m?.Se?.has(e);
+  const o = (e.R & REACTIVE_REASK) !== 0 && !(e.S & STATUS_PENDING && e.m !== null && !e.m.xe);
+  const r = context;
+  context = e;
+  e.G = null;
+  e.Pe++;
+  e.R = REACTIVE_RECOMPUTING_DEPS | e.R & REACTIVE_ZOMBIE;
+  e.de = clock;
+  let I = e._e !== NOT_PENDING ? e._e : e.i & CONFIG_OVERRIDE && e.m.B !== NOT_PENDING ? e.m.B : e.Re;
+  let a = e.Ue;
+  let N = false;
+  let f = false;
+  let T = tracking;
+  tracking = true;
+  try {
+    if (e.i & CONFIG_SYNC) {
+      I = e.ee(I);
+      if (e.m !== null) e.m.Ne = null;
+      e.Te = false;
+    } else {
+      const t2 = e.m?.Ne;
+      const n2 = e.ee(I);
+      const E2 = typeof n2 === "object" && n2 !== null;
+      const u2 = e.m?.Ne !== t2;
+      I = u2 || !E2 ? n2 : handleAsync(e, n2);
+      if (!u2 && !E2) {
+        if (e.m !== null) e.m.Ne = null;
+        e.Te = false;
+      }
+    }
+    if (e.S !== 0 || e.m !== null) clearStatus(e, t);
+  } catch (t2) {
+    const n2 = t2 instanceof NotReadyError;
+    if (n2 && e.Te) {
+      parkLoadingWindow(e, t2);
+    } else {
+      if (n2) ext(e).Ee = true;
+      notifyStatus(e, n2 ? STATUS_PENDING : STATUS_ERROR, t2);
+      if (n2 && _ && !e.m?.Ne) settlePendingSource(e);
+      if (n2 && i) {
+        for (const t3 of i) if (t3 !== e && !e.m?.Se?.has(t3)) settlePendingSource(e, t3);
+      }
+    }
+  } finally {
+    tracking = T;
+    N = (e.R & REACTIVE_MISSED_WAKE) !== 0;
+    f = (e.R & REACTIVE_JOINED) !== 0;
+    if (!(e.R & REACTIVE_PROBED)) e.i &= ~CONFIG_VERDICT;
+    e.R = e.R & (REACTIVE_ZOMBIE | REACTIVE_DISPOSED | REACTIVE_FRAME_READ | REACTIVE_STAGED_READ | REACTIVE_LANE_READ | REACTIVE_SCREEN_READ | REACTIVE_PROBE_UNANSWERED) | (t ? e.R & REACTIVE_SNAPSHOT_STALE : 0);
+    context = r;
+    if (e.m !== null) e.m.xe = o && (e.S & STATUS_PENDING) !== 0;
+  }
+  if (e.R & REACTIVE_DISPOSED) {
+    clearDeps(e);
+    if (e.m !== null) e.m.Ne = null;
+    setPassLane(E);
+    return;
+  }
+  let S = passLane;
+  const c = !!e.m?.F;
+  if (S !== null) {
+    if (GlobalQueue.W(e, S, t, c)) setPassLane(S);
+    else S = null;
+  }
+  if (!e.m?.F) {
+    const s2 = e._e !== NOT_PENDING ? e._e : e.i & CONFIG_OVERRIDE && e.m.B !== NOT_PENDING ? e.m.B : e.Re;
+    let o2 = false;
+    try {
+      o2 = !n && u || !e.ke || !e.ke(s2, I);
+    } catch (t2) {
+      notifyStatus(e, STATUS_ERROR, t2);
+    }
+    if (n && o2 && // A stale reader of a lane (REACTIVE_SCREEN_READ) that computed what it
+    // last applied owes no run (lanes.ts).
+    !(e.R & REACTIVE_SCREEN_READ && !e.pe && Object.is(e.ye, I)) && // A re-staging pass owes no run: the commit replays the effect (#3802).
+    e._e === NOT_PENDING) {
+      e.pe = !e.m?.F;
+      if (!t || S !== null) globalQueue.enqueue(n, e.Y ??= GlobalQueue.q.bind(null, e), S);
+    }
+    if (!t && S === null && e.i & CONFIG_GUESS && GlobalQueue.be(e, I, c)) ;
+    else if (c) ;
+    else if (o2) {
+      if (S !== null) {
+        if (n && e._e === NOT_PENDING) e.Re = I;
+        else if (n || S.We) e._e = I;
+        else e.m.B = I;
+      } else if (t ? !((flushTransaction !== null || passTx !== null) && (f || E && e.R & REACTIVE_STAGED_READ || (creatorPass(r)?.R ?? 0) & REACTIVE_JOINED)) : n && e._e === NOT_PENDING) {
+        e.Re = I;
+      } else {
+        e._e = I;
+        if (t) {
+          holdNode(e, flushTransaction ?? passTx);
+          e.S |= STATUS_UNINITIALIZED;
+          GlobalQueue.ie?.(e);
+        }
+      }
+      if (e.t !== null) {
+        insertSubs(e);
+        if (S !== null) laneDirty(e, S);
+      }
+    } else if (e.Ue != a) {
+      for (let t2 = e.t; t2 !== null; t2 = t2.o) insertIntoHeapHeight(t2.l, dirtyQueue);
+    }
+    if (!o2 && !e.m?.F) {
+      if (l !== void 0) settleErroredDependents(e, l);
+      if (i) {
+        for (const t2 of i) if (t2 !== e) settlePendingSource(e, t2);
+      }
+    }
+    if (_ && !(e.S & (STATUS_PENDING | STATUS_UNINITIALIZED))) settlePendingSource(e);
+  }
+  if (t && S === null && (f || E && e.R & REACTIVE_STAGED_READ) && e.S & STATUS_PENDING) {
+    const t2 = flushTransaction ?? passTx;
+    if (t2 !== null && !t2.B && !GlobalQueue.ie?.(e)) holdNode(e, t2);
+  }
+  if (!e.m?.F && e._e === NOT_PENDING && !(n && e.pe)) {
+    if (t || n === EFFECT_TRACKED) trimStaleDeps(e);
+    else heldTrim(e);
+  }
+  if (e._e !== NOT_PENDING || e.m !== null && (e.m.Ze !== null || e.m.Qe !== null) || (e.S & (STATUS_PENDING | STATUS_UNINITIALIZED)) !== 0 && (!t || (e.S & STATUS_PENDING) !== 0)) {
+    e.i |= CONFIG_STAGED;
+    if (S === null) queuePendingNode(e);
+  }
+  setPassLane(E);
+  if (N) {
+    enqueueSub(e);
+    schedule();
+  }
+}
+function updateIfNecessary(e) {
+  if (e.R & (REACTIVE_RECOMPUTING_DEPS | REACTIVE_DISPOSED)) return;
+  if (e.R & REACTIVE_CHECK) {
+    for (let t = e.p; t; t = t._) {
+      const n = t.I;
+      if (n.ee) {
+        updateIfNecessary(n);
+      }
+      if (e.R & REACTIVE_DIRTY) {
+        break;
+      }
+    }
+  }
+  if (e.R & REACTIVE_DIRTY || e.m?.F && e.de < clock && !e.m?.Ne) {
+    recompute(e);
+  }
+  e.R = e.R & (REACTIVE_SNAPSHOT_STALE | REACTIVE_IN_HEAP | REACTIVE_IN_HEAP_HEIGHT | REACTIVE_ZOMBIE | REACTIVE_DISPOSED | REACTIVE_MANUAL_WRITE | REACTIVE_FRAME_READ | REACTIVE_STAGED_READ | REACTIVE_LANE_READ | REACTIVE_SCREEN_READ | REACTIVE_PROBE_UNANSWERED);
+}
+function computed(e, t) {
+  const n = t?.transparent ?? false;
+  const E = t !== null && typeof t === "object" && "loadingValue" in t;
+  const u = {
+    id: inheritId(t, n, context),
+    i: (n ? CONFIG_TRANSPARENT : 0) | (t?.ownedWrite ? CONFIG_OWNED_WRITE : 0) | (!context || t?.lazy ? CONFIG_AUTO_DISPOSE : 0) | (t?.sync ? CONFIG_SYNC : 0) | (t?.ue ? CONFIG_NO_SNAPSHOT : 0) | (t?.ve ?? 0) | (snapshotCaptureActive && ownerInSnapshotScope(context) ? CONFIG_IN_SNAPSHOT_SCOPE : 0),
+    ke: t?.equals ?? isEqual,
+    Oe: null,
+    D: context?.D ?? defaultContext,
+    Me: 0,
+    ee: e,
+    Re: E ? t.loadingValue : void 0,
+    Ue: 0,
+    Be: void 0,
+    je: null,
+    p: null,
+    G: null,
+    Pe: 0,
+    t: null,
+    we: null,
+    _parent: context,
+    Ve: null,
+    Ye: null,
+    he: null,
+    R: t?.lazy ? REACTIVE_LAZY : REACTIVE_NONE,
+    // A loadingValue node is born committed: commit #0 is already in _value.
+    S: E ? 0 : STATUS_UNINITIALIZED,
+    de: clock,
+    _e: NOT_PENDING,
+    Ke: -1,
+    Te: E,
+    // Cold machinery (async slots) lives one hop away in the lazily-allocated extension — the core literal MUST
+    // stay under V8's in-object boundary (§12: past ~39 fields every
+    // allocation spills to a backing store and creation cost ~4x's).
+    m: null
+  };
+  if (t?.unobserved) ext(u).qe = t.unobserved;
+  setupComputedNode(u, t);
+  return u;
+}
+function ext(e) {
+  return e.m ??= {
+    Ne: null,
+    Ie: null,
+    F: void 0,
+    Ee: void 0,
+    Se: void 0,
+    qe: void 0,
+    me: void 0,
+    Ze: null,
+    Qe: null,
+    Le: null,
+    xe: false,
+    Je: NOT_PENDING,
+    ze: -1,
+    De: 0,
+    B: NOT_PENDING,
+    T: 0
+  };
+}
+function joinPass(e, t) {
+  e.R |= REACTIVE_JOINED;
+  if (t.S & STATUS_UNINITIALIZED || e.u !== EFFECT_RENDER) joinPassTx(txOf(t), !e.u && e.S & STATUS_UNINITIALIZED || GlobalQueue.ie?.(e));
+}
+function frameRead(e, t) {
+  const n = e.i & CONFIG_VERDICT;
+  if ((passLane === null || e.S & STATUS_UNINITIALIZED && t.S & STATUS_PENDING) && !n && (e.u !== EFFECT_RENDER || t.i & CONFIG_INPUTS_PUBLISHED)) return false;
+  const E = txOf(t);
+  if (E === flushTransaction && passLane === null && !n || e.S & STATUS_UNINITIALIZED && e.i & CONFIG_HELD && txOf(e) === E) return false;
+  staleReader(e, E);
+  return true;
+}
+function creatorPass(e) {
+  return e !== null && e.Xe ? e.$e : e;
+}
+function parkChildren(e) {
+  markDisposal(e);
+  const t = ext(e);
+  t.Qe = e.Oe;
+  t.Ze = e.he;
+  e.Oe = null;
+  e.he = null;
+  e.Me = 0;
+}
+function createEffectNode(e, t, n, E, u) {
+  const l = u?.transparent ?? false;
+  const s = {
+    id: inheritId(u, l, context),
+    i: (l ? CONFIG_TRANSPARENT : 0) | (u?.ownedWrite ? CONFIG_OWNED_WRITE : 0) | (u?.sync ? CONFIG_SYNC : 0) | (u?.ve ?? 0) | (snapshotCaptureActive && ownerInSnapshotScope(context) ? CONFIG_IN_SNAPSHOT_SCOPE : 0),
+    ke: false,
+    Oe: null,
+    D: context?.D ?? defaultContext,
+    Me: 0,
+    ee: e,
+    Re: void 0,
+    Ue: 0,
+    Be: void 0,
+    je: null,
+    p: null,
+    G: null,
+    Pe: 0,
+    t: null,
+    we: null,
+    _parent: context,
+    Ve: null,
+    Ye: null,
+    he: null,
+    R: REACTIVE_LAZY,
+    S: STATUS_UNINITIALIZED,
+    de: clock,
+    _e: NOT_PENDING,
+    Ke: -1,
+    Te: false,
+    pe: false,
+    ye: void 0,
+    et: t,
+    Et: n,
+    ut: void 0,
+    u: E,
+    m: null
+  };
+  if (u?.unobserved) ext(s).qe = u.unobserved;
+  setupComputedNode(s, lazyOptions);
+  return s;
+}
+var effectStatusNotify = null;
+function setEffectStatusNotify(e) {
+  effectStatusNotify = e;
+}
+function statusNotifierOf(e) {
+  return e.u ? effectStatusNotify ?? void 0 : void 0;
+}
+var lazyOptions = {
+  lazy: true
+};
+function setupComputedNode(e, t) {
+  e.je = e;
+  const n = context?.Xe ? context.$e : context;
+  if (context) linkChild(context, e);
+  if (n) e.Ue = n.Ue + 1;
+  GlobalQueue.lt?.(e);
+  !t?.lazy && recompute(e, true);
+  if (snapshotCaptureActive && !t?.lazy) {
+    if (!(e.S & STATUS_PENDING) && !(e.i & CONFIG_NO_SNAPSHOT)) {
+      ext(e).me = e.Re === void 0 ? NO_SNAPSHOT : e.Re;
+      e.i |= CONFIG_HAS_SNAPSHOT;
+      snapshotSources.add(e);
+    }
+  }
+}
+function signal(e, t) {
+  const n = {
+    ke: t?.equals ?? isEqual,
+    i: (t?.ownedWrite ? CONFIG_OWNED_WRITE : 0) | (t?.ue ? CONFIG_NO_SNAPSHOT : 0),
+    Re: e,
+    t: null,
+    we: null,
+    de: clock,
+    _e: NOT_PENDING,
+    // Signal-literal diet (§12e): NO _time/_fn/_statusFlags slots. Stores
+    // materialize one signal per touched leaf, so signal bytes are store
+    // bytes. _time is write-only on signals (every read site is computed-
+    // typed error-retry gating); _fn/_statusFlags read falsy-identically as
+    // missing properties on the shared paths (undefined masks to 0).
+    Ke: -1,
+    m: null
+  };
+  if (t?.unobserved) ext(n).qe = t.unobserved;
+  if (snapshotCaptureActive && !(n.i & CONFIG_NO_SNAPSHOT)) {
+    ext(n).me = e === void 0 ? NO_SNAPSHOT : e;
+    n.i |= CONFIG_HAS_SNAPSHOT;
+    snapshotSources.add(n);
+  }
+  return n;
+}
+function isEqual(e, t) {
+  return e === t;
+}
+var verdict = null;
+function setVerdict(e) {
+  verdict = e;
+}
+function untrack(e, t) {
+  if (GlobalQueue._t === null && !tracking && true) return e();
+  const n = tracking;
+  tracking = false;
+  try {
+    if (GlobalQueue._t) return GlobalQueue._t(e);
+    return e();
+  } finally {
+    tracking = n;
+  }
+}
+var spectating = false;
+function prepareComputed(e, t) {
+  if (e.R & REACTIVE_LAZY) {
+    e.R &= ~REACTIVE_LAZY;
+    recompute(e, true);
+  } else if (e.R & REACTIVE_DISPOSED) {
+    if (e.i & CONFIG_AUTO_DISPOSE) {
+      const t2 = e._parent;
+      if (t2 !== null) {
+        if (t2.R & REACTIVE_DISPOSED) {
+          e.i &= ~CONFIG_AUTO_DISPOSE;
+          return;
+        }
+        if (!(e.R & REACTIVE_ZOMBIE)) linkChild(t2, e);
+      }
+      recompute(e, true);
+    }
+  } else ;
+}
+function readerSeesCommitted(e, t) {
+  return !!(!t || e._e === NOT_PENDING || t.i & CONFIG_CHILDREN_FORBIDDEN);
+}
+var unflushedStaged = false;
+function markUnflushedStaged() {
+  unflushedStaged = true;
+}
+function unflushedValue(e) {
+  if (globalQueue.X || e._e === NOT_PENDING || e.i & CONFIG_PROMOTED) return NOT_PENDING;
+  if (e.i & CONFIG_HELD) return e.m.ze === clock ? e.m.Je : NOT_PENDING;
+  return e.Re;
+}
+function stashFlushed(e) {
+  const t = e.m;
+  if (t.ze !== clock) {
+    t.Je = e._e;
+    t.ze = clock;
+    unflushedStaged = true;
+  }
+}
+var promotedWrites = [];
+function markLateLinker(e) {
+  e.R |= REACTIVE_MISSED_WAKE;
+  return true;
+}
+function resyncUnflushedCompanions() {
+  unflushedStaged = false;
+  if (promotedWrites.length !== 0) {
+    for (const e of promotedWrites) e.i &= ~CONFIG_PROMOTED;
+    promotedWrites.length = 0;
+  }
+}
+function pullComputed(e, t) {
+  if (e.Ue >= dirtyQueue.ge) {
+    markNode(t);
+    markHeap(dirtyQueue);
+    updateIfNecessary(e);
+  } else if (t.i & CONFIG_FRESH_READ) updateIfNecessary(e);
+  const n = e.Ue;
+  if (n >= t.Ue && e._parent !== t) t.Ue = n + 1;
+}
+function read(e) {
+  let t = context;
+  if (t?.Xe) t = t.$e;
+  const n = e;
+  const E = e;
+  if (typeof n.ee === "function") prepareComputed(e);
+  if (verdict !== null) return verdict(e, t);
+  if (!n.ee && e.m?.me === void 0 && !snapshotCaptureActive && (!unflushedStaged || e._e === NOT_PENDING) && // A28, see readNodeFast
+  !(e.i & CONFIG_OVERRIDE) && // lanes: the slow path's one arm
+  true) {
+    if (t) {
+      if (tracking) link(e, t);
+      if (e.i & CONFIG_HELD && !(t.i & CONFIG_CHILDREN_FORBIDDEN)) {
+        if (frameRead(t, e)) return e.Re;
+        joinPass(t, e);
+      }
+    }
+    if (!t || e._e === NOT_PENDING || t.i & CONFIG_CHILDREN_FORBIDDEN) return e.Re;
+    if (t.i & CONFIG_VERDICT && stagedScreen(t)) return e.Re;
+    stagedRead(t);
+    return e._e;
+  }
+  let u = false;
+  if (t) {
+    if (tracking) {
+      link(e, t);
+      if (E.ee) pullComputed(E, t);
+    }
+    if (e.i & CONFIG_HELD && !(e.i & CONFIG_OVERRIDE) && !(t.i & CONFIG_CHILDREN_FORBIDDEN)) {
+      if (E.S & STATUS_UNINITIALIZED || !frameRead(t, e)) joinPass(t, e);
+      else u = true;
+    }
+  }
+  if (e.i & CONFIG_OVERRIDE) {
+    const n2 = GlobalQueue.ot(t, e);
+    if (n2 !== NOT_PENDING) return n2;
+  }
+  if (E.S & STATUS_PENDING && !u && !(e.i & CONFIG_OVERRIDE) && !(E.S & STATUS_UNINITIALIZED)) {
+    if (passLane !== null && !(t?.S & STATUS_UNINITIALIZED)) u = true;
+    else if (t !== null && t.i & CONFIG_VERDICT) u = GlobalQueue.rt(t, E);
+  }
+  if (E.S & STATUS_PENDING && !u) {
+    if (t) {
+      if (!(t.i & CONFIG_CHILDREN_FORBIDDEN) || E.S & STATUS_UNINITIALIZED) {
+        if (!tracking && !spectating && e !== t) link(e, t);
+        throw E.m?.F;
+      }
+    } else if (E.S & STATUS_UNINITIALIZED) {
+      throw E.m?.F;
+    }
+  }
+  if (E.ee && E.S & STATUS_ERROR) {
+    if (tracking && E.de < clock) {
+      recompute(E);
+      return read(e);
+    } else throw E.m?.F;
+  }
+  if (snapshotCaptureActive && t && t.i & CONFIG_IN_SNAPSHOT_SCOPE) {
+    const n2 = e.m?.me;
+    if (n2 !== void 0) {
+      const E2 = n2 === NO_SNAPSHOT ? void 0 : n2;
+      const u2 = e._e !== NOT_PENDING ? e._e : e.Re;
+      if (u2 !== E2) t.R |= REACTIVE_SNAPSHOT_STALE;
+      return E2;
+    }
+  }
+  if (u) return e.Re;
+  const l = serve(e, t);
+  if (!t && typeof n.ee === "function" && e.i & CONFIG_AUTO_DISPOSE && !(E.S & STATUS_PENDING) && !e.t) {
+    dormantNodes.add(e);
+    schedule();
+  }
+  return l;
+}
+function serve(e, t) {
+  if (e._e !== NOT_PENDING && e.S & STATUS_UNINITIALIZED && (!t || spectating || t.i & CONFIG_CHILDREN_FORBIDDEN)) throw new NotReadyError(null);
+  const n = t && unflushedStaged ? unflushedValue(e) : NOT_PENDING;
+  if (n !== NOT_PENDING) {
+    markLateLinker(t);
+    return n;
+  }
+  if (readerSeesCommitted(e, t)) return e.Re;
+  if (t.i & CONFIG_VERDICT && !(e.S & STATUS_UNINITIALIZED) && stagedScreen(t)) return e.Re;
+  stagedRead(t, e);
+  return e._e;
+}
+function stagedRead(e, t) {
+  if (!(t?.S & STATUS_UNINITIALIZED)) {
+    e.R |= REACTIVE_STAGED_READ;
+    if (passLane !== null) stagedReaders.push(e);
+  }
+}
+function stagedScreen(e) {
+  if (flushTransaction === null) return false;
+  staleReader(e, flushTransaction);
+  return true;
+}
+function notePromotedWrite(e) {
+  if (globalQueue.X || e.i & CONFIG_PROMOTED) return;
+  e.i |= CONFIG_PROMOTED;
+  promotedWrites.push(e);
+}
+function captureWriteSnapshot(e, t) {
+  if (e.i & CONFIG_NO_SNAPSHOT || e.ee !== void 0 || e.m?.me !== void 0) return;
+  ext(e).me = t === void 0 ? NO_SNAPSHOT : t;
+  e.i |= CONFIG_HAS_SNAPSHOT;
+  snapshotSources.add(e);
+}
+function setSignal(e, t) {
+  const n = e._e === NOT_PENDING ? e.Re : e._e;
+  if (typeof t === "function") t = t(n);
+  if (e.i & CONFIG_OVERRIDE) return GlobalQueue.It(e, t);
+  if (e.i & CONFIG_HELD) joinFuture(txOf(e));
+  const E = !!(e.S & STATUS_UNINITIALIZED) || !e.ke || !e.ke(n, t);
+  if (!E) return t;
+  if (snapshotCaptureActive) captureWriteSnapshot(e, n);
+  const u = e._e !== NOT_PENDING;
+  if (!u) queuePendingNode(e);
+  else if (e.i & CONFIG_HELD && !globalQueue.X) stashFlushed(e);
+  e._e = t;
+  if (context !== null) notePromotedWrite(e);
+  if (e.ee !== void 0) e.de = clock;
+  if (u && e.Ke === notifyEpoch) return t;
+  insertSubs(e);
+  schedule();
+  return t;
+}
+function setMemo(e, t) {
+  const n = e.i & CONFIG_HELD && !(e.R & REACTIVE_MANUAL_WRITE) && txOf(e) !== flushTransaction;
+  if (n && typeof t === "function") t = t(e.Re);
+  const E = setSignal(e, t);
+  if (n) {
+    e.R = e.R & ~REACTIVE_CHECK | REACTIVE_DIRTY;
+    insertIntoHeap(e, dirtyQueue);
+    schedule();
+  } else if (e._e !== NOT_PENDING) e.R |= REACTIVE_MANUAL_WRITE;
+  return E;
+}
+function runWithOwner(e, t) {
+  const n = context;
+  const E = tracking;
+  context = e;
+  tracking = false;
+  try {
+    return t();
+  } finally {
+    context = n;
+    tracking = E;
+  }
+}
+
+// ../layered-baseline/packages/signals/dist/prod/core/lanes.js
+var lanes = [];
+var LEFT_SHOWN = 1 << 20;
+function newLane(e) {
+  const n = newTransaction(true, e);
+  lanes.push(n);
+  return n;
+}
+function laneValueOf(e) {
+  if (!(e.i & CONFIG_GUESS) && e._e !== NOT_PENDING) return e._e;
+  const n = e.m.B;
+  return n !== NOT_PENDING ? n : e.Re;
+}
+function display(e) {
+  const n = e.m.B;
+  return e.m.Le.We && n !== NOT_PENDING ? n : e.Re;
+}
+var pendingGuesses = [];
+function inFlight(e) {
+  return (e.S & STATUS_PENDING) !== 0 || (e.i & CONFIG_SLOT_NODE) !== 0 && GlobalQueue.C?.(e) === true;
+}
+function applyGuesses(e) {
+  let n = null;
+  for (let t = 0; t < pendingGuesses.length; t += 3) {
+    const u = pendingGuesses[t];
+    const l = pendingGuesses[t + 1];
+    let s = true;
+    if (u.i & CONFIG_OVERRIDE) {
+      s = !u.ke || !u.ke(laneValueOf(u), l);
+      if (!(u.i & CONFIG_GUESS)) {
+        u._e = NOT_PENDING;
+        u.i |= CONFIG_GUESS;
+      }
+      u.m.B = l;
+      const n2 = txOf(u)._parent;
+      if (e !== null && n2 !== null) merge(e, n2);
+    } else {
+      let t2;
+      if (u.i & CONFIG_HELD) t2 = newLane(txOf(u));
+      else {
+        if (e === null && inFlight(u)) e = newTransaction(false);
+        if (e === null) continue;
+        t2 = n ??= newLane(e);
+      }
+      ext(u).B = l;
+      u.i |= CONFIG_OVERRIDE | CONFIG_GUESS;
+      list(u, t2);
+    }
+    ext(u).De = pendingGuesses[t + 2];
+    if (s) {
+      insertSubs(u);
+      laneDirty(u, txOf(u));
+    }
+  }
+  pendingGuesses.length = 0;
+}
+function enterLane(e, n) {
+  n.R |= REACTIVE_LANE_READ;
+  const t = passLane;
+  if (t === null) {
+    setPassLane(e);
+    if (n.R & REACTIVE_JOINED && n.R & REACTIVE_STAGED_READ) stagedRead(n);
+    return;
+  }
+  if (sameLane(t, e)) return setPassLane(e);
+  if (under(t, e)) return;
+  if (under(e, t)) return setPassLane(e);
+  linkLanes(t, e);
+  setPassLane(e);
+}
+function under(e, n) {
+  for (let t = e._parent; t !== null && t.B; t = t._parent) if (t === n) return true;
+  return false;
+}
+function linkLanes(e, n) {
+  const t = e.nn ?? (e.nn = [e]);
+  const u = n.nn;
+  if (u === t) return;
+  if (u === null) {
+    t.push(n);
+    n.nn = t;
+  } else for (let e2 = 0; e2 < u.length; e2++) {
+    t.push(u[e2]);
+    u[e2].nn = t;
+  }
+}
+function linkBlocked(e) {
+  const n = e.nn;
+  if (n !== null) for (let t = 0; t < n.length; t++) {
+    const u = n[t];
+    if (u !== e && (u.tt !== 0 || ownFlights(u) || nestedBlocked(u))) return true;
+  }
+  return false;
+}
+function unlink(e) {
+  const n = e.nn;
+  if (n === null) return;
+  const t = n.indexOf(e);
+  if (t !== -1) n.splice(t, 1);
+  e.nn = null;
+}
+function verdictLane(e) {
+  return e.He ??= newLane(e);
+}
+function laneStage(e, n, t, u) {
+  if (!(t || u || e.R & REACTIVE_LANE_READ || e.i & CONFIG_GUESS)) {
+    const n2 = e.m;
+    if (n2 !== null) {
+      const t2 = n2.Le;
+      if (t2?.We && !blocked(resolveTx(t2._parent))) e.R |= LEFT_SHOWN;
+      if (t2?.B) n2.Le = null;
+      n2.B = NOT_PENDING;
+    }
+    e.i &= -2305;
+    return false;
+  }
+  if (!e.u) {
+    if (!(e.i & CONFIG_OVERRIDE)) {
+      e._e = NOT_PENDING;
+      e.i = e.i & ~CONFIG_HELD | CONFIG_OVERRIDE;
+      ext(e);
+    }
+    if (!u) e.i &= ~CONFIG_GUESS;
+  } else if (u) {
+    if (u !== true && !(u.S & STATUS_UNINITIALIZED) && (e.i & CONFIG_HELD || e.R & REACTIVE_RECOMPUTING_DEPS) && !e.m?.Le?.B) {
+      queuePendingNode(e);
+      return false;
+    }
+    e.R |= REACTIVE_LANE_DIRTY;
+  }
+  list(e, n);
+  return true;
+}
+function supersede(e, n, t) {
+  const u = txOf(e);
+  const l = resolveTx(u._parent ?? u);
+  if (t && e.i & CONFIG_SLOT_NODE && GlobalQueue.tn?.(e.m.B, n)) t = false;
+  if (t) {
+    dissolveLane(u, l, e);
+    if (u.We) e.Re = e.m.B;
+    e.i &= -10241;
+    e.m.B = NOT_PENDING;
+    holdNode(e, l);
+    if (e.t !== null) insertSubs(e);
+  } else {
+    e.i |= CONFIG_HELD;
+    GlobalQueue.un?.(u);
+  }
+  e._e = n;
+  joinFuture(l);
+}
+function dissolveLane(e, n, t) {
+  const u = lanes.indexOf(e);
+  if (u !== -1) lanes.splice(u, 1);
+  unlink(e);
+  const l = e.He;
+  if (l !== null) {
+    e.He = null;
+    if (lanes.indexOf(l) !== -1) dissolveLane(l, null);
+  }
+  for (let u2 = 0; u2 < e.ln.length; u2++) {
+    const l2 = e.ln[u2];
+    const s = l2.m;
+    if (l2 === t || s.Le !== e) continue;
+    const r = l2.u;
+    const i = l2.i & CONFIG_GUESS;
+    const o = s.B;
+    const E = e.We && !r ? o : l2.Re;
+    const f = laneValueOf(l2);
+    s.B = NOT_PENDING;
+    l2.i &= -10241;
+    if (n === null) {
+      s.Le = null;
+      if (!r && !i) l2._e = f;
+      commitPendingNode(l2);
+      if (!r) {
+        if (l2.R & (REACTIVE_IN_HEAP | REACTIVE_DIRTY | REACTIVE_CHECK) || l2.S & STATUS_PENDING) l2.i |= CONFIG_INPUTS_PUBLISHED;
+        if (E !== NOT_PENDING && (!l2.ke || !l2.ke(E, l2.Re))) insertSubs(l2);
+      }
+    } else if (i) {
+      if (l2._e === NOT_PENDING) l2._e = covered(l2);
+      if (e.We) l2.Re = o;
+      holdNode(l2, n);
+      insertSubs(l2);
+    } else {
+      s.Le = null;
+      if (!r) {
+        if (E !== NOT_PENDING && e.We) l2._e = E;
+        if (l2.S & STATUS_PENDING) {
+          s.Ne = null;
+          enqueueSub(l2);
+        }
+      }
+      if (e.We) {
+        commitPendingNode(l2);
+        if (!r) l2.i |= CONFIG_INPUTS_PUBLISHED;
+      } else {
+        if (s.Ze !== null || s.Qe !== null) GlobalQueue.Ge(l2, false, true);
+        l2.i &= -385;
+      }
+    }
+  }
+  if (n === null || e.We && !e.sn) releaseQueues(e);
+  else e.rn[0].length = e.rn[1].length = 0;
+}
+function laneRead(e, n) {
+  const t = n.i & CONFIG_GUESS;
+  if (e !== null && e.i & CONFIG_AUTHORITATIVE) return GlobalQueue.En(n);
+  if (e === null) return laneValueOf(n);
+  const u = txOf(n);
+  const l = n.S;
+  if (!tracking || e.i & CONFIG_CHILDREN_FORBIDDEN) {
+    if (passLane === null || e.i & CONFIG_CHILDREN_FORBIDDEN) return display(n);
+    enterLane(u, e);
+    if (!t && l & STATUS_PENDING) return NOT_PENDING;
+    return laneValueOf(n);
+  }
+  if (e.u === EFFECT_RENDER && (passLane === null || !sameLane(passLane, u))) {
+    if (!t) {
+      if (l & STATUS_PENDING && n.m.B === NOT_PENDING) return NOT_PENDING;
+      if (n._e !== NOT_PENDING && e.i & CONFIG_HELD && flushTransaction !== null && resolveTx(flushTransaction) === txOf(e)) return n._e;
+    }
+    if (u.sn || !t && l & STATUS_PENDING) {
+      if (!t && !u.We && l & STATUS_UNINITIALIZED) throw new NotReadyError(null);
+      if (!(e.R & REACTIVE_SCREEN_READ)) {
+        e.R |= REACTIVE_FRAME_READ | REACTIVE_SCREEN_READ;
+        u.fn.push(e);
+      }
+      return display(n);
+    }
+  }
+  enterLane(u, e);
+  if (!t && l & STATUS_PENDING) return NOT_PENDING;
+  return laneValueOf(n);
+}
+function covered(e) {
+  return e.i & CONFIG_SLOT_NODE && GlobalQueue.Nn !== void 0 ? GlobalQueue.Nn(e) : e.Re;
+}
+function guessFlights(e) {
+  for (let n = 0; n < e.ln.length; n++) {
+    const t = e.ln[n];
+    if (t.i & CONFIG_GUESS && t.m.Le === e && inFlight(t)) return true;
+  }
+  return false;
+}
+function laneCorrections() {
+  let e = false;
+  const n = lanes.slice();
+  for (let t = 0; t < n.length; t++) {
+    const u = n[t];
+    if (lanes.indexOf(u) === -1) continue;
+    const l = resolveTx(u._parent);
+    if (!l.nt || l.tt !== 0 || l.B || ownFlights(l) || guessFlights(u)) continue;
+    e = true;
+    for (let e2 = 0; e2 < u.ln.length && lanes.indexOf(u) !== -1; e2++) {
+      const n2 = u.ln[e2];
+      if (n2.i & CONFIG_GUESS && n2.m.Le === u) {
+        const e3 = n2._e !== NOT_PENDING ? n2._e : covered(n2);
+        supersede(n2, e3, !n2.ke || !n2.ke(n2.m.B, e3));
+      }
+    }
+  }
+  return e;
+}
+function laneSeam(e, n) {
+  if (n || blocked(e)) {
+    e.sn = true;
+    return;
+  }
+  e.sn = false;
+  e.We = true;
+  reruns(e);
+  for (let n2 = 0; n2 < e.ln.length; n2++) {
+    const t = e.ln[n2];
+    if (t.R & LEFT_SHOWN) {
+      t.R ^= LEFT_SHOWN;
+      insertSubs(t);
+    }
+    const u = t.m;
+    if (u.Le !== e) continue;
+    if (!(t.i & CONFIG_GUESS) && !t.u && t._e !== NOT_PENDING) {
+      u.B = t._e;
+      t._e = NOT_PENDING;
+    }
+    if (u.Ze !== null || u.Qe !== null) GlobalQueue.Ge(t, false, true);
+    t.i &= ~CONFIG_STAGED;
+  }
+  releaseQueues(e);
+}
+function endLanes(e) {
+  for (let n = lanes.length - 1; n >= 0; n--) {
+    const t = lanes[n];
+    if (resolveTx(t._parent) !== e) continue;
+    endLanes(t);
+    dissolveLane(t, null);
+  }
+}
+function lanesBlocked(e) {
+  return e.B && linkBlocked(e) || nestedBlocked(e);
+}
+function nestedBlocked(e) {
+  for (let n = 0; n < lanes.length; n++) {
+    const t = lanes[n];
+    if (resolveTx(t._parent) !== e) continue;
+    if (blocked(t) || guessFlights(t)) return true;
+  }
+  return false;
+}
+function laneWrite(e, n) {
+  if (e.i & CONFIG_GUESS) {
+    if (stale(e, question)) {
+      e._e = n;
+      e.i |= CONFIG_HELD;
+      GlobalQueue.an?.(e, n);
+      schedule();
+      return n;
+    }
+    supersede(e, n, !e.ke || !e.ke(e.m.B, n));
+  } else {
+    const t = txOf(e);
+    if (e.ke && e.ke(laneValueOf(e), n)) return n;
+    if (t.We) e._e = n;
+    else e.m.B = n;
+    if (e.ee !== void 0) e.de = clock;
+    insertSubs(e);
+    laneDirty(e, t);
+  }
+  schedule();
+  return n;
+}
+function laneOutcome(e, n, t) {
+  if (t) return true;
+  if (stale(e, answered(e))) {
+    e._e = n;
+    e.i |= CONFIG_HELD;
+    return true;
+  }
+  supersede(e, n, !e.ke || !e.ke(e.m.B, n));
+  return true;
+}
+function stale(e, n) {
+  return n !== 0 && n < e.m.De;
+}
+function answered(e) {
+  let n = 0;
+  for (let t = e.p; t !== null; t = t._) {
+    const e2 = t.I;
+    if (e2.m !== null && e2.m.De > n && e2.de === clock) n = e2.m.De;
+  }
+  return n;
+}
+GlobalQueue.ot = laneRead;
+GlobalQueue.W = laneStage;
+GlobalQueue.be = laneOutcome;
+GlobalQueue.It = laneWrite;
+var judged = 0;
+GlobalQueue.In = (e) => {
+  judged = lanes.length;
+  if (pendingGuesses.length !== 0) applyGuesses(e);
+};
+GlobalQueue._n = (e) => {
+  const n = [];
+  if (e !== null) for (let t = 0; t < e.length; t++) {
+    const u = e[t];
+    const l = u.m?.Le;
+    if (u.R & REACTIVE_DISPOSED || l != null && l._parent?.He === l && (u.i & CONFIG_VERDICT ? !(u.R & REACTIVE_PROBE_UNANSWERED) : !blocked(l._parent))) continue;
+    enqueueSub(u);
+    if (l != null && l.B && n.indexOf(l) === -1) n.push(l);
+  }
+  for (let e2 = Math.min(judged, lanes.length) - 1; e2 >= 0; e2--) laneSeam(lanes[e2], n.indexOf(lanes[e2]) !== -1);
+};
+GlobalQueue.Gn = () => lanes.length !== 0 && laneCorrections();
+GlobalQueue.cn = endLanes;
+GlobalQueue.On = lanesBlocked;
+GlobalQueue.$ = verdictLane;
+
+// ../layered-baseline/packages/signals/dist/prod/core/verdict.js
+function watchVerdict(e, t = false) {
+  if (t) e.R |= REACTIVE_PROBE_UNANSWERED;
+  stagedReaders.push(e);
+}
+function route(e, t) {
+  if (passLane === null && !(e.R & (REACTIVE_JOINED | REACTIVE_STAGED_READ))) setPassLane(verdictLane(t));
+  e.R |= REACTIVE_LANE_READ;
+}
+function observeFlight(e, t) {
+  if (t.i & CONFIG_INPUTS_PUBLISHED) return false;
+  if (globalQueue.X) {
+    joinFuture(null);
+    if (!(t.i & CONFIG_HELD)) queuePendingNode(t);
+    verdictRead(e, flushTransaction, true);
+  }
+  return true;
+}
+var latestActive = false;
+var probing = false;
+var probeFound = false;
+function verdictRead(e, t, n) {
+  route(e, t);
+  if (n) staleReader(e, t);
+  else if (probing && t.fn[t.fn.length - 1] !== e) t.fn.push(e);
+}
+function provisionalVerdict(e, t) {
+  if (!probing) {
+    joinFuture(null);
+    verdictRead(e, flushTransaction);
+    return;
+  }
+  if (flushTransaction !== null) {
+    if (t) probeFound = true;
+    verdictRead(e, flushTransaction);
+    if (e.R & REACTIVE_STAGED_READ) watchVerdict(e);
+    return;
+  }
+  watchVerdict(e, t);
+}
+function quietPending(e) {
+  const t = e.m;
+  if (t === null) return false;
+  if (t.Se !== void 0) {
+    for (const e2 of t.Se) if (!e2.m?.xe) return false;
+    return true;
+  }
+  return t.xe;
+}
+function heldNotFinal(e) {
+  if ((e.S & STATUS_PENDING) !== 0 && !quietPending(e)) return true;
+  return e._e !== NOT_PENDING && !latestActive && !e.m.xe && !(e.S & STATUS_UNINITIALIZED) && (!e.ke || !e.ke(e.Re, e._e));
+}
+function pendingVerdict(e, t) {
+  if (t.S & STATUS_UNINITIALIZED) return;
+  if (probing && !quietPending(t)) probeFound = true;
+  if (e !== null && tracking) {
+    if (t.i & CONFIG_HELD) verdictRead(e, txOf(t));
+    else if (globalQueue.X) provisionalVerdict(e, false);
+  }
+}
+function markVerdictReader(e) {
+  let t = context;
+  if (t?.Xe) t = t.$e;
+  if (t !== null && tracking) {
+    t.i |= CONFIG_VERDICT;
+    t.R |= REACTIVE_PROBED;
+  }
+}
+function isPending(e) {
+  markVerdictReader();
+  const t = probing;
+  const n = probeFound;
+  const r = verdict;
+  probing = true;
+  probeFound = false;
+  setVerdict(verdictValue);
+  try {
+    e();
+    return probeFound;
+  } catch (e2) {
+    if (e2 instanceof NotReadyError && !probeFound && context !== null) throw e2;
+    return probeFound;
+  } finally {
+    probing = t;
+    probeFound = n;
+    setVerdict(r);
+  }
+}
+function heldLatest(e, t) {
+  const n = unflushedValue(e);
+  if (n === NOT_PENDING) return e._e;
+  if (t !== null) markLateLinker(t);
+  return n;
+}
+function verdictValue(e, t) {
+  const n = e;
+  const r = t !== null && !(t.i & CONFIG_CHILDREN_FORBIDDEN);
+  const i = r && tracking;
+  if (t !== null && tracking) {
+    link(e, t);
+    if (n.ee !== void 0) {
+      setVerdict(null);
+      pullComputed(n, t);
+      setVerdict(verdictValue);
+    }
+  }
+  if (probing && GlobalQueue.N !== void 0 && GlobalQueue.N(n)) {
+    probeFound = true;
+    if (i && flushTransaction !== null) verdictRead(t, flushTransaction);
+  }
+  if (e.i & CONFIG_OVERRIDE) {
+    const r2 = txOf(e);
+    if (i) verdictRead(t, r2._parent ?? r2);
+    const u2 = (n.S & STATUS_PENDING) !== 0 && !quietPending(n);
+    if (e.i & CONFIG_GUESS) {
+      if (probing && (u2 || e._e !== NOT_PENDING && (!e.ke || !e.ke(e.m.B, e._e)))) probeFound = true;
+      return e.m.B;
+    }
+    if (probing && u2) probeFound = true;
+    return latestActive && !u2 ? laneValueOf(e) : display(e);
+  }
+  const u = (n.S & STATUS_UNINITIALIZED) !== 0;
+  if (e.i & CONFIG_HELD) {
+    if (!u) {
+      const r2 = txOf(e);
+      if (i && !probing && t.u === EFFECT_RENDER && passLane === null && r2.He !== null && r2.He.sn && flushTransaction !== r2) {
+        staleReader(t, r2.He);
+        return e.Re;
+      }
+      if (i) verdictRead(t, r2);
+      if (probing && heldNotFinal(n)) probeFound = true;
+      if (latestActive && e._e !== NOT_PENDING) {
+        if (!i && flushTransaction !== null && !globalQueue.X) joinFuture(txOf(e));
+        return heldLatest(e, i ? t : null);
+      }
+      return e.Re;
+    }
+    if (e._e !== NOT_PENDING && !(n.S & STATUS_PENDING)) {
+      if (probing && r) joinPass(t, e);
+      return e._e;
+    }
+  } else if (e._e !== NOT_PENDING) {
+    if (n.S & STATUS_PENDING && !u) pendingVerdict(i ? t : null, n);
+    else if (i && globalQueue.X) provisionalVerdict(t, !latestActive && !u);
+    else if (i && probing) watchVerdict(t);
+    if (latestActive) {
+      if (globalQueue.X) return e._e;
+      if (t !== null) markLateLinker(t);
+    }
+    return e.Re;
+  }
+  if (n.S & STATUS_PENDING) {
+    if (!u) {
+      pendingVerdict(i ? t : null, n);
+      return e.Re;
+    }
+    if (t !== null && !tracking && !spectating && e !== t) link(e, t);
+    throw n.m?.F;
+  }
+  if (n.ee !== void 0 && n.S & STATUS_ERROR) throw n.m.F;
+  return e.Re;
+}
+GlobalQueue.rt = observeFlight;
+GlobalQueue.ct = () => {
+  if (probing) probeFound = true;
+};
+
+// ../layered-baseline/packages/signals/dist/prod/core/effect.js
+function effect(e, t, u, E) {
+  const f = !!E?.user;
+  const r = createEffectNode(e, t, u, f ? EFFECT_USER : EFFECT_RENDER, E);
+  recompute(r, true);
+  !E?.defer && r._e === NOT_PENDING && !r.m?.Le?.B && (r.u === EFFECT_USER || E?.schedule ? globalQueue.enqueue(r.u, runEffect.bind(null, r)) : runEffect(r, r.u));
+}
+function notifyEffectStatus(e, t) {
+  const u = e !== void 0 ? e : this.S;
+  const E = t !== void 0 ? t : this.m?.F;
+  if (u & STATUS_ERROR) {
+    globalQueue.notify(this, STATUS_PENDING, 0);
+    if (this.u === EFFECT_USER) {
+      if (this.S & STATUS_ERROR) {
+        this.pe = true;
+        globalQueue.enqueue(this.u, this.Y ??= runEffect.bind(null, this));
+      }
+      return;
+    }
+    if (!globalQueue.notify(this, STATUS_ERROR, STATUS_ERROR)) {
+      haltReactivity(unwrapStatusError(E));
+      throw E;
+    }
+  } else if (this.u === EFFECT_RENDER) {
+    globalQueue.notify(this, STATUS_PENDING | STATUS_ERROR, u, E);
+  }
+}
+function runEffect(e, t) {
+  if (!e.pe || e.R & REACTIVE_DISPOSED) return;
+  if (GlobalQueue.se && GlobalQueue.se(e)) return;
+  if (e.S & STATUS_ERROR && e.u === EFFECT_USER) {
+    const t2 = unwrapStatusError(e.m?.F);
+    e.ye = e.Re;
+    e.pe = false;
+    try {
+      e.Et ? e.Et(t2, () => {
+        const t3 = e.ut;
+        e.ut = void 0;
+        t3?.();
+      }) : console.error(t2);
+    } catch (t3) {
+      if (!globalQueue.notify(e, STATUS_ERROR, STATUS_ERROR)) {
+        haltReactivity(t3);
+        throw t3;
+      }
+    }
+    return;
+  }
+  const u = e.m?.F == null;
+  const E = e.ut;
+  e.ut = void 0;
+  try {
+    E?.();
+    const t2 = e.et(e.Re, e.ye);
+    if (false) ;
+    e.ut = t2;
+  } catch (t2) {
+    ext(e).F = new StatusError(e, t2);
+    e.S |= STATUS_ERROR;
+    if (!globalQueue.notify(e, STATUS_ERROR, STATUS_ERROR)) {
+      haltReactivity(t2);
+      throw t2;
+    }
+  } finally {
+    e.ye = e.Re;
+    e.pe = false;
+    if (u) trimStaleDeps(e);
+  }
+}
+GlobalQueue.q = runEffect;
+setEffectStatusNotify(notifyEffectStatus);
+
+// ../layered-baseline/packages/signals/dist/prod/signals.js
+function accessor(e) {
+  const t = read.bind(null, e);
+  t[$REFRESH] = e;
+  return t;
+}
+function createSignal(e, t) {
+  if (typeof e === "function") {
+    const r2 = computed(e, t);
+    r2.i &= ~CONFIG_AUTO_DISPOSE;
+    return [accessor(r2), setMemo.bind(null, r2)];
+  }
+  const r = signal(e, t);
+  return [accessor(r), setSignal.bind(null, r)];
+}
+function createMemo(e, t) {
+  return accessor(computed(e, t));
+}
+function createRenderEffect(e, t, r) {
+  effect(e, t, void 0, r);
+}
+
+// ../layered-baseline/packages/signals/dist/prod/flatten.js
+function flatten(r, t) {
+  if (typeof r === "function" && !r.length) {
+    if (t?.doNotUnwrap) return r;
+    do {
+      r = r();
+    } while (typeof r === "function" && !r.length);
+  }
+  if (t?.skipNonRendered && (r == null || r === true || r === false || r === "")) return;
+  if (Array.isArray(r)) {
+    let e = [];
+    if (flattenArray(r, e, t)) {
+      return () => {
+        let r2 = [];
+        flattenArray(e, r2, {
+          ...t,
+          doNotUnwrap: false
+        });
+        return r2;
+      };
+    }
+    return e;
+  }
+  return r;
+}
+function flattenArray(r, t = [], e) {
+  let o = null;
+  let f = false;
+  for (let n = 0; n < r.length; n++) {
+    try {
+      let o2 = r[n];
+      if (typeof o2 === "function" && !o2.length) {
+        if (e?.doNotUnwrap) {
+          t.push(o2);
+          f = true;
+          continue;
+        }
+        do {
+          o2 = o2();
+        } while (typeof o2 === "function" && !o2.length);
+      }
+      if (Array.isArray(o2)) {
+        f = flattenArray(o2, t, e) || f;
+      } else if (e?.skipNonRendered && (o2 == null || o2 === true || o2 === false || o2 === "")) {
+      } else t.push(o2);
+    } catch (r2) {
+      if (!(r2 instanceof NotReadyError)) throw r2;
+      o = r2;
+    }
+  }
+  if (o) throw o;
+  return f;
+}
+
+// ../pr3886/next/packages/solid/dist/solid.js
+var sharedConfig = {
+  hydrating: false,
+  registry: void 0,
+  done: false
+};
+var _createRoot;
+var _createMemo;
+var _createSignal;
+var _createRenderEffect;
+var createMemo2 = (...args) => {
+  return (_createMemo || createMemo)(...args);
+};
+var createSignal2 = (...args) => {
+  return (_createSignal || createSignal)(...args);
+};
+var createRoot2 = (...args) => (_createRoot || createRoot)(...args);
+var createRenderEffect2 = (...args) => (_createRenderEffect || createRenderEffect)(...args);
+function createComponent(Comp, props, name) {
+  return untrack(() => Comp(props || {}));
+}
+
+// ../pr3886/next/packages/solid/dist/internal.js
+var sharedConfig2 = sharedConfig;
+
+// ../pr3886/next/packages/web/dist/web.js
+var $$SLOT = /* @__PURE__ */ Symbol("slot");
+var $$HOST = /* @__PURE__ */ Symbol("host");
+var transparentOptions = {
+  transparent: true,
+  sync: true
+};
+function effect2(fn, effectFn, options) {
+  const nodeOptions = options ? {
+    sync: true,
+    ...options,
+    transparent: !options.scope
+  } : transparentOptions;
+  createRenderEffect2(fn, effectFn, nodeOptions);
+}
+function reconcileArrays(parentNode, a, b, marker) {
+  let bLength = b.length, aEnd = a.length, bEnd = bLength, aStart = 0, bStart = 0, tail = a[aEnd - 1], tailTag = tail[$$SLOT], after = tail.parentNode === parentNode && (!tailTag || tailTag === marker) ? tail.nextSibling : marker || null, map = null, anchor, anchorTag;
+  const isLive = (n) => {
+    if (!n) return false;
+    const tag = n[$$SLOT];
+    return n.parentNode === parentNode && (!tag || tag === marker);
+  };
+  while (aStart < aEnd || bStart < bEnd) {
+    if (a[aStart] === b[bStart] && isLive(a[aStart])) {
+      aStart++;
+      bStart++;
+      continue;
+    }
+    while (a[aEnd - 1] === b[bEnd - 1] && isLive(a[aEnd - 1])) {
+      aEnd--;
+      bEnd--;
+    }
+    if (aEnd === aStart) {
+      let node;
+      if (bEnd < bLength) {
+        if (bStart) {
+          const prev = b[bStart - 1];
+          const prevTag = prev[$$SLOT];
+          node = prev.parentNode === parentNode && (!prevTag || prevTag === marker) ? prev.nextSibling : after;
+        } else node = b[bEnd - bStart];
+      } else node = after;
+      while (bStart < bEnd) {
+        const n = b[bStart++];
+        parentNode.insertBefore(n, node);
+        if (marker) n[$$SLOT] = marker;
+      }
+    } else if (bEnd === bStart) {
+      while (aStart < aEnd) {
+        const n = a[aStart++];
+        if (!map || !map.has(n)) {
+          const tag = n[$$SLOT];
+          if (n.parentNode === parentNode && (!tag || tag === marker)) n.remove();
+        }
+      }
+    } else if ((anchor = a[aStart]) === b[bEnd - 1] && b[bStart] === a[aEnd - 1] && anchor.parentNode === parentNode && (!(anchorTag = anchor[$$SLOT]) || anchorTag === marker)) {
+      if (marker) {
+        do {
+          const n = a[--aEnd];
+          parentNode.insertBefore(n, anchor);
+          n[$$SLOT] = marker;
+          bStart++;
+          if (aStart >= aEnd - 1 || bStart >= bEnd) break;
+        } while (a[aStart] === b[bEnd - 1] && b[bStart] === a[aEnd - 1]);
+      } else {
+        do {
+          parentNode.insertBefore(a[--aEnd], anchor);
+          bStart++;
+          if (aStart >= aEnd - 1 || bStart >= bEnd) break;
+        } while (a[aStart] === b[bEnd - 1] && b[bStart] === a[aEnd - 1]);
+      }
+    } else {
+      if (!map) {
+        map = /* @__PURE__ */ new Map();
+        let i = bStart;
+        while (i < bEnd) map.set(b[i], i++);
+      }
+      const index = map.get(a[aStart]);
+      if (index != null) {
+        if (bStart < index && index < bEnd) {
+          let i = aStart, sequence = 1, t;
+          while (++i < aEnd && i < bEnd) {
+            if ((t = map.get(a[i])) == null || t !== index + sequence) break;
+            sequence++;
+          }
+          if (sequence > index - bStart) {
+            const head = a[aStart];
+            const headTag = head[$$SLOT];
+            const node = head.parentNode === parentNode && (!headTag || headTag === marker) ? head : after;
+            while (bStart < index) {
+              const n = b[bStart++];
+              parentNode.insertBefore(n, node);
+              if (marker) n[$$SLOT] = marker;
+            }
+          } else {
+            const oldNode = a[aStart++];
+            const newNode = b[bStart++];
+            const oldTag = oldNode[$$SLOT];
+            if (oldNode.parentNode === parentNode && (!oldTag || oldTag === marker)) {
+              parentNode.replaceChild(newNode, oldNode);
+            } else {
+              parentNode.insertBefore(newNode, after);
+            }
+            if (marker) newNode[$$SLOT] = marker;
+          }
+        } else aStart++;
+      } else {
+        const n = a[aStart++];
+        const nTag = n[$$SLOT];
+        if (n.parentNode === parentNode && (!nTag || nTag === marker)) n.remove();
+      }
+    }
+  }
+}
+var EVENT_KEY = "_$$";
+var $$EVENT_OWNER = "_$SOLID_EVENT_OWNER";
+var INNER_OWNED = {};
+var delegatedEvents = /* @__PURE__ */ new Set();
+var delegatedContainers = /* @__PURE__ */ new Map();
+function render(code, element, init, options = {}) {
+  let disposer;
+  registerDelegatedRoot(element);
+  try {
+    createRoot2((dispose) => {
+      disposer = dispose;
+      if (options.onError) getOwner()[ROOT_ERROR_HOOK] = options.onError;
+      if (element === document) {
+        const tree = code();
+        effect2(() => flatten(tree), () => {
+        });
+      } else {
+        const tree = code();
+        insert(element, () => tree, element.firstChild ? null : void 0, init, {
+          ...options.insertOptions,
+          schedule: true
+        });
+      }
+    }, {
+      id: options.renderId
+    });
+    flush();
+  } catch (err) {
+    if (disposer) disposer();
+    unregisterDelegatedRoot(element);
+    throw err;
+  } finally {
+  }
+  return () => {
+    disposer();
+    unregisterDelegatedRoot(element);
+    element.textContent = "";
+  };
+}
+function create(html, bypassGuard, flag) {
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  return flag === 2 ? t.content.firstChild.firstChild : t.content.firstChild;
+}
+function template(html, flag) {
+  let node;
+  const fn = flag === 1 ? (bypassGuard) => document.importNode(node || (node = create(html, bypassGuard, flag)), true) : (bypassGuard) => (node || (node = create(html, bypassGuard, flag))).cloneNode(true);
+  return fn;
+}
+function delegateEvents(eventNames) {
+  for (let i = 0, l = eventNames.length; i < l; i++) {
+    const name = eventNames[i];
+    if (!delegatedEvents.has(name)) {
+      delegatedEvents.add(name);
+      delegatedContainers.forEach((state, container) => attachDelegatedEvent(name, container, state));
+    }
+  }
+}
+function registerDelegatedRoot(root) {
+  const state = registerDelegatedContainer(root, root);
+  if (state) state.roots = (state.roots || 0) + 1;
+}
+function unregisterDelegatedRoot(root) {
+  const state = delegatedContainers.get(root);
+  if (state) state.roots > 1 ? state.roots-- : delete state.roots;
+  unregisterDelegatedContainer(root, root);
+}
+function registerDelegatedContainer(container, owner = container) {
+  if (!container || !owner) return;
+  let state = delegatedContainers.get(container);
+  if (!state) delegatedContainers.set(container, state = {
+    owners: /* @__PURE__ */ new Map(),
+    handlers: /* @__PURE__ */ new Map()
+  });
+  state.owners.set(owner, (state.owners.get(owner) || 0) + 1);
+  delegatedEvents.forEach((name) => attachDelegatedEvent(name, container, state));
+  return state;
+}
+function unregisterDelegatedContainer(container, owner = container) {
+  const state = delegatedContainers.get(container);
+  if (!state) return;
+  const count = state.owners.get(owner);
+  if (count > 1) state.owners.set(owner, count - 1);
+  else state.owners.delete(owner);
+  if (state.owners.size) return;
+  state.handlers.forEach((handler, name) => container.removeEventListener(name, handler));
+  delegatedContainers.delete(container);
+}
+function attachDelegatedEvent(name, container, state) {
+  if (state.handlers.has(name)) return;
+  const handler = (e) => eventHandler(e, container, state);
+  state.handlers.set(name, handler);
+  container.addEventListener(name, handler);
+}
+function findOwner(target, state) {
+  let node = target;
+  let distance = 0;
+  while (node) {
+    if (state.owners.has(node)) return {
+      owner: node,
+      distance
+    };
+    distance++;
+    node = node._$host || node.parentNode || node.host;
+  }
+}
+var SCOPE_OPTIONS = {
+  scope: true
+};
+var hydrationRt = null;
+function insert(parent, accessor2, marker, initial, options) {
+  const multi = marker !== void 0;
+  const host = options && options.host;
+  if (multi && !initial) initial = [];
+  if (hydrationRt !== null) initial = hydrationRt.claimInitial(parent, multi, initial);
+  if (typeof accessor2 !== "function") {
+    accessor2 = normalize(accessor2, initial, multi, true);
+    if (typeof accessor2 !== "function") {
+      insertExpression(parent, accessor2, initial, marker);
+      host && tagHost(accessor2, host);
+      return;
+    }
+  }
+  if (multi && initial.length === 0) {
+    const placeholder = document.createTextNode("");
+    parent.insertBefore(placeholder, marker);
+    initial = [placeholder];
+  }
+  let current = initial;
+  effect2(
+    (prev) => {
+      if (hydrationRt !== null) current = hydrationRt.reclaimRegion(current, parent, marker);
+      const value = normalize(accessor2(), current, multi, true);
+      if (typeof value !== "function") return value;
+      const innerOptions = prev !== void 0 && !(options && options.schedule) ? {
+        ...options,
+        schedule: true
+      } : options;
+      effect2(() => (hydrationRt !== null && (current = hydrationRt.reclaimRegion(current, parent, marker)), normalize(value, current, multi)), (inner) => {
+        current = insertExpression(parent, inner, current, marker);
+        host && tagHost(current, host);
+      }, innerOptions);
+      return INNER_OWNED;
+    },
+    (value) => {
+      if (value === INNER_OWNED) return;
+      current = insertExpression(parent, value, current, marker);
+      host && tagHost(current, host);
+    },
+    accessor2.$s ? options ? {
+      ...options,
+      scope: true
+    } : SCOPE_OPTIONS : options
+  );
+}
+function isHydrating(node) {
+  if (!sharedConfig2.hydrating) return false;
+  if (sharedConfig2.isClaiming && !sharedConfig2.isClaiming()) return false;
+  if (!node || node.isConnected) return true;
+  return serverComponentClaims !== null && serverComponentClaims.claimed(node);
+}
+var serverComponentClaims = null;
+function eventHandler(e, container, state) {
+  if (hydrationRt !== null && hydrationRt.dedupEvent(e)) return;
+  const prev = e[$$EVENT_OWNER];
+  let resumeNode;
+  if (prev) {
+    if (prev === true || prev === container || !container.contains(prev)) return;
+    resumeNode = prev;
+  }
+  const owner = state && (state.owners.size === 1 && state.owners.has(container) ? container : findOwner(e.target, state)?.owner);
+  if (state && !owner) return;
+  if (owner && owner === resumeNode) return;
+  e[$$EVENT_OWNER] = owner || true;
+  let node = resumeNode || e.target;
+  const key = EVENT_KEY + e.type;
+  const oriTarget = e.target;
+  const boundary = owner || container || e.currentTarget;
+  const retarget = (value) => Object.defineProperty(e, "target", {
+    configurable: true,
+    value
+  });
+  const handleNode = () => {
+    const handler = node[key];
+    if (handler && !node.disabled) {
+      const data = node[`${key}Data`];
+      data !== void 0 ? handler.call(node, data, e) : typeof handler === "function" ? handler.call(node, e) : handler.handleEvent(e);
+      if (e.cancelBubble) return;
+    }
+    node.host && typeof node.host !== "string" && !node.host._$host && node.contains(e.target) && retarget(node.host);
+    return true;
+  };
+  const walkUpTree = () => {
+    while (node && handleNode()) {
+      if (node === boundary || node.parentNode === boundary) break;
+      node = node._$host || node.parentNode || node.host;
+    }
+  };
+  Object.defineProperty(e, "currentTarget", {
+    configurable: true,
+    get() {
+      return node || boundary || document;
+    }
+  });
+  if (resumeNode) {
+    if (resumeNode === e.target) node = resumeNode._$host || resumeNode.parentNode || resumeNode.host;
+    if (node && node !== boundary) walkUpTree();
+  } else if (e.composedPath) {
+    const path = e.composedPath();
+    if (path.length) {
+      retarget(path[0]);
+      for (let i = 0; i < path.length; i++) {
+        node = path[i];
+        if (!handleNode()) break;
+        if (node._$host) {
+          node = node._$host;
+          walkUpTree();
+          break;
+        }
+        if (node === boundary || node.parentNode === boundary) {
+          break;
+        }
+      }
+    } else walkUpTree();
+  } else walkUpTree();
+  retarget(oriTarget);
+}
+function insertExpression(parent, value, current, marker) {
+  if (hydrationRt !== null && isHydrating(parent)) {
+    if (value && value !== current) {
+      const arr = Array.isArray(value);
+      for (const n of arr ? value : [value]) {
+        if (n && n.nodeType) {
+          if (!isHydrating(n)) return current;
+        } else if (arr && (typeof n === "string" || typeof n === "number")) {
+          return current;
+        }
+      }
+    }
+    return value;
+  }
+  if (value === current) return value;
+  if (hydrationRt !== null && sharedConfig2.hydrating && current == null && value && [].concat(value).every((n) => n?.parentNode === parent) && value.length !== 0) return value;
+  const t = typeof value, multi = marker !== void 0;
+  if (t === "string" || t === "number") {
+    const tc = typeof current;
+    if (tc === "string" || tc === "number") {
+      parent.firstChild.data = value;
+    } else {
+      if (ownsAllChildren(parent, current)) parent.textContent = value;
+      else {
+        removeOwnedChildren(parent, current);
+        parent.insertBefore(document.createTextNode(value), parent.firstChild);
+      }
+    }
+  } else if (value === void 0) {
+    cleanChildren(parent, current, marker);
+  } else if (value.nodeType) {
+    if (Array.isArray(current)) {
+      cleanChildren(parent, current, multi ? marker : null, value);
+    } else if (current != null && current.nodeType) {
+      current.parentNode === parent ? parent.replaceChild(value, current) : parent.appendChild(value);
+    } else if (current != null && parent.firstChild) {
+      parent.replaceChild(value, parent.firstChild);
+    } else {
+      parent.appendChild(value);
+    }
+    if (marker) value[$$SLOT] = marker;
+  } else if (Array.isArray(value)) {
+    const currentArray = Array.isArray(current);
+    for (let i = 0, len = value.length; i < len; i++) {
+      const item = value[i], t2 = typeof item;
+      if (t2 === "string" || t2 === "number") {
+        const prev = currentArray ? current[i] : void 0;
+        if (prev && prev.nodeType === 3) {
+          if (prev.data !== "" + item) prev.data = item;
+          value[i] = prev;
+        } else value[i] = document.createTextNode(item);
+      }
+    }
+    if (value.length === 0) {
+      cleanChildren(parent, current, marker);
+    } else if (currentArray) {
+      if (current.length === 0) {
+        appendNodes(parent, value, marker);
+      } else reconcileArrays(parent, current, value, marker);
+    } else {
+      if (current != null) cleanChildren(parent, current);
+      appendNodes(parent, value);
+    }
+  } else ;
+  selectInsert && selectInsert(parent);
+  return value;
+}
+var selectInsert;
+function normalize(value, current, multi, doNotUnwrap) {
+  value = flatten(value, {
+    skipNonRendered: true,
+    doNotUnwrap
+  });
+  if (doNotUnwrap && typeof value === "function") return value;
+  if (multi && !Array.isArray(value)) value = [value != null ? value : ""];
+  if (sharedConfig2.hydrating && Array.isArray(value)) {
+    for (let i = 0, len = value.length; i < len; i++) {
+      const item = value[i], prev = current && current[i], t = typeof item;
+      if ((t === "string" || t === "number") && prev && prev.nodeType === 3 && isHydrating(prev)) value[i] = prev;
+    }
+  }
+  return value;
+}
+function tagHost(value, host) {
+  if (Array.isArray(value)) {
+    for (let i = 0, len = value.length; i < len; i++) tagHost(value[i], host);
+  } else if (value && value.nodeType && value[$$HOST] !== host) {
+    value[$$HOST] = host;
+    Object.defineProperty(value, "_$host", {
+      get: host,
+      configurable: true
+    });
+  }
+}
+function appendNodes(parent, array, marker = null) {
+  for (let i = 0, len = array.length; i < len; i++) {
+    const n = array[i];
+    parent.insertBefore(n, marker);
+    if (marker) n[$$SLOT] = marker;
+  }
+}
+function ownsAllChildren(parent, current) {
+  if (current == null) return true;
+  if (Array.isArray(current)) {
+    return current.length ? parent.firstChild === current[0] && parent.lastChild === current[current.length - 1] : parent.firstChild === null;
+  }
+  if (current === "") return parent.firstChild === null;
+  if (current.nodeType) return parent.firstChild === current && parent.lastChild === current;
+  const first = parent.firstChild;
+  return first !== null && first.nodeType === 3 && parent.lastChild === first;
+}
+function removeOwnedChildren(parent, current) {
+  if (Array.isArray(current)) {
+    for (let i = 0; i < current.length; i++) {
+      const el = current[i];
+      if (el.parentNode === parent) el.remove();
+    }
+  } else if (current.nodeType) {
+    if (current.parentNode === parent) current.remove();
+  } else {
+    const first = parent.firstChild;
+    if (first && first.nodeType === 3) first.remove();
+  }
+}
+function cleanChildren(parent, current, marker, replacement) {
+  if (marker === void 0) {
+    if (ownsAllChildren(parent, current)) return parent.textContent = "";
+    return removeOwnedChildren(parent, current);
+  }
+  if (current.length) {
+    let inserted = false;
+    for (let i = current.length - 1; i >= 0; i--) {
+      const el = current[i];
+      if (replacement !== el) {
+        const tag = el[$$SLOT];
+        const owns = el.parentNode === parent && (!tag || tag === marker);
+        if (replacement && !inserted && !i) owns ? parent.replaceChild(replacement, el) : parent.insertBefore(replacement, marker);
+        else if (owns) el.remove();
+      } else inserted = true;
+    }
+  } else if (replacement) parent.insertBefore(replacement, marker);
+  if (replacement && marker) replacement[$$SLOT] = marker;
+}
+
+// ../pr3886/next/App.tsx
+var _tmpl$ = /* @__PURE__ */ template(`<section id=id-first><h2>Read id first</h2><button>Load item 1</button><p>ID: <output data-value=id></output></p><p>Data: <output data-value=data></output></p><p>Pending: <output data-value=pending>`);
+var _tmpl$2 = /* @__PURE__ */ template(`<section id=pending-first><h2>Read pending first</h2><button>Load item 1</button><p>ID: <output data-value=id></output></p><p>Data: <output data-value=data></output></p><p>Pending: <output data-value=pending>`);
+var _tmpl$3 = /* @__PURE__ */ template(`<main style=font-family:sans-serif;padding:24px><h1>isPending: read order changes publication</h1><p>Try each button separately. Each request takes three seconds. Reload to reset.</p><p>The two memos differ only in the order of id() and isPending(id).</p><div style=display:flex;gap:64px;flex-wrap:wrap><!><!>`);
+async function load(id) {
+  await new Promise((resolve2) => setTimeout(resolve2, 3e3));
+  return id * 10;
+}
+function IdFirst() {
+  const [id, setId] = createSignal2(0);
+  const data = createMemo2(() => {
+    const value = id();
+    isPending(id);
+    return value === 0 ? 0 : load(value);
+  });
+  var _el$ = _tmpl$(), _el$2 = _el$.firstChild, _el$3 = _el$2.nextSibling, _el$4 = _el$3.nextSibling, _el$5 = _el$4.firstChild, _el$6 = _el$5.nextSibling, _el$7 = _el$4.nextSibling, _el$8 = _el$7.firstChild, _el$9 = _el$8.nextSibling, _el$0 = _el$7.nextSibling, _el$1 = _el$0.firstChild, _el$10 = _el$1.nextSibling;
+  _el$3._$$click = () => setId(1);
+  insert(_el$6, id);
+  insert(_el$9, data);
+  insert(_el$10, () => String(isPending(id)));
+  return _el$;
+}
+function PendingFirst() {
+  const [id, setId] = createSignal2(0);
+  const data = createMemo2(() => {
+    isPending(id);
+    const value = id();
+    return value === 0 ? 0 : load(value);
+  });
+  var _el$11 = _tmpl$2(), _el$12 = _el$11.firstChild, _el$13 = _el$12.nextSibling, _el$14 = _el$13.nextSibling, _el$15 = _el$14.firstChild, _el$16 = _el$15.nextSibling, _el$17 = _el$14.nextSibling, _el$18 = _el$17.firstChild, _el$19 = _el$18.nextSibling, _el$20 = _el$17.nextSibling, _el$21 = _el$20.firstChild, _el$22 = _el$21.nextSibling;
+  _el$13._$$click = () => setId(1);
+  insert(_el$16, id);
+  insert(_el$19, data);
+  insert(_el$22, () => String(isPending(id)));
+  return _el$11;
+}
+function App() {
+  var _el$23 = _tmpl$3(), _el$24 = _el$23.firstChild, _el$25 = _el$24.nextSibling, _el$26 = _el$25.nextSibling, _el$27 = _el$26.nextSibling, _el$28 = _el$27.firstChild, _el$29 = _el$28.nextSibling;
+  insert(_el$27, createComponent(IdFirst, {}), _el$28);
+  insert(_el$27, createComponent(PendingFirst, {}), _el$29);
+  return _el$23;
+}
+render(() => createComponent(App, {}), document.getElementById("root"));
+delegateEvents(["click"]);
+export {
+  App as default
+};

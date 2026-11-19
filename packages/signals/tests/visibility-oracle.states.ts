@@ -90,10 +90,8 @@ export function supersededGraph(initDownstream: boolean) {
     async supersede() {
       const run = action(function* () {
         setValue(1); // new question → refetch
-        // Wrong guess; truth will be 2. Before the first commit (the
-        // `initDownstream: false` state) the guess is written (S-56,
-        // 2026-11-07; the 2026-11-03 DEV guard, #4656, is gone for memos)
-        // and voided at the correction, its lane never shown (D-34).
+        // The split output accepts this guess even before its first commit.
+        // Downstream work still determines when the output can publish.
         setDouble(3);
         yield never();
       });
@@ -285,26 +283,18 @@ export const STATES: State[] = [
       return built;
     },
     expect: {
-      // Never committed: the guess (`supersede` above; S-56) is written in
-      // the frame that re-asked its source and voided at the correction,
-      // its lane never shown (D-34). The reads are the void guess's (lanes 2026-10-01/02:
-      // written in the frame that re-asked its source, its lane blocked and
-      // never displayed, §16): there is no displayed override — direct reads
-      // see the committed value, the truth is staged under the action, a
-      // fresh reader of it is born held.
-      untracked: rule(
-        0,
-        "lanes: the never-shown guess is void at the correction; the truth is staged"
-      ),
-      derivesFrom: rule(2, "A18 (b): tracked derivations recompute from the arrived value"),
+      // The selected guess remains while the input update is held. Ordinary
+      // reads retain the committed output; latest observes the selected guess.
+      untracked: rule(0, "the output remains committed while the selected guess is held"),
+      derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(
         HELD,
-        "A18 (c) / A29 (born held): a fresh mainline memo over the superseded node derives from the staged truth and is held with the transaction; the frame keeps the override"
+        "a fresh reader derives from the selected override and waits for its consequences"
       ),
-      preexisting: rule(HELD, "A18 (c): the applied frame keeps the override until commit"),
-      staleForeign: rule(0, "lanes: a stale reader of a void guess sees the committed value"),
-      childrenForbidden: rule(0, "A32 / lanes: the frame — the never-shown guess is void"),
-      latest: rule(2, "A18 (d): latest returns the arrived value"),
+      preexisting: rule(HELD, "the existing reader retains its committed output"),
+      staleForeign: rule(0, "a stale reader sees the committed output"),
+      childrenForbidden: rule(0, "a children-forbidden reader sees the committed output"),
+      latest: rule(3, "latest observes the selected output, not its masked incoming answer"),
       isPending: rule(true, "A18 (d): pending iff the arrival differs from the override"),
       authoritative: rule(2, "A17 carve-out: the authoritative reader sees the staged truth")
     }
@@ -319,20 +309,10 @@ export const STATES: State[] = [
       return built;
     },
     expect: {
-      // Never committed: the guess (`supersede` above; S-56) is written in
-      // the frame that re-asked its source and voided at the correction,
-      // its lane never shown (D-34). The reads are the void guess's (lanes 2026-10-01/02:
-      // written in the frame that re-asked its source, its lane blocked and
-      // never displayed, §16): there is no displayed override — direct reads
-      // see the committed value, the truth is staged under the action, a
-      // fresh reader of it is born held.
-      // Never committed: no value to serve a direct read (A19 exc. 1 —
-      // loading, not pending), `latest` tunnels to the staged truth.
-      untracked: rule(
-        "throws:NotReady",
-        "A19 exc. 1 / lanes: never committed and the guess void — nothing to serve"
-      ),
-      derivesFrom: rule(2, "A18 (b)"),
+      // The same held input with no previously published output: ordinary
+      // reads and an imperatively created latest output have nothing to serve.
+      untracked: rule("throws:NotReady", "no output has published yet"),
+      derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(HELD, "A18 (c) / A29 (born held)"),
       preexisting: observed(
         HELD,
@@ -342,15 +322,12 @@ export const STATES: State[] = [
         HELD,
         "lanes / A29: a fresh stale reader of a never-committed node enters"
       ),
-      childrenForbidden: rule(
+      childrenForbidden: rule(NOT_READY, "no output has published: loading, not pending"),
+      latest: rule(
         NOT_READY,
-        "A32 / A19 exc. 1 / lanes: the frame — nothing committed, the guess void; loading, not pending, as for the untracked read (was 0 while the old representation committed the superseded first landing)"
+        "an imperative latest read has no published output yet; flushed-value outside reads are deferred"
       ),
-      latest: rule(2, "A18 (d)"),
-      isPending: rule(
-        false,
-        "A19 exc. 1: a never-committed node is loading, not pending (the guess that was 'the observable value' under `next` is void)"
-      ),
+      isPending: rule(false, "a never-published node is loading, not pending"),
       authoritative: rule(2, "A17 carve-out")
     }
   },

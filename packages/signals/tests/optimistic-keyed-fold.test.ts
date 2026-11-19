@@ -272,29 +272,69 @@ describe("keyed arrangement guess: a correction folds beneath it (D-34)", () => 
   });
 
   for (const where of ["in the action", "on mainline"]) {
-    it(`a truth longer than a reorder guess (${where}): a list pass never pairs the truth's length with the guess's rows`, async () => {
+    it(`a truth longer than a reorder guess (${where}): guessed indices and the unguessed tail stay coherent`, async () => {
       const h = setup([row("a"), row("b")]);
+      const outputPairs: [string, string][] = [];
+      const direct = () => h.rows.map(r => r?.id ?? "HOLE").join(",");
+      const disposeMirror = createRoot(dispose => {
+        const memo = createMemo(direct);
+        createRenderEffect(
+          () => [direct(), memo()] as [string, string],
+          pair => void outputPairs.push(pair)
+        );
+        return dispose;
+      });
+      const expectRows = (ids: string[]) => {
+        expect(h.rows.length).toBe(ids.length);
+        expect(Object.keys(h.rows)).toEqual(ids.map((_, i) => String(i)));
+        expect(Array.from(h.rows, r => r?.id ?? "HOLE")).toEqual(ids);
+        expect(h.frames.at(-1)).toBe(ids.join(","));
+      };
       let release!: () => void;
-      const gate = new Promise<void>(r => (release = r));
-      const truth = [row("b"), row("a"), row("s")];
-      const p = action(function* () {
-        h.set(d => void d.reverse());
-        yield gate;
-        if (where === "in the action") h.setSource(truth);
-      })();
-      flush();
-      if (where === "on mainline") {
-        h.setSource(truth);
+      let running: Promise<unknown> | undefined;
+      try {
+        const gate = new Promise<void>(r => (release = r));
+        const truth = [row("b"), row("a"), row("s")];
+        const p = (running = action(function* () {
+          h.set(d => void d.reverse());
+          yield gate;
+          if (where === "in the action") h.setSource(truth);
+        })());
+        flush();
+        expectRows(["b", "a"]);
+        if (where === "on mainline") {
+          h.setSource(truth);
+          flush();
+          // Incoming growth joins the active permutation. The complete
+          // reversed arrangement remains selected until the action ends.
+          expectRows(["b", "a"]);
+        }
+        release();
+        await p;
+        flush();
+        await sleep(1);
+        flush();
+        expect(h.mapped.every(r => r !== undefined)).toBe(true);
+        expectRows(["b", "a", "s"]);
+        // Input publication and override correction may notify the same complete
+        // value twice. Preserve the exact order of distinct observable frames.
+        expect(h.frames.filter((frame, i, frames) => i === 0 || frame !== frames[i - 1])).toEqual([
+          "a,b",
+          "b,a",
+          "b,a,s"
+        ]);
+        expect(outputPairs.length).toBeGreaterThan(0);
+        for (const [value, derived] of outputPairs) {
+          expect(value).not.toContain("HOLE");
+          expect(derived).toBe(value);
+        }
+        expect(h.counts()).toEqual({ mounts: 3, unmounts: 0 });
+      } finally {
+        release?.();
+        await running;
+        disposeMirror();
         flush();
       }
-      release();
-      await p;
-      flush();
-      await sleep(1);
-      flush();
-      expect(h.mapped.every(r => r !== undefined)).toBe(true);
-      expect(h.frames).toEqual(["a,b", "b,a", "b,a,s"]);
-      expect(h.counts()).toEqual({ mounts: 3, unmounts: 0 });
     });
   }
 });

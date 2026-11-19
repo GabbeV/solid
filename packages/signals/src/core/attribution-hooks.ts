@@ -7,6 +7,12 @@ import type { Computed, Owner, Signal } from "./types.js";
  * historical `transition` wording. */
 export type Transition = Transaction;
 
+/** Ask an installed optimistic selector whether its published value is a guess. */
+export let layerShowsGuess: ((node: Signal<any>) => boolean | undefined) | undefined;
+export function setLayerShowsGuess(read: typeof layerShowsGuess): void {
+  layerShowsGuess = read;
+}
+
 /**
  * Observe-tier hook points for the reactive core.
  *

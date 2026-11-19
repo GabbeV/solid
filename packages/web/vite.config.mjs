@@ -46,6 +46,7 @@ export default defineConfig({
     pool: "threads",
     globals: true,
     setupFiles: [
+      "./test/setup-jest-dom.ts",
       "test/setup-frames-eager.ts",
       // Reader-seat shadow (S0): the signals dist built with
       // SIGNALS_TEST_DEFINE=true records per-file mismatches when

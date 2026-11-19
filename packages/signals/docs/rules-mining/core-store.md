@@ -15,10 +15,11 @@ Files: **CS** = `tests/store/createStore.test.ts`, **SP** = `tests/store/storePa
 - SH "shallow store nested in a deep store reconciles through the parent".
 - **CONFLICT (mild):** under CoW, once a store privatizes a shared raw, the raw held by the other store diverges — dedupe key (raw identity) and logical node no longer coincide. Ruling needed on what dedupe means once backings diverge.
 
-**R3. A store proxy ingested into another store (deep or shallow) is re-wrapped in the ingesting store's own proxy family — never identity-passed, never raw-marked.**
+**R3. A derived store, projection or optimistic store wraps an incoming store proxy in its own family. A plain holder shares the proxy, including a proxy inserted later through its setter.**
 
 - SPC "each level serves its own proxies…", "set-trap ingest passes through without raw-marking", "seed ingest…".
 - **Ruled 2026-11-18 (#4996):** this is the derived store's rule — a projection, `createStore(fn)` and an optimistic store derive, so each holds its own view of a store in its value. Plain stores are one family (R2): a store placed in a plain store is that store, the same identity and shared state, so an edit through either shows in both. Pin: `tests/store-setter-foreign-proxy-4996.test.ts`.
+- A plain holder of a derived row shares the row’s view. The derivation still separates that view from its input.
 
 **R4. Write isolation across a store chain: writing through the last store in a derived chain is visible only there; upstream stores and base objects untouched (shallow or deep middle).**
 
@@ -194,7 +195,7 @@ _Amended 2026-10-01 (#3733, rule B)._ This reverses #2692's "write trumps deriva
 
 - SH 2 tests.
 
-**R43. Store proxies are exempt from shallow raw treatment: shallow store ingesting another store's proxy passes it through unmarked and serves a live wrapped view (upstream visible, downstream isolated), seed or set-trap.**
+**R43. A shallow slot holding a store proxy follows R3, both in its seed and on assignment. A plain holder shares the proxy. A derived holder serves its own live view.**
 
 - SPC "#2932…" + derived chain tests.
 

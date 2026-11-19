@@ -102,6 +102,7 @@ async function run(shape: Shape, plain: Plain, prior: boolean) {
   second.resolve(second.v);
   await task();
   flush();
+  expect(asks).toEqual([]);
   return { reasked, landed: { leaves, plains } };
 }
 

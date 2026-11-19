@@ -406,10 +406,17 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
   (newItems as any)[$TRACK]; // top level tracking (a store array's container node)
   // A shallow store array diffs its backing: its slots are raw records, and
   // a trap per slot read was most of a one-row write on a 1k-row list.
-  newItems = shallowView?.((newItems as any)[$TARGET]) ?? newItems;
+  const target = (newItems as any)[$TARGET];
+  newItems = shallowView?.(target) ?? newItems;
+  // Resolve the selected slots in the list computation's context before
+  // the internal row owner starts mutating its retained bookkeeping.
   const newLen = newItems.length;
+  const captured = target?._fam?.opt && newLen !== 0 ? newItems.slice(0) : undefined;
 
-  runWithOwner(this._owner, (updateKeyedRows<Item, MappedItem>).bind(this, newItems, newLen));
+  runWithOwner(
+    this._owner,
+    (updateKeyedRows<Item, MappedItem>).bind(this, newItems, newLen, captured)
+  );
 
   return this._mappings;
 }
@@ -418,10 +425,11 @@ function updateKeyedMap<Item, MappedItem>(this: MapData<Item, MappedItem>): any[
 function updateKeyedRows<Item, MappedItem>(
   this: MapData<Item, MappedItem>,
   list: readonly Item[],
-  newLen: number
+  newLen: number,
+  captured: Item[] | undefined
 ): void {
   // The next pass's `_items`, taken first: a store list answers each read of a slot through a trap.
-  const newItems = list.slice(0);
+  const newItems = captured ?? list.slice(0);
   let i: number,
     j: number,
     // The stage slot a mapper writes its row/index signal into: `j` on the

@@ -74,6 +74,7 @@ describe("uninitialized async memo over latest(s) (#4362, #4363)", () => {
 
   it("#4362: the issue's shape (no try/catch) does not trip the loop guard", () => {
     const [s, set] = createSignal(1);
+    const values: unknown[] = [];
     createRoot(() => {
       const m = createMemo(() => {
         const v = latest(s);
@@ -81,12 +82,13 @@ describe("uninitialized async memo over latest(s) (#4362, #4363)", () => {
       });
       createRenderEffect(
         () => [latest(m), isPending(m)],
-        () => {}
+        value => void values.push(value)
       );
     });
     flush();
     set(2);
     expect(() => flush()).not.toThrow();
+    expect(values).toEqual([]);
   });
 
   it("#4363: latest(m) keeps throwing NotReady after its latest() input changes (A7)", () => {
@@ -211,15 +213,18 @@ describe("uninitialized async memo over latest(s) (#4362, #4363)", () => {
     createRoot(() => {
       out.rootBody = show(() => m());
       const memoUntrack = createMemo(() => show(() => untrack(m)));
-      out.memoUntrack = memoUntrack();
+      // Its own first value can also be held; inspect the accessor's read.
+      out.memoUntrack = show(memoUntrack);
       createTrackedEffect(() => {
         out.tracked = show(() => m());
       });
       createRenderEffect(
-        () => show(() => [untrack(m), latest(m)]),
-        v => {
-          out.effect = v;
-        }
+        () => {
+          // This test records what the read throws, not when a callback
+          // publishes the string produced by the diagnostic catch helper.
+          out.effect = show(() => [untrack(m), latest(m)]);
+        },
+        () => {}
       );
       // Loading, not pending (A19 exc. 1): owned, the probe propagates NotReady.
       out.probe = show(() => isPending(m));

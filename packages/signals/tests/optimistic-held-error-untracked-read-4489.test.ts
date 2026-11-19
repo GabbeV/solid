@@ -1,15 +1,9 @@
 /**
- * #4489: a keyed derived optimistic store's re-ask (a `filter` change, held
- * with a pending removal guess's action — D-34) rejected. The view held, but
- * an untracked read (a click handler) of a row the screen still showed threw
- * the new error: a derived store's derive published its held rejection at
- * once (D-41's open deviation for derived stores).
- *
- * Ruled (D-41, F-1 "what it does not say", D-29, D-34): an error that lands
- * on a held node is staged with the frame. Until the reveal the screen keeps
- * what it showed and an untracked read reads the screen — here the guess
- * over the committed rows (F-11); the effect's error arm does not run. At
- * the reveal the error shows, to the screen and to reads alike.
+ * #4489 control under independent input/override lifetimes (stage 120):
+ * a whole-list read consumes unguessed inputs and can show their error while
+ * a selected guessed row remains readable. At correction the guessed output
+ * consumes its input error as well. This deliberately differs from next's
+ * family-wide D-34 hold.
  */
 import { expect, it } from "vitest";
 import {
@@ -32,7 +26,7 @@ const tick = async () => {
   }
 };
 
-it("#4489: while an action holds the view, a handler reads the row the screen shows (D-41)", async () => {
+it("#4489: a guessed row remains readable while an independent input error reaches the whole list", async () => {
   const asks: { key: string; res: (v: any) => void; rej: (e: any) => void }[] = [];
   const ask = (key: string) => new Promise<any>((res, rej) => asks.push({ key, res, rej }));
   const settle = async (key: string, f: (a: (typeof asks)[number]) => void) => {
@@ -86,15 +80,18 @@ it("#4489: while an action holds the view, a handler reads the row the screen sh
     flush();
     await tick();
     await settle("f:closed", a => a.rej(new Error("declined")));
-    // Held: the screen keeps the guess, and so does a handler's read.
-    expect(frames).toEqual(["#1 #3 #4", "#1 #4"]);
-    expect(screen.at(-1)).toBe("#1 #4");
+    // The unguessed rows consume the independent producer error, so the
+    // whole-list view shows its fallback. The guessed index still selects
+    // its own output; a handler can read it until the action retires.
+    expect(frames).toEqual(["#1 #3 #4", "#1 #4", "ERR declined"]);
+    expect(screen.at(-1)).toBe("ERR declined");
     expect(untrack(() => issues[1].id)).toBe(4);
     expect(untrack(() => issues.length)).toBe(2);
-    // The close is accepted; its refresh re-asks the new question, which
-    // fails too. The action ends: the error reveals to the screen and reads.
+    // The close is accepted; its refresh re-asks the input. The shown error
+    // remains until the replacement answer; retirement then exposes that
+    // error through the formerly guessed index too.
     await settle("close:3", a => a.res({}));
-    expect(frames.at(-1)).toBe("#1 #4");
+    expect(frames.at(-1)).toBe("ERR declined");
     await settle("f:closed", a => a.rej(new Error("declined again")));
     expect(frames.at(-1)).toBe("ERR declined again");
     expect(screen.at(-1)).toBe("ERR declined again");

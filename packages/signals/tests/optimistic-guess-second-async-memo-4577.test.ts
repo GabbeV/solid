@@ -23,6 +23,7 @@ test("F-1 in the #4577 shape: one memo's readers agree, a memo is whole, the scr
   const ask = (key: string) => new Promise<any>(res => asks.push({ key, res }));
   const settle = async (key: string, v: any) => {
     const i = asks.findIndex(a => a.key === key);
+    expect(i, `missing request ${key}`).toBeGreaterThanOrEqual(0);
     asks.splice(i, 1)[0].res(v);
     await tick();
   };
@@ -104,7 +105,11 @@ test("F-1 in the #4577 shape: one memo's readers agree, a memo is whole, the scr
   closeOne(1);
   await tick();
   await settle("issues:closed", [{ id: 1 }, { id: 2 }]);
-  await settle("other:closed", "O-closed");
+  // Optimistic derivations may request the committed filter again.
+  // Answer each request for its actual key, never splice(-1) and send a
+  // "closed" response to an unrelated "open" request.
+  for (const request of asks.filter(a => a.key.startsWith("other:")))
+    await settle(request.key, `O-${request.key.split(":")[1]}`);
   await settle("close:1", {});
   await settle("issues:closed", [{ id: 2 }]);
   for (let k = 0; k < 10 && asks.length; k++) {

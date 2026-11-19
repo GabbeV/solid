@@ -1,18 +1,22 @@
-import { NOT_PENDING } from "./constants.js";
+import { LEGACY_LANES, NOT_PENDING } from "./constants.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_CHILDREN_FORBIDDEN,
   CONFIG_HELD,
   CONFIG_OVERRIDE,
+  CONFIG_STAGED_ERROR,
   EFFECT_RENDER,
   EFFECT_TRACKED,
   EFFECT_USER,
   REACTIVE_DISPOSED,
+  REACTIVE_JOINED,
   STATUS_ERROR,
-  STATUS_PENDING
+  STATUS_PENDING,
+  STATUS_UNINITIALIZED
 } from "./constants.js";
 import {
   computed,
+  creatorReads,
   createEffectNode,
   enterCallback,
   exitCallback,
@@ -41,15 +45,16 @@ import {
   haltReactivity,
   haltReactivityAt,
   notifyEpoch,
-  txOf,
   resetUnhandledAsync,
   schedule,
+  txOf,
   setTrackedQueueCallback,
   setEffectCallback,
   heldRunHook,
   attachHook,
   queueEvent,
-  applyStaged
+  applyStaged,
+  layerCompute
 } from "./scheduler.js";
 import type { Computed, NodeOptions, Owner } from "./types.js";
 
@@ -81,18 +86,36 @@ export function effect<T>(
     isUser ? EFFECT_USER : EFFECT_RENDER,
     options
   ) as Effect<T>;
+  // Capture the creator's frame before this child's own reads can join it.
+  // Only a ready first unscheduled render initializes the detached tree.
+  const inherited =
+    !isUser && !options?.schedule && !options?.defer && layerCompute ? creatorReads(node, 0) : 0;
   recompute(node, true);
-  // A first pass that read a staged value was staged itself (recompute: born
-  // staged); the flush's commit replays this effect. Its first run is not this
-  // creation's (F-7). A lane's node's run is the lane's: queued, not run
-  // now — into its own pass's lane (its transaction: the creator's lane, or
-  // the one a lane read moved the pass into, F-6/F-7) — and released at the
-  // reveal (lanes.ts). Not a lane's node: the creator's (`enqueue`'s default
-  // for no transaction; the frame for a transaction's).
-  // `defer` skips the first run, whoever owes it. A node born staged
-  // (#4543): its staged first value applies now, so the commit replays
-  // nothing and the next pass gets it as `prev`, as on a plain mount (#4556;
-  // D-12). A lane's node (#4557): it queues none.
+  if (
+    inherited &&
+    node._pendingValue !== NOT_PENDING &&
+    !(node._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
+    !(node._config & CONFIG_STAGED_ERROR)
+  ) {
+    let ready = true;
+    // A staging alone may be an independent mount over a first answer.
+    // Such an answer still waits for publication (A29).
+    if (!(inherited & REACTIVE_JOINED))
+      for (let edge = node._deps; edge; edge = edge._nextDep)
+        if (
+          edge._gen === node._depGen &&
+          (edge._dep as Computed<any>)._statusFlags & STATUS_UNINITIALIZED
+        )
+          ready = false;
+    if (ready) {
+      applyStaged(node);
+      node._statusFlags &= ~STATUS_UNINITIALIZED;
+    }
+  }
+  // Remaining first values that are born held wait for commit (A29).
+  // A ready owned first render above may initialize private DOM now (D-19);
+  // scheduled/user callbacks and subsequent runs still use the holder's queue.
+  // `defer` initializes the previous value but skips the first callback.
   options?.defer
     ? applyStaged(node)
     : node._pendingValue === NOT_PENDING &&
@@ -132,7 +155,14 @@ function notifyEffectStatus(this: Effect<any>): void {
       // and the runner dispatches on them, so a recovery before the effect
       // phase takes the success arm instead. (Re-read: the boundary
       // notify above can run a redraw.)
-      if (this._statusFlags & STATUS_ERROR) queueEffectRun(this);
+      // Re-reading the still-displayed error during a retry restores its
+      // status, but does not publish a different answer to the error arm.
+      if (
+        this._statusFlags & STATUS_ERROR &&
+        (this._x?._shownError == null ||
+          unwrapStatusError(this._x._shownError) !== unwrapStatusError(actualError))
+      )
+        queueEffectRun(this);
       return;
     }
     // Dev locates the halt at the node that threw: the StatusError's
@@ -144,19 +174,6 @@ function notifyEffectStatus(this: Effect<any>): void {
       unwrapStatusError(actualError),
       __DEV__ && actualError instanceof StatusError ? actualError.source : undefined
     );
-  } else if (
-    // A user effect's run owed for a pass a new question has since made
-    // pending is for a world that will not commit (F-1, F-2): void — the
-    // effect re-runs when that question settles (`settlePendingSource`). A
-    // quiet re-ask keeps it: the pass still answers the question asked (F-9).
-    this._type === EFFECT_USER
-  ) {
-    if (
-      actualStatus & STATUS_PENDING &&
-      this._modified &&
-      !(actualError as any)?.source?._x?._reask
-    )
-      ext(this)._blocked = !(this._modified = false);
   } else if (this._type === EFFECT_RENDER) {
     globalQueue.notify(this, STATUS_PENDING | STATUS_ERROR, actualStatus, actualError);
     if (__DEV__ && _hitUnhandledAsync && resetUnhandledAsync()) {
@@ -245,6 +262,15 @@ function runEffect(node: Effect<any>, type: number): void {
   // Captured before the callback: its own throw errors the node below, but
   // the compute pass that produced `_value` was clean, so its tail still goes.
   const cleanPass = node._x?._error == null;
+  // A queued value callback can outlive the update that enqueued it. Its
+  // current holder decides publication. The compute-error arm above is a
+  // separate error notification; it does not publish a proposed value.
+  if (type && node._config & CONFIG_HELD && !(LEGACY_LANES && node._x!._transaction!._lane)) {
+    txOf(node)._queues[type - 1].push(
+      (node._boundRunEffect ??= runEffect.bind(null, node))
+    );
+    return;
+  }
   let prevStrictRead: string | false = false;
   let prevStrictReadEvent: unknown;
   if (__DEV__) {
@@ -272,6 +298,9 @@ function runEffect(node: Effect<any>, type: number): void {
     }
     // The final cleanup is invoked by disposeChildren at true disposal.
     node._cleanup = nextCleanup as (() => void) | undefined;
+    // A published recovery ends the old error's display. Reusing that error
+    // on a later failure must notify the error arm again.
+    if (cleanPass && node._x) node._x._shownError = null;
   } catch (error) {
     // (D-42, dev: as above — a boundary takes it or the system halts.)
     if (__DEV__) forgetThrownRead();
@@ -287,7 +316,7 @@ function runEffect(node: Effect<any>, type: number): void {
     node._prevValue = node._value;
     node._modified = false;
     // The run applied: this is the frame now, so the dependency tail the
-    // compute pass left linked goes (D-10, #3438 — `recompute` defers an
+    // compute pass left linked goes (A30, #3438 — `recompute` defers an
     // effect's trim while a run is owed; the twin of `commitPendingNode`'s
     // trim for a staged pass). An errored compute kept its full list with
     // `_depsTail` marking where it stopped; leave it, as the commit does.
@@ -345,8 +374,8 @@ export function trackedEffect(fn: () => void | (() => void), options?: NodeOptio
       ) {
         // Held: it commits at its hold's landing, which runs the hold's
         // stashed runs — but a run during the hold, for another dep, had
-        // consumed the one queued for it (#4607). Re-run there, as a
-        // stale reader would be (D-9); effect-phase code holds nothing (D-29).
+        // consumed the one queued for it (#4607). Re-run there, as A15's
+        // stale reader would be; effect-phase code holds nothing (D-29).
         if (dep._config & CONFIG_HELD) {
           if (!owed) {
             owed = true;

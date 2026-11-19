@@ -36,7 +36,10 @@ import {
   EFFECT_TRACKED,
   EFFECT_USER,
   REACTIVE_DISPOSED,
+  NOT_PENDING,
   REACTIVE_IN_HEAP,
+  REACTIVE_JOINED,
+  REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_LANE_READ,
   REACTIVE_PROBED,
   REACTIVE_ZOMBIE,
@@ -47,7 +50,7 @@ import {
 import { computed, read, recompute, runWithOwner, setSignal, signal } from "./core/core.js";
 import { emitDiagnostic, forgetThrownRead, reportDiagnostic } from "./core/dev.js";
 import { shadowSeatRestore, shadowSeatSave, shadowSwapSeat } from "./core/seat.js";
-import { NotReadyError, unwrapStatusError } from "./core/error.js";
+import { ContextRetry, NotReadyError, StatusError, unwrapStatusError } from "./core/error.js";
 import { reportClientError } from "./core/error-hooks.js";
 import { link } from "./core/graph.js";
 import { enqueueSub } from "./core/heap.js";
@@ -61,6 +64,8 @@ import {
   haltReactivityAt,
   heldUnder,
   joinFuture,
+  layerTransaction,
+  layerNotify,
   passLane,
   schedule,
   setPassLane,
@@ -72,8 +77,9 @@ import {
   swapHook
 } from "./core/scheduler.js";
 import { attrHooks } from "./core/attribution-hooks.js";
-import type { Computed, Owner, Signal } from "./core/types.js";
+import type { Computed, Owner, Root, Signal } from "./core/types.js";
 import { flatten } from "./flatten.js";
+import { boundaries as layerBoundaries } from "./layers/boundary.js";
 import { accessor, type Accessor } from "./signals.js";
 
 interface Boundary {
@@ -266,7 +272,8 @@ export function redraw(b: Boundary): void {
 function catchStatus(
   node: Computed<any>,
   flags: number,
-  error?: unknown
+  error?: unknown,
+  fresh = false
 ): boolean | typeof CAUGHT_REARMED {
   if (flags === 0) {
     // A status cleared. Judged by the node's status now, against each
@@ -291,7 +298,12 @@ function catchStatus(
           b._readers.delete(node) &&
           !prune(b, 0)
         ) {
-          if (b._fallback) redraw(b);
+          if (b._fallback) {
+            // The recovered reader selects this swap. Carry its update to
+            // the queued output even if its retained tree reads no new value.
+            if (b._output) layerNotify?.(node, b._output);
+            redraw(b);
+          }
           if (revealHooks && b._reveal !== null) revealHooks._changed(b._reveal);
         }
     return false;
@@ -305,6 +317,18 @@ function catchStatus(
       continue;
     }
     if (isCollecting(b)) {
+      const creator = (b._owner as Root)._parentComputed;
+      // A synthetic first-pass hold inherited from the boundary's creator
+      // already gates this whole mount. It is not a new load needing a
+      // fallback. Real pending work still reaches the ordinary status path.
+      if (
+        fresh &&
+        !b._initialized &&
+        creator &&
+        (creator._config & CONFIG_HELD ||
+          (creator._flags & REACTIVE_RECOMPUTING_DEPS && creator._flags & REACTIVE_JOINED))
+      )
+        continue;
       caught(b, node, error);
       return b._armed ? CAUGHT_REARMED : true;
     }
@@ -397,6 +421,9 @@ function caughtBelow(b: Boundary, r: Computed<any>, s: Computed<any>): boolean {
  * upstream node is walked once (`seen`), so a shared upstream graph costs its
  * size, not its paths. */
 function reads(n: Computed<any>, s: Computed<any>, seen?: Set<any>): any {
+  // An active override subscribes to its input, but does not consume it.
+  const boundary = layerBoundaries.get(n);
+  if (boundary && boundary._override !== NOT_PENDING) return false;
   for (let l = n._deps, h; l; l = l._nextDep)
     if ((h = l._dep) === s || ((seen ||= new Set()).size < seen.add(h).size && reads(h, s, seen)))
       return 1;
@@ -417,6 +444,18 @@ export function prune(b: Boundary, pass?: boolean | 0): number {
   const mask = b._type | STATUS_PENDING;
   for (const [r, s] of b._readers) {
     if (!((r._flags | s._flags) & REACTIVE_DISPOSED)) {
+      // Reset still targets the original error source. A recovered reader
+      // which no longer consumes that source need not await its lower update.
+      if (
+        b._type === STATUS_ERROR &&
+        r !== s &&
+        !(r._statusFlags & mask) &&
+        !(r._config & CONFIG_STAGED_ERROR) &&
+        !reads(r, s)
+      ) {
+        b._readers.delete(r);
+        continue;
+      }
       const k = keeps(b, r);
       // An error staged on its source is not settled: it publishes with the
       // commit (D-41, #4364). Nor a verdict reader queued to re-derive: its pass,
@@ -591,7 +630,20 @@ function reportOutsideHold(b: Boundary): void {
 
 /** `on` changed after the mount: fresh again if anything under it is
  * pending now; collecting for the rest of the flush either way. */
-function arm(b: Boundary): void {
+function displayAhead(c: Computed<any>, seen = new Set<Computed<any>>()): boolean {
+  if (seen.has(c)) return false;
+  seen.add(c);
+  const layer = layerBoundaries.get(c);
+  // Observation outputs are explicit display-ahead reads even when their
+  // first proposal has not yet been staged by the seam. User optimism is
+  // transparent without an override.
+  if (layer && (!layer._inputStatus || layer._override !== NOT_PENDING)) return true;
+  for (let d = c._deps; d; d = d._nextDep)
+    if (displayAhead(d._dep as Computed<any>, seen)) return true;
+  return false;
+}
+
+function arm(b: Boundary): true | void {
   if (!b._initialized) {
     // Already re-armed and on its fallback, as the frame's work — and the
     // `on` pass arms again as lane work: its verdict was provisional (a
@@ -608,6 +660,7 @@ function arm(b: Boundary): void {
       // voided at the seam (verdict.ts `verdictSeam`).
       flip(b);
       redraw(b);
+      return true;
     }
     return;
   }
@@ -629,7 +682,8 @@ function arm(b: Boundary): void {
     lane = GlobalQueue._verdictLane!(flushTransaction!);
   }
   b._armLane = lane;
-  if (__DEV__) b._ahead = lane !== null;
+  if (__DEV__)
+    b._ahead = lane !== null || displayAhead(getOwner() as Computed<any>);
   collecting.add(b);
   const n = b._readers.size;
   heldUnder(b._owner, flushTransaction, r => record(b, r));
@@ -647,9 +701,13 @@ function arm(b: Boundary): void {
         if (a._type & STATUS_PENDING) for (const [o] of b._readers) a._readers.delete(o);
       flip(b);
       redraw(b);
-      return;
+      return true;
     }
   }
+  // The shared layer engine carries the eventual fallback through this
+  // dependency, even when pending content is discovered after the on-pass.
+  // Legacy lanes carry that ownership through their separate flip path.
+  if (layerTransaction) return true;
 }
 
 /** The error boundary's `reset`: re-run what threw (a comparator throw
@@ -657,7 +715,20 @@ function arm(b: Boundary): void {
 function reset(b: Boundary): void {
   // A snapshot: a source failing again is caught — and re-added — mid-walk.
   for (const r of new Set(b._readers.values()))
-    if (r._fn !== undefined && !(r._flags & REACTIVE_DISPOSED)) recompute(r);
+    if (r._fn !== undefined && !(r._flags & REACTIVE_DISPOSED)) {
+      const previous = unwrapStatusError(r._x?._error);
+      recompute(r);
+      // An unchanged error need not notify readers again (D-41), but an
+      // explicit reset has observed this failure anew. Object errors are
+      // still reported once by the hook; primitives are reported per sight.
+      const error = r._x?._error;
+      if (r._statusFlags & STATUS_ERROR && unwrapStatusError(error) === previous)
+        reportClientError(
+          unwrapStatusError(error),
+          b._owner,
+          error instanceof StatusError ? error.source : r
+        );
+    }
   schedule();
 }
 
@@ -736,14 +807,19 @@ function createBoundary<T>(
   // A source of it going pending re-runs it (CONFIG_REDERIVE) rather than
   // marking it: the pass catches the NotReady — it is a notification, it
   // does not suspend the parent — and re-arms.
+  let arming: Computed<any> | undefined;
   if (onFn) {
     let mounted = false;
-    runWithOwner(owner, () =>
-      computed(() => {
+    // The output depends on actual rearming, not this callback's void return.
+    // A version notifies it when the selected swap changes while preserving
+    // equality filtering for an on-pass that requests no new swap.
+    arming = runWithOwner(owner, () =>
+      computed((version: number = 0) => {
         try {
           const deps = onFn();
           if (__DEV__ && !mounted && typeof deps === "function") reportOnAccessor(b);
         } catch (e) {
+          if (e instanceof ContextRetry) throw e;
           // (D-42, dev: this catch is the re-arm's mechanism, not a user's.)
           if (__DEV__) forgetThrownRead();
           if (!(e instanceof NotReadyError)) {
@@ -752,13 +828,15 @@ function createBoundary<T>(
               else haltReactivity(e);
               throw e;
             }
-            return;
+            return version;
           }
         }
-        if (mounted) arm(b);
-        else mounted = true;
+        if (mounted) return arm(b) ? version + 1 : version;
+        mounted = true;
+        return version;
       })
-    )._config |= CONFIG_REDERIVE;
+    );
+    arming._config |= CONFIG_REDERIVE;
   }
   const context: Record<symbol | string, unknown> = { ...owner._context, [BOUNDARY]: b };
   if (revealHooks !== null) context[REVEAL] = null;
@@ -792,7 +870,11 @@ function createBoundary<T>(
           b._lane = null;
         }
       }
-      if (!b._armed && !(self._config & CONFIG_HELD)) self._config |= CONFIG_FRAME;
+      if (b._initialized && !b._armed && !(self._config & CONFIG_HELD)) self._config |= CONFIG_FRAME;
+      // Rearming contributes to this output even when the callback returns
+      // no value. Keep that dependency in the graph so a published observation
+      // and the fallback it selects propagate within the same update.
+      if (arming) link(arming, self);
       // Reveal order (reveal.ts): a gated slot shows its fallback — or, in a
       // collapsed tail, nothing — whatever its content's state; the
       // controller is told the pass ran (its readiness may have changed) and
@@ -849,6 +931,10 @@ function createBoundary<T>(
         throw tree._x!._error;
       }
       if (isCollecting(b)) {
+        // Keeping the fallback still observes the content's next status.
+        // A recovery can notify this output before the source finishes;
+        // returning below must not drop the link that delivers its next error.
+        link(tree, self);
         // A boundary mounted over a held value shows its fallback now and the
         // content at the commit (F-7, #3540): entering the transaction would make
         // the output born held. One with a committed value reads a held tree and
@@ -867,6 +953,7 @@ function createBoundary<T>(
       try {
         value = read(tree);
       } catch (e) {
+        if (e instanceof ContextRetry) throw e;
         if (e instanceof NotReadyError ? type === STATUS_PENDING : type === STATUS_ERROR) {
           if (isCollecting(b)) {
             // (D-42, dev: the boundary IS the catcher the throw is addressed to.)
@@ -1086,7 +1173,7 @@ installBoundaryHooks(
   (node, held) =>
     !held &&
     (node._statusFlags & STATUS_UNINITIALIZED
-      ? catchStatus(node, STATUS_PENDING)
+      ? catchStatus(node, STATUS_PENDING, undefined, true)
       : armedOver(node)),
   hiddenBy,
   boundarySeam,

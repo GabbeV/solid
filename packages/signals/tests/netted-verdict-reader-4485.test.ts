@@ -5,6 +5,11 @@
 // the `stagedScreen` arm before any netted check, which listed it as a stale
 // reader of the flush's hold, and its probe was the seam's verdict
 // (`provisionalVerdict`), not final (D-23 Status, #4469's family).
+//
+// Shared outputs: a netted write never publishes pending=true. Reading the
+// unchanged false output does not change the reader's ordinary scheduling.
+// The source's queued pass may still belong to the action's flush, as it
+// does for an ordinary reader in next; its unchanged frame lands there.
 import { describe, expect, it } from "vitest";
 import {
   action,
@@ -21,14 +26,14 @@ const tick = async () => {
 };
 
 describe("#4485: a verdict reader of a signal whose writes net", () => {
-  const net = async (where: "in-action" | "before-action" | "later-tick") => {
+  const net = async (where: "in-action" | "before-action" | "later-tick", pending = true) => {
     const [s, setS] = createSignal(1);
     const [x, setX] = createSignal(0);
     const runs: unknown[] = [];
     const dispose = createRoot(d => {
       createRenderEffect(x, () => {});
       createRenderEffect(
-        () => [s(), isPending(s)],
+        () => [s(), pending ? isPending(s) : false],
         v => void runs.push(v)
       );
       return d;
@@ -57,16 +62,20 @@ describe("#4485: a verdict reader of a signal whose writes net", () => {
   };
 
   it.each(["in-action", "before-action"] as const)(
-    "pends nothing and is not re-run at the landing (%s)",
+    "pends nothing and follows the ordinary reader's publication (%s)",
     async where => {
       const { held, runs } = await net(where);
-      expect(held).toEqual([[1, false]]);
+      // No pending proposal lifts this pass out of the ordinary flush.
+      expect(held).toEqual([]);
       expect(runs).toEqual([[1, false]]);
+      expect(await net(where, false)).toEqual({ held, runs });
     }
   );
 
   it("pends nothing in a later tick of the hold", async () => {
-    const { runs } = await net("later-tick");
+    const result = await net("later-tick");
+    const { runs } = result;
     expect(runs).toEqual([[1, false]]);
+    expect(await net("later-tick", false)).toEqual(result);
   });
 });

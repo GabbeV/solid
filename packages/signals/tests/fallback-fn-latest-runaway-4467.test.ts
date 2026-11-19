@@ -74,10 +74,17 @@ for (const v of ["direct", "innerMemo", "fnDirect", "fnMemo"] as const)
       createRenderEffect(mount, s => void screens.push(s));
     });
     flush();
+    // The retried creator reads committed x=0 beside the explicit latest=1.
+    expect(screens).toEqual(["0:F1"]);
     await vi.advanceTimersByTimeAsync(100);
     flush();
+    expect(screens).toEqual(["0:F1"]);
     await vi.advanceTimersByTimeAsync(200);
     flush();
-    expect(builds).toBe(1);
-    expect(screens).toEqual(["1:C"]);
+    // Discovering latest retries the creator once in the optimistic context.
+    // Both fallback attempts terminate. The first visible mount uses the
+    // committed input; the final one uses the incoming input and ready content.
+    // The runaway regression remains bounded explicitly.
+    expect(builds).toBe(2);
+    expect(screens).toEqual(["0:F1", "1:C"]);
   });

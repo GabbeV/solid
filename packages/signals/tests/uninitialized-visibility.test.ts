@@ -14,7 +14,7 @@
  * 2. Write-visibility corollary (A25, ruled 2026-07-17): the seed is a
  *    legitimate WRITE base. Setter function-form arguments (store draft,
  *    signal `prev`) read the raw current state — seed / `undefined` — while
- *    every read channel throws, so no consumer can rely on it.
+ *    unguessed public reads throw, so no consumer can rely on the seed.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -224,69 +224,95 @@ describe("A25 write-visibility corollary: seed visible on the write path", () =>
     dispose();
   });
 
-  // Ruled 2026-11-03 (#4656): an OPTIMISTIC setter before the first landing
-  // is a write before load — in DEV the named diagnostic, no guess made.
-  it("optimistic store: a setter before the first landing throws OPTIMISTIC_WRITE_BEFORE_LOAD", async () => {
-    const d = deferred<{ a: number }>();
+  // The seed supplies the callback draft, but an unpublished proposal is
+  // discarded while its producer remains coordinated with the writing action.
+  it("optimistic store: the first setter reads the seed and discards while entangling its input", async () => {
+    const d = deferred<{ a: number; b: number }>();
+    const finish = deferred<void>();
+    const shown: number[] = [];
     let s!: any, ss!: any, dispose!: () => void;
     createRoot(disp => {
       dispose = disp;
-      [s, ss] = createOptimisticStore(async () => d.promise, { a: 0 });
+      [s, ss] = createOptimisticStore(async () => d.promise, { a: 0, b: 2 });
       createRenderEffect(
-        () => s,
-        () => {}
+        () => s.a,
+        value => {
+          shown.push(value);
+        }
       );
     });
     flush();
-    let ran = false;
-    expect(() =>
+    expect(() => s.a).toThrow(NotReadyError);
+    expect(() => s.b).toThrow(NotReadyError);
+    let seen: unknown;
+    const running = action(function* () {
       ss((draft: any) => {
-        ran = true;
-        draft.a = 1;
-      })
-    ).toThrow(/OPTIMISTIC_WRITE_BEFORE_LOAD/);
-    expect(ran).toBe(false);
-    d.resolve({ a: 7 });
-    await settle();
-    expect(s.a).toBe(7);
-    dispose();
+        seen = [draft.a, draft.b];
+        draft.a++;
+      });
+      yield finish.promise;
+    })();
+    try {
+      flush();
+      expect(seen).toEqual([0, 2]);
+      expect(shown).toEqual([]);
+      expect(() => s.a).toThrow(NotReadyError);
+      expect(() => s.b).toThrow(NotReadyError);
+      d.resolve({ a: 7, b: 8 });
+      await settle();
+      expect(shown).toEqual([]);
+      expect(() => s.a).toThrow(NotReadyError);
+      expect(() => s.b).toThrow(NotReadyError);
+      finish.resolve();
+      await running;
+      await settle();
+      expect(shown).toEqual([7]);
+      expect(s.a).toBe(7);
+      expect(s.b).toBe(8);
+    } finally {
+      d.resolve({ a: 7, b: 8 });
+      finish.resolve();
+      await running;
+      dispose();
+    }
   });
 
-  it("optimistic computed: getter throws while uninitialized; a guess before the first answer shows and the answer judges it (S-56)", async () => {
+  it("optimistic computed: the first setter receives undefined and can publish before its input", async () => {
     const d = deferred<number>();
     let get!: any, set!: any, dispose!: () => void;
+    const shown: number[] = [];
     createRoot(disp => {
       dispose = disp;
       [get, set] = createOptimistic<number>(async () => d.promise);
       createRenderEffect(
-        () => {
-          try {
-            get();
-          } catch {}
-        },
-        () => {}
+        () => get(),
+        value => {
+          shown.push(value);
+        }
       );
     });
     flush();
 
     expect(() => get()).toThrow(NotReadyError);
     let prevSeen: any = "not-run";
-    // S-56 (ruled 2026-11-07, reversing 2026-11-03's #4656 guard): a guess
-    // before the first answer is the newest value the node has produced —
-    // it shows in place of the loading, and the function form receives
-    // `undefined` (nothing has been produced yet).
-    set((prev: any) => {
-      prevSeen = prev;
-      return 99;
-    });
-    expect(prevSeen).toBe(undefined);
+    // An unpublished scalar output has no previous value, but its guess
+    // can initialize it independently of the pending input.
+    expect(() =>
+      set((prev: any) => {
+        prevSeen = prev;
+        return 99;
+      })
+    ).not.toThrow();
+    expect(prevSeen).toBeUndefined();
     flush();
+    expect(shown).toEqual([99]);
     expect(get()).toBe(99);
 
     // The first answer judges the guess.
     d.resolve(1);
     await settle();
     expect(get()).toBe(1);
+    expect(shown).toEqual([99, 1]);
     dispose();
   });
 

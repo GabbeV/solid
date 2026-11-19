@@ -161,56 +161,71 @@ for (const kind of ["Show", "Switch"] as const)
     });
   }
 
-test("Show: a branch closed and reopened inside one hold keeps reading the screen", async () => {
-  const error = vi.spyOn(console, "error").mockImplementation(() => {});
-  const [open, setOpen] = createSignal<string | false>("a");
-  const [fmt, setFmt] = createSignal("ru");
-  const resolvers: (() => void)[] = [];
-  const out: string[] = [];
-  createRoot(() => {
-    const data = createMemo(() => {
-      const o = open();
-      return new Promise<string>(r => resolvers.push(() => r(`data-${o}`)));
+test.each([false, true])(
+  "Show: a branch closed and reopened inside one hold (scheduled=%s)",
+  async schedule => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const [open, setOpen] = createSignal<string | false>("a");
+    const [fmt, setFmt] = createSignal("ru");
+    const resolvers: (() => void)[] = [];
+    const out: string[] = [];
+    const dispose = createRoot(dispose => {
+      const data = createMemo(() => {
+        const o = open();
+        return new Promise<string>(r => resolvers.push(() => r(`data-${o}`)));
+      });
+      const view = Show({
+        get when() {
+          return open();
+        },
+        fallback: "closed",
+        children: (v: () => string) => {
+          createRenderEffect(
+            () => `${fmt()}:${v()}`,
+            t => void out.push(t),
+            { schedule }
+          );
+          return "branch";
+        }
+      });
+      createRenderEffect(
+        () => (view as any)(),
+        () => {}
+      );
+      createRenderEffect(
+        createLoadingBoundary(
+          () => data(),
+          () => "wait"
+        ),
+        () => {}
+      );
+      return dispose;
     });
-    const view = Show({
-      get when() {
-        return open();
-      },
-      fallback: "closed",
-      children: (v: () => string) => {
-        createRenderEffect(
-          () => `${fmt()}:${v()}`,
-          t => void out.push(t)
-        );
-        return "branch";
-      }
-    });
-    createRenderEffect(
-      () => (view as any)(),
-      () => {}
-    );
-    createRenderEffect(
-      createLoadingBoundary(
-        () => data(),
-        () => "wait"
-      ),
-      () => {}
-    );
-  });
-  flush();
-  resolvers.shift()!();
-  await settle();
-  setOpen(false);
-  flush();
-  setFmt("en");
-  flush();
-  setOpen("b");
-  flush();
-  setFmt("fr");
-  flush();
-  expect(out).toEqual(["ru:a", "en:a", "fr:a"]);
-  while (resolvers.length) resolvers.shift()!();
-  await settle();
-  expect(out).toEqual(["ru:a", "en:a", "fr:a", "fr:b"]);
-  expect(error.mock.calls.map(c => String(c[0]).split("\n")[0])).toEqual([]);
-});
+    try {
+      flush();
+      resolvers.shift()!();
+      await settle();
+      setOpen(false);
+      flush();
+      setFmt("en");
+      flush();
+      setOpen("b");
+      flush();
+      setFmt("fr");
+      flush();
+      // Unscheduled callbacks may build the private replacement eagerly.
+      // Scheduled callbacks represent publication and must keep the old view.
+      // The JSX counterpart also pins attached DOM and element identity.
+      expect(out).toEqual(schedule ? ["ru:a", "en:a", "fr:a"] : ["ru:a", "en:a", "en:b", "fr:a"]);
+      while (resolvers.length) resolvers.shift()!();
+      await settle();
+      expect(out).toEqual(
+        schedule ? ["ru:a", "en:a", "fr:a", "fr:b"] : ["ru:a", "en:a", "en:b", "fr:a", "fr:b"]
+      );
+      expect(error.mock.calls.map(c => String(c[0]).split("\n")[0])).toEqual([]);
+    } finally {
+      dispose();
+      for (const resolve of resolvers) resolve();
+    }
+  }
+);

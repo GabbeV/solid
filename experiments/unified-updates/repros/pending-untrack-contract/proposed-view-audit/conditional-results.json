@@ -1,0 +1,140 @@
+{
+  "frames": [
+    {
+      "id": "0",
+      "data": "0",
+      "pending": "false",
+      "direct": "0/0/false/10",
+      "wrapped": "0/0/false/undefined",
+      "async": "0/0/false/10"
+    },
+    {
+      "id": "0",
+      "data": "0",
+      "pending": "true",
+      "direct": "0/0/false/10",
+      "wrapped": "0/0/false/undefined",
+      "async": "0/0/false/10"
+    },
+    {
+      "id": "0",
+      "data": "0",
+      "pending": "true",
+      "direct": "0/0/false/10",
+      "wrapped": "0/0/false/undefined",
+      "async": "0/0/false/10"
+    },
+    {
+      "id": "1",
+      "data": "1",
+      "pending": "false",
+      "direct": "1/1/false/1",
+      "wrapped": "1/0/true/undefined",
+      "async": "1/1/false/0"
+    }
+  ],
+  "history": {
+    "id": [
+      "0",
+      "1"
+    ],
+    "data": [
+      "0",
+      "1"
+    ],
+    "pending": [
+      "false",
+      "true",
+      "false"
+    ],
+    "direct": [
+      "0/0/false/10",
+      "1/1/false/1"
+    ],
+    "wrapped": [
+      "0/0/false/undefined",
+      "1/0/true/undefined"
+    ],
+    "async": [
+      "0/0/false/10",
+      "1/1/false/0"
+    ]
+  },
+  "trace": [
+    {
+      "phase": "initial",
+      "name": "data",
+      "result": "0"
+    },
+    {
+      "phase": "initial",
+      "name": "pending",
+      "result": "0/false"
+    },
+    {
+      "phase": "initial",
+      "name": "direct",
+      "result": "0/0/false/10"
+    },
+    {
+      "phase": "initial",
+      "name": "wrapped",
+      "result": "0/0/false/undefined"
+    },
+    {
+      "phase": "initial",
+      "name": "async",
+      "result": "0/0/false/10"
+    },
+    {
+      "phase": "setId",
+      "name": "data",
+      "result": "promise"
+    },
+    {
+      "phase": "setId",
+      "name": "pending",
+      "result": "0/true"
+    },
+    {
+      "phase": "setId",
+      "name": "direct",
+      "result": "1/1/true/0"
+    },
+    {
+      "phase": "setId",
+      "name": "wrapped",
+      "result": "1/0/false/undefined"
+    },
+    {
+      "phase": "setId",
+      "name": "async",
+      "result": "1/1/true/0"
+    },
+    {
+      "phase": "revision",
+      "name": "direct",
+      "result": "1/1/false/0"
+    },
+    {
+      "phase": "revision",
+      "name": "wrapped",
+      "result": "1/0/true/undefined"
+    },
+    {
+      "phase": "revision",
+      "name": "async",
+      "result": "1/1/false/0"
+    },
+    {
+      "phase": "resolve",
+      "name": "pending",
+      "result": "1/false"
+    },
+    {
+      "phase": "resolve",
+      "name": "direct",
+      "result": "1/1/false/1"
+    }
+  ]
+}

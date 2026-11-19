@@ -18,6 +18,7 @@
 import { describe, expect, it } from "vitest";
 import {
   action,
+  NotReadyError,
   createMemo,
   createRenderEffect,
   createRoot,
@@ -62,7 +63,10 @@ function mount(keepShadowAlive: boolean) {
             try {
               return latest(() => copy());
             } catch (e) {
-              errors.push(e as Error);
+              // Creator retries use the same control-flow category as an
+              // ordinary suspension. This regression guards against actual
+              // user errors (the old internal-write guard), not retries.
+              if (!(e instanceof NotReadyError)) errors.push(e as Error);
               throw e;
             }
           },

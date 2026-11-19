@@ -13,6 +13,8 @@ declare global {
    */
   const __OBSERVE__: boolean;
   const __TEST__: boolean;
+  /** Experimental scalar build omits legacy optimistic/verdict lanes. */
+  const __LEGACY_LANES__: boolean;
 }
 
 export {};

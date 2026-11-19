@@ -21,7 +21,7 @@ import {
 } from "./core/constants.js";
 import { ext } from "./core/core.js";
 import { enqueueSub } from "./core/heap.js";
-import { GlobalQueue } from "./core/scheduler.js";
+import { GlobalQueue, pendingMarkHook } from "./core/scheduler.js";
 import type { Computed, Signal } from "./core/types.js";
 
 export type Marked = Signal<any> | Computed<any>;
@@ -40,6 +40,7 @@ export function repoll(
   seen = new Set<Computed<any>>(),
   readers = CONFIG_VERDICT | CONFIG_AUTHORITATIVE
 ): void {
+  pendingMarkHook?.(node);
   for (let s = node._subs; s !== null; s = s._nextSub) {
     const sub = s._sub;
     if (seen.has(sub)) continue;

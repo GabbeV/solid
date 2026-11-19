@@ -207,7 +207,9 @@ describe("store twins of the lane-authority fixes (#3335/#3334/#3330/#3331)", ()
     flush();
     expect(flights.map(f => f.n)).toEqual([3]);
     expect(log).toEqual([]);
-    expect(state.d).toBe(3);
+    // The proposal has not published through its async consequence yet.
+    // Ordinary reads agree with the displayed output, as for a scalar.
+    expect(state.d).toBe(0);
 
     resolveAll(); // truth: 2 ≠ 3
     await settle();

@@ -36,6 +36,9 @@ import {
   until
 } from "../src/index.js";
 import { CONFIG_HELD } from "../src/core/constants.js";
+import { read } from "../src/core/core.js";
+import { getContainerNode } from "../src/store/store.js";
+import { $TARGET } from "../src/store/types.js";
 
 afterEach(() => flush());
 
@@ -354,19 +357,19 @@ async function buildFold(setup: (todos: Row[]) => void = () => {}) {
       return todos;
     },
     frames,
+    latestInput: () =>
+      latest(() => render(read(getContainerNode((todos as any)[$TARGET])) as Row[])),
     T,
     dispose
   };
 }
 
 describe("held truth is masked from lane passes only (store fold, #3568 shape held past the landing)", () => {
-  it("mid-hold: untracked keeps the optimistic frame, latest() shows the staged world whole", async () => {
+  it("mid-hold: latest selected output retains its structure while latest input shows truth", async () => {
     const h = await buildFold();
     expect(render(h.todos)).toBe("1,2,3 len=3");
-    // D-34's displayed-guess clause (#4689, built 2026-11-07 for a signal
-    // and a superseded keyed row) is not built for a folded arrangement:
-    // `latest` of it still shows the world whole.
-    expect(latest(() => render(h.todos))).toBe("1,2,3,4 len=4");
+    expect(latest(() => render(h.todos))).toBe("1,2,3 len=3");
+    expect(h.latestInput()).toBe("1,2,3,4 len=4");
     expect(h.frames.at(-1)).toBe("1,2,3 len=3");
     await h.T.release();
     expect(h.frames.at(-1)).toBe("1,2,3,4 len=4");
@@ -374,7 +377,7 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
     h.dispose();
   });
 
-  it("a fresh mainline memo created mid-hold composes one staged world (1,2,3,4 len=4, not 1,2,3,HOLE) and is held", async () => {
+  it("a fresh ordinary memo reads the selected output, then corrects with the action", async () => {
     const h = await buildFold();
     const computed: string[] = [];
     const published: string[] = [];
@@ -391,19 +394,21 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
       return d;
     });
     flush();
-    // #3589 left this torn: the fresh memo is not the fold's owning pass, so
-    // it was served the landed `length` (through the superseded override)
-    // with row 3 still masked to committed.
-    expect(computed).toEqual(["1,2,3,4 len=4"]);
-    expect(latest(m)).toBe("1,2,3,4 len=4");
-    expect(published).toEqual([]);
+    // Stage120: an ordinary derivation consumes the selected store output,
+    // including its active index guess, rather than tunneling to its input.
+    expect(computed).toEqual(["1,2,3 len=3"]);
+    expect(latest(m)).toBe("1,2,3 len=3");
+    expect(published).toEqual(["1,2,3 len=3"]);
+    expect(published.at(-1)).toBe(h.frames.at(-1));
     await h.T.release();
-    expect(published).toEqual(["1,2,3,4 len=4"]);
+    expect(published).toEqual(["1,2,3 len=3", "1,2,3,4 len=4"]);
+    expect(published.at(-1)).toBe(h.frames.at(-1));
+    for (const value of [...computed, ...published]) expect(value).not.toContain("HOLE");
     d();
     h.dispose();
   });
 
-  it("a user effect reading row-then-length mid-hold gets row3=4 len=4 (one staged world) and is held", async () => {
+  it("a user effect reading row-then-length retains selected structure through an unrelated write", async () => {
     const [tick3, setTick3] = createSignal(0);
     const computed: string[] = [];
     const applied: string[] = [];
@@ -425,16 +430,16 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
     applied.length = 0;
     setTick3(1);
     flush();
-    // #3589: `row3=HOLE len=4` — row 3 read committed (a mainline pass, not
-    // the fold's owner), then `length` read the landed truth.
-    expect(computed).toEqual(["row3=4 len=4 t1"]);
-    expect(applied).toEqual([]);
+    // The selected append has length 3, so index 3 is coherently absent.
+    // An unrelated write can publish with that complete selected context.
+    expect(computed).toEqual(["row3=HOLE len=3 t1"]);
+    expect(applied).toEqual(["row3=HOLE len=3 t1"]);
     await h.T.release();
-    expect(applied).toEqual(["row3=4 len=4 t1"]);
+    expect(applied).toEqual(["row3=HOLE len=3 t1", "row3=4 len=4 t1"]);
     h.dispose();
   });
 
-  it("a user effect reading length-then-row mid-hold likewise gets len=4 row3=4", async () => {
+  it("a user effect reading length-then-row retains the same complete selected structure", async () => {
     const [tick2, setTick2] = createSignal(0);
     const computed: string[] = [];
     const h = await buildFold(todos => {
@@ -452,8 +457,9 @@ describe("held truth is masked from lane passes only (store fold, #3568 shape he
     computed.length = 0;
     setTick2(1);
     flush();
-    expect(computed).toEqual(["len=4 row3=4 t1"]);
+    expect(computed).toEqual(["len=3 row3=HOLE t1"]);
     await h.T.release();
+    expect(computed.at(-1)).toBe("len=4 row3=4 t1");
     h.dispose();
   });
 

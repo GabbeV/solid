@@ -1,13 +1,10 @@
 /**
- * #4203: #4166 carries a verdict lane's mount through nested first passes,
- * so a render effect its content creates is held like a direct read. A
- * plain memo the content creates is not a render effect: one that reads a
- * signal the mount wrote (a staging) and never settles, with no reader,
- * holds nothing and reaches no boundary (Reader). Before, it was held, so
- * `<Show when={latest(gate) ?? gate()}><Loading>…` never revealed. A memo
- * that settles is still held like #4166's render effect.
+ * #4203: an unread pending memo holds no rendered value and reaches no Loading
+ * boundary, even when its owner is a latest-opened branch. A settled memo in
+ * that branch can read a complete committed lower frame (#4166); next's extra
+ * hold on such mounts is not retained in the shared model.
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   action,
   createLoadingBoundary,
@@ -20,6 +17,12 @@ import {
   untrack
 } from "../src/index.js";
 
+const disposals: (() => void)[] = [];
+afterEach(() => {
+  for (const dispose of disposals.splice(0)) dispose();
+  flush();
+});
+
 const settle = async () => {
   for (let i = 0; i < 3; i++) {
     await new Promise(r => setTimeout(r, 0));
@@ -30,7 +33,8 @@ const settle = async () => {
 describe("#4203: an unread pending memo does not hold a verdict-mounted boundary", () => {
   it("the boundary reveals its content", async () => {
     let slot: unknown;
-    createRoot(() => {
+    createRoot(dispose => {
+      disposals.push(dispose);
       const content = () => {
         const [version, setVersion] = createSignal(0, { ownedWrite: true });
         setVersion(1);
@@ -75,12 +79,13 @@ describe("#4203: an unread pending memo does not hold a verdict-mounted boundary
     expect(slot).toBe("CHILD");
   });
 
-  it("a settled memo the content creates is still held (#4166)", async () => {
+  it("a settled memo the content creates reads the complete committed frame (#4166)", async () => {
     const [x, setX] = createSignal(0);
     let screenX: unknown;
     let inner: unknown;
     let slot: unknown;
-    createRoot(() => {
+    createRoot(dispose => {
+      disposals.push(dispose);
       createRenderEffect(x, v => {
         screenX = v;
       });
@@ -113,7 +118,7 @@ describe("#4203: an unread pending memo does not hold a verdict-mounted boundary
       yield new Promise<void>(r => (release = r));
     })();
     await settle();
-    expect([screenX, slot, inner]).toEqual([0, "pending", undefined]);
+    expect([screenX, slot, inner]).toEqual([0, "p", 0]);
     release();
     await done;
     await settle();

@@ -39,6 +39,7 @@ function harness(
     await tick();
   };
   const frames: string[] = [];
+  let selected!: () => unknown;
   let setFilter!: (f: string) => void;
   let add!: (id: number) => any;
   createRoot(() => {
@@ -61,6 +62,7 @@ function harness(
       [],
       { key: "id" }
     );
+    selected = () => issues[2]?.id;
     add = action(function* (id: number) {
       set((d: any[]) => {
         d.push({ id });
@@ -82,11 +84,17 @@ function harness(
       } as any
     );
   });
-  return { frames, settle, setFilter: (f: string) => setFilter(f), add: (id: number) => add(id) };
+  return {
+    frames,
+    selected,
+    settle,
+    setFilter: (f: string) => setFilter(f),
+    add: (id: number) => add(id)
+  };
 }
 
-it("an optimistic store over a failing memo, with an action's guess in flight, delivers the error once at the reveal", async () => {
-  const { frames, settle, setFilter, add } = harness("optimistic", "memo-sync", false);
+it("a whole-list reader receives an independent input error once while a guessed index stays selected", async () => {
+  const { frames, selected, settle, setFilter, add } = harness("optimistic", "memo-sync", false);
   await tick();
   await settle("f:open", a => a.res([{ id: 1 }, { id: 3 }]));
   add(9);
@@ -96,7 +104,10 @@ it("an optimistic store over a failing memo, with an action's guess in flight, d
   flush();
   await tick();
   await settle("f:closed", a => a.rej(new Error("timeout")));
-  // Held with the action's guess (D-41): no arm yet.
+  // Stage 120: unguessed inputs publish independently. The whole-list
+  // reader consumes their error; the guessed appended index still selects 9.
+  expect(frames.at(-1)).toBe("ERR timeout");
+  expect(selected()).toBe(9);
   frames.push("--rejected");
   await settle("add:9", a => a.res({}));
   frames.push("--action-done");
@@ -108,8 +119,8 @@ it("an optimistic store over a failing memo, with an action's guess in flight, d
     "#1 #3",
     "#1 #3 #9",
     "--added",
-    "--rejected",
     "ERR timeout",
+    "--rejected",
     "--action-done",
     "#1 #4"
   ]);

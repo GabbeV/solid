@@ -1,4 +1,4 @@
-import { NotReadyError } from "./core/index.js";
+import { ContextRetry, NotReadyError } from "./core/error.js";
 
 // CARVE 4: `flatten` lived in boundaries.ts but is the general children
 // resolver the renderers (`web`, `universal`, `solid`'s `children()`) walk
@@ -71,7 +71,7 @@ function flattenArray(
         // skip
       } else results.push(child);
     } catch (e) {
-      if (!(e instanceof NotReadyError)) throw e;
+      if (e instanceof ContextRetry || !(e instanceof NotReadyError)) throw e;
       notReady = e;
     }
   }

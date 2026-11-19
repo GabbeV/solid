@@ -289,7 +289,7 @@ describe("#3540: a fresh Loading mounted over a held value", () => {
     await tick();
     expect(log).toContain("open true");
     expect(log).toContain("label 1");
-    expect(log).toContain("view content 1");
+    expect(log.filter(value => value.startsWith("view ")).at(-1)).toBe("view content 1");
   });
 
   // The label, created in the mount, reads the hold and joins it, so the
@@ -308,9 +308,15 @@ describe("#3540: a fresh Loading mounted over a held value", () => {
             log.push(v);
           });
           const view = Loading(() => `content ${x()}`, "fallback");
-          createRenderEffect(view, v => {
-            log.push(`view ${v}`);
-          });
+          // Attachment/publication waits; a first unscheduled callback may
+          // already initialize the detached boundary's DOM (D-19).
+          createRenderEffect(
+            view,
+            v => {
+              log.push(`view ${v}`);
+            },
+            { schedule: true }
+          );
           return true;
         },
         v => {
@@ -499,13 +505,13 @@ describe("#3540: the catcher is whoever `catchStatus` would catch at — at any 
     // for its commit, as on next. Pre-L2 shows the committed value now; L2
     // joins the hold (A29).
     "plain held memo": [" | i1", "open fresh 1 · x 1 | i0", " | i0", ""],
-    // (The born-held memo the mounting flush's hold owns is not recorded:
-    // nothing catches it, D-13.)
-    "plain held bound": [" | i1", "open p · text fresh 1 · x 1 | i0", " | i0", ""],
+    // Shared publication records the born-held memo and its binding. Both
+    // obligations retire at the same commit; the visible trace is unchanged.
+    "plain held bound": [" | i2", "open p · text fresh 1 · x 1 | i0", " | i0", ""],
     "plain flight memo": [" | i1", "holder 1 · open fresh 1 | i0", " | i0", ""],
     "plain flight bound": [" | i1", "holder 1 · open p · text fresh 1 | i0", " | i0", ""],
     "revealed held memo": [" | o1 i1", "open fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
-    "revealed held bound": [" | o1 i1", "open p · text fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
+    "revealed held bound": [" | o2 i2", "open p · text fresh 1 · x 1 | o0 i0", " | o0 i0", ""],
     "revealed flight memo": [" | o1 i1", "holder 1 · open fresh 1 | o0 i0", " | o0 i0", ""],
     "revealed flight bound": [
       " | o1 i1",
@@ -732,9 +738,9 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
 
   // A fresh boundary mounted over the hold (memo content). While its
   // fallback shows, its value is not pending (nothing stale is shown).
-  // `latest` of the content: held, the derivation staged in the hold
-  // (`content 1`, A11, as next serves it); in flight, the content has no
-  // value yet and throws, as for any first load. Pre-L2 serves the
+  // Imperative `latest` of never-published content has no value and throws,
+  // for both a held proposal and an unfinished first request. Next's outside
+  // flushed-value exception is deferred in the shared model. Pre-L2 serves the
   // committed or staged value (`content 0` in a flush, a tear under A29;
   // `content 1` from mainline); `next` reports the boundary pending while
   // it holds the mount. (Readers: the content's catch walk records it once
@@ -742,7 +748,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // under the boundary are held with the hold, and only render effects are
   // caught — a pending memo is no reader of its own, D-12, #4542.)
   const observe = (source: Source, x1: string) => [
-    `view fallback | readers=${source === "held" ? 2 : 1} view=false m=false latest=${source === "held" ? "content 1" : "throws NotReadyError"}`,
+    `view fallback | readers=${source === "held" ? 2 : 1} view=false m=false latest=throws NotReadyError`,
     `${[x1, "view content 1"].sort().join(" · ")} | readers=0 view=false m=false latest=content 1`,
     " | readers=0 view=false m=false latest=content 1"
   ];
@@ -808,7 +814,8 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // committed memo, pending with its committed value.)
   const committed: Record<string, string[]> = {
     "held rearmed memo": [
-      "view fallback | readers=1 view=false m=false latest=c1 1",
+      // A newly created memo has no committed output for this outside read.
+      "view fallback | readers=2 view=false m=false latest=throws NotReadyError",
       "view c1 1 · x 1 | readers=0 view=false m=false latest=c1 1",
       " | readers=0 view=false m=false latest=c1 1"
     ],
@@ -818,9 +825,8 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
       " | readers=0 view=false m=false latest=c1 1"
     ],
     "held plain memo": [
-      // The boundary's render creates a fresh memo, born into the flush's
-      // hold: nothing catches or records it (D-13).
-      " | readers=0 view=true m=false latest=c1 1",
+      // The boundary's render creates a fresh memo; its catch walk records it.
+      " | readers=1 view=true m=false latest=throws NotReadyError",
       "view c1 1 · x 1 | readers=0 view=false m=false latest=c1 1",
       " | readers=0 view=false m=false latest=c1 1"
     ],
@@ -987,7 +993,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
             latest: verdict(() => m!(), "latest")
           })
         );
-        const first = source === "held" ? "fresh 1" : "throws NotReadyError";
+        const first = "throws NotReadyError";
         const landed = [
           source === "held" ? "x 1" : "holder 1",
           ...(where === "flush" ? ["open true"] : []),

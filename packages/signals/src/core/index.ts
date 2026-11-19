@@ -1,5 +1,6 @@
 export { ContextNotFoundError, NoOwnerError, NotReadyError, TimeoutError } from "./error.js";
-export { isPending, latest } from "./verdict.js";
+export { isPending } from "../layers/pending.js";
+export { latest } from "../layers/latest.js";
 export { action } from "./action.js";
 export {
   isEqual,

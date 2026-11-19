@@ -27,9 +27,11 @@ import {
   createRenderEffect,
   createRoot,
   createSignal,
-  DEV,
   flush
 } from "../src/index.js";
+import { $REFRESH } from "../src/core/constants.js";
+import { resolveTx, transactionNodes } from "../src/core/scheduler.js";
+import { boundaries } from "../src/layers/boundary.js";
 
 afterEach(() => flush());
 
@@ -198,15 +200,15 @@ describe("lane contract 3 — a lane holds itself", () => {
     };
   }
 
-  it("a derivation of the guess hitting async holds the lane's frame, not the parent's; direct reads see the guess; the lane reveals at its own flight", async () => {
+  it("a derivation of the guess hitting async holds its output; ordinary reads agree with its effects", async () => {
     const f = blockedFixture();
     f.setSrc(1);
     f.setOpt(5);
     flush();
-    // Nothing of the lane shows yet; direct reads see the guess (ruling 4).
+    // Nothing has published; ordinary reads retain that same output.
     expect(f.log.length).toBe(4);
-    expect(f.opt()).toBe(5);
-    expect(f.dbl()).toBe(10);
+    expect(f.opt()).toBe(0);
+    expect(f.dbl()).toBe(0);
     expect(f.src()).toBe(0);
 
     // The lane's flight lands: the lane reveals as one frame. The parent is
@@ -373,7 +375,7 @@ describe("lane hardening — errors, disposal, nesting, growth", () => {
     expect(f.log.length).toBe(len);
   });
 
-  it("a nested guess (written in a lane's own frame) has the lane as its parent and ends with it", async () => {
+  it("a guess written by a derivation belongs to the executing update, not the input override's lifetime", async () => {
     // Blocked lane: its flight's landing is the lane's own frame. A write
     // made in that frame's pure phase (an owned write in a derivation) is
     // the lane's; one made in an effect callback would be the next round's.
@@ -400,49 +402,48 @@ describe("lane hardening — errors, disposal, nesting, growth", () => {
     flush();
     resolveSlow("s5");
     await settled();
-    expect(f.log.slice(-4).sort()).toEqual(["dbl:10", "inner:guess", "opt:5", "slow:s5"]);
-    expect(inner()).toBe("guess");
+    // This executing update has finished; the outer input is still held.
+    // Its setter does not inherit the outer override's longer lifetime.
+    expect(f.log.filter(value => value.startsWith("inner:"))).toEqual(["inner:base"]);
+    expect(f.log.filter(value => value.startsWith("opt:"))).toEqual(["opt:0", "opt:5"]);
+    expect(f.log.filter(value => value.startsWith("slow:"))).toEqual(["slow:none", "slow:s5"]);
+    expect(inner()).toBe("base");
 
-    // The outer lane ends with its parent; the nested one with the outer.
+    // The outer input can now finish without another inner publication.
     await f.land(5);
     expect(f.src()).toBe(1);
     expect(inner()).toBe("base");
-    expect(f.log.slice(-2).sort()).toEqual(["inner:base", "truth:5"]);
+    expect(f.log.filter(value => value.startsWith("inner:"))).toEqual(["inner:base"]);
+    expect(f.log.filter(value => value.startsWith("truth:"))).toEqual(["truth:0", "truth:5"]);
     f.dispose();
   });
 
   it("a long-lived lane does not grow its bookkeeping with every pass", async () => {
-    const owners = new Set<any>();
-    DEV!.hooks.onOwner = o => void owners.add(o);
-    try {
-      const f = fixture();
-      const [tick, setTick] = createSignal(0);
-      createRoot(() =>
-        createRenderEffect(
-          () => `${f.opt()}/${tick()}`,
-          () => {}
-        )
-      );
+    const f = fixture();
+    const [tick, setTick] = createSignal(0);
+    createRoot(() =>
+      createRenderEffect(
+        () => `${f.opt()}/${tick()}`,
+        () => {}
+      )
+    );
+    flush();
+    f.setSrc(1);
+    f.setOpt(5);
+    flush();
+    // The boundary keeps its lifetime, while ordinary transactions own
+    // publication. Live held nodes and retry readers must stay bounded.
+    const layer = boundaries.get((f.opt as any)[$REFRESH])!;
+    const scope = resolveTx(layer._scope!);
+    const size = () => [Array.from(transactionNodes(scope)).length, scope._reruns?.size ?? 0];
+    const before = size();
+    for (let i = 1; i <= 50; i++) {
+      setTick(i);
       flush();
-      f.setSrc(1);
-      f.setOpt(5);
-      flush();
-      // Internal layout: the guess node carries its lane on `_x._transaction`;
-      // the lane's `_nodes` is bounded by distinct nodes, not by passes.
-      const guess = [...owners].find(o => o._x?._transaction?._lane);
-      expect(guess).toBeDefined();
-      const lane = guess._x._transaction;
-      const before = lane._nodes.length;
-      for (let i = 1; i <= 50; i++) {
-        setTick(i);
-        flush();
-      }
-      expect(lane._nodes.length).toBe(before);
-      await f.land(5);
-      f.dispose();
-    } finally {
-      DEV!.hooks.onOwner = undefined;
     }
+    expect(size()).toEqual(before);
+    await f.land(5);
+    f.dispose();
   });
 });
 
@@ -493,15 +494,11 @@ describe("lane contract 4 — a lane sees the screen plus its own guesses (maint
     dispose();
   });
 
-  // The case read-through was built for, and why it needs none of it. The
-  // parent holds two flights; the guess over one of them has a downstream
-  // async of its own, so the lane is blocked on it. The guessed-over flight
-  // lands first and differs: the lane dissolves into the parent, and the
-  // downstream refetch — now the parent's own work, reading the truth as a
-  // member — starts at once, held off screen with everything else. It does
-  // not wait for the parent's other flight, and nothing shows until the
-  // parent lands as one frame.
-  it("async → optimistic → async: a corrected guess refetches downstream at once, without waiting for the parent's other flight", async () => {
+  // Two input flights share an update. The selected guess remains until
+  // that input update can retire it. Correction then starts immediately,
+  // without waiting for the obsolete guess's downstream flight. The corrected
+  // consequence and both inputs publish together.
+  it("async → optimistic → async: correction starts at input retirement without waiting for the obsolete guess flight", async () => {
     const [src, setSrc] = createSignal(0);
     let resolveTruth!: (v: number) => void;
     let resolveOther!: (v: number) => void;
@@ -536,16 +533,20 @@ describe("lane contract 4 — a lane sees the screen plus its own guesses (maint
 
     resolveTruth(7); // lands first, and differs
     await settled();
-    expect(fetched).toEqual([0, 5, 7]); // the refetch with the truth, now — `other` is still up
+    expect(fetched).toEqual([0, 5]); // other still holds the input update and its override lifetime
+    expect(log).toEqual(["0|0|0"]);
+
+    resolveOther(1);
+    await settled();
+    expect(fetched).toEqual([0, 5, 7]); // correction starts without resolving detail(5)
     expect(log).toEqual(["0|0|0"]);
 
     detailResolvers.get(7)!(70);
     await settled();
-    expect(log).toEqual(["0|0|0"]); // held: the parent still waits on `other`
-
-    resolveOther(1);
-    await settled();
     expect(log).toEqual(["0|0|0", "7|70|1"]); // one frame
+    detailResolvers.get(5)!(50);
+    await settled();
+    expect(log).toEqual(["0|0|0", "7|70|1"]); // obsolete answer cannot publish
     dispose();
   });
 });

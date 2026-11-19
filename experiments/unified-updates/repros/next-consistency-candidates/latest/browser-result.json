@@ -1,0 +1,35 @@
+{
+  "name": "latest",
+  "title": "Solid 2.0 - Mizulu",
+  "errors": [],
+  "logs": [],
+  "samples": [
+    {
+      "time": 0,
+      "text": "A published memo and its ordinary consumer disagree\nRun\n\nCommitted ID: 1\n\nCommitted filter: 0\n\nMemo of latest ID: 1\n\nThe same memo / filter: 1 / 0\n\nThe action proposes ID 2 and filter 1, then stays open."
+    },
+    {
+      "time": 300,
+      "text": "A published memo and its ordinary consumer disagree\nRun\n\nCommitted ID: 1\n\nCommitted filter: 0\n\nMemo of latest ID: 2\n\nThe same memo / filter: 1 / 0\n\nThe action proposes ID 2 and filter 1, then stays open."
+    },
+    {
+      "time": 800,
+      "text": "A published memo and its ordinary consumer disagree\nRun\n\nCommitted ID: 1\n\nCommitted filter: 0\n\nMemo of latest ID: 2\n\nThe same memo / filter: 1 / 0\n\nThe action proposes ID 2 and filter 1, then stays open."
+    },
+    {
+      "time": 1300,
+      "text": "A published memo and its ordinary consumer disagree\nRun\n\nCommitted ID: 1\n\nCommitted filter: 0\n\nMemo of latest ID: 2\n\nThe same memo / filter: 1 / 0\n\nThe action proposes ID 2 and filter 1, then stays open."
+    },
+    {
+      "time": 2300,
+      "text": "A published memo and its ordinary consumer disagree\nRun\n\nCommitted ID: 1\n\nCommitted filter: 0\n\nMemo of latest ID: 2\n\nThe same memo / filter: 1 / 0\n\nThe action proposes ID 2 and filter 1, then stays open."
+    }
+  ],
+  "verified": true,
+  "buildResponses": {
+    "count": 99,
+    "statuses": [
+      200
+    ]
+  }
+}

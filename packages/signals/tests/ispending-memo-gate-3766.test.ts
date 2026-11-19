@@ -61,7 +61,10 @@ describe("#3766 memo over isPending read beside a second async memo", () => {
     flush();
     await wait(100);
     flush();
-    expect(seen).toEqual(["a false | 100", "b false | 200"]);
+    // Sibling callback order is unspecified; each binding still publishes
+    // exactly its settled value, without an intermediate pending/value pair.
+    expect(seen.filter(value => value.startsWith("a "))).toEqual(["a false | 100"]);
+    expect(seen.filter(value => value.startsWith("b "))).toEqual(["b false | 200"]);
   });
 
   it("initial mount: a plain write while the reader waits on gate", async () => {

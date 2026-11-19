@@ -324,7 +324,7 @@ describe("@solidjs/signals bundled under `sideEffects: false`", () => {
     };
   }
   const run = (code: string) =>
-    execFileSync(process.execPath, ["--input-type=module", "-e", code], { encoding: "utf8" });
+    execFileSync(process.execPath, ["--input-type=module"], { input: code, encoding: "utf8" });
   const REPORT = `.then(() => process.stdout.write("ok"), e => process.stdout.write(String(e)))`;
   const STORE_APP = `
     import { action, affects, createStore } from "@solidjs/signals";

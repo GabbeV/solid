@@ -38,14 +38,13 @@
  *      write; #3521 first cut).
  * S7 — (fixed) an optimistic override survives its key becoming unobserved
  *      (the slot release defers to the flush that resolves the override).
- * S8 — (fixed, 3b step 6c) a derivation's untracked read of a SUPERSEDED
- *      store node derives from the landed truth (A18), not the override —
- *      nodeValue delegates to core's one slow selection, `serve`.
- * S9 — (fixed) a pass whose verdict posture is only inherited reads a store
- *      key with no node as the signal and a key with a node do:
- *      `stagedScreen`'s node-less call (store.ts `readSource`) used to skip
- *      `holdStaging` (#4681). Since #4776 such a pass, read only by the
- *      screen, is display and reads as the inline probe (D-25).
+ * S8 — an untracked derivation samples the selected proposal while its
+ *      action remains open. Retirement does not resample that value: the
+ *      callback explicitly opted out of a reactive dependency.
+ * S9 — observation outputs select the same update context through a memo
+ *      as inline (unified updates). A higher pending/latest output reads
+ *      committed lower values, including untracked store keys with no node.
+ *      Parking must include those backings before switching context.
  * Discovery for S4–S7: the matrix's `memoUntracked` / `effectUntracked`
  * reader kinds (an untracked read inside a derivation), added with S5.
  *
@@ -542,16 +541,12 @@ describe("S7 (structural) — optimistic add/delete survives the only structural
   }
 });
 
-/** S8 (fixed, 3b step 6c): A18 supersession for a store node read UNTRACKED
- * inside a derivation. A derived optimistic store's own truth landed (2)
- * while an action's edit (3) is displayed: the signal serves a deriving
- * reader the staged truth and holds it (A18: truth in the graph now, on
- * screen at commit); the store's untracked node path served the memo the
- * OVERRIDE and let it publish 3 — nodeValue had its own override arm without
- * the supersession routing core read() has (overrideRead). nodeValue now
- * delegates to `serve`, the one slow selection, and inherits the arm. */
-describe("S8 — a derivation's UNTRACKED read of a superseded store node derives from the truth (A18) — signal vs store", () => {
-  it("store: memo → render effect holds, then publishes the landed truth at settle", async () => {
+/** An action keeps its selected proposal until its body ends. A late
+ * untracked memo samples that proposal once; a later correction does not
+ * resample it. See unified-cold-store-companion.test.ts for the paired
+ * scalar/store case and a tracked memo that follows the correction. */
+describe("S8 — an untracked derivation samples the selected proposal once", () => {
+  it("store: the sampled guess publishes after its hold while the store corrects", async () => {
     const [value, setValue] = createSignal(0);
     const fetches: Array<() => void> = [];
     let s!: { n: number };
@@ -587,12 +582,8 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
     flush();
     fetches.shift()!(); // own truth lands {n: 2} ≠ 3
     await settle();
-    // Lanes (2026-10-01/02; the signal oracle's `supersede` state): the guess
-    // was written in the frame that re-asked its source, so its lane was
-    // blocked and the guess never displayed — "a correction while blocked
-    // voids the never-shown guess" (§16). A18 (c)'s "the display keeps the
-    // override" is about a displayed override: direct reads see the
-    // committed value, the truth is staged under the action. (Was 3.)
+    // The proposal has not published because its downstream work is held.
+    // An ordinary outside read still sees the committed value.
     expect(s.n).toBe(0);
     const log: number[] = [];
     createRoot(() => {
@@ -602,11 +593,17 @@ describe("S8 — a derivation's UNTRACKED read of a superseded store node derive
       });
     });
     flush();
-    expect(log).toEqual([]); // held with the action: derives from the truth, not the override
+    expect(log).toEqual([]); // the sampled proposal shares its publication hold
     flights.splice(0).forEach(f => f());
     await settle();
     await settle();
-    expect(log).toEqual([2]);
+    // The landed truth asks its own downstream flight after the action and
+    // the previous answer finish. Fulfill that request before its publication.
+    expect(flights).toHaveLength(1);
+    flights.shift()!();
+    await settle();
+    expect(log).toEqual([3]);
+    expect(s.n).toBe(2);
   });
 });
 
@@ -713,41 +710,60 @@ async function s9Trace(source: S9Source, posture: S9Posture) {
   return { trace: trace.join(" ; "), nodes };
 }
 
-describe("S9 — a verdict memo only the screen reads is display: an inherited posture reads as the inline probe does (D-25 #4776, R2) — signal vs store", () => {
-  // `|` is the landing. A pass reading a verdict memo, with nothing of the
-  // hold's own reading it, is display (D-25, #4776): it is served the screen
-  // mid-hold, as the same probe written inline is (memo-inline parity), and
-  // re-derives on the landed world: the same screens. (The landing frame
-  // itself is not ruled here: the inline form's is the reference.)
-  const own = "pass 0/0 ; screen 0 0/0 ; pass 0/0 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1";
+describe("S9 — observation contexts agree through memos and across signal/store read paths", () => {
+  // `|` precedes resolving data. Pending can publish above that hold and
+  // sees committed count=0. A memo wrapper does not change the context.
+  // Keep the complete calculation and publication trace, including retries.
+  const expected = {
+    "inherited isPending":
+      "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 0/1 ; screen 1 0/1",
+    "inherited latest":
+      "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1",
+    "own latest": "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; | ; pass 1/0 ; pass 1/1 ; screen 1 1/1"
+  };
+  for (const [posture, trace] of Object.entries(expected) as [keyof typeof expected, string][])
+    for (const source of S9_SOURCES)
+      it(`${posture}: ${source}`, async () => {
+        const r = await s9Trace(source, posture);
+        expect(r.nodes).toEqual({
+          container: source === "store, untracked, container node",
+          leaf: source === "store, tracked" || source === "store, untracked, leaf node only"
+        });
+        expect(r.trace).toBe(trace);
+      });
+
+  // `[latest(x), x()]` through a memo has one context for every source.
+  // The unheld proposal first propagates as 1/1; once held, latest
+  // explicitly exposes 1 while the ordinary read selects committed 0.
+  // Its tracked read gives the store key a leaf; check the full publication
+  // sequence as well as parity with the signal.
+  const sameKeyTrace =
+    "pass 0/0 ; screen 0 0/0 ; pass 1/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1";
+  for (const source of S9_SOURCES)
+    it(`latest of the same key, through a memo: ${source}`, async () => {
+      const r = await s9Trace(source, "latest of the same key, through a memo");
+      expect(r.nodes.leaf).toBe(!source.startsWith("signal"));
+      expect(r.trace).toBe(sameKeyTrace);
+    });
+
   const pairs: [S9Posture, S9Posture][] = [
     ["inherited latest", "own latest"],
     ["inherited isPending", "own isPending"],
     ["latest of the same key, through a memo", "latest of the same key, inline"]
   ];
-  for (const source of S9_SOURCES)
-    it(`own latest: ${source}`, async () => {
-      const r = await s9Trace(source, "own latest");
-      expect(r.nodes).toEqual({
-        container: source === "store, untracked, container node",
-        leaf: source === "store, tracked" || source === "store, untracked, leaf node only"
-      });
-      expect(r.trace).toBe(own);
-    });
+  const screens = (trace: string) =>
+    trace
+      .split(" ; ")
+      .filter(entry => !entry.startsWith("pass"))
+      .join(" ; ");
   for (const [memo, inline] of pairs)
     for (const source of S9_SOURCES)
       it(`${memo}: ${source} reads as ${inline} on the signal`, async () => {
         const r = await s9Trace(source, memo);
-        // The same screens; the inline probe may re-run its pass once more.
-        const screens = (t: string) =>
-          t
-            .split(" ; ")
-            .filter(e => !e.startsWith("pass"))
-            .join(" ; ");
         expect(screens(r.trace)).toBe(screens((await s9Trace("signal", inline)).trace));
-        // Mid-hold the pass shows the screen's count beside its verdict.
+        // The calculation before resolving data depends on the selected observation.
         expect(r.trace).toContain(
-          memo === "inherited latest" ? "pass 0/0 ; |" : "pass 1/0 ; screen 0 1/0 ; |"
+          memo === "inherited latest" ? "pass 0/1 ; |" : "pass 1/0 ; screen 0 1/0 ; |"
         );
       });
 });

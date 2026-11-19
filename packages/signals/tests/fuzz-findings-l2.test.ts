@@ -429,9 +429,8 @@ describe("fuzz findings on L2 — lanes", () => {
   // effect on a shown lane re-run by an unrelated write while the lane is
   // held on a re-guess's derivation is a stale reader (#3460) and should show
   // the screen — the guess the lane revealed — not the re-guess the lane has
-  // not revealed yet, which no other reader shows. A re-guess of a shown
-  // guess is restaged for the lane's next reveal, judged with the passes it
-  // re-runs (#4775).
+  // not revealed yet, which no other reader shows. The re-guess and its
+  // async derivation publish together (F-1).
   it("F5b: a stale reader of a held re-guess shows the revealed guess (A17 #3460)", async () => {
     const [source, setSource] = createSignal(0);
     const [t, setT] = createSignal(0);
@@ -563,20 +562,11 @@ describe("fuzz findings on L2 — lanes", () => {
     dispose();
   });
 
-  // F8. A15 lanes corollary (#3460): "a render effect OFF the lane that reads
-  // what the lane is revealing … shows the committed value, publishes now,
-  // entangles nothing — and re-derives at the release"; the lane-membership
-  // ruling (2026-10-05, reading A): a stale reader of the lane "whether or
-  // not the lane is held at that moment". A mainline mount whose child reads
-  // a lane derivation whose re-ask nobody had observed (the seam left the
-  // lane unheld) published the mount control while the child entered the
-  // lane and waited on the flight — a torn mount (fuzzer S2 "mount
-  // control"). `laneRead`'s stale-reader arm was gated on `_held`; it now
-  // also takes a leaf reading a lane member whose own flight is up: the
-  // child shows the screen (the lane's revealed derivation) beside its
-  // control, and re-derives at the reveal. Through a memo the mount is born
-  // held instead (A29, #3761): the next pin.
-  it("F8: a mainline mount over a lane derivation in flight shows its child as a stale reader beside its mount control (A15 lanes corollary)", async () => {
+  // F8: latest has already published the new input while nobody observed
+  // its downstream flight. Mounting a normal reader now observes that flight.
+  // The mount control and child wait together, directly or through a memo;
+  // a child cannot reveal separately from its previously unpublished control.
+  it("F8: a mainline mount waits for a flight whose latest input has already published", async () => {
     const [source, setSource] = createSignal(0);
     const [mounted, setMounted] = createSignal(false);
     const gates = new Map<string, () => void>();
@@ -633,8 +623,10 @@ describe("fuzz findings on L2 — lanes", () => {
     await drain();
     setMounted(true); // a mainline mount over the held derivation
     await drain();
-    // The control publishes; the child shows the lane's screen beside it.
-    expect([shownMounted, child]).toEqual([true, 1]);
+    // latest(source)=2 already published while the flight had no observer.
+    // Mounting ordinary content for that output must wait for matching data,
+    // with its control; it cannot display stale content 1 beside latest 2.
+    expect([shownMounted, child]).toEqual([false, "absent"]);
     gates.get("d:2")!();
     await drain();
     expect([shownMounted, child]).toEqual([true, 2]); // re-derived at the reveal
@@ -802,29 +794,34 @@ describe("fuzz findings on L2 — lanes", () => {
     const [mounted, setMounted] = createSignal(true);
     let resume!: () => void;
     let run!: () => Promise<void>;
-    let child: unknown = "absent";
+    type Frame = { value: unknown; cleaned: boolean };
+    const frames: Frame[] = [];
+    let shown: Frame | undefined;
     let dispose!: () => void;
     createRoot(d => {
       dispose = d;
       createRenderEffect(mounted, () => {});
       createRenderEffect(
-        () =>
-          mounted()
-            ? createRoot(dd => {
-                createRenderEffect(
-                  () => latest(source),
-                  v => {
-                    child = v;
-                  }
-                );
-                onCleanup(() => {
-                  child = "absent";
-                });
-                return dd;
-              })
-            : undefined,
-        dd => {
-          if (dd) onCleanup(dd);
+        () => {
+          if (!mounted()) return undefined;
+          const frame = createRoot(() => {
+            const frame: Frame = { value: undefined, cleaned: false };
+            frames.push(frame);
+            createRenderEffect(
+              () => latest(source),
+              value => {
+                frame.value = value;
+              }
+            );
+            onCleanup(() => {
+              frame.cleaned = true;
+            });
+            return frame;
+          });
+          return frame;
+        },
+        frame => {
+          shown = frame;
         }
       );
       run = action(function* () {
@@ -835,7 +832,8 @@ describe("fuzz findings on L2 — lanes", () => {
       });
     });
     flush();
-    expect(child).toBe(0);
+    expect(shown?.value).toBe(0);
+    expect(shown?.cleaned).toBe(false);
     const p = run();
     setMounted(false); // the action's tick: the unmount rides with it (O1)
     await drain();
@@ -844,8 +842,12 @@ describe("fuzz findings on L2 — lanes", () => {
     resume(); // the body ends with the truth: source = 1
     await p;
     await drain(4);
-    expect(child).toBe(1);
+    // A private replacement can initialize before its predecessor's cleanup.
+    // Observe the published frame, so old cleanup cannot overwrite the oracle.
+    expect(shown?.value).toBe(1);
+    expect(shown?.cleaned).toBe(false);
     dispose();
+    expect(frames.every(frame => frame.cleaned)).toBe(true);
   });
 });
 

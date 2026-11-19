@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { optHooks } from "../../src/store/hooks.js";
 import {
   $TARGET,
   $TRACK,
@@ -45,7 +46,8 @@ function nodesOf(proxy: object) {
     n: Object.keys(t.n ?? {}),
     kSubs: (() => {
       let c = 0;
-      for (let l = t.k?._subs ?? null; l !== null; l = l._nextSub) c++;
+      const k = t.k && (t._fam?.opt && optHooks?.node ? optHooks.node(t, t.k) : t.k);
+      for (let l = k?._subs ?? null; l !== null; l = l._nextSub) c++;
       return c;
     })()
   };
@@ -78,7 +80,7 @@ const ENUMERATORS: Array<[string, (s: Row) => string]> = [
   ["JSON.stringify", s => JSON.stringify(s)]
 ];
 
-describe("store enumerators subscribe to the key-set node only (#3664)", () => {
+describe("store enumerators track keys without per-value subscriptions (#3664)", () => {
   for (const [label, enumerate] of ENUMERATORS) {
     it(`${label} inside a memo births no presence node; adds and deletes re-run it`, () => {
       const [s, set] = createStore<Row>(row(5));
@@ -136,6 +138,39 @@ describe("store enumerators subscribe to the key-set node only (#3664)", () => {
     });
   }
 
+  it("a reused key-set link still identifies an enumerator before another subscriber", () => {
+    const [store] = createStore<Row>({ a: 1, b: 2 });
+    const [revision, setRevision] = createSignal(0);
+    let dispose!: () => void;
+    createRoot(cleanup => {
+      dispose = cleanup;
+      createRenderEffect(
+        () => {
+          revision();
+          return Object.keys(store).join(",");
+        },
+        () => {}
+      );
+      createRenderEffect(
+        () => Object.keys(store).join(","),
+        () => {}
+      );
+    });
+    try {
+      flush();
+      expect(nodesOf(store).h).toEqual([]);
+      expect(nodesOf(store).kSubs).toBe(2);
+      setRevision(1);
+      flush();
+      expect(nodesOf(store).h).toEqual([]);
+      expect(nodesOf(store).n).toEqual([]);
+      expect(nodesOf(store).kSubs).toBe(2);
+    } finally {
+      dispose();
+      flush();
+    }
+  });
+
   it("value reads that ride the enumeration still get value nodes (spread, entries, stringify)", () => {
     const [s, set] = createStore<Row>(row(3));
     const runs: string[] = [];
@@ -182,7 +217,7 @@ describe("store enumerators subscribe to the key-set node only (#3664)", () => {
     expect(k).toBe(N);
   });
 
-  it("optimistic add and delete re-run an enumerator through the key-set node alone", async () => {
+  it("optimistic add and delete re-run an enumerator without value-only reruns", async () => {
     const [s, set] = createOptimisticStore<Row>({ a: 1 });
     const runs: string[] = [];
     createRoot(() => {
@@ -206,16 +241,10 @@ describe("store enumerators subscribe to the key-set node only (#3664)", () => {
     });
     const done = act();
     flush();
-    // The writer births presence nodes to carry its overrides (`has`
-    // births them too); the READER did not subscribe to them.
+    // Selected shape outputs may subscribe to the container and the reader
+    // may subscribe to a per-key presence output. Their exact graph size is
+    // incidental; the public enumerator must follow key changes.
     expect(runs.at(-1)).toBe("b");
-    const t = (s as any)[$TARGET];
-    for (const key of Object.keys(t.h ?? {})) {
-      let subs = 0;
-      for (let l = t.h[key]._subs; l !== null; l = l._nextSub) subs++;
-      expect(subs).toBe(0);
-    }
-    expect(nodesOf(s).kSubs).toBe(1);
 
     release();
     await done;
@@ -223,6 +252,50 @@ describe("store enumerators subscribe to the key-set node only (#3664)", () => {
     // No truth landed: the optimistic structure reverts, and the revert
     // reaches the enumerator through the key-set node as the add did.
     expect(runs.at(-1)).toBe("a");
+    const beforeValue = runs.slice();
+    let releaseValue!: () => void;
+    const valueDone = action(function* () {
+      set(d => {
+        d.a = 3;
+      });
+      yield new Promise<void>(r => (releaseValue = r));
+    })();
+    flush();
+    expect(s.a).toBe(3);
+    expect(runs).toEqual(beforeValue);
+    releaseValue();
+    await valueDone;
+    flush();
+    expect(runs).toEqual(beforeValue);
+
+    const [nested, setNested] = createOptimisticStore({ row: { value: 1 } });
+    const nestedRuns: string[] = [];
+    const disposeNested = createRoot(dispose => {
+      createRenderEffect(
+        () => Object.keys(nested).join(","),
+        v => {
+          nestedRuns.push(v);
+        }
+      );
+      return dispose;
+    });
+    flush();
+    let releaseNested!: () => void;
+    const nestedDone = action(function* () {
+      setNested(d => {
+        d.row.value = 2;
+      });
+      yield new Promise<void>(r => (releaseNested = r));
+    })();
+    flush();
+    expect(nested.row.value).toBe(2);
+    expect(nestedRuns).toEqual(["row"]);
+    releaseNested();
+    await nestedDone;
+    flush();
+    expect(nestedRuns).toEqual(["row"]);
+    disposeNested();
+    flush();
   });
 });
 

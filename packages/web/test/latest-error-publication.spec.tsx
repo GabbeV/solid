@@ -162,3 +162,109 @@ test("reset retries the failed source and retains the fallback until latest reco
     dispose();
   }
 });
+
+test.each([0, 2])("late readers agree through %s additional latest outputs", async depth => {
+  const end = Promise.withResolvers<void>();
+  const recovery = Promise.withResolvers<string>();
+  const container = document.createElement("div");
+  let start!: () => Promise<unknown>;
+  let mount!: () => void;
+  let recover!: () => void;
+  const dispose = render(() => {
+    const [version, setVersion] = createSignal(0);
+    const [visible, setVisible] = createSignal(false);
+    mount = () => setVisible(true);
+    recover = () => setVersion(2);
+    const data = createMemo(() => {
+      if (version() === 1) throw new Error("failed");
+      return version() === 2 ? recovery.promise : "ready";
+    });
+    let ahead = data;
+    for (let i = 0; i < depth; i++) {
+      const input = ahead;
+      ahead = createMemo(() => latest(input));
+    }
+    start = action(function* () {
+      setVersion(1);
+      yield end.promise;
+    });
+    const View = () => (
+      <Errored fallback={error => (error() as Error).message}>
+        <span>{latest(ahead)}</span>
+      </Errored>
+    );
+    return (
+      <>
+        <p>{version()}</p>
+        <View />
+        <Show when={visible()}>
+          <View />
+        </Show>
+      </>
+    );
+  }, container);
+  let running: Promise<unknown> | undefined;
+  try {
+    await tick();
+    expect(container.textContent).toBe("0ready");
+    running = start();
+    await tick();
+    expect(container.textContent).toBe("0failed");
+    mount();
+    await tick();
+    expect(container.textContent).toBe("0failedfailed");
+    recover();
+    await tick();
+    expect(container.textContent).toBe("0failedfailed");
+    recovery.resolve("recovered");
+    await tick();
+    expect(container.textContent).toBe("0recoveredrecovered");
+    end.resolve();
+    await running;
+    await tick();
+    expect(container.textContent).toBe("2recoveredrecovered");
+  } finally {
+    end.resolve();
+    recovery.resolve("recovered");
+    await running;
+    dispose();
+  }
+});
+
+test("latest preserves an Error returned as a value", async () => {
+  const end = Promise.withResolvers<void>();
+  const container = document.createElement("div");
+  let start!: () => Promise<unknown>;
+  const dispose = render(() => {
+    const [changed, setChanged] = createSignal(false);
+    const data = createMemo(() => new Error(changed() ? "answer" : "ready"));
+    start = action(function* () {
+      setChanged(true);
+      yield end.promise;
+    });
+    return (
+      <>
+        <p>{String(changed())}</p>
+        <Errored fallback={() => "caught"}>
+          <span>{latest(data).message}</span>
+        </Errored>
+      </>
+    );
+  }, container);
+  let running: Promise<unknown> | undefined;
+  try {
+    await tick();
+    expect(container.textContent).toBe("falseready");
+    running = start();
+    await tick();
+    expect(container.textContent).toBe("falseanswer");
+    end.resolve();
+    await running;
+    await tick();
+    expect(container.textContent).toBe("trueanswer");
+  } finally {
+    end.resolve();
+    await running;
+    dispose();
+  }
+});

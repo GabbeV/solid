@@ -1,71 +1,59 @@
+import { createStaticOptimisticStore, staticOptimisticHooks } from "./optimistic-static.js";
+import { LEGACY_LANES } from "../core/constants.js";
 /**
- * Store — optimistic stores on lanes (plan sec. 31, S4; INTERNALS §3/§7, RUL-3;
- * S2: a guess is a patch).
+ * Store — optimistic stores on lanes (plan sec. 31, S4; INTERNALS §3/§7, RUL-3).
  *
  * No store-side layer, no backup snapshots, no retaining ledger: a user
- * write to an optimistic store is one GUESS per target — the user's draft,
- * carried by the target's guess carrier (`kg`, a `$PATCH` slot node like a
- * hold's), with the keys the draft changed recorded on it. Lanes do the rest
- * on that one node (`optimisticWrite`, the same write `createOptimistic`'s
- * setter makes): the guess shows under the action's hold, a landing beneath
+ * write to an optimistic store is a GUESS on the written key's node
+ * (`optimisticWrite` — the same write `createOptimistic`'s setter makes),
+ * a presence guess on its presence node, and, when membership or
+ * arrangement changed, an arrangement guess on the container node. Lanes
+ * do the rest: the guess shows under the action's hold, a landing beneath
  * it stages as truth and confirms it when equal (A18/A24), the action's
- * settle dissolves it (a revert to the frame it covered, or the landed
- * truth). The committed backing is never touched by a guess; a guess folds
- * nothing (its truth lands through its own batch).
+ * settle dissolves it (a revert to the value it covered, or the landed
+ * truth). The committed backing is never touched by a guess.
  *
- * Reads find the carrier by key (store.ts `frameOf`: a key the guess
- * changed reads through it, tracked, by core's lane rules — what the lane
- * shows; presence, descriptors and enumeration are the patch frame's). A
- * chained target's committed frame is the inner store's proxy: an unguessed
- * key reads through to the inner store's current frame by construction.
+ * Reads compose: a reader of an overlaid target sees the truth it is served
+ * with the lanes' values over it (`optimisticView` — per node, by the same
+ * rule a leaf read follows: what the lane shows).
  *
  * Landings (Q-D, plan sec. 31.7): the derive's output is reconciled against the
  * optimistic VIEW — a row the guess added and the server returns with the
  * same key in the same position keeps its proxy (the row target adopts the
- * server object) — and reaches the carrier as a truth frame (store.ts
- * `notifyWrites` → `setSignal` → lanes `laneWrite`), judged over the guess's
- * own keys (`echoes`): confirmed beneath, re-based over an older truth
- * (`_laneRebase`), folded (D-34), or a correction.
+ * server object), its leaves write truth beneath their guesses, and the
+ * container's arrangement guess is confirmed silently (`LaneView`'s
+ * comparator) — `For` does not run. Retained-setter replay (the
+ * 2026-08-31b continuation half) is not built here; the matrix decides.
  */
 import {
   CONFIG_CHILDREN_FORBIDDEN,
   CONFIG_GUESS,
   CONFIG_HELD,
   CONFIG_OVERRIDE,
+  CONFIG_SLOT_NODE,
   EFFECT_RENDER,
   NOT_PENDING,
   STATUS_PENDING,
   REACTIVE_REASK
 } from "../core/constants.js";
-import {
-  context,
-  isEqual,
-  joinPassAt,
-  read as readNode,
-  setSignal,
-  slotSignal,
-  untrack
-} from "../core/core.js";
+import { context, ext, isEqual, joinPassAt, read as readNode, untrack } from "../core/core.js";
 import { link } from "../core/graph.js";
-import { getObserver } from "../core/owner.js";
-import { devGuardOptimisticBeforeLoad, devWarnOptimisticWhileLoading } from "../core/dev.js";
-import { latestOf, readGuesses, setLaneValue } from "../core/lanes.js";
-import { guessedValueOf, optimisticWrite, pendingGuessOf, take } from "../core/guesses.js";
-import { covered } from "../core/truth.js";
+import { devGuardOptimisticBeforeLoad } from "../core/dev.js";
+import { laneValueOf, optimisticWrite, pendingGuessOf, take } from "../core/lanes.js";
 import {
   clock,
   GlobalQueue,
-  holdNode,
   insertSubs,
   joinFuture,
   laneDirty,
+  list,
   merge,
+  notifyEpoch,
   passLane,
   resolveTx,
+  schedule,
   staleReader,
   txOf,
-  actionDepth,
-  question,
   type Transaction
 } from "../core/scheduler.js";
 import type { Computed, Signal } from "../core/types.js";
@@ -75,12 +63,13 @@ import { reconcileState } from "./reconcile.js";
 import {
   cloneRaw,
   committed,
+  getContainerNode,
   getHasNode,
   getNode,
+  LaneView,
   linkedTo,
-  nameCarrier,
+  resolveChainedRaw,
   sameKey,
-  serveKeyValue,
   storeSetter,
   targetsEqual,
   unwrapValue
@@ -88,8 +77,8 @@ import {
 import { installOptHooks } from "./hooks.js";
 import { $OWNER, lookupTarget, type StoreFamily, type StoreTarget } from "./target.js";
 import {
-  $PATCH,
   $TARGET,
+  $TRACK,
   isWrappable,
   type NoArray,
   type NoFn,
@@ -101,383 +90,101 @@ import {
 
 const hasOwn = Object.prototype.hasOwnProperty;
 
-/** S2 — a target's guess carriers, one per lane (per action): `$PATCH` slot
- * nodes whose lane value is the user's draft, the keys it changed recorded
- * (`wk`, `del`; a keyed list's rows as written and removed keys with it).
- * Oldest first; a carrier that is no lane's is dropped (`sweepOverlaid`).
- * Off the target (a plain store carries nothing for the optimistic engine). */
-const carriers: WeakMap<StoreTarget, Signal<any>[]> = new WeakMap();
-const kgOf = (t: StoreTarget): Signal<any>[] | null => carriers.get(t) ?? null;
-const INDEX = /^(0|[1-9]\d*)$/;
-/** The newest live guess carrier for `key`, if any: a lane's guess, or one a
- * correction re-homed into its hold (HELD) — the screen keeps what it showed
- * until that hold lands (A18 (c)), a member reads the truth beneath;
- * `read()` of the carrier decides. Its record (`wk`, `del`) has the key —
- * or, for a read (`reads`), the key is an index or the length of a keyed
- * list's arrangement guess (`g`): a list reader enters the lane through
- * them, as it did through the guessed container. An arrangement guess does
- * not claim a key it only carried over from another live guess's carrier
- * (`borrowed`, #4784): the read falls through to that carrier — or to the
- * truth once it dissolves — instead of serving this frame's stale copy of
- * the expired guess. A row carried over verbatim in a keyed list is not
- * borrowed (`carriedVerbatim`, #4724): the row target decides its contents.
- * A landing asks without `reads`: a key the guess only carried over is the
- * truth's, and its leaf tells its readers as ever (store.ts `leafSet`). */
-function guessFor(
-  t: StoreTarget,
-  key: PropertyKey,
-  shape = false,
-  reads = true
-): Signal<any> | null {
-  const kg = kgOf(t);
-  if (kg !== null)
-    for (let i = kg.length - 1; i >= 0; i--) {
-      const g: any = kg[i];
-      if (
-        g._config & (CONFIG_OVERRIDE | CONFIG_HELD) &&
-        (g.wk?.has(key) ||
-          g.del?.has(key) ||
-          (reads &&
-            g.g !== undefined &&
-            !g.borrowed?.has(key) &&
-            (key === "length" || (typeof key === "string" && INDEX.test(key)))))
-      )
-        return g;
-    }
-  return null;
-}
-/** The newest live guess carrier (the frame a structural read sees). */
-function newestGuess(t: StoreTarget): Signal<any> | null {
-  const kg = kgOf(t);
-  if (kg !== null)
-    for (let i = kg.length - 1; i >= 0; i--)
-      if (kg[i]._config & (CONFIG_OVERRIDE | CONFIG_HELD)) return kg[i];
-  return null;
-}
-/** The hold's carrier of a truth staged beneath the screen: the container
- * node while a transaction holds its staging (a landing adopted under an
- * action), else null. A guess made over it carries that truth beneath. */
-function heldCarrier(t: StoreTarget): Signal<any> | null {
-  const k = t.k;
-  return k !== null && k._config & CONFIG_HELD && k._pendingValue !== NOT_PENDING ? k : null;
-}
-/** A guessed key's value from the carrier's frame. */
-function carrierValue(frame: Record<PropertyKey, any>, key: PropertyKey): any {
-  return hasOwn.call(frame, key) || key !== "__proto__" ? frame[key as any] : undefined;
-}
-
+/** A user setter's writes on an optimistic family, as guesses: one per
+ * changed key's leaf, one per presence change, the container's arrangement
+ * when membership or order changed. `pb` is the draft (a clone of the view
+ * the user saw); `old` the view it composed on. */
 /** An optimistic setter's targets whose staging was set aside (`draft`),
  * restored when the setter's writes become guesses (`writes`). */
 const optStaged: Map<StoreTarget, Record<PropertyKey, any>> = new Map();
 
-/** The view the setter composes on (`writer`): the committed frame — a
- * chained backing resolved through the inner store's — with the lane's
- * value and the tick's own guess over it; `plain`: the committed frame
- * alone (the comparator's world). */
-function writerBacking(t: StoreTarget, plain = false): Record<PropertyKey, any> {
+// A chained backing is a proxy: reading it as a handler can expose a
+// derived store's staging. Compose the writer's view on the committed
+// backing of each link, retaining any optimistic guesses on that link.
+function writerBacking(t: StoreTarget): Record<PropertyKey, any> {
   const base = committed(t);
   const inner: StoreTarget | undefined = (base as any)[$TARGET];
-  const src = inner === undefined ? base : writerBacking(inner, plain);
-  return plain ? src : guessView(t, src, true);
-}
-/** `src` with the target's guess over it: the carrier's unflushed guess or
- * lane value when it carries one, else `src` itself. */
-function guessView(
-  t: StoreTarget,
-  src: Record<PropertyKey, any>,
-  writer = false
-): Record<PropertyKey, any> {
-  const kg = kgOf(t);
-  if (kg !== null)
-    for (let i = kg.length - 1; i >= 0; i--) {
-      const g = kg[i];
-      if (writer) {
-        // The writer composes on the screen with the tick's own guesses: the
-        // unflushed guess, the lane's value, a corrected guess's screen until
-        // its hold lands (D-34, D-37 — never the truth beneath it).
-        const v = writerFrame(g);
-        if (v !== NOT_PENDING) return ownedKeys(t, g, kg, v);
-      } else if (g._config & (CONFIG_OVERRIDE | CONFIG_HELD)) {
-        // A snapshot, `deep()`, a reconcile's key matching: the carrier as
-        // core reads it for this reader (the lane's world, the screen, the
-        // truth beneath — the same frame the per-key reads compose).
-        const v = untrack(() => readNode(g));
-        if (v !== NOT_PENDING) return v as Record<PropertyKey, any>;
-      }
-    }
-  return src;
-}
-
-/** A carrier's frame as the writer sees it: the unflushed guess or the
- * lane's value, a corrected guess's screen until its hold lands (D-34). */
-function writerFrame(g: any): any {
-  if (g._config & CONFIG_OVERRIDE || pendingGuessOf(g) !== NOT_PENDING) {
-    const v = guessedValueOf(g);
-    if (v !== NOT_PENDING) return v;
-  }
-  return g._config & CONFIG_HELD ? g._value : NOT_PENDING;
-}
-/** The newest carrier's frame with each key another carrier owns taken from
- * that carrier, as a read of the key finds it (`guessFor`): the newest frame
- * only copied those keys when it was written, and an older carrier a later
- * guess on the same key went to has moved on since (#4988). A list's frame
- * is its arrangement, taken whole. */
-function ownedKeys(t: StoreTarget, g: any, kg: Signal<any>[], v: any): Record<PropertyKey, any> {
-  let out = v;
-  if (!Array.isArray(v))
-    for (const o of kg as any[])
-      if (o !== g && o.wk !== null)
-        for (const key of o.wk)
-          if (guessFor(t, key, false, false) === o) {
-            const f = writerFrame(o);
-            if (f !== NOT_PENDING && f[key] !== out[key])
-              (out === v ? (out = { ...v }) : out)[key] = f[key];
-          }
-  return out;
+  return inner === undefined
+    ? base
+    : optimisticView(inner, writerBacking(inner), laneValueOf, true);
 }
 
 /** The user's draft on an optimistic family: a clone of the view the user
- * saw (#3665). A staging already on the target (a landing adopted this
- * flush) is set aside for the setter's duration: the guess goes over it, it
- * stays the truth beneath. */
+ * saw — the committed frame with the lanes' values and the tick's own
+ * unflushed guesses over it (#3665). A staging already on the target (a
+ * landing adopted this flush) is set aside for the setter's duration: the
+ * guesses go over it, it stays the truth beneath. */
 function optimisticDraft(t: StoreTarget): Record<PropertyKey, any> {
   if (t.pb !== null) optStaged.set(t, t.pb);
-  return cloneRaw(writerBacking(t), t);
-}
-
-/** The target's guess carrier, made at the first guess: its committed value
- * the frame the guess is shown over. Its comparator judges a truth against
- * the guess over the keys the guess changed (`echoes`: the server's echo of a
- * guessed row is a new object with the same contents, #3898). */
-function guessCarrier(t: StoreTarget, keys?: Set<PropertyKey>): any {
-  let kg = kgOf(t);
-  if (kg === null) carriers.set(t, (kg = []));
-  // The carrier a guess goes on: one with a guess still unflushed (this
-  // flush's: one lane), or a live one whose record shares a key (two
-  // suggestions for one slot entangle their frames, A34 (1) — as the one
-  // leaf node did); else a new one — another action's guess of other keys
-  // is its own lane's. A corrected guess whose screen stays until its hold
-  // lands (D-34) counts for its keys: the setter composed on that screen,
-  // and the guess over it ends with that hold (#4869) — a new carrier over
-  // the committed frame would drop a write back to it as no change.
-  for (let i = kg.length - 1; i >= 0; i--) {
-    const g: any = kg[i];
-    const live = g._config & (CONFIG_OVERRIDE | CONFIG_GUESS);
-    if (!live && pendingGuessOf(g) === NOT_PENDING && !(g._config & CONFIG_HELD && keys)) continue;
-    if (pendingGuessOf(g) !== NOT_PENDING || (live && keys === undefined))
-      return entangle(t, g, keys);
-    if (g.wk !== null) for (const key of keys!) if (g.wk.has(key) || g.del?.has(key)) return g;
-  }
-  const g: any = slotSignal(committed(t), patchEquals, t, $PATCH, false);
-  if (__OBSERVE__) nameCarrier(g, t);
-  // Written over a held truth (a landing the target's hold keeps beneath
-  // the screen): that truth is the one beneath the guess, judged at the
-  // body's end (A18, #3330) — as it was the leaf's staging.
-  const p = heldCarrier(t);
-  if (p !== null) {
-    g._pendingValue = p._pendingValue;
-    holdNode(g, txOf(p));
-  }
-  g.guess = true;
-  g.wk = null;
-  g.del = null;
-  g.removed = null;
-  g.borrowed = null;
-  g.g = undefined;
-  kg.push(g);
-  return g;
-}
-/** This flush's carrier writes a key another action's live guess holds: two
- * suggestions for one slot, and their frames entangle (A34 (1)) — as the one
- * leaf node's lanes merged at the seam (`applyGuesses`): an unapplied
- * carrier is held on that guess's frame, so its lane is born under it; an
- * applied one's frame merges now. */
-function entangle(t: StoreTarget, g: any, keys: Set<PropertyKey> | undefined): any {
-  if (keys !== undefined)
-    for (const o of kgOf(t)! as any[])
-      if (o !== g && o._config & CONFIG_OVERRIDE && o.wk !== null)
-        for (const key of keys)
-          if (o.wk.has(key) || o.del?.has(key)) {
-            const holder = resolveTx(txOf(o)._parent!);
-            if (g._config & CONFIG_OVERRIDE) merge(resolveTx(txOf(g)._parent!), holder);
-            else if (!(g._config & CONFIG_HELD)) holdNode(g, holder);
-            break;
-          }
-  return g;
-}
-/** The derive's open question is a re-ask of the same one (D-34 ¶3): its
- * own `refresh()`, or every source it waits on re-asked (`refresh(list)`
- * ahead of a sync derive over `list`, #4724) — an input re-asked is not an
- * input changed. A guess written over it stands in for the flight (A17). */
-function reasked(d: Computed<any>): boolean {
-  if (d._flags & REACTIVE_REASK || d._x?._reask) return true;
-  const ps = d._x?._pendingSources;
-  if (!ps?.size) return false;
-  for (const s of ps)
-    if (s === d || !((s as any)._flags & REACTIVE_REASK || (s as any)._x?._reask)) return false;
-  return true;
-}
-function patchEquals(this: any, a: any, b: any): boolean {
-  if (a === b) return true;
-  if (a === null || b === null || typeof a !== "object" || typeof b !== "object") return false;
-  // A chained backing (a proxy) is judged as the inner store's committed
-  // frame: the proxy would serve the inner's staging, and a guess equal to
-  // that staging is still a guess over the committed world.
-  const at: StoreTarget | undefined = a[$TARGET];
-  if (at !== undefined) a = writerBacking(at, true);
-  const bt: StoreTarget | undefined = b[$TARGET];
-  if (bt !== undefined) b = writerBacking(bt, true);
-  const fam: StoreFamily = this._host._fam;
-  // A structural guess (a list's, the only kind that records `g`): the
-  // arrangement, rows by identity or key, as the container judged it.
-  if (
-    this.g !== undefined &&
-    (a.length !== b.length || a.some((r: any, i: number) => !rowSame(r, b[i], fam)))
-  )
-    return false;
-  // Each key the guess changed, by content: the same object, or the
-  // server's echo of a guessed one — a new object with the same contents
-  // (#3898). A row the adoption paired by key with a guessed one is not
-  // thereby its equal: the leaves judged the content, so does the carrier.
-  const wk: Set<PropertyKey> | null = this.wk;
-  if (wk !== null)
-    for (const key of wk) {
-      if (key in a !== key in b) return false;
-      if (!GlobalQueue._echoes!(a[key as any], b[key as any])) return false;
-    }
-  const del: Set<PropertyKey> | null = this.del;
-  if (del !== null) for (const key of del) if (key in a !== key in b) return false;
-  return true;
-}
-
-// A keyed arrangement guess carries another guess's row verbatim when the
-// setter returned the view's row unchanged: the frame holds the view's row
-// object (the `echoes` normalization), and the row target — not the frame
-// copy — decides the row's contents, so the arrangement read serves this
-// frame's copy instead of falling through to the lender. Falling through
-// re-links the reader to the lender's carrier, which loses the
-// notification that carries the new arrangement to the DOM (#4724).
-// Primitives always borrow: the lender may rewrite the value, and this
-// frame's copy would go stale (#4784).
-function carriedVerbatim(
-  t: StoreTarget,
-  old: Record<PropertyKey, any>,
-  pb: Record<PropertyKey, any>,
-  key: PropertyKey
-): boolean {
-  if (typeof key !== "string" || !INDEX.test(key)) return false;
-  const keyFn = t._fam?.key;
-  if (keyFn === null || keyFn === undefined) return false;
-  const row = unwrapValue(pb[key]);
-  return isWrappable(row) && row === old[key];
+  return cloneRaw(optimisticView(t, writerBacking(t), laneValueOf, true), t);
 }
 
 export function notifyOptimisticWrites(
   t: StoreTarget,
   pb: Record<PropertyKey, any>
 ): Record<PropertyKey, any> | null {
-  // The view the user saw: the committed frame (a staging adopted eagerly is
-  // not it) with the lane's value and the tick's own guess over it.
-  const old = writerBacking(t);
+  // The view the user saw: the committed frame (a staging adopted eagerly
+  // is not it) with the lanes' values and the tick's own guesses over it.
+  const base = writerBacking(t);
+  const old = optimisticView(t, base, laneValueOf, true);
   const isArr = Array.isArray(pb);
+  // A chained target's nodes are links (§7b): their committed value is
+  // never served and never learns the inner store's commits — yet a guess
+  // is judged against it, and reverts to it (#3672). Hand the node the
+  // inner store's truth for its key before guessing over it.
   const inner = t.ch ? (t.v as Record<PropertyKey, any>) : null;
-  const changed = new Set<PropertyKey>();
-  let del: Set<PropertyKey> | null = null;
-  let structural = false,
-    shape = false;
+  const guess = (node: Signal<any>, key: PropertyKey, presence: boolean, nv: unknown): void => {
+    if (inner !== null) node._value = presence ? key in base : unwrapValue(base[key as any]);
+    // By value: a function leaf is a value, not an updater (#3017).
+    optimisticWrite(node, () => nv);
+  };
+  let structural = false;
   for (const key of Reflect.ownKeys(pb)) {
-    if (key === $OWNER) continue;
-    const nv = unwrapValue(pb[key as any]);
+    if ((isArr && key === "length") || key === $OWNER) continue;
+    // A chained draft holds the inner store's raws; a raw is the inner slot it
+    // resolves to (as a read of it serves) — the row a held write staged is
+    // the same row, not a guess over the slot (#3796).
+    const raw = pb[key as any];
+    const nv = unwrapValue(inner && raw ? resolveChainedRaw(t, key, raw) : raw);
     if (!(key in old)) {
-      changed.add(key);
-      structural = shape = true;
+      guess(getNode(t, key), key, false, nv);
+      guess(getHasNode(t, key), key, true, true);
+      structural = true;
     } else {
       const previous = old[key as any];
-      // A chained draft holds the inner store's raws: the inner's own frame.
-      const ov = unwrapValue(inner !== null && previous ? previous : previous);
-      // A row the setter carried over is not a write (#4724, the point of
-      // write): the draft's rows are clones of the view's, so a carried row
-      // is a new object with the view's contents — the same row, as the
-      // server's echo of a guessed one is (`echoes`, #3898).
+      const ov = unwrapValue(inner && previous ? resolveChainedRaw(t, key, previous) : previous);
       if (!isEqual(ov, nv) && !targetsEqual(ov, nv)) {
-        if (isArr && echoes(ov, nv)) {
-          // The frame carries the row the view showed, not the draft's clone
-          // of it: the same object wraps as the same proxy (a list keeps its
-          // row identities across a structural guess, deep-chained-view).
-          pb[key as any] = previous;
-        } else {
-          changed.add(key);
-          if (isArr) structural = true;
-        }
+        guess(getNode(t, key), key, false, nv);
+        if (isArr) structural = true;
       }
     }
   }
   for (const key of Reflect.ownKeys(old)) {
-    if (key === $OWNER || key in pb) continue;
-    (del ??= new Set()).add(key);
-    structural = shape = true;
+    if ((isArr && key === "length") || key === $OWNER) continue;
+    if (key in pb) continue;
+    guess(getNode(t, key), key, false, undefined);
+    guess(getHasNode(t, key), key, true, false);
+    structural = true;
   }
-  const staged = optStaged.get(t);
-  if (staged !== undefined) optStaged.delete(t);
-  if (changed.size === 0 && del === null) return staged ?? null;
-  const g = guessCarrier(t, del === null ? changed : new Set([...changed, ...del]));
-  // The questions of every action that guessed on this carrier: same-slot
-  // guesses share it (D-33), and its `_q` is only the newest's (#4874).
-  (g.qs ??= new Set()).add(question);
-  // The record accumulates across a lane's writes to the same target.
-  if (g.wk === null) g.wk = changed;
-  else for (const key of changed) g.wk.add(key);
-  if (del !== null) {
-    if (g.del === null) g.del = del;
-    else for (const key of del) g.del.add(key);
+  if (isArr && (old as any[]).length !== (pb as any[]).length) {
+    guess(getNode(t, "length"), "length", false, (pb as any[]).length);
+    structural = true;
   }
-  // The keys this guess's frame only carries over from another live guess's
-  // carrier (#4784): the draft was composed on the view, so its frame holds
-  // the other guess's values at keys this guess did not itself write. The
-  // arrangement read falls through on those keys — to the lender's carrier
-  // while it lives, to the truth once it dissolves — instead of serving
-  // this frame's copy of the expired guess. A row the setter carried over
-  // verbatim is not borrowed (`carriedVerbatim`): the row target decides
-  // its contents, and falling through would lose the DOM notification
-  // (#4724). The record accumulates across a lane's writes, like `wk`: a
-  // key this guess later writes itself is its own, and the `wk`/`del`
-  // match above takes precedence regardless. Not a guess that changed the
-  // keys or the length: it writes the list itself, the slot the other
-  // structural guesses write, so they entangle and its frame holds until
-  // they all settle (D-33) — a fall-through there served the truth's
-  // length beside this frame's rows.
-  const kg = kgOf(t);
-  if (kg !== null && kg.length > 1 && !shape && !changed.has("length"))
-    for (const o of kg as any[]) {
-      if (o === g) continue;
-      const live =
-        o._config & (CONFIG_OVERRIDE | CONFIG_GUESS | CONFIG_HELD) ||
-        pendingGuessOf(o) !== NOT_PENDING;
-      if (!live) continue;
-      for (const key of o.wk ?? [])
-        if (!changed.has(key) && !del?.has(key) && !carriedVerbatim(t, old, pb, key))
-          (g.borrowed ??= new Set()).add(key);
-      for (const key of o.del ?? [])
-        if (!changed.has(key) && !del?.has(key) && !carriedVerbatim(t, old, pb, key))
-          (g.borrowed ??= new Set()).add(key);
-    }
-  if (structural && isArr) {
-    const rows = (pb as any[]).map(arrangementRow, t._fam!);
+  if (structural) {
+    const rows = isArr ? (pb as any[]).map(value => unwrapValue(value)) : shallowKeys(pb);
     // The keys of the view the setter saw that are not the guess's own
     // rows, which a re-base over another truth takes from that truth
     // (`_laneRebase`): the rows the setter removed, which it never brings
     // back, and the rows it only carried over from the truth beneath (the
-    // committed row itself), which the new truth decides. Rows it added, or
-    // carried from another action's guess, are the guesses' own: their
-    // landings judge them. A set (empty or not) marks a keyed arrangement
-    // guess (`fold`).
+    // committed row itself), which the new truth decides. Rows it added, or carried from another action's guess,
+    // are the guesses' own: their landings judge them. A set (empty or not)
+    // marks a keyed arrangement guess (`fold`).
     let removed: Set<unknown> | null = null;
     const keyFn = t._fam!.key;
-    if (keyFn !== null && keyFn !== undefined) {
+    if (isArr && keyFn !== null && keyFn !== undefined) {
       removed = new Set();
       const kept = new Set<unknown>();
-      const base = committed(t) as any[];
-      const truth = new Set(base);
+      const truth = new Set(base as any[]);
       for (let i = 0; i < rows.length; i++) {
         const k = isWrappable(rows[i]) ? keyFn(rows[i]) : undefined;
         if (k !== undefined) kept.add(k);
@@ -486,15 +193,14 @@ export function notifyOptimisticWrites(
       // removed by another action's guess, whose landing judges it — a
       // re-base never brings it back beside that guess (F-11, #4656).
       const n = (old as any[]).length;
-      const all = [...(old as any[]), ...base];
+      const all = [...(old as any[]), ...(base as any[])];
       for (let i = 0; i < all.length; i++) {
         const r = unwrapValue(all[i]);
         const k = isWrappable(r) ? keyFn(r) : undefined;
         if (k !== undefined && (!kept.has(k) || (i < n && truth.has(r)))) removed.add(k);
       }
     }
-    g.removed = removed;
-    g.g = rows;
+    const view = new LaneView(rows, base, removed);
     // Written while the derive asks a new question (an input changed, not a
     // `refresh()`): the guess's base answers the old one, so the rows it only
     // carried over are that answer's — the new answer re-bases it like an
@@ -502,28 +208,34 @@ export function notifyOptimisticWrites(
     // A refresh's flight already up (`_reask`, the pass consumed the flag)
     // asks nothing new either (D-34 ¶3, #4656).
     const d = t._fam!.node;
-    if (removed && d?._statusFlags! & STATUS_PENDING && !reasked(d!)) g.g = null;
+    if (
+      removed &&
+      d?._statusFlags! & STATUS_PENDING &&
+      !(d!._flags & REACTIVE_REASK || d!._x?._reask)
+    )
+      view.g = null;
+    optimisticWrite(getContainerNode(t), view as any);
   }
-  // By value: the draft is the guess as written (a function leaf is a
-  // value, not an updater, #3017).
-  optimisticWrite(g, () => pb);
   if (t.dk !== null) optimisticWrite(t.dk, {} as any);
   markOverlaid(t);
-  return staged ?? null;
+  const staged = optStaged.get(t);
+  if (staged === undefined) return null;
+  optStaged.delete(t);
+  return staged;
 }
 
 type KeyFn = (item: any) => any;
 
-// A borrowed row must keep following its source through a re-base. Unwrapping
-// a foreign proxy here would retain its old backing after that source adopts
-// a new answer (#4931). Local rows still use the family's raw identity.
-// (`this`: the family, as `rows.map(arrangementRow, fam)`.)
-function arrangementRow(this: StoreFamily, row: any): any {
-  return row?.[$TARGET]?._fam !== this ? row : unwrapValue(row);
+/** The container comparator's lane arm (store.ts `containerEquals`): an
+ * arrangement guess (`LaneView`) against a landing or another arrangement,
+ * by row identity — by key when the family has one. */
+function arrangement(t: StoreTarget, a: any, b: any): boolean {
+  const av = a instanceof LaneView;
+  const bv = b instanceof LaneView;
+  if (!av && !bv) return false;
+  return arrangementEqual(av ? a.rows : a, bv ? b.rows : b, t._fam!);
 }
 
-/** Two rows of a keyed list's arrangement, by identity — by key when the
- * family has one. */
 function rowSame(a: any, b: any, fam: StoreFamily): boolean {
   if (isEqual(a, b) || targetsEqual(a, b)) return true;
   const keyFn = fam.key;
@@ -564,6 +276,24 @@ GlobalQueue._echoes = (a, b) => {
     return false;
   }
 };
+
+function arrangementEqual(
+  a: Record<PropertyKey, any>,
+  b: Record<PropertyKey, any>,
+  fam: StoreFamily
+): boolean {
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    if (a.length !== (b as any[]).length) return false;
+    for (let i = 0; i < a.length; i++) if (!rowSame(a[i], (b as any[])[i], fam)) return false;
+    return true;
+  }
+  const ak = Reflect.ownKeys(a).filter(k => k !== $OWNER);
+  const bk = Reflect.ownKeys(b).filter(k => k !== $OWNER);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) if (!(k in b)) return false;
+  return true;
+}
 
 /** Write `incoming` into the draft `draft` (a store proxy inside a user's
  * setter): arrays match rows by key (position when unkeyed) and recurse into
@@ -617,115 +347,65 @@ function reconcileDraft(draft: any, incoming: any, keyFn: KeyFn | null): void {
   for (const k of Object.keys(draft)) if (!(k in incoming)) delete draft[k];
 }
 
-/** Core asks (scheduler `laneDirty`): the lane dirtied the target's guess
- * carrier — its readers are the readers of the leaves of the keys the guess
- * changed (they link their leaves, and the carrier once they read through
- * it): dirtied as the lane's work, with the presence nodes and the
- * container (a structural guess). */
-/** The nodes the readers of a guess carrier's keys link: the leaves and
- * presence nodes of the keys it changed, and the container. */
-function readersOf(n: any, fn: (node: Signal<any>) => void): void {
-  if (n._key !== $PATCH || !n.guess) return;
-  const t = n._host as StoreTarget;
-  const each = (keys: Iterable<PropertyKey>) => {
-    for (const key of keys) {
-      const leaf = t.n?.[key as any];
-      if (leaf !== undefined && leaf._subs !== null) fn(leaf);
-      const has = t.h?.[key as any];
-      if (has !== undefined && has._subs !== null) fn(has);
-    }
-  };
-  each(n.wk ?? []);
-  if (n.del !== null) each(n.del);
-  const k = t.k;
-  if (k !== null && k._subs !== null) fn(k);
-}
-GlobalQueue._slotDirty = (n, l) => readersOf(n, node => laneDirty(node, l));
-/** Core asks (lanes `rerun`): a guess coming back at a landing re-derives
- * the carrier's readers there — the readers of its keys' leaves. */
-GlobalQueue._slotRerun = (n, t) =>
-  readersOf(n, node => {
-    for (let s = node._subs; s !== null; s = s._nextSub) staleReader(s._sub, t);
-  });
 /** Core asks (lanes `laneWrite`): the family's derive, re-asking in a lane of
- * another action than the one that guessed this target, writes it — that
+ * another action than the one that guessed this slot, writes it — that
  * lane's new question, which the guess (over the old one) does not answer:
- * the carrier is the lane's derivation from here (F-6, #4336; lanes
+ * the slot is the lane's derivation from here (F-6, #4336; lanes
  * `laneStage` for a node's own pass). */
 GlobalQueue._slotTake = (n, back) => {
   const t = (n as any)._host as StoreTarget | undefined;
   if (back) {
-    // The guess comes back (lanes `endLanes`): on the target's carrier — the
-    // node itself, re-attached if the taker lane's end swept it (as the leaf
-    // path re-made its node).
+    // The guess comes back (lanes `endLanes`): on the slot's node now — the
+    // node itself, or the one a read made after it was released.
+    const k = (n as any)._key;
     markOverlaid(t!);
-    let kg = kgOf(t!);
-    if (kg === null) carriers.set(t!, (kg = []));
-    if (kg.indexOf(n) === -1) kg.push(n);
-    return n;
+    return k === $TRACK
+      ? getContainerNode(t!)
+      : n._equals === isEqual
+        ? getHasNode(t!, k)
+        : getNode(t!, k);
   }
   const d = t?._fam?.node?._x?._transaction;
   const g = txOf(n);
   if (!d?._lane || sameAction(d, g)) return false;
-  // The re-ask takes the target's guess whole (the carrier and the deep
-  // witness): a node other than the written one shows its truth in the
-  // lane's world (lanes `take`).
-  for (const m of [...(kgOf(t!) ?? []), t!.dk])
-    if (m?._config! & CONFIG_GUESS && txOf(m!) === g) take(m!, d, m !== n);
+  // The re-ask takes the target's guess whole: the slot is the lane's
+  // derivation; its other guessed slots show their truth in the lane's
+  // world (lanes `take`).
+  for (const m of nodesOf(t!)) if (m?._config & CONFIG_GUESS && txOf(m) === g) take(m, d, m !== n);
   return true;
 };
-/** Q-D (plan sec. 39): an OLDER question's truth landed beneath a guess
- * (`laneWrite` held it — another action's landing is not this guess's
- * answer). The guess's edit is re-based over it: the truth frame with the
- * guess's own keys over it; a keyed list's order from the guess, rows from
- * the truth by key (a guessed row the truth has is the truth's object — the
- * row target adopted it, its proxy survives), rows the guess added — or
+/** Q-D (plan sec. 39): an OLDER question's truth landed beneath an arrangement
+ * guess (`laneWrite` held it — another action's landing is not this guess's
+ * answer). The guess's edit is re-based over it: order from the guess, rows
+ * from the truth by key (a guessed row the truth has is the truth's object —
+ * the row target adopted it, its proxy survives), rows the guess added — or
  * carried from another action's guess — kept (their landings judge them),
  * truth rows the guess lacks appended unless it removed them. A row the
  * guess only carried over from the truth it was written on is that truth's,
  * not the guess's: the new truth decides it, so after a new question the
  * old list's rows never show beside the new one's (F-1, D-35, #4482;
- * `removed`). Unkeyed lists compose positionally — the guess stands as
- * written (the documented residue). A current truth re-bases, the same way,
- * a guess written while its question was being asked (`g` null, #4525):
- * asked before the guess, it is the older question; its rows are held
- * beneath the guess. True: the lane holds the landing (`laneWrite`). */
-GlobalQueue._laneRebase = (el: any, truth: unknown, older: boolean) => {
-  const t: StoreTarget | undefined = el._host;
-  // Not a store's: the lane judges the write (`supersede`).
-  if (t === undefined) return false;
-  if (el._key !== $PATCH) {
-    // The deep witness's guess: a bump beneath a shown keyed arrangement
-    // guess folds that lane (D-34), else the lane judges it.
-    if (older) return true;
-    const g = kgOf(t)?.find(c => c._config & CONFIG_OVERRIDE && (c as any).removed);
-    return g !== undefined && (g as any).g !== null ? fold(g, truth) : false;
+ * `removed`). The composed arrangement becomes the lane's value on every
+ * index whose row the committed backing does not already show — compared
+ * BY KEY, never by raw identity: the same key's new object is the same row
+ * (its target adopted it) and the slot stays the committed backing's — (a
+ * node is born for it as the lane's derivation), on `length` only when the
+ * committed length differs, and as the `LaneView`'s base for structural
+ * reads. Unkeyed families compose
+ * positionally — the guess stands as written (the documented residue).
+ * A current truth re-bases, the same way, a guess written while its
+ * question was being asked (`g` null, #4525): asked before the guess, it is
+ * the older question; its rows are held beneath the guess. True: the lane
+ * holds the landing (`laneWrite`). */
+GlobalQueue._laneRebase = (el: Signal<any>, truth: unknown, older: boolean) => {
+  const t = (el as any)._host as StoreTarget | undefined;
+  if (!older && (t?.k?._x?._lane as LaneView)?.g !== null) return fold(el, truth);
+  if (!t || (el as any)._key !== $TRACK) return true;
+  const view = el._x!._lane;
+  if (!(view instanceof LaneView)) return;
+  if (!Array.isArray(truth) || !Array.isArray(view.rows)) {
+    view.base = truth as Record<PropertyKey, any>;
+    return;
   }
-  const guess = latestOf(el) as any;
-  // A current truth: folded beneath a shown keyed arrangement guess (D-34).
-  // Not folded (an object's guess, a lane that has not shown): held beneath
-  // the guess for the hold's end, as a leaf's landing was — the screen keeps
-  // the guess until the commit (D-34; #4690, the outside re-ask).
-  if (!older && el.g !== null) return fold(el, truth);
-  // The truth of an action whose own guess is on this carrier, entangled
-  // with a later one's (same slot, D-33): the hold's own staging, beneath
-  // the guess until the hold commits — none of it shows before (#4874).
-  if (older && el.qs?.has(question)) return true;
-  // The truth answers another carrier's guess (`by`, its rows): the rows
-  // this guess carried over from that guess are judged by it — its own
-  // landing — so a placeholder it added never shows beside the row its
-  // answer wrote (#4897). Entangled with this guess's hold (an action that
-  // read that guess, D-33, #4788), that truth is the hold's own staging, as
-  // a same-carrier one above: none of it shows before the hold commits.
-  let by: any[] | undefined;
-  if (older)
-    for (const o of kgOf(t)! as any[])
-      if (o !== el && o.qs?.has(question)) {
-        if (sameAction(txOf(o), txOf(el))) return true;
-        by = o.g;
-      }
-  // An older question's truth, or the #4525 re-base: the guess's edit over it.
-  if (!Array.isArray(truth) || !Array.isArray(guess)) return true;
   const keyFn = t._fam?.key;
   if (!keyFn) return;
   const byKey = new Map<unknown, any>();
@@ -735,7 +415,7 @@ GlobalQueue._laneRebase = (el: any, truth: unknown, older: boolean) => {
     if (k !== undefined && !byKey.has(k)) byKey.set(k, r);
   }
   const used = new Set<unknown>();
-  const removed: Set<unknown> = el.removed ?? new Set();
+  const removed = view.removed!;
   const rows: any[] = [];
   // From the guess as written, not an earlier re-base's composition: a
   // derive's landing writes key by key, and a truth row one partial write
@@ -743,58 +423,49 @@ GlobalQueue._laneRebase = (el: any, truth: unknown, older: boolean) => {
   // The #4525 re-base (`g` null): the lane's rows are the new question's
   // answer now; its work reads that question's hold as the hold's own
   // flush does (core.ts `frameRead`, F-1, #4536).
-  if (el.g === null) txOf(el).over = t._fam!.node!._x!._transaction!;
-  const guessed: any[] = (el.g ??= guess.map(arrangementRow, t._fam!));
+  if (view.g === null) txOf(el).over = t._fam!.node!._x!._transaction!;
+  const guessed = (view.g ??= view.rows as any[]);
   for (let i = 0; i < guessed.length; i++) {
     const g = guessed[i];
     const k = isWrappable(g) ? keyFn(g) : undefined;
     const tr = k !== undefined ? byKey.get(k) : undefined;
     if (tr !== undefined) {
-      // The truth's row under the guessed one's key: the guessed row's
-      // target adopts it (the same proxy from here; its leaves tell its
-      // readers what changed), as the derive's draft pairs new rows under
-      // guessed ones (`pairRows`).
-      const gt = isWrappable(g) ? lookupTarget(unwrapValue(g), t._fam!) : undefined;
-      if (gt !== undefined && lookupTarget(tr, t._fam!) === undefined)
-        reconcileState(tr, gt.px, keyFn, true);
       rows.push(tr);
       used.add(k);
-    } else if (!removed.has(k) && !by?.includes(g)) rows.push(g);
+    } else if (!removed.has(k)) rows.push(g);
   }
   for (let i = 0; i < truth.length; i++) {
     const r = truth[i];
     const k = isWrappable(r) ? keyFn(r) : undefined;
     if (k !== undefined && !used.has(k) && !removed.has(k)) rows.push(r);
   }
-  // Every index of the composition is the guess's from here (a new row at
-  // an index, the length): the record covers the frame.
-  const wk: Set<PropertyKey> = el.wk ?? (el.wk = new Set());
-  const n = Math.max(rows.length, guess.length, (committed(t) as any[]).length);
-  for (let i = 0; i < n; i++) wk.add(String(i));
-  wk.add("length");
-  const l = txOf(el);
-  setLaneValue(el, l, rows);
-  // The composition changed what the lane shows (a truth row's content
-  // under a guessed key, a row appended): the carrier's readers re-derive
-  // as the lane's work (`laneDirty`; the leaf's `laneSet` did).
-  if (!sameRows(guess, rows, t._fam!)) laneDirty(el, l);
-  return true;
-};
-/** Two row lists show the same through the proxies: each slot the same
- * target (a row the guessed one's target adopted is the same proxy) or
- * the same primitive. */
-function sameRows(a: any[], b: any[], fam: StoreFamily): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const x = unwrapValue(a[i]),
-      y = unwrapValue(b[i]);
-    if (isWrappable(x)) {
-      const xt = lookupTarget(x, fam);
-      if (xt === undefined || xt !== lookupTarget(y, fam)) return false;
-    } else if (!isEqual(x, y)) return false;
+  view.rows = rows;
+  view.base = rows;
+  const lane = txOf(el);
+  const base = committed(t) as any[];
+  const nodes = t.n;
+  for (let i = 0; i < rows.length; i++) {
+    const node = nodes?.[i];
+    // A slot the lane does not own shows the committed row: it becomes the
+    // lane's only where the composed row is another row (by key — the same
+    // key's new object is the same row, its target adopted it).
+    if (node === undefined) {
+      if (!sameRow(base[i], rows[i], keyFn)) laneSet(getNode(t, i), rows[i], lane);
+    } else if (!sameRow(node._config & CONFIG_OVERRIDE ? node._x!._lane : base[i], rows[i], keyFn))
+      laneSet(node, rows[i], lane);
+  }
+  if (nodes !== null) {
+    for (let i = rows.length; ; i++) {
+      const node = nodes[i];
+      if (node === undefined) break;
+      laneSet(node, undefined, lane);
+    }
+    const len = nodes.length;
+    if (len !== undefined && (len._config & CONFIG_OVERRIDE || base.length !== rows.length))
+      laneSet(len, rows.length, lane);
   }
   return true;
-}
+};
 
 /** D-34 for a keyed arrangement guess: rows by key, not positions. A
  * current truth that differs folds into the hold beneath it instead of
@@ -803,12 +474,14 @@ function sameRows(a: any[], b: any[], fam: StoreFamily): boolean {
  * re-derives from the truth now (`foldedRead`). A confirmation is silent
  * (A17): only truth readers are told. True: the lane stages the truth
  * beneath (`laneWrite`). */
-function fold(el: any, truth: unknown): boolean {
+function fold(el: Signal<any>, truth: unknown): boolean {
+  const k = ((el as any)._host as StoreTarget | undefined)?.k;
   const l = txOf(el);
   // A guess the screen never showed is void at the correction (D-34); a
-  // keyed arrangement guess's carrier carries its removed-keys set.
-  if (!l._shown || !el.removed) return false;
-  const guess = latestOf(el);
+  // keyed arrangement guess's view carries its removed-keys set.
+  if (!l._shown || !(k?._config! & CONFIG_OVERRIDE) || !(k!._x!._lane as LaneView)?.removed)
+    return false;
+  const guess = el._x!._lane;
   if ((!el._equals || !el._equals(guess, truth)) && !GlobalQueue._echoes!(guess, truth))
     l.folded = foldedRead;
   else GlobalQueue._confirmed?.(l);
@@ -842,7 +515,27 @@ function foldedRead(c: Computed<any> | null, el: Signal<any> | Computed<any>): u
     joinPassAt(c, resolveTx(l._parent ?? l));
   }
   if (el._pendingValue !== NOT_PENDING) return el._pendingValue;
-  return covered(el);
+  return el._config & CONFIG_SLOT_NODE ? GlobalQueue._slotCovered!(el) : el._value;
+}
+
+function sameRow(a: unknown, b: unknown, keyFn: (item: any) => any): boolean {
+  if (a === b) return true;
+  if (!isWrappable(a) || !isWrappable(b)) return false;
+  const ka = keyFn(unwrapValue(a));
+  return ka !== undefined && sameKey(ka, keyFn(unwrapValue(b)));
+}
+
+/** A composed value becomes the lane's on `node`: a guess re-based, or a
+ * node that was not the lane's becomes its derivation (its committed value
+ * untouched beneath; the lane's end commits the latest). */
+function laneSet(node: Signal<any>, value: unknown, lane: ReturnType<typeof txOf>): void {
+  const x = ext(node);
+  if (!(node._config & CONFIG_OVERRIDE)) {
+    node._config |= CONFIG_OVERRIDE;
+    list(node, lane);
+  } else if (x._lane === value) return;
+  x._lane = value;
+  if (node._subs !== null) laneDirty(node, lane);
 }
 
 /** D-34 for a per-key guess (#4329): the derive's draft wrote new objects
@@ -851,186 +544,34 @@ function foldedRead(c: Computed<any> | null, el: Signal<any> | Computed<any>): u
  * reconciles the new object at its slot — in a keyed list, the one with
  * the row's key — exactly as a returned landing would: rows match by key,
  * a guessed row keeps its target, and its leaves are judged against their
- * guesses. With no guess out, rows nothing guessed are left as the draft
- * wrote them. */
-function pairRows(t: StoreTarget, pb: Record<PropertyKey, any>, viewed?: boolean): void {
-  const fam = t._fam!;
-  const keyFn = fam.key;
-  const list = Array.isArray(pb);
-  // One rule (Q-D, plan sec. 31.7): a row with a target keeps it under the
-  // landing's new object at its slot — in a keyed list, the one with its
-  // key (an unkeyed list pairs nothing). The target adopts the object; a
-  // row another store lent keeps its proxy in the slot.
-  let at: Map<unknown, number> | undefined;
-  const pair = (k: unknown, px: any, lent?: boolean) => {
-    if (list && at === undefined) {
-      at = new Map();
-      (pb as any[]).forEach((r, i) => {
-        const rk = isWrappable(r) && keyFn ? keyFn(r) : undefined;
-        if (rk !== undefined && !at!.has(rk)) at!.set(rk, i);
-      });
-    }
-    // A returned landing leaves a row another store lent alone (its target
-    // here is chained over that store's proxy, §7b): the diff against the
-    // view keeps it by key, and reconciling the answer into it ties the
-    // lender's row to this landing, so two stores that lent each other rows
-    // waited on each other's flight forever (#4928).
-    if (viewed && px[$TARGET].ch) return;
-    const i: any = list ? at!.get(k) : k;
-    const nv = i === undefined ? undefined : pb[i];
-    // A new object only: not the row's own, nor one another row serves
-    // (pairing it would alias the two).
-    if (isWrappable(nv) && !lookupTarget(nv, fam)) {
-      reconcileState(nv, px, keyFn, true);
-      if (lent) pb[i] = px;
-    }
-  };
-  // A guessed row, or its ancestor directly under `t`.
-  for (let c of fam._overlaid ?? []) {
+ * guesses. Rows nothing guessed are left as the draft wrote them. */
+function pairRows(t: StoreTarget, pb: Record<PropertyKey, any>): void {
+  const keyFn = t._fam!.key;
+  for (let c of t._fam!._overlaid ?? []) {
+    // The guessed row, or its ancestor directly under `t` (none: skip).
     while (c.u !== t) if ((c = c.u!) === null) break;
-    if (c !== null) pair(list ? keyFn?.(c.v) : c.pk, c.px);
+    if (c === null) continue;
+    const k = keyFn?.(c.v);
+    const nv = Array.isArray(pb)
+      ? k !== undefined && pb.find(r => isWrappable(r) && sameKey(keyFn!(r), k))
+      : pb[c.pk!];
+    // A new object only: not `c`'s own, nor one another row serves
+    // (pairing it would alias the two).
+    if (isWrappable(nv) && !lookupTarget(nv, t._fam)) reconcileState(nv, c.px, keyFn, true);
   }
-  if (!keyFn || !list) return;
-  // While guesses are out, every committed row, not only a guessed one
-  // (#4738): a row whose guess settled can be guessed again, and the setter
-  // writes the committed row's target.
-  if (fam._overlaid?.size)
-    for (const ov of committed(t) as any[]) {
-      const rt = isWrappable(ov) ? lookupTarget(ov, fam) : undefined;
-      if (rt !== undefined) pair(keyFn(ov), rt.px);
-    }
-  // A row another store's guess added as it is (that store's proxy, not a
-  // copy): a guess of that store's still out on the row shows on through
-  // its own carrier until its action ends (F-11, #4902). A returned landing
-  // (`viewed`) is diffed against the view, which already holds the lent row
-  // by key: its slot stays this store's row (#4918).
-  if (!viewed)
-    kgOf(t)?.forEach(c => {
-      const f = guessedValueOf(c);
-      if (Array.isArray(f))
-        for (const r of f) {
-          const ft = r?.[$TARGET];
-          if (ft?.px === r && ft._fam !== fam) pair(keyFn(r), r, true);
-        }
-    });
 }
 
-/** #4788 (D-33): an action read `key` of `t` (`v`, else the writer's view
- * of it): when a live guess wrote that key, a guess the action writes next
- * derives from it (core lanes.ts `readGuesses`). A row reached through a
- * guessed index, or the length of a guessed arrangement, is navigation, not
- * a value the write is computed from: the row's own keys say what was read
- * of it. Nor is the keyed diff a returned array is written by (`diffing`):
- * the user's own reads are the setter's. */
-let diffing = false;
-/** #4812: a record a live guess put in place (a replaced child), with the
- * record it replaced: what the setter reads under it derives from that
- * guess, however deep — where it differs from what the replaced record
- * holds (a rewritten row's unchanged `id` is navigation, #4724). */
-const placed = new WeakMap<object, [Transaction, any]>();
-function noteRead(t: StoreTarget, key: PropertyKey, v?: unknown): void {
-  if (!actionDepth || diffing) return;
-  const g: any = guessFor(t, key, false, false);
-  const p = g && g._config & CONFIG_OVERRIDE ? null : placed.get(t.v);
-  if (!p && !(g && g._config & CONFIG_OVERRIDE)) return;
-  const l = p ? p[0] : txOf(g),
-    old = unwrapValue(p ? p[1]?.[key as any] : t.v[key as any]),
-    r = unwrapValue(v ?? (g ? carrierValue(guessedValueOf(g), key) : t.v[key as any]));
-  if (isWrappable(r)) r !== old && placed.set(r, [l, old]);
-  else if (!p || !Object.is(r, old)) readGuesses.push(l, question);
-}
-/** #4812: presence (`in`) and enumeration in a setter's draft read the key
- * set a live guess changed — a key it added or deleted. */
-function noteShape(t: StoreTarget, key?: PropertyKey): void {
-  const kg = actionDepth && !diffing ? kgOf(t) : null;
-  if (kg !== null)
-    for (let i = kg.length - 1; i >= 0; i--) {
-      const g: any = kg[i];
-      if (
-        g._config & CONFIG_OVERRIDE &&
-        (key !== undefined
-          ? g.del?.has(key) || (g.wk?.has(key) && !(key in t.v))
-          : g.del?.size || [...(g.wk ?? [])].some((k: PropertyKey) => !(k in t.v)))
-      )
-        readGuesses.push(txOf(g), question);
-    }
-}
-
-installOptHooks({
+installOptHooks(LEGACY_LANES ? {
   pair: pairRows,
   draft: optimisticDraft,
   writes: notifyOptimisticWrites,
-  view: guessView,
-  reconcile: (d, v, k) => {
-    diffing = true;
-    reconcileDraft(d, v, k);
-    diffing = false;
-  },
+  arrangement,
+  reconcile: reconcileDraft,
+  view: (t, src, writer = false) =>
+    writer ? optimisticView(t, src, laneValueOf, true) : optimisticView(t, src),
+  has: optimisticHas,
+  descriptor: optimisticOwnDescriptor,
   sweep: sweepOverlaid,
-  // The carrier arms (store.ts calls them for an optimistic family's target
-  // outside a draft and the write override): a key a live guess changed
-  // reads through the carrier, tracked — the lane's seat, a verdict
-  // window's judgment of the guess (A17/A24) — and the key's leaf stays the
-  // reader's subscription point (silent while the guess covers it: the next
-  // guess on the key, on a carrier of its own, reaches the reader through
-  // it, `readersOf`). Presence and descriptors are the carrier frame's;
-  // enumeration reads the newest carrier, tracked.
-  read: (t, key) => {
-    const g = guessFor(t, key);
-    const obs = getObserver();
-    if (g === null) {
-      // A key an arrangement guess only borrowed, its lender gone, reads the
-      // truth (#4784), but that guess still orders the rows read beside it:
-      // its end must reach this reader, as when it served the key (#4897).
-      if (obs !== null) kgOf(t)?.forEach(c => (c as any).borrowed?.has(key) && link(c, obs as any));
-      return NOT_PENDING;
-    }
-    const frame = readNode(g) as Record<PropertyKey, any>;
-    const node = obs !== null ? getNode(t, key) : t.n?.[key as any];
-    if (obs !== null) link(node!, obs as Computed<any>);
-    const v = carrierValue(frame, key);
-    if (obs === null) noteRead(t, key, v);
-    return serveKeyValue(t, key, v, false, node);
-  },
-  drafted: (t, key, shape) => (shape ? noteShape(t, key) : noteRead(t, key!)),
-  has: (t, key) => {
-    const g = guessFor(t, key, true);
-    if (g === null) return undefined;
-    const obs = getObserver();
-    if (obs !== null) link(getHasNode(t, key), obs as Computed<any>);
-    return key in (readNode(g) as object);
-  },
-  descriptor: (t, key, array) => {
-    const g = guessFor(t, key, true);
-    if (g === null) return undefined;
-    const obs = getObserver();
-    if (obs !== null) link(getHasNode(t, key), obs as Computed<any>);
-    const frame = readNode(g) as Record<PropertyKey, any>;
-    if (!(key in frame)) return null;
-    const value = frame[key as any];
-    const length = key === "length" && Array.isArray(frame);
-    return { value, writable: true, enumerable: !length, configurable: !(length && array) };
-  },
-  frame: t => {
-    const g = newestGuess(t);
-    return g === null ? NOT_PENDING : readNode(g);
-  },
-  // A key a live guess changed: its leaf is silent at a landing — its
-  // readers read the carrier, whose judgement of the landing tells them (a
-  // correction through the carrier, a confirmation silently, A17).
-  covers: (t, key, shape) => guessFor(t, key, shape, false) !== null,
-  // A landing reaches each live carrier as the truth it is judged against
-  // (`laneWrite`: confirmed beneath, re-based, folded, or a correction) —
-  // the frame as landed, not the backing by reference: a later batch writes
-  // the backing in place, and a truth staged beneath a guess (a correction
-  // held for the hold's end) must stay the answer it was.
-  judge: (t, truth) => {
-    const kg = kgOf(t);
-    if (kg === null) return;
-    const frame = Array.isArray(truth) ? (truth as any[]).slice() : { ...truth };
-    for (let i = 0; i < kg.length; i++)
-      if (kg[i]._config & (CONFIG_OVERRIDE | CONFIG_HELD)) setSignal(kg[i], frame);
-  },
   // A new question (not a `refresh()`) asked over guesses an earlier frame
   // opened, which answer the old one (D-34, #4336). Stamped on `fam._asked`
   // with this flush's `clock`, so it lapses when the flush ends: `clock + 1`
@@ -1040,16 +581,13 @@ installOptHooks({
   // no live guess left — the lane waits for its answer (F-6), as for a
   // guessed `createOptimistic` (lanes `laneStage`). The guess's own lane
   // asks nothing new and stamps nothing.
-  // A `refresh()` re-asks the guesses' own question (D-34 ¶3) — the
-  // derive's own, or every source it waits on re-asked (`reasked`: a
-  // refreshed memo dirties a sync derive ahead of its own refresh, #4801):
-  // a guess
+  // A `refresh()` re-asks the guesses' own question (D-34 ¶3): a guess
   // stands in for its flight (A17), so a leaf lane work reads is kept off
   // the wake — the lane shows its guesses and the flight holds the lane's
   // parent, not the lane (F-11, #4656).
   ask: fam => {
     if (!fam._overlaid?.size) return;
-    if (reasked(fam.node!)) return (n: any) => n._subs._sub._x?._transaction?._lane;
+    if (fam.node!._flags & REACTIVE_REASK) return (n: any) => n._subs._sub._x?._transaction?._lane;
     // Stamped with the flush (`clock`): it lapses when the flush ends.
     let a = ~clock;
     for (const g of fam._overlaid) {
@@ -1065,10 +603,7 @@ installOptHooks({
   // only a target carrying a guess stands in — a read of one with none is an
   // ordinary pending read (F-2), so a keyed store's other keys wait for their
   // answer, not for the guess's action; in a lane with no guess of its own,
-  // or with no live guess left, none does (F-6) — whoever asked: a reader
-  // that joined another action's lane (it reads that action's guess
-  // elsewhere) over mainline's new question waits for its answer, so a
-  // `Loading on` region remounted under it shows its fallback (#4929).
+  // or with no live guess left, none does (F-6).
   // A reader already observing the flight (linked) keeps observing it:
   // served the guess, a re-run (the guess's own, the seam) would drop its
   // link and release the hold beside a guess over the previous answer
@@ -1090,39 +625,15 @@ installOptHooks({
     const a = f._asked;
     const d = f.node!;
     const c: any = context;
-    if (
-      !o?.size ||
-      (a === clock + 1 &&
-        (passLane === null
-          ? !o.has(t)
-          : ![...o].some(
-              g => (g = laneNodeOf(g) as any) && sameAction(txOf(g as any), passLane!)
-            ))) ||
-      a === ~clock
-    )
+    if (!o?.size || (a === clock + 1 && passLane === null && !o.has(t)) || a === ~clock)
       return false;
     // Linked by this pass's hold (below): its other reads keep the guess.
     const j = heldC === c && heldAt === clock;
     if (linkedTo(c, d)) return j && heldV > 1;
-    if (kgOf(t)?.some(g => (g as any).g === null) && c?._statusFlags & STATUS_PENDING) {
+    if ((t.k?._x?._lane as LaneView)?.g === null && c?._statusFlags & STATUS_PENDING)
       if (c._type === EFFECT_RENDER) readNode(d);
       else if (j ? heldV : ((heldC = c), (heldAt = clock), (heldV = held(c))))
         d._x?._transaction ? (link(d, c), staleReader(c, txOf(d)), (heldV = 2)) : readNode(d);
-    }
-    // #4786: guesses of one action standing in (A17) for a `refresh()` that
-    // another action holds (D-34 ¶3: the same question) still leave the
-    // pass derived from that refetch: a derivation reading them is a stale
-    // reader of it (A15). Linked, the refetch's hold keeps waiting for it
-    // (F-11) and it re-derives at the landing. A render effect reads its
-    // memo's frame; a new question is the branches above.
-    else if (
-      c?._depsTail !== undefined &&
-      c._type !== EFFECT_RENDER &&
-      d._x?._reask &&
-      d._x._transaction &&
-      !ownFlight(o, txOf(d))
-    )
-      (link(d, c), staleReader(c, txOf(d)));
     return true;
   },
   // Mainline hold (`clock + 1`): the flush joins the action of each guess a
@@ -1136,7 +647,7 @@ installOptHooks({
           if (n) merge(txOf(n)._parent!, t);
         }
   }
-});
+} : staticOptimisticHooks);
 
 /** A derivation in the frame's hold (scheduler.ts `blockedBy`): one a
  * pending render effect reads, through any chain of pending derivations
@@ -1157,28 +668,22 @@ function held(c: any, seen = new Set()): true | undefined {
  * come in one run, so each does not re-walk its subscribers. */
 let heldC: any, heldAt: number, heldV: any;
 
-/** A guess in `o` (live or held) belongs to the transaction `f` that holds
- * the flight it stands in for. */
-function ownFlight(o: Set<StoreTarget>, f: Transaction): boolean {
-  for (const t of o)
-    for (const n of [...(kgOf(t) ?? []), t.dk])
-      if (n?._x?._transaction) {
-        const l = txOf(n);
-        if (resolveTx(l._parent ?? l) === f) return true;
-      }
-  return false;
-}
-
 /** Two lanes of one action (their parents resolved through merges). */
 function sameAction(a: Transaction, b: Transaction): boolean {
   return resolveTx(a._parent!) === resolveTx(b._parent!);
 }
 
+function shallowKeys(o: Record<PropertyKey, any>): Record<PropertyKey, any> {
+  const out: Record<PropertyKey, any> = {};
+  for (const k of Reflect.ownKeys(o)) if (k !== $OWNER) out[k as any] = unwrapValue(o[k as any]);
+  return out;
+}
+
 /** Families with a target carrying a lane value — swept at the flush's
- * commit (`sweepOverlaid`): a target whose carrier is no lane's any more
- * leaves its family's `_overlaid` and drops the carrier. (Not on the read
- * path: a guess is pending between the setter and the seam, and a read in
- * between must not take the target for clean.) */
+ * commit (`sweepOverlaid`): a target none of whose nodes is a lane's any
+ * more leaves its family's `_overlaid`. (Not on the read path: a guess is
+ * pending between the setter and the seam, and a read in between must not
+ * take the target for clean.) */
 const overlaidFamilies: Set<StoreFamily> = new Set();
 
 function markOverlaid(t: StoreTarget): void {
@@ -1194,34 +699,185 @@ export function sweepOverlaid(): void {
     for (const t of set)
       if (!laneNodeOf(t)) {
         set.delete(t);
-        const live = kgOf(t)?.filter(
-          g => g._config & CONFIG_HELD || g._pendingValue !== NOT_PENDING
-        );
-        if (!live || live.length === 0) carriers.delete(t);
-        else carriers.set(t, live);
-      } else if (kgOf(t) !== null) {
-        // A carrier that is no lane's and no hold's (a corrected guess waits
-        // for its hold's landing, A18 (c)) is done.
-        const live = kgOf(t)!.filter(
-          g =>
-            g._config & (CONFIG_OVERRIDE | CONFIG_GUESS | CONFIG_HELD) ||
-            g._pendingValue !== NOT_PENDING
-        );
-        if (live.length === 0) carriers.delete(t);
-        else carriers.set(t, live);
+        if (t.ch) rebaseChained(t);
+        // The container shows its backing again (a shown arrangement guess
+        // that ended without a landing left its `LaneView` as the value).
+        const k = t.k;
+        if (k !== null && k._value instanceof LaneView) k._value = k._value.base;
       }
     if (set.size === 0) overlaidFamilies.delete(fam);
   }
 }
 
-/** The node of `t` carrying a lane value, if any — the guess carrier or the
- * deep witness (`read`: one a reader's last pass read). */
+/** A chained view's lanes ended: its nodes are links (§7b) whose committed
+ * value is the inner store's at the guess, not now — the inner may have
+ * moved underneath the guess (the base committed while the view showed
+ * its arrangement, #3672/F1). Re-base each node on the inner's truth and
+ * re-derive the readers whose shown value it is not. */
+function rebaseChained(t: StoreTarget): void {
+  const inner = t.v as Record<PropertyKey, any>;
+  let changed = false;
+  const nodes = t.n;
+  if (nodes !== null)
+    for (const key of Reflect.ownKeys(nodes)) {
+      const node = nodes[key as any];
+      const cur = untrack(() => unwrapValue(inner[key as any]));
+      if (node._equals && node._equals(node._value, cur)) continue;
+      node._value = cur;
+      // (The lane's end notified it this epoch when the shown value and the
+      // covered one differed — its readers re-derive already.)
+      if (node._subs !== null && node._notifiedAt !== notifyEpoch) {
+        insertSubs(node);
+        changed = true;
+      }
+    }
+  const has = t.h;
+  if (has !== null)
+    for (const key of Reflect.ownKeys(has)) {
+      const node = has[key as any];
+      const cur = untrack(() => key in inner);
+      if (node._value === cur) continue;
+      node._value = cur;
+      if (node._subs !== null && node._notifiedAt !== notifyEpoch) {
+        insertSubs(node);
+        changed = true;
+      }
+    }
+  // The arrangement the readers saw (the shown guess) against the inner's
+  // now: a structural reader re-derives when they differ.
+  const k = t.k;
+  if (
+    k !== null &&
+    k._subs !== null &&
+    k._value instanceof LaneView &&
+    k._notifiedAt !== notifyEpoch
+  ) {
+    const rows = Array.isArray(inner) ? untrack(() => (inner as any[]).map(value => unwrapValue(value))) : inner;
+    if (!arrangementEqual(k._value.rows, rows, t._fam!)) {
+      insertSubs(k);
+      changed = true;
+    }
+  }
+  if (changed) schedule();
+}
+
+/** `t`'s nodes (a missing container or deep node: null). */
+function nodesOf(t: StoreTarget): any[] {
+  const all = [t.k, t.dk];
+  for (const r of [t.n, t.h])
+    if (r !== null) for (const k of Reflect.ownKeys(r)) all.push(r[k as any]);
+  return all;
+}
+/** A node of `t` carrying a lane value, if any (`read`: one a reader's
+ * last pass read). */
 function laneNodeOf(t: StoreTarget, read?: boolean): Signal<any> | undefined {
-  for (const n of [...(kgOf(t) ?? []), t.dk])
-    if (n !== null && n._config & CONFIG_OVERRIDE) {
+  for (const n of nodesOf(t))
+    if (n?._config & CONFIG_OVERRIDE) {
       if (!read) return n;
       for (let s = n._subs; s !== null; s = s._nextSub) if (s._gen === s._sub._depGen) return n;
     }
+}
+
+function overlaid(t: StoreTarget): boolean {
+  const fam = t._fam;
+  return fam !== null && fam.opt === true && fam._overlaid !== undefined && fam._overlaid.has(t);
+}
+
+/** What a lane node shows an untracked reader here: core's rule (`read`
+ * without a link — the lane's world inside its own pass, the screen
+ * outside, a verdict window's answer under one). */
+const shown = (n: Signal<any>): unknown => untrack(() => readNode(n));
+
+/** An untracked `key in store` on an optimistic family: the presence guess
+ * (what its lane shows) when the key carries one; `undefined` when not —
+ * the backing answers. */
+export function optimisticHas(t: StoreTarget, key: PropertyKey): boolean | undefined {
+  if (!overlaid(t)) return undefined;
+  const h = t.h?.[key as any];
+  if (h !== undefined && h._config & CONFIG_OVERRIDE) return !!shown(h);
+  const n = t.n?.[key as any];
+  if (n !== undefined && n._config & CONFIG_OVERRIDE) return shown(n) !== undefined;
+  return undefined;
+}
+
+/** A descriptor read of a guessed key: synthesized from the lane's value
+ * (`null`: the guess removed the key; `undefined`: no guess — the backing
+ * describes it). */
+export function optimisticOwnDescriptor(
+  t: StoreTarget,
+  key: PropertyKey
+): PropertyDescriptor | null | undefined {
+  const present = optimisticHas(t, key);
+  if (present === undefined) return undefined;
+  if (!present) return null;
+  const n = t.n?.[key as any];
+  const value = n !== undefined && n._config & CONFIG_OVERRIDE ? shown(n) : t.v[key as any];
+  // An array's `length` is reported as the array has it (non-configurable).
+  if (key === "length" && Array.isArray(t.v))
+    return { value, writable: true, enumerable: false, configurable: false };
+  return { value, writable: true, enumerable: true, configurable: true };
+}
+
+/** The truth `src` with the target's lane values over it: each overlaid
+ * leaf's value (`pick`: what the lane shows, or — for `latest` — the lane's
+ * latest), each presence guess as a key added or removed, the array
+ * length. Returns `src` itself when nothing is overlaid. */
+export function optimisticView(
+  t: StoreTarget,
+  src: Record<PropertyKey, any>,
+  pick: (n: any) => unknown = shown,
+  // The writer's view: the unflushed guesses too (on nodes that are no
+  // lane's yet) — what the next write composes on (#3665).
+  writer = false
+): Record<PropertyKey, any> {
+  if (!writer && !overlaid(t)) return src;
+  let out: Record<PropertyKey, any> | null = null;
+  const ensure = () => (out ??= Array.isArray(src) ? [...(src as any[])] : { ...src });
+  const nodes = t.n;
+  if (nodes !== null) {
+    for (const key of Reflect.ownKeys(nodes)) {
+      const node = nodes[key as any];
+      let ov: unknown;
+      if (node._config & CONFIG_OVERRIDE) ov = pick(node);
+      // The writer composes on the screen: a node a correction left held
+      // shows what it showed until the commit (D-34, D-37, #4656).
+      else if (
+        !writer ||
+        ((ov = pendingGuessOf(node)) === NOT_PENDING &&
+          !((ov = node._value), node._config & CONFIG_HELD))
+      )
+        continue;
+      if (key === "length" && Array.isArray(src)) {
+        // Against the clone: a removal guess already written past the
+        // source's end extends it (#4642).
+        if ((out ?? src).length !== ov) (ensure() as any[]).length = ov as number;
+      } else if (!isEqual(src[key as any], ov) || !hasOwn.call(src, key)) {
+        ensure()[key as any] = ov;
+      }
+    }
+  }
+  const has = t.h;
+  if (has !== null) {
+    for (const key of Reflect.ownKeys(has)) {
+      const node = has[key as any];
+      let pv: unknown;
+      if (node._config & CONFIG_OVERRIDE) pv = pick(node);
+      else if (!writer || (pv = pendingGuessOf(node)) === NOT_PENDING) continue;
+      const present = !!pv;
+      const view = out ?? src;
+      if (!present && key in view) delete ensure()[key as any];
+    }
+  }
+  return out ?? src;
+}
+
+/** `latest()`'s view: the lanes' latest values (a landing staged beneath a
+ * guess is what lands). */
+export function latestView(
+  t: StoreTarget,
+  src: Record<PropertyKey, any>
+): Record<PropertyKey, any> {
+  return optimisticView(t, src, laneValueOf);
 }
 
 export function createOptimisticStore<T extends object = {}>(
@@ -1243,6 +899,7 @@ export function createOptimisticStore<T extends object = {}>(
   second?: NoFn<T> | Store<NoFn<T>> | StoreOptions | null,
   third?: ProjectionOptions
 ): [get: Store<T>, set: StoreSetter<T>] {
+  if (!LEGACY_LANES) return createStaticOptimisticStore(first, second, third) as any;
   const derived = typeof first === "function";
   // A derived store's family (projection.ts): the derive's status reaches
   // its leaves' readers as for `createStore(fn)` (F-12, #4437).
@@ -1255,10 +912,7 @@ export function createOptimisticStore<T extends object = {}>(
   return [
     store,
     ((fn: (draft: T) => void) => (
-      __DEV__ &&
-        derived &&
-        (devGuardOptimisticBeforeLoad((store as any)[$TARGET]._fam.node),
-        devWarnOptimisticWhileLoading((store as any)[$TARGET]._fam.node)),
+      __DEV__ && derived && devGuardOptimisticBeforeLoad((store as any)[$TARGET]._fam.node),
       storeSetter(store, fn)
     )) as StoreSetter<T>
   ];

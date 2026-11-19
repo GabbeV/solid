@@ -1,3 +1,7 @@
+// The public package uses the shared update engine. This constant temporarily
+// keeps the remaining legacy store paths identifiable during migration.
+export const LEGACY_LANES = false;
+
 export const REACTIVE_NONE = 0;
 export const REACTIVE_CHECK = 1 << 0;
 export const REACTIVE_DIRTY = 1 << 1;
@@ -13,7 +17,7 @@ export const REACTIVE_ZOMBIE = 1 << 5;
 export const REACTIVE_DISPOSED = 1 << 6;
 /** L2 — this pass read the future (a tracked read of a CONFIG_HELD node).
  * Lives for the pass only: set by `read`, consumed by `recompute`'s publish
- * (a first pass that read the future is born held, F-7), wiped with the
+ * (a first pass that read the future is born held, A29), wiped with the
  * pass's other per-pass bits. */
 export const REACTIVE_JOINED = 1 << 7;
 export const REACTIVE_SNAPSHOT_STALE = 1 << 8;
@@ -35,7 +39,7 @@ export const REACTIVE_FRAME_READ = 1 << 11;
  * either re-read later in the pass (fresh) or trimmed with it (not a dep).
  */
 export const REACTIVE_MISSED_WAKE = 1 << 12;
-/** A `refresh()` asked this node to re-ask its question (F-9, D-23):
+/** A `refresh()` asked this node to re-ask its question (A19 exc. 2, A24):
  * consumed by the next pass, which — going pending — classifies its flight
  * quiet (`_x._reask`). */
 export const REACTIVE_REASK = 1 << 13;
@@ -52,12 +56,12 @@ export const REACTIVE_PROBED = 1 << 15;
  * lane's from the start (`recompute`), not a stale reader's re-run by an
  * unrelated write (#3460). Consumed by the pass. */
 export const REACTIVE_LANE_DIRTY = 1 << 16;
-/** Lanes — the pass read a lane's value as lane work (`enterLane`): a
+/** Lanes (plan sec. 28) — the pass read a lane's value as lane work (`enterLane`): a
  * tracked derivation's read of displayed optimism, a verdict read routed
  * into the holder's verdict lane. A pass in a lane's seat that read none of
  * its world has left the lane (`recompute`'s tail). Per pass. */
 export const REACTIVE_LANE_READ = 1 << 17;
-/** Lanes — a render effect in the frame's seat was served the screen
+/** Lanes (plan sec. 28) — a render effect in the frame's seat was served the screen
  * for a lane's node (`laneRead`: a stale reader of a lane that has not
  * shown). Its pass computing exactly what it last applied has nothing to
  * run — an effect has no comparator, and the guess's notification is not a
@@ -84,15 +88,26 @@ export const REACTIVE_AHEAD = 1 << 20;
  * missed gave it (D-22, #4474), so the queued pass runs, then `recompute`'s
  * tail releases the node. Survives the head wipe; the tail consumes it. */
 export const REACTIVE_RELEASE_AFTER = 1 << 22;
-/** A computed its own owner reads (a memo reading the memo it created): the
- * owner sits below it (heights put owners first), so a wake of it wakes the
- * owner too — the owner's pass re-creates it and is what its readers see. */
-export const REACTIVE_OWNER_READS = 1 << 23;
-/** The windows the pass opened, by kind, from this bit up (`window <<
- * WINDOW_KINDS`): 1 `isPending`, 2 `latest`. Per pass (bits 24 and 25;
- * nothing sits above them). #4966: a first plain read that only the pass's
- * own `isPending` window gates is not a mount (core.ts `stagedScreen`). */
-export const WINDOW_KINDS = 24;
+
+/** Experimental layers: the staged result belongs to a replaced context.
+ * Keep it for equality until replacement succeeds; neither reuse it as
+ * callback history nor publish it through an error/loading fallback. */
+export const REACTIVE_PREVIOUS_COMMITTED = 1 << 23;
+/** Optional layer coordinator: this effect was adopted for an output pass. */
+export const REACTIVE_LAYER_EFFECT = 1 << 24;
+/** A writable computation can receive raw values from its setter, including
+ * thenables. An optimistic input must retain its own normalization producer. */
+export const REACTIVE_WRITABLE_COMPUTED = 1 << 25;
+/** Optional layer journal: this computation has a saved published dependency
+ * list. Stable graphs need no WeakMap lookup or deletion at their seams. */
+export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
+
+/** This pass retried a creator after a child selected another context. */
+export const REACTIVE_RETRIED_OWNER = 1 << 27;
+/** Carry a queued creator retry into its next execution. */
+export const REACTIVE_RETRY_OWNER = 1 << 28;
+/** A child read by its owner wakes that owner without raising its height. */
+export const REACTIVE_OWNER_READS = 1 << 29;
 
 // Static configuration bits packed into Owner/Computed/Signal _config.
 export const CONFIG_OWNED_WRITE = 1 << 0;
@@ -124,7 +139,7 @@ export const CONFIG_HELD = 1 << 8;
  * shown, it has no screen: its reads are its transaction's, whichever flush
  * runs it (`bornInto`, #4010). Cleared by its commit. */
 export const CONFIG_HELD_FRAME = 1 << 20;
-/** F-1 (#3305): a commit published this flight's inputs
+/** A15's reveal corollary (#3305): a commit published this flight's inputs
  * beneath it — the node was pending, nothing staged, when it committed — so
  * its committed value is torn against the visible frame. A render effect
  * revealing it cannot be a stale reader: it observes the flight (pends,
@@ -132,7 +147,7 @@ export const CONFIG_HELD_FRAME = 1 << 20;
  * earned it for as long as the node stays pending, and no longer: the
  * commit that lands a value clears it. */
 export const CONFIG_INPUTS_PUBLISHED = 1 << 10;
-/** Lanes — the node has a lane's value (`_x._lane`): a written guess
+/** Lanes (plan sec. 28) — the node has a lane's value (`_x._lane`): a written guess
  * (CONFIG_GUESS) or a lane pass's derivation of one. Its lane is
  * `_x._transaction`. The gate to the lane arm of `read`; `_value` stays the
  * committed truth and `_pendingValue` a transaction's staging throughout —
@@ -144,13 +159,18 @@ export const CONFIG_OVERRIDE = 1 << 11;
  * of a per-node `_unobserved` closure. */
 export const CONFIG_SLOT_NODE = 1 << 12;
 /** A store slot node whose staging is a USER setter's proposal, not its
- * derive's derivation (D-8's discriminator for derived stores — the
+ * derive's derivation (A34 (3)'s discriminator for derived stores — the
  * leaf twin of REACTIVE_MANUAL_WRITE). Set by the user setter, cleared by
  * the derive's own write to the key. */
 export const CONFIG_MANUAL_WRITE = 1 << 18;
 /** D-41: the staged value in `_pendingValue` is an error — an
  * answer of the held frame, published at its landing like a value. */
 export const CONFIG_STAGED_ERROR = 1 << 21;
+/** A loadingValue node is serving its committed seed before its first real
+ * answer. Pending work in this window does not suspend readers or boundaries.
+ * A sync answer, landed async answer or commit closes the window; an error
+ * does not. Kept in the existing flags instead of a field on every memo. */
+export const CONFIG_LOADING = 1 << 24;
 /** Lanes — the node carries a written guess (`optimisticWrite`): its own
  * source recomputing it, or a plain write landing on it, is the truth
  * (`supersede`). A lane's derived staging is not. */
@@ -158,7 +178,7 @@ export const CONFIG_GUESS = 1 << 13;
 /** The node's pass read a verdict (`isPending`/`latest`): a dependency going
  * pending is a question for its next pass — the verdict changed — so the
  * propagation re-derives it instead of marking it pending (as a kept-tail
- * link does, D-10). Set at the window, never cleared: a reader that stopped
+ * link does, A30). Set at the window, never cleared: a reader that stopped
  * asking re-derives once and goes pending through its own read. The same
  * bit as REACTIVE_PROBED: a pass's probe (or a read of a verdict memo,
  * core.ts `read`) carries into the config at its end without a shift. */
@@ -177,7 +197,7 @@ export const CONFIG_LAGS = 1 << 19;
 /** The reader wants the truth, not the lane's guess (`until`, signals.ts):
  * a read of displayed optimism serves the base the guess covers, makes the
  * pass no lane's, and the truth landing wakes it even when it confirms the
- * guess (the one case ordinary subscribers are not told, F-11). */
+ * guess (the one case ordinary subscribers are not told — A17's silence). */
 export const CONFIG_AUTHORITATIVE = 1 << 17;
 // Presence bits (stage-3 hot-path monomorphism, DESIGN-PATCH-CHANNEL §11b):
 // optional per-node slots (_overrideValue, _pendingSignal/_latestValueComputed,
@@ -198,7 +218,7 @@ export const CONFIG_HAS_SNAPSHOT = 1 << 9;
  * deliberately keeps that race — its contract is "first settled value"
  * (#2930), not "next quiescent state". */
 export const CONFIG_FRESH_READ = 1 << 16;
-/** F-10: the node was written inside a recompute that ran OUTSIDE a flush
+/** A28 (4): the node was written inside a recompute that ran OUTSIDE a flush
  * (a creation-time compute — boundary machinery, a mapArray's first run). Such
  * a write is promoted at that recompute's end: readers in the same block see
  * it. Cleared when the next flush begins; set only on that rare path. */
@@ -241,12 +261,6 @@ export const CONFIG_KEY_BAG = 1 << 28;
  * joins nothing, so two mounts under one boundary made in separate flushes
  * keep their holds apart (D-4, S-5 rows 1′–3′, #4283). */
 export const CONFIG_FRAME = 1 << 23;
-/** A render effect created by a pass that probed (`isPending`/`latest`) —
- * the mount a display-ahead `Show` opens (S-46, D-25). Stamped at its first
- * pass; its first read of a hold's staging or flight is born held, not a
- * D-3 leaf of the screen, and the verdict lane that opened it reveals with
- * the landing (lanes.ts `mountPending`). */
-export const CONFIG_MOUNT_AHEAD = 1 << 24;
 /** The node's last answering pass registered a flight: an async memo. Kept
  * by the verdict engine alone (verdict.ts `holdWork`), which reads it. */
 export const CONFIG_ASYNC = 1 << 29;
@@ -311,5 +325,8 @@ export type Refreshable<T> = T & { readonly [$REFRESH]: any };
  * same objects. */
 export const NewSet = Set;
 
-/** Dev: the strict-read label compiled dev DOM output reads an event handler expression under (#1742). */
+/** The dev strict-read label used for compiled event handlers (#1742). */
 export const EVENT_HANDLER_READ = "an event handler expression";
+
+/** Persistent feature state shares the existing lifecycle word. */
+export const REACTIVE_PERSISTENT = REACTIVE_PREVIOUS_COMMITTED | REACTIVE_LAYER_EFFECT | REACTIVE_WRITABLE_COMPUTED | REACTIVE_SAVED_DEPENDENCIES | REACTIVE_RETRY_OWNER;

@@ -1,0 +1,44 @@
+--- a/packages/signals/src/experimental/layer.ts
++++ b/packages/signals/src/experimental/layer.ts
+@@ -601,6 +601,27 @@
+   }
+   const boundary = boundaries.get(node);
+   if (!origin && boundary && boundary.override !== NOT_PENDING) return;
++  // Experimental assertion: a proposal must not release its own lifetime by
++  // taking over that lifetime's last pending calculation. Everything needed
++  // here already exists; retain only a local reference across this operation.
++  let lifetime: Transaction | null = null;
++  if (__DEV__ && !origin && node._x?._inFlight && node._config & CONFIG_HELD) {
++    const previous = txOf(node);
++    if (previous !== update && !previous._open) {
++      for (const layer of active) {
++        if (!layer.update || resolveTx(layer.update) !== update) continue;
++        // latest can release its input while continuing to expose that same
++        // proposed value. It is not a pending/guess lifetime reversal.
++        if (layer.statusInput) continue;
++        const parent = layer.scope ??
++          ("parent" in layer ? (layer.parent as Transaction | null) ?? inputUpdate(layer) : null);
++        if (parent && resolveTx(parent) === previous && blocked(previous)) {
++          lifetime = previous;
++          break;
++        }
++      }
++    }
++  }
+   const transferredProposal =
+     (node._pendingValue !== NOT_PENDING || node._statusFlags & (STATUS_PENDING | STATUS_ERROR)) &&
+     (!(node._config & CONFIG_HELD) || txOf(node) !== update);
+@@ -616,6 +637,13 @@
+   // repeated status propagation may short-circuit. Its consumers must still
+   // follow that existing proposal/status into this update.
+   if (transferredProposal) insertSubs(node);
++  if (__DEV__ && lifetime && !blocked(resolveTx(lifetime))) {
++    throw new Error(
++      "[OPTIMISTIC_SELF_RELEASE] An optimistic proposal replaced the last async calculation " +
++      "keeping its own update open. Keep that async work in the input producer and derive " +
++      "the optimistic presentation separately."
++    );
++  }
+ }
+ 
+ /** Transfer context along value and status notifications. An unchanged

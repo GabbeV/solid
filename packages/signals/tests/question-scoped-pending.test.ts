@@ -10,9 +10,10 @@
  * - A new question (any tracked input changed value since the last reveal)
  *   pends everything under the source until its answer reveals. Nothing can
  *   silence it — pendingness is monotone.
- * - Optimistic writes are verdict-inert: they neither announce pending on
- *   their own slots nor mask anyone else's (the store-wide mask / A21 is
- *   deleted). To downstream async they are real input changes.
+ * - A published optimistic guess does not pend merely because its action
+ *   remains open, and does not mask anyone else's pending state. A changed
+ *   guess held behind its downstream work is still unpublished and pending,
+ *   like an ordinary output (unified-update ruling, INTEGRATION-106).
  * - `affects(target, key?)` is the only declaration verb: additive pending
  *   on the named slot AND everything derived from it (marks ride the status
  *   rails — see tests/affects-propagation.test.ts), held from declaration to
@@ -876,7 +877,7 @@ describe("affects — captured proxies (#2882)", () => {
   // Optimistic stores make in-flight writes readable outside the action, so
   // the two declaration-ordering tests use them (a plain store's writes are
   // transition-held and invisible to outside probes anyway).
-  it("records added after the mark registers are not covered (snapshot at declaration)", async () => {
+  it("new records in a marked optimistic output inherit its pending declaration", async () => {
     const [state, setState] = createOptimisticStore<{ rows: Row[] }>({ rows: seedRows() });
 
     let resolveIt!: () => void;
@@ -893,7 +894,7 @@ describe("affects — captured proxies (#2882)", () => {
     const added = state.rows[2];
     expect(added.name).toBe("c"); // optimistic write is visible…
     expect(isPending(() => state.rows.length)).toBe(true); // …the rows record itself is marked…
-    expect(isPending(() => added.name)).toBe(false); // …but the new record was not in the declared scope
+    expect(isPending(() => added.name)).toBe(true); // the new output belongs to the marked source
 
     resolveIt();
     await done;
@@ -1115,6 +1116,7 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     const sourceFetch = deferredFetcher((_: number) => serverValue);
     const derivedFetch = deferredFetcher((v: number) => v * 2);
 
+    const sourcePublished: number[] = [];
     let state!: { data: number };
     let derived!: SourceAccessor<number>;
     let dispose!: () => void;
@@ -1126,6 +1128,12 @@ describe("digestion windows (same-question landings are ordinary changes downstr
           s.data = await sourceFetch.fetch(0);
         },
         { data: 0 }
+      );
+      createRenderEffect(
+        () => state.data,
+        value => {
+          sourcePublished.push(value);
+        }
       );
       derived = createMemo(() => derivedFetch.fetch(state.data));
       createRenderEffect(derived, () => {});
@@ -1149,10 +1157,16 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     sourceFetch.resolveAll();
     await tick();
     expect(isPending(derived)).toBe(true);
+    expect(isPending(() => state.data)).toBe(true);
+    expect(state.data).toBe(10);
+    expect(sourcePublished.at(-1)).toBe(10);
 
     derivedFetch.resolveAll();
     await tick();
     expect(derived()).toBe(30);
+    expect(sourcePublished.at(-1)).toBe(15);
+    expect(state.data).toBe(15);
+    expect(isPending(() => state.data)).toBe(false);
     expect(isPending(derived)).toBe(false);
     dispose();
   });
@@ -1218,11 +1232,20 @@ describe("digestion windows (same-question landings are ordinary changes downstr
     });
     const done = act();
     flush();
-    // Own slot: verdict-inert. Downstream async memo: new question, pending.
-    expect(isPending(() => state.data)).toBe(false);
+    // The guessed output and its consequence still show their committed
+    // values. A changed, unpublished output remains pending (the same rule
+    // as scalar optimism; unified-update ruling recorded in INTEGRATION-106).
+    expect(state.data).toBe(10);
+    expect(isPending(() => state.data)).toBe(true);
     expect(isPending(derived)).toBe(true);
 
     derivedFetch.resolveAll();
+    await tick();
+    expect(state.data).toBe(15);
+    expect(derived()).toBe(30);
+    expect(isPending(() => state.data)).toBe(false);
+    expect(isPending(derived)).toBe(false);
+
     resolveMutation();
     await done;
     await tick();

@@ -439,24 +439,13 @@ describe("#3648 first landing of an async memo under an optimistic lane", () => 
   });
 
   /**
-   * A18 (d), ruled on the revert case above: a pending node that carries an
-   * override DISPLAYS the override — the optimistic value shields the pending
-   * state. "Uninitialized must suspend" (#3276, A19 exception 1) was written
-   * for a node with nothing to show; a never-committed node with an armed
-   * derived override has something to show. So an UNTRACKED read — no reader
-   * identity, hence no lane membership to test — of a node that is
-   * STATUS_UNINITIALIZED, pending, and under an armed derived override returns
-   * the override. Before this, `read()`'s `!c && STATUS_UNINITIALIZED` throw
-   * fired ahead of `serve()`'s override arm, so the read threw NotReadyError
-   * in the body-end window while the same read of an INITIALIZED node
-   * re-deriving under its override returned the override.
-   *
-   * Unchanged, pinned beside it: a tracked lane reader keeps the override
-   * (A17 — `rendered` shows it throughout); a tracked OFF-LANE reader
-   * mounted into the window suspends (#3651 — outsiders never see the lane's
-   * values) and ends on the truth.
+   * A published optimistic result initializes the shared memo output. Its
+   * correction holds that same output, so a late reader can show the already
+   * published result and then join the correction's publication. The old lane
+   * representation kept this memo uninitialized beneath a separate displayed
+   * override and therefore suspended the late reader (#3651).
    */
-  it("shape B revert: an untracked read of the never-committed node is served its derived override — before the revert, and in the re-derivation window; a tracked off-lane reader in the window still suspends", async () => {
+  it("shape B revert: existing, untracked and late readers share the published output while correction is pending", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const capture = OBSERVE!.diagnostics.capture();
 
@@ -518,16 +507,12 @@ describe("#3648 first landing of an async memo under an optimistic lane", () => 
     await settle();
     expect(rendered).toEqual(["data for 2"]);
 
-    // Lane live, first landing under the lane: the node has never committed
-    // (its value sits in the derived-override slot) and is not pending. An
-    // untracked read displays the override (A17).
+    // The first optimistic result has published through the ordinary output.
+    // An untracked read sees that same result.
     expect(untrack(() => data())).toBe("data for 2");
 
-    // The revert window (see the case above): `data` re-derives from the
-    // truth on the plain channel, pending and still uninitialized, its
-    // derived override still armed and displayed. An untracked read from
-    // ambient context is served the override — not a NotReadyError, not
-    // `undefined` (A18 (d)).
+    // Correction re-derives from id=0 while the published result remains 2.
+    // The untracked read continues to agree with the existing binding.
     gate.reject(new Error("action failed"));
     await running.catch(() => {});
     await settle();
@@ -539,13 +524,12 @@ describe("#3648 first landing of an async memo under an optimistic lane", () => 
     expect(fetches.length).toBe(3);
     expect(untrack(() => data())).toBe("data for 2");
 
-    // A tracked OFF-LANE reader mounted into the window holds (#3651): it
-    // publishes neither the override nor `undefined`, and re-derives when
-    // the truth lands.
+    // The late reader sees the same initialized output, not a fabricated
+    // undefined or a separate never-published base value.
     setFlag(true);
     flush();
     await settle();
-    expect(offLane).toEqual(["off"]);
+    expect(offLane).toEqual(["off", "data for 2"]);
     expect(rendered).toEqual(["data for 2"]);
 
     fetches[fetches.length - 1].resolve("y");
@@ -558,7 +542,7 @@ describe("#3648 first landing of an async memo under an optimistic lane", () => 
     dispose();
 
     expect(rendered).toEqual(["data for 2", "data for 0"]);
-    expect(offLane).toEqual(["off", "data for 0"]);
+    expect(offLane).toEqual(["off", "data for 2", "data for 0"]);
     expect(afterCommit).toBe("data for 0");
     expect(codes).not.toContain("SETTLE_WALK_UNINITIALIZED_SOURCE");
     expect(error).not.toHaveBeenCalled();

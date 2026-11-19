@@ -1,4 +1,5 @@
 import {
+  layerShowsGuess,
   setAttributionHooks,
   storeTools,
   type AttributionHooks,
@@ -8,6 +9,7 @@ import {
   type Transition
 } from "./attribution-hooks.js";
 import {
+  LEGACY_LANES,
   CONFIG_GUESS,
   CONFIG_HELD,
   CONFIG_OVERRIDE,
@@ -33,7 +35,7 @@ import {
   ownerPath,
   reportDiagnostic
 } from "./dev.js";
-import { blockersOf, GlobalQueue } from "./scheduler.js";
+import { blockersOf, GlobalQueue, transactionNodes } from "./scheduler.js";
 import type { Computed, Owner, Signal } from "./types.js";
 
 /**
@@ -2865,7 +2867,7 @@ function acknowledge(
  * (lanes.ts `_laneGuesses`) and its `affects()` marks (`_marks`). */
 function censusRegistrations(t: Transition, state: HoldState): void {
   const budget = { left: HOLD_CENSUS_CAP };
-  const guesses = GlobalQueue._laneGuesses?.(t);
+  const guesses = LEGACY_LANES ? GlobalQueue._laneGuesses?.(t) : GlobalQueue._layerGuesses?.(t);
   if (guesses !== undefined)
     for (const node of guesses)
       acknowledge(state, "optimistic", nodeName(node), reachesEffect(node, budget));
@@ -2915,8 +2917,8 @@ function censusCompanions(roots: Iterable<Signal<any> | Computed<any>>, state: H
     visited.add(node);
     for (let s = node._subs; s !== null; s = s._nextSub) {
       const sub = s._sub;
-      if (sub._config & CONFIG_VERDICT) {
-        const windows = (sub as { _devWindows?: number })._devWindows ?? 0;
+      const windows = (sub as { _devWindows?: number })._devWindows ?? 0;
+      if (windows) {
         const reader = (sub as { _type?: number })._type ? sub : reachesEffect(sub, budget);
         if (windows & 1 && reader !== null) acknowledge(state, "isPending", nodeName(node), reader);
         if (windows & 2 && reader !== null) acknowledge(state, "latest", nodeName(node), reader);
@@ -2989,7 +2991,7 @@ function trackHoldSettled(t: Transition): void {
   let interaction: ChangeOrigin | undefined;
   let origin: ChangeOrigin | undefined;
   let lastJoinAt = -Infinity;
-  for (const node of t._nodes) {
+  for (const node of transactionNodes(t)) {
     if (typeof (node as Computed<any>)._fn === "function" || isCompanion(node)) continue;
     const change = (node as AttributedNode)._devChange;
     if (change === undefined || change.kind !== "write") continue;
@@ -3019,7 +3021,7 @@ function trackHoldSettled(t: Transition): void {
     return;
   }
   censusRegistrations(t, state);
-  censusCompanions([...t._nodes, ...state.blockers], state);
+  censusCompanions([...transactionNodes(t), ...state.blockers], state);
   const end = now();
   // The hold began no later than its first parked flush; an interaction stamp
   // reaches further back (dispatch). A node rewritten mid-hold keeps only its
@@ -3846,7 +3848,7 @@ function noteNavigationWrite(prior: ChangeRecord | undefined, record: ChangeReco
 /** holdStart: `t`'s staged writes are parked — their navigations settle with `t`. */
 function markNavigationsHeld(t: Transition): void {
   if (openNavs.size === 0) return;
-  for (const node of t._nodes) {
+  for (const node of transactionNodes(t)) {
     const origin = (node as AttributedNode)._devChange?.origin;
     if (origin?.kind !== "navigation") continue;
     const state = navStates.get(origin);
@@ -3857,7 +3859,7 @@ function markNavigationsHeld(t: Transition): void {
 /** transitionSettled: `t` commits — the navigations whose writes it staged are done. */
 function settleNavigations(t: Transition, hold: HoldEvent | undefined): void {
   if (openNavs.size === 0) return;
-  for (const node of t._nodes) {
+  for (const node of transactionNodes(t)) {
     const origin = (node as AttributedNode)._devChange?.origin;
     if (origin?.kind !== "navigation") continue;
     const state = navStates.get(origin);
@@ -3924,15 +3926,24 @@ interface Watched {
 // settles — its transaction lands, merges or dissolves (`unhold`, `land`,
 // `dissolveLane`); nothing drops one without clearing `_transaction`.
 const watched = new Map<Signal<any> | Computed<any>, Watched>();
+// A selector can keep showing its guess without any staged work. Remember
+// what it covered without pinning the selector between drains.
+let coveredByLayer = new WeakMap<Signal<any>, { value: unknown }>();
 
 /** What the screen shows of `n` — a revealed guess included (NOT_PENDING: none yet). */
 function shownOf(n: Signal<any> | Computed<any>): unknown {
+  if (LEGACY_LANES && n._x?._transaction?._lane && n._x._transaction._shown) {
+    const value = n._x._lane;
+    if (value !== NOT_PENDING) return value;
+  }
   return (n as Computed<any>)._statusFlags & STATUS_UNINITIALIZED ? NOT_PENDING : n._value;
 }
 
 /** The screen shows `n`'s optimistic guess (not a derived override or a companion). */
 function showsGuess(n: Signal<any> | Computed<any>): boolean {
-  return (n._config & CONFIG_GUESS) !== 0 && !!n._x?._shown;
+  return LEGACY_LANES
+    ? (n._config & CONFIG_GUESS) !== 0 && !!n._x?._transaction?._shown
+    : layerShowsGuess?.(n) === true;
 }
 
 /** Its shown value can still change without a new staging: staged, held, or on a lane. */
@@ -3959,13 +3970,18 @@ function trackStaged(el: Signal<any> | Computed<any>): void {
     if (origin !== undefined) w.origin = origin;
     return;
   }
-  // Watched for the flush record's audience, or for the revert finding (a
-  // guess enters a lane through `list`). Nothing wants it: no origin walk —
-  // this runs on every write while the engine is enabled.
-  if (!records.observed("flush") && !(options.optimisticReverts && el._x?._transaction?._lane))
+  // Only watch nodes needed by a flush record or an optimistic revert finding.
+  const layer = !LEGACY_LANES && layerShowsGuess?.(el) !== undefined;
+  if (!records.observed("flush") && !(options.optimisticReverts && (layer || el._x?._transaction?._lane)))
     return;
   const guess = showsGuess(el);
-  watched.set(el, { shown: shownOf(el), guess, covered: el._value, origin: ambientOrigin() });
+  const covered = layer ? coveredByLayer.get(el) : undefined;
+  watched.set(el, {
+    shown: shownOf(el),
+    guess,
+    covered: covered === undefined ? el._value : covered.value,
+    origin: ambientOrigin()
+  });
 }
 
 /** flushEnd: compare, judge the reverts, and list the changes for the record (`live` beside it). */
@@ -3979,10 +3995,10 @@ function drainChanges(record: boolean, live: FlushLive["changes"]): FlushChange[
       continue;
     }
     const now = shownOf(n);
+    const guess = showsGuess(n);
     if (!Object.is(now, w.shown)) {
       const fallback = pendingFallbacks.get(n as Computed<any>);
       if (fallback !== undefined) displayFallback(fallback);
-      const guess = showsGuess(n);
       if (w.guess && !guess && now !== NOT_PENDING && w.shown !== NOT_PENDING)
         checkOptimisticRevert(
           n,
@@ -3997,13 +4013,16 @@ function drainChanges(record: boolean, live: FlushLive["changes"]): FlushChange[
         changes.push(change);
         live.push(bodies ? { node: n, prev: w.shown, value: now } : { node: n });
       }
-      // A guess's truth is what the screen showed before it appeared; a new
-      // guess over a shown guess keeps covering the same truth.
-      if (guess && !w.guess) w.covered = w.shown;
-      w.shown = now;
       w.origin = undefined;
-      w.guess = guess;
     }
+    // A guess covers what the screen showed before it appeared. Further
+    // guesses cover the same value until a correction publishes.
+    if (guess && !w.guess) {
+      w.covered = w.shown;
+      if (!LEGACY_LANES) coveredByLayer.set(n, { value: w.covered });
+    } else if (!LEGACY_LANES && !guess && w.guess) coveredByLayer.delete(n);
+    w.shown = now;
+    w.guess = guess;
     if (!unsettled(n) && !pendingFallbacks.has(n as Computed<any>)) watched.delete(n);
   }
   return changes;
@@ -4457,7 +4476,7 @@ function noteInteractionNavigation(event: NavigationEvent): void {
 /** holdStart: `t` parked writes — the interactions that performed them wait for `t`. */
 function markInteractionsHeld(t: Transition): void {
   if (openInteractions.size === 0) return;
-  for (const node of t._nodes) {
+  for (const node of transactionNodes(t)) {
     const state = openInteractionOf((node as AttributedNode)._devChange?.origin);
     if (state !== undefined) {
       state.heldIn.add(t);
@@ -4749,6 +4768,7 @@ function resetWindows(): void {
 function resetTracking(): void {
   frames.length = 0;
   watched.clear();
+  coveredByLayer = new WeakMap();
   activeHold = null;
   openFlush = null;
   pendingFallbacks.clear();

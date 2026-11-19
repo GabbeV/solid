@@ -7,11 +7,9 @@
 // equal to the last good one is still a change of answer" (D-41), and the
 // reader settles with the hold it shares (D-9).
 //
-// A verdict reader (`pending`, `both`) runs while the error is staged and
-// again at the recovery, both right, then a third time when the hold
-// commits, though nothing it read changed. The landing's re-derivation
-// (`reruns`) re-runs every stale and verdict reader of the hold (A15). That
-// is a known deviation under D-23's Status, pinned it.fails here.
+// Pending's source-owned output filters the unchanged boolean at landing.
+// A reader of both the value and pending still receives the value's recovery
+// notification at landing. That remaining deviation is pinned it.fails.
 import { describe, expect, it } from "vitest";
 import {
   action,
@@ -72,13 +70,16 @@ describe("#4469: a hold that recovers to the committed value", () => {
     expect(runs).toEqual([[30]]);
   });
 
-  it.fails.each(["pending", "both"] as const)(
-    "re-runs no reader at the landing (%s)",
-    async read => {
-      const { recovered, committed } = await recover(read);
-      expect(committed).toBe(recovered);
-    }
-  );
+  it("re-runs no reader at the landing (pending)", async () => {
+    const { recovered, committed, runs } = await recover("pending");
+    expect(runs).toEqual([[true], [false]]);
+    expect(committed).toBe(recovered);
+  });
+
+  it.fails("re-runs no reader at the landing (both)", async () => {
+    const { recovered, committed } = await recover("both");
+    expect(committed).toBe(recovered);
+  });
 
   it("runs the reader while staged and at the recovery (both)", async () => {
     const { runs } = await recover("both");

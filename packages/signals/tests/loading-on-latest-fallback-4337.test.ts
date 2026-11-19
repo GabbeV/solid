@@ -1,18 +1,8 @@
-/**
- * #4337 (maintainer's probe, from the ReactiveScript tracker eval): a keyed
- * `createOptimisticStore` list whose question reads `filter()`, an action that
- * guesses a row, yields and then refreshes the list, and `filter` set by a
- * plain write while the action is out. The list sits under a loading boundary
- * whose fallback reads `latest(filter)`, with or without `on: () => filter()`.
- *
- * The render reads row 3's guess, so the filter change is held with the
- * assignment (D-34, #4336). The boundary's swap is the filter change's work
- * (#3540): it lands with that frame, never beside the held `filter` (F-1,
- * F-2). `latest()` inside the fallback may read ahead (F-6, the #4284
- * ruling), but only inside a fallback that shows; it does not make the swap
- * itself display-ahead, so no `loading` frame sits beside the held `filter`
- * value. When nothing holds the change, the fallback shows with it and clears
- * when its content's answer lands (F-4), as on `next`.
+/** Stage 120 keeps an independent filter update separate from the guessing
+ * action. With `on`, its fallback can publish immediately; without `on`,
+ * the content holds until that input answers. Selected property overrides
+ * retain their own action lifetimes and do not rebase onto a new question.
+ * The action's later refresh still publishes a coherent content frame.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -125,30 +115,35 @@ function page(on: boolean) {
 
 const MOUNT = ["open | loading open", "open | #1(-) #3(-)"];
 
-describe("#4337 a fallback reading latest() under a held input change", () => {
+describe("#4337 a fallback reading latest() during an independent input change", () => {
   for (const on of [true, false]) {
-    it(`the swap lands with the held change (on=${on})`, async () => {
+    it(`the swap follows the independent filter change (on=${on})`, async () => {
       const p = page(on);
       await p.land("fetchIssues:open", OPEN);
       p.assign(3, "ann");
       await tick();
       expect(p.screen()).toBe("open | #1(-) #3(ann)");
 
-      // Held with the assignment: no swap, no fallback beside `open`.
+      // The filter is independent of the assignment lifetime.
       p.setFilter("closed");
       await tick();
-      expect(p.screen()).toBe("open | #1(-) #3(ann)");
+      expect(p.screen()).toBe(on ? "closed | loading closed" : "open | #1(-) #3(ann)");
       await p.land("fetchIssues:closed", []);
-      expect(p.screen()).toBe("open | #1(-) #3(ann)");
+      expect(p.screen()).toBe("closed | ");
       await p.land("assign:3,ann", undefined);
-      expect(p.screen()).toBe("open | #1(-) #3(ann)");
-      // The action's refresh answers: the change lands, content and all.
+      expect(p.screen()).toBe("closed | ");
+      // The independent input already landed; the action's refresh stays quiet.
       await p.land("fetchIssues:closed", []);
-      expect(p.frames).toEqual([...MOUNT, "open | #1(-) #3(ann)", "closed | "]);
+      expect(p.frames).toEqual([
+        ...MOUNT,
+        "open | #1(-) #3(ann)",
+        ...(on ? ["closed | loading closed"] : []),
+        "closed | "
+      ]);
       expect(p.asks).toEqual([]);
     });
 
-    it(`toggled back while held, it never leaves its content (on=${on})`, async () => {
+    it(`toggled back during an action, the newest input determines content (on=${on})`, async () => {
       const p = page(on);
       await p.land("fetchIssues:open", OPEN);
       p.assign(3, "ann");
@@ -157,15 +152,19 @@ describe("#4337 a fallback reading latest() under a held input change", () => {
       await tick();
       p.setFilter("open");
       await tick();
-      expect(p.screen()).toBe("open | #1(-) #3(ann)");
+      expect(p.screen()).toBe(on ? "open | loading open" : "open | #1(-) #3(ann)");
       await p.land("fetchIssues:closed", []);
-      expect(p.screen()).toBe("open | #1(-) #3(ann)");
+      expect(p.screen()).toBe(on ? "open | loading open" : "open | #1(-) #3(ann)");
       await p.land("fetchIssues:open", OPEN);
       expect(p.screen()).toBe("open | #1(-) #3(ann)");
       await p.land("assign:3,ann", undefined);
       expect(p.screen()).toBe("open | #1(-) #3(ann)");
       await p.land("fetchIssues:open", ASSIGNED);
-      expect(p.frames).toEqual([...MOUNT, "open | #1(-) #3(ann)"]);
+      expect(p.frames).toEqual([
+        ...MOUNT,
+        "open | #1(-) #3(ann)",
+        ...(on ? ["closed | loading closed", "open | loading open", "open | #1(-) #3(ann)"] : [])
+      ]);
       expect(p.asks).toEqual([]);
     });
   }
