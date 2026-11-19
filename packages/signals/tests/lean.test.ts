@@ -542,18 +542,42 @@ describe("transitions", () => {
     expect(g.probe()).toBe("throws E1"); // "100": the answer older than the error
   });
 
-  it("T2 (held) a staged error stays the newest answer when the question moves again in the hold", async () => {
-    const g = tx("A");
-    await g.answer(0);
-    const h = hold(() => g.setA(1));
-    await g.answer(1, false);
-    expect(g.probe()).toBe("throws E1");
-    g.setA(3);
-    flush();
-    expect(g.probe()).toBe("throws E1"); // "100" (a staged value in this position is kept)
-    h.release();
-    await settle();
-  });
+  it.each([false, true])(
+    "T2 (held) latest retains a staged error across re-asks (read before re-ask: %s)",
+    async readEarly => {
+      const g = tx("A");
+      await g.answer(0);
+      const h = hold(() => g.setA(1));
+      try {
+        await g.answer(1, false);
+        if (readEarly) expect(g.probe()).toBe("throws E1");
+        g.setA(2);
+        flush();
+        expect(g.probe()).toBe("throws E1");
+        g.setA(3);
+        flush();
+        await g.answer(2); // superseded
+        expect(g.probe()).toBe("throws E1");
+        expect(g.log).toEqual(["value 100"]);
+        await g.answer(3, false);
+        expect(g.probe()).toBe("throws E3");
+        g.setA(0);
+        flush();
+        expect(g.probe()).toBe("throws E3");
+        await g.answer(0); // equal to the previously published value
+        expect(g.probe()).toBe("100");
+        g.setA(4);
+        flush();
+        expect(g.probe()).toBe("100");
+        await g.answer(4);
+        expect(g.log).toEqual(["value 100"]);
+      } finally {
+        h.release();
+        await settle();
+      }
+      expect(g.log).toEqual(["value 100", "value 104"]);
+    }
+  );
 
   it.fails(
     "T3 two mainline writes to a guessed node's sync source are held alike (D-34, S-44)",

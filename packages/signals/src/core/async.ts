@@ -965,6 +965,7 @@ export function handleAsync<T>(
 }
 
 export function clearStatus(el: Computed<any>, clearUninitialized: boolean = false): void {
+  if (el._x?._aheadError) el._x._aheadError = undefined;
   if (el._x?._pendingSources) clearPendingSources(el);
   if (el._x?._blocked) el._x._blocked = false;
   el._statusFlags = clearUninitialized ? 0 : el._statusFlags & STATUS_UNINITIALIZED;
@@ -1002,6 +1003,7 @@ function landStatus(el: Computed<any>, clearUninitialized: boolean = false): voi
   const sources = el._x?._pendingSources;
   // (The full clear below drops the set whether or not self was retired first.)
   if (sources && (sources.delete(el), sources.size)) {
+    if (el._x!._aheadError) el._x!._aheadError = undefined;
     el._x!._blocked = false;
     if (clearUninitialized) el._statusFlags = STATUS_PENDING;
     setPendingError(el, sources.values().next().value);
@@ -1017,6 +1019,7 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
   )
     error = new StatusError(el, error);
 
+  if (status === STATUS_ERROR && el._x?._aheadError) el._x._aheadError = undefined;
   const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   // (CARVE 2: the lane assignment went with the engine.)
 

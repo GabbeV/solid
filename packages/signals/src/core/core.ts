@@ -570,6 +570,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
     // An error a pass staged (D-41) is replaced by this pass's answer: a
     // value, a flight, or an error of its own (#4109, #4145).
     if (el._config & CONFIG_STAGED_ERROR) {
+      if (el._config & CONFIG_HELD) ext(el)._aheadError = el._pendingValue;
       el._pendingValue = NOT_PENDING;
       el._config ^= CONFIG_STAGED_ERROR;
     }

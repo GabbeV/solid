@@ -2,6 +2,7 @@
 import { context, prepareComputed, read, unflushedValue, untrack } from "../core/core.js";
 import {
   $REFRESH,
+  CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
   CONFIG_STAGED_ERROR,
   NOT_PENDING,
@@ -86,6 +87,7 @@ const kind: ObservationKind<any> = {
     // A re-ask has no replacement answer yet. Keep the selected error,
     // just as the input retains a staged successful value during a re-ask.
     if (source._statusFlags & STATUS_PENDING) {
+      if (source._x?._aheadError) return selectedError(record, source._x._aheadError);
       if (record._override instanceof LatestError) return record._override;
       if (source._x?._shownError) return selectedError(record, source._x._shownError);
     }
@@ -121,34 +123,38 @@ function fallback(layer: Layer<any>): unknown {
     // Registration may call a user comparator which reads this same output.
     // Preserve its read context without adding bookkeeping dependencies here.
     untrack(() => holdQueuedProposals(resolveTx(flushTransaction!)));
+  const retainedError =
+    source._statusFlags & STATUS_PENDING &&
+    source._pendingValue === NOT_PENDING &&
+    source._x?._aheadError;
+  // An error is the latest settled proposal. Pulling it through read() can
+  // retry the producer in the next tick and replace that error with a new
+  // pending request before the observation's consumers ever receive it.
+  if (retainedError || source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) {
+    link(source, output);
+    if (source._height >= output._height) output._height = source._height + 1;
+    if (
+      source._config & CONFIG_STAGED_ERROR &&
+      source._config & CONFIG_HELD &&
+      !(output._statusFlags & STATUS_UNINITIALIZED) &&
+      !(layer as Observation<any>)._retiring
+    )
+      return output._value;
+    throw (
+      retainedError ||
+      (source._config & CONFIG_STAGED_ERROR ? source._pendingValue : source._x!._error)
+    );
+  }
   // Without an established hold, the input propagates normally. A later
   // suspension can activate an override through observation preparation.
   if (
     (layer as Observation<any>)._retiring ||
-    source._statusFlags & STATUS_ERROR ||
     (source._statusFlags & STATUS_UNINITIALIZED && source._pendingValue === NOT_PENDING) ||
-    source._config & CONFIG_STAGED_ERROR ||
     (!(source._config & CONFIG_HELD) &&
       !(source._statusFlags & STATUS_PENDING) &&
       !(output._statusFlags & STATUS_ERROR || output._x?._shownError))
-  ) {
-    // An error is the latest settled proposal. Pulling it through read() can
-    // retry the producer in the next tick and replace that error with a new
-    // pending request before the observation's consumers ever receive it.
-    if (source._statusFlags & STATUS_ERROR || source._config & CONFIG_STAGED_ERROR) {
-      link(source, output);
-      if (source._height >= output._height) output._height = source._height + 1;
-      if (
-        source._config & CONFIG_STAGED_ERROR &&
-        source._config & CONFIG_HELD &&
-        !(output._statusFlags & STATUS_UNINITIALIZED) &&
-        !(layer as Observation<any>)._retiring
-      )
-        return output._value;
-      throw source._config & CONFIG_STAGED_ERROR ? source._pendingValue : source._x!._error;
-    }
+  )
     return read(source);
-  }
   link(source, output);
   if (source._height >= output._height) output._height = source._height + 1;
   if (source._x?._shownError && source._pendingValue === NOT_PENDING) throw source._x._shownError;
@@ -175,6 +181,13 @@ const observations = new WeakMap<Signal<any>, Observation<any>>();
 function latestOutput(source: Computed<any>): Computed<any> {
   const existing = observations.get(source);
   if (existing) {
+    // Retirement can finish after the last subscriber leaves. A dormant
+    // output still starts its next read with a fresh frame.
+    if (
+      existing._output._flags & REACTIVE_DISPOSED &&
+      existing._output._config & CONFIG_AUTO_DISPOSE
+    )
+      existing._output._statusFlags |= STATUS_UNINITIALIZED;
     prepareLatest(existing);
     return existing._output;
   }
@@ -183,7 +196,8 @@ function latestOutput(source: Computed<any>): Computed<any> {
   if (
     context === null &&
     source._statusFlags & STATUS_UNINITIALIZED &&
-    source._pendingValue === NOT_PENDING
+    source._pendingValue === NOT_PENDING &&
+    !source._x?._aheadError
   )
     return source;
   const record = createSourceObservation(source, kind, selectLatest);

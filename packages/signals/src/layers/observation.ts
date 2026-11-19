@@ -3,6 +3,7 @@ import { carryStagedError } from "../core/async.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
+  CONFIG_STAGED_ERROR,
   NOT_PENDING,
   REACTIVE_DISPOSED,
   STATUS_PENDING,
@@ -244,6 +245,7 @@ export function releaseObservation(record: Observation<any>): void {
   if (record._output._config & CONFIG_AUTO_DISPOSE) {
     // A discarded first proposal must not satisfy revival's equality check
     // before this output has ever published a value.
+    record._output._config &= ~CONFIG_STAGED_ERROR;
     record._output._pendingValue = NOT_PENDING;
     record._output._statusFlags |= STATUS_UNINITIALIZED;
   }

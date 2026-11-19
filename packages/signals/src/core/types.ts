@@ -133,6 +133,8 @@ export interface NodeExtension {
    * it, `isPending` reads a staged answer as a change over it, and a
    * recovery equal to the last good value is still a new answer. */
   _shownError: unknown;
+  /** Last flushed error superseded by a still-unanswered request in a hold. */
+  _aheadError?: unknown;
   /** R5: the frame pass's flight of a `latest()`/`isPending()` reader the
    * seam re-derived in the verdict lane (lanes.ts `laneSeams`) — the
    * frame's answer to the question it asked, which the transaction's
