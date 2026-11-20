@@ -1,4 +1,4 @@
-// Verdicts (plan sec. 28 replay, 2026-10-02; maintainer, 2026-10-01: verdicts are
+// Verdicts (2026-10-02; maintainer, 2026-10-01: verdicts are
 // optimistic state the system supplies). `isPending(fn)` asks whether what
 // `fn` reads is final; `latest(fn)` reads the proposal — the staged write or
 // landing, the lane's value — instead of the screen. A verdict is a guess
@@ -119,7 +119,7 @@ function watchVerdict(c: Computed<any>, unanswered = false): void {
  * does not rescue it: its result shows at the landing, re-derived), or a
  * member of the frame a held pass of that hold built (CONFIG_HELD_FRAME,
  * `bornInto`): the hold's own work, born in its world, reads plainly and
- * its run is the frame's (D-25, D-27) — the same leaf reading a memo of the
+ * its run is the frame's (D-25) — the same leaf reading a memo of the
  * `latest()` waits for the landing too (`enterLane`; E2, #4284). A lane
  * read, for `recompute`'s tail (REACTIVE_LANE_READ). */
 function route(c: Computed<any>, t: Transaction): void {
@@ -156,14 +156,14 @@ function route(c: Computed<any>, t: Transaction): void {
  * with the rest of its frame. */
 function observeFlight(c: Computed<any>, el: Computed<any>): boolean {
   // A render effect routed into a verdict lane reads the screen as lane
-  // work (D-26). A memo still observes the flight: a plain read after its
+  // work (D-25). A memo still observes the flight: a plain read after its
   // window is the frame's read, as one before it is (A10, F-6, #4661).
   if (passLane && (c as any)._type && !(c._statusFlags & STATUS_UNINITIALIZED)) return true;
   if (el._config & CONFIG_INPUTS_PUBLISHED || (el._config & CONFIG_HELD && bornInto(c, txOf(el))))
     return false;
   // A derived store's derive whose store has no reader (`fam.live` empty:
   // no leaf has a node) is no display: it observes nothing and holds nothing
-  // (F-3, D-11) — it stays live only to keep the store's data.
+  // (F-3, D-9) — it stays live only to keep the store's data.
   if (globalQueue._running && (c as any)._fam?.live.size !== 0) {
     joinFuture(null);
     if (!(el._config & CONFIG_HELD)) queuePendingNode(el);
@@ -270,7 +270,7 @@ function pendingVerdict(c: Computed<any> | null, el: Computed<any>): void {
       // `latest` of a flight serves the committed value, the frame's and the
       // lane's alike (D-22): nothing is the seam's, so the reader is the
       // verdict lane's now, as a plain read of a flight makes it
-      // (`observeFlight`). Its frame pass re-derived in the lane (R5) asked
+      // (`observeFlight`). Its frame pass re-derived in the lane (F-9) asked
       // its question again (F-9, #4397). A staging's is the seam's (#4365).
       // A probe in a transaction only that opened is the lane's too, with no
       // re-run at its landing: nothing it holds flips the verdict — the
@@ -659,7 +659,7 @@ function verdictValue(el: Signal<any> | Computed<any>, c: Computed<any> | null):
       // flush. A probe in a pass reads as its plain read does (#4648): a
       // first value staged this flush has no committed value (D-23 exc. 1,
       // F-9), and an untracked read sees the flush's staging — the staging
-      // flush is a normal flush, not the hold (F-10, D-24; ruled 2026-11-03).
+      // flush is a normal flush, not the hold (F-10, D-23; ruled 2026-11-03).
       // If the flush parks, what the pass read is the hold's frame.
       if (globalQueue._running) {
         if (__TEST__) shadowActual(SLOT_P);
@@ -863,7 +863,7 @@ function attachWaits(node: Computed<any>): boolean {
  * the hold's own sync write: not an async memo's answer (a flight's, A10),
  * not a lane's, and not a staging a window asked of under the hold that
  * holds it, or in this flush (`_askedIn`: `[latest(x), x()]` through a memo
- * stays atomic, D-26 — a mark that expires with that hold). It is served
+ * stays atomic, D-25 — a mark that expires with that hold). It is served
  * that staging — held (`frameRead`), or this flush's before it parks
  * (`stagedScreen`), leaving the verdict lane an earlier read of the verdict
  * memo seated it in (D-25: either read order). A frame (a render effect, a
@@ -871,7 +871,7 @@ function attachWaits(node: Computed<any>): boolean {
  * key's node-less staging (store.ts `readSource`): by construction this
  * flush's own sync write to a plain store, with no node for a window to
  * have asked through — the posture alone decides, as it does for the
- * signal (R2, signal parity). */
+ * signal. */
 function holdStaging(c: Computed<any>, el?: Signal<any> | Computed<any>): unknown {
   const a = el?._x?._askedIn;
   return (

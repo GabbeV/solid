@@ -222,7 +222,7 @@ const POLICY = [
   "src/boundaries.ts",
   "src/core/async.ts",
   "src/core/core.ts",
-  "src/core/guesses.ts",
+  "src/layers/optimistic.ts",
   "src/core/seat.ts",
   "src/core/types.ts",
   "src/core/verdict.ts"

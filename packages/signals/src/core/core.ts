@@ -413,7 +413,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   const isEffect = (el as any)._type;
   let released: Computed<any>[] | undefined;
   let superseded: unknown = NOT_PENDING;
-  // Lanes (plan sec. 28): the seat of a pass is its node's. A node carrying a lane's
+  // Lanes: the seat of a pass is its node's. A node carrying a lane's
   // derived value runs as the lane's whoever dirtied it — a sync write, a
   // boundary reset, a frame rerun — so its children and its result are the
   // lane's; so does a member the lane's own re-staging dirtied
@@ -526,7 +526,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
       // tree and output), spelled from the effect type as at creation.
       // A verdict reader born into `tx` (`bornInto`: never committed) is the
       // hold's own work, whatever it asked before (D-25): it joins like any
-      // held pass, so what it mounts is the hold's (D-13, #4467).
+      // held pass, so what it mounts is the hold's (D-12, #4467).
       if (tx._lane || el._config & CONFIG_LAGS) {
       } else if (
         !(el._config & (CONFIG_VERDICT | (EFFECT_RENDER << 23))) ||
@@ -995,7 +995,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
         if (!landingDelivery) el._value = value;
       } else {
         el._pendingValue = value;
-        // D-39: a staged recovery keeps the error it replaces the display
+        // D-41: a staged recovery keeps the error it replaces the display
         // until it commits (`commitPendingNode`), as a write over one does
         // (`setMemo`).
         if (outgoingError) el._x!._shownError = outgoingError;
@@ -1013,7 +1013,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
           // dropped what the read recorded.) Not when the flush has joined
           // the hold and the pass is its own (not a verdict lane's mount,
           // #3851): the mount is part of the hold, and the boundary appears
-          // at its commit, its fallback never seen (D-13, U-3) — a `<Show>`
+          // at its commit, its fallback never seen (D-12, U-3) — a `<Show>`
           // mounting it over a landing included.
           // With per-computation update contexts, the active hold need not
           // own the enclosing mount. Let the boundary check its creator:
@@ -1063,7 +1063,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   // and it is held all the same — its answer reveals no earlier than the
   // hold's commit (D-12) — but the hold does not wait for it: its only
   // readers are behind the fallback (`_hidden`; F-4, #3540). A boundary
-  // re-armed by `on` owns what it collects outright (D-14): not held. Only
+  // re-armed by `on` owns what it collects outright (D-12): not held. Only
   // an effect is caught: a derivation left pending is no reader (Reader,
   // D-12) — held, so its answer is the hold's and a render effect reading
   // it joins, but it reaches no boundary, and the commit waits for it only
@@ -1475,7 +1475,7 @@ function frameRead(c: Computed<any>, el: Signal<any> | Computed<any>): boolean {
     // or another change's flush re-derived it over the old inputs, and the
     // landing committed that beside the new ones (F-1, D-34 ¶3, #4576, #4577).
     // It reads that staging as the lane's render effects do, joining
-    // nothing — lane work never makes a flush the hold's (D-37). Joined, a
+    // nothing — lane work never makes a flush the hold's (D-25). Joined, a
     // plain write the flush carried was held into that hold while the lane
     // showed it, and retracted at the next seam (F-7, #4643).
     if (lane && passLane!.over && resolveTx(passLane!.over) === t && !verdict) return false;
@@ -2220,7 +2220,7 @@ export function devRead(el: Signal<any> | Computed<any>): void {
  * re-run is not served — served, it would re-run without end. Not a reader
  * waiting on another source, a render effect (the frame: its plain read
  * throws), lane work
- * or a verdict lane's pass (D-37: the screen plus the lane's own guesses).
+ * or a verdict lane's pass (D-25: the screen plus the lane's own guesses).
  * Legacy lanes exclude held staging. Shared updates can already hold a
  * first answer here: the read's earlier `readHeld` has selected and joined
  * its update, so deriving from it does not publish it outside that hold.
@@ -2378,10 +2378,10 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
         // the hold's own work and not a verdict reader already (#4504):
         // such a read throws — it read no value, and a node whose flight is
         // up is the hold's work, not a verdict reader (D-25, #3884). The
-        // hold's own work is a pass born in its world (uninitialized, D-27)
+        // hold's own work is a pass born in its world (uninitialized, D-25)
         // or one over a pass of its own still staged for the commit.
         // Stamped, its next run — the hold's re-run at the landing of a
-        // memo whose plain mount read held its reader (D-2, D-27) — was
+        // memo whose plain mount read held its reader (D-1, D-25) — was
         // served the screen beside the answer its reader waited for (F-2,
         // D-22). A memo with a committed value and none staged is no hold's
         // work, and its posture lasts until a pass completes having read no
@@ -2503,7 +2503,7 @@ export function read<T>(el: Signal<T> | Computed<T>): T {
   ) {
     // A verdict reader first, in a lane or not: a memo's plain read of a
     // flight observes it whether or not a window read routed the pass first
-    // (A10; `observeFlight` serves a routed render effect as lane work, D-26,
+    // (A10; `observeFlight` serves a routed render effect as lane work, D-25,
     // #4661). A reader with no committed value yet sees the flight pending: a
     // boundary a lane mounts shows its fallback (A29's boundary exemption).
     if (c !== null && c._config & CONFIG_VERDICT)
@@ -2709,7 +2709,7 @@ function shadowRead<T>(el: Signal<T> | Computed<T>): T {
 }
 
 /** A pass read a staging of this flush: it derives from what the flush may
- * yet hold (REACTIVE_STAGED_READ — the seam decides). Lane work too (plan sec. 28, a
+ * yet hold (REACTIVE_STAGED_READ — the seam decides). Lane work too (D-25, a
  * lane sees the screen plus its own guesses) — a folded lane's only before
  * the frame has a transaction (after, it reads the screen like a verdict
  * reader, `stagedScreen` — a list pass never pairs a held length with the
@@ -2777,7 +2777,7 @@ export function stagedScreen(c: Computed<any>, el?: Signal<any> | Computed<any>)
   // A transaction only a `latest()` read opened holds nothing: the staging
   // is the frame's read for a pass in the frame's seat, as it is before the
   // frame has one, and the seam re-derives the pass once only if the flush
-  // parks (D-22, F-10). Lane work sees the screen (D-37). Not a pass with no
+  // parks (D-22, F-10). Lane work sees the screen (D-25). Not a pass with no
   // value yet: its first answer is nobody's hold (D-6) and would commit the
   // staging whether or not the frame parks — it reads the screen, and runs
   // again at the landing.
@@ -3072,7 +3072,7 @@ export function setSignal<T>(el: Signal<T> | Computed<T>, v: T | ((prev: T) => T
 /**
  * User-facing setter for the memo form of `createSignal(fn)`. A write applies
  * first, then derivations re-run (A34 as amended 2026-10-01, rule B; core
- * R31): the write stages like any other, and a source change — in this flush
+ * CS-R31): the write stages like any other, and a source change — in this flush
  * or a later one, under a hold or on mainline — re-derives with the staged
  * write as `prev`. The write never refuses the re-run (the frame-scoped mask
  * of #3733/#3740 and #2692's "write wins the tick" before it are gone; call

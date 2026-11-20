@@ -121,7 +121,7 @@ export interface NodeExtension {
    * window read this node's staging (verdict.ts `holdStaging`). Stale once
    * that hold lands or dissolves: nothing clears it. Unset until then. */
   _askedIn?: Transaction | number;
-  /** Lanes (plan sec. 28) — the lane's value for this node while CONFIG_OVERRIDE is
+  /** Lanes — the lane's value for this node while CONFIG_OVERRIDE is
    * set: a written guess, or a lane pass's derivation. `NOT_PENDING` when
    * none. The screen shows it once the lane has revealed (`_shown`); a
    * direct read sees it throughout; the committed truth stays `_value`. */
@@ -131,13 +131,13 @@ export interface NodeExtension {
    * is live. A count, never a hold. */
   _marks: number;
   /** D-41: the error a node showed when a re-ask made it pending — still
-   * the display (D-39) until a new answer commits: an untracked read throws
+   * the display (D-41) until a new answer commits: an untracked read throws
    * it, `isPending` reads a staged answer as a change over it, and a
    * recovery equal to the last good value is still a new answer. */
   _shownError: unknown;
   /** Last flushed error superseded by a still-unanswered request in a hold. */
   _aheadError?: unknown;
-  /** R5: the frame pass's flight of a `latest()`/`isPending()` reader the
+  /** F-9: the frame pass's flight of a `latest()`/`isPending()` reader the
    * seam re-derived in the verdict lane (lanes.ts `laneSeams`) — the
    * frame's answer to the question it asked, which the transaction's
    * landing adopts instead of asking it again (lanes.ts `adoptParked`, F-9). Cleared
