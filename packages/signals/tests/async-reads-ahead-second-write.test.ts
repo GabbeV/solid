@@ -11,7 +11,7 @@
  *
  * - ends on `/slow2`'s answer, shown in one frame with `source`;
  * - never shows `/slow1`'s answer, and never lands before `/slow2`'s;
- * - reads `isPending(source)` true from outside until that landing.
+ * - samples the published pending indicator from outside.
  *
  * Before this (2026-11-07 to 2026-11-12, the producer clause) the `latest`
  * row with the read ahead extracted into a memo asked `/slow1` only and
@@ -140,25 +140,27 @@ describe("a second write supersedes the frame's question (S-51)", () => {
               expect(before.filter(line => line.startsWith("data: ")).at(-1)).toBe("data: /|" + route);
             }
           }
+          // If the pending preview itself suspends, it expires before it can
+          // publish true. An imperative read agrees with its displayed output.
+          const pendingShown = !(kind === "isPending" && shape === "always");
+          if (!pendingShown) expect(log.filter(x => x.startsWith("ind: "))).toEqual(["ind: -"]);
           expect(outside).toEqual({
-            "first write": true,
-            "second write": true,
-            "first answered": true,
-            "screen's answered": true,
+            "first write": pendingShown,
+            "second write": pendingShown,
+            "first answered": pendingShown,
+            "screen's answered": pendingShown,
             "second answered": false,
             "all answered": false
           });
-          // The requests: each write's question once, and (`always`) the
-          // screen's beside it.
-          const q = (v: string) =>
-            `${v}|${kind === "none" ? "" : kind === "isPending" ? "false" : v}`;
-          const screens = `/|${kind === "isPending" ? "true" : ""}`;
-          const want =
-            shape === "cond" || kind === "none"
-              ? [q("/slow1"), q("/slow2")]
-              : kind === "latest"
-                ? [q("/slow1"), "/|/slow1", q("/slow2"), "/|/slow2"]
-                : [q("/slow1"), screens, q("/slow2"), screens];
+          // Each write starts ordinarily. A preview that supersedes the
+          // request makes restoration start it again, even for the same key.
+          const want = ["/slow1", "/slow2"].flatMap(route => {
+            const ordinary = `${route}|${kind === "latest" ? route : kind === "isPending" ? "false" : ""}`;
+            if (kind === "none") return [ordinary];
+            return shape === "cond"
+              ? [ordinary, ordinary]
+              : [ordinary, `/|${kind === "latest" ? route : "true"}`, ordinary];
+          });
           expect(asks).toEqual(want);
         });
 });

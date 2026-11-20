@@ -165,6 +165,12 @@ export function calculateCorrection(
     correctionContext = previous;
   }
 }
+function queueCorrection(update: Transaction, reader: Computed<any>): void {
+  let jobs = correctionJobs.get(update);
+  if (!jobs) correctionJobs.set(update, (jobs = new Set()));
+  jobs.add(reader);
+}
+
 function processCorrections() {
   if (!correctionJobs.size) return false;
   const [owner, jobs] = correctionJobs.entries().next().value!;
@@ -221,6 +227,7 @@ const layerOwn = (node: Signal<any>, update: Transaction) => {
 /** User guesses settle before observations sample their downstream work.
  * Each feature installs only its own lifetime; both use common publication. */
 type BoundaryLifecycle = {
+  _fold?: (node: Computed<any>, parent: Transaction) => void;
   _merge?: (from: Transaction, into: Transaction) => void;
   _write?: (layer: Layer<any>, update: Transaction, proposal: unknown) => boolean;
   _notify?: (source: Signal<any>, reader: Computed<any>, update: Transaction) => boolean | void;
@@ -286,13 +293,22 @@ export function resumeInput(layer: Layer<any>, update: Transaction | null): Tran
 
 export function stageRestoration(
   layer: Layer<any>,
-  update: Transaction | null
+  update: Transaction | null,
+  restoresInputValue = false
 ): Transaction | null {
   layer._override = NOT_PENDING;
   // Retiring the cut makes its suspended consequences input work again.
   // Recompute will supersede obsolete flights in that common update.
-  if (layer._output._config & CONFIG_HELD)
-    merge(txOf(layer._output), (update ??= newTransaction(false)));
+  if (layer._output._config & CONFIG_HELD) {
+    const upper = txOf(layer._output);
+    // A retained flight that read the parent's old frame has a different
+    // question after the fold, even if the selector itself compares equal.
+    if (restoresInputValue && upper !== update && update?._reruns)
+      for (const reader of update._reruns)
+        if (reader._x?._inFlight && reader._config & CONFIG_HELD && txOf(reader) === upper)
+          queueCorrection(update, reader);
+    merge(upper, (update ??= newTransaction(false)));
+  }
   return update;
 }
 
@@ -462,11 +478,14 @@ function mergeLayers(from: Transaction, into: Transaction): void {
     intoPosition = positionOf(into);
   if (fromPosition !== intoPosition) {
     const higher = fromPosition > intoPosition ? from : into;
+    const lower = higher === from ? into : from;
     for (
       let i = 0, node = LEGACY_LANES ? higher._nodes[0] : higher._firstHeld;
       node;
       node = LEGACY_LANES ? higher._nodes[++i] : node._x!._nextHeld
-    )
+    ) {
+      if (lower === releasingInput && node._config & CONFIG_REDERIVE)
+        observations?._fold?.(node as Computed<any>, lower);
       if (
         node._config & CONFIG_HELD &&
         (!LEGACY_LANES || txOf(node) === higher) &&
@@ -474,6 +493,7 @@ function mergeLayers(from: Transaction, into: Transaction): void {
       )
         if ((node as Computed<any>)._fn)
           (node as Computed<any>)._flags |= REACTIVE_PREVIOUS_COMMITTED;
+    }
     into._level = Math.min(fromPosition, intoPosition);
   }
 }
@@ -1274,9 +1294,7 @@ function notifyLayer(source: Signal<any>, reader: Computed<any>, value = false):
     value &&
     (!(source._config & CONFIG_HELD) || txOf(source) === resolveTx(correctionContext))
   ) {
-    let jobs = correctionJobs.get(correctionContext);
-    if (!jobs) correctionJobs.set(correctionContext, (jobs = new Set()));
-    jobs.add(reader);
+    queueCorrection(correctionContext, reader);
     return true;
   }
   if (!(source._config & CONFIG_HELD)) return;

@@ -160,6 +160,12 @@ function prepareObservationPreview(record: Observation<any>): void {
   }
 }
 
+function recordRestoration(record: Observation<any>, parent: Transaction | null): void {
+  record._retiring = true;
+  record._time = inputTime(record._input);
+  record._parent = parent;
+}
+
 function prepareObservations(): boolean {
   previews = undefined;
   let changed = selected;
@@ -167,10 +173,17 @@ function prepareObservations(): boolean {
   // Prepare both observations of a held synchronous proposal in the same
   // round. Waiting for settle would publish latest before pending. Unheld
   // proposals propagate through inactive latest outputs ordinarily.
+  // A replacement may only notify the observation read by its own producer.
+  // Sample its other retiring observations before running any preview readers.
+  for (const record of watching) {
+    if (!record._retiring || record._time === inputTime(record._input)) continue;
+    const parent = record._parent && liveTx(record._parent);
+    if (parent && blocked(parent)) {
+      record._retiring = false;
+      dirty.add(record);
+    }
+  }
   for (const record of dirty) {
-    // A new input question supersedes a prepared restoration before its
-    // readers run again, not only after the publication sweep.
-    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     // A first answer can be staged beneath a replacement flight before it
     // initializes the input. Its observations still have a value to select.
     // A ready first answer initializes normally; opening a child update for
@@ -197,7 +210,6 @@ function prepareObservations(): boolean {
   if (changed) return true;
   let restoring: Observation<any>[] | undefined;
   for (const record of watching) {
-    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     if (deadObservation(record)) {
       watching.delete(record);
       dirty.delete(record);
@@ -228,12 +240,10 @@ function prepareObservations(): boolean {
       continue;
     // Rejoin before publication so new ordinary consequences can hold the
     // input and the observation's restoration together.
-    record._retiring = true;
-    record._parent = parent;
-    record._time = inputTime(record._input);
-    // Preparation can be triggered by a different, lower update's flush.
-    // Restore within the selected input update, without joining that flush.
-    record._parent = stageRestoration(record, parent);
+    recordRestoration(
+      record,
+      stageRestoration(record, parent, record._observation._restoresInputValue)
+    );
     (restoring ??= []).push(record);
     changed = true;
   }
@@ -310,6 +320,20 @@ function settleObservations(): void {
 }
 
 setObservationLifecycle({
+  _fold: (node, parent) => {
+    const record = boundaries.get(node) as Observation<any> | undefined;
+    if (
+      record?._observation?._restoresInputValue &&
+      record._override !== NOT_PENDING &&
+      record._input._config & CONFIG_HELD &&
+      txOf(record._input) === parent
+    ) {
+      // The lower replay is taking this output back with its input. Its
+      // selected latest answer is already the input proposal.
+      record._override = NOT_PENDING;
+      recordRestoration(record, parent);
+    }
+  },
   _prepare: prepareObservations,
   _preparePublication: preparePublication,
   _awaitingPreview: awaitingPreview,
@@ -383,7 +407,6 @@ export function releaseObservation(record: Observation<any>): void {
 
 export function markObservation(layer: Layer<any>): void {
   const record = layer as Observation<any>;
-  if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
   record._observation._observe?.(record);
   dirty.add(record);
   record._output._cleanup ??= releaseObservation.bind(null, record);
