@@ -503,34 +503,62 @@ describe("transitions", () => {
       expect(g.log.filter(v => v.startsWith("1:"))).toEqual([]); // ["1:101"]: a never committed 1
     });
 
-  it("T1 (memo) no effect run sees S = 1000 * A + b of a world that never committed", async () => {
-    const reqs: { q: number; res: () => void }[] = [];
-    const seen: number[] = [];
-    const [a, setA] = createSignal(0);
-    const [b, setB] = createSignal(0);
-    const dispose = createRoot(d => {
-      const A = createMemo(() => {
-        const q = a();
-        return new Promise<number>(res => reqs.push({ q, res: () => res(q + 100) }));
+  it.each([100, 103])(
+    "T1 a superseded sum stays on its committed answer until A returns %i",
+    async answer => {
+      const reqs: { q: number; res: () => void }[] = [];
+      const seen: number[] = [];
+      const [a, setA] = createSignal(0);
+      const [b, setB] = createSignal(0);
+      const { dispose, S } = createRoot(dispose => {
+        const A = createMemo(() => {
+          const q = a();
+          return new Promise<number>(res =>
+            reqs.push({ q, res: () => res(q === 0 ? 100 : answer) })
+          );
+        });
+        const S = createMemo(() => 1000 * A() + b());
+        createEffect(
+          () => S(),
+          (v: number) => void seen.push(v)
+        );
+        return { dispose, S };
       });
-      const S = createMemo(() => 1000 * A() + b());
-      createEffect(
-        () => S(),
-        (v: number) => void seen.push(v)
-      );
-      return d;
-    });
-    cleanup.push(() => (reqs.forEach(r => r.res()), dispose()));
-    flush();
-    reqs.shift()!.res();
-    await settle();
-    const h = hold(() => setB(1));
-    setA(3);
-    flush();
+      cleanup.push(() => (reqs.forEach(r => r.res()), dispose()));
+      flush();
+      reqs.shift()!.res();
+      await settle();
+      const h = hold(() => setB(1));
+      setA(3);
+      flush();
+      h.release();
+      await settle();
+      expect([a(), b()]).toEqual([3, 1]);
+      expect(S()).toBe(100000);
+      expect(seen).toEqual([100000]);
+      reqs.shift()!.res();
+      await settle();
+      expect(S()).toBe(1000 * answer + 1);
+      expect(seen).toEqual([100000, 1000 * answer + 1]);
+    }
+  );
+
+  it("a superseded held error does not become the committed answer", async () => {
+    const g = tx("A");
+    await g.answer(0);
+    const h = hold(
+      () => g.setA(1),
+      () => g.setA(3)
+    );
+    await g.answer(1, false);
+    expect(g.probe()).toBe("throws E1");
     h.release();
     await settle();
-    expect([a(), b()]).toEqual([3, 1]);
-    expect(seen).toEqual([100000]); // [100000, 100001]: S of (a = 0, b = 1)
+    expect(g.a()).toBe(3);
+    expect(g.A()).toBe(100);
+    expect(g.log).toEqual(["value 100"]);
+    await g.answer(3);
+    expect(g.log).toEqual(["value 100", "value 103"]);
   });
 
   it("T2 latest() stays on a committed error while the next question is in flight (D-22, D-41)", async () => {

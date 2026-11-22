@@ -1,7 +1,8 @@
 /**
  * #4897: adding a placeholder and reordering a keyed array are structural
  * edits of the same array. Both actions publish together, for a draft swap
- * as well as a returned copy. The final list contains at most the answered row.
+ * as well as a returned copy. The copy also reads the add's guessed slot
+ * (D-33). At release the final list contains at most the answered row.
  * The DOM counterpart uses For in packages/web/test.
  */
 import { describe, expect, test } from "vitest";

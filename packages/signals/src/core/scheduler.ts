@@ -1,3 +1,4 @@
+import type { Effect } from "./effect.js";
 import {
   CONFIG_AHEAD,
   CONFIG_FRAME,
@@ -38,7 +39,7 @@ import {
   STATUS_UNINITIALIZED
 } from "./constants.js";
 import { attrHooks } from "./attribution-hooks.js";
-import { notifyStatus } from "./async.js";
+import { notifyStatus, quietPending } from "./async.js";
 import {
   dispatchingEvent,
   creatorPass,
@@ -2040,6 +2041,24 @@ export function applyStaged(n: Signal<any>): unknown {
   );
 }
 
+// A held answer and an effect already queued from it both belong to the
+// question that produced them. A refresh asks that same question again.
+function supersededPass(node: Computed<unknown>): boolean {
+  const effect = node as Effect<unknown>;
+  const owesRun = effect._type === EFFECT_USER && effect._modified;
+  if (
+    (node._pendingValue === NOT_PENDING && !owesRun) ||
+    node._statusFlags & STATUS_UNINITIALIZED ||
+    quietPending(node)
+  )
+    return false;
+  if (owesRun) effect._modified = false;
+  // A propagated wait may settle equal. Recompute the discarded answer
+  // then, even when no value-change notification reaches this node.
+  if (!node._x!._inFlight) node._x!._blocked = true;
+  return true;
+}
+
 export function commitPendingNode(n: Signal<any>): void {
   const c = n as Partial<Computed<unknown>>;
   // L2: the commit is where a pass, held or not, stops being uncommitted —
@@ -2057,7 +2076,9 @@ export function commitPendingNode(n: Signal<any>): void {
   // #3305): a reveal of it must observe, not show the pre-flight value.
   const inFlight =
     (c._statusFlags! & STATUS_PENDING) !== 0 &&
-    (n._pendingValue === NOT_PENDING || !!(c._flags! & REACTIVE_PREVIOUS_COMMITTED));
+    (supersededPass(c as Computed<unknown>) ||
+      n._pendingValue === NOT_PENDING ||
+      !!(c._flags! & REACTIVE_PREVIOUS_COMMITTED));
   if (inFlight) n._pendingValue = NOT_PENDING;
   else c._flags! &= ~(REACTIVE_PREVIOUS_COMMITTED | REACTIVE_RETRIED_OWNER);
   n._config &= ~CONFIG_LOADING;
