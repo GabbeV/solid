@@ -817,8 +817,8 @@ export const staticOptimisticHooks: OptHooks = {
       const neu = Object.getOwnPropertyDescriptor(next, key);
       const inherited =
         key === "__proto__" || key === "prototype" ? undefined : record.prototype?.[key];
-      let before = unwrapValue(old ? old.value : inherited);
-      let after = unwrapValue(neu ? neu.value : inherited);
+      let before = unwrapValue(old ? old.value : inherited, t._fam);
+      let after = unwrapValue(neu ? neu.value : inherited, t._fam);
       if (t.ch && isWrappable(after)) {
         after = resolveChainedRaw(t, key, after);
         // A nested write can materialize the source wrapper for an untouched parent slot.
