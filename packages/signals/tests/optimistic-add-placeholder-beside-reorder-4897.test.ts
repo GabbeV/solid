@@ -1,20 +1,8 @@
 /**
- * #4897 — one keyed optimistic store over one answer source. An add guesses a
- * placeholder at the end; a reorder of the two rows above it is guessed and
- * stays out.
- *
- * - The add's answer lands: the reorder's re-base over that truth kept the
- *   placeholder it carried from the add beside the new row ("2,1,(A),10").
- *   The add's own landing judges the rows the reorder carried from it.
- * - The add is declined while the reorder (draft writes) is out: its length
- *   reverts, and the reorder's carrier, which only borrowed the length
- *   (#4784), no longer served the list's readers, so a `mapArray` never saw
- *   the reorder end ("2,1" after it settled).
- * - A reorder returned as a copy (`slice` reads the presence of index 2 and
- *   the length the add wrote) derives from the add's guess, and the two holds
- *   entangle (D-33, #4788, #4812): neither ends while the other is out.
- *
- * The DOM version is packages/web/test/optimistic-add-placeholder-beside-reorder-4897.spec.tsx.
+ * #4897: adding a placeholder and reordering a keyed array are structural
+ * edits of the same array. Both actions publish together, for a draft swap
+ * as well as a returned copy. The final list contains at most the answered row.
+ * The DOM counterpart uses For in packages/web/test.
  */
 import { describe, expect, test } from "vitest";
 import {
@@ -69,11 +57,13 @@ function setup(draftStyle: boolean, reader: "join" | "mapArray") {
     fj[k] = [];
     js.forEach(j => j(new Error("no")));
   };
-  const out = { join: "" };
+  const out = { join: "", finished: false };
+  const [finished, setFinished] = createSignal(false);
   let rows!: Row[];
   let setRows!: any;
   let setAns!: any;
   createRoot(() => {
+    createRenderEffect(finished, value => void (out.finished = value));
     const [ans, sa] = createSignal<any>(() => ask("list"), { loadingValue: null } as any);
     setAns = sa;
     [rows, setRows] = createOptimisticStore<Row[]>(
@@ -129,9 +119,10 @@ function setup(draftStyle: boolean, reader: "join" | "mapArray") {
       const r: any = yield ask("add");
       setAns((cs: any[]) => [...cs, { id: r.id, title: r.title }]);
     } catch {}
+    setFinished(true);
   });
   const state = () => out.join;
-  return { land, fail, rows: () => rows, up, add, state };
+  return { land, fail, rows: () => rows, up, add, state, finished: () => out.finished };
 }
 
 describe("#4897 an ended add's placeholder while a reorder guess on other slots is out", () => {
@@ -155,11 +146,11 @@ describe("#4897 an ended add's placeholder while a reorder guess on other slots 
           if (ending === "answered") t.land("add", { id: 10, title: "A" });
           else t.fail("add");
           await tick();
-          expect(t.state()).toBe(
-            !draftStyle ? "2,1,(A)" : ending === "answered" ? "2,1,10" : "2,1"
-          );
+          expect(t.state()).toBe("2,1,(A)");
+          expect(t.finished()).toBe(false);
           t.land("move", null);
           await tick();
           expect(t.state()).toBe(ending === "answered" ? "1,2,10" : "1,2");
+          expect(t.finished()).toBe(true);
         });
 });
