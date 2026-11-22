@@ -649,7 +649,7 @@ function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer =
 function descriptorValue(slot: Slot) {
   const reader = getObserver() as Computed<any> | null;
   if (reader?._fn) pullComputed(slot.output as Computed<any>, reader);
-  return untrack(() => slot.read(false));
+  return untrack(() => read(slot.output));
 }
 
 function noteStoreRead(
