@@ -968,10 +968,13 @@ export function setTrackedQueueCallback(value: boolean) {
  * the body's writes are its transaction's and commit when it settles; a
  * drain mid-step cannot reveal them, and dev says so. */
 export let actionDepth = 0;
-export function enterAction(): void {
+export let currentAction: Transaction | null = null;
+export function enterAction(action: Transaction): void {
+  currentAction = action;
   actionDepth++;
 }
-export function exitAction(): void {
+export function exitAction(previous: Transaction | null): void {
+  currentAction = previous;
   actionDepth--;
 }
 

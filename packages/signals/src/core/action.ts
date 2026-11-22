@@ -7,6 +7,7 @@ import { emitDiagnostic } from "./dev.js";
 import { attrHooks } from "./attribution-hooks.js";
 import {
   actionDepth,
+  currentAction,
   effectCallbackEvent,
   effectCallbackOwner,
   enterAction,
@@ -173,7 +174,8 @@ export function action<Args extends any[], Y, R>(
           attrHooks.actionStepStart(it, genFn.name || undefined);
         // The body is on the stack between these brackets: flush() is
         // refused inside (FLUSH_IN_ACTION, scheduler.ts).
-        enterAction();
+        const previousAction = currentAction;
+        enterAction(t);
         // Dev: the body's reads are imperative, not post-await reads of the
         // continuation that invoked the action (UNTRACKED_READ_AFTER_AWAIT);
         // and it is an imperative scope of its own, not the effect callback
@@ -192,13 +194,13 @@ export function action<Args extends any[], Y, R>(
         try {
           r = err ? it.throw!(v) : it.next(v);
         } catch (e) {
-          exitAction();
+          exitAction(previousAction);
           if (__DEV__)
             (exitCallback(), setEffectCallback(effectCallback, effectEvent, effectOwner));
           if (__OBSERVE__ && attrHooks !== null) attrHooks.actionStepEnd(it);
           return done(undefined, e, true);
         }
-        exitAction();
+        exitAction(previousAction);
         if (__DEV__) (exitCallback(), setEffectCallback(effectCallback, effectEvent, effectOwner));
         if (__OBSERVE__ && attrHooks !== null) attrHooks.actionStepEnd(it);
         // A rejected iterator result (async generators) means the error already

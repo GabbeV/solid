@@ -20,6 +20,7 @@ import {
   createOptimisticStoreInput,
   proposeOptimisticSlots,
   entangleOptimisticSlotRead,
+  inGuessWriter,
   withOptimisticSlotBatch
 } from "../layers/optimistic.js";
 import {
@@ -530,7 +531,7 @@ function readSelected(t: StoreTarget, node: Signal<any>) {
     const key = (node as any)._key;
     slot = slotFor(t, key, t.h?.[key as any] === node);
   }
-  if (slot) return read(slot.output);
+  if (slot) return slot.read();
   const row = selectedBody(t);
   if (row && row !== t.v) {
     const key = (node as any)._key;
@@ -595,7 +596,7 @@ function compose(t: StoreTarget, shape: Record<PropertyKey, any>, writer = false
   }
   for (const [key, slot] of arrayShape ? [] : record.shape) {
     if (Array.isArray(out) && key === "length") continue;
-    const meta = writer ? (slot.writerValue() as ShapeMeta) : (read(slot.output) as ShapeMeta);
+    const meta = writer ? (slot.writerValue() as ShapeMeta) : (slot.read(false) as ShapeMeta);
     const bits = meta.bits & shapeMask;
     if (!(bits & 1)) {
       Reflect.deleteProperty(out, key);
@@ -648,7 +649,63 @@ function selectedView(t: StoreTarget, source: Record<PropertyKey, any>, writer =
 function descriptorValue(slot: Slot) {
   const reader = getObserver() as Computed<any> | null;
   if (reader?._fn) pullComputed(slot.output as Computed<any>, reader);
-  return untrack(() => read(slot.output));
+  return untrack(() => slot.read(false));
+}
+
+function noteStoreRead(
+  t: StoreTarget,
+  key: PropertyKey | undefined,
+  kind: "value" | "has" | "keys" | "descriptor",
+  draft = true
+): void {
+  if (kind === "value" && Array.isArray(t.v) && key === "length") {
+    readArrayLength(t);
+    return;
+  }
+  // Values written earlier in this draft no longer consume another guess.
+  if (draft && key !== undefined && t.wk?.has(key)) return;
+  const sample = (slot: Slot) => (draft ? slot.writerValue() : slot.read(false));
+  const consume = (slot: Slot) => (draft ? entangleOptimisticSlotRead(slot) : slot.read());
+  let consumedKeys: Set<PropertyKey> | undefined;
+  const entangle = (target: StoreTarget, r: RecordSlots): boolean => {
+    // Value guesses also vouch for their key's continued existence. A
+    // setter reading only metadata consumes a guess if removing that
+    // override would change the answer in its draft.
+    const base = () => r.draft?.base ?? writerBase(target);
+    if (kind === "keys") {
+      let keys: PropertyKey[] | undefined;
+      for (const [k, slot] of r.shape) {
+        if (consumedKeys?.has(k) || !slot.activeOwner()) continue;
+        keys ??= Reflect.ownKeys(base());
+        if (sample(slot).bits >>> 5 === keys.indexOf(k) + 1) continue;
+        consume(slot);
+        if (target.ch) (consumedKeys ??= new Set()).add(k);
+      }
+      return false;
+    }
+    const slot = (kind === "descriptor" ? r.shape : kind === "has" ? r.presence : r.slots).get(
+      key!
+    );
+    if (!slot?.activeOwner()) return false;
+    if (kind === "descriptor") {
+      const old = Object.getOwnPropertyDescriptor(base(), key!);
+      const meta = sample(slot) as ShapeMeta;
+      if (
+        (meta.bits & shapeMask) === shapeBits(old) &&
+        meta.get === old?.get &&
+        meta.set === old?.set
+      )
+        return false;
+    } else if (kind === "has" && sample(slot) === key! in base()) return false;
+    consume(slot);
+    return true;
+  };
+  let target: StoreTarget | undefined = t;
+  while (target) {
+    const slots = records.get(target);
+    if (slots && entangle(target, slots)) return;
+    target = target.ch ? (target.v as any)[$TARGET] : undefined;
+  }
 }
 
 export const staticOptimisticHooks: OptHooks = {
@@ -683,7 +740,7 @@ export const staticOptimisticHooks: OptHooks = {
       const descriptor = Object.getOwnPropertyDescriptor(row, key);
       if (descriptor && "value" in descriptor) slot = slotFor(t, key);
     }
-    return { value: slot ? read(slot.output) : Reflect.get(row, key, receiver) };
+    return { value: slot ? slot.read() : Reflect.get(row, key, receiver) };
   },
   accessor: (t, key, receiver) => {
     const slot = records.get(t)?.shape.get(key);
@@ -709,10 +766,14 @@ export const staticOptimisticHooks: OptHooks = {
     }
   },
   view: selectedView,
-  keys: t => (Array.isArray(t.v) ? Reflect.ownKeys(selectedArrayShape(t)) : undefined),
+  keys: t => {
+    if (inGuessWriter()) noteStoreRead(t, undefined, "keys", false);
+    if (Array.isArray(t.v)) return Reflect.ownKeys(selectedArrayShape(t, false));
+  },
   descriptor: (t, key, source) => {
+    if (inGuessWriter()) noteStoreRead(t, key, "descriptor", false);
     if (Array.isArray(t.v)) {
-      const descriptor = Object.getOwnPropertyDescriptor(selectedArrayShape(t), key);
+      const descriptor = Object.getOwnPropertyDescriptor(selectedArrayShape(t, false), key);
       if (!descriptor) return null;
       if (key !== "length" && "value" in descriptor)
         descriptor.value = descriptorValue(slotFor(t, key));
@@ -734,9 +795,10 @@ export const staticOptimisticHooks: OptHooks = {
     return descriptor;
   },
   has: (t, key) => {
-    if (Array.isArray(t.v)) return key in selectedArrayShape(t);
+    if (inGuessWriter()) noteStoreRead(t, key, "has", false);
+    if (Array.isArray(t.v)) return key in selectedArrayShape(t, false);
     const slot = records.get(t)?.presence.get(key);
-    if (slot) return !!read(slot.output);
+    if (slot) return !!slot.read(false);
     const row = selectedBody(t);
     return row && row !== t.v ? key in row : undefined;
   },
@@ -747,54 +809,7 @@ export const staticOptimisticHooks: OptHooks = {
     record.draft = { base, previous, staged: t.pb };
     return cloneRaw(previous, t);
   },
-  draftRead: (t, key, kind) => {
-    if (kind === "value" && Array.isArray(t.v) && key === "length") {
-      readArrayLength(t);
-      return;
-    }
-    // Values written earlier in this draft no longer consume another guess.
-    if (key !== undefined && t.wk?.has(key)) return;
-    let consumedKeys: Set<PropertyKey> | undefined;
-    const entangle = (target: StoreTarget, r: RecordSlots): boolean => {
-      // Value guesses also vouch for their key's continued existence. A
-      // setter reading only metadata consumes a guess if removing that
-      // override would change the answer in its draft.
-      const base = () => r.draft?.base ?? writerBase(target);
-      if (kind === "keys") {
-        let keys: PropertyKey[] | undefined;
-        for (const [k, slot] of r.shape) {
-          if (consumedKeys?.has(k) || !slot.activeOwner()) continue;
-          keys ??= Reflect.ownKeys(base());
-          if (slot.writerValue().bits >>> 5 === keys.indexOf(k) + 1) continue;
-          entangleOptimisticSlotRead(slot);
-          if (target.ch) (consumedKeys ??= new Set()).add(k);
-        }
-        return false;
-      }
-      const slot = (kind === "descriptor" ? r.shape : kind === "has" ? r.presence : r.slots).get(
-        key!
-      );
-      if (!slot?.activeOwner()) return false;
-      if (kind === "descriptor") {
-        const old = Object.getOwnPropertyDescriptor(base(), key!);
-        const meta = slot.writerValue() as ShapeMeta;
-        if (
-          (meta.bits & shapeMask) === shapeBits(old) &&
-          meta.get === old?.get &&
-          meta.set === old?.set
-        )
-          return false;
-      } else if (kind === "has" && slot.writerValue() === key! in base()) return false;
-      entangleOptimisticSlotRead(slot);
-      return true;
-    };
-    let target: StoreTarget | undefined = t;
-    while (target) {
-      const slots = records.get(target);
-      if (slots && entangle(target, slots)) return;
-      target = target.ch ? (target.v as any)[$TARGET] : undefined;
-    }
-  },
+  draftRead: noteStoreRead,
   writes: (t, next) => {
     const record = recordFor(t);
     const saved = record.draft;

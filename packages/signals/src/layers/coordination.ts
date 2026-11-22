@@ -1139,7 +1139,7 @@ function sourceHoldsLifetime(source: Computed<any>, position: number): boolean {
 }
 
 function canPublish(update: Transaction): boolean {
-  if (observations?._awaitingPreview?.(update)) return false;
+  if (guesses?._awaitingPreview?.(update) || observations?._awaitingPreview?.(update)) return false;
   // Reuse the pending-reader registry: ownership gates the private frame's
   // attachment, while the recorded higher read gates its publication. This
   // relation is one-way and deliberately absent from blocked()'s lifetime

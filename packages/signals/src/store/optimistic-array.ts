@@ -158,9 +158,8 @@ export function readArrayAnswer(t: StoreTarget): void {
     }
   }
 }
-export function selectedArrayShape(t: StoreTarget, writer = false): any[] {
-  const slot = structureSlot(t);
-  return writer ? slot.writerValue() : read(slot.output);
+export function selectedArrayShape(t: StoreTarget, consume = true): any[] {
+  return structureSlot(t).read(consume);
 }
 export function arrayIndex(key: PropertyKey): number {
   if (typeof key !== "string" || key === "") return -1;

@@ -1,8 +1,17 @@
 /** User guesses and their action lifetime, published by the common layer core. */
-import { computed, read, signal, runWithOwner, untrack, stageSelectedValue } from "../core/core.js";
+import {
+  computed,
+  creatorPass,
+  read,
+  signal,
+  verdict,
+  runWithOwner,
+  untrack,
+  stageSelectedValue
+} from "../core/core.js";
 import { enqueueSub } from "../core/heap.js";
 import { registerGraph, forgetThrownRead } from "../core/dev.js";
-import { dispose, getOwner } from "../core/owner.js";
+import { dispose, getObserver, getOwner } from "../core/owner.js";
 import { attrHooks, setLayerShowsGuess } from "../core/attribution-hooks.js";
 import {
   $REFRESH,
@@ -24,6 +33,7 @@ import {
 } from "../core/constants.js";
 import {
   blocked,
+  currentAction,
   flushTransaction,
   GlobalQueue,
   holdNode,
@@ -33,6 +43,8 @@ import {
   newTransaction,
   resolveTx,
   recomputeInUpdate,
+  readyToPublish,
+  transactionNodes,
   setLayerBlocked,
   txOf,
   inEffectCallback,
@@ -66,6 +78,129 @@ const proposalGroups = new Set<Set<Layer<any>>>();
 // the enclosing setter's compound publication.
 let proposalBatch: Set<Layer<any>> | null = null;
 const scopes = new Map<Transaction, Set<Layer<any>>>();
+// A write that consumes a live guess depends on two different commits. Its
+// action shares the source's lifetime; its preview waits only for the
+// particular output publication it read. An already displayed guess has
+// no such publication. Keep the original action identity across yields.
+type GuessRead = { source: Layer<any>; scope: Transaction; publication: Transaction | null };
+type GuessReads = Map<Layer<any>, GuessRead>;
+const writerReads = new WeakMap<object, GuessReads>();
+let activeSetter: object | undefined;
+// A draft can read a same-tick proposal before its output has a transaction.
+const queuedReads = new Map<Layer<any>, GuessRead>();
+// Replace the dependencies together with the selected value at the flush.
+const nextReads = new Map<Layer<any>, GuessRead[]>();
+const publicationReads = new Map<Signal<any>, GuessRead[]>();
+
+function outputUpdate(layer: Layer<any>): Transaction | null {
+  return layer._output._config & CONFIG_HELD ? txOf(layer._output) : null;
+}
+function unpublished(read: GuessRead): Transaction | null {
+  const update = outputUpdate(read.source);
+  return read.publication && update === resolveTx(read.publication) ? update : null;
+}
+
+function rememberGuess(source: Layer<any>, queued = false): void {
+  if (!source._scope) return;
+  const writer = currentAction ?? activeSetter;
+  if (!writer) return;
+  let reads = writerReads.get(writer);
+  if (!reads) writerReads.set(writer, (reads = new Map()));
+  const publication = outputUpdate(source);
+  let receipt = queued ? queuedReads.get(source) : reads.get(source);
+  if (
+    !receipt ||
+    receipt.scope !== source._scope ||
+    (!queued && receipt.publication !== publication)
+  )
+    receipt = { source, scope: source._scope, publication };
+  if (queued) queuedReads.set(source, receipt);
+  reads.set(source, receipt);
+}
+
+export function inGuessWriter(): boolean {
+  return (
+    !!(currentAction || activeSetter) &&
+    !getObserver() &&
+    !verdict &&
+    !((creatorPass(getOwner())?._flags ?? 0) & REACTIVE_RECOMPUTING_DEPS)
+  );
+}
+
+function readGuess<T>(layer: Layer<T>, consume = true): T {
+  if (layer._override !== NOT_PENDING && inGuessWriter()) {
+    if (consume) rememberGuess(layer);
+    return layer._override as T;
+  }
+  return read(layer._output);
+}
+
+function joinReadScopes(layer: Layer<any>, reads: GuessRead[]): void {
+  for (const receipt of reads) {
+    const scope = liveTx(receipt.scope);
+    if (scope) merge(layer._scope!, scope);
+  }
+}
+
+function recordProposalReads(target: Layer<any>, reads: GuessReads | undefined): void {
+  if (!reads) {
+    if (nextReads.size) nextReads.delete(target);
+    return;
+  }
+  const consumed = Array.from(reads.values()).filter(read => read.source !== target);
+  if (!consumed.length) {
+    nextReads.delete(target);
+    return;
+  }
+  nextReads.set(target, consumed);
+  if (target._scope) joinReadScopes(target, consumed);
+}
+
+/** Publications consumed by this update which still own the version read.
+ * Landing a source removes its ordinary held stamp. Retirement of the
+ * target removes its edge even if its old preview's flight never resolves. */
+function* prerequisites(update: Transaction): Iterable<Transaction> {
+  for (const node of transactionNodes(update)) {
+    const reads = publicationReads.get(node);
+    if (!reads) continue;
+    for (const read of reads) {
+      const holder = unpublished(read);
+      if (holder && holder !== update) yield holder;
+    }
+  }
+}
+
+function reaches(from: Transaction, target: Transaction, seen: Set<Transaction>): boolean {
+  if (seen.has(from)) return false;
+  seen.add(from);
+  for (const before of prerequisites(from))
+    if (before === target || reaches(before, target, seen)) return true;
+  return false;
+}
+
+const judging = new Set<Transaction>();
+function awaitingGuess(update: Transaction): boolean {
+  if (!publicationReads.size || judging.has(update)) return false;
+  const outer = !judging.size;
+  judging.add(update);
+  try {
+    for (const before of prerequisites(update)) {
+      // A one-way dependency lands first. Mutual reads of still-unpublished
+      // writes form one frame: every member must pass ordinary readiness,
+      // without changing its computation depth or joining its async lifetime.
+      if (
+        publicationReads.size === 1 ||
+        !reaches(before, update, new Set()) ||
+        !readyToPublish(before)
+      )
+        return true;
+    }
+    return false;
+  } finally {
+    if (outer) judging.clear();
+  }
+}
+
 type OptimisticLayer = Layer<any> & { _shownGuess?: boolean };
 if (__OBSERVE__) {
   GlobalQueue._layerGuesses = update =>
@@ -111,6 +246,7 @@ function retire(layer: Layer<any>): void {
   const scope = liveTx(layer._scope!);
   if (!scope) joinFuture(null);
   resumeInput(layer, scope ?? resolveTx(flushTransaction!));
+  publicationReads.delete(layer._output);
   removeScope(layer);
   layer._onRetired?.();
   const input = layer._input,
@@ -162,7 +298,11 @@ function prepareGuesses(): boolean {
       holdNode(layer._input, scope);
     }
     if (!scope) proposals.delete(layer);
-    else bindScope(layer, scope);
+    else {
+      bindScope(layer, scope);
+      const reads = nextReads.get(layer);
+      if (reads) joinReadScopes(layer, reads);
+    }
   }
   // Scope membership follows ordinary merging. Output updates which own
   // no guesses do not scan unrelated lifetimes when checking readiness.
@@ -194,6 +334,11 @@ function prepareGuesses(): boolean {
       settledInputs = null;
     }
   }
+  // Once either end has published, the dependency has done its job. A
+  // later publication of the same output belongs to a different proposal.
+  for (const [output, reads] of publicationReads)
+    if (!(output._config & CONFIG_HELD) || !reads.some(unpublished))
+      publicationReads.delete(output);
   return changed;
 }
 
@@ -378,6 +523,7 @@ setGuessLifecycle({
     layer._output._deps?._dep === layer._input &&
     stageValueInUpdate(layer._output, update, proposal),
   _notify: forwardInput,
+  _awaitingPreview: awaitingGuess,
   _merge: (from, into) => {
     settledInputs = null;
     const layers = scopes.get(from);
@@ -390,6 +536,8 @@ setGuessLifecycle({
   _prepare: prepareGuesses,
   _settle: () => {
     if (!proposals.size) {
+      if (nextReads.size) nextReads.clear();
+      if (queuedReads.size) queuedReads.clear();
       proposalGroups.clear();
       return false;
     }
@@ -415,6 +563,19 @@ setGuessLifecycle({
         if (first) merge(update, first);
         else first = update;
       }
+    }
+    if (queuedReads.size || nextReads.size || publicationReads.size) {
+      for (const [source, receipt] of queuedReads) {
+        receipt.publication = outputUpdate(source);
+      }
+      for (const layer of proposals.keys()) {
+        const reads = nextReads.get(layer)?.filter(read => read.publication !== null);
+        if (reads?.length && layer._override !== NOT_PENDING)
+          publicationReads.set(layer._output, reads);
+        else publicationReads.delete(layer._output);
+      }
+      nextReads.clear();
+      queuedReads.clear();
     }
     proposalGroups.clear();
     proposals.clear();
@@ -549,6 +710,7 @@ function removeScope(layer: Layer<any>): void {
 function releaseLayer(layer: Layer<any>): void {
   if (layer._opening && layer._scope) resolveTx(layer._scope)._open--;
   layer._opening = undefined;
+  publicationReads.delete(layer._output);
   removeScope(layer);
   proposals.delete(layer);
   layer._scope = null;
@@ -561,8 +723,8 @@ function releaseLayer(layer: Layer<any>): void {
 function bindScope(layer: Layer<any>, scope: Transaction): void {
   if (layer._scope) merge(scope, layer._scope);
   layer._scope = resolveTx(scope);
-  // Only repeated guesses share this lifetime. Incoming input updates keep
-  // their own publication context while the override is selected.
+  // Writes to this slot share its lifetime. Reads consumed by this write
+  // join their owners separately; an incoming answer alone does neither.
   const current = resolveTx(layer._scope);
   let layers = scopes.get(current);
   if (!layers) scopes.set(current, (layers = new Set()));
@@ -652,6 +814,7 @@ export function createOptimisticSlot<T>(
   };
   return {
     output: layer._output,
+    read: (consume = true) => readGuess(layer, consume),
     propose: (value: T) => {
       // A changed proposal can introduce a different child in the same
       // action. Repeated equal proposals do not need another discovery pass.
@@ -696,22 +859,27 @@ export function createOptimisticSlot<T>(
   };
 }
 
-/** An actual store-setter read of another selected guess joins its action.
- * Output publication alone must not join these independent lifetimes. */
+/** A draft can consume an unflushed guess. Its publication is identified
+ * when the queued proposal acquires its ordinary output transaction. */
 export function entangleOptimisticSlotRead(slot: ReturnType<typeof createOptimisticSlot>): void {
-  const owner = slot.activeOwner();
-  if (owner && flushTransaction) merge(flushTransaction, owner);
+  if (slot.activeOwner()) {
+    const layer = boundaries.get(slot.output)!;
+    rememberGuess(layer, proposals.has(layer));
+  }
 }
 
 /** Collect every changed slot submitted during one store setter, including
  * recursive writes. Nested setters also keep their own output groups. */
 export function withOptimisticSlotBatch<T>(setter: () => T): T {
   const previous = proposalBatch;
+  const previousSetter = activeSetter;
   const group = new Set<Layer<any>>();
   proposalBatch = group;
+  activeSetter ??= group;
   try {
     return setter();
   } finally {
+    activeSetter = previousSetter;
     proposalBatch = previous;
     if (previous) for (const layer of group) previous.add(layer);
     if (group.size > 1) proposalGroups.add(group);
@@ -748,7 +916,22 @@ function layerAccessors<T>(layer: Layer<T>) {
   const output = layer._output;
   const propose = (value: T | ((previous: T) => T)) => {
     const previous = previousProposal(layer);
-    const next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
+    const writer = currentAction ?? activeSetter;
+    let reads: GuessReads | undefined;
+    let next: T;
+    if (!writer && scopes.size && typeof value === "function") {
+      activeSetter = layer;
+      try {
+        next = (value as (v: T) => T)(previous as T);
+        reads = writerReads.get(layer);
+      } finally {
+        writerReads.delete(layer);
+        activeSetter = undefined;
+      }
+    } else {
+      next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
+      if (writer) reads = writerReads.get(writer);
+    }
     if (output._flags & REACTIVE_DISPOSED) return next;
     if (__OBSERVE__ && attrHooks !== null) {
       attrHooks.write(output, previous, next);
@@ -758,12 +941,13 @@ function layerAccessors<T>(layer: Layer<T>) {
       const scope = flushTransaction ?? (layer._scope && liveTx(layer._scope));
       if (scope) bindScope(layer, scope);
     }
+    recordProposalReads(layer, reads);
     output._cleanup ??= releaseLayer.bind(null, layer);
     proposals.set(layer, next);
     wakeLayers();
     return next;
   };
-  const accessor = () => read(output);
+  const accessor = () => readGuess(layer);
   (accessor as any)[$REFRESH] = output;
   return [accessor, propose] as const;
 }
