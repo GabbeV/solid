@@ -473,3 +473,74 @@ it.each(["array", "added key", "unchanged keys"])(
     }
   }
 );
+
+it.each(["price first", "stock first"])(
+  "a cycle waits for an independent input and its own async work (%s)",
+  async order => {
+    const priceReady = Promise.withResolvers<void>();
+    const stockReady = Promise.withResolvers<void>();
+    const revise = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+    const app = createRoot(dispose => {
+      const [price, setPrice] = createOptimistic(0);
+      const [quote, setQuote] = createOptimistic(0);
+      const [stock, setStock] = createOptimistic(0);
+      const [summary, setSummary] = createOptimistic(0);
+      const shown = visiblePair(price, quote);
+      const others = visiblePair(stock, summary);
+      const checkedPrice = createMemo(() => (price() ? priceReady.promise : 0));
+      const checkedStock = createMemo(() => (stock() ? stockReady.promise : 0));
+      createRenderEffect(checkedPrice, () => {});
+      createRenderEffect(checkedStock, () => {});
+      const priceAction = action(function* () {
+        setPrice(1);
+        yield revise.promise;
+        setPrice(() => quote() + stock());
+        yield finish.promise;
+      });
+      const stockAction = action(function* () {
+        setStock(10);
+        yield finish.promise;
+      });
+      const quoteAction = action(function* () {
+        setQuote(() => price() + 1);
+        yield finish.promise;
+      });
+      const summarize = action(function* () {
+        setSummary(() => price() + quote());
+        yield finish.promise;
+      });
+      return { dispose, shown, others, priceAction, stockAction, quoteAction, summarize };
+    });
+    try {
+      flush();
+      app.priceAction();
+      await turn();
+      app.stockAction();
+      await turn();
+      app.quoteAction();
+      await turn();
+      revise.resolve();
+      await turn();
+      app.summarize();
+      await turn();
+      expect(app.shown).toEqual([0, 0]);
+      expect(app.others).toEqual([0, 0]);
+      (order === "stock first" ? stockReady : priceReady).resolve();
+      await turn();
+      expect(app.shown).toEqual([0, 0]);
+      expect(app.others).toEqual([order === "stock first" ? 10 : 0, 0]);
+      (order === "stock first" ? priceReady : stockReady).resolve();
+      await turn();
+      expect(app.shown).toEqual([12, 2]);
+      expect(app.others).toEqual([10, 14]);
+    } finally {
+      revise.resolve();
+      stockReady.resolve();
+      priceReady.resolve();
+      finish.resolve();
+      await turn();
+      app.dispose();
+    }
+  }
+);

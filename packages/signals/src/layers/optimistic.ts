@@ -73,6 +73,14 @@ const proposals = new Map<Layer<any>, unknown>();
 // until their proposals acquire ordinary output transactions; scopes are not
 // members of the group and retain their independent action lifetimes.
 const proposalGroups = new Set<Set<Layer<any>>>();
+let stageGroups: (() => void) | undefined;
+
+function addGroup(group: Set<Layer<any>>): void {
+  if (group.size > 1) {
+    proposalGroups.add(group);
+    stageGroups = stageGroupedProposals;
+  }
+}
 // A store setter can discover changed slots across several recursive writes.
 // Each invocation owns its group; nested changed outputs also participate in
 // the enclosing setter's compound publication.
@@ -82,45 +90,51 @@ const scopes = new Map<Transaction, Set<Layer<any>>>();
 // action shares the source's lifetime; its preview waits only for the
 // particular output publication it read. An already displayed guess has
 // no such publication. Keep the original action identity across yields.
-type GuessRead = { source: Layer<any>; scope: Transaction; publication: Transaction | null };
-type GuessReads = Map<Layer<any>, GuessRead>;
-const writerReads = new WeakMap<object, GuessReads>();
-let activeSetter: object | undefined;
-// A draft can read a same-tick proposal before its output has a transaction.
-const queuedReads = new Map<Layer<any>, GuessRead>();
-// Replace the dependencies together with the selected value at the flush.
-const nextReads = new Map<Layer<any>, GuessRead[]>();
+type GuessRead = { _source: Layer<any>; _scope: Transaction; _publication: Transaction | null };
+type GuessWriter = { _guessReads?: Map<Layer<any>, GuessRead> };
+let activeSetter: GuessWriter | undefined;
+function writer(): GuessWriter | undefined {
+  return (currentAction as GuessWriter | null) ?? activeSetter;
+}
+
+// Optional data of a queued proposal. Drafts can consume it before it has
+// an output transaction; stamp that shared read when the proposal is staged.
+type ProposalReads = { _sample?: GuessRead; _uses?: GuessRead[] };
+const incoming = new Map<Layer<any>, ProposalReads>();
 const publicationReads = new Map<Signal<any>, GuessRead[]>();
+
+function proposalReads(layer: Layer<any>): ProposalReads {
+  let reads = incoming.get(layer);
+  if (!reads) incoming.set(layer, (reads = {}));
+  return reads;
+}
 
 function outputUpdate(layer: Layer<any>): Transaction | null {
   return layer._output._config & CONFIG_HELD ? txOf(layer._output) : null;
 }
+
 function unpublished(read: GuessRead): Transaction | null {
-  const update = outputUpdate(read.source);
-  return read.publication && update === resolveTx(read.publication) ? update : null;
+  const held = read._publication && resolveTx(read._publication);
+  return held && held === outputUpdate(read._source) ? held : null;
 }
 
 function rememberGuess(source: Layer<any>, queued = false): void {
-  if (!source._scope) return;
-  const writer = currentAction ?? activeSetter;
-  if (!writer) return;
-  let reads = writerReads.get(writer);
-  if (!reads) writerReads.set(writer, (reads = new Map()));
-  const publication = outputUpdate(source);
-  let receipt = queued ? queuedReads.get(source) : reads.get(source);
-  if (
-    !receipt ||
-    receipt.scope !== source._scope ||
-    (!queued && receipt.publication !== publication)
-  )
-    receipt = { source, scope: source._scope, publication };
-  if (queued) queuedReads.set(source, receipt);
-  reads.set(source, receipt);
+  const owner = writer();
+  if (!owner || !source._scope) return;
+  const reads = (owner._guessReads ??= new Map());
+  const pending = queued && proposalReads(source);
+  let read = pending ? pending._sample : reads.get(source);
+  const publication = pending ? null : outputUpdate(source);
+  if (!read || read._scope !== source._scope || (!pending && read._publication !== publication)) {
+    read = { _source: source, _scope: source._scope, _publication: publication };
+    if (pending) pending._sample = read;
+  }
+  reads.set(source, read);
 }
 
 export function inGuessWriter(): boolean {
   return (
-    !!(currentAction || activeSetter) &&
+    !!writer() &&
     !getObserver() &&
     !verdict &&
     !((creatorPass(getOwner())?._flags ?? 0) & REACTIVE_RECOMPUTING_DEPS)
@@ -133,27 +147,6 @@ function readGuess<T>(layer: Layer<T>, consume = true): T {
     return layer._override as T;
   }
   return read(layer._output);
-}
-
-function joinReadScopes(layer: Layer<any>, reads: GuessRead[]): void {
-  for (const receipt of reads) {
-    const scope = liveTx(receipt.scope);
-    if (scope) merge(layer._scope!, scope);
-  }
-}
-
-function recordProposalReads(target: Layer<any>, reads: GuessReads | undefined): void {
-  if (!reads) {
-    if (nextReads.size) nextReads.delete(target);
-    return;
-  }
-  const consumed = Array.from(reads.values()).filter(read => read.source !== target);
-  if (!consumed.length) {
-    nextReads.delete(target);
-    return;
-  }
-  nextReads.set(target, consumed);
-  if (target._scope) joinReadScopes(target, consumed);
 }
 
 /** Publications consumed by this update which still own the version read.
@@ -170,35 +163,67 @@ function* prerequisites(update: Transaction): Iterable<Transaction> {
   }
 }
 
-function reaches(from: Transaction, target: Transaction, seen: Set<Transaction>): boolean {
-  if (seen.has(from)) return false;
-  seen.add(from);
-  for (const before of prerequisites(from))
-    if (before === target || reaches(before, target, seen)) return true;
-  return false;
+/** Tarjan components in dependency order. A finished vertex can no longer
+ * lower an ancestor's index. The visitor may stop at the first component. */
+function visitComponents<T>(
+  roots: Iterable<T>,
+  dependencies: (node: T) => Iterable<T>,
+  accept: (members: T[]) => boolean
+): boolean {
+  const indices = new Map<T, number>();
+  const stack: T[] = [];
+  let stopped = false;
+  function visit(node: T): number {
+    const seen = indices.get(node);
+    if (seen !== undefined) return seen;
+    const index = indices.size;
+    indices.set(node, index);
+    stack.push(node);
+    let low = index;
+    for (const dep of dependencies(node)) {
+      low = Math.min(low, visit(dep));
+      if (stopped) break;
+    }
+    if (!stopped && low === index) {
+      const members: T[] = [];
+      let member: T;
+      do {
+        member = stack.pop()!;
+        indices.set(member, Infinity);
+        members.push(member);
+      } while (member !== node);
+      stopped = !accept(members);
+    }
+    return low;
+  }
+  for (const root of roots) {
+    visit(root);
+    if (stopped) return false;
+  }
+  return true;
 }
 
-const judging = new Set<Transaction>();
+let checkingMembers = false;
 function awaitingGuess(update: Transaction): boolean {
-  if (!publicationReads.size || judging.has(update)) return false;
-  const outer = !judging.size;
-  judging.add(update);
-  try {
-    for (const before of prerequisites(update)) {
-      // A one-way dependency lands first. Mutual reads of still-unpublished
-      // writes form one frame: every member must pass ordinary readiness,
-      // without changing its computation depth or joining its async lifetime.
-      if (
-        publicationReads.size === 1 ||
-        !reaches(before, update, new Set()) ||
-        !readyToPublish(before)
-      )
-        return true;
+  if (!publicationReads.size || checkingMembers) return false;
+  for (const before of prerequisites(update)) {
+    // Land a one-way dependency first. Only a cycle containing this update
+    // can land together, and every member still needs its ordinary readiness.
+    if (publicationReads.size === 1) return true;
+    checkingMembers = true;
+    try {
+      return !visitComponents(
+        [before],
+        prerequisites,
+        members =>
+          members.includes(update) &&
+          members.every(member => member === update || readyToPublish(member))
+      );
+    } finally {
+      checkingMembers = false;
     }
-    return false;
-  } finally {
-    if (outer) judging.clear();
   }
+  return false;
 }
 
 type OptimisticLayer = Layer<any> & { _shownGuess?: boolean };
@@ -298,11 +323,7 @@ function prepareGuesses(): boolean {
       holdNode(layer._input, scope);
     }
     if (!scope) proposals.delete(layer);
-    else {
-      bindScope(layer, scope);
-      const reads = nextReads.get(layer);
-      if (reads) joinReadScopes(layer, reads);
-    }
+    else bindScope(layer, scope);
   }
   // Scope membership follows ordinary merging. Output updates which own
   // no guesses do not scan unrelated lifetimes when checking readiness.
@@ -351,155 +372,91 @@ function selectProposal(proposal: unknown, layer: Layer<any>): void {
  * pass through other members. Collapse overlapping setters and dependency
  * cycles before assigning any positions; neither proposal nor group order can
  * then determine the selected frame. */
-function positionProposals(): Iterable<Set<Layer<any>>> {
+function positionProposals(): Iterable<Iterable<Layer<any>>> {
   // The normal store setter has independent truth slots at one depth. Keep
   // its existing one-pass positioning and group merge without allocating a
   // component graph. Clear proposals can still hold a correction output, so
   // include them in this check just as the later merge loop does.
-  for (const layer of proposals.keys())
-    layer._position = 1 + Math.max(layerPosition(layer._input), positionOf(inputUpdate(layer)));
-  if (!proposalGroups.size) return [];
-  let uniform = true;
   for (const group of proposalGroups) {
     let position: number | undefined;
     for (const layer of group) {
       if (!proposals.has(layer) || layer._output._flags & REACTIVE_DISPOSED) continue;
-      if (position !== undefined && position !== layer._position) {
-        uniform = false;
-        break;
-      }
+      if (position !== undefined && position !== layer._position) return groupByDependencies();
       position = layer._position;
     }
-    if (!uniform) break;
   }
-  if (uniform) return proposalGroups;
-  const parent = new Map<Layer<any>, Layer<any>>();
-  for (const layer of proposals.keys()) parent.set(layer, layer);
-  const root = (layer: Layer<any>): Layer<any> => {
-    const next = parent.get(layer)!;
-    if (next === layer) return layer;
-    const result = root(next);
-    parent.set(layer, result);
-    return result;
-  };
-  const union = (a: Layer<any>, b: Layer<any>) => {
-    a = root(a);
-    b = root(b);
-    if (a !== b) parent.set(b, a);
-  };
+  return proposalGroups;
+}
+
+function groupByDependencies(): Layer<any>[][] {
+  // A compound write adds edges in both directions. Overlapping setters
+  // and cycles through their inputs therefore use the same component rule.
+  const peers = new Map<Layer<any>, Layer<any>[]>();
+  function link(layer: Layer<any>, peer: Layer<any>) {
+    const adjacent = peers.get(layer);
+    if (adjacent) adjacent.push(peer);
+    else peers.set(layer, [peer]);
+  }
   for (const group of proposalGroups) {
     let first: Layer<any> | undefined;
     for (const layer of group) {
-      if (!parent.has(layer)) continue;
-      if (first) union(first, layer);
-      else first = layer;
+      if (!proposals.has(layer)) continue;
+      if (first) {
+        link(first, layer);
+        link(layer, first);
+      } else first = layer;
     }
   }
-  const components = () => {
-    const result = new Map<Layer<any>, Set<Layer<any>>>();
-    for (const layer of parent.keys()) {
-      const representative = root(layer);
-      let members = result.get(representative);
-      if (!members) result.set(representative, (members = new Set()));
-      members.add(layer);
-    }
-    return result;
-  };
-  const edges = (members: ReadonlySet<Layer<any>>) => {
-    const dependencies = new Set<Layer<any>>();
-    const walk = (source: Signal<any>, path: Set<Signal<any>>) => {
-      if (path.has(source) || typeof (source as Computed<any>)._fn !== "function") return;
-      path.add(source);
-      try {
-        const boundary = boundaries.get(source);
-        if (boundary) {
-          if (parent.has(boundary) && proposals.get(boundary) !== NOT_PENDING) {
-            if (members.has(boundary)) walk(boundary._input, path);
-            else dependencies.add(root(boundary));
-          } else if (boundary._override === NOT_PENDING) walk(boundary._input, path);
-        } else {
-          for (const dependency of committedDependencies(source as Computed<any>))
-            walk(dependency, path);
-        }
-      } finally {
-        path.delete(source);
-      }
-    };
-    for (const layer of members) walk(layer._input, new Set());
-    return dependencies;
-  };
-  // A cycle between setter groups is itself one publication boundary. Tarjan
-  // runs only for queued proposals; ordinary reads acquire no graph work.
-  const groups = components();
-  const index = new Map<Layer<any>, number>();
-  const low = new Map<Layer<any>, number>();
-  const stack: Layer<any>[] = [];
-  const onStack = new Set<Layer<any>>();
-  let nextIndex = 0;
-  const visit = (group: Layer<any>) => {
-    index.set(group, nextIndex);
-    low.set(group, nextIndex++);
-    stack.push(group);
-    onStack.add(group);
-    for (const dependency of edges(groups.get(group)!)) {
-      if (!index.has(dependency)) {
-        visit(dependency);
-        low.set(group, Math.min(low.get(group)!, low.get(dependency)!));
-      } else if (onStack.has(dependency))
-        low.set(group, Math.min(low.get(group)!, index.get(dependency)!));
-    }
-    if (low.get(group) !== index.get(group)) return;
-    const members: Layer<any>[] = [];
-    let member: Layer<any>;
-    do {
-      member = stack.pop()!;
-      onStack.delete(member);
-      members.push(member);
-    } while (member !== group);
-    for (let i = 1; i < members.length; i++) union(members[0], members[i]);
-  };
-  for (const group of groups.keys()) if (!index.has(group)) visit(group);
 
-  const merged = components();
-  const positioned = new Set<Layer<any>>();
-  const position = (group: Layer<any>): number => {
-    group = root(group);
-    if (positioned.has(group)) return merged.get(group)!.values().next().value!._position!;
-    const members = merged.get(group)!;
-    for (const dependency of edges(members)) position(dependency);
-    const transparent = new Set<Signal<any>>();
-    for (const layer of members) transparent.add(layer._output);
-    const throughMember = (source: Signal<any>, path = new Set<Signal<any>>()): boolean => {
-      if (transparent.has(source)) return true;
-      if (path.has(source) || typeof (source as Computed<any>)._fn !== "function") return false;
-      path.add(source);
-      try {
-        const boundary = boundaries.get(source);
-        if (boundary)
-          return boundary._override === NOT_PENDING && throughMember(boundary._input, path);
-        for (const dependency of committedDependencies(source as Computed<any>))
-          if (throughMember(dependency, path)) return true;
+  function reachesBoundary(
+    source: Signal<any>,
+    match: (layer: Layer<any>) => boolean,
+    seen = new Set<Signal<any>>()
+  ): boolean {
+    if (seen.has(source) || typeof (source as Computed<any>)._fn !== "function") return false;
+    seen.add(source);
+    const layer = boundaries.get(source);
+    if (layer)
+      return (
+        match(layer) ||
+        (layer._override === NOT_PENDING && reachesBoundary(layer._input, match, seen))
+      );
+    for (const dep of committedDependencies(source as Computed<any>))
+      if (reachesBoundary(dep, match, seen)) return true;
+    return false;
+  }
+
+  const groups: Layer<any>[][] = [];
+  visitComponents(
+    proposals.keys(),
+    layer => {
+      const deps = peers.get(layer) ?? [];
+      reachesBoundary(layer._input, input => {
+        if (input._override !== NOT_PENDING && proposals.has(input)) deps.push(input);
         return false;
-      } finally {
-        path.delete(source);
+      });
+      return deps;
+    },
+    members => {
+      const transparent = new Set(members.map(member => member._output));
+      let depth = 0;
+      for (const layer of members) {
+        depth = Math.max(depth, layerPosition(layer._input, undefined, transparent));
+        // A held input reached through this component already counts in its
+        // external inputs. Counting its old transaction would inflate depth
+        // on every supersession.
+        if (
+          !(layer._input._config & CONFIG_HELD) ||
+          !reachesBoundary(layer._input, input => transparent.has(input._output))
+        )
+          depth = Math.max(depth, positionOf(inputUpdate(layer)));
       }
-    };
-    let depth = 0;
-    for (const layer of members) {
-      depth = Math.max(depth, layerPosition(layer._input, undefined, transparent));
-      // An input update reached through this group's selected output is an
-      // earlier version of the same cut. Count its external graph inputs in
-      // layerPosition above, but do not count its held transaction again on
-      // every supersession. An unheld input returns the action scope instead.
-      if (!(layer._input._config & CONFIG_HELD) || !throughMember(layer._input))
-        depth = Math.max(depth, positionOf(inputUpdate(layer)));
+      for (const layer of members) layer._position = depth + 1;
+      groups.push(members);
+      return true;
     }
-    for (const layer of members) layer._position = depth + 1;
-    positioned.add(group);
-    return depth + 1;
-  };
-  for (const group of merged.keys()) position(group);
-  return merged.values();
+  );
+  return groups;
 }
 
 function applyProposal(proposal: unknown, layer: Layer<any>): void {
@@ -514,6 +471,28 @@ function applyProposal(proposal: unknown, layer: Layer<any>): void {
     layer._onSelected = undefined;
     onSelected();
   }
+}
+
+// Only store setters submit compound writes. Installing this entry at the
+// first group also lets scalar-only bundles discard the grouping algorithm.
+function stageGroupedProposals(): void {
+  const groups = positionProposals();
+  proposals.forEach(applyProposal);
+  for (const group of groups) {
+    let first: Transaction | undefined;
+    for (const layer of group) {
+      if (!proposals.has(layer) || !(layer._output._config & CONFIG_HELD)) continue;
+      const update = txOf(layer._output);
+      if (!first) first = update;
+      else if (first !== update) {
+        if (positionOf(first) !== positionOf(update))
+          throw new Error("Optimistic store writer groups require outputs at the same depth.");
+        merge(update, first);
+      }
+    }
+  }
+  proposalGroups.clear();
+  stageGroups = undefined;
 }
 
 setGuessLifecycle({
@@ -535,51 +514,29 @@ setGuessLifecycle({
   },
   _prepare: prepareGuesses,
   _settle: () => {
-    if (!proposals.size) {
-      if (nextReads.size) nextReads.clear();
-      if (queuedReads.size) queuedReads.clear();
-      proposalGroups.clear();
-      return false;
+    const changed = proposals.size !== 0;
+    if (changed) {
+      // Freeze the selections before assigning a context to any of them.
+      proposals.forEach(selectProposal);
+      for (const layer of proposals.keys())
+        layer._position = 1 + Math.max(layerPosition(layer._input), positionOf(inputUpdate(layer)));
     }
-    // Freeze the whole batch's selections before assigning contexts. This
-    // prevents simultaneous nested guesses from depending on setter order.
-    proposals.forEach(selectProposal);
-    const groups = positionProposals();
-    proposals.forEach(applyProposal);
-    for (const group of groups) {
-      const updates = new Set<Transaction>();
-      let position: number | undefined;
-      for (const layer of group) {
-        if (!proposals.has(layer) || !(layer._output._config & CONFIG_HELD)) continue;
-        const update = txOf(layer._output);
-        const depth = positionOf(update);
-        if (position !== undefined && position !== depth)
-          throw new Error("Optimistic store writer groups require outputs at the same depth.");
-        position = depth;
-        updates.add(update);
-      }
-      let first: Transaction | undefined;
-      for (const update of updates) {
-        if (first) merge(update, first);
-        else first = update;
-      }
-    }
-    if (queuedReads.size || nextReads.size || publicationReads.size) {
-      for (const [source, receipt] of queuedReads) {
-        receipt.publication = outputUpdate(source);
-      }
+    if (stageGroups) stageGroups();
+    else if (changed) proposals.forEach(applyProposal);
+    // Stamp same-tick reads only after every output has acquired its final
+    // holder. A new proposal replaces the previous publication's inputs.
+    if (incoming.size || publicationReads.size) {
       for (const layer of proposals.keys()) {
-        const reads = nextReads.get(layer)?.filter(read => read.publication !== null);
-        if (reads?.length && layer._override !== NOT_PENDING)
-          publicationReads.set(layer._output, reads);
+        const reads = incoming.get(layer);
+        if (reads?._sample) reads._sample._publication = outputUpdate(layer);
+        if (reads?._uses && layer._override !== NOT_PENDING)
+          publicationReads.set(layer._output, reads._uses);
         else publicationReads.delete(layer._output);
       }
-      nextReads.clear();
-      queuedReads.clear();
+      incoming.clear();
     }
-    proposalGroups.clear();
-    proposals.clear();
-    return true;
+    if (changed) proposals.clear();
+    return changed;
   },
   _active: () => !!(scopes.size || proposals.size)
 });
@@ -722,10 +679,16 @@ function releaseLayer(layer: Layer<any>): void {
 
 function bindScope(layer: Layer<any>, scope: Transaction): void {
   if (layer._scope) merge(scope, layer._scope);
-  layer._scope = resolveTx(scope);
   // Writes to this slot share its lifetime. Reads consumed by this write
   // join their owners separately; an incoming answer alone does neither.
-  const current = resolveTx(layer._scope);
+  const uses = incoming.get(layer)?._uses;
+  if (uses) {
+    for (const read of uses) {
+      const owner = liveTx(read._scope);
+      if (owner) merge(scope, owner);
+    }
+  }
+  const current = (layer._scope = resolveTx(scope));
   let layers = scopes.get(current);
   if (!layers) scopes.set(current, (layers = new Set()));
   layers.add(layer);
@@ -875,14 +838,14 @@ export function withOptimisticSlotBatch<T>(setter: () => T): T {
   const previousSetter = activeSetter;
   const group = new Set<Layer<any>>();
   proposalBatch = group;
-  activeSetter ??= group;
+  activeSetter ??= group as GuessWriter;
   try {
     return setter();
   } finally {
     activeSetter = previousSetter;
     proposalBatch = previous;
     if (previous) for (const layer of group) previous.add(layer);
-    if (group.size > 1) proposalGroups.add(group);
+    addGroup(group);
   }
 }
 
@@ -896,7 +859,7 @@ export function proposeOptimisticSlots(
     slot.propose(value);
     group.add(boundaries.get(slot.output)!);
   }
-  if (group.size > 1) proposalGroups.add(group);
+  addGroup(group);
 }
 
 // A first proposal starts from the published output. Its pending slot can
@@ -914,34 +877,33 @@ function previousProposal<T>(layer: Layer<T>): T {
 
 function layerAccessors<T>(layer: Layer<T>) {
   const output = layer._output;
-  const propose = (value: T | ((previous: T) => T)) => {
-    const previous = previousProposal(layer);
-    const writer = currentAction ?? activeSetter;
-    let reads: GuessReads | undefined;
-    let next: T;
-    if (!writer && scopes.size && typeof value === "function") {
-      activeSetter = layer;
+  const propose = (value: T | ((previous: T) => T)): T => {
+    const owner = writer();
+    if (!owner && scopes.size && typeof value === "function") {
+      activeSetter = {};
       try {
-        next = (value as (v: T) => T)(previous as T);
-        reads = writerReads.get(layer);
+        return propose(value);
       } finally {
-        writerReads.delete(layer);
         activeSetter = undefined;
       }
-    } else {
-      next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
-      if (writer) reads = writerReads.get(writer);
     }
+    const previous = previousProposal(layer);
+    const next = typeof value === "function" ? (value as (v: T) => T)(previous as T) : value;
     if (output._flags & REACTIVE_DISPOSED) return next;
     if (__OBSERVE__ && attrHooks !== null) {
       attrHooks.write(output, previous, next);
       attrHooks.staged(output);
     }
+    const reads = owner?._guessReads;
+    if (reads && (reads.size > 1 || !reads.has(layer)))
+      proposalReads(layer)._uses = Array.from(reads.values()).filter(
+        read => read._source !== layer
+      );
+    else if (incoming.has(layer)) incoming.get(layer)!._uses = undefined;
     if (layer._automatic) {
       const scope = flushTransaction ?? (layer._scope && liveTx(layer._scope));
       if (scope) bindScope(layer, scope);
     }
-    recordProposalReads(layer, reads);
     output._cleanup ??= releaseLayer.bind(null, layer);
     proposals.set(layer, next);
     wakeLayers();
