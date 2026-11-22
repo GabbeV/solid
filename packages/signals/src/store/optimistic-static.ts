@@ -909,8 +909,13 @@ export const staticOptimisticHooks: OptHooks = {
         Array.isArray(source) && key !== undefined
           ? source.find(row => isWrappable(row) && sameKey(family.key!(row), key))
           : source[child.pk!];
-      if (isWrappable(incoming) && !lookupTarget(incoming, family))
+      if (isWrappable(incoming) && !lookupTarget(incoming, family)) {
+        if (Array.isArray(previous) && key !== undefined && previous[child.pk!] !== child.v) {
+          const original = previous.find(row => isWrappable(row) && sameKey(family.key!(row), key));
+          if (original) child = lookupTarget(original, family) ?? child;
+        }
         reconcileState(incoming, child.px, family.key, true);
+      }
     };
     // Preserve the identity of an already published row before pairing a
     // replacement proposal at the same positional slot.
