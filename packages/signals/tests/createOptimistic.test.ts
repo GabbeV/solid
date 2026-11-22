@@ -414,6 +414,7 @@ describe("createOptimistic", () => {
       let sendMessage!: () => void;
       let optimistic!: SourceAccessor<string>;
       let resolveCount!: (value: string) => void;
+      let screen: unknown;
 
       createRoot(() => {
         const count = createMemo(
@@ -424,7 +425,8 @@ describe("createOptimistic", () => {
         );
         const [readOptimistic, setOptimistic] = createOptimistic<string>(() => count());
         optimistic = readOptimistic;
-        createLoadingBoundary(optimistic, () => "Loading")();
+        const out = createLoadingBoundary(optimistic, () => "Loading");
+        createRenderEffect(out, v => void (screen = v));
 
         sendMessage = () => {
           // The split output can accept a guess while its input is loading.
@@ -432,14 +434,19 @@ describe("createOptimistic", () => {
           expect(() => refresh(optimistic)).not.toThrow();
         };
       });
+      flush();
+      expect(screen).toBe("Loading");
 
       sendMessage();
       flush();
+      expect(screen).toBe("Optimistic");
 
+      // The first answer judges the guess.
       resolveCount("Settled");
       await Promise.resolve();
       flush();
       expect(optimistic()).toBe("Settled");
+      expect(screen).toBe("Settled");
     });
 
     it("should hold regular signal value during transition while showing optimistic", async () => {
@@ -4359,8 +4366,7 @@ describe("createOptimistic", () => {
 
       // Shipping's ready answer differs from the displayed one, so it stays
       // pending until publication, just as for an ordinary signal update.
-      // Next's lane path clearing pending here is a bug, not an exception
-      // to preserve. Equal answers may still clear pending early.
+      // Equal answers may still clear pending early (D-23, S-54).
       expect(shippingPendingComputes.at(-1)).toBe(true);
       expect(shippingPendingValues.at(-1)).toBe(true);
       expect(taxPendingValues.at(-1)).toBe(true);

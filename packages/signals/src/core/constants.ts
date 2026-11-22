@@ -106,6 +106,8 @@ export const REACTIVE_SAVED_DEPENDENCIES = 1 << 26;
 export const REACTIVE_RETRIED_OWNER = 1 << 27;
 /** Carry a queued creator retry into its next execution. */
 export const REACTIVE_RETRY_OWNER = 1 << 28;
+/** A child read by its owner wakes that owner without raising its height. */
+export const REACTIVE_OWNER_READS = 1 << 29;
 
 // Static configuration bits packed into Owner/Computed/Signal _config.
 export const CONFIG_OWNED_WRITE = 1 << 0;
@@ -322,6 +324,9 @@ export type Refreshable<T> = T & { readonly [$REFRESH]: any };
  * a construction through a binding carries none. Same constructor, so the
  * same objects. */
 export const NewSet = Set;
+
+/** The dev strict-read label used for compiled event handlers (#1742). */
+export const EVENT_HANDLER_READ = "an event handler expression";
 
 /** Persistent feature state shares the existing lifecycle word. */
 export const REACTIVE_PERSISTENT = REACTIVE_PREVIOUS_COMMITTED | REACTIVE_LAYER_EFFECT | REACTIVE_WRITABLE_COMPUTED | REACTIVE_SAVED_DEPENDENCIES | REACTIVE_RETRY_OWNER;

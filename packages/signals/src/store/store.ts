@@ -28,7 +28,7 @@
  * setter (`wk`); overlay drafts for large plain records; zero allocation
  * for adopted-but-unread objects.
  */
-import { attrHooks } from "../core/attribution-hooks.js";
+import { attrHooks, registerStoreTools } from "../core/attribution-hooks.js";
 import {
   $REFRESH,
   CONFIG_CHILDREN_FORBIDDEN,
@@ -321,16 +321,13 @@ function releaseSlot(node: any): void {
     if (t.dk === node) t.dk = null;
   } else if (t.n?.[key as any] === node) {
     delete t.n![key as any];
-    t.nc--;
-  } else if (t.h?.[key as any] === node) delete t.h![key as any];
+    if (--t.nc === 0) t.n = null;
+  } else if (t.h?.[key as any] === node) {
+    delete t.h![key as any];
+    if (Reflect.ownKeys(t.h!).length === 0) t.h = null;
+  }
   // The family's index keeps only targets that still carry a node.
-  if (
-    t._fam !== null &&
-    t.nc === 0 &&
-    t.k === null &&
-    t.dk === null &&
-    (t.h === null || Reflect.ownKeys(t.h).length === 0)
-  )
+  if (t._fam !== null && t.nc === 0 && t.k === null && t.dk === null && t.h === null)
     t._fam.live.delete(t);
 }
 
@@ -422,7 +419,7 @@ export function getNode(
       slotNodeEquals,
       target,
       key,
-      accKnown === -1 ? isOwnAccessor(pb ?? target.v, key) : accKnown === 1
+      accKnown === -1 ? isAccessorKey(pb ?? target.v, key, true) : accKnown === 1
     ));
     if (pb !== null && !(created as any).acc)
       bornStaged(target, created, target.del?.has(key) ? undefined : pb[key as any], key);
@@ -523,9 +520,13 @@ const storePark = (t: Transaction): void => {
   optHooks?.park(t);
 };
 
+// A bundle without deep() can fold the deep notification guards away.
+export let deepUsed = false;
+
 function getDeepNode(target: StoreTarget): Signal<number> {
   let dk = target.dk;
   if (dk === null) {
+    deepUsed = true;
     dk = target.dk = slotSignal<number>(0, never, target, $DEEP, false);
     if (__OBSERVE__ && attrHooks !== null) stampNodeOwner(dk, target);
     noteNode(target, dk, $DEEP);
@@ -624,13 +625,17 @@ function intrinsicArrayMethod(src: Record<PropertyKey, any>, key?: PropertyKey):
 }
 
 function isOwnAccessor(src: Record<PropertyKey, any>, key: PropertyKey): boolean {
+  return isAccessorKey(src, key, false);
+}
+
+function isAccessorKey(src: Record<PropertyKey, any>, key: PropertyKey, inherited: boolean): boolean {
   // Descriptor discovery is bookkeeping, not another value read by the
   // caller's observation window. Chained proxies may compose other fields.
   if (verdict !== null) {
     const previous = verdict;
     setVerdict(null);
     try {
-      return isOwnAccessor(src, key);
+      return isAccessorKey(src, key, inherited);
     } finally {
       setVerdict(previous);
     }
@@ -640,10 +645,9 @@ function isOwnAccessor(src: Record<PropertyKey, any>, key: PropertyKey): boolean
     if (target?.px === src && intrinsicArrayMethod(src, key))
       return target._fam?.opt ? (optHooks?.accessorKind?.(target, key) ?? false) : false;
   }
-  return (
-    hasOwn.call(src, key) &&
-    (lookupGetter.call(src, key) !== undefined || lookupSetter.call(src, key) !== undefined)
-  );
+  return hasOwn.call(src, key)
+    ? lookupGetter.call(src, key) !== undefined || lookupSetter.call(src, key) !== undefined
+    : inherited && key !== "__proto__" && lookupGetter.call(src, key) !== undefined;
 }
 
 /** Shallow clone into store ownership. Plain data (grade 2) spreads; anything
@@ -1193,86 +1197,6 @@ function foldTarget(t: StoreTarget, old: Record<PropertyKey, any>): void {
 // ---------------------------------------------------------------------------
 // write-time notification (setter exit)
 
-/** Devtools and attribution: the containers a setter replaced wholesale. */
-function storePathOf(t: StoreTarget): string {
-  let path = "";
-  for (let cur: StoreTarget | null = t; cur !== null; cur = cur.u)
-    path = cur.pk === null ? "store" + path : "." + String(cur.pk) + path;
-  return path;
-}
-const REPLACED_CENSUS_MAX = 64;
-function sameLeaf(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null || typeof a !== "object" || typeof b !== "object") return false;
-  return unwrapValue(a) === unwrapValue(b) || targetsEqual(a, b);
-}
-function reportReplacedContainers(
-  t: StoreTarget,
-  old: Record<PropertyKey, any>,
-  pb: Record<PropertyKey, any>,
-  writtenKeys: Iterable<PropertyKey> | null
-): void {
-  // Shallow stores (and raw / unwrappable leaves) invalidate the whole
-  // replaced value as one unit — leaf draft assignment does not narrow
-  // who re-runs (#4686). The spread-copy diagnostic only helps deep stores.
-  if (t.s) return;
-  const keys = writtenKeys ?? Reflect.ownKeys(pb);
-  const isArray = Array.isArray(pb);
-  const owner = storeRootOwner(t);
-  // Items the array held before the write: an index that now holds one of
-  // them was moved into place (an in-place splice / shift), not replaced.
-  let oldArrayItems: Set<unknown> | null = null;
-  for (const key of keys) {
-    if ((isArray && key === "length") || key === $OWNER) continue;
-    if (t.del?.has(key)) continue;
-    const ov = unwrapValue(old[key as any]);
-    const nv = unwrapValue(pb[key as any]);
-    if (
-      ov === null ||
-      nv === null ||
-      typeof ov !== "object" ||
-      typeof nv !== "object" ||
-      ov === nv ||
-      targetsEqual(ov, nv)
-    )
-      continue;
-    // A raw / unwrappable previous value is itself a leaf: replacing it is
-    // the write, not a container copy the store could have mutated in place.
-    if (isRawValue(ov) || !isWrappable(ov)) continue;
-    if (isArray) {
-      if (oldArrayItems === null) {
-        oldArrayItems = new Set<unknown>();
-        for (const item of old as unknown[]) oldArrayItems.add(unwrapValue(item));
-      }
-      if (oldArrayItems.has(nv)) continue;
-    }
-    const isArr = Array.isArray(nv);
-    if (isArr !== Array.isArray(ov)) continue;
-    let total: number;
-    let unchanged = 0;
-    if (isArr) {
-      total = (nv as unknown[]).length;
-      if (total > REPLACED_CENSUS_MAX) continue;
-      const oldItems = new Set<unknown>();
-      for (const item of ov as unknown[]) oldItems.add(unwrapValue(item));
-      for (const item of nv as unknown[]) if (oldItems.has(unwrapValue(item))) unchanged++;
-    } else {
-      const nkeys = Object.keys(nv);
-      total = nkeys.length;
-      if (total > REPLACED_CENSUS_MAX) continue;
-      for (const k of nkeys) if (sameLeaf((ov as any)[k], (nv as any)[k])) unchanged++;
-    }
-    attrHooks!.storeReplaced(
-      storePathOf(t) + "." + String(key),
-      isArr,
-      total,
-      unchanged,
-      isArr ? (ov as unknown[]).length : Object.keys(ov).length,
-      owner
-    );
-  }
-}
-
 /** A user setter wrote a key whose staging is a derivation another
  * transaction holds (A34 (3), #3612): the hold re-derives over the write. */
 let heldDerivationHit = false;
@@ -1376,7 +1300,7 @@ function notifyWrites(t: StoreTarget): void {
   const wk0 = t.wk;
   const writtenKeys =
     wk0 === WK_ALL || t.a === true || !plainProto(t.ovl ? (t.v as object) : pb) ? null : wk0;
-  if (__OBSERVE__ && attrHooks !== null) reportReplacedContainers(t, old, pb, writtenKeys);
+  if (__OBSERVE__ && attrHooks !== null) attrHooks.storeWrite(t, old, pb, writtenKeys);
   if (t._fam !== null && !heldDerivationHit && writtenKeys !== null)
     for (const key of writtenKeys)
       if (heldDerivation(t, nodes?.[key as any], key)) {
@@ -1399,7 +1323,7 @@ function notifyWrites(t: StoreTarget): void {
         // falls through so the cleared-acc hot read serves it (#3949);
         // an own getter's descriptor has no `value`, so the compare below
         // would otherwise keep the getter's result (or FORCE) for `undefined`.
-        (node as any).acc = isOwnAccessor(pb, key);
+        (node as any).acc = isAccessorKey(pb, key, true);
         const od = Object.getOwnPropertyDescriptor(old, key);
         const nd = Object.getOwnPropertyDescriptor(pb, key);
         if (!nd || nd.get || nd.set) {
@@ -1436,7 +1360,7 @@ function notifyWrites(t: StoreTarget): void {
       }
     }
   }
-  if (t.dk !== null) {
+  if (deepUsed && t.dk !== null) {
     if (t.del?.size) bumpDeep(t);
     else
       for (const key of writtenKeys ?? Reflect.ownKeys(pb)) {
@@ -1531,7 +1455,7 @@ export function notifyKeyDiff(
     (node as any).acc === true ||
     (probe && hasOwn.call(neu, key) && lookupGetter.call(neu, key) !== undefined)
   ) {
-    (node as any).acc = isOwnAccessor(neu, key);
+    (node as any).acc = isAccessorKey(neu, key, true);
     const od = Object.getOwnPropertyDescriptor(old, key);
     const nd = Object.getOwnPropertyDescriptor(neu, key);
     // Data descriptors fall through, as in notifyWrites (#3949).
@@ -1627,7 +1551,7 @@ export function notifyFold(
   old: Record<PropertyKey, any>,
   neu: Record<PropertyKey, any>
 ): void {
-  if (t.dk !== null && old !== neu) bumpDeep(t);
+  if (deepUsed && t.dk !== null && old !== neu) bumpDeep(t);
   const nodes = t.n;
   if (nodes !== null) {
     for (const key of Reflect.ownKeys(nodes)) notifyKeyDiff(nodes[key as any], key, old, neu);
@@ -2551,14 +2475,14 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     let accProbe: -1 | 0 | 1 = -1;
     {
       let acc: boolean;
-      if (inDraft(target) && target._fam?.opt) acc = isOwnAccessor(src, key);
+      if (inDraft(target) && target._fam?.opt) acc = isAccessorKey(src, key, true);
       else if (target._fam?.opt && optHooks?.accessorKind) {
         acc =
           optHooks.accessorKind(target, key) ??
-          (node0 !== undefined ? (node0 as any).acc === true : isOwnAccessor(src, key));
+          (node0 !== undefined ? (node0 as any).acc === true : isAccessorKey(src, key, true));
       } else if (node0 !== undefined) acc = (node0 as any).acc === true;
       else if (!inDraft(target) && getObserver() !== null) {
-        acc = isOwnAccessor(src, key);
+        acc = isAccessorKey(src, key, true);
         if (src === (target.pb ?? target.v)) accProbe = acc ? 1 : 0;
       } else acc = false;
       if (acc) {
@@ -2696,7 +2620,8 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     if (Array.isArray(target.v) && optHooks && optRead(target)) {
       const descriptor = optHooks.descriptor(target, key, target.v);
       if (!descriptor) return undefined;
-      if (key !== "length") descriptor.configurable = true;
+      if (key === "length" && Array.isArray(shell)) descriptor.writable = true;
+      else descriptor.configurable = true;
       return descriptor;
     }
     // An enumerator (spread, Object.entries) already holds the container
@@ -2736,7 +2661,9 @@ const traps: ProxyHandler<object> & ThisType<StoreTarget> = {
     }
     desc ??= visibleDescriptor(target, src, key);
     if (desc === undefined) return undefined;
-    if (!(key === "length" && Array.isArray(shell))) desc.configurable = true;
+    // The array shell has a writable, non-configurable length even when its source is frozen.
+    if (key === "length" && Array.isArray(shell)) desc.writable = true;
+    else desc.configurable = true;
     return desc;
   },
 
@@ -3353,6 +3280,29 @@ function snapshotRecord(
     }
   }
   return copy ?? src;
+}
+
+// Observe: what the attribution engine needs of a store to judge a
+// `storeWrite` (its spread-copy census). Registered here so the engine never
+// imports this module — an app without stores does not load it for turning
+// attribution on.
+if (__OBSERVE__) {
+  registerStoreTools({
+    pathOf(target) {
+      let path = "";
+      for (let cur: StoreTarget | null = target as StoreTarget; cur !== null; cur = cur.u)
+        path = cur.pk === null ? "store" + path : "." + String(cur.pk) + path;
+      return path;
+    },
+    isShallow: target => (target as StoreTarget).s,
+    deleted: target => (target as StoreTarget).del,
+    rootOwner: target => storeRootOwner(target as StoreTarget),
+    ownerKey: $OWNER,
+    unwrapValue,
+    targetsEqual,
+    isRawValue,
+    isWrappable
+  });
 }
 
 // Devtools `DEV.setSignal` for store property slots (#4679): go through the

@@ -9,6 +9,7 @@ import {
 } from "./constants.js";
 import {
   createRoot as root,
+  createOwner,
   getOwner,
   onCleanup,
   runWithOwner,
@@ -43,6 +44,7 @@ import {
   hasServerTiming,
   mergeServerTiming,
   traceMetaMarkup,
+  withholdForSharedCache,
   type TraceContext
 } from "./trace.js";
 import { observeRender, timesServerWork } from "./server-observe.js";
@@ -742,6 +744,12 @@ function preloadInvalid(field, message, value) {
 // with the client's skip (client.ts). `data.type` is the one thing safe to
 // record about an arbitrary value; the value itself rides `data.value` for
 // the console consumer.
+
+// Finished markup is only what this runtime made: its nodes carry this symbol
+// as `$` (`Symbol.for`, so duplicate runtime copies agree). No data, JSON
+// included, can hold a symbol value, so a plain object with a `t` key is data
+// and never markup. A named key keeps the check one plain property read.
+const SSR_NODE = /*#__PURE__*/ Symbol.for("solid.ssrNode");
 function unrecognizedInsert(node) {
   devCheck({
     code: "UNRECOGNIZED_INSERT_VALUE",
@@ -1620,6 +1628,8 @@ interface TagInfo {
   raw: boolean;
   formDefaults: Record<string, string> | undefined;
   formAttributes: Record<string, string> | undefined;
+  /** 1 for <select>, 2 for <option>: the select-value match (`ssrSelect`). */
+  sel: number;
 }
 // What ends a tag or attribute name in the HTML tokenizer (whitespace, `/`,
 // `>`, `=`), what it reports as an error inside one (quotes, `<`, NUL), and
@@ -1653,7 +1663,8 @@ function tagInfo(tag: string): TagInfo {
       textarea: tag === "textarea",
       raw: tag === "script" || tag === "style",
       formDefaults,
-      formAttributes
+      formAttributes,
+      sel: tag === "select" ? 1 : tag === "option" ? 2 : 0
     };
     if (tagInfos.size < 512) tagInfos.set(tag, info);
   }
@@ -1892,6 +1903,7 @@ export function renderToString(code, options = {}) {
     serializeFragmentAssets("", tracking.boundaryModules, sharedConfig.context, renderId);
     closed = true;
     serializer.close();
+    withholdForSharedCache(context.trace, requestEvent);
     const head = renderShellHead(
       headRegistry,
       nonce,
@@ -1901,7 +1913,7 @@ export function renderToString(code, options = {}) {
     );
     const document = withShellEnd(
       assembleDocument(
-        resolveSSRSelectValues(html),
+        html,
         tracking.emittedAssets,
         tracking.preloadLinks,
         tracking.inlineStyles,
@@ -1988,10 +2000,10 @@ export function renderToStream<T>(
      * (see `ServerErrorHook`): every failure the render handles — an
      * `<Errored>` fallback (`handling: "fallback"`), a rejected fragment
      * (`"client"`), a hydration value that would not serialize
-     * (`"serialize"`: an async value that fails before the first flush
-     * also fails the render, with no `onCompleteAll`; after it, its key
-     * rejects on the client — #4647) — and the one that fails the request
-     * (`"failed"`),
+     * (`"serialize"`: a default serializer failure before the first flush
+     * also fails the render, with no `onCompleteAll` (#4709); after it,
+     * published values reject on the client (#4647)), and the one that fails
+     * the request (`"failed"`),
      * once per error per kind per request (per render outside one), with
      * where it was met. A one-argument listener still
      * works; it hears them all — filter on `context.handling` for the
@@ -2187,7 +2199,9 @@ export function renderToStream(code, options = {}) {
     // The live sink wrapper (post-shell) is handed to the failure
     // completion below; pre-shell there is none yet.
     const sink = writable;
-    buffer = { write() {} };
+    // `pipe` flushes right after its first write, and that write can be what
+    // abandons the render (#4745).
+    buffer = { write() {}, flush() {} };
     writable = { end() {} };
     // The dispose contains a throwing `onCleanup` itself (#4029, #4193).
     if (dispose) {
@@ -2356,34 +2370,87 @@ export function renderToStream(code, options = {}) {
   let stableOrder = false;
   let parkedWrites = null;
   const byKey = (a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-  // A failure reported after write returns leaves a pending client key
-  // (#4647). Before the first flush nothing has reached the client, so the
-  // render fails: the shell is not sent and `onCompleteAll` does not fire
-  // (Ryan's ruling, 2026-11-03). After it the page is midstream: the default
-  // serializer rejects the key, and whatever of its value already went out,
-  // on the client (`rejectUnserializedKey`) and the render completes. Keep synchronous failures completing as before (#4227). A
-  // buffered stream can emit its initial chunk and fail inside write;
-  // detecting that case would require publication information from the
-  // serializer.
-  let writing = 0;
+  // Before the first flush, any default serializer failure fails the render,
+  // including failures inside write (#4709): nothing is sent and
+  // `onCompleteAll` does not fire. After it, published values reject through
+  // `rejectUnserializedKey` (#4647); a synchronous failure that published
+  // nothing still omits the value and lets the render complete (#4227).
+  // An error an `<Errored>` contained never fails the render: its record,
+  // and the rejection of the source it came from, go out as a plain `Error`
+  // with its message when the default serializer cannot encode them. Another
+  // record of the same error gets the same replacement without a second
+  // report. A rejection nothing contained fails the render like any value:
+  // one that fails ahead of its boundary waits in `unclaimed` for the shell,
+  // by when the root holes were pulled again.
   let stranded = false;
-  const handOver = (id, value) => {
-    writing++;
-    try {
-      serializer.write(id, value);
-    } finally {
-      writing--;
+  let writingRecord = false;
+  let recordFailed = false;
+  const plainRecords = new WeakMap();
+  // What this render's `<Errored>` boundaries contained (`context.contained`):
+  // each error caught, and the value sent in its place.
+  const caught = new Set();
+  let unclaimed = null;
+  // The reason each serialized promise rejected with, by key: what a write
+  // of that key fails on when seroval cannot encode it.
+  const rejected = new Map();
+  const plainMessage = (id, value) =>
+    value != null && typeof value.message === "string"
+      ? value.message
+      : `The error record for key ${JSON.stringify(id)} could not be serialized on the server`;
+  const plainFor = (id, value) => {
+    const keyed = value !== null && typeof value === "object";
+    let plain = keyed && plainRecords.get(value);
+    if (!plain) {
+      plain = new Error(plainMessage(id, value));
+      if (keyed) plainRecords.set(value, plain);
     }
+    return plain;
   };
-  const write = (id, value) => {
-    if (stableOrder && !dead) (parkedWrites ||= []).push([id, value]);
-    else handOver(id, value);
+  const claim = () => {
+    if (unclaimed) {
+      for (const reason of unclaimed) if (!caught.has(reason)) stranded = true;
+      unclaimed = null;
+    }
+    return stranded;
+  };
+  const claimLater = reason => {
+    if (firstFlushed || stranded || caught.has(reason)) return;
+    if (!unclaimed) {
+      unclaimed = new Set();
+      // A pending sibling must not hold a failed render open. A root hole
+      // still pending may be the boundary that contains it: the shell decides.
+      deferFlush(() => {
+        if (!rootHoles && claim()) abandon();
+      });
+    }
+    unclaimed.add(reason);
+  };
+  // `error`: true for an `<Errored>` record.
+  const handOver = (id, value, error) => {
+    if (!error || options.serializer) return serializer.write(id, value);
+    let plain = value !== null && typeof value === "object" && plainRecords.get(value);
+    if (!plain) {
+      recordFailed = false;
+      writingRecord = true;
+      try {
+        serializer.write(id, value);
+      } finally {
+        writingRecord = false;
+      }
+      if (!recordFailed) return;
+      plain = plainFor(id, value);
+    }
+    serializer.write(id, plain);
+  };
+  const write = (id, value, error) => {
+    if (stableOrder && !dead) (parkedWrites ||= []).push([id, value, error]);
+    else handOver(id, value, error);
   };
   const flushParkedWrites = () => {
     if (!parkedWrites) return;
     const writes = parkedWrites.sort(byKey);
     parkedWrites = null;
-    for (let i = 0; i < writes.length; i++) handOver(writes[i][0], writes[i][1]);
+    for (let i = 0; i < writes.length; i++) handOver(writes[i][0], writes[i][1], writes[i][2]);
   };
   const flushStubBatch = () => {
     if (!stubBatch) return;
@@ -2418,7 +2485,7 @@ export function renderToStream(code, options = {}) {
     writeTasks();
     // A key that failed before the first flush: nothing went out, and the
     // render fails as a rejection there would, already reported (#4647).
-    if (stranded) return abandon();
+    if (claim()) return abandon();
     // Every blocker has settled by definition here (the render is complete),
     // so doShell's growth gate has nothing to wait for: align its baseline
     // rather than let a stale flush-loop snapshot hold a finished shell.
@@ -2563,13 +2630,32 @@ export function renderToStream(code, options = {}) {
     // throws from its promise callback and never reaches `onDone` — the
     // render would stay pending. Heard as `handling: "serialize"` by the
     // render's hook, else the ambient one, else `console.error`.
-    onError: err => {
-      reportFailure(err, "serialize");
-      if (!writing && !options.serializer && !firstFlushed) stranded = true;
+    onError: (err, key) => {
+      // The key's own rejection, met after the write returned: an error
+      // whose record already failed was heard then.
+      const rejection = !options.serializer && !writingRecord && rejected.has(key);
+      const reason = rejection && rejected.get(key);
+      if (!rejection || reason === null || typeof reason !== "object" || !plainRecords.has(reason))
+        reportFailure(err, "serialize");
+      if (writingRecord) recordFailed = true;
+      else if (rejection) {
+        plainFor(key, reason);
+        claimLater(reason);
+      } else if (!options.serializer && !firstFlushed && !stranded) {
+        stranded = true;
+        // Let the current write and render initialization finish. The normal
+        // flush may abandon first; a pending sibling must not hold it open.
+        deferFlush(() => abandon());
+      }
     },
     // After the first flush: rejects on the client what the failed write
     // left pending (#4647). Only here, so `renderToString` does not carry it.
-    late: rejectUnserializedKey
+    // Before it, a key's own rejection goes out as the plain `Error` its
+    // boundary's record is; the render fails instead when none contained it.
+    late: (serialize, refs, onData, scopeId) =>
+      rejectUnserializedKey(serialize, refs, onData, scopeId, key =>
+        !firstFlushed && rejected.has(key) ? plainMessage(key, rejected.get(key)) : undefined
+      )
   } as any);
   let rootAssetsSerialized = false;
   const serializeRootAssets = () => {
@@ -2732,7 +2818,10 @@ export function renderToStream(code, options = {}) {
     // rejection arm also keeps an abandoned-then-rejected source from
     // surfacing as an unhandled rejection (seroval only sees the race).
     const drop = () => pendingSerialized.delete(id);
-    p.then(drop, drop);
+    p.then(drop, reason => {
+      drop();
+      rejected.set(id, reason);
+    });
     return raced;
   };
   // A fragment settling with an error abandons its subtree: descendant
@@ -2966,7 +3055,7 @@ export function renderToStream(code, options = {}) {
         resolveSSRSync(escape(payloadFn())) +
         html.slice(last + placeholder.length + 1);
     },
-    serialize(id, p, deferStream) {
+    serialize(id, p, deferStream, errorRecord) {
       // The channels the runtime opens to the client — an async source's
       // promise, a live source's iterable — reject or throw with the RAW
       // failure, and seroval encodes that reason as a value for the client
@@ -2978,7 +3067,17 @@ export function renderToStream(code, options = {}) {
       if (p && typeof p === "object" && typeof p.then === "function") {
         if (!firstFlushed && deferStream) {
           blockingPromises.add(p);
-          p.then(d => write(id, d)).catch(e => write(id, e));
+          // A rejection goes out as one (#4747): a rejected promise the
+          // client reads off its mark and rethrows, as it does a streamed
+          // source's, never the reason as the source's value. Its reason
+          // fails to encode, if it does, as a streamed rejection's does
+          // (`rejected`, the serializer's `onError`).
+          p.then(d => write(id, d)).catch(e => {
+            rejected.set(id, e);
+            const r = Promise.reject(e);
+            r.catch(() => {});
+            write(id, r);
+          });
           return;
         }
         // Every pending promise handed to seroval joins the abandonment
@@ -2995,7 +3094,7 @@ export function renderToStream(code, options = {}) {
           return;
         }
       }
-      write(id, p);
+      write(id, p, errorRecord);
     },
     escape: escape,
     resolve: resolveSSRNode,
@@ -3131,17 +3230,13 @@ export function renderToStream(code, options = {}) {
               // the blank: an empty template, so what its swap lists is the
               // outcome alone (the client reads a listed outcome as the
               // server's answer for the failure, #4287).
-              sink.fragment(
-                key,
-                resolveSSRSelectValues(value !== undefined ? value : error ? "" : " "),
-                {
-                  styles,
-                  revealGroup,
-                  error: error
-                    ? ssrSanitizeError(error, null, undefined, undefined, errorScope)
-                    : error
-                }
-              );
+              sink.fragment(key, value !== undefined ? value : error ? "" : " ", {
+                styles,
+                revealGroup,
+                error: error
+                  ? ssrSanitizeError(error, null, undefined, undefined, errorScope)
+                  : error
+              });
               item.resolve(error);
             }
           }
@@ -3174,6 +3269,10 @@ export function renderToStream(code, options = {}) {
   // fails the request.
   context.errorPolicy = options.onError;
   context._errorScope = errorScope;
+  context.contained = (error, wire) => {
+    caught.add(error);
+    caught.add(wire);
+  };
   context.flushed = () => firstFlushed;
   // The trace this render belongs to (see `getTraceContext`): the request's
   // under a request scope, the render's own otherwise. Set before the render
@@ -3343,6 +3442,7 @@ export function renderToStream(code, options = {}) {
     flushStubBatch();
     // Shell head flush: commits every registration not owned by a
     // still-pending fragment (those flush with their fragment later).
+    withholdForSharedCache(context.trace, requestEvent);
     const head = renderShellHead(
       headRegistry,
       nonce,
@@ -3360,7 +3460,7 @@ export function renderToStream(code, options = {}) {
     // AND arrives separately through `sink.asset`. Consume them inside this
     // call (the document sink splices the head synchronously) — a sink that
     // stores the meta and re-reads it later sees late entries twice.
-    sink.shell(resolveSSRSelectValues(html), {
+    sink.shell(html, {
       preloads: tracking.emittedAssets,
       preloadLinks: tracking.preloadLinks,
       inlineStyles: tracking.inlineStyles,
@@ -3496,7 +3596,7 @@ export function renderToStream(code, options = {}) {
           }
           if (!shellCompleted) return flush();
           // A key failed to serialize before the shell went out (#4647).
-          if (stranded) return abandon();
+          if (claim()) return abandon();
           const encoder = new TextEncoder();
           const writer = w.getWriter();
           // Writes are chained and awaited before the lock is released.
@@ -3687,7 +3787,7 @@ export function renderToStream(code, options = {}) {
             }
             if (!shellCompleted) return flush();
             // A key failed to serialize before the shell went out (#4647).
-            if (stranded) return abandon();
+            if (claim()) return abandon();
             const sink = guardSink(w);
             buffer = writable = coalesceWrites(sink.write, sink.end);
             buffer.write(tmp);
@@ -3786,6 +3886,8 @@ function buildAsyncWrap(err, node) {
   fn.$rw = true;
   if (suppress) fn.$lhSuppress = true;
   if (node.$lhSkip) fn.$lhSkip = true;
+  if (node.$lhInTag) fn.$lhInTag = true;
+  if (node.$lhAttr) fn.$lhAttr = node.$lhAttr;
   if (node.$lhBinding) fn.$lhBinding = node.$lhBinding;
   return { fn, p };
 }
@@ -4128,7 +4230,7 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
   // `resolveValue` returns them). NotReady escalations are absorbed into
   // h/p (the caller decides pending semantics); real errors propagate.
   function resolveHoleValue(hole) {
-    const result = { t: [""], h: [], p: [], rows: null };
+    const result = { t: [""], h: [], p: [], rows: null, $: SSR_NODE };
     try {
       result.rows = resolveValue(holeValue(hole), result);
     } catch (err) {
@@ -4268,7 +4370,8 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
      */
     nest(hole) {
       const s = engine.scope;
-      if (!s || s.h === hole || hole.$lhSkip || (inScope && !inScope())) return undefined;
+      if (!s || s.h === hole || hole.$lhSkip || hole.$lhInTag || (inScope && !inScope()))
+        return undefined;
       engine.scope = scopeFor(hole);
       return s;
     },
@@ -4282,6 +4385,32 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
      * evaluations), or null when interception is off for this evaluation.
      */
     content(hole) {
+      // An escalated in-tag hole's retry (see `retry` below): never marked,
+      // whatever chain it rides. Under a pending capture, the tag's last
+      // retry to resolve registers the binding (the text now is what the
+      // client receives); a retry that is still pending re-wraps, keeping
+      // its capture.
+      if (hole.$lhInTag) {
+        const cap = hole.$lhAttr;
+        if (!cap || cap.adopted || engine.suppressed || engine.sweeping) return null;
+        const r = tryResolveFunctionHole(hole);
+        if (typeof r !== "string") {
+          const res = { t: [""], h: [], p: [], $: SSR_NODE };
+          appendResolvedNode(res, r);
+          return res;
+        }
+        if (--cap.waiting === 0 && !cap.closed) {
+          try {
+            cap.base = attrPartsText(cap.parts);
+          } catch (err) {
+            // A part still waits (its value moved back to pending) or failed:
+            // the tag keeps what its retries resolved to.
+            cap.base = null;
+          }
+          if (cap.base !== null) engine.attr(cap);
+        }
+        return r;
+      }
       // A retry fn of an escalated hole re-enters here on its re-pull —
       // through `ctx.ssr(pending.t, ...pending.h)` (boundary resume) or the
       // tree resolver (root holes). Its markers already ride the pending
@@ -4293,7 +4422,7 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
       // sweep — a sweep's value doesn't ship, and a baseline the client
       // never saw would swallow a needed emission.
       if (hole.$lhSuppress) {
-        const r = { t: [""], h: [], p: [] };
+        const r = { t: [""], h: [], p: [], $: SSR_NODE };
         let rows = null;
         const b = hole.$lhBinding;
         const run = () => {
@@ -4449,7 +4578,7 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
         // …and a slot-tagged value resolves unmarked (suppressed, so a
         // wrapped getter isn't re-intercepted one level down).
         leave(b, prevParent, prevScope, prevVisit);
-        const r = { t: [""], h: [], p: [] };
+        const r = { t: [""], h: [], p: [], $: SSR_NODE };
         engine.suppressed++;
         try {
           resolveSSRNode(value, r);
@@ -4471,9 +4600,9 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
         closeChildren(b);
         escalated.fn.$lhSuppress = true;
         escalated.fn.$lhBinding = b;
-        res = { t: ["", ""], h: [escalated.fn], p: [escalated.p] };
+        res = { t: ["", ""], h: [escalated.fn], p: [escalated.p], $: SSR_NODE };
       } else {
-        res = { t: [""], h: [], p: [] };
+        res = { t: [""], h: [], p: [], $: SSR_NODE };
         try {
           rows = resolveValue(value, res);
         } catch (_) {
@@ -4524,12 +4653,58 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
       t[0] = open + t[0];
       t[t.length - 1] += close;
       sink.openBinding(key, b);
-      return { t, h: res.h, p: res.p };
+      return { t: t, h: res.h, p: res.p, $: SSR_NODE };
     },
     /** The shared id counter — `ssr()` mints an attr address at injection
      *  time, before its capture completes. */
     mint() {
       return nextId++;
+    },
+    /**
+     * Open an attr capture for the tag whose open ends at `off` in `text`
+     * (`ssr()`'s tag-open segment): mint its address and splice
+     * ` data-lha="N"` in, or — a boundary resume re-rendering a tag whose
+     * capture went pending (see `retry`), where the address is already on
+     * the element — take that address over, so the pending capture never
+     * registers. Returns the capture, its segment's new text on `text`.
+     */
+    open(text, off, hole) {
+      const pending = hole && hole.$lhAttr;
+      let inject;
+      let id;
+      if (pending && !pending.adopted && text.startsWith(pending.inject, off)) {
+        pending.adopted = true;
+        ({ id, inject } = pending);
+      } else {
+        id = nextId++;
+        inject = ` data-lha="${id}"`;
+        text = text.slice(0, off) + inject + text.slice(off);
+      }
+      const prefix = text.slice(off + inject.length);
+      return { id, parts: [prefix], base: prefix, inject, waiting: 0, text };
+    },
+    /**
+     * An in-tag hole that escalated (its value is still pending) resolves later
+     * as a retry fn, one of two ways. A boundary resume re-renders the open tag
+     * through `ssr(pending.t, ...pending.h)`, which captures it again. At the
+     * top of a render there is no boundary: the tree resolver pulls the retry
+     * as a function node, which it otherwise treats as content and routes
+     * through the live-hole engine, so its markers would land inside the tag
+     * (`<div<!--lh:N--> style="…"<!--lh:/N-->>`) or inside the attribute value.
+     * The retry is tagged (`$lhInTag`, carried through re-wraps) so the engine
+     * never marks it. When the tag was being captured, the capture stays open
+     * as pending (`$lhAttr`): its address stays on the element, and the engine
+     * registers its binding once the tag's last retry resolves, with the text
+     * at that moment as the baseline. A boundary resume adopts the address
+     * instead (see `open`), so the element carries one.
+     */
+    retry(fn, cap) {
+      if (typeof fn !== "function") return;
+      fn.$lhInTag = true;
+      if (cap) {
+        fn.$lhAttr = cap;
+        cap.waiting++;
+      }
     },
     /** Whether interception may arm at the current evaluation point —
      *  `ssr()` asks before opening an attr capture (the `data-lha`
@@ -4556,8 +4731,15 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
      * known only as a digest, no list — removes them too.
      */
     attr(cap) {
-      const owner = getOwner();
-      const holeCtx = sharedConfig.context;
+      // A capture still waiting on escalated retries registers when the last
+      // resolves (see `retry`), under the render's owner and context.
+      if (cap.waiting) {
+        cap.owner = getOwner();
+        cap.ctx = sharedConfig.context;
+        return;
+      }
+      const owner = cap.owner !== undefined ? cap.owner : getOwner();
+      const holeCtx = cap.ctx !== undefined ? cap.ctx : sharedConfig.context;
       const b = {
         key: "lha:" + cap.id,
         children: [],
@@ -4573,29 +4755,7 @@ export function createLiveHoles(sink, scoped, settled, errorScope) {
           engine.gateHit = false;
           let html = "";
           try {
-            let group = null;
-            let groupVal = null;
-            const run = () => {
-              for (const part of cap.parts) {
-                if (typeof part === "string") {
-                  html += part;
-                  continue;
-                }
-                let v;
-                if (part.g) {
-                  if (group !== part.g) {
-                    group = part.g;
-                    groupVal = part.g();
-                  }
-                  v = groupVal[part.i];
-                } else {
-                  v = part.f();
-                }
-                const vt = typeof v;
-                if (vt === "string" || vt === "number") html += v;
-              }
-            };
-            swept(owner, holeCtx, run);
+            swept(owner, holeCtx, () => (html = attrPartsText(cap.parts)));
           } catch (err) {
             // NotReady holds for a later commit (the end-latch sweep is the
             // floor), unless scopes this sweep created are what wait (see
@@ -4736,9 +4896,37 @@ function rowPatch(a, b) {
   }
 }
 
-export function ssr(template: string[] | string, ...nodes: any[]): { t: string };
+// The attribute text of a capture's parts (statics, re-runnable thunks,
+// group positions), as the binding's sweep and its deferred baseline build
+// it. Throws what a part throws.
+function attrPartsText(parts) {
+  let html = "";
+  let group = null;
+  let groupVal = null;
+  for (const part of parts) {
+    if (typeof part === "string") {
+      html += part;
+      continue;
+    }
+    let v;
+    if (part.g) {
+      if (group !== part.g) {
+        group = part.g;
+        groupVal = part.g();
+      }
+      v = groupVal[part.i];
+    } else {
+      v = part.f();
+    }
+    const vt = typeof v;
+    if (vt === "string" || vt === "number") html += v;
+  }
+  return html;
+}
 
 // rendering
+export function ssr(template: string[] | string, ...nodes: any[]): { t: string };
+
 export function ssr(t) {
   // Inlined hole resolution — uses `arguments` instead of a `(t, ...nodes)`
   // rest parameter to avoid the per-call holes-array allocation. Inline
@@ -4750,7 +4938,7 @@ export function ssr(t) {
   // returns an array of values for >=N hole positions. The check is at
   // the END of the typeof chain so non-function holes don't pay for it.
   const len = arguments.length;
-  if (len === 1) return { t };
+  if (len === 1) return { t: t, $: SSR_NODE };
   let s = t[0];
   let result = null;
   let lastGroup = null;
@@ -4776,24 +4964,21 @@ export function ssr(t) {
   // (started or already active). Declines when the tag-open buffer is no
   // longer the current tail (an earlier hole of this tag escalated — the
   // tag latches) or interception is off for this evaluation.
-  const captureStart = () => {
+  const captureStart = hole => {
     if (cap) return true;
     if (!lastOpen || live.suppressed || live.sweeping || !live.active()) return false;
+    // The tag opened while the output was one string and a hole of this
+    // tag has since escalated it into segments: the open is in the first.
+    if (lastOpen.r === null && result !== null && result.t.length === 1) {
+      lastOpen.r = result;
+      lastOpen.seg = 0;
+    }
     if (lastOpen.r !== result || (result !== null && lastOpen.seg !== result.t.length - 1)) {
       return false;
     }
-    const id = live.mint();
-    const inject = ` data-lha="${id}"`;
-    let prefix;
-    if (result === null) {
-      s = s.slice(0, lastOpen.off) + inject + s.slice(lastOpen.off);
-      prefix = s.slice(lastOpen.off + inject.length);
-    } else {
-      const seg = result.t[lastOpen.seg];
-      result.t[lastOpen.seg] = seg.slice(0, lastOpen.off) + inject + seg.slice(lastOpen.off);
-      prefix = result.t[lastOpen.seg].slice(lastOpen.off + inject.length);
-    }
-    cap = { id, parts: [prefix], base: prefix, at: lastOpen.seg, inject };
+    cap = live.open(result === null ? s : result.t[lastOpen.seg], lastOpen.off, hole);
+    if (result === null) s = cap.text;
+    else result.t[lastOpen.seg] = cap.text;
     return true;
   };
   for (let i = 1; i < len; i++) {
@@ -4827,7 +5012,7 @@ export function ssr(t) {
           lastGroupVal = r;
           lastGroupIdx = 0;
           if (!Array.isArray(r) && result === null) {
-            result = { t: [s], h: [], p: [] };
+            result = { t: [s], h: [], p: [], $: SSR_NODE };
             s = "";
           }
         }
@@ -4840,7 +5025,7 @@ export function ssr(t) {
           hasValue = true;
           // A group can span elements; each element captures only its own
           // positions (by dequeue index — group order is positional).
-          if (live && !hp.pos[i - 1] && captureStart()) {
+          if (live && !hp.pos[i - 1] && captureStart(hole)) {
             cap.parts.push({ g: hole, i: lastGroupIdx - 1 });
           }
         } else {
@@ -4850,11 +5035,17 @@ export function ssr(t) {
           // tag and mints its own, so a leftover would sit beside it and
           // move the element off its bound address on the first op. The
           // address is unique, so the first match is the splice.
-          if (cap) {
-            result.t[cap.at] = result.t[cap.at].replace(cap.inject, "");
-            cap = null;
+          //
+          // At the top of a render nothing re-renders the tag, so a capture
+          // stays open, pending (see the engine's `retry`): the address stays and
+          // the binding registers when the tag's retries resolve.
+          const slot = ssrGroupSlot(lastGroupVal.fn, lastGroupIdx++);
+          if (live && !hp.pos[i - 1]) {
+            const capturing = captureStart(hole);
+            if (capturing) cap.parts.push({ g: hole, i: lastGroupIdx - 1 });
+            live.retry(slot, capturing && cap);
           }
-          result.h.push(ssrGroupSlot(lastGroupVal.fn, lastGroupIdx++));
+          result.h.push(slot);
           result.p.push(lastGroupVal.p);
           result.t.push("");
         }
@@ -4877,7 +5068,7 @@ export function ssr(t) {
           if (typeof rs === "string") {
             s += rs;
           } else {
-            result = { t: [s], h: [], p: [] };
+            result = { t: [s], h: [], p: [], $: SSR_NODE };
             s = "";
             if (rs.merge !== undefined) mergeTemplateInto(result, rs.merge);
             else resolveSSRNode(rs.bail, result);
@@ -4901,37 +5092,36 @@ export function ssr(t) {
           else result.t[result.t.length - 1] += liveNode;
         } else {
           if (result === null) {
-            result = { t: [s], h: [], p: [] };
+            result = { t: [s], h: [], p: [], $: SSR_NODE };
             s = "";
           }
           resolveSSRNode(liveNode, result);
         }
       } else if (result !== null) {
         const inTag = live && !hp.pos[i - 1];
-        const capturing = inTag && captureStart();
+        const capturing = inTag && captureStart(hole);
         const li = capturing ? result.t.length - 1 : 0;
         const before = capturing ? result.t[li].length : 0;
+        const pushed = result.h.length;
         if (live) live.suppressed++;
         try {
           resolveSSRNode(hole, result);
         } finally {
           if (live) live.suppressed--;
         }
+        if (inTag) {
+          for (let k = pushed; k < result.h.length; k++) live.retry(result.h[k], capturing && cap);
+        }
         if (capturing) {
-          if (result.t.length - 1 === li) {
-            cap.base += result.t[li].slice(before);
-            cap.parts.push({ f: hole });
-          } else {
-            // The hole escalated mid-attrs: the tag latches, its address
-            // with it (see the group escalation above).
-            result.t[cap.at] = result.t[cap.at].replace(cap.inject, "");
-            cap = null;
-          }
+          // Escalated mid-attrs: the capture goes pending (see the group
+          // escalation above); its base is rebuilt when it registers.
+          if (result.t.length - 1 === li) cap.base += result.t[li].slice(before);
+          cap.parts.push({ f: hole });
         }
       } else {
         // Capture opens BEFORE the value resolves — the prefix slice must
         // stop at the hole position, not swallow its first value.
-        const capturing = live && !hp.pos[i - 1] && captureStart();
+        const capturing = live && !hp.pos[i - 1] && captureStart(hole);
         // An unminted content hole keeps its occurrence scope (`nest`).
         const scope = live && hp.pos[i - 1] && live.nest(hole);
         const r = tryResolveFunctionHole(hole);
@@ -4943,15 +5133,13 @@ export function ssr(t) {
             cap.parts.push({ f: hole });
           }
         } else {
-          // The hole escalated mid-attrs: the tag latches, its address
-          // with it (see the group escalation above).
-          if (capturing) {
-            s = s.replace(cap.inject, "");
-            cap = null;
-          }
-          result = { t: [s], h: [], p: [] };
+          // The hole escalated mid-attrs: the capture goes pending (see the
+          // group escalation above).
+          result = { t: [s], h: [], p: [], $: SSR_NODE };
           s = "";
           appendResolvedNode(result, r);
+          if (capturing) cap.parts.push({ f: hole });
+          if (live && !hp.pos[i - 1]) for (const h of result.h) live.retry(h, capturing && cap);
         }
       }
       if ("_SOLID_DEV_" && devNext !== undefined) checkUnscopedHole(devNext, t, i - 1, hole);
@@ -4964,7 +5152,7 @@ export function ssr(t) {
       } else {
         // Escalation: allocate the heavy `{ t, h, p }` result shape and
         // splice in the sync prefix we accumulated.
-        result = { t: [s], h: [], p: [] };
+        result = { t: [s], h: [], p: [], $: SSR_NODE };
         s = "";
         appendResolvedNode(result, r);
       }
@@ -5000,7 +5188,7 @@ export function ssr(t) {
     if (result === null) s += next;
     else result.t[result.t.length - 1] += next;
   }
-  if (result === null) return { t: s };
+  if (result === null) return { t: s, $: SSR_NODE };
   return result;
 }
 export function ssrClassName(value: string | { [k: string]: boolean } | Array<any>): string;
@@ -5132,7 +5320,7 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
     let i = 0;
     for (; i < props.length; i++) {
       const s = props[i];
-      if (s == null || typeof s === "function" || $PROXY in s) break;
+      if (!s || typeof s === "function" || $PROXY in s) break;
     }
     if (i === props.length) sources = props;
     else {
@@ -5140,8 +5328,9 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
       owners = [];
       collectSpreadSources(props, viewKeys, owners);
     }
-  } else if (props == null) {
-    // A nullish source (static or resolved) is an empty spread (#3297).
+  } else if (!props) {
+    // A nullish or falsy source (static or resolved) is an empty spread
+    // (#3297; `{...(c() && x)}`, #4937).
     props = {};
   } else if ($PROXY in props) {
     if (viewOf(props) !== undefined) {
@@ -5152,6 +5341,10 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
   }
   const info = tagInfo(tag);
   const skipChildren = info.isVoid;
+  // A spread <select>'s `value` and a spread <option>'s match (`ssrSelect`,
+  // `ssrOption`): the select's state, the option's value and whether it
+  // carries `selected` itself.
+  let sel, optValue, optOwn;
   // Each emitted attribute carries its own leading space (the hydration key
   // already does), so skipped props leave no stray whitespace behind:
   // `<li _hk=0>` rather than `<li _hk=0 >` (#3382).
@@ -5213,6 +5406,11 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
       // element with a spread is serialized here instead. Keep the runtime
       // path equivalent: textarea value/defaultValue are its text content,
       // never HTML attributes (#3286).
+      if (info.sel === 1 && prop === "value") {
+        const value = props[prop];
+        sel = ssrSelect(value);
+        continue;
+      }
       if (info.textarea && (prop === "value" || prop === "defaultValue")) {
         const value = props[prop];
         if (value !== null) children = escape(value);
@@ -5238,6 +5436,10 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
       if (value == undefined || prop.startsWith("prop:") || prop === "ref" || isEventName(prop))
         continue;
       if (link !== null && LinkAttributes.has(prop)) link[prop] = value;
+      if (info.sel === 2) {
+        if (prop === "value") optValue = value;
+        else if (prop === "selected" && value) optOwn = true;
+      }
       if (prop === "style") {
         result += ` style="${ssrStyle(value)}"`;
       } else if (prop === "class") {
@@ -5276,9 +5478,17 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
   if (link !== null && link.href !== undefined) result += ssrLinkClaim(link);
   // The hydration key is unquoted, so a void element needs the space before
   // `/>` or the slash becomes part of the key's value.
-  if (skipChildren) return { t: result + " />" };
-  if (childOwner !== null) children = info.raw ? childOwner.children : escape(childOwner.children);
-  if (typeof children === "function") children = children();
+  if (skipChildren) return { t: result + " />", $: SSR_NODE };
+  if (sel !== undefined) children = ssrIn(sel, () => spreadChildren(info, childOwner, children));
+  else children = spreadChildren(info, childOwner, children);
+  if (info.sel === 2)
+    result += ssrOption(
+      optValue !== undefined || typeof children !== "string"
+        ? optValue
+        : children.replace(/&lt;/g, "<").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim(),
+      undefined,
+      optOwn
+    );
   // `() => scope(fn)` children return the scope's evaluator: run it as resolveSSRNode would.
   let thunk = null;
   if (typeof children === "function" && (ctx === undefined || !ctx.liveHoles)) {
@@ -5287,7 +5497,7 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
     try {
       children = thunk();
     } catch (err) {
-      const res = { t: [""], h: [], p: [] };
+      const res = { t: [""], h: [], p: [], $: SSR_NODE };
       pushSSRAsyncHole(res, err, thunk);
       return ssr([result + ">", info.close], res);
     }
@@ -5304,20 +5514,27 @@ export function ssrElement(tag, props, children, needsId, skip, attrs) {
   // (`ssrTextTail`) is left as the child left it: the parent resets it on this
   // element's finished node either way.
   const ct = typeof children;
-  if (ct === "string" || ct === "number") return { t: result + ">" + children + info.close };
-  if (children == null || ct === "boolean") return { t: result + ">" + info.close };
-  if (ct === "object" && !children.h && typeof children.t === "string")
-    return { t: result + ">" + children.t + info.close };
+  if (ct === "string" || ct === "number")
+    return { t: result + ">" + children + info.close, $: SSR_NODE };
+  if (children == null || ct === "boolean") return { t: result + ">" + info.close, $: SSR_NODE };
+  if (ct === "object" && children.$ === SSR_NODE && !children.h && typeof children.t === "string")
+    return { t: result + ">" + children.t + info.close, $: SSR_NODE };
   if (thunk === null)
     return ssr([result + ">", info.close], resolveSSRNode(children, undefined, true));
   // Nested, as resolveSSRNode resolves a function's value: arrays keep their separators.
-  const res = { t: [""], h: [], p: [] };
+  const res = { t: [""], h: [], p: [], $: SSR_NODE };
   try {
     resolveSSRNode(children, res, false, true);
   } catch (err) {
     pushSSRAsyncHole(res, err, thunk);
   }
   return ssr([result + ">", info.close], res);
+}
+
+// A spread element's children, read after every attribute (see the walk).
+function spreadChildren(info, childOwner, children) {
+  if (childOwner !== null) children = info.raw ? childOwner.children : escape(childOwner.children);
+  return typeof children === "function" ? children() : children;
 }
 
 /**
@@ -5331,7 +5548,7 @@ function collectSpreadSources(props, viewKeys, owners) {
   for (let i = 0; i < props.length; i++) {
     let s = props[i];
     if (typeof s === "function") s = s();
-    if (s != null) sourceOwners(s, viewKeys, owners);
+    if (s) sourceOwners(s, viewKeys, owners);
   }
 }
 
@@ -5457,189 +5674,67 @@ export function ssrLinkClaim(attrs) {
   return ctx.linkClaim(attrs);
 }
 
-// --- <select value> resolution (solidjs/solid#3013) ---------------------------
+// --- <select value> at render time (solidjs/solid#3013, #4891) --------------
 //
 // HTML defines no `value` attribute for <select>: a browser's initial
-// selection comes from `selected` on an <option>. The compiler (and the
-// runtime spread path) emit the bound value as a `value` attribute in the
-// markup; this flush-time pass resolves it into `selected` on the matching
-// option(s) and strips the attribute — React SSR parity — so no-JS clients
-// and crawlers see the right selection. Hydration still assigns the `value`
-// property, so JS clients were already correct.
-//
-// String-scan safety: this only ever runs on our own serializer output.
-// `escape(s, true)` guarantees `"` cannot appear inside an attribute value,
-// so a quote-aware tag walk (skip "…" runs, then `>` really ends the tag)
-// is exact — `<` / `>` ARE legal inside attribute values and a naive
-// indexOf would mis-scan on them. Text content has `<` escaped, so between
-// tags only comments (hydration markers) start with `<`. One deliberate
-// blind spot: `multiple` as a word inside a quoted attribute value reads as
-// the multiple attribute, which only matters when the bound value contains
-// a comma. A select split across flush chunks (a Loading boundary inside
-// it) is left untouched: its options stream later as a fragment template
-// and hydration assigns the property.
+// selection comes from `selected` on an <option> (React SSR parity, so
+// no-JS clients and crawlers see the right selection; hydration still
+// assigns the `value` property). The compilers turn a bound `<select
+// value={v}>` into `ssrSelect(v)` ahead of its children, which reads
+// the value once and keeps it on a transparent owner (no hydration id of its
+// own): the select's dynamic children render under it (`ssrIn`), so an
+// option a component, a `<For>` or a later async render produces finds it
+// through its owner's context. Each compiled server <option> asks
+// `ssrOption`, which writes ` selected` when its value matches — handed the
+// select's state when the option sits in the select's own template, else
+// read off the current owner. An option carrying `selected` itself is the
+// select's default (the forms contract: the default is the SSR state, the
+// bound value applies at hydration), and options after it are left alone.
+// Nothing is scanned afterwards, so a page with no option pays nothing, and
+// the state lives on the render's owner tree, never in module scope.
 
-// Decodes the entities our own escape() produces (attr and content forms).
-function decodeSSREntities(s) {
-  return s.indexOf("&") < 0
-    ? s
-    : s
-        .replace(/&quot;/g, '"')
-        .replace(/&lt;/g, "<")
-        .replace(/&amp;/g, "&");
+// The bound select's state, keyed on its owner's context map.
+const SELECT = Symbol();
+
+/** Compiler-emitted primitive; not for hand-written code. @internal */
+export function ssrSelect(value: any): any;
+
+export function ssrSelect(value) {
+  const owner = createOwner({ transparent: true });
+  const state = { v: value, d: false, o: owner };
+  owner._context = { ...owner._context, [SELECT]: state };
+  return state;
 }
 
-// Matches the quoted form (`value="…"`) AND the bare form (`value` followed
-// by a space, `>`, or end-of-attrs): empty attribute values serialize as
-// bare attributes (see ssrSpread / compiled templates), and an empty-string
-// bound value is a real bound value — a `value=""` option must match it
-// (#3013 follow-up). Group 1 is undefined for the bare form → empty string.
-const SELECT_VALUE_ATTR = /\svalue(?:="([^"]*)")?(?=[\s>]|$)/;
+/** Compiler-emitted primitive; not for hand-written code. @internal */
+export function ssrIn<T>(state: any, fn: () => T): T;
 
-// True end (`>`) of the tag opening at `i`, skipping quoted attribute
-// values. -1 when the tag never closes in this string.
-function tagEnd(html, i) {
-  for (let j = i + 1; j < html.length; j++) {
-    const c = html.charCodeAt(j);
-    if (c === 34) {
-      j = html.indexOf('"', j + 1);
-      if (j < 0) return -1;
-    } else if (c === 62) return j;
+export function ssrIn(state, fn) {
+  return runWithOwner(state.o, fn);
+}
+
+/** Compiler-emitted primitive; not for hand-written code. @internal */
+export function ssrOption(value: any, state?: any, own?: any): string;
+
+export function ssrOption(value, state, own) {
+  if (state === undefined) {
+    const o = getOwner();
+    if (!o || !(state = o._context[SELECT])) return "";
   }
-  return -1;
+  if (own) return ((state.d = true), "");
+  if (state.d) return "";
+  // A text-content option's value comes as a thunk of its one child.
+  if (typeof value === "function") value = value();
+  if (value == null) return "";
+  value = String(value);
+  const v = state.v;
+  // As the client assigns it (client.ts `applySelectValue`): an array
+  // selects every option whose value matches an entry, anything else one.
+  return v != null && (v.map ? v.some(x => x != null && String(x) === value) : String(v) === value)
+    ? " selected"
+    : "";
 }
 
-// Text content of an option starting at `from`, collecting across comment
-// nodes (hydration markers around dynamic text) until a real tag starts.
-function optionText(html, from) {
-  let t = "";
-  let i = from;
-  for (;;) {
-    const lt = html.indexOf("<", i);
-    if (lt < 0) return t + html.slice(i);
-    t += html.slice(i, lt);
-    if (!html.startsWith("<!--", lt)) return t;
-    const ce = html.indexOf("-->", lt);
-    if (ce < 0) return t;
-    i = ce + 3;
-  }
-}
-
-// Whether the tag at `i` is `<name` at a proper name boundary.
-function tagIs(html, i, name) {
-  if (!html.startsWith(name, i + 1)) return false;
-  const c = html.charCodeAt(i + 1 + name.length);
-  return c === 32 || c === 62 || c === 9 || c === 10 || c === 13;
-}
-
-// Compiler-armed gate (stage-4 SSR): compiled output containing a
-// `<select value=…>` (or a spread on a select) emits `_$ssrSelectValues()`
-// once per module. Apps that never bind a select value never even SCAN —
-// profiling showed the gate's own indexOf costing >50% of a select-free
-// page's render, because the first pass over the freshly-assembled rope
-// pays its flattening. Raw HTML injected around the compiler (innerHTML
-// escape hatches) intentionally gets browser semantics — the select-value
-// forms contract is a JSX-level promise.
-let selectValuesActive = false;
-export function ssrSelectValues() {
-  selectValuesActive = true;
-}
-
-export function resolveSSRSelectValues(html) {
-  // Region-jumping walk: attribute values escape `<` (ESCAPE_ATTR), so
-  // every "<select" hit below is a genuine tag position — jump candidate to
-  // candidate and walk tags ONLY inside value-carrying select regions;
-  // everything between regions is copied verbatim. (The old form walked
-  // EVERY tag in the document once any <select> existed — O(document) per
-  // render and per streamed fragment.)
-  if (!selectValuesActive) return html;
-  let cand = html.indexOf("<select");
-  if (cand < 0) return html;
-  let out = "";
-  let idx = 0; // emitted through idx
-  while (cand >= 0) {
-    // Word boundary — skips <selectedcontent> hits.
-    if (!tagIs(html, cand, "select")) {
-      cand = html.indexOf("<select", cand + 7);
-      continue;
-    }
-    const e0 = tagEnd(html, cand);
-    if (e0 < 0) break;
-    const open = html.slice(cand, e0 + 1);
-    const m = SELECT_VALUE_ATTR.exec(open);
-    if (!m) {
-      // No bound value: nothing to resolve in this select.
-      cand = html.indexOf("<select", e0 + 1);
-      continue;
-    }
-    const bound = decodeSSREntities(m[1] ?? "");
-    const sel = {
-      values: /\smultiple(?=[\s>=])/.test(open) ? bound.split(",") : [bound],
-      strip: cand + m.index,
-      stripEnd: cand + m.index + m[0].length,
-      body: e0 + 1,
-      marks: [],
-      defaulted: false
-    };
-    // Tag walk scoped to the region: options and comments until the close.
-    let committed = false;
-    let i = html.indexOf("<", e0 + 1);
-    while (i >= 0) {
-      let e;
-      if (html.charCodeAt(i + 1) === 33) {
-        // Comment (hydration marker) or bare <!> placeholder.
-        e = html.charCodeAt(i + 2) === 45 ? html.indexOf("-->", i) : html.indexOf(">", i);
-        if (e < 0) break;
-        if (html.charCodeAt(i + 2) === 45) e += 2;
-      } else {
-        e = tagEnd(html, i);
-        if (e < 0) break;
-        // "</select>" exactly: <selectedcontent>'s close also starts "</select".
-        if (html.startsWith("</select>", i)) {
-          // Commit: drop the value attribute, then mark the matched options —
-          // unless an option carried `selected` already (a defaultSelected):
-          // per the forms contract the DEFAULT is the SSR state and the bound
-          // value applies at hydration, exactly like defaultValue + value on
-          // an <input>.
-          out += html.slice(idx, sel.strip) + html.slice(sel.stripEnd, sel.body);
-          let seg = sel.body;
-          if (!sel.defaulted) {
-            for (let k = 0; k < sel.marks.length; k++) {
-              out += html.slice(seg, sel.marks[k]) + " selected";
-              seg = sel.marks[k];
-            }
-          }
-          out += html.slice(seg, i);
-          idx = i;
-          committed = true;
-          break;
-        } else if (tagIs(html, i, "option")) {
-          const attrs = html.slice(i + 7, e);
-          if (/\sselected(?=[\s=]|$)/.test(attrs)) sel.defaulted = true;
-          else {
-            const vm = SELECT_VALUE_ATTR.exec(attrs);
-            // Spec: no value attribute → text content, whitespace collapsed.
-            // A bare `value` attribute (vm[1] undefined) IS a value: "".
-            const value = vm
-              ? decodeSSREntities(vm[1] ?? "")
-              : decodeSSREntities(optionText(html, e + 1))
-                  .replace(/\s+/g, " ")
-                  .trim();
-            if (sel.values.includes(value)) sel.marks.push(e);
-          }
-        }
-      }
-      i = html.indexOf("<", e + 1);
-    }
-    // A select that never closes in this chunk (a Loading boundary inside
-    // it) never commits and stays byte-identical — matching the old walk,
-    // which also never processed anything past an uncommitted select.
-    if (!committed) break;
-    cand = html.indexOf("<select", idx);
-  }
-  if (idx === 0) return html;
-  return out + html.slice(idx);
-}
 export function escape(s: any, attr?: boolean): any;
 
 export function escape(s, attr) {
@@ -5721,7 +5816,7 @@ const ESCAPE_CONTENT = /[&<]/;
 // `<` escapes in attribute values too (stage-4 SSR): it costs nothing on
 // the fast path (same single regex scan) and guarantees that a raw
 // "<select" byte sequence in the document is ALWAYS a genuine tag start —
-// the invariant resolveSSRSelectValues' region-jumping depends on. Also
+// the invariant the old select-value scan's region-jumping depended on. Also
 // matches React/octane escaping norms.
 const ESCAPE_ATTR = /[&"<]/;
 
@@ -5812,7 +5907,13 @@ function tryJoinPlainSSRArray(nodes) {
   let out = "";
   for (let i = 0, len = nodes.length; i < len; i++) {
     const node = nodes[i];
-    if (node == null || typeof node !== "object" || node.h || typeof node.t !== "string") {
+    if (
+      node == null ||
+      typeof node !== "object" ||
+      node.$ !== SSR_NODE ||
+      node.h ||
+      typeof node.t !== "string"
+    ) {
       return undefined;
     }
     out += node.t;
@@ -5857,7 +5958,7 @@ function hydrationBootstrap(eventNames = ["click", "input"], nonce, ledger) {
     nonce ? ` nonce="${escape(String(nonce), true)}"` : ""
   }>window._$HY||(e=>{let t=e=>e&&e.hasAttribute&&(e.hasAttribute("_hk")?e:t(e.host&&e.host.nodeType?e.host:e.parentNode));["${eventNames.join(
     '","'
-  )}"].forEach((o=>document.addEventListener(o,(o=>{if(!e.events)return;let s=t(o.composedPath&&o.composedPath()[0]||o.target);s&&!e.completed.has(s)&&e.events.push([s,o])}))))})(_$HY={events:[],completed:new WeakSet,r:new Proxy({},{set:(r,k,v)=>(v instanceof Promise&&v.catch(()=>{}),r[k]=v,!0)}),${ledger ? "s:{}," : ""}fe(){}});</script><!--xs-->`;
+  )}"].forEach((o=>document.addEventListener(o,(o=>{if(!e.events)return;let n=o.composedPath&&o.composedPath()[0]||o.target,s=t(n);s&&!e.completed.has(s)&&e.events.push([s,o,n])}))))})(_$HY={events:[],completed:new WeakSet,r:new Proxy({},{set:(r,k,v)=>(v instanceof Promise&&v.catch(()=>{}),r[k]=v,!0)}),${ledger ? "s:{}," : ""}fe(){}});</script><!--xs-->`;
 }
 
 function queue(fn) {
@@ -6252,13 +6353,13 @@ function tryResolveString(node, nested?: boolean) {
       }
       return s;
     }
-    if (node.h && node.h.length > 0) return { merge: node };
-    if (node.t === undefined) {
+    if (node.$ !== SSR_NODE) {
       // Not a template object — mirror the client's dev warn-and-skip
       // instead of crashing downstream on a malformed template shape.
       if ("_SOLID_DEV_") unrecognizedInsert(node);
       return "";
     }
+    if (node.h && node.h.length > 0) return { merge: node };
     ssrTextTail = false;
     return Array.isArray(node.t) ? node.t[0] : node.t;
   }
@@ -6282,16 +6383,7 @@ function tryResolveString(node, nested?: boolean) {
 // callers never pass it.
 export function resolveSSRNode(node: any, result?: any, top?: boolean, nested?: boolean): any;
 
-export function resolveSSRNode(
-  node,
-  result = {
-    t: [""],
-    h: [],
-    p: []
-  },
-  top,
-  nested
-) {
+export function resolveSSRNode(node, result = { t: [""], h: [], p: [], $: SSR_NODE }, top, nested) {
   if (!nested) ssrTextTail = false;
   const t = typeof node;
   if (t === "string" || t === "number") {
@@ -6317,7 +6409,9 @@ export function resolveSSRNode(
       if (slotLive) slotLive.suppressed--;
     }
   } else if (t === "object") {
-    if (node.h) {
+    if (node.$ !== SSR_NODE) {
+      if ("_SOLID_DEV_") unrecognizedInsert(node);
+    } else if (node.h) {
       result.t[result.t.length - 1] += node.t[0];
       if (node.t.length > 1) {
         result.t.push(...node.t.slice(1));
@@ -6325,10 +6419,10 @@ export function resolveSSRNode(
         result.p.push(...node.p);
       }
       ssrTextTail = false;
-    } else if (node.t !== undefined) {
+    } else {
       result.t[result.t.length - 1] += node.t;
       ssrTextTail = false;
-    } else if ("_SOLID_DEV_") unrecognizedInsert(node);
+    }
   } else if (t === "function") {
     // Function nodes reaching the tree resolver are content by construction
     // (in-tag holes route here only under `ssr()`'s suppression window), so
@@ -7387,7 +7481,20 @@ export function registerElementClaim(
 export function registerElementClaim() {
   return noopCleanup;
 }
-function noopCleanup() {} /** Server no-op: returns `node` unchanged. Claims never fire during SSR. */
+function noopCleanup() {}
+// Trusted Types are a DOM concern: on the server a policy has nothing to
+// create, and an isomorphic entry that sets one must not throw.
+export function setTrustedTypesPolicy(
+  policy: { createHTML(html: string): unknown } | undefined
+): void;
+
+export function setTrustedTypesPolicy() {}
+/** Server: markup stays a string. @internal */
+export function trustedHTML(html: string): string;
+
+export function trustedHTML(html) {
+  return html;
+} /** Server no-op: returns `node` unchanged. Claims never fire during SSR. */
 export function claimElement<T extends Element>(node: T, owner?: Owner | null): T;
 
 export function claimElement(node) {
@@ -7426,6 +7533,8 @@ export {
   notSup as template,
   notSup as setProperty,
   notSup as setStatefulProperty,
+  notSup as heldRead,
+  notSup as strictHandler,
   notSup as className,
   notSup as assign,
   notSup as hydrate,

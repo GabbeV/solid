@@ -6,6 +6,8 @@ import {
   registerImportMethod,
   filterChildren,
   getCoverageIgnoreComments,
+  reclaimCoverageIgnoreComments,
+  takeCoverageIgnoreCommentsForParent,
   trimWhitespace,
   transformCondition,
   convertJSXIdentifier
@@ -117,12 +119,10 @@ export default function transformComponent(
           isDynamic(attribute.get("argument"), {
             checkMember: true
           }) && (dynamicSpread = true)
-            ? t.isCallExpression(node.argument) &&
-              !node.argument.arguments.length &&
-              !t.isCallExpression(node.argument.callee) &&
-              !t.isMemberExpression(node.argument.callee)
-              ? (node.argument.callee as t.Expression)
-              : t.arrowFunctionExpression([], node.argument)
+            ? // Always a thunk, never the bare callee of `{...fn()}`:
+              // mergeProps memoizes a function source and a memo passes its
+              // previous value, so `fn` would be called with it (#4964).
+              t.arrowFunctionExpression([], node.argument)
             : (node.argument as t.Expression)
         );
       } else if (t.isJSXAttribute(node)) {
@@ -335,6 +335,11 @@ export default function transformComponent(
     });
 
   const childResult = transformComponentChildren(path.get("children"), config);
+  // Pragmas written immediately before this component (a parent's
+  // `filterChildren` hand-off) lead this getter, not the parent's (#2138).
+  // When there is no children getter to put them on, leave them on the path
+  // so the parent can fall back (#4701).
+  const beforeComponentComments = getCoverageIgnoreComments(path);
   if (childResult) {
     if (childResult[1]) {
       const body =
@@ -349,7 +354,12 @@ export default function transformComponent(
         [],
         t.isExpression(body) ? t.blockStatement([t.returnStatement(body)]) : body
       );
-      if (childResult[2]?.length) getter.leadingComments = childResult[2];
+      const coverageComments = [...(beforeComponentComments ?? []), ...(childResult[2] ?? [])];
+      if (coverageComments.length) {
+        getter.leadingComments = coverageComments;
+        // Consumed — parent must not also fall back these onto its getter.
+        path.setData("solid.coverageIgnoreComments", undefined);
+      }
       runningObject.push(getter);
     } else runningObject.push(t.objectProperty(t.identifier("children"), childResult[0]));
   }
@@ -419,7 +429,10 @@ function transformComponentChildren(
 
   let transformedChildren: t.Expression | t.Expression[] = filteredChildren.reduce(
     (memo: t.Expression[], path: BabelPath<JSXNode>) => {
-      coverageIgnoreComments ||= getCoverageIgnoreComments(path);
+      const taken = takeCoverageIgnoreCommentsForParent(path);
+      if (taken?.length) {
+        coverageIgnoreComments = [...(coverageIgnoreComments ?? []), ...taken];
+      }
       if (t.isJSXText(path.node)) {
         const v = decode(trimWhitespace((path.node.extra?.raw as string | undefined) ?? ""));
         if (v.length) {
@@ -432,6 +445,12 @@ function transformComponentChildren(
           componentChild: true,
           lastElement: true
         });
+        // Nested component with no children getter leaves the hand-off on the
+        // path (fragments transparent) — reclaim for this parent's getter (#4701).
+        const reclaimed = reclaimCoverageIgnoreComments(path);
+        if (reclaimed?.length) {
+          coverageIgnoreComments = [...(coverageIgnoreComments ?? []), ...reclaimed];
+        }
         if (!child) return memo;
         dynamic = dynamic || !!child.dynamic;
         if (

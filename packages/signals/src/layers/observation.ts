@@ -1,8 +1,12 @@
 /** Publication lifecycle shared by source-owned observation outputs. */
+import { boundaries } from "./boundary.js";
+import { enqueueSub } from "../core/heap.js";
 import { carryStagedError } from "../core/async.js";
 import {
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
+  CONFIG_STAGED,
+  CONFIG_STAGED_ERROR,
   NOT_PENDING,
   REACTIVE_DISPOSED,
   STATUS_PENDING,
@@ -10,6 +14,7 @@ import {
 } from "../core/constants.js";
 import {
   blocked,
+  readyToPublish,
   inEffectCallback,
   liveTx,
   setEffectCallback,
@@ -23,7 +28,8 @@ import {
   inputTime,
   createLayerBoundary,
   setObservationLifecycle,
-  resumeInput,
+  stageRestoration,
+  calculateCorrection,
   readOverride,
   stageLayer,
   wakeLayers,
@@ -38,6 +44,7 @@ export type Observation<T> = Layer<T> & {
 };
 export type ObservationKind<T> = {
   _fallback: (layer: Layer<T>) => T;
+  _restoresInputValue?: boolean;
   _sample: (record: Observation<T>) => T;
   _active: (record: Observation<T>, value: T) => boolean;
   _observe?: (record: Observation<T>) => void;
@@ -48,6 +55,15 @@ const watching = new Set<Observation<any>>();
 // Selection during a pull is the same propagation work as selection in the
 // preparation loop. Give its consumers a round before retiring the override.
 let selected = false;
+// Hold lower publication and replay only for this sweep. The child may land
+// while its input is still held, then the next round prepares the revert.
+const awaitingDelivery = new WeakMap<Transaction, Transaction>();
+let previews: Map<Transaction, Observation<any>> | undefined;
+
+function awaitingPreview(update: Transaction): boolean {
+  const output = awaitingDelivery.get(update);
+  return !!previews?.has(update) || !!(output && !liveTx(output));
+}
 
 export function stageObservation(record: Observation<any>, value: unknown): void {
   stageLayer(record, value);
@@ -64,16 +80,110 @@ function deadObservation(record: Observation<any>): boolean {
   );
 }
 
+function readsOutput(
+  node: Computed<any>,
+  output: Computed<any>,
+  update: Transaction,
+  seen: Set<Computed<any>>
+): boolean {
+  if (seen.has(node)) return false;
+  seen.add(node);
+  for (let edge = node._deps; edge; edge = edge._nextDep) {
+    if (edge._gen !== node._depGen) continue;
+    const dep = edge._dep as Computed<any>;
+    if (dep === output) return true;
+    if (!(dep._config & CONFIG_HELD) || txOf(dep) !== update || !dep._fn) continue;
+    const layer = boundaries.get(dep);
+    if ((!layer || layer._override === NOT_PENDING) && readsOutput(dep, output, update, seen))
+      return true;
+  }
+  return false;
+}
+
+/**
+ * A higher pass can supersede the last request holding its input. Before
+ * replaying that reader in the input update, restore the pending outputs it
+ * consumed. A ready preview can publish first; an unfinished one expires.
+ */
+function prepareObservationPreview(record: Observation<any>): void {
+  if (
+    record._input._pendingValue === NOT_PENDING ||
+    record._override === NOT_PENDING ||
+    !record._observation._active(record, record._override) ||
+    !(record._output._config & CONFIG_HELD)
+  )
+    return;
+  const parent = record._observation._parent
+    ? record._observation._parent(record)
+    : record._input._config & CONFIG_HELD
+      ? txOf(record._input)
+      : null;
+  if (!parent?._reruns?.size) return;
+  const output = txOf(record._output);
+  if (parent === output) return;
+  // A held callback alone has no staged calculation to replace. Follow
+  // current dependencies so a peer sharing the transaction cannot trigger
+  // publication on behalf of a reader that never consumed this observation.
+  for (const reader of parent._reruns) {
+    if (
+      !(reader._config & CONFIG_STAGED) ||
+      !(reader._config & CONFIG_HELD) ||
+      txOf(reader) !== output ||
+      (record._observation._restoresInputValue &&
+        (reader._x?._supersededGen !== reader._depGen ||
+          reader._x?._inFlight ||
+          reader._statusFlags & STATUS_PENDING)) ||
+      !readsOutput(reader, record._output, output, new Set())
+    )
+      continue;
+    if (record._observation._restoresInputValue && (reader._x?._supersededGen !== reader._depGen || reader._x?._inFlight || reader._statusFlags & STATUS_PENDING)) continue;
+    if (blocked(parent)) return;
+    const ready = readyToPublish(output);
+    if (!ready && record._observation._restoresInputValue) return;
+    watching.add(record);
+    if (ready) {
+      (previews ??= new Map()).set(parent, record);
+      // A landing can defer its render queue until a stale binding has rerun.
+      // Its input can resume after that queue has had its turn. While the
+      // output is still live, ordinary readiness continues to govern expiry.
+      if (awaitingDelivery.get(parent) !== output) {
+        awaitingDelivery.set(parent, output);
+        output._queues[0].push(() => {
+          if (awaitingDelivery.get(parent) === output) {
+            awaitingDelivery.delete(parent);
+            wakeLayers();
+          }
+        });
+      }
+    }
+    break;
+  }
+}
+
+function recordRestoration(record: Observation<any>, parent: Transaction | null): void {
+  record._retiring = true;
+  record._time = inputTime(record._input);
+  record._parent = parent;
+}
+
 function prepareObservations(): boolean {
+  previews = undefined;
   let changed = selected;
   selected = false;
   // Prepare both observations of a held synchronous proposal in the same
   // round. Waiting for settle would publish latest before pending. Unheld
   // proposals propagate through inactive latest outputs ordinarily.
+  // A replacement may only notify the observation read by its own producer.
+  // Sample its other retiring observations before running any preview readers.
+  for (const record of watching) {
+    if (!record._retiring || record._time === inputTime(record._input)) continue;
+    const parent = record._parent && liveTx(record._parent);
+    if (parent && blocked(parent)) {
+      record._retiring = false;
+      dirty.add(record);
+    }
+  }
   for (const record of dirty) {
-    // A new input question supersedes a prepared restoration before its
-    // readers run again, not only after the publication sweep.
-    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     // A first answer can be staged beneath a replacement flight before it
     // initializes the input. Its observations still have a value to select.
     // A ready first answer initializes normally; opening a child update for
@@ -89,6 +199,7 @@ function prepareObservations(): boolean {
     )
       continue;
     const next = record._observation._sample(record);
+    prepareObservationPreview(record);
     if (!Object.is(record._override, next)) {
       stageLayer(record, next);
       changed = true;
@@ -97,8 +208,8 @@ function prepareObservations(): boolean {
   // New observation proposals must propagate before readiness is judged.
   // Their readers can discover additional holds (including sibling inputs).
   if (changed) return true;
+  let restoring: Observation<any>[] | undefined;
   for (const record of watching) {
-    if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
     if (deadObservation(record)) {
       watching.delete(record);
       dirty.delete(record);
@@ -113,6 +224,7 @@ function prepareObservations(): boolean {
         ? txOf(record._input)
         : record._parent;
     const parent = owner && liveTx(owner);
+    if (parent && awaitingPreview(parent)) continue;
     if (record._retiring) {
       // A ready, unheld input can acquire a hold from this restoration's
       // ordinary consequences. Keep the restoration in that newly discovered
@@ -128,18 +240,45 @@ function prepareObservations(): boolean {
       continue;
     // Rejoin before publication so new ordinary consequences can hold the
     // input and the observation's restoration together.
-    record._retiring = true;
-    record._parent = parent;
-    record._time = inputTime(record._input);
-    // Preparation can be triggered by a different, lower update's flush.
-    // Restore within the selected input update, without joining that flush.
-    record._parent = resumeInput(record, parent, true);
+    recordRestoration(
+      record,
+      stageRestoration(record, parent, record._observation._restoresInputValue)
+    );
+    (restoring ??= []).push(record);
     changed = true;
+  }
+  if (restoring)
+    for (const record of restoring) calculateCorrection(record._output, record._parent);
+  return changed;
+}
+
+// After lower readers have replayed, a transferred flight may be the only
+// outstanding work. Restore its observation before publishing the input.
+function preparePublication(): boolean {
+  let changed = false;
+  for (const record of dirty) {
+    if (
+      !watching.has(record) &&
+      record._input._pendingValue !== NOT_PENDING &&
+      record._override !== NOT_PENDING &&
+      record._input._config & CONFIG_HELD &&
+      record._output._config & CONFIG_HELD &&
+      txOf(record._output) !== txOf(record._input) &&
+      blocked(txOf(record._output), true) &&
+      !blocked(txOf(record._input))
+    ) {
+      watching.add(record);
+      changed = true;
+    }
   }
   return changed;
 }
 
 function settleObservations(): void {
+  if (previews) {
+    for (const record of previews.values()) enqueueSub(record._output);
+    previews = undefined;
+  }
   for (const record of watching) dirty.add(record);
   for (const record of dirty) {
     if (deadObservation(record)) {
@@ -181,7 +320,23 @@ function settleObservations(): void {
 }
 
 setObservationLifecycle({
+  _fold: (node, parent) => {
+    const record = boundaries.get(node) as Observation<any> | undefined;
+    if (
+      record?._observation?._restoresInputValue &&
+      record._override !== NOT_PENDING &&
+      record._input._config & CONFIG_HELD &&
+      txOf(record._input) === parent
+    ) {
+      // The lower replay is taking this output back with its input. Its
+      // selected latest answer is already the input proposal.
+      record._override = NOT_PENDING;
+      recordRestoration(record, parent);
+    }
+  },
   _prepare: prepareObservations,
+  _preparePublication: preparePublication,
+  _awaitingPreview: awaitingPreview,
   _settle: settleObservations,
   _active: () => !!(dirty.size || watching.size)
 });
@@ -244,6 +399,7 @@ export function releaseObservation(record: Observation<any>): void {
   if (record._output._config & CONFIG_AUTO_DISPOSE) {
     // A discarded first proposal must not satisfy revival's equality check
     // before this output has ever published a value.
+    record._output._config &= ~CONFIG_STAGED_ERROR;
     record._output._pendingValue = NOT_PENDING;
     record._output._statusFlags |= STATUS_UNINITIALIZED;
   }
@@ -251,7 +407,6 @@ export function releaseObservation(record: Observation<any>): void {
 
 export function markObservation(layer: Layer<any>): void {
   const record = layer as Observation<any>;
-  if (record._retiring && record._time !== inputTime(record._input)) record._retiring = false;
   record._observation._observe?.(record);
   dirty.add(record);
   record._output._cleanup ??= releaseObservation.bind(null, record);

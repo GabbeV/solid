@@ -99,7 +99,7 @@ const template = props => {
         {
           name: "Jason"
         },
-        dynamicSpread,
+        () => dynamicSpread(),
         {
           ref(r$) {
             var _ref$3 = props.ref;
@@ -339,8 +339,7 @@ var _el$52 = _$getNextElement(_tmpl$7),
   [_el$59, _co$15] = _$getNextMarker(_el$58.nextSibling),
   _el$54 = _el$59.nextSibling,
   _el$60 = _el$54.nextSibling,
-  [_el$61, _co$16] = _$getNextMarker(_el$60.nextSibling),
-  _el$57 = _el$61.nextSibling;
+  [_el$61, _co$16] = _$getNextMarker(_el$60.nextSibling);
 _$insert(
   _el$52,
   _$createComponent(Link, {

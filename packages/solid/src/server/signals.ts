@@ -540,6 +540,23 @@ export function setContext<T>(
 // Without this, the parent still points at the pooled node, and once the
 // pool recycles it into a *different* tree, disposing the old parent walks
 // into the new tree and tears down live owners (#2863).
+/**
+ * Returns a disposed owner to the pool. The next `createOwner` overwrites
+ * every field, so only references that would keep the finished render alive
+ * are dropped here: `_context` holds the render's provided values (and, under
+ * a boundary, its error handler and HTML), and a pooled owner can sit idle
+ * for as long as the process runs while concurrent renders fill the pool
+ * (#4890). `_parent` / `_nextSibling` are cleared by `unlinkOwner`,
+ * `_firstChild` / `_disposal` by the dispose walk.
+ */
+function recycleOwner(node: SSROwner): void {
+  if (ownerPool.length < OWNER_POOL_MAX) {
+    node.id = undefined;
+    node._context = defaultSSRContext;
+    ownerPool.push(node);
+  }
+}
+
 function unlinkOwner(node: SSROwner): void {
   const parent = node._parent;
   if (!parent) return;
@@ -579,10 +596,7 @@ export function disposeOwner(owner: Owner, self: boolean = true): void {
     if (self) {
       node._disposed = true;
       unlinkOwner(node);
-      if (ownerPool.length < OWNER_POOL_MAX) {
-        node.id = undefined;
-        ownerPool.push(node);
-      }
+      recycleOwner(node);
     } else {
       // Id slots can be consumed without creating child owners
       // (createUniqueId, ssrScope reservations, client-computed slots), so a
@@ -632,12 +646,8 @@ export function disposeOwner(owner: Owner, self: boolean = true): void {
   }
   if (self) unlinkOwner(node);
   // Recycle the disposed owner. Skip the root case (`self=false`) and the
-  // already-pooled case so we don't double-add. The next `createOwner` will
-  // overwrite all fields, so we only need to drop heavy references here.
-  if (self && ownerPool.length < OWNER_POOL_MAX) {
-    node.id = undefined;
-    ownerPool.push(node);
-  }
+  // already-pooled case so we don't double-add.
+  if (self) recycleOwner(node);
   if (error) throw error[0];
 }
 
@@ -1153,6 +1163,11 @@ const SLOTS = /* @__PURE__ */ Symbol("settledSlots");
 // across retry passes join the in-flight instance instead of allocating a
 // fresh one per pass. Same lifetime and keying rationale as SLOTS above.
 const PROJECTION_SLOTS = /* @__PURE__ */ Symbol("projectionSlots");
+
+// A retry pass adopts or joins a slot without serializing it again (#4809).
+export function hasAsyncSlot(ctx: object, id: string): boolean {
+  return !!((ctx as any)[SLOTS]?.[id] || (ctx as any)[PROJECTION_SLOTS]?.[id]);
+}
 
 function adoptSlot(comp: ServerComputation<any>, slot: SlotRecord) {
   if (slot.s === 1) {
@@ -1851,10 +1866,8 @@ export function createDeepProxy<T extends object>(
  * no meaning as data — a boundary's output accessor (`$lhSkip`: <Loading>,
  * <Errored>) or an SSR template object (`SSRTemplateObject`, from `ssr()` /
  * `ssrElement()`), alone or inside a fragment array. Plain data never
- * matches: only own-`Object.prototype` objects are inspected (class instances
- * — Date, Map, URL, anything a serializer plugin owns — skip at the first
- * check), a pending template carries its holes as functions (`h`), which no
- * serializer encodes, and a settled one is the single key `t` holding markup.
+ * matches: template objects carry the runtime's `solid.ssrNode` symbol as
+ * `$`, a value no data (JSON included) can hold.
  */
 function isRenderedOutput(value: any, seen?: Set<unknown>): boolean {
   if (typeof value === "function") return value.$lhSkip === true;
@@ -1872,14 +1885,7 @@ function isRenderedOutput(value: any, seen?: Set<unknown>): boolean {
     }
     return false;
   }
-  if (Object.getPrototypeOf(value) !== Object.prototype) return false;
-  const t = value.t;
-  if (typeof t === "string") {
-    if (t.charCodeAt(0) !== 60 /* < */) return false;
-    for (const key in value) if (key !== "t") return false;
-    return true;
-  }
-  return Array.isArray(t) && Array.isArray(value.h) && Array.isArray(value.p);
+  return value.$ === Symbol.for("solid.ssrNode");
 }
 
 /**
@@ -4272,7 +4278,7 @@ export function createErrorBoundary<T, U>(
   const boundaryId = ownerId(idOwner);
   const serializeError = (err: any) => {
     if (ctx && boundaryId && !runWithOwner(owner, () => getContext(NoHydrateContext))) {
-      ctx.serialize(boundaryId, err);
+      ctx.serialize(boundaryId, err, undefined, true);
     }
   };
   // The finding (observe/dev): a render error this boundary contained by
@@ -4323,6 +4329,7 @@ export function createErrorBoundary<T, U>(
       ctx && ctx.errorPolicy,
       ctx && ctx._errorScope
     );
+    if (ctx && ctx.contained) ctx.contained(err, wire);
     if (defer) deferredWire = wire;
     else serializeError(wire);
     fallbackResult = renderFallback(wire);
@@ -4812,6 +4819,16 @@ export function onSettled(callback: () => void | (() => void)): void {
 
 /** No-op on the server: there is no client flush to run after. */
 export function onFlush(_callback: () => void): void {}
+
+/** @internal Refs never run on the server; parity with the client entry (#4761). */
+export function runRefCallback(fn: () => void): void {
+  untrack(fn);
+}
+
+/** @internal Handlers are never bound on the server; parity with the client entry (#1742). */
+export function strictReadTracked<T>(fn: () => T, _label: string): T {
+  return fn();
+}
 
 // NoInfer utility type (also re-exported from signals, but define for local use)
 type NoInfer<T extends any> = [T][T extends any ? 0 : never];

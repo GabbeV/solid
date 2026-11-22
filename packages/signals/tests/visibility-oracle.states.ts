@@ -310,7 +310,7 @@ export const STATES: State[] = [
     },
     expect: {
       // The same held input with no previously published output: ordinary
-      // reads and an imperatively created latest output have nothing to serve.
+      // reads suspend, while latest can select the flushed guess.
       untracked: rule("throws:NotReady", "no output has published yet"),
       derivesFrom: rule(3, "the active override remains selected while its input update is held"),
       published: rule(HELD, "A18 (c) / A29 (born held)"),
@@ -323,10 +323,7 @@ export const STATES: State[] = [
         "lanes / A29: a fresh stale reader of a never-committed node enters"
       ),
       childrenForbidden: rule(NOT_READY, "no output has published: loading, not pending"),
-      latest: rule(
-        NOT_READY,
-        "an imperative latest read has no published output yet; flushed-value outside reads are deferred"
-      ),
+      latest: rule(3, "latest selects the flushed guess while its input update is held"),
       isPending: rule(false, "a never-published node is loading, not pending"),
       authoritative: rule(2, "A17 carve-out")
     }

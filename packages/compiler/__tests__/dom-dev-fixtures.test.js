@@ -6,7 +6,9 @@ const babelDomDevFixtures = path.resolve(__dirname, "../../babel-plugin/test/__d
 const oxcDomDevFixtures = path.resolve(__dirname, "fixtures/dom-dev");
 
 const fixtureParity = {
-  statefulProperties: "subset"
+  lowerShow: "subset",
+  statefulProperties: "subset",
+  strictEventHandlers: "subset"
 };
 
 function readFixture(name) {

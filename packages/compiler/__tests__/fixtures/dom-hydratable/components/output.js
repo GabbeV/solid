@@ -66,7 +66,9 @@ const template = (props) => {
 			return _$getNextElement(_tmpl$3);
 		}
 	})), _el$10, _el$11);
-	_$insert(_el$7, _$createComponent(Child, _$mergeProps({ name: "Jason" }, dynamicSpread, {
+	_$insert(_el$7, _$createComponent(Child, _$mergeProps({ name: "Jason" }, () => {
+		return dynamicSpread();
+	}, {
 		ref(r$) {
 			var _ref$3 = props.ref;
 			typeof _ref$3 === "function" || Array.isArray(_ref$3) ? _$applyRef(_ref$3, r$) : props.ref = r$;
@@ -202,7 +204,6 @@ var [_el$73, _el$74] = _$getNextMarker(_el$72.nextSibling);
 var _el$75 = _el$73.nextSibling;
 var _el$76 = _el$75.nextSibling;
 var [_el$77, _el$78] = _$getNextMarker(_el$76.nextSibling);
-var _el$79 = _el$77.nextSibling;
 _$insert(_el$70, _$createComponent(Link, { children: "comments" }), _el$73, _el$74);
 _$insert(_el$70, _$createComponent(Link, { children: "show" }), _el$77, _el$78);
 const template12 = _el$70;

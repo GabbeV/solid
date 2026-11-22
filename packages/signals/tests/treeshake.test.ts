@@ -87,6 +87,7 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
         "deferred.ts",
         "core/verdict.ts",
         "core/lanes.ts",
+        "layers/optimistic.ts",
         "core/action.ts",
         "core/context.ts"
       ])
@@ -369,7 +370,7 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
     // auto-dispose sweep guard that preserves the inline arm's early return.
     // 25,338 -> 25,426. The additive half; the twins it makes deletable
     // (overrideRead's wrapper, nodeValue, the verdict re-derivations) are the
-    // deletion half — see docs/DESIGN-CONSOLIDATION.md §0.
+    // deletion half — see docs/archive/DESIGN-CONSOLIDATION.md §0.
     // A write is a proposal (A34, #3494 / #3519 review, 2026-09-17): +234 B
     // core-retained (25,426 -> 25,660 over move 3b) — `batchJoins` (setSignal records a
     // held node's join and schedules; drained inside flush's try; the fast
@@ -478,6 +479,7 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
       retainedFrom(retained, [
         "core/verdict.ts",
         "core/lanes.ts",
+        "layers/optimistic.ts",
         "affects.ts",
         "boundaries.ts",
         "map.ts"
@@ -511,7 +513,8 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
       `export { createSignal, createEffect, createRoot, flush, createOptimistic } from "sigsrc";`
     );
     expect(retainedFrom(retained, ["layers/coordination.ts", "layers/optimistic.ts"])).toEqual([
-      "layers/coordination.ts", "layers/optimistic.ts"
+      "layers/coordination.ts",
+      "layers/optimistic.ts"
     ]);
     expect(retainedFrom(retained, ["core/lanes.ts", "core/verdict.ts"])).toEqual([]);
   });
@@ -535,6 +538,7 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
         "affects.ts",
         "core/verdict.ts",
         "core/lanes.ts",
+        "layers/optimistic.ts",
         "core/action.ts"
       ])
     ).toEqual([]);
@@ -552,9 +556,12 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
       `export { createSignal, createEffect, createRoot, flush, isPending, latest } from "sigsrc";`
     );
     expect(retainedFrom(retained, ["layers/coordination.ts", "layers/observation.ts"])).toEqual([
-      "layers/coordination.ts", "layers/observation.ts"
+      "layers/coordination.ts",
+      "layers/observation.ts"
     ]);
-    expect(retainedFrom(retained, ["core/verdict.ts", "core/lanes.ts", "layers/optimistic.ts"])).toEqual([]);
+    expect(
+      retainedFrom(retained, ["core/verdict.ts", "core/lanes.ts", "layers/optimistic.ts"])
+    ).toEqual([]);
     expect(retainedFrom(retained, ["store/", "boundaries.ts", "map.ts", "affects.ts"])).toEqual([]);
   });
 
@@ -634,6 +641,7 @@ describe("pay-for-use tree-shaking (#2883)", { timeout: 30_000 }, () => {
           "affects.js",
           "core/verdict.js",
           "core/lanes.js",
+          "layers/optimistic.js",
           "core/action.js",
           "core/context.js"
         ])

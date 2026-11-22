@@ -1,12 +1,15 @@
 import { LEGACY_LANES, CONFIG_CHILDREN_FORBIDDEN } from "./constants.js";
 import { isThenable } from "./async.js";
-import { enterCallback, exitCallback } from "./core.js";
+import { enterCallback, exitCallback, inRefCallback } from "./core.js";
 import { getOwner } from "./owner.js";
+import type { Owner } from "./types.js";
 import { emitDiagnostic } from "./dev.js";
 import { attrHooks } from "./attribution-hooks.js";
 import {
   actionDepth,
+  currentAction,
   effectCallbackEvent,
+  effectCallbackOwner,
   enterAction,
   exitAction,
   flush,
@@ -36,7 +39,7 @@ const ACTION_CALLED_IN_OWNED_SCOPE_MESSAGE =
  * — that would park the outer's remaining writes' frame mid-slice; the outer
  * step's own return does. */
 function inTransaction<T>(t: Transaction, q: number, fn: () => T): T {
-  // The slice and its flush ask this action's question (A18 provenance):
+  // The slice and its flush ask this action's question (F-11):
   // the guesses it writes and the flights it starts are stamped with it.
   const prevQ = LEGACY_LANES ? question : 0;
   if (LEGACY_LANES) setQuestion(q);
@@ -76,7 +79,7 @@ function inTransaction<T>(t: Transaction, q: number, fn: () => T): T {
  * the next `yield` runs OUTSIDE the transaction: writes to fresh signals
  * commit immediately, and anything that creates a reader there — `until()`,
  * `latest()`, a memo or effect, a mount — is created mainline, where a read of
- * this action's held state makes it born held (A29): staged with the
+ * this action's held state makes it born held (F-7): staged with the
  * transaction and replayed at its commit. `await` is still the ergonomic
  * choice for typed results; just put a bare `yield` before any write or
  * reader creation that follows it — including the expression of the next
@@ -137,7 +140,7 @@ export function action<Args extends any[], Y, R>(
     // onSettled) stay legal.
     if (__DEV__) {
       const owner = getOwner();
-      if (owner && !(owner._config & CONFIG_CHILDREN_FORBIDDEN)) {
+      if (owner && !(owner._config & CONFIG_CHILDREN_FORBIDDEN) && !inRefCallback()) {
         emitDiagnostic({
           code: "ACTION_CALLED_IN_OWNED_SCOPE",
           kind: "write",
@@ -171,7 +174,8 @@ export function action<Args extends any[], Y, R>(
           attrHooks.actionStepStart(it, genFn.name || undefined);
         // The body is on the stack between these brackets: flush() is
         // refused inside (FLUSH_IN_ACTION, scheduler.ts).
-        enterAction();
+        const previousAction = currentAction;
+        enterAction(t);
         // Dev: the body's reads are imperative, not post-await reads of the
         // continuation that invoked the action (UNTRACKED_READ_AFTER_AWAIT);
         // and it is an imperative scope of its own, not the effect callback
@@ -179,22 +183,25 @@ export function action<Args extends any[], Y, R>(
         // `resolve`) is deliberate (PRIMITIVE_IN_EFFECT_CALLBACK is off).
         let effectCallback = false;
         let effectEvent: unknown;
+        let effectOwner: Owner | null = null;
         if (__DEV__) {
           enterCallback();
           effectCallback = inEffectCallback;
           effectEvent = effectCallbackEvent;
+          effectOwner = effectCallbackOwner;
           setEffectCallback(false);
         }
         try {
           r = err ? it.throw!(v) : it.next(v);
         } catch (e) {
-          exitAction();
-          if (__DEV__) (exitCallback(), setEffectCallback(effectCallback, effectEvent));
+          exitAction(previousAction);
+          if (__DEV__)
+            (exitCallback(), setEffectCallback(effectCallback, effectEvent, effectOwner));
           if (__OBSERVE__ && attrHooks !== null) attrHooks.actionStepEnd(it);
           return done(undefined, e, true);
         }
-        exitAction();
-        if (__DEV__) (exitCallback(), setEffectCallback(effectCallback, effectEvent));
+        exitAction(previousAction);
+        if (__DEV__) (exitCallback(), setEffectCallback(effectCallback, effectEvent, effectOwner));
         if (__OBSERVE__ && attrHooks !== null) attrHooks.actionStepEnd(it);
         // A rejected iterator result (async generators) means the error already
         // escaped the generator body — it is completed, and throwing back in

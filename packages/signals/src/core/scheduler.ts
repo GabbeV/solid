@@ -29,6 +29,7 @@ import {
   REACTIVE_MANUAL_WRITE,
   REACTIVE_JOINED,
   REACTIVE_MISSED_WAKE,
+  REACTIVE_OWNER_READS,
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_SNAPSHOT_STALE,
   REACTIVE_ZOMBIE,
@@ -60,7 +61,7 @@ import {
   type DiagnosticSubject
 } from "./dev.js";
 import { dependencyFrame, sweepDormant, trimStaleDeps } from "./graph.js";
-import { deleteFromHeap, enqueueSub, runHeap, type Heap } from "./heap.js";
+import { deleteFromHeap, enqueueSub, markNode, runHeap, type Heap } from "./heap.js";
 import { devCheckQuiescent } from "./invariants.js";
 import { rethrowCleanupError } from "./owner.js";
 import type { Computed, Owner, Root, Signal } from "./types.js";
@@ -106,6 +107,18 @@ export let layerNotify:
 export let layerFrameRead:
   | ((reader: Computed<any>, source: Signal<any>) => boolean | null)
   | undefined;
+export let dispatchedCorrection: Computed<any> | undefined;
+// Only a render calculation preparing a correction needs a deferred delivery.
+const landingValues = new WeakMap<
+  Transaction,
+  Map<Computed<any>, { value: unknown; generation: number }>
+>();
+export function stageDelivery(node: Computed<any>, value: unknown) {
+  const owner = resolveTx(flushTransaction!);
+  let values = landingValues.get(owner);
+  if (!values) landingValues.set(owner, (values = new Map()));
+  values.set(node, { value, generation: node._depGen });
+}
 export let preparingUpdate: Transaction | null = null;
 export let layerStatus: ((reader: Computed<any>, source: Computed<any>) => boolean) | undefined;
 export let layerBlocked: ((update: Transaction) => boolean) | undefined;
@@ -251,6 +264,17 @@ export function installBoundaryHooks(
   hiddenHook = hidden;
   boundarySeamHook = seam;
   heldRunHook = heldRun;
+}
+/** `@solidjs/web`'s head registry: told when a boundary swaps between its
+ * fallback and its content, and asks whether a registration's node is
+ * behind a fallback — content there is not on screen (F-3), nor are its
+ * head tags (#4873). Never set without the registry. */
+export let swapHook: (() => void) | null = null;
+export function setSwapHook(fn: () => void): void {
+  swapHook = fn;
+}
+export function isHidden(node: object): boolean {
+  return !!hiddenHook?.(node as Computed<any>);
 }
 /** Store (store/store.ts): `park` — the flush parked into `t`: the store
  * materializes and holds the container node of every staging that had none
@@ -564,6 +588,16 @@ export function merge(t: Transaction, f: Transaction): void {
   t = resolveTx(t);
   f = resolveTx(f);
   if (t === f || (LEGACY_LANES && (t._lane || f._lane))) return;
+  const before = landingValues.get(t);
+  if (before) {
+    const after = landingValues.get(f);
+    if (!after) landingValues.set(f, before);
+    else
+      for (const [node, value] of before)
+        if (!after.has(node) || after.get(node)!.generation < value.generation)
+          after.set(node, value);
+    landingValues.delete(t);
+  }
   layerMerge?.(t, f);
   if (__OBSERVE__ && attrHooks !== null) attrHooks.transitionMerged(f, t);
   t._into = f;
@@ -812,6 +846,7 @@ export function list(n: Signal<any>, t: Transaction): void {
     t._lastHeld = n;
   } else t._nodes.push(n);
   x._transaction = t;
+  if (__OBSERVE__ && attrHooks !== null) attrHooks.staged(n);
 }
 
 /** Diagnostic enumeration; core propagation uses direct links. */
@@ -933,10 +968,13 @@ export function setTrackedQueueCallback(value: boolean) {
  * the body's writes are its transaction's and commit when it settles; a
  * drain mid-step cannot reveal them, and dev says so. */
 export let actionDepth = 0;
-export function enterAction(): void {
+export let currentAction: Transaction | null = null;
+export function enterAction(action: Transaction): void {
+  currentAction = action;
   actionDepth++;
 }
-export function exitAction(): void {
+export function exitAction(previous: Transaction | null): void {
+  currentAction = previous;
   actionDepth--;
 }
 
@@ -966,10 +1004,21 @@ export const ANY_EVENT = {};
  * a different event and is not in it (#4235). */
 export let effectCallbackEvent: unknown = ANY_EVENT;
 
-export function setEffectCallback(value: boolean, event: unknown = ANY_EVENT) {
+/** Dev-only: the context a callback scope runs in — null for an effect
+ * callback, the creating pass's for a ref callback (`runRefCallback`, #4761).
+ * A primitive created in that context is created in the callback; one
+ * created by a computation the callback pulls is that computation's. */
+export let effectCallbackOwner: Owner | null = null;
+
+export function setEffectCallback(
+  value: boolean,
+  event: unknown = ANY_EVENT,
+  owner: Owner | null = null
+) {
   if (__DEV__) {
     inEffectCallback = value;
     effectCallbackEvent = event;
+    effectCallbackOwner = owner;
   }
 }
 
@@ -1071,6 +1120,11 @@ export function resetErrorHalt(): void {
   halted = false;
   haltNotified = false;
   if (__DEV__) haltedAt = "";
+  // A throw out of the pure phase skips the `scheduled` recompute.
+  if (scheduled) {
+    scheduled = false;
+    schedule();
+  }
 }
 
 // CARVE 4: the queue tree (boundary CollectionQueues as children of the
@@ -1132,7 +1186,7 @@ export class GlobalQueue implements IQueue {
   declare static _lagging: ((c: Computed<any>) => Computed<any> | undefined) | undefined;
   // `affects()` marks (affects.ts): the probe's coverage test.
   declare static _layerGuesses: ((t: Transaction) => Signal<any>[]) | undefined;
-  declare static _layerPublished: ((node: Computed<any>, previous: unknown) => void) | undefined;
+  declare static _layerPublished: ((node: Computed<any>) => void) | undefined;
   declare static _marked: ((el: Signal<any> | Computed<any>) => boolean) | undefined;
 
   flush() {
@@ -1506,7 +1560,7 @@ function queuedWork(update: Transaction): boolean {
   return false;
 }
 
-function readyToPublish(update: Transaction): boolean {
+export function readyToPublish(update: Transaction): boolean {
   return (
     !blocked(update, true) && !queuedWork(update) && (!layerCanPublish || layerCanPublish(update))
   );
@@ -1548,6 +1602,16 @@ function land(u: Transaction): void {
         x._nextHeld = null;
         x._transaction = null;
         commitPendingNode(node);
+      }
+    // Land only the correction this binding still derives from. The owned
+    // subtree may have been disposed while the held nodes above committed.
+    const values = landingValues.get(u);
+    if (values)
+      for (const [node, value] of values) {
+        if (node._flags & REACTIVE_DISPOSED) continue;
+        if (node._depGen !== value.generation) continue;
+        node._value = value.value;
+        queueEffectRun(node);
       }
   } finally {
     globalQueue._queues = queues;
@@ -1688,7 +1752,8 @@ export function recomputeInUpdate(
   prepare = false,
   create = false,
   fromHeap = false,
-  inherit = false
+  inherit = false,
+  dispatch = false
 ): void {
   const incoming = flushTransaction;
   const previousFork = calculationForked;
@@ -1718,7 +1783,15 @@ export function recomputeInUpdate(
   try {
     for (;;) {
       try {
-        recomputeBody(node, create);
+        if (dispatch) {
+          const before = dispatchedCorrection;
+          dispatchedCorrection = node;
+          try {
+            GlobalQueue._update(node);
+          } finally {
+            dispatchedCorrection = before;
+          }
+        } else recomputeBody(node, create);
       } finally {
         if (flushTransaction && (!inherit || calculationForked)) {
           // Keep the usual per-calculation parking boundary. Only the scope
@@ -1831,7 +1904,8 @@ function forgetReruns(c: Computed<any>): void {
 export function queuePendingNode(node: Signal<any>): void {
   if (__DEV__) lastStagedNodeName = (node as any)._name ?? null;
   pendingNodes.push(node);
-  if (!globalQueue._running) markUnflushedStaged(); // A28
+  if (!globalQueue._running) markUnflushedStaged();
+  if (__OBSERVE__ && attrHooks !== null) attrHooks.staged(node);
 }
 
 // Dev-only attribution for the flush loop guard (#3140): when the guard
@@ -1871,15 +1945,22 @@ export function insertSubs(node: Signal<any> | Computed<any>): void {
     // already validated this dep — the value it read is now stale — so latch
     // for recompute's tail to reschedule. Untouched links need no latch (the
     // pass either re-reads them fresh or trims them), and neither does the
-    // tail link: it is the read IN FLIGHT — read() links before it pulls, so
-    // this very commit is what that read returns.
-    if (sub._flags & REACTIVE_RECOMPUTING_DEPS && s._gen === sub._depGen && s !== sub._depsTail)
+    // A computed's tail link is still in flight while read() pulls it. A
+    // signal already returned, so its newest link can miss an owned write too (F-10).
+    if (
+      sub._flags & REACTIVE_RECOMPUTING_DEPS &&
+      s._gen === sub._depGen &&
+      (s !== sub._depsTail || !(node as Computed<any>)._fn)
+    )
       sub._flags |= REACTIVE_MISSED_WAKE;
     if (hasSnapshot && sub._config & CONFIG_IN_SNAPSHOT_SCOPE) {
       sub._flags |= REACTIVE_SNAPSHOT_STALE;
       continue;
     }
-    if (!layerNotify?.(node, sub, true)) enqueueSub(sub);
+    if (!layerNotify?.(node, sub, true)) {
+      enqueueSub(sub);
+      if (sub._flags & REACTIVE_OWNER_READS) markNode(sub._parent as Computed<any>, REACTIVE_CHECK);
+    }
   }
   if (__OBSERVE__ && fanOut >= GRAPH_SIZE_WARN_AT) noteFanOut(node, fanOut);
 }
@@ -1980,7 +2061,6 @@ export function commitPendingNode(n: Signal<any>): void {
   if (inFlight) n._pendingValue = NOT_PENDING;
   else c._flags! &= ~(REACTIVE_PREVIOUS_COMMITTED | REACTIVE_RETRIED_OWNER);
   n._config &= ~CONFIG_LOADING;
-  const previous = __OBSERVE__ ? n._value : undefined;
   const err = n._config & CONFIG_STAGED_ERROR;
   // An answer commits: the error it replaces leaves the display (D-41).
   if (!inFlight && !err && c._x) c._x._shownError = null;
@@ -2008,8 +2088,6 @@ export function commitPendingNode(n: Signal<any>): void {
       notifyStatus(c as Computed<unknown>, STATUS_ERROR, e);
     if (c._x) c._x._shownError = null;
   } else if (applyStaged(n)) {
-    if (__OBSERVE__ && n._config & CONFIG_REDERIVE)
-      GlobalQueue._layerPublished?.(n as Computed<any>, previous);
     // A node born staged (recompute) initializes at this commit.
     c._statusFlags! &= ~STATUS_UNINITIALIZED;
     // A quiet re-ask's classification survives its landing and dies with
@@ -2021,6 +2099,14 @@ export function commitPendingNode(n: Signal<any>): void {
     // this commit's, not its creation's (A29) — queue it now.
     if ((n as any)._type && (n as any)._type !== EFFECT_TRACKED) queueEffectRun(n);
   }
+  if (
+    __OBSERVE__ &&
+    !inFlight &&
+    !err &&
+    !(c._statusFlags! & STATUS_ERROR) &&
+    n._config & CONFIG_REDERIVE
+  )
+    GlobalQueue._layerPublished?.(n as Computed<any>);
   c._flags! &= ~REACTIVE_MANUAL_WRITE;
   // The dependencies of the pass that produced the value are the frame's now:
   // the previous frame's tail goes (A30, #3410; `recompute` left it for a

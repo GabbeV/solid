@@ -619,8 +619,10 @@ type S9Source = (typeof S9_SOURCES)[number];
 type S9Posture =
   | "inherited isPending"
   | "inherited latest"
+  | "own isPending"
   | "own latest"
-  | "latest of the same key, through a memo";
+  | "latest of the same key, through a memo"
+  | "latest of the same key, inline";
 
 /** One flush writes a hold (`data` goes async) and `count`, and re-runs
  * `pass` through an unrelated trigger, so an untracked read of `count`
@@ -670,7 +672,16 @@ async function s9Trace(source: S9Source, posture: S9Posture) {
     );
     const pass = createMemo(() => {
       trigger();
-      const v = posture === "own latest" ? latest(data) : verdict();
+      const v =
+        posture === "own latest"
+          ? latest(data)
+          : posture === "own isPending"
+            ? isPending(data)
+              ? 1
+              : 0
+            : posture === "latest of the same key, inline"
+              ? latest(source.startsWith("signal") ? count : () => state.count)
+              : verdict();
       const c = read();
       trace.push(`pass ${v}/${c}`);
       return `${v}/${c}`;
@@ -703,7 +714,7 @@ describe("S9 — observation contexts agree through memos and across signal/stor
   // `|` precedes resolving data. Pending can publish above that hold and
   // sees committed count=0. A memo wrapper does not change the context.
   // Keep the complete calculation and publication trace, including retries.
-  const expected: Record<Exclude<S9Posture, "latest of the same key, through a memo">, string> = {
+  const expected = {
     "inherited isPending":
       "pass 0/0 ; screen 0 0/0 ; pass 0/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 0/1 ; screen 1 0/1",
     "inherited latest":
@@ -726,14 +737,33 @@ describe("S9 — observation contexts agree through memos and across signal/stor
   // explicitly exposes 1 while the ordinary read selects committed 0.
   // Its tracked read gives the store key a leaf; check the full publication
   // sequence as well as parity with the signal.
-  for (const source of S9_SOURCES.slice(1))
-    it(`latest of the same key, through a memo: ${source} matches the signal`, async () => {
-      const posture = "latest of the same key, through a memo";
-      const r = await s9Trace(source, posture);
+  const sameKeyTrace =
+    "pass 0/0 ; screen 0 0/0 ; pass 1/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1";
+  for (const source of S9_SOURCES)
+    it(`latest of the same key, through a memo: ${source}`, async () => {
+      const r = await s9Trace(source, "latest of the same key, through a memo");
       expect(r.nodes.leaf).toBe(!source.startsWith("signal"));
-      expect(r.trace).toBe((await s9Trace("signal", posture)).trace);
-      expect(r.trace).toBe(
-        "pass 0/0 ; screen 0 0/0 ; pass 1/1 ; pass 1/0 ; screen 0 1/0 ; | ; pass 1/1 ; screen 1 1/1"
-      );
+      expect(r.trace).toBe(sameKeyTrace);
     });
+
+  const pairs: [S9Posture, S9Posture][] = [
+    ["inherited latest", "own latest"],
+    ["inherited isPending", "own isPending"],
+    ["latest of the same key, through a memo", "latest of the same key, inline"]
+  ];
+  const screens = (trace: string) =>
+    trace
+      .split(" ; ")
+      .filter(entry => !entry.startsWith("pass"))
+      .join(" ; ");
+  for (const [memo, inline] of pairs)
+    for (const source of S9_SOURCES)
+      it(`${memo}: ${source} reads as ${inline} on the signal`, async () => {
+        const r = await s9Trace(source, memo);
+        expect(screens(r.trace)).toBe(screens((await s9Trace("signal", inline)).trace));
+        // The calculation before resolving data depends on the selected observation.
+        expect(r.trace).toContain(
+          memo === "inherited latest" ? "pass 0/1 ; |" : "pass 1/0 ; screen 0 1/0 ; |"
+        );
+      });
 });

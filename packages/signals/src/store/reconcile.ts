@@ -25,6 +25,7 @@ import {
 import {
   adoptPB,
   bumpDeep,
+  deepUsed,
   hasAccessorFlag,
   joinDraftReads,
   materializePB,
@@ -134,6 +135,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
         if (nv !== null && typeof nv === "object" && (pvRaw !== nv || isOwned(nv)))
           descend(pvRaw, nv, keyFn, proj, t, i);
         if (
+          deepUsed &&
           !bumped &&
           !(nv !== null && typeof nv === "object" ? targetsEqual(pvRaw, nv) : isEqual(pvRaw, nv))
         ) {
@@ -148,7 +150,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
           }
         }
       }
-      if (!bumped && i < incoming.length) bumpDeep(t);
+      if (deepUsed && !bumped && i < incoming.length) bumpDeep(t);
       const structStart = i; // misalignment point (== nlen on aligned ticks)
       let prevByKey: Map<any, any> | null = null;
       for (; i < incoming.length; i++) {
@@ -201,6 +203,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
         if (!shallow && i < dlen && nvP !== null && typeof nvP === "object")
           descend(prevView[i], nvP, keyFn, proj, t, i);
         if (
+          deepUsed &&
           !bumped &&
           !(nvP !== null && typeof nvP === "object"
             ? targetsEqual(prevView[i], nvP)
@@ -247,7 +250,7 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
       continue;
     }
     if (isObj && !shallow) descend((prevView as any)[k], nv, keyFn, proj, t, k);
-    if (!bumped && !(isObj ? targetsEqual(ov, nv) : isEqual(ov, nv))) {
+    if (deepUsed && !bumped && !(isObj ? targetsEqual(ov, nv) : isEqual(ov, nv))) {
       bumpDeep(t);
       bumped = true;
     }

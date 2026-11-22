@@ -308,8 +308,10 @@ describe("A25 write-visibility corollary: seed visible on the write path", () =>
     expect(shown).toEqual([99]);
     expect(get()).toBe(99);
 
+    // The first answer judges the guess.
     d.resolve(1);
     await settle();
+    expect(get()).toBe(1);
     expect(shown).toEqual([99, 1]);
     dispose();
   });

@@ -162,10 +162,7 @@ describe("refresh(memo) inside an action with an isPending reader settles (#4349
       expect(r.frames).toEqual(declared ? ["v41", "pending", "v42"] : ["v41", "v42"]);
     });
 
-  it("`[isPending(x), x()]` publishes pending beside committed x without restarting its request", async () => {
-    // The same loop without a refresh: the action's write lands beneath its
-    // memo's new question, and the render effect that probes and reads it
-    // parked the frame it opened every round.
+  it("`[isPending(x), x()]` publishes pending beside committed x without restarting its request (S-52, D-25)", async () => {
     const fetches: (() => void)[] = [];
     const frames: string[] = [];
     let set!: (v: number) => void;

@@ -89,7 +89,6 @@ export type Layer<T> = {
   _output: Computed<T>;
   _override: T | typeof NOT_PENDING;
   _scope: Transaction | null;
-  _inputTime?: number;
   _inputStatus?: true;
   _statusInput?: Computed<any>;
   _position?: number;
@@ -151,6 +150,40 @@ setLayerVisibility((output, update) => !boundaries.get(output) || observed(outpu
 export function positionOf(update: Transaction | null): number {
   return update ? (resolveTx(update)._level ?? 0) : 0;
 }
+let correctionContext: Transaction | null = null;
+const correctionJobs = new Map<Transaction, Set<Computed<any>>>();
+export function calculateCorrection(
+  node: Computed<any>,
+  update: Transaction | null,
+  dispatch = false
+) {
+  const previous = correctionContext;
+  correctionContext = update;
+  try {
+    recomputeInUpdate(node, update, false, false, false, false, dispatch);
+  } finally {
+    correctionContext = previous;
+  }
+}
+function queueCorrection(update: Transaction, reader: Computed<any>): void {
+  let jobs = correctionJobs.get(update);
+  if (!jobs) correctionJobs.set(update, (jobs = new Set()));
+  jobs.add(reader);
+}
+
+function processCorrections() {
+  if (!correctionJobs.size) return false;
+  const [owner, jobs] = correctionJobs.entries().next().value!;
+  correctionJobs.delete(owner);
+  const update = liveTx(owner);
+  for (const node of jobs) {
+    if (node._flags & REACTIVE_DISPOSED) continue;
+    if (!update || (node._config & CONFIG_HELD && positionOf(txOf(node)) > positionOf(update)))
+      enqueueSub(node);
+    else calculateCorrection(node, update, true);
+  }
+  return true;
+}
 let releasingInput: Transaction | null = null;
 let evaluation: Computed<any> | null = null;
 let evaluationReads: Set<Transaction> | null = null;
@@ -194,10 +227,13 @@ const layerOwn = (node: Signal<any>, update: Transaction) => {
 /** User guesses settle before observations sample their downstream work.
  * Each feature installs only its own lifetime; both use common publication. */
 type BoundaryLifecycle = {
+  _fold?: (node: Computed<any>, parent: Transaction) => void;
   _merge?: (from: Transaction, into: Transaction) => void;
   _write?: (layer: Layer<any>, update: Transaction, proposal: unknown) => boolean;
   _notify?: (source: Signal<any>, reader: Computed<any>, update: Transaction) => boolean | void;
   _prepare: () => boolean;
+  _awaitingPreview?: (update: Transaction) => boolean;
+  _preparePublication?: () => boolean;
   _settle: () => boolean | void;
   _active: () => boolean;
 };
@@ -248,23 +284,30 @@ export function inputUpdate(layer: Layer<any>): Transaction | null {
 /** Retire the override in its input update, or in an ordinary flush when the
  * input is unheld. Reading below then uses normal derivation joining.
  * Published output and owned children stay in the common committed slots. */
-export function resumeInput(
+export function resumeInput(layer: Layer<any>, update: Transaction | null): Transaction | null {
+  update = stageRestoration(layer, update);
+  if (update) joinFuture(update);
+  enqueueSub(layer._output);
+  return update;
+}
+
+export function stageRestoration(
   layer: Layer<any>,
   update: Transaction | null,
-  prepare = false
+  restoresInputValue = false
 ): Transaction | null {
   layer._override = NOT_PENDING;
   // Retiring the cut makes its suspended consequences input work again.
   // Recompute will supersede obsolete flights in that common update.
-  if (layer._output._config & CONFIG_HELD)
-    merge(txOf(layer._output), (update ??= newTransaction(false)));
-  // A prepared restoration belongs to its selected input update even when
-  // another update triggered the seam. Scoped recomputation keeps unrelated
-  // flush work separate; actual reads still perform the usual peer joins.
-  if (prepare) recomputeInUpdate(layer._output, update, true);
-  else {
-    if (update) joinFuture(update);
-    enqueueSub(layer._output);
+  if (layer._output._config & CONFIG_HELD) {
+    const upper = txOf(layer._output);
+    // A retained flight that read the parent's old frame has a different
+    // question after the fold, even if the selector itself compares equal.
+    if (restoresInputValue && upper !== update && update?._reruns)
+      for (const reader of update._reruns)
+        if (reader._x?._inFlight && reader._config & CONFIG_HELD && txOf(reader) === upper)
+          queueCorrection(update, reader);
+    merge(upper, (update ??= newTransaction(false)));
   }
   return update;
 }
@@ -334,12 +377,16 @@ function prepareLayers(): boolean {
   // obsolete async consequence that the false observation must supersede.
   changed = !!guesses?._prepare();
   changed = !!observations?._prepare() || changed;
+  // First propagate the new source selections. They can replace the question
+  // whose correction would otherwise wake a binding for an obsolete answer.
+  if (correctionJobs.size && changed) return true;
+  if (processCorrections()) return true;
   // Only updates with waiting readers require preparation. The scheduler
   // already indexes these for disposal, and maintains the index on merges.
   // A replay sets changed, so transferred readers are reconsidered before
   // any publication even if their surviving update was already visited.
   for (const parent of rerunHolders) {
-    if (!parent._reruns?.size) continue;
+    if (!parent._reruns?.size || observations?._awaitingPreview?.(parent)) continue;
     const waiting = blocked(parent);
     for (const reader of parent._reruns) {
       // This update already replaces the owner's frame. Its parked children
@@ -410,7 +457,7 @@ function prepareLayers(): boolean {
       }
     }
   }
-  return changed;
+  return changed || !!observations?._preparePublication?.();
 }
 
 function prepareReader(reader: Computed<any>, update: Transaction): void {
@@ -431,11 +478,14 @@ function mergeLayers(from: Transaction, into: Transaction): void {
     intoPosition = positionOf(into);
   if (fromPosition !== intoPosition) {
     const higher = fromPosition > intoPosition ? from : into;
+    const lower = higher === from ? into : from;
     for (
       let i = 0, node = LEGACY_LANES ? higher._nodes[0] : higher._firstHeld;
       node;
       node = LEGACY_LANES ? higher._nodes[++i] : node._x!._nextHeld
-    )
+    ) {
+      if (lower === releasingInput && node._config & CONFIG_REDERIVE)
+        observations?._fold?.(node as Computed<any>, lower);
       if (
         node._config & CONFIG_HELD &&
         (!LEGACY_LANES || txOf(node) === higher) &&
@@ -443,6 +493,7 @@ function mergeLayers(from: Transaction, into: Transaction): void {
       )
         if ((node as Computed<any>)._fn)
           (node as Computed<any>)._flags |= REACTIVE_PREVIOUS_COMMITTED;
+    }
     into._level = Math.min(fromPosition, intoPosition);
   }
 }
@@ -1088,6 +1139,7 @@ function sourceHoldsLifetime(source: Computed<any>, position: number): boolean {
 }
 
 function canPublish(update: Transaction): boolean {
+  if (guesses?._awaitingPreview?.(update) || observations?._awaitingPreview?.(update)) return false;
   // Reuse the pending-reader registry: ownership gates the private frame's
   // attachment, while the recorded higher read gates its publication. This
   // relation is one-way and deliberately absent from blocked()'s lifetime
@@ -1237,6 +1289,14 @@ function adoptOutput(
 /** Transfer context along value and status notifications. An unchanged
  * memo is a propagation stop for optimistic updates just as for ordinary ones. */
 function notifyLayer(source: Signal<any>, reader: Computed<any>, value = false): boolean | void {
+  if (
+    correctionContext &&
+    value &&
+    (!(source._config & CONFIG_HELD) || txOf(source) === resolveTx(correctionContext))
+  ) {
+    queueCorrection(correctionContext, reader);
+    return true;
+  }
   if (!(source._config & CONFIG_HELD)) return;
   const update = txOf(source);
   if (!isChildUpdate(update)) return;
@@ -1255,10 +1315,6 @@ export function stageLayer(layer: Layer<any>, proposal: unknown, position?: numb
   // dependency cannot promote this existing override or split its peer joins.
   layer._position = position ?? 1 + Math.max(layerPosition(layer._input), positionOf(inputHolder));
   layer._override = proposal;
-  // Attribution tracks answers, not re-evaluations of unchanged truth.
-  // The existing notification stamp avoids treating companion discovery as
-  // a new input answer. Selection needs no revision field in production.
-  if (__OBSERVE__) layer._inputTime = layer._input._notifiedAt;
   enableReads();
   // Selecting an equal, settled scalar output has no downstream proposal.
   // In particular a newly allocated pending observation must not replay its
@@ -1345,7 +1401,6 @@ export function createLayerBoundary<T>(
     _override: NOT_PENDING,
     _scope: null
   } as Layer<T>;
-  if (__OBSERVE__) layer._inputTime = producer._notifiedAt;
   // Choose the feature selector once at allocation. Its calls into common
   // selection/publication are direct; no per-evaluation lifecycle dispatch.
   const output = computed<T>(select.bind(null, layer), {

@@ -188,23 +188,8 @@ const ORIGINAL: Checkpoint[] = [
 
 function expected(extra: Extra, original: boolean): Checkpoint[] {
   const baseline = original ? ORIGINAL : NARROWED;
-  if (extra === "tracked latest") {
-    // The latest proposal's own derivation keeps it held. Ordinary source
-    // reads in that higher computation use the committed '/' frame. In the
-    // original shape, target combines both peer proposals in a memo: pending
-    // waits with latest. A direct render binding uses their published values
-    // independently. See unified-observation-peer-publication for the same
-    // distinction with explicit optimistic boundaries and no feedback.
-    return baseline.map((checkpoint, index) =>
-      index === baseline.length - 1
-        ? checkpoint
-        : {
-            ...checkpoint,
-            effect: original ? "-" : "/",
-            ...(original ? { latest: "/", isPending: false } : {})
-          }
-    );
-  }
+  // With a tracked latest read the higher calculation uses the committed
+  // route "/". It returns synchronously, so both navigation previews publish.
   if (extra === "untracked latest") {
     // A's initial pass precedes latest's notification, which is untracked.
     // The ordinary B write reruns data; its latest read now selects the
@@ -217,12 +202,8 @@ function expected(extra: Extra, original: boolean): Checkpoint[] {
         : { ...checkpoint, effect: "/slow1", ...(original ? { latest: "/slow1" } : {}) }
     );
   }
-  if (extra === "tracked isPending") {
-    // Pending=true supersedes the blocking pass with one over committed
-    // source. The input can publish; pending's reversal then starts its
-    // consequence again. The source itself is no longer unpublished.
-    return baseline.map(checkpoint => ({ ...checkpoint, effect: "-", isPending: false }));
-  }
+  // Reading pending in the request can supersede it. The ready preview
+  // publishes, and its correction keeps the source held until data lands.
   return baseline;
 }
 

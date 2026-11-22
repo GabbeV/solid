@@ -111,9 +111,9 @@ describe("#4393: two latest() readers under one async memo, t written during the
           "m0b:1100"
         ]);
         const combined = asks.filter(ask => ask.startsWith("m1:"));
-        expect(combined).toHaveLength(2);
-        expect(["m1:23", "m1:1023"]).toContain(combined[0]);
-        expect(combined[1]).toBe("m1:1123");
+        // As with ordinary inputs, overlapping requests hold the combined
+        // memo. If s answers before t changes, its first answer is eligible.
+        expect(combined).toEqual(gap < 10 ? ["m1:1123"] : ["m1:23", "m1:1123"]);
         expect(values.at(-1)).toBe("1123");
       });
 
@@ -206,9 +206,10 @@ describe("#4400: a second write during the hold, distinct encoding", () => {
       flush();
       for (let i = 0; i < 4; i++) await settle();
       dispose();
-      // The expired optimistic 32 is superseded before its downstream ask.
+      // Both writes start with the ordinary question. The expired optimistic
+      // 32 is superseded before its downstream ask.
       // It cannot extend its own lifetime just to start m1:33.
-      expect(asks).toEqual(["m0:23", "m0:22", "m0:23", "m0:32", "m0:34", "m1:35"]);
+      expect(asks).toEqual(["m0:23", "m0:22", "m0:23", "m0:34", "m0:32", "m0:34", "m1:35"]);
       expect(out.at(-1)).toBe(reader === "pair" ? "false,35" : "pfalse");
     }
   );

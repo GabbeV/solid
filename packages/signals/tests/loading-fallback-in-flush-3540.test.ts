@@ -748,7 +748,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // under the boundary are held with the hold, and only render effects are
   // caught — a pending memo is no reader of its own, D-12, #4542.)
   const observe = (source: Source, x1: string) => [
-    `view fallback | readers=${source === "held" ? 2 : 1} view=false m=false latest=throws NotReadyError`,
+    `view fallback | readers=${source === "held" ? 2 : 1} view=false m=false latest=${source === "held" ? "content 1" : "throws NotReadyError"}`,
     `${[x1, "view content 1"].sort().join(" · ")} | readers=0 view=false m=false latest=content 1`,
     " | readers=0 view=false m=false latest=content 1"
   ];
@@ -814,8 +814,8 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
   // committed memo, pending with its committed value.)
   const committed: Record<string, string[]> = {
     "held rearmed memo": [
-      // A newly created memo has no committed output for this outside read.
-      "view fallback | readers=2 view=false m=false latest=throws NotReadyError",
+      // The memo’s first flushed result is available through latest.
+      "view fallback | readers=2 view=false m=false latest=c1 1",
       "view c1 1 · x 1 | readers=0 view=false m=false latest=c1 1",
       " | readers=0 view=false m=false latest=c1 1"
     ],
@@ -826,7 +826,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
     ],
     "held plain memo": [
       // The boundary's render creates a fresh memo; its catch walk records it.
-      " | readers=1 view=true m=false latest=throws NotReadyError",
+      " | readers=1 view=true m=false latest=c1 1",
       "view c1 1 · x 1 | readers=0 view=false m=false latest=c1 1",
       " | readers=0 view=false m=false latest=c1 1"
     ],
@@ -993,7 +993,7 @@ describe("#3540: the boundary scope — committed content, held mounts, no catch
             latest: verdict(() => m!(), "latest")
           })
         );
-        const first = "throws NotReadyError";
+        const first = source === "held" ? "fresh 1" : "throws NotReadyError";
         const landed = [
           source === "held" ? "x 1" : "holder 1",
           ...(where === "flush" ? ["open true"] : []),

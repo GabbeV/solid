@@ -4,6 +4,7 @@ import type { Computed, Disposable, Owner, Refreshable } from "./core/index.js";
 import {
   $REFRESH,
   cleanup,
+  inRefCallback,
   computed,
   CONFIG_AUTO_DISPOSE,
   CONFIG_HELD,
@@ -25,15 +26,10 @@ import {
   untrack,
   CONFIG_REDERIVE
 } from "./core/index.js";
-import {
-  devGuardOptimisticBeforeLoad,
-  emitDiagnostic,
-  forgetThrownRead,
-  registerGraph,
-  reportDiagnostic
-} from "./core/dev.js";
+import { emitDiagnostic, forgetThrownRead, registerGraph, reportDiagnostic } from "./core/dev.js";
 import {
   dirtyQueue,
+  flush,
   flushTransaction,
   globalQueue,
   resolveTx,
@@ -104,9 +100,10 @@ export function onCleanup(fn: Disposable): Disposable {
           message
         })
       );
-    } else if (owner._config & CONFIG_CHILDREN_FORBIDDEN) {
-      const message =
-        "[CLEANUP_IN_FORBIDDEN_SCOPE] Cannot use onCleanup inside createTrackedEffect or onSettled; return a cleanup function instead";
+    } else if (owner._config & CONFIG_CHILDREN_FORBIDDEN || inRefCallback()) {
+      const message = inRefCallback()
+        ? "[CLEANUP_IN_FORBIDDEN_SCOPE] Cannot use onCleanup inside a ref callback; register it in the factory that returns the ref (the component body)"
+        : "[CLEANUP_IN_FORBIDDEN_SCOPE] Cannot use onCleanup inside createTrackedEffect or onSettled; return a cleanup function instead";
       emitDiagnostic({
         code: "CLEANUP_IN_FORBIDDEN_SCOPE",
         kind: "lifecycle",
@@ -396,7 +393,7 @@ export type NoInfer<T extends any> = [T][T extends any ? 0 : never];
  * setUser({ ...user(), name: "Alice" });
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/reactivity/create-signal
+ * @description https://docs.solidjs.com/reference/solid-js/reactivity/create-signal
  */
 export function createSignal<T>(): Signal<T | undefined>;
 export function createSignal<T>(value: Exclude<T, Function>, options?: SignalOptions<T>): Signal<T>;
@@ -439,7 +436,7 @@ export function createSignal<T>(
  * const [state, setState] = createOptimistic<T>(fn, options?: SignalOptions<T> & MemoOptions<T>);
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/reactivity/create-optimistic
+ * @description https://docs.solidjs.com/reference/solid-js/reactivity/create-optimistic
  */
 export function createOptimistic<T>(): Signal<T | undefined>;
 export function createOptimistic<T>(
@@ -485,7 +482,7 @@ export function createOptimistic<T>(
  * });
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/reactivity/create-memo
+ * @description https://docs.solidjs.com/reference/solid-js/reactivity/create-memo
  */
 // NoInfer keeps the previous-value parameter from influencing T inference, so
 // the memo/effect result type is still driven by the compute return type.
@@ -572,7 +569,7 @@ export function createMemo<T>(
  * );
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/reactivity/create-effect
+ * @description https://docs.solidjs.com/reference/solid-js/reactivity/create-effect
  */
 export function createEffect<const T>(
   compute: ComputeFunction<undefined | NoInfer<T>, T>,
@@ -626,7 +623,7 @@ export function createEffect<const T>(
  * }
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-render-effect
+ * @description https://docs.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-render-effect
  */
 export function createRenderEffect<const T>(
   compute: ComputeFunction<undefined | NoInfer<T>, T>,
@@ -679,7 +676,7 @@ export function createRenderEffect<const T>(
  * });
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-tracked-effect
+ * @description https://docs.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-tracked-effect
  */
 export function createTrackedEffect(
   compute: () => void | (() => void),
@@ -712,7 +709,7 @@ export function createTrackedEffect(
  * setCount(1); // logs once, reaction re-armed for next change
  * ```
  *
- * @description https://v2.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-reaction
+ * @description https://docs.solidjs.com/reference/solid-js/advanced/specialized-reactivity/create-reaction
  */
 export function createReaction(
   effectFn: EffectFunction<undefined> | EffectBundle<undefined>,
@@ -777,7 +774,7 @@ export function createReaction(
  *   holds (the action awaits the promise that would otherwise wait on its
  *   own settle);
  * - a mainline reader whose pass read a frame another transaction holds
- *   joined it (L2, born held — A29) and delivers at that commit: the
+ *   joined it (L2, born held — F-7) and delivers at that commit: the
  *   committed view, never a foreign hold's unrevealed frame. */
 function watch<T>(
   fn: () => T,
@@ -1105,7 +1102,8 @@ export function onSettled(callback: () => void | (() => void)): void {
  * - A write in the callback lands after any write made inline in the same
  *   frame. Don't write the same signal both inside and outside it; use a
  *   functional setter if the order matters.
- * - Several `onFlush` callbacks run in call order and batch into one flush.
+ * - Several `onFlush` callbacks run in call order, each in its own flush:
+ *   async work one callback starts does not hold another's writes.
  * - `queueMicrotask` is not a substitute: called before the frame's first
  *   write, it runs before that flush and its write joins it.
  *
@@ -1123,7 +1121,7 @@ export function onSettled(callback: () => void | (() => void)): void {
 export function onFlush(callback: () => void): void {
   if (__DEV__) {
     const owner = getOwner();
-    if (owner && !(owner._config & CONFIG_CHILDREN_FORBIDDEN)) {
+    if (owner && !(owner._config & CONFIG_CHILDREN_FORBIDDEN) && !inRefCallback()) {
       const message =
         "[ON_FLUSH_IN_OWNED_SCOPE] onFlush called in an owned scope (a component body or a computation). It is meant for event handlers and effect callbacks; to run work after this scope's first stable render, use onSettled.";
       reportDiagnostic(
@@ -1139,7 +1137,12 @@ export function onFlush(callback: () => void): void {
     }
   }
   // The frame's flush is queued (or already draining) ahead of this
-  // microtask, so the callback's writes start a flush of their own.
+  // microtask, so the callback's writes start a flush of their own. Each
+  // callback flushes before the next runs, so async work one starts never
+  // holds another's writes.
   schedule();
-  queueMicrotask(callback);
+  queueMicrotask(() => {
+    callback();
+    flush();
+  });
 }

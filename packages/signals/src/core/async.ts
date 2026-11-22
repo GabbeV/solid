@@ -32,7 +32,7 @@ import {
   NewSet
 } from "./constants.js";
 import { attrHooks } from "./attribution-hooks.js";
-import { context, setSignal, untrack, ext, statusNotifierOf } from "./core.js";
+import { context, ext, landThroughSetSignal, setSignal, statusNotifierOf, untrack } from "./core.js";
 import { devTrackHeldPending } from "./invariants.js";
 import {
   caughtReadFlightSettled,
@@ -118,7 +118,11 @@ function clearPendingSources(el: Computed<any>): void {
 export function retryReaches(el: Computed<any>, source: any): boolean {
   for (let d = el._deps; d; d = d._nextDep) {
     const dep = d._dep as Computed<any>;
-    if (dep === source || dep._x?._pendingSources?.has(source)) return true;
+    if (
+      !(dep._flags & REACTIVE_DISPOSED) &&
+      (dep === source ? dep._statusFlags & STATUS_PENDING : dep._x?._pendingSources?.has(source))
+    )
+      return true;
   }
   return false;
 }
@@ -371,7 +375,12 @@ export function settlePendingSource(el: Computed<any>, source: Computed<any> = e
       // resumes the sync frame") — a held reader's re-pass over the landed
       // value is that transaction's work, and the flush that carries it
       // parks into it.
-      if (node._config & CONFIG_HELD && !layerStatus?.(node, el)) joinFuture(txOf(node));
+      if (
+        node._config & CONFIG_HELD &&
+        !layerStatus?.(node, el) &&
+        !(source._statusFlags & STATUS_PENDING)
+      )
+        joinFuture(txOf(node));
       if (node._x?._blocked) {
         enqueueSub(node);
         scheduled = true;
@@ -639,10 +648,9 @@ export function handleAsync<T>(
     const carried = stageMarkHook && pendingNodes.some(n => n._pendingValue !== NOT_PENDING);
     const wasUninitialized = el._statusFlags & STATUS_UNINITIALIZED;
     landStatus(el);
-    // Attribution hook: lets the engine snapshot state before the landing
-    // branches, so it can tell whether the plain path's setSignal committed a
-    // change (and only then classify it as an async landing).
-    if (__OBSERVE__ && attrHooks !== null) attrHooks.asyncStart(el);
+    const observed = __OBSERVE__ && attrHooks !== null;
+    const before = observed ? el._value : undefined;
+    const beforeTime = observed ? el._time : 0;
     if (setter) {
       try {
         setter(value);
@@ -663,29 +671,16 @@ export function handleAsync<T>(
       // Its producer remains initial until commit, so a replay or late reader
       // cannot mistake the seed backing for a published first answer.
       if (wasUninitialized && !(el._config & CONFIG_HELD)) landStatus(el, true);
-      // Attribution hook: this path landed through the setter (derived
-      // stores, projections), which does not go through setSignal, so the
-      // plain branch's asyncEnd never ran and the flight stayed open — the
-      // next flight counted a committed answer as abandoned (#3947).
-      // direct=true: asyncEnd finalizes either way and stamps an async write
-      // only if the commit moved `_value`/`_time` or parked `_pendingValue`.
-      // A store setter does not move this node's `_value`, so no stamp is
-      // recorded and waterfall chaining through derived stores stays
-      // unmeasured. Outside the try (#2883 — see attribution-hooks.ts).
-      if (__OBSERVE__ && attrHooks !== null) attrHooks.asyncEnd(el, undefined, value, true);
+      if (observed)
+        attrHooks!.asyncLanded(
+          el,
+          value,
+          el._value !== before || el._time !== beforeTime || el._pendingValue === value
+        );
     } else {
-      // CARVE 2: the override-covered landing (hold + A18 supersession) and the
-      // lane-routed landing (derived override, lane effect queue) went with
-      // the optimistic engine; every landing is the plain setSignal. A node
-      // already held stages its answer into that hold (`setSignal`). Its
-      // comparator throw is contained there (`isSame`, A3).
-      setSignal(el, () => value);
+      const changed = observed ? landThroughSetSignal(el, value) : (setSignal(el, () => value), false);
       el._flags &= ~REACTIVE_PREVIOUS_COMMITTED;
-      // Attribution hook: this path landed through setSignal, whose write
-      // hook already saw any committed change — direct=false lets the engine
-      // reclassify that write as an async landing iff it actually committed.
-      // Outside the try (#2883 — see attribution-hooks.ts).
-      if (__OBSERVE__ && attrHooks !== null) attrHooks.asyncEnd(el, undefined, value, false);
+      if (observed) attrHooks!.asyncLanded(el, value, changed);
     }
     // First real answer landing: the window closes when the answer becomes
     // OBSERVABLE. A direct commit is observable now; a staged write
@@ -970,6 +965,7 @@ export function handleAsync<T>(
 }
 
 export function clearStatus(el: Computed<any>, clearUninitialized: boolean = false): void {
+  if (el._x?._aheadError) el._x._aheadError = undefined;
   if (el._x?._pendingSources) clearPendingSources(el);
   if (el._x?._blocked) el._x._blocked = false;
   el._statusFlags = clearUninitialized ? 0 : el._statusFlags & STATUS_UNINITIALIZED;
@@ -1007,6 +1003,7 @@ function landStatus(el: Computed<any>, clearUninitialized: boolean = false): voi
   const sources = el._x?._pendingSources;
   // (The full clear below drops the set whether or not self was retired first.)
   if (sources && (sources.delete(el), sources.size)) {
+    if (el._x!._aheadError) el._x!._aheadError = undefined;
     el._x!._blocked = false;
     if (clearUninitialized) el._statusFlags = STATUS_PENDING;
     setPendingError(el, sources.values().next().value);
@@ -1022,6 +1019,7 @@ export function notifyStatus(el: Computed<any>, status: number, error?: any): vo
   )
     error = new StatusError(el, error);
 
+  if (status === STATUS_ERROR && el._x?._aheadError) el._x._aheadError = undefined;
   const pendingSource = status === STATUS_PENDING && error instanceof NotReadyError && error.source;
   // (CARVE 2: the lane assignment went with the engine.)
 

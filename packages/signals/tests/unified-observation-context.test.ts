@@ -98,12 +98,15 @@ for (const kind of [
             end.resolve();
             await running;
             await turn();
-            // untrack takes a snapshot; it does not pull a dirty wrapper or
-            // subscribe to the wrapper's subsequent correction. Both ordinary
-            // reads still belong to the same context. A later explicit rerun
-            // samples the now-published false value.
-            const snapshot = kind === "pending memo" && !tracked;
-            expect(shown.at(-1)).toBe(`1/${kind.startsWith("pending") ? snapshot : 1}/1`);
+            // untrack samples this execution's context without subscribing.
+            // A correction already calculated in this update is eligible.
+            if (kind === "pending memo" && !tracked) {
+              const sampled = calculations.at(-1);
+              expect(["1/false/1", "1/true/1"]).toContain(sampled);
+              expect(shown.at(-1)).toBe(sampled);
+            } else {
+              expect(shown.at(-1)).toBe(`1/${kind.startsWith("pending") ? false : 1}/1`);
+            }
             app.setRevision(2);
             flush();
             await turn();
