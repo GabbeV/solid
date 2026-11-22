@@ -52,11 +52,13 @@ import {
 import {
   captureWriteSnapshot,
   context,
+  creatorPass,
   devRead,
   disposalDepth,
   isEqual,
   notePromotedWrite,
   ownedScopeWriteMessage,
+  pullComputed,
   read as readNode,
   REACTIVE_WRITE_IN_OWNED_SCOPE_SIGNAL_MESSAGE,
   setSignal,
@@ -870,6 +872,7 @@ function ensurePB(target: StoreTarget): Record<PropertyKey, any> {
         const producer = userWrite && target.ch && initialWriteProducer(target);
         if (!(error instanceof NotReadyError) || error instanceof ContextRetry || !producer)
           throw error;
+        if (__DEV__) devWriteThroughLoading(target);
         holdInitialWriteProducer(producer);
         // The trap may complete this mutation, but no backing is installed,
         // so this child cannot publish the discarded proposal (#4810).
@@ -2110,7 +2113,16 @@ function pullFamily(
     // Keep a synthetic input linked through its producer's quiet landing; the
     // following ordinary pass restores the settled per-property barrier.
     if (inputSide && fw._x?._reask) readNode(fw);
-    else untrack(() => readNode(fw));
+    else {
+      // During propagation a leaf's producer must run before its reader
+      // (#4782). Outside the flush, a draft can still be building this
+      // update: sampling its displayed leaf must not restart the producer.
+      if (globalQueue._running) {
+        const reader = creatorPass(getObserver());
+        if (reader) pullComputed(fw, reader);
+      }
+      untrack(() => readNode(fw));
+    }
     // #4491: a derive that is a verdict reader only through what it reads (a
     // verdict memo's value, D-25 / F-6; no window of its own) is served the
     // committed value of a flight it reads (`observeFlight`, A15's stale
@@ -2321,6 +2333,24 @@ function warnWriteOutsideSetter(
         `Stores are read-only outside the setter's draft: use \`${hint}\`.`,
       nodeName: name,
       data: { operation, property: name }
+    })
+  );
+}
+
+function devWriteThroughLoading(target: StoreTarget): void {
+  const name = String(target.pk ?? "");
+  reportDiagnostic(
+    emitDiagnostic({
+      code: "STORE_WRITE_THROUGH_LOADING",
+      kind: "write",
+      severity: "warn",
+      message:
+        `[STORE_WRITE_THROUGH_LOADING] A store setter wrote inside "${name}", which is another ` +
+        `store still loading its first answer. The write was dropped: when that store loads, its ` +
+        `answer is what shows, as for a write to a loading store itself. Write after it loads, or ` +
+        `replace the whole value: \`setStore(s => { s.${name} = value })\`.`,
+      nodeName: name,
+      data: { operation: "set", property: name }
     })
   );
 }

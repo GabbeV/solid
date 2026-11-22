@@ -3,7 +3,9 @@ import {
   createEffect,
   createMemo,
   createProjection,
+  createRenderEffect,
   createRoot,
+  createSignal,
   createStore,
   flush
 } from "../src/index.js";
@@ -64,6 +66,31 @@ function run(N: number, memo: boolean) {
 }
 
 describe("a projection read by another projection's derive (#4782)", () => {
+  it("a reader first selecting a projection asks only for its current value", () => {
+    const asks: number[] = [];
+    const app = createRoot(dispose => {
+      const [selected, select] = createSignal(false);
+      const [price, setPrice] = createSignal(0);
+      const doubled = createMemo(() => price() * 2);
+      const row = createProjection(() => ({ cost: doubled() }), { cost: 0 });
+      const detail = createMemo(() => {
+        if (selected()) asks.push(row.cost);
+        return asks.length;
+      });
+      createRenderEffect(detail, () => {});
+      return { select, setPrice, dispose };
+    });
+    try {
+      flush();
+      app.select(true);
+      app.setPrice(1);
+      flush();
+      expect(asks).toEqual([2]);
+    } finally {
+      app.dispose();
+    }
+  });
+
   for (const memo of [true, false])
     it(`each derive runs once per flush (${memo ? "derive reads a memo" : "store keys only"})`, () => {
       expect(run(50, memo)).toEqual({ bRuns: 49, rRuns: 1, out: 49 });
