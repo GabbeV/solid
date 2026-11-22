@@ -92,7 +92,7 @@ function arrayInput(t: StoreTarget): Record<PropertyKey, any> {
   for (;;) {
     if (visited.has(target)) return committed(target);
     visited.add(target);
-    pullFamilyInput(target);
+    if (target._fam) pullFamilyInput(target);
     const source = read(getContainerNode(target)) as Record<PropertyKey, any>;
     const inner = source?.[$TARGET] as StoreTarget | undefined;
     if (!inner) return source;

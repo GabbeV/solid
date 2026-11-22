@@ -2018,6 +2018,17 @@ export function linkedTo(c: Computed<any>, n: Signal<any>): boolean {
   return false;
 }
 
+/** Reading a projection's own row from one of its inputs must not add a
+ * dependency back to the projection. Heights bound the dependency walk. */
+function feeds(node: Computed<any>, input: Computed<any>): boolean {
+  for (let edge = node._deps; edge; edge = edge._nextDep) {
+    const dependency = edge._dep as Computed<any>;
+    if (dependency === input || (dependency._height > input._height && feeds(dependency, input)))
+      return true;
+  }
+  return false;
+}
+
 /** The projection's obligation (plan sec. 31.7 Q-B): before any value is served
  * through a family target, the derive — the firewall — is brought up to
  * date WITHOUT the reader subscribing to it. Core's `read()` of the
@@ -2047,6 +2058,8 @@ function pullFamily(
   )
     return;
   if (!inputSide && target._fam!.opt && optHooks?.ownsFirewall?.(target, key, presence)) return;
+  const c: any = context;
+  if (c?._subs && feeds(fw, c)) return;
   // A settled derive: the pull alone, no link (the barrier). A derive with a
   // flight up (or errored): the reader observes the flight exactly as a
   // reader of a memo would — linked, so it re-runs at the landing (the
@@ -2082,7 +2095,6 @@ function pullFamily(
     // another reason (a guess it read, the seam) that dropped the link would
     // release the hold with the flight still up. An errored derive has no
     // landing to learn of: the error is what the frame shows.
-    const c: any = context;
     if (
       c !== null &&
       c._type === EFFECT_RENDER &&

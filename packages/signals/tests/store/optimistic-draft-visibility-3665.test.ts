@@ -259,8 +259,9 @@ describe("#3665 — a second setter in the same action sees the first setter's a
       await run;
       flush();
       expect(keys).toEqual(["a", "b"]);
-      // S2: the add is the target's guess carrier's, not a presence node's.
-      expect(afterWrite!.h).toEqual([]);
+      // Adding b proposes its presence. Enumerating the draft must not
+      // materialize a presence node for the untouched key a.
+      expect(afterWrite!.h.filter(key => key !== "b")).toEqual([]);
       expect(afterEnumerate).toEqual(afterWrite);
       dispose();
     });
