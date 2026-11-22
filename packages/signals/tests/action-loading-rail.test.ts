@@ -1,18 +1,6 @@
 /**
- * #2937: the loading rail is invisible to transactions (#2933 ruling) — an
- * uninitialized async node has no committed value for a transaction to hold,
- * so its FIRST reveal must flow ambiently. The pending-node stamping sites
- * (initTransition adoption / reassignPendingTransition at stash) stamped
- * loading-rail nodes like value-holding pending ones; the node's settle then
- * re-activated the (incomplete) action transaction and the reveal — the
- * boundary swap, including the fallback's onCleanup — was stashed with it.
- * When the action's completion depended on that cleanup (the reported
- * hand-rolled "wait for the fallback to clear" transition), that was a
- * deadlock, with or without a flush between the write and the action call.
- *
- * Adoption itself is intended and untouched: writes made earlier in the same
- * tick — plain or optimistic — join the action's transaction (updates can be
- * mutation and navigation at once). Only the loading-rail stamp is exempt.
+ * A first request made against committed inputs may reveal during an action
+ * (#2937). A request made against an action's proposal publishes with it.
  */
 import {
   action,
@@ -37,7 +25,7 @@ function harness(log: string[]) {
   let resolveData!: (v: number) => void;
   let view: any;
 
-  createRoot(() => {
+  const dispose = createRoot(dispose => {
     const data = createMemo(() => {
       const s = src();
       return new Promise<number>(r => (resolveData = v => r(v + s)));
@@ -53,13 +41,14 @@ function harness(log: string[]) {
         return "fallback";
       }
     );
-    createRenderEffect(
-      () => (view = b()),
-      () => {}
-    );
+    createRenderEffect(b, value => {
+      view = value;
+    });
+    return dispose;
   });
   flush();
   return {
+    dispose,
     setSrc,
     setOpt,
     opt,
@@ -76,18 +65,15 @@ async function drive(mode: "in-step" | "adopted", preFlush: boolean) {
 
   const p = (Promise as any).withResolvers();
 
-  // Watcher in its own root BEFORE the action: resolves the action's yielded
-  // promise when the fallback cleans up (the issue's createTransition).
-  createRoot(dispose => {
+  // Track fallback cleanup independently of the ordinary selection binding.
+  const stop = createRoot(dispose => {
     createEffect(
       () => latest(h.isL),
-      (v: boolean) => {
-        if (!v) {
-          p.resolve();
-          dispose();
-        }
+      loading => {
+        if (!loading) p.resolve();
       }
     );
+    return dispose;
   });
 
   if (mode === "adopted") h.setSrc(2); // same tick, before the action call
@@ -100,26 +86,39 @@ async function drive(mode: "in-step" | "adopted", preFlush: boolean) {
     log.push("action:end");
   });
   const done = run();
-
-  await wait(10);
-  flush();
-  h.resolve(100); // uninitialized async settles: first reveal must flow
-  await wait(10);
-  flush();
-
-  const result = await Promise.race([done.then(() => "done"), wait(300).then(() => "TIMEOUT")]);
-  flush();
-  return { log, result, view: h.view() };
+  try {
+    await wait(0);
+    flush();
+    h.resolve(100);
+    await wait(0);
+    flush();
+    const alreadyCommitted = mode === "adopted" && preFlush;
+    if (alreadyCommitted) {
+      expect(h.view()).toBe("content:102");
+      expect(log).toEqual(["fallback-cleanup", "action:end"]);
+    } else {
+      expect(h.view()).toBe("fallback");
+      expect(log).toEqual([]);
+      // The action cannot wait for its own reveal. Complete its external work.
+      p.resolve();
+    }
+    await done;
+    flush();
+    expect(h.view()).toBe("content:102");
+    expect(log).toEqual(
+      alreadyCommitted ? ["fallback-cleanup", "action:end"] : ["action:end", "fallback-cleanup"]
+    );
+  } finally {
+    p.resolve();
+    stop();
+    h.dispose();
+  }
 }
 
 for (const mode of ["in-step", "adopted"] as const) {
   for (const preFlush of [false, true]) {
-    it(`boundary reveal settles the action (${mode} write, preFlush=${preFlush})`, async () => {
-      const { log, result, view } = await drive(mode, preFlush);
-      expect(result).toBe("done");
-      expect(view).toBe("content:102");
-      expect(log).toEqual(["fallback-cleanup", "action:end"]);
-    });
+    it(`first reveal follows the input used by its request (${mode}, preFlush=${preFlush})`, () =>
+      drive(mode, preFlush));
   }
 }
 

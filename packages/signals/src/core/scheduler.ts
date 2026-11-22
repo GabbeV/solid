@@ -33,6 +33,7 @@ import {
   REACTIVE_OWNER_READS,
   REACTIVE_RECOMPUTING_DEPS,
   REACTIVE_SNAPSHOT_STALE,
+  REACTIVE_STAGED_READ,
   REACTIVE_ZOMBIE,
   STATUS_ERROR,
   STATUS_PENDING,
@@ -1652,6 +1653,10 @@ function append<T>(a: T[], b: T[]): void {
 /** Nodes staged this flush (`_pendingValue` set), committed at its end. */
 export const pendingNodes: Signal<any>[] = [];
 
+function independentFirstLoad(node: Computed<unknown>): boolean {
+  return !!(node._statusFlags & STATUS_UNINITIALIZED) && !(node._flags & REACTIVE_STAGED_READ);
+}
+
 /** Park this round's proposals and their owned frames in the common update.
  * A layer can park a prefix before temporarily running another update's pass.
  * The normal seam uses the same loop; `_nodes` may grow as frames are held. */
@@ -1676,17 +1681,11 @@ export function holdQueuedProposals(update: Transaction, start?: number): void {
       !(n._config & (CONFIG_HELD | (LEGACY_LANES ? CONFIG_OVERRIDE : 0))) &&
       (!LEGACY_LANES || n._x === null || n._x._transaction === null || !n._x._transaction._lane)
     ) {
-      // A loading source — pending with nothing staged and no committed
-      // value (A16, A19 exc. 1: uninitialized is loading, not pending)
-      // that is not an observer — is nobody's frame: not held. Its
-      // first landing is commit #0, not a resumption of this frame, and
-      // a write that reaches it later overlaps nothing (#2937: the
-      // stale stamp was the bridge that entangled unrelated updates
-      // with a never-resolving flight). Its observers are held and
-      // wait on its flight (`blocked`).
+      // An independent first load can reveal during this hold (D-6). If
+      // its request read a proposal, its answer publishes with that input.
       if (
         n._pendingValue === NOT_PENDING &&
-        (n as Computed<any>)._statusFlags & STATUS_UNINITIALIZED &&
+        independentFirstLoad(n as Computed<unknown>) &&
         (n as any)._type !== EFFECT_RENDER
       )
         continue;
@@ -2048,7 +2047,7 @@ function supersededPass(node: Computed<unknown>): boolean {
   const owesRun = effect._type === EFFECT_USER && effect._modified;
   if (
     (node._pendingValue === NOT_PENDING && !owesRun) ||
-    node._statusFlags & STATUS_UNINITIALIZED ||
+    independentFirstLoad(node) ||
     quietPending(node)
   )
     return false;

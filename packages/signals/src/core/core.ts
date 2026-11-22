@@ -190,7 +190,6 @@ import {
   laneOutcomeHook,
   laneReadHook,
   laneStageHook,
-  laneSeamsHook,
   laneServedHook,
   holdStagingHook,
   holdWorkHook,
@@ -630,7 +629,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   // — here, the finally below, updateIfNecessary — carries it (#3543).
   // A settle found this node unobserved while this pass was queued
   // (REACTIVE_RELEASE_AFTER): the release is this pass's tail's (#4474).
-  const releaseAfter = el._flags & REACTIVE_RELEASE_AFTER;
+  const previousFlags = el._flags;
   el._flags =
     REACTIVE_RECOMPUTING_DEPS |
     (el._flags & (REACTIVE_PERSISTENT | REACTIVE_ZOMBIE | REACTIVE_REASK));
@@ -689,6 +688,10 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   } catch (e) {
     if (e instanceof ContextRetry) throw e;
     const notReady = e instanceof NotReadyError;
+    // A suspended retry leaves the earlier proposal in the slot. Its input
+    // still owns it, even if the retry read only committed values.
+    if (notReady && el._pendingValue !== NOT_PENDING)
+      el._flags |= previousFlags & REACTIVE_STAGED_READ;
     // A failed replacement can publish a fallback. The old context's staged
     // result must not become committed history through that status commit.
     // While pending, retain it for the eventual answer's equality check: its
@@ -1142,7 +1145,7 @@ export function recomputeBody(el: Computed<any>, create: boolean): void {
   // seam — and is reclaimed now if still unobserved and settled; a pass that
   // went pending is an observer's again (its landing releases it), and one
   // re-queued above is released at that pass's tail.
-  if (releaseAfter) releaseIfSettledUnobserved(el);
+  if (previousFlags & REACTIVE_RELEASE_AFTER) releaseIfSettledUnobserved(el);
 }
 
 function updateIfNecessary(el: Computed<unknown>): void {
@@ -2708,46 +2711,13 @@ function shadowRead<T>(el: Signal<T> | Computed<T>): T {
   }
 }
 
-/** A pass read a staging of this flush: it derives from what the flush may
- * yet hold (REACTIVE_STAGED_READ — the seam decides). Lane work too (D-25, a
- * lane sees the screen plus its own guesses) — a folded lane's only before
- * the frame has a transaction (after, it reads the screen like a verdict
- * reader, `stagedScreen` — a list pass never pairs a held length with the
- * guess's rows, D-34): the staging is the screen if
- * the frame commits — one pass, the common case — and a held write if it
- * parks, which the seam repairs (`stagedReaders`): the pass re-derives on
- * the committed world and its lane's runs wait that round, so the held
- * write never shows through the lane. A verdict lane's work likewise: the
- * lane holds verdicts, not the frame's other stagings (#3851) — except a
- * verdict reader, which answered for itself (the lane seam, lanes.ts). Not
- * a read of a node born staged at all: it has no committed value to
- * re-derive on, and a re-run would read the same staging and re-queue every
- * round (#3969: nor does it make a later lane read a re-derive, `enterLane`). */
+/** A pass consuming a proposal shares its publication, including the first
+ * answer of a source. Its children inherit an already-held read immediately. */
 export function stagedRead(c: Computed<any>, el?: Signal<any> | Computed<any>): void {
-  if (!((el as Computed<any> | undefined)?._statusFlags! & STATUS_UNINITIALIZED)) {
-    c._flags |= REACTIVE_STAGED_READ;
-    // A proposal consumed while this flush already belongs to an update
-    // gives owned children that same hold. Record it at the read: a later
-    // child can join a different hold without changing its creator's frame.
-    if (
-      el &&
-      flushTransaction !== null &&
-      preparingUpdate === null &&
-      (LEGACY_LANES ? passLane : null) === null &&
-      !(LEGACY_LANES && c._config & CONFIG_VERDICT)
-    )
-      c._flags |= REACTIVE_JOINED;
-
-    if (__TEST__) shadowExternalRaise(c, RAISE_FL);
-    // A verdict reader's too when it is an effect, before the frame has a
-    // transaction (after, `stagedScreen` serves it the screen): the staging
-    // is the frame's read, and the pass re-derives once as a verdict reader
-    // if the flush parks (D-22; D-25: the probe decides the posture in either
-    // read order). A memo's is the frame's derivation either way: a memo is
-    // not a leaf (`frameRead`).
-    if (laneSeamsHook && (passLane !== null || ((c as any)._type && c._config & CONFIG_VERDICT)))
-      stagedReaders.push(c);
-  }
+  c._flags |= REACTIVE_STAGED_READ;
+  if (el && flushTransaction !== null && preparingUpdate === null)
+    c._flags |= REACTIVE_JOINED;
+  if (__TEST__) shadowExternalRaise(c, RAISE_FL);
 }
 
 /** A10 for a staged node: a verdict reader (the pass entered a window) that

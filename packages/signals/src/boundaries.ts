@@ -523,22 +523,13 @@ function boundarySeam(): void {
     // A fresh boundary's content that derives from a write a hold keeps
     // reveals with that hold's commit (F-7, D-12): the boundary waits on
     // the held node, kept like a held reader until it commits (`prune`).
-    // The node a settled reader reads: an answer staged there — a staged
-    // error marks no frame reader (D-41) — left the reader settled on its
-    // stale committed value (#4591). The node a first load it waits on
-    // reads: the seam keeps a loading source out of every hold (#2937,
-    // D-6), so its answer landed mainline, torn from the frame a write's
-    // hold keeps on screen (F-1, #4593); under an open action it still
-    // reveals at its landing (#2937). Not a held reader: it reveals with its
-    // own commit.
+    // A staged error can leave a settled reader displaying its previous
+    // value. Keep its held dependency until the error can publish (D-41).
     if (!b._initialized)
       for (const [r] of b._readers)
-        for (const n of r._statusFlags & STATUS_PENDING ? r._x?._pendingSources || [] : [r])
-          if (!(n._config & CONFIG_HELD))
-            for (let d = n._deps; d; d = d._nextDep) {
-              const h = d._dep as Computed<any>;
-              if (h._config & CONFIG_HELD && (n === r || !txOf(h)._open)) record(b, h);
-            }
+        if (!(r._statusFlags & STATUS_PENDING) && !(r._config & CONFIG_HELD))
+          for (let d = r._deps; d; d = d._nextDep)
+            if (d._dep._config & CONFIG_HELD) record(b, d._dep as Computed<any>);
     prune(b);
     const o = b._output!;
     // A fallback staged into the very hold its readers landed in folds back:
@@ -548,6 +539,7 @@ function boundarySeam(): void {
     if (
       b._type & STATUS_PENDING &&
       !b._initialized &&
+      b._fallback &&
       o._config & CONFIG_HELD &&
       [...b._readers].every(
         ([, s]) =>
@@ -976,7 +968,9 @@ function createBoundary<T>(
         if (tree._statusFlags & type & STATUS_PENDING) caught(b, tree);
         if (b._readers.size !== 0) return shown && passLane ? value : fallback(b);
       }
-      b._initialized = true;
+      // While a fallback is on screen, preparing its replacement does not
+      // make the boundary transparent. A superseding request still gets caught.
+      if (!b._fb) b._initialized = true;
       // Observe: the fallback stops showing (a hide before its commit means
       // it never displayed — the engine knows the swap it was staged with).
       if (__OBSERVE__ && b._fallback && b._type & STATUS_PENDING && attrHooks !== null)
@@ -999,6 +993,7 @@ function createBoundary<T>(
           // handle) is what an enclosing boundary waits on: it died, and
           // the seam of another round drops it there (#4270).
           if (fb!._statusFlags & STATUS_ERROR) schedule();
+          b._initialized = true;
           dispose(fb!);
           b._fb = null;
         }
