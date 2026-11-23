@@ -84,6 +84,12 @@ export function inputTime(input: Computed<any>): number {
   return typeof input._fn === "function" ? input._time : input._notifiedAt;
 }
 
+export const enum GuessLifetime {
+  Action = 1,
+  Preview,
+  Store
+}
+
 export type Layer<T> = {
   _input: Computed<any>;
   _output: Computed<T>;
@@ -92,8 +98,7 @@ export type Layer<T> = {
   _inputStatus?: true;
   _statusInput?: Computed<any>;
   _position?: number;
-  _automatic?: true;
-  _opening?: true;
+  _lifetime?: GuessLifetime;
   _onSelected?: () => void;
   _onRetired?: () => void;
   _refreshInput?: (layer: Layer<any>) => void;

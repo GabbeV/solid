@@ -19,6 +19,7 @@ import {
   CONFIG_HELD,
   CONFIG_REDERIVE,
   CONFIG_LOADING,
+  CONFIG_INPUTS_PUBLISHED,
   CONFIG_SYNC,
   REACTIVE_WRITABLE_COMPUTED,
   NOT_PENDING,
@@ -29,7 +30,8 @@ import {
   REACTIVE_DISPOSED,
   REACTIVE_RECOMPUTING_DEPS,
   STATUS_PENDING,
-  STATUS_ERROR
+  STATUS_ERROR,
+  STATUS_UNINITIALIZED
 } from "../core/constants.js";
 import {
   blocked,
@@ -58,6 +60,7 @@ import { ContextRetry, NotReadyError } from "../core/error.js";
 import { committedDependencies, layerPosition } from "./committed-dependencies.js";
 import {
   createLayerBoundary,
+  GuessLifetime,
   inputUpdate,
   positionOf,
   resumeInput,
@@ -243,20 +246,25 @@ if (__OBSERVE__) {
 // calculations. Merging invalidates it before admitting any new work.
 let settledInputs: Transaction | null = null;
 
-/** A guessed input's own flight keeps its action alive even without readers,
- * as in next. It does not hold a different update merely because the
- * override is displayed. Its eventual correction uses ordinary joining. */
+/** Check the work that gives this scope a lifetime. A request whose
+ * inputs had already published before a scalar guess belongs to its revert. */
 function pendingScope(update: Transaction): boolean {
   if (update === settledInputs) return false;
   const layers = scopes.get(update);
   if (!layers) return false;
-  for (const layer of layers) if (pendingInput(layer)) return true;
+  for (const layer of layers) {
+    if (layer._lifetime === GuessLifetime.Preview) {
+      // Let this guess propagate, then publish ahead of the revert only
+      // while its output is synchronously ready.
+      if (proposals.has(layer)) return true;
+      const output = outputUpdate(layer);
+      if (output && output !== update && readyToPublish(output)) return true;
+    } else if (pendingInput(layer)) return true;
+  }
   return false;
 }
 
-/** A projection leaf is a plain signal: its producer's flight reaches it as
- * a pending source rather than its own status flag. Both forms justify a
- * guess made while that question is unanswered. */
+/** A store slot can inherit a producer's pending status through its sources. */
 function pendingInput(layer: Layer<any>): boolean {
   const input = layer._input;
   if (input._statusFlags & STATUS_PENDING) return true;
@@ -284,6 +292,7 @@ function retire(layer: Layer<any>): void {
     output._x !== null &&
     (!owner || (owner._root && !owner._parentComputed)) &&
     !(input._config & CONFIG_HELD) &&
+    !(input._statusFlags & STATUS_PENDING) &&
     input._pendingValue === NOT_PENDING &&
     !(
       input._flags &
@@ -307,37 +316,28 @@ function prepareGuesses(): boolean {
       proposals.delete(layer);
       continue;
     }
-    if (!layer._automatic || layer._scope) continue;
+    if (!layer._lifetime || layer._scope) continue;
     // A pending lower input is evidence that an ambient guess can outlive
     // this flush; its preexisting transaction does not own the new guess's
     // action lifetime. The layer core coordinates output publication apart
     // from this scope.
     let scope = flushTransaction && resolveTx(flushTransaction);
-    if (!scope && !pendingInput(layer)) scope = inputUpdate(layer);
     if (!scope && pendingInput(layer)) {
-      // Keep this new lifetime alive until the guess has propagated once;
-      // its displayed consumers then determine the ordinary input hold.
       scope = newTransaction(false);
-      scope._open++;
-      layer._opening = true;
-      holdNode(layer._input, scope);
+      bindScope(layer, scope);
+      if (layer._lifetime !== GuessLifetime.Preview) holdNode(layer._input, scope);
+      continue;
     }
-    if (!scope) proposals.delete(layer);
-    else bindScope(layer, scope);
+    scope ??= inputUpdate(layer);
+    if (scope) bindScope(layer, scope);
+    else proposals.delete(layer);
   }
   // Scope membership follows ordinary merging. Output updates which own
   // no guesses do not scan unrelated lifetimes when checking readiness.
   for (const [scope, layers] of scopes) {
     // Absence of a flight is stable during retirement; newly merged work
     // invalidates this shortcut before another readiness check.
-    if (!scope._open) {
-      settledInputs = scope;
-      for (const layer of layers)
-        if (pendingInput(layer)) {
-          settledInputs = null;
-          break;
-        }
-    }
+    if (!scope._open && !pendingScope(scope)) settledInputs = scope;
     try {
       for (const layer of layers) {
         if (layer._output._flags & REACTIVE_DISPOSED) {
@@ -462,10 +462,6 @@ function groupByDependencies(): Layer<any>[][] {
 function applyProposal(proposal: unknown, layer: Layer<any>): void {
   const surviving = proposal !== NOT_PENDING && !(layer._output._flags & REACTIVE_DISPOSED);
   if (!(layer._output._flags & REACTIVE_DISPOSED)) stageLayer(layer, proposal, layer._position);
-  if (layer._opening) {
-    resolveTx(layer._scope!)._open--;
-    layer._opening = undefined;
-  }
   if (surviving && layer._onSelected) {
     const onSelected = layer._onSelected;
     layer._onSelected = undefined;
@@ -570,7 +566,7 @@ type Input<T> = T | ((previous: NoInfer<T> | undefined) => T | PromiseLike<T> | 
 /** Public scalar path: allocate only the pair that the API returns. */
 export function createOptimisticPair<T>(input: Input<T>, config?: NodeOptions<T>) {
   const layer = createBoundary(input, config);
-  layer._automatic = true;
+  layer._lifetime = GuessLifetime.Action;
   return layerAccessors(layer);
 }
 
@@ -581,7 +577,7 @@ export function createLayer<T>(
   options?: { lifetime: "action"; node?: NodeOptions<T> }
 ) {
   const layer = createBoundary(input, options?.node);
-  if (options?.lifetime === "action") layer._automatic = true;
+  if (options?.lifetime === "action") layer._lifetime = GuessLifetime.Action;
   const pair = layerAccessors(layer);
   return [
     ...pair,
@@ -661,12 +657,11 @@ function removeScope(layer: Layer<any>): void {
   layers?.delete(layer);
   if (!layers?.size) scopes.delete(scope);
   layer._scope = null;
+  if (layer._lifetime === GuessLifetime.Preview) layer._lifetime = GuessLifetime.Action;
   if (!scopes.size) setLayerBlocked();
 }
 
 function releaseLayer(layer: Layer<any>): void {
-  if (layer._opening && layer._scope) resolveTx(layer._scope)._open--;
-  layer._opening = undefined;
   publicationReads.delete(layer._output);
   removeScope(layer);
   proposals.delete(layer);
@@ -688,7 +683,20 @@ function bindScope(layer: Layer<any>, scope: Transaction): void {
       if (owner) merge(scope, owner);
     }
   }
-  const current = (layer._scope = resolveTx(scope));
+  const current = resolveTx(scope);
+  if (
+    !layer._scope &&
+    layer._lifetime === GuessLifetime.Action &&
+    layer._input._config & CONFIG_INPUTS_PUBLISHED &&
+    (layer._input._statusFlags & (STATUS_PENDING | STATUS_UNINITIALIZED)) === STATUS_PENDING
+  ) {
+    // The input outlived its update before this guess was made. It may
+    // suspend the correction, but does not keep the setting update open.
+    // Re-enter preparation after publication even with no other queued work.
+    layer._lifetime = GuessLifetime.Preview;
+    current._queues[0].push(wakeLayers);
+  }
+  layer._scope = current;
   let layers = scopes.get(current);
   if (!layers) scopes.set(current, (layers = new Set()));
   layers.add(layer);
@@ -729,7 +737,9 @@ export function createOptimisticSlot<T>(
       }
     )
   );
-  layer._automatic = true;
+  // Store slots share their producer's outstanding request across the
+  // compound write (including properties that have no answer of their own).
+  layer._lifetime = GuessLifetime.Store;
   layer._inputStatus = true;
   layer._onSelected = onSelected;
   layer._onRetired = onRetired;
@@ -900,7 +910,7 @@ function layerAccessors<T>(layer: Layer<T>) {
         read => read._source !== layer
       );
     else if (incoming.has(layer)) incoming.get(layer)!._uses = undefined;
-    if (layer._automatic) {
+    if (layer._lifetime) {
       const scope = flushTransaction ?? (layer._scope && liveTx(layer._scope));
       if (scope) bindScope(layer, scope);
     }

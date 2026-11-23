@@ -115,7 +115,7 @@ function observeInput(record: Observation): void {
 // An explicit proposal or another consumed pending input owns a different answer.
 function quietQuestion(record: Observation): boolean {
   const boundary = boundaries.get(record._input);
-  if (!boundary?._automatic || boundary._override !== NOT_PENDING) return false;
+  if (!boundary?._lifetime || boundary._override !== NOT_PENDING) return false;
   let quiet = false;
   for (let incoming = record._incoming; incoming; incoming = pendingInput(incoming)) {
     for (let edge = incoming._deps; edge && edge._gen === incoming._depGen; edge = edge._nextDep) {
