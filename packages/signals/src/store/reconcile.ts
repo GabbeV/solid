@@ -25,7 +25,6 @@ import {
 import {
   adoptPB,
   bumpDeep,
-  committed,
   deepUsed,
   hasAccessorFlag,
   joinDraftReads,
@@ -104,11 +103,11 @@ function applyAdopt(t: StoreTarget, incoming: any, keyFn: KeyFn | null, proj = f
   // Returned producer answers use adoption rather than draft notification.
   // Pair rows retained by selected guesses before the parent adopts them.
   if (optHooks && t._fam?.opt === true) optHooks.pair(t, incoming);
-  // Positional guesses still refer to the published array while another
-  // answer is staged. Overlaying them on that answer can displace a live row.
+  // A keyed input reconciles against its own rows, including rows hidden by
+  // a guess. The pairing above already accounts for rows introduced by guesses.
   const prevView =
-    optHooks && t._fam?.opt === true
-      ? optHooks.view(t, keyFn && Array.isArray(old) ? committed(t) : old, true)
+    optHooks && t._fam?.opt === true && !(keyFn && Array.isArray(old))
+      ? optHooks.view(t, old, true)
       : old;
   const nextArr = Array.isArray(incoming);
   const shallow = t.s === true;

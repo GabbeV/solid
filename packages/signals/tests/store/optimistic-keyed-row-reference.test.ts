@@ -295,3 +295,33 @@ it("a later refresh reaches a nested field when only the destination index is ob
     dispose();
   }
 });
+
+it("keeps a captured row live while a guess hides it from the keyed list", async () => {
+  const release = Promise.withResolvers<void>();
+  const { dispose, hide, receive, rows } = createRoot(dispose => {
+    const [answer, receive] = createSignal([{ id: "a", count: 0 }]);
+    const [rows, guess] = createOptimisticStore(() => answer(), [] as Row[], { key: "id" });
+    const hide = action(function* () {
+      guess(draft => {
+        draft.length = 0;
+      });
+      yield release.promise;
+    });
+    return { dispose, hide, receive, rows };
+  });
+  const original = rows[0];
+  const hiding = hide();
+  try {
+    await tick();
+    receive([{ id: "a", count: 2 }]);
+    await tick();
+    expect(rows.length).toBe(0);
+    expect(original.count).toBe(2);
+    release.resolve();
+    await hiding;
+    expect(rows[0]).toBe(original);
+  } finally {
+    release.resolve();
+    dispose();
+  }
+});

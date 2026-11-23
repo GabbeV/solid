@@ -4,6 +4,7 @@ import {
   CONFIG_INPUTS_PUBLISHED,
   CONFIG_AUTO_DISPOSE,
   REACTIVE_DISPOSED,
+  STATUS_PENDING,
   STATUS_UNINITIALIZED
 } from "../core/constants.js";
 import { flushTransaction, holdNode, insertSubs, joinFuture, schedule } from "../core/scheduler.js";
@@ -153,8 +154,12 @@ export function readArrayAnswer(t: StoreTarget): void {
   for (let p: StoreTarget | null = t; p; p = p.u) {
     const gate = pendingAnswers.get(p);
     if (gate && !gate._value) {
-      readArrayStructure(p);
-      if (!read(gate)) throw new NotReadyError(gate);
+      const producer = p._fam!.node!;
+      // A refresh can supersede the answer before its readiness publishes.
+      if (producer._statusFlags & STATUS_PENDING) read(producer);
+      // The selected arrangement waits for publication. Its correction
+      // consumes the ordinary input and cannot wait for its own commit.
+      if (readArrayStructure(p) && !read(gate)) throw new NotReadyError(gate);
     }
   }
 }
@@ -189,11 +194,12 @@ export function readArrayLength(t: StoreTarget): void {
 }
 
 /** All ordinary array outputs derive in the selected structural context. */
-export function readArrayStructure(t: StoreTarget): void {
+export function readArrayStructure(t: StoreTarget): boolean {
   const slot = arrays.get(t)?.structure;
-  if (!slot?.activeOwner()) return;
+  if (!slot?.activeOwner()) return false;
   untrack(() => read(slot.output));
   read(slot.output);
+  return true;
 }
 
 /** Shared net array-shape test; row arrangement can add another boundary. */
