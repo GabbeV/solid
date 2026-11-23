@@ -146,8 +146,14 @@ function recordFor(t: StoreTarget): RecordSlots {
   return record;
 }
 
+function selectedTarget(value: any, family: StoreTarget["_fam"]): StoreTarget | undefined {
+  if (!isWrappable(value)) return;
+  const target = lookupTarget(value, family) ?? value[$TARGET];
+  return target?._fam === family ? target : undefined;
+}
+
 /** A selected parent property supplies the body's publication boundary. */
-function selectedBody(
+function selectedValue(
   t: StoreTarget,
   writer = false,
   published = false
@@ -158,7 +164,7 @@ function selectedBody(
       records.get(t.u)?.slots.get(t.pk) ?? records.get(t.u)?.slots.get(String(t.pk));
     if (candidate?.activeOwner()) {
       const value = candidate.writerValue();
-      if (isWrappable(value) && lookupTarget(value, t._fam!) === t) {
+      if (selectedTarget(value, t._fam) === t) {
         recordFor(t).parent = slot = candidate;
         selectedTargets.add(t);
       }
@@ -179,14 +185,24 @@ function selectedBody(
     } finally {
       setVerdict(previous);
     }
-    if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
+    if (selectedTarget(value, t._fam) === t) return value;
   }
   if (t.u && t.pk !== null) {
-    const parent = selectedBody(t.u, writer, published);
-    const value = parent?.[t.pk];
-    if (isWrappable(value) && lookupTarget(value, t._fam!) === t) return value;
+    const parent = selectedValue(t.u, writer, published);
+    const live = parent === t.u.px;
+    const value = live ? read(getNode(t.u, t.pk)) : parent?.[t.pk];
+    if (selectedTarget(value, t._fam) === t) return live ? t.px : value;
   }
   return undefined;
+}
+
+function selectedBody(
+  t: StoreTarget,
+  writer = false,
+  published = false
+): Record<PropertyKey, any> | undefined {
+  const value = selectedValue(t, writer, published);
+  return value === t.px ? read(getContainerNode(t)) : value;
 }
 
 function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
@@ -214,8 +230,9 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
       t.ch || t.u || t._fam?.node
         ? createOptimisticStoreInput(
             () => {
-              const body = selectedBody(t);
+              const body = selectedValue(t);
               if (body) {
+                if (body === t.px) return read(node);
                 return presence ? key in body : body[key as any];
               }
               // A selected descendant supplies its displayed value, but an
@@ -282,7 +299,7 @@ function slotFor(t: StoreTarget, key: PropertyKey, presence = false): Slot {
         invalidateAncestors();
         if (!presence) {
           const value = slot!.writerValue();
-          const child = isWrappable(value) && lookupTarget(value, t._fam!);
+          const child = selectedTarget(value, t._fam);
           if (child) {
             const childRecord = recordFor(child);
             childRecord.parent = slot;
@@ -864,6 +881,21 @@ export const staticOptimisticHooks: OptHooks = {
           }
         }
       }
+      if (
+        changed &&
+        Array.isArray(next) &&
+        arrayIndex(key) >= 0 &&
+        t._fam?.key &&
+        isWrappable(after)
+      ) {
+        const row = lookupTarget(after, t._fam);
+        if (
+          row?.u === t &&
+          selectedTarget(committed(t)[row.pk!], t._fam) === row &&
+          t._fam.key(row.v) !== undefined
+        )
+          after = row.px;
+      }
       if (changed) entries.push([slotFor(t, key), after]);
       if (changed || !!old !== !!neu) {
         const presence = slotFor(t, key, true);
@@ -927,7 +959,7 @@ export const staticOptimisticHooks: OptHooks = {
     for (const slot of records.get(t)?.slots.values() ?? []) {
       if (!slot.activeOwner()) continue;
       const value = slot.writerValue();
-      const child = isWrappable(value) && lookupTarget(value, family);
+      const child = selectedTarget(value, family);
       if (child) pair(child, slot);
     }
     // A guessed leaf can also keep a row that its parent never guessed.
@@ -991,7 +1023,16 @@ export const staticOptimisticHooks: OptHooks = {
       }
     }
   },
-  ask: () => {},
+  ask: fam =>
+    fam.opt && selectedTargets.size
+      ? node => {
+          for (let t: StoreTarget | null = node._host; t; t = t.u) {
+            const parent = records.get(t)?.parent;
+            if (parent) return parent.output._value === t.px;
+          }
+          return false;
+        }
+      : undefined,
   park: () => {},
   stands: (t, key, presence) => {
     if (key === undefined) return false;

@@ -389,7 +389,7 @@ it("keeps a child leaf guess while its setter-read parent row guess remains acti
   }
 });
 
-it("keeps preobserved row leaves under a later index reorder guess", async () => {
+it("publishes refreshed fields through the same keyed rows while the guessed order remains visible", async () => {
   type Row = { id: number; title: string };
   let server: Row[] = [
     { id: 1, title: "one" },
@@ -437,7 +437,9 @@ it("keeps preobserved row leaves under a later index reorder guess", async () =>
     flush();
     fetches.shift()!();
     await settle();
-    expect(shown.at(-1)).toBe("2:two 1:one");
+    expect(shown.at(-1)).toBe("2:saved-two 1:saved-one");
+    expect(rows[0]).toBe(second);
+    expect(rows[1]).toBe(first);
     gate.resolve();
     await running;
     await settle();

@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   action,
+  createMemo,
   createOptimisticStore,
   createRenderEffect,
   createRoot,
@@ -123,18 +124,174 @@ for (const producer of ["returned", "draft"] as const) {
   }
 }
 
-// The save publishes while its count still reads 0 through the moved row.
-it.fails(
-  "publishes the corrected count together with saved for an existing row moved by reference",
-  async () => {
-    let landing: unknown;
-    await withMovedRow(
-      "returned",
+it.each(["returned", "draft"] as const)(
+  "%s answer publishes the corrected count together with saved while the moved row stays selected",
+  producer =>
+    withMovedRow(
+      producer,
       draft => draft[0],
       (_original, _moved, saved, count) => {
-        landing = [saved, count];
+        expect([saved, count]).toEqual([true, 2]);
+      }
+    )
+);
+
+it("keeps value, presence and keys together while a moved row's corrected count suspends", async () => {
+  type Item = Row & { flag?: boolean };
+  const ack = Promise.withResolvers<void>();
+  const moveGate = Promise.withResolvers<void>();
+  const calculated = Promise.withResolvers<number>();
+  let answer!: (rows: Item[]) => void;
+  let detail: number[] | undefined, saved: boolean | undefined;
+  let rendered: unknown, late: unknown;
+  const { change, move, mount, dispose } = createRoot(dispose => {
+    const [rows, setRows] = createOptimisticStore(
+      () =>
+        new Promise<Item[]>(resolve => {
+          answer = resolve;
+        }),
+      [] as Item[],
+      { key: "id" }
+    );
+    const [isSaved, setSaved] = createSignal(false);
+    const [visible, mount] = createSignal(false);
+    const row = () => rows.find(row => row.id === "a")!;
+    const summary = () => [row().count, "flag" in row(), Object.keys(row()).includes("flag")];
+    const result = createMemo(() => {
+      const count = row().count;
+      return count === 2 ? calculated.promise : count;
+    });
+    createRenderEffect(isSaved, value => {
+      saved = value;
+    });
+    createRenderEffect(
+      () => [row().count, result()],
+      value => {
+        detail = value;
       }
     );
-    expect(landing).toEqual([true, 2]);
+    createRenderEffect(
+      () => {
+        visible();
+        return summary();
+      },
+      value => {
+        rendered = value;
+      }
+    );
+    createRenderEffect(
+      () => (visible() ? summary() : null),
+      value => {
+        late = value;
+      }
+    );
+    const change = action(function* () {
+      setRows(draft => {
+        draft[0].count = 1;
+      });
+      yield ack.promise;
+      refresh(rows);
+      setSaved(true);
+    });
+    const move = action(function* () {
+      setRows(draft => {
+        draft.reverse();
+      });
+      yield moveGate.promise;
+    });
+    return { change, move, mount, dispose };
+  });
+  try {
+    flush();
+    answer([
+      { id: "a", count: 0 },
+      { id: "b", count: 0 }
+    ]);
+    await tick();
+    const changed = change();
+    await tick();
+    ack.resolve();
+    await tick();
+    const moved = move();
+    await tick();
+    answer([
+      { id: "a", count: 2, flag: true },
+      { id: "b", count: 0 }
+    ]);
+    await tick();
+    mount(true);
+    await tick();
+    expect([saved, detail, rendered]).toEqual([false, [1, 1], [1, false, false]]);
+    if (late !== null) expect(late).toEqual([1, false, false]);
+    calculated.resolve(2);
+    await tick();
+    expect([saved, detail, rendered, late]).toEqual([
+      true,
+      [2, 2],
+      [2, true, true],
+      [2, true, true]
+    ]);
+    moveGate.resolve();
+    await Promise.all([changed, moved]);
+  } finally {
+    ack.resolve();
+    moveGate.resolve();
+    calculated.resolve(2);
+    dispose();
   }
-);
+});
+
+it("a later refresh reaches a nested field when only the destination index is observed", async () => {
+  type Item = { id: string; details: { count: number } };
+  const gate = Promise.withResolvers<void>();
+  let answer!: (rows: Item[]) => void;
+  let shown: number | undefined;
+  const { rows, move, dispose } = createRoot(dispose => {
+    const [rows, setRows] = createOptimisticStore(
+      () =>
+        new Promise<Item[]>(resolve => {
+          answer = resolve;
+        }),
+      [] as Item[],
+      { key: "id" }
+    );
+    createRenderEffect(
+      () => rows[1].details.count,
+      count => {
+        shown = count;
+      }
+    );
+    const move = action(function* () {
+      setRows(draft => {
+        draft.reverse();
+      });
+      yield gate.promise;
+    });
+    return { rows, move, dispose };
+  });
+  const payload = (count: number) => [
+    { id: "a", details: { count } },
+    { id: "b", details: { count: 0 } }
+  ];
+  try {
+    flush();
+    answer(payload(0));
+    await tick();
+    const moved = move();
+    await tick();
+    refresh(rows);
+    await tick();
+    answer(payload(2));
+    await tick();
+    expect(shown).toBe(2);
+    expect(rows[1].details.count).toBe(2);
+    gate.resolve();
+    await moved;
+    await tick();
+    expect(shown).toBe(0);
+    expect(rows[0].details.count).toBe(2);
+  } finally {
+    gate.resolve();
+    dispose();
+  }
+});
