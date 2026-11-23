@@ -29,11 +29,8 @@
  *      OPT_LAND_ACTIONS=2|3  OPT_LAND_ONLY=<case index>
  *      OPT_LAND_REPORT=/path.json (every finding, smallest example per kind)
  *
- * The default run is the gate: a fixed seed and case count for each form
- * with two and with three actions, and the number of failing cases per kind
- * may not rise above `BASELINE`. Lower a baseline number when a fix lowers
- * the count; never raise one. Any env override turns the run into a survey
- * that prints its counts and asserts nothing.
+ * The default run requires zero findings. Env overrides run the same checks
+ * as a survey and report their counts.
  */
 import { expect, test, vi } from "vitest";
 import { writeFileSync } from "node:fs";
@@ -53,24 +50,6 @@ const GATE =
   !process.env.OPT_LAND_CASES &&
   !process.env.OPT_LAND_ACTIONS &&
   !ONLY;
-
-/** Failing cases per kind at the default seed and case count, by
- * `form/actions`. A kind not listed is 0. */
-const BASELINE: Record<string, Record<string, number>> = {
-  "seeded/2": { "agree: snapshot≠proxy": 1 },
-  "seeded/3": {
-    "agree: snapshot≠proxy": 7,
-    "live: a guessed row is off screen": 2,
-    "live: a removed row is on screen": 1,
-    "frame: a torn frame was shown": 1
-  },
-  "seedless/2": { "agree: snapshot≠proxy": 3 },
-  "seedless/3": {
-    "agree: snapshot≠proxy": 5,
-    "live: a guessed row is off screen": 2,
-    "frame: a torn frame was shown": 2
-  }
-};
 
 type Row = { id: number; n: number };
 const ser = (rows: Row[]): string => {
@@ -477,7 +456,6 @@ async function runCase(c: Case): Promise<Finding[]> {
 for (const form of FORMS)
   for (const ACTIONS of ACTION_COUNTS)
     test(`optimistic landing model: ${form}, seed ${SEED}, ${CASES} cases, ${ACTIONS} actions`, async () => {
-      const base = BASELINE[`${form}/${ACTIONS}`] ?? {};
       const r = rng(SEED * 7919 + form.length + ACTIONS * 31);
       const byKind: Record<string, number> = {};
       const all: any[] = [];
@@ -518,10 +496,5 @@ for (const form of FORMS)
               .map(([k, v]) => `  ${k}: ${v}`)
               .join("\n")
         );
-      if (GATE) {
-        const over = Object.entries(byKind).filter(([k, v]) => v > (base[k] ?? 0));
-        expect(
-          over.map(([k, v]) => `${k}: ${v} cases (baseline ${base[k] ?? 0})\n${examples[k].text}`)
-        ).toEqual([]);
-      }
+      if (GATE) expect(all).toEqual([]);
     }, 600_000);

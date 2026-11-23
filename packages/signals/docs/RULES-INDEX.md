@@ -33,7 +33,7 @@ Status legend: **live** stated and standing · **ruled** carries an explicit rul
 | C | 4 | 0 | 3 | 1 |
 | INV | 11 | 3 | 7 | 4 |
 | RUL | 13 | 3 | 5 | 7 |
-| R (CS) | 59 | 15 | 20 | 30 |
+| R (CS) | 59 | 14 | 20 | 31 |
 | R (OL) | 37 | 1 | 4 | 33 |
 | R (OS) | 46 | 0 | 4 | 42 |
 | R (PJ) | 37 | 2 | 6 | 31 |
@@ -234,7 +234,7 @@ Status legend: **live** stated and standing · **ruled** carries an explicit rul
 | CS-R25 | live | `docs/rules-mining/core-store.md:114` | — | next-smoke.test.ts×1 | Writes to properties with ZERO observers still batch (no effects anywhere; pre-write value visible between setState and flush).** |
 | CS-R26 | live | `docs/rules-mining/core-store.md:119` | — | — | Setting a key to undefined is not deletion: key stays present (`in` true, no key-set notify); only delete / storePath.DELETE removes.** |
 | CS-R27 | live | `docs/rules-mining/core-store.md:123` | store.ts×2 | — | The setter may return a replacement value that swaps the root wholesale; symbol keys on the replacement preserved.** |
-| CS-R28 | live | `docs/rules-mining/core-store.md:127` | reconcile.ts×1 | — | `storePath` addressing: string keys, numeric indices, index arrays, predicate filters ((value, index)), ranges, trailing functional setters address and update intended paths + trigger per-path subscri… |
+| CS-R28 | live | `docs/rules-mining/core-store.md:127` | — | — | `storePath` addressing: string keys, numeric indices, index arrays, predicate filters ((value, index)), ranges, trailing functional setters address and update intended paths + trigger per-path subscri… |
 | CS-R29 | live | `docs/rules-mining/core-store.md:131` | store.ts×1 | overlay.test.ts×1 | Merge/replacement preserve accessor descriptors and keep getters LIVE (re-evaluated per read, reactive reads track), for pre-existing and new keys.** |
 | CS-R30 | live | `docs/rules-mining/core-store.md:136` | reconcile.ts×1 store.ts×4 | proto-key-removal-4672.test.ts×3 store-prototype-4670.test.ts×2 | Prototype pollution fully guarded: `__proto__` assignment inert; reading `constructor` on the draft returns undefined; storePath refuses `__proto__`/`constructor`/`prototype` segments; skips unsafe ow… |
 | CS-R31 | live | `docs/rules-mining/core-store.md:140` | core.ts×1 store.ts×1 | a34-writes-then-derivations.test.ts×1 createMemo.test.ts×6 derived-write-then-derivation-3733.test.ts×1 held-derivation-not-a-proposal-3612.test.ts×3 createStore.test.ts×3 reconcile-resend-identity.test.ts×1 | Derived-store manual writes apply before the derivation.** A manual `setStore` lands at once, staged with any live transaction. When a source of the fold changes, in the same update or later, the fold… |
