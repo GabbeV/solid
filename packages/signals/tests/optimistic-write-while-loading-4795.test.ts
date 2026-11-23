@@ -1,10 +1,5 @@
-/**
- * #4795 (ruled 2026-11-12): an optimistic write to a source that answered
- * before and is loading a new question (an input changed) composes on the
- * previous answer, and the new answer replaces the guess (D-34). Dev warns
- * `OPTIMISTIC_WRITE_WHILE_LOADING` at the guess, once per source. Not before
- * the first answer (S-56), not over a `refresh()` (the same question).
- */
+/** A functional guess can use the last answer while the new input is loading.
+ * The caller decides whether its prediction needs fresh data. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   action,
@@ -38,6 +33,7 @@ const tick = async () => {
 function app(kind: "memo" | "store") {
   const asks: Record<string, (v: any) => void> = {};
   const ask = (k: string) => new Promise<any>(r => (asks[k] = r));
+  const bases: string[][] = [];
   let setSel!: (v: number) => void, guess!: () => void, again!: () => void;
   createRoot(() => {
     const [sel, set] = createSignal(1);
@@ -48,7 +44,11 @@ function app(kind: "memo" | "store") {
         () => v(),
         () => {}
       );
-      guess = () => setV((d: any) => [...(d ?? []), "x"]);
+      guess = () =>
+        setV((d: string[] | undefined) => {
+          bases.push([...(d ?? [])]);
+          return [...(d ?? []), "x"];
+        });
       again = () => void refresh(v);
     } else {
       const [s, setS] = createOptimisticStore(async () => ask(`fetch:${sel()}`), [] as string[]);
@@ -58,17 +58,24 @@ function app(kind: "memo" | "store") {
       );
       guess = () =>
         setS(d => {
+          bases.push([...d]);
           d.push("x");
         });
       again = () => void refresh(s);
     }
   });
-  return { asks, setSel: (v: number) => setSel(v), guess: () => guess(), again: () => again() };
+  return {
+    asks,
+    bases,
+    setSel: (v: number) => setSel(v),
+    guess: () => guess(),
+    again: () => again()
+  };
 }
 
-describe("#4795: a guess while the source loads a new question warns in dev", () => {
+describe("#4795: guessing while the source loads a new question", () => {
   for (const kind of ["memo", "store"] as const) {
-    it(`${kind}: after an input change, once per source`, async () => {
+    it(`${kind}: the setter composes on the last answer without warning`, async () => {
       const a = app(kind);
       flush();
       a.asks["fetch:1"](["a"]);
@@ -81,12 +88,9 @@ describe("#4795: a guess while the source loads a new question warns in dev", ()
         a.guess();
       })();
       flush();
-      const events = capture.stop().filter(e => e.code === CODE) as any[];
-      expect(events.length).toBe(1);
-      expect(events[0].severity).toBe("warn");
-      expect(events[0].kind).toBe("write");
-      expect(events[0].message).toContain("D-34");
-      expect(warned()).toBe(1);
+      expect(a.bases).toEqual([["a"], ["a", "x"]]);
+      expect(capture.stop().map(event => event.code)).not.toContain(CODE);
+      expect(warned()).toBe(0);
     });
     it(`${kind}: not over a refresh of the same question`, async () => {
       const a = app(kind);
@@ -100,7 +104,7 @@ describe("#4795: a guess while the source loads a new question warns in dev", ()
         a.guess();
       })();
       flush();
-      expect(capture.stop().filter(e => e.code === CODE).length).toBe(0);
+      expect(capture.stop().map(event => event.code)).not.toContain(CODE);
       expect(warned()).toBe(0);
     });
   }
@@ -112,7 +116,7 @@ describe("#4795: a guess while the source loads a new question warns in dev", ()
       a.guess();
     })();
     flush();
-    expect(capture.stop().filter(e => e.code === CODE).length).toBe(0);
+    expect(capture.stop().map(event => event.code)).not.toContain(CODE);
     expect(warned()).toBe(0);
   });
 });
