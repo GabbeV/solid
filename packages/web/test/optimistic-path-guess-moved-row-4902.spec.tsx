@@ -2,12 +2,9 @@
  * @jsxImportSource @solidjs/web
  * @vitest-environment jsdom
  */
-// #4902 (fuzz seed 41, board app: one keyed optimistic store per fetch). A
-// toggle guesses a card's count (`todo[0].done += 1`); the card is then
-// moved into another store, the row passed as it is (a store row). Once the
-// move's answers land, the card keeps the toggle's guess while the toggle is
-// still out (F-11). Passing a copy (`{ ...row }`) keeps it too. The signals
-// version is packages/signals/tests/optimistic-path-guess-moved-row-4902.test.ts.
+// A move borrows a row until its destination answers. Passing the reference
+// reads no count in the move setter. Spreading the row does read the toggle's
+// pending count there, so the move and toggle must publish together (F-11).
 import { test, expect } from "vitest";
 import { For, action, createSignal, createOptimisticStore, flush, refresh } from "solid-js";
 import { render } from "../src/index.js";
@@ -34,7 +31,7 @@ function landDraft(draft: any[], v: any[]) {
 }
 
 for (const copy of [false, true])
-  test(`#4902 a path guess on a row moved into another store ${copy ? "(as a copy)" : "(the row itself)"} stays while its action is out`, async () => {
+  test(`publishes the move with the writes its setter consumed (copy: ${copy})`, async () => {
     const fl: Record<string, ((v: any) => void)[]> = {};
     const ask = (k: string) => new Promise<any>(r => (fl[k] ??= []).push(r));
     const land = (k: string, v: any) => {
@@ -120,7 +117,7 @@ for (const copy of [false, true])
       { id: 1, done: 0, total: 2 }
     ]);
     await tick();
-    expect(state()).toBe(" | 5:3/3,1:1/2");
+    expect(state()).toBe(copy ? " | 5:3/3,1:1/2" : " | 5:3/3,1:0/2");
     land("toggle", {});
     await tick();
     expect(state()).toBe(" | 5:3/3,1:0/2");

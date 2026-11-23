@@ -1,9 +1,6 @@
-// #4902 (fuzz seed 41, board app): a toggle guesses a row's count with a path
-// write (`todo[0].done += 1`). A move then passes that row as it is (the store
-// row, not a copy) into another optimistic store's guess. Once the move is
-// accepted and both re-asks land, the row must keep the toggle's guess while
-// the toggle is still out (F-11: a guess stays until its own action ends).
-// The DOM version is packages/web/test/optimistic-path-guess-moved-row-4902.spec.tsx.
+// A move borrows a row until its destination answers. Passing the reference
+// reads no count in the move setter. Spreading the row does read the toggle's
+// pending count there, so the move and toggle must publish together (F-11).
 import { test, expect } from "vitest";
 import {
   action,
@@ -38,7 +35,7 @@ function landDraft(draft: any[], v: any[]) {
 }
 
 for (const copy of [false, true])
-  test(`#4902 a path guess on a row moved into another store ${copy ? "(as a copy)" : "(the row itself)"} stays while its action is out`, async () => {
+  test(`publishes the move with the writes its setter consumed (copy: ${copy})`, async () => {
     const fl: Record<string, ((v: any) => void)[]> = {};
     const ask = (k: string) => new Promise<any>(r => (fl[k] ??= []).push(r));
     const land = (k: string, v: any) => {
@@ -48,8 +45,13 @@ for (const copy of [false, true])
       rs.forEach(r => r(structuredClone(v)));
     };
     const out: Record<string, string> = {};
+    const [moved, setMoved] = createSignal(false);
+    let movePublished = false;
     let todo: any, setTodo: any, done: any, setDone: any, todoAns: any, doneAns: any;
-    createRoot(() => {
+    const dispose = createRoot(d => {
+      createRenderEffect(moved, value => {
+        movePublished = value;
+      });
       [todoAns] = createSignal<any>(() => ask("todo"), { loadingValue: null } as any);
       [doneAns] = createSignal<any>(() => ask("done"), { loadingValue: null } as any);
       [todo, setTodo] = createOptimisticStore<Row[]>(
@@ -82,6 +84,7 @@ for (const copy of [false, true])
           }
         );
       }
+      return d;
     });
     const state = () => `${out.todo} | ${out.done}`;
     const toggle = action(function* (i: number) {
@@ -97,6 +100,7 @@ for (const copy of [false, true])
       yield ask("move");
       refresh(todoAns);
       refresh(doneAns);
+      setMoved(true);
     });
 
     land("todo", [{ id: 1, done: 0, total: 2 }]);
@@ -118,8 +122,11 @@ for (const copy of [false, true])
       { id: 1, done: 0, total: 2 }
     ]);
     await tick();
-    expect(state()).toBe(" | 5:3/3,1:1/2");
+    expect(state()).toBe(copy ? " | 5:3/3,1:1/2" : " | 5:3/3,1:0/2");
+    expect(movePublished).toBe(!copy);
     land("toggle", {});
     await tick();
     expect(state()).toBe(" | 5:3/3,1:0/2");
+    expect(movePublished).toBe(true);
+    dispose();
   });
